@@ -1,0 +1,21 @@
+#!/bin/bash
+DATA_NAME=(${@:1:1})
+echo ${DATA_NAME}
+
+WD_DIR=${HOME}/scratch
+DATA_DIR=${WD_DIR}/${DATA_NAME}
+BIDS_DIR=${DATA_DIR}_BIDS
+FMRIPREP_VER=20.2.0
+DERIVS_DIR_NAME=${DATA_NAME}_fmriprep_anat_${FMRIPREP_VER}
+LOG_DIR_NAME=${DATA_NAME}_fmriprep_anat_log
+
+RUN_ID=$(tail -c 9 ${DATA_NAME}_fmriprep_anat.log)
+mv fmriprep_vince-${RUN_ID}*.out ${LOG_DIR_NAME}
+mv fmriprep_vince-${RUN_ID}*.err ${LOG_DIR_NAME}
+
+#2 collect output
+tar -czvf res/${DERIVS_DIR_NAME}.tar.gz ${DERIVS_DIR_NAME}/fmriprep
+tar -czvf res/${DERIVS_DIR_NAME}_freesurfer.tar.gz ${DERIVS_DIR_NAME}/freesurfer-6.0.1
+tar -czvf res/${LOG_DIR_NAME}.tar.gz  ${LOG_DIR_NAME}
+
+echo "Step5: fmriprep for ${DATA_NAME} Finished"
