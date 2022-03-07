@@ -1,0 +1,2 @@
+# mr_proc tab_data
+This is the folder where data information files from dicom headers and the download platform are stored. These data will be used for validation of dataset, heuristics creation and subjeclt filtering.
