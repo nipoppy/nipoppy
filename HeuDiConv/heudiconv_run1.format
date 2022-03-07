@@ -1,0 +1,29 @@
+#!/bin/bash
+# usage:
+# bash Abbas_raw_heudiconv_slurm_run1_format.sh ${WD_NAME} ${STUDY_NAME} >> ${LOG_FILE}_run1.log
+DATA_NAME=(${@:1:1})
+echo ${DATA_NAME}
+
+WD_DIR=${HOME}/scratch
+DATA_DIR=${WD_DIR}/${DATA_NAME}
+BIDS_DIR=${DATA_DIR}_BIDS
+INFO_SUM_DIR=${DATA_DIR}_INFO_SUM
+INFO_SUM_DIR_NAME=${DATA_NAME}_INFO_SUM
+LOG_FILE_r1=${DATA_NAME}_heudiconv_run1.log
+SLURM_LOG_OUT_DIR=${DATA_DIR}_heudiconv_log_run1
+LOG_DIR_NAME=${DATA_NAME}_heudiconv_log_run1
+
+# copying and merging information tsv files.
+RUN_ID=$(tail -c 9 ${LOG_FILE_r1})
+mv heudi_vinc_r1-${RUN_ID}*.out ${LOG_DIR_NAME}
+mv heudi_vinc_r1-${RUN_ID}*.err ${LOG_DIR_NAME}
+
+for subject_id in $(find ${BIDS_DIR}/.heudiconv/ -maxdepth 1 -mindepth 1 | xargs -I {} basename {}); do
+  cp ${BIDS_DIR}/.heudiconv/${subject_id}/info/*.tsv ${INFO_SUM_DIR}/
+  cat ${INFO_SUM_DIR}/dicominfo.tsv >> ${INFO_SUM_DIR}/dicominfo_sum_tmp.tsv
+done
+sort -r ${INFO_SUM_DIR}/dicominfo_sum_tmp.tsv | uniq > ${INFO_SUM_DIR}/${DATA_NAME}_dicomInfo.tsv
+
+tar -czvf res/${INFO_SUM_DIR_NAME}.tar.gz ${INFO_SUM_DIR_NAME}
+tar -czvf res/${LOG_DIR_NAME}.tar.gz ${LOG_DIR_NAME}
+echo "Step4: Heudiconv Run1 Info zipped"
