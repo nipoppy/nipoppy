@@ -5,6 +5,7 @@ echo ${DATA_NAME}
 #echo ${HEURISTIC_FILE}
 # HEURISTIC_FILE="src/Heuristics_Abbas_all_T1_T2_fMRI_DTI_SWI.py"
 
+
 SEARCH_LV=1
 LOG_FILE=${DATA_NAME}_heudiconv
 LOG_FILE_r1=${LOG_FILE}_run1.log
