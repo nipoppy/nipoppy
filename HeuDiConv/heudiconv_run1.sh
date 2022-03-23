@@ -1,10 +1,6 @@
 #!/bin/bash
 DATA_NAME=(${@:1:1})
 echo ${DATA_NAME}
-#HEURISTIC_FILE=(${@:2:1})
-#echo ${HEURISTIC_FILE}
-# HEURISTIC_FILE="src/Heuristics_Abbas_all_T1_T2_fMRI_DTI_SWI.py"
-
 
 SEARCH_LV=1
 LOG_FILE=${DATA_NAME}_heudiconv
@@ -12,14 +8,14 @@ LOG_FILE_r1=${LOG_FILE}_run1.log
 LOG_FILE_r2=${LOG_FILE}_run2.log
 WD_DIR=${HOME}/scratch
 DATA_DIR=${WD_DIR}/${DATA_NAME}
-CODE_DIR=${WD_DIR}/ET_biomarker/scripts/heudiconv/
+CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
+CON_IMG=${WD_DIR}/container_images/heudiconv_0.9.0.sif
 SUB_LIST=${WD_DIR}/${DATA_NAME}_subjects.list
 
 BIDS_DIR=${DATA_DIR}_BIDS
 INFO_DIR=${DATA_DIR}_INFO
 INFO_SUM_DIR=${DATA_DIR}_INFO_SUM
 SLURM_LOG_OUT_DIR=${DATA_DIR}_heudiconv_log
-
 
 rm -rf ${SLURM_LOG_OUT_DIR}_run1
 rm -rf ${SLURM_LOG_OUT_DIR}_run2
@@ -81,5 +77,5 @@ fi
 echo "Step2: folders created!"
 
 # submit batch job
-sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} >> ${LOG_FILE_r1}
+sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
 # --array=1-$(( $( wc -l $STUDY/data/participants.tsv | cut -f1 -d' ' ) - 1 ))
