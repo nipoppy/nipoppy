@@ -36,9 +36,9 @@ if [ ${DATA_NAME} = 'PPMI' ]; then
     subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
     echo ${DATA_NAME} * ${subject_id} 
     singularity run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
-    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/{session}/*.dcm \
+    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/{session}/*/*.dcm \
     -s ${subject_id} \
-    -ss ${SES}\
+    #-ss ${SES}\
     -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
     --grouping studyUID \
     -c dcm2niix -b --overwrite --minmeta \

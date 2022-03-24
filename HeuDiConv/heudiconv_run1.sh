@@ -30,7 +30,7 @@ if [ -z $RUN_ID ];then
 else
   echo "previous run $RUN_ID found, deleting logs..."
   rm heudi_vinc_r1-${RUN_ID}*.out
-  rm heudi_vinc_r1--${RUN_ID}*.err
+  rm heudi_vinc_r1-${RUN_ID}*.err
 fi
 
 rm *.ses
