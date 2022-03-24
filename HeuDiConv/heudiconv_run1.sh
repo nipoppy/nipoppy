@@ -24,6 +24,9 @@ rm -rf *.out
 
 rm ${SUB_LIST}
 
+# load singularity module on cluster
+module load singularity
+
 RUN_ID=$(tail -c 9 ${LOG_FILE_r1})
 if [ -z $RUN_ID ];then
   echo 'no previous run found...'
