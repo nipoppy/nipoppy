@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=heudic_r2_vin
-#SBATCH --time=5:00:00
-#SBATCH --account=rpp-aevans-ab
+#SBATCH --time=6:00:00
+#SBATCH --account=rrg-jbpoline
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=4GB
 # Outputs ----------------------------------
@@ -12,18 +12,12 @@
 # usage:
 #sbatch heudiconv_slurm_run2.sh ${WD_NAME} ${STUDY_NAME} ${SEARCH_LV} ${HEURISTIC_FILE} >> ${LOG_FILE}_run2.log
 DATA_NAME=(${@:1:1})
-echo ${DATA_NAME}
 HEURISTIC_FILE=(${@:2:1})
-echo ${HEURISTIC_FILE}
 CON_IMG=(${@:3:1})
 SUB_LIST=(${@:4:1})
 
-# PPMI N=117
-# ADNI N=???
-# MNI-ET N = 42
-# MNI-PD N = 56
-# MNI-NC N = 36
-# SBATCH --array=1-117
+echo "Converting: " ${DATA_NAME} " subjects: " ${SUB_LIST}  " with heuristics: " ${HEURISTIC_FILE} " contatiner: " ${CON_IMG}
+
 WD_DIR=${HOME}/"scratch"
 BIDS_DIR=${WD_DIR}/${DATA_NAME}_BIDS
 # singularity folders
@@ -42,10 +36,10 @@ if [ ${DATA_NAME} = 'PPMI' ]; then
     subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
     echo ${DATA_NAME} * ${subject_id} 
     singularity run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
-    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/{session}/*.dcm \
+    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/{session}/*/*.dcm \
     -s ${subject_id} \
-    -ss ${SES}\
-    -f ${SINGULARITY_MNT_DIR}/ET_biomarker/scripts/heudiconv/${HEURISTIC_FILE} \
+    #-ss ${SES}\
+    -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
     --grouping studyUID \
     -c dcm2niix -b --overwrite --minmeta \
     -o ${SINGULARITY_OUT_DIR}
@@ -59,7 +53,7 @@ elif [ ${DATA_NAME} = 'ADNI' ]; then
     -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/{session}/*.dcm \
     -s ${subject_id} \
     -ss ${SES}\
-    -f ${SINGULARITY_MNT_DIR}/ET_biomarker/scripts/heudiconv/${HEURISTIC_FILE} \
+    -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
     --grouping studyUID \
     -c dcm2niix -b --overwrite --minmeta \
     -o ${SINGULARITY_OUT_DIR}

@@ -1,8 +1,18 @@
 # Simple guide for HeuDiConv scripts
 This is the HeuDiConv scripts with slurm based HPC system (e.g. Compute Canada) for this ET structrual MRI data conversion (from dicoms to BIDS nifti), it is adapted from the sample code provided by the [HeuDiConv official documents (version 0.5.4)](https://heudiconv.readthedocs.io/en/latest/), you can find more information regarding HeuDiConv in the official documents.
 ## General information
-There are 2 steps (runs) for HeuDiConv to convert the dicom dataset into nifti and organized in BIDS format, we have scripts for both 2 runs, and they are: 1) **heudiconv_run1** (heudiconv_run1.\*), HeuDiConv will go over all the dicom images and summarize the dicom info into a table for each subject in a hidden folder `PPMI_BIDS/.heudiconv/*` within the BIDS output folder; 2) **heudiconv_run2** (heudiconv_run2.\*, this is the where the conversion is happening, you need to give a heuristic file based on the dicom info to filter out the images you would like to convert); 3) **Some other useful scripts**: 1) Hueristics for different datasets: e.g. `Heuristics_ADNI_T1.py` is the heuristic file for T1 images for ADNI dataset; 2) Jupyter notebook for analyzing the dicom info and creating heuristics, e.g. `session_sel.ipynb`;.3) Error handling scripts, e.g. `studyID_fixer.py` is for handling the studyID error during conversion, this happens usually because the subject was taken out of the scanner for some reasons during the scanning protocol, as long as you know there were no other problems, you can simply make all the studyID of the dicom images the same as the first dicom image of this subject (WARNING: You can only do this when you are sure about all the details of the images acquisitin. If not, please consult your imaging experts for further suggestions, and always backup your raw dataset!): 
+There are 2 steps (runs) for HeuDiConv to convert the dicom dataset into nifti and organized in BIDS format, we have scripts for both 2 runs, and they are: 
+
+    1) **heudiconv_run1** (heudiconv_run1.\*), HeuDiConv will go over all the dicom images and summarize the dicom info into a table for each subject in a hidden folder `PPMI_BIDS/.heudiconv/*` within the BIDS output folder; 
+    2) **heudiconv_run2** (heudiconv_run2.\*, this is the where the conversion is happening, you need to give a heuristic file based on the dicom info to filter out the images you would like to convert); 
+    3) **Some other useful scripts**: 
+        1) Hueristics for different datasets: e.g. `Heuristics_PPMI_T1.py` is the heuristic file for T1 images for PPMI dataset; 
+        2) Jupyter notebook for analyzing the dicom info and creating heuristics, e.g. `session_sel.ipynb`;.
+        3) Error handling scripts, e.g. `studyID_fixer.py` is for handling the studyID error during conversion, this happens usually because the subject was taken out of the scanner for some reasons during the scanning protocol, as long as you know there were no other problems, you can simply make all the studyID of the dicom images the same as the first dicom image of this subject (WARNING: You can only do this when you are sure about all the details of the images acquisitin. If not, please consult your imaging experts for further suggestions, and always backup your raw dataset!): 
+        
 There are basically 3 scripts for each run of HeuDiConv, including: 
+
+   
    1. **Main script**, e.g. `heudiconv_run1.sh` (screening all the dicom info):
       1. Function: 1) Preparing the working directories (following compute canada conventions, like all the data in `~/scratch`): 2) Create subject list and save it as a file for latter use; 3)  Submit the computing task to compute canada with `sbatch`;
       2. Input: 1) the name of dataset you would like to convert, e.g. PPMI (assuming all BIDS formated PPMI dataset are in `~/scratch/PPMI`); 
