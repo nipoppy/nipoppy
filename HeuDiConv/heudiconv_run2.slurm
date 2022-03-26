@@ -42,7 +42,7 @@ if [ ${DATA_NAME} = 'PPMI' ]; then
 	    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/"$seq"/{session}/*/*.dcm \
             -s ${subject_id} \
             -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
-	    -ss "$date" \
+	    -ss "${date:0:10}" \
 	    --grouping studyUID \
 	    -c dcm2niix -b --overwrite --minmeta \
 	    -o ${SINGULARITY_OUT_DIR}
