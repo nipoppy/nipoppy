@@ -23,26 +23,31 @@ BIDS_DIR=${WD_DIR}/${DATA_NAME}_BIDS
 # singularity folders
 SINGULARITY_MNT_DIR=/scratch
 SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${DATA_NAME}_BIDS
-CODES_DIR=${WD_DIR}/ET_biomarker/scripts/heudiconv
+CODES_DIR=${WD_DIR}/mr_proc/HeuDiConv
 SINGULARITY_CODES_DIR=/codes
 # run heudiconv at session level.
 echo "Starting task ${SLURM_ARRAY_TASK_ID}"
 DIR=$(sed -n "${SLURM_ARRAY_TASK_ID}p" ${SUB_LIST})
-echo "Current Directory: " ${DIR}
 DIR_STR=${DIR//\//" " }
 #Get subject ID
 if [ ${DATA_NAME} = 'PPMI' ]; then
     DATA_DIR_LEN_OFFSET=32
     subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
-    echo ${DATA_NAME} * ${subject_id} 
-    singularity run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
-    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/{session}/*/*.dcm \
-    -s ${subject_id} \
-    #-ss ${SES}\
-    -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
-    --grouping studyUID \
-    -c dcm2niix -b --overwrite --minmeta \
-    -o ${SINGULARITY_OUT_DIR}
+    echo ${DATA_NAME} "-" ${subject_id} "-" ${HEURISTIC_FILE}
+    for seq in $(ls -1 $DIR);
+    do
+        for date in $(ls -1 $DIR/"$seq");
+        do
+	    singularity run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
+	    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/"$seq"/{session}/*/*.dcm \
+            -s ${subject_id} \
+            -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
+	    -ss "$date" \
+	    --grouping studyUID \
+	    -c dcm2niix -b --overwrite --minmeta \
+	    -o ${SINGULARITY_OUT_DIR}
+	done
+    done
 
 elif [ ${DATA_NAME} = 'ADNI' ]; then
     DATA_DIR_LEN_OFFSET=32
@@ -60,7 +65,7 @@ elif [ ${DATA_NAME} = 'ADNI' ]; then
 else
     DATA_DIR_LEN_OFFSET=29
     subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
-    echo ${DATA_NAME} * ${subject_id} * ${SES}
+    echo ${DATA_NAME} "-" ${subject_id} "-" ${SES}
 fi
 
 echo "Step5: Heudiconv Run2 finishted, conversion complete!"
