@@ -38,8 +38,9 @@ if [ ${DATA_NAME} = 'PPMI' ]; then
     do
         for date in $(ls -1 $DIR/"$seq");
         do
+	    echo "session: " "${date:0:10}"
 	    singularity run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
-	    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/"$seq"/{session}/*/*.dcm \
+	    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/"$seq"/${date}/*/*.dcm \
             -s ${subject_id} \
             -f ${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE} \
 	    -ss "${date:0:10}" \
