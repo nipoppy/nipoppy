@@ -23,7 +23,7 @@ def infotodict(seqinfo):
     #rest_fieldmap = create_key('sub-{subject}/{session}/fmap/sub-{subject}_task-rest_acq-bold_run-{item:01d}_fieldmap')
     #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
     #info = {t1w: [], t2w: [], dwi: [], rest: [],  dwi_fieldmap: [], rest_fieldmap: [], swi: []}
-    info = {t1w: []}
+    info = {t1w: [], t2w: [], dwi: []}
     
     data = create_key('run{item:03d}')
     last_run = len(seqinfo)
