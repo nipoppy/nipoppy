@@ -10,7 +10,6 @@ BIDS_DIR=${DATA_DIR}_BIDS
 INFO_SUM_DIR=${DATA_DIR}_INFO_SUM
 INFO_SUM_DIR_NAME=${DATA_NAME}_INFO_SUM
 LOG_FILE_r1=${DATA_NAME}_heudiconv_run1.log
-SLURM_LOG_OUT_DIR=${DATA_DIR}_heudiconv_log_run1
 LOG_DIR_NAME=${DATA_NAME}_heudiconv_log_run1
 
 # copying and merging information tsv files.
