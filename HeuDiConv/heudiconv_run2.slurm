@@ -29,7 +29,7 @@ TMP_DIR=${DATA_DIR}_convTMP
 SINGULARITY_MNT_DIR=/scratch
 SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${DATA_NAME}_BIDS
 SINGULARITY_CODES_DIR=/codes
-SINGULARITY_HEURISTICS=${SINGULARITY_CODES_DIR}/${HEURISTIC_FILE}
+SINGULARITY_HEURISTICS=${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE}
 
 # run heudiconv at subject level.
 echo "Starting task ${SLURM_ARRAY_TASK_ID}"
@@ -74,9 +74,7 @@ if [ ${DATA_NAME} = 'PPMI' ];then
 # conversion
     echo "converting session: " ${ses_i}
     singularity run --cleanenv 
-    -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
-    -B ${CODES_DIR}:${SINGULARITY_CODES_DIR} \
-    ${CON_IMG} \
+    -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
     -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}_convTMP/{subject}/{session}/*/*.dcm \
     -s ${subject_id} \
     -f ${SINGULARITY_HEURISTICS} \
