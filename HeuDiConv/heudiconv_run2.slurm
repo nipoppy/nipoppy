@@ -73,7 +73,7 @@ if [ ${DATA_NAME} = 'PPMI' ];then
     do
 # conversion
     echo "converting session: " ${ses_i}
-    singularity run --cleanenv 
+    singularity run --cleanenv \
     -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
     -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}_convTMP/{subject}/{session}/*/*.dcm \
     -s ${subject_id} \
