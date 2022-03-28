@@ -39,55 +39,54 @@ DIR=$(sed -n "${SLURM_ARRAY_TASK_ID}p" ${SUB_LIST})
 DIR_STR=${DIR//\//" " }
 #Get subject ID
 if [ ${DATA_NAME} = 'PPMI' ];then
-DATA_DIR_LEN_OFFSET=32
-subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
-echo ${subject_id}
-seq_list=$(ls -1 $DIR)
-ses_list=()
-sub_tmp_dir=${TMP_DIR}/${subject_id}
+    DATA_DIR_LEN_OFFSET=32
+    subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
+    echo ${subject_id}
+    seq_list=$(ls -1 $DIR)
+    ses_list=()
+    sub_tmp_dir=${TMP_DIR}/${subject_id}
 # create tmp subject dir
-if [ -d ${sub_tmp_dir} ];then
-rm -rf ${sub_tmp_dir}/*
-echo ${subject_id} " cleared!"
-else
-mkdir -p ${sub_tmp_dir}
-echo ${subject_id} " tmp dir created..."
-fi
+    if [ -d ${sub_tmp_dir} ];then
+        rm -rf ${sub_tmp_dir}/*
+        echo ${subject_id} " cleared!"
+    else
+        mkdir -p ${sub_tmp_dir}
+    echo ${subject_id} " tmp dir created..."
+    fi
 # reorganize PPMI subject forder indexed by sessions
-for seq in $(ls -1 $DIR);
-do
-for date in $(ls -1 $DIR/"$seq");
-do
-ses_tmp=$(echo ${date:0:10} | tr -d  '-')
-ses_dir_tmp=${sub_tmp_dir}/${ses_tmp}
-if [ -d ${ses_dir_tmp} ];then
-  rsync -a ${DIR}/${seq}/${date}/* ${ses_dir_tmp}
-else
-  ses_list+=("${ses_tmp}")
-  mkdir -p ${ses_dir_tmp}
-fi
-done
-done
-echo ${ses_list[@]}
-for ses_i in ${ses_list[@]};
-do
+    for seq in $(ls -1 $DIR);
+    do
+        for date in $(ls -1 $DIR/"$seq");
+        do
+        ses_tmp=$(echo ${date:0:10} | tr -d  '-')
+        ses_dir_tmp=${sub_tmp_dir}/${ses_tmp}
+        if [ -d ${ses_dir_tmp} ];then
+            rsync -a ${DIR}/${seq}/${date}/* ${ses_dir_tmp}
+        else
+            ses_list+=("${ses_tmp}")
+            mkdir -p ${ses_dir_tmp}
+        fi
+        done
+    done
+    echo ${ses_list[@]}
+    for ses_i in ${ses_list[@]};
+    do
 # conversion
-echo "converting session: " ${ses_i}
-singularity run --cleanenv 
--B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
--B ${CODES_DIR}:${SINGULARITY_CODES_DIR} \
-   ${CON_IMG} \
--d ${SINGULARITY_MNT_DIR}/${DATA_NAME}_convTMP/{subject}/{session}/*/*.dcm \
--s ${subject_id} \
--f ${SINGULARITY_HEURISTICS} \
--ss "${ses_i}" \
---grouping studyUID \
--c dcm2niix -b --overwrite --minmeta \
--o ${SINGULARITY_OUT_DIR}
-done
+    echo "converting session: " ${ses_i}
+    singularity run --cleanenv 
+    -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
+    -B ${CODES_DIR}:${SINGULARITY_CODES_DIR} \
+    ${CON_IMG} \
+    -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}_convTMP/{subject}/{session}/*/*.dcm \
+    -s ${subject_id} \
+    -f ${SINGULARITY_HEURISTICS} \
+    -ss "${ses_i}" \
+    --grouping studyUID \
+    -c dcm2niix -b --overwrite --minmeta \
+    -o ${SINGULARITY_OUT_DIR}
+    done
 # clear tmp subject dir
-rm -rf ${sub_tmp_dir}
-fi
+    rm -rf ${sub_tmp_dir}
 
 elif [ ${DATA_NAME} = 'ADNI' ]; then
     DATA_DIR_LEN_OFFSET=32
