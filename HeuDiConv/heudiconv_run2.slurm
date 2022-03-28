@@ -48,10 +48,10 @@ sub_tmp_dir=${TMP_DIR}/${subject_id}
 # create tmp subject dir
 if [ -d ${sub_tmp_dir} ];then
 rm -rf ${sub_tmp_dir}/*
-echo ${subject_id} "deleted, create new one!"
+echo ${subject_id} " cleared!"
 else
 mkdir -p ${sub_tmp_dir}
-echo ${subject_id} "tmp dir created..."
+echo ${subject_id} " tmp dir created..."
 fi
 # reorganize PPMI subject forder indexed by sessions
 for seq in $(ls -1 $DIR);
@@ -77,7 +77,7 @@ singularity run --cleanenv
 -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
 -B ${CODES_DIR}:${SINGULARITY_CODES_DIR} \
    ${CON_IMG} \
--d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/{session}/*/*.dcm \
+-d ${SINGULARITY_MNT_DIR}/${DATA_NAME}_convTMP/{subject}/{session}/*/*.dcm \
 -s ${subject_id} \
 -f ${SINGULARITY_HEURISTICS} \
 -ss "${ses_i}" \
