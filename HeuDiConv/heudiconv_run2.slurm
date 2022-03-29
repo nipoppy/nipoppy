@@ -38,7 +38,7 @@ DIR=$(sed -n "${SLURM_ARRAY_TASK_ID}p" ${SUB_LIST})
 
 DIR_STR=${DIR//\//" " }
 #Get subject ID
-if [ ${DATA_NAME} = 'PPMI' ];then
+if [ ${DATA_NAME} == 'PPMI' ];then
     DATA_DIR_LEN_OFFSET=32
     subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
     echo ${subject_id}
@@ -86,7 +86,7 @@ if [ ${DATA_NAME} = 'PPMI' ];then
 # clear tmp subject dir
     rm -rf ${sub_tmp_dir}
 
-elif [ ${DATA_NAME} = 'ADNI' ]; then
+elif [ ${DATA_NAME} == 'ADNI' ]; then
     DATA_DIR_LEN_OFFSET=32
     subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
     SES=$(cat ${DATA_NAME}_sessions/${subject_id})

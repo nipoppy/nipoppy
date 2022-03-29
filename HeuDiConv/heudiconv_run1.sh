@@ -1,6 +1,8 @@
 #!/bin/bash
 DATA_NAME=(${@:1:1})
 echo ${DATA_NAME}
+CHECK_DIR=(${@:2:1})
+echo ${CHECK_DIR}
 
 SEARCH_LV=1
 LOG_FILE=${DATA_NAME}_heudiconv
@@ -49,6 +51,7 @@ find ${DATA_DIR} -maxdepth ${SEARCH_LV} -mindepth ${SEARCH_LV} >> ${SUB_LIST}
 N_SUB=$(cat ${SUB_LIST}|wc -l )
 echo "Step1: subjects.list created!"
 # folder check
+if [ ${CHECK_DIR} == 'Y' ];then
 if [ -d ${BIDS_DIR} ];then
   rm -rf ${BIDS_DIR}/*
   rm -rf ${BIDS_DIR}.zip
@@ -78,6 +81,9 @@ else
   mkdir -p ${SLURM_LOG_OUT_DIR}_run2
 fi
 echo "Step2: folders created!"
+else
+echo "Step2: folders check skipped!"
+fi
 
 # submit batch job
 sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
