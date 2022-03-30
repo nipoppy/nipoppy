@@ -23,3 +23,6 @@ Process long and prosper
     2. directions: dir-
     3. magnitude map: epi
 5. tbd 
+
+## References
+1. Ross's Python interface for working with Parkinson's Progression Markers Initiative (PPMI) data [pypmi](https://github.com/rmarkello/pypmi);
