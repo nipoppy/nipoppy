@@ -12,22 +12,31 @@ CODE_FILE=${WD_DIR}/mr_proc/HeuDiConv/heudiconv_run2.slurm
 SUB_LIST=${DATA_DIR}_subjects.list
 CON_IMG=${WD_DIR}/container_images/heudiconv_0.9.0.sif
 N_SUB=$(cat ${SUB_LIST}|wc -l )
+TMP_DIR=${DATA_DIR}_convTMP
+
+# test tmp-dir
+if [ -d ${TMP_DIR} ];then
+  rm -rf ${TMP_DIR}/*
+  echo "conversion tmp dir already exists, cleared!"
+else
+  mkdir -p ${TMP_DIR}
+fi
 
 #Select the proper heuristic file
-if [ ${DATA_NAME} = 'PPMI' ]; then
-    if [ ${COV_MODE} = 'T1' ]; then
+if [ ${DATA_NAME} == 'PPMI' ]; then
+    if [ ${COV_MODE} == 'T1' ]; then
         HEURISTIC_FILE="Heuristics_PPMI_T1.py"
     else
         HEURISTIC_FILE="Heuristics_PPMI_all.py"
     fi
-elif [ ${DATA_NAME} = 'ADNI' ]; then
-    if [ ${COV_MODE} = 'T1' ]; then
+elif [ ${DATA_NAME} == 'ADNI' ]; then
+    if [ ${COV_MODE} == 'T1' ]; then
         HEURISTIC_FILE="Heuristics_ADNI_T1.py"
     else
         HEURISTIC_FILE="Heuristics_ADNI_all.py"
     fi
 else
-    if [ ${COV_MODE} = 'T1' ]; then
+    if [ ${COV_MODE} == 'T1' ]; then
         HEURISTIC_FILE="Heuristics_MNI-ET_T1.py"
     else
         HEURISTIC_FILE="Heuristics_MNI-ET_all.py"

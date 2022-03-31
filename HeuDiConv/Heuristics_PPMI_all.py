@@ -1,6 +1,281 @@
+# -*- coding: utf-8 -*-
+"""
+Heuristics created by Vincent for PPMI dataset T1/T2/DTI images.
+created @ 22th Mar. 2022
+merged Ross's heuristics @ 30th Mar. 2022
+"""
 import os
-# Heuristics created by Vincent for PPMI dataset T1/T2/DTI images.
-# 22th Mar. 2022
+import logging
+
+lgr = logging.getLogger(__name__)
+scaninfo_suffix = '.json'
+
+# scanning protocol details
+T1W_SERIES = [
+    'MPRAGE 2 ADNI',
+    'MPRAGE ADNI',
+    'MPRAGE GRAPPA 2',
+    'MPRAGE GRAPPA2',
+    'MPRAGE GRAPPA2(adni)',
+    'MPRAGE w/ GRAPPA',
+    'MPRAGE_GRAPPA',
+    'MPRAGE_GRAPPA_ADNI',
+    'MPRAGE GRAPPA',
+    'SAG T1 3D MPRAGE',
+    'sag mprage',
+    'MPRAGEadni',
+    'MPRAGE GRAPPA_ND',
+    '3D SAG',
+    'MPRAGE T1 SAG',
+    'MPRAGE SAG',
+    'SAG T1 3DMPRAGE',
+    'SAG T1 MPRAGE',
+    'SAG 3D T1',
+    'SAG MPRAGE GRAPPA2-NEW2016',
+    'SAG MPRAGE GRAPPA_ND',
+    'Sag MPRAGE GRAPPA',
+    'AXIAL T1 3D MPRAGE',
+    'SAG MPRAGE GRAPPA',
+    'sT1W_3D_FFE',
+    'sT1W_3D_ISO',
+    'sT1W_3D_TFE',
+    'sag 3D FSPGR BRAVO straight',
+    'SAG T1 3D FSPGR',
+    'SAG FSPGR 3D '
+    'SAG 3D FSPGR BRAVO STRAIGHT',
+    'SAG T1 3D FSPGR 3RD REPEAT',
+    'SAG FSPGR BRAVO',
+    'SAG SPGR 3D',
+    'SAG 3D SPGR',
+    'FSPGR 3D SAG',
+    'SAG FSPGR 3D',
+    'SAG 3D FSPGR BRAVO STRAIGHT',
+    'SAG FSPGR 3D ',
+    't1_mpr_ns_sag_p2_iso',
+    'T1',
+    'T1 Repeat',
+    'AX T1',
+    'axial spgr',
+    'T1W_3D_FFE AX',
+    # added by Vincent
+    'AX T1 SE C+'
+    '3D SAG T1 MPRAGE',
+    '3D SAG T1 MPRAGE_ND',
+    '3D T1',
+    '3D T1 MPRAGE',
+    '3D T1-weighted',
+    'Accelerated Sag IR-FSPGR',
+    'MPRAGE',
+    'MPRAGE - Sag',
+    'MPRAGE Phantom GRAPPA2',
+    'MPRAGE w/ GRAPPA 2',
+    'PPMI_MPRAGE_GRAPPA2',
+    'SAG 3D T1 FSPGR',
+    'SAG FSPGR 3D VOLUMETRIC T1',
+    'Sag MPRAGE GRAPPA_ND',
+    'T1-weighted, 3D VOLUMETRIC',
+    'tra_T1_MPRAGE'
+]
+
+T2W_SERIES = [
+    # single echo only
+    't2_tse_tra',
+    't2 cor',
+    'T2 COR',
+    'T2W_TSE',
+    'AX T2',
+    'AX T2 AC-PC LINE ENTIRE BRAIN',
+    'AX T2 AC-PC line Entire Brain',
+    'Ax T2 Fse thin ac-pc',
+    # mixed single / dual-echo
+    'AXIAL FSE T2 FS',
+    ## T2 MT added by Vincent 
+    '2D GRE - MT',
+    '2D GRE MT',
+    '2D GRE-MT',
+    '2D GRE-MT_RPT2',
+    '2D GRE-NM',
+    '2D GRE-NM_MT',
+    '2D_GRE-MT',
+    'AX GRE -MT',
+    'AXIAL 2D GRE-MT',
+    'LOWER 2D GRE MT'
+]
+
+T2_STAR_SERIES = [
+    'AXIAL_T2_STAR'
+]
+
+PD_SERIES = [
+    'Ax T2* GRE'
+]
+
+T2W_PDT2_SERIES = [
+    'Ax T2 FSE',        # only PD/T2                        (48-65 slices)
+    '*AX FSE T2',       # mixed T2w and PD/T2               (24-64 slices)
+    'AX T2 FSE',        # only T2w (one subject)            (24-24 slices)
+    '*Ax T2 FSE',       # only T2w (one subject)            (22-22 slices)
+    'AXIAL  T2  FSE'   # only T2w                          (23-26 slices)
+]
+
+PDT2_SERIES = [
+    'AX DE TSE',
+    'AX DUAL_TSE',
+    'DUAL_TSE',
+    'sT2W/PD_TSE',
+    'Axial PD-T2-FS TSE',
+    'Axial PD-T2 TSE',
+    'Axial PD-T2 TSE FS',
+    'AXIAL PD-T2 TSE FS',
+    'AX PD + T2',
+    'PD-T2 DUAL AXIAL TSE',
+    'Axial PD-T2 TSE_AC/PC line',
+    'Axial PD-T2 TSE_AC PC line',
+    'Ax PD /T2',
+    'AXIAL PD+T2 TSE',
+    'AX T2 DE',
+    't2 weighted double echo',
+    'T2'
+]
+
+FLAIR_SERIES = [
+    # FLAIR (no weighting specified)
+    'FLAIR_LongTR AX',
+    'FLAIR_LongTR SENSE',
+    'AX FLAIR',
+    'AXIAL FLAIR',
+    'FLAIR_longTR',
+    'FLAIR AXIAL',
+    'ax flair',
+    'Cor FLAIR TI_2800ms',
+    'FLAIR',
+    # T2 FLAIR
+    'AX T2 FLAIR',
+    'T2  AXIAL FLAIR',
+    'Ax T2 FLAIR  ang to ac-pc',
+    'T2W_FLAIR',
+    'AX FLAIR T2',
+    'AX T2 FLAIR 5/1',
+    'Ax T2 FLAIR',
+    't2_tirm_tra_dark-fluid_',
+    't2_tirm_tra_dark-fluid NO BLADE',
+    # T1 FLAIR -- should these be here?
+    'Ax T1 FLAIR',
+    'AX T1 FLAIR',
+    # added by Vincent
+    '3D T2  SPC FLAIR C9C1HN007',
+    '3D T2 FLAIR',
+    '3D T2 FLAIR_ND',
+    '3D T2 FLAIR_SAGITAL',
+    '3D T2 FLAIR_ti1650',
+    '3D T2 FLAIR_ti1650_ND',
+    '3D_Brain_VIEW_FLAIR_SAG',
+    '3D_T2_FLAIR',
+    '3D_T2_FLAIR_SAG INVICCRO T2 FLAIR',
+    'SAG 3D FLAIR',
+    'SAG CUBE FLAIR',
+    'Sag 3D T2 FLAIR'
+]
+
+DTI_SERIES = [
+    'DTI_gated',
+    'DTI_non_gated',
+    'DTI_pulse gated_AC/PC line',
+    'REPEAT_DTI_GATED',
+    'DTI_NONGATED',
+    'REPEAT_DTI_NONGATED',
+    'TRIGGERED DTI',
+    'DTI_NON gated',
+    'DTI_ non_gated',
+    'DTI_non gated Repeat',
+    'DTI_NON-GATED',
+    'REPEAT_DTI_NON-GATED',
+    'DTI_none_gated',
+    'DTI_non gated',
+    'Repeat DTI_non gated',
+    'REPEAT_NON_GATED',
+    'DTI',
+    'REPEAT_DTI_ NON GATED',
+    'REPEAT_DTI_NON GATED',
+    'DTI_NON GATED',
+    'DTI Sequence',
+    'DTI_ NON gated REPEAT',
+    'DTI_ non gated',
+    'DTI_GATED',
+    'DTI_NON gated REPEAT',
+    'DTI_NON_GATED',
+    'DTI_Non Gated',
+    'DTI_Non gated',
+    'DTI_Non gated Repeat',
+    'DTI_Non-gated',
+    'DTI_UNgated',
+    'DTI_UNgated#2',
+    'DTI_gated AC-PC LINE',
+    'DTI_gated#1',
+    'DTI_gated#2',
+    'DTI_gated_ADC',
+    'DTI_gated_FA',
+    'DTI_gated_TRACEW',
+    'DTI_non gated repeat',
+    'DTI_pulse gated_AC PC line',
+    'DTI_ungated',
+    'REPEAT DTI_NON GATED',
+    'REPEAT DTI_NON gated',
+    'REPEAT_NON DTI_GATED',
+    'Repeat DTI Sequence',
+    ## added by Vincent
+    '2D DTI EPI FAT SHIFT LEFT',
+    '2D DTI EPI FAT SHIFT RIGHT',
+    'AX DTI   L - R',
+    'AX DTI   L - R  (ROTATE AXIAL FOV 45 DEGREES)',
+    'AX DTI   R - L',
+    'AX DTI LR',
+    'AX DTI RL',
+    'Ax DTI',
+    'Axial DTI FREQ A_P',
+    'Axial DTI L>R',
+    'Axial DTI R>L',
+    'Axial FLAIR',
+    'DTI Sequence REPEAT',
+    'DTI Sequence_ADC',    # derivate?
+    'DTI Sequence_FA',     # derivate?
+    'DTI Sequence_TRACEW', # derivate?
+    'DTI_ LR',
+    'DTI_ RL',
+    'DTI_30dir L-R',
+    'DTI_30dir R-L',
+    'DTI_ADC',              # derivate?
+    'DTI_EXP',              # derivate?
+    'DTI_FA',               # derivate?
+    'DTI_LR',
+    'DTI_LR_split_1',
+    'DTI_N0N GATED',
+    'DTI_NON-gated',
+    'DTI_RL',
+    'DTI_RL_split_1',
+    'DTI_TRACEW',                   # derivate?
+    'DTI_gated AC-PC LINE_FA',      # derivate?
+    'DTI_gated AC-PC LINE_TRACEW',  # derivate?
+    'DTI_gated NON',
+    'DTI_non gated Repeated',
+    'DTI_non-gated',
+    'DTI_none gated',
+    'NON DTI_gated'
+]
+
+BOLD_SERIES = [
+    'ep2d_RESTING_STATE',
+    'ep2d_bold_rest'
+    'ep2d_diff_LR',
+    'ep2d_diff_RL'
+]
+
+UN_classified_SERIES = [
+    'B0rf Map',
+    'Field_mapping',
+    'GRE B0',
+    'localizer'
+]
 
 def create_key(template, outtype=('nii.gz',), annotation_classes=None):
     if template is None or not template:
@@ -15,47 +290,227 @@ def infotodict(seqinfo):
     seqitem: run number during scanning
     subindex: sub index within group
     """
-    t1w = create_key('sub-{subject}/{session}/anat/sub-{subject}_run-{item:01d}_T1w')
-    t2w = create_key('sub-{subject}/{session}/anat/sub-{subject}_run-{item:01d}_T2w')
-    dwi = create_key('sub-{subject}/{session}/dwi/sub-{subject}_run-{item:01d}_dwi')
-    #dwi_fieldmap = create_key('sub-{subject}/{session}/fmap/sub-{subject}_acq-dwi_run-{item:01d}_fieldmap')
-    #rest = create_key('sub-{subject}/{session}/func/sub-{subject}_task-rest_run-{item:01d}_bold')
-    #rest_fieldmap = create_key('sub-{subject}/{session}/fmap/sub-{subject}_task-rest_acq-bold_run-{item:01d}_fieldmap')
-    #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
-    #info = {t1w: [], t2w: [], dwi: [], rest: [],  dwi_fieldmap: [], rest_fieldmap: [], swi: []}
-    info = {t1w: []}
+    t1w        = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T1w')  # noqa
+    t1w_grappa = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-grappa2_run-{item:02d}_T1w')  # noqa
+    t1w_adni   = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-adni_run-{item:02d}_T1w')  # noqa
+    t2w        = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T2w')  # noqa
+    t2MT       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-MT_run-{item:02d}_T2w')  # noqa
+    t2starw    = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T2starw')  # noqa
+    pd         = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PD')  # noqa
+    pdt2       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PDT2')  # noqa
+    flair      = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_FLAIR')  # noqa
+    dwi        = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_run-{item:02d}_dwi')  # noqa
+    bold       = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:02d}_bold')  # noqa
     
-    data = create_key('run{item:03d}')
-    last_run = len(seqinfo)
+    #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
+    info = {t1w: [], t1w_grappa: [], t1w_adni: [], t2w: [], t2MT: [],
+            t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], bold: []}
+    revlookup = {}
+
     for idx, s in enumerate(seqinfo):
-        print(s) 
-        if s.is_derived == False:
-            if ('MPRAGE' in s.series_description) or ('T1' in s.series_description):
-                print("****** T1 ******")
-                info[t1w].append(s.series_id)
-            if 'T2' in s.series_description:
-                print("****** T2 ******")
+        revlookup[s.series_id] = s.series_description
+        print(s)
+        # the straightforward scan series
+        if s.series_description in T1W_SERIES:# T1
+            info[t1w].append(s.series_id)
+        elif s.series_description in T2W_SERIES:# T2
+            if ('MT' in s.series_description):# T2 MT
+                info[t2MT].append(s.series_id)
+            else:
                 info[t2w].append(s.series_id)
-            if 'DTI' in s.series_description:
-                print("****** DWI ******")
-                info[dwi].append(s.series_id)
-        #print(s.is_motion_corrected)
-        #print('BOLD: ', 'BOLD' in s.protocol_name)
-        #print('bold: ', 'bold' in s.protocol_name)
-        #print('rest: ', 'rest' in s.protocol_name)
-        #print('Rest: ', 'Rest' in s.protocol_name)
-        #print('motion'': ', s.is_motion_corrected=='False')
-        #print('motion: ', s.is_motion_corrected==False)
-        #print('final: ', ((('BOLD' in s.protocol_name) or ('bold' in s.protocol_name)) and (('rest' in s.protocol_name) or ('Rest' in s.protocol_name)) and (s.is_motion_corrected==False)))
-        #if ((('BOLD' in s.protocol_name) or ('bold' in s.protocol_name)) and (('rest' in s.protocol_name) or ('Rest' in s.protocol_name)) and (s.is_motion_corrected==False)):
-        #    print('this is bold: ', s.is_motion_corrected)
-        #    if 'gre_field_mapping' in s.protocol_name:
-        #        print("****** rs-fMRI filedmap ******")
-        #        info[rest_fieldmap].append(s.series_id)
-        #    else:
-        #        print("****** rs-fMRI ******")
-        #        info[rest].append(s.series_id)
-        #if ('swi' in s.protocol_name or 'SWI' in s.protocol_name):
-        #    print("****** SWI ******")
-        #    info[swi].append(s.series_id) 
+        elif s.series_description in T2_STAR_SERIES:# T2star
+            info[t2starw].append(s.series_id)  
+        elif s.series_description in PD_SERIES:# PD
+            info[pd].append(s.series_id)
+        elif s.series_description in PDT2_SERIES:# PDT2
+            info[pdt2].append(s.series_id)
+        elif s.series_description in FLAIR_SERIES:# FLAIR
+            info[flair].append(s.series_id)
+        elif s.series_description in DTI_SERIES:# DWI
+              info[dwi].append(s.series_id)
+        elif s.series_description in BOLD_SERIES:# BOLD
+               info[bold].append(s.series_id)
+        # the less straightforward (mixed) series
+        elif s.series_description in T2W_PDT2_SERIES:
+            if s.dim3 < 40:
+               info[t2w].append(s.series_id)
+            else:
+                info[pdt2].append(s.series_id)
+        # if we don't match _anything_ then we want to know!
+        else:
+            lgr.warning('Skipping unrecognized series description: {}'.format(s.series_description))
+
+    # Adding "acq" for all t1w
+    if len(info[t1w]) > 1:
+        # copy out t1w image series ids and reset info[t1w]
+        all_t1w = info[t1w].copy()
+        info[t1w] = []
+        for series_id in all_t1w:
+            series_description = revlookup[series_id].lower()
+            if series_description in ['mprage_grappa', 'sag_mprage_grappa']:
+                info[t1w].append(series_id)
+            elif 'adni' in series_description:
+                info[t1w_adni].append(series_id)
+            else:
+                info[t1w_grappa].append(series_id)
+    
     return info
+
+## Taken from Ross code
+def custom_callable(*args):
+    """
+    Called at the end of `heudiconv.convert.convert()` to perform clean-up
+
+    Checks to see if multiple "clean" output files were generated by
+    ``heudiconv``. If so, assumes that this was because they had different echo
+    times and tries to rename them and embed metadata from the relevant dicom
+    files. This only needs to be done because the PPMI dicoms are a hot mess
+    (cf. all the lists above with different series descriptions).
+    """
+
+    import glob
+    import re
+    import pydicom as dcm
+    import nibabel as nib
+    import numpy as np
+    from heudiconv.cli.run import get_parser
+    from heudiconv.dicoms import embed_metadata_from_dicoms
+    from heudiconv.utils import (
+        load_json,
+        TempDirs,
+        treat_infofile,
+        set_readonly
+    )
+
+    # unpack inputs and get command line arguments (again)
+    # there's gotta be a better way to do this, but c'est la vie
+    prefix, outtypes, item_dicoms = args[:3]
+    outtype = outtypes[0]
+    opts = get_parser().parse_args()
+
+    # if you don't want BIDS format then you're going to have to rename outputs
+    # on your own!
+    if not opts.bids:
+        return
+
+    # do a crappy job of checking if multiple output files were generated
+    # if we're only seeing one file, we're good to go
+    # otherwise, we need to do some fun re-naming...
+    res_files = glob.glob(prefix + '[1-9].' + outtype)
+    if len(res_files) < 2:
+        return
+
+    # there are few a sequences with some weird stuff that causes >2
+    # files to be generated, some of which are two-dimensional (one slice)
+    # we don't want that because that's nonsense, so let's design a check
+    # for 2D files and just remove them
+    for fname in res_files:
+        if len([f for f in nib.load(fname).shape if f > 1]) < 3:
+            os.remove(fname)
+            os.remove(fname.replace(outtype, 'json'))
+    res_files = [fname for fname in res_files if os.path.exists(fname)]
+    bids_pairs = [(f, f.replace(outtype, 'json')) for f in res_files]
+
+    # if there's only one file remaining don't add a needless 'echo' key
+    # just rename the file and be done with it
+    if len(bids_pairs) == 1:
+        safe_movefile(bids_pairs[0][0], prefix + '.' + outtype)
+        safe_movefile(bids_pairs[0][1], prefix + scaninfo_suffix)
+        return
+
+    # usually, at least two remaining files will exist
+    # the main reason this happens with PPMI data is dual-echo sequences
+    # look in the json files for EchoTime and generate a key based on that
+    echonums = [load_json(json).get('EchoTime') for (_, json) in bids_pairs]
+    if all([f is None for f in echonums]):
+        return
+    echonums = np.argsort(echonums) + 1
+
+    for echo, (nifti, json) in zip(echonums, bids_pairs):
+        # create new prefix with echo specifier
+        # this isn't *technically* BIDS compliant, yet, but we're making due...
+        split = re.search(r'run-(\d+)_', prefix).end()
+        new_prefix = (prefix[:split]
+                      + 'echo-%d_' % echo
+                      + prefix[split:])
+        outname, scaninfo = (new_prefix + '.' + outtype,
+                             new_prefix + scaninfo_suffix)
+
+        # safely move files to new name
+        safe_movefile(nifti, outname, overwrite=False)
+        safe_movefile(json, scaninfo, overwrite=False)
+
+        # embed metadata from relevant dicoms (i.e., with same echo number)
+        dicoms = [f for f in item_dicoms if
+                  isclose(float(dcm.read_file(f, force=True).EchoTime) / 1000,
+                          load_json(scaninfo).get('EchoTime'))]
+        prov_file = prefix + '_prov.ttl' if opts.with_prov else None
+        embed_metadata_from_dicoms(opts.bids, dicoms,
+                                   outname, new_prefix + '.json',
+                                   prov_file, scaninfo, TempDirs(),
+                                   opts.with_prov, opts.minmeta)
+
+        # perform the bits of heudiconv.convert.convert that were never called
+        if scaninfo and os.path.exists(scaninfo):
+            lgr.info("Post-treating %s file", scaninfo)
+            treat_infofile(scaninfo)
+        if outname and os.path.exists(outname):
+            set_readonly(outname)
+
+        # huzzah! great success if you've reached this point
+
+
+def isclose(a, b, rel_tol=1e-06, abs_tol=0.0):
+    """
+    Determine whether two floating point numbers are close in value.
+
+    Literally just math.isclose() from Python >3.5 as defined in PEP 485
+
+    Parameters
+    ----------
+    a, b, : float
+        Floats to compare
+    rel_tol : float
+       Maximum difference for being considered "close", relative to the
+       magnitude of the input values
+    abs_tol : float
+       Maximum difference for being considered "close", regardless of the
+       magnitude of the input values
+
+    Returns
+    -------
+    bool
+        True if `a` is close in value to `b`, and False otherwise.
+
+    For the values to be considered close, the difference between them must be
+    smaller than at least one of the tolerances.
+    """
+
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
+def safe_movefile(src, dest, overwrite=False):
+    """
+    Safely move `source` to `dest`, avoiding overwriting unless `overwrite`
+
+    Uses `heudiconv.utils.safe_copyfile` before calling `os.remove` on `src`
+
+    Parameters
+    ----------
+    src : str
+        Path to source file; will be removed
+    dest : str
+        Path to dest file; should not exist
+    overwrite : bool
+        Whether to overwrite destination file, if it exists
+    """
+
+    from heudiconv.utils import safe_copyfile
+
+    try:
+        safe_copyfile(src, dest, overwrite)
+        os.remove(src)
+    except RuntimeError:
+        lgr.warning('Tried moving %s to %s but %s ' % (src, dest, dest)
+                    + 'already exists?! Check your outputs to make sure they '
+                    + 'look okay...')

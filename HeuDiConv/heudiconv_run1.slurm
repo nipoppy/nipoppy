@@ -31,9 +31,9 @@ echo "Current Directory: " ${WD_DIR}
 DIR_STR=${DIR//\//" " }
 echo ${DIR_STR}
 #Get subject ID
-if [ ${DATA_NAME} = 'PPMI' ]; then
+if [ ${DATA_NAME} == 'PPMI' ]; then
     DATA_DIR_LEN_OFFSET=32
-elif [ ${DATA_NAME} = 'ADNI' ]; then
+elif [ ${DATA_NAME} == 'ADNI' ]; then
     DATA_DIR_LEN_OFFSET=32
 else
     DATA_DIR_LEN_OFFSET=29
@@ -41,7 +41,7 @@ fi
 subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
 echo ${DATA_NAME} ${subject_id}
 # create different folder patterns for different datasets
-if [ ${DATA_NAME} = 'PPMI' ]; then
+if [ ${DATA_NAME} == 'PPMI' ]; then
 singularity run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
 ${CON_IMG} \
 -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/*/*.dcm \
