@@ -290,6 +290,7 @@ def infotodict(seqinfo):
     seqitem: run number during scanning
     subindex: sub index within group
     """
+    t1w        = create_key('sub-{subject}/{session}/anat/sub-{subject}_ses-{session}_run-{item:02d}_T1w')  # noqa
     t1w_grappa = create_key('sub-{subject}/{session}/anat/sub-{subject}_ses-{session}_acq-grappa2_run-{item:02d}_T1w')  # noqa
     t1w_adni   = create_key('sub-{subject}/{session}/anat/sub-{subject}_ses-{session}_acq-adni_run-{item:02d}_T1w')  # noqa
     t2w        = create_key('sub-{subject}/{session}/anat/sub-{subject}_ses-{session}_run-{item:02d}_T2w')  # noqa
@@ -301,7 +302,6 @@ def infotodict(seqinfo):
     dwi        = create_key('sub-{subject}/{session}/dwi/sub-{subject}_ses-{session}_run-{item:02d}_dwi')  # noqa
     bold       = create_key('sub-{subject}/{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:02d}_bold')  # noqa
     
-
     #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
     info = {t1w: [], t1w_grappa: [], t1w_adni: [], t2w: [], t2MT: [],
             t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], bold: []}
