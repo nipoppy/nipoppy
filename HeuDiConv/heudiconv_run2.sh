@@ -1,12 +1,20 @@
 #!/bin/bash
 DATA_NAME=(${@:1:1})
 echo ${DATA_NAME}
-COV_MODE=(${@:2:1})
+hpc_system=(${@:2:1})
+echo ${hpc_system}
+COV_MODE=(${@:3:1})
 echo ${COV_MODE}
 
-WD_NAME="scratch"
+if [ ${hpc_system} == 'sge' ]; then
+# working dir for BIC server sge
+WD_DIR=/data/pd/ppmi
+else
+# working dir for CC
+WD_DIR=${HOME}/scratch 
+fi 
 LOG_FILE=${DATA_NAME}_heudiconv_run2.log
-WD_DIR=${HOME}/${WD_NAME}
+
 DATA_DIR=${WD_DIR}/${DATA_NAME}
 CODE_FILE=${WD_DIR}/mr_proc/HeuDiConv/heudiconv_run2.slurm
 SUB_LIST=${DATA_DIR}_subjects.list

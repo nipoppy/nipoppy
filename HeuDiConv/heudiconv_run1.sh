@@ -10,7 +10,15 @@ SEARCH_LV=1
 LOG_FILE=${DATA_NAME}_heudiconv
 LOG_FILE_r1=${LOG_FILE}_run1.log
 LOG_FILE_r2=${LOG_FILE}_run2.log
-WD_DIR=${HOME}/scratch
+
+if [ ${hpc_system} == 'sge' ]; then
+# working dir for BIC server sge
+WD_DIR=/data/pd/ppmi
+else
+# working dir for CC
+WD_DIR=${HOME}/scratch 
+fi 
+
 DATA_DIR=${WD_DIR}/${DATA_NAME}
 CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
 CON_IMG=${WD_DIR}/container_images/heudiconv_0.9.0.sif
