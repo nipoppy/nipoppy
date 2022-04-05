@@ -1,7 +1,9 @@
 #!/bin/bash
 DATA_NAME=(${@:1:1})
 echo ${DATA_NAME}
-CHECK_DIR=(${@:2:1})
+hpc_system=(${@:2:1})
+echo ${hpc_system}
+CHECK_DIR=(${@:3:1})
 echo ${CHECK_DIR}
 
 SEARCH_LV=1
@@ -86,5 +88,12 @@ echo "Step2: folders check skipped!"
 fi
 
 # submit batch job
-sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+
 # --array=1-$(( $( wc -l $STUDY/data/participants.tsv | cut -f1 -d' ' ) - 1 ))
+if [ ${hpc_system} == 'sge' ]; then
+    chmod +x ${CODE_DIR}/heudiconv_run1.sge
+    chmod +x ${CODE_DIR}/heudiconv_run2.sge
+    qsub -q=origami.q -t=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.sge ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+else
+    sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+fi 
