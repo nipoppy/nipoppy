@@ -53,4 +53,10 @@ else
 fi
 
 # submit batch job
-sbatch --array=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} >> ${LOG_FILE}
+if [ ${hpc_system} == 'sge' ]; then
+    CODE_FILE=${WD_DIR}/mr_proc/HeuDiConv/heudiconv_run2.sge
+    qsub -t=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} >> ${LOG_FILE}
+
+else
+    sbatch --array=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} >> ${LOG_FILE}
+fi 

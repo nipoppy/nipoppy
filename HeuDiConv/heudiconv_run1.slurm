@@ -12,7 +12,7 @@
 
 DATA_NAME=(${@:1:1})
 CON_IMG=(${@:2:1})
-CON_IMG=(${@:2:1})
+
 echo converting ${DATA_NAME} using ${CON_IMG}
 
 WD_NAME="scratch"
