@@ -9,7 +9,7 @@
 #$ -q origami.q
 
 #$ -l h_rt=3:00:00
-#$ -l rmem=4GB
+#$ -l mem_free=4GB
 #$ -pe mpi 8
 
 DATA_NAME=(${@:1:1})
