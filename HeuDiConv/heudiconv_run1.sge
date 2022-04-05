@@ -10,9 +10,7 @@
 
 #$ -l h_rt=3:00:00
 #$ -l mem_free=4G
-
-
-##############$xxxxxxxxxxxxxxxxx -pe mpi 8
+#$ -pe smp 2
 
 DATA_NAME=(${@:1:1})
 CON_IMG=(${@:2:1})
