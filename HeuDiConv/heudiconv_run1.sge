@@ -14,6 +14,7 @@ DATA_NAME=(${@:1:1})
 CON_IMG=(${@:2:1})
 echo converting ${DATA_NAME} using ${CON_IMG}
 
+# bic singulairty 3.6 located in /opt 
 SINGULARITY_PATH=/opt/bin/singularity
 WD_NAME="scratch"
 WD_DIR=${HOME}/${WD_NAME}
@@ -42,7 +43,7 @@ subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
 echo ${DATA_NAME} ${subject_id}
 # create different folder patterns for different datasets
 if [ ${DATA_NAME} == 'PPMI' ]; then
-singularity run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
+${SINGULARITY_PATH} run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
 ${CON_IMG} \
 -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/*/*.dcm \
 -s ${subject_id} -c none \
@@ -50,7 +51,7 @@ ${CON_IMG} \
 -o ${SINGULARITY_OUT_DIR} \
 --overwrite
 else
-singularity run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
+${SINGULARITY_PATH} run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
 ${CON_IMG} \
 -d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/*/*.dcm \
 -s ${subject_id} -c none \
