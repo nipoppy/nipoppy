@@ -13,8 +13,7 @@ SLURM_LOG_OUT_DIR=${DATA_DIR}_heudiconv_log_run2
 LOG_DIR_NAME=${DATA_NAME}_heudiconv_log_run2
 
 RUN_ID=$(tail -c 9 ${DATA_NAME}_heudiconv_run2.log)
-mv heudic_r2_vin-${RUN_ID}*.out ${LOG_DIR_NAME}
-mv heudic_r2_vin-${RUN_ID}*.err ${LOG_DIR_NAME}
+mv heudic_r2_vin-${RUN_ID}-* ${LOG_DIR_NAME}
 
 # run2
 tar -czvf res/${LOG_DIR_NAME}.tar.gz ${LOG_DIR_NAME}
