@@ -102,6 +102,8 @@ if [ ${hpc_system} == 'sge' ]; then
     chmod +x ${CODE_DIR}/heudiconv_run1.sge
     chmod +x ${CODE_DIR}/heudiconv_run2.sge
     qsub -t 1-${N_SUB} -q origami.q  ${CODE_DIR}/heudiconv_run1.sge ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+    echo "SGE job submitted!"
 else
     sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+    echo "SLURM job submitted!"
 fi 

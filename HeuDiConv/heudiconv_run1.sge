@@ -5,12 +5,10 @@
 #$ -e logs/heudiconv_r1_err.log
 #$ -m abe
 #$ -M vincent.w.qing@gmail.com
-
 #$ -q origami.q
-
 #$ -l h_rt=3:00:00
-#$ -l mem_free=4G
-#$ -pe smp 2
+#$ -l h_vmem=4G
+#$ -pe smp 1
 
 DATA_NAME=(${@:1:1})
 CON_IMG=(${@:2:1})
