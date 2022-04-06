@@ -79,6 +79,7 @@ fi
 if [ -d ${SLURM_LOG_OUT_DIR}_run1 ];then
   rm -rf ${SLURM_LOG_OUT_DIR}_run1/*
   rm -rf ${SLURM_LOG_OUT_DIR}_run1.zip
+  rm -rf logs/*
   echo "SLURM_LOG_OUT_DIR_run1 folder already exists, cleared!"
 else
   mkdir -p ${SLURM_LOG_OUT_DIR}_run1
