@@ -14,6 +14,7 @@ DATA_NAME=(${@:1:1})
 CON_IMG=(${@:2:1})
 echo converting ${DATA_NAME} using ${CON_IMG}
 
+SINGULARITY_PATH=/opt/bin/singularity
 WD_NAME="scratch"
 WD_DIR=${HOME}/${WD_NAME}
 DATA_DIR=${WD_DIR}/${DATA_NAME}

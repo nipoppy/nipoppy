@@ -2,7 +2,7 @@
 """
 Heuristics created by Vincent for PPMI dataset T1/T2/DTI images.
 created @ 22th Mar. 2022
-Ross's heuristics merged @ 30th Mar. 2022
+merged Ross's heuristics @ 30th Mar. 2022
 """
 import os
 import logging
@@ -312,17 +312,11 @@ def infotodict(seqinfo):
     pdt2       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PDT2')  # noqa
     flair      = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_FLAIR')  # noqa
     dwi        = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_run-{item:02d}_dwi')  # noqa
-    # dti results using the convention from here： https://github.com/bids-standard/bids-bep016/blob/bep-016/src/05-derivatives/05-diffusion-derivatives.md
-    dwi_adc    = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_parameter-adc_run-{item:02d}_dti')  # noqa to change
-    dwi_fa     = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_parameter-fa_run-{item:02d}_dti')  # noqa to change
-    dwi_tracew = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_parameter-tracew_run-{item:02d}_dti')  # noqa to change
-    dwi_exp    = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_parameter-exp_run-{item:02d}_dti')  # noqa to change
     bold       = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:02d}_bold')  # noqa
-    #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
     
+    #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
     info = {t1w: [], t1w_grappa: [], t1w_adni: [], t2w: [], t2MT: [],
-            t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], dwi_fa:[], dwi_adc:[], 
-            dwi_tracew:[], dwi_exp:[], bold: []}
+            t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], bold: []}
     revlookup = {}
 
     for idx, s in enumerate(seqinfo):
@@ -344,19 +338,10 @@ def infotodict(seqinfo):
             info[pdt2].append(s.series_id)
         elif s.series_description in FLAIR_SERIES:# FLAIR
             info[flair].append(s.series_id)
-        elif s.series_description in DTI_SERIES:# DWI
-            if  'ADC' in s.series_description:
-                info[dwi_adc].append(s.series_id)
-            elif 'FA' in s.series_description:
-                info[dwi_fa].append(s.series_id)
-            elif 'TRACEW' in s.series_description:
-                info[dwi_tracew].append(s.series_id)
-            elif 'EXP' in s.series_description:
-                info[dwi_exp].append(s.series_id)    
-            else:
-              info[dwi].append(s.series_id)
+        elif s.series_description in DTI_SERIES:# DWI, all derivatives are not included
+            info[dwi].append(s.series_id)
         elif s.series_description in BOLD_SERIES:# BOLD
-               info[bold].append(s.series_id)
+            info[bold].append(s.series_id)
         # the less straightforward (mixed) series
         elif s.series_description in T2W_PDT2_SERIES:
             if s.dim3 < 40:
