@@ -2,7 +2,7 @@
 """
 Heuristics created by Vincent for PPMI dataset T1/T2/DTI images.
 created @ 22th Mar. 2022
-merged Ross's heuristics @ 30th Mar. 2022
+Ross's heuristics merged @ 30th Mar. 2022
 """
 import os
 import logging
@@ -318,8 +318,8 @@ def infotodict(seqinfo):
     dwi_tracew = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_parameter-tracew_run-{item:02d}_dti')  # noqa to change
     dwi_exp    = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_parameter-exp_run-{item:02d}_dti')  # noqa to change
     bold       = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:02d}_bold')  # noqa
-    
     #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
+    
     info = {t1w: [], t1w_grappa: [], t1w_adni: [], t2w: [], t2MT: [],
             t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], dwi_fa:[], dwi_adc:[], 
             dwi_tracew:[], dwi_exp:[], bold: []}
