@@ -356,7 +356,6 @@ def infotodict(seqinfo):
                 info[t1w_adni].append(series_id)
             else:
                 info[t1w_grappa].append(series_id)
-    
     return info
 
 ## Taken from Ross code
