@@ -237,25 +237,16 @@ DTI_SERIES = [
     'Axial DTI R>L',
     'Axial FLAIR',
     'DTI Sequence REPEAT',
-    'DTI Sequence_ADC',    # derivate?
-    'DTI Sequence_FA',     # derivate?
-    'DTI Sequence_TRACEW', # derivate?
     'DTI_ LR',
     'DTI_ RL',
     'DTI_30dir L-R',
     'DTI_30dir R-L',
-    'DTI_ADC',              # derivate?
-    'DTI_EXP',              # derivate?
-    'DTI_FA',               # derivate?
     'DTI_LR',
     'DTI_LR_split_1',
     'DTI_N0N GATED',
     'DTI_NON-gated',
     'DTI_RL',
     'DTI_RL_split_1',
-    'DTI_TRACEW',                   # derivate?
-    'DTI_gated AC-PC LINE_FA',      # derivate?
-    'DTI_gated AC-PC LINE_TRACEW',  # derivate?
     'DTI_gated NON',
     'DTI_non gated Repeated',
     'DTI_non-gated',
