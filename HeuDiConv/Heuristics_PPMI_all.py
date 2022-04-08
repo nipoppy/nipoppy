@@ -89,6 +89,10 @@ T2W_SERIES = [
     'Ax T2 Fse thin ac-pc',
     # mixed single / dual-echo
     'AXIAL FSE T2 FS',
+    'T2' 
+]
+
+MT_SERIES = [
     ## T2 MT added by Vincent 
     '2D GRE - MT',
     '2D GRE MT',
@@ -104,18 +108,6 @@ T2W_SERIES = [
 
 T2_STAR_SERIES = [
     'AXIAL_T2_STAR'
-]
-
-PD_SERIES = [
-    'Ax T2* GRE'
-]
-
-T2W_PDT2_SERIES = [
-    'Ax T2 FSE',        # only PD/T2                        (48-65 slices)
-    '*AX FSE T2',       # mixed T2w and PD/T2               (24-64 slices)
-    'AX T2 FSE',        # only T2w (one subject)            (24-24 slices)
-    '*Ax T2 FSE',       # only T2w (one subject)            (22-22 slices)
-    'AXIAL  T2  FSE'   # only T2w                          (23-26 slices)
 ]
 
 PDT2_SERIES = [
@@ -135,7 +127,6 @@ PDT2_SERIES = [
     'AXIAL PD+T2 TSE',
     'AX T2 DE',
     't2 weighted double echo',
-    'T2'
 ]
 
 FLAIR_SERIES = [
@@ -161,7 +152,6 @@ FLAIR_SERIES = [
     't2_tirm_tra_dark-fluid NO BLADE',
     # T1 FLAIR -- should these be here?
     'Ax T1 FLAIR',
-    'AX T1 FLAIR',
     # added by Vincent
     '3D T2  SPC FLAIR C9C1HN007',
     '3D T2 FLAIR',
@@ -235,7 +225,6 @@ DTI_SERIES = [
     'Axial DTI FREQ A_P',
     'Axial DTI L>R',
     'Axial DTI R>L',
-    'Axial FLAIR',
     'DTI Sequence REPEAT',
     'DTI_ LR',
     'DTI_ RL',
@@ -297,17 +286,16 @@ def infotodict(seqinfo):
     t1w_grappa = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-grappa2_run-{item:02d}_T1w')  # noqa
     t1w_adni   = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-adni_run-{item:02d}_T1w')  # noqa
     t2w        = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T2w')  # noqa
-    t2MT       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-MT_run-{item:02d}_T2w')  # noqa
+    t2MT       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-GREMT_run-{item:02d}_T2w')  # noqa
     t2starw    = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T2starw')  # noqa
-    pd         = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PD')  # noqa
-    pdt2       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PDT2')  # noqa
+    pdt2       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_MESE')  # noqa
     flair      = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_FLAIR')  # noqa
     dwi        = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_run-{item:02d}_dwi')  # noqa
     bold       = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:02d}_bold')  # noqa
     
     #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
     info = {t1w: [], t1w_grappa: [], t1w_adni: [], t2w: [], t2MT: [],
-            t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], bold: []}
+            t2starw: [], pdt2: [], flair: [], dwi: [], bold: []}
     revlookup = {}
 
     for idx, s in enumerate(seqinfo):
@@ -317,14 +305,11 @@ def infotodict(seqinfo):
         if s.series_description in T1W_SERIES:# T1
             info[t1w].append(s.series_id)
         elif s.series_description in T2W_SERIES:# T2
-            if ('MT' in s.series_description):# T2 MT
-                info[t2MT].append(s.series_id)
-            else:
-                info[t2w].append(s.series_id)
+            info[t2w].append(s.series_id)
+        elif s.series_description in MT_SERIES:# T2star
+            info[t2MT].append(s.series_id)  
         elif s.series_description in T2_STAR_SERIES:# T2star
-            info[t2starw].append(s.series_id)  
-        elif s.series_description in PD_SERIES:# PD
-            info[pd].append(s.series_id)
+            info[t2starw].append(s.series_id)          
         elif s.series_description in PDT2_SERIES:# PDT2
             info[pdt2].append(s.series_id)
         elif s.series_description in FLAIR_SERIES:# FLAIR
@@ -333,12 +318,6 @@ def infotodict(seqinfo):
             info[dwi].append(s.series_id)
         elif s.series_description in BOLD_SERIES:# BOLD
             info[bold].append(s.series_id)
-        # the less straightforward (mixed) series
-        elif s.series_description in T2W_PDT2_SERIES:
-            if s.dim3 < 40:
-               info[t2w].append(s.series_id)
-            else:
-                info[pdt2].append(s.series_id)
         # if we don't match _anything_ then we want to know!
         else:
             lgr.warning('Skipping unrecognized series description: {}'.format(s.series_description))
