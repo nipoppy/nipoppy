@@ -11,6 +11,7 @@ lgr = logging.getLogger(__name__)
 scaninfo_suffix = '.json'
 
 # scanning protocol details
+# converted
 T1W_SERIES = [
     'MPRAGE 2 ADNI',
     'MPRAGE ADNI',
@@ -77,6 +78,7 @@ T1W_SERIES = [
     'tra_T1_MPRAGE'
 ]
 
+# converted
 T2W_SERIES = [
     # single echo only
     't2_tse_tra',
@@ -92,6 +94,7 @@ T2W_SERIES = [
     'T2' 
 ]
 
+# converted as T2 with acq-GREMT, according to study design
 MT_SERIES = [
     ## T2 MT added by Vincent 
     '2D GRE - MT',
@@ -106,10 +109,12 @@ MT_SERIES = [
     'LOWER 2D GRE MT'
 ]
 
+# converted
 T2_STAR_SERIES = [
     'AXIAL_T2_STAR'
 ]
 
+# converted
 PDT2_SERIES = [
     'AX DE TSE',
     'AX DUAL_TSE',
@@ -129,6 +134,7 @@ PDT2_SERIES = [
     't2 weighted double echo',
 ]
 
+# converted
 FLAIR_SERIES = [
     # FLAIR (no weighting specified)
     'FLAIR_LongTR AX',
@@ -167,6 +173,7 @@ FLAIR_SERIES = [
     'Sag 3D T2 FLAIR'
 ]
 
+# converted
 DTI_SERIES = [
     'DTI_gated',
     'DTI_non_gated',
@@ -243,6 +250,7 @@ DTI_SERIES = [
     'NON DTI_gated'
 ]
 
+#by now DTI derivatives are not converted
 DTI_derived_SERIES = [
     'DTI Sequence_ADC',    # derivate?
     'DTI Sequence_FA',     # derivate?
@@ -255,6 +263,7 @@ DTI_derived_SERIES = [
     'DTI_gated AC-PC LINE_TRACEW'  # derivate?
 ]
 
+# not converted by now
 BOLD_SERIES = [
     'ep2d_RESTING_STATE',
     'ep2d_bold_rest',
@@ -262,6 +271,7 @@ BOLD_SERIES = [
     'ep2d_diff_RL'
 ]
 
+# not converted by now
 UN_classified_SERIES = [
     'B0rf Map',
     'Field_mapping',
