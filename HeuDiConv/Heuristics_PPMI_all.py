@@ -11,6 +11,7 @@ lgr = logging.getLogger(__name__)
 scaninfo_suffix = '.json'
 
 # scanning protocol details
+# converted
 T1W_SERIES = [
     'MPRAGE 2 ADNI',
     'MPRAGE ADNI',
@@ -58,7 +59,7 @@ T1W_SERIES = [
     'axial spgr',
     'T1W_3D_FFE AX',
     # added by Vincent
-    'AX T1 SE C+'
+    'AX T1 SE C+',
     '3D SAG T1 MPRAGE',
     '3D SAG T1 MPRAGE_ND',
     '3D T1',
@@ -77,6 +78,7 @@ T1W_SERIES = [
     'tra_T1_MPRAGE'
 ]
 
+# converted
 T2W_SERIES = [
     # single echo only
     't2_tse_tra',
@@ -89,6 +91,11 @@ T2W_SERIES = [
     'Ax T2 Fse thin ac-pc',
     # mixed single / dual-echo
     'AXIAL FSE T2 FS',
+    'T2' 
+]
+
+# converted as T2 with acq-GREMT, according to study design
+MT_SERIES = [
     ## T2 MT added by Vincent 
     '2D GRE - MT',
     '2D GRE MT',
@@ -102,22 +109,12 @@ T2W_SERIES = [
     'LOWER 2D GRE MT'
 ]
 
+# converted
 T2_STAR_SERIES = [
     'AXIAL_T2_STAR'
 ]
 
-PD_SERIES = [
-    'Ax T2* GRE'
-]
-
-T2W_PDT2_SERIES = [
-    'Ax T2 FSE',        # only PD/T2                        (48-65 slices)
-    '*AX FSE T2',       # mixed T2w and PD/T2               (24-64 slices)
-    'AX T2 FSE',        # only T2w (one subject)            (24-24 slices)
-    '*Ax T2 FSE',       # only T2w (one subject)            (22-22 slices)
-    'AXIAL  T2  FSE'   # only T2w                          (23-26 slices)
-]
-
+# converted
 PDT2_SERIES = [
     'AX DE TSE',
     'AX DUAL_TSE',
@@ -135,9 +132,9 @@ PDT2_SERIES = [
     'AXIAL PD+T2 TSE',
     'AX T2 DE',
     't2 weighted double echo',
-    'T2'
 ]
 
+# converted
 FLAIR_SERIES = [
     # FLAIR (no weighting specified)
     'FLAIR_LongTR AX',
@@ -161,7 +158,6 @@ FLAIR_SERIES = [
     't2_tirm_tra_dark-fluid NO BLADE',
     # T1 FLAIR -- should these be here?
     'Ax T1 FLAIR',
-    'AX T1 FLAIR',
     # added by Vincent
     '3D T2  SPC FLAIR C9C1HN007',
     '3D T2 FLAIR',
@@ -177,6 +173,7 @@ FLAIR_SERIES = [
     'Sag 3D T2 FLAIR'
 ]
 
+# converted
 DTI_SERIES = [
     'DTI_gated',
     'DTI_non_gated',
@@ -235,27 +232,17 @@ DTI_SERIES = [
     'Axial DTI FREQ A_P',
     'Axial DTI L>R',
     'Axial DTI R>L',
-    'Axial FLAIR',
     'DTI Sequence REPEAT',
-    'DTI Sequence_ADC',    # derivate?
-    'DTI Sequence_FA',     # derivate?
-    'DTI Sequence_TRACEW', # derivate?
     'DTI_ LR',
     'DTI_ RL',
     'DTI_30dir L-R',
     'DTI_30dir R-L',
-    'DTI_ADC',              # derivate?
-    'DTI_EXP',              # derivate?
-    'DTI_FA',               # derivate?
     'DTI_LR',
     'DTI_LR_split_1',
     'DTI_N0N GATED',
     'DTI_NON-gated',
     'DTI_RL',
     'DTI_RL_split_1',
-    'DTI_TRACEW',                   # derivate?
-    'DTI_gated AC-PC LINE_FA',      # derivate?
-    'DTI_gated AC-PC LINE_TRACEW',  # derivate?
     'DTI_gated NON',
     'DTI_non gated Repeated',
     'DTI_non-gated',
@@ -263,13 +250,28 @@ DTI_SERIES = [
     'NON DTI_gated'
 ]
 
+#by now DTI derivatives are not converted
+DTI_derived_SERIES = [
+    'DTI Sequence_ADC',    # derivate?
+    'DTI Sequence_FA',     # derivate?
+    'DTI Sequence_TRACEW', # derivate?
+    'DTI_ADC',              # derivate?
+    'DTI_EXP',              # derivate?
+    'DTI_FA',               # derivate?
+    'DTI_TRACEW',                   # derivate?
+    'DTI_gated AC-PC LINE_FA',      # derivate?
+    'DTI_gated AC-PC LINE_TRACEW'  # derivate?
+]
+
+# not converted by now
 BOLD_SERIES = [
     'ep2d_RESTING_STATE',
-    'ep2d_bold_rest'
+    'ep2d_bold_rest',
     'ep2d_diff_LR',
     'ep2d_diff_RL'
 ]
 
+# not converted by now
 UN_classified_SERIES = [
     'B0rf Map',
     'Field_mapping',
@@ -294,17 +296,16 @@ def infotodict(seqinfo):
     t1w_grappa = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-grappa2_run-{item:02d}_T1w')  # noqa
     t1w_adni   = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-adni_run-{item:02d}_T1w')  # noqa
     t2w        = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T2w')  # noqa
-    t2MT       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-MT_run-{item:02d}_T2w')  # noqa
+    t2MT       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-GREMT_run-{item:02d}_T2w')  # noqa
     t2starw    = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_T2starw')  # noqa
-    pd         = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PD')  # noqa
-    pdt2       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_PDT2')  # noqa
+    pdt2       = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_MESE')  # noqa
     flair      = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:02d}_FLAIR')  # noqa
     dwi        = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_run-{item:02d}_dwi')  # noqa
     bold       = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:02d}_bold')  # noqa
     
     #swi = create_key('sub-{subject}/{session}/swi/sub-{subject}_run-{item:01d}_swi')
     info = {t1w: [], t1w_grappa: [], t1w_adni: [], t2w: [], t2MT: [],
-            t2starw: [], pd: [], pdt2: [], flair: [], dwi: [], bold: []}
+            t2starw: [], pdt2: [], flair: [], dwi: [], bold: []}
     revlookup = {}
 
     for idx, s in enumerate(seqinfo):
@@ -314,28 +315,19 @@ def infotodict(seqinfo):
         if s.series_description in T1W_SERIES:# T1
             info[t1w].append(s.series_id)
         elif s.series_description in T2W_SERIES:# T2
-            if ('MT' in s.series_description):# T2 MT
-                info[t2MT].append(s.series_id)
-            else:
-                info[t2w].append(s.series_id)
+            info[t2w].append(s.series_id)
+        elif s.series_description in MT_SERIES:# T2star
+            info[t2MT].append(s.series_id)  
         elif s.series_description in T2_STAR_SERIES:# T2star
-            info[t2starw].append(s.series_id)  
-        elif s.series_description in PD_SERIES:# PD
-            info[pd].append(s.series_id)
+            info[t2starw].append(s.series_id)          
         elif s.series_description in PDT2_SERIES:# PDT2
             info[pdt2].append(s.series_id)
         elif s.series_description in FLAIR_SERIES:# FLAIR
             info[flair].append(s.series_id)
-        elif s.series_description in DTI_SERIES:# DWI
-              info[dwi].append(s.series_id)
+        elif s.series_description in DTI_SERIES:# DWI, all derivatives are not included
+            info[dwi].append(s.series_id)
         elif s.series_description in BOLD_SERIES:# BOLD
-               info[bold].append(s.series_id)
-        # the less straightforward (mixed) series
-        elif s.series_description in T2W_PDT2_SERIES:
-            if s.dim3 < 40:
-               info[t2w].append(s.series_id)
-            else:
-                info[pdt2].append(s.series_id)
+            info[bold].append(s.series_id)
         # if we don't match _anything_ then we want to know!
         else:
             lgr.warning('Skipping unrecognized series description: {}'.format(s.series_description))
@@ -353,164 +345,163 @@ def infotodict(seqinfo):
                 info[t1w_adni].append(series_id)
             else:
                 info[t1w_grappa].append(series_id)
-    
     return info
 
 ## Taken from Ross code
-def custom_callable(*args):
-    """
-    Called at the end of `heudiconv.convert.convert()` to perform clean-up
+# def custom_callable(*args):
+#     """
+#     Called at the end of `heudiconv.convert.convert()` to perform clean-up
 
-    Checks to see if multiple "clean" output files were generated by
-    ``heudiconv``. If so, assumes that this was because they had different echo
-    times and tries to rename them and embed metadata from the relevant dicom
-    files. This only needs to be done because the PPMI dicoms are a hot mess
-    (cf. all the lists above with different series descriptions).
-    """
+#     Checks to see if multiple "clean" output files were generated by
+#     ``heudiconv``. If so, assumes that this was because they had different echo
+#     times and tries to rename them and embed metadata from the relevant dicom
+#     files. This only needs to be done because the PPMI dicoms are a hot mess
+#     (cf. all the lists above with different series descriptions).
+#     """
 
-    import glob
-    import re
-    import pydicom as dcm
-    import nibabel as nib
-    import numpy as np
-    from heudiconv.cli.run import get_parser
-    from heudiconv.dicoms import embed_metadata_from_dicoms
-    from heudiconv.utils import (
-        load_json,
-        TempDirs,
-        treat_infofile,
-        set_readonly
-    )
+#     import glob
+#     import re
+#     import pydicom as dcm
+#     import nibabel as nib
+#     import numpy as np
+#     from heudiconv.cli.run import get_parser
+#     from heudiconv.dicoms import embed_metadata_from_dicoms
+#     from heudiconv.utils import (
+#         load_json,
+#         TempDirs,
+#         treat_infofile,
+#         set_readonly
+#     )
 
-    # unpack inputs and get command line arguments (again)
-    # there's gotta be a better way to do this, but c'est la vie
-    prefix, outtypes, item_dicoms = args[:3]
-    outtype = outtypes[0]
-    opts = get_parser().parse_args()
+#     # unpack inputs and get command line arguments (again)
+#     # there's gotta be a better way to do this, but c'est la vie
+#     prefix, outtypes, item_dicoms = args[:3]
+#     outtype = outtypes[0]
+#     opts = get_parser().parse_args()
 
-    # if you don't want BIDS format then you're going to have to rename outputs
-    # on your own!
-    if not opts.bids:
-        return
+#     # if you don't want BIDS format then you're going to have to rename outputs
+#     # on your own!
+#     if not opts.bids:
+#         return
 
-    # do a crappy job of checking if multiple output files were generated
-    # if we're only seeing one file, we're good to go
-    # otherwise, we need to do some fun re-naming...
-    res_files = glob.glob(prefix + '[1-9].' + outtype)
-    if len(res_files) < 2:
-        return
+#     # do a crappy job of checking if multiple output files were generated
+#     # if we're only seeing one file, we're good to go
+#     # otherwise, we need to do some fun re-naming...
+#     res_files = glob.glob(prefix + '[1-9].' + outtype)
+#     if len(res_files) < 2:
+#         return
 
-    # there are few a sequences with some weird stuff that causes >2
-    # files to be generated, some of which are two-dimensional (one slice)
-    # we don't want that because that's nonsense, so let's design a check
-    # for 2D files and just remove them
-    for fname in res_files:
-        if len([f for f in nib.load(fname).shape if f > 1]) < 3:
-            os.remove(fname)
-            os.remove(fname.replace(outtype, 'json'))
-    res_files = [fname for fname in res_files if os.path.exists(fname)]
-    bids_pairs = [(f, f.replace(outtype, 'json')) for f in res_files]
+#     # there are few a sequences with some weird stuff that causes >2
+#     # files to be generated, some of which are two-dimensional (one slice)
+#     # we don't want that because that's nonsense, so let's design a check
+#     # for 2D files and just remove them
+#     for fname in res_files:
+#         if len([f for f in nib.load(fname).shape if f > 1]) < 3:
+#             os.remove(fname)
+#             os.remove(fname.replace(outtype, 'json'))
+#     res_files = [fname for fname in res_files if os.path.exists(fname)]
+#     bids_pairs = [(f, f.replace(outtype, 'json')) for f in res_files]
 
-    # if there's only one file remaining don't add a needless 'echo' key
-    # just rename the file and be done with it
-    if len(bids_pairs) == 1:
-        safe_movefile(bids_pairs[0][0], prefix + '.' + outtype)
-        safe_movefile(bids_pairs[0][1], prefix + scaninfo_suffix)
-        return
+#     # if there's only one file remaining don't add a needless 'echo' key
+#     # just rename the file and be done with it
+#     if len(bids_pairs) == 1:
+#         safe_movefile(bids_pairs[0][0], prefix + '.' + outtype)
+#         safe_movefile(bids_pairs[0][1], prefix + scaninfo_suffix)
+#         return
 
-    # usually, at least two remaining files will exist
-    # the main reason this happens with PPMI data is dual-echo sequences
-    # look in the json files for EchoTime and generate a key based on that
-    echonums = [load_json(json).get('EchoTime') for (_, json) in bids_pairs]
-    if all([f is None for f in echonums]):
-        return
-    echonums = np.argsort(echonums) + 1
+#     # usually, at least two remaining files will exist
+#     # the main reason this happens with PPMI data is dual-echo sequences
+#     # look in the json files for EchoTime and generate a key based on that
+#     echonums = [load_json(json).get('EchoTime') for (_, json) in bids_pairs]
+#     if all([f is None for f in echonums]):
+#         return
+#     echonums = np.argsort(echonums) + 1
 
-    for echo, (nifti, json) in zip(echonums, bids_pairs):
-        # create new prefix with echo specifier
-        # this isn't *technically* BIDS compliant, yet, but we're making due...
-        split = re.search(r'run-(\d+)_', prefix).end()
-        new_prefix = (prefix[:split]
-                      + 'echo-%d_' % echo
-                      + prefix[split:])
-        outname, scaninfo = (new_prefix + '.' + outtype,
-                             new_prefix + scaninfo_suffix)
+#     for echo, (nifti, json) in zip(echonums, bids_pairs):
+#         # create new prefix with echo specifier
+#         # this isn't *technically* BIDS compliant, yet, but we're making due...
+#         split = re.search(r'run-(\d+)_', prefix).end()
+#         new_prefix = (prefix[:split]
+#                       + 'echo-%d_' % echo
+#                       + prefix[split:])
+#         outname, scaninfo = (new_prefix + '.' + outtype,
+#                              new_prefix + scaninfo_suffix)
 
-        # safely move files to new name
-        safe_movefile(nifti, outname, overwrite=False)
-        safe_movefile(json, scaninfo, overwrite=False)
+#         # safely move files to new name
+#         safe_movefile(nifti, outname, overwrite=False)
+#         safe_movefile(json, scaninfo, overwrite=False)
 
-        # embed metadata from relevant dicoms (i.e., with same echo number)
-        dicoms = [f for f in item_dicoms if
-                  isclose(float(dcm.read_file(f, force=True).EchoTime) / 1000,
-                          load_json(scaninfo).get('EchoTime'))]
-        prov_file = prefix + '_prov.ttl' if opts.with_prov else None
-        embed_metadata_from_dicoms(opts.bids, dicoms,
-                                   outname, new_prefix + '.json',
-                                   prov_file, scaninfo, TempDirs(),
-                                   opts.with_prov, opts.minmeta)
+#         # embed metadata from relevant dicoms (i.e., with same echo number)
+#         dicoms = [f for f in item_dicoms if
+#                   isclose(float(dcm.read_file(f, force=True).EchoTime) / 1000,
+#                           load_json(scaninfo).get('EchoTime'))]
+#         prov_file = prefix + '_prov.ttl' if opts.with_prov else None
+#         embed_metadata_from_dicoms(opts.bids, dicoms,
+#                                    outname, new_prefix + '.json',
+#                                    prov_file, scaninfo, TempDirs(),
+#                                    opts.with_prov, opts.minmeta)
 
-        # perform the bits of heudiconv.convert.convert that were never called
-        if scaninfo and os.path.exists(scaninfo):
-            lgr.info("Post-treating %s file", scaninfo)
-            treat_infofile(scaninfo)
-        if outname and os.path.exists(outname):
-            set_readonly(outname)
+#         # perform the bits of heudiconv.convert.convert that were never called
+#         if scaninfo and os.path.exists(scaninfo):
+#             lgr.info("Post-treating %s file", scaninfo)
+#             treat_infofile(scaninfo)
+#         if outname and os.path.exists(outname):
+#             set_readonly(outname)
 
-        # huzzah! great success if you've reached this point
-
-
-def isclose(a, b, rel_tol=1e-06, abs_tol=0.0):
-    """
-    Determine whether two floating point numbers are close in value.
-
-    Literally just math.isclose() from Python >3.5 as defined in PEP 485
-
-    Parameters
-    ----------
-    a, b, : float
-        Floats to compare
-    rel_tol : float
-       Maximum difference for being considered "close", relative to the
-       magnitude of the input values
-    abs_tol : float
-       Maximum difference for being considered "close", regardless of the
-       magnitude of the input values
-
-    Returns
-    -------
-    bool
-        True if `a` is close in value to `b`, and False otherwise.
-
-    For the values to be considered close, the difference between them must be
-    smaller than at least one of the tolerances.
-    """
-
-    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+#         # huzzah! great success if you've reached this point
 
 
-def safe_movefile(src, dest, overwrite=False):
-    """
-    Safely move `source` to `dest`, avoiding overwriting unless `overwrite`
+# def isclose(a, b, rel_tol=1e-06, abs_tol=0.0):
+#     """
+#     Determine whether two floating point numbers are close in value.
 
-    Uses `heudiconv.utils.safe_copyfile` before calling `os.remove` on `src`
+#     Literally just math.isclose() from Python >3.5 as defined in PEP 485
 
-    Parameters
-    ----------
-    src : str
-        Path to source file; will be removed
-    dest : str
-        Path to dest file; should not exist
-    overwrite : bool
-        Whether to overwrite destination file, if it exists
-    """
+#     Parameters
+#     ----------
+#     a, b, : float
+#         Floats to compare
+#     rel_tol : float
+#        Maximum difference for being considered "close", relative to the
+#        magnitude of the input values
+#     abs_tol : float
+#        Maximum difference for being considered "close", regardless of the
+#        magnitude of the input values
 
-    from heudiconv.utils import safe_copyfile
+#     Returns
+#     -------
+#     bool
+#         True if `a` is close in value to `b`, and False otherwise.
 
-    try:
-        safe_copyfile(src, dest, overwrite)
-        os.remove(src)
-    except RuntimeError:
-        lgr.warning('Tried moving %s to %s but %s ' % (src, dest, dest)
-                    + 'already exists?! Check your outputs to make sure they '
-                    + 'look okay...')
+#     For the values to be considered close, the difference between them must be
+#     smaller than at least one of the tolerances.
+#     """
+
+#     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
+# def safe_movefile(src, dest, overwrite=False):
+#     """
+#     Safely move `source` to `dest`, avoiding overwriting unless `overwrite`
+
+#     Uses `heudiconv.utils.safe_copyfile` before calling `os.remove` on `src`
+
+#     Parameters
+#     ----------
+#     src : str
+#         Path to source file; will be removed
+#     dest : str
+#         Path to dest file; should not exist
+#     overwrite : bool
+#         Whether to overwrite destination file, if it exists
+#     """
+
+#     from heudiconv.utils import safe_copyfile
+
+#     try:
+#         safe_copyfile(src, dest, overwrite)
+#         os.remove(src)
+#     except RuntimeError:
+#         lgr.warning('Tried moving %s to %s but %s ' % (src, dest, dest)
+#                     + 'already exists?! Check your outputs to make sure they '
+#                     + 'look okay...')

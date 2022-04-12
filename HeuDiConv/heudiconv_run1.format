@@ -14,8 +14,8 @@ LOG_DIR_NAME=${DATA_NAME}_heudiconv_log_run1
 
 # copying and merging information tsv files.
 RUN_ID=$(tail -c 9 ${LOG_FILE_r1})
-mv heudi_vinc_r1-${RUN_ID}*.out ${LOG_DIR_NAME}
-mv heudi_vinc_r1-${RUN_ID}*.err ${LOG_DIR_NAME}
+mv heudi_vinc_r1-${RUN_ID}-* ${LOG_DIR_NAME}
+#mv heudi_vinc_r1-${RUN_ID}*.err ${LOG_DIR_NAME}
 
 for subject_id in $(find ${BIDS_DIR}/.heudiconv/ -maxdepth 1 -mindepth 1 | xargs -I {} basename {}); do
   cp ${BIDS_DIR}/.heudiconv/${subject_id}/info/*.tsv ${INFO_SUM_DIR}/
