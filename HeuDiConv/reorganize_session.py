@@ -96,8 +96,8 @@ def main(dataset_name):
                     os.makedirs(target_dir)
                     [shutil.copy2(dcm_file_, target_dir) for dcm_file_ in alldcm]
                     print(subj_+' '+modality_str_+' '+date_str_+' '+img_str_+' copied to ', sub_dir, curr_ses, img_str_)
-                    subj_dcm_df = {'Image Data ID':[img_str_], 'Visit':[curr_ses], 'Subject':[subj_], 'Modality':[modality_str_], 'Image Date':[date_str_]}
-                    dcm_df=dcm_df.append(pd.DataFrame(data=subj_dcm_df))
+                    subj_dcm_dict = {'Image Data ID':[img_str_], 'Visit':[curr_ses], 'Subject':[subj_], 'Modality':[modality_str_], 'Image Date':[date_str_]}
+                    dcm_df=pd.concat([dcm_df, pd.DataFrame(data=subj_dcm_dict)])
                     
     # save dcm info dataframe to csv 
     if not dataset_out_df_path.exists():
