@@ -109,5 +109,5 @@ def main(dataset_name):
 if __name__ == '__main__':
     args=get_args()
     dataset_name_=args.data;    
-    print("The input data folder: ", DATA_DIR, type(DATA_DIR))
+    print("The input data folder: ", dataset_name_, type(dataset_name_))
     main(dataset_name_)
