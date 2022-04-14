@@ -17,6 +17,7 @@ from pathlib import Path
 import glob
 import os
 import shutil
+import pandas as pd
 
 # setting up codes dir and working dir
 code_path_str='/data/pd/ppmi/mr_proc'
