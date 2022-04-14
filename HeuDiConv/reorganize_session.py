@@ -86,6 +86,7 @@ def main(dataset_name):
             else:
                 print(subj_+' '+ 'session dir '+str(ses_str) + ' dir already exists!')
         # copy files from raw dataset folder to the new folder
+        n_duplicate=0
         for modality_str_ in os.listdir(dataset_path / subj_):
             for date_str_ in os.listdir(dataset_path / subj_ / modality_str_):
                 for img_str_ in os.listdir(dataset_path / subj_ / modality_str_ / date_str_):
@@ -93,7 +94,13 @@ def main(dataset_name):
                     alldcm = glob.glob(str(dataset_path / subj_ / modality_str_ / date_str_ / img_str_)+'/*')
                     source_dir = str(dataset_path / subj_ / modality_str_ / date_str_ / img_str_)
                     target_dir = str(sub_dir / curr_ses / img_str_)
-                    os.makedirs(target_dir)
+                    # deal with conflicting ImageID
+                    if not target_dir.exists():
+                        os.makedirs(target_dir)
+                    else:
+                        n_duplicate=n_duplicate+1
+                        target_dir=target_dir+'_'+str(n_duplicate)
+                        os.makedirs(target_dir)
                     [shutil.copy2(dcm_file_, target_dir) for dcm_file_ in alldcm]
                     print(subj_+' '+modality_str_+' '+date_str_+' '+img_str_+' copied to ', sub_dir, curr_ses, img_str_)
                     subj_dcm_dict = {'Image Data ID':[img_str_], 'Visit':[curr_ses], 'Subject':[subj_], 'Modality':[modality_str_], 'Image Date':[date_str_]}
