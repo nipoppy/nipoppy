@@ -75,8 +75,8 @@ def main(dataset_name):
         sub_dir = dataset_out_path / subj_
         if not (sub_dir).exists():
             os.makedirs(sub_dir)
-            else:
-                print(subj_+' subject dir already exists!')
+        else:
+            print(subj_+' subject dir already exists!')
         # make new session dir for subj_
         for ses_str in image_tab_df.Visit.unique():
             ses_dir = dataset_out_path / subj_ / str(ses_str)
