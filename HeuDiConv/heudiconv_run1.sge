@@ -31,7 +31,7 @@ SINGULARITY_DATA_DIR=${SINGULARITY_MNT_DIR}/${ORGANIZED_DATA_NAME}
 SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${BIDS_NAME}
 
 # run heudiconv at subject level.
-SGE_TASK_ID=1
+#SGE_TASK_ID=1 # for test purpose
 echo "Starting task ${SGE_TASK_ID}"
 DIR=$(sed -n "${SGE_TASK_ID}p" ${SUB_LIST} )
 DIR_STR=${DIR//\//" " }
