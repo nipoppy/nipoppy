@@ -1,8 +1,8 @@
 #!/bin/bash
 #$ -cwd
 #$ -N vincentq_heudiconv_r1
-#$ -o logs/heudiconv/vincentq_heudiconv_r1_${SGE_TASK_ID}_out.log
-#$ -e logs/heudiconv/vincentq_heudiconv_r1_${SGE_TASK_ID}_err.log
+#$ -o logs/heudiconv/vincentq_heudiconv_r1_out.log
+#$ -e logs/heudiconv/vincentq_heudiconv_r1_err.log
 #$ -m abe
 #$ -q origami.q
 #$ -l h_rt=3:00:00
