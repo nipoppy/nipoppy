@@ -50,8 +50,8 @@ echo 'Line ' ${DIR_STR} ' into subject id: ' ${subject_id}
 # Run conversion for all sessions.
 if [ ${DATA_NAME} == 'PPMI' ]; then
 for ses_i in $(ls -1 ${WD_DIR}/${ORGANIZED_DATA_NAME}/${subject_id});
+do
 echo "converting subject ${subject_id} -> session ${ses_i}:"
-do 
 ${SINGULARITY_PATH} run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
 -d ${SINGULARITY_DATA_DIR}/{subject}/{session}/*/*.dcm \
 -s ${subject_id} \
@@ -66,8 +66,8 @@ done
 else
 
 for ses_i in $(ls -1 ${WD_DIR}/${ORGANIZED_DATA_NAME}/${subject_id});
+do
 echo converting session ${ses_i} "for" subject ${subject_id} 
-do 
 ${SINGULARITY_PATH} run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
 -d ${SINGULARITY_DATA_DIR}/{subject}/{session}/*/*.dcm \
 -s ${subject_id} \
