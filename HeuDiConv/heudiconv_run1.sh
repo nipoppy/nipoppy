@@ -56,15 +56,17 @@ echo "Step1: subjects.list created!"
 # folder check
 if [ ${CHECK_DIR} == 'Y' ];then
 if [ -d ${BIDS_DIR} ];then
-  rm -rf ${BIDS_DIR}/*
+  rm -rf ${BIDS_DIR}
   rm -rf res/${BIDS_DIR}.zip
+  mkdir -p ${BIDS_DIR}
   echo "BIDS folder already exists, cleared!"
 else
   mkdir -p ${BIDS_DIR}
 fi
 if [ -d ${INFO_DIR} ];then
-  rm -rf ${INFO_DIR}/*
+  rm -rf ${INFO_DIR}
   rm -rf res/${INFO_DIR}.zip 
+  mkdir -p ${INFO_DIR}
   echo "INFO_SUM folder already exists, cleared!"
 else
   mkdir -p ${INFO_DIR}
