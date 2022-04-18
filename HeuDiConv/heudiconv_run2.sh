@@ -55,7 +55,7 @@ if [ ${hpc_system} == 'sge' ]; then
     rm -rf ${LOG_DIR}/vincentq_heudiconv_r2_*
     # running conversion
     CODE_FILE=${CODE_DIR}/heudiconv_run2.sge
-    N_SUB=1 # for single subject test purpose
+    #N_SUB=1 # for single subject test purpose
     qsub -t 1-$(( $N_SUB + 1 )) -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${HEUDICONV_VERSION} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
     echo "SGE job submitted!"
 else
