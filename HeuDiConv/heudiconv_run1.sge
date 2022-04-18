@@ -5,30 +5,30 @@
 #$ -e logs/heudiconv/vincentq_heudiconv_r1_err.log
 #$ -m abe
 #$ -q origami.q
-#$ -l h_rt=3:00:00
+#$ -l h_rt=1:00:00
 #$ -l h_vmem=8G
 #$ -pe smp 4
 
 DATA_NAME=(${@:1:1})
 HEUDICONV_VERSION=(${@:2:1})
-echo converting ${DATA_NAME} using HeuDiConv version=${HEUDICONV_VERSION}...
+SUB_LIST=(${@:3:1})
+WD_DIR=(${@:4:1})
+echo converting ${DATA_NAME} with subjects list:${SUB_LIST} using HeuDiConv version=${HEUDICONV_VERSION}...
 
 # dataset dir
-WD_DIR=/data/pd/ppmi
+#WD_DIR=/data/pd/ppmi
 echo "Current Directory: " ${WD_DIR}
 ORGANIZED_DATA_NAME=${DATA_NAME}_SessionOrganized
-BIDS_NAME=${DATA_NAME}_BIDS
 
 # codes, envs and containers
 SINGULARITY_PATH=/opt/bin/singularity # bic singulairty 3.6 located in /opt 
 CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
-SUB_LIST=${CODE_DIR}/${DATA_NAME}_subjects.list
 CON_IMG=${WD_DIR}/container_images/heudiconv_${HEUDICONV_VERSION}.sif
 
 # singularity folders
 SINGULARITY_MNT_DIR=/scratch
 SINGULARITY_DATA_DIR=${SINGULARITY_MNT_DIR}/${ORGANIZED_DATA_NAME}
-SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${BIDS_NAME}
+SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${DATA_NAME}_BIDS
 
 # run heudiconv at subject level.
 #SGE_TASK_ID=1 # for test purpose
@@ -49,9 +49,7 @@ echo ${DATA_NAME} ${subject_id}
 
 # create different folder patterns for different datasets
 if [ ${DATA_NAME} == 'PPMI' ]; then
-${SINGULARITY_PATH} run \
--B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
-${CON_IMG} \
+${SINGULARITY_PATH} run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
 -d ${SINGULARITY_DATA_DIR}/{subject}/*/*/*.dcm \
 -s ${subject_id} -c none \
 -f convertall \
@@ -59,9 +57,7 @@ ${CON_IMG} \
 --overwrite
 
 else
-${SINGULARITY_PATH} run \
--B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
-${CON_IMG} \
+${SINGULARITY_PATH} run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
 -d ${SINGULARITY_DATA_DIR}/{subject}/*/*/*/*.dcm \
 -s ${subject_id} -c none \
 -f convertall \

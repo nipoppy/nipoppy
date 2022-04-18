@@ -40,7 +40,7 @@ if [ -z $RUN_ID ];then
   echo 'no previous run found...'
 else
   echo "previous run $RUN_ID found, deleting logs..."
-  rm ${LOG_DIR}/vincentq_heudiconv_r1_*
+  rm -rf ${LOG_DIR}/vincentq_heudiconv_r1_*
 fi
 
 chmod +x ${CODE_DIR}/heudiconv_run2.sh
@@ -86,13 +86,15 @@ fi
 if [ ${hpc_system} == 'sge' ]; then
     chmod +x ${CODE_DIR}/heudiconv_run1.sge
     chmod +x ${CODE_DIR}/heudiconv_run2.sge
+    CODE_FILE=${CODE_DIR}/heudiconv_run1.sge
     #N_SUB=1 # for single subject test purpose
-    qsub -t 1-${N_SUB} -q origami.q  ${CODE_DIR}/heudiconv_run1.sge ${DATA_NAME} ${HEUDICONV_VERSION} >> ${LOG_FILE_r1}
+    qsub -t 1-${N_SUB} -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEUDICONV_VERSION} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r1}
     echo "SGE job submitted!"
 else
     chmod +x ${CODE_DIR}/heudiconv_run1.slurm
     chmod +x ${CODE_DIR}/heudiconv_run2.slurm
+    CODE_FILE=${CODE_DIR}/heudiconv_run1.slurm
     #N_SUB=1 # for single subject test purpose
-    sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${HEUDICONV_VERSION} >> ${LOG_FILE_r1}
+    sbatch --array=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEUDICONV_VERSION} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r1}
     echo "SLURM job submitted!"
 fi 

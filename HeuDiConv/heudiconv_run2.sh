@@ -13,22 +13,17 @@ else
 # working dir for CC
 WD_DIR=${HOME}/scratch 
 fi 
-LOG_FILE=${DATA_NAME}_heudiconv_run2.log
 
-DATA_DIR=${WD_DIR}/${DATA_NAME}
-CODE_FILE=${WD_DIR}/mr_proc/HeuDiConv/heudiconv_run2.slurm
-SUB_LIST=${DATA_DIR}_subjects.list
-CON_IMG=${WD_DIR}/container_images/heudiconv_0.9.0.sif
-N_SUB=$(cat ${SUB_LIST}|wc -l )
-TMP_DIR=${DATA_DIR}_convTMP
+# basic env and software
+CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
+HEUDICONV_VERSION=0.9.0
+SUB_LIST=${CODE_DIR}/${DATA_NAME}_subjects.list
 
-# test tmp-dir
-if [ -d ${TMP_DIR} ];then
-  rm -rf ${TMP_DIR}/*
-  echo "conversion tmp dir already exists, cleared!"
-else
-  mkdir -p ${TMP_DIR}
-fi
+#data dirs
+
+#logging
+LOG_DIR=${WD_DIR}/logs/heudiconv
+LOG_FILE_r2=${DATA_NAME}_heudiconv_run2.log
 
 #Select the proper heuristic file
 if [ ${DATA_NAME} == 'PPMI' ]; then
@@ -51,6 +46,19 @@ else
     fi
 fi
 
+# Get total number of subjects
+N_SUB=$(cat ${SUB_LIST}|wc -l )
+
+# submit subject conversion batch job
+if [ ${hpc_system} == 'sge' ]; then
+    # Clear previous logs
+    rm -rf ${LOG_DIR}/vincentq_heudiconv_r2_*
+    # running conversion
+    CODE_FILE=${CODE_DIR}/heudiconv_run2.sge
+    N_SUB=1 # for single subject test purpose
+    qsub -t=1-${N_SUB} -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
+else
+# SLURM convention logs
 RUN_ID=$(tail -c 9 ${DATA_NAME}_heudiconv_run2.log)
 if [ -z $RUN_ID ];then
   echo 'no previous run found...'
@@ -59,12 +67,8 @@ else
   rm heudic_r2_vin-${RUN_ID}*.out
   rm heudic_r2_vin-${RUN_ID}*.err
 fi
-
-# submit batch job
-if [ ${hpc_system} == 'sge' ]; then
-    CODE_FILE=${WD_DIR}/mr_proc/HeuDiConv/heudiconv_run2.sge
-    qsub -t=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} >> ${LOG_FILE}
-
-else
-    sbatch --array=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} >> ${LOG_FILE}
+    # running conversion
+    CODE_FILE=${CODE_DIR}/heudiconv_run2.slurm
+    #N_SUB=1 # for single subject test purpose
+    sbatch --array=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
 fi 
