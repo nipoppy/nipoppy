@@ -6,11 +6,6 @@ echo ${hpc_system}
 CHECK_DIR=(${@:3:1})
 echo ${CHECK_DIR}
 
-SEARCH_LV=1
-LOG_FILE=${DATA_NAME}_heudiconv
-LOG_FILE_r1=${LOG_FILE}_run1.log
-LOG_FILE_r2=${LOG_FILE}_run2.log
-
 if [ ${hpc_system} == 'sge' ]; then
 # working dir for BIC server sge
 WD_DIR=/data/pd/ppmi
@@ -19,92 +14,83 @@ else
 WD_DIR=${HOME}/scratch 
 fi 
 
-DATA_DIR=${WD_DIR}/${DATA_NAME}
+# basic env and software
 CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
-CON_IMG=${WD_DIR}/container_images/heudiconv_0.9.0.sif
-SUB_LIST=${WD_DIR}/${DATA_NAME}_subjects.list
+HEUDICONV_VERSION=0.9.0
+SEARCH_LV=1
+SUB_LIST=${CODE_DIR}/${DATA_NAME}_subjects.list
 
+#data
+DATA_DIR=${WD_DIR}/${DATA_NAME}
+ORGANIZED_DATA_NAME=${DATA_NAME}_SessionOrganized
 BIDS_DIR=${DATA_DIR}_BIDS
 INFO_DIR=${DATA_DIR}_INFO
-INFO_SUM_DIR=${DATA_DIR}_INFO_SUM
-SLURM_LOG_OUT_DIR=${DATA_DIR}_heudiconv_log
 
-rm -rf ${SLURM_LOG_OUT_DIR}_run1
-rm -rf ${SLURM_LOG_OUT_DIR}_run2
-rm -rf *.err
-rm -rf *.out
+#logging
+LOG_DIR=${WD_DIR}/logs/heudiconv
+LOG_FILE_prefix=${DATA_NAME}_heudiconv
+LOG_FILE_r1=${LOG_FILE_prefix}_run1.log
+LOG_FILE_r2=${LOG_FILE_prefix}_run2.log
 
-rm ${SUB_LIST}
-
-# load singularity module on cluster
-module load singularity
+# load modules on HPC
+#module load singularity
 
 RUN_ID=$(tail -c 9 ${LOG_FILE_r1})
 if [ -z $RUN_ID ];then
   echo 'no previous run found...'
 else
   echo "previous run $RUN_ID found, deleting logs..."
-  rm heudi_vinc_r1-${RUN_ID}*.out
-  rm heudi_vinc_r1-${RUN_ID}*.err
+  rm ${LOG_DIR}/vincentq_heudiconv_r1_*
 fi
 
-rm *.ses
-
-chmod +x ${CODE_DIR}/heudiconv_run1.slurm
-chmod +x ${CODE_DIR}/heudiconv_run1.format
 chmod +x ${CODE_DIR}/heudiconv_run2.sh
-chmod +x ${CODE_DIR}/heudiconv_run2.slurm
+chmod +x ${CODE_DIR}/heudiconv_run1.format
 chmod +x ${CODE_DIR}/heudiconv_run2.format
 
 # get all subject dicom foldernames.
-find ${DATA_DIR} -maxdepth ${SEARCH_LV} -mindepth ${SEARCH_LV} >> ${SUB_LIST}
+rm ${SUB_LIST}
+find ${ORGANIZED_DATA_NAME} -maxdepth ${SEARCH_LV} -mindepth ${SEARCH_LV} >> ${SUB_LIST}
 N_SUB=$(cat ${SUB_LIST}|wc -l )
 echo "Step1: subjects.list created!"
+
 # folder check
 if [ ${CHECK_DIR} == 'Y' ];then
 if [ -d ${BIDS_DIR} ];then
   rm -rf ${BIDS_DIR}/*
-  rm -rf ${BIDS_DIR}.zip
+  rm -rf res/${BIDS_DIR}.zip
   echo "BIDS folder already exists, cleared!"
 else
   mkdir -p ${BIDS_DIR}
 fi
-if [ -d ${INFO_SUM_DIR} ];then
-  rm -rf ${INFO_SUM_DIR}/*
-  rm -rf ${INFO_SUM_DIR}.zip 
+if [ -d ${INFO_DIR} ];then
+  rm -rf ${INFO_DIR}/*
+  rm -rf res/${INFO_DIR}.zip 
   echo "INFO_SUM folder already exists, cleared!"
 else
-  mkdir -p ${INFO_SUM_DIR}
+  mkdir -p ${INFO_DIR}
 fi
-if [ -d ${SLURM_LOG_OUT_DIR}_run1 ];then
-  rm -rf ${SLURM_LOG_OUT_DIR}_run1/*
-  rm -rf ${SLURM_LOG_OUT_DIR}_run1.zip
-  rm -rf logs/*
+if [ -d ${LOG_DIR} ];then
+  rm -rf ${LOG_DIR}/*
+  rm -rf res/${LOG_DIR}.zip
   echo "SLURM_LOG_OUT_DIR_run1 folder already exists, cleared!"
 else
-  mkdir -p ${SLURM_LOG_OUT_DIR}_run1
+  mkdir -p ${LOG_DIR}
 fi
-if [ -d ${SLURM_LOG_OUT_DIR}_run2 ];then
-  rm -rf ${SLURM_LOG_OUT_DIR}_run2/*
-  rm -rf ${SLURM_LOG_OUT_DIR}_run2.zip
-  echo "SLURM_LOG_OUT_DIR_run2 folder already exists, cleared!"
-else
-  mkdir -p ${SLURM_LOG_OUT_DIR}_run2
-fi
-echo "Step2: folders created!"
 else
 echo "Step2: folders check skipped!"
 fi
 
 # submit batch job
-
-# --array=1-$(( $( wc -l $STUDY/data/participants.tsv | cut -f1 -d' ' ) - 1 ))
 if [ ${hpc_system} == 'sge' ]; then
     chmod +x ${CODE_DIR}/heudiconv_run1.sge
     chmod +x ${CODE_DIR}/heudiconv_run2.sge
-    qsub -t 1-${N_SUB} -q origami.q  ${CODE_DIR}/heudiconv_run1.sge ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+    N_SUB=1 # for single subject test
+    qsub -t 1-${N_SUB} -q origami.q  ${CODE_DIR}/heudiconv_run1.sge ${DATA_NAME} ${HEUDICONV_VERSION} >> ${LOG_FILE_r1}
     echo "SGE job submitted!"
 else
-    sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${CON_IMG} >> ${LOG_FILE_r1}
+    chmod +x ${CODE_DIR}/heudiconv_run1.slurm
+    chmod +x ${CODE_DIR}/heudiconv_run2.slurm
+    #N_SUB=1 # for single subject test
+    sbatch --array=1-${N_SUB} ${CODE_DIR}/heudiconv_run1.slurm ${DATA_NAME} ${HEUDICONV_VERSION} >> ${LOG_FILE_r1}
     echo "SLURM job submitted!"
 fi 

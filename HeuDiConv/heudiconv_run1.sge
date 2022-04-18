@@ -1,36 +1,39 @@
 #!/bin/bash
 #$ -cwd
 #$ -N vincentq_heudiconv_r1
-#$ -o logs/heudiconv_r1_out.log
-#$ -e logs/heudiconv_r1_err.log
+#$ -o logs/heudiconv/vincentq_heudiconv_r1_${SGE_TASK_ID}_out.log
+#$ -e logs/heudiconv/vincentq_heudiconv_r1_${SGE_TASK_ID}_err.log
 #$ -m abe
-#$ -M vincent.w.qing@gmail.com
 #$ -q origami.q
 #$ -l h_rt=3:00:00
 #$ -l h_vmem=4G
 #$ -pe smp 1
 
 DATA_NAME=(${@:1:1})
-CON_IMG=(${@:2:1})
-echo converting ${DATA_NAME} using ${CON_IMG}
+HEUDICONV_VERSION=(${@:2:1})
+echo converting ${DATA_NAME} using HeuDiConv version=${HEUDICONV_VERSION}...
 
-# bic singulairty 3.6 located in /opt 
-SINGULARITY_PATH=/opt/bin/singularity
-WD_NAME="scratch"
-WD_DIR=${HOME}/${WD_NAME}
-DATA_DIR=${WD_DIR}/${DATA_NAME}
-SUB_LIST=${WD_DIR}/${DATA_NAME}_subjects.list
-BIDS_DIR=${DATA_DIR}_BIDS
+# dataset dir
+WD_DIR=/data/pd/ppmi
+echo "Current Directory: " ${WD_DIR}
+ORGANIZED_DATA_NAME=${DATA_NAME}_SessionOrganized
+BIDS_NAME=${DATA_NAME}_BIDS
+
+# codes, envs and containers
+SINGULARITY_PATH=/opt/bin/singularity # bic singulairty 3.6 located in /opt 
+CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
+SUB_LIST=${CODE_DIR}/${DATA_NAME}_subjects.list
+CON_IMG=${WD_DIR}/container_images/heudiconv_${HEUDICONV_VERSION}.sif
 
 # singularity folders
-SINGULARITY_MNT_DIR=/${WD_NAME}
-SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${DATA_NAME}_BIDS
+SINGULARITY_MNT_DIR=/scratch
+SINGULARITY_DATA_DIR=${SINGULARITY_MNT_DIR}/${ORGANIZED_DATA_NAME}
+SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${BIDS_NAME}
+
 # run heudiconv at subject level.
 echo "Starting task ${SGE_TASK_ID}"
 DIR=$(sed -n "${SGE_TASK_ID}p" ${SUB_LIST} )
-echo "Current Directory: " ${WD_DIR}
 DIR_STR=${DIR//\//" " }
-echo ${DIR_STR}
 #Get subject ID
 if [ ${DATA_NAME} == 'PPMI' ]; then
     DATA_DIR_LEN_OFFSET=32
@@ -40,25 +43,29 @@ else
     DATA_DIR_LEN_OFFSET=29
 fi
 subject_id=${DIR_STR[@]:DATA_DIR_LEN_OFFSET}
+
 echo ${DATA_NAME} ${subject_id}
+
 # create different folder patterns for different datasets
 if [ ${DATA_NAME} == 'PPMI' ]; then
-${SINGULARITY_PATH} run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
+${SINGULARITY_PATH} run \
+-B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
 ${CON_IMG} \
--d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/*/*.dcm \
+-d ${SINGULARITY_DATA_DIR}/{subject}/*/*/*/*.dcm \
 -s ${subject_id} -c none \
 -f convertall \
 -o ${SINGULARITY_OUT_DIR} \
 --overwrite
+
 else
-${SINGULARITY_PATH} run -B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
+${SINGULARITY_PATH} run \
+-B ${WD_DIR}:${SINGULARITY_MNT_DIR} \
 ${CON_IMG} \
--d ${SINGULARITY_MNT_DIR}/${DATA_NAME}/{subject}/*/*/*/*.dcm \
+-d ${SINGULARITY_DATA_DIR}/{subject}/*/*/*/*.dcm \
 -s ${subject_id} -c none \
 -f convertall \
 -o ${SINGULARITY_OUT_DIR} \
 --overwrite
-#-ss ${ses_id} \
-#--grouping studyUID \
+
 fi
 echo "Step3: Heudiconv Run1 finishted!"
