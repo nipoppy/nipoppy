@@ -56,7 +56,8 @@ if [ ${hpc_system} == 'sge' ]; then
     # running conversion
     CODE_FILE=${CODE_DIR}/heudiconv_run2.sge
     N_SUB=1 # for single subject test purpose
-    qsub -t 1-${N_SUB} -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
+    qsub -t 1-$(( $N_SUB + 1 )) -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
+    echo "SGE job submitted!"
 else
 # SLURM convention logs
 RUN_ID=$(tail -c 9 ${DATA_NAME}_heudiconv_run2.log)
@@ -70,5 +71,6 @@ fi
     # running conversion
     CODE_FILE=${CODE_DIR}/heudiconv_run2.slurm
     #N_SUB=1 # for single subject test purpose
-    sbatch --array=1-${N_SUB} ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
+    sbatch --array=1-$(( $N_SUB + 1 )) ${CODE_FILE} ${DATA_NAME} ${HEURISTIC_FILE} ${CON_IMG} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r2}
+    echo "SLURM job submitted!"
 fi 
