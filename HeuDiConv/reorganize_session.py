@@ -92,14 +92,14 @@ def main(dataset_name):
                 for img_str_ in os.listdir(dataset_path / subj_ / modality_str_ / date_str_):
                     curr_ses=str(image_tab_df[image_tab_df['Image Data ID']==img_str_].iloc[0,1])
                     alldcm = glob.glob(str(dataset_path / subj_ / modality_str_ / date_str_ / img_str_)+'/*')
-                    source_dir = str(dataset_path / subj_ / modality_str_ / date_str_ / img_str_)
-                    target_dir = str(sub_dir / curr_ses / img_str_)
+                    target_dir = sub_dir / curr_ses / img_str_
                     # deal with conflicting ImageID
                     if not target_dir.exists():
+                        target_dir=str(target_dir)
                         os.makedirs(target_dir)
                     else:
                         n_duplicate=n_duplicate+1
-                        target_dir=target_dir+'_'+str(n_duplicate)
+                        target_dir=str(target_dir)+'_'+str(n_duplicate)
                         os.makedirs(target_dir)
                     [shutil.copy2(dcm_file_, target_dir) for dcm_file_ in alldcm]
                     print(subj_+' '+modality_str_+' '+date_str_+' '+img_str_+' copied to ', sub_dir, curr_ses, img_str_)
