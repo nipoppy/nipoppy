@@ -1,10 +1,10 @@
 
-HeuDiConv/validation/.ipynb_checkpoints/validation_report-checkpoint.ipynb
-notebooks/.ipynb_checkpoints/subject_profiling_filtering-checkpoint.ipynb
-private_libs/__pycache__/private_utils.cpython-38.pyc
-notebooks/.ipynb_checkpoints/subject_profiling_filtering-checkpoint.ipynb
-notebooks/.ipynb_checkpoints/subject_profiling_filtering-checkpoint.ipynb
-notebooks/.ipynb_checkpoints/subject_profiling_filtering-checkpoint.ipynb
+HeuDiConv/validation/.ipynb_checkpoints/*
+notebooks/.ipynb_checkpoints/*
+private_libs/__pycache__/*
+notebooks/.ipynb_checkpoints/s*
 HeuDiConv/.ipynb_checkpoints/reorganize_session-checkpoint.py
-HeuDiConv/.ipynb_checkpoints/reorganize_session-checkpoint.py
-private_libs/.ipynb_checkpoints/private_utils-checkpoint.py
+private_libs/.ipynb_checkpoints/*
+HeuDiConv/.ipynb_checkpoints/*
+HeuDiConv/validation/.ipynb_checkpoints/*
+
