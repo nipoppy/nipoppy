@@ -12,7 +12,8 @@ Output file:  folder structure: ppmi_subject_session.csv
 """
 # libs and envs
 import sys
-codes_dir_str='/scratch/mr_proc'
+# codes_dir_str='/scratch/mr_proc' # run on CC
+codes_dir_str='/data/pd/ppmi/mr_proc' # run on BIC
 sys.path.append(codes_dir_str)
 from pathlib import Path
 import pandas as pd
@@ -20,7 +21,8 @@ import numpy as np
 
 # main PATH
 codes_dir    = Path(codes_dir_str)
-bids_dir_str = '/scratch/PPMI_BIDS' # PPMI_BIDS
+bids_dir_str = '/data/pd/ppmi/PPMI_BIDS' # PPMI_BIDS on BIC
+# bids_dir_str = '/scratch/PPMI_BIDS' # PPMI_BIDS on CC
 bids_dir     = Path(bids_dir_str)
 fmriprep_dir = codes_dir / 'fMRIPrep' 
 
