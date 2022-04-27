@@ -17,11 +17,11 @@ WD_DIR=${HOME}/scratch
 DATA_DIR=${WD_DIR}/${DATA_NAME}
 BIDS_DIR=${DATA_DIR}_BIDS
 
-CODE_DIR=${WD_DIR}/interventionMDD/preproc
+CODE_DIR=${WD_DIR}/mr_proc/fMRIPrep # change according to project
 CODE_SLURM=${CODE_DIR}/fmriprep_anat_sub.slurm
 CODE_COLLECT=${CODE_DIR}/fmriprep_anat.format
 TEMPLATEFLOW_HOST_HOME=${WD_DIR}/templateflow
-RUN_LIST=${CODE_DIR}/runningMDD_rerun.csv
+RUN_LIST=${CODE_DIR}/ppmi_subject_session.csv # change according to project
 
 FMRIPREP_VER=20.2.7
 LOG_FILE=${WD_DIR}/${DATA_NAME}_fmriprep_anat.log
@@ -66,11 +66,12 @@ while read line; do
     SUB_ID_STR="$(cut -d',' -f1 <<<${line})"
     SUB_ID="$(cut -d'-' -f2 <<<${SUB_ID_STR})"
     SES_ID="$(cut -d',' -f2 <<<${line})"
-    echo 'rerunning subj: ' ${SUB_ID} ', ses' ${SES_ID}
+    echo 'running subj: ' ${SUB_ID} ', ses' ${SES_ID}
     sbatch ${CODE_SLURM} ${DATA_NAME} ${FMRIPREP_VER} ${SUB_ID} ${SES_ID} >> ${LOG_FILE}
 done < ${RUN_LIST}
 
 else
+echo 'running subj: ' ${SUB_ID} ', ses' ${SES_ID}
 sbatch ${CODE_SLURM} ${DATA_NAME} ${FMRIPREP_VER} ${SUB_ID} ${SES_ID} >> ${LOG_FILE}
 fi
 echo "fmriprep job submitted!"
