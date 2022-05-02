@@ -2,9 +2,10 @@
 HeuDiConv/validation/.ipynb_checkpoints/*
 notebooks/.ipynb_checkpoints/*
 private_libs/__pycache__/*
-notebooks/.ipynb_checkpoints/s*
+notebooks/.ipynb_checkpoints/*
 HeuDiConv/.ipynb_checkpoints/reorganize_session-checkpoint.py
 private_libs/.ipynb_checkpoints/*
 HeuDiConv/.ipynb_checkpoints/*
 HeuDiConv/validation/.ipynb_checkpoints/*
-
+notebooks/.ipynb_checkpoints/*
+notebooks/scratch_book.ipynb
