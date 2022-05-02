@@ -2,13 +2,13 @@
 if [ "$#" -ne 3 ]; then
 DATA_NAME=(${@:1:1})
 CLEAN_RUN_FLAG=(${@:2:1})
-RUN_LIST_FLAG='Y'
-echo "Cleaning old results: "${CHECK_DIR}
+echo "Cleaning old results..."
 else
 DATA_NAME=(${@:1:1})
 SUB_ID=(${@:2:1})
 SES_ID=(${@:3:1})
-RUN_LIST_FLAG='N'
+CLEAN_RUN_FLAG='N'
+
 echo 'Rerunning subj: ' ${SUB_ID} ', ses' ${SES_ID}
 fi
 echo ${DATA_NAME}
@@ -59,7 +59,7 @@ fi
 mkdir -p ${LOG_DIR}
 fi
 
-if [ ${RUN_LIST_FLAG} == 'Y' ];then
+if [ ${CLEAN_RUN_FLAG} == 'Y' ];then
 #RUN_LIST="runningMDD_rerun.csv" # for easy test
 while read line; do
     # Do what you want to $name
