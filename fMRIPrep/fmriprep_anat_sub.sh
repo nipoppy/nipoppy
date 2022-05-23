@@ -2,6 +2,7 @@
 if [ "$#" -ne 3 ]; then
 DATA_NAME=(${@:1:1})
 CLEAN_RUN_FLAG=(${@:2:1})
+RUN_LIST_NAME=(${@:3:1})
 echo "Cleaning old results..."
 else
 DATA_NAME=(${@:1:1})
@@ -21,7 +22,8 @@ CODE_DIR=${WD_DIR}/mr_proc/fMRIPrep # change according to project
 CODE_SLURM=${CODE_DIR}/fmriprep_anat_sub.slurm
 CODE_COLLECT=${CODE_DIR}/fmriprep_anat.format
 TEMPLATEFLOW_HOST_HOME=${WD_DIR}/templateflow
-RUN_LIST=${CODE_DIR}/ppmi_subject_session.csv # change according to project
+RUN_LIST=${CODE_DIR}/${RUN_LIST_NAME} # change according to project
+#RUN_LIST=${CODE_DIR}/ppmi_subject_session.csv # change according to project
 
 FMRIPREP_VER=20.2.7
 LOG_FILE=${WD_DIR}/${DATA_NAME}_fmriprep_anat.log
@@ -60,7 +62,6 @@ mkdir -p ${LOG_DIR}
 fi
 
 if [ ${CLEAN_RUN_FLAG} == 'Y' ];then
-#RUN_LIST="runningMDD_rerun.csv" # for easy test
 while read line; do
     # Do what you want to $name
     SUB_ID_STR="$(cut -d',' -f1 <<<${line})"
