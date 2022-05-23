@@ -74,7 +74,12 @@ T1W_SERIES = [
     'SAG FSPGR 3D VOLUMETRIC T1',
     'Sag MPRAGE GRAPPA_ND',
     'T1-weighted, 3D VOLUMETRIC',
-    'tra_T1_MPRAGE'
+    'tra_T1_MPRAGE',
+    '3D T1-weighted_ND', ## added from livingpark
+    '3D T1 _weighted',
+    'Sagittal 3D Accelerated MPRAGE',
+    'T1 REPEAT',
+    'MPRAGE Repeat',
 ]
 
 def create_key(template, outtype=('nii.gz',), annotation_classes=None):
@@ -116,5 +121,4 @@ def infotodict(seqinfo):
                 info[t1w_adni].append(series_id)
             else:
                 info[t1w_grappa].append(series_id)
-
     return info

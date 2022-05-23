@@ -21,7 +21,7 @@ import pandas as pd
 
 # setting up codes dir and working dir
 code_path_str='/data/pd/ppmi/mr_proc'
-project_dir_str = '/data/pd/ppmi/'
+project_dir_str = '/data/pd/ppmi/scratch'
 code_dir = Path(code_path_str)
 sys.path.append(code_path_str)
 
@@ -29,6 +29,7 @@ def get_args():
     import argparse
     parser = argparse.ArgumentParser(description='Input of pamameters: ')
     parser.add_argument('--data', type=str, default = 'data')
+    parser.add_argument('--tab',  type=str, default = 'tab')
     args = parser.parse_args()
     return args
 
@@ -43,17 +44,18 @@ def del_dir_safe(folder_):
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-def main(dataset_name):
+def main(dataset_name, tab_file_name):
     """Entry point"""
     """1. input images"""
-    if dataset_name=='PPMI':
+    if 'PPMI' in dataset_name:
         dataset_path = Path(project_dir_str+dataset_name) # change this line according to your local dir
-        dataset_out_path    = Path(project_dir_str+dataset_name+'_SessionOrganized')
-        ppmi_img_dl_file    = code_dir / 'tab_data'  / 'PPMI_3T_sdMRI_3_07_2022.csv'  # Inormation from download database.
-        dataset_out_df_path = Path(code_dir / 'tab_data'  / 'PPMI_3T_sdMRI_3_07_2022_dcminfo.csv')  # save information of dicom dataset
-        ppmi_img_dl_data    = pd.read_csv(ppmi_img_dl_file, sep=',')
+        dataset_out_path = Path(project_dir_str+dataset_name+'_SessionOrganized')
+        #ppmi_img_dl_file    = code_dir / 'tab_data'  / 'PPMI_3T_sdMRI_3_07_2022.csv'  # Inormation from download database.
+        ppmi_img_dl_data    = pd.read_csv(tab_file_name, sep=',')
+        # dicom info output
+        dataset_out_df_path = Path(code_dir / 'tab_data'  / dataset_name+'_dcminfo.csv')  # save information of dicom dataset
 
-    elif dataset_name=='ADNI':
+    elif "ADNI" in dataset_name:
         print('To be implemented for '+dataset_name)
     else:
         print('To be implemented for default setting')
@@ -116,6 +118,7 @@ def main(dataset_name):
 
 if __name__ == '__main__':
     args=get_args()
-    dataset_name_=args.data;    
-    print("The input data folder: ", dataset_name_, type(dataset_name_))
-    main(dataset_name_)
+    dataset_name_=args.data; 
+    tab_file_name_=args.tab;   
+    print("The input data folder: ", dataset_name_, tab_file_name_)
+    main(dataset_name_, tab_file_name_)
