@@ -21,7 +21,7 @@ import pandas as pd
 
 # setting up codes dir and working dir
 code_path_str='/data/pd/ppmi/mr_proc'
-project_dir_str = '/data/pd/ppmi/scratch'
+project_dir_str = '/data/pd/ppmi/scratch/'
 code_dir = Path(code_path_str)
 sys.path.append(code_path_str)
 
