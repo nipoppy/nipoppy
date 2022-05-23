@@ -51,7 +51,7 @@ def main(dataset_name, tab_file_name):
         dataset_path = Path(project_dir_str+dataset_name) # change this line according to your local dir
         dataset_out_path = Path(project_dir_str+dataset_name+'_SessionOrganized')
         #ppmi_img_dl_file    = code_dir / 'tab_data'  / 'PPMI_3T_sdMRI_3_07_2022.csv'  # Inormation from download database.
-        ppmi_img_dl_data    = pd.read_csv((code_dir/ 'tab_data' / tab_file_name), sep=',')
+        ppmi_img_dl_data    = pd.read_csv((code_dir/ 'tab_data' / tab_file_name), dtype=str, sep=',')
         # dicom info output
         dataset_out_df_path = Path(code_dir / 'tab_data'  / (dataset_name+'_dcminfo.csv'))  # save information of dicom dataset
 
@@ -92,6 +92,7 @@ def main(dataset_name, tab_file_name):
         for modality_str_ in os.listdir(dataset_path / subj_):
             for date_str_ in os.listdir(dataset_path / subj_ / modality_str_):
                 for img_str_ in os.listdir(dataset_path / subj_ / modality_str_ / date_str_):
+                    print(subj_, modality_str_, date_str_, img_str_)
                     curr_ses=str(image_tab_df[image_tab_df['Image Data ID']==img_str_].iloc[0,1])
                     alldcm = glob.glob(str(dataset_path / subj_ / modality_str_ / date_str_ / img_str_)+'/*')
                     target_dir = sub_dir / curr_ses / img_str_
