@@ -60,7 +60,7 @@ ${SINGULARITY_PATH} run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG
 
 else
 ${SINGULARITY_PATH} run --cleanenv -B ${WD_DIR}:${SINGULARITY_MNT_DIR} ${CON_IMG} \
--d ${SINGULARITY_DATA_DIR}/{subject}/*/*/*/*.dcm \
+-d ${SINGULARITY_DATA_DIR}/{subject}/*/*/*.dcm \
 -s ${subject_id} -c none \
 -f convertall \
 -o ${SINGULARITY_OUT_DIR} \
