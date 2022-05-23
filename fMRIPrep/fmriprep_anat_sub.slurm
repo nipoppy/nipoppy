@@ -65,7 +65,7 @@ cmd="${SINGULARITY_CMD} /data /output participant --participant-label $SUB_ID \
 --fs-license-file /home/fmriprep/.freesurfer/license.txt \
 --cifti-out 91k --return-all-components --anat-only --ignore t2w --longitudinal \
 --bids-filter-file /codes/${BIDS_FILTER} \
---write-graph --skip_bids_validation --notrack"
+--write-graph --skip_bids_validation --notrack --nprocs 12"
 # --bids-filter-file ${BIDS_FILTER} --anat-only --cifti-out 91k 
 # Setup done, run the command
 #echo Running task ${SLURM_ARRAY_TASK_ID}

@@ -1,22 +1,20 @@
 #!/bin/bash
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 4 ]; then
 DATA_NAME=(${@:1:1})
 CLEAN_RUN_FLAG=(${@:2:1})
 RUN_LIST_NAME=(${@:3:1})
 echo "Cleaning old results..."
 else
 DATA_NAME=(${@:1:1})
-SUB_ID=(${@:2:1})
-SES_ID=(${@:3:1})
-CLEAN_RUN_FLAG='N'
-
+CLEAN_RUN_FLAG=(${@:2:1})
+SUB_ID=(${@:3:1})
+SES_ID=(${@:4:1})
 echo 'Rerunning subj: ' ${SUB_ID} ', ses' ${SES_ID}
 fi
 echo ${DATA_NAME}
 
 WD_DIR=${HOME}/scratch
 DATA_DIR=${WD_DIR}/${DATA_NAME}
-BIDS_DIR=${DATA_DIR}_BIDS
 
 CODE_DIR=${WD_DIR}/mr_proc/fMRIPrep # change according to project
 CODE_SLURM=${CODE_DIR}/fmriprep_anat_sub.slurm
