@@ -89,7 +89,7 @@ if [ ${hpc_system} == 'sge' ]; then
     chmod +x ${CODE_DIR}/heudiconv_run2.sge
     CODE_FILE=${CODE_DIR}/heudiconv_run1.sge
     #N_SUB=1 # for single subject test purpose
-    qsub -t 1-${N_SUB} -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEUDICONV_VERSION} ${SUB_LIST} ${WD_DIR} >> ${LOG_FILE_r1}
+    qsub -t 1-${N_SUB} -q origami.q ${CODE_FILE} ${DATA_NAME} ${HEUDICONV_VERSION} ${SUB_LIST} ${WD_DIR} ${CODE_DIR} >> ${LOG_FILE_r1}
     echo "SGE job submitted!"
 else
     chmod +x ${CODE_DIR}/heudiconv_run1.slurm

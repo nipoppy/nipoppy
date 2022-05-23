@@ -13,6 +13,7 @@ DATA_NAME=(${@:1:1})
 HEUDICONV_VERSION=(${@:2:1})
 SUB_LIST=(${@:3:1})
 WD_DIR=(${@:4:1})
+CODE_DIR=(${@:5:1})
 echo converting ${DATA_NAME} with subjects list:${SUB_LIST} using HeuDiConv version=${HEUDICONV_VERSION}...
 
 # dataset dir
@@ -22,7 +23,6 @@ ORGANIZED_DATA_NAME=${DATA_NAME}_SessionOrganized
 
 # codes, envs and containers
 SINGULARITY_PATH=/opt/bin/singularity # bic singulairty 3.6 located in /opt 
-CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
 CON_IMG=${WD_DIR}/container_images/heudiconv_${HEUDICONV_VERSION}.sif
 
 # singularity folders
