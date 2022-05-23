@@ -41,9 +41,9 @@ elif [ ${DATA_NAME} == 'ADNI' ]; then
     fi
 else
     if [ ${COV_MODE} == 'T1' ]; then
-        HEURISTIC_FILE="Heuristics_MNI-ET_T1.py"
+        HEURISTIC_FILE="Heuristics_PPMI_T1.py"
     else
-        HEURISTIC_FILE="Heuristics_MNI-ET_all.py"
+        HEURISTIC_FILE="Heuristics_PPMI_all.py"
     fi
 fi
 
