@@ -14,7 +14,6 @@ HEURISTIC_FILE=(${@:2:1})
 HEUDICONV_VERSION=(${@:3:1})
 SUB_LIST=(${@:4:1})
 WD_DIR=(${@:5:1})
-CODE_DIR=(${@:6:1})
 echo "Converting: subjects: " ${SUB_LIST} " of " ${DATA_NAME}  ", using HeuDiConv version=" ${HEUDICONV_VERSION}" with heuristics: " ${HEURISTIC_FILE} 
 
 # dataset dir
@@ -30,7 +29,7 @@ CON_IMG=${WD_DIR}/container_images/heudiconv_${HEUDICONV_VERSION}.sif
 SINGULARITY_MNT_DIR=/scratch
 SINGULARITY_DATA_DIR=${SINGULARITY_MNT_DIR}/${ORGANIZED_DATA_NAME}
 SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${DATA_NAME}_BIDS
-SINGULARITY_HEURISTICS=${SINGULARITY_MNT_DIR}/${CODE_DIR}/${HEURISTIC_FILE}
+SINGULARITY_HEURISTICS=${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE}
 
 # Get subject string
 echo "Starting task ${SGE_TASK_ID}..."
