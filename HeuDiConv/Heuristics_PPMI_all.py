@@ -81,6 +81,7 @@ T1W_SERIES = [
     'Sagittal 3D Accelerated MPRAGE',
     'T1 REPEAT',
     'MPRAGE Repeat',
+    'SAG_3D_MPRAGE'
 ]
 
 # converted
