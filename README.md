@@ -1,53 +1,60 @@
-# mr_proc (workflow for standarized processing of MR images)
-Process long and prosper
+# QPN_processing
+Repository for QPN image processing codebase
 
-## Objective
-This repo will contain container recipes and run scripts to 
-    1. Standadized data i.e. convert DICOMs into BIDS
-    2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep
+## Meatadata
+- [QPN dataset V1](metadata/ID_lists/subjects/COPN_loris_imaging_subject_list_11_April_2022.csv): This is generated from subjects that are present in the [Loris instance](https://copn.loris.ca/) 
+  -  These subjects serve as input to BIDS conversion and subsequent image processing pipelines
+  -  The DICOMs are grabbed from BIC server (i.e. /data/pd/qpn/dicom) 
+- [QPN MR image proc status](metadata/ID_lists/subjects/QPN_image_proc_status.csv): This tracks the progress of image processing pipelines e.g. Heudiconv, fmriprep etc. 
 
-## Workflow steps
+## Available modalities and protocols
+![QPN MR acq protocols](./QPN_dicom_protocols.png)
 
-### 1. Gather dataset metadata
-   - Create demograph.csv comprising participant IDs, visit, age, sex, and group (e.g. Dx) information. 
-       - Note that demograph.csv corresponds to a single visit. If you have longitudinal data you will have to run this workflow multiple times. 
-   - Create proc_tracker.csv comprising participant IDs from demograph.csv 
-       - This will track the progress of processing workflow and any issues we encounter. 
-       
-### 2. Gather MRI acquisition protocols
-   - This lists all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. 
-   
-### 3. DICOM organization
-   - DICOMs are available in various formats and disks. In this step we extract, copy, and rename DICOMs in a single directory for all participants listed in the metadata.csv. 
-   - Participant ID convention is decided in this step during renaming. 
-   - Copy a single participant (dicom dir) into test_data/dicom. This participant will serve as a test case for various pipelines. 
-   
-### 4. BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
-   - Specify Heudiconv container (i.e. Singularity image / recipe) 
-   - Run single participant tests: 
-       - Modify and run "./heudiconv_run1.sh --test-run" with apporpriate local paths for container and project dir. This will generate list of available protocols from DICOM header. This script will use a test participant from test_data/dicom for processing. 
-       - Manually update the heurisitic file using the enlisted protocols from run1. 
-       - Modify and run "./heudiconv_run2.sh --test-run" script with apporpriate local paths. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
-       - Run BIDS validator. There are several options listed [here](https://github.com/bids-standard/bids-validator). Make sure you match the version of Heudiconv and BIDS validator standard. 
-   - Run entire dataset (provided single participant test is successful) 
-       - Modify and run "./heudiconv_run1.sh" and "./heudiconv_run2.sh" without the "--test-run" flag. This will require you to specify your real DICOM and BIDS dir paths. 
-       - The above scripts are written to work for single participant (i.e. single DICOM dir). The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using heudiconv_run<>_sge.sh or heudiconv_run<>_slurm.sh queue submission scripts. 
-       - Heudiconv is not perfect! Heuristic file will also need to be updated if your dataset has different protocols for different participants. Any custom post-hoc changes / fixes your make to BIDS datasets must be added to proc_tracker.csv under "notes" column. 
-           - Example issue: heudiconv adds mysterious suffix - possibly due to how dcm2nix handles multi-echo conversion see [neurostar issue](https://neurostars.org/t/heudiconv-adding-unspecified-suffix/21450/3) 
-       - Once dataset passes BIDS validation, update proc_tracker.csv with BIDS_status column marked as "complete". 
-       
-### 5. Run processing pipelines
-Curating dataset into BIDS format simplifies running several commonly used pipelines. Each pipeline follows similar steps:
-   - Specify pipeline container (i.e. Singularity image / recipe) 
-   - Run single participant test. This uses sample participant from /test_data/bids as input and generates output in the /test_data/<pipeline> dir. 
-   - Run entire dataset (provided single participant test is successful)
+## Processing Steps
 
-#### [fMRIPrep](https://fmriprep.org/en/stable/) (including FreeSurfer) 
+### DICOM extraction and symlinks
+  1. The QPN DICOMs were located in multiple directories in nested tar.gz archives. These were extracted and renamed using: [extract_dcm.sh](./bids/scripts/extract_dcm.sh). 
+     - Example cmd: 
+       ``` ./extract_dcm.sh path/to/DCM_*.tar /path/to/output/ ```
+  2. These were then moved to BIC:data/dicom directory which is a repository for all scans acquired at BIC. The ongoing QPN scans are directly stored here by QPN data collection team. 
+  3. Symlinks for QPN scans are made from /data/dicom to /data/pd/qpn/dicom which serves as a QPN specific dicom dir. 
+  4. The symlinks are filtered to exlude duplicate DICOMs for a subject due to bad acquisition. These are then renamed and copied to dicom_heudiconv directory which serves as an input to BIDS conversion using heudiconv.
 
-#### [MRIQC](https://mriqc.readthedocs.io/en/stable/)
+### BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/)   
+  1. Heudiconv Run_1 to enlist all the scans and protocols: [heudiconv_run1.sh](/bids/scripts/heudiconv_run1.sh)
+     - Example cmd: 
+       ``` ./heudiconv_run1.sh PD* 01 2018 ```
+  2. Manual update of heurisitic file using the enlisted protocols from Run_1: [Heuristics_qpn.py](bids/heuristics/Heuristics_qpn.py)
+  3. Heudiconv Run_2 to create NIFTI files in BIDS format: [heudiconv_run2.sh](/bids/scripts/heudiconv_run2.sh)
+  4. BIDS validator [run_bids_val.sh](bids/scripts/run_bids_val.sh) - this uses Singularity image created from [Docker validator](https://github.com/bids-standard/bids-validator) 
+      - Checks for errors (ignores dwi related bval and bvec errors since they are not relevant to TractoFlow) 
+      - Checks for subjects with repeat / multiple runs for a same modality/suffix. 
+      - Checks if [IntendedFor](https://github.com/nipy/heudiconv/pull/482) field is present in fmaps.
+  5. Issues:
+      - Filenames mismatch between Heudiconv and [BIDS BEP](https://github.com/bids-standard/bep001/blob/master/src/04-modality-specific-files/01-magnetic-resonance-imaging-data.md). Use modify [fix_heudiconv_naming.sh](bids/scripts/fix_heudiconv_naming.sh) to fix issues.
+      - Heudiconv will generate two NIFTIs with PDT2 suffix with different echo index - which may not be ideal for certain pipelines which require separate PDw and T2w suffixes. 
+      - ~~Heudiconv will also swap the order of "echo" and "part" for MEGRE scans.~~ (This has been fixed in the Heudiconv commit: cb2fd91, which now used as a container for this processing)
+      - Heudiconv adds mysterious suffix - possibly due to how dcm2nix handles multi-echo conversion see [neurostar issue](https://neurostars.org/t/heudiconv-adding-unspecified-suffix/21450/3) 
+        - Examples: 1) sub-PD00509D598628_ses-01_run-3_T1w_heudiconv822a_ROI1.nii.gz 2) sub-PD00509D598628_ses-01_run-3_T1w2.nii.gz
+        - Currently removing these files manually since only 3 subjects have this issue: PD00119D567297, PD00509D598628, PD00435D874573
 
-#### [SPM](https://www.fil.ion.ucl.ac.uk/spm/)
+### Structural and functional image processing 
+#### [fMRIPrep](https://fmriprep.org/en/stable/)
+  - Download / build [fmriprep Singularity](https://fmriprep.org/en/1.5.5/singularity.html) version: fmriprep_20.2.7.sif. 
+  - Use [sample_bids_filter.json](fmriprep/sample_bids_filter.json) to filter sesions, runs, and suffixes. Especially we need to exclude NM T1w scans. Note that this json needs to be copied into your BIDS dir after your edit it. 
+  - Run script [fmriprep_anat_and_func_sub_regular_20.2.7.sh](fmriprep/scripts/fmriprep_anat_and_func_sub_regular_20.2.7.sh) to process single subject (i.e. individual-level BIDS subdir)
+     - Example cmd: 
+     ```./fmriprep_anat_and_func_sub_regular_20.2.7.sh /path/to/root/bids/dir/ /path/to/output/dir/ <participant_id>```
+     - Use [fmriprep_sge.sh](fmriprep/scripts/fmriprep_sge.sh) to submit cluster jobs with list of participants as csv input.
+  - Issues:
+     - Functional fmaps require `IntendedFor` field which was not populated in the older version of Heudiconv. This is now fixed in the Heudiconv commit: cb2fd91, which now used as a container for this processing)
+     - There were few dicoms (~6) which had wrong `PhaseEncodingDirection` for PA epi scans after Heudiconv conversion. This is currently fixed manually by changing sidecar fmap jsons by changing (i-->j).  
 
 #### [TractoFlow](https://github.com/scilus/tractoflow)
+  - Version: tractoflow_2.2.1_b9a527_2021-04-13.sif
+  - Notes:  Might need to "average" the PA acquisition, since Tractoflow assume 1 volume but there is 3 in "dwi" (Re: Etienne St-Onge 21 March 2022) 
 
-#### [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
+
+### Useful resources:
+- BIDS, fMRIPrep, MRIQC: [tutorial](https://sarenseeley.github.io/BIDS-fmriprep-MRIQC.html)
+- Heudiconv: [tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html)
