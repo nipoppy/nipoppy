@@ -8,7 +8,7 @@ Repository for QPN image processing codebase
 - [QPN MR image proc status](metadata/ID_lists/subjects/QPN_image_proc_status.csv): This tracks the progress of image processing pipelines e.g. Heudiconv, fmriprep etc. 
 
 ## Available modalities and protocols
-![QPN MR acq protocols](./QPN_dicom_protocols.png)
+![QPN MR acq protocols](./metadata/QPN_dicom_protocols.png)
 
 ## Processing Steps
 
