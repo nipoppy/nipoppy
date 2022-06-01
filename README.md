@@ -11,8 +11,8 @@ This repo will contain container recipes and run scripts to manage MR data organ
 
 ### 0. Setup dataset directory structure
    - mr_proc expects following directory tree with several *mandatory* subdirs and files. 
-   - You can run mr_proc_setup.sh to create this directory tree. 
-   - You can run mr_proc_stutus.sh check status of your dataset
+   - You can run `scripts/mr_proc_setup.sh` to create this directory tree. 
+   - You can run `scripts/mr_proc_stutus.sh` check status of your dataset
 
 <img src="imgs/data_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
