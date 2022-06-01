@@ -1,12 +1,20 @@
-# mr_proc (workflow for standarized processing of MR images)
-Process long and prosper
+# mr_proc 
+A workflow for standarized MR images processing. 
+*Process long and prosper.*
 
 ## Objective
-This repo will contain container recipes and run scripts to 
+This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to 
     1. Standadized data i.e. convert DICOMs into BIDS
     2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep
 
 ## Workflow steps
+
+### 0. Setup dataset directory structure
+   - mr_proc expects following directory tree with several *mandatory* subdirs and files. 
+   - You can run mr_proc_setup.sh to create this directory tree. 
+   - You can run mr_proc_stutus.sh check status of your dataset
+
+<img src="imgs/data_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
 ### 1. Gather dataset metadata
    - Create demograph.csv comprising participant IDs, visit, age, sex, and group (e.g. Dx) information. 
