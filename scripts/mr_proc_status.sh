@@ -50,7 +50,7 @@ if [ -f $MR_PROC_ROOT/clinical/demographics/participants.csv ]; then
     #ignore header
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
 
-echo "  number of participant in participant list: $N_PARTICIPANTS"
+echo "  number of participants in participant list: $N_PARTICIPANTS"
 
 else    
     echo "  participants.csv is MISSING! Please add it inside $MR_PROC_ROOT/clinical/demographics/"
