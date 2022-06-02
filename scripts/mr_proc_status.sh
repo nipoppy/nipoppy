@@ -43,7 +43,7 @@ done
 echo ""
 echo "Checking participants list..."
 
-if [ -d $MR_PROC_ROOT/clinical/demographics/participants.csv ]; then
+if [ -f $MR_PROC_ROOT/clinical/demographics/participants.csv ]; then
     echo "  participants.csv exists"
 
     N_PARTICIPANTS=`cat $MR_PROC_ROOT/clinical/demographics/participants.csv | wc -l`
@@ -65,7 +65,9 @@ echo "Checking available test data..."
 N_DICOMS=`ls $MR_PROC_ROOT/test_data/dicom | wc -l`
 
 # Note bids creates participants.tsv and not csv
-if [ -d $MR_PROC_ROOT/test_data/bids/participants.tsv ]; then
+N_BIDS=`cat $MR_PROC_ROOT/test_data/bids/participants.tsv | wc -l`
+
+if [ -f $MR_PROC_ROOT/test_data/bids/participants.tsv ]; then
     N_BIDS=`cat $MR_PROC_ROOT/test_data/bids/participants.tsv | wc -l`
     #ignore header
     N_BIDS=$((N_BIDS - 1))
@@ -84,8 +86,8 @@ echo "Checking available real data..."
 N_DICOMS=`ls $MR_PROC_ROOT/dicom | wc -l`
 
 # Note bids creates participants.tsv and not csv
-if [ -d $MR_PROC_ROOT/bids/participants.tsv ]; then
-    N_BIDS=`cat $MR_PROC_ROOT/test_data/bids/participants.tsv | wc -l`
+if [ -f $MR_PROC_ROOT/bids/participants.tsv ]; then
+    N_BIDS=`cat $MR_PROC_ROOT/bids/participants.tsv | wc -l`
     #ignore header
     N_BIDS=$((N_BIDS - 1))
 else
