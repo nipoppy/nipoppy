@@ -16,14 +16,12 @@ This repo will contain container recipes and run scripts to manage MR data organ
 
 <img src="imgs/data_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
-### 1. Gather dataset metadata
-   - Create demograph.csv comprising participant IDs, visit, age, sex, and group (e.g. Dx) information. 
-       - Note that demograph.csv corresponds to a single visit. If you have longitudinal data you will have to run this workflow multiple times. 
-   - Create proc_tracker.csv comprising participant IDs from demograph.csv 
+### 1. Initialize mr_proc tracker
+   - This creates proc_tracker.csv comprising participant IDs from participants.csv 
        - This will track the progress of processing workflow and any issues we encounter. 
        
 ### 2. Gather MRI acquisition protocols
-   - This lists all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. 
+   - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `workflow/dicom_org/scan_protocols.csv`
    
 ### 3. DICOM organization
    - DICOMs are available in various formats and disks. In this step we extract, copy, and rename DICOMs in a single directory for all participants listed in the metadata.csv. 
