@@ -27,23 +27,38 @@ This repo will contain container recipes and run scripts to manage MR data organ
        - This will track the progress of processing workflow and any issues we encounter. 
        
 ### 2. Gather MRI acquisition protocols
-   - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `workflow/dicom_org/scan_protocols.csv`
+   - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `mr_proc/workflow/dicom_org/scan_protocols.csv`
    
 ### 3. DICOM organization
    - Scanner DICOM files are named and stored in various formats and locations. In this step we extract, copy, and rename DICOMs in a single directory for all participants with available imaging data. 
        - Copy "raw dicoms"`<dataset>/scratch/raw_dicoms` directory.
        - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<dataset>/clinical/demographics` 
-   - Copy a single participant (i.e. dicom dir) into test_data/dicom. This participant will serve as a test case for various pipelines. 
+   - Copy a single participant (i.e. dicom dir) into `<dataset>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
    
 ### 4. BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
-   - Specify Heudiconv container (i.e. Singularity image / recipe) 
+   - Copy Heudiconv container into: `<dataset>/proc/containers`
    - Run single participant tests: 
-       - Modify and run `./heudiconv_run1.sh --test-run` with apporpriate local paths for container and project dir. This will generate list of available protocols from DICOM header. This script will use a test participant from test_data/dicom for processing. 
-       - Manually update the heurisitic file using the enlisted protocols from run1. 
-       - Modify and run `./heudiconv_run2.sh --test-run` script with apporpriate local paths. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
+       - Modify and run `./heudiconv_run1.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will generate list of available protocols from DICOM header. This script will use a test participant from test_data/dicom for processing. 
+       - sample cmd: `./heudiconv_run1.sh -m ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -d . -t 1` where, 
+            - m: mr_proc_root_dir, 
+            - p: participant_id
+            - s: session_id
+            - d: datastore_dir (only needed if your dicoms are symlinks)
+            - t: 1 implies a test run
+
+       - Manually update the sample heurisitic file: `mr_proc/workflow/bids_conv/heuristic.py` using the enlisted protocols from run1. 
+       - Add updated heuristic file here: `<dataset>/proc/`
+       - Modify and run `./heudiconv_run2.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
+       - sample cmd: `./heudiconv_run2.sh -m ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -d . -t 1` where, 
+            - m: mr_proc_root_dir, 
+            - p: participant_id
+            - s: session_id
+            - d: datastore_dir (only needed if your dicoms are symlinks)
+            - t: 1 implies a test run
+         
        - Run BIDS validator. There are several options listed [here](https://github.com/bids-standard/bids-validator). Make sure you match the version of Heudiconv and BIDS validator standard. 
    - Run entire dataset (provided single participant test is successful) 
-       - Modify and run `./heudiconv_run1.sh` and `./heudiconv_run2.sh` without the `--test-run` flag. This will require you to specify your real DICOM and BIDS dir paths. 
+       - Modify and run `./heudiconv_run1.sh` and `./heudiconv_run2.sh` with the `-t 0` flag. This will require you to specify your real DICOM and BIDS dir paths. 
        - The above scripts are written to work for single participant (i.e. single DICOM dir). The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using heudiconv_run<>_sge.sh or heudiconv_run<>_slurm.sh queue submission scripts. 
    - Run BIDS validator for the entire dataset.
    - Heudiconv is not perfect! 
