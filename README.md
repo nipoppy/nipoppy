@@ -6,6 +6,12 @@ A workflow for standarized MR images processing.
 This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to 
     1. Standadized data i.e. convert DICOMs into BIDS
     2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep
+    
+## Organization
+   - metadata: files to track mr_proc progress 
+   - scripts: helper code to setup and check status of mr_proc
+   - notebooks: helper notebooks for data wrangling
+   - workflow: code modules to exectute mr_proc stages and logging
 
 ## Workflow steps
 
