@@ -30,9 +30,10 @@ This repo will contain container recipes and run scripts to manage MR data organ
    - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `workflow/dicom_org/scan_protocols.csv`
    
 ### 3. DICOM organization
-   - DICOMs are available in various formats and disks. In this step we extract, copy, and rename DICOMs in a single directory for all participants listed in the metadata.csv. 
-   - Participant ID convention is decided in this step during renaming. 
-   - Copy a single participant (dicom dir) into test_data/dicom. This participant will serve as a test case for various pipelines. 
+   - Scanner DICOM files are named and stored in various formats and locations. In this step we extract, copy, and rename DICOMs in a single directory for all participants with available imaging data. 
+       - Copy "raw dicoms"`<dataset>/scratch/raw_dicoms` directory.
+       - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<dataset>/clinical/demographics` 
+   - Copy a single participant (i.e. dicom dir) into test_data/dicom. This participant will serve as a test case for various pipelines. 
    
 ### 4. BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
    - Specify Heudiconv container (i.e. Singularity image / recipe) 
@@ -44,9 +45,11 @@ This repo will contain container recipes and run scripts to manage MR data organ
    - Run entire dataset (provided single participant test is successful) 
        - Modify and run `./heudiconv_run1.sh` and `./heudiconv_run2.sh` without the `--test-run` flag. This will require you to specify your real DICOM and BIDS dir paths. 
        - The above scripts are written to work for single participant (i.e. single DICOM dir). The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using heudiconv_run<>_sge.sh or heudiconv_run<>_slurm.sh queue submission scripts. 
-       - Heudiconv is not perfect! Heuristic file will also need to be updated if your dataset has different protocols for different participants. Any custom post-hoc changes / fixes your make to BIDS datasets must be added to proc_tracker.csv under "notes" column. 
-           - Example issue: heudiconv adds mysterious suffix - possibly due to how dcm2nix handles multi-echo conversion see [neurostar issue](https://neurostars.org/t/heudiconv-adding-unspecified-suffix/21450/3) 
-       - Once dataset passes BIDS validation, update proc_tracker.csv with BIDS_status column marked as "complete". 
+   - Run BIDS validator for the entire dataset.
+   - Heudiconv is not perfect! 
+       - Heuristic file will also need to be updated if your dataset has different protocols for different participants. Any custom post-hoc changes / fixes your make to BIDS datasets must be added to proc_tracker.csv under "notes" column. 
+       - You should also open an issue on this repo with the problems and solutions you encounter during processing. 
+   - Once dataset passes BIDS validation, update proc_tracker.csv with BIDS_status column marked as "complete". 
        
 ### 5. Run processing pipelines
 Curating dataset into BIDS format simplifies running several commonly used pipelines. Each pipeline follows similar steps:
