@@ -26,5 +26,4 @@ else
     mkdir -p $MR_PROC_ROOT/test_data/{dicom,bids,derivatives}
     mkdir -p $MR_PROC_ROOT/clinical/{demographics,assessments}
     mkdir -p $MR_PROC_ROOT/derivatives/{fmriprep,tractoflow}
-
 fi

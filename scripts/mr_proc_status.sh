@@ -64,9 +64,6 @@ echo "Checking available test data..."
 
 N_DICOMS=`ls $MR_PROC_ROOT/test_data/dicom | wc -l`
 
-# Note bids creates participants.tsv and not csv
-N_BIDS=`cat $MR_PROC_ROOT/test_data/bids/participants.tsv | wc -l`
-
 if [ -f $MR_PROC_ROOT/test_data/bids/participants.tsv ]; then
     N_BIDS=`cat $MR_PROC_ROOT/test_data/bids/participants.tsv | wc -l`
     #ignore header
