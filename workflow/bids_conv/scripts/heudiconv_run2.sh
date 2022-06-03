@@ -1,61 +1,75 @@
 #!/bin/bash
 
-if [ "$#" -ne 4 ]; then
-  echo "Please provide local WD, subject ID, session ID, and Heuristic file path (e.g. Heuristics_qpn.py)"
+if [ "$#" -ne 10 ]; then
+  echo "Please provide MR_PROC_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
+  and test_run flag"
+  echo "Note that heuristic file needs to inside: $MR_PROC_ROOT/workflow/bids_conv"
+  echo "Sample cmd: ./heudiconv_run1.sh -m <mr_proc_root> -p <sub-01> -s <01> -d <./> -t 1"
   exit 1
 fi
 
+while getopts m:p:s:d:t: flag
+do
+    case "${flag}" in
+        m) MR_PROC_ROOT=${OPTARG};;
+        p) PARTICIPANT_ID=${OPTARG};;
+        s) SES_ID=${OPTARG};;
+        d) DATASTORE=${OPTARG};;
+        t) TEST_RUN=${OPTARG};;
+    esac
+done
 
-LOCAL_WD=$1 #"/data/pd/qpn" (on bic)
-subject_id=$2
-ses_id=$3
-HEURISTIC_FILE=$4
+# Make sure heuristic file exists
+if [ ! -f $MR_PROC_ROOT/proc/heuristic.py ]; then
+    echo "  $MR_PROC_ROOT/proc/heuristic.py is MISSING!"
+    exit 1
+fi
 
-SINGULARITY_IMG="/data/pd/qpn/containers/heudiconv_cb2fd91.sif"
-# SINGULARITY_IMG="/home/nikhil/projects/my_containers/heudiconv_cb2fd91.sif"
-SINGULARITY_PATH=/opt/bin/singularity #(bic)
+# Container
+SINGULARITY_IMG="$MR_PROC_ROOT/proc/containers/heudiconv_cb2fd91.sif"
+SINGULARITY_PATH=singularity
 
-DICOM_DIR="dicom_heudiconv/" #Relative to WD (local or singularity)
-BIDS_DIR="bids/" #Relative to WD (local or singularity)
-LOCAL_CODE_DIR="/home/bic/nikhil/QPN_processing/"
+if [ "$TEST_RUN" -eq 1 ]; then
+    echo "Doing a test run..."
+    DICOM_DIR="test_data/dicom/" #Relative to WD (local or singularity)
+    BIDS_DIR="test_data/bids/" #Relative to WD (local or singularity)
+else
+    echo "Doing a real run..."
+    DICOM_DIR="dicom/" #Relative to WD (local or singularity)
+    BIDS_DIR="bids/" #Relative to WD (local or singularity)
+fi
 
-# QPN dicoms are links from BIC data server (store).
-# So we need to BIND this as well
-LOCAL_DATA_STORE="/data"
-SINGULARITY_DATA_STORE="/data"
-
-echo "Local WD: ${LOCAL_WD}"
-echo "Subject_id: ${subject_id}, Session_id: ${ses_id}"
+echo "MR_PROC_ROOT: ${MR_PROC_ROOT}"
+echo "PARTICIPANT_ID: ${PARTICIPANT_ID}, Session_id: ${SES_ID}"
 
 # singularity folders
-SINGULARITY_WD=/scratch/
-SINGULARITY_OUT_DIR=${SINGULARITY_WD}${BIDS_DIR}
-SINGULARITY_CODE_DIR=${SINGULARITY_WD}QPN_processing
+SINGULARITY_WD=/scratch
+SINGULARITY_DICOM_DIR=${SINGULARITY_WD}/${DICOM_DIR}
+SINGULARITY_BIDS_DIR=${SINGULARITY_WD}/${BIDS_DIR}
 
-echo "Heudiconv Run2 started..."
+HEURISTIC_FILE=$SINGULARITY_WD/proc/heuristic.py
+
+echo "Singularity dicom dir: $SINGULARITY_DICOM_DIR"
+echo "Singularity bids dir: $SINGULARITY_BIDS_DIR"
+
+# if mr_proc dicoms are symlinks from some data server
+# we need to BIND that location to the container as well 
+LOCAL_DATA_STORE=$DATASTORE #"/data" #(bic)
+SINGULARITY_DATA_STORE="/data"
 
 # run heudiconv at subject level.
 # {subject} is the variable in the heuristics file created for each dataset to filter images during conversion.
-# (e.g. Heuristics_PPMI_T1.py) 
+echo "Heudiconv Run2 started..."
 
-$SINGULARITY_PATH run -B ${LOCAL_WD}:${SINGULARITY_WD} \
--B ${LOCAL_CODE_DIR}:${SINGULARITY_CODE_DIR} \
+$SINGULARITY_PATH run -B ${MR_PROC_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
 heudiconv  \
 -d ${SINGULARITY_WD}/${DICOM_DIR}/{subject}/* \
--s ${subject_id} -c none \
--f ${SINGULARITY_CODE_DIR}/bids/heuristics/${HEURISTIC_FILE} \
+-s ${PARTICIPANT_ID} -c none \
+-f ${HEURISTIC_FILE} \
 --grouping studyUID \
 -c dcm2niix -b --overwrite --minmeta \
--o ${SINGULARITY_OUT_DIR} \
--ss ${ses_id} 
+-o ${SINGULARITY_BIDS_DIR} \
+-ss ${SES_ID} 
 
 echo "Heudiconv Run2 finishted, conversion complete!"
-
-# --command populate-intended-for \
-# TypeError: populate_intended_for() missing 2 required positional arguments: 'matching_parameters' and 'criterion'
-# Add below to heuristics file
-# POPULATE_INTENDED_FOR_OPTS = {
-#         'matching_parameters': ['ImagingVolume', 'Shims'],
-#         'criterion': 'Closest'
-# }
