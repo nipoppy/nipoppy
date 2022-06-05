@@ -8,14 +8,15 @@ echo ${COV_MODE}
 
 if [ ${hpc_system} == 'sge' ]; then
 # working dir for BIC server sge
-WD_DIR=/data/pd/ppmi
+WD_DIR="/data/pd/ppmi/scratch"
+CODE_DIR="/data/pd/ppmi/mr_proc/HeuDiConv"
 else
 # working dir for CC
 WD_DIR=${HOME}/scratch 
+CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
 fi 
 
 # basic env and software
-CODE_DIR=${WD_DIR}/mr_proc/HeuDiConv
 HEUDICONV_VERSION=0.9.0
 SUB_LIST=${CODE_DIR}/${DATA_NAME}_subjects.list
 
@@ -40,9 +41,9 @@ elif [ ${DATA_NAME} == 'ADNI' ]; then
     fi
 else
     if [ ${COV_MODE} == 'T1' ]; then
-        HEURISTIC_FILE="Heuristics_MNI-ET_T1.py"
+        HEURISTIC_FILE="Heuristics_PPMI_T1.py"
     else
-        HEURISTIC_FILE="Heuristics_MNI-ET_all.py"
+        HEURISTIC_FILE="Heuristics_PPMI_all.py"
     fi
 fi
 

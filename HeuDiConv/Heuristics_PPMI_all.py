@@ -75,7 +75,13 @@ T1W_SERIES = [
     'SAG FSPGR 3D VOLUMETRIC T1',
     'Sag MPRAGE GRAPPA_ND',
     'T1-weighted, 3D VOLUMETRIC',
-    'tra_T1_MPRAGE'
+    'tra_T1_MPRAGE', 
+    '3D T1-weighted_ND', ## added from livingpark
+    '3D T1 _weighted',
+    'Sagittal 3D Accelerated MPRAGE',
+    'T1 REPEAT',
+    'MPRAGE Repeat',
+    'SAG_3D_MPRAGE'
 ]
 
 # converted
@@ -91,7 +97,9 @@ T2W_SERIES = [
     'Ax T2 Fse thin ac-pc',
     # mixed single / dual-echo
     'AXIAL FSE T2 FS',
-    'T2' 
+    'T2',
+    '*AX FSE T2', # added from livingpark
+    'AXIAL  T2  FSE',
 ]
 
 # converted as T2 with acq-GREMT, according to study design
@@ -106,7 +114,8 @@ MT_SERIES = [
     '2D_GRE-MT',
     'AX GRE -MT',
     'AXIAL 2D GRE-MT',
-    'LOWER 2D GRE MT'
+    'LOWER 2D GRE MT',
+    '2D GRE MT MTC-NO', # added from living park
 ]
 
 # converted
@@ -170,7 +179,8 @@ FLAIR_SERIES = [
     '3D_T2_FLAIR_SAG INVICCRO T2 FLAIR',
     'SAG 3D FLAIR',
     'SAG CUBE FLAIR',
-    'Sag 3D T2 FLAIR'
+    'Sag 3D T2 FLAIR',
+    'SAG 3D T2 FLAIR_',  # added from livingpark
 ]
 
 # converted
@@ -269,6 +279,10 @@ BOLD_SERIES = [
     'ep2d_bold_rest',
     'ep2d_diff_LR',
     'ep2d_diff_RL'
+    'rsfMRI_LR', # added from livingpark
+    'rsfMRI_RL',
+    'BOLD_RS ACPC_LINE',
+    'repeat_BOLD_RS ACPC_LINE', 
 ]
 
 # not converted by now
