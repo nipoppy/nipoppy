@@ -1,0 +1,28 @@
+#!/bin/bash
+# usage:
+# bash heudiconv_slurm_run1_format.sh ${DATA_NAME} ${hpc_system}
+DATA_NAME=(${@:1:1})
+echo ${DATA_NAME}
+hpc_system=(${@:2:1})
+echo ${hpc_system}
+
+if [ ${hpc_system} == 'sge' ]; then
+# working dir for BIC server sge
+WD_DIR=/data/pd/ppmi/scratch
+else
+# working dir for CC
+WD_DIR=${HOME}/scratch 
+fi 
+
+BIDS_DIR=${DATA_NAME}_BIDS
+INFO_DIR=${DATA_NAME}_INFO
+
+for subject_id in $(find ${BIDS_DIR}/.heudiconv/ -maxdepth 1 -mindepth 1 | xargs -I {} basename {}); do
+  cat ${BIDS_DIR}/.heudiconv/${subject_id}/info/dicominfo.tsv >> ${INFO_DIR}/dicominfo_sum_tmp.tsv
+done
+sort -r ${INFO_DIR}/dicominfo_sum_tmp.tsv | uniq > ${INFO_DIR}/${DATA_NAME}_dicomInfo.tsv
+rm ${INFO_DIR}/dicominfo_sum_tmp.tsv
+
+#zip -r res/${INFO_SUM_DIR_NAME}.tar.gz ${INFO_SUM_DIR_NAME}
+#zip -r res/${LOG_DIR_NAME}.tar.gz ${LOG_DIR_NAME}
+echo "Step4: Heudiconv Run1 dicominfo collected"

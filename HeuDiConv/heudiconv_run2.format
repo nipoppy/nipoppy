@@ -1,0 +1,21 @@
+#!/bin/bash
+#!/bin/#!/usr/bin/env bash
+DATA_NAME=(${@:1:1})
+echo ${DATA_NAME}
+hpc_system=(${@:2:1})
+echo ${hpc_system}
+
+if [ ${hpc_system} == 'sge' ]; then
+# working dir for BIC server sge
+WD_DIR=/data/pd/ppmi/scratch
+else
+# working dir for CC
+WD_DIR=${HOME}/scratch 
+fi 
+
+BIDS_DIR=${DATA_NAME}_BIDS
+INFO_DIR=${DATA_NAME}_INFO
+
+# run2
+zip -r res/${BIDS_DIR}.zip ${BIDS_DIR}
+echo "Step5: Heudiconv Run2 Info zipped"
