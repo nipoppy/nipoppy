@@ -43,7 +43,6 @@ fi
 # Folder cleaning
 if [ ${CLEAN_RUN_FLAG} == 'Y' ];then
 
-
 # create session outputs
 for SES_ in $(sed -n '/sub/s/^.*,\([0-9]*\).*$/\1/p' ${RUN_LIST} | sort -u)
 do
