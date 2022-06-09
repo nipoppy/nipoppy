@@ -28,19 +28,19 @@ We also have an automatic downloading piepline from livingPark project: [ppmi-sc
 
 2.1 **Fix the potnetial studyID conflicts** in dicoms with [studyID_fixer](HeuDiConv/studyID_fixer.py);
 
-Example cmd: ```python studyID_fixer.py --data PPMI``` (parameters: dataset)
+Example: ```python studyID_fixer.py --data PPMI``` (parameters: dataset)
 
 2.2 **Reorganize dicom folders** to ```PPMI/sub/session/images/*.dcm``` with [HeuDiConv/reorganize_session.py] according to the downloading meta data table;
 
-Example cmd: ```python reorganize_session.py --data PPMI --tab PPMI_3T_sdMRI_3_07_2022.csv``` (parameters: dataset, downloading meta data table)
+Example: ```python reorganize_session.py --data PPMI --tab PPMI_3T_sdMRI_3_07_2022.csv``` (parameters: dataset, downloading meta data table)
 
 2.3 **Heudiconv Run_1** to enlist all the scans and protocols: [heudiconv_run1.sh](HeuDiConv/heudiconv_run1.sh)
 
-Example cmd: ```./heudiconv_run1.sh PPMI sge Y``` (parameters: dataset, HPC system, whether to clear existing folder)
+Example: ```./heudiconv_run1.sh PPMI sge Y``` (parameters: dataset, HPC system, whether to clear existing folder)
 
 2.4 **Heudiconv Run_2** to create NIFTI files in BIDS format: [heudiconv_run2.sh](HeuDiConv/heudiconv_run2.sh)
 
-Example cmd: ```./heudiconv_run2.sh PPMI sge T1``` (parameters: dataset, HPC system, heuristics file to use all/T1)
+Example: ```./heudiconv_run2.sh PPMI sge T1``` (parameters: dataset, HPC system, heuristics file to use all/T1)
 
 2.5 **Heuristics files**:
 
@@ -56,11 +56,21 @@ The failed conversions are here: [failed conversions](HeuDiConv/err_subjects_con
 
 **3. Structural image processing using [fMRIPrep](https://github.com/nipreps/fmriprep) ver-20.2.7**
 
-3.1 Generate the subject-session file for fMRIPrep preprocessing like ```ppmi_subject_session.csv, sdMRI_subject_session_rerun1.csv``` and the bids filter for the specific session like ``````, tests and experiemnts in ```fMRIPrep_help.ipynb``` and ```get_subj_ses.py``` for running on server;
+3.1 Generate the subject-session file for fMRIPrep preprocessing like ```ppmi_subject_session.csv, sdMRI_subject_session_rerun1.csv``` and the bids filter for the specific session like ```anat_ses-0.json```, tests and experiemnts in ```fMRIPrep_help.ipynb``` and run ```get_subj_ses.py``` on server;
 
-3.2  
+3.2  Run anatomical only processing of fMRIPrep with **fmriprep_anat_sub.sh**;
+
+Dataset level preproc example: ```./fmriprep_anat_sub.sh PPMI Y ppmi_subject_session.csv``` (parameters: dataset, whether to clear existing folder, subject-session table)
+
+Subject level preproc example: ```./fmriprep_anat_sub.sh PPMI Y sub-xxxx 0``` (parameters: dataset, whether to clear existing folder, subject id, session id)
+
+3.3  Currate results after preproc finsihed with **fmriprep_anat.format**, all the preprossed results will be zipped in 2 files (fmriprep, freesurfer) for easier data transfer.
+
+Example: ```./fmriprep_anat.format PPMI 0 20.2.7``` (parameters: dataset, session id, fMRIPrep version)
 
 **Issues**
+
+The failed subjects are listed in [sdMRI_subject_session_rerun1](fMRIPrep/sdMRI_subject_session_rerun1.csv), rerunning.
 
 **4. Diffusion image processing using [TractoFlow](https://github.com/scilus/tractoflow) ver-???**
 
@@ -75,20 +85,3 @@ Note done yet.
 3. [TractoFlow](https://github.com/scilus/tractoflow)
 4. [SPM](https://www.fil.ion.ucl.ac.uk/spm/)
 5. [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
-
-
-    1. Prepare data: including check and fix the studyID problems with ```HeuDiConv/studyID_fixer.py```;
-    2. Run1: HeuDiConv_0.9.0
-        1. It has run1 and run2, there should be some summary statistics and exploration for heuristics after run1 before run2, and it should be compared with the download information for validations;
-        2. prepare env: 1)in_files, 2)variables, 3)folders;
-        3. submit slurm jobs;
-        4. collect results: 1)outputs; 2)logs;
-    3. Run2: fMRIPrep_20.2.7
-        1. prepare env: 1)in_files, 2)variables, 3)folders;
-        2. submit slurm jobs;
-        3. collect results: 1)outputs; 2)logs;
-4. BIDS conventions
-    1. field map: fieldmap
-    2. directions: dir-
-    3. magnitude map: epi
-5. tbd 
