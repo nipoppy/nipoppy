@@ -6,7 +6,7 @@ Repository for PPMI image processing codebase. All the imaging data were downloa
 2. PD bio-marker reproducibility study, the corresponding version is  [**ver-livingpark**](https://github.com/LivingPark-MRI), all the data in this study but not in **ver-sdMRI** are placed here;
 3. All the other versions will be created upon the creations and approvals of new PD related projects.
 
-## Meatadata
+## Meatadata (needs to be updated)
 The participant.csv. 
 
 ## Modalities and protocols
@@ -26,26 +26,39 @@ We also have an automatic downloading piepline from livingPark project: [ppmi-sc
 
 **2. BIDS conversion using [HeuDiConv](https://github.com/nipy/heudiconv) ver-0.9.0**
 
-2.1 Fix the potnetial studyID conflicts in dicoms with []();
+2.1 **Fix the potnetial studyID conflicts** in dicoms with [studyID_fixer](HeuDiConv/studyID_fixer.py);
 
-2.2 Reorganize dicom folders to ```PPMI/sub/session/images/*.dcm``` with [HeuDiConv/reorganize_session.py]
+Example cmd: ```python studyID_fixer.py --data PPMI``` (parameters: dataset)
 
-2.3 Heudiconv Run_1 to enlist all the scans and protocols: heudiconv_run1.sh
-Example cmd: ```./heudiconv_run1.sh PD* 01 2018```
+2.2 **Reorganize dicom folders** to ```PPMI/sub/session/images/*.dcm``` with [HeuDiConv/reorganize_session.py] according to the downloading meta data table;
 
-2.4 Heudiconv Run_2 to create NIFTI files in BIDS format: heudiconv_run2.sh
-BIDS validator run_bids_val.sh - this uses Singularity image created from Docker validator
+Example cmd: ```python reorganize_session.py --data PPMI --tab PPMI_3T_sdMRI_3_07_2022.csv``` (parameters: dataset, downloading meta data table)
 
-Manual update of heurisitic file using the enlisted protocols from Run_1: Heuristics_qpn.py
-Heudiconv Run_2 to create NIFTI files in BIDS format: heudiconv_run2.sh
-BIDS validator run_bids_val.sh - this uses Singularity image created from Docker validator
-Checks for errors (ignores dwi related bval and bvec errors since they are not relevant to TractoFlow)
-Checks for subjects with repeat / multiple runs for a same modality/suffix.
-Checks if IntendedFor field is present in fmaps.
+2.3 **Heudiconv Run_1** to enlist all the scans and protocols: [heudiconv_run1.sh](HeuDiConv/heudiconv_run1.sh)
+
+Example cmd: ```./heudiconv_run1.sh PPMI sge Y``` (parameters: dataset, HPC system, whether to clear existing folder)
+
+2.4 **Heudiconv Run_2** to create NIFTI files in BIDS format: [heudiconv_run2.sh](HeuDiConv/heudiconv_run2.sh)
+
+Example cmd: ```./heudiconv_run2.sh PPMI sge T1``` (parameters: dataset, HPC system, heuristics file to use all/T1)
+
+2.5 **Heuristics files**:
+
+[PPMI_all images](HeuDiConv/Heuristics_PPMI_all.py)
+
+[PPMI_T1 only](HeuDiConv/Heuristics_PPMI_T1.py)
+
+**X** Will run BIDS validator run_bids_val.sh - this uses Singularity image created from Docker validator [have not ran by now]
 
 **Issues**
 
+The failed conversions are here: [failed conversions](HeuDiConv/err_subjects_conversion.txt)
+
 **3. Structural image processing using [fMRIPrep](https://github.com/nipreps/fmriprep) ver-20.2.7**
+
+3.1 Generate the subject-session file for fMRIPrep preprocessing like ```ppmi_subject_session.csv, sdMRI_subject_session_rerun1.csv``` and the bids filter for the specific session like ``````, tests and experiemnts in ```fMRIPrep_help.ipynb``` and ```get_subj_ses.py``` for running on server;
+
+3.2  
 
 **Issues**
 
