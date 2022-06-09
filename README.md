@@ -43,7 +43,6 @@ Checks for errors (ignores dwi related bval and bvec errors since they are not r
 Checks for subjects with repeat / multiple runs for a same modality/suffix.
 Checks if IntendedFor field is present in fmaps.
 
-
 **Issues**
 
 **3. Structural image processing using [fMRIPrep](https://github.com/nipreps/fmriprep) ver-20.2.7**
@@ -59,7 +58,12 @@ Note done yet.
 ## Resources and references
 
 1. Ross's Python interface for working with Parkinson's Progression Markers Initiative (PPMI) data [pypmi](https://github.com/rmarkello/pypmi);
-2. 
+2. [MRIQC](https://mriqc.readthedocs.io/en/stable/)
+3. [TractoFlow](https://github.com/scilus/tractoflow)
+4. [SPM](https://www.fil.ion.ucl.ac.uk/spm/)
+5. [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
+
+
     1. Prepare data: including check and fix the studyID problems with ```HeuDiConv/studyID_fixer.py```;
     2. Run1: HeuDiConv_0.9.0
         1. It has run1 and run2, there should be some summary statistics and exploration for heuristics after run1 before run2, and it should be compared with the download information for validations;
@@ -75,6 +79,3 @@ Note done yet.
     2. directions: dir-
     3. magnitude map: epi
 5. tbd 
-
-## References
-
