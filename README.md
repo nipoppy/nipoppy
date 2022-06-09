@@ -1,83 +1,81 @@
-# mr_proc 
-A workflow for standarized MR images processing. 
-*Process long and prosper.*
+# PPMI_processing
 
-## Objective
-This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to 
-    1. Standadized data i.e. convert DICOMs into BIDS
-    2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep
-    
-## Organization
-   - metadata: files to track mr_proc progress 
-   - scripts: helper code to setup and check status of mr_proc
-   - notebooks: helper notebooks for data wrangling
-   - workflow: code modules to exectute mr_proc stages and logging
+Repository for PPMI image processing codebase. All the imaging data were downloaded from [PPMI](https://www.ppmi-info.org/), mainly supporting 2 projects:
 
-## Workflow steps
+1. PD subtypying and progression, the corresponding version is **ver-sdMRI**, this is the base version dataset;
+2. PD bio-marker reproducibility study, the corresponding version is  [**ver-livingpark**](https://github.com/LivingPark-MRI), all the data in this study but not in **ver-sdMRI** are placed here;
+3. All the other versions will be created upon the creations and approvals of new PD related projects.
 
-### 0. Setup dataset directory structure
-   - mr_proc expects following directory tree with several *mandatory* subdirs and files. 
-   - You can run `scripts/mr_proc_setup.sh` to create this directory tree. 
-   - You can run `scripts/mr_proc_stutus.sh` check status of your dataset
+## Meatadata
+The participant.csv. 
 
-<img src="imgs/data_org.jpg" alt="Drawing" align="middle" width="1000px"/>
+## Modalities and protocols
+PPMI is a multi-model multi-site imaging collection, we only focus on structrual MRI (T1) and dissuion MRI (DWI). Due to the multi-site nature of PPMI, the protocols used in this data set is complex, and we manage these protocols with a [heuristic file]([HeuDiConv/Heuristics_PPMI_all.py](https://github.com/neurodatascience/mr_proc/blob/fa21c6803a5b11d7da8c0124d11f9fdeac813e79/HeuDiConv/Heuristics_PPMI_all.py)) for our dicoms to bids conversion, refer to [PPMI docs](https://www.ppmi-info.org/study-design/research-documents-and-sops) for detailed acquisition parameters.
 
-### 1. Initialize mr_proc tracker
-   - This creates proc_tracker.csv comprising participant IDs from participants.csv 
-       - This will track the progress of processing workflow and any issues we encounter. 
-       
-### 2. Gather MRI acquisition protocols
-   - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `mr_proc/workflow/dicom_org/scan_protocols.csv`
-   
-### 3. DICOM organization
-   - Scanner DICOM files are named and stored in various formats and locations. In this step we extract, copy, and rename DICOMs in a single directory for all participants with available imaging data. 
-       - Copy "raw dicoms"`<dataset>/scratch/raw_dicoms` directory.
-       - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<dataset>/clinical/demographics` 
-   - Copy a single participant (i.e. dicom dir) into `<dataset>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
-   
-### 4. BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
-   - Copy Heudiconv container into: `<dataset>/proc/containers`
-   - Run single participant tests: 
-       - Modify and run `./heudiconv_run1.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will generate list of available protocols from DICOM header. This script will use a test participant from test_data/dicom for processing. 
-       - sample cmd: `./heudiconv_run1.sh -m ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -d . -t 1` where, 
-            - m: mr_proc_root_dir, 
-            - p: participant_id
-            - s: session_id
-            - d: datastore_dir (only needed if your dicoms are symlinks)
-            - t: 1 implies a test run
+## Processing Steps
 
-       - Manually update the sample heurisitic file: `mr_proc/workflow/bids_conv/heuristic.py` using the enlisted protocols from run1. 
-       - Add updated heuristic file here: `<dataset>/proc/`
-       - Modify and run `./heudiconv_run2.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
-       - sample cmd: `./heudiconv_run2.sh -m ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -d . -t 1` where, 
-            - m: mr_proc_root_dir, 
-            - p: participant_id
-            - s: session_id
-            - d: datastore_dir (only needed if your dicoms are symlinks)
-            - t: 1 implies a test run
-         
-       - Run BIDS validator. There are several options listed [here](https://github.com/bids-standard/bids-validator). Make sure you match the version of Heudiconv and BIDS validator standard. 
-   - Run entire dataset (provided single participant test is successful) 
-       - Modify and run `./heudiconv_run1.sh` and `./heudiconv_run2.sh` with the `-t 0` flag. This will require you to specify your real DICOM and BIDS dir paths. 
-       - The above scripts are written to work for single participant (i.e. single DICOM dir). The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using heudiconv_run<>_sge.sh or heudiconv_run<>_slurm.sh queue submission scripts. 
-   - Run BIDS validator for the entire dataset.
-   - Heudiconv is not perfect! 
-       - Heuristic file will also need to be updated if your dataset has different protocols for different participants. Any custom post-hoc changes / fixes your make to BIDS datasets must be added to proc_tracker.csv under "notes" column. 
-       - You should also open an issue on this repo with the problems and solutions you encounter during processing. 
-   - Once dataset passes BIDS validation, update proc_tracker.csv with BIDS_status column marked as "complete". 
-       
-### 5. Run processing pipelines
-Curating dataset into BIDS format simplifies running several commonly used pipelines. Each pipeline follows similar steps:
-   - Specify pipeline container (i.e. Singularity image / recipe) 
-   - Run single participant test. This uses sample participant from /test_data/bids as input and generates output in the /test_data/<pipeline> dir. 
-   - Run entire dataset (provided single participant test is successful)
+**1. Datadownload and curation**
 
-#### [fMRIPrep](https://fmriprep.org/en/stable/) (including FreeSurfer) 
+1.1. The dataset were downloaded from PPMI imaging collections, and located in ```/data/pd/ppmi/downloads``` on BIC server;
 
-#### [MRIQC](https://mriqc.readthedocs.io/en/stable/)
+1.2 The dataset includes: a) The imaging data (raw file, the dicom images); 2) The downloading meta data (tsv file, metadata for this download); 3) The imaging metadata (zip file of xml files, descripters for all images); 4) The study data (demographics data, clinical assessments, etc.).
 
-#### [SPM](https://www.fil.ion.ucl.ac.uk/spm/)
+**Issues**
 
-#### [TractoFlow](https://github.com/scilus/tractoflow)
+We also have an automatic downloading piepline from livingPark project: [ppmi-scraper](https://github.com/LivingPark-MRI/ppmi-scraper) for automatic subject level download, but the downloading meta data is not avalible. 
 
-#### [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
+**2. BIDS conversion using [HeuDiConv](https://github.com/nipy/heudiconv) ver-0.9.0**
+
+2.1 Fix the potnetial studyID conflicts in dicoms with []();
+
+2.2 Reorganize dicom folders to ```PPMI/sub/session/images/*.dcm``` with [HeuDiConv/reorganize_session.py]
+
+2.3 Heudiconv Run_1 to enlist all the scans and protocols: heudiconv_run1.sh
+Example cmd: ```./heudiconv_run1.sh PD* 01 2018```
+
+2.4 Heudiconv Run_2 to create NIFTI files in BIDS format: heudiconv_run2.sh
+BIDS validator run_bids_val.sh - this uses Singularity image created from Docker validator
+
+Manual update of heurisitic file using the enlisted protocols from Run_1: Heuristics_qpn.py
+Heudiconv Run_2 to create NIFTI files in BIDS format: heudiconv_run2.sh
+BIDS validator run_bids_val.sh - this uses Singularity image created from Docker validator
+Checks for errors (ignores dwi related bval and bvec errors since they are not relevant to TractoFlow)
+Checks for subjects with repeat / multiple runs for a same modality/suffix.
+Checks if IntendedFor field is present in fmaps.
+
+**Issues**
+
+**3. Structural image processing using [fMRIPrep](https://github.com/nipreps/fmriprep) ver-20.2.7**
+
+**Issues**
+
+**4. Diffusion image processing using [TractoFlow](https://github.com/scilus/tractoflow) ver-???**
+
+Note done yet.
+
+**Issues**
+
+## Resources and references
+
+1. Ross's Python interface for working with Parkinson's Progression Markers Initiative (PPMI) data [pypmi](https://github.com/rmarkello/pypmi);
+2. [MRIQC](https://mriqc.readthedocs.io/en/stable/)
+3. [TractoFlow](https://github.com/scilus/tractoflow)
+4. [SPM](https://www.fil.ion.ucl.ac.uk/spm/)
+5. [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
+
+
+    1. Prepare data: including check and fix the studyID problems with ```HeuDiConv/studyID_fixer.py```;
+    2. Run1: HeuDiConv_0.9.0
+        1. It has run1 and run2, there should be some summary statistics and exploration for heuristics after run1 before run2, and it should be compared with the download information for validations;
+        2. prepare env: 1)in_files, 2)variables, 3)folders;
+        3. submit slurm jobs;
+        4. collect results: 1)outputs; 2)logs;
+    3. Run2: fMRIPrep_20.2.7
+        1. prepare env: 1)in_files, 2)variables, 3)folders;
+        2. submit slurm jobs;
+        3. collect results: 1)outputs; 2)logs;
+4. BIDS conventions
+    1. field map: fieldmap
+    2. directions: dir-
+    3. magnitude map: epi
+5. tbd 
