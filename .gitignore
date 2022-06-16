@@ -11,3 +11,6 @@ private_libs/.ipynb_checkpoints/private_utils-checkpoint.py
 HeuDiConv/__pycache__/*
 HeuDiConv/validation/.ipynb_checkpoints/livingpark-checkpoint.ipynb
 fMRIPrep/.ipynb_checkpoints/fMRIPrep_help-checkpoint.ipynb
+workflow/fMRIPrep/.ipynb_checkpoints/fMRIPrep_help-checkpoint.ipynb
+workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_simple_qc-checkpoint.py
+workflow/fMRIPrep/.ipynb_checkpoints/get_subj_ses-checkpoint.py
