@@ -14,3 +14,6 @@ fMRIPrep/.ipynb_checkpoints/fMRIPrep_help-checkpoint.ipynb
 workflow/fMRIPrep/.ipynb_checkpoints/fMRIPrep_help-checkpoint.ipynb
 workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_simple_qc-checkpoint.py
 workflow/fMRIPrep/.ipynb_checkpoints/get_subj_ses-checkpoint.py
+workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_anat_sub-checkpoint.slurm
+workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_anat-checkpoint.format
+workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_anat_sub-checkpoint.sh

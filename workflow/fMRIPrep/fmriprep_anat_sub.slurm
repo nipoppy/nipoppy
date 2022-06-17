@@ -22,7 +22,7 @@ CON_IMG=${WD_DIR}/container_images/fmriprep_${FMRIPREP_VER}.sif
 DERIVS_DIR=${DATA_DIR}_ses-${SES_ID}_fmriprep_anat_${FMRIPREP_VER}
 
 # Need to change according to projects
-CODE_DIR=${WD_DIR}/mr_proc/fMRIPrep
+CODE_DIR=${WD_DIR}/mr_proc/workflow/fMRIPrep
 BIDS_FILTER="anat_ses-${SES_ID}.json"
 echo ${SUB_ID}***${BIDS_FILTER}
 

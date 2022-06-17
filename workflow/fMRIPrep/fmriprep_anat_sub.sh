@@ -17,7 +17,7 @@ echo ${DATA_NAME}
 WD_DIR=${HOME}/scratch
 DATA_DIR=${WD_DIR}/${DATA_NAME}
 
-CODE_DIR=${WD_DIR}/mr_proc/fMRIPrep # change according to project
+CODE_DIR=${WD_DIR}/mr_proc/workflow/fMRIPrep # change according to project
 CODE_SLURM=${CODE_DIR}/fmriprep_anat_sub.slurm
 CODE_COLLECT=${CODE_DIR}/fmriprep_anat.format
 TEMPLATEFLOW_HOST_HOME=${WD_DIR}/templateflow
