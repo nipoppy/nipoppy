@@ -4,10 +4,12 @@
 # @Date:   2022-6-16
 """
 ======================================================
-Get dataset subject session list (PPMI) for fMRIPrep preproc:
-Input  dataset folder structure: PPMI_BIDS
+Do a simple QC of fMRIPrep preproc results, check whether the files in fMRIPrep_qc_dict and Freesurfer_qc_dict are present in the fMRIPrep output folder.
+Input:  --data       : fMRIPrep output folder;
+        --report_dir : Folder to save fMRIPrep reports;
+        --code_dir   : Folder to save the QC report.
 
-Output file:  folder structure: ppmi_subject_session.csv
+Output file:  mr_proc/workflow/fMRIPrep/<fMRIPrep-results>_report.csv.
 ======================================================
 """
 # libs and envs
@@ -65,9 +67,9 @@ def get_args():
     return args
 
 def main(dataset_dir, report_dir, code_dir):
-    root_str       = dataset_dir         # "/scratch/PPMI_ses-21_fmriprep_anat_20.2.7"
-    out_report_dir = report_dir          # '/scratch' # CC
-    out_csv_dir    = code_dir            # out_report_dir+'/mr_proc/workflow/fMRIPrep'
+    root_str       = dataset_dir       
+    out_report_dir = report_dir         
+    out_csv_dir    = code_dir           
     #
     root_dir = Path(root_str)
     fmriprep_dir = root_dir / "fmriprep"
@@ -98,9 +100,9 @@ def main(dataset_dir, report_dir, code_dir):
     
     # Creat basic output dataframe
     qc_df = pd.DataFrame({'dataset':[dataset_name]*n_sub,'session':[ses_name]*n_sub,'fmriprep_proc':[proc_name]*n_sub,'fMRIPrep_ver':[software_version]*n_sub}, index=sub_list)
-    for x in sub_withFolder: qc_df.loc[x,'sub_fMRIPrep']=1
-    for x in sub_withReport: qc_df.loc[x,'sub_report']=1
-    for x in sub_fsFolder: qc_df.loc[x,'sub_Freesurfer']=1
+    for x in sub_withFolder: qc_df.loc[x,'sub_fMRIPrep']=0
+    for x in sub_withReport: qc_df.loc[x,'sub_report']=0
+    for x in sub_fsFolder: qc_df.loc[x,'sub_Freesurfer']=0
     for x in sub_fsFolder: qc_df.loc[x,'Freesurfer_ver']=fs_ver
     
     # Setting run-1
@@ -109,11 +111,22 @@ def main(dataset_dir, report_dir, code_dir):
     # QC over subjects
     for sub_id_str in sub_list:
         # copy out fMRIPrep report
-        shutil.copytree(fmriprep_dir/sub_id_str/"figures", qc_report_out_dir/sub_id_str/"figures", dirs_exist_ok=True)
-        shutil.copytree(fmriprep_dir/sub_id_str/"log", qc_report_out_dir/sub_id_str/"figures", dirs_exist_ok=True)
-        shutil.copy2(fmriprep_dir/(sub_id_str+'.html'), qc_report_out_dir/(sub_id_str+'.html'))
+        if (fmriprep_dir/sub_id_str).is_dir():
+            qc_df.loc[sub_id_str, 'sub_fMRIPrep']=int(1)
+            if (fmriprep_dir/sub_id_str/"figures").is_dir():
+                shutil.copytree(fmriprep_dir/sub_id_str/"figures", qc_report_out_dir/sub_id_str/"figures", dirs_exist_ok=True)
+            if (fmriprep_dir/sub_id_str/"log").is_dir():
+                shutil.copytree(fmriprep_dir/sub_id_str/"log", qc_report_out_dir/sub_id_str/"log", dirs_exist_ok=True)
+        else:
+            qc_df.loc[sub_id_str, 'sub_fMRIPrep']=int(0)
+        # html file
+        if (fmriprep_dir/(sub_id_str+'.html')).is_file():
+            qc_df.loc[sub_id_str, 'sub_report']=int(1)
+            shutil.copy2(fmriprep_dir/(sub_id_str+'.html'), qc_report_out_dir/(sub_id_str+'.html'))
+        else:
+            qc_df.loc[sub_id_str, 'sub_report']=int(0)
         
-        ## qc fmriprep
+        ## QC fmriprep
         sub_img_dir = fmriprep_dir/sub_id_str/ses_full_str/'anat'
         for k, v in fMRIPrep_qc_dict.items():
             current_fmriprep_file_name = sub_id_str+'_'+ses_full_str+current_run_str+v
@@ -124,10 +137,13 @@ def main(dataset_dir, report_dir, code_dir):
                 qc_df.loc[sub_id_str, k]=int(0)
                 print(sub_id_str+' missing fMRIPrep results: '+current_fmriprep_file_name)
                 
-        ## qc freesurfer
+        ## QC freesurfer
         sub_fs_dir = fs_dir/sub_id_str/'stats'
+        if sub_fs_dir.is_dir():
+            qc_df.loc[sub_id_str, 'sub_Freesurfer']=int(1)
+        else:
+            qc_df.loc[sub_id_str, 'sub_Freesurfer']=int(0)
         for k, v in Freesurfer_qc_dict.items():
-        #print(str(sub_img_dir/(sub_id_str+'_'+ses_full_str+current_run_str+v)))
             current_fmriprep_file = sub_fs_dir/v
             if current_fmriprep_file.is_file():
                 qc_df.loc[sub_id_str, k]=int(1)
