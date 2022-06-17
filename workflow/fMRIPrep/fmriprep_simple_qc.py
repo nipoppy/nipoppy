@@ -32,8 +32,8 @@ fMRIPrep_qc_dict = {'t1_image': 'desc-preproc_T1w.nii.gz',
                     'mni_gm'  : 'space-MNI152NLin2009cAsym_res-2_label-GM_probseg.nii.gz', 
                     'mni_wm'  : 'space-MNI152NLin2009cAsym_res-2_label-WM_probseg.nii.gz'
                    }
-Freesurfer_qc_dict = {'aseg'  : 'aseg.stats',
-                      'wmparc':'wmparc.stats',
+Freesurfer_qc_dict = {'fs_aseg'  : 'aseg.stats',
+                      'fs_wmparc':'wmparc.stats',
                       # left hemisphere
                       'lh.a2009s' : 'lh.aparc.a2009s.stats',
                       'lh.DKT'    : 'lh.aparc.DKTatlas.stats',
@@ -138,9 +138,23 @@ def main(dataset_dir, report_dir, code_dir):
     ## zip and save results        
     shutil.make_archive(out_report_dir+'/'+report_folder_name, 'zip', str(qc_report_out_dir))
     # save QC report
-    qc_df.loc['Total']= qc_df.sum(numeric_only=True, axis=0)
+    qc_df.loc[:, 'fmriprep_rerun']=qc_df.loc[:,fMRIPrep_qc_dict.keys()].apply(lambda x: int(not all(x)), axis=1)
+    qc_df.loc[:, 'freesurfer_rerun']=qc_df.loc[:,Freesurfer_qc_dict.keys()].apply(lambda x: int(not all(x)), axis=1)
+    ordered_columns = ['dataset', 'session', 'fmriprep_proc', 'fMRIPrep_ver', 'sub_fMRIPrep',
+                       'sub_report', 'sub_Freesurfer', 'Freesurfer_ver', 'fmriprep_rerun', 'freesurfer_rerun', 
+                       't1_image', 't1_mask','aparcaseg', 'aseg', 'dseg', 'prob_csf', 'prob_gm', 'prob_wm', 
+                       'mni_T1', 'mni_mask', 'mni_dseg', 'mni_csf', 'mni_gm', 'mni_wm', 
+                       'fs_aseg', 'fs_wmparc',
+                       'lh.a2009s', 'lh.DKT', 'lh.pial', 'lh.aparc', 'lh.BA_exvivo', 'lh.BA_exvivo_th', 'lh.curv', 'lh.w-g.pct', 
+                       'rh.a2009s', 'rh.DKT', 'rh.pial', 'rh.aparc', 'rh.BA_exvivo', 'rh.BA_exvivo_th', 'rh.curv', 'rh.w-g.pct']
+    qc_df=qc_df[ordered_columns]
+    rerun_list=qc_df[(qc_df['fmriprep_rerun']==1)|(qc_df['freesurfer_rerun']==1)].index
+    if len(rerun_list)==0:
+        print(root_folder, " passed simple QC!")
+    else:
+        print('Subjects need to rerun for',root_folder, ':',rerun_list)
     qc_df.to_csv(qc_tab_file)
-    print("QC finished!")
+    
     return 1
 
 if __name__ == '__main__':
