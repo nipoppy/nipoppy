@@ -70,7 +70,9 @@ Example: ```./fmriprep_anat.format PPMI 0 20.2.7``` (parameters: dataset, sessio
 
 **Issues**
 
-The failed subjects are listed in [sdMRI_subject_session_rerun1](fMRIPrep/sdMRI_subject_session_rerun1.csv), rerunning.
+1. The failed subjects are listed in [sdMRI_subject_session_rerun1](fMRIPrep/sdMRI_subject_session_rerun1.csv), rerun finished;
+2. A simple QC script is created to check the output files in [fmriprep_simple_qc.py](workflow/fMRIPrep/fmriprep_simple_qc.py), it returns a rerun2 list [sdMRI_subject_session_rerun2.csv](workflow/fMRIPrep/sdMRI_subject_session_rerun2.csv), detailed QC report is stored in ```mr_proc/workflow/fMRIPrep/PPMI_ses-<session number>_fmriprep_anat_20.2.7_report.csv```;
+3. Rerun2 is running on CC.
 
 **4. Diffusion image processing using [TractoFlow](https://github.com/scilus/tractoflow) ver-???**
 
