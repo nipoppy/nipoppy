@@ -1,0 +1,3 @@
+,dataset,session,fmriprep_proc,fMRIPrep_ver,sub_fMRIPrep,sub_report,sub_Freesurfer,Freesurfer_ver,fmriprep_rerun,freesurfer_rerun,t1_image,t1_mask,aparcaseg,aseg,dseg,prob_csf,prob_gm,prob_wm,mni_T1,mni_mask,mni_dseg,mni_csf,mni_gm,mni_wm,fs_aseg,fs_wmparc,lh.a2009s,lh.DKT,lh.pial,lh.aparc,lh.BA_exvivo,lh.BA_exvivo_th,lh.curv,lh.w-g.pct,rh.a2009s,rh.DKT,rh.pial,rh.aparc,rh.BA_exvivo,rh.BA_exvivo_th,rh.curv,rh.w-g.pct
+sub-3853,PPMI,9,anat,20.2.7,1.0,1.0,1.0,6.0.1,0,0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+sub-3852,PPMI,9,anat,20.2.7,1.0,1.0,1.0,6.0.1,0,0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
