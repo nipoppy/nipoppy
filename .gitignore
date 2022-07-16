@@ -17,3 +17,8 @@ workflow/fMRIPrep/.ipynb_checkpoints/get_subj_ses-checkpoint.py
 workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_anat_sub-checkpoint.slurm
 workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_anat-checkpoint.format
 workflow/fMRIPrep/.ipynb_checkpoints/fmriprep_anat_sub-checkpoint.sh
+workflow/HeuDiConv/validation/.ipynb_checkpoints/validation_report-checkpoint.ipynb
+workflow/HeuDiConv/.ipynb_checkpoints/reorganize_session-checkpoint.py
+workflow/HeuDiConv/.ipynb_checkpoints/studyID_fixer-checkpoint.py
+workflow/HeuDiConv/.ipynb_checkpoints/validation_report-checkpoint.ipynb
+workflow/HeuDiConv/.ipynb_checkpoints/readme-checkpoint.md

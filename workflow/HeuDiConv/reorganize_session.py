@@ -11,19 +11,11 @@ Output dataset folder structure: dataset/ses/imageID/*.dcm
 Output dataset info table      : mr_proc/tab_data/*_dcminfo.csv
 ======================================================
 """
-
-import sys
 from pathlib import Path
 import glob
 import os
 import shutil
 import pandas as pd
-
-# setting up codes dir and working dir
-code_path_str='/data/pd/ppmi/mr_proc'
-project_dir_str = '/data/pd/ppmi/scratch/'
-code_dir = Path(code_path_str)
-sys.path.append(code_path_str)
 
 def get_args():
     import argparse
@@ -44,19 +36,20 @@ def del_dir_safe(folder_):
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-def main(dataset_name, tab_file_name):
+def main(dataset_dir, tab_file):
     """Entry point"""
     """1. input images"""
-    if 'PPMI' in dataset_name:
-        dataset_path = Path(project_dir_str+dataset_name) # change this line according to your local dir
-        dataset_out_path = Path(project_dir_str+dataset_name+'_SessionOrganized')
+    if 'PPMI' in dataset_dir:
+        # setting up codes dir and working dir
+        dataset_path = Path(dataset_dir) # change this line according to your local dir
+        dataset_out_path = Path(dataset_dir+'_SessionOrganized')
         #ppmi_img_dl_file    = code_dir / 'tab_data'  / 'PPMI_3T_sdMRI_3_07_2022.csv'  # Inormation from download database.
-        ppmi_img_dl_data    = pd.read_csv((code_dir/ 'tab_data' / tab_file_name), dtype=str, sep=',')
+        ppmi_img_dl_data    = pd.read_csv(tab_file, dtype=str, sep=',')
         # dicom info output
-        dataset_out_df_path = Path(code_dir / 'tab_data'  / (dataset_name+'_dcminfo.csv'))  # save information of dicom dataset
+        dataset_out_df_path = Path((tab_file[:-12]+'dcminfo.csv'))  # save information of dicom dataset
 
-    elif "ADNI" in dataset_name:
-        print('To be implemented for '+dataset_name)
+    elif "ADNI" in dataset_dir:
+        print('To be implemented for '+dataset_dir)
     else:
         print('To be implemented for default setting')
         
@@ -72,7 +65,6 @@ def main(dataset_name, tab_file_name):
     dcm_df = pd.DataFrame(data={'Image Data ID':[], 'Visit':[], 'Subject':[], 'Modality':[], 'Image Date':[]})
     # Organizing dataset according to sessions for each subject
     for subj_ in sub_list:
-        image_data_list=[]
         image_tab_df = ppmi_img_dl_data[ppmi_img_dl_data['Subject']==subj_].loc[:,['Image Data ID', 'Visit']].copy()
         # make new subject and session dir 
         sub_dir = dataset_out_path / subj_
@@ -123,7 +115,7 @@ def main(dataset_name, tab_file_name):
 
 if __name__ == '__main__':
     args=get_args()
-    dataset_name_=args.data; 
-    tab_file_name_=args.tab;   
-    print("The input data folder: ", dataset_name_, tab_file_name_)
-    main(dataset_name_, tab_file_name_)
+    dataset_dir_=args.data; 
+    tab_file_=args.tab;   
+    print("The input data folder: ", dataset_dir_, 'session info tab file:', tab_file_)
+    main(dataset_dir_, tab_file_)
