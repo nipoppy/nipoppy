@@ -21,9 +21,9 @@ def get_args():
 def main(DATA_DIR):
     """Entry point"""
     """1. input images"""
-    if DATA_DIR=='PPMI':
+    if 'PPMI'in DATA_DIR:
         alldcm = glob.glob(DATA_DIR + '/*/*/*/*/*.dcm')
-    elif DATA_DIR=='ADNI':
+    elif 'ADNI' in DATA_DIR:
         alldcm = glob.glob(DATA_DIR + '/*/*/*/*/*.dcm')
     else:
         alldcm = glob.glob(DATA_DIR + '/*/*/*/*/*.dcm')
