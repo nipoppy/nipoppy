@@ -1,11 +1,11 @@
 #!/bin/bash
 #$ -cwd
 #$ -N vincentq_heudiconv_r1
-#$ -o logs/heudiconv/vincentq_heudiconv_r1_out.log
-#$ -e logs/heudiconv/vincentq_heudiconv_r1_err.log
+#$ -o logs/heudiconv/vincentq_heudiconv_r1.out
+#$ -e logs/heudiconv/vincentq_heudiconv_r1.err
 #$ -m abe
 #$ -q origami.q
-#$ -l h_rt=1:00:00
+#$ -l h_rt=0:30:00
 #$ -l h_vmem=8G
 #$ -pe smp 4
 

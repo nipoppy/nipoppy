@@ -1,11 +1,11 @@
 #!/bin/bash
 #$ -cwd
 #$ -N vincentq_heudiconv_r2
-#$ -o logs/heudiconv/vincentq_heudiconv_r2_out.log
-#$ -e logs/heudiconv/vincentq_heudiconv_r2_err.log
+#$ -o logs/heudiconv/vincentq_heudiconv_r2.out
+#$ -e logs/heudiconv/vincentq_heudiconv_r2.err
 #$ -m abe
 #$ -q origami.q
-#$ -l h_rt=4:00:00
+#$ -l h_rt=1:00:00
 #$ -l h_vmem=8G
 #$ -pe smp 4
 
@@ -29,7 +29,7 @@ CON_IMG=${WD_DIR}/container_images/heudiconv_${HEUDICONV_VERSION}.sif
 SINGULARITY_MNT_DIR=/scratch
 SINGULARITY_DATA_DIR=${SINGULARITY_MNT_DIR}/${ORGANIZED_DATA_NAME}
 SINGULARITY_OUT_DIR=${SINGULARITY_MNT_DIR}/${DATA_NAME}_BIDS
-SINGULARITY_HEURISTICS=${SINGULARITY_MNT_DIR}/mr_proc/HeuDiConv/${HEURISTIC_FILE}
+SINGULARITY_HEURISTICS=${SINGULARITY_MNT_DIR}/mr_proc/workflow/HeuDiConv/${HEURISTIC_FILE}
 
 # Get subject string
 echo "Starting task ${SGE_TASK_ID}..."
