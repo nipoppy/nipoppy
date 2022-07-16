@@ -9,7 +9,7 @@ echo ${CHECK_DIR}
 if [ ${hpc_system} == 'sge' ]; then
 # working dir for BIC server sge
 WD_DIR="/data/pd/ppmi/scratch"
-CODE_DIR="/data/pd/ppmi/mr_proc/HeuDiConv"
+CODE_DIR="/data/pd/ppmi/scratch/mr_proc/HeuDiConv"
 else
 # working dir for CC
 WD_DIR=${HOME}/scratch 
