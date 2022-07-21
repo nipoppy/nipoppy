@@ -6,13 +6,15 @@ Repository for PPMI image processing codebase. All the imaging data were downloa
 2. PD bio-marker reproducibility study, the corresponding version is  [**ver-livingpark**](https://github.com/LivingPark-MRI), all the data in this study but not in **ver-sdMRI** are placed here;
 3. All the other versions will be created upon the creations and approvals of new PD related projects.
 
-## Meatadata (needs to be updated)
-The participant.csv. 
+## Meatadata
+Metadata regarding the dataset and different versions of this PPMI dataset (`metadata/*`). 
 
 ## Modalities and protocols
 PPMI is a multi-model multi-site imaging collection, we only focus on structrual MRI (T1) and dissuion MRI (DWI). Due to the multi-site nature of PPMI, the protocols used in this data set is complex, and we manage these protocols with a [heuristic file]([HeuDiConv/Heuristics_PPMI_all.py](https://github.com/neurodatascience/mr_proc/blob/fa21c6803a5b11d7da8c0124d11f9fdeac813e79/HeuDiConv/Heuristics_PPMI_all.py)) for our dicoms to bids conversion, refer to [PPMI docs](https://www.ppmi-info.org/study-design/research-documents-and-sops) for detailed acquisition parameters.
 
 ## Processing Steps
+
+<img src="imgs/PPMI_workflow.jpg" alt="Drawing" align="middle" width="500px"/>
 
 **1. Datadownload and curation**
 
@@ -24,9 +26,9 @@ PPMI is a multi-model multi-site imaging collection, we only focus on structrual
 
 We also have an automatic downloading piepline from livingPark project: [ppmi-scraper](https://github.com/LivingPark-MRI/ppmi-scraper) for automatic subject level download, but the downloading meta data is not avalible. 
 
-**2. BIDS conversion using [HeuDiConv](https://github.com/nipy/heudiconv) ver-0.9.0**
+**2. BIDS conversion using [HeuDiConv](https://github.com/nipy/heudiconv) ver-0.9.0** (`workflow/HeuDiConv/*`)
 
-2.1 **Fix the potnetial studyID conflicts** in dicoms with [studyID_fixer](HeuDiConv/studyID_fixer.py);
+2.1 **Fix the potnetial studyID conflicts** in dicoms with [studyID_fixer](workflow/HeuDiConv/studyID_fixer.py);
 
 Example: ```python studyID_fixer.py --data PPMI``` (parameters: dataset)
 
@@ -34,19 +36,19 @@ Example: ```python studyID_fixer.py --data PPMI``` (parameters: dataset)
 
 Example: ```python reorganize_session.py --data PPMI --tab PPMI_3T_sdMRI_3_07_2022.csv``` (parameters: dataset, downloading meta data table)
 
-2.3 **Heudiconv Run_1** to enlist all the scans and protocols: [heudiconv_run1.sh](HeuDiConv/heudiconv_run1.sh)
+2.3 **Heudiconv Run_1** to enlist all the scans and protocols: [heudiconv_run1.sh](workflow/HeuDiConv/heudiconv_run1.sh)
 
 Example: ```./heudiconv_run1.sh PPMI sge Y``` (parameters: dataset, HPC system, whether to clear existing folder)
 
-2.4 **Heudiconv Run_2** to create NIFTI files in BIDS format: [heudiconv_run2.sh](HeuDiConv/heudiconv_run2.sh)
+2.4 **Heudiconv Run_2** to create NIFTI files in BIDS format: [heudiconv_run2.sh](workflow/HeuDiConv/heudiconv_run2.sh)
 
 Example: ```./heudiconv_run2.sh PPMI sge T1``` (parameters: dataset, HPC system, heuristics file to use all/T1)
 
 2.5 **Heuristics files**:
 
-[PPMI_all images](HeuDiConv/Heuristics_PPMI_all.py)
+[PPMI_all images](workflow/HeuDiConv/Heuristics_PPMI_all.py)
 
-[PPMI_T1 only](HeuDiConv/Heuristics_PPMI_T1.py)
+[PPMI_T1 only](workflow/HeuDiConv/Heuristics_PPMI_T1.py)
 
 **X** Will run BIDS validator run_bids_val.sh - this uses Singularity image created from Docker validator [have not ran by now]
 
@@ -54,19 +56,19 @@ Example: ```./heudiconv_run2.sh PPMI sge T1``` (parameters: dataset, HPC system,
 
 The failed conversions are here: [failed conversions](HeuDiConv/err_subjects_conversion.txt)
 
-**3. Structural image processing using [fMRIPrep](https://github.com/nipreps/fmriprep) ver-20.2.7**
+**3. Structural image processing using [fMRIPrep](https://github.com/nipreps/fmriprep) ver-20.2.7** (`workflow/fMRIPrep/*`)
 
 3.1 Generate the subject-session file for fMRIPrep preprocessing like ```ppmi_subject_session.csv, sdMRI_subject_session_rerun1.csv``` and the bids filter for the specific session like ```anat_ses-0.json```, tests and experiemnts in ```fMRIPrep_help.ipynb``` and run ```get_subj_ses.py``` on server;
 
 3.2  Run anatomical only processing of fMRIPrep with **fmriprep_anat_sub.sh**;
 
-Dataset level preproc example: ```./fmriprep_anat_sub.sh PPMI Y ppmi_subject_session.csv``` (parameters: dataset, whether to clear existing folder, subject-session table)
+Dataset level preproc example: ```./mr_proc/workflow/fMRIPrep/fmriprep_anat_sub.sh PPMI Y ppmi_subject_session.csv``` (parameters: dataset, whether to clear existing folder, subject-session table)
 
-Subject level preproc example: ```./fmriprep_anat_sub.sh PPMI Y sub-xxxx 0``` (parameters: dataset, whether to clear existing folder, subject id, session id)
+Subject level preproc example: ```./mr_proc/workflow/fMRIPrep/fmriprep_anat_sub.sh PPMI Y sub-xxxx 0``` (parameters: dataset, whether to clear existing folder, subject id, session id)
 
 3.3  Currate results after preproc finsihed with **fmriprep_anat.format**, all the preprossed results will be zipped in 2 files (fmriprep, freesurfer) for easier data transfer.
 
-Example: ```./fmriprep_anat.format PPMI 0 20.2.7``` (parameters: dataset, session id, fMRIPrep version)
+Example: ```./mr_proc/workflow/fMRIPrep/fmriprep_anat.format PPMI 0 20.2.7``` (parameters: dataset, session id, fMRIPrep version)
 
 **Issues**
 
