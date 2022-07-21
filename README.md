@@ -3,15 +3,19 @@ A workflow for standarized MR images processing.
 *Process long and prosper.*
 
 ## Objective
-This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to 
+This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to
     1. Standadized data i.e. convert DICOMs into BIDS
     2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep
     
-## Organization
-   - metadata: files to track mr_proc progress 
+The scripts in mr_proc operate on a dataset directory with a specific subdir tree structure.
+
+<img src="imgs/mr_proc_dataset_org.jpg" alt="Drawing" align="middle" width="500px"/>
+
+The organization mr_proc code module is as follows:
    - scripts: helper code to setup and check status of mr_proc
-   - notebooks: helper notebooks for data wrangling
    - workflow: code modules to exectute mr_proc stages and logging
+   - metadata: files to track mr_proc progress
+   - notebooks: helper notebooks for data wrangling
 
 ## Workflow steps
 
