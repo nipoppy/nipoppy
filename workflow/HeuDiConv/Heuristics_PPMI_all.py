@@ -81,7 +81,62 @@ T1W_SERIES = [
     'Sagittal 3D Accelerated MPRAGE',
     'T1 REPEAT',
     'MPRAGE Repeat',
-    'SAG_3D_MPRAGE'
+    'SAG_3D_MPRAGE',
+    'T1-weighted,_3D_VOLUMETRIC', ## added from all T1 PPMI
+    '3D_SAG',
+    'FSPGR_3D_SAG',
+    'SAG_T1_MPRAGE',
+    'MPRAGE_2_ADNI',
+    'MPRAGE_Repeat',
+    'T1W_3D_FFE_COR',
+    'SAG',
+    'SAG_MPRAGE_GRAPPA2-NEW2016',
+    'MPRAGE_GRAPPA_2',
+    'AX_T1_SE_C+',
+    '3D_Sagittal_T1',
+    'Coronal',
+    'MPRAGE_SENSE2',
+    'sag_mprage',
+    'Accelerated_Sag_IR-FSPGR',
+    'SAG_SPGR',
+    'MPRAGE_GRAPPA2_adni_',
+    'Sag_MPRAGE_GRAPPA',
+    '3D_SAG_T1_MPRAGE',
+    'MPRAGE_ADNI',
+    'AX_3D_FSPGR_straight_brain_lab',
+    '3D_T1_MPRAGE',
+    'rpt_PPMI_MPRAGE_GRAPPA2',
+    'SAG_FSPGR_BRAVO',
+    '3D_T1',
+    'sag_3D_FSPGR_BRAVO_straight',
+    'mprage',
+    'AX_T1',
+    'Sagittal_3D_Accelerated_MPRAGE',
+    'MPRAGE_w__GRAPPA',
+    'SAG_T1_3D_FSPGR',
+    'SAG_3D_MPRAGE_RPT',
+    'SAG_T1_SE',
+    'axial_spgr',
+    'SAG_T1_3D_FSPGR_3RD_REPEAT',
+    'SAG_FSPGR_3D',
+    'MPRAGE_SAG',
+    'T1_repeat',
+    'T1_SAG',
+    'Sag_T1',
+    'T1_REPEAT',
+    'T1W_3D_FFE_AX',
+    '3D_T1-weighted',
+    'SAG_T1_3DMPRAGE',
+    'MPRAGE_T1_SAG',
+    'SAG_FSPGR_3D_VOLUMETRIC_T1',
+    'SAG_3D_T1_FSPGR',
+    'SAG_3D_T1',
+    'T1_Repeat',
+    'SAG_SPGR_3D',
+    'MPRAGE_GRAPPA2', 
+    'MPRAGE_-_Sag',
+    'SAG_3D_FSPGR_BRAVO_STRAIGHT',
+    'SAG_MPRAGE_GRAPPA',
 ]
 
 # converted
@@ -100,6 +155,8 @@ T2W_SERIES = [
     'T2',
     '*AX FSE T2', # added from livingpark
     'AXIAL  T2  FSE',
+    '_AX_FSE_T2',
+    ' 3-pl_T2__FGRE'
 ]
 
 # converted as T2 with acq-GREMT, according to study design
@@ -116,6 +173,25 @@ MT_SERIES = [
     'AXIAL 2D GRE-MT',
     'LOWER 2D GRE MT',
     '2D GRE MT MTC-NO', # added from living park
+    'NM-MT', # added from all T1 PPMI
+    '2D_GRE-NM',
+    '2D_GRE_-_MT',
+    'SAG_3D_SPGR',
+    'MPRAGE_w__GRAPPA_2',
+    'T1_AXIAL',
+    'sag',
+    'SAG_T1_3D_MPRAGE',
+    'AXIAL_T1_3D_MPRAGE',
+    '2D_GRE_MT',
+    'AXIAL_2D_GRE-MT',
+    '2DGRE-MT',
+    '2D_GRE-MT_RPT2', 
+    'AX_GRE_-MT',
+    '2D_GRE_MT_MTC-NO',
+    'AX_2D_GRE-MT',
+    '2D_GRE-NM_MT',
+    'AX_T2_GRE_MT',
+    'LOWER_2D_GRE_MT',
 ]
 
 # converted
@@ -141,6 +217,13 @@ PDT2_SERIES = [
     'AXIAL PD+T2 TSE',
     'AX T2 DE',
     't2 weighted double echo',
+    'Axial_PD_T2', ## Added from all T1 PPMI version
+    'AX_T2',
+    'Axial_PD-T2_TSE_FS',
+    'AX_PD_+_T2',
+    'Ax_PD__T2',
+    'Axial_PD-T2_TSE',
+    'AX_DUAL_TSE',
 ]
 
 # converted
@@ -181,6 +264,14 @@ FLAIR_SERIES = [
     'SAG CUBE FLAIR',
     'Sag 3D T2 FLAIR',
     'SAG 3D T2 FLAIR_',  # added from livingpark
+    'AX_T2_FLAIR', # added from all T1
+    'Sag_MPRAGE_GRAPPA_ND',
+    'FLAIR_LongTR_AX',
+    'MPRAGE_GRAPPA_ND',
+    'Ax_T2_FLAIR',
+    'SAG_MPRAGE_GRAPPA_ND',
+    'AX_FLAIR',
+    '3D_SAG_T1_MPRAGE_ND',
 ]
 
 # converted
@@ -290,7 +381,22 @@ UN_classified_SERIES = [
     'B0rf Map',
     'Field_mapping',
     'GRE B0',
-    'localizer'
+    'localizer',
+    'MPRAGE_64channel_p2', # Added from PPMI all T1 version
+    'COR',
+    'MPRAGE_ASO',
+    'B0rf_Map',
+    '3_plane',
+    'GRE_B0',
+    'MR',
+    'Transverse',
+    'TRA',
+    'MPRAGE_Phantom_GRAPPA2',
+    'Cal_Head_24',
+    'SURVEY',
+    '3_PLANE_LOC',
+    'MIDLINE_SAG_LOC',
+    ''
 ]
 
 def create_key(template, outtype=('nii.gz',), annotation_classes=None):
