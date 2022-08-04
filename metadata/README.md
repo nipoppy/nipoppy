@@ -40,4 +40,5 @@ PPMI metadata, including different PPMI versions for different projects and also
 
 ## Issues
 
-1) livingPark is currently based on the nifti files downloaded directly from PPMI portal.
+1) All bids and fMRIPrep results have not been BIDS validated;
+2) livingPark is currently based on the nifti files downloaded directly from PPMI portal.
