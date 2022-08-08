@@ -1,0 +1,505 @@
+slurmstepd: error: *** JOB 30785054 ON bc12327 CANCELLED AT 2022-08-08T04:39:52 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 59466.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 57127.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 75508.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 56582.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 57605.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 12593.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 58783.
+slurmstepd: error: *** JOB 30785143 ON bc12041 CANCELLED AT 2022-08-08T05:48:16 DUE TO TIME LIMIT ***
+	 [Node] Error on "_autorecon_surfs1" (/work/fmriprep_wf/single_subject_40733_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1)
+220806-21:52:36,570 nipype.workflow ERROR:
+220806-21:52:36,574 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _autorecon_surfs1.
+RuntimeError: subprocess exited with code 1.
+220806-21:52:38,566 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _autorecon_surfs1.
+RuntimeError: subprocess exited with code 1.
+220806-21:52:39,944 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 40733 (1). Check the HTML reports for details.
+exception calling callback for <Future at 0x2b328c5132e8 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol/result_autorecon2_vol.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol/result_autorecon2_vol.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol/result_autorecon2_vol.pklz
+slurmstepd: error: *** JOB 30785167 ON bc11857 CANCELLED AT 2022-08-08T06:01:54 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3832_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon2_vol" (/work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol)
+exception calling callback for <Future at 0x2b73fbf9fe10 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats1/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats1/result__parcstats1.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats1/result__parcstats1.pklz
+slurmstepd: error: *** JOB 30785169 ON bc11218 CANCELLED AT 2022-08-08T06:08:28 DUE TO TIME LIMIT ***
+	 [Node] Error on "_parcstats1" (/work/fmriprep_wf/single_subject_3832_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats1)
+exception calling callback for <Future at 0x2b7b874a0278 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms2/_inputs.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms2/result__std_tpms2.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms2/result__std_tpms2.pklz
+exception calling callback for <Future at 0x2b7b874ab048 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms1/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms1/result__std_tpms1.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms1/result__std_tpms1.pklz
+slurmstepd: error: *** JOB 30785185 ON bc11926 CANCELLED AT 2022-08-08T06:11:29 DUE TO TIME LIMIT ***
+	 [Node] Error on "_std_tpms1" (/work/fmriprep_wf/single_subject_3307_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_tpms/mapflow/_std_tpms1)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 57714.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 41289.
+	 [Node] Error on "fmriprep_wf.single_subject_3305_wf.anat_preproc_wf.anat_derivatives_wf.ds_surfs" (/work/fmriprep_wf/single_subject_3305_wf/anat_preproc_wf/anat_derivatives_wf/ds_surfs)
+220806-21:40:35,404 nipype.workflow ERROR:
+220806-21:40:35,409 nipype.workflow ERROR:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3305_wf/anat_preproc_wf/anat_derivatives_wf/ds_surfs/mapflow/_ds_surfs2/_node.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3305_wf/anat_preproc_wf/anat_derivatives_wf/ds_surfs/mapflow/_ds_surfs2/result__ds_surfs2.pklz
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3305_wf/anat_preproc_wf/anat_derivatives_wf/ds_surfs/result_ds_surfs.pklz.tmp'
+220807-00:17:18,381 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3305 (1). Check the HTML reports for details.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 101124.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 60003.
+slurmstepd: error: *** JOB 30785280 ON bc12201 CANCELLED AT 2022-08-08T07:08:05 DUE TO TIME LIMIT ***
+exception calling callback for <Future at 0x2ab1fb293fd0 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3462_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/cortribbon/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3462_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/cortribbon/result_cortribbon.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3462_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/cortribbon/result_cortribbon.pklz
+slurmstepd: error: *** JOB 30785283 ON bc12223 CANCELLED AT 2022-08-08T07:08:05 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 70179.
+220806-21:30:06,26 nipype.workflow ERROR:
+220806-21:30:06,30 nipype.workflow ERROR:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3464_wf/anat_preproc_wf/anat_reports_wf/_template_MNI152NLin2009cAsym/ds_std_t1w_report'
+exception calling callback for <Future at 0x2aad1cf90240 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_15761_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/13_add_gm_wm/result_13_add_gm_wm.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_15761_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/13_add_gm_wm/result_13_add_gm_wm.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_15761_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/13_add_gm_wm/result_13_add_gm_wm.pklz
+slurmstepd: error: *** JOB 30785305 ON bc21105 CANCELLED AT 2022-08-08T08:14:00 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_15761_wf.anat_preproc_wf.brain_extraction_wf.atropos_wf.13_add_gm_wm" (/work/fmriprep_wf/single_subject_15761_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/13_add_gm_wm)
+exception calling callback for <Future at 0x2b859afeef28 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_74158_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_74158_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_74158_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+slurmstepd: error: *** JOB 30785323 ON bc11522 CANCELLED AT 2022-08-08T08:36:32 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_74158_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon3" (/work/fmriprep_wf/single_subject_74158_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3)
+exception calling callback for <Future at 0x2b09ac3d7128 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/full_wm/result_full_wm.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/full_wm/result_full_wm.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/full_wm/result_full_wm.pklz
+exception calling callback for <Future at 0x2b09ac3d7da0 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/res_tmpl'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/res_tmpl/result_res_tmpl.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/res_tmpl/result_res_tmpl.pklz
+exception calling callback for <Future at 0x2b09ac3d79e8 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3390_wf/bidssrc/result_bidssrc.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3390_wf/bidssrc/result_bidssrc.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3390_wf/bidssrc/result_bidssrc.pklz
+slurmstepd: error: *** JOB 30785324 ON bc11625 CANCELLED AT 2022-08-08T08:36:32 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3390_wf.anat_preproc_wf.brain_extraction_wf.full_wm" (/work/fmriprep_wf/single_subject_3390_wf/anat_preproc_wf/brain_extraction_wf/full_wm)
+	 [Node] Error on "fmriprep_wf.single_subject_3390_wf.bidssrc" (/work/fmriprep_wf/single_subject_3390_wf/bidssrc)
+exception calling callback for <Future at 0x2ad47590bd30 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3323_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/_node.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3323_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/result_autorecon_surfs.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3323_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/result_autorecon_surfs.pklz
+slurmstepd: error: *** JOB 30785331 ON bc12023 CANCELLED AT 2022-08-08T08:40:02 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 12224.
+exception calling callback for <Future at 0x2b5193ca21d0 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3565_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3565_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3565_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+slurmstepd: error: *** JOB 30785354 ON bc12003 CANCELLED AT 2022-08-08T08:58:14 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3565_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon3" (/work/fmriprep_wf/single_subject_3565_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3)
+exception calling callback for <Future at 0x2b9431f1b5c0 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3569_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/fs2gii/mapflow/_fs2gii1/result__fs2gii1.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3569_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/fs2gii/mapflow/_fs2gii1/result__fs2gii1.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3569_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/fs2gii/mapflow/_fs2gii1/result__fs2gii1.pklz
+slurmstepd: error: *** JOB 30785366 ON bc11213 CANCELLED AT 2022-08-08T09:04:45 DUE TO TIME LIMIT ***
+	 [Node] Error on "_fs2gii1" (/work/fmriprep_wf/single_subject_3569_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/fs2gii/mapflow/_fs2gii1)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 57277.
+220806-21:30:06,162 nipype.workflow ERROR:
+220806-21:30:06,166 nipype.workflow ERROR:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3079_wf/anat_preproc_wf/anat_reports_wf/ds_t1w_dseg_mask_report'
+	 [Node] Error on "_autorecon_surfs1" (/work/fmriprep_wf/single_subject_3409_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1)
+220806-21:30:09,209 nipype.workflow ERROR:
+220806-21:30:09,216 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _autorecon_surfs1.
+RuntimeError: subprocess exited with code 1.
+220806-21:30:11,203 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _autorecon_surfs1.
+RuntimeError: subprocess exited with code 1.
+220806-21:30:12,550 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3409 (1). Check the HTML reports for details.
+slurmstepd: error: *** JOB 30785380 ON bc11838 CANCELLED AT 2022-08-08T09:10:46 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3871_wf.anat_preproc_wf.surface_recon_wf.autorecon1" (/work/fmriprep_wf/single_subject_3871_wf/anat_preproc_wf/surface_recon_wf/autorecon1)
+220806-18:32:55,377 nipype.workflow ERROR:
+220806-18:32:55,380 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-19:06:33,362 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-19:06:35,4 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3871 (1). Check the HTML reports for details.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 59121.
+	 [Node] Error on "fmriprep_wf.single_subject_54991_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon3" (/work/fmriprep_wf/single_subject_54991_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3)
+220806-21:40:46,20 nipype.workflow ERROR:
+220806-21:40:46,25 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon3.
+RuntimeError: subprocess exited with code 1.
+exception calling callback for <Future at 0x2ad1668d3c88 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3161_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/save_midthickness/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3161_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/save_midthickness/result_save_midthickness.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3161_wf/anat_preproc_wf/surface_recon_wf/gifti_surface_wf/save_midthickness/result_save_midthickness.pklz
+slurmstepd: error: *** JOB 30785396 ON bc12215 CANCELLED AT 2022-08-08T09:20:16 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 3425.
+exception calling callback for <Future at 0x2b7332f14978 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3660_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_mask/_report/report.rst'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3660_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_mask/result_std_mask.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3660_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/std_mask/result_std_mask.pklz
+exception calling callback for <Future at 0x2b7332f14240 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3660_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/tpl_moving/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3660_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/tpl_moving/result_tpl_moving.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3660_wf/anat_preproc_wf/anat_norm_wf/_template_MNI152NLin2009cAsym/tpl_moving/result_tpl_moving.pklz
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 74067.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 54156.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+	 [Node] Error on "_parcstats0" (/work/fmriprep_wf/single_subject_3559_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats0)
+220806-21:41:02,637 nipype.workflow ERROR:
+220806-21:41:02,642 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats0.
+RuntimeError: subprocess exited with code 1.
+	 [Node] Error on "_parcstats1" (/work/fmriprep_wf/single_subject_3559_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats1)
+220806-21:47:39,94 nipype.workflow ERROR:
+220806-21:47:39,97 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats1.
+RuntimeError: subprocess exited with code 1.
+220806-21:47:41,86 nipype.workflow ERROR:
+220806-21:47:41,87 nipype.workflow ERROR:
+220806-21:47:42,236 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3559 (2). Check the HTML reports for details.
+exception calling callback for <Future at 0x2b86fb87ffd0 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3530_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3530_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3530_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+slurmstepd: error: *** JOB 30785443 ON bc12234 CANCELLED AT 2022-08-08T10:38:41 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3530_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon3" (/work/fmriprep_wf/single_subject_3530_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3)
+	 [Node] Error on "_parcstats0" (/work/fmriprep_wf/single_subject_41488_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats0)
+220806-21:43:02,396 nipype.workflow ERROR:
+220806-21:43:02,401 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats0.
+RuntimeError: subprocess exited with code 1.
+220806-21:49:50,876 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats0.
+RuntimeError: subprocess exited with code 1.
+220806-21:49:52,892 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 41488 (1). Check the HTML reports for details.
+exception calling callback for <Future at 0x2b3740f70f60 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3523_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3523_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/result__autorecon_surfs1.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3523_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/result__autorecon_surfs1.pklz
+slurmstepd: error: *** JOB 30785452 ON bc11807 CANCELLED AT 2022-08-08T10:50:44 DUE TO TIME LIMIT ***
+	 [Node] Error on "_autorecon_surfs1" (/work/fmriprep_wf/single_subject_3523_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 106127.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+	 [Node] Error on "_parcstats0" (/work/fmriprep_wf/single_subject_3833_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats0)
+220806-21:45:19,328 nipype.workflow ERROR:
+220806-21:45:19,334 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats0.
+RuntimeError: subprocess exited with code 1.
+220806-21:52:13,782 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats0.
+RuntimeError: subprocess exited with code 1.
+220806-21:52:15,349 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3833 (1). Check the HTML reports for details.
+	 [Node] Error on "fmriprep_wf.single_subject_3866_wf.anat_preproc_wf.surface_recon_wf.autorecon1" (/work/fmriprep_wf/single_subject_3866_wf/anat_preproc_wf/surface_recon_wf/autorecon1)
+220806-15:09:11,635 nipype.workflow ERROR:
+220806-15:09:11,637 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-15:41:53,562 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-15:41:54,856 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3866 (1). Check the HTML reports for details.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 114615.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 72760.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 135579.
+220806-21:40:37,190 nipype.workflow ERROR:
+220806-21:40:37,193 nipype.workflow ERROR:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3831_wf/anat_preproc_wf/anat_derivatives_wf/ds_t1w_tpms/_node.pklz.tmp'
+exception calling callback for <Future at 0x2acbf1a3b908 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3191_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3191_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3191_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3/result_autorecon3.pklz
+slurmstepd: error: *** JOB 30785517 ON bc11505 CANCELLED AT 2022-08-08T11:46:45 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3191_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon3" (/work/fmriprep_wf/single_subject_3191_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon3)
+slurmstepd: error: *** JOB 30785519 ON bc11841 CANCELLED AT 2022-08-08T11:55:47 DUE TO TIME LIMIT ***
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+exception calling callback for <Future at 0x2aad6fbc1128 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_4082_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_4082_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/result__autorecon_surfs1.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_4082_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/result__autorecon_surfs1.pklz
+slurmstepd: error: *** JOB 30785526 ON bc11756 CANCELLED AT 2022-08-08T12:23:31 DUE TO TIME LIMIT ***
+	 [Node] Error on "_autorecon_surfs1" (/work/fmriprep_wf/single_subject_4082_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 101372.
+exception calling callback for <Future at 0x2b60e4f90dd8 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_5015_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/_inputs.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_5015_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/result_autorecon_surfs.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_5015_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/result_autorecon_surfs.pklz
+slurmstepd: error: *** JOB 30785534 ON bc11523 CANCELLED AT 2022-08-08T12:23:31 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 101048.
+exception calling callback for <Future at 0x2b5e18864be0 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_85236_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_85236_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/result__autorecon_surfs1.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_85236_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon_surfs/mapflow/_autorecon_surfs1/result__autorecon_surfs1.pklz
+slurmstepd: error: *** JOB 30785540 ON bc12209 CANCELLED AT 2022-08-08T12:48:51 DUE TO TIME LIMIT ***
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+slurmstepd: error: *** JOB 30785562 ON bc11757 CANCELLED AT 2022-08-08T14:14:49 DUE TO TIME LIMIT ***
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+exception calling callback for <Future at 0x2b82ca9945f8 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_4059_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol/command.txt'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_4059_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol/result_autorecon2_vol.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_4059_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol/result_autorecon2_vol.pklz
+slurmstepd: error: *** JOB 30785611 ON bc12246 CANCELLED AT 2022-08-08T14:36:47 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_4059_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon2_vol" (/work/fmriprep_wf/single_subject_4059_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol)
+	 [Node] Error on "fmriprep_wf.single_subject_3808_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon2_vol" (/work/fmriprep_wf/single_subject_3808_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol)
+220806-21:40:41,898 nipype.workflow ERROR:
+220806-21:40:41,902 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon2_vol.
+RuntimeError: subprocess exited with code 1.
+220806-21:40:43,896 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon2_vol.
+RuntimeError: subprocess exited with code 1.
+220806-21:40:46,46 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3808 (1). Check the HTML reports for details.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 100889.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 101492.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 50027.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 101747.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 102308.
+	 [Node] Error on "fmriprep_wf.single_subject_3869_wf.anat_preproc_wf.surface_recon_wf.autorecon1" (/work/fmriprep_wf/single_subject_3869_wf/anat_preproc_wf/surface_recon_wf/autorecon1)
+220806-19:44:20,837 nipype.workflow ERROR:
+220806-19:44:20,840 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-19:44:42,861 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-19:44:43,773 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3869 (1). Check the HTML reports for details.
+	 [Node] Error on "_t1w_conform0" (/work/fmriprep_wf/single_subject_3869_wf/anat_preproc_wf/anat_template_wf/t1w_conform/mapflow/_t1w_conform0)
+	 [Node] Error on "_t1w_conform2" (/work/fmriprep_wf/single_subject_3869_wf/anat_preproc_wf/anat_template_wf/t1w_conform/mapflow/_t1w_conform2)
+220806-19:15:04,186 nipype.workflow ERROR:
+220806-19:15:04,188 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _t1w_conform0.
+    raise BoundingBoxError("The field of view given "
+nilearn.image.resampling.BoundingBoxError: The field of view given by the target affine does not contain any of the data
+220806-19:15:04,192 nipype.workflow ERROR:
+220806-19:15:04,193 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _t1w_conform2.
+    raise BoundingBoxError("The field of view given "
+nilearn.image.resampling.BoundingBoxError: The field of view given by the target affine does not contain any of the data
+220806-19:15:12,191 nipype.workflow ERROR:
+220806-19:15:12,192 nipype.workflow ERROR:
+220806-19:15:12,859 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3869 (2). Check the HTML reports for details.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 59866.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 3544.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 115448.
+slurmstepd: error: *** JOB 30785692 ON bc11941 CANCELLED AT 2022-08-08T15:39:24 DUE TO TIME LIMIT ***
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+slurmstepd: error: *** JOB 30785706 ON bc11808 CANCELLED AT 2022-08-08T15:46:22 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 3407.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 102484.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 57447.
+exception calling callback for <Future at 0x2b6b1fc196d8 state=finished raised FileNotFoundError>
+AttributeError: 'Bunch' object has no attribute 'copyable_trait_names'
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_60023_wf/anat_preproc_wf/brain_extraction_wf/apply_mask/result_apply_mask.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_60023_wf/anat_preproc_wf/brain_extraction_wf/apply_mask/result_apply_mask.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_60023_wf/anat_preproc_wf/brain_extraction_wf/apply_mask/result_apply_mask.pklz
+slurmstepd: error: *** JOB 30785729 ON bc12042 CANCELLED AT 2022-08-08T16:20:41 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_60023_wf.anat_preproc_wf.brain_extraction_wf.apply_mask" (/work/fmriprep_wf/single_subject_60023_wf/anat_preproc_wf/brain_extraction_wf/apply_mask)
+slurmstepd: error: *** JOB 30785730 ON bc11506 CANCELLED AT 2022-08-08T16:23:43 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 42379.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+	 [Node] Error on "fmriprep_wf.single_subject_3865_wf.anat_preproc_wf.surface_recon_wf.autorecon1" (/work/fmriprep_wf/single_subject_3865_wf/anat_preproc_wf/surface_recon_wf/autorecon1)
+220806-20:54:53,158 nipype.workflow ERROR:
+220806-20:54:53,160 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-21:24:59,733 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon1.
+RuntimeError: subprocess exited with code 1.
+220806-21:25:01,197 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3865 (1). Check the HTML reports for details.
+exception calling callback for <Future at 0x2b99ad4514a8 state=finished raised FileNotFoundError>
+    with self.open(mode='w', encoding=encoding, errors=errors) as f:
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_75564_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/23_depad_mask/_report/report.rst'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_75564_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/23_depad_mask/result_23_depad_mask.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_75564_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/23_depad_mask/result_23_depad_mask.pklz
+slurmstepd: error: *** JOB 30785760 ON bc11931 CANCELLED AT 2022-08-08T17:01:16 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 41438.
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+sqlite3.OperationalError: unable to open database file
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: http://sqlalche.me/e/13/e3q8)
+	 [Node] Error on "fmriprep_wf.single_subject_3080_wf.anat_preproc_wf.surface_recon_wf.autorecon_resume_wf.autorecon2_vol" (/work/fmriprep_wf/single_subject_3080_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/autorecon2_vol)
+220806-21:30:09,57 nipype.workflow ERROR:
+220806-21:30:09,60 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon2_vol.
+RuntimeError: subprocess exited with code 1.
+220806-21:30:11,55 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node autorecon2_vol.
+RuntimeError: subprocess exited with code 1.
+220806-21:30:11,816 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 3080 (1). Check the HTML reports for details.
+exception calling callback for <Future at 0x2b3074a534e0 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/06_get_gm'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/06_get_gm/result_06_get_gm.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/06_get_gm/result_06_get_gm.pklz
+exception calling callback for <Future at 0x2b3076f43d68 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/05_get_wm/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/05_get_wm/result_05_get_wm.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/05_get_wm/result_05_get_wm.pklz
+exception calling callback for <Future at 0x2b3074a53ac8 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/10_me_csf/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/10_me_csf/result_10_me_csf.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/10_me_csf/result_10_me_csf.pklz
+exception calling callback for <Future at 0x2b3094f8f0f0 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/27_depad_csf/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/27_depad_csf/result_27_depad_csf.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3069_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/27_depad_csf/result_27_depad_csf.pklz
+slurmstepd: error: *** JOB 30785766 ON bc11720 CANCELLED AT 2022-08-08T17:38:42 DUE TO TIME LIMIT ***
+exception calling callback for <Future at 0x2b3bdd11ba20 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3310_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/01_atropos/result_01_atropos.pklz.tmp'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3310_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/01_atropos/result_01_atropos.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3310_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/01_atropos/result_01_atropos.pklz
+slurmstepd: error: *** JOB 30785771 ON bc11747 CANCELLED AT 2022-08-08T17:38:42 DUE TO TIME LIMIT ***
+	 [Node] Error on "fmriprep_wf.single_subject_3310_wf.anat_preproc_wf.brain_extraction_wf.atropos_wf.01_atropos" (/work/fmriprep_wf/single_subject_3310_wf/anat_preproc_wf/brain_extraction_wf/atropos_wf/01_atropos)
+exception calling callback for <Future at 0x2ad0c1f1b828 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3168_wf/anat_preproc_wf/brain_extraction_wf/inu_n4_final/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3168_wf/anat_preproc_wf/brain_extraction_wf/inu_n4_final/result_inu_n4_final.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3168_wf/anat_preproc_wf/brain_extraction_wf/inu_n4_final/result_inu_n4_final.pklz
+exception calling callback for <Future at 0x2ad0c1f1b160 state=finished raised FileNotFoundError>
+OSError: [Errno 122] Disk quota exceeded: '/work/fmriprep_wf/single_subject_3168_wf/anat_preproc_wf/brain_extraction_wf/thr_brainmask/_report'
+    raise FileNotFoundError(results_file)
+FileNotFoundError: /work/fmriprep_wf/single_subject_3168_wf/anat_preproc_wf/brain_extraction_wf/thr_brainmask/result_thr_brainmask.pklz
+FileNotFoundError: /work/fmriprep_wf/single_subject_3168_wf/anat_preproc_wf/brain_extraction_wf/thr_brainmask/result_thr_brainmask.pklz
+slurmstepd: error: *** JOB 30785773 ON bc11747 CANCELLED AT 2022-08-08T17:38:42 DUE TO TIME LIMIT ***
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 120549.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 71452.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 71679.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 100878.
+                [--error-on-aroma-warnings] [-v]
+fmriprep: error: One or more participant labels were not found in the BIDS directory: 116531.
