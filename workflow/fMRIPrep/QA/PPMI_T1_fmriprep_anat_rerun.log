@@ -1,0 +1,11 @@
+slurmstepd: error: *** JOB 30841601 ON bc12139 CANCELLED AT 2022-08-11T12:38:37 ***
+	 [Node] Error on "_parcstats1" (/work/fmriprep_wf/single_subject_41283_wf/anat_preproc_wf/surface_recon_wf/autorecon_resume_wf/parcstats/mapflow/_parcstats1)
+220809-22:00:23,997 nipype.workflow ERROR:
+220809-22:00:24,0 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats1.
+RuntimeError: subprocess exited with code 1.
+220809-22:00:25,991 nipype.workflow ERROR:
+nipype.pipeline.engine.nodes.NodeExecutionError: Exception raised while executing Node _parcstats1.
+RuntimeError: subprocess exited with code 1.
+220809-22:00:27,628 cli ERROR:
+	 Preprocessing did not finish successfully. Errors occurred while processing data from participants: 41283 (1). Check the HTML reports for details.
