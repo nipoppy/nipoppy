@@ -9,13 +9,13 @@ WD_DIR=${HOME}/scratch
 
 #FMRIPREP_VER=20.2.7
 DERIVS_DIR_NAME=${DATA_NAME}_ses-${SES_ID}_fmriprep_anat_${FMRIPREP_VER}
-LOG_DIR_NAME=${DATA_NAME}_fmriprep_anat_slurm_log
+#LOG_DIR_NAME=${DATA_NAME}_fmriprep_anat_slurm_log
 
-mv fmriprep_subj_vince-* ${LOG_DIR_NAME}
+#mv fmriprep_subj_vince-* ${LOG_DIR_NAME}
 
 #2 collect output
 tar -czvf res/${DERIVS_DIR_NAME}_fmriprep.tar.gz ${DERIVS_DIR_NAME}/fmriprep
 tar -czvf res/${DERIVS_DIR_NAME}_freesurfer.tar.gz ${DERIVS_DIR_NAME}/freesurfer-6.0.1
-tar -czvf res/${LOG_DIR_NAME}.tar.gz  ${LOG_DIR_NAME}
+#tar -czvf res/${LOG_DIR_NAME}.tar.gz  ${LOG_DIR_NAME}
 
 echo "Step5: fmriprep for ${DATA_NAME} Finished"
