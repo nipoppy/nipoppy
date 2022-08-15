@@ -1,0 +1,11 @@
+Session,Months,Description
+0,-3,'Screening'
+1,0,'Baseline'
+5,12,'Month 12'
+7,24,'Month 24'
+9,36,'Month 36'
+11,48,'Month 48'
+30,-1,'Premature Withdrawal'
+21,-1,'Symptomatic Therapy'
+90,-1,'Unscheduled Visit 01'
+91,-1,'Unscheduled Visit 02'
