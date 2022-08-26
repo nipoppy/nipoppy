@@ -9,7 +9,7 @@ This repo will contain container recipes and run scripts to manage MR data organ
     
 The scripts in mr_proc operate on a dataset directory with a specific subdir tree structure.
 
-<img src="imgs/mr_proc_dataset_org.jpg" alt="Drawing" align="middle" width="500px"/>
+<img src="imgs/mr_proc_data_proc_org.jpg" alt="Drawing" align="middle" width="500px"/>
 
 The organization mr_proc code module is as follows:
    - scripts: helper code to setup and check status of mr_proc
@@ -24,7 +24,7 @@ The organization mr_proc code module is as follows:
    - You can run `scripts/mr_proc_setup.sh` to create this directory tree. 
    - You can run `scripts/mr_proc_stutus.sh` check status of your dataset
 
-<img src="imgs/data_org.jpg" alt="Drawing" align="middle" width="1000px"/>
+<img src="imgs/mr_proc_data_dir_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
 ### 1. Initialize mr_proc tracker
    - This creates proc_tracker.csv comprising participant IDs from participants.csv 
@@ -36,28 +36,28 @@ The organization mr_proc code module is as follows:
 ### 3. DICOM organization
    - Scanner DICOM files are named and stored in various formats and locations. In this step we extract, copy, and rename DICOMs in a single directory for all participants with available imaging data. 
        - Copy "raw dicoms"`<dataset>/scratch/raw_dicoms` directory.
-       - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<dataset>/clinical/demographics` 
+       - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<dataset>/tabular/demographics` 
    - Copy a single participant (i.e. dicom dir) into `<dataset>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
    
 ### 4. BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
    - Copy Heudiconv container into: `<dataset>/proc/containers`
    - Run single participant tests: 
        - Modify and run `./heudiconv_run1.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will generate list of available protocols from DICOM header. This script will use a test participant from test_data/dicom for processing. 
-       - sample cmd: `./heudiconv_run1.sh -m ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -d . -t 1` where, 
-            - m: mr_proc_root_dir, 
+       - sample cmd: `./heudiconv_run1.sh -d ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -l . -t 1` where, 
+            - d: dataset_root_dir 
             - p: participant_id
             - s: session_id
-            - d: datastore_dir (only needed if your dicoms are symlinks)
+            - l: symlink_datastore_dir (only needed if your dicoms are symlinks)
             - t: 1 implies a test run
 
        - Manually update the sample heurisitic file: `mr_proc/workflow/bids_conv/heuristic.py` using the enlisted protocols from run1. 
        - Add updated heuristic file here: `<dataset>/proc/`
        - Modify and run `./heudiconv_run2.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
-       - sample cmd: `./heudiconv_run2.sh -m ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -d . -t 1` where, 
-            - m: mr_proc_root_dir, 
+       - sample cmd: `./heudiconv_run2.sh -d ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -l . -t 1` where, 
+            - d: dataset_root_dir 
             - p: participant_id
             - s: session_id
-            - d: datastore_dir (only needed if your dicoms are symlinks)
+            - l: symlink_datastore_dir (only needed if your dicoms are symlinks)
             - t: 1 implies a test run
          
        - Run BIDS validator. There are several options listed [here](https://github.com/bids-standard/bids-validator). Make sure you match the version of Heudiconv and BIDS validator standard. 

@@ -1,26 +1,26 @@
 #!/bin/bash
 
 if [ "$#" -ne 10 ]; then
-  echo "Please provide MR_PROC_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
+  echo "Please provide DATASET_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
 
-  echo "Sample cmd: ./heudiconv_run1.sh -m <mr_proc_root> -p <sub-01> -s <01> -d <./> -t 1"
+  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <sub-01> -s <01> -l <./> -t 1"
   exit 1
 fi
 
-while getopts m:p:s:d:t: flag
+while getopts d:p:s:l:t: flag
 do
     case "${flag}" in
-        m) MR_PROC_ROOT=${OPTARG};;
+        d) DATASET_ROOT=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
         s) SES_ID=${OPTARG};;
-        d) DATASTORE=${OPTARG};;
+        l) DATASTORE=${OPTARG};;
         t) TEST_RUN=${OPTARG};;
     esac
 done
 
 # Container
-SINGULARITY_IMG="$MR_PROC_ROOT/proc/containers/heudiconv_cb2fd91.sif"
+SINGULARITY_IMG="$DATASET_ROOT/proc/containers/heudiconv_cb2fd91.sif"
 SINGULARITY_PATH=singularity
 
 if [ "$TEST_RUN" -eq 1 ]; then
@@ -33,7 +33,7 @@ else
     BIDS_DIR="bids/" #Relative to WD (local or singularity)
 fi
 
-echo "MR_PROC_ROOT: ${MR_PROC_ROOT}"
+echo "DATASET_ROOT: ${DATASET_ROOT}"
 echo "PARTICIPANT_ID: ${PARTICIPANT_ID}, Session_id: ${SES_ID}"
 
 # singularity folders
@@ -54,7 +54,7 @@ SINGULARITY_DATA_STORE="/data"
 
 echo "Heudiconv Run1 started..."
 
-$SINGULARITY_PATH run -B ${MR_PROC_ROOT}:${SINGULARITY_WD} \
+$SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
 heudiconv  \
 -d $SINGULARITY_DICOM_DIR/{subject}/* \

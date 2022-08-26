@@ -28,7 +28,7 @@ fi
 
 echo ""
 echo "Checking level-1 subdirs ..."
-for i in {scratch,backups,downloads,proc,test_data,clinical,dicom,bids,derivatives,releases}; do
+for i in {scratch,backups,downloads,proc,test_data,tabular,dicom,bids,derivatives,releases}; do
     if [ -d $MR_PROC_ROOT/$i ]; then
         echo "  $MR_PROC_ROOT/$i exists"
     else    
@@ -43,17 +43,17 @@ done
 echo ""
 echo "Checking participants list..."
 
-if [ -f $MR_PROC_ROOT/clinical/demographics/participants.csv ]; then
+if [ -f $MR_PROC_ROOT/tabular/demographics/participants.csv ]; then
     echo "  participants.csv exists"
 
-    N_PARTICIPANTS=`cat $MR_PROC_ROOT/clinical/demographics/participants.csv | wc -l`
+    N_PARTICIPANTS=`cat $MR_PROC_ROOT/tabular/demographics/participants.csv | wc -l`
     #ignore header
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
 
 echo "  number of participants in participant list: $N_PARTICIPANTS"
 
 else    
-    echo "  participants.csv is MISSING! Please add it inside $MR_PROC_ROOT/clinical/demographics/"
+    echo "  participants.csv is MISSING! Please add it inside $MR_PROC_ROOT/tabular/demographics/"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 

@@ -4,17 +4,17 @@ if [ "$#" -ne 10 ]; then
   echo "Please provide MR_PROC_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
   echo "Note that heuristic file needs to inside: $MR_PROC_ROOT/workflow/bids_conv"
-  echo "Sample cmd: ./heudiconv_run1.sh -m <mr_proc_root> -p <sub-01> -s <01> -d <./> -t 1"
+  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <sub-01> -s <01> -l <./> -t 1"
   exit 1
 fi
 
-while getopts m:p:s:d:t: flag
+while getopts d:p:s:l:t: flag
 do
     case "${flag}" in
-        m) MR_PROC_ROOT=${OPTARG};;
+        d) MR_PROC_ROOT=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
         s) SES_ID=${OPTARG};;
-        d) DATASTORE=${OPTARG};;
+        l) DATASTORE=${OPTARG};;
         t) TEST_RUN=${OPTARG};;
     esac
 done
