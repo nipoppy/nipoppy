@@ -8,7 +8,7 @@ In order to run the MRIQC pipeline and exclude scans with the acquisition label,
 NOTE: Singularity v2.6 is used for compatibility with BIC but this may change in the future.
 
 ## Running MRIQC Scripts
-In order run the MRIQC pipeline, use ```run_mriqc_sge.sh``` and pass in the data directory, the results directory and the path with the participants list as arguments as shown below:
+In order run the MRIQC pipeline, use ```run_mriqc_sge.sh``` and pass in the absolute path to the data directory, the absolute path to the results directory and the path with the participants list as arguments as shown below:
 
 ```qsub run_mriqc_sge.sh -d DATA_DIR -r RESULTS_DIR -p PARTICIPANT_LIST```
 
