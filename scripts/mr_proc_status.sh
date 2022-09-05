@@ -15,6 +15,7 @@ DATASET=$2
 DATASET_ROOT=$1/$2
 
 N_ERRORS=0
+N_WARNINGS=0
 
 #########
 
@@ -51,12 +52,16 @@ if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
 
     echo "  checking expected number of participants with BIDS data"
-    N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/bids/participants.csv | grep "sub-" | wc -l`
+    N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
     #ignore header
     N_BIDS_EXPECT_PARTICIPANTS=$((N_BIDS_EXPECT_PARTICIPANTS - 1))
 
 echo "  number of all participants in participant list: $N_PARTICIPANTS"
 echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
+
+    if [ $N_PARTICIPANTS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
+        N_WARNINGS=$((N_WARNINGS + 1))
+    fi
 
 else    
     echo "  participants.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
@@ -115,10 +120,13 @@ if [ -d $DATASET_ROOT/derivatives ]; then
             echo "proc status file for $proc_pipe exists"
         else
             echo "proc status file for $proc_pipe MISSING"
+            N_WARNINGS=$((N_WARNINGS + 1))
         fi
+    done 
 else
     echo "  No processing pipelines found since derivatives subdir is MISSING"
 fi
 
 echo ""
 echo "Number of errors found: $N_ERRORS"
+echo "Number of warnings found: $N_WARNINGS"
