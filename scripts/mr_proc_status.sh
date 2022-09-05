@@ -23,7 +23,7 @@ echo "Checking mr_proc root dir ..."
 if [ -d $DATASET_ROOT ]; then
     echo "  mr_proc root dir: $DATASET_ROOT exists"
 else
-    echo "  mr_proc root dir: $DATASET_ROOT is MISSING!"
+    echo "  ERRORS: mr_proc root dir: $DATASET_ROOT is MISSING!"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 
@@ -33,7 +33,7 @@ for i in {scratch,backups,downloads,proc,test_data,tabular,dicom,bids,derivative
     if [ -d $DATASET_ROOT/$i ]; then
         echo "  $DATASET_ROOT/$i exists"
     else    
-        echo "  $DATASET_ROOT/$i is MISSING!"
+        echo "  ERRORS: $DATASET_ROOT/$i is MISSING!"
         N_ERRORS=$((N_ERRORS + 1))
     fi;
 
@@ -53,18 +53,17 @@ if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
 
     echo "  checking expected number of participants with BIDS data"
     N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
-    #ignore header
-    N_BIDS_EXPECT_PARTICIPANTS=$((N_BIDS_EXPECT_PARTICIPANTS - 1))
 
 echo "  number of all participants in participant list: $N_PARTICIPANTS"
 echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
 
     if [ $N_PARTICIPANTS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
+        echo "WARNING: number of total and BIDS particiants are not equal!"
         N_WARNINGS=$((N_WARNINGS + 1))
     fi
 
 else    
-    echo "  participants.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
+    echo "  ERROR: participants.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 
@@ -105,6 +104,11 @@ fi
 echo "  number of dicoms scan dirs: $N_DICOMS"
 echo "  number of bids subject dirs: $N_BIDS"
 
+if [ $N_BIDS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
+    echo "ERROR: number of expected and available BIDS participants do no match!"
+    N_ERRORS=$((N_ERRORS + 1))
+fi
+
 #########
 
 echo ""
@@ -119,12 +123,12 @@ if [ -d $DATASET_ROOT/derivatives ]; then
         if [ -f $DATASET_ROOT/derivatives/$proc_pipe/proc_status.csv ]; then
             echo "proc status file for $proc_pipe exists"
         else
-            echo "proc status file for $proc_pipe MISSING"
+            echo "WARNING: proc status file for $proc_pipe MISSING"
             N_WARNINGS=$((N_WARNINGS + 1))
         fi
     done 
 else
-    echo "  No processing pipelines found since derivatives subdir is MISSING"
+    echo "  WARNING: No processing pipelines found since derivatives subdir is MISSING"
 fi
 
 echo ""
