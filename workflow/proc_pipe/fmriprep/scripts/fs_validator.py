@@ -12,10 +12,6 @@ Script to validate freesurfer output
 #Author: nikhil153
 #Date: 27-July-2022
 
-
-# Sample cmd:
-
-
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
 HEMISPHERES = ["lh","rh"]
@@ -57,23 +53,29 @@ def check_mri(mri_dir):
 def check_label(label_dir):
     status_msg = "Pass"
     for parc in PARCELS:
-        for hemi in HEMISPHERES:
-            filepath = Path(f"{label_dir}/{hemi}.{parc}.annot")
-            filepath_status = Path.is_file(filepath)
-            if not filepath_status:
-                status_msg = f"{hemi}.{parc}.annot not found"
-                break;
+        if status_msg == "Pass":
+            for hemi in HEMISPHERES:
+                filepath = Path(f"{label_dir}/{hemi}.{parc}.annot")
+                filepath_status = Path.is_file(filepath)
+                if not filepath_status:
+                    status_msg = f"{hemi}.{parc}.annot not found"
+                    break;
+        else:
+            break;
     return status_msg
 
 def check_stats(stats_dir):
     status_msg = "Pass"
     for parc in PARCELS:
-        for hemi in HEMISPHERES:
-            filepath = Path(f"{stats_dir}/{hemi}.{parc}.stats")
-            filepath_status = Path.is_file(filepath)
-            if not filepath_status:
-                status_msg = f"{hemi}.{parc}.stats not found"
-                break;
+        if status_msg == "Pass":
+            for hemi in HEMISPHERES:
+                filepath = Path(f"{stats_dir}/{hemi}.{parc}.stats")
+                filepath_status = Path.is_file(filepath)
+                if not filepath_status:
+                    status_msg = f"{hemi}.{parc}.stats not found"
+                    break;
+        else:
+            break;
 
     # check aseg
     filepath = Path(f"{stats_dir}/aseg.stats")
@@ -86,15 +88,17 @@ def check_stats(stats_dir):
 def check_surf(surf_dir):
     status_msg = "Pass"
     for measure in SURF_MEASURES:
-        for hemi in HEMISPHERES:
-            filepath = Path(f"{surf_dir}/{hemi}.{measure}")
-            filepath_status = Path.is_file(filepath)
-            if not filepath_status:
-                status_msg = f"{hemi}.{measure} not found"
-                break;
+        if status_msg == "Pass":
+            for hemi in HEMISPHERES:
+                filepath = Path(f"{surf_dir}/{hemi}.{measure}")
+                filepath_status = Path.is_file(filepath)
+                if not filepath_status:
+                    status_msg = f"{hemi}.{measure} not found"
+                    break;
+        else:
+            break;
+            
     return status_msg
-
-
 
 def check_output(subject_dir):
 
@@ -123,6 +127,7 @@ if __name__ == "__main__":
     # Read from csv
     fs_output_dir = args.fs_output_dir
     participants_list = args.participants_list
+    status_log_dir = fs_output_dir + "/status_logs/"
 
     print(f"\nChecking subject ids and dirs...")
     # Check number of participants from the list
@@ -173,20 +178,20 @@ if __name__ == "__main__":
 
     if n_failed > 0:
         failed_participant_ids = status_df[status_df["FS_complete"]==False]["participant_id"].values
-        subject_list = "./failed_subject_ids.txt"
+        subject_list = f"{status_log_dir}/failed_subject_ids.txt"
         with open(f'{subject_list}', 'w') as f:
             for line in failed_participant_ids:
                 f.write(f"{line}\n")
         print(f"See failed subject list: {subject_list}")
 
     if len(subjects_missing_in_participant_list) > 0:
-        subject_list = "./subjects_missing_in_participant_list.txt"
+        subject_list = f"{status_log_dir}/subjects_missing_in_participant_list.txt"
         with open(f'{subject_list}', 'w') as f:
             for line in subjects_missing_in_participant_list:
                 f.write(f"{line}\n")
         print(f"See subjects_missing_in_participant_list: {subject_list}")
     
     # Save fs_status_df
-    status_save_path = "./fs_status.csv"
-    print(f"See status FS csv: {status_save_path}")
+    status_save_path = f"{status_log_dir}/fs_status.csv"
+    print(f"See FS status csv: {status_save_path}")
     status_df.to_csv(status_save_path)

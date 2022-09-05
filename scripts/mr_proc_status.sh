@@ -50,7 +50,7 @@ if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
     N_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | wc -l`
     #ignore header
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
-    
+
     N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
 
 echo "  number of all participants in participant list: $N_PARTICIPANTS"
