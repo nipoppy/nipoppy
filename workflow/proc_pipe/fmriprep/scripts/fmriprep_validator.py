@@ -112,6 +112,9 @@ if __name__ == "__main__":
     participants_list = args.participants_list
     status_log_dir = fmriprep_dir + "/status_logs/"
 
+    if not Path.is_dir(Path(status_log_dir)):
+        os.mkdir(status_log_dir)
+        
     print(f"\nChecking subject ids and dirs...")
     # Check number of participants from the list
     if participants_list.rsplit(".")[1] == "tsv":

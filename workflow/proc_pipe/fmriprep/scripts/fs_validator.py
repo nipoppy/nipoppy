@@ -129,7 +129,7 @@ if __name__ == "__main__":
     participants_list = args.participants_list
     status_log_dir = fs_output_dir + "/status_logs/"
 
-    if not Path.is_dir(status_log_dir):
+    if not Path.is_dir(Path(status_log_dir)):
         os.mkdir(status_log_dir)
 
     print(f"\nChecking subject ids and dirs...")
