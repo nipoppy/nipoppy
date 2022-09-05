@@ -26,7 +26,7 @@ parser.add_argument('--fs_output_dir', dest='fs_output_dir',
                     help='path to fs_output_dir with all the subjects')
 
 parser.add_argument('--participants_list', dest='participants_list',                      
-                    help='path to participants list (csv or tsv')
+                    help='path to participants list (csv or tsv)')
 
 args = parser.parse_args()
 
@@ -37,7 +37,7 @@ def check_fsdirs(subject_dir):
         dirpath_status = Path.is_dir(dirpath)
         if not dirpath_status:
             status_msg = f"{fsdir} not found"
-            break;
+            break
     return status_msg
 
 def check_mri(mri_dir):
@@ -47,7 +47,7 @@ def check_mri(mri_dir):
         filepath_status = Path.is_file(filepath)
         if not filepath_status:
             status_msg = f"{parc}+aseg.mgz not found"
-            break;
+            break
     return status_msg
 
 def check_label(label_dir):
@@ -59,9 +59,9 @@ def check_label(label_dir):
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
                     status_msg = f"{hemi}.{parc}.annot not found"
-                    break;
+                    break
         else:
-            break;
+            break
     return status_msg
 
 def check_stats(stats_dir):
@@ -73,9 +73,9 @@ def check_stats(stats_dir):
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
                     status_msg = f"{hemi}.{parc}.stats not found"
-                    break;
+                    break
         else:
-            break;
+            break
 
     # check aseg
     filepath = Path(f"{stats_dir}/aseg.stats")
@@ -94,9 +94,9 @@ def check_surf(surf_dir):
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
                     status_msg = f"{hemi}.{measure} not found"
-                    break;
+                    break
         else:
-            break;
+            break
             
     return status_msg
 
@@ -128,6 +128,9 @@ if __name__ == "__main__":
     fs_output_dir = args.fs_output_dir
     participants_list = args.participants_list
     status_log_dir = fs_output_dir + "/status_logs/"
+
+    if not Path.is_dir(status_log_dir):
+        os.mkdir(status_log_dir)
 
     print(f"\nChecking subject ids and dirs...")
     # Check number of participants from the list
