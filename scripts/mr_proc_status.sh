@@ -50,15 +50,14 @@ if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
     N_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | wc -l`
     #ignore header
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
-
-    echo "  checking expected number of participants with BIDS data"
+    
     N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
 
 echo "  number of all participants in participant list: $N_PARTICIPANTS"
 echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
 
     if [ $N_PARTICIPANTS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
-        echo "WARNING: number of total and BIDS particiants are not equal!"
+        echo "  WARNING: number of total and BIDS particiants are not equal!"
         N_WARNINGS=$((N_WARNINGS + 1))
     fi
 
@@ -105,7 +104,7 @@ echo "  number of dicoms scan dirs: $N_DICOMS"
 echo "  number of bids subject dirs: $N_BIDS"
 
 if [ $N_BIDS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
-    echo "ERROR: number of expected and available BIDS participants do no match!"
+    echo "  ERROR: number of expected and available BIDS participants do no match!"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 
@@ -116,14 +115,14 @@ echo "Checking processing pipelines to be run..."
 
 if [ -d $DATASET_ROOT/derivatives ]; then
     PROC_PIPES=`ls $DATASET_ROOT/derivatives`
-    echo "available image processing pipelines: $PROC_PIPES"
+    echo "$PROC_PIPES"
     echo ""
     echo "checking if processing status file exists"
     for proc_pipe in $PROC_PIPES; do 
         if [ -f $DATASET_ROOT/derivatives/$proc_pipe/proc_status.csv ]; then
-            echo "proc status file for $proc_pipe exists"
+            echo "  proc status file for $proc_pipe exists"
         else
-            echo "WARNING: proc status file for $proc_pipe MISSING"
+            echo "  WARNING: proc status file for $proc_pipe MISSING"
             N_WARNINGS=$((N_WARNINGS + 1))
         fi
     done 
