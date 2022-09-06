@@ -56,7 +56,7 @@ parser.add_argument('--ses', dest='ses',
                     help='session id e.g. bl')
 
 parser.add_argument('--run', dest='run', default=None,                  
-                    help='run id e.g. 01')
+                    help='run id e.g. 1')
 
 parser.add_argument('--tpl_spaces', dest='tpl_spaces', nargs='*', default=["MNI152NLin2009cAsym_res-2"], 
                     help='template space and its resolution')           
@@ -70,9 +70,6 @@ parser.add_argument('--participants_list', dest='participants_list',
 args = parser.parse_args()
 
 def check_fmriprep(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modality):    
-    # TODO
-    # modalities and runs
-    # "sub-MNI0056D864854_ses-01_run-1_desc-brain_mask.json"
     fmriprep_files_dict = fmriprep_modality_file_dict[modality]
     status_dict = {}
     for tpl_space in tpl_spaces:
@@ -184,8 +181,6 @@ if __name__ == "__main__":
     status_cols = fmriprep_tpl_spaces + [f"fsl-{s}" for s in fsl_spaces]
     status_df = pd.DataFrame(columns=["participant_id"] + fmriprep_complete_cols + status_cols)
 
-    print(f"status_cols: {status_df.columns}")
-
     # populate status_df iterating over available FS subject dirs
     for p, participant_id in enumerate(fmriprep_participants):
         subject_dir = f"{fmriprep_dir}/{participant_id}"
@@ -198,8 +193,6 @@ if __name__ == "__main__":
             fmriprep_status += list(modality_status.values())
             fmriprep_complete.append(modality_complete)
 
-        print(f"fmri_complete: {fmriprep_complete}")
-        print(f"fmriprep_status: {fmriprep_status}")
         status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status + list(fsl_status.values())
         
     # append subjects missing FS subject_dir
@@ -210,8 +203,6 @@ if __name__ == "__main__":
         status_df.loc[p + len(participant_ids)] = [participant_id, fmriprep_complete] + status_list
 
     status_df["fmriprep_complete"] = status_df[fmriprep_complete_cols].prod(axis=1).astype(bool)
-    print("status_df")
-    print(status_df)
     n_complete = len(status_df[status_df["fmriprep_complete"]])
     n_failed = n_participants - n_complete
 
