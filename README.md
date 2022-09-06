@@ -6,7 +6,11 @@ Repository for QPN image processing codebase
   -  These subjects serve as input to BIDS conversion and subsequent image processing pipelines
   -  The DICOMs are grabbed from BIC server (i.e. /data/pd/qpn/dicom) 
 - [QPN MR image proc status](metadata/ID_lists/subjects/QPN_image_proc_status.csv): This tracks the progress of image processing pipelines e.g. Heudiconv, fmriprep etc. 
-
+- Sept 2022 updates
+  - Moved `participants.csv` and `proc_tracker.csv` to `mr_proc` directory organization. `participants.csv` is now in the `tabular/demographics` and `proc_tracker.csv` is in `derivatives`
+  - Process to update global participants.csv 
+    - Using copn.loris to generate global participants.csv. This is checked against bids and neuropsych participants.This is the only place where we have access to age, sex, group info for all imaging subjects. 
+    - In future: Get a manifest from Roozbeh
 ## Available modalities and protocols
 ![QPN MR acq protocols](./metadata/QPN_dicom_protocols.png)
 
