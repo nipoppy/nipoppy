@@ -51,6 +51,9 @@ parser.add_argument('--participants_list', dest='participants_list',
 args = parser.parse_args()
 
 def check_fmriprep(subject_dir, participant_id, ses_id, tpl_spaces):    
+    # TODO
+    # modalities and runs
+    # "sub-MNI0056D864854_ses-01_run-1_desc-brain_mask.json"
     status_dict = {}
     for tpl_space in tpl_spaces:
         status_msg = "Pass"
@@ -114,7 +117,7 @@ if __name__ == "__main__":
 
     if not Path.is_dir(Path(status_log_dir)):
         os.mkdir(status_log_dir)
-        
+
     print(f"\nChecking subject ids and dirs...")
     # Check number of participants from the list
     if participants_list.rsplit(".")[1] == "tsv":
