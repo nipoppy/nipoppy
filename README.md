@@ -44,7 +44,7 @@ The organization mr_proc code module is as follows:
    - Copy Heudiconv container into: `<dataset>/proc/containers`
    - Run single participant tests: 
        - Modify and run `./heudiconv_run1.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will generate list of available protocols from DICOM header. This script will use a test participant from test_data/dicom for processing. 
-       - sample cmd: `./heudiconv_stage_1.sh -d ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -l . -t 1` where, 
+       - sample cmd: `./heudiconv_stage_1.sh -d ~/scratch/mr_proc/<dataset> -p MNI001 -s 01 -l . -t 1` where, 
             - d: dataset_root_dir 
             - p: participant_id
             - s: session_id
@@ -54,7 +54,7 @@ The organization mr_proc code module is as follows:
        - Manually update the sample heurisitic file: `mr_proc/workflow/bids_conv/heuristic.py` using the enlisted protocols from run1. 
        - Add updated heuristic file here: `<dataset>/proc/`
        - Modify and run `./heudiconv_run2.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
-       - sample cmd: `./heudiconv_stage_2.sh -d ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -l . -t 1` where, 
+       - sample cmd: `./heudiconv_stage_2.sh -d ~/scratch/mr_proc/<dataset> -p MNI001 -s 01 -l . -t 1` where, 
             - d: dataset_root_dir 
             - p: participant_id
             - s: session_id
