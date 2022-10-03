@@ -1,14 +1,14 @@
 #!/bin/bash
 #
 #$ -cwd
-#$ -o heudiconv_out.log
-#$ -e heudiconv_err.log
+#$ -o heudiconv_run2_out.log
+#$ -e heudiconv_run2_err.log
 #$ -m e
-#$ -l h_rt=12:00:00
+#$ -l h_rt=24:00:00
 #$ -l h_vmem=32G
 #$ -q origami.q
 
-#$ -t 1-21
+#$ -t 1-35
 	
 if [ "$#" -ne 1 ]; then
   echo "Please provide subject list"
@@ -24,4 +24,4 @@ echo "Number subjects found: `cat $subject_list | wc -l`"
 subject_id=`sed -n "${SGE_TASK_ID}p" $subject_list`
 echo "Subject ID: $subject_id"
 	
-./heudiconv_run1.sh $LOCAL_WD $subject_id $ses_id
+./heudiconv_stage_2.sh $LOCAL_WD $subject_id $ses_id Heuristics_qpn.py
