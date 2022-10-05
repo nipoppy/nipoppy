@@ -20,7 +20,7 @@ do
 done
 
 # Container
-SINGULARITY_IMG="$DATASET_ROOT/proc/containers/heudiconv_cb2fd91.sif"
+SINGULARITY_IMG="/home/nimhans/projects/container_store/heudiconv_cb2fd91.sif"
 SINGULARITY_PATH=singularity
 
 if [ "$TEST_RUN" -eq 1 ]; then

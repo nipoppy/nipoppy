@@ -27,20 +27,20 @@ FMRIPREP_VERSION="20.2.7"
 FS_VERSION="6.0.1"
 
 # Container
-SINGULARITY_IMG="$DATASET_ROOT/proc/containers/fmriprep_${FMRIPREP_VERSION}.sif"
+SINGULARITY_IMG="/home/nimhans/projects/container_store/fmriprep_${FMRIPREP_VERSION}.sif"
 SINGULARITY_PATH=singularity
 
 # TEMPLATEFLOW
-TEMPLATEFLOW_HOST_HOME="$DATASET_ROOT/proc/templateflow"
+TEMPLATEFLOW_HOST_HOME="/home/nimhans/projects/templateflow/"
 
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."
-    BIDS_DIR="test_data/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="test_data/derivatives/fmriprep/"
+    BIDS_DIR="$DATASET_ROOT/test_data/bids/" #Relative to WD (local or singularity)
+    DERIV_DIR="$DATASET_ROOT/test_data/derivatives/fmriprep/"
 else
     echo "Doing a real run..."
-    BIDS_DIR="bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="derivatives/fmriprep/"
+    BIDS_DIR="$DATASET_ROOT/bids/" #Relative to WD (local or singularity)
+    DERIV_DIR="$DATASET_ROOT/derivatives/fmriprep/"
 fi
 
 OUT_DIR=${DERIV_DIR}/output

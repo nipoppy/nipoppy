@@ -51,7 +51,7 @@ The organization mr_proc code module is as follows:
             - l: symlink_datastore_dir (only needed if your dicoms are symlinks)
             - t: 1 implies a test run
 
-       - Manually update the sample heurisitic file: `mr_proc/workflow/bids_conv/heuristic.py` using the enlisted protocols from run1. 
+       - Manually update the sample heurisitic file: `mr_proc/workflow/bids_conv/heuristic.py` using the enlisted protocols from stage_1. Copy this file into `dataset_root_dir/test_data/bids/` (for test run) or `dataset_root_dir/bids/` (for actual run)
        - Add updated heuristic file here: `<dataset>/proc/`
        - Modify and run `./heudiconv_run2.sh` with `-t 1` flag and apporpriate local path for mr_proc_dataset_dir. This will convert the DICOMs into NIFTIs along with sidecar JSONs and organize them based on your heuristic file. The BIDS dataset is created under /test_data/bids. 
        - sample cmd: `./heudiconv_stage_2.sh -d ~/scratch/mr_proc/<dataset> -p sub001 -s 01 -l . -t 1` where, 

@@ -3,39 +3,59 @@
 # Author: nikhil153
 # Last update: 16 Feb 2022
 
-if [ "$#" -ne 3 ]; then
-  echo "Please provide paths to the bids_dir, working_dir and subject ID (i.e. subdir inside BIDS_DIR)"
+if [ "$#" -ne 10 ]; then
+  echo "Please provide DATASET_ROOT, PARTICIPANT_ID, SESSION_ID, BIDS_FILTER (typically to filter out sessions) \
+  and TEST_RUN flag"
+
+  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -p <sub-01> -s <01> -b <bids_filter.json> -t 1"
   exit 1
 fi
 
-BIDS_DIR=$1
-WD_DIR=$2
-SUB_ID=$3
+while getopts d:p:s:b:t: flag
+do
+    case "${flag}" in
+        d) DATASET_ROOT=${OPTARG};;
+        p) PARTICIPANT_ID=${OPTARG};;
+        s) SESSION_ID=${OPTARG};;
+        b) BIDS_FILTER=${OPTARG};;
+        t) TEST_RUN=${OPTARG};;
+    esac
+done
 
-#BIDS_DIR="/scratch/nikhil/ukbb_processing/fmriprep/BIDS_DIR"
-BIDS_FILTER="bids_filter.json" # to ignore NM T1 files. This needs to be in BIDS_DIR. 
+# Versions (hardcoded for now)
+FMRIPREP_VERSION="20.2.7"
+FS_VERSION="6.0.1"
 
-CON_IMG="/data/pd/qpn/containers/fmriprep_20.2.7.sif"
-#CON_IMG="/home/nikhil/projects/my_containers/fmriprep_20.2.7.sif"
-SINGULARITY_PATH="/opt/bin/singularity"
+# Container
+SINGULARITY_IMG="/home/nimhans/projects/container_store/fmriprep_${FMRIPREP_VERSION}.sif"
+SINGULARITY_PATH=singularity
 
-# CHECK IF YOU HAVE TEMPLATEFLOW
-# TEMPLATEFLOW_HOST_HOME="/home/nikhil/scratch/templateflow"
-TEMPLATEFLOW_HOST_HOME="/data/pd/qpn/templateflow" #"/home/nikhil/projects/templateflow"
+# TEMPLATEFLOW
+TEMPLATEFLOW_HOST_HOME="/home/nimhans/projects/templateflow/"
 
-DERIVS_DIR=${WD_DIR}/output
+if [ "$TEST_RUN" -eq 1 ]; then
+    echo "Doing a test run..."
+    BIDS_DIR="$DATASET_ROOT/test_data/bids/" #Relative to WD (local or singularity)
+    DERIV_DIR="$DATASET_ROOT/test_data/derivatives/fmriprep/"
+else
+    echo "Doing a real run..."
+    BIDS_DIR="$DATASET_ROOT/bids/" #Relative to WD (local or singularity)
+    DERIV_DIR="$DATASET_ROOT/derivatives/fmriprep/"
+fi
 
-LOG_FILE=${WD_DIR}_fmriprep_anat.log
-echo "Starting fmriprep proc with container: ${CON_IMG}"
+OUT_DIR=${DERIV_DIR}/output
+
+LOG_FILE=${DERIV_DIR}_fmriprep_anat.log
+echo "Starting fmriprep proc with container: ${SINGULARITY_IMG}"
 echo ""
-echo "Using working dir: ${WD_DIR} and subject ID: ${SUB_ID}"
+echo "Using working dir: ${DERIV_DIR} and subject ID: ${PARTICIPANT_ID}"
 
 # Create subject specific dirs
-FMRIPREP_HOME=${DERIVS_DIR}/fmriprep_home_${SUB_ID}
-echo "Processing: ${SUB_ID} with home dir: ${FMRIPREP_HOME}"
+FMRIPREP_HOME=${OUT_DIR}/fmriprep_home_${PARTICIPANT_ID}
+echo "Processing: ${PARTICIPANT_ID} with home dir: ${FMRIPREP_HOME}"
 mkdir -p ${FMRIPREP_HOME}
 
-LOCAL_FREESURFER_DIR="${DERIVS_DIR}/freesurfer-6.0.1"
+LOCAL_FREESURFER_DIR="${OUT_DIR}/freesurfer/ses-${SESSION_ID}"
 mkdir -p ${LOCAL_FREESURFER_DIR}
 
 # Prepare some writeable bind-mount points.
@@ -45,38 +65,52 @@ mkdir -p ${FMRIPREP_HOST_CACHE}
 # Make sure FS_LICENSE is defined in the container.
 mkdir -p $FMRIPREP_HOME/.freesurfer
 export SINGULARITYENV_FS_LICENSE=$FMRIPREP_HOME/.freesurfer/license.txt
-cp ${WD_DIR}/license.txt ${SINGULARITYENV_FS_LICENSE}
+cp ${DERIV_DIR}/license.txt ${SINGULARITYENV_FS_LICENSE}
 
 # Designate a templateflow bind-mount point
 export SINGULARITYENV_TEMPLATEFLOW_HOME="/templateflow"
 
 # Singularity CMD 
-SINGULARITY_CMD="$SINGULARITY_PATH run \
+SINGULARITY_CMD="singularity run \
 -B ${BIDS_DIR}:/data_dir \
 -B ${FMRIPREP_HOME}:/home/fmriprep --home /home/fmriprep --cleanenv \
--B ${DERIVS_DIR}:/output \
+-B ${OUT_DIR}:/output \
 -B ${TEMPLATEFLOW_HOST_HOME}:${SINGULARITYENV_TEMPLATEFLOW_HOME} \
--B ${WD_DIR}:/work \
+-B ${DERIV_DIR}:/work \
 -B ${LOCAL_FREESURFER_DIR}:/fsdir \
- ${CON_IMG}"
+ ${SINGULARITY_IMG}"
 
 # Remove IsRunning files from FreeSurfer
-find ${LOCAL_FREESURFER_DIR}/sub-$SUB_ID/ -name "*IsRunning*" -type f -delete
+# find ${LOCAL_FREESURFER_DIR}/sub-$PARTICIPANT_ID/ -name "*IsRunning*" -type f -delete
 
 # Compose the command line
-cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $SUB_ID \
--w /work --output-spaces MNI152NLin2009cAsym:res-2 anat fsnative fsaverage5 \
---fs-subjects-dir /fsdir \
---skip_bids_validation \
---bids-database-dir /work/first_run/bids_db/
---fs-license-file /home/fmriprep/.freesurfer/license.txt \
---return-all-components -v \
---write-graph  --notrack \
---bids-filter-file /data_dir/${BIDS_FILTER}"
+if [ -f ${BIDS_DIR}/${BIDS_FILTER} ]; then
+    echo "Using ${BIDS_FILTER}"
+    cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
+    -w /work \
+    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative fsaverage5 \
+    --fs-subjects-dir /fsdir \
+    --skip_bids_validation \
+    --bids-database-dir /work/first_run/bids_db/
+    --fs-license-file /home/fmriprep/.freesurfer/license.txt \
+    --return-all-components -v \
+    --write-graph --notrack \
+    --bids-filter-file /data_dir/${BIDS_FILTER}" 
 
-#--bids-filter-file ${BIDS_FILTER} 
-# --anat-only --cifti-out 91k"
-#--bids-database-dir /work/first_run: creating this during first test run. If successful, all other subjects will use this and avoid reindexing same bids_db \
+else    
+    echo "${BIDS_FILTER} not found"
+
+    cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
+    -w /work \
+    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative fsaverage5 \
+    --fs-subjects-dir /fsdir \
+    --skip_bids_validation \
+    --bids-database-dir /work/first_run/bids_db/
+    --fs-license-file /home/fmriprep/.freesurfer/license.txt \
+    --return-all-components -v \
+    --write-graph --notrack \
+    --anat-only" 
+fi
 
 # Setup done, run the command
 #echo Running task ${SLURM_ARRAY_TASK_ID}
@@ -86,7 +120,7 @@ eval $cmd
 exitcode=$?
 
 # Output results to a table
-echo "$SUB_ID    ${SLURM_ARRAY_TASK_ID}    $exitcode"
+echo "$PARTICIPANT_ID    ${SLURM_ARRAY_TASK_ID}    $exitcode"
 echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode
 rm -rf ${FMRIPREP_HOME}
 exit $exitcode

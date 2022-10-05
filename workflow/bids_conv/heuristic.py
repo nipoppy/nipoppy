@@ -68,18 +68,18 @@ def infotodict(seqinfo):
 
     keys_protocols_dict = {
         T1w:['MPRAGE_iPAT2','3DT1','3DT1_Repeat','Sag_3D_MPRAGE'],
-        PDT2: ['PD T2 1sequence','PD_T2','PD_T2_Repeat','PD_T2_Repeat2'],
-        "T2star":['AXIAL_T2_STAR_iPAT2','T2-star','T2-star_Repeat'], # need to check mag vs phase from image_type
-        "MEGRE": ['GRE_10_echos_Dr Collins','GRE_10_echos_Dr Collins_Repeat'], # need to check mag vs phase from image_type
-        FLAIR:['Axial T2-FLAIR_iPAT2','2D_FLAIR_FS','2D_FLAIR_FS_Repeat','2D_FLAIR_FS_repeat'],
-        T1wNeuromel:['T1W Neuromel_TR600_1.8mm_TE10_FA120_BW180_7av'],
-        dwi:['DWI','DTI-EDM'],
-        dwiAP: ['DTI-B03_AP','DWI-B02_AP'],
-        dwiPA: ['DTI-B03_PA','DWI-B03_PA'],
-        bold:['BOLD Resting State AC-PC','RS-fMRI'],        
-        "boldGREfmap":['BOLD_RS_gre_field_mapping'], # need to check mag vs phase from image_type
-        epiAP:['RS_fMRI_se_AP'],
-        epiPA:['RS_fMRI_se_PA']
+        # PDT2: ['PD T2 1sequence','PD_T2','PD_T2_Repeat','PD_T2_Repeat2'],
+        # "T2star":['AXIAL_T2_STAR_iPAT2','T2-star','T2-star_Repeat'], # need to check mag vs phase from image_type
+        # "MEGRE": ['GRE_10_echos_Dr Collins','GRE_10_echos_Dr Collins_Repeat'], # need to check mag vs phase from image_type
+        # FLAIR:['Axial T2-FLAIR_iPAT2','2D_FLAIR_FS','2D_FLAIR_FS_Repeat','2D_FLAIR_FS_repeat'],
+        # T1wNeuromel:['T1W Neuromel_TR600_1.8mm_TE10_FA120_BW180_7av'],
+        # dwi:['DWI','DTI-EDM'],
+        # dwiAP: ['DTI-B03_AP','DWI-B02_AP'],
+        # dwiPA: ['DTI-B03_PA','DWI-B03_PA'],
+        # bold:['BOLD Resting State AC-PC','RS-fMRI'],        
+        # "boldGREfmap":['BOLD_RS_gre_field_mapping'], # need to check mag vs phase from image_type
+        # epiAP:['RS_fMRI_se_AP'],
+        # epiPA:['RS_fMRI_se_PA']
     }
     
     # These protcols needs special naming based on image type (see below)

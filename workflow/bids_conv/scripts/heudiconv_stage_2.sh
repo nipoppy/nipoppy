@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ "$#" -ne 10 ]; then
-  echo "Please provide MR_PROC_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
+  echo "Please provide DATASET_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
-  echo "Note that heuristic file needs to inside: $MR_PROC_ROOT/workflow/bids_conv"
+  echo "Note that heuristic file needs to inside: $DATASET_ROOT/workflow/bids_conv"
   echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <sub-01> -s <01> -l <./> -t 1"
   exit 1
 fi
@@ -11,7 +11,7 @@ fi
 while getopts d:p:s:l:t: flag
 do
     case "${flag}" in
-        d) MR_PROC_ROOT=${OPTARG};;
+        d) DATASET_ROOT=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
         s) SES_ID=${OPTARG};;
         l) DATASTORE=${OPTARG};;
@@ -19,14 +19,8 @@ do
     esac
 done
 
-# Make sure heuristic file exists
-if [ ! -f $MR_PROC_ROOT/proc/heuristic.py ]; then
-    echo "  $MR_PROC_ROOT/proc/heuristic.py is MISSING!"
-    exit 1
-fi
-
 # Container
-SINGULARITY_IMG="$MR_PROC_ROOT/proc/containers/heudiconv_cb2fd91.sif"
+SINGULARITY_IMG="/home/nimhans/projects/container_store/heudiconv_cb2fd91.sif"
 SINGULARITY_PATH=singularity
 
 if [ "$TEST_RUN" -eq 1 ]; then
@@ -39,7 +33,13 @@ else
     BIDS_DIR="bids/" #Relative to WD (local or singularity)
 fi
 
-echo "MR_PROC_ROOT: ${MR_PROC_ROOT}"
+# Make sure heuristic file exists
+if [ ! -f $DATASET_ROOT/bids/heuristic.py ]; then
+    echo "$DATASET_ROOT/bids/heuristic.py is MISSING!"
+    exit 1
+fi
+
+echo "DATASET_ROOT: ${DATASET_ROOT}"
 echo "PARTICIPANT_ID: ${PARTICIPANT_ID}, Session_id: ${SES_ID}"
 
 # singularity folders
@@ -47,7 +47,7 @@ SINGULARITY_WD=/scratch
 SINGULARITY_DICOM_DIR=${SINGULARITY_WD}/${DICOM_DIR}
 SINGULARITY_BIDS_DIR=${SINGULARITY_WD}/${BIDS_DIR}
 
-HEURISTIC_FILE=$SINGULARITY_WD/proc/heuristic.py
+HEURISTIC_FILE=$SINGULARITY_WD/bids/heuristic.py
 
 echo "Singularity dicom dir: $SINGULARITY_DICOM_DIR"
 echo "Singularity bids dir: $SINGULARITY_BIDS_DIR"
@@ -61,7 +61,7 @@ SINGULARITY_DATA_STORE="/data"
 # {subject} is the variable in the heuristics file created for each dataset to filter images during conversion.
 echo "Heudiconv Run2 started..."
 
-$SINGULARITY_PATH run -B ${MR_PROC_ROOT}:${SINGULARITY_WD} \
+$SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
 heudiconv  \
 -d ${SINGULARITY_WD}/${DICOM_DIR}/{subject}/* \
