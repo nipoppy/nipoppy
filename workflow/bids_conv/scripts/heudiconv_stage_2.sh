@@ -4,7 +4,7 @@ if [ "$#" -ne 10 ]; then
   echo "Please provide DATASET_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
   echo "Note that heuristic file needs to inside: $DATASET_ROOT/workflow/bids_conv"
-  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <sub-01> -s <01> -l <./> -t 1"
+  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <MNI01> -s <01> -l <./> -t 1"
   exit 1
 fi
 
@@ -34,8 +34,8 @@ else
 fi
 
 # Make sure heuristic file exists
-if [ ! -f $DATASET_ROOT/bids/heuristic.py ]; then
-    echo "$DATASET_ROOT/bids/heuristic.py is MISSING!"
+if [ ! -f $DATASET_ROOT/proc/heuristic.py ]; then
+    echo "$DATASET_ROOT/proc/heuristic.py is MISSING!"
     exit 1
 fi
 
@@ -47,7 +47,7 @@ SINGULARITY_WD=/scratch
 SINGULARITY_DICOM_DIR=${SINGULARITY_WD}/${DICOM_DIR}
 SINGULARITY_BIDS_DIR=${SINGULARITY_WD}/${BIDS_DIR}
 
-HEURISTIC_FILE=$SINGULARITY_WD/bids/heuristic.py
+HEURISTIC_FILE=$SINGULARITY_WD/proc/heuristic.py
 
 echo "Singularity dicom dir: $SINGULARITY_DICOM_DIR"
 echo "Singularity bids dir: $SINGULARITY_BIDS_DIR"

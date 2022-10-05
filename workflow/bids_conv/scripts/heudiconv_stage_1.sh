@@ -4,7 +4,7 @@ if [ "$#" -ne 10 ]; then
   echo "Please provide DATASET_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
 
-  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <sub-01> -s <01> -l <./> -t 1"
+  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <MNI01> -s <01> -l <./> -t 1"
   exit 1
 fi
 

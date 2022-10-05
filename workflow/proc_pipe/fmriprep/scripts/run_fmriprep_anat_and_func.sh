@@ -7,7 +7,7 @@ if [ "$#" -ne 10 ]; then
   echo "Please provide DATASET_ROOT, PARTICIPANT_ID, SESSION_ID, BIDS_FILTER (typically to filter out sessions) \
   and TEST_RUN flag"
 
-  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -p <sub-01> -s <01> -b <bids_filter.json> -t 1"
+  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -p <MNI01> -s <01> -b <bids_filter.json> -t 1"
   exit 1
 fi
 
