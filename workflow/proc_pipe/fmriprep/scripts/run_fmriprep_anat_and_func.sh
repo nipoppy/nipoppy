@@ -88,7 +88,7 @@ if [ -f ${BIDS_DIR}/${BIDS_FILTER} ]; then
     echo "Using ${BIDS_FILTER}"
     cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
     -w /work \
-    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative fsaverage5 \
+    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative \
     --fs-subjects-dir /fsdir \
     --skip_bids_validation \
     --bids-database-dir /work/first_run/bids_db/
@@ -102,14 +102,13 @@ else
 
     cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
     -w /work \
-    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative fsaverage5 \
+    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative \
     --fs-subjects-dir /fsdir \
     --skip_bids_validation \
     --bids-database-dir /work/first_run/bids_db/
     --fs-license-file /home/fmriprep/.freesurfer/license.txt \
     --return-all-components -v \
-    --write-graph --notrack \
-    --anat-only" 
+    --write-graph --notrack" 
 fi
 
 # Setup done, run the command
