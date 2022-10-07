@@ -1,27 +1,29 @@
 #!/bin/bash
 
-if [ "$#" -ne 10 ]; then
-  echo "Please provide DATASET_ROOT, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
+if [ "$#" -ne 14 ]; then
+  echo "Please provide DATASET_ROOT, HEUDICONV_IMG, SINGULAIRTY_RUN_CMD, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
 
-  echo "Sample cmd: ./heudiconv_run1.sh -d <dataset_root> -p <MNI01> -s <01> -l <./> -t 1"
+  echo "Sample cmd: ./heudiconv_stage_1.sh -d <dataset_root> -h <path_to_heudicon_img> -r <singularity>. -p <MNI01> -s <01> -l <./> -t 1"
   exit 1
 fi
 
-while getopts d:p:s:l:t: flag
+while getopts d:h:r:p:s:l:t: flag
 do
     case "${flag}" in
         d) DATASET_ROOT=${OPTARG};;
+        h) HEUDICONV_IMG=${OPTARG};;
+        r) RUN_CMD=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
         s) SES_ID=${OPTARG};;
         l) DATASTORE=${OPTARG};;
-        t) TEST_RUN=${OPTARG};;
+        t) TEST_RUN=${OPTARG};;        
     esac
 done
 
 # Container
-SINGULARITY_IMG="/home/nimhans/projects/container_store/heudiconv_cb2fd91.sif"
-SINGULARITY_PATH=singularity
+SINGULARITY_IMG=$HEUDICONV_IMG
+SINGULARITY_PATH=$RUN_CMD
 
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."
