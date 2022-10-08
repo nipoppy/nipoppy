@@ -69,8 +69,6 @@ def infotodict(seqinfo):
     keys_protocols_dict = {
         T1w:['MPRAGE_iPAT2','3DT1','3DT1_Repeat','Sag_3D_MPRAGE'],
         PDT2: ['PD T2 1sequence','PD_T2','PD_T2_Repeat','PD_T2_Repeat2'],
-        "T2star":['AXIAL_T2_STAR_iPAT2','T2-star','T2-star_Repeat'], # need to check mag vs phase from image_type
-        "MEGRE": ['GRE_10_echos_Dr Collins','GRE_10_echos_Dr Collins_Repeat'], # need to check mag vs phase from image_type
         FLAIR:['Axial T2-FLAIR_iPAT2','2D_FLAIR_FS','2D_FLAIR_FS_Repeat','2D_FLAIR_FS_repeat'],
         T1wNeuromel:['T1W Neuromel_TR600_1.8mm_TE10_FA120_BW180_7av'],
         dwi:['DWI','DTI-EDM'],
@@ -84,8 +82,6 @@ def infotodict(seqinfo):
     
     # These protcols needs special naming based on image type (see below)
     protocols_with_mag_and_phase = {
-                                    "T2star":[T2starMag,T2starPhase],
-                                    "MEGRE": [MEGREMag,MEGREPhase],
                                     "boldGREfmap": [boldGREfmapMag, boldGREfmapPhase]
                                     }
 

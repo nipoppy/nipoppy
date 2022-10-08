@@ -7,5 +7,6 @@
     "SINGULARITY_PATH": "singularity",
     "SINGULARITY_HEUDICONV": "/home/nimhans/projects/container_store/heudiconv_{}.sif",
     "SINGULARITY_BIDS_VALIDATOR": "/home/nimhans/projects/container_store/bids_validator.sif",
-    "SINGULARITY_FMRIPREP": "/home/nimhans/projects/container_store/fmriprep_{}.sif"
+    "SINGULARITY_FMRIPREP": "/home/nimhans/projects/container_store/fmriprep_{}.sif",
+    "TEMPLATEFLOW_DIR": "/home/nimhans/projects/templateflow/"    
 }
