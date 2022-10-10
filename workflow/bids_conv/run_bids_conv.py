@@ -12,9 +12,9 @@ Script to perform DICOM to BIDS conversion using HeuDiConv
 parser = argparse.ArgumentParser(description=HELPTEXT)
 
 parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
-parser.add_argument('--stage', type=int, help='heudiconv stage (either 1 or 2)')
+parser.add_argument('--stage', type=int, help='participant id')
 parser.add_argument('--participant_id', type=str, help='heudiconv stage (either 1 or 2)')
-parser.add_argument('--session_id', type=str, help='heudiconv stage (either 1 or 2)')
+parser.add_argument('--session_id', type=str, help='session id for the participant')
 parser.add_argument('--test_run', default=False, action=argparse.BooleanOptionalAction, help='do a test run or not')
 
 args = parser.parse_args()
@@ -50,5 +50,4 @@ HEUDICONV_ARGS = ["-d", DATASET_ROOT, "-h", SINGULARITY_HEUDICONV, "-r", SINGULA
                   "-p", participant_id, "-s", session_id, "-l", DATASTORE_DIR, "-t", test_run]
 HEUDICONV_CMD = [HEUDICONV_SCRIPT] + HEUDICONV_ARGS
 
-print(HEUDICONV_CMD)
-heudicong_proc = subprocess.run(HEUDICONV_CMD)
+heudiconv_proc = subprocess.run(HEUDICONV_CMD)

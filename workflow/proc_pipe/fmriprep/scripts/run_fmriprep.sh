@@ -3,35 +3,36 @@
 # Author: nikhil153
 # Last update: 16 Feb 2022
 
-if [ "$#" -ne 10 ]; then
-  echo "Please provide DATASET_ROOT, PARTICIPANT_ID, SESSION_ID, BIDS_FILTER (typically to filter out sessions) \
-  and TEST_RUN flag"
+if [ "$#" -ne 18 ]; then
+  echo "Please provide DATASET_ROOT, HEUDICONV_IMG, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, PARTICIPANT_ID, SESSION_ID, \
+        BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag and TEST_RUN flag"
 
-  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -p <MNI01> -s <01> -b <bids_filter.json> -t 1"
+  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -h <path_to_fmriprep_img> -r <singularity> \
+        -f <path_to_templateflow_dir> -p <MNI01> -s <01> -b 1 -a 1 -t 1"
   exit 1
 fi
 
-while getopts d:p:s:b:t: flag
+while getopts d:h:r:f:p:s:b:a:t: flag
 do
     case "${flag}" in
         d) DATASET_ROOT=${OPTARG};;
+        h) HEUDICONV_IMG=${OPTARG};;
+        r) RUN_CMD=${OPTARG};; 
+        f) TEMPLATEFLOW_DIR=${OPTARG};;         
         p) PARTICIPANT_ID=${OPTARG};;
         s) SESSION_ID=${OPTARG};;
         b) BIDS_FILTER=${OPTARG};;
+        a) ANAT_ONLY=${OPTARG};;
         t) TEST_RUN=${OPTARG};;
     esac
 done
 
-# Versions (hardcoded for now)
-FMRIPREP_VERSION="20.2.7"
-FS_VERSION="6.0.1"
-
 # Container
-SINGULARITY_IMG="/home/nimhans/projects/container_store/fmriprep_${FMRIPREP_VERSION}.sif"
-SINGULARITY_PATH=singularity
+SINGULARITY_IMG=$HEUDICONV_IMG
+SINGULARITY_PATH=$RUN_CMD
 
 # TEMPLATEFLOW
-TEMPLATEFLOW_HOST_HOME="/home/nimhans/projects/templateflow/"
+TEMPLATEFLOW_HOST_HOME=$TEMPLATEFLOW_DIR
 
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."
@@ -83,10 +84,8 @@ SINGULARITY_CMD="singularity run \
 # Remove IsRunning files from FreeSurfer
 # find ${LOCAL_FREESURFER_DIR}/sub-$PARTICIPANT_ID/ -name "*IsRunning*" -type f -delete
 
-# Compose the command line
-if [ -f ${BIDS_DIR}/${BIDS_FILTER} ]; then
-    echo "Using ${BIDS_FILTER}"
-    cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
+# Compose fMRIPrep command
+cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
     -w /work \
     --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative \
     --fs-subjects-dir /fsdir \
@@ -94,33 +93,27 @@ if [ -f ${BIDS_DIR}/${BIDS_FILTER} ]; then
     --bids-database-dir /work/first_run/bids_db/
     --fs-license-file /home/fmriprep/.freesurfer/license.txt \
     --return-all-components -v \
-    --write-graph --notrack \
-    --bids-filter-file /data_dir/${BIDS_FILTER}" 
+    --write-graph --notrack"
 
-else    
-    echo "${BIDS_FILTER} not found"
+# Append optional args
+if [ "$BIDS_FILTER" -eq 1 ]; then
+    echo "***Using a BIDS filter**"
+    cmd=$cmd" \
+    --bids-filter-file /data_dir/bids_filter.json"
+fi
 
-    cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
-    -w /work \
-    --output-spaces MNI152NLin2009cAsym:res-2 MNI152NLin6Sym:res-1 MNI152Lin:res-1 anat fsnative \
-    --fs-subjects-dir /fsdir \
-    --skip_bids_validation \
-    --bids-database-dir /work/first_run/bids_db/
-    --fs-license-file /home/fmriprep/.freesurfer/license.txt \
-    --return-all-components -v \
-    --write-graph --notrack" 
+if [ "$ANAT_ONLY" -eq 1 ]; then
+    echo "***Only running anatomical workflow***"
+    cmd=$cmd" \
+    --anat-only"
 fi
 
 # Setup done, run the command
-#echo Running task ${SLURM_ARRAY_TASK_ID}
 unset PYTHONPATH
 echo Commandline: $cmd
 eval $cmd
 exitcode=$?
 
-# Output results to a table
-echo "$PARTICIPANT_ID    ${SLURM_ARRAY_TASK_ID}    $exitcode"
-echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode
 rm -rf ${FMRIPREP_HOME}
 exit $exitcode
 

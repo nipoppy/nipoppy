@@ -4,7 +4,7 @@ if [ "$#" -ne 14 ]; then
   echo "Please provide DATASET_ROOT, HEUDICONV_IMG, SINGULAIRTY_RUN_CMD, participant ID, session ID, datastore dir (in case dicoms are symlinks) \
   and test_run flag"
 
-  echo "Sample cmd: ./heudiconv_stage_1.sh -d <dataset_root> -h <path_to_heudicon_img> -r <singularity>. -p <MNI01> -s <01> -l <./> -t 1"
+  echo "Sample cmd: ./heudiconv_stage_1.sh -d <dataset_root> -h <path_to_heudiconv_img> -r <singularity> -p <MNI01> -s <01> -l <./> -t 1"
   exit 1
 fi
 
