@@ -1,5 +1,4 @@
 from re import ASCII
-import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
@@ -11,6 +10,10 @@ Script to validate freesurfer output
 """
 #Author: nikhil153
 #Date: 27-July-2022
+
+# Example command
+# python fs_validator.py --fs_output_dir /home/nimhans/projects/data/example_dataset/derivatives/fmriprep/output/freesurfer/ses-01 \
+#                        --participants_list /home/nimhans/projects/data/example_dataset/tabular/demographics/participants.csv
 
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
@@ -140,6 +143,7 @@ if __name__ == "__main__":
         participants_df = pd.read_csv(participants_list)
 
     participant_ids = participants_df["participant_id"]
+    participant_ids = ["sub-" + str(id) for id in participant_ids]
     n_participants = len(participant_ids)
     print(f"Number of subjects in the participants list: {n_participants}")
 

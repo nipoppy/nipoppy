@@ -1,5 +1,4 @@
 from re import ASCII
-import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
@@ -154,6 +153,7 @@ if __name__ == "__main__":
         participants_df = pd.read_csv(participants_list)
 
     participant_ids = participants_df["participant_id"]
+    participant_ids = ["sub-" + str(id) for id in participant_ids]
     n_participants = len(participant_ids)
     print(f"Number of subjects in the participants list: {n_participants}")
 
@@ -199,8 +199,9 @@ if __name__ == "__main__":
     for p, participant_id in enumerate(subjects_missing_subject_dir):
         subject_dir = f"{fmriprep_dir}/{participant_id}"
         status_list = len(status_cols)*["subject dir not found"]
-        fmriprep_complete = False
-        status_df.loc[p + len(participant_ids)] = [participant_id, fmriprep_complete] + status_list
+        fmriprep_complete = len(status_cols)*[False]
+        fmriprep_status = len(status_cols)*["Not checked"]
+        status_df.loc[p + len(participant_ids)] = [participant_id] + fmriprep_complete + fmriprep_status + list(fsl_status.values())
 
     status_df["fmriprep_complete"] = status_df[fmriprep_complete_cols].prod(axis=1).astype(bool)
     n_complete = len(status_df[status_df["fmriprep_complete"]])

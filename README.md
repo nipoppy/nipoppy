@@ -3,19 +3,25 @@ A workflow for standarized MR images processing.
 *Process long and prosper.*
 
 ## Objective
-This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to
-    1. Standadized data i.e. convert DICOMs into BIDS
-    2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep
+This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to: 
+    1. Standadized data i.e. convert DICOMs into BIDS.
+    2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep.
+    3. Organize processed MR data inside `derivatives` directory. 
+    4. Provide metadata to `NeuroBagel` to allow indexing and query participants across multiple studies.
     
 The scripts in mr_proc operate on a dataset directory with a specific subdir tree structure.
 
 <img src="imgs/mr_proc_data_proc_org.jpg" alt="Drawing" align="middle" width="500px"/>
 
 The organization mr_proc code module is as follows:
+   - global_config: A file to set various paths specific to the machine you are using which will be used for data processing. 
    - scripts: helper code to setup and check status of mr_proc
    - workflow: code modules to exectute mr_proc stages and logging
    - metadata: files to track mr_proc progress
-   - notebooks: helper notebooks for data wrangling
+
+## General Notes
+   - The mr_proc setup uses Singualrity containers to run various MR image processing pipelines. Once the container is created/downloaded, you can write a python or shell run script and save them inside [my_new_pipeline](/workflow/proc_pipe/)
+   - The mr_proc setup allows you to validate processed output for 1) BIDS conversion 2) FreeSurfer 3) fMRIPrep and reports failed participants.
 
 ## Workflow steps
 
@@ -48,13 +54,13 @@ The organization mr_proc code module is as follows:
    - Make sure you have the appropriate HeuDiConv container in your [global configs](./workflow/global_configs.json)
    - Use [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) to run HeuDiConv `stage_1` and `stage_2`.  
       - Run `stage_1` to generate a list of available protocols from the DICOM header. These protocols are listed in `<DATASET_ROOT>/bids/.heudiconv/<participant_id>/info/dicominfo_ses-<session_id>.tsv`
-      - Sameple command:
-         - TODO
+      - Example command:
+         - python run_bids_conv.py --global_config ../global_configs.json --stage 1 --participant_id MNI01 --session_id 01 
 
       - Update [sample heuristic file](workflow/bids_conv/sample_heuristic.py) to create a name-mapping (i.e. dictionary) for bids organization based on the list of available protocols. **Copy this file into `$DATASET_ROOT/proc/heuristic.py`.**
       - Run `stage_2` to convert the dicoms into BIDS format based on the mapping from `$DATASET_ROOT/proc/heuristic.py`. 
-      - Sameple command:
-         - TODO
+      - Example command:
+         - python run_bids_conv.py --global_config ../global_configs.json --stage 2 --participant_id MNI01 --session_id 01 
 
        - The above scripts are written to work on a single participant. The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using queue submission [scripts](workflow/bids_conv/scripts/hpc/)
        - If you are doing this for the first time, you should first try [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) in a `test mode` by following these steps:
@@ -78,6 +84,16 @@ Curating dataset into BIDS format simplifies running several commonly used pipel
    - Run entire dataset (provided single participant test is successful)
 
 #### [fMRIPrep](https://fmriprep.org/en/stable/) (including FreeSurfer) 
+   - Use [run_fmriprep](workflow/proc_pipe/fmriprep/run_fmriprep.py) script to run fmriprep pipeline. 
+      - Mandatory: For FreeSurfer tasks, **you need to have `license.txt` file inside `<DATASET_ROOT>/derivatives/fmriprep`**
+      - You can run anatomical only workflow by adding --anat_only flag
+      - Optional: To ignore certain modalities / acquisitions you can create bids_filter.json file. This is common when you have multiple T1w acquisitions (e.g. Neuromelanin) in the BIDS directory. See [sample_bids_filter.json](workflow/proc_pipe/fmriprep/sample_bids_filter.json) for an example. **Note that your custom bids_filter.json file needs to be copied here `<DATASET_ROOT>/bids/bids_filter.json`.** 
+      - Similar to HeuDiConv, you can do a test run by adding --test_run flag. (Requires a BIDS participant directory inside `<DATASET_ROOT>/test_data/bids`)
+   - Example command:
+      - python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --bids_filter
+   
+
+   
 
 #### [MRIQC](https://mriqc.readthedocs.io/en/stable/)
 
