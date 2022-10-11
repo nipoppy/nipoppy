@@ -64,7 +64,7 @@ The organization mr_proc code module is as follows:
 
        - The above scripts are written to work on a single participant. The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using queue submission [scripts](workflow/bids_conv/scripts/hpc/)
        - If you are doing this for the first time, you should first try [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) in a `test mode` by following these steps:
-            - Copy a single participant directory from `<DATASET_ROOT>/dicom` to ``<DATASET_ROOT>/test_data/dicom` 
+            - Copy a single participant directory from `<DATASET_ROOT>/dicom` to `<DATASET_ROOT>/test_data/dicom` 
             - Run `stage_1` and `stage_2` with [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) with additional `--test_run` flag. 
 
 ### 6. Run BIDS validator for the entire dataset.   

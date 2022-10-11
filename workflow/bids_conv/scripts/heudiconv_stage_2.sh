@@ -61,7 +61,7 @@ SINGULARITY_DATA_STORE="/data"
 
 # run heudiconv at subject level.
 # {subject} is the variable in the heuristics file created for each dataset to filter images during conversion.
-echo "Heudiconv Run2 started..."
+echo "Heudiconv Stage_2 started..."
 
 $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
@@ -74,4 +74,4 @@ heudiconv  \
 -o ${SINGULARITY_BIDS_DIR} \
 -ss ${SES_ID} 
 
-echo "Heudiconv Run2 finishted, conversion complete!"
+echo "Heudiconv Stage_2 finishted, conversion complete!"

@@ -1,5 +1,5 @@
 {
-    "DATASET_ROOT": "/home/nimhans/projects/data/example_dataset",
+    "DATASET_ROOT": "/home/nimhans/projects/data/PD_SERB",
     "DATASTORE_DIR": "./",
     "HEUDICONV_VERSION": "cb2fd91",
     "FMRIPREP_VERSION": "20.2.7",
