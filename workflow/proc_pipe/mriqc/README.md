@@ -10,7 +10,7 @@ NOTE: Singularity v2.6 is used for compatibility with BIC but this may change in
 ## Running MRIQC Scripts
 In order run the MRIQC pipeline, use ```run_mriqc_sge.sh``` and pass in the absolute path to the data directory, the absolute path to the results directory and the path with the participants list as arguments as shown below:
 
-```qsub run_mriqc_sge.sh -d DATA_DIR -r RESULTS_DIR -p PARTICIPANT_LIST```
+```qsub run_mriqc_sge.sh -d DATA_DIR -r RESULTS_DIR -p PARTICIPANT_LIST -c CONTAINER_DIR```
 
 In order to evaluate how many subjects successfully passed through the MRIQC pipeline, run ```eval_mriqc_results_sge.sh``` and pass in the input directory, the path with the result file and the path with the participant list as shown below:
 
