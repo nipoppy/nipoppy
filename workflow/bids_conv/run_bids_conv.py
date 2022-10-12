@@ -24,8 +24,6 @@ stage = args.stage
 participant_id = args.participant_id
 session_id = args.session_id
 test_run = str(int(args.test_run))
-
-print(global_config,str(stage),participant_id,session_id,test_run)
   
 # Read global configs
 f = open(global_config)
