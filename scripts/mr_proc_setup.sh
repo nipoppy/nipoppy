@@ -25,6 +25,11 @@ else
     mkdir -p $DATASET_ROOT/proc/{containers,envs}
     mkdir -p $DATASET_ROOT/test_data/{dicom,bids,derivatives,tabular}
     mkdir -p $DATASET_ROOT/tabular/{demographics,assessments}
-    mkdir -p $DATASET_ROOT/derivatives/{fmriprep,tractoflow}
+    mkdir -p $DATASET_ROOT/derivatives/{fmriprep,mriqc,tractoflow}
 
+    PARTICIPANTS_CSV=$DATASET_ROOT/tabular/demographics/participants.csv    
+    if [ ! -f $PARTICIPANTS_CSV ]; then
+        echo "initializing participants.csv"
+        echo "participant_id,age,sex,group" > $PARTICIPANTS_CSV
+    fi
 fi

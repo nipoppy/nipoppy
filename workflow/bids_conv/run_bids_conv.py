@@ -1,14 +1,16 @@
 import argparse
 import json
 import subprocess
+import shutil
 
-HELPTEXT = """
-Script to perform DICOM to BIDS conversion using HeuDiConv
-"""
 #Author: nikhil153
 #Date: 07-Oct-2022
 
 # argparse
+HELPTEXT = """
+Script to perform DICOM to BIDS conversion using HeuDiConv
+"""
+
 parser = argparse.ArgumentParser(description=HELPTEXT)
 
 parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
@@ -41,8 +43,12 @@ print(f"Using DATASET_ROOT: {DATASET_ROOT}")
 print(f"Using SINGULARITY_HEUDICONV: {SINGULARITY_HEUDICONV}")
 print(f"Running HeuDiConv stage: {stage}")
 
+# Copy heuristic.py into "DATASET_ROOT/proc/heuristic.py"
+if stage == 2:
+    print(f"Copying ./heuristic.py to {DATASET_ROOT}/proc/heuristic.py (to be seen by Singularity container)")
+    shutil.copyfile("heuristic.py", f"{DATASET_ROOT}/proc/heuristic.py")
+
 # Run HeuDiConv script
-# /heudiconv_run1.sh -d <dataset_root> -p <MNI01> -s <01> -l <./> -t 1
 HEUDICONV_SCRIPT = f"scripts/heudiconv_stage_{stage}.sh"
 HEUDICONV_ARGS = ["-d", DATASET_ROOT, "-i", SINGULARITY_HEUDICONV, "-r", SINGULARITY_PATH, \
                   "-p", participant_id, "-s", session_id, "-l", DATASTORE_DIR, "-t", test_run]

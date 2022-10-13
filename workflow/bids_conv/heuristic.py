@@ -1,5 +1,6 @@
 import os
-# template heudiconv heuristics
+# HeuDiConv heuristics
+# Test shutil 
 
 # Based on: https://github.com/nipy/heudiconv/blob/master/heudiconv/heuristics/example.py
 POPULATE_INTENDED_FOR_OPTS = {
@@ -40,12 +41,15 @@ def infotodict(seqinfo):
     FLAIRTRANS = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-TRANS_run-{item:01d}_FLAIR')
 
     #---------dwi-----------#
-    dkiFOR = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-FOR_run-{item:01d}_dwi')
-    dkiREV = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-REV_run-{item:01d}_dwi')
+    dkiFOR = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-DKIFOR_run-{item:01d}_dwi')
+    dkiREV = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-DKIREV_run-{item:01d}_dwi')
     
-    #---------dwi-----------#
-    fmapAX = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-AXbold_run-{item:01d}_fieldmap')
-    fmapM0 = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-SENSE_run-{item:01d}_m0scan')
+    #---------fmap-----------#
+    fmapAX = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-AXbold_run-{item:01d}_epi')
+
+    #---------perf-----------#
+    asl = create_key('sub-{subject}/{session}/perf/sub-{subject}_{session}_run-{item:01d}_asl')
+    fmapM0 = create_key('sub-{subject}/{session}/perf/sub-{subject}_{session}_acq-SENSE_run-{item:01d}_m0scan')
 
     #---------func-----------#
     bold = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:01d}_bold')
@@ -57,12 +61,13 @@ def infotodict(seqinfo):
             T2w: [], FLAIR: [], FLAIRCOR: [], FLAIRTRANS: [], PDw: [], 
             dkiFOR: [], dkiREV: [], 
             bold: [], boldMB: [], 
-            fmapAX: [], fmapM0: []
+            fmapAX: [], fmapM0: [],
+            asl: []
            }
     
     ##########################################################################################################
     ## This is typically what you will have to change based on your scanner protocols
-    ## Use heudiconv run_1 output file:dicominfo.tsv from all subjects to identify all possible protocol names
+    ## Use heudiconv stage_1 output file:dicominfo.tsv from all subjects to identify all possible protocol names
     ##########################################################################################################
 
     keys_protocols_dict = {
@@ -81,10 +86,12 @@ def infotodict(seqinfo):
         dkiFOR:['DKI_uniform_distribution_FOR'],
         dkiREV:['DKI_uniform_distribution_rev'],
 
-        fmapAX: ['Axial field mapping'],
-        # fmapM0: ["M0 meting SENSE"],
+        asl: ["SOURCE - ASL SENSE_NEW"],
+        fmapM0: ["M0 meting SENSE"],
 
         "boldMB":['MB2_sample fmri protocol'],        
+
+        fmapAX: ['Axial field mapping'],
         
     }
 

@@ -53,8 +53,8 @@ if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
 
     N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
 
-echo "  number of all participants in participant list: $N_PARTICIPANTS"
-echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
+    echo "  number of all participants in participant list: $N_PARTICIPANTS"
+    echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
 
     if [ $N_PARTICIPANTS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
         echo "  WARNING: number of total and BIDS particiants are not equal!"
@@ -62,6 +62,8 @@ echo "  number of expected imaging participants in participant list: $N_BIDS_EXP
     fi
 
 else    
+    N_PARTICIPANTS=0
+    N_BIDS_EXPECT_PARTICIPANTS=0
     echo "  ERROR: participants.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
     N_ERRORS=$((N_ERRORS + 1))
 fi

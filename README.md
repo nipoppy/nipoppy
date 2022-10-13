@@ -7,7 +7,8 @@ This repo will contain container recipes and run scripts to manage MR data organ
     1. Standadized data i.e. convert DICOMs into BIDS.
     2. Run commonly used image processing pipelines e.g. FreeSurfer, fMRIPrep.
     3. Organize processed MR data inside `derivatives` directory. 
-    4. Provide metadata to `NeuroBagel` to allow indexing and query participants across multiple studies.
+    4. Organize demographic and clinical assessment data inside `tabular` directory. 
+    5. Provide metadata to `NeuroBagel` to allow indexing and query participants across multiple studies.
     
 The scripts in mr_proc operate on a dataset directory with a specific subdir tree structure.
 
@@ -57,8 +58,8 @@ The organization mr_proc code module is as follows:
       - Example command:
          - python run_bids_conv.py --global_config ../global_configs.json --stage 1 --participant_id MNI01 --session_id 01 
 
-      - Update [sample heuristic file](workflow/bids_conv/sample_heuristic.py) to create a name-mapping (i.e. dictionary) for bids organization based on the list of available protocols. **Copy this file into `$DATASET_ROOT/proc/heuristic.py`.**
-      - Run `stage_2` to convert the dicoms into BIDS format based on the mapping from `$DATASET_ROOT/proc/heuristic.py`. 
+      - Copy+Rename [sample heuristic file](workflow/bids_conv/sample_heuristic.py) --> `./heuristic.py` to create a name-mapping (i.e. dictionary) for bids organization based on the list of available protocols. **Note that this file automatically gets copied into `$DATASET_ROOT/proc/heuristic.py` to be seen by the Singularity container.**
+      - Run `stage_2` to convert the dicoms into BIDS format based on the mapping from `heuristic.py`. 
       - Example command:
          - python run_bids_conv.py --global_config ../global_configs.json --stage 2 --participant_id MNI01 --session_id 01 
 
@@ -89,13 +90,13 @@ Curating dataset into BIDS format simplifies running several commonly used pipel
 
 #### 8.1 [fMRIPrep](https://fmriprep.org/en/stable/) (including FreeSurfer) 
    - Use [run_fmriprep](workflow/proc_pipe/fmriprep/run_fmriprep.py) script to run fmriprep pipeline. 
-      - Mandatory: For FreeSurfer tasks, **you need to have `license.txt` file inside `<DATASET_ROOT>/derivatives/fmriprep`**
-      - Mandatory: fmriprep manages brain-template spaces using [TemplateFlow](https://fmriprep.org/en/stable/spaces.html). These templates can be shared across studies and datasets. Use [global configs](./workflow/global_configs.json) to specify path to `TEMPLATEFLOW_DIR` where these templates can reside. For machines with Internet connections, all required templates are automatically downloaded duing the run. 
-      - You can run anatomical only workflow by adding --anat_only flag
-      - Optional: To ignore certain modalities / acquisitions you can create bids_filter.json file. This is common when you have multiple T1w acquisitions (e.g. Neuromelanin) in the BIDS directory. See [sample_bids_filter.json](workflow/proc_pipe/fmriprep/sample_bids_filter.json) for an example. **Note that your custom bids_filter.json file needs to be copied here `<DATASET_ROOT>/bids/bids_filter.json`.** 
-      - Similar to HeuDiConv, you can do a test run by adding --test_run flag. (Requires a BIDS participant directory inside `<DATASET_ROOT>/test_data/bids`)
+      - Mandatory: For FreeSurfer tasks, **you need to have a [license.txt](https://surfer.nmr.mgh.harvard.edu/fswiki/License) file inside `<DATASET_ROOT>/derivatives/fmriprep`**
+      - Mandatory: fMRIPrep manages brain-template spaces using [TemplateFlow](https://fmriprep.org/en/stable/spaces.html). These templates can be shared across studies and datasets. Use [global configs](./workflow/global_configs.json) to specify path to `TEMPLATEFLOW_DIR` where these templates can reside. For machines with Internet connections, all required templates are automatically downloaded duing the fMRIPrep run. 
+      - You can run "anatomical only" workflow by adding `--anat_only` flag
+      - Optional: To ignore certain modalities / acquisitions you can create a `bids_filter.json` file. This is common when you have multiple T1w acquisitions (e.g. Neuromelanin, SPIR etc.) in the BIDS directory. See [sample_bids_filter.json](workflow/proc_pipe/fmriprep/sample_bids_filter.json) for an example. **Note that you can create a custom `bids_filter.json` by Copy+Renaming [sample_bids_filter.json](workflow/proc_pipe/fmriprep/sample_bids_filter.json). When `--use_bids_filter` flag is set, this `bids_filter.json` automatically gets copied into `<DATASET_ROOT>/bids/bids_filter.json` to be seen by the Singularity container.** 
+      - Similar to HeuDiConv, you can do a test run by adding `--test_run` flag. (Requires a BIDS participant directory inside `<DATASET_ROOT>/test_data/bids`)
    - Example command:
-      - python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --bids_filter
+      - python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --use_bids_filter
    - Main MR processing tasks run by fmriprep (see [fMRIPrep](https://fmriprep.org/en/stable/) for details):
       - Preprocessing
          - Bias correction / Intensity normalization (N4)
