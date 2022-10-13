@@ -1,6 +1,8 @@
 import argparse
 import json
 import subprocess
+import os
+from pathlib import Path
 
 HELPTEXT = """
 Script to run fMRIPrep 
@@ -43,13 +45,16 @@ SINGULARITY_FMRIPREP = SINGULARITY_FMRIPREP.format(FMRIPREP_VERSION)
 print(f"Using DATASET_ROOT: {DATASET_ROOT}")
 print(f"Using SINGULARITY_FMRIPREP: {SINGULARITY_FMRIPREP}")
 
+# Create version specific output dir
+Path(f"{DATASET_ROOT}/derivatives/fmriprep/v{FMRIPREP_VERSION}").mkdir(parents=True, exist_ok=True)
+
 # Run FMRIPREP script
 # "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -h <path_to_fmriprep_img> -r <singularity> \
 #         -f <path_to_templateflow_dir> -p <MNI01> -s <01> -b 1 -a 1 -t 1"
 
 FMRIPREP_SCRIPT = f"scripts/run_fmriprep.sh"
-FMRIPREP_ARGS = ["-d", DATASET_ROOT, "-h", SINGULARITY_FMRIPREP, "-r", SINGULARITY_PATH, "-f", TEMPLATEFLOW_DIR, \
-                  "-p", participant_id, "-s", session_id, "-b", bids_filter, "-a", anat_only, "-t", test_run]
+FMRIPREP_ARGS = ["-d", DATASET_ROOT, "-i", SINGULARITY_FMRIPREP, "-r", SINGULARITY_PATH, "-f", TEMPLATEFLOW_DIR, \
+                  "-p", participant_id, "-s", session_id, "-b", bids_filter, "-a", anat_only, "-v", f"v{FMRIPREP_VERSION}", "-t", test_run]
 FMRIPREP_CMD = [FMRIPREP_SCRIPT] + FMRIPREP_ARGS
 
 fmriprep_proc = subprocess.run(FMRIPREP_CMD)

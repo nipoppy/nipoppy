@@ -76,25 +76,50 @@ The organization mr_proc code module is as follows:
        - Make sure you match the version of Heudiconv and BIDS validator standard. 
        - Heuristic file will also need to be updated if your dataset has different protocols for different participants. 
        - You should also open an issue on this repo with the problems and solutions you encounter during processing. 
-       
-### 7. Run processing pipelines
+
+### 7. Fix HeuDiConv errors
+   - If you see errors from BIDS validator, it is possible that HeuDiConv may not be supporting your MRI sequence. In that case add a function to [fix_heudiconv_issues.py](workflow/bids_conv/fix_heudiconv_issues.py) to manually rename files, and run the script posthoc. 
+   - Make sure to open an issue on [HeuDiConv Github](https://github.com/nipy/heudiconv/issues) for fix in future release. 
+
+### 8. Run processing pipelines
 Curating dataset into BIDS format simplifies running several commonly used pipelines. Each pipeline follows similar steps:
    - Specify pipeline container (i.e. Singularity image / recipe) 
    - Run single participant test. This uses sample participant from /test_data/bids as input and generates output in the /test_data/<pipeline> dir. 
    - Run entire dataset (provided single participant test is successful)
 
-#### [fMRIPrep](https://fmriprep.org/en/stable/) (including FreeSurfer) 
+#### 8.1 [fMRIPrep](https://fmriprep.org/en/stable/) (including FreeSurfer) 
    - Use [run_fmriprep](workflow/proc_pipe/fmriprep/run_fmriprep.py) script to run fmriprep pipeline. 
       - Mandatory: For FreeSurfer tasks, **you need to have `license.txt` file inside `<DATASET_ROOT>/derivatives/fmriprep`**
+      - Mandatory: fmriprep manages brain-template spaces using [TemplateFlow](https://fmriprep.org/en/stable/spaces.html). These templates can be shared across studies and datasets. Use [global configs](./workflow/global_configs.json) to specify path to `TEMPLATEFLOW_DIR` where these templates can reside. For machines with Internet connections, all required templates are automatically downloaded duing the run. 
       - You can run anatomical only workflow by adding --anat_only flag
       - Optional: To ignore certain modalities / acquisitions you can create bids_filter.json file. This is common when you have multiple T1w acquisitions (e.g. Neuromelanin) in the BIDS directory. See [sample_bids_filter.json](workflow/proc_pipe/fmriprep/sample_bids_filter.json) for an example. **Note that your custom bids_filter.json file needs to be copied here `<DATASET_ROOT>/bids/bids_filter.json`.** 
       - Similar to HeuDiConv, you can do a test run by adding --test_run flag. (Requires a BIDS participant directory inside `<DATASET_ROOT>/test_data/bids`)
    - Example command:
       - python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --bids_filter
-   
+   - Main MR processing tasks run by fmriprep (see [fMRIPrep](https://fmriprep.org/en/stable/) for details):
+      - Preprocessing
+         - Bias correction / Intensity normalization (N4)
+         - Brain extraction (ANTs)
+         - Spatial normalization to standard space(s)
+      - Anatomical
+         - Tissue segmentation (FAST)
+         - FreeSurfer recon-all
+      - Functional
+         - BOLD reference image estimation
+         - Head-motion estimation
+         - Slice time correction
+         - Susceptibility Distortion Correction (SDC)
+         - Pre-processed BOLD in native space
+         - EPI to T1w registration
+         - Resampling BOLD runs onto standard spaces
+         - EPI sampled to FreeSurfer surfaces
+         - Confounds estimation
+         - ICA-AROMA
+      - Qualtiy Control
+         - [Visual reports](https://fmriprep.org/en/stable/outputs.html#visual-reports)
 
+### TODO
    
-
 #### [MRIQC](https://mriqc.readthedocs.io/en/stable/)
 
 #### [SPM](https://www.fil.ion.ucl.ac.uk/spm/)

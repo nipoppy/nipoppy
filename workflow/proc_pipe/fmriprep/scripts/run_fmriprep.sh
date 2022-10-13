@@ -3,7 +3,7 @@
 # Author: nikhil153
 # Last update: 16 Feb 2022
 
-if [ "$#" -ne 18 ]; then
+if [ "$#" -ne 20 ]; then
   echo "Please provide DATASET_ROOT, HEUDICONV_IMG, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, PARTICIPANT_ID, SESSION_ID, \
         BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag and TEST_RUN flag"
 
@@ -12,41 +12,45 @@ if [ "$#" -ne 18 ]; then
   exit 1
 fi
 
-while getopts d:h:r:f:p:s:b:a:t: flag
+while getopts d:i:r:f:p:s:b:a:v:t: flag
 do
     case "${flag}" in
         d) DATASET_ROOT=${OPTARG};;
-        h) HEUDICONV_IMG=${OPTARG};;
+        i) SINGULARITY_IMG=${OPTARG};;
         r) RUN_CMD=${OPTARG};; 
         f) TEMPLATEFLOW_DIR=${OPTARG};;         
         p) PARTICIPANT_ID=${OPTARG};;
         s) SESSION_ID=${OPTARG};;
         b) BIDS_FILTER=${OPTARG};;
         a) ANAT_ONLY=${OPTARG};;
+        v) VERSION=${OPTARG};;
         t) TEST_RUN=${OPTARG};;
     esac
 done
 
 # Container
-SINGULARITY_IMG=$HEUDICONV_IMG
+SINGULARITY_IMG=$SINGULARITY_IMG
 SINGULARITY_PATH=$RUN_CMD
 
 # TEMPLATEFLOW
 TEMPLATEFLOW_HOST_HOME=$TEMPLATEFLOW_DIR
 
+# FS license.txt path
+LOCAL_FS_LICENSE=${DATASET_ROOT}/derivatives/fmriprep/license.txt
+
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."
     BIDS_DIR="$DATASET_ROOT/test_data/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="$DATASET_ROOT/test_data/derivatives/fmriprep/"
+    DERIV_DIR="$DATASET_ROOT/test_data/derivatives/fmriprep/$VERSION/"
 else
     echo "Doing a real run..."
     BIDS_DIR="$DATASET_ROOT/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="$DATASET_ROOT/derivatives/fmriprep/"
+    DERIV_DIR="$DATASET_ROOT/derivatives/fmriprep/$VERSION/"
 fi
 
 OUT_DIR=${DERIV_DIR}/output
 
-LOG_FILE=${DERIV_DIR}_fmriprep_anat.log
+LOG_FILE=${DERIV_DIR}_fmriprep.log
 echo "Starting fmriprep proc with container: ${SINGULARITY_IMG}"
 echo ""
 echo "Using working dir: ${DERIV_DIR} and subject ID: ${PARTICIPANT_ID}"
@@ -66,7 +70,7 @@ mkdir -p ${FMRIPREP_HOST_CACHE}
 # Make sure FS_LICENSE is defined in the container.
 mkdir -p $FMRIPREP_HOME/.freesurfer
 export SINGULARITYENV_FS_LICENSE=$FMRIPREP_HOME/.freesurfer/license.txt
-cp ${DERIV_DIR}/license.txt ${SINGULARITYENV_FS_LICENSE}
+cp ${LOCAL_FS_LICENSE} ${SINGULARITYENV_FS_LICENSE}
 
 # Designate a templateflow bind-mount point
 export SINGULARITYENV_TEMPLATEFLOW_HOME="/templateflow"
@@ -110,7 +114,9 @@ fi
 
 # Setup done, run the command
 unset PYTHONPATH
+echo ""
 echo Commandline: $cmd
+echo ""
 eval $cmd
 exitcode=$?
 

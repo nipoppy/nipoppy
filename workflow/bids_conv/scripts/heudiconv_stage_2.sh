@@ -8,11 +8,11 @@ if [ "$#" -ne 14 ]; then
   exit 1
 fi
 
-while getopts d:h:r:p:s:l:t: flag
+while getopts d:i:r:p:s:l:t: flag
 do
     case "${flag}" in
         d) DATASET_ROOT=${OPTARG};;
-        h) HEUDICONV_IMG=${OPTARG};;
+        i) SINGULARITY_IMG=${OPTARG};;
         r) RUN_CMD=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
         s) SES_ID=${OPTARG};;

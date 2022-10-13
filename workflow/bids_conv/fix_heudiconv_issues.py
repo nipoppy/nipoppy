@@ -15,7 +15,7 @@ import os
 #   "<prefix>_magnitude1.<nii.gz/json>", "<prefix>_phase1.<nii.gz/json>"
 #   "<prefix>_magnitude2.<nii.gz/json>", "<prefix>_phase2.<nii.gz/json>"
 
-# 2. asl: remove asl scans from scans.tsv since they are added in the .bidsignore file for now. 
+# 2. asl: remove asl and m0 scans from scans.tsv since they are added in the .bidsignore file for now. 
 
 HELPTEXT = """
 Script to perform DICOM to BIDS conversion using HeuDiConv

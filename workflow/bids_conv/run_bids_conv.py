@@ -44,7 +44,7 @@ print(f"Running HeuDiConv stage: {stage}")
 # Run HeuDiConv script
 # /heudiconv_run1.sh -d <dataset_root> -p <MNI01> -s <01> -l <./> -t 1
 HEUDICONV_SCRIPT = f"scripts/heudiconv_stage_{stage}.sh"
-HEUDICONV_ARGS = ["-d", DATASET_ROOT, "-h", SINGULARITY_HEUDICONV, "-r", SINGULARITY_PATH, \
+HEUDICONV_ARGS = ["-d", DATASET_ROOT, "-i", SINGULARITY_HEUDICONV, "-r", SINGULARITY_PATH, \
                   "-p", participant_id, "-s", session_id, "-l", DATASTORE_DIR, "-t", test_run]
 HEUDICONV_CMD = [HEUDICONV_SCRIPT] + HEUDICONV_ARGS
 
