@@ -34,24 +34,24 @@ The organization mr_proc code module is as follows:
 <img src="imgs/mr_proc_data_dir_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
 ### 1. Create subject manifest
-   - Create a `participants.csv` in `<DATASET_ROOT>/tabular/demographics` comprising at least `participant_id`,`age`,`sex`,`group` (typically a diagnosis) columns.  
+   - Update the `participants.csv` in `<DATASET_ROOT>/tabular/demographics` comprising at least `participant_id`,`age`,`sex`,`group` (typically a diagnosis) columns.  
        - This list serves as a ground truth for subject availability and participant IDs are used to create BIDS ids downstream.
        
 ### 2. Gather MRI acquisition protocols (Optional)
    - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `mr_proc/workflow/dicom_org/scan_protocols.csv`
    - Although optional this is an important documentation for comparing across studies. 
    
-### 3. DICOM organization
+### 3. Organize (and rename) DICOMs 
    - Scanner DICOM files are named and stored in various formats and locations. In this step we extract, copy, and rename DICOMs in a single directory for all participants with available imaging data. 
        - Copy / download all "raw dicoms" in the `<DATASET_ROOT>/scratch/raw_dicoms` directory.
        - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<DATASET_ROOT>/tabular/demographics` 
    - Copy a single participant (i.e. dicom dir) into `<DATASET_ROOT>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
    
-### 4. Populate [global configs](./workflow/global_configs.json)
+### 4. Populate [global configs](./workflow/global_configs.json) file
    - This file contains paths to dataset, pipeline versions, and containers used by several workflow scripts.
    - This is a dataset specific file and needs to be modified based on local configs and paths.
 
-### 5. BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
+### 5. Run DICOM --> BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
    - Make sure you have the appropriate HeuDiConv container in your [global configs](./workflow/global_configs.json)
    - Use [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) to run HeuDiConv `stage_1` and `stage_2`.  
       - Run `stage_1` to generate a list of available protocols from the DICOM header. These protocols are listed in `<DATASET_ROOT>/bids/.heudiconv/<participant_id>/info/dicominfo_ses-<session_id>.tsv`
@@ -68,7 +68,7 @@ The organization mr_proc code module is as follows:
             - Copy a single participant directory from `<DATASET_ROOT>/dicom` to `<DATASET_ROOT>/test_data/dicom` 
             - Run `stage_1` and `stage_2` with [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) with additional `--test_run` flag. 
 
-### 6. Run BIDS validator for the entire dataset.   
+### 6. Run BIDS validator
    - Make sure you have the appropriate HeuDiConv container in your [global configs](./workflow/global_configs.json)
    - Use [run_bids_val.sh](workflow/bids_conv/scripts/run_bids_val.sh) to check for errors and warnings
         - Sample command: `run_bids_val.sh <bids_dir> <log_dir>` 
@@ -82,7 +82,7 @@ The organization mr_proc code module is as follows:
    - If you see errors from BIDS validator, it is possible that HeuDiConv may not be supporting your MRI sequence. In that case add a function to [fix_heudiconv_issues.py](workflow/bids_conv/fix_heudiconv_issues.py) to manually rename files, and run the script posthoc. 
    - Make sure to open an issue on [HeuDiConv Github](https://github.com/nipy/heudiconv/issues) for fix in future release. 
 
-### 8. Run processing pipelines
+### 8. Run MR image processing pipelines
 Curating dataset into BIDS format simplifies running several commonly used pipelines. Each pipeline follows similar steps:
    - Specify pipeline container (i.e. Singularity image / recipe) 
    - Run single participant test. This uses sample participant from /test_data/bids as input and generates output in the /test_data/<pipeline> dir. 
