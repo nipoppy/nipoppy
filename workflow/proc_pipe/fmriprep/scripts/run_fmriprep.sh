@@ -97,7 +97,8 @@ cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTI
     --bids-database-dir /work/first_run/bids_db/
     --fs-license-file /home/fmriprep/.freesurfer/license.txt \
     --return-all-components -v \
-    --write-graph --notrack"
+    --write-graph --notrack
+    --omp-nthreads 4 --nthreads 12 --mem_mb 8000"
 
 # Append optional args
 if [ "$BIDS_FILTER" -eq 1 ]; then
