@@ -22,7 +22,7 @@ do
 done
 
 # Container
-SINGULARITY_IMG=$HEUDICONV_IMG
+SINGULARITY_IMG=$SINGULARITY_IMG
 SINGULARITY_PATH=$RUN_CMD
 
 if [ "$TEST_RUN" -eq 1 ]; then
@@ -63,9 +63,11 @@ SINGULARITY_DATA_STORE="/data"
 # {subject} is the variable in the heuristics file created for each dataset to filter images during conversion.
 echo "Heudiconv Stage_2 started..."
 
+# Only for custom build singularity container you need to call "heudiconv" before specifying heudiconv run options.
+# heudiconv  \
+
 $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
-heudiconv  \
 -d ${SINGULARITY_WD}/${DICOM_DIR}/{subject}/* \
 -s ${PARTICIPANT_ID} -c none \
 -f ${HEURISTIC_FILE} \

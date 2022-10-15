@@ -56,9 +56,11 @@ SINGULARITY_DATA_STORE="/data"
 
 echo "Heudiconv Stage_1 started..."
 
+# Only for custom build singularity container you need to call "heudiconv" before specifying heudiconv run options.
+# heudiconv  \
+
 $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
-heudiconv  \
 -d $SINGULARITY_DICOM_DIR/{subject}/* \
 -s ${PARTICIPANT_ID} -c none \
 -f convertall \
