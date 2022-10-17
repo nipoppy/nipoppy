@@ -15,6 +15,12 @@ import os
 #   "<prefix>_magnitude1.<nii.gz/json>", "<prefix>_phase1.<nii.gz/json>"
 #   "<prefix>_magnitude2.<nii.gz/json>", "<prefix>_phase2.<nii.gz/json>"
 
+# fmap PhaseEncodingDirection:
+# File "/usr/local/miniconda/lib/python3.7/site-packages/sdcflows/workflows/base.py", line 123, in init_sdc_estimate_wf
+# 'PhaseEncodingDirection is not defined within the metadata retrieved '
+# Solution: https://neurostars.org/t/phase-encoding-error-for-field-maps/2650/3: 
+# "If you BOLD series is j, then your EPI fieldmap should be j-, and vice versa"
+
 # 2. asl: remove asl and m0 scans from scans.tsv since they are added in the .bidsignore file for now. 
 
 HELPTEXT = """

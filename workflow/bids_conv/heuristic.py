@@ -24,6 +24,7 @@ def infotodict(seqinfo):
 
     #---------anat-----------#
     T1w = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:01d}_T1w')
+    T1wTFE = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-TFE_run-{item:01d}_T1w')
     
     # Other T1w prefixed acq
     T1wSPIR = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-SPIR_run-{item:01d}_T1w')
@@ -57,7 +58,7 @@ def infotodict(seqinfo):
 
     # info dict to be populated
     info = {
-            T1w: [], T1wSPIR: [], T1wTFEGD: [], T1wMPRCOR: [], T1wMPRTRANS: [], 
+            T1w: [], T1wTFE: [], T1wSPIR: [], T1wTFEGD: [], T1wMPRCOR: [], T1wMPRTRANS: [], 
             T2w: [], FLAIR: [], FLAIRCOR: [], FLAIRTRANS: [], PDw: [], 
             dkiFOR: [], dkiREV: [], 
             bold: [], boldMB: [], 
@@ -71,7 +72,8 @@ def infotodict(seqinfo):
     ##########################################################################################################
 
     keys_protocols_dict = {
-        T1w:['sT1W_3D_TFE_MPRAGE','Sag_3D_MPRAGE'],
+        T1w: ['Sag_3D_MPRAGE'],
+        T1wTFE: ['sT1W_3D_TFE_MPRAGE'],
         T1wSPIR: ["T1W_3D_SPIR"],
         T1wTFEGD: ["sT1W_3D_TFE_32ch_GD"],
         T1wMPRCOR:["MPR COR"],
