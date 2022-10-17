@@ -4,7 +4,7 @@ import glob
 import pandas as pd
 
 
-def eval(args): #config file 
+def eval_mriqc(args): #config file 
     config = json.load(open(args[1])) 
     participants = pd.read_csv(config['subject_list'], sep='\t')
     
@@ -54,5 +54,5 @@ def eval(args): #config file
             df.to_csv(config['results_file'], mode='a', index=False, header=False)
         else: df.to_csv(config['results_file'], index=False)
 
-eval(sys.argv)
+eval_mriqc(sys.argv)
 
