@@ -94,10 +94,11 @@ cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTI
     --output-spaces MNI152NLin2009cAsym:res-2 anat fsnative \
     --fs-subjects-dir /fsdir \
     --skip_bids_validation \
-    --bids-database-dir /work/first_run/bids_db/
+    --bids-database-dir /work/first_run/bids_db/ \
     --fs-license-file /home/fmriprep/.freesurfer/license.txt \
     --return-all-components -v \
-    --write-graph --notrack
+    --write-graph --notrack \
+    --use-syn-sdc --force-syn --ignore fieldmaps \
     --omp-nthreads 4 --nthreads 8 --mem_mb 4000"
 
 # Append optional args

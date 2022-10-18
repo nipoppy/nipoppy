@@ -56,12 +56,12 @@ The organization mr_proc code module is as follows:
    - Use [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) to run HeuDiConv `stage_1` and `stage_2`.  
       - Run `stage_1` to generate a list of available protocols from the DICOM header. These protocols are listed in `<DATASET_ROOT>/bids/.heudiconv/<participant_id>/info/dicominfo_ses-<session_id>.tsv`
       - Example command:
-         - python run_bids_conv.py --global_config ../global_configs.json --stage 1 --participant_id MNI01 --session_id 01 
+         - python run_bids_conv.py --global_config ../global_configs.json --participant_id MNI01 --session_id 01 --stage 1
 
       - Copy+Rename [sample heuristic file](workflow/bids_conv/sample_heuristic.py) --> `./heuristic.py` to create a name-mapping (i.e. dictionary) for bids organization based on the list of available protocols. **Note that this file automatically gets copied into `$DATASET_ROOT/proc/heuristic.py` to be seen by the Singularity container.**
       - Run `stage_2` to convert the dicoms into BIDS format based on the mapping from `heuristic.py`. 
       - Example command:
-         - python run_bids_conv.py --global_config ../global_configs.json --stage 2 --participant_id MNI01 --session_id 01 
+         - python run_bids_conv.py --global_config ../global_configs.json --participant_id MNI01 --session_id 01 --stage 2
 
        - The above scripts are written to work on a single participant. The entire dataset can be BIDSified using a "for loop" or if you have access to a cluster you can run it parallel using queue submission [scripts](workflow/bids_conv/scripts/hpc/)
        - If you are doing this for the first time, you should first try [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) in a `test mode` by following these steps:
@@ -115,9 +115,21 @@ Curating dataset into BIDS format simplifies running several commonly used pipel
          - Resampling BOLD runs onto standard spaces
          - EPI sampled to FreeSurfer surfaces
          - Confounds estimation
-         - ICA-AROMA
+         - ICA-AROMA (not run by default)
       - Qualtiy Control
          - [Visual reports](https://fmriprep.org/en/stable/outputs.html#visual-reports)
+
+   - Validate output 
+      - You can check successful completion of the fmriprep run by confirming certain output files. The following two scripts will check `freesurfer` and `fmriprep` specific expeteced files independently.
+         - [fsvalidator](workflow/proc_pipe/fmriprep/fs_validator.py)
+         - [FS validator](workflow/proc_pipe/fmriprep/fmriprep_validator.py)
+      - You should also do a Visual QC using reports provided by fmriprep. 
+         - Look at the subject specific [html reports](https://fmriprep.org/en/stable/outputs.html#visual-reports)
+         - SDC correction [note](https://neurostars.org/t/weird-results-of-performing-susceptibility-distortion-correction-on-the-epi/20352/2): "It is expected that the frontal lobe shrank after SDC correction. Indeed P>A acquisition has a tendency to “inflate” this area, so SDC correction shrank it to its original shape. More importantly, the functional image after SDC should get closer to anatomical outline" 
+
+   - CLEANUP of working dir
+      - fmriprep run generates huge number of intermediate files. You should remove those after successful run to free-up space. 
+         - e.g. fmriprep_wf/
 
 ### TODO
    

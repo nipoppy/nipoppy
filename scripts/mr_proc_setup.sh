@@ -22,7 +22,7 @@ else
     echo "setting mr_proc root dir at: $DATASET_ROOT"
 
     mkdir -p $DATASET_ROOT/{scratch,backups,downloads,proc,test_data,tabular,dicom,bids,derivatives,releases}
-    mkdir -p $DATASET_ROOT/proc/{containers,envs}
+    mkdir -p $DATASET_ROOT/proc/{logs}
     mkdir -p $DATASET_ROOT/test_data/{dicom,bids,derivatives,tabular}
     mkdir -p $DATASET_ROOT/tabular/{demographics,assessments}
     mkdir -p $DATASET_ROOT/derivatives/{fmriprep,mriqc,tractoflow}
