@@ -54,7 +54,10 @@ Path(f"{DATASET_ROOT}/derivatives/fmriprep/v{FMRIPREP_VERSION}").mkdir(parents=T
 #Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
 if use_bids_filter:
     print(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
-    shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/bids/bids_filter.json")
+    if test_run == 1:
+        shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/test_data/bids/bids_filter.json")
+    else:
+        shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/bids/bids_filter.json")
 
 # Run FMRIPREP script
 # "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -i <path_to_fmriprep_img> -r <singularity> \

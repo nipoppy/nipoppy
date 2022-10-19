@@ -46,8 +46,7 @@ def infotodict(seqinfo):
     dkiREV = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-DKIREV_run-{item:01d}_dwi')
     
     #---------fmap-----------#
-    #fmapAX = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-bold_run-{item:01d}_epi')
-    fmapAX = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-bold_dir-{item:01d}_run-{item:01d}_epi.json')
+    fmapAX = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-bold_run-{item:01d}_epi')
 
     #---------perf-----------#
     asl = create_key('sub-{subject}/{session}/perf/sub-{subject}_{session}_run-{item:01d}_asl')
