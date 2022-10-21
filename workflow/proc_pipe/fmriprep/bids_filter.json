@@ -10,6 +10,7 @@
         "datatype": "func",
         "session": "01",
         "run": "1",
+        "acquisition": "multiband",
         "suffix": "bold"
     }
 }

@@ -97,6 +97,8 @@ Curating dataset into BIDS format simplifies running several commonly used pipel
       - Similar to HeuDiConv, you can do a test run by adding `--test_run` flag. (Requires a BIDS participant directory inside `<DATASET_ROOT>/test_data/bids`)
    - Example command:
       - python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --use_bids_filter
+      - You can change default run parameters in the [run_fmriprep.sh](workflow/proc_pipe/fmriprep/scripts/run_fmriprep.sh) by looking at the [documentation](https://fmriprep.org/en/stable/usage.html)
+
    - Main MR processing tasks run by fmriprep (see [fMRIPrep](https://fmriprep.org/en/stable/) for details):
       - Preprocessing
          - Bias correction / Intensity normalization (N4)
@@ -134,8 +136,6 @@ Curating dataset into BIDS format simplifies running several commonly used pipel
 ### TODO
    
 #### [MRIQC](https://mriqc.readthedocs.io/en/stable/)
-
-#### [SPM](https://www.fil.ion.ucl.ac.uk/spm/)
 
 #### [TractoFlow](https://github.com/scilus/tractoflow)
 
