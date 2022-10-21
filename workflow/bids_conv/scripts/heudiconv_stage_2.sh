@@ -66,6 +66,10 @@ echo "Heudiconv Stage_2 started..."
 # Only for custom build singularity container you need to call "heudiconv" before specifying heudiconv run options.
 # heudiconv  \
 
+# Setting --grouping all to avoid this error for some of the nimhans subjects
+# Reason: "Conflicting study identifiers found"
+# Solution: https://github.com/nipy/heudiconv/issues/377
+
 $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
 -d ${SINGULARITY_WD}/${DICOM_DIR}/{subject}/* \

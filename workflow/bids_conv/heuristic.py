@@ -55,13 +55,15 @@ def infotodict(seqinfo):
     #---------func-----------#
     bold = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:01d}_bold')
     boldMB = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_acq-multiband_run-{item:01d}_bold')
+    boldMBSP = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_acq-multibandSP_run-{item:01d}_bold')
+
 
     # info dict to be populated
     info = {
             T1w: [], T1wTFE: [], T1wSPIR: [], T1wTFEGD: [], T1wMPRCOR: [], T1wMPRTRANS: [], 
             T2w: [], FLAIR: [], FLAIRCOR: [], FLAIRTRANS: [], PDw: [], 
             dkiFOR: [], dkiREV: [], 
-            bold: [], boldMB: [], 
+            bold: [], boldMB: [], boldMBSP: [],
             fmapAX: [], fmapM0: [],
             asl: []
            }
@@ -76,24 +78,26 @@ def infotodict(seqinfo):
         T1wTFE: ['sT1W_3D_TFE_MPRAGE'],
         T1wSPIR: ["T1W_3D_SPIR"],
         T1wTFEGD: ["sT1W_3D_TFE_32ch_GD"],
-        T1wMPRCOR:["MPR COR"],
-        T1wMPRTRANS:["MPR TRANS"],
+        T1wMPRCOR: ["MPR COR"],
+        T1wMPRTRANS: ["MPR TRANS"],
 
-        T2w:["3D_Brain_VIEW_T2"],
-        FLAIR:["3D_Brain_VIEW_FLAIR_SHC"],
-        FLAIRCOR:["V3D_Brain_VIEW_FLAIR_OCOR"],
-        FLAIRTRANS:["V3D_Brain_VIEW_FLAIR_TRANS"],
-        PDw:["PDW_TSE_Tra","PDW_TSE_Tra"],
+        T2w: ["3D_Brain_VIEW_T2","T2W_DRIVE"],
+        FLAIR: ["3D_Brain_VIEW_FLAIR_SHC"],
+        FLAIRCOR: ["V3D_Brain_VIEW_FLAIR_OCOR"],
+        FLAIRTRANS: ["V3D_Brain_VIEW_FLAIR_TRANS"],
+        PDw: ["PDW_TSE_Tra"],
 
-        dkiFOR:['DKI_uniform_distribution_FOR'],
-        dkiREV:['DKI_uniform_distribution_rev'],
+        dkiFOR: ['DKI_uniform_distribution_FOR'], 
+        dkiREV: ['DKI_uniform_distribution_rev'], 
 
         asl: ["SOURCE - ASL SENSE_NEW"],
         fmapM0: ["M0 meting SENSE"],
 
-        "boldMB":['MB2_sample fmri protocol'],        
+        "boldMB": ['MB2_sample fmri protocol','MB2_sample fmri fa 52'],
 
-        fmapAX: ['Axial field mapping'],
+        boldMBSP: ["MB2_fmri_0.3_SP"],
+
+        fmapAX: ['Axial field mapping'], 
         
     }
 
@@ -108,9 +112,10 @@ def infotodict(seqinfo):
             for ptcl in protocols:
                 if (ptcl in s.protocol_name):   
                     if key == "boldMB":
-                        if (s.dim3 == 16000):                            
+                        if (s.dim3 in [15399,15999,16000,16001,17600]) & (ptcl == "MB2_sample fmri protocol"):
                             info[boldMB].append(s.series_id)
-
+                        elif (s.dim3 in [16000,17600,17601,17543,35200]) & (ptcl == "MB2_sample fmri fa 52"):
+                            info[boldMB].append(s.series_id)
                     else:
                         info[key].append(s.series_id)
                 

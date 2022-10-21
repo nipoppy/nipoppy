@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 import glob
 import shutil
+import pydicom
 
 HELPTEXT = """
 Script to perform DICOM to BIDS conversion using HeuDiConv
@@ -69,14 +70,20 @@ for index, row in map_df.iterrows():
             dst_filename_len = len(str(n_raw_dicoms))
             skipped_file_list = []
             for src_fpath in filepaths:
-                if (filename_pattern == "") | (filename_pattern in src_fpath):        
-                    dst_filename = str(dcm_idx).zfill(dst_filename_len)
-                    dst_fpath = f"{participant_dicom_dir}/{dst_filename}.dcm"
-                    shutil.copyfile(src_fpath, dst_fpath)
-                    dcm_idx += 1
+                if (filename_pattern == "") | (filename_pattern in src_fpath):      
+                    # check if the file is vaild dicom
+                    try:
+                        dataset = pydicom.dcmread(src_fpath)                
+                        dst_filename = str(dcm_idx).zfill(dst_filename_len)
+                        dst_fpath = f"{participant_dicom_dir}/{dst_filename}.dcm"
+                        shutil.copyfile(src_fpath, dst_fpath)
+                        dcm_idx += 1
+                    except:
+                        print(f"Error reading {src_fpath}. Not renaming it.")
+                        skipped_file_list.append(f"{src_fpath},invalid_dicom")
 
                 else:
-                    skipped_file_list.append(src_fpath)
+                    skipped_file_list.append(f"{src_fpath},filename_pattern_mismatch")
 
             skipped_files_txt = f"{output_dir}/{participant_id}_skipped_files.csv"
             with open(skipped_files_txt, 'w') as output_file:
