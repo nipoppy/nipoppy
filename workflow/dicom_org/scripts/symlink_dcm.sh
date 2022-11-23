@@ -29,8 +29,9 @@ echo ""
 
 for sub in `cat $SUBJECT_LIST`; do 
    i=`ls ${DICOM_SOURCE_DIR} | grep ${sub}`
+   echo "sub files: $i"
    n_matches=`echo $i | wc -l`
-
+   echo "number of matches: $n_matches"
    if [[ "$i" == "" ]]; then
       echo "No scan match found for $sub in the source dir"
    else
