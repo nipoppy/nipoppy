@@ -8,13 +8,18 @@
 # date: 12 April 2022
 
 if [ "$#" -ne 3 ]; then
-  echo "Please provide DICOM_SOURCE_DIR, DICOM_DEST_DIR, and the subject_list_file"
+  echo "Please provide DICOM_SOURCE_DIR, DICOM_DEST_DIR, and SUBJECT_LIST"
   exit 1
 fi
 
 DICOM_SOURCE_DIR=$1
 DICOM_DEST_DIR=$2
 SUBJECT_LIST=$3
+
+SUBJECT_LIST_DIR=`dirname "$SUBJECT_LIST"`
+HEUDICONV_PARTICIPANT_LIST="${SUBJECT_LIST_DIR}/heudiconv_participant_list.txt"
+touch ${HEUDICONV_PARTICIPANT_LIST}
+chmod 775 ${HEUDICONV_PARTICIPANT_LIST}
 
 N_SUBS=`cat $SUBJECT_LIST | wc -l`
 echo "Number of subjects in the batch: $N_SUBS"
@@ -27,6 +32,7 @@ for sub in `cat $SUBJECT_LIST`; do
    PSCID=`echo $i | cut -d "_" -f1`
    DCCID=`echo $i | cut -d "_" -f2`
    BIDS_ID="${PSCID}D${DCCID}"
+   echo BIDS_ID >> ${HEUDICONV_PARTICIPANT_LIST}
    echo "subject_id: $sub, dicom_file: $i, bids_id: $BIDS_ID"
    ln -s ${DICOM_SOURCE_DIR}/${i} $DICOM_DEST_DIR/${BIDS_ID}
 done
