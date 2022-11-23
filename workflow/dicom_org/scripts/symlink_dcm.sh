@@ -46,6 +46,7 @@ for sub in `cat $SUBJECT_LIST`; do
          done
          echo "linking $f_link"
          i=$f_link
+      fi
 
       PSCID=`echo $i | cut -d "_" -f1`
       DCCID=`echo $i | cut -d "_" -f2`
