@@ -8,11 +8,11 @@ if [ "$#" -ne 14 ]; then
   exit 1
 fi
 
-while getopts d:h:r:p:s:l:t: flag
+while getopts d:i:r:p:s:l:t: flag
 do
     case "${flag}" in
         d) DATASET_ROOT=${OPTARG};;
-        h) HEUDICONV_IMG=${OPTARG};;
+        i) SINGULARITY_IMG=${OPTARG};;
         r) RUN_CMD=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
         s) SES_ID=${OPTARG};;
@@ -22,7 +22,7 @@ do
 done
 
 # Container
-SINGULARITY_IMG=$HEUDICONV_IMG
+SINGULARITY_IMG=$SINGULARITY_IMG
 SINGULARITY_PATH=$RUN_CMD
 
 if [ "$TEST_RUN" -eq 1 ]; then
@@ -54,11 +54,13 @@ SINGULARITY_DATA_STORE="/data"
 # run heudiconv at subject level.
 # {subject} is the variable in the heuristics file created for each dataset to filter images during conversion.\
 
-echo "Heudiconv Run1 started..."
+echo "Heudiconv Stage_1 started..."
+
+# Only for custom build singularity container you need to call "heudiconv" before specifying heudiconv run options.
+# heudiconv  \
 
 $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -B ${LOCAL_DATA_STORE}:${SINGULARITY_DATA_STORE} ${SINGULARITY_IMG} \
-heudiconv  \
 -d $SINGULARITY_DICOM_DIR/{subject}/* \
 -s ${PARTICIPANT_ID} -c none \
 -f convertall \
@@ -66,4 +68,4 @@ heudiconv  \
 --overwrite \
 -ss ${SES_ID} \
 
-echo "Heudiconv Run1 finished!"
+echo "Heudiconv Stage_1 finished!"
