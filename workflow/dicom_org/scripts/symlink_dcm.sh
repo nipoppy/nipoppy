@@ -32,9 +32,14 @@ for sub in `cat $SUBJECT_LIST`; do
    PSCID=`echo $i | cut -d "_" -f1`
    DCCID=`echo $i | cut -d "_" -f2`
    BIDS_ID="${PSCID}D${DCCID}"
-   echo BIDS_ID >> ${HEUDICONV_PARTICIPANT_LIST}
    echo "subject_id: $sub, dicom_file: $i, bids_id: $BIDS_ID"
-   ln -s ${DICOM_SOURCE_DIR}/${i} $DICOM_DEST_DIR/${BIDS_ID}
+   
+   if [ -d "${DICOM_SOURCE_DIR}/${i}" ]; then
+      ln -s ${DICOM_SOURCE_DIR}/${i} $DICOM_DEST_DIR/${BIDS_ID}
+      echo BIDS_ID >> ${HEUDICONV_PARTICIPANT_LIST}
+   else 
+      echo "${DICOM_SOURCE_DIR}/${i} does not exist"
+   fi
 done
 echo ""
 echo "Symlinking complete"
