@@ -33,9 +33,20 @@ for sub in `cat $SUBJECT_LIST`; do
 
    if [[ "$i" == "" ]]; then
       echo "No scan match found for $sub in the source dir"
-   elif [[ $n_matches != "1" ]]; then
-      echo "Multiple scan matches found for $sub in the source dir"
    else
+      if [[ $n_matches > "1" ]]; then
+         echo "Multiple ($n_matches) scan matches found for $sub in the source dir"
+         min_size=0
+         for j in $i; do
+            new_size=`ls $j | wc -l`
+            if [[ $new_size > $min_size ]]; then
+               min_size=$new_size
+               f_link=$j
+            fi
+         done
+         echo "linking $f_link"
+         i=$f_link
+
       PSCID=`echo $i | cut -d "_" -f1`
       DCCID=`echo $i | cut -d "_" -f2`
       BIDS_ID="${PSCID}D${DCCID}"
