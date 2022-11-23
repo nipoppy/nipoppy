@@ -29,8 +29,7 @@ echo ""
 
 for sub in `cat $SUBJECT_LIST`; do 
    i=`ls ${DICOM_SOURCE_DIR} | grep ${sub}`
-   echo "sub files: $i"
-   n_matches=`echo $i | wc -l`
+   n_matches=`echo "$i" | tr ' ' '\n' | wc -l`
    echo "number of matches: $n_matches"
    if [[ "$i" == "" ]]; then
       echo "No scan match found for $sub in the source dir"
@@ -38,7 +37,7 @@ for sub in `cat $SUBJECT_LIST`; do
       if [[ $n_matches > 1 ]]; then
          echo "Multiple ($n_matches) scan matches found for $sub in the source dir"
          min_size=0
-         for j in $i; do
+         for j in `echo "$i" | tr ' ' '\n'`; do
             new_size=`ls $j | wc -l`
             if [[ $new_size > $min_size ]]; then
                min_size=$new_size
