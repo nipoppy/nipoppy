@@ -7,26 +7,28 @@
 # author: nikhil153
 # date: 12 April 2022
 
-if [ "$#" -ne 2 ]; then
-  echo "Please provide subject-list-file and project-dicom-dir"
+if [ "$#" -ne 3 ]; then
+  echo "Please provide DICOM_SOURCE_DIR, mr_proc_dataset_root_dir, and the subject_list_file"
   exit 1
 fi
 
-SUBJECT_LIST=$1
-PROJECT_DICOM_DIR=$2
+DICOM_SOURCE_DIR=$1
+DATASET_ROOT=$2
+SUBJECT_LIST=$3
 
-SOURCE_DICOM_DIR="/data/dicom"
-DICOM_LIST="data_dicom_matches.txt"
+MR_PROC_DICOM_DIR="$DATASET_ROOT/dicom"
 
 N_SUBS=`cat $SUBJECT_LIST | wc -l`
 echo "Number of subjects in the batch: $N_SUBS"
 
-echo "Identifying available DICOMs for the provided subject list"
-for i in `cat $SUBJECT_LIST`; do ls $SOURCE_DICOM_DIR | grep `echo $i | cut -d "," -f2`; done > $DICOM_LIST
+echo "Symlinking dicom dirs from $DICOM_SOURCE_DIR to $MR_PROC_DICOM_DIR"
+for sub in `cat $SUBJECT_LIST`; do 
+   i=`ls $sub`
+   PSCID=`echo $i | cut -d "_" -f1`
+   DCCID=`echo $i | cut -d "_" -f2`
+   BIDS_ID="${PSCID}D${DCCID}"
 
-N_DICOMS=`cat $DICOM_LIST | wc -l`
-echo "Number of DICOM matches in $SOURCE_DICOM_DIR: $N_DICOMS"
+   ln -s ${DICOM_SOURCE_DIR}/${i} $MR_PROC_DICOM_DIR/${BIDS_ID}
+done
 
-echo "Symlinking dicom dirs from $SOURCE_DICOM_DIR to $PROJECT_DICOM_DIR"
-for i in `cat $DICOM_LIST`; do ln -s ${SOURCE_DICOM_DIR}/${i} $PROJECT_DICOM_DIR/${i}; done
 echo "Symlinking complete"
