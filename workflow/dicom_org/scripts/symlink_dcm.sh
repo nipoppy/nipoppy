@@ -29,17 +29,22 @@ echo ""
 
 for sub in `cat $SUBJECT_LIST`; do 
    i=`ls ${DICOM_SOURCE_DIR} | grep ${sub}`
-   PSCID=`echo $i | cut -d "_" -f1`
-   DCCID=`echo $i | cut -d "_" -f2`
-   BIDS_ID="${PSCID}D${DCCID}"
-   echo "subject_id: $sub, dicom_file: $i, bids_id: $BIDS_ID"
+   n_matches=`echo $i | wc -l`
+
+   if [[ "$i" == "" ]]; then
+      echo "No scan match found for $sub in the source dir"
+   elif [[ $n_matches != "1" ]]; then
+      echo "Multiple scan matches found for $sub in the source dir"
+   else
+      PSCID=`echo $i | cut -d "_" -f1`
+      DCCID=`echo $i | cut -d "_" -f2`
+      BIDS_ID="${PSCID}D${DCCID}"
+      echo "subject_id: $sub, dicom_file: $i, bids_id: $BIDS_ID"
    
-   if [ -d "${DICOM_SOURCE_DIR}/${i}" ]; then
       ln -s ${DICOM_SOURCE_DIR}/${i} $DICOM_DEST_DIR/${BIDS_ID}
       echo BIDS_ID >> ${HEUDICONV_PARTICIPANT_LIST}
-   else 
-      echo "${DICOM_SOURCE_DIR}/${i} does not exist"
    fi
 done
 echo ""
 echo "Symlinking complete"
+echo "HeuDiConv participant list: ${HEUDICONV_PARTICIPANT_LIST}"
