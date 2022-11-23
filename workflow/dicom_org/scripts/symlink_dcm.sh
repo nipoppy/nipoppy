@@ -34,7 +34,7 @@ for sub in `cat $SUBJECT_LIST`; do
    if [[ "$i" == "" ]]; then
       echo "No scan match found for $sub in the source dir"
    else
-      if [[ $n_matches > "1" ]]; then
+      if [[ $n_matches > 1 ]]; then
          echo "Multiple ($n_matches) scan matches found for $sub in the source dir"
          min_size=0
          for j in $i; do
@@ -54,7 +54,7 @@ for sub in `cat $SUBJECT_LIST`; do
       echo "subject_id: $sub, dicom_file: $i, bids_id: $BIDS_ID"
    
       ln -s ${DICOM_SOURCE_DIR}/${i} $DICOM_DEST_DIR/${BIDS_ID}
-      echo BIDS_ID >> ${HEUDICONV_PARTICIPANT_LIST}
+      echo $BIDS_ID >> ${HEUDICONV_PARTICIPANT_LIST}
    fi
 done
 echo ""
