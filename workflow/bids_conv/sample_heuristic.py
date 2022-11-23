@@ -1,7 +1,7 @@
 import os
-# Heuristics created by nikhil153 (GH) for QPN data.
-# 10 Jan 2022
+# template heudiconv heuristics
 
+# Based on: https://github.com/nipy/heudiconv/blob/master/heudiconv/heuristics/example.py
 POPULATE_INTENDED_FOR_OPTS = {
         'matching_parameters': ['ModalityAcquisitionLabel'],
         'criterion': 'Closest'
@@ -35,18 +35,11 @@ def infotodict(seqinfo):
     T1wNeuromel = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-NM_run-{item:01d}_T1w')
     
     # This needs to have specific order: https://neurostars.org/t/multi-echo-anatomical-mri-bids-questions/17157/16
-    # sub-01_run-1_dir-AP_echo-1_part-mag_MEGRE.nii.gz # QPN doesn't have "dir for MEGRE"
-    # sub-01_run-1_dir-AP_echo-1_part-phase_MEGRE.nii.gz
-    # However, current Heudiconv swaps the order of "echo" and "part" casing BIDS validator to fail. 
-    # Additional script ("fix_heudiconv_naming.sh" is created to rename these post hoc.)
     MEGREMag = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:01d}_part-mag_MEGRE')
     MEGREPhase = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:01d}_part-phase_MEGRE')
     
     FLAIR = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:01d}_FLAIR')
-    
-    # Not sure how to classify this under BIDS (see gen_heuristics for TE/TR detail)
-    # Only one subject has this acq
-    # TRUFISP = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:01d}_acq-TRUFISP_T2')
+   
 
     #---------dwi-----------#
     dwi = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_run-{item:01d}_dwi')
@@ -68,29 +61,31 @@ def infotodict(seqinfo):
             dwiAP: [], dwiPA: [], bold: [], boldGREfmapMag: [], boldGREfmapPhase:[], epiAP: [], epiPA: []
            }
     
-    # This is based on heudiconv run_1 output file:dicominfo.tsv from all subjects
+    ##########################################################################################################
+    ## This is typically what you will have to change based on your scanner protocols
+    ## Use heudiconv run_1 output file:dicominfo.tsv from all subjects to identify all possible protocol names
+    ##########################################################################################################
+
     keys_protocols_dict = {
         T1w:['MPRAGE_iPAT2','3DT1','3DT1_Repeat','Sag_3D_MPRAGE'],
         PDT2: ['PD T2 1sequence','PD_T2','PD_T2_Repeat','PD_T2_Repeat2'],
-        "T2star":['AXIAL_T2_STAR_iPAT2','T2-star','T2-star_Repeat'], # # need to check mag vs phase from image_type #GRE classification based on QPN_MR.xlsx
-        "MEGRE": ['GRE_10_echos_Dr Collins','GRE_10_echos_Dr Collins_Repeat'], # need to check mag vs phase from image_type
         FLAIR:['Axial T2-FLAIR_iPAT2','2D_FLAIR_FS','2D_FLAIR_FS_Repeat','2D_FLAIR_FS_repeat'],
-        # TRUFISP: ['SAG TRUFISP'], #Not sure how to classify this under BIDS (see gen_heuristics for TE/TR detail)
         T1wNeuromel:['T1W Neuromel_TR600_1.8mm_TE10_FA120_BW180_7av'],
         dwi:['DWI','DTI-EDM'],
-        dwiAP: ['DTI-B03_AP','DWI-B02_AP'], # only PD00760 has DWI_B02_AP in dicoms and not in QPN loris
-        dwiPA: ['DTI-B03_PA','DWI-B03_PA'], # only PD00760 has DWI_B03_AP in dicoms and not in QPN loris
+        dwiAP: ['DTI-B03_AP','DWI-B02_AP'],
+        dwiPA: ['DTI-B03_PA','DWI-B03_PA'],
         bold:['BOLD Resting State AC-PC','RS-fMRI'],        
         "boldGREfmap":['BOLD_RS_gre_field_mapping'], # need to check mag vs phase from image_type
         epiAP:['RS_fMRI_se_AP'],
         epiPA:['RS_fMRI_se_PA']
     }
-
+    
+    # These protcols needs special naming based on image type (see below)
     protocols_with_mag_and_phase = {
-                                    "T2star":[T2starMag,T2starPhase],
-                                    "MEGRE": [MEGREMag,MEGREPhase],
                                     "boldGREfmap": [boldGREfmapMag, boldGREfmapPhase]
                                     }
+
+    ##########################################################################################################
 
     data = create_key('run{item:03d}')
     last_run = len(seqinfo)
