@@ -49,11 +49,11 @@ for i in `cat $SUBJECT_LIST`; do
 
          if [ -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ]; then
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-01" 
-         elif [ -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ] 
+         elif [ -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ]; then
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-02" 
-         elif [ -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ]
+         elif [ -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ]; then 
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-unknown" 
-         elif [ -f ${DATASET_DICOM_DIR}/tars/${matched_subject_dir} ]
+         elif [ -f ${DATASET_DICOM_DIR}/tars/${matched_subject_dir} ]; then
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/tars" 
          else
             echo "Copying $matched_subject_dir into ${DATASET_DICOM_DIR}"
