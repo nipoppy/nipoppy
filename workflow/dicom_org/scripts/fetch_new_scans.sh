@@ -39,23 +39,28 @@ for i in `cat $SUBJECT_LIST`; do
       # Need to explicitly claim based on BIC's policy (Sept 2022)
       find_mri -claim -noconfir $DICOM_NAME 
       
-      for k in $matches; do
-	 j=`basename "$k"`
-	 echo $j
-         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${j} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${j} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${j} ]; then
-            cp -r ${k} ${DATASET_DICOM_DIR}/
-            chmod -R 775 ${DATASET_DICOM_DIR}/${i}*
+      for match in $matches; do
+	 scan_name=`basename "$match"`
+	 echo $scan_name
+         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${scan_name} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${scan_name} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${scan_name} ]; then
+            cp -r ${match} ${DATASET_DICOM_DIR}/
+            chmod -R 775 ${DATASET_DICOM_DIR}/${scan_name}
+
+	    # check if it's a tar file
+            if tar tf "${DATASET_DICOM_DIR}/${scan_name}" 2> /dev/null 1>&2; then 
+               echo "untarring $scan_name"
+	       subject_dir=`echo $scan_name | cut -d "." -f1`
+	       
+	       mkdir ${DATASET_DICOM_DIR}/{${subject_dir},tmp}
+	       chmod 775 ${DATASET_DICOM_DIR}/${subject_dir}
+	       chmod 775 ${DATASET_DICOM_DIR}/tmp
+
+	       tar xzf ${DATASET_DICOM_DIR}/${scan_name} --directory ${DATASET_DICOM_DIR}/tmp
+	       mv `find ${DATASET_DICOM_DIR}/tmp/ -name MR*` ${DATASET_DICOM_DIR}/${subject_dir}/
+	       rm -rf ${DATASET_DICOM_DIR}/tmp ${DATASET_DICOM_DIR}/${scan_name} 
+	    fi
          else
-            echo "${j} exists in ${DATASET_DICOM_DIR}" 
-         fi
-      done
-      for j in ${DATASET_DICOM_DIR}/${i}*; do
-         if tar tf "$j" 2> /dev/null 1>&2; then 
-            echo "untarring $j"
-            k=`echo $j | cut -d "." -f1`
-            tar xzf $j
-            mv "data" $k
-            rm -rf $j
+            echo "${match} exists in ${DATASET_DICOM_DIR}" 
          fi
       done
    fi
