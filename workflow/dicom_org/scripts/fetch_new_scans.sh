@@ -47,7 +47,7 @@ for i in `cat $SUBJECT_LIST`; do
             echo "untarring $j"
             k=`echo $j | cut -d "." -f1`
             tar xzf $j
-            mv $j ${DATASET_DICOM_DIR}/$k
+            mv "data" ${DATASET_DICOM_DIR}/$k
             rm -rf $j
          fi
       done
