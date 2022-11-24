@@ -30,7 +30,7 @@ for i in `cat $SUBJECT_LIST`; do
    
    if [[ "$DICOM_NAME" == "" ]]; then
       echo "No scan match found for $i in the source dir"
-      echo "$i, dcm_dir_matches:0, tar:false, n_dcm:0" >> $LOG_FILE
+      echo "$i, None, dcm_dir_matches:0, tar:false, n_dcm:0" >> $LOG_FILE
    else
       matches=`echo $DICOM_NAME | tr ' ' '\n'`
       n_matches=`echo $DICOM_NAME | tr ' ' '\n' | wc -l`
@@ -48,13 +48,21 @@ for i in `cat $SUBJECT_LIST`; do
 	      echo "Matched subject dir: $matched_subject_dir"
 
          if [ -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ]; then
-            echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-01" 
+            n_dcm=`ls ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir}/ | wc -l`
+            echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-01"             
+            echo "$i, $matched_subject_dir, dcm_dir_matches:${n_matches}, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
          elif [ -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ]; then
+            n_dcm=`ls ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir}/ | wc -l`
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-02" 
+            echo "$i, $matched_subject_dir, dcm_dir_matches:${n_matches}, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
          elif [ -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ]; then 
+            n_dcm=`ls ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir}/ | wc -l`
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-unknown" 
+            echo "$i, $matched_subject_dir, dcm_dir_matches:${n_matches}, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
          elif [ -f ${DATASET_DICOM_DIR}/tars/${matched_subject_dir} ]; then
+            n_dcm=0
             echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/tars" 
+            echo "$i, $matched_subject_dir, dcm_dir_matches:${n_matches}, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
          else
             echo "Copying $matched_subject_dir into ${DATASET_DICOM_DIR}"
             cp -r ${match} ${DATASET_DICOM_DIR}/
@@ -79,10 +87,11 @@ for i in `cat $SUBJECT_LIST`; do
                rm -rf ${DATASET_DICOM_DIR}/tmp
                matched_subject_dir=$subject_dir
             fi
-            n_dcm=`ls ${DATASET_DICOM_DIR}/${subject_dir}/ | wc -l`
+            n_dcm=`ls ${DATASET_DICOM_DIR}/${matched_subject_dir}/ | wc -l`
+            echo "$i, $matched_subject_dir, dcm_dir_matches:${n_matches}, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
          fi
       done
-      echo "$i, dcm_dir_matches:$n_matches, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
+      
    fi
 done
 
