@@ -30,7 +30,7 @@ for i in `cat $SUBJECT_LIST`; do
    
    if [[ "$DICOM_NAME" == "" ]]; then
       echo "No scan match found for $i in the source dir"
-      echo "$i, dicom_missing, tar_false" >> $LOG_FILE
+      echo "$i, dcm_dir_matches:0, tar:false, n_dcm:0" >> $LOG_FILE
    else
       matches=`echo $DICOM_NAME | tr ' ' '\n'`
       n_matches=`echo $DICOM_NAME | tr ' ' '\n' | wc -l`
@@ -46,7 +46,17 @@ for i in `cat $SUBJECT_LIST`; do
       for match in $matches; do
 	      matched_subject_dir=`basename "$match"`
 	      echo "Matched subject dir: $matched_subject_dir"
-         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/tars/${matched_subject_dir} ]; then
+
+         if [ -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ]; then
+            echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-01" 
+         elif [ -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ] 
+            echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-02" 
+         elif [ -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ]
+            echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/ses-unknown" 
+         elif [ -f ${DATASET_DICOM_DIR}/tars/${matched_subject_dir} ]
+            echo "${matched_subject_dir} already exists within ${DATASET_DICOM_DIR}/tars" 
+         else
+            echo "Copying $matched_subject_dir into ${DATASET_DICOM_DIR}"
             cp -r ${match} ${DATASET_DICOM_DIR}/
             chmod -R 775 ${DATASET_DICOM_DIR}/${matched_subject_dir}
 
@@ -67,19 +77,20 @@ for i in `cat $SUBJECT_LIST`; do
                mv `find ${DATASET_DICOM_DIR}/tmp/ -name MR*` ${DATASET_DICOM_DIR}/${subject_dir}/
                echo "Cleaning up tmp dirs"
                rm -rf ${DATASET_DICOM_DIR}/tmp
+               matched_subject_dir=$subject_dir
             fi
-         else
-            echo "${match} already exists within ${DATASET_DICOM_DIR}" 
+            n_dcm=`ls ${DATASET_DICOM_DIR}/${subject_dir}/ | wc -l`
          fi
       done
-      echo "$i, dicom_matches_$n_matches, tar_${tar}" >> $LOG_FILE
+      echo "$i, dcm_dir_matches:$n_matches, tar:${tar}, n_dcm:${n_dcm}" >> $LOG_FILE
    fi
 done
 
 # reorganize based on visits (i.e. sessions for BIDS)
 echo ""
 echo "reorganizing scans based on visits/sessions"
-mv ${DATASET_DICOM_DIR}/*tar* ${DATASET_DICOM_DIR}/tars/
+mv ${DATASET_DICOM_DIR}/*tar.gz ${DATASET_DICOM_DIR}/tars/
+mv ${DATASET_DICOM_DIR}/*tar ${DATASET_DICOM_DIR}/tars/
 mv ${DATASET_DICOM_DIR}/*MRI01* ${DATASET_DICOM_DIR}/ses-01/
 mv ${DATASET_DICOM_DIR}/*MRI02* ${DATASET_DICOM_DIR}/ses-02/
 mv ${DATASET_DICOM_DIR}/MNI* ${DATASET_DICOM_DIR}/ses-unknown/
