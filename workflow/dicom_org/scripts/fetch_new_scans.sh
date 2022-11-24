@@ -46,7 +46,7 @@ for i in `cat $SUBJECT_LIST`; do
       for match in $matches; do
 	      matched_subject_dir=`basename "$match"`
 	      echo "Matched subject dir: $matched_subject_dir"
-         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ]; then
+         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/tars/${matched_subject_dir} ]; then
             cp -r ${match} ${DATASET_DICOM_DIR}/
             chmod -R 775 ${DATASET_DICOM_DIR}/${matched_subject_dir}
 
@@ -65,8 +65,8 @@ for i in `cat $SUBJECT_LIST`; do
 
                echo "Moving dcm files to the top-level subject dir"
                mv `find ${DATASET_DICOM_DIR}/tmp/ -name MR*` ${DATASET_DICOM_DIR}/${subject_dir}/
-               echo "Cleaning up tar and tmp dirs"
-               rm -rf ${DATASET_DICOM_DIR}/tmp ${DATASET_DICOM_DIR}/${matched_subject_dir} 
+               echo "Cleaning up tmp dirs"
+               rm -rf ${DATASET_DICOM_DIR}/tmp
             fi
          else
             echo "${match} already exists within ${DATASET_DICOM_DIR}" 
@@ -81,6 +81,7 @@ echo ""
 echo "reorganizing scans based on visits/sessions"
 mv ${DATASET_DICOM_DIR}/*MRI01* ${DATASET_DICOM_DIR}/ses-01/
 mv ${DATASET_DICOM_DIR}/*MRI02* ${DATASET_DICOM_DIR}/ses-02/
+mv ${DATASET_DICOM_DIR}/*tar* ${DATASET_DICOM_DIR}/tars/
 mv ${DATASET_DICOM_DIR}/MNI* ${DATASET_DICOM_DIR}/ses-unknown/
 mv ${DATASET_DICOM_DIR}/PD* ${DATASET_DICOM_DIR}/ses-unknown/
 echo ""
