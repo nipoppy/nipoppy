@@ -35,7 +35,7 @@ for i in `cat $SUBJECT_LIST`; do
    else
       find_mri -claim -noconfir $DICOM_NAME 
       for k in `echo $DICOM_NAME | tr ' ' '\n'`; do
-         if [ ! -d ${DATASET_DICOM_DIR}/${k} ]; then
+         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${k} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${k} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${k} ]; then
             cp -r ${k} ${DATASET_DICOM_DIR}/
             chmod -R 775 ${DATASET_DICOM_DIR}/${i}*
          else
@@ -47,8 +47,8 @@ for i in `cat $SUBJECT_LIST`; do
             echo "untarring $j"
             k=`echo $j | cut -d "." -f1`
             tar xzf $j
-            mv "data" ${DATASET_DICOM_DIR}/$k
-            rm -rf $j
+            mv "data" $k
+            # rm -rf $j
          fi
       done
    fi
@@ -57,7 +57,8 @@ done
 # reorganize based on visits (i.e. sessions for BIDS)
 mv ${DATASET_DICOM_DIR}/*MRI01* ${DATASET_DICOM_DIR}/ses-01/
 mv ${DATASET_DICOM_DIR}/*MRI02* ${DATASET_DICOM_DIR}/ses-02/
-mv ${DATASET_DICOM_DIR}/* ${DATASET_DICOM_DIR}/ses-unknown/
+mv ${DATASET_DICOM_DIR}/MNI* ${DATASET_DICOM_DIR}/ses-unknown/
+mv ${DATASET_DICOM_DIR}/PD* ${DATASET_DICOM_DIR}/ses-unknown/
 
 echo "Dicom transfer complete"
 
