@@ -9,9 +9,9 @@ DATASET_DICOM_DIR=$1
 SUBJECT_LIST=$2
 
 SUBJECT_LIST_DIR=`dirname "$SUBJECT_LIST"`
-MISSING_SUBJECT_LIST=$SUBJECT_LIST_DIR/subjects_with_missing_dicoms.txt
-touch $MISSING_SUBJECT_LIST
-chmod 755 $MISSING_SUBJECT_LIST
+LOG_FILE=$SUBJECT_LIST_DIR/fetch_dicom.log
+touch $LOG_FILE
+chmod 755 $LOG_FILE
 
 if [ ! -d "$DATASET_DICOM_DIR" ]; then
    echo "Could not find $DATASET_DICOM_DIR"
@@ -30,39 +30,49 @@ for i in `cat $SUBJECT_LIST`; do
    
    if [[ "$DICOM_NAME" == "" ]]; then
       echo "No scan match found for $i in the source dir"
-      echo $i >> $MISSING_SUBJECT_LIST
+      echo "$i, dicom_missing, tar_false" >> $LOG_FILE
    else
       matches=`echo $DICOM_NAME | tr ' ' '\n'`
       n_matches=`echo $matches | wc -l`
       echo "number of dicom matches: $n_matches for subject $i"
-
+      echo ""
+      echo "*****************************************************"
       # Need to explicitly claim based on BIC's policy (Sept 2022)
       find_mri -claim -noconfir $DICOM_NAME 
-      
+      echo "*****************************************************"
+      echo ""
+
+      tar="false"
       for match in $matches; do
-	 scan_name=`basename "$match"`
-	 echo $scan_name
-         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${scan_name} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${scan_name} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${scan_name} ]; then
+	      matched_subject_dir=`basename "$match"`
+	      echo "Matched subject dir: $matched_subject_dir"
+         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${matched_subject_dir} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${matched_subject_dir} ]; then
             cp -r ${match} ${DATASET_DICOM_DIR}/
-            chmod -R 775 ${DATASET_DICOM_DIR}/${scan_name}
+            chmod -R 775 ${DATASET_DICOM_DIR}/${matched_subject_dir}
 
-	    # check if it's a tar file
-            if tar tf "${DATASET_DICOM_DIR}/${scan_name}" 2> /dev/null 1>&2; then 
-               echo "untarring $scan_name"
-	       subject_dir=`echo $scan_name | cut -d "." -f1`
-	       
-	       mkdir ${DATASET_DICOM_DIR}/{${subject_dir},tmp}
-	       chmod 775 ${DATASET_DICOM_DIR}/${subject_dir}
-	       chmod 775 ${DATASET_DICOM_DIR}/tmp
+	         # check if it's a tar file
+            echo "Checking if the matched subject dir is a tar.gz file"
+            if tar tf "${DATASET_DICOM_DIR}/${matched_subject_dir}" 2> /dev/null 1>&2; then 
+               tar="true"
+               echo "untarring $matched_subject_dir"
+               subject_dir=`echo $matched_subject_dir | cut -d "." -f1`
+               
+               mkdir ${DATASET_DICOM_DIR}/{${subject_dir},tmp}
+               chmod 775 ${DATASET_DICOM_DIR}/${subject_dir}
+               chmod 775 ${DATASET_DICOM_DIR}/tmp
 
-	       tar xzf ${DATASET_DICOM_DIR}/${scan_name} --directory ${DATASET_DICOM_DIR}/tmp
-	       mv `find ${DATASET_DICOM_DIR}/tmp/ -name MR*` ${DATASET_DICOM_DIR}/${subject_dir}/
-	       rm -rf ${DATASET_DICOM_DIR}/tmp ${DATASET_DICOM_DIR}/${scan_name} 
-	    fi
+               tar xzf ${DATASET_DICOM_DIR}/${matched_subject_dir} --directory ${DATASET_DICOM_DIR}/tmp
+
+               echo "Moving dcm files to the top-level subject dir"
+               mv `find ${DATASET_DICOM_DIR}/tmp/ -name MR*` ${DATASET_DICOM_DIR}/${subject_dir}/
+               echo "Cleaning up tar and tmp dirs"
+               rm -rf ${DATASET_DICOM_DIR}/tmp ${DATASET_DICOM_DIR}/${matched_subject_dir} 
+            fi
          else
-            echo "${match} exists in ${DATASET_DICOM_DIR}" 
+            echo "${match} already exists within ${DATASET_DICOM_DIR}" 
          fi
       done
+      echo "$i, dicom_matches_$n_matches, tar_${tar}" >> $LOG_FILE
    fi
 done
 
@@ -74,6 +84,6 @@ mv ${DATASET_DICOM_DIR}/*MRI02* ${DATASET_DICOM_DIR}/ses-02/
 mv ${DATASET_DICOM_DIR}/MNI* ${DATASET_DICOM_DIR}/ses-unknown/
 mv ${DATASET_DICOM_DIR}/PD* ${DATASET_DICOM_DIR}/ses-unknown/
 echo ""
-echo "Check manifest subjects missing DICOMs here: $MISSING_SUBJECT_LIST"
+echo "Check log here: $LOG_FILE"
+echo ""
 echo "Dicom transfer complete"
-
