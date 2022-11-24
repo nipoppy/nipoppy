@@ -35,11 +35,13 @@ for i in `cat $SUBJECT_LIST`; do
    else
       find_mri -claim -noconfir $DICOM_NAME 
       for k in `echo $DICOM_NAME | tr ' ' '\n'`; do
-         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${k} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${k} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${k} ]; then
+	 j=`basename "$k"`
+	 echo $j
+         if [ ! -d ${DATASET_DICOM_DIR}/ses-01/${j} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-02/${j} ] && [ ! -d ${DATASET_DICOM_DIR}/ses-unknown/${j} ]; then
             cp -r ${k} ${DATASET_DICOM_DIR}/
             chmod -R 775 ${DATASET_DICOM_DIR}/${i}*
          else
-            echo "${DATASET_DICOM_DIR}/${k} exists" 
+            echo "${DATASET_DICOM_DIR}/${j} exists" 
          fi
       done
       for j in ${DATASET_DICOM_DIR}/${i}*; do
@@ -48,7 +50,7 @@ for i in `cat $SUBJECT_LIST`; do
             k=`echo $j | cut -d "." -f1`
             tar xzf $j
             mv "data" $k
-            # rm -rf $j
+            rm -rf $j
          fi
       done
    fi
