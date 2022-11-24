@@ -33,8 +33,8 @@ for i in `cat $SUBJECT_LIST`; do
       echo "$i, dicom_missing, tar_false" >> $LOG_FILE
    else
       matches=`echo $DICOM_NAME | tr ' ' '\n'`
-      n_matches=`echo $matches | wc -l`
-      echo "number of dicom matches: $n_matches for subject $i"
+      n_matches=`echo $DICOM_NAME | tr ' ' '\n' | wc -l`
+      echo "dicom matches ($n_matches): $matches for subject $i"
       echo ""
       echo "*****************************************************"
       # Need to explicitly claim based on BIC's policy (Sept 2022)
@@ -79,9 +79,9 @@ done
 # reorganize based on visits (i.e. sessions for BIDS)
 echo ""
 echo "reorganizing scans based on visits/sessions"
+mv ${DATASET_DICOM_DIR}/*tar* ${DATASET_DICOM_DIR}/tars/
 mv ${DATASET_DICOM_DIR}/*MRI01* ${DATASET_DICOM_DIR}/ses-01/
 mv ${DATASET_DICOM_DIR}/*MRI02* ${DATASET_DICOM_DIR}/ses-02/
-mv ${DATASET_DICOM_DIR}/*tar* ${DATASET_DICOM_DIR}/tars/
 mv ${DATASET_DICOM_DIR}/MNI* ${DATASET_DICOM_DIR}/ses-unknown/
 mv ${DATASET_DICOM_DIR}/PD* ${DATASET_DICOM_DIR}/ses-unknown/
 echo ""
