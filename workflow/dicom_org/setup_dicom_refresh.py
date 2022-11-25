@@ -18,7 +18,6 @@ parser = argparse.ArgumentParser(description=HELPTEXT)
 parser.add_argument('--recruit_manifest', type=str, help='participant_manifest from study coordinator')
 parser.add_argument('--bids_dir', type=str, help='path to the current bids_dir')
 parser.add_argument('--loris_imaging_manifest', type=str, help='loris_imaging_manifest for crossreference')
-parser.add_argument('--visit', type=str, help='visit label (i.e. session in BIDS')
 parser.add_argument('--release_dir', type=str, help='path to directory to save lists and logs during dicom refresh')
 args = parser.parse_args()
 
@@ -28,17 +27,20 @@ loris_imaging_manifest = args.loris_imaging_manifest
 visit = args.visit
 release_dir = args.release_dir
 
+# Globals
+VISITS = ["MRI01","MRI02"]
+PSCID_LEN = 7
+
 # Total recruitment till date
 recruit_df = pd.read_csv(recruit_manifest)
 participants_recruit = set(recruit_df["participant_id"].str.strip())
 n_participants_recruit = len(participants_recruit)
 print(f"Number of total recruited participants: {n_participants_recruit}")
 
-# Current BIDSified participants (e.g. sub-PD01234D123456)
-id_len = 7 
+# Current BIDSified participants (e.g. sub-PD01234D123456) 
 bids_participants_tsv = f"{bids_dir}/participants.tsv"
 bids_participants_df = pd.read_csv(bids_participants_tsv, sep="\t")
-participants_bids = set(bids_participants_df["participant_id"].str.split("-",expand=True)[1].str.slice(stop=id_len).str.strip())
+participants_bids = set(bids_participants_df["participant_id"].str.split("-",expand=True)[1].str.slice(stop=PSCID_LEN).str.strip())
 n_participants_bids = len(participants_bids)
 print(f"Number of total BIDSified participants: {n_participants_bids}")
 
@@ -55,6 +57,11 @@ participants_new = participants_recruit - participants_bids
 n_participants_new = len(participants_new)
 print(f"Number of new participants: {n_participants_new}")
 
+# Identify BIDS participants missing in recruitment
+participants_missing_recruit = participants_bids - participants_recruit
+n_participants_missing_recruit = len(participants_missing_recruit)
+print(f"Number of participants missing in recruitment: {participants_missing_recruit}")
+
 # Generate BIDS_ID for the new participants
 participants_new_in_loris = participants_new & participants_loris
 n_participants_new_in_loris = len(participants_new_in_loris)
@@ -64,6 +71,7 @@ n_participants_new_not_in_loris = len(participants_new_not_in_loris)
 
 print(f"Number of new participants in LORIS: {n_participants_new_in_loris}")
 print(f"Number of new participants NOT in LORIS: {n_participants_new_not_in_loris}")
+print(f"\te.g.: {list(participants_new_not_in_loris[:2])}")
 
 if n_participants_new_in_loris > 0:
     loris_new_df = loris_df[loris_df["PSCID"].isin(participants_new_in_loris)][["PSCID","DCCID"]].copy()
