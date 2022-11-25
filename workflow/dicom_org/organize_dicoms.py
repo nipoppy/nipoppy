@@ -42,26 +42,31 @@ for index, row in participant_df.iterrows():
     print(f"\nparticipant_id: {participant_id}, bids_id: {bids_id}")
     dicom_dir_matches = glob.glob(f"{dicom_source_dir}/{participant_id}*")
 
-    if len(dicom_dir_matches) > 1:
-        print(f"Found multiple ({len(dicom_dir_matches)}) dicom dirs")
-        n_dcm_list = []
-
-        for dicom_dir in dicom_dir_matches:
-            n_dcm = len(os.listdir(dicom_dir))
-            n_dcm_list.append(n_dcm)
-
-        n_max_dcm = np.max(n_dcm_list)
-        print(f"Selecting dicom dir with {n_max_dcm} dcm files")
-        max_n_dicom_dir = dicom_dir_matches[np.argmax(n_dcm_list)]
-        link_dicom_dir = max_n_dicom_dir
+    if len(dicom_dir_matches)== 0:
+        print(f"No dicom dir match found for {participant_id}")
+        dicom_dir_list.append(None)
+        n_max_dcm_list.append(None)
     else:
-        link_dicom_dir = dicom_dir_matches[0]
-        n_max_dcm = len(os.listdir(link_dicom_dir))
+        if len(dicom_dir_matches) > 1:
+            print(f"Found multiple ({len(dicom_dir_matches)}) dicom dirs")
+            n_dcm_list = []
 
-    dicom_dir_list.append(os.path.basename(link_dicom_dir))
-    n_max_dcm_list.append(n_max_dcm)
-    print(f"Creating symlink from {os.path.basename(link_dicom_dir)} to {bids_id}")
-    os.symlink(link_dicom_dir, f"{dicom_dest_dir}/{bids_id}")
+            for dicom_dir in dicom_dir_matches:
+                n_dcm = len(os.listdir(dicom_dir))
+                n_dcm_list.append(n_dcm)
+
+            n_max_dcm = np.max(n_dcm_list)
+            print(f"Selecting dicom dir with {n_max_dcm} dcm files")
+            max_n_dicom_dir = dicom_dir_matches[np.argmax(n_dcm_list)]
+            link_dicom_dir = max_n_dicom_dir
+        else:
+            link_dicom_dir = dicom_dir_matches[0]
+            n_max_dcm = len(os.listdir(link_dicom_dir))
+
+        dicom_dir_list.append(os.path.basename(link_dicom_dir))
+        n_max_dcm_list.append(n_max_dcm)
+        print(f"Creating symlink from {os.path.basename(link_dicom_dir)} to {bids_id}")
+        os.symlink(link_dicom_dir, f"{dicom_dest_dir}/{bids_id}")
 
 participant_df["linked_dicom_dir"] = dicom_dir_list
 participant_df["n_dcm"] = n_max_dcm_list
