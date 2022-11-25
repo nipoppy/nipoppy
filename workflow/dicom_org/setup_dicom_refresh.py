@@ -69,7 +69,7 @@ n_participants_new_not_in_loris = len(participants_new_not_in_loris)
 
 print(f"Number of new participants in LORIS: {n_participants_new_in_loris}")
 print(f"Number of new participants NOT in LORIS: {n_participants_new_not_in_loris}")
-print(f"\te.g.: {list(participants_new_not_in_loris[:2])}")
+print(f"\te.g.: {list(participants_new_not_in_loris)[:2]}")
 
 if n_participants_new_in_loris > 0:
     loris_new_df = loris_df[loris_df["PSCID"].isin(participants_new_in_loris)][["PSCID","DCCID"]].copy()
