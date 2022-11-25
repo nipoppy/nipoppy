@@ -24,11 +24,10 @@ args = parser.parse_args()
 recruit_manifest = args.recruit_manifest
 bids_dir = args.bids_dir
 loris_imaging_manifest = args.loris_imaging_manifest
-visit = args.visit
 release_dir = args.release_dir
 
 # Globals
-VISITS = ["MRI01","MRI02"]
+# VISITS = ["MRI01","MRI02"]
 PSCID_LEN = 7
 
 # Total recruitment till date
@@ -47,7 +46,6 @@ print(f"Number of total BIDSified participants: {n_participants_bids}")
 # Current participants in LORIS 
 # (this helps to match DICOM IDs when there are multiple hits on dicom server)
 loris_df = pd.read_csv(loris_imaging_manifest)
-loris_df = loris_df[loris_df["Vist Label"]==visit]
 participants_loris = set(loris_df["PSCID"].str.strip())
 n_participants_loris = len(participants_loris)
 print(f"Number of total LORIS (imaging) participants: {n_participants_loris}")
