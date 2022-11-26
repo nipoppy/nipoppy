@@ -18,9 +18,9 @@ parser = argparse.ArgumentParser(description=HELPTEXT)
 parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
 parser.add_argument('--participant_id', type=str, help='participant id')
 parser.add_argument('--session_id', type=str, help='session id for the participant')
-parser.add_argument('--use_bids_filter', default=False, action=argparse.BooleanOptionalAction, help='use bids filter or not')
-parser.add_argument('--anat_only', default=False, action=argparse.BooleanOptionalAction, help='run only anatomical workflow or not')
-parser.add_argument('--test_run', default=False, action=argparse.BooleanOptionalAction, help='do a test run or not')
+parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
+parser.add_argument('--anat_only', action='store_true', help='run only anatomical workflow or not')
+parser.add_argument('--test_run', action='store_true', help='do a test run or not')
 
 args = parser.parse_args()
 
