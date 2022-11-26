@@ -1,7 +1,7 @@
 {
-    "DATASET_ROOT": "/data/pd/qpn",
-    "DATASTORE_DIR": "./",
-    "HEUDICONV_VERSION": "cb2fd91",
+    "DATASET_ROOT": "/data/pd/qpn/",
+    "DATASTORE_DIR": "/data/",
+    "HEUDICONV_VERSION": "0.11.6",
     "FMRIPREP_VERSION": "20.2.7",
     "FS_VERSION": "6.0.1",
     "SINGULARITY_PATH": "singularity",

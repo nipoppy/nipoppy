@@ -66,6 +66,6 @@ $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -f convertall \
 -o ${SINGULARITY_BIDS_DIR} \
 --overwrite \
--ss ${SES_ID} \
+-ss ${SES_ID}
 
 echo "Heudiconv Stage_1 finished!"
