@@ -3,7 +3,7 @@
 # Author: nikhil153
 # Last update: 16 Feb 2022
 
-if [ "$#" -ne 20 ]; then
+if [ "$#" -ne 22 ]; then
   echo "Please provide DATASET_ROOT, HEUDICONV_IMG, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, PARTICIPANT_ID, SESSION_ID, \
         BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag and TEST_RUN flag"
 
@@ -12,10 +12,11 @@ if [ "$#" -ne 20 ]; then
   exit 1
 fi
 
-while getopts d:i:r:f:p:s:b:a:v:t: flag
+while getopts d:o:i:r:f:p:s:b:a:v:t: flag
 do
     case "${flag}" in
         d) DATASET_ROOT=${OPTARG};;
+        o) OUTPUT_DIR=${OPTARG};;
         i) SINGULARITY_IMG=${OPTARG};;
         r) RUN_CMD=${OPTARG};; 
         f) TEMPLATEFLOW_DIR=${OPTARG};;         
@@ -41,11 +42,11 @@ LOCAL_FS_LICENSE=${DATASET_ROOT}/derivatives/fmriprep/license.txt
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."
     BIDS_DIR="$DATASET_ROOT/test_data/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="$DATASET_ROOT/test_data/derivatives/fmriprep/$VERSION/"
+    DERIV_DIR="$OUTPUT_DIR/test_data/derivatives/fmriprep/$VERSION/"        
 else
     echo "Doing a real run..."
     BIDS_DIR="$DATASET_ROOT/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="$DATASET_ROOT/derivatives/fmriprep/$VERSION/"
+    DERIV_DIR="$OUTPUT_DIR/derivatives/fmriprep/$VERSION/"
 fi
 
 OUT_DIR=${DERIV_DIR}/output
