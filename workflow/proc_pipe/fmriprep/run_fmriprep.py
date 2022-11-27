@@ -71,8 +71,9 @@ if use_bids_filter:
 #         -f <path_to_templateflow_dir> -p <MNI01> -s <01> -b 1 -a 1 -t 1"
 
 FMRIPREP_SCRIPT = f"scripts/run_fmriprep.sh"
-FMRIPREP_ARGS = ["-d", DATASET_ROOT, "-o", output_dir, "-i", SINGULARITY_FMRIPREP, "-r", SINGULARITY_PATH, "-f", TEMPLATEFLOW_DIR, \
-                  "-p", participant_id, "-s", session_id, "-b", bids_filter, "-a", anat_only, "-v", f"v{FMRIPREP_VERSION}", "-t", test_run]
+FMRIPREP_ARGS = ["-d", DATASET_ROOT, "-o", output_dir, "-i", SINGULARITY_FMRIPREP, "-r", SINGULARITY_PATH, \
+                 "-f", TEMPLATEFLOW_DIR, "-p", participant_id, "-s", session_id, "-b", bids_filter, \
+                 "-a", anat_only, "-v", f"v{FMRIPREP_VERSION}", "-t", test_run]
 FMRIPREP_CMD = [FMRIPREP_SCRIPT] + FMRIPREP_ARGS
 
 fmriprep_proc = subprocess.run(FMRIPREP_CMD)

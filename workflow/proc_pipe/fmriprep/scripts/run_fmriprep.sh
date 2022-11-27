@@ -4,11 +4,13 @@
 # Last update: 16 Feb 2022
 
 if [ "$#" -ne 22 ]; then
-  echo "Please provide DATASET_ROOT, HEUDICONV_IMG, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, PARTICIPANT_ID, SESSION_ID, \
-        BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag and TEST_RUN flag"
+    echo "Please provide DATASET_ROOT, OUTPUT_DIR, HEUDICONV_IMG, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, PARTICIPANT_ID, \
+        SESSION_ID, BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag and TEST_RUN flag"
 
-  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -h <path_to_fmriprep_img> -r <singularity> \
-        -f <path_to_templateflow_dir> -p <MNI01> -s <01> -b 1 -a 1 -t 1"
+    echo "Sample cmd: ./run_fmriprep.sh -d <DATASET_ROOT> -o <output_dir> -i <SINGULARITY_FMRIPREP> \
+        -r, <SINGULARITY_PATH> -f <TEMPLATEFLOW_DIR> -p <participant_id> -s <session_id> -b <bids_filter> \
+        -a <anat_only> -v <FMRIPREP_VERSION> -t <test_run>"
+
   exit 1
 fi
 
@@ -40,11 +42,13 @@ TEMPLATEFLOW_HOST_HOME=$TEMPLATEFLOW_DIR
 LOCAL_FS_LICENSE=${OUTPUT_DIR}/derivatives/fmriprep/license.txt
 
 if [ "$TEST_RUN" -eq 1 ]; then
-    echo "Doing a test run..."
+    echo ""
+    echo "***Doing a test run...***"
     BIDS_DIR="$DATASET_ROOT/test_data/bids/" #Relative to WD (local or singularity)
     DERIV_DIR="$OUTPUT_DIR/test_data/derivatives/fmriprep/$VERSION/"        
 else
-    echo "Doing a real run..."
+    echo ""
+    echo "***Doing a real run...***"
     BIDS_DIR="$DATASET_ROOT/bids/" #Relative to WD (local or singularity)
     DERIV_DIR="$OUTPUT_DIR/derivatives/fmriprep/$VERSION/"
 fi
@@ -90,6 +94,7 @@ SINGULARITY_CMD="singularity run \
 # find ${LOCAL_FREESURFER_DIR}/sub-$PARTICIPANT_ID/ -name "*IsRunning*" -type f -delete
 
 # Compose fMRIPrep command
+# to ignore field maps: --use-syn-sdc --force-syn --ignore fieldmaps \
 cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
     -w /work \
     --output-spaces MNI152NLin2009cAsym:res-2 anat fsnative \
@@ -99,17 +104,18 @@ cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTI
     --fs-license-file /home/fmriprep/.freesurfer/license.txt \
     --return-all-components -v \
     --write-graph --notrack \
-    --use-syn-sdc --force-syn --ignore fieldmaps \
     --omp-nthreads 4 --nthreads 8 --mem_mb 4000"
 
 # Append optional args
 if [ "$BIDS_FILTER" -eq 1 ]; then
+    echo ""
     echo "***Using a BIDS filter**"
     cmd=$cmd" \
     --bids-filter-file /data_dir/bids_filter.json"
 fi
 
 if [ "$ANAT_ONLY" -eq 1 ]; then
+    echo ""
     echo "***Only running anatomical workflow***"
     cmd=$cmd" \
     --anat-only"
