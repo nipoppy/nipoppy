@@ -9,10 +9,10 @@ global_config=$1
 participant_list=$2
 session_id=$3
 
-n_participants=`cat participant_list | wc -l`
+n_participants=`cat $participant_list | wc -l`
 echo "Found $n_participants in the list"
 echo ""
-for participant_id in `cat participant_list`; do 
+for participant_id in `cat $participant_list`; do 
     echo "---------------------------------------------------"
     echo "Starting participant: ${participant_id}"
     echo "---------------------------------------------------"
