@@ -37,7 +37,7 @@ SINGULARITY_PATH=$RUN_CMD
 TEMPLATEFLOW_HOST_HOME=$TEMPLATEFLOW_DIR
 
 # FS license.txt path
-LOCAL_FS_LICENSE=${DATASET_ROOT}/derivatives/fmriprep/license.txt
+LOCAL_FS_LICENSE=${OUTPUT_DIR}/derivatives/fmriprep/license.txt
 
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."

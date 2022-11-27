@@ -56,12 +56,12 @@ print(f"Using output_dir: {output_dir}")
 print(f"Using SINGULARITY_FMRIPREP: {SINGULARITY_FMRIPREP}")
 
 # Create version specific output dir
-Path(f"{DATASET_ROOT}/derivatives/fmriprep/v{FMRIPREP_VERSION}").mkdir(parents=True, exist_ok=True)
+Path(f"{output_dir}/derivatives/fmriprep/v{FMRIPREP_VERSION}").mkdir(parents=True, exist_ok=True)
 
 #Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
 if use_bids_filter:
     print(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
-    if test_run == 1:
+    if test_run == "1":
         shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/test_data/bids/bids_filter.json")
     else:
         shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/bids/bids_filter.json")
