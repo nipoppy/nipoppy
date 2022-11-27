@@ -48,9 +48,9 @@ print(f"Running HeuDiConv stage: {stage}")
 
 # Check if dicom_dir exists for the participant
 if test_run == "1":
-    participant_subdir_path = f"{DATASET_ROOT}/test_data/dicom/{participant_id}"
+    participant_subdir_path = f"{DATASET_ROOT}/test_data/dicom/ses-{session_id}/{participant_id}"
 else:
-    participant_subdir_path = f"{DATASET_ROOT}/dicom/{participant_id}"
+    participant_subdir_path = f"{DATASET_ROOT}/dicom/ses-{session_id}/{participant_id}"
 
 dir_status = Path(participant_subdir_path).is_dir()
 
