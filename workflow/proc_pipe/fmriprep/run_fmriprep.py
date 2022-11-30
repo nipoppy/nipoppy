@@ -58,19 +58,23 @@ print(f"Using SINGULARITY_FMRIPREP: {SINGULARITY_FMRIPREP}")
 # Create version specific output dir
 Path(f"{output_dir}/derivatives/fmriprep/v{FMRIPREP_VERSION}").mkdir(parents=True, exist_ok=True)
 
+fname = __file__
+CWD = os.path.dirname(os.path.abspath(fname))
+print(f"CWD: {CWD}, fname: {fname}")
+
 #Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
 if use_bids_filter:
     print(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
     if test_run == "1":
-        shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/test_data/bids/bids_filter.json")
+        shutil.copyfile(f"{CWD}/bids_filter.json", f"{DATASET_ROOT}/test_data/bids/bids_filter.json")
     else:
-        shutil.copyfile("bids_filter.json", f"{DATASET_ROOT}/bids/bids_filter.json")
+        shutil.copyfile(f"{CWD}/bids_filter.json", f"{DATASET_ROOT}/bids/bids_filter.json")
 
 # Run FMRIPREP script
 # "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -i <path_to_fmriprep_img> -r <singularity> \
 #         -f <path_to_templateflow_dir> -p <MNI01> -s <01> -b 1 -a 1 -t 1"
 
-FMRIPREP_SCRIPT = f"scripts/run_fmriprep.sh"
+FMRIPREP_SCRIPT = f"{CWD}/scripts/run_fmriprep.sh"
 FMRIPREP_ARGS = ["-d", DATASET_ROOT, "-o", output_dir, "-i", SINGULARITY_FMRIPREP, "-r", SINGULARITY_PATH, \
                  "-f", TEMPLATEFLOW_DIR, "-p", participant_id, "-s", session_id, "-b", bids_filter, \
                  "-a", anat_only, "-v", f"v{FMRIPREP_VERSION}", "-t", test_run]
