@@ -10,14 +10,14 @@ mr_proc branch for QPN image processing code
 ![QPN MR acq protocols](./images/QPN_dicom_protocols.png)
 
 ## Clinical data
-### TODO
+- TODO
 
-### Containers (Singularity)
+## Containers (Singularity)
 - [Heudionv](https://heudiconv.readthedocs.io/en/latest/installation.html#singularity) (current version: `0.11.6`)
 - [BIDS validator](https://github.com/bids-standard/bids-validator)
 - [fMRIPrep](https://fmriprep.org/en/1.5.5/singularity.html) (current version: `20.2.7`)
 
-### Global Configs
+## Global Configs
    - Create the [global_configs.json](./workflow/global_configs.json) file with paths to QPN dataset, pipeline versions, and containers used by several workflow scripts.
 
 ## Processing Steps
@@ -56,7 +56,7 @@ mr_proc branch for QPN image processing code
 3. Issues:
     - Filenames mismatch between Heudiconv and [BIDS BEP](https://github.com/bids-standard/bep001/blob/master/src/04-modality-specific-files/01-magnetic-resonance-imaging-data.md). Use modify [fix_heudiconv_naming.sh](bids/scripts/fix_heudiconv_naming.sh) to fix issues.
     - Heudiconv will generate two NIFTIs with PDT2 suffix with different echo index - which may not be ideal for certain pipelines which require separate PDw and T2w suffixes. 
-    - ~~Heudiconv will also swap the order of "echo" and "part" for MEGRE scans.~~ (This has been fixed in the Heudiconv "0.11.6", which now used as a container for this processing)
+    - ~~Heudiconv will also swap the order of "echo" and "part" for MEGRE scans.~~ (This has been fixed in the Heudiconv `v0.11.6`, which now used as a container for this processing)
     - Heudiconv adds mysterious suffix - possibly due to how dcm2nix handles multi-echo conversion see [neurostar issue](https://neurostars.org/t/heudiconv-adding-unspecified-suffix/21450/3) 
       - Examples: 1) sub-PD00509D598628_ses-01_run-3_T1w_heudiconv822a_ROI1.nii.gz 2) sub-PD00509D598628_ses-01_run-3_T1w2.nii.gz
       - Currently removing these files manually since only 3 subjects have this issue: PD00119D567297, PD00509D598628, PD00435D874573
@@ -71,11 +71,11 @@ mr_proc branch for QPN image processing code
   - Note: when `--use_bids_filter` flag is set, this `bids_filter.json` automatically gets copied into `<DATASET_ROOT>/bids/bids_filter.json` to be seen by the Singularity container.
   - For QPN you need to use this file to ignore neuromelanin scans (i.e. `sub-<>_acq-NM_run-1_T1w.nii.gz`) during regular anatomical workflow.
   - Similar to HeuDiConv, you can do a test run by adding `--test_run` flag. (Requires a BIDS participant directory inside `<DATASET_ROOT>/test_data/bids`)
-   - Example command:
-      ``` 
-      python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --use_bids_filter --output_dir <origami_space>/nikhil/qpn/ 
-      ```
-      - You can change default run parameters in the [run_fmriprep.sh](workflow/proc_pipe/fmriprep/scripts/run_fmriprep.sh) by looking at the [documentation](https://fmriprep.org/en/stable/usage.html)
+  - Example command:
+    ``` 
+    python run_fmriprep.py --global_config ../../global_configs.json --participant_id MNI01 --session_id 01 --use_bids_filter --output_dir <origami_space>/nikhil/qpn/ 
+    ```
+    - You can change default run parameters in the [run_fmriprep.sh](workflow/proc_pipe/fmriprep/scripts/run_fmriprep.sh) by looking at the [documentation](https://fmriprep.org/en/stable/usage.html)
 
 2. Issues:
   - Due to weird permissions issues on BIC Singularity cannot read from the directories created on `PD data disk` during a run. Therefore `--output_dir <origami_space>/nikhil/qpn/` must be specified in the ORIGAMI disk. 
