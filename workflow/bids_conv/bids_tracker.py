@@ -47,8 +47,9 @@ print(f"n_participants_tsv: {len(tsv_participants)}, \
 if tsv_participants == bids_dir_participants:
     layout = BIDSLayout(bids_dir)
     session_list = layout.get_sessions()
+    session_str_list = [f"ses-{ses}" for ses in session_list]
 
-    bids_status_df = pd.DataFrame(index=tsv_participants, columns=session_list)    
+    bids_status_df = pd.DataFrame(index=tsv_participants, columns=session_str_list)    
 
     for participant in tsv_participants:
         participant_id = participant.split("-",2)[1]
@@ -59,7 +60,7 @@ if tsv_participants == bids_dir_participants:
                                     suffix=F_SUFFIX,                 
                                     return_type='filename')
             if f != None:
-                bids_status_df.loc[participant,ses] = len(f)
+                bids_status_df.loc[participant,f"ses-{ses}"] = len(f)
 
     print(f"Saving bids_status_df at {output_csv}")        
     bids_status_df = bids_status_df.reset_index().rename(columns={"index":"participant_id"})
@@ -67,5 +68,3 @@ if tsv_participants == bids_dir_participants:
 
 else:
     print(f"participants_tsv and bids_dir participants mismatch...")
-
-
