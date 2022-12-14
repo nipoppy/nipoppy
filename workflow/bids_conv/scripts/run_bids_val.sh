@@ -1,16 +1,31 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-   echo "Please provide paths to the bids_dir and log_dir"
+if [ "$#" -ne 1 ]; then
+   echo "Please provide paths to the DATASET_ROOT"
    exit 1
 fi
 
-BIDS_DIR=$1
-LOG_DIR=$2
+# Versions (hardcoded for now)
+FMRIPREP_VERSION="20.2.7"
+FS_VERSION="6.0.1"
+
+# Container
+SINGULARITY_IMG="/home/nimhans/projects/container_store/bids_validator.sif"
+SINGULARITY_PATH=singularity
+
+DATASET_ROOT=$1
+BIDS_DIR=$DATASET_ROOT/bids
+LOG_DIR=$DATASET_ROOT/proc/logs
 LOG_FILE=$LOG_DIR/bids_val.log
 CURRENT_DIR=$PWD
 
-/opt/bin/singularity run -B $BIDS_DIR:/data:ro /data/pd/qpn/containers/bids_validator.sif /data --verbose > $LOG_FILE
+echo $LOG_DIR
+
+if [ ! -d ${LOG_DIR} ]; then
+   mkdir -p ${LOG_DIR}
+fi
+
+singularity run -B $BIDS_DIR:/data:ro $SINGULARITY_IMG /data --verbose > $LOG_FILE
 
 echo ""
 echo "number of BIDS validation errors: `cat $LOG_FILE | grep "ERR" | wc -l`"
@@ -37,4 +52,3 @@ cat $LOG_DIR/subjects_with_missing_IntendedFor.txt | grep " 0" | wc -l > $LOG_DI
 
 echo ""
 echo "Note: Check verbose log and lists of bids fail subjects here: $LOG_DIR"
-echo "Note: BIDS validation fails and subjects with multiple runs are to be moved to /data/pd/qpn/bids_issues for further checks"
