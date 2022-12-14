@@ -6,7 +6,7 @@ import logging
 
 logging.basicConfig(filename='/home/bic/inesgp/mriqc_eval_err.log', level=logging.DEBUG)
 
-def eval(args): #config file
+def eval_mriqc(args): #config file
     config = json.load(open(args[1])) 
     participants = pd.read_csv(config['subject_list'], sep='\t')
     #subject_id = participants['participant_id'][int(args[-1])+1]
@@ -60,5 +60,5 @@ def eval(args): #config file
             df.to_csv(config['results_file'], mode='a', index=False, header=False)
         else: df.to_csv(config['results_file'], index=False)
 
-eval(sys.argv)
+eval_mriqc(sys.argv)
 
