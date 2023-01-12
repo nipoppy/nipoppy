@@ -12,27 +12,28 @@ fi
 LOCAL_ROOT=$1
 DATASET=$2
 
-MR_PROC_ROOT=$1/$2
+DATASET_ROOT=$1/$2
 
 N_ERRORS=0
+N_WARNINGS=0
 
 #########
 
 echo "Checking mr_proc root dir ..."
-if [ -d $MR_PROC_ROOT ]; then
-    echo "  mr_proc root dir: $MR_PROC_ROOT exists"
+if [ -d $DATASET_ROOT ]; then
+    echo "  mr_proc root dir: $DATASET_ROOT exists"
 else
-    echo "  mr_proc root dir: $MR_PROC_ROOT is MISSING!"
+    echo "  ERRORS: mr_proc root dir: $DATASET_ROOT is MISSING!"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 
 echo ""
 echo "Checking level-1 subdirs ..."
-for i in {scratch,backups,downloads,proc,test_data,clinical,dicom,bids,derivatives,releases}; do
-    if [ -d $MR_PROC_ROOT/$i ]; then
-        echo "  $MR_PROC_ROOT/$i exists"
+for i in {scratch,backups,downloads,proc,test_data,tabular,dicom,bids,derivatives,releases}; do
+    if [ -d $DATASET_ROOT/$i ]; then
+        echo "  $DATASET_ROOT/$i exists"
     else    
-        echo "  $MR_PROC_ROOT/$i is MISSING!"
+        echo "  ERRORS: $DATASET_ROOT/$i is MISSING!"
         N_ERRORS=$((N_ERRORS + 1))
     fi;
 
@@ -43,17 +44,27 @@ done
 echo ""
 echo "Checking participants list..."
 
-if [ -f $MR_PROC_ROOT/clinical/demographics/participants.csv ]; then
+if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
     echo "  participants.csv exists"
 
-    N_PARTICIPANTS=`cat $MR_PROC_ROOT/clinical/demographics/participants.csv | wc -l`
+    N_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | wc -l`
     #ignore header
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
 
-echo "  number of participants in participant list: $N_PARTICIPANTS"
+    N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
+
+    echo "  number of all participants in participant list: $N_PARTICIPANTS"
+    echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
+
+    if [ $N_PARTICIPANTS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
+        echo "  WARNING: number of total and BIDS particiants are not equal!"
+        N_WARNINGS=$((N_WARNINGS + 1))
+    fi
 
 else    
-    echo "  participants.csv is MISSING! Please add it inside $MR_PROC_ROOT/clinical/demographics/"
+    N_PARTICIPANTS=0
+    N_BIDS_EXPECT_PARTICIPANTS=0
+    echo "  ERROR: participants.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 
@@ -62,10 +73,10 @@ fi
 echo ""
 echo "Checking available test data..."
 
-N_DICOMS=`ls $MR_PROC_ROOT/test_data/dicom | wc -l`
+N_DICOMS=`ls $DATASET_ROOT/test_data/dicom | wc -l`
 
-if [ -f $MR_PROC_ROOT/test_data/bids/participants.tsv ]; then
-    N_BIDS=`cat $MR_PROC_ROOT/test_data/bids/participants.tsv | wc -l`
+if [ -f $DATASET_ROOT/test_data/bids/participants.tsv ]; then
+    N_BIDS=`cat $DATASET_ROOT/test_data/bids/participants.tsv | wc -l`
     #ignore header
     N_BIDS=$((N_BIDS - 1))
 else
@@ -80,31 +91,47 @@ echo "  number of test bids subject dirs: $N_BIDS"
 echo ""
 echo "Checking available real data..."
 
-N_DICOMS=`ls $MR_PROC_ROOT/dicom | wc -l`
+N_DICOMS=`ls $DATASET_ROOT/dicom | wc -l`
 
 # Note bids creates participants.tsv and not csv
-if [ -f $MR_PROC_ROOT/bids/participants.tsv ]; then
-    N_BIDS=`cat $MR_PROC_ROOT/bids/participants.tsv | wc -l`
+if [ -f $DATASET_ROOT/bids/participants.tsv ]; then
+    N_BIDS=`cat $DATASET_ROOT/bids/participants.tsv | wc -l`
     #ignore header
     N_BIDS=$((N_BIDS - 1))
 else
     N_BIDS=0
 fi
 
-echo "  number of real dicoms scan dirs: $N_DICOMS"
-echo "  number of real bids subject dirs: $N_BIDS"
+echo "  number of dicoms scan dirs: $N_DICOMS"
+echo "  number of bids subject dirs: $N_BIDS"
+
+if [ $N_BIDS -ne $N_BIDS_EXPECT_PARTICIPANTS ]; then
+    echo "  ERROR: number of expected and available BIDS participants do no match!"
+    N_ERRORS=$((N_ERRORS + 1))
+fi
 
 #########
 
 echo ""
 echo "Checking processing pipelines to be run..."
 
-if [ -d $MR_PROC_ROOT/derivatives ]; then
-    PROC_PIPES=`ls $MR_PROC_ROOT/derivatives`
+if [ -d $DATASET_ROOT/derivatives ]; then
+    PROC_PIPES=`ls $DATASET_ROOT/derivatives`
     echo "$PROC_PIPES"
+    echo ""
+    echo "checking if processing status file exists"
+    for proc_pipe in $PROC_PIPES; do 
+        if [ -f $DATASET_ROOT/derivatives/$proc_pipe/proc_status.csv ]; then
+            echo "  proc status file for $proc_pipe exists"
+        else
+            echo "  WARNING: proc status file for $proc_pipe MISSING"
+            N_WARNINGS=$((N_WARNINGS + 1))
+        fi
+    done 
 else
-    echo "  No processing pipelines found since derivatives subdir is MISSING"
+    echo "  WARNING: No processing pipelines found since derivatives subdir is MISSING"
 fi
 
 echo ""
 echo "Number of errors found: $N_ERRORS"
+echo "Number of warnings found: $N_WARNINGS"

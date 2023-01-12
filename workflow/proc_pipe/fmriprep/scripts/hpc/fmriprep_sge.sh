@@ -15,15 +15,16 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
-subject_list=$1
-bids_dir="/data/pd/qpn/bids/"
-fmriprep_dir="/data/pd/qpn/fmriprep/v20.2.7/"
+SUBJECT_LIST=$1
+SESSION_ID=$2
+BIDS_FILTER="bids_filter.json"
+DATASET_ROOT="/data/pd/qpn/"
+TEST_RUN="0"
 
-echo "bids_dir: $bids_dir"
-echo "fmriprep_dir: $fmriprep_dir"
-echo "Number subjects found: `cat $subject_list | wc -l`"
+echo "DATASET_ROOT: $DATASET_ROOT"
+echo "Number subjects found: `cat $SUBJECT_LIST | wc -l`"
 
-subject_id=`sed -n "${SGE_TASK_ID}p" $subject_list`
-echo "Subject ID: $subject_id"
+SUBJECT_ID=`sed -n "${SGE_TASK_ID}p" $SUBJECT_LIST`
+echo "Subject ID: $SUBJECT_ID"
 	
-./fmriprep_anat_and_func_sub_regular_20.2.7.sh /data/pd/qpn/bids /data/pd/qpn/fmriprep/v20.2.7/ $subject_id
+./run_fmriprep_anat.sh -d $DATASET_ROOT -p $SUBJECT_ID -s $SESSION_ID -b $BIDS_FILTER -t $TEST_RUN
