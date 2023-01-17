@@ -14,7 +14,7 @@ def eval_mriqc(args):
     
     logging.basicConfig(filename='%s/mriqc_eval_err.log'%config['results_dir'], level=logging.DEBUG)
    
-    for index in range(len(participants)):
+    for index in range(1,len(participants)):
         #read MRIQC pipeline output log
         output_log = config['input_dir'] + '/mriqc_out_' + str(index) + '.log'
         f = open(output_log, 'r')
@@ -22,7 +22,7 @@ def eval_mriqc(args):
         subject_id = f.readline().strip()
         logging.info(subject_id)
 
-        results = {'participant_id': [subject_id], 'T1w': [], 'BOLD': []} #default datatypes
+        results = {'participant_id': [subject_id], 'session_id': [config['session_id']], 'T1w': [], 'BOLD': []} #default datatypes
         results.update({a: [] for a in config['file_names']})
     
         
@@ -32,17 +32,17 @@ def eval_mriqc(args):
             for arg in results:
             
                 acq2 = None
-                if arg == 'participant_id': continue
+                if arg == 'participant_id' or arg == 'session_id': continue
                 
                 elif arg == 'T1w': #default check
-                    acq1 = config['input_dir'] + '/' + subject_id + '_ses-*_run-*_T1w*'
+                    acq1 = config['input_dir'] + '/' + subject_id + '_ses-' + config['session_id'] + '*_run-*_T1w*'
             
                 elif arg == 'BOLD': #default check 
-                    acq1 = config['input_dir'] + '/' + subject_id + '_ses-*_task-rest_run-*_bold*'
+                    acq1 = config['input_dir'] + '/' + subject_id + '_ses-' + config['session_id'] + '*_task-rest_run-*_bold*'
                 
                 else: #check for unknown datatypes
-                    acq1 = config['input_dir'] + '/' + subject_id + '_ses-*_' + arg + '_run-*_T1w*'
-                    acq2 = config['input_dir'] + '/' + subject_id + '_ses-*_' + arg + '_run-*_T2w*'
+                    acq1 = config['input_dir'] + '/' + subject_id + '_ses-' + config['session_id'] + '*_' + arg + '_run-*_T1w*'
+                    acq2 = config['input_dir'] + '/' + subject_id + '_ses-' + config['session_id'] + '*_' + arg + '_run-*_T2w*'
 
                 if glob.glob(acq1):
                     results[arg].append('Success')
@@ -56,14 +56,14 @@ def eval_mriqc(args):
                 
         else: #no sign participant passed, assume failure for all datatypes
             for a in results: 
-                if a == 'participant_id': continue
+                if a == 'participant_id' or a == 'session_id': continue
                 results[a].append('Fail')
     
         logging.info(results)
         
         #create/append to csv file
         df = pd.DataFrame(results)
-        results_file = config['results_dir'] + '/status.csv'
+        results_file = config['results_dir'] + '/' + config['csv_name'] + '.csv'
         if glob.glob(results_file):
 
             df.to_csv(results_file, mode='a', index=False, header=False)

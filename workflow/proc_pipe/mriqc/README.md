@@ -17,21 +17,22 @@
 
 ### 1.2 Evaluate MRIQC Results
 - Use [eval_mriqc_results.py](https://github.com/neurodatascience/mr_proc/blob/main/workflow/proc_pipe/scripts/eval_mriqc_results.py) to determine how many subjects successfully passed through the MRIQC pipeline
-	- Mandatory: Pass in a JSON configuration file LINK that contains the input directory, the results directory, the absolute path to the list of subjects and the desired file types
+	- Mandatory: Pass in a JSON configuration file LINK that contains the input directory, the results directory, the absolute path to the list of subjects, the desired file types, the desired session ID and the output CSV filename
+	- Multiple sessions can be evaluated, but each session will require a new job running this script
 	- Optional: By default, the script will evaluate if T1w and BOLD MRI data participant files were processed, but other file types can be passed in through the JSON file
 - Example command:
 	- python eval.py mriqc_config.json >> RESULTS_DIR/mriqc_eval_err.log
-- After a successful run of the script, a CSV file named ```**status.csv**``` should appear in the results directory along with an error output log meant to track errors that may occur
+- After a successful run of the script, a CSV file named by default ```**status.csv**``` should appear in the results directory along with an error output log meant to track errors that may occur
 - An example status CSV snippet:
 ```
-participant_id,T1w,BOLD
-sub-01,Success,Success
-sub-02,Success,Fail
-sub-03,Success,Success
-sub-04,Success,Success
-sub-05,Fail,Success
-sub-06,Success,Success
-sub-07,Success,Success
-sub-08,Fail,Fail
-sub-09,Success,Success
+participant_id,session_id,T1w,BOLD
+sub-01,01,Success,Success
+sub-02,01,Success,Fail
+sub-03,01,Success,Success
+sub-04,01,Success,Success
+sub-05,01,Fail,Success
+sub-06,01,Success,Success
+sub-07,01,Success,Success
+sub-08,01,Fail,Fail
+sub-09,01,Success,Success
 ```
