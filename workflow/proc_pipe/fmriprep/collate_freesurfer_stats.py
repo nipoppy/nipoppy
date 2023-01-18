@@ -23,35 +23,17 @@ Date: May-5-2022
 parser = argparse.ArgumentParser(description=HELPTEXT)
 
 # data
-# TODO
+# TODO: Not sure how to handle multiple visits..
 # parser.add_argument('--participants_list', dest='participants_list',                      
 #                     help='path to participants list (csv or tsv')
 
-parser.add_argument('--fs_output_dir', dest='fs_output_dir',                      
-                    help='path to fs_output_dir with all the subjects')
-
-parser.add_argument('--stat_file', dest='stat_file',                     
-                    default='aparc.DKTatlas.stats',
-                    help='name of a standard FS stat file')
-
-parser.add_argument('--stat_measure', dest='stat_measure',  
-                    default='average_thickness_mm',
-                    help='path to bids_dir')                    
-
-parser.add_argument('--ukbb_dkt_ct_fields', dest='ukbb_dkt_ct_fields',  
-                    help='UKBB lookup table with fields ID and DKT ROI names')
-
-parser.add_argument('--ukbb_aseg_vol_fields', dest='ukbb_aseg_vol_fields',  default="", 
-                    help='UKBB lookup table with fields ID and ASEG ROI names')
-                    
-parser.add_argument('--aseg',  
-                    action='store_true',
-                    help='Parse aseg.stats to collate subcortical volumes')
-
-parser.add_argument('--save_dir', dest='save_dir',  
-                    default='./',
-                    help='path to save_dir')
-
+parser.add_argument('--fs_output_dir', help='path to fs_output_dir with all the subjects')
+parser.add_argument('--stat_file', default='aparc.DKTatlas.stats', help='name of a standard FS stat file')
+parser.add_argument('--stat_measure', default='average_thickness_mm', help='path to bids_dir')                    
+parser.add_argument('--ukbb_dkt_ct_fields', help='UKBB lookup table with fields ID and DKT ROI names')
+parser.add_argument('--ukbb_aseg_vol_fields', default="", help='UKBB lookup table with fields ID and ASEG ROI names')
+parser.add_argument('--aseg', action='store_true', help='Parse aseg.stats to collate subcortical volumes')
+parser.add_argument('--save_dir', default='./', help='path to save_dir')
 args = parser.parse_args()
 
 def parse_aseg(aseg_file, stat_measure):

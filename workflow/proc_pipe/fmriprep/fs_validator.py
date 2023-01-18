@@ -25,11 +25,12 @@ SURF_MEASURES = ["curv","area","thickness","volume","sulc","midthickness"]
 parser = argparse.ArgumentParser(description=HELPTEXT)
 
 # data
-parser.add_argument('--fs_output_dir', dest='fs_output_dir',                      
-                    help='path to fs_output_dir with all the subjects')
+parser.add_argument('--fs_output_dir', help='path to fs_output_dir with all the subjects')
 
-parser.add_argument('--participants_list', dest='participants_list',                      
-                    help='path to participants list (csv or tsv)')
+parser.add_argument('--participants_list', help='path to participants list (csv or tsv)')
+
+parser.add_argument('--status_log_dir', help='path to status_log_dir')
+
 
 args = parser.parse_args()
 
@@ -39,7 +40,7 @@ def check_fsdirs(subject_dir):
         dirpath = Path(f"{subject_dir}/{fsdir}")
         dirpath_status = Path.is_dir(dirpath)
         if not dirpath_status:
-            status_msg = f"{fsdir} not found"
+            status_msg = "Missing file(s)"
             break
     return status_msg
 
@@ -49,7 +50,7 @@ def check_mri(mri_dir):
         filepath = Path(f"{mri_dir}/{parc}+aseg.mgz")
         filepath_status = Path.is_file(filepath)
         if not filepath_status:
-            status_msg = f"{parc}+aseg.mgz not found"
+            status_msg = "Missing file(s)"
             break
     return status_msg
 
@@ -61,7 +62,7 @@ def check_label(label_dir):
                 filepath = Path(f"{label_dir}/{hemi}.{parc}.annot")
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
-                    status_msg = f"{hemi}.{parc}.annot not found"
+                    status_msg = "Missing file(s)"
                     break
         else:
             break
@@ -75,7 +76,7 @@ def check_stats(stats_dir):
                 filepath = Path(f"{stats_dir}/{hemi}.{parc}.stats")
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
-                    status_msg = f"{hemi}.{parc}.stats not found"
+                    status_msg = "Missing file(s)"
                     break
         else:
             break
@@ -84,7 +85,7 @@ def check_stats(stats_dir):
     filepath = Path(f"{stats_dir}/aseg.stats")
     filepath_status = Path.is_file(filepath)
     if not filepath_status:
-        status_msg = f"{parc}.stats not found"
+        status_msg = "Missing file(s)"
 
     return status_msg
 
@@ -96,7 +97,7 @@ def check_surf(surf_dir):
                 filepath = Path(f"{surf_dir}/{hemi}.{measure}")
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
-                    status_msg = f"{hemi}.{measure} not found"
+                    status_msg = "Missing file(s)"
                     break
         else:
             break
@@ -130,11 +131,8 @@ if __name__ == "__main__":
     # Read from csv
     fs_output_dir = args.fs_output_dir
     participants_list = args.participants_list
-    status_log_dir = fs_output_dir + "/status_logs/"
-
-    if not Path.is_dir(Path(status_log_dir)):
-        os.mkdir(status_log_dir)
-
+    status_log_dir = args.status_log_dir
+    
     print(f"\nChecking subject ids and dirs...")
     # Check number of participants from the list
     if participants_list.rsplit(".")[1] == "tsv":
@@ -143,7 +141,10 @@ if __name__ == "__main__":
         participants_df = pd.read_csv(participants_list)
 
     participant_ids = participants_df["participant_id"]
-    participant_ids = ["sub-" + str(id) for id in participant_ids]
+    if str(participant_ids.values[0])[:3] != "sub":
+        print("Adding sub prefix to the participant_id(s)")
+        participant_ids = ["sub-" + str(id) for id in participant_ids]
+    
     n_participants = len(participant_ids)
     print(f"Number of subjects in the participants list: {n_participants}")
 
