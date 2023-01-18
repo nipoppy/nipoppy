@@ -2,17 +2,21 @@ import sys
 import json
 import glob
 import pandas as pd
+import logging
 
+logging.basicConfig(filename='/home/bic/inesgp/mriqc_eval_err.log', level=logging.DEBUG)
 
-def eval_mriqc(args): #config file 
+def eval_mriqc(args): #config file
     config = json.load(open(args[1])) 
     participants = pd.read_csv(config['subject_list'], sep='\t')
-    
-    for index in range(1,len(participants)+1):
+    #subject_id = participants['participant_id'][int(args[-1])+1]
+   
+    for index in range(len(participants)):
         output_log = config['input_dir'] + '/mriqc_out_' + str(index) + '.log'
         f = open(output_log, 'r')
 
         subject_id = f.readline().strip()
+        logging.info(subject_id)
 
         results = {'participant_id': [subject_id], 'T1w': [], 'BOLD': []}
         results.update({a: [] for a in config['file_names']})
@@ -49,8 +53,10 @@ def eval_mriqc(args): #config file
                 if a == 'participant_id': continue
                 results[a].append('Fail')
     
+        logging.info(results)
         df = pd.DataFrame(results)
         if glob.glob(config['results_file']):
+            logging.info('here')
             df.to_csv(config['results_file'], mode='a', index=False, header=False)
         else: df.to_csv(config['results_file'], index=False)
 
