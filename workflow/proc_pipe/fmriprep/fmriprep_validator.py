@@ -110,7 +110,7 @@ if __name__ == "__main__":
     ses = f"ses-{args.ses}"
     tpl_spaces = args.tpl_spaces
     participants_list = args.participants_list
-    status_log_dir = args.status_log_dir 
+    status_log_dir = args.status_log_dir
 
     if args.run != None:
         run = f"run-{args.run}"
