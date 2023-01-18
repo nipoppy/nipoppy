@@ -9,7 +9,7 @@ HELPTEXT = """
 Script to validate fmriprep output
 """
 #Author: nikhil153
-#Date: 17-Jan-2023
+#Date: 27-July-2022
 
 # globals
 TASK = "rest"
@@ -37,7 +37,6 @@ fmriprep_modality_file_dict = {
                             "anat":fmriprep_anat_files_dict,
                             "func":fmriprep_func_files_dict
                             }
-
 
 # argparse
 parser = argparse.ArgumentParser(description=HELPTEXT)
@@ -102,7 +101,7 @@ def check_output(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modali
     fmriprep_status_dict = {}
     for modality in modalities:
         fmriprep_status_dict[modality] = check_fmriprep(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modality)
-            
+                
     return fmriprep_status_dict
 
 if __name__ == "__main__":
@@ -162,6 +161,7 @@ if __name__ == "__main__":
         modality_tpl_spaces = [f"{modality}-{tpl_space}" for tpl_space in tpl_spaces]
         fmriprep_tpl_spaces += modality_tpl_spaces
         fmriprep_complete_cols.append(f"{modality}-fmriprep_complete")
+
         status_cols = fmriprep_tpl_spaces
 
     status_df = pd.DataFrame(columns=["participant_id"] + fmriprep_complete_cols + status_cols)
@@ -179,6 +179,8 @@ if __name__ == "__main__":
             modality_complete = all(flag == "Pass" for flag in modality_status.values())
             fmriprep_status += list(modality_status.values())
             fmriprep_complete.append(modality_complete)
+
+            status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status
         
     # append subjects missing FS subject_dir
     print(f"\nPopulating status_df by appending missing FS subject dirs")
@@ -187,7 +189,7 @@ if __name__ == "__main__":
         status_list = len(status_cols)*["subject dir not found"]
         fmriprep_complete = len(modalities)*[False]
         fmriprep_status = len(fmriprep_tpl_spaces)*["Not checked"]                
-        
+
         status_df.loc[p + len(participant_ids)] = [participant_id] + fmriprep_complete + fmriprep_status
 
     status_df["fmriprep_complete"] = status_df[fmriprep_complete_cols].prod(axis=1).astype(bool)
