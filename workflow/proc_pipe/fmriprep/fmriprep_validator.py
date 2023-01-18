@@ -48,23 +48,21 @@ fsl_files_dict = {
 parser = argparse.ArgumentParser(description=HELPTEXT)
 
 # data
-parser.add_argument('--fmriprep_dir', dest='fmriprep_dir',                      
-                    help='path to fmriprep_dir with all the subjects')
+parser.add_argument('--fmriprep_dir', help='path to fmriprep_dir with all the subjects')
 
-parser.add_argument('--ses', dest='ses',                      
-                    help='session id e.g. bl')
+parser.add_argument('--ses', help='session id e.g. bl')
 
-parser.add_argument('--run', dest='run', default=None,                  
-                    help='run id e.g. 1')
+parser.add_argument('--run', default=None, help='run id e.g. 1')
 
-parser.add_argument('--tpl_spaces', dest='tpl_spaces', nargs='*', default=["MNI152NLin2009cAsym_res-2"], 
+parser.add_argument('--tpl_spaces', nargs='*', default=["MNI152NLin2009cAsym_res-2"], 
                     help='template space and its resolution')           
 
-parser.add_argument('--fsl_spaces',  dest='fsl_spaces', nargs='*', default=[], 
+parser.add_argument('--fsl_spaces', nargs='*', default=[], 
                     help='checks if fsl FLIRT and FNIRT files are there')
 
-parser.add_argument('--participants_list', dest='participants_list',                      
-                    help='path to participants list (csv or tsv')
+parser.add_argument('--participants_list', help='path to participants list (csv or tsv)')
+
+parser.add_argument('--status_log_dir', help='output dir to save status logs')
 
 args = parser.parse_args()
 
@@ -139,7 +137,7 @@ if __name__ == "__main__":
     tpl_spaces = args.tpl_spaces
     fsl_spaces = args.fsl_spaces
     participants_list = args.participants_list
-    status_log_dir = fmriprep_dir + "/status_logs/"
+    status_log_dir = args.status_log_dir
     modalities = MODALITIES
 
     if not Path.is_dir(Path(status_log_dir)):
