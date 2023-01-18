@@ -141,7 +141,10 @@ if __name__ == "__main__":
         participants_df = pd.read_csv(participants_list)
 
     participant_ids = participants_df["participant_id"]
-    participant_ids = ["sub-" + str(id) for id in participant_ids]
+    if str(participant_ids.values[0])[:3] != "sub":
+        print("Adding sub prefix to the participant_id(s)")
+        participant_ids = ["sub-" + str(id) for id in participant_ids]
+    
     n_participants = len(participant_ids)
     print(f"Number of subjects in the participants list: {n_participants}")
 
