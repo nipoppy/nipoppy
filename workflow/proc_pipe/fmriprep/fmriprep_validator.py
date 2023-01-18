@@ -180,7 +180,7 @@ if __name__ == "__main__":
             fmriprep_status += list(modality_status.values())
             fmriprep_complete.append(modality_complete)
 
-            status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status
+        status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status
         
     # append subjects missing FS subject_dir
     print(f"\nPopulating status_df by appending missing FS subject dirs")
