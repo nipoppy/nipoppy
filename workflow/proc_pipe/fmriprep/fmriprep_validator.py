@@ -12,7 +12,6 @@ Script to validate fmriprep output
 #Date: 27-July-2022
 
 # globals
-MODALITIES = ["anat"] #["func"]
 TASK = "rest"
 
 #sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-preproc_bold.nii.gz
@@ -63,10 +62,13 @@ parser.add_argument('--ses', help='session id e.g. bl')
 
 parser.add_argument('--run', default=None, help='run id e.g. 1')
 
+parser.add_argument('--modalities', nargs='*', default=["anat"], 
+                    help='modalities to check (choose from anat and func)')           
+
 parser.add_argument('--tpl_spaces', nargs='*', default=["MNI152NLin2009cAsym_res-2"], 
                     help='template space and its resolution')           
 
-parser.add_argument('--fsl_spaces', nargs='*', default=["MNI152NLin6Sym_res-1"], 
+parser.add_argument('--fsl_spaces', nargs='*', default=[], 
                     help='checks if fsl FLIRT and FNIRT files are there')
 
 parser.add_argument('--participants_list', help='path to participants list (csv or tsv)')
@@ -94,7 +96,7 @@ def check_fmriprep(subject_dir, participant_id, ses_id, run_id, tpl_spaces, moda
                     filepath_status = Path.is_file(filepath)
                     if not filepath_status:
                         # print(filepath) 
-                        status_msg = f"{file_suffix} not found"
+                        status_msg = "Missing file(s)"
                         status_dict[tpl_space] = status_msg
                         break
 
@@ -115,7 +117,7 @@ def check_fsl(subject_dir, participant_id, ses_id, fsl_spaces):
                     filepath_status = Path.is_file(filepath)
                     if not filepath_status:
                         # print(filepath)
-                        status_msg = f"{file_suffix} not found"
+                        status_msg = "Missing file(s)"
                         status_dict[fsl_space] = status_msg
                         break
                 status_dict[fsl_space] = status_msg
@@ -128,14 +130,11 @@ def check_output(subject_dir, participant_id, ses_id, run_id, tpl_spaces, fsl_sp
     fmriprep_status_dict = {}
     for modality in modalities:
         fmriprep_status_dict[modality] = check_fmriprep(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modality)
-    
-    if len(fsl_spaces) > 0:
-        fsl_status_dict = check_fsl(subject_dir, participant_id, ses_id, fsl_spaces)
-    else:
+        
         fsl_status_dict = {}
-        for fsl_space in fsl_spaces:
-            fsl_status_dict[fsl_space] = "Not checked"
-
+        if (modality == "anat") & (len(fsl_spaces)) > 0:
+            fsl_status_dict = check_fsl(subject_dir, participant_id, ses_id, fsl_spaces)
+                
     return fmriprep_status_dict, fsl_status_dict
 
 if __name__ == "__main__":
@@ -153,7 +152,8 @@ if __name__ == "__main__":
     else:
         run = args.run
 
-    modalities = MODALITIES
+    modalities = args.modalities
+    print(f"Validating output in: {modalities}")
 
     if not Path.is_dir(Path(status_log_dir)):
         os.mkdir(status_log_dir)
@@ -183,12 +183,13 @@ if __name__ == "__main__":
     subjects_missing_subject_dir = set(participant_ids) - set(subject_dir_list)
     subjects_missing_in_participant_list = set(subject_dir_list) - set(participant_ids)
 
-    print(f"\nSubjects missing FMRIPrep subject_dir: {len(subjects_missing_subject_dir)}")
+    print(f"\nSubjects missing fMRIPrep subject_dir: {len(subjects_missing_subject_dir)}")
     print(f"Subjects missing in participant list: {len(subjects_missing_in_participant_list)}")
     print(f"\nChecking FMRIPrep output for {len(fmriprep_participants)} subjects")
 
     print(f"\nChecking for following templateflow spaces:\n{tpl_spaces}")
-    print(f"\nChecking for following additional registrations from FSL spaces:\n{fsl_spaces}")
+    if len(fsl_spaces) > 0:
+        print(f"\nChecking for following additional registrations from FSL spaces:\n{fsl_spaces}")
 
     fmriprep_tpl_spaces= []
     fmriprep_complete_cols = []
@@ -197,7 +198,11 @@ if __name__ == "__main__":
         fmriprep_tpl_spaces += modality_tpl_spaces
         fmriprep_complete_cols.append(f"{modality}-fmriprep_complete")
 
-    status_cols = fmriprep_tpl_spaces + [f"fsl-{s}" for s in fsl_spaces]
+    if len(fsl_spaces) > 0:
+        status_cols = fmriprep_tpl_spaces + [f"fsl-{s}" for s in fsl_spaces]
+    else:
+        status_cols = fmriprep_tpl_spaces
+
     status_df = pd.DataFrame(columns=["participant_id"] + fmriprep_complete_cols + status_cols)
     print(f"\nNumber of status cols: {len(status_df.columns)}")
 
@@ -214,7 +219,10 @@ if __name__ == "__main__":
             fmriprep_status += list(modality_status.values())
             fmriprep_complete.append(modality_complete)
 
-        status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status + list(fsl_status.values())
+        if len(fsl_spaces) > 0:
+            status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status + list(fsl_status.values())
+        else:
+            status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status
         
     # append subjects missing FS subject_dir
     print(f"\nPopulating status_df by appending missing FS subject dirs")
@@ -222,8 +230,13 @@ if __name__ == "__main__":
         subject_dir = f"{fmriprep_dir}/{participant_id}"
         status_list = len(status_cols)*["subject dir not found"]
         fmriprep_complete = len(modalities)*[False]
-        fmriprep_fsl_status = len(status_cols)*["Not checked"]
-        status_df.loc[p + len(participant_ids)] = [participant_id] + fmriprep_complete + fmriprep_fsl_status
+        fmriprep_status = len(fmriprep_tpl_spaces)*["Not checked"]                
+
+        if len(fsl_spaces) > 0:
+            fsl_status = len(fsl_spaces)*["Not checked"]
+            status_df.loc[p + len(participant_ids)] = [participant_id] + fmriprep_complete + fmriprep_status + fsl_status
+        else:
+            status_df.loc[p + len(participant_ids)] = [participant_id] + fmriprep_complete + fmriprep_status
 
     status_df["fmriprep_complete"] = status_df[fmriprep_complete_cols].prod(axis=1).astype(bool)
     n_complete = len(status_df[status_df["fmriprep_complete"]])
