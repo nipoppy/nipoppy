@@ -18,9 +18,9 @@ results_dir = args.results_dir
 index = args.index
 participant_list = pd.read_csv(args.participant_list) #pd.read_csv(global_config + '/' + args.participant_list)
 participant_id = participant_list.loc[index]['participant_id']
+participant_label = participant_id.split('-')[-1]
 
+subprocess.run(['echo %s >> %s/mriqc_out_%s.log'%(participant_id, results_dir, participant_label)], shell=True)
 
-subprocess.run(['echo %s >> %s/mriqc_out_%s.log'%(participant_id, results_dir, index)], shell=True)
-
-subprocess.run(['singularity run --cleanenv -B %s:/data:ro -B %s:/out %s --no-sub /data /out participant --participant-label %s >> %s/mriqc_out_%s.log'%(global_config, results_dir, container, participant_id, results_dir, index)], shell=True)
+subprocess.run(['singularity run --cleanenv -B %s:/data:ro -B %s:/out %s --no-sub /data /out participant --participant-label %s >> %s/mriqc_out_%s.log'%(global_config, results_dir, container, participant_id, results_dir, participant_label)], shell=True)
 

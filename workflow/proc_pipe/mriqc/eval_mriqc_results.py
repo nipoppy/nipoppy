@@ -14,12 +14,16 @@ def eval_mriqc(args):
     
     logging.basicConfig(filename='%s/mriqc_eval_err.log'%config['results_dir'], level=logging.DEBUG)
    
-    for index in range(1,len(participants)):
+    for index in range(len(participants)):
+    
+    	#get subject ID
+    	subject_id = participants['participant_id'][index]
+    	
         #read MRIQC pipeline output log
-        output_log = config['input_dir'] + '/mriqc_out_' + str(index) + '.log'
+        output_log = config['input_dir'] + '/mriqc_out_' + str(subject_id.split('-')[-1]) + '.log'
         f = open(output_log, 'r')
 
-        subject_id = f.readline().strip()
+
         logging.info(subject_id)
 
         results = {'participant_id': [subject_id], 'session_id': [config['session_id']], 'T1w': [], 'BOLD': []} #default datatypes
@@ -63,6 +67,12 @@ def eval_mriqc(args):
         
         #create/append to csv file
         df = pd.DataFrame(results)
+        first_column = df.pop('participant_id')
+        second_column = df.pop('session_id')
+        df.insert(0, 'participant_id', first_column)
+        df.insert(1, 'session_id', second_column)
+
+
         results_file = config['results_dir'] + '/' + config['csv_name'] + '.csv'
         if glob.glob(results_file):
 
