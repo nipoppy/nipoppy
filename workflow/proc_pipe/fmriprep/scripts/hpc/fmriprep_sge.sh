@@ -1,29 +1,38 @@
 #!/bin/bash
 #
 #$ -cwd
-#$ -o fmriprep_out.log
-#$ -e fmriprep_err.log
+#$ -o ./sge_logs/
+#$ -e ./sge_logs/
+#$ -M nikhil.bhagwat@mcgill.ca
+#$ -m a
 #$ -m e
 #$ -l h_rt=24:00:00
 #$ -l h_vmem=32G
 #$ -q origami.q
 
-#$ -t 1-8
+#$ -t 1-34
 	
 if [ "$#" -ne 1 ]; then
   echo "Please provide subject list"
   exit 1
 fi
 
-subject_list=$1
-bids_dir="/data/pd/qpn/bids/"
-fmriprep_dir="/data/pd/qpn/fmriprep/v20.2.7/"
+# load python env
+source /data/origami/nikhil/my_envs/brain_diff/bin/activate
 
-echo "bids_dir: $bids_dir"
-echo "fmriprep_dir: $fmriprep_dir"
-echo "Number subjects found: `cat $subject_list | wc -l`"
+participant_list=$1
+global_config="/data/origami/nikhil/my_repos/mr_proc/workflow/global_configs.json"
+session_id="01"
+output_dir="/data/origami/nikhil/qpn/"
 
-subject_id=`sed -n "${SGE_TASK_ID}p" $subject_list`
-echo "Subject ID: $subject_id"
-	
-./fmriprep_anat_and_func_sub_regular_20.2.7.sh /data/pd/qpn/bids /data/pd/qpn/fmriprep/v20.2.7/ $subject_id
+echo "output_dir: $fmriprep_dir"
+echo "Number participant found: `cat $participant_list | wc -l`"
+
+participant_id=`sed -n "${SGE_TASK_ID}p" $participant_list`
+echo "Subject ID: $participant_id"
+
+python ../../run_fmriprep.py --global_config $global_config \
+--participant_id $participant_id \
+--session_id $session_id \
+--use_bids_filter \
+--output_dir $output_dir

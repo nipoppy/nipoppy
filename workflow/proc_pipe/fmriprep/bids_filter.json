@@ -1,0 +1,9 @@
+{
+    "t1w": {
+        "datatype": "anat",
+        "session": "01",
+        "run": "1",
+        "acquisition": null,
+        "suffix": "T1w"
+    }
+}
