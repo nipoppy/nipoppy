@@ -14,6 +14,7 @@
 - MRIQC processes the participants and produces image quality metrics from structural (T1w and T2w) and functional MRI data (see [MRIQC](https://mriqc.readthedocs.io/en/latest/) for details)
 - The script generates the output and the job log in the listed **`result_dir`**
 - A run for a participant is considered successful when the participant's log file reads **`Participant level finished successfully`**
+- The Dockerfile in this directory can be used to build the MRIQC pipeline which processes the data
 
 ### 1.2 Evaluate MRIQC Results
 - Use [eval_mriqc_results.py](https://github.com/InesGP/mr_proc/blob/main/workflow/proc_pipe/mriqc/eval_mriqc_results.py) to determine how many subjects successfully passed through the MRIQC pipeline
