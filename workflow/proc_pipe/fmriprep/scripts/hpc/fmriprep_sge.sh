@@ -10,7 +10,7 @@
 #$ -l h_vmem=32G
 #$ -q origami.q
 
-#$ -t 1-34
+#$ -t 1-1
 	
 if [ "$#" -ne 1 ]; then
   echo "Please provide subject list"
