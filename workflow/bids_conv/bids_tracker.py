@@ -70,7 +70,7 @@ if tsv_participants == bids_dir_participants:
                                         suffix=file_suffix,                 
                                         return_type='filename')
                 
-                f_count.append(f)
+                f_count.append(len(f))
 
             session_df.loc[ses] = f_count
 
@@ -79,7 +79,7 @@ if tsv_participants == bids_dir_participants:
         bids_status_df = bids_status_df.append(session_df)
 
     print(f"Saving bids_status_df at {output_csv}")        
-    bids_status_df = bids_status_df.reset_index().rename(columns={"index":"participant_id"})
+    bids_status_df = bids_status_df.set_index("participant_id")
     bids_status_df.to_csv(output_csv,index=None)
 
 else:
