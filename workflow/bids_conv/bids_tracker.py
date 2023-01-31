@@ -11,10 +11,7 @@ HELPTEXT = """
 Script to check participant-session availability 
 """
 #Author: nikhil153
-#Date: 1-Dec-2022
-
-# Globals
-F_EXT = 'nii.gz' 
+#Date: 1-Dec-2022 
 
 modality_suffic_dict = {
     "anat": "T1w",
@@ -28,11 +25,13 @@ parser = argparse.ArgumentParser(description=HELPTEXT)
 parser.add_argument('--bids_dir', help='path to bids_dir with all the subjects')
 parser.add_argument('--modalities', nargs='*', default=["anat"], 
                     help='modalities to check') 
-parser.add_argument('--output_csv', help='path to output csv file')                    
+parser.add_argument('--file_ext', default='nii.gz', help='file extension to query')
+parser.add_argument('--output_csv', help='path to output csv file')
 
 args = parser.parse_args()
 bids_dir = args.bids_dir
 modalities = args.modalities
+file_ext = args.file_ext
 
 print(f"Validating output in: {modalities}")
 
@@ -64,11 +63,11 @@ if tsv_participants == bids_dir_participants:
         for ses in sessions:
             f_count = []
             for modality in modalities:
-                F_SUFFIX = modality_suffic_dict[modality]
+                file_suffix = modality_suffic_dict[modality]
                 f = layout.get(subject=participant_id, 
                                         session=ses, 
-                                        extension=F_EXT, 
-                                        suffix=F_SUFFIX,                 
+                                        extension=file_ext, 
+                                        suffix=file_suffix,                 
                                         return_type='filename')
                 
                 f_count.append(f)
@@ -76,7 +75,7 @@ if tsv_participants == bids_dir_participants:
             session_df.loc[ses] = f_count
 
         session_df = session_df.reset_index()
-        session_df["participant_id"] = participant_id
+        session_df["participant_id"] = participant
         bids_status_df = bids_status_df.append(session_df)
 
     print(f"Saving bids_status_df at {output_csv}")        
