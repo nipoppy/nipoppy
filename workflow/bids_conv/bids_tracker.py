@@ -43,8 +43,8 @@ tsv_participants = set(pd.read_csv(participants_tsv,sep="\t")["participant_id"].
 bids_dir_paths = glob.glob(f"{bids_dir}/sub*")
 bids_dir_participants = set([os.path.basename(x) for x in bids_dir_paths])
 
-participants_missing_in_tsv = bids_dir_participants - tsv_participants
-participants_missing_in_bids_dir = tsv_participants - bids_dir_participants
+participants_missing_in_tsv = list(bids_dir_participants - tsv_participants)
+participants_missing_in_bids_dir = list(tsv_participants - bids_dir_participants)
 
 print(f"n_participants_tsv: {len(tsv_participants)}, \
         n_participants_bids_dir: {len(bids_dir_participants)}, \
@@ -74,7 +74,7 @@ if tsv_participants == bids_dir_participants:
 
             session_df.loc[ses] = f_count
 
-        session_df = session_df.reset_index()
+        session_df = session_df.reset_index().rename(columns={"index":"session_id"})
         session_df["participant_id"] = participant
         bids_status_df = bids_status_df.append(session_df)
 
@@ -84,5 +84,13 @@ if tsv_participants == bids_dir_participants:
 
 else:
     print(f"participants_tsv and bids_dir participants mismatch...")
+    output_csv = f"mismatched_{output_csv}"
+    missing_tsv_status = len(participants_missing_in_tsv) * ["participants_missing_in_tsv"]
+    missing_bids_status = len(participants_missing_in_bids_dir) * ["participants_missing_in_bids_dir"]
+    missing_df = pd.DataFrame()
+    missing_df["participant_id"] = participants_missing_in_tsv + participants_missing_in_tsv
+    missing_df["status"] = missing_tsv_status + missing_bids_status
+    print(f"Saving participants_missing_in_tsv and n_participants_missing_in_bids_dir at {output_csv}")
+
 
 
