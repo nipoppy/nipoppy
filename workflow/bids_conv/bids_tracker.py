@@ -80,7 +80,7 @@ if tsv_participants == bids_dir_participants:
 
     print(f"Saving bids_status_df at {output_csv}")        
     bids_status_df = bids_status_df.set_index("participant_id")
-    bids_status_df.to_csv(output_csv,index=None)
+    bids_status_df.to_csv(output_csv)
 
 else:
     print(f"participants_tsv and bids_dir participants mismatch...")
