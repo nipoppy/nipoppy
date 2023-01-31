@@ -91,4 +91,4 @@ else:
     missing_df["participant_id"] = participants_missing_in_tsv + participants_missing_in_bids_dir
     missing_df["status"] = missing_tsv_status + missing_bids_status
     print(f"Saving missing participants csv at {output_csv}")
-    missing_df.to_csv(output_csv)
+    missing_df.to_csv(output_csv,index=None)
