@@ -60,9 +60,9 @@ if tsv_participants == bids_dir_participants:
     for participant in tsv_participants:
         participant_id = participant.split("-",2)[1]
 
-        session_df = pd.DataFrame()
+        session_df = pd.DataFrame(index=sessions, columns=modalities)
         for ses in sessions:
-            modality_df = pd.DataFrame(columns=["participant_id","session"] + modalities)
+            f_count = []
             for modality in modalities:
                 F_SUFFIX = modality_suffic_dict[modality]
                 f = layout.get(subject=participant_id, 
@@ -71,10 +71,12 @@ if tsv_participants == bids_dir_participants:
                                         suffix=F_SUFFIX,                 
                                         return_type='filename')
                 
-                modality_df.loc[0, modality] = [participant_id, ses, len(f)]  
-            
-            session_df = session_df.append(modality_df)
+                f_count.append(f)
 
+            session_df.loc[ses] = f_count
+
+        session_df = session_df.reset_index()
+        session_df["participant_id"] = participant_id
         bids_status_df = bids_status_df.append(session_df)
 
     print(f"Saving bids_status_df at {output_csv}")        
