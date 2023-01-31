@@ -84,7 +84,7 @@ if tsv_participants == bids_dir_participants:
 
 else:
     print(f"participants_tsv and bids_dir participants mismatch...")
-    output_csv = f"mismatched_{output_csv}"
+    output_csv = os.path.join(os.path.basename(output_csv) + "mismatched_participants.csv")
     missing_tsv_status = len(participants_missing_in_tsv) * ["participants_missing_in_tsv"]
     missing_bids_status = len(participants_missing_in_bids_dir) * ["participants_missing_in_bids_dir"]
     missing_df = pd.DataFrame()
