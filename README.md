@@ -34,7 +34,7 @@ The organization mr_proc code module is as follows:
 <img src="imgs/mr_proc_data_dir_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
 ### 1. Create subject manifest
-   - Update the `participants.csv` in `<DATASET_ROOT>/tabular/demographics` comprising at least `participant_id`,`age`,`sex`,`group` (typically a diagnosis) columns.  
+   - Update the `mr_proc_manifest.csv` in `<DATASET_ROOT>/tabular/demographics` comprising at least `participant_id`,`age`,`sex`,`group` (typically a diagnosis) columns.  
        - This list serves as a ground truth for subject availability and participant IDs are used to create BIDS ids downstream.
        
 ### 2. Gather MRI acquisition protocols (Optional)
@@ -47,7 +47,7 @@ The organization mr_proc code module is as follows:
        - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<DATASET_ROOT>/tabular/demographics` 
    - Copy a single participant (i.e. dicom dir) into `<DATASET_ROOT>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
    
-### 4. Populate [global configs](./workflow/global_configs.json) file
+### 4. Populate [global configs](`<DATASET_ROOT>/proc/global_configs.json`) file
    - This file contains paths to dataset, pipeline versions, and containers used by several workflow scripts.
    - This is a dataset specific file and needs to be modified based on local configs and paths.
 

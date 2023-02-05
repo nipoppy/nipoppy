@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import json
 from proc_tracker import tracker
-from pipe_tracker_utils import tracker_configs
+from fs_tracker_utils import tracker_configs
 
 # Driver code
 global_config_file = "/home/nikhil/projects/Parkinsons/ppmi/proc/global_configs.json"
@@ -46,5 +46,5 @@ for session in sessions:
             _df.loc[participant_id,task_name] = status
 
     proc_status_df = proc_status_df.append(_df)
-print(proc_status_df)
 
+print(proc_status_df)
