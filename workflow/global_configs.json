@@ -1,12 +1,32 @@
 {
-    "DATASET_ROOT": "/home/nimhans/projects/data/PD_SERB",
-    "DATASTORE_DIR": "./",
-    "HEUDICONV_VERSION": "0.11.3",
-    "FMRIPREP_VERSION": "20.2.7",
-    "FS_VERSION": "6.0.1",
+    "DATASET_ROOT": "",
+    "DATASTORE_DIR": "",
+
+    "CONTAINER_STORE": "",
+    
     "SINGULARITY_PATH": "singularity",
-    "SINGULARITY_HEUDICONV": "/home/nimhans/projects/container_store/heudiconv_{}.sif",
-    "SINGULARITY_BIDS_VALIDATOR": "/home/nimhans/projects/container_store/bids_validator.sif",
-    "SINGULARITY_FMRIPREP": "/home/nimhans/projects/container_store/fmriprep_{}.sif",
-    "TEMPLATEFLOW_DIR": "/home/nimhans/projects/templateflow/"    
+
+    "TEMPLATEFLOW_DIR": "",
+
+    "SESSIONS": ["1","2","3"],
+
+    "BIDS": {
+        "HEUDICONV": {
+            "VERSION": "0.11.3",    
+            "CONTAINER": "heudiconv_{}.sif"
+        },
+        "VALIDATOR":{
+            "VERSION": "bids_validator.sif"
+        }
+    },
+
+    "PROC_PIPELINES": {
+        "fmriprep": {
+            "VERSION": "20.2.7",
+            "CONTAINER": "fmriprep_{}.sif"
+        },
+        "freesurfer": {
+            "VERSION": "6.0.1"
+        }
+    }
 }
