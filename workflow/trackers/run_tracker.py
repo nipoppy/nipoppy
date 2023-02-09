@@ -49,7 +49,7 @@ def run(global_config_file, dash_schema_file, workflows):
 
             for task_name, func in task_dict.items():
                 status = func(subject_dir)
-                print(f"task_name: {task_name}, status: {status}")
+                # print(f"task_name: {task_name}, status: {status}")
                 _df.loc[participant_id,task_name] = status
 
         proc_status_df = proc_status_df.append(_df)
