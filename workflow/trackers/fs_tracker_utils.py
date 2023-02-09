@@ -84,15 +84,17 @@ def check_surf(subject_dir):
             
     return status_msg
 
+def check_run_status(subject_dir):
+    fsdir_status = check_fsdirs(subject_dir)
+    stats_status = check_stats(subject_dir)
+    status_msg = fsdir_status & stats_status
+    return status_msg
+
 tracker_configs = {
-    "Phase_": {
-        "FS_DIRS_EXIST": check_fsdirs,
-        "PARCEL_STATS_EXIST": check_stats
+    "Global_": {
+        "run_status": check_run_status
     },
-    
-    "Stage_": {        
-        "MRI_MEASURES_EXIST": check_mri,
-        "LABEL_MEASURES_EXIST": check_label,
-        "SURF_MEASURES_EXIST": check_surf
-    }
+    "Phase_": {
+        "DKT_stats": check_stats
+    },
 }
