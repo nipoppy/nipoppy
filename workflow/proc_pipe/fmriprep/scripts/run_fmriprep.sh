@@ -4,64 +4,53 @@
 # Last update: 16 Feb 2022
 
 if [ "$#" -ne 20 ]; then
-  echo "Please provide DATASET_ROOT, HEUDICONV_IMG, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, PARTICIPANT_ID, SESSION_ID, \
-        BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag and TEST_RUN flag"
-
-  echo "Sample cmd: ./run_fmriprep_anat_and_func.sh -d <dataset_root> -h <path_to_fmriprep_img> -r <singularity> \
-        -f <path_to_templateflow_dir> -p <MNI01> -s <01> -b 1 -a 1 -t 1"
+  echo "Please provide DATA_DIR, FMRIPREP_DIR, FMRIPREP_IMG, FS_DIR, FS_LICENSE, PARTICIPANT_ID, \
+        CONTAINER, TEMPLATEFLOW_DIR, SINGULAIRTY_RUN_CMD, \
+        BIDS_FILTER flag (typically to filter out sessions), ANAT_ONLY flag"
   exit 1
 fi
 
-while getopts d:i:r:f:p:s:b:a:v:t: flag
+while getopts d:o:f:l:p:c:r:t:b:a: flag
 do
     case "${flag}" in
-        d) DATASET_ROOT=${OPTARG};;
-        i) SINGULARITY_IMG=${OPTARG};;
-        r) RUN_CMD=${OPTARG};; 
-        f) TEMPLATEFLOW_DIR=${OPTARG};;         
+        d) DATA_DIR=${OPTARG};;
+        o) FMRIPREP_DIR=${OPTARG};;
+        f) FS_DIR=${OPTARG};;
+        l) FS_LICENSE=${OPTARG};;
         p) PARTICIPANT_ID=${OPTARG};;
-        s) SESSION_ID=${OPTARG};;
+        c) CONTAINER=${OPTARG};;
+        r) RUN_CMD=${OPTARG};; 
+        t) TEMPLATEFLOW_DIR=${OPTARG};;                 
         b) BIDS_FILTER=${OPTARG};;
         a) ANAT_ONLY=${OPTARG};;
-        v) VERSION=${OPTARG};;
-        t) TEST_RUN=${OPTARG};;
     esac
 done
 
 # Container
-SINGULARITY_IMG=$SINGULARITY_IMG
+SINGULARITY_CONTAINER=$CONTAINER
 SINGULARITY_PATH=$RUN_CMD
 
 # TEMPLATEFLOW
 TEMPLATEFLOW_HOST_HOME=$TEMPLATEFLOW_DIR
 
+# paths
+BIDS_DIR=$DATA_DIR
+FMRIPREP_DIR=$FMRIPREP_DIR
+FS_DIR=$FS_DIR
 # FS license.txt path
-LOCAL_FS_LICENSE=${DATASET_ROOT}/derivatives/fmriprep/license.txt
+LOCAL_FS_LICENSE=$FS_LICENSE
 
-if [ "$TEST_RUN" -eq 1 ]; then
-    echo "Doing a test run..."
-    BIDS_DIR="$DATASET_ROOT/test_data/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="$DATASET_ROOT/test_data/derivatives/fmriprep/$VERSION/"
-else
-    echo "Doing a real run..."
-    BIDS_DIR="$DATASET_ROOT/bids/" #Relative to WD (local or singularity)
-    DERIV_DIR="$DATASET_ROOT/derivatives/fmriprep/$VERSION/"
-fi
+FP_OUT_DIR=${FMRIPREP_DIR}/output
 
-OUT_DIR=${DERIV_DIR}/output
-
-LOG_FILE=${DERIV_DIR}_fmriprep.log
-echo "Starting fmriprep proc with container: ${SINGULARITY_IMG}"
+LOG_FILE=${FMRIPREP_DIR}_fmriprep.log
+echo "Starting fmriprep proc with container: ${SINGULARITY_CONTAINER}"
 echo ""
-echo "Using working dir: ${DERIV_DIR} and subject ID: ${PARTICIPANT_ID}"
+echo "Using working dir: ${FMRIPREP_DIR} and subject ID: ${PARTICIPANT_ID}"
 
 # Create subject specific dirs
-FMRIPREP_HOME=${OUT_DIR}/fmriprep_home_${PARTICIPANT_ID}
+FMRIPREP_HOME=${FP_OUT_DIR}/fmriprep_home_${PARTICIPANT_ID}
 echo "Processing: ${PARTICIPANT_ID} with home dir: ${FMRIPREP_HOME}"
 mkdir -p ${FMRIPREP_HOME}
-
-LOCAL_FREESURFER_DIR="${OUT_DIR}/freesurfer/ses-${SESSION_ID}"
-mkdir -p ${LOCAL_FREESURFER_DIR}
 
 # Prepare some writeable bind-mount points.
 FMRIPREP_HOST_CACHE=$FMRIPREP_HOME/.cache/fmriprep
@@ -79,14 +68,14 @@ export SINGULARITYENV_TEMPLATEFLOW_HOME="/templateflow"
 SINGULARITY_CMD="singularity run \
 -B ${BIDS_DIR}:/data_dir \
 -B ${FMRIPREP_HOME}:/home/fmriprep --home /home/fmriprep --cleanenv \
--B ${OUT_DIR}:/output \
+-B ${FP_OUT_DIR}:/output \
 -B ${TEMPLATEFLOW_HOST_HOME}:${SINGULARITYENV_TEMPLATEFLOW_HOME} \
--B ${DERIV_DIR}:/work \
--B ${LOCAL_FREESURFER_DIR}:/fsdir \
- ${SINGULARITY_IMG}"
+-B ${FMRIPREP_DIR}:/work \
+-B ${FS_DIR}:/fsdir \
+ ${SINGULARITY_CONTAINER}"
 
 # Remove IsRunning files from FreeSurfer
-# find ${LOCAL_FREESURFER_DIR}/sub-$PARTICIPANT_ID/ -name "*IsRunning*" -type f -delete
+# find ${FS_DIR}/sub-$PARTICIPANT_ID/ -name "*IsRunning*" -type f -delete
 
 # Compose fMRIPrep command
 cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTICIPANT_ID \
@@ -98,8 +87,10 @@ cmd="${SINGULARITY_CMD} /data_dir /output participant --participant-label $PARTI
     --fs-license-file /home/fmriprep/.freesurfer/license.txt \
     --return-all-components -v \
     --write-graph --notrack \
-    --use-syn-sdc --force-syn --ignore fieldmaps \
     --omp-nthreads 4 --nthreads 8 --mem_mb 4000"
+
+# Field map (TODO)
+# --use-syn-sdc --force-syn --ignore fieldmaps \
 
 # Append optional args
 if [ "$BIDS_FILTER" -eq 1 ]; then

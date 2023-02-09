@@ -1,219 +1,95 @@
-from re import ASCII
-import pandas as pd
-from pathlib import Path
 import argparse
-import glob
+import json
+import subprocess
 import os
+from pathlib import Path
+import shutil
 
-HELPTEXT = """
-Script to validate fmriprep output
-"""
 #Author: nikhil153
-#Date: 27-July-2022
-
-# globals
-TASK = "rest"
-
-#sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-preproc_bold.nii.gz
-#sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-brain_mask.json
-fmriprep_anat_files_dict = {
-    "brain_mask.json" : "desc-brain_mask.json",
-    "brain_mask.nii" : "desc-brain_mask.nii.gz",
-    "preproc_T1w.json": "desc-preproc_T1w.json",
-    "preproc_T1w.nii": "desc-preproc_T1w.nii.gz",
-    "dseg.nii": "dseg.nii.gz",
-    "CSF_probseg": "label-CSF_probseg.nii.gz",
-    "GM_probseg": "label-GM_probseg.nii.gz",
-    "WM_probseg": "label-WM_probseg.nii.gz"
-}
-fmriprep_func_files_dict = {
-    "brain_mask.json" : "desc-brain_mask.json",
-    "brain_mask.nii" : "desc-brain_mask.nii.gz",
-    "preproc_T1w.json": "desc-preproc_bold.json",
-    "preproc_T1w.nii": "desc-preproc_bold.nii.gz",
-}
-
-fmriprep_modality_file_dict = {
-                            "anat":fmriprep_anat_files_dict,
-                            "func":fmriprep_func_files_dict
-                            }
+#Date: 05-Feb-2023 (last update)
 
 # argparse
+HELPTEXT = """
+Script to run fMRIPrep 
+"""
+
 parser = argparse.ArgumentParser(description=HELPTEXT)
 
-# Sample cmd:
-# python fmriprep_validator.py \
-# --fmriprep_dir /home/nikhil/scratch/ukbb_processing/derivatives/fmriprep/post_ohbm \
-# --ses 2 \
-# --tpl_spaces MNI152NLin2009cSym_res-1 MNI152NLin6Sym_res-1 MNI152Lin_res-1 \
-# --participants_list /home/nikhil/scratch/ukbb_processing/bids/participants.tsv \
-# --status_log_dir ~/scratch/ukbb_processing/derivatives/proc_status/ses-2/fmriprep/
-
-parser.add_argument('--fmriprep_dir', dest='fmriprep_dir',                      
-                    help='path to fmriprep_dir with all the subjects')
-
-parser.add_argument('--ses', help='session id e.g. bl')
-
-parser.add_argument('--run', default=None, help='run id e.g. 1')
-
-parser.add_argument('--modalities', nargs='*', default=["anat"], 
-                    help='modalities to check (choose from anat and func)')           
-
-parser.add_argument('--tpl_spaces', nargs='*', default=["MNI152NLin2009cAsym_res-2"], 
-                    help='template space and its resolution')           
-
-parser.add_argument('--participants_list', help='path to participants list (csv or tsv)')
-
-parser.add_argument('--status_log_dir', help='path to status_log_dir')
+parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
+parser.add_argument('--participant_id', type=str, help='participant id')
+parser.add_argument('--session_id', type=str, help='session id for the participant')
+parser.add_argument('--output_dir', type=str, help='specify custom output dir (default: <DATASET_ROOT>/derivatives)')
+parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
+parser.add_argument('--anat_only', action='store_true', help='run only anatomical workflow or not')
+parser.add_argument('--test_run', action='store_true', help='do a test run or not')
 
 args = parser.parse_args()
 
-def check_fmriprep(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modality):    
-    fmriprep_files_dict = fmriprep_modality_file_dict[modality]
-    status_dict = {}
-    for tpl_space in tpl_spaces:
-        status_msg = "Pass"
-        for k,v in fmriprep_files_dict.items():
-            if status_msg == "Pass":    
-                for file_suffix in [f"space-{tpl_space}_{v}"]:
-                    if run_id == None:
-                        filepath = Path(f"{subject_dir}/{ses_id}/{modality}/{participant_id}_{ses_id}_{file_suffix}")
-                    else:
-                        if modality == "anat":
-                            filepath = Path(f"{subject_dir}/{ses_id}/{modality}/{participant_id}_{ses_id}_{run_id}_{file_suffix}")
-                        else:
-                            filepath = Path(f"{subject_dir}/{ses_id}/{modality}/{participant_id}_{ses_id}_task-{TASK}_{run_id}_{file_suffix}")
-    
-                    filepath_status = Path.is_file(filepath)
-                    if not filepath_status:
-                        # print(filepath) 
-                        status_msg = "Missing file(s)"
-                        status_dict[tpl_space] = status_msg
-                        break
+global_config_file = args.global_config
+participant_id = args.participant_id
+session_id = args.session_id
+output_dir = args.output_dir # Needed on BIC (QPN) due to weird permissions issues with mkdir
+use_bids_filter = args.use_bids_filter
+bids_filter = str(int(use_bids_filter)) #reformat for shell script argument
+anat_only = str(int(args.anat_only))
+test_run = args.test_run
 
-                status_dict[tpl_space] = status_msg
-            else:
-                break
+  
+# Read global configs
+with open(global_config_file, 'r') as f:
+    global_configs = json.load(f)
 
-    return status_dict
+DATASET_ROOT = global_configs["DATASET_ROOT"]
+DATASTORE_DIR = global_configs["DATASTORE_DIR"]
+TEMPLATEFLOW_DIR = global_configs["TEMPLATEFLOW_DIR"]
+SINGULARITY_PATH = global_configs["SINGULARITY_PATH"]
+CONTAINER_STORE = global_configs["CONTAINER_STORE"]
 
-def check_output(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modalities):
-    fmriprep_status_dict = {}
-    for modality in modalities:
-        fmriprep_status_dict[modality] = check_fmriprep(subject_dir, participant_id, ses_id, run_id, tpl_spaces, modality)
-                
-    return fmriprep_status_dict
+FMRIPREP_CONTAINER = global_configs["PROC_PIPELINES"]["fmriprep"]["CONTAINER"]
+FMRIPREP_VERSION = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
+FS_VERSION = global_configs["PROC_PIPELINES"]["freesurfer"]["VERSION"]
+FMRIPREP_CONTAINER = FMRIPREP_CONTAINER.format(FMRIPREP_VERSION)
 
-if __name__ == "__main__":
-    # Read from csv
-    fmriprep_dir = args.fmriprep_dir
-    ses = f"ses-{args.ses}"
-    tpl_spaces = args.tpl_spaces
-    participants_list = args.participants_list
-    status_log_dir = args.status_log_dir
+SINGULARITY_FMRIPREP = f"{CONTAINER_STORE}{FMRIPREP_CONTAINER}"
 
-    if args.run != None:
-        run = f"run-{args.run}"
-        print(f"Using run id string: {run}")
-    else:
-        run = args.run
+if output_dir is None:
+    output_dir = DATASET_ROOT
 
-    modalities = args.modalities
-    print(f"Validating output in: {modalities}")
+print(f"Using DATASET_ROOT: {DATASET_ROOT}")
+print(f"Using output_dir: {output_dir}")
+print(f"Using SINGULARITY_FMRIPREP: {SINGULARITY_FMRIPREP}")
 
-    if not Path.is_dir(Path(status_log_dir)):
-        os.mkdir(status_log_dir)
+# Specify paths
+if test_run:
+    print("Doing a test run")
+    bids_dir = f"{DATASET_ROOT}/test_data/bids/"
+    derivs_dir = f"{output_dir}/test_data/derivatives/"
+else:
+    bids_dir = f"{DATASET_ROOT}/bids/"
+    derivs_dir = f"{output_dir}/derivatives/"
 
-    print(f"\nChecking subject ids and dirs...")
-    # Check number of participants from the list
-    if participants_list.rsplit(".")[1] == "tsv":
-        participants_df = pd.read_csv(participants_list,sep="\t")
-    else:
-        participants_df = pd.read_csv(participants_list)
+fmriprep_dir = f"{output_dir}/derivatives/fmriprep/v{FMRIPREP_VERSION}"
+# freesurfer won't
+FS_dir = f"{output_dir}/derivatives/freesurfer/v{FS_VERSION}/output/ses-{session_id}"
+FS_license = f"{output_dir}/derivatives/freesurfer/license.txt"
 
-    participant_ids = participants_df["participant_id"]
-    if str(participant_ids.values[0])[:3] != "sub":
-        print("Adding sub prefix to the participant_id(s)")
-        participant_ids = ["sub-" + str(id) for id in participant_ids]
-    
-    n_participants = len(participant_ids)
-    print(f"Number of subjects in the participants list: {n_participants}")
+Path(f"{fmriprep_dir}/output").mkdir(parents=True, exist_ok=True)
+Path(FS_dir).mkdir(parents=True, exist_ok=True)
 
-    # Check available subject dirs
-    subject_path_list = glob.glob(f"{fmriprep_dir}/sub*[!html]")
-    subject_dir_list = [os.path.basename(x) for x in subject_path_list]
-    
-    print(f"Number of fmriprep_dir subject dirs: {len(subject_path_list)}")
-    
-    fmriprep_participants = set(participant_ids) & set(subject_dir_list)
-    subjects_missing_subject_dir = set(participant_ids) - set(subject_dir_list)
-    subjects_missing_in_participant_list = set(subject_dir_list) - set(participant_ids)
+fname = __file__
+CWD = os.path.dirname(os.path.abspath(fname))
+# print(f"CWD: {CWD}, fname: {fname}")
 
-    print(f"\nSubjects missing fMRIPrep subject_dir: {len(subjects_missing_subject_dir)}")
-    print(f"Subjects missing in participant list: {len(subjects_missing_in_participant_list)}")
-    print(f"\nChecking FMRIPrep output for {len(fmriprep_participants)} subjects")
+# Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
+if use_bids_filter:
+    print(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
+    shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
 
-    print(f"\nChecking for following templateflow spaces:\n{tpl_spaces}")
-    
-    fmriprep_tpl_spaces= []
-    fmriprep_complete_cols = []
-    for modality in modalities:
-        modality_tpl_spaces = [f"{modality}-{tpl_space}" for tpl_space in tpl_spaces]
-        fmriprep_tpl_spaces += modality_tpl_spaces
-        fmriprep_complete_cols.append(f"{modality}-fmriprep_complete")
+# setup singularity run script command
+FMRIPREP_SCRIPT = f"{CWD}/scripts/run_fmriprep.sh"
+FMRIPREP_ARGS = ["-d", bids_dir, "-o", fmriprep_dir, "-f", FS_dir, "-l", FS_license, "-p", participant_id, \
+                 "-c", SINGULARITY_FMRIPREP, "-r", SINGULARITY_PATH, "-t", TEMPLATEFLOW_DIR, \
+                 "-b", bids_filter, "-a", anat_only]
+FMRIPREP_CMD = [FMRIPREP_SCRIPT] + FMRIPREP_ARGS
 
-        status_cols = fmriprep_tpl_spaces
-
-    status_df = pd.DataFrame(columns=["participant_id"] + fmriprep_complete_cols + status_cols)
-    print(f"\nNumber of status cols: {len(status_df.columns)}")
-
-    # populate status_df iterating over available FS subject dirs
-    print(f"\nPopulating status_df iterating over available FS subject dirs")
-    for p, participant_id in enumerate(fmriprep_participants):
-        subject_dir = f"{fmriprep_dir}/{participant_id}"
-        modality_status_dict = check_output(subject_dir, participant_id, ses, run, tpl_spaces, modalities)
-        fmriprep_status = []
-        fmriprep_complete = []
-        for modality in modalities:
-            modality_status = modality_status_dict[modality]
-            modality_complete = all(flag == "Pass" for flag in modality_status.values())
-            fmriprep_status += list(modality_status.values())
-            fmriprep_complete.append(modality_complete)
-
-        status_df.loc[p] = [participant_id] + fmriprep_complete + fmriprep_status
-        
-    # append subjects missing FS subject_dir
-    print(f"\nPopulating status_df by appending missing FS subject dirs")
-    for p, participant_id in enumerate(subjects_missing_subject_dir):
-        subject_dir = f"{fmriprep_dir}/{participant_id}"
-        status_list = len(status_cols)*["subject dir not found"]
-        fmriprep_complete = len(modalities)*[False]
-        fmriprep_status = len(fmriprep_tpl_spaces)*["Not checked"]                
-
-        status_df.loc[p + len(participant_ids)] = [participant_id] + fmriprep_complete + fmriprep_status
-
-    status_df["fmriprep_complete"] = status_df[fmriprep_complete_cols].prod(axis=1).astype(bool)
-    n_complete = len(status_df[status_df["fmriprep_complete"]])
-    n_failed = n_participants - n_complete
-
-    print(f"\nnumber of failed subjects: {n_failed}")
-
-    if n_failed > 0:
-        failed_participant_ids = status_df[status_df["fmriprep_complete"]==False]["participant_id"].values
-        subject_list = f"{status_log_dir}/failed_subject_ids.txt"
-        with open(f'{subject_list}', 'w') as f:
-            for line in failed_participant_ids:
-                f.write(f"{line}\n")
-        print(f"See failed subject list: {subject_list}")
-
-    if len(subjects_missing_in_participant_list) > 0:
-        subject_list = f"{status_log_dir}/subjects_missing_in_participant_list.txt"
-        with open(f'{subject_list}', 'w') as f:
-            for line in subjects_missing_in_participant_list:
-                f.write(f"{line}\n")
-        print(f"See subjects_missing_in_participant_list: {subject_list}")
-    
-    # Save fs_status_df
-    status_save_path = f"{status_log_dir}/fmriprep_status.csv"
-    print(f"See fmriprep status csv: {status_save_path}")
-    status_df.to_csv(status_save_path)
+fmriprep_proc = subprocess.run(FMRIPREP_CMD)
