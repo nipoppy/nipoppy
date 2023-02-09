@@ -3,8 +3,8 @@ import pandas as pd
 
 class tracker:
     # constructor
-    def __init__(self, global_config_file, dash_schema_file, pipeline):
-        self.pipeline = pipeline
+    def __init__(self, global_config_file, dash_schema_file, workflow):
+        self.workflow = workflow
         self.global_config_file = global_config_file
         self.dash_schema_file = dash_schema_file
 
@@ -15,7 +15,7 @@ class tracker:
 
         self.mr_proc_root_dir = global_configs["DATASET_ROOT"]
         self.sessions = global_configs["SESSIONS"]
-        self.version = global_configs["PROC_PIPELINES"][self.pipeline]["VERSION"] 
+        self.version = global_configs["PROC_PIPELINES"][self.workflow]["VERSION"] 
 
     def get_dash_fields(self):
         with open(self.dash_schema_file, 'r') as f:

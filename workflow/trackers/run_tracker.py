@@ -56,7 +56,7 @@ def run(global_config_file, dash_schema_file, workflows):
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
-    proc_status_df.to_csv(tracker_csv, index=None)
+    proc_status_df.to_csv(tracker_csv)
 
 if __name__ == '__main__':
     # argparse
