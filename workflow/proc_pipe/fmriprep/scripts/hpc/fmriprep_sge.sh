@@ -1,38 +1,30 @@
 #!/bin/bash
 #
 #$ -cwd
-#$ -o ./sge_logs/
-#$ -e ./sge_logs/
-#$ -M nikhil.bhagwat@mcgill.ca
-#$ -m a
+#$ -o fmriprep_out.log
+#$ -e fmriprep_err.log
 #$ -m e
 #$ -l h_rt=24:00:00
 #$ -l h_vmem=32G
 #$ -q origami.q
 
-#$ -t 1-1
+#$ -t 1-8
 	
 if [ "$#" -ne 1 ]; then
   echo "Please provide subject list"
   exit 1
 fi
 
-# load python env
-source /data/origami/nikhil/my_envs/brain_diff/bin/activate
+SUBJECT_LIST=$1
+SESSION_ID=$2
+BIDS_FILTER="bids_filter.json"
+DATASET_ROOT="/data/pd/qpn/"
+TEST_RUN="0"
 
-participant_list=$1
-global_config="/data/origami/nikhil/my_repos/mr_proc/workflow/global_configs.json"
-session_id="01"
-output_dir="/data/origami/nikhil/qpn/"
+echo "DATASET_ROOT: $DATASET_ROOT"
+echo "Number subjects found: `cat $SUBJECT_LIST | wc -l`"
 
-echo "output_dir: $fmriprep_dir"
-echo "Number participant found: `cat $participant_list | wc -l`"
-
-participant_id=`sed -n "${SGE_TASK_ID}p" $participant_list`
-echo "Subject ID: $participant_id"
-
-python ../../run_fmriprep.py --global_config $global_config \
---participant_id $participant_id \
---session_id $session_id \
---use_bids_filter \
---output_dir $output_dir
+SUBJECT_ID=`sed -n "${SGE_TASK_ID}p" $SUBJECT_LIST`
+echo "Subject ID: $SUBJECT_ID"
+	
+./run_fmriprep_anat.sh -d $DATASET_ROOT -p $SUBJECT_ID -s $SESSION_ID -b $BIDS_FILTER -t $TEST_RUN
