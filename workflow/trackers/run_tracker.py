@@ -71,10 +71,7 @@ def run(global_config_file, dash_schema_file, pipelines):
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
-<<<<<<< HEAD
     proc_status_df.index.name = "participant_id"
-=======
->>>>>>> 02f04d949a7001e1b0f502df4d0eb6b602aa9713
     proc_status_df.to_csv(tracker_csv)
 
 if __name__ == '__main__':
@@ -95,8 +92,4 @@ if __name__ == '__main__':
     dash_schema_file = args.dash_schema
     pipelines = args.pipelines
 
-<<<<<<< HEAD
     run(global_config_file, dash_schema_file, pipelines)
-=======
-    run(global_config_file, dash_schema_file, workflows)
->>>>>>> 02f04d949a7001e1b0f502df4d0eb6b602aa9713

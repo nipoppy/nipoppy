@@ -4,8 +4,8 @@ import os
 
 class tracker:
     # constructor
-    def __init__(self, global_config_file, dash_schema_file, workflow):
-        self.workflow = workflow
+    def __init__(self, global_config_file, dash_schema_file, pipeline):
+        self.pipeline = pipeline
         self.global_config_file = global_config_file
         self.dash_schema_file = dash_schema_file
 
@@ -14,16 +14,10 @@ class tracker:
         with open(self.global_config_file, 'r') as f:
             global_configs = json.load(f)
 
-<<<<<<< HEAD
         mr_proc_root_dir = global_configs["DATASET_ROOT"]
         sessions = global_configs["SESSIONS"]
         version = global_configs["PROC_PIPELINES"][self.pipeline]["VERSION"] 
         return mr_proc_root_dir, sessions, version
-=======
-        self.mr_proc_root_dir = global_configs["DATASET_ROOT"]
-        self.sessions = global_configs["SESSIONS"]
-        self.version = global_configs["PROC_PIPELINES"][self.workflow]["VERSION"] 
->>>>>>> 02f04d949a7001e1b0f502df4d0eb6b602aa9713
 
     def get_dash_schema(self):
         with open(self.dash_schema_file, 'r') as f:
