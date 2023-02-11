@@ -58,11 +58,11 @@ def run(global_config_file, dash_schema_file, pipelines):
             if dir_status:                
                 for name, func in status_check_dict.items():
                     status = func(subject_dir)
-                    print(f"task_name: {name}, status: {status}")
+                    # print(f"task_name: {name}, status: {status}")
                     _df.loc[participant_id,name] = status
                     _df.loc[participant_id,"pipeline_starttime"] = get_start_time(subject_dir)
             else:
-                print(f"Pipeline output not found for participant_id: {participant_id}, session: {session}")
+                # print(f"Pipeline output not found for participant_id: {participant_id}, session: {session}")
                 for name in status_check_dict.keys():                    
                     _df.loc[participant_id,name] = UNAVAILABLE
                     _df.loc[participant_id,"pipeline_starttime"] = UNAVAILABLE

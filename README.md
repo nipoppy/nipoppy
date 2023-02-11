@@ -26,15 +26,15 @@ The organization mr_proc code module is as follows:
 
 ## Workflow steps
 
-### Installation
+### i. mr_proc code+env installation
    - Change dir to where you want to clone this repo, e.g.: `cd /home/<user>/projects/<my_project>/code/`
    - Create a new [venv](https://realpython.com/python-virtual-environments-a-primer/): `python3 -m venv mr_proc_env` 
    - Activate your env: `source mr_proc_env/bin/activate` 
    - Clone this repo: `git clone https://github.com/neurodatascience/mr_proc.git`
-   - Change dir to `mr_proc` and checkout nimhans branch: `git checkout nimhans` 
+   - Change dir to `mr_proc` 
    - Install python dependencies: `pip install -e .`  
 
-### 0. Setup dataset directory structure
+### ii. mr_proc dataset directory Setup 
    - mr_proc expects following directory tree with several *mandatory* subdirs and files. 
    - You can run `scripts/mr_proc_setup.sh` to create this directory tree. 
    - You can run `scripts/mr_proc_stutus.sh` check status of your dataset
@@ -55,7 +55,9 @@ The organization mr_proc code module is as follows:
        - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<DATASET_ROOT>/tabular/demographics` 
    - Copy a single participant (i.e. dicom dir) into `<DATASET_ROOT>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
    
-### 4. Populate [global configs](`<DATASET_ROOT>/proc/global_configs.json`) file
+### 4. Populate global configs
+   - Copy, rename, and populate [sample_global_configs.json]()./sample_global_configs.json) 
+   - Althogh not mandatory, the preferred location would be: `<DATASET_ROOT>/proc/global_configs.json`
    - This file contains paths to dataset, pipeline versions, and containers used by several workflow scripts.
    - This is a dataset specific file and needs to be modified based on local configs and paths.
 
@@ -77,7 +79,7 @@ The organization mr_proc code module is as follows:
             - Run `stage_1` and `stage_2` with [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) with additional `--test_run` flag. 
 
 ### 6. Run BIDS validator
-   - Make sure you have the appropriate HeuDiConv container in your [global configs](./workflow/global_configs.json)
+   - Make sure you have the appropriate HeuDiConv container in your `<DATASET_ROOT>/proc/global_configs.json`
    - Use [run_bids_val.sh](workflow/bids_conv/scripts/run_bids_val.sh) to check for errors and warnings
         - Sample command: `run_bids_val.sh <bids_dir> <log_dir>` 
         - Alternatively if your machine has a browser you can also use an online [validator](https://bids-standard.github.io/bids-validator/)
