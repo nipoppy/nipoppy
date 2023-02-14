@@ -74,6 +74,6 @@ def montage_T1w(path):
 
 
 montage_bold(sys.argv[1]); #mriqc_stats/group_bold.tsv
-plt.savefig('group_bold.jpeg')
+plt.savefig('group_bold.jpeg', bbox_inches='tight', pad_inches=0.5)
 montage_T1w(paths[2]); #mriqc_stats/group_T1w.tsv
-plt.savefig('group_T1w.jpeg')
+plt.savefig('group_T1w.jpeg', bbox_inches='tight', pad_inches=0.5)
