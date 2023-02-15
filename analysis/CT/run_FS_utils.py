@@ -72,7 +72,7 @@ if __name__ == '__main__':
         print(f"Using {group} subset of participants")
         participants_list = list(participants_df[participants_df["group"] == group]["bids_id"])
 
-    if str(participants_list.values[0])[:3] != "sub":
+    if str(participants_list[0])[:3] != "sub":
         print("Adding sub prefix to the participant_id(s)")
         participants_list = ["sub-" + str(id) for id in participants_list]
 
