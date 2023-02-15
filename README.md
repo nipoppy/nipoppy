@@ -1,6 +1,8 @@
 # mr_proc 
-A workflow for standarized MR images processing. 
+A workflow manager for curating MRI and tabular data and standarized processing. 
 *Process long and prosper.*
+
+---
 
 ## Objective
 This repo will contain container recipes and run scripts to manage MR data organization and image processing. Currently, it offers scripts to: 
@@ -24,6 +26,8 @@ The organization mr_proc code module is as follows:
    - The mr_proc setup uses Singualrity containers to run various MR image processing pipelines. Once the container is created/downloaded, you can write a python or shell run script and save them inside [my_new_pipeline](/workflow/proc_pipe/)
    - The mr_proc setup allows you to validate processed output for 1) BIDS conversion 2) FreeSurfer 3) fMRIPrep and reports failed participants.
 
+---
+
 ## Workflow steps
 
 ### i. mr_proc code+env installation
@@ -39,28 +43,30 @@ The organization mr_proc code module is as follows:
    - You can run `scripts/mr_proc_setup.sh` to create this directory tree. 
    - You can run `scripts/mr_proc_stutus.sh` check status of your dataset
 
+---
+
 <img src="imgs/mr_proc_data_dir_org.jpg" alt="Drawing" align="middle" width="1000px"/>
 
 ### 1. Create subject manifest
    - Update the `mr_proc_manifest.csv` in `<DATASET_ROOT>/tabular/demographics` comprising at least `participant_id`,`age`,`sex`,`group` (typically a diagnosis) columns.  
        - This list serves as a ground truth for subject availability and participant IDs are used to create BIDS ids downstream.
-       
-### 2. Gather MRI acquisition protocols (Optional)
+              
+### 2. Populate global configs
+   - Copy, rename, and populate [sample_global_configs.json](/sample_global_configs.json) 
+   - Althogh not mandatory, the preferred location would be: `<DATASET_ROOT>/proc/global_configs.json`
+   - This file contains paths to dataset, pipeline versions, and containers used by several workflow scripts.
+   - This is a dataset specific file and needs to be modified based on local configs and paths.
+
+### 3. Gather MRI acquisition protocols (Optional)
    - List all the modalities and acquisition protocols used duing scanning e.g. MPRAGE, 3DT1, FLAIR, RS-FMRI etc. in the `mr_proc/workflow/dicom_org/scan_protocols.csv`
    - Although optional this is an important documentation for comparing across studies. 
    
-### 3. Organize (and rename) DICOMs 
+### 4. Organize (and rename) DICOMs 
    - Scanner DICOM files are named and stored in various formats and locations. In this step we extract, copy, and rename DICOMs in a single directory for all participants with available imaging data. 
        - Copy / download all "raw dicoms" in the `<DATASET_ROOT>/scratch/raw_dicoms` directory.
        - Write a script to extract, copy, and rename these raw DICOMs into `<dataset>/dicom`. Ensure `participant_id` naming matches with `participants.csv` in `<DATASET_ROOT>/tabular/demographics` 
    - Copy a single participant (i.e. dicom dir) into `<DATASET_ROOT>/test_data/dicom`. This participant will serve as a test case for various pipelines. 
    
-### 4. Populate global configs
-   - Copy, rename, and populate [sample_global_configs.json]()./sample_global_configs.json) 
-   - Althogh not mandatory, the preferred location would be: `<DATASET_ROOT>/proc/global_configs.json`
-   - This file contains paths to dataset, pipeline versions, and containers used by several workflow scripts.
-   - This is a dataset specific file and needs to be modified based on local configs and paths.
-
 ### 5. Run DICOM --> BIDS conversion using [Heudiconv](https://heudiconv.readthedocs.io/en/latest/) ([tutorial](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html))
    - Make sure you have the appropriate HeuDiConv container in your [global configs](./workflow/global_configs.json)
    - Use [run_bids_conv.py](workflow/bids_conv/run_bids_conv.py) to run HeuDiConv `stage_1` and `stage_2`.  
@@ -143,10 +149,11 @@ Curating dataset into BIDS format simplifies running several commonly used pipel
       - fmriprep run generates huge number of intermediate files. You should remove those after successful run to free-up space. 
          - e.g. fmriprep_wf/
 
+---
+
 ### TODO
    
 #### [MRIQC](https://mriqc.readthedocs.io/en/stable/)
 
 #### [TractoFlow](https://github.com/scilus/tractoflow)
-
-#### [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
+---
