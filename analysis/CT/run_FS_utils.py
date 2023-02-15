@@ -10,7 +10,7 @@ def get_mris_preproc_cmd(participants_list, out_file, meas="thickness", template
     """
     participants_str_list = []
     for participant in participants_list:
-        participants_str_list.append(f"--s sub-{participant}")
+        participants_str_list.append(f"--s {participant}")
 
     participants_str = ' '.join(participants_str_list)
     FS_CMD_dict = {}
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     print("")
     print("-"*50)
     print("Starting FS utils")
-    
+
     if group is None:
         print("No group filter specified, concatenating all participants")
         participants_list = list(participants_df["bids_id"])
@@ -71,6 +71,10 @@ if __name__ == '__main__':
     else:
         print(f"Using {group} subset of participants")
         participants_list = list(participants_df[participants_df["group"] == group]["bids_id"])
+
+    if str(participants_list.values[0])[:3] != "sub":
+        print("Adding sub prefix to the participant_id(s)")
+        participants_list = ["sub-" + str(id) for id in participants_list]
 
     print(f"n_participants: {len(participants_list)}")
     out_file = f"/output_dir/surf_concat_{group}.mgh"
