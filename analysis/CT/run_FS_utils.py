@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--FS_dir', type=str, help='list of participants to process')
     parser.add_argument('--participants_csv', type=str, help='list of participants to process')
+    parser.add_argument('--group', type=str, help='filter participants based on a specific group value in the csv')
     parser.add_argument('--output_dir', type=str, help='out_file path for the processed / aggregated output')
     parser.add_argument('--meas', type=str, default="thickness", help='cortical measure')
     parser.add_argument('--template', type=str, default="fsaverage", help='freesurfer template (fsaverage or fsaverage5)')
@@ -45,6 +46,7 @@ if __name__ == '__main__':
     FS_license = f"{FS_dir}/license.txt"
 
     participants_csv = args.participants_csv
+    group = args.group
     output_dir = args.output_dir
     container = args.container
     meas = args.meas
@@ -57,8 +59,17 @@ if __name__ == '__main__':
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity exec -B {FS_dir}:/fsdir -B {output_dir}:/output_dir {container} "
 
-    participants_list = list(pd.read_csv(participants_csv)["participant_id"])
-    out_file = "/output_dir/surf_concat.mgh"
+    participants_df = pd.read_csv(participants_csv)
+
+    if group is None:
+        print("No group filter specified, concatenating all participants")
+        participants_list = list(participants_df["participant_id"])
+        group = "all"
+    else:
+        print(f"Using {group} subset of participants")
+        participants_list = list(participants_df[participants_df["group"] == group]["participant_id"])
+
+    out_file = f"/output_dir/surf_concat_{group}.mgh"
 
     FS_CMD_dict = get_mris_preproc_cmd(participants_list, out_file, meas, template)
     print("-"*50)
