@@ -59,18 +59,18 @@ if __name__ == '__main__':
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity exec -B {FS_dir}:/fsdir -B {output_dir}:/output_dir {container} "
 
-    participants_df = pd.read_csv(participants_csv)
+    _df = pd.read_csv(participants_csv)
     print("")
     print("-"*50)
     print("Starting FS utils")
 
     if group is None:
         print("No group filter specified, concatenating all participants")
-        participants_list = list(participants_df["bids_id"])
+        participants_list = list(_df[~_df["bids_id"].isna()]["bids_id"])
         group = "all"
     else:
         print(f"Using {group} subset of participants")
-        participants_list = list(participants_df[participants_df["group"] == group]["bids_id"])
+        participants_list = list(_df[(~_df["bids_id"].isna()) & (_df["group"] == group)]["bids_id"])
 
     if str(participants_list[0])[:3] != "sub":
         print("Adding sub prefix to the participant_id(s)")
