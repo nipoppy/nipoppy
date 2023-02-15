@@ -5,12 +5,19 @@ from pathlib import Path
 import shutil
 import pandas as pd
 
-def get_mris_preproc_cmd(participants_list, out_file, meas="thickness", template="fsaverage"):
+# Make sure FS_LICENSE is defined in the container.
+os.environ['SINGULARITYENV_FS_LICENSE'] = "/fsdir/license.txt"
+os.environ['SINGULARITYENV_SUBJECTS_DIR'] = "/fsdir/"
+
+def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", template="fsaverage"):
     """ A function to generate FreeSurfer's mris_preproc command
     """
     participants_str_list = []
     for participant in participants_list:
-        participants_str_list.append(f"--s {participant}")
+        dirpath = Path(f"{FS_dir}/{participant}")
+        dirpath_status = Path.is_dir(dirpath)
+        if dirpath_status:
+            participants_str_list.append(f"--s {participant}")
 
     participants_str = ' '.join(participants_str_list)
     FS_CMD_dict = {}
@@ -24,6 +31,25 @@ def get_mris_preproc_cmd(participants_list, out_file, meas="thickness", template
 
     return FS_CMD_dict
         
+
+def run(FS_dir, participants_list, out_file, meas, template):
+    """ function to exectute FS container with mris_preproc command
+    """
+    FS_CMD_dict = get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas, template)
+    for hemi, FS_CMD in FS_CMD_dict.items():
+        print(f"hemisphere: {hemi}")
+        CMD_ARGS = SINGULARITY_CMD + FS_CMD 
+
+        CMD = CMD_ARGS.split()
+
+        try:        
+            proc = subprocess.run(CMD)
+
+        except Exception as e:
+            print(f"mris_preproc run failed with exceptions: {e}")
+
+        print("-"*30)
+        print("")
 
 if __name__ == '__main__':
     # argparse
@@ -52,9 +78,7 @@ if __name__ == '__main__':
     meas = args.meas
     template = args.template
 
-    # Make sure FS_LICENSE is defined in the container.
-    os.environ['SINGULARITYENV_FS_LICENSE'] = "/fsdir/license.txt"
-    os.environ['SINGULARITYENV_SUBJECTS_DIR'] = "/fsdir/"
+    
     
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity exec -B {FS_dir}:/fsdir -B {output_dir}:/output_dir {container} "
@@ -79,26 +103,13 @@ if __name__ == '__main__':
     print(f"n_participants: {len(participants_list)}")
     out_file = f"/output_dir/surf_concat_{group}.mgh"
 
-    FS_CMD_dict = get_mris_preproc_cmd(participants_list, out_file, meas, template)
+    run(FS_dir, participants_list, out_file, meas, template)
     
     print("Running mris_preproc separately for left and right hemisphere\n")
     
     print("-"*30)
     print("")
-    for hemi, FS_CMD in FS_CMD_dict.items():
-        print(f"hemisphere: {hemi}")
-        CMD_ARGS = SINGULARITY_CMD + FS_CMD 
-
-        CMD = CMD_ARGS.split()
-
-        try:        
-            proc = subprocess.run(CMD)
-
-        except Exception as e:
-            print(f"mris_preproc run failed with exceptions: {e}")
-
-        print("-"*30)
-        print("")
+    
 
     print("mris_preproc run complete")
     print("-"*50)
