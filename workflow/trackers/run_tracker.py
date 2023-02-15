@@ -26,7 +26,7 @@ def run(global_config_file, dash_schema_file, pipelines):
 
     mr_proc_manifest = f"{mr_proc_root_dir}/tabular/demographics/mr_proc_manifest.csv"
     manifest_df = pd.read_csv(mr_proc_manifest)
-    participants = manifest_df["participant_id"].astype(str).str.strip().values
+    participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].astype(str).str.strip().values
     n_participants = len(participants)
 
     print("-"*50)
@@ -43,35 +43,36 @@ def run(global_config_file, dash_schema_file, pipelines):
     proc_status_df = pd.DataFrame()
     for session in sessions:
         print(f"Checking session: {session}")
-        _df = pd.DataFrame(index=participants, columns=dash_col_list)
-        _df = _df.drop(columns=["participant_id"]) # it's indexed already
+        _df = pd.DataFrame(index=participants, columns=dash_col_list)        
         _df["session"] = session
         _df["pipeline_name"] = pipeline        
         _df["pipeline_version"] = version
         
-        for participant_id in participants:
-            print(f"participant_id: {participant_id}")
+        for bids_id in participants:
+            _df["participant_id"] = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
 
-            subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session}/sub-{participant_id}" 
+            print(f"bids_id: {bids_id}")
+
+            subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session}/{bids_id}" 
 
             dir_status = Path(subject_dir).is_dir()
             if dir_status:                
                 for name, func in status_check_dict.items():
                     status = func(subject_dir)
                     # print(f"task_name: {name}, status: {status}")
-                    _df.loc[participant_id,name] = status
-                    _df.loc[participant_id,"pipeline_starttime"] = get_start_time(subject_dir)
+                    _df.loc[bids_id,name] = status
+                    _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
             else:
-                # print(f"Pipeline output not found for participant_id: {participant_id}, session: {session}")
+                # print(f"Pipeline output not found for bids_id: {bids_id}, session: {session}")
                 for name in status_check_dict.keys():                    
-                    _df.loc[participant_id,name] = UNAVAILABLE
-                    _df.loc[participant_id,"pipeline_starttime"] = UNAVAILABLE
+                    _df.loc[bids_id,name] = UNAVAILABLE
+                    _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
 
         proc_status_df = proc_status_df.append(_df)
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
-    proc_status_df.index.name = "participant_id"
+    proc_status_df.index.name = "bids_id"
     proc_status_df.to_csv(tracker_csv)
 
 if __name__ == '__main__':
