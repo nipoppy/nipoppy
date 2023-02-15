@@ -60,19 +60,23 @@ if __name__ == '__main__':
     SINGULARITY_CMD=f"singularity exec -B {FS_dir}:/fsdir -B {output_dir}:/output_dir {container} "
 
     participants_df = pd.read_csv(participants_csv)
-
+    print("")
+    print("-"*50)
+    print("Starting FS utils")
+    
     if group is None:
         print("No group filter specified, concatenating all participants")
-        participants_list = list(participants_df["participant_id"])
+        participants_list = list(participants_df["bids_id"])
         group = "all"
     else:
         print(f"Using {group} subset of participants")
-        participants_list = list(participants_df[participants_df["group"] == group]["participant_id"])
+        participants_list = list(participants_df[participants_df["group"] == group]["bids_id"])
 
+    print(f"n_participants: {len(participants_list)}")
     out_file = f"/output_dir/surf_concat_{group}.mgh"
 
     FS_CMD_dict = get_mris_preproc_cmd(participants_list, out_file, meas, template)
-    print("-"*50)
+    
     print("Running mris_preproc separately for left and right hemisphere\n")
     
     print("-"*30)
