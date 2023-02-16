@@ -106,7 +106,7 @@ if __name__ == '__main__':
         participants_list = ["sub-" + str(id) for id in participants_list]
 
     print(f"n_participants: {len(participants_list)}")
-    out_file = f"/output_dir/surf_concat_{group}.mgh"
+    out_file = f"/output_dir/surf_concat_{group}_{fwhm}.mgh"
 
     run(FS_dir, participants_list, out_file, meas, fwhm, template)
     
