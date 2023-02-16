@@ -2,6 +2,5 @@
 	"input_dir": INPUT_DIR,
     	"results_dir": RESULTS_DIR,
 	"subject_id": SUBJECT_ID,
-    	"file_names": [MRI_DATATYPE_1, MRI_DATATYPE_2, ..., MRI_DATATYPE_N],
     	"session": SESSION_ID
 }
