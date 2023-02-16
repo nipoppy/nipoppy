@@ -1,5 +1,5 @@
 # mr_proc 
-A workflow manager for curating MRI and tabular data and standarized processing. 
+A workflow manager for curating MRI and tabular data and standardized processing. 
 *Process long and prosper.*
 
 ---
