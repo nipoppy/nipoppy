@@ -9,7 +9,8 @@ import pandas as pd
 os.environ['SINGULARITYENV_FS_LICENSE'] = "/fsdir/license.txt"
 os.environ['SINGULARITYENV_SUBJECTS_DIR'] = "/fsdir/"
 
-def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", template="fsaverage"):
+
+def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", fwhm=0, template="fsaverage"):
     """ A function to generate FreeSurfer's mris_preproc command
     """
     participants_str_list = []
@@ -26,16 +27,16 @@ def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", 
         f = os.path.basename(out_file)
         out_file = f"{d}/{hemi}_{f}"
 
-        FS_CMD = f"mris_preproc {participants_str} --target {template} --hemi {hemi} --meas {meas} --out {out_file}"
+        FS_CMD = f"mris_preproc {participants_str} --target {template} --hemi {hemi} --meas {meas} --fwhm {fwhm} --out {out_file}"
         FS_CMD_dict[hemi] = FS_CMD
 
     return FS_CMD_dict
         
 
-def run(FS_dir, participants_list, out_file, meas, template):
+def run(FS_dir, participants_list, out_file, meas, fwhm, template):
     """ function to exectute FS container with mris_preproc command
     """
-    FS_CMD_dict = get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas, template)
+    FS_CMD_dict = get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas, fwhm, template)
     for hemi, FS_CMD in FS_CMD_dict.items():
         print(f"hemisphere: {hemi}")
         CMD_ARGS = SINGULARITY_CMD + FS_CMD 
@@ -63,6 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--group', type=str, help='filter participants based on a specific group value in the csv')
     parser.add_argument('--output_dir', type=str, help='out_file path for the processed / aggregated output')
     parser.add_argument('--meas', type=str, default="thickness", help='cortical measure')
+    parser.add_argument('--fwhm', type=int, default=0, help='smoothing kernel in mm')
     parser.add_argument('--template', type=str, default="fsaverage", help='freesurfer template (fsaverage or fsaverage5)')
     parser.add_argument('--container', type=str, help='path to freesurfer container')
 
@@ -76,25 +78,28 @@ if __name__ == '__main__':
     output_dir = args.output_dir
     container = args.container
     meas = args.meas
+    fwhm = args.fwhm
     template = args.template
-
-    
     
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity exec -B {FS_dir}:/fsdir -B {output_dir}:/output_dir {container} "
 
     _df = pd.read_csv(participants_csv)
+
+    # remove missing MRI participants
+    _df = _df[~_df["bids_id"].isna()]
+
     print("")
     print("-"*50)
     print("Starting FS utils")
 
     if group is None:
         print("No group filter specified, concatenating all participants")
-        participants_list = list(_df[~_df["bids_id"].isna()]["bids_id"])
+        participants_list = list(_df["bids_id"])
         group = "all"
     else:
         print(f"Using {group} subset of participants")
-        participants_list = list(_df[(~_df["bids_id"].isna()) & (_df["group"] == group)]["bids_id"])
+        participants_list = list(_df[(_df["group"] == group)]["bids_id"])
 
     if str(participants_list[0])[:3] != "sub":
         print("Adding sub prefix to the participant_id(s)")
@@ -103,11 +108,11 @@ if __name__ == '__main__':
     print(f"n_participants: {len(participants_list)}")
     out_file = f"/output_dir/surf_concat_{group}.mgh"
 
-    run(FS_dir, participants_list, out_file, meas, template)
+    run(FS_dir, participants_list, out_file, meas, fwhm, template)
     
     print("Running mris_preproc separately for left and right hemisphere\n")
     
-    print("-"*30)
+    print(" -"*30)
     print("")
     
 
