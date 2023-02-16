@@ -27,11 +27,11 @@ SINGULARITY_PATH=$RUN_CMD
 
 if [ "$TEST_RUN" -eq 1 ]; then
     echo "Doing a test run..."
-    DICOM_DIR="test_data/dicom/ses-${SES_ID}/" #Relative to WD (local or singularity)
+    DICOM_DIR="test_data/dicom/" #Relative to WD (local or singularity)
     BIDS_DIR="test_data/bids/" #Relative to WD (local or singularity)
 else
     echo "Doing a real run..."
-    DICOM_DIR="dicom/ses-${SES_ID}/" #Relative to WD (local or singularity)
+    DICOM_DIR="dicom/" #Relative to WD (local or singularity)
     BIDS_DIR="bids/" #Relative to WD (local or singularity)
 fi
 
@@ -66,6 +66,6 @@ $SINGULARITY_PATH run -B ${DATASET_ROOT}:${SINGULARITY_WD} \
 -f convertall \
 -o ${SINGULARITY_BIDS_DIR} \
 --overwrite \
--ss ${SES_ID}
+-ss ${SES_ID} \
 
 echo "Heudiconv Stage_1 finished!"

@@ -44,14 +44,15 @@ done
 echo ""
 echo "Checking participants list..."
 
-if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
-    echo "  participants.csv exists"
+mr_proc_manifest=$DATASET_ROOT/tabular/demographics/mr_proc_manifest.csv
+if [ -f $mr_proc_manifest ]; then
+    echo "  mr_proc_manifest.csv exists"
 
-    N_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | wc -l`
+    N_PARTICIPANTS=`cat $mr_proc_manifest | wc -l`
     #ignore header
     N_PARTICIPANTS=$((N_PARTICIPANTS - 1))
 
-    N_BIDS_EXPECT_PARTICIPANTS=`cat $DATASET_ROOT/tabular/demographics/participants.csv | grep "sub-" | wc -l`
+    N_BIDS_EXPECT_PARTICIPANTS=`cat $mr_proc_manifest | grep "sub-" | wc -l`
 
     echo "  number of all participants in participant list: $N_PARTICIPANTS"
     echo "  number of expected imaging participants in participant list: $N_BIDS_EXPECT_PARTICIPANTS"
@@ -64,7 +65,7 @@ if [ -f $DATASET_ROOT/tabular/demographics/participants.csv ]; then
 else    
     N_PARTICIPANTS=0
     N_BIDS_EXPECT_PARTICIPANTS=0
-    echo "  ERROR: participants.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
+    echo "  ERROR: mr_proc_manifest.csv is MISSING! Please add it inside $DATASET_ROOT/tabular/demographics/"
     N_ERRORS=$((N_ERRORS + 1))
 fi
 
