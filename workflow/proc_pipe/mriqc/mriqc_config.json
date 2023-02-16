@@ -1,8 +1,7 @@
 {
 	"input_dir": INPUT_DIR,
     	"results_dir": RESULTS_DIR,
-    	"subject_list": PARTICIPANT_FILE,
+	"subject_id": SUBJECT_ID,
     	"file_names": [MRI_DATATYPE_1, MRI_DATATYPE_2, ..., MRI_DATATYPE_N],
-    	"session_id": SESSION_ID,
-    	"csv_name": "status"
+    	"session": SESSION_ID
 }
