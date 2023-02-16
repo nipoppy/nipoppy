@@ -7,7 +7,7 @@ PIPELINE_VERSION = '22.0.1'
 PIPELINE_STARTTIME = '2023-01-23 00:00:00'
 
 
-def eval_mriqc(args): #
+def eval_mriqc(args):
     
     #load config file
     config = json.load(open(args[1])) 
@@ -29,7 +29,7 @@ def eval_mriqc(args): #
 
     results = {'participant_id': [config['subject_id']], 'session': [config['session_id']], 
                'pipeline_name': [PIPELINE_NAME], 'pipeline_version': [PIPELINE_VERSION], 
-               'pipeline_starttime': [PIPELINE_STARTTIME], 'PIPELINE_STATUS_COLUMNS': [], 'MRIQC_BOLD': []} 
+               'pipeline_starttime': [PIPELINE_STARTTIME], 'PIPELINE_STATUS_COLUMNS': []} 
     
         
     #check if participant successfully passed MRIQC pipeline
