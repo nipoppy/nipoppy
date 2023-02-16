@@ -25,9 +25,9 @@ def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", 
     for hemi in ["lh", "rh"]:
         d = os.path.dirname(out_file)
         f = os.path.basename(out_file)
-        out_file = f"{d}/{hemi}_{f}"
+        hemi_out_file = f"{d}/{hemi}_{f}"
 
-        FS_CMD = f"mris_preproc {participants_str} --target {template} --hemi {hemi} --meas {meas} --fwhm {fwhm} --out {out_file}"
+        FS_CMD = f"mris_preproc {participants_str} --target {template} --hemi {hemi} --meas {meas} --fwhm {fwhm} --out {hemi_out_file}"
         FS_CMD_dict[hemi] = FS_CMD
 
     return FS_CMD_dict
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         participants_list = ["sub-" + str(id) for id in participants_list]
 
     print(f"n_participants: {len(participants_list)}")
-    out_file = f"/output_dir/surf_concat_{group}_{fwhm}.mgh"
+    out_file = f"/output_dir/surf_concat_{group}_{fwhm}mm.mgh"
 
     run(FS_dir, participants_list, out_file, meas, fwhm, template)
     
