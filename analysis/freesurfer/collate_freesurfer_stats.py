@@ -47,7 +47,22 @@ def parse_aseg(aseg_file, stat_measure):
 
     # print(f"number of ROIs in aseg file: {len(aseg_df)}")
 
+    # Get global volumes from the "measure" lines
+    file_data = open(aseg_file, 'r')
+    lines = file_data.readlines()
+    measure_lines = []
+    for line in lines:
+        if "Measure" in line:
+            measure_lines.append(line)
+    global_df = pd.DataFrame(measure_lines)
+    global_df = global_df.replace('\n','', regex=True)
+    global_df = global_df[0].str.split(",", expand=True)[[1,3]]
+    global_df = global_df.rename(columns = {1:"hemi_ROI",3:stat_measure})
+
+    aseg_df = pd.concat([aseg_df,global_df],axis=0)
+
     return aseg_df
+
 
 
 if __name__ == "__main__":
