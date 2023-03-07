@@ -1,0 +1,32 @@
+{
+    "DATASET_ROOT": "",
+    "DATASTORE_DIR": "",
+
+    "CONTAINER_STORE": "",
+    
+    "SINGULARITY_PATH": "singularity",
+
+    "TEMPLATEFLOW_DIR": "",
+
+    "SESSIONS": ["1","2","3"],
+
+    "BIDS": {
+        "HEUDICONV": {
+            "VERSION": "0.11.3",    
+            "CONTAINER": "heudiconv_{}.sif"
+        },
+        "VALIDATOR":{
+            "VERSION": "bids_validator.sif"
+        }
+    },
+
+    "PROC_PIPELINES": {
+        "fmriprep": {
+            "VERSION": "20.2.7",
+            "CONTAINER": "fmriprep_{}.sif"
+        },
+        "freesurfer": {
+            "VERSION": "6.0.1"
+        }
+    }
+}
