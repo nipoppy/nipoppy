@@ -54,10 +54,15 @@ def parse_aseg(aseg_file, stat_measure):
     for line in lines:
         if "Measure" in line:
             measure_lines.append(line)
+
     global_df = pd.DataFrame(measure_lines)
     global_df = global_df.replace('\n','', regex=True)
-    global_df = global_df[0].str.split(",", expand=True)[[1,3]]
-    global_df = global_df.rename(columns = {1:"hemi_ROI",3:stat_measure})
+    global_df = global_df[0].str.split(",", expand=True)
+    global_df[0] = global_df[0].str.split(" ", expand=True)[2]
+    global_df[0] = global_df[0].replace({"EstimatedTotalIntraCranialVol":"EstimatedTotalIntraCranial"}) #To match UKB field names
+    global_df = global_df[[0,3]]
+
+    global_df = global_df.rename(columns = {0:"hemi_ROI",3:stat_measure})
 
     aseg_df = pd.concat([aseg_df,global_df],axis=0)
 
