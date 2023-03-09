@@ -17,23 +17,17 @@
 - The Dockerfile in this directory can be used to build the MRIQC pipeline which processes the data
 
 ### 1.2 Evaluate MRIQC Results
-- Use [eval_mriqc_results.py](https://github.com/InesGP/mr_proc/blob/main/workflow/proc_pipe/mriqc/eval_mriqc_results.py) to determine how many subjects successfully passed through the MRIQC pipeline
-	- Mandatory: Pass in a [JSON configuration file](https://github.com/InesGP/mr_proc/blob/main/workflow/proc_pipe/mriqc/mriqc_config.json) that contains the input directory, the results directory, the absolute path to the list of subjects, the desired file types, the desired session ID and the output CSV filename
+- Use [mriqc_tracker.py](https://github.com/InesGP/mr_proc/blob/main/workflow/proc_pipe/mriqc/eval_mriqc_results.py) to determine how many subjects successfully passed through the MRIQC pipeline
+	- Mandatory: Pass in the subject directory as an argument
 	- Multiple sessions can be evaluated, but each session will require a new job running this script
-	- Optional: By default, the script will evaluate if T1w and BOLD MRI data participant files were processed, but other file types can be passed in through the JSON file
 - Example command:
-	- python eval.py mriqc_config.json >> RESULTS_DIR/mriqc_eval_err.log
-- After a successful run of the script, a CSV file named by default ```**status.csv**``` should appear in the results directory along with an error output log meant to track errors that may occur
-- An example status CSV snippet:
-```
-participant_id,session_id,T1w,BOLD
-sub-01,01,Success,Success
-sub-02,01,Success,Fail
-sub-03,01,Success,Success
-sub-04,01,Success,Success
-sub-05,01,Fail,Success
-sub-06,01,Success,Success
-sub-07,01,Success,Success
-sub-08,01,Fail,Fail
-sub-09,01,Success,Success
-```
+	``` 
+	from mriqc_tracker import tracker_configs 
+	
+	results = {}
+	for name, func in tracer_configs.items():
+		if type(func) == dict:
+			results[name] = {"MRIQC_BOLD': func['MRIQC_BOLD'](subject_dir)}
+		else: results[name] = func(subject_dir)
+	```
+- After a successful run of the script, a dictionary called `tracker_configs` is returned contained whether the subject passed through the pipeline successfully

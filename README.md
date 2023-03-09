@@ -1,5 +1,7 @@
 # mr_proc 
-A workflow for standarized MR images processing. 
+
+A workflow manager for curating MRI and tabular data and standardized processing. 
+
 *Process long and prosper.*
 
 **Note: This is a template branch which is typically customized for a specific dataset**
