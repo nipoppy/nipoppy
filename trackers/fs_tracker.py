@@ -1,17 +1,16 @@
 from pathlib import Path
 
+# Status flags
+SUCCESS="SUCCESS"
+FAIL="FAIL"
+INCOMPLETE="INCOMPLETE"
+UNAVAILABLE="UNAVAILABLE"
 
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
 HEMISPHERES = ["lh","rh"]
 PARCELS = ["aparc","aparc.a2009s","aparc.DKTatlas"]
 SURF_MEASURES = ["curv","area","thickness","volume","sulc","midthickness"]
-
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
 
 def check_fsdirs(subject_dir):
     status_msg = SUCCESS

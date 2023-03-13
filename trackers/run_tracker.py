@@ -5,7 +5,7 @@ from pathlib import Path
 import argparse
 import datetime
 from tracker import tracker, get_start_time
-from fs_tracker_utils import tracker_configs
+import fs_tracker, fmriprep_tracker
 
 # Status flags
 SUCCESS="SUCCESS"
@@ -13,62 +13,75 @@ FAIL="FAIL"
 INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
-def run(global_config_file, dash_schema_file, pipelines):
+# Globals
+PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
+pipeline_tracker_config_dict = {
+    "freesurfer": fs_tracker.tracker_configs,
+    "fmriprep": fmriprep_tracker.tracker_configs
+}
+
+def run(global_config_file, dash_schema_file, pipelines, run_id=1):
     # Currently only tracking freesurfer
-    pipeline = pipelines[0]
+    for pipeline in pipelines:
 
-    pipe_tracker = tracker(global_config_file, dash_schema_file, pipeline) 
+        pipe_tracker = tracker(global_config_file, dash_schema_file, pipeline) 
+            
+        mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
+        schema = pipe_tracker.get_dash_schema()
+        tracker_configs = pipeline_tracker_config_dict[pipeline]
+
+        n_sessions = len(session_ids)
+
+        mr_proc_manifest = f"{mr_proc_root_dir}/tabular/demographics/mr_proc_manifest.csv"
+        manifest_df = pd.read_csv(mr_proc_manifest)
+        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].astype(str).str.strip().values
+        n_participants = len(participants)
+
+        print("-"*50)
+        print(f"pipeline: {pipeline}, version: {version}")
+        print(f"n_participants: {n_participants}, session_ids: {n_sessions}")
+        print("-"*50)
+
         
-    mr_proc_root_dir, sessions, version = pipe_tracker.get_global_configs()
-    schema = pipe_tracker.get_dash_schema()
-    
-    n_sessions = len(sessions)
+        status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS)
+        n_checks = len(status_check_dict)
 
-    mr_proc_manifest = f"{mr_proc_root_dir}/tabular/demographics/mr_proc_manifest.csv"
-    manifest_df = pd.read_csv(mr_proc_manifest)
-    participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].astype(str).str.strip().values
-    n_participants = len(participants)
+        dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
 
-    print("-"*50)
-    print(f"pipeline: {pipeline}, version: {version}")
-    print(f"n_participants: {n_participants}, sessions: {n_sessions}")
-    print("-"*50)
+        proc_status_df = pd.DataFrame()
+        for session_id in session_ids:
+            print(f"Checking session: {session_id}")
+            _df = pd.DataFrame(index=participants, columns=dash_col_list)        
+            _df["session"] = session_id
+            _df["pipeline_name"] = pipeline        
+            _df["pipeline_version"] = version
+            
+            for bids_id in participants:
+                _df["participant_id"] = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
 
-    col_group = "PIPELINE_STATUS_COLUMNS"
-    status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, col_group)
-    n_checks = len(status_check_dict)
+                print(f"bids_id: {bids_id}")
 
-    dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
+                if pipeline == "freesurfer":
+                    subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
+                elif pipeline == "fmriprep":
+                    subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                else:
+                    print(f"unknown pipeline: {pipeline}")
+                    
+                dir_status = Path(subject_dir).is_dir()
+                if dir_status:                
+                    for name, func in status_check_dict.items():
+                        status = func(subject_dir, session_id, run_id)
+                        # print(f"task_name: {name}, status: {status}")
+                        _df.loc[bids_id,name] = status
+                        _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
+                else:
+                    # print(f"Pipeline output not found for bids_id: {bids_id}, session: {session}")
+                    for name in status_check_dict.keys():                    
+                        _df.loc[bids_id,name] = UNAVAILABLE
+                        _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
 
-    proc_status_df = pd.DataFrame()
-    for session in sessions:
-        print(f"Checking session: {session}")
-        _df = pd.DataFrame(index=participants, columns=dash_col_list)        
-        _df["session"] = session
-        _df["pipeline_name"] = pipeline        
-        _df["pipeline_version"] = version
-        
-        for bids_id in participants:
-            _df["participant_id"] = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
-
-            print(f"bids_id: {bids_id}")
-
-            subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session}/{bids_id}" 
-
-            dir_status = Path(subject_dir).is_dir()
-            if dir_status:                
-                for name, func in status_check_dict.items():
-                    status = func(subject_dir)
-                    # print(f"task_name: {name}, status: {status}")
-                    _df.loc[bids_id,name] = status
-                    _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
-            else:
-                # print(f"Pipeline output not found for bids_id: {bids_id}, session: {session}")
-                for name in status_check_dict.keys():                    
-                    _df.loc[bids_id,name] = UNAVAILABLE
-                    _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
-
-        proc_status_df = proc_status_df.append(_df)
+            proc_status_df = proc_status_df.append(_df)
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
