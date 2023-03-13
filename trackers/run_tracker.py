@@ -69,6 +69,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                     print(f"unknown pipeline: {pipeline}")
                     
                 dir_status = Path(subject_dir).is_dir()
+                
                 if dir_status:                
                     for name, func in status_check_dict.items():
                         status = func(subject_dir, session_id, run_id)

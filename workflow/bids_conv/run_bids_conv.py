@@ -7,15 +7,38 @@ import pandas as pd
 import os
 from joblib import Parallel, delayed
 import glob
+import logging
+import workflow.catalog as catalog
 
 #Author: nikhil153
 #Date: 07-Oct-2022
-TEST_RUN="0"
 fname = __file__
 CWD = os.path.dirname(os.path.abspath(fname))
 
-def run_heudiconv(participant_id, global_configs, session_id, stage):
-    print(f"\n***Processing participant: {participant_id}***")
+# logger
+def get_logger(log_file, mode="w", level="DEBUG"):
+    """ Initiate a new logger if not provided
+    """
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logger = logging.getLogger(__name__)
+
+    logger.setLevel(level)
+
+    file_handler = logging.FileHandler(log_file, mode=mode)
+    formatter = logging.Formatter(log_format)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    # output to terminal as well
+    stream = logging.StreamHandler()
+    streamformat = logging.Formatter(log_format)
+    stream.setFormatter(streamformat)
+    logger.addHandler(stream)
+    
+    return logger
+
+def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
+    logger.info(f"\n***Processing participant: {dicom_id}***")
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     DATASTORE_DIR = global_configs["DATASTORE_DIR"]
     SINGULARITY_PATH = global_configs["SINGULARITY_PATH"]
@@ -23,93 +46,114 @@ def run_heudiconv(participant_id, global_configs, session_id, stage):
     HEUDICONV_CONTAINER = global_configs["BIDS"]["heudiconv"]["CONTAINER"]
     HEUDICONV_VERSION = global_configs["BIDS"]["heudiconv"]["VERSION"]
     HEUDICONV_CONTAINER = HEUDICONV_CONTAINER.format(HEUDICONV_VERSION)
-    SINGULARITY_HEUDICONV = f"{CONTAINER_STORE}{HEUDICONV_CONTAINER}"
-    print(f"Using SINGULARITY_HEUDICONV: {SINGULARITY_HEUDICONV}")
-    
-    # Run HeuDiConv script
-    HEUDICONV_SCRIPT = f"{CWD}/scripts/heudiconv_stage_{stage}.sh"
-    HEUDICONV_ARGS = ["-d", DATASET_ROOT, "-i", SINGULARITY_HEUDICONV, "-r", SINGULARITY_PATH, \
-                    "-p", participant_id, "-s", session_id, "-l", DATASTORE_DIR, "-t", TEST_RUN]
-    HEUDICONV_CMD = [HEUDICONV_SCRIPT] + HEUDICONV_ARGS
+    SINGULARITY_HEUDICONV = f"{CONTAINER_STORE}/{HEUDICONV_CONTAINER}"
 
+    logger.info(f"Using SINGULARITY_HEUDICONV: {SINGULARITY_HEUDICONV}")
+
+    SINGULARITY_WD = "/scratch"
+    SINGULARITY_DICOM_DIR = f"{SINGULARITY_WD}/dicom/ses-{session_id}"
+    SINGULARITY_BIDS_DIR = f"{SINGULARITY_WD}/bids"
+    SINGULARITY_DATA_STORE="/data"
+    HEURISTIC_FILE=f"{SINGULARITY_WD}/proc/heuristic.py"
+
+    # Singularity CMD 
+    SINGULARITY_CMD=f"{SINGULARITY_PATH} run -B {DATASET_ROOT}:{SINGULARITY_WD} \
+        -B {DATASTORE_DIR}:{SINGULARITY_DATA_STORE} {SINGULARITY_HEUDICONV} "
+
+    # Heudiconv CMD
+    subject = "{subject}"
+    if stage == 1:
+        logger.info("Running stage 1")
+        Heudiconv_CMD = f" -d {SINGULARITY_DICOM_DIR}/{subject}/* \
+            -s {dicom_id} -c none \
+            -f convertall \
+            -o {SINGULARITY_BIDS_DIR} \
+            --overwrite \
+            -ss {session_id} "
+
+    elif stage == 2:
+        logger.info("Running stage 2")
+        Heudiconv_CMD = f" -d {SINGULARITY_DICOM_DIR}/{subject}/* \
+            -s {dicom_id} -c none \
+            -f {HEURISTIC_FILE} \
+            --grouping studyUID \
+            -c dcm2niix -b --overwrite --minmeta \
+            -o {SINGULARITY_BIDS_DIR} \
+            -ss {session_id} "
+
+    else:
+        logger.error("Incorrect Heudiconv stage: {stage}")
+
+    CMD_ARGS = SINGULARITY_CMD + Heudiconv_CMD 
+    CMD = CMD_ARGS.split()
+
+    logger.info(f"CMD:\n{CMD}")
     try:
-        heudiconv_proc = subprocess.run(HEUDICONV_CMD)
+        heudiconv_proc = subprocess.run(CMD)
     except Exception as e:
-        print(f"bids run failed with exceptions: {e}")
+        logger.error(f"bids run failed with exceptions: {e}")
 
-def main(global_configs, session_id, stage=2, n_jobs=2):
-
+def run(global_configs, session_id, stage=2, n_jobs=2):
+    """ Runs the bids conv tasks 
+    """
+    session = f"ses-{session_id}"
     DATASET_ROOT = global_configs["DATASET_ROOT"]
-    print("-"*50)
-    print(f"Using DATASET_ROOT: {DATASET_ROOT}")
-    print(f"Running HeuDiConv stage: {stage}")
-    print(f"Number of parallel jobs: {n_jobs}")
+    log_dir = f"{DATASET_ROOT}/scratch/logs/"
+    log_file = f"{log_dir}/bids_conv.log"
+
+    logger = get_logger(log_file)
+    logger.info("-"*50)
+    logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
+    logger.info(f"Running HeuDiConv stage: {stage}")
+    logger.info(f"Number of parallel jobs: {n_jobs}")
 
     mr_proc_manifest = f"{DATASET_ROOT}/tabular/demographics/mr_proc_manifest.csv"
-    dicom_dir = f"{DATASET_ROOT}dicom/"
-    bids_dir = f"{DATASET_ROOT}bids/"
-
-    # read current participant manifest 
-    manifest_df = pd.read_csv(mr_proc_manifest)
-    participants = manifest_df["participant_id"].str.strip().values
-    n_participants = len(participants)
-
-    # generate bids_id
-    manifest_df["dicom_id"] = [''.join(filter(str.isalnum, idx)) for idx in participants]
-    manifest_df["bids_id"] = "sub-" + manifest_df["dicom_id"].astype(str)
-    dicom_ids = list(manifest_df["dicom_id"])
-    bids_ids = list(manifest_df["bids_id"])
-
-    # available participant dicom dirs
-    participant_dicom_dirs = next(os.walk(dicom_dir))[1]
-    participant_dicom_dirs = set(dicom_ids) & set(participant_dicom_dirs)
-    n_participant_dicom_dirs = len(participant_dicom_dirs)
-
-    # available participant bids dirs
-    participant_bids_dirs = next(os.walk(bids_dir))[1]
-    participant_bids_dirs = set(bids_ids) & set(participant_bids_dirs)
-    n_participant_bids_dirs = len(participant_bids_dirs)
-
-    # check mismatch between manifest and participant dicoms
-    missing_dicom_dirs = set(dicom_ids) - set(participant_dicom_dirs)
-    n_missing_dicom_dirs = len(missing_dicom_dirs)
-
-    participant_bids_dirs_dicom_ids = manifest_df[manifest_df["bids_id"].isin(participant_bids_dirs)]["dicom_id"]
+    dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
+    bids_dir = f"{DATASET_ROOT}/bids/"
 
     # participants to process with Heudiconv
-    heudiconv_participants = set(dicom_ids) - set(missing_dicom_dirs) - set(participant_bids_dirs_dicom_ids)
+    heudiconv_df = catalog.get_new_dicoms(mr_proc_manifest, dicom_dir, bids_dir, session_id, logger)
+    heudiconv_participants = list(heudiconv_df["dicom_id"].values)
     n_heudiconv_participants = len(heudiconv_participants)
 
-    print("-"*50)
-    print("Identifying participants to be BIDSified\n"
-    f"  n_particitpants: {n_participants}\n \
-    n_participant_bids_dirs: {n_participant_bids_dirs}\n \
-    n_participant_dicom_dirs: {n_participant_dicom_dirs}\n \
-    n_missing_dicom_dirs: {n_missing_dicom_dirs}\n \
-    heudiconv participants to processes: {n_heudiconv_participants}")
-    print("-"*50)
-
     if n_heudiconv_participants > 0:
-        # Copy heuristic.py into "DATASET_ROOT/proc/heuristic.py"
+        logger.info(f"\nStarting bids conversion for {n_heudiconv_participants} participant(s)")
+    
         if stage == 2:
-            print(f"Copying ./heuristic.py to {DATASET_ROOT}/proc/heuristic.py (to be seen by Singularity container)")
+            logger.info(f"Copying ./heuristic.py to {DATASET_ROOT}/proc/heuristic.py (to be seen by Singularity container)")
             shutil.copyfile(f"{CWD}/heuristic.py", f"{DATASET_ROOT}/proc/heuristic.py")
 
-        ## Process in parallel! 
-        Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(participant_id, global_configs, session_id, stage) for participant_id in heudiconv_participants)
+        if n_jobs > 1:
+            ## Process in parallel! (Won't write to logs)
+            Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(
+                dicom_id, global_configs, session_id, stage, logger
+                ) for dicom_id in heudiconv_participants)
+
+        else:
+            # Useful for debugging
+            for dicom_id in heudiconv_participants:
+                run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
 
         # Check succussful bids
         participant_bids_paths = glob.glob(f"{bids_dir}/sub-*")
-        manifest_df.to_csv(mr_proc_manifest,index=None)
-        print("-"*50)
-        print(f"BIDS conversion completed for the new {n_heudiconv_participants} participants")
-        print(f"Current successfully converted BIDS participants: {len(participant_bids_paths)}")
+        
+        # Add newly processed bids_id to the manifest csv
+        manifest_df = pd.read_csv(mr_proc_manifest)
+        manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(heudiconv_df["participant_id"]))
+                         & (manifest_df["session_id"].astype(str) == str(session_id)), 
+                         "bids_id"] = heudiconv_df["bids_id"]
+
+        manifest_df.to_csv(mr_proc_manifest, index=None)
+        
+        logger.info("-"*50)
+        logger.info(f"BIDS conversion completed for the {n_heudiconv_participants} new participants")
+        logger.info(f"Current successfully converted BIDS participants: {len(participant_bids_paths)}")
         
     else:
-        print(f"No new participants found for bids conversion...")
+        logger.info(f"No new participants found for bids conversion...")
 
-    print("-"*50)
-    print("")
+    logger.info("-"*50)
+    logger.info("")
 
 if __name__ == '__main__':
     # argparse
@@ -120,7 +164,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
     parser.add_argument('--session_id', type=str, help='session id for the participant')
-    parser.add_argument('--stage', type=int, help='heudiconv stage (either 1 or 2)')
+    parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2)')
     parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes')
 
     args = parser.parse_args()
@@ -134,4 +178,4 @@ if __name__ == '__main__':
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    main(global_configs, session_id, stage, n_jobs)
+    run(global_configs, session_id, stage, n_jobs)
