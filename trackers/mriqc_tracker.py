@@ -5,7 +5,7 @@ import glob
 
 #/scratch/qpn/sub-01/
 
-def eval_mriqc(subject_dir, session_id):
+def eval_mriqc(subject_dir, session_id, run_id=None):
     
        
     #get subject id from directory
@@ -38,7 +38,7 @@ def eval_mriqc(subject_dir, session_id):
     return results
 
 
-def check_bold(subject_dir, session_id):
+def check_bold(subject_dir, session_id, run_id=None):
     
     #get subject id from directory
     subject_id = subject_dir.split('/')[-1].split('-')[-1]

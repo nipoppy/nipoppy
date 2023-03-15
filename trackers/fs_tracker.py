@@ -9,92 +9,98 @@ UNAVAILABLE="UNAVAILABLE"
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
 HEMISPHERES = ["lh","rh"]
-PARCELS = ["aparc","aparc.a2009s","aparc.DKTatlas"]
+DEFAULT_PARCELS = ["aparc","aparc.a2009s"]
+ALL_PARCELS = ["aparc","aparc.a2009s","aparc.DKTatlas"]
 SURF_MEASURES = ["curv","area","thickness","volume","sulc","midthickness"]
 
 def check_fsdirs(subject_dir):
-    status_msg = SUCCESS
+    filepath_status = True
     for fsdir in FIRST_LEVEL_DIRS:
         dirpath = Path(f"{subject_dir}/{fsdir}")
         dirpath_status = Path.is_dir(dirpath)
         if not dirpath_status:
-            status_msg = FAIL
             break
-    return status_msg
+    return filepath_status
 
 def check_mri(subject_dir):
-    status_msg = SUCCESS
-    for parc in PARCELS:
+    filepath_status = True
+    for parc in DEFAULT_PARCELS:
         filepath = Path(f"{subject_dir}/mri/{parc}+aseg.mgz")
         filepath_status = Path.is_file(filepath)
         if not filepath_status:
-            status_msg = FAIL
             break
-    return status_msg
+    return filepath_status
 
 def check_label(subject_dir):
-    status_msg = SUCCESS
-    for parc in PARCELS:
-        if status_msg == SUCCESS:
+    filepath_status = True
+    for parc in DEFAULT_PARCELS:
+        if filepath_status:
             for hemi in HEMISPHERES:
                 filepath = Path(f"{subject_dir}/label/{hemi}.{parc}.annot")
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
-                    status_msg = FAIL
                     break
         else:
             break
-    return status_msg
+    return filepath_status
 
-def check_stats(subject_dir):
-    status_msg = SUCCESS
+def check_surf(subject_dir):
+    filepath_status = True
+    for measure in SURF_MEASURES:
+        if filepath_status:
+            for hemi in HEMISPHERES:
+                filepath = Path(f"{subject_dir}/surf/{hemi}.{measure}")
+                filepath_status = Path.is_file(filepath)
+                if not filepath_status:
+                    break
+        else:
+            break
+            
+    return filepath_status
+
+def check_stats(subject_dir, PARCELS=DEFAULT_PARCELS):
+    filepath_status = True
     for parc in PARCELS:
-        if status_msg == SUCCESS:
+        if filepath_status:
             for hemi in HEMISPHERES:
                 filepath = Path(f"{subject_dir}/stats/{hemi}.{parc}.stats")
                 filepath_status = Path.is_file(filepath)
                 if not filepath_status:
-                    status_msg = FAIL
                     break
         else:
             break
 
     # check aseg
     filepath = Path(f"{subject_dir}/stats/aseg.stats")
-    filepath_status = Path.is_file(filepath)
-    if not filepath_status:
-        status_msg = FAIL
+    aseg_status = Path.is_file(filepath)
 
-    return status_msg
+    return filepath_status & aseg_status
 
-def check_surf(subject_dir):
-    status_msg = SUCCESS
-    for measure in SURF_MEASURES:
-        if status_msg == SUCCESS:
-            for hemi in HEMISPHERES:
-                filepath = Path(f"{subject_dir}/surf/{hemi}.{measure}")
-                filepath_status = Path.is_file(filepath)
-                if not filepath_status:
-                    status_msg = FAIL
-                    break
-        else:
-            break
-            
-    return status_msg
-
-def check_run_status(subject_dir):
-    fsdir_status = check_fsdirs(subject_dir)
-    stats_status = check_stats(subject_dir)
-    if (fsdir_status==SUCCESS) & (stats_status==SUCCESS):
+def check_run_status(subject_dir, session_id=None, run_id=None):
+    check_list = [check_fsdirs,check_mri,check_label,check_surf,check_stats]
+    status_list = []
+    for cl in check_list:
+        status_list.append(cl(subject_dir))
+    
+    if all(status_list):
         status_msg = SUCCESS
     else:
         status_msg = FAIL
     return status_msg
 
+def check_parcels(subject_dir, session_id=None, run_id=None):
+    stats_status = check_stats(subject_dir,ALL_PARCELS)
+    if stats_status:
+        status_msg = SUCCESS
+    else:
+        status_msg = FAIL
+    return status_msg
+
+
 tracker_configs = {
     "pipeline_complete": check_run_status,
     
     "Phase_": {
-            "DKT": check_stats
+            "parcellations": check_parcels
             }
 }
