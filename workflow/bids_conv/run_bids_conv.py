@@ -7,35 +7,13 @@ import pandas as pd
 import os
 from joblib import Parallel, delayed
 import glob
-import logging
+import workflow.logger as my_logger
 import workflow.catalog as catalog
 
 #Author: nikhil153
 #Date: 07-Oct-2022
 fname = __file__
 CWD = os.path.dirname(os.path.abspath(fname))
-
-# logger
-def get_logger(log_file, mode="w", level="DEBUG"):
-    """ Initiate a new logger if not provided
-    """
-    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logger = logging.getLogger(__name__)
-
-    logger.setLevel(level)
-
-    file_handler = logging.FileHandler(log_file, mode=mode)
-    formatter = logging.Formatter(log_format)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-
-    # output to terminal as well
-    stream = logging.StreamHandler()
-    streamformat = logging.Formatter(log_format)
-    stream.setFormatter(streamformat)
-    logger.addHandler(stream)
-    
-    return logger
 
 def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
     logger.info(f"\n***Processing participant: {dicom_id}***")
@@ -93,15 +71,17 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
     except Exception as e:
         logger.error(f"bids run failed with exceptions: {e}")
 
-def run(global_configs, session_id, stage=2, n_jobs=2):
+def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     """ Runs the bids conv tasks 
     """
     session = f"ses-{session_id}"
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
-    log_file = f"{log_dir}/bids_conv.log"
 
-    logger = get_logger(log_file)
+    if logger is None:
+        log_file = f"{log_dir}/bids_conv.log"
+        logger = my_logger.get_logger(log_file)
+
     logger.info("-"*50)
     logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
     logger.info(f"Running HeuDiConv stage: {stage}")
@@ -139,6 +119,7 @@ def run(global_configs, session_id, stage=2, n_jobs=2):
         
         # Add newly processed bids_id to the manifest csv
         manifest_df = pd.read_csv(mr_proc_manifest)
+        print(manifest_df)
         manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(heudiconv_df["participant_id"]))
                          & (manifest_df["session_id"].astype(str) == str(session_id)), 
                          "bids_id"] = heudiconv_df["bids_id"]
@@ -178,4 +159,4 @@ if __name__ == '__main__':
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    run(global_configs, session_id, stage, n_jobs)
+    run(global_configs, session_id, stage=stage, n_jobs=n_jobs)
