@@ -6,14 +6,15 @@ import glob
 #/scratch/qpn/sub-01/
 
 def eval_mriqc(subject_dir, session_id):
-    
+
+    log_dir = subject_dir.split('sub')[0]
        
     #get subject id from directory
     subject_id = subject_dir.split('/')[-1].split('-')[-1]
 
 
     #read MRIQC pipeline output log
-    output_log = subject_dir + '/mriqc_out_' + str(subject_id) + '.log'
+    output_log = log_dir + '/mriqc_out_' + str(subject_id) + '.log'
     f = open(output_log, 'r')
 
     #set up dictionary to return
@@ -39,13 +40,16 @@ def eval_mriqc(subject_dir, session_id):
 
 
 def check_bold(subject_dir, session_id):
+
+    log_dir = subject_dir.split('sub')[0]
+
     
     #get subject id from directory
     subject_id = subject_dir.split('/')[-1].split('-')[-1]
 
     
     #read MRIQC pipeline output log
-    output_log = subject_dir + '/mriqc_out_' + str(subject_id) + '.log'
+    output_log = log_dir + '/mriqc_out_' + str(subject_id) + '.log'
 
     f = open(output_log, 'r')
     
