@@ -1,0 +1,26 @@
+name: Update dataset repos
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  update-dataset-repo:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fork:
+          - neurodatascience/mr_proc-ppmi
+          - neurodatascience/mr_proc-qpn
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ matrix.fork }}
+      - name: Get upstream changes
+        run: |
+          git remote add upstream https://github.com/neurodatascience/mr_proc.git
+          git fetch upstream main:upstream-main
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          branch: upstream-changes
+          
