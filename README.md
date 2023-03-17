@@ -19,3 +19,8 @@ A workflow manager for curating MRI and tabular data and standardized processing
 - [fMRIPrep](https://fmriprep.org/en/1.5.5/singularity.html) 
 - [TractoFlow](https://github.com/scilus/tractoflow)
 - [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
+
+### GH workflow for contributing to template and dataset-specific forks
+
+![mr_proc_gh_contribution_workflow](https://user-images.githubusercontent.com/7978607/226065220-c1123b5e-8774-4f02-b8ef-0f2255cdf122.jpg)
+
