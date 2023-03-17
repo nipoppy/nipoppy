@@ -18,9 +18,10 @@ jobs:
       - name: Get upstream changes
         run: |
           git remote add upstream https://github.com/neurodatascience/mr_proc.git
-          git fetch upstream main:upstream-main
+          git pull upstream main
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
+          title: Update to match `neurodatascience/mr_proc:main`
+          token: ${{ secrets.PAT }}
           branch: upstream-changes
-          
