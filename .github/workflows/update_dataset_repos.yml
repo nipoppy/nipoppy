@@ -19,6 +19,8 @@ jobs:
         run: |
           git remote add upstream https://github.com/neurodatascience/mr_proc.git
           git pull upstream main
+          git fetch upstream main:upstream-main
+          git reset --hard upstream-main
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
