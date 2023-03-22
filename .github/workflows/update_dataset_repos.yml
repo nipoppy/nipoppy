@@ -25,7 +25,7 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           title: Update to match neurodatascience/mr_proc:main
-          body: PR created/updated automatically by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action.
+          body: PR created/updated automatically by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action. Will be merged automatically by [automerge-action](https://github.com/pascalgn/automerge-action) if there are no merge conflicts.
           token: ${{ secrets.PAT }}
           branch: main-upstream
           labels: automerge
