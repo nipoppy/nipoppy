@@ -21,18 +21,31 @@ jobs:
           git fetch upstream main:upstream-main
           git reset --hard upstream-main
       - name: Create Pull Request
-        id: step-create
+        id: create-pull-request
         uses: peter-evans/create-pull-request@v4
         with:
-          title: Update to match `neurodatascience/mr_proc:main`
+          title: Update to match neurodatascience/mr_proc:main
           body: PR created/updated automatically by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action.
           token: ${{ secrets.PAT }}
           branch: main-upstream
-      - name: Approve Pull Request
-        if: ${{ steps.step-create.outputs.pull-request-number }}
-        uses: michellewang/auto-approve-action@v3
-        with:
-          repository: ${{ matrix.fork }}
-          pull-request-number: ${{ steps.step-create.outputs.pull-request-number }}
-          review-message: PR approved by [auto-approve-action](https://github.com/michellewang/auto-approve-action) GitHub action.
-          github-token: ${{ secrets.PAT2 }}
+          labels: automerge
+#       - name: Approve Pull Request
+#         if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+#         uses: michellewang/auto-approve-action@v3
+#         with:
+#           repository: ${{ matrix.fork }}
+#           pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+#           review-message: PR approved by [auto-approve-action](https://github.com/michellewang/auto-approve-action) GitHub action.
+#           github-token: ${{ secrets.PAT2 }}
+      - name: Automerge Pull Request
+        if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        uses: pascalgn/automerge-action@v0.15.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+          MERGE_LABELS: automerge
+          MERGE_METHOD: merge
+          MERGE_COMMIT_MESSAGE: "{pullRequest.title} (#{pullRequest.number})"
+          MERGE_REQUIRED_APPROVALS: 0
+          MERGE_DELETE_BRANCH: false
+          MERGE_ERROR_FAIL: true
+          PULL_REQUEST: ${{ matrix.fork }}/${{ steps.create-pull-request.outputs.pull-request-number }}
