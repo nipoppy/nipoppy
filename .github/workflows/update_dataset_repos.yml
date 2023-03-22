@@ -26,4 +26,4 @@ jobs:
           title: Update to match `neurodatascience/mr_proc:main`
           body: PR created/updated automatically by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action.
           token: ${{ secrets.PAT }}
-          branch: upstream-changes
+          branch: main-upstream
