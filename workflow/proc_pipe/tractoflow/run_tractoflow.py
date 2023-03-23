@@ -85,10 +85,10 @@ if use_bids_filter:
 # TRACTOFLOW_SCRIPT = f"{CWD}/scripts/run_fmriprep.sh"
 
 # TRACTOFLOW_SCRIPT is this?
-TRACTOFLOW_SCRIPT="nextflow run /PATH/TO/TRACTOFLOW/main.nf"
+TRACTOFLOW_SCRIPT="nextflow run tractoflow/main.nf"
 
 ## additional arguments? how can these be extracted?
-#bids_dir
+#bids_dir ## may need to be generic input directory
 dti_shells = "0 1000"
 fodf_shells = "0 1000"
 sh_order = 6
