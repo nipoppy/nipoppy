@@ -45,7 +45,7 @@ jobs:
           MERGE_LABELS: automerge
           MERGE_METHOD: merge
           MERGE_COMMIT_MESSAGE: "{pullRequest.title} (#{pullRequest.number})"
-          MERGE_REQUIRED_APPROVALS: 0
+          MERGE_REQUIRED_APPROVALS: 1
           MERGE_DELETE_BRANCH: "false"
           MERGE_ERROR_FAIL: "true"
           PULL_REQUEST: ${{ matrix.fork }}/${{ steps.create-pull-request.outputs.pull-request-number }}
