@@ -5,6 +5,7 @@ on:
       - 'main'
 jobs:
   update-dataset-repo:
+    if: github.repository == 'neurodatascience/mr_proc'
     runs-on: ubuntu-latest
     strategy:
       matrix:
