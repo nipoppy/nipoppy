@@ -8,6 +8,7 @@ jobs:
     if: github.repository == 'neurodatascience/mr_proc'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         fork:
           - neurodatascience/mr_proc-ppmi
