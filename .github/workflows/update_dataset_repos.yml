@@ -37,7 +37,7 @@ jobs:
           repository: ${{ matrix.fork }}
           pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
           review-message: PR approved by [auto-approve-action](https://github.com/michellewang/auto-approve-action) GitHub action.
-          github-token: ${{ secrets.PAT2 }}
+          github-token: ${{ secrets.GH_ACTION_PAT }}
       - name: Automerge Pull Request
         if: ${{ steps.create-pull-request.outputs.pull-request-number }}
         uses: pascalgn/automerge-action@v0.15.6
