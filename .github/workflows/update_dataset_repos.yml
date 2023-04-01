@@ -5,8 +5,10 @@ on:
       - 'main'
 jobs:
   update-dataset-repo:
+    if: github.repository == 'neurodatascience/mr_proc'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         fork:
           - neurodatascience/mr_proc-ppmi
@@ -29,15 +31,16 @@ jobs:
           token: ${{ secrets.PAT }}
           branch: main-upstream
           labels: automerge
-#       - name: Approve Pull Request
-#         if: ${{ steps.create-pull-request.outputs.pull-request-number }}
-#         uses: michellewang/auto-approve-action@v3
-#         with:
-#           repository: ${{ matrix.fork }}
-#           pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
-#           review-message: PR approved by [auto-approve-action](https://github.com/michellewang/auto-approve-action) GitHub action.
-#           github-token: ${{ secrets.PAT2 }}
+      - name: Approve Pull Request
+        if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        uses: michellewang/auto-approve-action@v3
+        with:
+          repository: ${{ matrix.fork }}
+          pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+          review-message: PR approved by [auto-approve-action](https://github.com/michellewang/auto-approve-action) GitHub action.
+          github-token: ${{ secrets.GH_ACTION_PAT }}
       - name: Automerge Pull Request
+        id: automerge-pull-request
         if: ${{ steps.create-pull-request.outputs.pull-request-number }}
         uses: pascalgn/automerge-action@v0.15.6
         env:
@@ -45,7 +48,13 @@ jobs:
           MERGE_LABELS: automerge
           MERGE_METHOD: merge
           MERGE_COMMIT_MESSAGE: "{pullRequest.title} (#{pullRequest.number})"
-          MERGE_REQUIRED_APPROVALS: 0
+          MERGE_REQUIRED_APPROVALS: 1
           MERGE_DELETE_BRANCH: "false"
           MERGE_ERROR_FAIL: "true"
           PULL_REQUEST: ${{ matrix.fork }}/${{ steps.create-pull-request.outputs.pull-request-number }}
+      - name: Fail job if Pull Request wasn't ready to be merged
+        if: steps.automerge-pull-request.outputs.mergeResult == 'not_ready'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed("Pull request #${{ steps.automerge-pull-request.outputs.pullRequestNumber }} is not ready to be merged. This is probably due to merge conflicts: fix them in neurodatascience/mr_proc or in each of neurodatascience/mr_proc-[dataset] before trying again.")
