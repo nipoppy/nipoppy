@@ -1,6 +1,20 @@
-# Ignore notebook caches
+# Bytes
+__pycache__/
+*.py[cod]
+*$py.class
+
+# packaging
+eggs/
+.eggs/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
 notebooks/.ipynb_checkpoints/*
 
-# Ignore logs
-workflow/bids_conv/logs/*
-workflow/proc_pipe/fmriprep/logs/*
+# dataset-specific files
+bids_filter.json 

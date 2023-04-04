@@ -1,101 +1,118 @@
-import argparse
-import subprocess
-from xxlimited import Str
 import pandas as pd
+import numpy as np
 from pathlib import Path
-import os
-import glob
-import shutil
-import pydicom
+import argparse
+import json
+import workflow.logger as my_logger
+from workflow.dicom_org.utils import search_dicoms, copy_dicoms
+from joblib import Parallel, delayed
+import workflow.catalog as catalog
 
-HELPTEXT = """
-Script to perform DICOM to BIDS conversion using HeuDiConv
-"""
 #Author: nikhil153
 #Date: 07-Oct-2022
 
-# argparse
-parser = argparse.ArgumentParser(description=HELPTEXT)
 
-parser.add_argument('--filename_map_csv', type=str, help='path to the CSV file containing map between raw dicom directory name --> participant name')
-parser.add_argument('--filename_pattern', type=str, default="", help='filename_pattern to filter raw dicom files')
-parser.add_argument('--output_dir', type=str, help='path to the output directory to save reorganized dicoms')
-parser.add_argument('--remove_raw_dicom', default=False, action=argparse.BooleanOptionalAction, help='remove raw dicoms to save sapce')
-parser.add_argument('--test_run', default=False, action=argparse.BooleanOptionalAction, help='do a test run with a single raw dicom dir')
+def reorg(participant, dicom_file, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks):
+    """ Copy / Symlink raw dicoms into a flat participant dir
+    """
+    logger.info(f"\nparticipant_id: {participant}")
 
-args = parser.parse_args()
+    participant_raw_dicom_dir = f"{raw_dicom_dir}/{dicom_file}/"
 
-filename_map_csv = args.filename_map_csv
-filename_pattern = args.filename_pattern
-output_dir = args.output_dir
-remove_raw_dicom = args.remove_raw_dicom
-test_run = args.test_run
+    raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir)
+    logger.info(f"n_raw_dicom: {len(raw_dcm_list)}, n_skipped (invalid/derived): {len(invalid_dicom_list)}")
 
-map_df = pd.read_csv(filename_map_csv)
-if test_run:
-    map_df = map_df.head(1)
-    print(f"\nDoing a test run with single raw dicom dir")
-else:
-    print(f"\nNumber of participants to be organized: {len(map_df)}")
+    # Remove non-alphanumeric chars (e.g. "_" from the participant_dir names)
+    dicom_id = ''.join(filter(str.isalnum, participant))
+    participant_dicom_dir = f"{dicom_dir}/{dicom_id}/"
+    
+    copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
+    
+    # Log skipped invalid dicom list for the participant
+    invalid_dicoms_file = f"{invalid_dicom_dir}/{participant}_invalid_dicoms.json"
+    invalid_dicom_dict = {participant: invalid_dicom_list}
+    # Save skipped or invalid dicom file list
+    with open(invalid_dicoms_file, "w") as outfile:
+        json.dump(invalid_dicom_dict, outfile, indent=4)
+        
 
-if remove_raw_dicom:
-    print(f"\n***Source raw dicom dirs will be deleted after remaming***")
+def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
+    """ Runs the dicom reorg tasks 
+    """
+    session = f"ses-{session_id}"
 
-for index, row in map_df.iterrows():
-    raw_participant_dir = row["raw_dir_name"]
-    participant_id = row["participant_id"]
+    # populate relative paths
+    DATASET_ROOT = global_configs["DATASET_ROOT"]
+    raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/{session}/"
+    dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
+    log_dir = f"{DATASET_ROOT}/scratch/logs/"    
+    invalid_dicom_dir = f"{log_dir}/invalid_dicom_dir/"
 
-    if not Path(raw_participant_dir).is_dir():
-        print(f"{raw_participant_dir} is missing for {participant_id}...")
+    mr_proc_manifest = f"{DATASET_ROOT}/tabular/demographics/mr_proc_manifest.csv"
+    
+    if logger is None:
+        log_file = f"{log_dir}/dicom_org.log"
+        logger = my_logger.get_logger(log_file)
+
+    logger.info("-"*50)
+    logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
+    logger.info(f"symlinks: {use_symlinks}")
+    logger.info(f"session: {session}")
+    logger.info(f"Number of parallel jobs: {n_jobs}")
+
+    reorg_df = catalog.get_new_raw_dicoms(mr_proc_manifest, raw_dicom_dir, dicom_dir, session_id, logger)
+    n_dicom_reorg_participants = len(reorg_df)
+
+    # start reorganizing
+    if n_dicom_reorg_participants > 0:
+        logger.info(f"\nStarting dicom reorg for {n_dicom_reorg_participants} participant(s)")
+        # make session specific dicom subdir, if needed
+        Path(dicom_dir).mkdir(parents=True, exist_ok=True)
+        # make log dirs
+        Path(f"{log_dir}").mkdir(parents=True, exist_ok=True)
+        Path(invalid_dicom_dir).mkdir(parents=True, exist_ok=True)
+
+        if n_jobs > 1:
+            ## Process in parallel! (Won't write to logs)            
+            Parallel(n_jobs=n_jobs)(delayed(reorg)(
+                participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks
+                ) 
+                for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["dicom_file"]))
+            )
+
+        else: # Useful for debugging
+            for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["dicom_file"])):
+                reorg(participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks) 
+
+        logger.info(f"\nDICOM reorg for {n_dicom_reorg_participants} participants completed")
+        logger.info(f"Skipped (invalid/derived) DICOMs are listed here: {log_dir}")
+        logger.info(f"DICOMs are now copied into {dicom_dir} and ready for bids conversion!")
 
     else:
-        print(f"\n***Starting dicom reorganization for {participant_id}***\n")
+        logger.info(f"No new participants found for dicom reorg...")
         
-        try:
-            filepaths = []
-            for root, dirnames, filenames in os.walk(f"{raw_participant_dir}"):
-                for filename in filenames:
-                    filepaths.append(os.path.join(root, filename))
+    logger.info("-"*50)
 
-            n_raw_dicoms = len(filepaths)    
-            print(f"Number of dicoms found: {n_raw_dicoms}")
 
-            participant_dicom_dir = f"{output_dir}/{participant_id}"
+if __name__ == '__main__':
+    # argparse
+    HELPTEXT = """
+    Script to reorganize raw (scanner dump) DICOMs into flatterned dir structure needed for BIDS conversion using HeuDiConv
+    """
+    parser = argparse.ArgumentParser(description=HELPTEXT)
+    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
+    parser.add_argument('--session_id', type=str, default=None, help='session (i.e. visit to process)')
+    parser.add_argument('--use_symlinks', action='store_true', help='symlink from raw_dicom to dicom to avoid duplication')
+    parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes')
+    args = parser.parse_args()
 
-            if not Path(participant_dicom_dir).is_dir():
-                os.mkdir(participant_dicom_dir)
+    # read global configs
+    global_config_file = args.global_config
+    with open(global_config_file, 'r') as f:
+        global_configs = json.load(f)
 
-            print(f"Copying renamed dicom files into: {participant_dicom_dir}")
-            dcm_idx = 1
-            dst_filename_len = len(str(n_raw_dicoms))
-            skipped_file_list = []
-            for src_fpath in filepaths:
-                if (filename_pattern == "") | (filename_pattern in src_fpath):      
-                    # check if the file is vaild dicom
-                    try:
-                        dataset = pydicom.dcmread(src_fpath)                
-                        dst_filename = str(dcm_idx).zfill(dst_filename_len)
-                        dst_fpath = f"{participant_dicom_dir}/{dst_filename}.dcm"
-                        shutil.copyfile(src_fpath, dst_fpath)
-                        dcm_idx += 1
-                    except:
-                        print(f"Error reading {src_fpath}. Not renaming it.")
-                        skipped_file_list.append(f"{src_fpath},invalid_dicom")
+    session_id = args.session_id
+    use_symlinks = args.use_symlinks # Saves space and time! 
+    n_jobs = args.n_jobs
 
-                else:
-                    skipped_file_list.append(f"{src_fpath},filename_pattern_mismatch")
-
-            skipped_files_txt = f"{output_dir}/{participant_id}_skipped_files.csv"
-            with open(skipped_files_txt, 'w') as output_file:
-                for line in skipped_file_list:
-                    output_file.write(line + '\n')
-
-            print(f"Number of files skipped: {len(skipped_file_list)}. See list here: {skipped_files_txt}")
-
-            if remove_raw_dicom:                
-                shutil.rmtree(raw_participant_dir)
-
-        except Exception as ex:
-            print(ex)
-
-    print(f"\n***Ending dicom reorganization for {participant_id}***")
+    run(global_configs, session_id, use_symlinks=use_symlinks, n_jobs=n_jobs)
