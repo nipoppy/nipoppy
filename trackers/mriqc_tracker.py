@@ -5,7 +5,7 @@ import glob
 
 #/scratch/qpn/sub-01/
 
-def eval_mriqc(subject_dir, session_id):
+def eval_mriqc(subject_dir, session_id, run_id=None):
 
     log_dir = subject_dir.split('sub')[0]
        
@@ -39,7 +39,7 @@ def eval_mriqc(subject_dir, session_id):
     return results
 
 
-def check_bold(subject_dir, session_id):
+def check_bold(subject_dir, session_id, run_id=None):
 
     log_dir = subject_dir.split('sub')[0]
 
