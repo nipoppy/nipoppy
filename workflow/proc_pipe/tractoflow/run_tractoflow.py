@@ -99,6 +99,6 @@ TRACTOFLOW_ARGS = ["--bids_input", bids_dir, "--dti_shells", dti_shells, "--fodf
 
 TRACTOFLOW_CMD = [TRACTOFLOW_SCRIPT] + TRACTOFLOW_ARGS
 
-print(TRACTOFLOW_CMD)
-#tractoflow_proc = subprocess.run(TRACTOFLOW_CMD)
+#print(TRACTOFLOW_CMD)
+tractoflow_proc = subprocess.run(TRACTOFLOW_CMD)
 
