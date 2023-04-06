@@ -87,7 +87,7 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     logger.info(f"Running HeuDiConv stage: {stage}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    mr_proc_manifest = f"{DATASET_ROOT}/tabular/demographics/mr_proc_manifest.csv"
+    mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
     dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
     bids_dir = f"{DATASET_ROOT}/bids/"
 

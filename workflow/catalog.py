@@ -6,31 +6,40 @@ from pathlib import Path
 import argparse
 import json
 
+# Globals
+# mr_proc_manifest columns
+PARTICIPANT_ID = "participant_id"
+PARTICIPANT_DICOM_DIR = "participant_dicom_dir"
+VISIT = "visit"
+SESSION = "session"
+DATATYPE = "datatype"
+DICOM_ID = "dicom_id"
+BIDS_ID  = "bids_id"
 
 def read_manifest(manifest_csv, session_id, logger):
     # read current participant manifest 
     manifest_df = pd.read_csv(manifest_csv)
-
+    session = f"ses-{session_id}"
     # filter session
-    manifest_df["session_id"] = manifest_df["session_id"].astype(str)
-    manifest_df = manifest_df[manifest_df["session_id"] == session_id]
+    manifest_df[SESSION] = manifest_df[SESSION].astype(str)
+    manifest_df = manifest_df[manifest_df[SESSION] == session]
     
-    manifest_df["participant_id"] = manifest_df["participant_id"].astype(str)
-    participants = manifest_df["participant_id"].str.strip().values
+    manifest_df[PARTICIPANT_ID] = manifest_df[PARTICIPANT_ID].astype(str)
+    participants = manifest_df[PARTICIPANT_ID].str.strip().values
 
     # generate dicom_id
-    manifest_df["dicom_id"] = [''.join(filter(str.isalnum, idx)) for idx in participants]
+    manifest_df[DICOM_ID] = [''.join(filter(str.isalnum, idx)) for idx in participants]
 
     # generate bids_id
-    manifest_df["bids_id"] = "sub-" + manifest_df["dicom_id"].astype(str)
+    manifest_df[BIDS_ID] = "sub-" + manifest_df[DICOM_ID].astype(str)
 
-    # check dicom files
-    if "dicom_file" in manifest_df.columns:
+    # check participant dicom dirs
+    if PARTICIPANT_DICOM_DIR in manifest_df.columns:
         logger.info("Using dicom filename from the manifest.csv") 
     else:
-        logger.warning("dicom_file is not specified in the manifest.csv")
+        logger.warning(f"{PARTICIPANT_DICOM_DIR} is not specified in the manifest.csv")
         logger.info("Assuming dicom_id is the dicom filename") 
-        manifest_df["dicom_file"] = manifest_df["dicom_id"].copy()
+        manifest_df[PARTICIPANT_DICOM_DIR] = manifest_df[DICOM_ID].copy()
 
     return manifest_df
 
@@ -64,7 +73,7 @@ def get_new_downloads(manifest_csv, raw_dicom_dir, session_id, logger):
     """ Identify new dicoms not yet inside <DATASET_ROOT>/scratch/raw_dicom
     """
     manifest_df = read_manifest(manifest_csv, session_id, logger)
-    participants = set(manifest_df["participant_id"])
+    participants = set(manifest_df[PARTICIPANT_ID])
     n_participants = len(participants)
 
     logger.info("-"*50)
@@ -76,13 +85,13 @@ def get_new_downloads(manifest_csv, raw_dicom_dir, session_id, logger):
     logger.info("-"*50)
     
     n_available_raw_dicom_dirs = len(available_raw_dicom_dirs)
-    available_raw_dicom_dirs_participant_ids = list(manifest_df[manifest_df["dicom_file"].isin(available_raw_dicom_dirs)]["participant_id"].astype(str).values)
+    available_raw_dicom_dirs_participant_ids = list(manifest_df[manifest_df[PARTICIPANT_DICOM_DIR].isin(available_raw_dicom_dirs)][PARTICIPANT_ID].astype(str).values)
 
     # check mismatch between manifest and raw_dicoms
     download_dicom_dir_participant_ids = set(participants) - set(available_raw_dicom_dirs_participant_ids)
     n_download_dicom_dirs = len(download_dicom_dir_participant_ids)
 
-    download_df = manifest_df[manifest_df["participant_id"].isin(download_dicom_dir_participant_ids)]
+    download_df = manifest_df[manifest_df[PARTICIPANT_ID].isin(download_dicom_dir_participant_ids)]
 
     logger.info("-"*50)
     logger.info(f"Identifying participants to be downloaded\n\n \
@@ -97,18 +106,18 @@ def get_new_raw_dicoms(manifest_csv, raw_dicom_dir, dicom_dir, session_id, logge
     """ Identify new raw_dicoms not yet reorganized inside <DATASET_ROOT>/dicom
     """
     manifest_df = read_manifest(manifest_csv, session_id, logger)
-    participants = set(manifest_df["participant_id"])
+    participants = set(manifest_df[PARTICIPANT_ID])
     n_participants = len(participants)
 
     # check current dicom dir
     current_dicom_dirs = list_dicoms(dicom_dir, logger)
     n_participant_dicom_dirs = len(current_dicom_dirs)
-    current_dicom_dirs_participant_ids = set(manifest_df[manifest_df["dicom_id"].isin(current_dicom_dirs)]["participant_id"].values)
+    current_dicom_dirs_participant_ids = set(manifest_df[manifest_df[DICOM_ID].isin(current_dicom_dirs)][PARTICIPANT_ID].values)
 
     # check raw dicom dir    
     available_raw_dicom_dirs = list_dicoms(raw_dicom_dir, logger)
     n_available_raw_dicom_dirs = len(available_raw_dicom_dirs)
-    available_raw_dicom_dirs_participant_ids = list(manifest_df[manifest_df["dicom_file"].isin(available_raw_dicom_dirs)]["participant_id"].astype(str).values)
+    available_raw_dicom_dirs_participant_ids = list(manifest_df[manifest_df[PARTICIPANT_DICOM_DIR].isin(available_raw_dicom_dirs)][PARTICIPANT_ID].astype(str).values)
 
     # check mismatch between manifest and raw_dicoms
     missing_dicom_dir_participant_ids = set(participants) - set(available_raw_dicom_dirs_participant_ids)
@@ -118,7 +127,7 @@ def get_new_raw_dicoms(manifest_csv, raw_dicom_dir, dicom_dir, session_id, logge
     dicom_reorg_participants = set(participants) - current_dicom_dirs_participant_ids - missing_dicom_dir_participant_ids
     n_dicom_reorg_participants = len(dicom_reorg_participants)
 
-    reorg_df = manifest_df[manifest_df["participant_id"].isin(dicom_reorg_participants)]
+    reorg_df = manifest_df[manifest_df[PARTICIPANT_ID].isin(dicom_reorg_participants)]
 
     logger.info("-"*50)
     logger.info(f"Identifying participants to be reorganized\n\n \
@@ -135,10 +144,10 @@ def get_new_dicoms(manifest_csv, dicom_dir, bids_dir, session_id, logger):
     """ Identify new dicoms not yet BIDSified
     """
     manifest_df = read_manifest(manifest_csv, session_id, logger)
-    participants = set(manifest_df["participant_id"])
+    participants = set(manifest_df[PARTICIPANT_ID])
     n_participants = len(participants)
-    dicom_ids = set(manifest_df["dicom_id"])
-    bids_ids = set(manifest_df["bids_id"])
+    dicom_ids = set(manifest_df[DICOM_ID])
+    bids_ids = set(manifest_df[BIDS_ID])
 
     # check current bids dir
     current_bids_dirs = list_bids(bids_dir, session_id, logger)
@@ -153,12 +162,12 @@ def get_new_dicoms(manifest_csv, dicom_dir, bids_dir, session_id, logger):
     missing_dicom_dirs = set(dicom_ids) - set(available_dicom_dirs)
     n_missing_dicom_dirs = len(missing_dicom_dirs)
 
-    current_bids_dirs_dicom_ids = manifest_df[manifest_df["bids_id"].isin(current_bids_dirs)]["dicom_id"]
+    current_bids_dirs_dicom_ids = manifest_df[manifest_df[BIDS_ID].isin(current_bids_dirs)][DICOM_ID]
 
     # participants to process with Heudiconv
     heudiconv_participants = set(dicom_ids) - set(missing_dicom_dirs) - set(current_bids_dirs_dicom_ids)
     n_heudiconv_participants = len(heudiconv_participants)
-    heudiconv_df = manifest_df[manifest_df["dicom_id"].isin(heudiconv_participants)]
+    heudiconv_df = manifest_df[manifest_df[DICOM_ID].isin(heudiconv_participants)]
 
     logger.info("-"*50)
     logger.info(f"Identifying participants to be BIDSified\n\n \
