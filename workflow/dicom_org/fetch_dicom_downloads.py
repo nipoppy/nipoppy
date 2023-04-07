@@ -9,6 +9,7 @@ import json
 import logging
 import subprocess
 import tarfile
+import workflow.logger as my_logger
 from joblib import Parallel, delayed
 import workflow.catalog as catalog
 
@@ -46,14 +47,15 @@ def find_mri(participant_ids):
     proc = subprocess.run(CMD,capture_output=True,text=True)
     proc_out = proc.stdout.strip().split('\n')
 
-    dcm_download_df = pd.DataFrame(columns=["dicom_file","session_id"])
+    dcm_download_df = pd.DataFrame(columns=["participant_dicom_dir","session_id"])
     i = 0 
     for l in proc_out:
         result = l.find('found')
         if result != -1:
             dcm_file = l.strip().rsplit(" ",1)[1]
             minc_file = dcm_file.lower().find("minc")
-            if minc_file == -1:
+            text_file = dcm_file.lower().find(".txt")
+            if (minc_file == -1) & (text_file == -1):
                 mri_index = dcm_file.lower().find("mri")
                 if mri_index != -1:
                     visit_id = int(dcm_file[mri_index:].split("_",1)[0][3:])
@@ -91,7 +93,7 @@ def untar_dcm(src_tar,dst_dir,tar_bkup_dir):
     shutil.move(src_tar, tar_bkup_dir)
 
 
-def run(global_configs, session_id, n_jobs):
+def run(global_configs, session_id, n_jobs, logger=None):
     """ Runs the dicom fetch 
     """
     session = f"ses-{session_id}"
@@ -101,38 +103,44 @@ def run(global_configs, session_id, n_jobs):
     raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/{session}/"
     tar_bkup_dir = f"{DATASET_ROOT}/scratch/raw_dicom/tars/"
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
-    log_file = f"{log_dir}/dicom_fetch.log"
 
     # mkdirs
     Path(raw_dicom_dir).mkdir(parents=True, exist_ok=True)
-    Path(f"{raw_dicom_dir}/tars").mkdir(parents=True, exist_ok=True)
+    Path(f"{tar_bkup_dir}").mkdir(parents=True, exist_ok=True)
     Path(f"{log_dir}").mkdir(parents=True, exist_ok=True)
 
-    mr_proc_manifest = f"{DATASET_ROOT}/tabular/demographics/mr_proc_manifest.csv"
+    mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
     
-    logger = get_logger(log_file)
+    if logger is None:
+        log_file = f"{log_dir}/dicom_fetch.log"
+        logger = my_logger.get_logger(log_file)
+
     logger.info("-"*50)
     logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
     logger.info(f"session: {session}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
     download_df = catalog.get_new_downloads(mr_proc_manifest, raw_dicom_dir, session_id, logger)
-    print(f"download df: \n {download_df}")
+    # print(f"download df: \n {download_df}")
     download_participants = list(download_df["participant_id"].values)
     n_download_participants = len(download_participants)
     logger.info(f"Found {n_download_participants} new participants for download")
 
     if n_download_participants > 0:
-        dcm_download_df = find_mri(download_participants[:2])
+        dcm_download_df = find_mri(download_participants)
         n_dcm_download = len(dcm_download_df)
-        print(f"n_downloadble_mri_found: {n_dcm_download}")
+        logger.info(f"n_mri_hits_found (includes duplicates): {n_dcm_download}")
         if n_dcm_download > 0:
-            logger.info(f"Copying {n_dcm_download} dicoms in to {raw_dicom_dir}")            
-            for dcm in dcm_download_df["dicom_file"].values:
+            logger.info(f"Copying and filtering {n_dcm_download} dicoms in to {raw_dicom_dir}")            
+            for dcm in dcm_download_df["participant_dicom_dir"].values:
                 dcm_dst_name = f"{raw_dicom_dir}/{os.path.basename(dcm)}"
-                shutil.copyfile(dcm, dcm_dst_name)
 
-                # Check if it's a tar file and untar it
+                if os.path.isdir(dcm):  
+                    shutil.copytree(dcm, dcm_dst_name)
+                else: #tar files 
+                    shutil.copyfile(dcm, dcm_dst_name)
+                
+                # Check if it's a tar (or tar.gz) file and untar it
                 if "tar" in str(dcm_dst_name).rsplit("."):
                     logger.info("Untarring copied dicom")
                     untar_dcm(dcm_dst_name,raw_dicom_dir,tar_bkup_dir)
@@ -157,7 +165,7 @@ def run(global_configs, session_id, n_jobs):
                     new_participant_dicom_downloads.append(os.path.basename(link_dicom_dir))
 
             n_new_participant_dicom_downloads = len(new_participant_dicom_downloads)
-            print(f"new_participant_dicom_downloads: {n_new_participant_dicom_downloads}")
+            logger.info(f"new_participant_dicom_downloads: {n_new_participant_dicom_downloads}")
 
             if n_new_participant_dicom_downloads > 0:
                 # Add newly processed bids_id to the manifest csv
@@ -165,7 +173,7 @@ def run(global_configs, session_id, n_jobs):
 
                 logger.info("Updating mr_proc_manifest with dicom file names")
                 manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(download_participants))
-                            & (manifest_df["session_id"].astype(str) == str(session_id)), 
+                            & (manifest_df["session"].astype(str) == str(session)), 
                             "participant_dicom_dir"] = new_participant_dicom_downloads
                 manifest_df.to_csv(mr_proc_manifest, index=None)
 
@@ -185,7 +193,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
     parser.add_argument('--session_id', type=str, default=None, help='session (i.e. visit to process)')
-    parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes')
+    parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes (Not implemented)')
     args = parser.parse_args()
 
     # read global configs
