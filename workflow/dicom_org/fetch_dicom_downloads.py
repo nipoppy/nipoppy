@@ -6,12 +6,11 @@ from pathlib import Path
 import shutil
 import argparse
 import json
-import logging
 import subprocess
 import tarfile
 import workflow.logger as my_logger
-from joblib import Parallel, delayed
 import workflow.catalog as catalog
+from concurrent.futures import ProcessPoolExecutor
 
 #Author: nikhil153
 #Date: 07-Oct-2022
@@ -19,34 +18,12 @@ import workflow.catalog as catalog
 fname = __file__
 CWD = os.path.dirname(os.path.abspath(fname))
 
-def get_logger(log_file, mode="w", level="DEBUG"):
-    """ Initiate a new logger if not provided
-    """
-    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logger = logging.getLogger(__name__)
-
-    logger.setLevel(level)
-
-    file_handler = logging.FileHandler(log_file, mode=mode)
-    formatter = logging.Formatter(log_format)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-
-    # output to terminal as well
-    stream = logging.StreamHandler()
-    streamformat = logging.Formatter(log_format)
-    stream.setFormatter(streamformat)
-    logger.addHandler(stream)
-    
-    return logger
-
 def find_mri(participant_ids):
-    """
+    """ Finds, claims and parses MRI paths from the BIC dicom server
     """
     CMD = ["find_mri", "-claim", "-noconfir"] + participant_ids
     proc = subprocess.run(CMD,capture_output=True,text=True)
     proc_out = proc.stdout.strip().split('\n')
-
     dcm_download_df = pd.DataFrame(columns=["participant_dicom_dir","session_id"])
     i = 0 
     for l in proc_out:
@@ -68,7 +45,7 @@ def find_mri(participant_ids):
     return dcm_download_df
 
 def filter_duplicate_dicoms(dicom_dir_matches,logger):
-    """
+    """ Selects a single dicom dir for a participant based on number of dicoms within
     """
     n_dcm_list = []
     for dicom_dir in dicom_dir_matches:
@@ -82,7 +59,7 @@ def filter_duplicate_dicoms(dicom_dir_matches,logger):
     return max_n_dicom_dir
 
 def untar_dcm(src_tar,dst_dir,tar_bkup_dir):
-    """
+    """ Extracts .tar and .tar.gz files and moves originals to tar backup dir
     """
     file = tarfile.open(src_tar)
     participant_dir = os.path.basename(src_tar).rsplit(".",2)[0]
@@ -92,6 +69,33 @@ def untar_dcm(src_tar,dst_dir,tar_bkup_dir):
     # Cleanup
     shutil.move(src_tar, tar_bkup_dir)
 
+
+def fetch(raw_dicom_dir,tar_bkup_dir,dcm,logger):
+    """ Fetches a single dicom dir from the source
+    """
+    dcm_dst_name = f"{raw_dicom_dir}/{os.path.basename(dcm)}"
+    logger.info(f"dcm source: {dcm}\tdcm dest: {dcm_dst_name}")
+
+    try:
+        if os.path.isdir(dcm):  
+            shutil.copytree(dcm, dcm_dst_name,dirs_exist_ok=False)
+        else: #tar files 
+            dcm_untar_dir_name  = dcm_dst_name.split(".",1)[0]
+            if (os.path.isfile(dcm_dst_name)) | (os.path.isdir(dcm_untar_dir_name)):
+                logger.info(f"{dcm_dst_name} (tar or untar) exists")
+            else:
+                shutil.copyfile(dcm, dcm_dst_name)
+
+                # Check if it's a tar (or tar.gz) file and untar it
+                if "tar" in str(dcm_dst_name).rsplit("."):
+                    logger.info("Untarring copied dicom")
+                    untar_dcm(dcm_dst_name,raw_dicom_dir,tar_bkup_dir)
+
+    except FileExistsError as e: #this is actually a dir_exists check
+        logger.warning(f"{dcm_dst_name} exists")
+
+    except shutil.SameFileError as e:
+        logger.warning(e)
 
 def run(global_configs, session_id, n_jobs, logger=None):
     """ Runs the dicom fetch 
@@ -121,7 +125,6 @@ def run(global_configs, session_id, n_jobs, logger=None):
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
     download_df = catalog.get_new_downloads(mr_proc_manifest, raw_dicom_dir, session_id, logger)
-    # print(f"download df: \n {download_df}")
     download_participants = list(download_df["participant_id"].values)
     n_download_participants = len(download_participants)
     logger.info(f"Found {n_download_participants} new participants for download")
@@ -131,19 +134,19 @@ def run(global_configs, session_id, n_jobs, logger=None):
         n_dcm_download = len(dcm_download_df)
         logger.info(f"n_mri_hits_found (includes duplicates): {n_dcm_download}")
         if n_dcm_download > 0:
-            logger.info(f"Copying and filtering {n_dcm_download} dicoms in to {raw_dicom_dir}")            
-            for dcm in dcm_download_df["participant_dicom_dir"].values:
-                dcm_dst_name = f"{raw_dicom_dir}/{os.path.basename(dcm)}"
+            logger.info(f"Copying and filtering {n_dcm_download} dicoms in to {raw_dicom_dir}")
+            if n_jobs > 1:
+                logger.info(f"Processing in parallel (n_jobs = {n_jobs})")
+                ## Process in parallel! (Won't write to logs) 
+                with ProcessPoolExecutor(n_jobs) as exe:
+                    # submit all copy tasks
+                    _ = [exe.submit(fetch, raw_dicom_dir,tar_bkup_dir,dcm,logger)
+                         for dcm in dcm_download_df["participant_dicom_dir"].values]
 
-                if os.path.isdir(dcm):  
-                    shutil.copytree(dcm, dcm_dst_name)
-                else: #tar files 
-                    shutil.copyfile(dcm, dcm_dst_name)
-                
-                # Check if it's a tar (or tar.gz) file and untar it
-                if "tar" in str(dcm_dst_name).rsplit("."):
-                    logger.info("Untarring copied dicom")
-                    untar_dcm(dcm_dst_name,raw_dicom_dir,tar_bkup_dir)
+            else: # Useful for debugging
+                for d, dcm in enumerate(dcm_download_df["participant_dicom_dir"].values):                
+                    logger.info(f"starting {d} of {n_dcm_download}")
+                    fetch(raw_dicom_dir,tar_bkup_dir,dcm,logger) 
 
             # Multiple dicoms per participant can be found (i.e visits, failed runs etc)
             # Need to pick one per participant and per session
@@ -152,7 +155,7 @@ def run(global_configs, session_id, n_jobs, logger=None):
                 # Check for files
                 dicom_dir_matches = glob.glob(f"{raw_dicom_dir}/{participant_id}*")
 
-                if len(dicom_dir_matches)== 0:
+                if len(dicom_dir_matches) == 0:
                     logger.warning(f"No dicom dir match found for {participant_id}")
                     new_participant_dicom_downloads.append(None)
                 else:
@@ -192,8 +195,8 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
-    parser.add_argument('--session_id', type=str, default=None, help='session (i.e. visit to process)')
-    parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes (Not implemented)')
+    parser.add_argument('--session_id', type=str, default=None, help='MRI session (i.e. visit) to process)')
+    parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes')
     args = parser.parse_args()
 
     # read global configs
