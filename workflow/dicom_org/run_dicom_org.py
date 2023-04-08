@@ -25,16 +25,21 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
     # Remove non-alphanumeric chars (e.g. "_" from the participant_dir names)
     dicom_id = ''.join(filter(str.isalnum, participant))
     participant_dicom_dir = f"{dicom_dir}/{dicom_id}/"
-    
-    copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
-    
-    # Log skipped invalid dicom list for the participant
-    invalid_dicoms_file = f"{invalid_dicom_dir}/{participant}_invalid_dicoms.json"
-    invalid_dicom_dict = {participant: invalid_dicom_list}
-    # Save skipped or invalid dicom file list
-    with open(invalid_dicoms_file, "w") as outfile:
-        json.dump(invalid_dicom_dict, outfile, indent=4)
-        
+    copy_dicom_success = True
+    try:
+        copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
+        # Log skipped invalid dicom list for the participant
+        invalid_dicoms_file = f"{invalid_dicom_dir}/{participant}_invalid_dicoms.json"
+        invalid_dicom_dict = {participant: invalid_dicom_list}
+        # Save skipped or invalid dicom file list
+        with open(invalid_dicoms_file, "w") as outfile:
+            json.dump(invalid_dicom_dict, outfile, indent=4)
+
+    except Exception as e:
+        logger.error(f"Could not copy dicoms for participant_id: {participant}")
+        copy_dicom_success = False
+
+    return copy_dicom_success
 
 def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
     """ Runs the dicom reorg tasks 
@@ -74,17 +79,20 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
 
         if n_jobs > 1:
             ## Process in parallel! (Won't write to logs)            
-            Parallel(n_jobs=n_jobs)(delayed(reorg)(
+            reorg_results = Parallel(n_jobs=n_jobs)(delayed(reorg)(
                 participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks
                 ) 
                 for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["participant_dicom_dir"]))
             )
 
         else: # Useful for debugging
+            reorg_results = []
             for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["participant_dicom_dir"])):
-                reorg(participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks) 
+                res = reorg(participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks) 
+                reorg_results.append(res)
 
-        logger.info(f"\nDICOM reorg for {n_dicom_reorg_participants} participants completed")
+        n_reorg_success = np.sum(reorg_results)
+        logger.info(f"\nSuccessfully completed DICOM reorg for {n_reorg_success} out of {n_dicom_reorg_participants} participants")
         logger.info(f"Skipped (invalid/derived) DICOMs are listed here: {log_dir}")
         logger.info(f"DICOMs are now copied into {dicom_dir} and ready for bids conversion!")
 
