@@ -132,7 +132,7 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
         manifest_df = pd.read_csv(mr_proc_manifest)
     
         manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(heudiconv_df["participant_id"]))
-                         & (manifest_df["session_id"].astype(str) == str(session_id)), 
+                         & (manifest_df["session"].astype(str) == session), 
                          "bids_id"] = heudiconv_df["bids_id"]
 
         manifest_df.to_csv(mr_proc_manifest, index=None)
