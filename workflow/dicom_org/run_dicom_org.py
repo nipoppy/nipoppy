@@ -19,7 +19,7 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
 
     participant_raw_dicom_dir = f"{raw_dicom_dir}/{participant_dicom_dir}/"
 
-    raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir,check_valid_dcm)
+    raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir, logger, check_valid_dcm)
     logger.info(f"n_raw_dicom: {len(raw_dcm_list)}, n_skipped (invalid/derived): {len(invalid_dicom_list)}")
 
     # Remove non-alphanumeric chars (e.g. "_" from the participant_dir names)
@@ -27,7 +27,7 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
     participant_dicom_dir = f"{dicom_dir}/{dicom_id}/"
     copy_dicom_success = True
     try:
-        copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
+        copy_dicoms(raw_dcm_list, participant_dicom_dir, logger, use_symlinks)
         # Log skipped invalid dicom list for the participant
         invalid_dicoms_file = f"{invalid_dicom_dir}/{participant}_invalid_dicoms.json"
         invalid_dicom_dict = {participant: invalid_dicom_list}

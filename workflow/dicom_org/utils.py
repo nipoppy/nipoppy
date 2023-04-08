@@ -2,25 +2,12 @@ import pandas as pd
 import numpy as np
 import glob
 import os
-import logging
+import workflow.logger as my_logger
 from pathlib import Path
 import shutil
 import pydicom
 
-# logger
-LOG_FILE = "../mr_proc.log"
-log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logger = logging.getLogger(__name__)
-
-# Use FileHandler() to log to a file
-file_handler = logging.FileHandler(LOG_FILE, mode="a")
-formatter = logging.Formatter(log_format)
-file_handler.setFormatter(formatter)
-
-# Don't forget to add the file handler
-logger.addHandler(file_handler)
-
-def search_dicoms(raw_dicom_dir, check_validity=True):
+def search_dicoms(raw_dicom_dir, logger, check_validity=True):
     """ Search and return list of dicom files from a scanner dicom-dir-tree output
     """
     filelist = []
@@ -30,7 +17,7 @@ def search_dicoms(raw_dicom_dir, check_validity=True):
             filepath = os.path.join(root,file)
 
             if check_validity: #Slow because of pydicom reads
-                valid_dicom = check_valid_dicom(filepath)
+                valid_dicom = check_valid_dicom(filepath,logger)
                 if valid_dicom:
                     filelist.append(filepath)
                 else:
@@ -48,7 +35,7 @@ def search_dicoms(raw_dicom_dir, check_validity=True):
 
     return unique_dcm, invalid_dicom_list
 
-def copy_dicoms(filelist, dicom_dir, symlink=False):
+def copy_dicoms(filelist, dicom_dir, logger, symlink=False):
     """ Copy dicoms from a scanner dicom-dir-tree output into a flat participant-level dir
     """
     if not Path(dicom_dir).is_dir():
@@ -62,7 +49,7 @@ def copy_dicoms(filelist, dicom_dir, symlink=False):
     else:
         logger.info(f"participant dicoms already exist")
 
-def check_valid_dicom(f_dcm):
+def check_valid_dicom(f_dcm, logger):
     """ checks if the file is vaild dicom
     """
     status = False
@@ -71,9 +58,10 @@ def check_valid_dicom(f_dcm):
         img_type = dcm_info[("0008", "0008")].value[0]
         if img_type == "DERIVED":
             status = False #Heudiconv cannot convert derived images
+            logger.warning(f"Derived dcm: {f_dcm}")     
         else:
             status = True
     except:
-        logger.info(f"Error reading {f_dcm}")        
+        logger.warning(f"Error reading {f_dcm}")        
 
     return status
