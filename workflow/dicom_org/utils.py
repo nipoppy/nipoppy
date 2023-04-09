@@ -35,17 +35,20 @@ def search_dicoms(raw_dicom_dir, logger, check_validity=True):
 
     return unique_dcm, invalid_dicom_list
 
-def copy_dicoms(filelist, dicom_dir, logger, symlink=False):
+def copy_dicoms(filelist, participant_dicom_dir, logger, symlink=False):
     """ Copy dicoms from a scanner dicom-dir-tree output into a flat participant-level dir
     """
-    if not Path(dicom_dir).is_dir():
-        os.mkdir(dicom_dir)
+    if not Path(participant_dicom_dir).is_dir():
+        Path(participant_dicom_dir).mkdir(parents=True, exist_ok=True)
         for f in filelist:
             f_basename = os.path.basename(f)
-            if symlink:
-                os.symlink(f, f"{dicom_dir}{f_basename}")
+            f_dirname = os.path.dirname(f)
+            f_sympath = f"{participant_dicom_dir}{f_basename}"
+            if symlink: # Use relpath to maintain portability of mr_proc dataset
+                f_relpath = os.path.relpath(f_dirname, start=participant_dicom_dir)
+                Path(f_sympath).symlink_to(f"{f_relpath}/{f_basename}")
             else:
-                shutil.copyfile(f, f"{dicom_dir}{f_basename}")
+                shutil.copyfile(f, f"{participant_dicom_dir}{f_basename}")
     else:
         logger.info(f"participant dicoms already exist")
 
