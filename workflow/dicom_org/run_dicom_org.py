@@ -12,12 +12,12 @@ import workflow.catalog as catalog
 #Date: 07-Oct-2022
 
 
-def reorg(participant, dicom_file, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks):
+def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks):
     """ Copy / Symlink raw dicoms into a flat participant dir
     """
     logger.info(f"\nparticipant_id: {participant}")
 
-    participant_raw_dicom_dir = f"{raw_dicom_dir}/{dicom_file}/"
+    participant_raw_dicom_dir = f"{raw_dicom_dir}/{participant_dicom_dir}/"
 
     raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir)
     logger.info(f"n_raw_dicom: {len(raw_dcm_list)}, n_skipped (invalid/derived): {len(invalid_dicom_list)}")
@@ -48,7 +48,7 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
     log_dir = f"{DATASET_ROOT}/scratch/logs/"    
     invalid_dicom_dir = f"{log_dir}/invalid_dicom_dir/"
 
-    mr_proc_manifest = f"{DATASET_ROOT}/tabular/demographics/mr_proc_manifest.csv"
+    mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
     
     if logger is None:
         log_file = f"{log_dir}/dicom_org.log"
@@ -77,11 +77,11 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
             Parallel(n_jobs=n_jobs)(delayed(reorg)(
                 participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks
                 ) 
-                for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["dicom_file"]))
+                for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["participant_dicom_dir"]))
             )
 
         else: # Useful for debugging
-            for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["dicom_file"])):
+            for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["participant_dicom_dir"])):
                 reorg(participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks) 
 
         logger.info(f"\nDICOM reorg for {n_dicom_reorg_participants} participants completed")
