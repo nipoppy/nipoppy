@@ -35,7 +35,7 @@ def find_mri(participant_ids):
             if (minc_file == -1) & (text_file == -1):
                 mri_index = dcm_file.lower().find("mri")
                 if mri_index != -1:
-                    visit_id = int(dcm_file[mri_index:].split("_",1)[0][3:])
+                    visit_id = str(dcm_file[mri_index:].split("_",1)[0][3:])
                 else:
                     visit_id = "unknown"
 
@@ -105,11 +105,13 @@ def run(global_configs, session_id, n_jobs, logger=None):
     # populate relative paths
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/{session}/"
+    unknown_ses_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/ses-unknown/" # TODO
     tar_bkup_dir = f"{DATASET_ROOT}/scratch/raw_dicom/tars/"
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
 
     # mkdirs
     Path(raw_dicom_dir).mkdir(parents=True, exist_ok=True)
+    Path(unknown_ses_dicom_dir).mkdir(parents=True, exist_ok=True)
     Path(f"{tar_bkup_dir}").mkdir(parents=True, exist_ok=True)
     Path(f"{log_dir}").mkdir(parents=True, exist_ok=True)
 
@@ -131,20 +133,44 @@ def run(global_configs, session_id, n_jobs, logger=None):
 
     if n_download_participants > 0:
         dcm_download_df = find_mri(download_participants)
-        n_dcm_download = len(dcm_download_df)
-        logger.info(f"n_mri_hits_found (includes duplicates): {n_dcm_download}")
-        if n_dcm_download > 0:
-            logger.info(f"Copying and filtering {n_dcm_download} dicoms in to {raw_dicom_dir}")
+        logger.info(f"dcm_donwload_df:\n{dcm_download_df}")
+        ##TODO: Filter unknown session_id
+        logger.info(f"len dcm_download_df: {len(dcm_download_df)}")
+        dcm_download_session_df = dcm_download_df[dcm_download_df["session_id"]==session_id].copy()
+        n_dcm_download = len(dcm_download_session_df)
+
+        dcm_download_unknown_df = dcm_download_df[dcm_download_df["session_id"]=="unknown"].copy()
+        n_unknown_dcm_download = len(dcm_download_unknown_df)
+        
+        logger.info(f"n_dcms found for {session}: {n_dcm_download} (includes duplicates)")
+        logger.info(f"n_dcms found for unknown session: {n_unknown_dcm_download} (includes duplicates)")
+        logger.info(f"Moving dcm with unknown session to {unknown_ses_dicom_dir}")
+
+        if n_unknown_dcm_download > 0:
+            logger.info(f"Copying and filtering {n_unknown_dcm_download} dicoms (unknown session) into {unknown_ses_dicom_dir}")
             if n_jobs > 1:
                 logger.info(f"Processing in parallel (n_jobs = {n_jobs})")
                 ## Process in parallel! (Won't write to logs) 
                 with ProcessPoolExecutor(n_jobs) as exe:
-                    # submit all copy tasks
-                    _ = [exe.submit(fetch, raw_dicom_dir,tar_bkup_dir,dcm,logger)
-                         for dcm in dcm_download_df["participant_dicom_dir"].values]
+                    _ = [exe.submit(fetch, unknown_ses_dicom_dir,tar_bkup_dir,dcm,logger)
+                         for dcm in dcm_download_unknown_df["participant_dicom_dir"].values]
 
             else: # Useful for debugging
-                for d, dcm in enumerate(dcm_download_df["participant_dicom_dir"].values):                
+                for d, dcm in enumerate(dcm_download_unknown_df["participant_dicom_dir"].values):                
+                    logger.info(f"starting {d} of {n_unknown_dcm_download}")
+                    fetch(unknown_ses_dicom_dir,tar_bkup_dir,dcm,logger)
+        
+        if n_dcm_download > 0:
+            logger.info(f"Copying and filtering {n_dcm_download} dicoms {session} into {raw_dicom_dir}")
+            if n_jobs > 1:
+                logger.info(f"Processing in parallel (n_jobs = {n_jobs})")
+                ## Process in parallel! (Won't write to logs) 
+                with ProcessPoolExecutor(n_jobs) as exe:
+                    _ = [exe.submit(fetch, raw_dicom_dir,tar_bkup_dir,dcm,logger)
+                         for dcm in dcm_download_session_df["participant_dicom_dir"].values]
+
+            else: # Useful for debugging
+                for d, dcm in enumerate(dcm_download_session_df["participant_dicom_dir"].values):                
                     logger.info(f"starting {d} of {n_dcm_download}")
                     fetch(raw_dicom_dir,tar_bkup_dir,dcm,logger) 
 
@@ -182,7 +208,7 @@ def run(global_configs, session_id, n_jobs, logger=None):
 
                 logger.info(f"Downloaded DICOMs (n={n_new_participant_dicom_downloads}) are now copied into {raw_dicom_dir} and ready for dicom_reorg!")
         else:
-            logger.error("No DICOMs were found using find_mri script")
+            logger.error(f"No DICOMs were found for {session} using find_mri script")
           
     else:
         logger.info(f"No new participants found for dicom fetch...")
@@ -204,7 +230,7 @@ if __name__ == '__main__':
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    session_id = args.session_id
+    session_id = str(args.session_id)
     n_jobs = args.n_jobs
 
     run(global_configs, session_id, n_jobs)
