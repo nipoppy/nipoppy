@@ -58,17 +58,30 @@ def filter_duplicate_dicoms(dicom_dir_matches,logger):
     
     return max_n_dicom_dir
 
-def untar_dcm(src_tar,dst_dir,tar_bkup_dir):
+def untar_dcm(src_tar,dst_dir,tar_bkup_dir,logger):
     """ Extracts .tar and .tar.gz files and moves originals to tar backup dir
     """
-    file = tarfile.open(src_tar)
     participant_dir = os.path.basename(src_tar).rsplit(".",2)[0]
-    file.extractall(f"{dst_dir}/{participant_dir}/") 
-    file.close()
+    # check if untar dir exists: 
+    untar_dcm_dir = f"{dst_dir}/{participant_dir}/"
+    if os.path.isdir(untar_dcm_dir):
+        logger.warning(f"skipping untarring - extracted {untar_dcm_dir} exists")
+    else:
+        file = tarfile.open(src_tar)
+        file.extractall(untar_dcm_dir) 
+        file.close()
 
     # Cleanup
-    shutil.move(src_tar, tar_bkup_dir)
-
+    try:
+        tar_bkup_file = f"{tar_bkup_dir}/{os.path.basename(src_tar)}"
+        tar_bkup_file_exists = os.path.isfile(tar_bkup_file)
+        logger.warning(f"{tar_bkup_file} exists")
+        if tar_bkup_file_exists:
+            os.remove(src_tar)
+        else:
+            _ = shutil.move(src_tar, tar_bkup_file)
+    except Exception as e: 
+        logger.error(e)
 
 def fetch(raw_dicom_dir,tar_bkup_dir,dcm,logger):
     """ Fetches a single dicom dir from the source
@@ -89,7 +102,7 @@ def fetch(raw_dicom_dir,tar_bkup_dir,dcm,logger):
                 # Check if it's a tar (or tar.gz) file and untar it
                 if "tar" in str(dcm_dst_name).rsplit("."):
                     logger.info("Untarring copied dicom")
-                    untar_dcm(dcm_dst_name,raw_dicom_dir,tar_bkup_dir)
+                    untar_dcm(dcm_dst_name,raw_dicom_dir,tar_bkup_dir, logger)
 
     except FileExistsError as e: #this is actually a dir_exists check
         logger.warning(f"{dcm_dst_name} exists")
@@ -134,17 +147,18 @@ def run(global_configs, session_id, n_jobs, logger=None):
     if n_download_participants > 0:
         dcm_download_df = find_mri(download_participants)
         logger.info(f"dcm_donwload_df:\n{dcm_download_df}")
-        ##TODO: Filter unknown session_id
+
+        # Filter session if possible
         logger.info(f"len dcm_download_df: {len(dcm_download_df)}")
         dcm_download_session_df = dcm_download_df[dcm_download_df["session_id"]==session_id].copy()
         n_dcm_download = len(dcm_download_session_df)
 
+        # Filter unknown session
         dcm_download_unknown_df = dcm_download_df[dcm_download_df["session_id"]=="unknown"].copy()
         n_unknown_dcm_download = len(dcm_download_unknown_df)
         
         logger.info(f"n_dcms found for {session}: {n_dcm_download} (includes duplicates)")
         logger.info(f"n_dcms found for unknown session: {n_unknown_dcm_download} (includes duplicates)")
-        logger.info(f"Moving dcm with unknown session to {unknown_ses_dicom_dir}")
 
         if n_unknown_dcm_download > 0:
             logger.info(f"Copying and filtering {n_unknown_dcm_download} dicoms (unknown session) into {unknown_ses_dicom_dir}")
@@ -193,8 +207,8 @@ def run(global_configs, session_id, n_jobs, logger=None):
 
                     new_participant_dicom_downloads.append(os.path.basename(link_dicom_dir))
 
-            n_new_participant_dicom_downloads = len(new_participant_dicom_downloads)
-            logger.info(f"new_participant_dicom_downloads: {n_new_participant_dicom_downloads}")
+            n_new_participant_dicom_downloads = len(new_participant_dicom_downloads) - new_participant_dicom_downloads.count(None)
+            logger.info(f"new_participant_dicom_downloads: {n_new_participant_dicom_downloads} out of {len(download_participants)}")
 
             if n_new_participant_dicom_downloads > 0:
                 # Add newly processed bids_id to the manifest csv
@@ -206,7 +220,7 @@ def run(global_configs, session_id, n_jobs, logger=None):
                             "participant_dicom_dir"] = new_participant_dicom_downloads
                 manifest_df.to_csv(mr_proc_manifest, index=None)
 
-                logger.info(f"Downloaded DICOMs (n={n_new_participant_dicom_downloads}) are now copied into {raw_dicom_dir} and ready for dicom_reorg!")
+                logger.info(f"DICOMs (n={n_new_participant_dicom_downloads} of {download_participants}) are now copied into {raw_dicom_dir} and ready for dicom_reorg!")
         else:
             logger.error(f"No DICOMs were found for {session} using find_mri script")
           
