@@ -2,12 +2,25 @@ import pandas as pd
 import numpy as np
 import glob
 import os
-import workflow.logger as my_logger
+import logging
 from pathlib import Path
 import shutil
 import pydicom
 
-def search_dicoms(raw_dicom_dir, logger, check_validity=True):
+# logger
+LOG_FILE = "../mr_proc.log"
+log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logger = logging.getLogger(__name__)
+
+# Use FileHandler() to log to a file
+file_handler = logging.FileHandler(LOG_FILE, mode="a")
+formatter = logging.Formatter(log_format)
+file_handler.setFormatter(formatter)
+
+# Don't forget to add the file handler
+logger.addHandler(file_handler)
+
+def search_dicoms(raw_dicom_dir, skip_dcm_check=False):
     """ Search and return list of dicom files from a scanner dicom-dir-tree output
     """
     filelist = []
@@ -15,44 +28,38 @@ def search_dicoms(raw_dicom_dir, logger, check_validity=True):
     for root, dirs, files in os.walk(raw_dicom_dir):
         for file in files:
             filepath = os.path.join(root,file)
-
-            if check_validity: #Slow because of pydicom reads
-                valid_dicom = check_valid_dicom(filepath,logger)
+            if skip_dcm_check:
+                valid_dicom = check_valid_dicom(filepath)
                 if valid_dicom:
                     filelist.append(filepath)
                 else:
                     invalid_dicom_list.append(filepath)
-            else:
-                filelist.append(filepath)
-
+    
     n_dcms = len(filelist)
     unique_dcm = set(filelist)
     n_unique_dcm = len(unique_dcm)
 
     if n_unique_dcm != n_dcms:
         n_duplicates = n_dcms - n_unique_dcm
-        logger.info(f"Duplicate dicom names found for {n_duplicates} dcms")
+        logger.debug(f"Duplicate dicom names found for {n_duplicates} dcms")
 
     return unique_dcm, invalid_dicom_list
 
-def copy_dicoms(filelist, participant_dicom_dir, logger, symlink=False):
+def copy_dicoms(filelist, dicom_dir, symlink=False):
     """ Copy dicoms from a scanner dicom-dir-tree output into a flat participant-level dir
     """
-    if not Path(participant_dicom_dir).is_dir():
-        Path(participant_dicom_dir).mkdir(parents=True, exist_ok=True)
+    if not Path(dicom_dir).is_dir():
+        os.mkdir(dicom_dir)
         for f in filelist:
             f_basename = os.path.basename(f)
-            f_dirname = os.path.dirname(f)
-            f_sympath = f"{participant_dicom_dir}{f_basename}"
-            if symlink: # Use relpath to maintain portability of mr_proc dataset
-                f_relpath = os.path.relpath(f_dirname, start=participant_dicom_dir)
-                Path(f_sympath).symlink_to(f"{f_relpath}/{f_basename}")
+            if symlink:
+                os.symlink(f, f"{dicom_dir}{f_basename}")
             else:
-                shutil.copyfile(f, f"{participant_dicom_dir}{f_basename}")
+                shutil.copyfile(f, f"{dicom_dir}{f_basename}")
     else:
-        logger.info(f"participant dicoms already exist")
+        logger.debug(f"participant dicoms already exist")
 
-def check_valid_dicom(f_dcm, logger):
+def check_valid_dicom(f_dcm):
     """ checks if the file is vaild dicom
     """
     status = False
@@ -61,10 +68,9 @@ def check_valid_dicom(f_dcm, logger):
         img_type = dcm_info[("0008", "0008")].value[0]
         if img_type == "DERIVED":
             status = False #Heudiconv cannot convert derived images
-            logger.warning(f"Derived dcm: {f_dcm}")     
         else:
             status = True
     except:
-        logger.warning(f"Error reading {f_dcm}")        
+        logger.debug(f"Error reading {f_dcm}")        
 
     return status
