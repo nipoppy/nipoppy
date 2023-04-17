@@ -15,49 +15,46 @@ CWD = os.path.dirname(os.path.abspath(fname))
 
 MEM_MB = 4000
 
-def run_tractoflow(participant_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, logger):
+def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, log_dir, logger):
     """ Launch fmriprep container"""
 
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
-    tractoflow_home_dir = f"{tractoflow_out_dir}/tractoflow_home_{participant_id}/"
+    tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
     Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
     ## generalize / code as inputs?
-    dti_shells="0 1000"
-    fodf_shells="0 1000"
+    dti_shells='"0 1000"'
+    fodf_shells='"0 1000"'
     sh_order=6
+    profile="fully_reproducible"
     ncore=4
-    
-    # # Singularity CMD 
-    # SINGULARITY_CMD=f"singularity run \
-    #     -B {bids_dir}:/data_dir \
-    #     -B {tractoflow_home_dir}:/home/tractoflow --home /home/tractoflow --cleanenv \
-    #     -B {tractoflow_out_dir}:/output \
-    #     -B {templateflow_dir}:{SINGULARITY_TEMPLATEFLOW_DIR} \
-    #     {SINGULARITY_CONTAINER}"
 
-    SINGULARITY_CMD=f"nextflow tractoflow/main.nf"
+    # path to pipelines - extract / pass from global_config.json or run()?
+    MRPROC_PIPE='/data/origami/bcmcpher/git/mr_proc/workflow/proc_pipe/tractoflow'
+    
+    NEXTFLOW_CMD=f"nextflow run {MRPROC_PIPE}/tractoflow/main.nf"
     
     # Compose tractoflow command
-    TRACTOFLOW_CMD=f" --bids_input {bids_dir} /output {tractoflow_out_dir} participant --participant-label {participant_id} \
-        --dti-shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} \
-        --profile {profile} --with-singularity {SINGULARITY_CONTAINER} --processes {ncore}"
+    TRACTOFLOW_CMD=f" --bids {bids_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti-shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_CONTAINER} --processes {ncore} -with-trace {log_dir}/{participant_id}_ses-{session_id}_nf-tract.txt -with-report {log_dir}/{participant_id}_ses-{session_id}_nf-report.html -resume"
+    
+    CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
+    #CMD = CMD_ARGS.split()
+    CMD = CMD_ARGS
 
-    CMD_ARGS = SINGULARITY_CMD + TRACTOFLOW_CMD 
-    CMD = CMD_ARGS.split()
-
-    logger.info(f"Running tractoflow...")
+    ## "working" call?
+    #nextflow run /data/origami/bcmcpher/git/mr_proc/workflow/proc_pipe/tractoflow/tractoflow/main.nf --bids /data/origami/bcmcpher/qpn-dev/bids/ --output_dir /data/origami/bcmcpher/test/tractoflow/v2.2.1/output/ participant --participant-label sub-MNI0056D864854 --dti_shells "0 1000" --fodf_shells "0 1000" --sh_order 6 --profile fully_reproducible -with-singularity /data/origami/container_store/mr_proc/tractoflow_2.2.1.sif --processes 4 -with-trace /data/origami/bcmcpher/qpn-dev/scratch/logs/sub-MNI0056D864854_ses-01_nf-tract.txt -with-report /data/origami/bcmcpher/qpn-dev/scratch/logs/sub-MNI0056D864854_ses-01_nf-report.html -resume
+    
+    logger.info(f"Running TractoFlow...")
     logger.info("-"*50)
     logger.info(f"CMD:\n{CMD}")
     logger.info("-"*50)
     try:
-        #tractoflow_proc = subprocess.run(CMD)
-        print(f"RUN THE COMMAND HERE: {CMD}")
+        tractoflow_proc = subprocess.run(CMD)
+        logger.info(f"Successfully completed TractoFlow run for participant: {participant_id}")
+        logger.info("-"*75)
     except Exception as e:
-        logger.error(f"tractoflow run failed with exceptions: {e}")
-    
-    logger.info(f"Successfully completed tractoflow run for participant: {participant_id}")
-    logger.info("-"*75)
+        logger.error(f"TractoFlow run failed with exceptions: {e}")
+        logger.info("-"*75)
     logger.info("")
 
 def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
@@ -71,15 +68,15 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}{TRACTOFLOW_CONTAINER}"
 
-    log_dir = f"{DATASET_ROOT}/scratch/logs/"
+    log_dir = f"{DATASET_ROOT}/scratch/logs"
 
     if logger is None:
-        log_file = f"{log_dir}/tractoflow.log"
+        log_file = f"{log_dir}/{participant_id}_ses-{session_id}_tractoflow.log"
         logger = my_logger.get_logger(log_file)
 
     logger.info("-"*75)
     logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
-    logger.info(f"Using participant_id: {participant_id}, session_id:{session_id}")
+    logger.info(f"Using participant_id: {participant_id}, session_id: {session_id}")
 
     if output_dir is None:
         output_dir = f"{DATASET_ROOT}/derivatives/"
@@ -93,7 +90,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
 
     # launch tractoflow
-    run_tractoflow(participant_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, logger)
+    run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, log_dir, logger)
 
 if __name__ == '__main__':
     # argparse
