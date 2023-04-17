@@ -3,10 +3,18 @@ import json
 import subprocess
 import os
 from pathlib import Path
+import workflow.logger as my_logger
 import shutil
 
 #Author: bcmcpher (Brent McPherson
 #Date: 17-Mar-2023 (created)
+
+fname = __file__
+CWD = os.path.dirname(os.path.abspath(fname))
+
+# env vars relative to the container.
+
+MEM_MB = 4000
 
 # argparse
 HELPTEXT = """
@@ -99,6 +107,6 @@ TRACTOFLOW_ARGS = ["--bids_input", bids_dir, "--dti_shells", dti_shells, "--fodf
 
 TRACTOFLOW_CMD = [TRACTOFLOW_SCRIPT] + TRACTOFLOW_ARGS
 
-#print(TRACTOFLOW_CMD)
-tractoflow_proc = subprocess.run(TRACTOFLOW_CMD)
+print(TRACTOFLOW_CMD)
+#tractoflow_proc = subprocess.run(TRACTOFLOW_CMD)
 
