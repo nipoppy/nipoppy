@@ -15,36 +15,55 @@ CWD = os.path.dirname(os.path.abspath(fname))
 
 MEM_MB = 4000
 
-def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, log_dir, global_configs, logger):
-    """ Launch fmriprep container"""
-
-    DATASET_ROOT = global_configs["DATASET_ROOT"]
+def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, logger):
+    """ Launch TractoFlow through Nextflow process
+    """
     
+    ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
     Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
-    ## generalize / code as inputs?
+    ## build paths for working inputs
+    tractoflow_work_dir = f"{tractoflow_dir}/work"
+    tractoflow_subj_dir = f"{tractoflow_work_dir}/{participant_id}"
+    Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
+
+    ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
+    dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz" ## bad path generalization
+    bvalfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bval"
+    bvecfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bvec"
+    anatfile = f"{bids_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-1_T1w.nii.gz"
+    #rpe_file = too hard to parse for now
+
+    ## just make copies - delete on success?
+    shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
+    shutil.copyfile(bvalfile, tractoflow_work_dir + '/bval')
+    shutil.copyfile(bvecfile, tractoflow_work_dir + '/bvec')
+    shutil.copyfile(anatfile, tractoflow_work_dir + '/t1.nii.gz')
+    #shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
+    
+    ## generalize as inputs - eventually
     dti_shells='"0 1000"'
     fodf_shells='"0 1000"'
     sh_order=6
     profile="fully_reproducible"
     ncore=4
 
-    # path to pipelines - extract / pass from global_config.json or run()?
-    MRPROC_PIPE=DATASET_ROOT + '/workflow/proc_pipe/tractoflow'
-    
+    # path to pipelines - how is this supposed to be inferred if global_config isn't passed?
+    MRPROC_PIPE='/data/origami/bcmcpher/mrproc-dev/workflow/proc_pipe/tractoflow'
+    log_dir='/data/origami/bcmcpher/mrproc-dev/scratch/logs'
+
+    # this is fixed for every run - nextflow is a dependency b/c it's too hard to package
+    # this reality prompts the planned migration to micapipe
     NEXTFLOW_CMD=f"nextflow run {MRPROC_PIPE}/tractoflow/main.nf"
     
     # Compose tractoflow command
-    TRACTOFLOW_CMD=f" --bids {bids_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti-shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_CONTAINER} --processes {ncore} -with-trace {log_dir}/{participant_id}_ses-{session_id}_nf-tract.txt -with-report {log_dir}/{participant_id}_ses-{session_id}_nf-report.html -resume"
+    TRACTOFLOW_CMD=f" --input {tractoflow_work_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti_shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_CONTAINER} --processes {ncore} -with-trace {log_dir}/{participant_id}_ses-{session_id}_nf-tract.txt -with-report {log_dir}/{participant_id}_ses-{session_id}_nf-report.html -resume"
     
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
-    #CMD = CMD_ARGS.split()
-    CMD = CMD_ARGS
-
-    ## "working" call?
-    #nextflow run /data/origami/bcmcpher/git/mr_proc/workflow/proc_pipe/tractoflow/tractoflow/main.nf --bids /data/origami/bcmcpher/qpn-dev/bids/ --output_dir /data/origami/bcmcpher/test/tractoflow/v2.2.1/output/ participant --participant-label sub-MNI0056D864854 --dti_shells "0 1000" --fodf_shells "0 1000" --sh_order 6 --profile fully_reproducible -with-singularity /data/origami/container_store/mr_proc/tractoflow_2.2.1.sif --processes 4 -with-trace /data/origami/bcmcpher/qpn-dev/scratch/logs/sub-MNI0056D864854_ses-01_nf-tract.txt -with-report /data/origami/bcmcpher/qpn-dev/scratch/logs/sub-MNI0056D864854_ses-01_nf-report.html -resume
+    CMD = CMD_ARGS.split()
+    #CMD = CMD_ARGS
     
     logger.info(f"Running TractoFlow...")
     logger.info("-"*50)
@@ -52,13 +71,12 @@ def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULA
     logger.info("-"*50)
     try:
         tractoflow_proc = subprocess.run(CMD)
-        logger.info(f"Successfully completed TractoFlow run for participant: {participant_id}")
+        logger.info(f"Successfully launched TractoFlow run for participant: {participant_id}")
         logger.info("-"*75)
     except Exception as e:
         logger.error(f"TractoFlow run failed with exceptions: {e}")
         logger.info("-"*75)
-    logger.info("")
-
+    
 def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
     """ Runs tractoflow command
     """
@@ -92,12 +110,12 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
 
     # launch tractoflow
-    run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, global_configs, logger)
+    run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, logger)
 
 if __name__ == '__main__':
     # argparse
     HELPTEXT = """
-    Script to run tractoflow 
+    Script to run TractoFlow 
     """
 
     parser = argparse.ArgumentParser(description=HELPTEXT)
