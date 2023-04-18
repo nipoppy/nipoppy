@@ -15,9 +15,11 @@ CWD = os.path.dirname(os.path.abspath(fname))
 
 MEM_MB = 4000
 
-def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, log_dir, logger):
+def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, log_dir, global_configs, logger):
     """ Launch fmriprep container"""
 
+    DATASET_ROOT = global_configs["DATASET_ROOT"]
+    
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
     Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
@@ -30,7 +32,7 @@ def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULA
     ncore=4
 
     # path to pipelines - extract / pass from global_config.json or run()?
-    MRPROC_PIPE='/data/origami/bcmcpher/git/mr_proc/workflow/proc_pipe/tractoflow'
+    MRPROC_PIPE=DATASET_ROOT + '/workflow/proc_pipe/tractoflow'
     
     NEXTFLOW_CMD=f"nextflow run {MRPROC_PIPE}/tractoflow/main.nf"
     
@@ -90,7 +92,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
 
     # launch tractoflow
-    run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, log_dir, logger)
+    run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, global_configs, logger)
 
 if __name__ == '__main__':
     # argparse
