@@ -77,7 +77,7 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     shutil.copyfile(bvalfile, tractoflow_subj_dir + '/bval')
     shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
     shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
-    #shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
+    #shutil.copyfile(rpe_file, tractoflow_work_dir + '/rev_b0.nii.gz')
 
     ## cd to tractoflow_work_dir to control where the "work" folder ends up
     os.chdir(tractoflow_work_dir)
@@ -104,12 +104,12 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
     CMD = CMD_ARGS.split()
 
-    ## log what is executed
+    ## log what is called
     logger.info(f"Running TractoFlow...")
     logger.info("-"*50)
-    logger.info(f"CMD:\n{CMD}")
+    logger.info(f"CMD:\n{CMD_ARGS}")
     logger.info("-"*50)
-    logger.info(f"Successfully launched TractoFlow run for participant: {participant_id}")
+    logger.info(f"Calling TractoFlow for participant: {participant_id}")
 
     ## there's probably a better way to try / catch the .run() call here
     try:
