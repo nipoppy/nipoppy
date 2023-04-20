@@ -28,28 +28,28 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}{TRACTOFLOW_CONTAINER}"
     LOGDIR = f"{DATASET_ROOT}/scratch/logs"
 
+    ## initialize the logger
     if logger is None:
         log_file = f"{LOGDIR}/{participant_id}_ses-{session_id}_tractoflow.log"
         logger = my_logger.get_logger(log_file)
 
+    ## log the info
     logger.info("-"*75)
     logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
     logger.info(f"Using participant_id: {participant_id}, session_id: {session_id}")
 
+    ## define default output_dir if it's not overwrote
     if output_dir is None:
         output_dir = f"{DATASET_ROOT}/derivatives/"
 
+    ## build paths to files
     bids_dir = f"{DATASET_ROOT}/bids/"
     tractoflow_dir = f"{output_dir}/tractoflow/v{TRACTOFLOW_VERSION}"
 
-    # Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
+    ## Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
     if use_bids_filter:
         logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
-
-    # launch tractoflow
-    #run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, logger)
-    #run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, logger)
 
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
@@ -57,10 +57,12 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
     ## build paths for working inputs
-    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}-wd"
-    tractoflow_subj_dir = f"{tractoflow_work_dir}/{participant_id}"
+    tractoflow_input_dir = f"{tractoflow_dir}/input"
+    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}"
+    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}"
     Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
-
+    Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
+    
     ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
     ## and uses a unique filter that isn't easy / worth parsing
     dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz"  ## bad path generalization for now.
@@ -76,6 +78,10 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
     shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
     #shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
+
+    ## cd to tractoflow_work_dir to control where the "work" folder ends up
+    os.chdir(tractoflow_work_dir)
+    logger.info(f"Setting working directory to: {tractoflow_work_dir}")
     
     ## generalize as inputs - eventually
     dti_shells='"0 1000"'
@@ -84,15 +90,15 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     profile="fully_reproducible"
     ncore=4
 
-    # path to pipelines - how is this supposed to be inferred if global_config isn't passed?
+    ## path to pipelines
     TRACTOFLOW_PIPE=f'{DATASET_ROOT}/workflow/proc_pipe/tractoflow'
     
-    # this is fixed for every run - nextflow is a dependency b/c it's too hard to package
-    # this reality prompts the planned migration to micapipe
+    ## this is fixed for every run - nextflow is a dependency b/c it's too hard to package in the containers that will call this
+    ## this reality prompts the planned migration to micapipe - or anything else, honestly
     NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf"
     
-    # Compose tractoflow command
-    TRACTOFLOW_CMD=f" --input {tractoflow_work_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti_shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_CONTAINER} --processes {ncore} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html -resume"
+    ## compose tractoflow arguments
+    TRACTOFLOW_CMD=f" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti_shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_TRACTOFLOW} --processes {ncore} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html -resume"
 
     ## build command line call
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
@@ -115,7 +121,7 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
 
 
 if __name__ == '__main__':
-    # argparse
+    ## argparse
     HELPTEXT = """
     Script to run TractoFlow 
     """
