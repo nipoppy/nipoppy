@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import workflow.logger as my_logger
 import shutil
+import re
 
 #Author: bcmcpher
 #Date: 14-Apr-2023 (last update)
@@ -40,10 +41,10 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
 
     ## define default output_dir if it's not overwrote
     if output_dir is None:
-        output_dir = f"{DATASET_ROOT}/derivatives/"
+        output_dir = f"{DATASET_ROOT}/derivatives"
 
     ## build paths to files
-    bids_dir = f"{DATASET_ROOT}/bids/"
+    bids_dir = f"{DATASET_ROOT}/bids"
     tractoflow_dir = f"{output_dir}/tractoflow/v{TRACTOFLOW_VERSION}"
 
     ## Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
@@ -79,13 +80,16 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
     #shutil.copyfile(rpe_file, tractoflow_work_dir + '/rev_b0.nii.gz')
 
-    ## cd to tractoflow_work_dir to control where the "work" folder ends up
-    os.chdir(tractoflow_work_dir)
-    logger.info(f"Setting working directory to: {tractoflow_work_dir}")
+    # ## cd to tractoflow_work_dir to control where the "work" folder ends up
+    # os.chdir(tractoflow_work_dir)
+    # logger.info(f"Setting working directory to: {tractoflow_work_dir}")
+
+    ## drop sub- from participant ID
+    tf_id = re.sub('sub-', '', participant_id)
     
     ## generalize as inputs - eventually
-    dti_shells='"0 1000"'
-    fodf_shells='"0 1000"'
+    dti_shells="0 1000"
+    fodf_shells="0 1000"
     sh_order=6
     profile="fully_reproducible"
     ncore=4
@@ -98,8 +102,12 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf"
     
     ## compose tractoflow arguments
-    TRACTOFLOW_CMD=f" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti_shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_TRACTOFLOW} --processes {ncore} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html -resume"
+    TRACTOFLOW_CMD=f" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} -work-dir {tractoflow_work_dir} --participant-label \"{tf_id}\" --dti_shells \"{dti_shells}\" --fodf_shells \"{fodf_shells}\" --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_TRACTOFLOW} --processes {ncore} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
 
+    ## add resume option if working directory is not empty
+    if not len(os.listdir(tractoflow_work_dir)) == 0:
+        TRACTOFLOW_CMD = TRACTOFLOW_CMD + " -resume"
+    
     ## build command line call
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
     CMD = CMD_ARGS.split()
