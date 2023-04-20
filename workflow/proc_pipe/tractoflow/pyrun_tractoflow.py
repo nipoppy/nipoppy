@@ -85,13 +85,13 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     # logger.info(f"Setting working directory to: {tractoflow_work_dir}")
 
     ## drop sub- from participant ID
-    tf_id = re.sub('sub-', '', participant_id)
+    tf_id = re.sub("sub-", "", participant_id)
     
     ## generalize as inputs - eventually
-    dti_shells="0 1000"
-    fodf_shells="0 1000"
+    dti_shells=1000
+    fodf_shells=1000
     sh_order=6
-    profile="fully_reproducible"
+    profile='fully_reproducible'
     ncore=4
 
     ## path to pipelines
@@ -99,18 +99,24 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     
     ## this is fixed for every run - nextflow is a dependency b/c it's too hard to package in the containers that will call this
     ## this reality prompts the planned migration to micapipe - or anything else, honestly
-    NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf"
+    NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf -with-singularity {SINGULARITY_TRACTOFLOW} -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
     
     ## compose tractoflow arguments
-    TRACTOFLOW_CMD=f" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} -work-dir {tractoflow_work_dir} --participant-label \"{tf_id}\" --dti_shells \"{dti_shells}\" --fodf_shells \"{fodf_shells}\" --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_TRACTOFLOW} --processes {ncore} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
+    TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_shells}" --fodf_shells "0 {fodf_shells}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
+    ## I have no idea why the inputs have to be parsed this way. The tractoflow arguments can be printed multiple ways that appear consistent with the documentation.
+    ## However, .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
+    ## Obviously, this breaks the calls that nextflow tries to make at somepoint (typically around Normalize_DWI) because half the command becomes an unfinished text field from the mysteriously added quotes.
+    ## I don't know if the problem is python printing unhelpful/inaccurate text to the user or if nextflow can't parse input text correctly.
+    
     ## add resume option if working directory is not empty
     if not len(os.listdir(tractoflow_work_dir)) == 0:
         TRACTOFLOW_CMD = TRACTOFLOW_CMD + " -resume"
     
     ## build command line call
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
-    CMD = CMD_ARGS.split()
+    CMD=CMD_ARGS
+    #CMD = CMD_ARGS.split()
 
     ## log what is called
     logger.info(f"Running TractoFlow...")
@@ -121,7 +127,7 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
 
     ## there's probably a better way to try / catch the .run() call here
     try:
-        tractoflow_proc = subprocess.run(CMD)
+        tractoflow_proc = subprocess.run(CMD, shell=True)
         logger.info("-"*75)
     except Exception as e:
         logger.error(f"TractoFlow run failed with exceptions: {e}")
