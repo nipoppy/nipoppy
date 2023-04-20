@@ -14,84 +14,22 @@ CWD = os.path.dirname(os.path.abspath(fname))
 # env vars relative to the container.
 
 MEM_MB = 4000
-
-def run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, logger):
-    """ Launch TractoFlow through Nextflow process
+    
+def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
+    """ Runs TractoFlow command with Nextflow
     """
-    
-    ## build paths for outputs
-    tractoflow_out_dir = f"{tractoflow_dir}/output/"
-    tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
-    Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
-    ## build paths for working inputs
-    tractoflow_work_dir = f"{tractoflow_dir}/work"
-    tractoflow_subj_dir = f"{tractoflow_work_dir}/{participant_id}"
-    Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
-
-    ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
-    dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz" ## bad path generalization
-    bvalfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bval"
-    bvecfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bvec"
-    anatfile = f"{bids_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-1_T1w.nii.gz"
-    #rpe_file = too hard to parse for now
-
-    ## just make copies - delete on success?
-    shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
-    shutil.copyfile(bvalfile, tractoflow_work_dir + '/bval')
-    shutil.copyfile(bvecfile, tractoflow_work_dir + '/bvec')
-    shutil.copyfile(anatfile, tractoflow_work_dir + '/t1.nii.gz')
-    #shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
-    
-    ## generalize as inputs - eventually
-    dti_shells='"0 1000"'
-    fodf_shells='"0 1000"'
-    sh_order=6
-    profile="fully_reproducible"
-    ncore=4
-
-    # path to pipelines - how is this supposed to be inferred if global_config isn't passed?
-    MRPROC_PIPE='/data/origami/bcmcpher/mrproc-dev/workflow/proc_pipe/tractoflow'
-    log_dir='/data/origami/bcmcpher/mrproc-dev/scratch/logs'
-
-    # this is fixed for every run - nextflow is a dependency b/c it's too hard to package
-    # this reality prompts the planned migration to micapipe
-    NEXTFLOW_CMD=f"nextflow run {MRPROC_PIPE}/tractoflow/main.nf"
-    
-    # Compose tractoflow command
-    TRACTOFLOW_CMD=f" --input {tractoflow_work_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti_shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_CONTAINER} --processes {ncore} -with-trace {log_dir}/{participant_id}_ses-{session_id}_nf-tract.txt -with-report {log_dir}/{participant_id}_ses-{session_id}_nf-report.html -resume"
-    
-    CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
-    CMD = CMD_ARGS.split()
-    #CMD = CMD_ARGS
-    
-    logger.info(f"Running TractoFlow...")
-    logger.info("-"*50)
-    logger.info(f"CMD:\n{CMD}")
-    logger.info("-"*50)
-    try:
-        tractoflow_proc = subprocess.run(CMD)
-        logger.info(f"Successfully launched TractoFlow run for participant: {participant_id}")
-        logger.info("-"*75)
-    except Exception as e:
-        logger.error(f"TractoFlow run failed with exceptions: {e}")
-        logger.info("-"*75)
-    
-def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
-    """ Runs tractoflow command
-    """
+    ## extract the config options
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     TRACTOFLOW_CONTAINER = global_configs["PROC_PIPELINES"]["tractoflow"]["CONTAINER"]
     TRACTOFLOW_VERSION = global_configs["PROC_PIPELINES"]["tractoflow"]["VERSION"]
     TRACTOFLOW_CONTAINER = TRACTOFLOW_CONTAINER.format(TRACTOFLOW_VERSION)
-
     SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}{TRACTOFLOW_CONTAINER}"
-
-    log_dir = f"{DATASET_ROOT}/scratch/logs"
+    LOGDIR = f"{DATASET_ROOT}/scratch/logs"
 
     if logger is None:
-        log_file = f"{log_dir}/{participant_id}_ses-{session_id}_tractoflow.log"
+        log_file = f"{LOGDIR}/{participant_id}_ses-{session_id}_tractoflow.log"
         logger = my_logger.get_logger(log_file)
 
     logger.info("-"*75)
@@ -110,7 +48,71 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
 
     # launch tractoflow
-    run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, logger)
+    #run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_TRACTOFLOW, use_bids_filter, logger)
+    #run_tractoflow(participant_id, session_id, bids_dir, tractoflow_dir, SINGULARITY_CONTAINER, use_bids_filter, logger)
+
+    ## build paths for outputs
+    tractoflow_out_dir = f"{tractoflow_dir}/output/"
+    tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
+    Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
+
+    ## build paths for working inputs
+    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}-wd"
+    tractoflow_subj_dir = f"{tractoflow_work_dir}/{participant_id}"
+    Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
+
+    ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
+    ## and uses a unique filter that isn't easy / worth parsing
+    dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz"  ## bad path generalization for now.
+    bvalfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bval"    ## not trivial to parse and build
+    bvecfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bvec"    ## the right names, esp. if bids
+    anatfile = f"{bids_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-1_T1w.nii.gz" ## parsing isn't more helpful
+    #rpe_file = too hard to parse for now - too many valid names are possible for input.
+    ## will need to extract and average b0s after verifying the rpe is actually reversed by checking sidecar.
+
+    ## just make copies - delete on success?
+    shutil.copyfile(dmrifile, tractoflow_subj_dir + '/dwi.nii.gz')
+    shutil.copyfile(bvalfile, tractoflow_subj_dir + '/bval')
+    shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
+    shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
+    #shutil.copyfile(dmrifile, tractoflow_work_dir + '/dwi.nii.gz')
+    
+    ## generalize as inputs - eventually
+    dti_shells='"0 1000"'
+    fodf_shells='"0 1000"'
+    sh_order=6
+    profile="fully_reproducible"
+    ncore=4
+
+    # path to pipelines - how is this supposed to be inferred if global_config isn't passed?
+    TRACTOFLOW_PIPE=f'{DATASET_ROOT}/workflow/proc_pipe/tractoflow'
+    
+    # this is fixed for every run - nextflow is a dependency b/c it's too hard to package
+    # this reality prompts the planned migration to micapipe
+    NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf"
+    
+    # Compose tractoflow command
+    TRACTOFLOW_CMD=f" --input {tractoflow_work_dir} --output_dir {tractoflow_out_dir} participant --participant-label {participant_id} --dti_shells {dti_shells} --fodf_shells {fodf_shells} --sh_order {sh_order} --profile {profile} -with-singularity {SINGULARITY_CONTAINER} --processes {ncore} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html -resume"
+
+    ## build command line call
+    CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
+    CMD = CMD_ARGS.split()
+
+    ## log what is executed
+    logger.info(f"Running TractoFlow...")
+    logger.info("-"*50)
+    logger.info(f"CMD:\n{CMD}")
+    logger.info("-"*50)
+    logger.info(f"Successfully launched TractoFlow run for participant: {participant_id}")
+
+    ## there's probably a better way to try / catch the .run() call here
+    try:
+        tractoflow_proc = subprocess.run(CMD)
+        logger.info("-"*75)
+    except Exception as e:
+        logger.error(f"TractoFlow run failed with exceptions: {e}")
+        logger.info("-"*75)
+
 
 if __name__ == '__main__':
     # argparse
@@ -118,24 +120,25 @@ if __name__ == '__main__':
     Script to run TractoFlow 
     """
 
+    ## parse intputs
     parser = argparse.ArgumentParser(description=HELPTEXT)
-
     parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset', required=True)
     parser.add_argument('--participant_id', type=str, help='participant id', required=True)
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--output_dir', type=str, default=None, help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
     parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
 
+    ## extract arguments
     args = parser.parse_args()
-
     global_config_file = args.global_config
     participant_id = args.participant_id
     session_id = args.session_id
     output_dir = args.output_dir # Needed on BIC (QPN) due to weird permissions issues with mkdir
     use_bids_filter = args.use_bids_filter
 
-    # Read global configs
+    ## Read global config
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    run(participant_id, global_configs, session_id, output_dir, use_bids_filter)
+    ## make valid tractoflow call based on inputs    
+    run_tractoflow(participant_id, global_configs, session_id, output_dir, use_bids_filter)
