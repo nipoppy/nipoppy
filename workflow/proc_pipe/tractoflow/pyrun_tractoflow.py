@@ -104,10 +104,10 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     ## compose tractoflow arguments
     TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_shells}" --fodf_shells "0 {fodf_shells}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
-    ## I have no idea why the inputs have to be parsed this way. The tractoflow arguments can be printed multiple ways that appear consistent with the documentation.
-    ## However, .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
-    ## Obviously, this breaks the calls that nextflow tries to make at somepoint (typically around Normalize_DWI) because half the command becomes an unfinished text field from the mysteriously added quotes.
-    ## I don't know if the problem is python printing unhelpful/inaccurate text to the user or if nextflow can't parse input text correctly.
+    ## I have no idea why the inputs have to be parsed this way. The TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
+    ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
+    ## Obviously, this breaks the calls that nextflow tries to make at somepoint (typically around Normalize_DWI) because half the command becomes an unfinished text block from the mysteriously added quotes.
+    ## I don't know if the problem is python printing unhelpful/inaccurate text to the user or if nextflow can't parse its own input arguments correctly.
     
     ## add resume option if working directory is not empty
     if not len(os.listdir(tractoflow_work_dir)) == 0:

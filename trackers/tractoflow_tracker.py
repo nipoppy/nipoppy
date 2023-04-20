@@ -12,8 +12,8 @@ default_tpl_space = "MNI152NLin2009cAsym" # Allowing res-1 or res-2
 
 # Sample output files
 # sub-MNI0056D864854_ses-01_task-rest_run-1_space-MNI152NLin2009cAsym_res-2_desc-brain_mask.json
-#sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-preproc_bold.nii.gz
-#sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-brain_mask.json
+# sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-preproc_bold.nii.gz
+# sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-brain_mask.json
 
 anat_files_dict = {
     "brain_mask.json" : "desc-brain_mask.json",
@@ -33,21 +33,29 @@ func_files_dict = {
 }
 
 def check_output(subject_dir, file_check_dict, session_id, run_id, modality, task=None):
+
+    
     session = f"ses-{session_id}"
     run = f"run-{run_id}"
     participant_id = os.path.basename(subject_dir)
     status_msg = SUCCESS
+
     for k,v in file_check_dict.items():
+
         if status_msg == SUCCESS:    
             default_tpl_status = []
+
             for file_suffix in [f"space-{default_tpl_space}_res-2_{v}",f"space-{default_tpl_space}_res-1_{v}"]:
+
                 if modality == "anat":
+
                     if run_id == None:
                         filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{file_suffix}")
                     else:
                         filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{run}_{file_suffix}")
 
                 elif modality == "func":
+
                     if run_id == None:
                         filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{file_suffix}")
                     else:
