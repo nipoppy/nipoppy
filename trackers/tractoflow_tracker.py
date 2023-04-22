@@ -1,124 +1,261 @@
 from pathlib import Path
 import os
+import itertools
 
-# Status flags
+##
+## Status flags
+##
+
 SUCCESS="SUCCESS"
 FAIL="FAIL"
 INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
-# Globals
-default_tpl_space = "MNI152NLin2009cAsym" # Allowing res-1 or res-2 
+##
+## dictionary for all output stages / file stems from TractoFlow in execution order
+##
 
-# Sample output files
-# sub-MNI0056D864854_ses-01_task-rest_run-1_space-MNI152NLin2009cAsym_res-2_desc-brain_mask.json
-# sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-preproc_bold.nii.gz
-# sub-MNI0056D864854_ses-01_task-rest_run-1_space-T1w_desc-brain_mask.json
-
-anat_files_dict = {
-    "brain_mask.json" : "desc-brain_mask.json",
-    "brain_mask.nii" : "desc-brain_mask.nii.gz",
-    "preproc_T1w.json": "desc-preproc_T1w.json",
-    "preproc_T1w.nii": "desc-preproc_T1w.nii.gz",
-    "dseg.nii": "dseg.nii.gz",
-    "CSF_probseg": "label-CSF_probseg.nii.gz",
-    "GM_probseg": "label-GM_probseg.nii.gz",
-    "WM_probseg": "label-WM_probseg.nii.gz"
-}
-func_files_dict = {
-    "brain_mask.json" : "desc-brain_mask.json",
-    "brain_mask.nii" : "desc-brain_mask.nii.gz",
-    "preproc_T1w.json": "desc-preproc_bold.json",
-    "preproc_T1w.nii": "desc-preproc_bold.nii.gz",
+TractoFlow_Stages = {
+    "All": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI', 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues', 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF', 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking', 'Local_Tracking_Mask', 'Local_Seeding_mask', 'Local_Tracking' ],
+    "DWIPreproc": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
+    "DWIPreprocEddyTopup": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup' ],
+    "DWIPreprocResampled":[ 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
+    "AnatPreproc": [ 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues' ],
+    "AnatResample": [ 'Denoise_T1', 'N4_T1', 'Resample_T1' ],
+    "AnatSegment": [ 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues' ],
+    "DWIModel": [ 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF' ],
+    "DWITensor": [ 'Extract_DTI_Shell', 'DTI_Metrics' ],
+    "DWIFODF": [ 'Extract_FODF_Shell', 'FODF_Metrics', 'Compute_FRF' ],
+    "Tracking": [ 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking', 'Local_Tracking_Mask', 'Local_Seeding_mask', 'Local_Tracking' ]
 }
 
-def check_output(subject_dir, file_check_dict, session_id, run_id, modality, task=None):
+TractoFlow_Procs = { 
+    "Bet_Prelim_DWI": [ '__b0_bet_mask_dilated.nii.gz', '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz' ],
+    "Denoise_DWI":  [ '__dwi_denoised.nii.gz' ],
+    "Eddy":  [ '__bval_eddy', '__dwi_corrected.nii.gz', '__dwi_eddy_corrected.bvec' ],
+    "Topup":  [ '__?' ],
+    "Eddy_Topup":  [ '__?' ],
+    "Bet_DWI":  [ '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz', '__dwi_bet.nii.gz' ],
+    "N4_DWI":  [ '__dwi_n4.nii.gz' ],
+    "Crop_DWI":  [ '__b0_cropped.nii.gz', '__b0_mask_cropped.nii.gz', '__dwi_cropped.nii.gz' ],
+    "Normalize_DWI":  [ '__dwi_normalized.nii.gz', '_fa_wm_mask.nii.gz' ],
+    "Extract_B0":  [ '__b0.nii.gz' ],
+    "Resample_B0":  [ '__b0_mask_resampled.nii.gz', '__b0_resampled.nii.gz' ],
+    "Resample_DWI":  [ '__dwi_resampled.nii.gz' ],
+    "Extract_DTI_Shell":  [ '__bval_dti', '__bvec_dti', '__dwi_dti.nii.gz' ],
+    "Extract_FODF_Shell":  [ '__bval_fodf', '__bvec_fodf', '__dwi_fodf.nii.gz' ],
+    "DTI_Metrics":  [ '__ad.nii.gz', '__evecs.nii.gz', '__ga.nii.gz', '__pulsation_std_dwi.nii.gz', '__residual_q1_residuals.npy', '__tensor.nii.gz', '__evals_e1.nii.gz', '__evecs_v1.nii.gz', '__md.nii.gz', '__rd.nii.gz', '__residual_q3_residuals.npy', '__evals_e2.nii.gz', '__evecs_v2.nii.gz', '__mode.nii.gz', '__residual_iqr_residuals.npy', '__residual_residuals_stats.png', '__evals_e3.nii.gz', '__evecs_v3.nii.gz', '__nonphysical.nii.gz', '__residual_mean_residuals.npy', '__residual_std_residuals.npy', '__evals.nii.gz', '__fa.nii.gz', '__norm.nii.gz', '__residual.nii.gz', '__rgb.nii.gz' ],
+    "FODF_Metrics":  [ '__afd_max.nii.gz', '__afd_sum.nii.gz', '__afd_total.nii.gz', '__fodf.nii.gz', '__nufo.nii.gz', '__peak_indices.nii.gz', '__peaks.nii.gz' ],
+    "Compute_FRF":  [ '__frf.txt' ],
+    "Denoise_T1":  [ '__t1_denoised.nii.gz' ],
+    "N4_T1":  [ '__t1_n4.nii.gz' ],
+    "Resample_T1":  [ '__t1_resampled.nii.gz' ],
+    "Bet_T1":  [ '__t1_bet_mask.nii.gz', '__t1_bet.nii.gz' ],
+    "Crop_T1":  [ '__t1_bet_cropped.nii.gz', '__t1_bet_mask_cropped.nii.gz' ],
+    "Register_T1":  [ '__output0GenericAffine.mat', '__output1InverseWarp.nii.gz', '__output1Warp.nii.gz', '__t1_mask_warped.nii.gz', '__t1_warped.nii.gz' ],
+    "Segment_Tissues":  [ '__map_csf.nii.gz', '__map_gm.nii.gz', '__map_wm.nii.gz', '__mask_csf.nii.gz', '__mask_gm.nii.gz', '__mask_wm.nii.gz' ],
+    "PFT_Tracking_Maps":  [ '__interface.nii.gz', '__map_exclude.nii.gz', '__map_include.nii.gz' ],
+    "PFT_Seeding_Mask": [ '__pft_seeding_mask.nii.gz' ],
+    "PFT_Tracking": [ '__pft_wholebrain_tracking.trk' ],
+    "Local_Tracking_Mask": [ '__?' ],
+    "Local_Seeding_Mask": [ '__?' ],
+    "Local_Tracking": [ '__?' ]
+}
 
+##
+## define functions to check if the files exist / stages complete
+##
+
+def check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='All'):    
+    """ docstring here
+    """
+    ## build subject info
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+
+    ## default to incomplete
+    status_msg = UNAVAILABLE
+
+    ## turn off local tracking - configure as an optional step?
+    doLocalTracking = False
+
+    ## the valid options for task
+    if not (task in list(stage_dict.keys())):
+        raise ValueError("The requested report is not recognized.")
+
+    ## pull the processes to check files for
+    procs = stage_dict[task]
     
+    ## check if Topup output exists - if it does, drop Eddy, otherwise drop Topup/Eddy_Topup
+    if os.path.exists(subject_dir + '/Topup'):
+        procs.remove('Eddy')
+    else:
+        procs.remove('Topup')
+        procs.remove('Eddy_Topup')
+
+    ## drop local tracking
+    if not doLocalTracking:
+        procs.remove('Local_Tracking_Mask')
+        procs.remove('Local_Seeding_Mask')
+        procs.remove('Local_Tracking')
+
+
+    ## BUILD THE FILE PATHS BASED ON STAGES / FILE STEPS PARSED
+    
+    # ## build the filepaths to evaluate
+    # files = [ file_check_dict[proc] for proc in procs ]
+    
+    # ## build the file names of all possible inputs
+    # subj_dict = dict()
+    # for key, value in file_check_dict.items():
+    #     subj_dict[key] = [ os.path.join(participant_dir, key, participant_id + stem) for stem in value ]
+
+    ## END UP WITH FULL PATH TO ALL FILES THAT SHOULD EXIST PER DICTIONARIES
+    files = list(itertools.chain.from_iterable(lfile))
+
+    ## fill in possible status files
+    if any(os.path.exists(files)):
+        status_msg = INCOMPLETE
+    if all(os.path.exists(files)):
+        status_msg = COMPLETE
+    if not os.path.exists(subject_dir):
+        status_msg = UNAVAILABLE
+    else:
+        status_msg = FAIL
+    
+    ## return status
+    return status_msg
+
+def check_dwiPreproc(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task=None):
+    """ docstring here
+    """
     session = f"ses-{session_id}"
     run = f"run-{run_id}"
     participant_id = os.path.basename(subject_dir)
     status_msg = SUCCESS
-
-    for k,v in file_check_dict.items():
-
-        if status_msg == SUCCESS:    
-            default_tpl_status = []
-
-            for file_suffix in [f"space-{default_tpl_space}_res-2_{v}",f"space-{default_tpl_space}_res-1_{v}"]:
-
-                if modality == "anat":
-
-                    if run_id == None:
-                        filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{file_suffix}")
-                    else:
-                        filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{run}_{file_suffix}")
-
-                elif modality == "func":
-
-                    if run_id == None:
-                        filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{file_suffix}")
-                    else:
-                        filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{run}_{file_suffix}")
-
-                else:
-                    print(f"Unknown modality: {modality}")
-
-                filepath_status = Path.is_file(filepath)
-                default_tpl_status.append(filepath_status)
-
-            if not any(default_tpl_status):
-                status_msg = FAIL                    
-                break
-        else:
-            break
-
+    ## determine what files exist
     return status_msg
 
-def check_anat_output(subject_dir, session_id, run_id):
-    """ Check output paths for anat stream
+def check_anatPreproc(subject_dir, file_check_dict=TractoFlow_Outs, session_id, run_id, task=None):
+    """ docstring here
     """
-    modality = "anat"
-    status_msg = check_output(subject_dir, anat_files_dict, session_id, run_id, modality)
-
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
     return status_msg
 
-def check_func_output(subject_dir, session_id, run_id, task="task-rest"):
-    """ Check output paths for func stream
+def check_dwiModel(subject_dir, file_check_dict=TractoFlow_Outs, session_id, run_id, task=None):
+    """ docstring here
     """
-    modality = "func"
-    status_msg = check_output(subject_dir, func_files_dict, session_id, run_id, modality, task)
-
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
     return status_msg
 
-def check_MNI152NLin2009cSym(subject_dir, session_id, run_id):
-    """ Checks availability of MNI152NLin2009cSym space images
+def check_pftTracking
+    """ docstring here
     """
-    status_msg = UNAVAILABLE
-    return status_msg
-    
-def check_MNI152NLin6Sym(subject_dir, session_id, run_id):
-    """ Checks availability of MNI152NLin6Sym space images
-    """
-    status_msg = UNAVAILABLE
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
     return status_msg
 
-def check_MNI152Lin(subject_dir, session_id, run_id):
-    """ Checks availability of MNI152Lin space images
+def check_dwiPreprocEddyTopup(subject_dir, file_check_dict=DWI_Preproc, session_id, run_id, task=None):
+    """ docstring here
     """
-    status_msg = UNAVAILABLE
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
     return status_msg
+
+def check_dwiNormalize(subject_dir, file_check_dict=DWI_Preproc, session_id, run_id, task=None):
+    """ docstring here
+    """
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
+    return status_msg
+
+def check_anatReorient(subject_dir, file_check_dict=Anat_Preproc, session_id, run_id, task=None):
+    """ docstring here
+    """
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
+    return status_msg
+
+def check_anatTracking(subject_dir, file_check_dict=Anat_Preproc, session_id, run_id, task=None):
+    """ docstring here
+    """
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
+    return status_msg
+
+def check_dwiModelTensor(subject_dir, file_check_dict=DWI_Model, session_id, run_id, task=None):
+    """ docstring here
+    """
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
+    return status_msg
+
+def check_dwiModelFODF(subject_dir, file_check_dict=DWI_Model, session_id, run_id, task=None):
+    """ docstring here
+    """
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
+    return status_msg
+
+def check_pftTracking(subject_dir, file_check_dict=PFT_Tracking, session_id, run_id, task=None):
+    """ docstring here
+    """
+    session = f"ses-{session_id}"
+    run = f"run-{run_id}"
+    participant_id = os.path.basename(subject_dir)
+    status_msg = SUCCESS
+    ## determine what files exist
+    return status_msg
+
+##
+## the dictionary to return with the inspected outputs
+##
 
 tracker_configs = {
-    "pipeline_complete": check_anat_output,
-    
+    "pipeline_complete": check_tf_final,    
     "Phase_": {
-            "func": check_func_output
+            "DWI-Preprocessing": check_dwiPreproc,
+            "Anat-Preprocessing": check_anatPreproc,
+            "DWI-ModelFitting": check_dwiModel,
+            "PFT-Tracking": check_pftTracking
             },
-
     "Stage_": {
-            "space-MNI152NLin2009cSym_res-1": check_MNI152NLin2009cSym,
-            "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
-            "space-MNI152Lin_res-1": check_MNI152Lin
+            "DWI-Preproc-EddyTopup": check_dwiPreprocEddyTopup,
+            "DWI-Preproc-Normalize": check_dwiNormalize,
+            "Anat-Preproc-Reorient": check_anatReorient,
+            "Anat-Preproc-Tracking": check_anatTracking,
+            "DWI-ModelFitting-Tensor": check_dwiModelTensor,
+            "DWI-ModelFitting-fODF": check_dwiModelFODF,
+            "PFT-Tracking": check_pftTracking
             }
 }
