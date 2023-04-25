@@ -55,14 +55,19 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
-    Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
+    if not os.path.exists(Path(f"{tractoflow_home_dir}")):
+        Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
     ## build paths for working inputs
     tractoflow_input_dir = f"{tractoflow_dir}/input"
     tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}"
     tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}"
-    Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
-    Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
+
+    if not os.path.exists(Path(f"{tractoflow_subj_dir}")):
+        Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
+
+    if not os.path.exists(Path(f"{tractoflow_work_dir}")):
+        Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
     
     ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
     ## and uses a unique filter that isn't easy / worth parsing
@@ -73,12 +78,14 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     #rpe_file = too hard to parse for now - too many valid names are possible for input.
     ## will need to extract and average b0s after verifying the rpe is actually reversed by checking sidecar.
 
-    ## just make copies - delete on success?
-    shutil.copyfile(dmrifile, tractoflow_subj_dir + '/dwi.nii.gz')
-    shutil.copyfile(bvalfile, tractoflow_subj_dir + '/bval')
-    shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
-    shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
-    #shutil.copyfile(rpe_file, tractoflow_work_dir + '/rev_b0.nii.gz')
+    ## just make copies if they aren't already there - resume option cannot work w/ modfied (recopied) files, so check first
+    ## delete on success?
+    if len(os.listdir(tractoflow_subj_dir)) == 0:
+        shutil.copyfile(dmrifile, tractoflow_subj_dir + '/dwi.nii.gz')
+        shutil.copyfile(bvalfile, tractoflow_subj_dir + '/bval')
+        shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
+        shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
+        #shutil.copyfile(rpe_file, tractoflow_work_dir + '/rev_b0.nii.gz') # figure out how to make this if input doesn't match
 
     # ## cd to tractoflow_work_dir to control where the "work" folder ends up
     # os.chdir(tractoflow_work_dir)

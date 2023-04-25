@@ -100,26 +100,21 @@ def check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=Tr
         procs.remove('Local_Seeding_Mask')
         procs.remove('Local_Tracking')
 
+    ## build the filepaths of the files that are supposed to exist
+    files = []
+    for proc in procs:
+        for stem in file_check_dict[proc]:
+            files.append(os.path.join(subject_dir, proc, participant_id + stem))
 
-    ## BUILD THE FILE PATHS BASED ON STAGES / FILE STEPS PARSED
-    
-    # ## build the filepaths to evaluate
-    # files = [ file_check_dict[proc] for proc in procs ]
-    
-    # ## build the file names of all possible inputs
-    # subj_dict = dict()
-    # for key, value in file_check_dict.items():
-    #     subj_dict[key] = [ os.path.join(participant_dir, key, participant_id + stem) for stem in value ]
-
-    ## END UP WITH FULL PATH TO ALL FILES THAT SHOULD EXIST PER DICTIONARIES
-    files = list(itertools.chain.from_iterable(lfile))
-
+    ## build logical if files exist
+    filesExist = [ os.path.exists(out) for out in files ]
+            
     ## fill in possible status files
-    if any(os.path.exists(files)):
+    if any(filesExist):
         status_msg = INCOMPLETE
-    if all(os.path.exists(files)):
+    elif all(filesExist):
         status_msg = COMPLETE
-    if not os.path.exists(subject_dir):
+    elif not os.path.exists(subject_dir):
         status_msg = UNAVAILABLE
     else:
         status_msg = FAIL
@@ -127,114 +122,70 @@ def check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=Tr
     ## return status
     return status_msg
 
-def check_dwiPreproc(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task=None):
+def check_dwiPreproc(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIPreproc')
     return status_msg
 
-def check_anatPreproc(subject_dir, file_check_dict=TractoFlow_Outs, session_id, run_id, task=None):
+def check_anatPreproc(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='AnatPreproc')
     return status_msg
 
-def check_dwiModel(subject_dir, file_check_dict=TractoFlow_Outs, session_id, run_id, task=None):
+def check_dwiModel(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIModel')
     return status_msg
 
-def check_pftTracking
+def check_pftTracking(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='Tracking')
     return status_msg
 
-def check_dwiPreprocEddyTopup(subject_dir, file_check_dict=DWI_Preproc, session_id, run_id, task=None):
+def check_dwiPreprocEddyTopup(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIPreprocEddyTopup')
     return status_msg
 
-def check_dwiNormalize(subject_dir, file_check_dict=DWI_Preproc, session_id, run_id, task=None):
+def check_dwiNormalize(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIPreprocResampled')
     return status_msg
 
-def check_anatReorient(subject_dir, file_check_dict=Anat_Preproc, session_id, run_id, task=None):
+def check_anatReorient(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='AnatResample')
     return status_msg
 
-def check_anatTracking(subject_dir, file_check_dict=Anat_Preproc, session_id, run_id, task=None):
+def check_anatTracking(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='AnatSegment')
     return status_msg
 
-def check_dwiModelTensor(subject_dir, file_check_dict=DWI_Model, session_id, run_id, task=None):
+def check_dwiModelTensor(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWITensor')
     return status_msg
 
-def check_dwiModelFODF(subject_dir, file_check_dict=DWI_Model, session_id, run_id, task=None):
+def check_dwiModelFODF(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIFODF')
     return status_msg
 
-def check_pftTracking(subject_dir, file_check_dict=PFT_Tracking, session_id, run_id, task=None):
+def check_tf_final(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
     """ docstring here
     """
-    session = f"ses-{session_id}"
-    run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
-    status_msg = SUCCESS
-    ## determine what files exist
+    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='All')
     return status_msg
 
 ##
