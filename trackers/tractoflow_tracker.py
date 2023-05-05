@@ -1,19 +1,13 @@
 from pathlib import Path
 import os
-import itertools
 
-##
 ## Status flags
-##
-
 SUCCESS="SUCCESS"
 FAIL="FAIL"
 INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
-##
 ## dictionary for all output stages / file stems from TractoFlow in execution order
-##
 
 TractoFlow_Stages = {
     "All": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI', 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues', 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF', 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking', 'Local_Tracking_Mask', 'Local_Seeding_mask', 'Local_Tracking' ],
@@ -66,7 +60,7 @@ TractoFlow_Procs = {
 ## define functions to check if the files exist / stages complete
 ##
 
-def check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='All'):    
+def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='All'):    
     """ docstring here
     """
     ## build subject info
@@ -95,10 +89,11 @@ def check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=Tr
         procs.remove('Eddy_Topup')
 
     ## drop local tracking
-    if not doLocalTracking:
-        procs.remove('Local_Tracking_Mask')
-        procs.remove('Local_Seeding_Mask')
-        procs.remove('Local_Tracking')
+    if (task=='Tracking'):
+        if not doLocalTracking:
+            procs.remove('Local_Tracking_Mask')
+            procs.remove('Local_Seeding_Mask')
+            procs.remove('Local_Tracking')
 
     ## build the filepaths of the files that are supposed to exist
     files = []
@@ -122,75 +117,73 @@ def check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=Tr
     ## return status
     return status_msg
 
-def check_dwiPreproc(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_dwiPreproc(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIPreproc')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWIPreproc')
     return status_msg
 
-def check_anatPreproc(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_anatPreproc(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='AnatPreproc')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='AnatPreproc')
     return status_msg
 
-def check_dwiModel(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_dwiModel(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIModel')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWIModel')
     return status_msg
 
-def check_pftTracking(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_pftTracking(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='Tracking')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='Tracking')
     return status_msg
 
-def check_dwiPreprocEddyTopup(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_dwiPreprocEddyTopup(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIPreprocEddyTopup')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWIPreprocEddyTopup')
     return status_msg
 
-def check_dwiNormalize(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_dwiNormalize(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIPreprocResampled')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWIPreprocResampled')
     return status_msg
 
-def check_anatReorient(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_anatReorient(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='AnatResample')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='AnatResample')
     return status_msg
 
-def check_anatTracking(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_anatTracking(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='AnatSegment')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='AnatSegment')
     return status_msg
 
-def check_dwiModelTensor(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_dwiModelTensor(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWITensor')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWITensor')
     return status_msg
 
-def check_dwiModelFODF(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_dwiModelFODF(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='DWIFODF')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWIFODF')
     return status_msg
 
-def check_tf_final(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id):
+def check_tf_final(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ docstring here
     """
-    status_msg = check_tf_output(subject_dir, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, session_id, run_id, task='All')
+    status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='All')
     return status_msg
 
-##
 ## the dictionary to return with the inspected outputs
-##
 
 tracker_configs = {
     "pipeline_complete": check_tf_final,    
@@ -206,7 +199,6 @@ tracker_configs = {
             "Anat-Preproc-Reorient": check_anatReorient,
             "Anat-Preproc-Tracking": check_anatTracking,
             "DWI-ModelFitting-Tensor": check_dwiModelTensor,
-            "DWI-ModelFitting-fODF": check_dwiModelFODF,
-            "PFT-Tracking": check_pftTracking
-            }
+            "DWI-ModelFitting-fODF": check_dwiModelFODF
+    }
 }
