@@ -10,7 +10,7 @@ UNAVAILABLE="UNAVAILABLE"
 ## dictionary for all output stages / file stems from TractoFlow in execution order
 
 TractoFlow_Stages = {
-    "All": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI', 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues', 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF', 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking', 'Local_Tracking_Mask', 'Local_Seeding_mask', 'Local_Tracking' ],
+    "All": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI', 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues', 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF', 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking' ],
     "DWIPreproc": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
     "DWIPreprocEddyTopup": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup' ],
     "DWIPreprocResampled":[ 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
@@ -20,8 +20,10 @@ TractoFlow_Stages = {
     "DWIModel": [ 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF' ],
     "DWITensor": [ 'Extract_DTI_Shell', 'DTI_Metrics' ],
     "DWIFODF": [ 'Extract_FODF_Shell', 'FODF_Metrics', 'Compute_FRF' ],
-    "Tracking": [ 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking', 'Local_Tracking_Mask', 'Local_Seeding_mask', 'Local_Tracking' ]
+    "Tracking": [ 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking' ]
 }
+
+# , 'Local_Tracking_Mask', 'Local_Seeding_mask', 'Local_Tracking'
 
 TractoFlow_Procs = { 
     "Bet_Prelim_DWI": [ '__b0_bet_mask_dilated.nii.gz', '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz' ],
@@ -50,11 +52,13 @@ TractoFlow_Procs = {
     "Segment_Tissues":  [ '__map_csf.nii.gz', '__map_gm.nii.gz', '__map_wm.nii.gz', '__mask_csf.nii.gz', '__mask_gm.nii.gz', '__mask_wm.nii.gz' ],
     "PFT_Tracking_Maps":  [ '__interface.nii.gz', '__map_exclude.nii.gz', '__map_include.nii.gz' ],
     "PFT_Seeding_Mask": [ '__pft_seeding_mask.nii.gz' ],
-    "PFT_Tracking": [ '__pft_wholebrain_tracking.trk' ],
-    "Local_Tracking_Mask": [ '__?' ],
-    "Local_Seeding_Mask": [ '__?' ],
-    "Local_Tracking": [ '__?' ]
+    "PFT_Tracking": [ '__pft_wholebrain_tracking.trk' ]
 }
+
+    # "Local_Tracking_Mask": [ '__?' ],
+    # "Local_Seeding_Mask": [ '__?' ],
+    # "Local_Tracking": [ '__?' ]
+
 
 ##
 ## define functions to check if the files exist / stages complete
@@ -88,12 +92,12 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
         procs.remove('Topup')
         procs.remove('Eddy_Topup')
 
-    ## drop local tracking
-    if (task=='Tracking'):
-        if not doLocalTracking:
-            procs.remove('Local_Tracking_Mask')
-            procs.remove('Local_Seeding_Mask')
-            procs.remove('Local_Tracking')
+    # ## drop local tracking
+    # if (task=='Tracking'):
+    #     if not doLocalTracking:
+    #         procs.remove('Local_Tracking_Mask')
+    #         procs.remove('Local_Seeding_Mask')
+    #         procs.remove('Local_Tracking')
 
     ## build the filepaths of the files that are supposed to exist
     files = []
