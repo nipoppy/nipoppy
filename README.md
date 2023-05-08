@@ -47,10 +47,11 @@ A workflow manager for curating MRI and tabular data and standardized processing
     * Clone `[gh-username]/mr_proc` locally
     * Push to `[gh-username]/mr_proc` on GitHub
     * PR from `[gh-username]/mr_proc` to `neurodatascience/mr_proc`
-    * Fetch newly added upstream (common across dataset) changes from `neurodatascience/mr_proc` to **all** `neurodatascience/mr_proc-[dataset]`
-      * Use GitHub Actions to automatically create PRs in each `neurodatascience/mr_proc-[dataset]` repo (work in progress)
-      * PRs need to be **merged**, without squashing or rebasing
-      
+    * Any time a PR is merged to `neurodatascience/mr_proc:main`, the newly added changes (common across dataset) will propagate automatically to **all** `neurodatascience/mr_proc-[dataset]` forks through a GitHub Actions workflow
+      * In each dataset fork, the `upstream-main` branch is created/updated automatically to match `neurodatascience/mr_proc:main`
+      * A PR labelled "automerge" is automatically created to incorporate changes from `upstream-main` to `main`
+      * "Automerge" PRs are approved and merged automatically if there are no merge conflicts
+        * If merge conflicts exist, they must be resolved manually. Then the PR needs to be **merged**, without squashing or rebasing
   * Changes that apply to individual datasets (e.g. dicom wrangling, statistical analysis) 
     * Clone `neurodatascience/mr_proc-[dataset]` locally
     * Make a new branch when working on a new feature
@@ -58,3 +59,7 @@ A workflow manager for curating MRI and tabular data and standardized processing
       * ***IMPORTANT***: need to be careful with branch names, they should be unique
     * PR from `neurodatascience/mr_proc-[dataset]:[feature_branch]` to `neurodatascience/mr_proc-[dataset]:main`
     * Delete branch when done
+  * Adding a new dataset
+    * Make a new fork of the template repo (`neurodatascience/mr_proc`) called `neurodatascience/mr_proc-[dataset]`
+    * Update the GitHub Actions workflow file to add the new fork to the job matrix
+    * Add dataset-specific files to the fork and begin processing (see the [`mr_proc` documentation](https://www.neurobagel.org/documentation/mr_proc/workflow/dicom_org/) for more information)
