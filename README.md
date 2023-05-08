@@ -22,8 +22,7 @@ A workflow manager for curating MRI and tabular data and standardized processing
 
 ### GH workflow for contributing to template and dataset-specific forks
 
-![mr_proc_gh_contribution_workflow](https://user-images.githubusercontent.com/29051929/236902770-09e6b82e-148e-469f-ab49-ef8d5086d1af.png)
-
+![mr_proc_gh_contribution_workflow](https://user-images.githubusercontent.com/29051929/236941655-f7dcc981-a2f4-4f3f-b1fc-8c2afdfcc8cf.png)
 
 ### Organization
 * Under the `neurodatascience` GitHub organization:
@@ -49,8 +48,8 @@ A workflow manager for curating MRI and tabular data and standardized processing
     * Push to `[gh-username]/mr_proc` on GitHub
     * PR from `[gh-username]/mr_proc` to `neurodatascience/mr_proc`
     * Any time a PR is merged to `neurodatascience/mr_proc:main`, the newly added changes (common across dataset) will propagate automatically to **all** `neurodatascience/mr_proc-[dataset]` forks through a GitHub Actions workflow
-      * In each dataset fork, the `upstream-main` branch is created/updated automatically to match `neurodatascience/mr_proc:main`
-      * A PR labelled "automerge" is automatically created to incorporate changes from `upstream-main` to `main`
+      * In each dataset fork, the `main-upstream` branch is created/updated automatically to match `neurodatascience/mr_proc:main`
+      * A PR labelled "automerge" is automatically created to incorporate changes from `main-upstream` to `main`
       * "Automerge" PRs are approved and merged automatically if there are no merge conflicts
         * If merge conflicts exist, they must be resolved manually. Then the PR needs to be **merged**, without squashing or rebasing
   * Changes that apply to individual datasets (e.g. dicom wrangling, statistical analysis) 
