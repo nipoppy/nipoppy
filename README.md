@@ -22,7 +22,7 @@ A workflow manager for curating MRI and tabular data and standardized processing
 
 ### GH workflow for contributing to template and dataset-specific forks
 
-![mr_proc_gh_contribution_workflow](https://user-images.githubusercontent.com/7978607/226065220-c1123b5e-8774-4f02-b8ef-0f2255cdf122.jpg)
+![mr_proc_gh_contribution_workflow](https://user-images.githubusercontent.com/29051929/236853252-3a65f24a-0efa-4344-9283-1a2200b0033d.png)
 
 ### Organization
 * Under the `neurodatascience` GitHub organization:
