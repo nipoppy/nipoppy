@@ -98,8 +98,8 @@ if __name__ == '__main__':
     Script to run trackers on various proc_pipes
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
-    parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status')
+    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
     args = parser.parse_args()
 
