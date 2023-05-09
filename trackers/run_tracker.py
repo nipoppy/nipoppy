@@ -1,9 +1,6 @@
-import os
 import pandas as pd
-import json
 from pathlib import Path
 import argparse
-import datetime
 from tracker import tracker, get_start_time
 import fs_tracker, fmriprep_tracker, mriqc_tracker
 
@@ -34,8 +31,6 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
-        n_sessions = len(session_ids)
-
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
         manifest_df = pd.read_csv(mr_proc_manifest)
         participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].astype(str).str.strip().values
@@ -47,7 +42,6 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
         print("-"*50)
 
         status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS)
-        n_checks = len(status_check_dict)
 
         dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
         
