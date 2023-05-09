@@ -26,7 +26,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
     """ driver code running pipeline specific trackers
     """
 
-    proc_status_df = pd.DataFrame()
+    proc_status_dfs = [] # list of dataframes
     for pipeline in pipelines:
         pipe_tracker = tracker(global_config_file, dash_schema_file, pipeline) 
             
@@ -85,7 +85,9 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
 
-            proc_status_df = proc_status_df.append(_df)
+            proc_status_dfs.append(_df)
+
+    proc_status_df = pd.concat(proc_status_dfs, axis='index')
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
