@@ -5,7 +5,9 @@ import os
 from pathlib import Path
 import workflow.logger as my_logger
 import shutil
-import re
+#import re
+#import glob
+from bids import BIDSLayout
 
 #Author: bcmcpher
 #Date: 14-Apr-2023 (last update)
@@ -15,7 +17,40 @@ CWD = os.path.dirname(os.path.abspath(fname))
 # env vars relative to the container.
 
 MEM_MB = 4000
+
+def parse_data(bids_dir, participant_id, session_id, logger):
+    """ Parse and verify the input files to build TractoFlow's simplified input to avoid their custom BIDS filter
+    """
+
+    ## because why parse subject ID the same as bids ID?
+    subj = participant_id.replace('sub-', '')
     
+    ## parse directory
+    layout = BIDSLayout(bids_dir)
+
+    ## pull every file name from BIDS layout
+    anat_files = layout.get(subject=subj, session=session_id, suffix='T1w', extension='.nii.gz', return_type='object')
+    dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', return_type='object')
+
+    ## anat parsing
+    anat_files[1].get_metadata() ## returns sidecar
+    ## default to most generic name?
+    ##  - check sidecar - what obvious fields can exclude a file?
+    ##  - SENSE vs. GRAPPA?
+
+    ## dwi parsing - check phase encoding dir
+    dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', PhaseEncodingDirection='j', return_type='object')
+    dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', PhaseEncodingDirection='j-', return_type='object')
+    ## check acquisition dir from sidecar to determine file to create (average) into rev_b0
+    ##  - create rev_b0
+
+    ## do some stuff...
+
+    ## if rpe_file is made, it needs to be uniquely names in tmp before it is copied (moved?) to input_dir
+    
+    ## return the paths to the input files to copy
+    return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
+
 def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
     """ Runs TractoFlow command with Nextflow
     """
@@ -68,15 +103,18 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
 
     if not os.path.exists(Path(f"{tractoflow_work_dir}")):
         Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
-    
-    ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
-    ## and uses a unique filter that isn't easy / worth parsing
-    dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz"  ## bad path generalization for now.
-    bvalfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bval"    ## not trivial to parse and build
-    bvecfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bvec"    ## the right names, esp. if bids
-    anatfile = f"{bids_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-1_T1w.nii.gz" ## parsing isn't more helpful
-    #rpe_file = too hard to parse for now - too many valid names are possible for input.
-    ## will need to extract and average b0s after verifying the rpe is actually reversed by checking sidecar.
+
+    ## call the file parser to copy the correct files to the input structure
+    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, run_id, logger)
+        
+    # ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
+    # ## and uses a unique filter that isn't easy / worth parsing
+    # dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz"  ## bad path generalization for now.
+    # bvalfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bval"    ## not trivial to parse and build
+    # bvecfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bvec"    ## the right names, esp. if bids
+    # anatfile = f"{bids_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-1_T1w.nii.gz" ## parsing isn't more helpful
+    # #rpe_file = too hard to parse for now - too many valid names are possible for input.
+    # ## will need to extract and average b0s after verifying the rpe is actually reversed by checking sidecar.
 
     ## just make copies if they aren't already there - resume option cannot work w/ modfied (recopied) files, so check first
     ## delete on success?
