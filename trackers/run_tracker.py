@@ -87,10 +87,11 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
+    proc_status_df = proc_status_df.drop(columns="bids_id")
     proc_status_df.index.name = "bids_id"
     proc_status_df.to_csv(tracker_csv)
 
-    print(f'Saved to {tracker_csv}')
+    print(f"Saved to {tracker_csv}")
 
 if __name__ == '__main__':
     # argparse
