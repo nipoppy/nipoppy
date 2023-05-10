@@ -55,7 +55,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
             for bids_id in participants:
                 participant_id = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
                 _df.loc[bids_id,"participant_id"] = participant_id
-                print(f"bids_id: {bids_id}, participant_id: {participant_id}")
+                # print(f"bids_id: {bids_id}, participant_id: {participant_id}")
 
                 if pipeline == "freesurfer":
                     subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
@@ -65,7 +65,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                     print(f"unknown pipeline: {pipeline}")
                     
                 dir_status = Path(subject_dir).is_dir()
-                print(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
+                # print(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
                 
                 if dir_status:                
                     for name, func in status_check_dict.items():
@@ -73,11 +73,13 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                         # print(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
                 else:
                     # print(f"Pipeline output not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
             proc_status_dfs.append(_df)
 
