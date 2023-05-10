@@ -33,7 +33,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
 
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
         manifest_df = pd.read_csv(mr_proc_manifest)
-        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].astype(str).str.strip().values
+        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
 
         print("-"*50)
