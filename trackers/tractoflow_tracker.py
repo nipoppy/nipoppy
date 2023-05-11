@@ -84,13 +84,19 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
 
     ## pull the processes to check files for
     procs = stage_dict[task]
-    
+
     ## check if Topup output exists - if it does, drop Eddy, otherwise drop Topup/Eddy_Topup
     if os.path.exists(subject_dir + '/Topup'):
-        procs.remove('Eddy')
+        try:
+            procs.remove('Eddy')
+        except ValueError:
+            pass
     else:
-        procs.remove('Topup')
-        procs.remove('Eddy_Topup')
+        try:
+            procs.remove('Topup')
+            procs.remove('Eddy_Topup')
+        except ValueError:
+            pass
 
     # ## drop local tracking
     # if (task=='Tracking'):
@@ -104,15 +110,16 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
     for proc in procs:
         for stem in file_check_dict[proc]:
             files.append(os.path.join(subject_dir, proc, participant_id + stem))
-
+            
     ## build logical if files exist
     filesExist = [ os.path.exists(out) for out in files ]
-            
+    
     ## fill in possible status files
     if any(filesExist):
-        status_msg = INCOMPLETE
-    elif all(filesExist):
-        status_msg = COMPLETE
+        if all(filesExist):
+            status_msg = SUCCESS
+        else:
+            status_msg = INCOMPLETE
     elif not os.path.exists(subject_dir):
         status_msg = UNAVAILABLE
     else:
@@ -191,13 +198,13 @@ def check_tf_final(subject_dir, session_id, run_id, file_check_dict=TractoFlow_P
 
 tracker_configs = {
     "pipeline_complete": check_tf_final,    
-    "Phase_": {
+    "PHASE_": {
             "DWI-Preprocessing": check_dwiPreproc,
             "Anat-Preprocessing": check_anatPreproc,
             "DWI-ModelFitting": check_dwiModel,
             "PFT-Tracking": check_pftTracking
             },
-    "Stage_": {
+    "STAGE_": {
             "DWI-Preproc-EddyTopup": check_dwiPreprocEddyTopup,
             "DWI-Preproc-Normalize": check_dwiNormalize,
             "Anat-Preproc-Reorient": check_anatReorient,
