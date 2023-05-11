@@ -28,12 +28,27 @@ def parse_data(bids_dir, participant_id, session_id, logger):
     ## parse directory
     layout = BIDSLayout(bids_dir)
 
-    ## pull every file name from BIDS layout
+    ## pull every t1w / dwi file name from BIDS layout
     anat_files = layout.get(subject=subj, session=session_id, suffix='T1w', extension='.nii.gz', return_type='object')
-    dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', return_type='object')
+    dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', extension='.nii.gz', return_type='object')
 
     ## anat parsing
-    anat_files[1].get_metadata() ## returns sidecar
+    tamet = []
+    tanat = []
+    
+    print("Parsing Anatomical Files...")
+    for idx, anat in enumerate(anat_files):
+
+        ## pull the data
+        tamet.append(anat.get_metadata())
+        tanat.append(anat.get_image())
+
+        print("- - - - - - - - - -")
+        print(anat.filename)
+        print(f"Scan Type: {tamet[idx]['MatrixCoilMode']}\nData Shape: {tanat[idx].shape}")
+        print(f"File has: {len(anat.get_entities()} parts")
+        print("- - - - - - - - - -")
+    
     ## default to most generic name?
     ##  - check sidecar - what obvious fields can exclude a file?
     ##  - SENSE vs. GRAPPA?
