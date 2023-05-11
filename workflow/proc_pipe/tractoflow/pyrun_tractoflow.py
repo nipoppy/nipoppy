@@ -47,7 +47,8 @@ def parse_data(bids_dir, participant_id, session_id, logger):
         print(anat.filename)
         print(f"Scan Type: {tamet[idx]['MatrixCoilMode']}\nData Shape: {tanat[idx].shape}")
         print(f"File has: {len(anat.get_entities()} parts")
-        print("- - - - - - - - - -")
+        
+    print("- - - - - - - - - -")
     
     ## default to most generic name?
     ##  - check sidecar - what obvious fields can exclude a file?
