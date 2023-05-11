@@ -97,12 +97,12 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
 if __name__ == '__main__':
     # argparse
     HELPTEXT = """
-    Script to reorganize raw (scanner dump) DICOMs into flatterned dir structure needed for BIDS conversion using HeuDiConv
+    Script to reorganize raw (scanner dump) DICOMs into flattened dir structure needed for BIDS conversion using HeuDiConv
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
-    parser.add_argument('--session_id', type=str, default=None, help='session (i.e. visit to process)')
-    parser.add_argument('--use_symlinks', action='store_true', help='symlink from raw_dicom to dicom to avoid duplication')
+    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--session_id', type=str, help='session (i.e. visit to process)', required=True)
+    parser.add_argument('--use_symlinks', action='store_true', help='symlink from raw_dicom to dicom to avoid duplication (default: copy files)')
     parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes')
     args = parser.parse_args()
 
