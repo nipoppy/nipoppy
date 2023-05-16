@@ -18,7 +18,6 @@ from workflow.utils import (
     COL_SESSION_MANIFEST,
     COL_SUBJECT_MANIFEST,
     COLS_STATUS,
-    dicom_id_to_bids_id, 
     DNAME_BACKUPS_STATUS, 
     FNAME_STATUS,
     participant_id_to_dicom_id, 
