@@ -3,23 +3,19 @@ import os
 from pathlib import Path
 
 from workflow.utils import (
-    COL_DOWNLOAD_STATUS, 
+    COL_BIDS_ID_MANIFEST,
+    COL_CONV_STATUS,
+    COL_DICOM_DIR,
+    COL_DICOM_ID,
+    COL_DOWNLOAD_STATUS,
     COL_ORG_STATUS, 
-    participant_id_to_dicom_id, 
-    dicom_id_to_bids_id,
+    COL_SESSION_MANIFEST,
+    COL_SUBJECT_MANIFEST,
+    COL_VISIT_MANIFEST,
 )
 
-# Globals
-# status file columns
-PARTICIPANT_ID = "participant_id"
-PARTICIPANT_DICOM_DIR = "participant_dicom_dir"
-VISIT = "visit"
-SESSION = "session"
-DICOM_ID = "dicom_id"
-BIDS_ID  = "bids_id"
-
 def read_status(fpath_status):
-    return pd.read_csv(fpath_status, dtype={col: str for col in [PARTICIPANT_ID, PARTICIPANT_DICOM_DIR, VISIT, SESSION, DICOM_ID, BIDS_ID]})
+    return pd.read_csv(fpath_status, dtype={col: str for col in [COL_SUBJECT_MANIFEST, COL_DICOM_DIR, COL_VISIT_MANIFEST, COL_SESSION_MANIFEST, COL_DICOM_ID, COL_BIDS_ID_MANIFEST]})
 
 def read_and_process_status(status_csv, session_id, logger):
     # read current participant manifest 
@@ -27,23 +23,16 @@ def read_and_process_status(status_csv, session_id, logger):
     session = f"ses-{session_id}"
 
     # filter session
-    status_df = status_df[status_df[SESSION] == session]
-    status_df[PARTICIPANT_ID] = status_df[PARTICIPANT_ID].astype(str)
-    participants = status_df[PARTICIPANT_ID].str.strip().values
-
-    # generate dicom_id
-    status_df[DICOM_ID] = [participant_id_to_dicom_id(idx) for idx in participants]
-
-    # generate bids_id
-    status_df[BIDS_ID] = [dicom_id_to_bids_id(dicom_id) for dicom_id in status_df[DICOM_ID]]
+    status_df = status_df[status_df[COL_SESSION_MANIFEST] == session]
+    status_df[COL_SUBJECT_MANIFEST] = status_df[COL_SUBJECT_MANIFEST].astype(str)
 
     # check participant dicom dirs
-    if not status_df[PARTICIPANT_DICOM_DIR].isna().all():
+    if not status_df[COL_DICOM_DIR].isna().all():
         logger.info("Using dicom filename from the status file") 
     else:
-        logger.warning(f"{PARTICIPANT_DICOM_DIR} is not specified in the status file")
+        logger.warning(f"{COL_DICOM_DIR} is not specified in the status file")
         logger.info("Assuming dicom_id is the dicom filename") 
-        status_df[PARTICIPANT_DICOM_DIR] = status_df[DICOM_ID].copy()
+        status_df[COL_DICOM_DIR] = status_df[COL_DICOM_ID].copy()
 
     return status_df
 
@@ -77,7 +66,7 @@ def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
     """ Identify new dicoms not yet inside <DATASET_ROOT>/scratch/raw_dicom
     """
     status_df = read_and_process_status(status_csv, session_id, logger)
-    participants = set(status_df[PARTICIPANT_ID])
+    participants = set(status_df[COL_SUBJECT_MANIFEST])
     n_participants = len(participants)
 
     logger.info("-"*50)
@@ -89,13 +78,13 @@ def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
     logger.info("-"*50)
     
     n_available_raw_dicom_dirs = len(available_raw_dicom_dirs)
-    available_raw_dicom_dirs_participant_ids = list(status_df[status_df[PARTICIPANT_DICOM_DIR].isin(available_raw_dicom_dirs)][PARTICIPANT_ID].astype(str).values)
+    available_raw_dicom_dirs_participant_ids = list(status_df[status_df[COL_DICOM_DIR].isin(available_raw_dicom_dirs)][COL_SUBJECT_MANIFEST].astype(str).values)
 
     # check mismatch between status file and raw_dicoms
     download_dicom_dir_participant_ids = set(participants) - set(available_raw_dicom_dirs_participant_ids)
     n_download_dicom_dirs = len(download_dicom_dir_participant_ids)
 
-    download_df = status_df[status_df[PARTICIPANT_ID].isin(download_dicom_dir_participant_ids)]
+    download_df = status_df[status_df[COL_SUBJECT_MANIFEST].isin(download_dicom_dir_participant_ids)]
 
     logger.info("-"*50)
     logger.info(f"Identifying participants to be downloaded\n\n \
@@ -110,18 +99,18 @@ def get_new_raw_dicoms(status_csv, session_id, logger):
     """ Identify new raw_dicoms not yet reorganized inside <DATASET_ROOT>/dicom
     """
     status_df = read_and_process_status(status_csv, session_id, logger)
-    participants_all = set(status_df[PARTICIPANT_ID])
+    participants_all = set(status_df[COL_SUBJECT_MANIFEST])
     n_participants_all = len(participants_all)
 
     # check raw dicom dir (downloaded)
-    downloaded = set(status_df.loc[status_df[COL_DOWNLOAD_STATUS], PARTICIPANT_ID])
+    downloaded = set(status_df.loc[status_df[COL_DOWNLOAD_STATUS], COL_SUBJECT_MANIFEST])
     n_downloaded = len(downloaded)
     
     # check current dicom dir (already reorganized)
-    downloaded_but_not_reorganized = downloaded & set(status_df.loc[~status_df[COL_ORG_STATUS], PARTICIPANT_ID])
+    downloaded_but_not_reorganized = downloaded & set(status_df.loc[~status_df[COL_ORG_STATUS], COL_SUBJECT_MANIFEST])
     n_downloaded_but_not_reorganized = len(downloaded_but_not_reorganized)
 
-    reorg_df = status_df[status_df[PARTICIPANT_ID].isin(downloaded_but_not_reorganized)]
+    reorg_df = status_df.loc[status_df[COL_SUBJECT_MANIFEST].isin(downloaded_but_not_reorganized)]
 
     logger.info("-"*50)
     logger.info(
@@ -135,42 +124,31 @@ def get_new_raw_dicoms(status_csv, session_id, logger):
 
     return reorg_df
 
-def get_new_dicoms(status_csv, dicom_dir, bids_dir, session_id, logger):
+def get_new_dicoms(status_csv, session_id, logger):
     """ Identify new dicoms not yet BIDSified
     """
     status_df = read_and_process_status(status_csv, session_id, logger)
-    participants = set(status_df[PARTICIPANT_ID])
-    n_participants = len(participants)
-    dicom_ids = set(status_df[DICOM_ID])
-    bids_ids = set(status_df[BIDS_ID])
+    participants_all = set(status_df[COL_SUBJECT_MANIFEST])
+    n_participants_all = len(participants_all)
 
-    # check current bids dir
-    current_bids_dirs = list_bids(bids_dir, session_id, logger)
-    current_bids_dirs = bids_ids & set(current_bids_dirs)
-    n_current_bids_dirs = len(current_bids_dirs)
+    # check current dicom dir (reorganized)
+    organized = set(status_df.loc[status_df[COL_ORG_STATUS], COL_SUBJECT_MANIFEST])
+    n_organized = len(organized)
 
-    # check current dicom dir
-    available_dicom_dirs = list_dicoms(dicom_dir, logger)
-    n_available_dicom_dirs = len(available_dicom_dirs)
+    # check bids dir (already converted)
+    organized_but_not_bids = organized & set(status_df.loc[~status_df[COL_CONV_STATUS], COL_SUBJECT_MANIFEST])
+    n_organized_but_not_bids = len(organized_but_not_bids)
 
-    # check mismatch between status file and participant dicoms
-    missing_dicom_dirs = set(dicom_ids) - set(available_dicom_dirs)
-    n_missing_dicom_dirs = len(missing_dicom_dirs)
-
-    current_bids_dirs_dicom_ids = status_df[status_df[BIDS_ID].isin(current_bids_dirs)][DICOM_ID]
-
-    # participants to process with Heudiconv
-    heudiconv_participants = set(dicom_ids) - set(missing_dicom_dirs) - set(current_bids_dirs_dicom_ids)
-    n_heudiconv_participants = len(heudiconv_participants)
-    heudiconv_df = status_df[status_df[DICOM_ID].isin(heudiconv_participants)]
+    heudiconv_df = status_df.loc[status_df[COL_SUBJECT_MANIFEST].isin(organized_but_not_bids)]
 
     logger.info("-"*50)
-    logger.info(f"Identifying participants to be BIDSified\n\n \
-    - n_particitpants (listed in the status file): {n_participants}\n \
-    - n_current_bids_dirs (current): {n_current_bids_dirs}\n \
-    - n_available_dicom_dirs (available): {n_available_dicom_dirs}\n \
-    - n_missing_dicom_dirs: {n_missing_dicom_dirs}\n \
-    - heudiconv participants to processes: {n_heudiconv_participants}\n")
+    logger.info(
+        "Identifying participants to be BIDSified\n\n"
+        f"- n_participants (listed in the status file): {n_participants_all}\n"
+        f"- n_organized: {n_organized}\n"
+        f"- n_missing: {n_participants_all - n_organized}\n"
+        f"- n_organized_but_not_bids: {n_organized_but_not_bids}\n"
+    )
     logger.info("-"*50)
 
     return heudiconv_df

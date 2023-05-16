@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import json
 import workflow.logger as my_logger
@@ -50,7 +52,7 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/{session}/"
     dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
-    log_dir = f"{DATASET_ROOT}/scratch/logs/"    
+    log_dir = f"{DATASET_ROOT}/scratch/logs/"
     invalid_dicom_dir = f"{log_dir}/invalid_dicom_dir/"
 
     fpath_status = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
@@ -94,15 +96,14 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
         logger.info(f"Skipped (invalid/derived) DICOMs are listed here: {log_dir}")
         logger.info(f"DICOMs are now copied into {dicom_dir} and ready for bids conversion!")
 
+        reorg_df[COL_ORG_STATUS] = True
+        df_status.loc[reorg_df.index] = reorg_df
+        save_backup(df_status, fpath_status, DNAME_BACKUPS_STATUS)
+
     else:
         logger.info(f"No new participants found for dicom reorg...")
         
     logger.info("-"*50)
-
-    reorg_df[COL_ORG_STATUS] = True
-    df_status.loc[reorg_df.index] = reorg_df
-
-    save_backup(df_status, fpath_status, DNAME_BACKUPS_STATUS)
 
 if __name__ == '__main__':
     # argparse

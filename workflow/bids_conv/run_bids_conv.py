@@ -1,14 +1,26 @@
+#!/usr/bin/env python
+
 import argparse
 import json
-import subprocess
-import shutil
-from pathlib import Path
-import pandas as pd
-import os
-from joblib import Parallel, delayed
 import glob
-import workflow.logger as my_logger
+import os
+import shutil
+import subprocess
+from joblib import Parallel, delayed
+from pathlib import Path
+
+from bids.layout import parse_file_entities
+
 import workflow.catalog as catalog
+import workflow.logger as my_logger
+from workflow.utils import (
+    COL_CONV_STATUS,
+    COL_DICOM_ID,
+    DNAME_BACKUPS_STATUS,
+    FNAME_STATUS, 
+    save_backup,
+    session_to_bids,
+)
 
 #Author: nikhil153
 #Date: 07-Oct-2022
@@ -21,8 +33,8 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
     DATASTORE_DIR = global_configs["DATASTORE_DIR"]
     SINGULARITY_PATH = global_configs["SINGULARITY_PATH"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
-    HEUDICONV_CONTAINER = global_configs["BIDS"]["heudiconv"]["CONTAINER"]
-    HEUDICONV_VERSION = global_configs["BIDS"]["heudiconv"]["VERSION"]
+    HEUDICONV_CONTAINER = global_configs["BIDS"]["HEUDICONV"]["CONTAINER"]
+    HEUDICONV_VERSION = global_configs["BIDS"]["HEUDICONV"]["VERSION"]
     HEUDICONV_CONTAINER = HEUDICONV_CONTAINER.format(HEUDICONV_VERSION)
     SINGULARITY_HEUDICONV = f"{CONTAINER_STORE}/{HEUDICONV_CONTAINER}"
 
@@ -74,7 +86,7 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
 def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     """ Runs the bids conv tasks 
     """
-    session = f"ses-{session_id}"
+    session = session_to_bids(session_id)
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
 
@@ -87,13 +99,15 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     logger.info(f"Running HeuDiConv stage: {stage}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
+    # mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
+    fpath_status = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_STATUS)
     dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
     bids_dir = f"{DATASET_ROOT}/bids/"
 
     # participants to process with Heudiconv
-    heudiconv_df = catalog.get_new_dicoms(mr_proc_manifest, dicom_dir, bids_dir, session_id, logger)
-    heudiconv_participants = list(heudiconv_df["dicom_id"].values)
+    df_status = catalog.read_status(fpath_status)
+    heudiconv_df = catalog.get_new_dicoms(fpath_status, session_id, logger)
+    heudiconv_participants = set(heudiconv_df["dicom_id"].values)
     n_heudiconv_participants = len(heudiconv_participants)
 
     if n_heudiconv_participants > 0:
@@ -115,21 +129,30 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
                 run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
 
         # Check succussful bids
-        participant_bids_paths = glob.glob(f"{bids_dir}/sub-*")
-        
-        # Add newly processed bids_id to the manifest csv
-        manifest_df = pd.read_csv(mr_proc_manifest)
-        print(manifest_df)
-        manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(heudiconv_df["participant_id"]))
-                         & (manifest_df["session_id"].astype(str) == str(session_id)), 
-                         "bids_id"] = heudiconv_df["bids_id"]
+        participants_with_bids = {
+            parse_file_entities(dpath)['subject']
+            for dpath in
+            glob.glob(f"{bids_dir}/sub-*/{session}")
+        }
 
-        manifest_df.to_csv(mr_proc_manifest, index=None)
+        new_participants_with_bids = heudiconv_participants & participants_with_bids
         
         logger.info("-"*50)
-        logger.info(f"BIDS conversion completed for the {n_heudiconv_participants} new participants")
-        logger.info(f"Current successfully converted BIDS participants: {len(participant_bids_paths)}")
-        
+
+        if stage == 1:
+
+            logger.info("Stage 1 done! Still need to run Stage 2")
+
+        else:
+
+            logger.info(f"Current successfully converted BIDS participants for session {session}: {len(participants_with_bids)}")
+            logger.info(f"BIDS conversion completed for the {new_participants_with_bids}/{heudiconv_participants} new participants")
+            
+            if new_participants_with_bids > 0:
+                heudiconv_df.loc[heudiconv_df[COL_DICOM_ID].isin(new_participants_with_bids), COL_CONV_STATUS] = True
+                df_status.loc[heudiconv_df.index] = heudiconv_df
+                save_backup(df_status, fpath_status, DNAME_BACKUPS_STATUS)
+
     else:
         logger.info(f"No new participants found for bids conversion...")
 
@@ -143,10 +166,10 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
-    parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
-    parser.add_argument('--session_id', type=str, help='session id for the participant')
-    parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2)')
-    parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes')
+    parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset', required=True)
+    parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
+    parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2, default: 2)')
+    parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes (default: 2)')
 
     args = parser.parse_args()
 
