@@ -64,7 +64,9 @@ def run(global_config_file, regenerate):
     df_status.loc[:, COL_DICOM_DIR] = np.nan
 
     # populate dicom_id (bids_id should already be populated)
-    df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(participant_id_to_dicom_id)
+    df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(
+        lambda participant_id: participant_id_to_dicom_id(participant_id, global_config)
+    )
 
     # initialize all status columns
     for col in [COL_DOWNLOAD_STATUS, COL_ORG_STATUS, COL_CONV_STATUS]:
