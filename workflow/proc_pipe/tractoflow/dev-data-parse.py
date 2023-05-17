@@ -34,7 +34,6 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         print("- - - - - - - - - -")
         print(anat.filename)
         print(f"Scan Type: {tmeta['MatrixCoilMode']}\nData Shape: {tvol.shape}")
-        print(f"File has: {len(anat.get_entities())} parts")
 
         ## if sense is in the encoded header drop it
         if tmeta['MatrixCoilMode'].lower() == 'sense':
@@ -67,7 +66,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         oanat = canat[np.argmin(npart)]
     else:
         oanat = canat[0]
-        
+
+    print(f"Selected anat file: {oanat.filename}")
     print("= = = = = = = = = =")
     
     ## preallocate candidate dmri inputs
@@ -85,7 +85,6 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         print("- - - - - - - - - -")
         print(dmri.filename)
         print(f"Encoding Direction: {tmeta['PhaseEncodingDirection']}\nData Shape: {tvol.shape}")
-        print(f"Image has: {len(dmri.get_entities())} parts")
 
         ## store phase encoding data
         cpe.append(tmeta['PhaseEncodingDirection'])
@@ -115,26 +114,23 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         
     print("- - - - - - - - - -")
 
-    print(f"cbv: {cbv}\ncnv: {cnv}\ncpe={cpe}")
-
-    print("- - - - - - - - - -")
-
     ## if there's more than 1 candidate with bv* files
     if sum(cbv == 1) > 1:
-        print("Continue checks assuming 2 directed files")
+        print("Continue checks assuming 2 directed files...")
 
         ## DEAL WITH 2 FULL SEQUENCES
         
+        
     else:
-        print("Continue checks assuming 1 directed file")
+        print("Continue checks assuming 1 directed file...")
 
-        ## pull the index of the max 
+        ## pull the index of the bvec that exists
         didx = np.argmax(cbv)
         
         ## pull phase encoding for directed volume
-        fpe = cpe[np.argmax(cbv)]
+        fpe = cpe[didx]
 
-        ## clean fpe of unnecessary +
+        ## clean fpe of unnecessary + if it's there
         if fpe[-1] == "+":
             fpe = fpe[0]
         
@@ -144,34 +140,42 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         else:
             rpe = fpe[0]
 
+        print(f"Foward Phase Encoding:  {fpe}\nReverse Phase Encoding: {rpe}")
+            
         ## look for the reverse phase encoded file in the other candidates
         if (rpe in cpe):
+            
             rpeb0 = dmri_files[cpe.index(rpe)]
             rpevol = rpeb0.get_image()
+            rpe_out = f'/tmp/{participant_id}_rpe_b0.nii.gz'
+            
+            ## if the rpe file has multiple volumes
             if len(rpevol.shape) == 4:
+
+                print('An RPE file is present: Averaging b0 volumes to single RPE volume...')
+                ## load and average the volumes
                 rpedat = rpevol.get_fdata()
                 rpedat = np.mean(rpedat, 3)
-                rpe_file = nib.nifti1.Nifti1Image(rpedat, rpevol.affine)
-            print(f"RPE Shape: {rpe_file.shape}")
-            rpe_out = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[cpe.index(rpe)].filename).joinpath()
-            ## PUT AVERAGE RPE VOLUME IN A TMP FILE TO COPY TO INPUT DIRECTORY
+
+                ## and write the file to /tmp
+                rpe_data = nib.nifti1.Nifti1Image(rpedat, rpevol.affine)
+                rpe_shape = rpe_data.shape
+                nib.save(rpe_data, rpe_out)
+                
+            else:
+
+                print('An RPE file is present: Copying single the single RPE b0 volume...')
+                ## otherwise, copy the input file to tmp
+                rpe_shape = rpevol.shape
+                shutil.copyfile(rpeb0, rpe_out)
+                            
         else:
+            
             print("No RPE is found in candidate files")
             rpe_out = None
             
     print("= = = = = = = = = =")
-
-        ## dwi parsing - check phase encoding dir
-
-        ## check acquisition dir from sidecar to determine file to create (average) into rev_b0
-        ##  - create rev_b0
-
-        ## do some stuff...
-        
-        ## if rpe_file is made, it needs to be uniquely named in tmp before it is copied (moved?) to input_dir
-
-    print('Selected Input Files:')
-        
+    
     ## default assignments
     dmrifile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename).joinpath()
     bvalfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename.replace('.nii.gz', '.bval')).joinpath()
