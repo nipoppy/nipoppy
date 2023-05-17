@@ -4,10 +4,10 @@
 
 ### 1.1 Run MRIQC
 - Use [run_mriqc.py](https://github.com/neurodatascience/mr_proc/blob/main/workflow/proc_pipe/mriqc/run_mriqc.py) to run MRIQC pipeline directly or wrap the script in an SGE/Slurm script to run on cluster
-	- Mandatory: Pass in the absolute path to the data directory to **`global_configs`**
+	- Mandatory: Pass in the absolute path to the data directory to **`global_config`**
 
 - Example command:
-	``` python run_mriqc.py --global_config CONFIG.JSON --subject_id 001 --output_dir OUTPUT_DIR_PATH ```
+	``` python run_mriqc.py --global_config CONFIG.JSON --subject_id 001 --output_dir OUTPUT_DIR_PATH --session_id 01 ```
 	- The format for the JSON configuration file to be passed to the script is shown [here](https://github.com/neurodatascience/mr_proc/blob/main/sample_global_configs.json)
 	
 - MRIQC processes the participants and produces image quality metrics from structural (T1w and T2w) and functional MRI data (see [MRIQC](https://mriqc.readthedocs.io/en/latest/) for details)

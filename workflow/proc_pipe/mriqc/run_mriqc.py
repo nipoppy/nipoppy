@@ -4,17 +4,17 @@ import argparse
 
 parser = argparse.ArgumentParser(description='')
 
-parser.add_argument('--global_configs', type=str, help='path to global configs for a given mr_proc dataset')
+parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
 parser.add_argument('--output_dir', type=str, help='overwrite path to put results in case of issues with default')
 parser.add_argument('--participant_id', type=str, help='subject ID to be processed')
 parser.add_argument('--session_id', type=str, help='session ID to be processed')
 
 args = parser.parse_args()
 
-DATASET_ROOT = args.global_configs["DATASET_ROOT"]
-CONTAINER_STORE = args.global_configs["CONTAINER_STORE"]
+DATASET_ROOT = args.global_config["DATASET_ROOT"]
+CONTAINER_STORE = args.global_config["CONTAINER_STORE"]
 #is currently mriqc_patch.simg
-MRIQC_CONTAINER = args.global_configs["PROC_PIPELINES"]["mriqc"]["CONTAINER"]
+MRIQC_CONTAINER = args.global_config["PROC_PIPELINES"]["mriqc"]["CONTAINER"]
 
 # config = json.load(open(args.global_config))
 
