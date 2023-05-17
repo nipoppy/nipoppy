@@ -20,12 +20,14 @@ from workflow.utils import (
     COLS_STATUS,
     DNAME_BACKUPS_STATUS, 
     FNAME_STATUS,
+    FNAME_MANIFEST,
+    load_manifest,
     participant_id_to_dicom_id, 
     save_backup,
 )
 
 DPATH_STATUS_RELATIVE = Path('scratch', 'raw_dicom')
-FPATH_MANIFEST_RELATIVE = Path('tabular', 'mr_proc_manifest.csv')
+FPATH_MANIFEST_RELATIVE = Path('tabular') / FNAME_MANIFEST
 
 FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 
@@ -48,7 +50,7 @@ def run(global_config_file, regenerate):
 
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
-    df_manifest = pd.read_csv(fpath_manifest, dtype=str)
+    df_manifest = load_manifest(fpath_manifest)
     df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
 
     # look for existing status file

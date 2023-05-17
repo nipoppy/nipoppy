@@ -85,3 +85,32 @@ def save_backup(df: pd.DataFrame, fpath_symlink, dname: str):
         fpath_symlink.unlink()
     fpath_symlink.symlink_to(fpath_backup)
     print(f'Created symlink: {fpath_symlink} -> {fpath_backup}')
+
+def load_manifest(fpath_manifest):
+
+    return pd.read_csv(
+        fpath_manifest, 
+        dtype={
+            col: str 
+            for col 
+            in [COL_SUBJECT_MANIFEST, COL_BIDS_ID_MANIFEST, COL_SESSION_MANIFEST]
+        },
+        converters={COL_DATATYPE_MANIFEST: pd.eval}
+    )
+
+def load_status(fpath_status):
+    return pd.read_csv(
+        fpath_status, 
+        dtype={
+            col: str 
+            for col in [
+                COL_SUBJECT_MANIFEST, 
+                COL_DICOM_DIR, 
+                COL_VISIT_MANIFEST, 
+                COL_SESSION_MANIFEST, 
+                COL_DICOM_ID, 
+                COL_BIDS_ID_MANIFEST,
+            ]
+        },
+    )
+

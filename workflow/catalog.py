@@ -12,14 +12,12 @@ from workflow.utils import (
     COL_SESSION_MANIFEST,
     COL_SUBJECT_MANIFEST,
     COL_VISIT_MANIFEST,
+    load_status,
 )
-
-def read_status(fpath_status):
-    return pd.read_csv(fpath_status, dtype={col: str for col in [COL_SUBJECT_MANIFEST, COL_DICOM_DIR, COL_VISIT_MANIFEST, COL_SESSION_MANIFEST, COL_DICOM_ID, COL_BIDS_ID_MANIFEST]})
 
 def read_and_process_status(status_csv, session_id, logger):
     # read current participant manifest 
-    status_df = read_status(status_csv)
+    status_df = load_status(status_csv)
     session = f"ses-{session_id}"
 
     # filter session
