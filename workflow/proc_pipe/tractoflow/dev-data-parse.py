@@ -95,7 +95,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         elif len(tvol.shape) == 3:
             cnv[idx] = 1
         else:
-            error('dMRI File: {dmri.filename} is not 3D/4D.')
+            raise ValueError('dMRI File: {dmri.filename} is not 3D/4D.')
             
         ## build paths to bvec / bval data
         tbvec = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri.filename.replace('.nii.gz', '.bvec')).joinpath()
@@ -116,12 +116,76 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
     ## if there's more than 1 candidate with bv* files
     if sum(cbv == 1) > 1:
+        
         print("Continue checks assuming 2 directed files...")
 
-        ## DEAL WITH 2 FULL SEQUENCES
+        dmrifs = []
         
-        
+        ## pull the full sequences
+        for x in cbv:
+            if x == 1:
+                dmrifs.append(dmri_files[x])
+
+        ## if there are more than 2, quit - bad input
+        if len(dmrifs) > 2:
+            raise ValueError('Too many candidate full sequences.')
+
+        ## split out to separate files
+        dmrifs1 = dmrifs[0]
+        dmrifs2 = dmrifs[1]
+
+        ## pull phase encoding direction
+        dmrifs1pe = dmrifs1.get_metadata()['PhaseEncodingDirection']
+        dmrifs2pe = dmrifs2.get_metadata()['PhaseEncodingDirection']
+
+        ## if the phase encodings are the same axis
+        if (dmrifs1pe[0] == dmrifs2pe[0]):
+
+            print('Phase encoding axis: {dmrifs1pe[0]}')
+            print(f"Foward Phase Encoding:  {dmrifs1pe}\nReverse Phase Encoding: {dmrifs2pe}")
+
+            ## pull the number of volumes
+            dmrifs1nv = dmrifs1.get_image().shape[3]
+            dmrifs2nv = dmrifs1.get_image().shape[3]
+
+            ## if the sequences are the same length
+            if (dmrifs1nv == dmrifs2nv):
+
+                print('N volumes match. Assuming mirrored sequences.')
+
+                ## verify that directions match?
+                
+                ## pull the first as forward
+                didx = dmri_files.index(dmrifs1) 
+
+                ## pull the second as reverse
+                rpeimage = dmrifs2.get_image()
+
+                ## load image data
+                rpedata = rpeimage.get_fdata() 
+
+                ## load bval data
+                rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
+
+                ## create average b0 from sequence
+                rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
+
+                ## write to disk
+                rpe_out = f'/tmp/{participant_id}_rpe_b0.nii.gz'
+                rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
+                rpe_shape = rpe_data.shape
+                nib.save(rpe_data, rpe_out)
+
+            else:
+
+                raise ValueError('The number of volumes do not match. Cannot determine what to do.')
+
+        else:
+
+            raise ValueError(f'The phase encodings are on different axes: {dmrifs1pe}, {dmrifs2pe}\nCannot determine what to do.')
+            
     else:
+        
         print("Continue checks assuming 1 directed file...")
 
         ## pull the index of the bvec that exists
@@ -181,7 +245,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     bvalfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename.replace('.nii.gz', '.bval')).joinpath()
     bvecfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename.replace('.nii.gz', '.bvec')).joinpath()
     anatfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'anat', oanat.filename).joinpath()
-    rpe_file = rpe_out
+    rpe_file = Path(rpe_out)
         
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
