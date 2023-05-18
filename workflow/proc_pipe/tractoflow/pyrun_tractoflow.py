@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 import json
 import subprocess
+import tempfile
 
 import numpy as np
 import nibabel as nib
@@ -19,7 +20,6 @@ CWD = os.path.dirname(os.path.abspath(fname))
 # env vars relative to the container.
 
 MEM_MB = 4000
-
 
 def parse_data(bids_dir, participant_id, session_id, logger=None):
     """ Parse and verify the input files to build TractoFlow's simplified input to avoid their custom BIDS filter
@@ -227,10 +227,11 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
 
                     ## write to disk
-                    rpe_out = f'/tmp/{participant_id}_rpe_b0.nii.gz'
+                    tmp_dir = tempfile.mkftemp() #TemoraryDirectory()
+                    rpe_out = f'{participant_id}_rpe_b0.nii.gz'
                     rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
                     rpe_shape = rpe_data.shape
-                    nib.save(rpe_data, rpe_out)
+                    nib.save(rpe_data, Path(tmp_dir, rpe_out).joinpath())
 
                 else:
 
@@ -268,7 +269,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             
             rpeb0 = dmri_files[cpe.index(rpe)]
             rpevol = rpeb0.get_image()
-            rpe_out = f'/tmp/{participant_id}_rpe_b0.nii.gz'
+            tmp_dir = tempfile.mkdtemp() #TemporaryDirectory()
+            rpe_out = f'{participant_id}_rpe_b0.nii.gz'
             
             ## if the rpe file has multiple volumes
             if len(rpevol.shape) == 4:
@@ -281,7 +283,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                 ## and write the file to /tmp
                 rpe_data = nib.nifti1.Nifti1Image(rpedat, rpevol.affine)
                 rpe_shape = rpe_data.shape
-                nib.save(rpe_data, rpe_out)
+                nib.save(rpe_data, Path(tmp_dir, rpe_out).joinpath())
                 
             else:
 
@@ -307,7 +309,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     if rpe_out == None:
         rpe_file = None
     else:
-        rpe_file = Path(rpe_out)
+        rpe_file = Path(tmp_dir, rpe_out).joinpath()
         
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
@@ -367,30 +369,17 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
 
     ## call the file parser to copy the correct files to the input structure
     dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
-        
-    # ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
-    # ## and uses a unique filter that isn't easy / worth parsing
-    # dmrifile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.nii.gz"  ## bad path generalization for now.
-    # bvalfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bval"    ## not trivial to parse and build
-    # bvecfile = f"{bids_dir}/{participant_id}/ses-{session_id}/dwi/{participant_id}_ses-{session_id}_run-1_dwi.bvec"    ## the right names, esp. if bids
-    # anatfile = f"{bids_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-1_T1w.nii.gz" ## parsing isn't more helpful
-    # #rpe_file = too hard to parse for now - too many valid names are possible for input.
-    # ## will need to extract and average b0s after verifying the rpe is actually reversed by checking sidecar.
 
     ## just make copies if they aren't already there - resume option cannot work w/ modfied (recopied) files, so check first
     ## delete on success?
     if len(os.listdir(tractoflow_subj_dir)) == 0:
-        shutil.copyfile(dmrifile, tractoflow_subj_dir + '/dwi.nii.gz')
-        shutil.copyfile(bvalfile, tractoflow_subj_dir + '/bval')
-        shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
-        shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
+        shutil.copyfile(dmrifile, Path(tractoflow_subj_dir, 'dwi.nii.gz').joinpath())
+        shutil.copyfile(bvalfile, Path(tractoflow_subj_dir, 'bval').joinpath())
+        shutil.copyfile(bvecfile, Path(tractoflow_subj_dir, 'bvec').joinpath())
+        shutil.copyfile(anatfile, Path(tractoflow_subj_dir, 't1.nii.gz').joinpath())
         if os.path.exists(rpe_file):
-            shutil.copyfile(rpe_file, tractoflow_work_dir + '/rev_b0.nii.gz')
-
-    # ## cd to tractoflow_work_dir to control where the "work" folder ends up
-    # os.chdir(tractoflow_work_dir)
-    # logger.info(f"Setting working directory to: {tractoflow_work_dir}")
-
+            shutil.copyfile(rpe_file, Path(tractoflow_subj_dir, 'rev_b0.nii.gz').joinpath())
+            
     ## drop sub- from participant ID
     tf_id = participant_id.replace('sub-', '')
     
