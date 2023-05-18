@@ -31,20 +31,37 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         tmeta = anat.get_metadata()
         tvol = anat.get_image()
 
+        ## because PPMI doesn't have full sidecars
+        
+        try:
+            tmcmode = tmeta['MatrixCoilMode']
+        except:
+            tmcmode = 'unknown'
+
+        try:
+            torient = tmeta['ImageOrientationText']
+        except:
+            torient = 'sag'
+
+        try:
+            tprotocol = tmeta['ProtocolName']
+        except:
+            tprotocol = 'unknown'
+            
         print("- - - - - - - - - -")
         print(anat.filename)
-        print(f"Scan Type: {tmeta['MatrixCoilMode']}\nData Shape: {tvol.shape}")
+        print(f"Scan Type: {tmcmode}\nData Shape: {tvol.shape}")
 
         ## if sense is in the encoded header drop it
-        if tmeta['MatrixCoilMode'].lower() == 'sense':
+        if tmcmode.lower() == 'sense':
             continue
 
         ## if it's not a sagittal T1, it's probably not the main
-        if not tmeta['ImageOrientationText'].lower() == 'sag':
+        if not torient.lower() == 'sag':
             continue
 
         ## look for Neuromelanin type scan in name somewhere
-        if ('neuromel' in tmeta['ProtocolName'].lower()):
+        if ('neuromel' in tprotocol.lower()):
             continue
         
         ## heudiconv heuristics file has some fields that could be reused.
@@ -57,7 +74,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
     ## error if nothing passes
     if len(canat) == 0:
-        error(f'No valid anat in {participant_id} for {session_id}.')
+        raise ValueError(f'No valid T1 anat file for {participant_id} in ses-{session_id}.')
         
     ## check how many candidates there are
     if len(canat) > 1:
@@ -81,7 +98,12 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
         tmeta = dmri.get_metadata()
         tvol = dmri.get_image()
-        
+
+        try:
+            tpedir = tmeta['PhaseEncodingDirection']
+        except:
+            raise ValueError("INCOMPLETE SIDECAR: ['PhaseEncodingDirection'] is not defined in sidecar. This is required to accurately parse the dMRI data.")
+            
         print("- - - - - - - - - -")
         print(dmri.filename)
         print(f"Encoding Direction: {tmeta['PhaseEncodingDirection']}\nData Shape: {tvol.shape}")
@@ -122,10 +144,11 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         dmrifs = []
         
         ## pull the full sequences
-        for x in cbv:
+        for idx, x in enumerate(cbv):
             if x == 1:
-                dmrifs.append(dmri_files[x])
-
+                print(f"File {idx+1}: {dmri_files[idx].filename}")
+                dmrifs.append(dmri_files[idx])
+        
         ## if there are more than 2, quit - bad input
         if len(dmrifs) > 2:
             raise ValueError('Too many candidate full sequences.')
@@ -133,7 +156,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         ## split out to separate files
         dmrifs1 = dmrifs[0]
         dmrifs2 = dmrifs[1]
-
+        
         ## pull phase encoding direction
         dmrifs1pe = dmrifs1.get_metadata()['PhaseEncodingDirection']
         dmrifs2pe = dmrifs2.get_metadata()['PhaseEncodingDirection']
@@ -141,44 +164,58 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         ## if the phase encodings are the same axis
         if (dmrifs1pe[0] == dmrifs2pe[0]):
 
-            print('Phase encoding axis: {dmrifs1pe[0]}')
-            print(f"Foward Phase Encoding:  {dmrifs1pe}\nReverse Phase Encoding: {dmrifs2pe}")
+            print(f'Phase encoding axis: {dmrifs1pe[0]}')
 
-            ## pull the number of volumes
-            dmrifs1nv = dmrifs1.get_image().shape[3]
-            dmrifs2nv = dmrifs1.get_image().shape[3]
+            ## if the phase encodings match exactly
+            if (dmrifs1pe == dmrifs2pe):
 
-            ## if the sequences are the same length
-            if (dmrifs1nv == dmrifs2nv):
+                ## THIS HAPPENS WITH A IDENTICAL RUN-1/RUN-2 IN PPMI
+                ## ARE THESE MEANT TO BE TIME 1 / TIME 2?
+                ## UNSURE HOW I SHOULD DEAL WITH MULTIPLE RUNS IN dMRI - NOT COMMON
+                print('Sequences are not reverse encoded. Ignoring second sequence.')
+                didx = dmri_files.index(dmrifs1)
+                rpe_out = None
 
-                print('N volumes match. Assuming mirrored sequences.')
-
-                ## verify that directions match?
-                
-                ## pull the first as forward
-                didx = dmri_files.index(dmrifs1) 
-
-                ## pull the second as reverse
-                rpeimage = dmrifs2.get_image()
-
-                ## load image data
-                rpedata = rpeimage.get_fdata() 
-
-                ## load bval data
-                rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
-
-                ## create average b0 from sequence
-                rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
-
-                ## write to disk
-                rpe_out = f'/tmp/{participant_id}_rpe_b0.nii.gz'
-                rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
-                rpe_shape = rpe_data.shape
-                nib.save(rpe_data, rpe_out)
-
+            ## they're the same axis in opposite orientations
             else:
 
-                raise ValueError('The number of volumes do not match. Cannot determine what to do.')
+                print(f"Foward Phase Encoding:  {dmrifs1pe}\nReverse Phase Encoding: {dmrifs2pe}")
+
+                ## if the sequences are the same length
+                if (dmrifs1nv == dmrifs2nv):
+                    
+                    print('N volumes match. Assuming mirrored sequences.')
+
+                    ## verify that bvecs match?
+
+                    ## pull the number of volumes
+                    dmrifs1nv = dmrifs1.get_image().shape[3]
+                    dmrifs2nv = dmrifs1.get_image().shape[3]
+
+                    ## pull the first as forward
+                    didx = dmri_files.index(dmrifs1) 
+
+                    ## pull the second as reverse
+                    rpeimage = dmrifs2.get_image()
+
+                    ## load image data
+                    rpedata = rpeimage.get_fdata() 
+
+                    ## load bval data
+                    rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
+
+                    ## create average b0 data from sequence
+                    rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
+
+                    ## write to disk
+                    rpe_out = f'/tmp/{participant_id}_rpe_b0.nii.gz'
+                    rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
+                    rpe_shape = rpe_data.shape
+                    nib.save(rpe_data, rpe_out)
+
+                else:
+
+                    raise ValueError('The sequences are suffieciently mismatched that an acquisition or conversion error is likley to have occurred.')
 
         else:
 
@@ -245,7 +282,12 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     bvalfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename.replace('.nii.gz', '.bval')).joinpath()
     bvecfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename.replace('.nii.gz', '.bvec')).joinpath()
     anatfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'anat', oanat.filename).joinpath()
-    rpe_file = Path(rpe_out)
+
+    ## condition empty path
+    if rpe_out == None:
+        rpe_file = None
+    else:
+        rpe_file = Path(rpe_out)
         
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
@@ -257,6 +299,10 @@ if __name__ == '__main__':
     bids_dir='/data/origami/bcmcpher/mrproc-dev/bids'
     participant_id='sub-MNI0056D864854'
     session_id='01'
+
+    # bids_dir='/data/pd/ppmi/bids'
+    # participant_id='sub-3107'
+    # session_id='91'
 
     ## create the outputs
     dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id)
