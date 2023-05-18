@@ -29,8 +29,8 @@ TractoFlow_Procs = {
     "Bet_Prelim_DWI": [ '__b0_bet_mask_dilated.nii.gz', '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz' ],
     "Denoise_DWI":  [ '__dwi_denoised.nii.gz' ],
     "Eddy":  [ '__bval_eddy', '__dwi_corrected.nii.gz', '__dwi_eddy_corrected.bvec' ],
-    "Topup":  [ '__?' ],
-    "Eddy_Topup":  [ '__?' ],
+    "Topup":  [ '__corrected_b0s.nii.gz', '__rev_b0_warped.nii.gz', 'topup_results_fieldcoef.nii.gz', 'topup_results_movpar.txt' ], 
+    "Eddy_Topup":  [ '__b0_bet_mask.nii.gz', '__bval_eddy', '__dwi_corrected.nii.gz', '__dwi_eddy_corrected.bvec' ],
     "Bet_DWI":  [ '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz', '__dwi_bet.nii.gz' ],
     "N4_DWI":  [ '__dwi_n4.nii.gz' ],
     "Crop_DWI":  [ '__b0_cropped.nii.gz', '__b0_mask_cropped.nii.gz', '__dwi_cropped.nii.gz' ],
@@ -58,7 +58,6 @@ TractoFlow_Procs = {
     # "Local_Tracking_Mask": [ '__?' ],
     # "Local_Seeding_Mask": [ '__?' ],
     # "Local_Tracking": [ '__?' ]
-
 
 ##
 ## define functions to check if the files exist / stages complete
@@ -109,8 +108,11 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
     files = []
     for proc in procs:
         for stem in file_check_dict[proc]:
-            files.append(os.path.join(subject_dir, proc, participant_id + stem))
-            
+            if stem[0] == '_':
+                files.append(os.path.join(subject_dir, proc, participant_id + stem))
+            else:
+                files.append(os.path.join(subject_dir, proc, stem))
+                
     ## build logical if files exist
     filesExist = [ os.path.exists(out) for out in files ]
     
