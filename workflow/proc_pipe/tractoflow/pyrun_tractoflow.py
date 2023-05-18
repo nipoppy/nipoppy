@@ -384,7 +384,7 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
         shutil.copyfile(bvalfile, tractoflow_subj_dir + '/bval')
         shutil.copyfile(bvecfile, tractoflow_subj_dir + '/bvec')
         shutil.copyfile(anatfile, tractoflow_subj_dir + '/t1.nii.gz')
-        if not rpe_file == None:
+        if os.path.exists(rpe_file):
             shutil.copyfile(rpe_file, tractoflow_work_dir + '/rev_b0.nii.gz')
 
     # ## cd to tractoflow_work_dir to control where the "work" folder ends up
