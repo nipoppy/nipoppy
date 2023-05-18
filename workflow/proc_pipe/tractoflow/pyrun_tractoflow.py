@@ -1,13 +1,15 @@
 import argparse
+import os
+import shutil
+from pathlib import Path
 import json
 import subprocess
-import os
-from pathlib import Path
-import workflow.logger as my_logger
-import shutil
-#import re
-#import glob
+
+import numpy as np
+import nibabel as nib
 from bids import BIDSLayout
+
+import workflow.logger as my_logger
 
 #Author: bcmcpher
 #Date: 14-Apr-2023 (last update)
@@ -18,12 +20,6 @@ CWD = os.path.dirname(os.path.abspath(fname))
 
 MEM_MB = 4000
 
-import json
-import os
-from pathlib import Path
-import numpy as np
-import nibabel as nib
-from bids import BIDSLayout
 
 def parse_data(bids_dir, participant_id, session_id, logger=None):
     """ Parse and verify the input files to build TractoFlow's simplified input to avoid their custom BIDS filter
@@ -70,7 +66,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             
         logger.info("- "*25)
         logger.info(anat.filename)
-        logger.info(f"Scan Type: {tmcmode}\nData Shape: {tvol.shape}")
+        logger.info(f"Scan Type: {tmcmode}")
+        logger.info(f"Data Shape: {tvol.shape}")
 
         ## if sense is in the encoded header drop it
         if tmcmode.lower() == 'sense':
@@ -126,7 +123,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             
         logger.info("- "*25)
         logger.info(dmri.filename)
-        logger.info(f"Encoding Direction: {tmeta['PhaseEncodingDirection']}\nData Shape: {tvol.shape}")
+        logger.info(f"Encoding Direction: {tmeta['PhaseEncodingDirection']}")
+        logger.info(f"Data Shape: {tvol.shape}")
 
         ## store phase encoding data
         cpe.append(tmeta['PhaseEncodingDirection'])
@@ -199,7 +197,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             ## they're the same axis in opposite orientations
             else:
 
-                logger.info(f"Foward Phase Encoding:  {dmrifs1pe}\nReverse Phase Encoding: {dmrifs2pe}")
+                logger.info(f"Foward Phase Encoding:  {dmrifs1pe}")
+                logger.info(f"Reverse Phase Encoding: {dmrifs2pe}")
 
                 ## if the sequences are the same length
                 if (dmrifs1nv == dmrifs2nv):
@@ -261,7 +260,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         else:
             rpe = fpe[0]
 
-        logger.info(f"Foward Phase Encoding:  {fpe}\nReverse Phase Encoding: {rpe}")
+        logger.info(f"Foward Phase Encoding:  {fpe}")
+        logger.info(f"Reverse Phase Encoding: {rpe}")
             
         ## look for the reverse phase encoded file in the other candidates
         if (rpe in cpe):
@@ -366,7 +366,7 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
         Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
 
     ## call the file parser to copy the correct files to the input structure
-    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, run_id, logger)
+    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
         
     # ## copy the bids data into this folder in their "simple" input structure b/c bids parsing doesn't work
     # ## and uses a unique filter that isn't easy / worth parsing
@@ -392,7 +392,7 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     # logger.info(f"Setting working directory to: {tractoflow_work_dir}")
 
     ## drop sub- from participant ID
-    tf_id = re.sub("sub-", "", participant_id)
+    tf_id = participant_id.replace('sub-', '')
     
     ## generalize as inputs - eventually
     dti_shells=1000
