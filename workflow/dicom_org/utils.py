@@ -20,7 +20,7 @@ file_handler.setFormatter(formatter)
 # Don't forget to add the file handler
 logger.addHandler(file_handler)
 
-def search_dicoms(raw_dicom_dir):
+def search_dicoms(raw_dicom_dir, skip_dcm_check=False):
     """ Search and return list of dicom files from a scanner dicom-dir-tree output
     """
     filelist = []
@@ -28,11 +28,12 @@ def search_dicoms(raw_dicom_dir):
     for root, dirs, files in os.walk(raw_dicom_dir):
         for file in files:
             filepath = os.path.join(root,file)
-            valid_dicom = check_valid_dicom(filepath)
-            if valid_dicom:
-                filelist.append(filepath)
-            else:
-                invalid_dicom_list.append(filepath)
+            if skip_dcm_check:
+                valid_dicom = check_valid_dicom(filepath)
+                if valid_dicom:
+                    filelist.append(filepath)
+                else:
+                    invalid_dicom_list.append(filepath)
     
     n_dcms = len(filelist)
     unique_dcm = set(filelist)

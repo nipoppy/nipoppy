@@ -12,14 +12,14 @@ import workflow.catalog as catalog
 #Date: 07-Oct-2022
 
 
-def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks):
+def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks, skip_dcm_check):
     """ Copy / Symlink raw dicoms into a flat participant dir
     """
     logger.info(f"\nparticipant_id: {participant}")
 
     participant_raw_dicom_dir = f"{raw_dicom_dir}/{participant_dicom_dir}/"
 
-    raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir)
+    raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir, skip_dcm_check)
     logger.info(f"n_raw_dicom: {len(raw_dcm_list)}, n_skipped (invalid/derived): {len(invalid_dicom_list)}")
 
     # Remove non-alphanumeric chars (e.g. "_" from the participant_dir names)
@@ -36,7 +36,7 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
         json.dump(invalid_dicom_dict, outfile, indent=4)
         
 
-def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
+def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_check=False, n_jobs=4):
     """ Runs the dicom reorg tasks 
     """
     session = f"ses-{session_id}"
@@ -75,14 +75,14 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, n_jobs=4):
         if n_jobs > 1:
             ## Process in parallel! (Won't write to logs)            
             Parallel(n_jobs=n_jobs)(delayed(reorg)(
-                participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks
+                participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks, skip_dcm_check
                 ) 
                 for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["participant_dicom_dir"]))
             )
 
         else: # Useful for debugging
             for participant_id, dicom_id in list(zip(reorg_df["participant_id"], reorg_df["participant_dicom_dir"])):
-                reorg(participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks) 
+                reorg(participant_id, dicom_id, raw_dicom_dir, dicom_dir, invalid_dicom_dir, logger, use_symlinks, skip_dcm_check) 
 
         logger.info(f"\nDICOM reorg for {n_dicom_reorg_participants} participants completed")
         logger.info(f"Skipped (invalid/derived) DICOMs are listed here: {log_dir}")
@@ -103,6 +103,7 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
     parser.add_argument('--session_id', type=str, default=None, help='session (i.e. visit to process)')
     parser.add_argument('--use_symlinks', action='store_true', help='symlink from raw_dicom to dicom to avoid duplication')
+    parser.add_argument('--skip_dcm_check', action='store_true', help='skip raw dicoms checks to see if they are derived')
     parser.add_argument('--n_jobs', type=int, default=4, help='number of parallel processes')
     args = parser.parse_args()
 
@@ -113,6 +114,7 @@ if __name__ == '__main__':
 
     session_id = args.session_id
     use_symlinks = args.use_symlinks # Saves space and time! 
+    skip_dcm_check = args.skip_dcm_check
     n_jobs = args.n_jobs
 
-    run(global_configs, session_id, use_symlinks=use_symlinks, n_jobs=n_jobs)
+    run(global_configs, session_id, use_symlinks=use_symlinks, skip_dcm_check=skip_dcm_check, n_jobs=n_jobs)
