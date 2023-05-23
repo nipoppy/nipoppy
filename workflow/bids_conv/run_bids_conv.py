@@ -9,6 +9,7 @@ import subprocess
 from joblib import Parallel, delayed
 from pathlib import Path
 
+import numpy as np
 from bids.layout import parse_file_entities
 
 import workflow.catalog as catalog
@@ -78,10 +79,14 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
     CMD = CMD_ARGS.split()
 
     logger.info(f"CMD:\n{CMD}")
+    heudiconv_proc_success = True
     try:
         heudiconv_proc = subprocess.run(CMD)
     except Exception as e:
         logger.error(f"bids run failed with exceptions: {e}")
+        heudiconv_proc_success = False
+
+    return heudiconv_proc_success
 
 def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     """ Runs the bids conv tasks 
@@ -119,14 +124,20 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
 
         if n_jobs > 1:
             ## Process in parallel! (Won't write to logs)
-            Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(
+            heudiconv_results = Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(
                 dicom_id, global_configs, session_id, stage, logger
                 ) for dicom_id in heudiconv_participants)
 
         else:
             # Useful for debugging
+            heudiconv_results = []
             for dicom_id in heudiconv_participants:
-                run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
+                res = run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
+            heudiconv_results.append(res)
+
+        # Check successful heudiconv runs
+        n_heudiconv_success = np.sum(heudiconv_results)
+        logger.info(f"Successfully ran Heudiconv (Stage 1 or Stage 2) for {n_heudiconv_success} out of {n_heudiconv_participants} participants")
 
         # Check succussful bids
         participants_with_bids = {
