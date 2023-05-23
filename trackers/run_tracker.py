@@ -1,9 +1,6 @@
-import os
 import pandas as pd
-import json
 from pathlib import Path
 import argparse
-import datetime
 from tracker import tracker, get_start_time
 import fs_tracker, fmriprep_tracker, mriqc_tracker
 
@@ -26,7 +23,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
     """ driver code running pipeline specific trackers
     """
 
-    proc_status_df = pd.DataFrame()
+    proc_status_dfs = [] # list of dataframes
     for pipeline in pipelines:
         pipe_tracker = tracker(global_config_file, dash_schema_file, pipeline) 
             
@@ -34,11 +31,9 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
-        n_sessions = len(session_ids)
-
-        mr_proc_manifest = f"{mr_proc_root_dir}/tabular/demographics/mr_proc_manifest.csv"
+        mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
         manifest_df = pd.read_csv(mr_proc_manifest)
-        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].astype(str).str.strip().values
+        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
 
         print("-"*50)
@@ -47,7 +42,6 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
         print("-"*50)
 
         status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS)
-        n_checks = len(status_check_dict)
 
         dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
         
@@ -61,7 +55,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
             for bids_id in participants:
                 participant_id = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
                 _df.loc[bids_id,"participant_id"] = participant_id
-                print(f"bids_id: {bids_id}, participant_id: {participant_id}")
+                # print(f"bids_id: {bids_id}, participant_id: {participant_id}")
 
                 if pipeline == "freesurfer":
                     subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
@@ -71,7 +65,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                     print(f"unknown pipeline: {pipeline}")
                     
                 dir_status = Path(subject_dir).is_dir()
-                print(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
+                # print(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
                 
                 if dir_status:                
                     for name, func in status_check_dict.items():
@@ -79,18 +73,25 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                         # print(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
                 else:
                     # print(f"Pipeline output not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
-            proc_status_df = proc_status_df.append(_df)
+            proc_status_dfs.append(_df)
+
+    proc_status_df = pd.concat(proc_status_dfs, axis='index')
 
     # Save proc_status_df
     tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
+    proc_status_df = proc_status_df.drop(columns="bids_id")
     proc_status_df.index.name = "bids_id"
     proc_status_df.to_csv(tracker_csv)
+
+    print(f"Saved to {tracker_csv}")
 
 if __name__ == '__main__':
     # argparse
@@ -98,8 +99,8 @@ if __name__ == '__main__':
     Script to run trackers on various proc_pipes
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset')
-    parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status')
+    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
     args = parser.parse_args()
 
