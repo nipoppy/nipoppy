@@ -3,6 +3,7 @@ import json
 import subprocess
 import shutil
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import os
 from joblib import Parallel, delayed
@@ -66,10 +67,14 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
     CMD = CMD_ARGS.split()
 
     logger.info(f"CMD:\n{CMD}")
+    heudiconv_proc_success = True
     try:
         heudiconv_proc = subprocess.run(CMD)
     except Exception as e:
         logger.error(f"bids run failed with exceptions: {e}")
+        heudiconv_proc_success = False
+
+    return heudiconv_proc_success
 
 def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     """ Runs the bids conv tasks 
@@ -105,29 +110,34 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
 
         if n_jobs > 1:
             ## Process in parallel! (Won't write to logs)
-            Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(
+            heudiconv_results = Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(
                 dicom_id, global_configs, session_id, stage, logger
                 ) for dicom_id in heudiconv_participants)
 
         else:
             # Useful for debugging
+            heudiconv_results = []
             for dicom_id in heudiconv_participants:
-                run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
+                res = run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
+                heudiconv_results.append(res)
 
-        # Check succussful bids
+        # Check successful heudiconv runs
+        n_heudiconv_success = np.sum(heudiconv_results)
+        logger.info(f"Successfully completed {n_heudiconv_success} out of {n_heudiconv_participants} heudiconv runs")
+        
+        # Check succussful bids (total sum: includes all previous runs)
         participant_bids_paths = glob.glob(f"{bids_dir}/sub-*")
         
         # Add newly processed bids_id to the manifest csv
         manifest_df = pd.read_csv(mr_proc_manifest)
-        print(manifest_df)
+    
         manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(heudiconv_df["participant_id"]))
-                         & (manifest_df["session_id"].astype(str) == str(session_id)), 
+                         & (manifest_df["session"].astype(str) == session), 
                          "bids_id"] = heudiconv_df["bids_id"]
 
         manifest_df.to_csv(mr_proc_manifest, index=None)
         
         logger.info("-"*50)
-        logger.info(f"BIDS conversion completed for the {n_heudiconv_participants} new participants")
         logger.info(f"Current successfully converted BIDS participants: {len(participant_bids_paths)}")
         
     else:
