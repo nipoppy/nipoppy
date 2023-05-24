@@ -11,6 +11,7 @@ from workflow.dicom_org.utils import search_dicoms, copy_dicoms
 from workflow.utils import (
     COL_ORG_STATUS, 
     DNAME_BACKUPS_STATUS, 
+    load_status,
     participant_id_to_dicom_id, 
     save_backup,
     session_id_to_bids_session,
@@ -57,7 +58,7 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_che
     invalid_dicom_dir = f"{log_dir}/invalid_dicom_dir/"
 
     fpath_status = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
-    df_status = catalog.read_status(fpath_status)
+    df_status = load_status(fpath_status)
     
     if logger is None:
         log_file = f"{log_dir}/dicom_org.log"
