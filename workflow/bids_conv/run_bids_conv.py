@@ -82,7 +82,7 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
     logger.info(f"CMD:\n{CMD}")
     heudiconv_proc_success = True
     try:
-        heudiconv_proc = subprocess.run(CMD)
+        subprocess.run(CMD, check=True) # raises CalledProcessError if non-zero return code
     except Exception as e:
         logger.error(f"bids run failed with exceptions: {e}")
         heudiconv_proc_success = False
