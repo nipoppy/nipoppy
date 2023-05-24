@@ -19,6 +19,7 @@ from workflow.utils import (
     COL_DICOM_ID,
     DNAME_BACKUPS_STATUS,
     FNAME_STATUS, 
+    load_status,
     save_backup,
     session_id_to_bids_session,
 )
@@ -88,7 +89,7 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
 
     return heudiconv_proc_success
 
-def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
+def run(global_configs, session_id, logger=None, stage=2, n_jobs=2, participant_id=None):
     """ Runs the bids conv tasks 
     """
     session = session_id_to_bids_session(session_id)
@@ -106,12 +107,17 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
 
     # mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
     fpath_status = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_STATUS)
-    dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
     bids_dir = f"{DATASET_ROOT}/bids/"
 
     # participants to process with Heudiconv
-    df_status = catalog.read_status(fpath_status)
+    df_status = load_status(fpath_status)
     heudiconv_df = catalog.get_new_dicoms(fpath_status, session_id, logger)
+
+    # filter by DICOM ID if needed
+    if participant_id is not None:
+        logger.info(f'Only running for participant: {participant_id}')
+        heudiconv_df = heudiconv_df.loc[heudiconv_df[COL_DICOM_ID] == participant_id]
+    
     heudiconv_participants = set(heudiconv_df["dicom_id"].values)
     n_heudiconv_participants = len(heudiconv_participants)
 
@@ -131,8 +137,8 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
         else:
             # Useful for debugging
             heudiconv_results = []
-            for dicom_id in heudiconv_participants:
-                res = run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
+            for participant_id in heudiconv_participants:
+                res = run_heudiconv(participant_id, global_configs, session_id, stage, logger) 
             heudiconv_results.append(res)
 
         # Check successful heudiconv runs
@@ -181,6 +187,7 @@ if __name__ == '__main__':
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2, default: 2)')
     parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes (default: 2)')
+    parser.add_argument('--participant_id', type=str, help='single participant id (default: run on all participants in the status file)')
 
     args = parser.parse_args()
 
@@ -188,9 +195,10 @@ if __name__ == '__main__':
     session_id = args.session_id
     stage = args.stage
     n_jobs = args.n_jobs
+    participant_id = args.participant_id
 
     # Read global configs
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    run(global_configs, session_id, stage=stage, n_jobs=n_jobs)
+    run(global_configs, session_id, stage=stage, n_jobs=n_jobs, participant_id=participant_id)
