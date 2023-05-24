@@ -104,11 +104,11 @@ def check_MNI152Lin(subject_dir, session_id, run_id):
 tracker_configs = {
     "pipeline_complete": check_anat_output,
     
-    "Phase_": {
+    "PHASE_": {
             "func": check_func_output
             },
 
-    "Stage_": {
+    "STAGE_": {
             "space-MNI152NLin2009cSym_res-1": check_MNI152NLin2009cSym,
             "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
             "space-MNI152Lin_res-1": check_MNI152Lin
