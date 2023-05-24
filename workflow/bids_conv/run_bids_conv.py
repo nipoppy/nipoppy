@@ -20,7 +20,7 @@ from workflow.utils import (
     DNAME_BACKUPS_STATUS,
     FNAME_STATUS, 
     save_backup,
-    session_to_bids,
+    session_id_to_bids_session,
 )
 
 #Author: nikhil153
@@ -91,7 +91,7 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
 def run(global_configs, session_id, logger=None, stage=2, n_jobs=2):
     """ Runs the bids conv tasks 
     """
-    session = session_to_bids(session_id)
+    session = session_id_to_bids_session(session_id)
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
 

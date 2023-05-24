@@ -5,7 +5,7 @@ from pathlib import Path
 from workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
-    COL_DICOM_DIR,
+    COL_PARTICIPANT_DICOM_DIR,
     COL_DICOM_ID,
     COL_DOWNLOAD_STATUS,
     COL_ORG_STATUS, 
@@ -25,12 +25,12 @@ def read_and_process_status(status_csv, session_id, logger):
     status_df[COL_SUBJECT_MANIFEST] = status_df[COL_SUBJECT_MANIFEST].astype(str)
 
     # check participant dicom dirs
-    if not status_df[COL_DICOM_DIR].isna().all():
+    if not status_df[COL_PARTICIPANT_DICOM_DIR].isna().all():
         logger.info("Using dicom filename from the status file") 
     else:
-        logger.warning(f"{COL_DICOM_DIR} is not specified in the status file")
+        logger.warning(f"{COL_PARTICIPANT_DICOM_DIR} is not specified in the status file")
         logger.info("Assuming dicom_id is the dicom filename") 
-        status_df[COL_DICOM_DIR] = status_df[COL_DICOM_ID].copy()
+        status_df[COL_PARTICIPANT_DICOM_DIR] = status_df[COL_DICOM_ID].copy()
 
     return status_df
 
@@ -76,7 +76,7 @@ def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
     logger.info("-"*50)
     
     n_available_raw_dicom_dirs = len(available_raw_dicom_dirs)
-    available_raw_dicom_dirs_participant_ids = list(status_df[status_df[COL_DICOM_DIR].isin(available_raw_dicom_dirs)][COL_SUBJECT_MANIFEST].astype(str).values)
+    available_raw_dicom_dirs_participant_ids = list(status_df[status_df[COL_PARTICIPANT_DICOM_DIR].isin(available_raw_dicom_dirs)][COL_SUBJECT_MANIFEST].astype(str).values)
 
     # check mismatch between status file and raw_dicoms
     download_dicom_dir_participant_ids = set(participants) - set(available_raw_dicom_dirs_participant_ids)

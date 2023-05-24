@@ -11,7 +11,7 @@ import pandas as pd
 from workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
-    COL_DICOM_DIR,
+    COL_PARTICIPANT_DICOM_DIR,
     COL_DICOM_ID,
     COL_DOWNLOAD_STATUS,
     COL_ORG_STATUS,
@@ -63,7 +63,7 @@ def run(global_config_file, regenerate):
         )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
-    df_status.loc[:, COL_DICOM_DIR] = np.nan
+    df_status.loc[:, COL_PARTICIPANT_DICOM_DIR] = np.nan
 
     # populate dicom_id (bids_id should already be populated)
     df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(
@@ -78,11 +78,11 @@ def run(global_config_file, regenerate):
 
         try:
             from dicom_dir_func import participant_id_to_dicom_dir
-            df_status[COL_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(participant_id_to_dicom_dir)
+            df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(participant_id_to_dicom_dir)
 
             # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
             df_status[COL_DOWNLOAD_STATUS] = check_status(
-                df_status, dpath_downloaded_dicom, COL_DICOM_DIR, session_first=True,
+                df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
             )
             print('download_status done')
 

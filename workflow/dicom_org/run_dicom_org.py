@@ -13,7 +13,7 @@ from workflow.utils import (
     DNAME_BACKUPS_STATUS, 
     participant_id_to_dicom_id, 
     save_backup,
-    session_to_bids,
+    session_id_to_bids_session,
 )
 
 #Author: nikhil153
@@ -47,7 +47,7 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
 def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_check=False, n_jobs=4):
     """ Runs the dicom reorg tasks 
     """
-    session = session_to_bids(session_id)
+    session = session_id_to_bids_session(session_id)
 
     # populate relative paths
     DATASET_ROOT = global_configs["DATASET_ROOT"]

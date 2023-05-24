@@ -1,4 +1,3 @@
-
 import datetime
 import os
 from pathlib import Path
@@ -30,13 +29,13 @@ COLS_MANIFEST = [COL_SUBJECT_MANIFEST, COL_BIDS_ID_MANIFEST, COL_VISIT_MANIFEST,
                  COL_SESSION_MANIFEST, COL_DATATYPE_MANIFEST]
 
 # status file columns
-COL_DICOM_DIR = 'participant_dicom_dir'
+COL_PARTICIPANT_DICOM_DIR = 'participant_dicom_dir'
 COL_DICOM_ID = 'dicom_id'
 COL_DOWNLOAD_STATUS = 'downloaded'
 COL_ORG_STATUS = 'organized'
 COL_CONV_STATUS = 'converted'
 COLS_STATUS = [COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST, 
-               COL_DICOM_DIR, COL_DICOM_ID, COL_BIDS_ID_MANIFEST, 
+               COL_PARTICIPANT_DICOM_DIR, COL_DICOM_ID, COL_BIDS_ID_MANIFEST, 
                COL_DOWNLOAD_STATUS, COL_ORG_STATUS, COL_CONV_STATUS]
 
 def participant_id_to_dicom_id(participant_id):
@@ -46,20 +45,12 @@ def participant_id_to_dicom_id(participant_id):
     return dicom_id
 
 def dicom_id_to_bids_id(dicom_id):
-    return subject_to_bids(dicom_id)
-
-def subject_to_bids(subject_id):
-    # add BIDS prefix if it doesn't already exist
-    subject_id = str(subject_id)
-    if subject_id.startswith(BIDS_SUBJECT_PREFIX):
-        return subject_id
-    else:
-        return f'{BIDS_SUBJECT_PREFIX}{subject_id}'
+    return f'{BIDS_SUBJECT_PREFIX}{dicom_id}'
 
 def participant_id_to_bids_id(participant_id):
     return dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
 
-def session_to_bids(session_id):
+def session_id_to_bids_session(session_id):
     # add BIDS prefix if it doesn't already exist
     session_id = str(session_id)
     if session_id.startswith(BIDS_SESSION_PREFIX):
@@ -105,7 +96,7 @@ def load_status(fpath_status):
             col: str 
             for col in [
                 COL_SUBJECT_MANIFEST, 
-                COL_DICOM_DIR, 
+                COL_PARTICIPANT_DICOM_DIR, 
                 COL_VISIT_MANIFEST, 
                 COL_SESSION_MANIFEST, 
                 COL_DICOM_ID, 
