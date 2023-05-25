@@ -33,7 +33,7 @@ FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 
 GLOBAL_CONFIG_DATASET_ROOT = 'DATASET_ROOT'
 
-def run(global_config_file, regenerate):
+def run(global_config_file, regenerate=False, empty=False):
     
     # parse global config
     with open(global_config_file) as file:
@@ -56,18 +56,21 @@ def run(global_config_file, regenerate):
     # look for existing status file
     if fpath_status_symlink.exists():
         df_status_old = pd.read_csv(fpath_status_symlink, dtype=str)
-    elif not regenerate:
-        raise ValueError(
-            f'Did not find an existing {FNAME_STATUS} file'
-            f'. Use {FLAG_REGENERATE} to create one from scratch.'
-        )
+    else:
+        df_status_old = None
+        
+        if not regenerate:
+            raise ValueError(
+                f'Did not find an existing {FNAME_STATUS} file'
+                f'. Use {FLAG_REGENERATE} to create one from scratch.'
+            )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
     df_status.loc[:, COL_PARTICIPANT_DICOM_DIR] = np.nan
 
     # populate dicom_id (bids_id should already be populated)
     df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(
-        lambda participant_id: participant_id_to_dicom_id(participant_id, global_config)
+        participant_id_to_dicom_id
     )
 
     # initialize all status columns
@@ -76,36 +79,40 @@ def run(global_config_file, regenerate):
 
     if regenerate:
 
-        try:
-            from dicom_dir_func import participant_id_to_dicom_dir
-            df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(participant_id_to_dicom_dir)
+        if not empty:
 
-            # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
-            df_status[COL_DOWNLOAD_STATUS] = check_status(
-                df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
+            try:
+                from dicom_dir_func import participant_id_to_dicom_dir
+                df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
+                    lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
+                )
+
+                # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
+                df_status[COL_DOWNLOAD_STATUS] = check_status(
+                    df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
+                )
+                # print('download_status done')
+
+            except ModuleNotFoundError:
+                warnings.warn(
+                    'Could not find participant ID -> DICOM directory conversion function'
+                    '. If you want to know which DICOM files have been fetched/downloaded'
+                    f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
+                    ' that contains a function definition for participant_id_to_dicom_dir()'
+                    '. See sample_dicom_dir_func.py for an example.'
+                )
+
+            # look for organized DICOM
+            df_status[COL_ORG_STATUS] = check_status(
+                df_status, dpath_organized_dicom, COL_DICOM_ID, session_first=True,
             )
-            print('download_status done')
+            # print('org done')
 
-        except ModuleNotFoundError:
-            warnings.warn(
-                'Could not find participant ID -> DICOM directory conversion function'
-                '. If you want to know which DICOM files have been fetched/downloaded'
-                f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
-                ' that contains a function definition for participant_id_to_dicom_dir()'
-                '. See sample_dicom_dir_func.py for an example.'
+            # look for BIDS: bids/bids_id/session
+            df_status[COL_CONV_STATUS] = check_status(
+                df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
             )
-
-        # look for organized DICOM
-        df_status[COL_ORG_STATUS] = check_status(
-            df_status, dpath_organized_dicom, COL_DICOM_ID, session_first=True,
-        )
-        print('org done')
-
-        # look for BIDS: bids/bids_id/session
-        df_status[COL_CONV_STATUS] = check_status(
-            df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
-        )
-        print('bids status done')
+            # print('bids status done')
 
     else:
 
@@ -185,10 +192,14 @@ if __name__ == '__main__':
         help=('regenerate entire status file'
               ' (default: only append rows for new subjects/sessions)'),
     )
+    parser.add_argument(
+        '--empty', action='store_true', 
+        help='generate empty status file (without checking what\'s on the disk)')
     args = parser.parse_args()
 
     # parse
     global_config_file = args.global_config
     regenerate = getattr(args, FLAG_REGENERATE.lstrip('-'))
+    empty = args.empty
 
-    run(global_config_file, regenerate=regenerate)
+    run(global_config_file, regenerate=regenerate, empty=empty)
