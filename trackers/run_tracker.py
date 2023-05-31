@@ -61,6 +61,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
             _df["session"] = session_id
             _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
+            _df["has_mri_data"] = "true" # everyone with a session value has MRI data
             
             n_participants = 0
             for bids_id in participants:
