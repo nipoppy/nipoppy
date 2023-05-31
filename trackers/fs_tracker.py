@@ -100,7 +100,7 @@ def check_parcels(subject_dir, session_id=None, run_id=None):
 tracker_configs = {
     "pipeline_complete": check_run_status,
     
-    "PHASE_": {
+    "PHASE__": {
             "parcellations": check_parcels
             }
 }

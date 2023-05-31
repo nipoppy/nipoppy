@@ -68,7 +68,7 @@ def check_bold(subject_dir, session_id, run_id=None):
 tracker_configs = {
     "pipeline_complete": eval_mriqc,
     
-    "STAGE_": {
+    "STAGE__": {
             "MRIQC_BOLD": check_bold
             }
 }
