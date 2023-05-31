@@ -49,7 +49,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         print(f"n_participants: {n_participants}, session_ids: {session_ids}")
         print("-"*50)
 
-        status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS)
+        status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
 
         # only use non-prefixed columns at this stage
         # for prefixed columns we need to generate the column name

@@ -25,7 +25,7 @@ class tracker:
 
         return self.dash_schema
 
-    def get_pipe_tasks(self, tracker_configs, col_group):
+    def get_pipe_tasks(self, tracker_configs, col_group, pipeline, version):
         task_dict = self.dash_schema[col_group]
         status_check_dict = {}
         for k,v in task_dict.items():     
@@ -33,10 +33,10 @@ class tracker:
                 if v["IsPrefixedColumn"]:
                     prefixed_task_dict = tracker_configs[k]
                     for pk, pv in prefixed_task_dict.items():
-                        status_check_dict[f"{k}{pk}"] = pv
+                        status_check_dict[f"{k}{pipeline}_{version}__{pk}"] = pv # {k}{pipeline_name}_{pipeline_version}__{pk}
                 else:    
                     status_check_dict[k] = tracker_configs[k]           
-                            
+            
             else: 
                 is_req = bool(v["IsRequired"])
                 if is_req:
