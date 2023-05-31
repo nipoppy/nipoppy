@@ -20,6 +20,10 @@ def run(instrument_config):
     stratification = config["stratification"]
 
     norming_procedure = instrument["norming_procedure"]
+    if norming_procedure.lower() in ["regress", "regression"]:
+        regress_model_dict = instrument["regression_model_coefficients"]
+    else:
+        regress_model_dict = None
 
     raw_score_name = instrument["raw_score_name"]
     normed_score_name = instrument["normed_score_name"]
@@ -38,29 +42,40 @@ def run(instrument_config):
     print("-"*60)
     print("")
 
+    print("Reading raw scores")
     raw_data_df = read_raw_scores(data_paths)
-    baseline_df = read_baseline_scores(data_paths)
 
     raw_data_df = raw_data_df[[participant_id_col] + strata_cols]
     raw_data_df = raw_data_df.set_index(participant_id_col)
+
+    raw_data_df[raw_score_name] = raw_data_df[raw_score_name].astype(float)
+
+    print("Checking valid scores")
     valid_data_df = get_valid_scores(raw_data_df,instrument)
 
     n_participants_to_normalized = len(valid_data_df)
     print(f"\nn_participants to be normalized: {n_participants_to_normalized}")
 
-    baseline_df, baselines_ranges = format_baseline_scores(baseline_df, stratification, raw_score_name)
-    n_strata = len(baseline_df)
-
-    print("-"*60)
-    print(f"n_starta: {n_strata}")
-    print(f"starta ranges:\n{baselines_ranges}\n")
-    print(f"***IMPORTANT: Any raw scores beyond these ranges will not be normalized***")
-    print("-"*60)
+    if norming_procedure.lower() in ["regress", "regression"]:
+        print(f"Baseline score tables are NOT used during norming for {norming_procedure}")
+        baseline_df = None
+    else:
+        print("Reading baseline scores")
+        baseline_df = read_baseline_scores(data_paths)
+        baseline_df, baselines_ranges = format_baseline_scores(baseline_df, stratification, raw_score_name)
+        n_strata = len(baseline_df)
+        print("-"*60)
+        print(f"n_starta: {n_strata}")
+        print(f"starta ranges:\n{baselines_ranges}\n")
+        print(f"***IMPORTANT: Any raw scores beyond these ranges will not be normalized***")
+        print("-"*60)
 
     print(f"Starting score normalization based on {norming_procedure}...")
     normed_data_df = valid_data_df.copy()
     for idx, participant_data in normed_data_df.iterrows():
-        normed_score, note = get_normed_score(participant_data, baseline_df, stratification, raw_score_name, norming_procedure)
+        # print(f"participant_data: {participant_data}")
+        normed_score, note = get_normed_score(participant_data, baseline_df, stratification, raw_score_name, 
+                                              norming_procedure, regress_model_dict)
         normed_data_df.loc[idx,normed_score_name] = normed_score
         normed_data_df.loc[idx,"note"] = note
 

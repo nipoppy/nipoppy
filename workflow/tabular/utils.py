@@ -36,6 +36,7 @@ def get_valid_scores(df,instrument):
     min_val = int(score_range["min"])
     max_val = int(score_range["max"])
 
+    # df[name] = df[name].astype()
     n_participants = len(df)
     n_multiple_visits = len(df[df.index.duplicated()])
 
@@ -58,7 +59,7 @@ def get_valid_scores(df,instrument):
     if n_invalid_scores > 0:
         print(f"n_invalid_scores: {n_invalid_scores}")
         print(f"Using participants only with valid scores")
-        df = df[df[name].isien(range(min_val, max_val+1))]
+        df = df[df[name].isin(range(min_val, max_val+1))]
 
     return df
     
@@ -86,54 +87,109 @@ def format_baseline_scores(df, stratification, raw_score_name):
         
     return df, baselines_ranges
 
-def get_normed_score(participant, baseline_df, stratification, raw_score_name, norming_procedure="lookup_scaled_score"):
+def get_normed_score(participant, baseline_df, stratification, raw_score_name, 
+                     norming_procedure="lookup_scaled_score", regress_model_dict=None):
     """ Filter baseline scores and return match for a given participant
     """
-    baseline_match_df = baseline_df.copy()
+    # Using regression formula directly 
+    if baseline_df is None:
+        if norming_procedure.lower() in ["regress", "regression"]:
+            if regress_model_dict == None:
+                print("regress_model_dict with covariate coefficients not provided")
+                normed_score = np.nan
+                note = "Missing regression model coefficients"
 
-    # Filter rows matching participant values
-    # Convention: upper limit is not include for demographics and scores: e.g. (0-4) implies {0,1,2,3}
-    for k,v in participant.items():
-        if stratification[k]["dtype"] == "categorical":
-            baseline_match_df = baseline_match_df[(baseline_match_df[f"{k}"] == v)]
+            else:
+                participant_dict = {"raw_score":participant[raw_score_name]}
+                regress_covars = []
+                for var_name in list(stratification.keys()):
+                    participant_dict[var_name] = participant.loc[var_name]
+                    if var_name != raw_score_name:
+                        regress_covars.append(var_name)
+                                    
+                normed_score = regress(participant_dict, regress_covars, regress_model_dict)
+                note = "Using regression formula"
         else:
-            baseline_match_df = baseline_match_df[(baseline_match_df[f"{k}_min"] <= v) & 
-                                        (baseline_match_df[f"{k}_max"] > v) ] # see convention
-
-    # Deal with zero or > 1 matches
-    if len(baseline_match_df) == 0:
-        normed_score = np.nan
-        note = "Strata not found"
-        
-    elif len(baseline_match_df) > 1:
-        print(f"Multiple matches found for participant: {participant.name}, {dict(participant)}")
-        print(f"Not assigning a scaled score for {participant.name}")
-        normed_score = np.nan
-        note = "Multiple strata matches found"
-
-    else:
-        # Select based on norming_procedure
-        if norming_procedure.lower() in ["lookup_scaled_score","scaled_score"]:
-            normed_score = baseline_match_df["Scaled_score"].values[0]
-            note = "Scaled score"
-
-        elif norming_procedure.lower() in ["zscore", "z-score", "z_score"]:
-            participant_dict = {"raw_score":baseline_match_df[raw_score_name].values[0],
-                                "Mean":baseline_match_df["Mean"].values[0],
-                                "SD":baseline_match_df["SD"].values[0]}
-
-            normed_score = z_score(participant_dict)
-            note = "zscore"
-        else:
-            print(f"Unknown norming procedure")
+            print(f"Unknown norming procedure: {norming_procedure}")
             normed_score = np.nan
             note = "Unknown norming procedure"
+
+    # Using stratified matching
+    else:
+        baseline_match_df = baseline_df.copy()
+
+        # Filter rows matching participant values
+        # Convention: upper limit is not include for demographics and scores: e.g. (0-4) implies {0,1,2,3}
+        for k,v in participant.items():
+            if stratification[k]["dtype"] == "categorical":
+                baseline_match_df = baseline_match_df[(baseline_match_df[f"{k}"] == v)]
+            else:
+                baseline_match_df = baseline_match_df[(baseline_match_df[f"{k}_min"] <= v) & 
+                                            (baseline_match_df[f"{k}_max"] > v) ] # see convention
+
+        # Deal with zero or > 1 matches
+        if len(baseline_match_df) == 0:
+            normed_score = np.nan
+            note = "Strata not found"
+            
+        elif len(baseline_match_df) > 1:
+            print(f"Multiple matches found for participant: {participant.name}, {dict(participant)}")
+            print(f"Not assigning a scaled score for {participant.name}")
+            normed_score = np.nan
+            note = "Multiple strata matches found"
+
+        else:
+            # Select based on norming_procedure
+            if norming_procedure.lower() in ["lookup_scaled_score","scaled_score"]:
+                normed_score = baseline_match_df["Scaled_score"].values[0]
+                note = "Scaled score"
+
+            elif norming_procedure.lower() in ["zscore", "z-score", "z_score"]:
+                participant_dict = {"raw_score":baseline_match_df[raw_score_name].values[0],
+                                    "Mean":baseline_match_df["Mean"].values[0],
+                                    "SD":baseline_match_df["SD"].values[0]}
+
+                normed_score = z_score(participant_dict)
+                note = "zscore"
+
+            else:
+                print(f"Unknown norming procedure")
+                normed_score = np.nan
+                note = "Unknown norming procedure"
 
     return normed_score, note
 
 def z_score(participant):
+    """Calculates z-score based on mean and SD values provided"""
     raw_score = participant["raw_score"]
     mean = participant["Mean"]
     SD = participant["SD"]
     z_score = (raw_score - mean)/SD
     return z_score
+
+def regress(participant, regress_covars, regress_model_dict):
+    
+    intercept = regress_model_dict["intercept"]
+    slope = regress_model_dict["slope"]
+    log_scale = regress_model_dict["log_scale"]
+
+    raw_score = participant["raw_score"]
+    
+    # print(f"Using these covars in the regression: {regress_covars}")
+    # Calculate weighted contribution of the stratification covarates
+    # e.g. edu_coef*education + sex_coef*sex + age_coef*age
+    weighted_covariate_sum = 0
+    for var_name in regress_covars: 
+        coef = regress_model_dict[var_name]
+        var_value = participant[var_name]
+        # print(f"var_name:{var_name}, coef: {coef}, var_val: {var_value}")
+        weighted_var = coef*var_value
+        weighted_covariate_sum = weighted_covariate_sum + weighted_var
+
+    # Based on Rebekah's (Neuropsy team) formula
+    if log_scale:
+        raw_score = np.log10(raw_score)
+    else:
+        normed_score = (raw_score - (weighted_covariate_sum + intercept))/slope
+
+    return normed_score
