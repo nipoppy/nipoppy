@@ -193,3 +193,13 @@ def regress(participant, regress_covars, regress_model_dict):
         normed_score = (raw_score - (weighted_covariate_sum + intercept))/slope
 
     return normed_score
+
+### TODO
+#     "hidden_variable_A = 3*((TMT A time seconds (Raw score) - 38.359) / 12.836) + 10",
+#     "hidden_variable_B = 3*((TMT B time (seconds) (Raw score) - 88.014369) / 39.157) + 10",
+#     "hidden_variable_AB = (3*(((Hidden_variable_2-Hidden_variable_1)--0.00000008301)/2.729) + 10) * -1",
+#     "TMT A-B contrast (Z-score)= =(Hidden_variable_3-(-12.475+(0.007*Age)+(0.131*Education)+(-0.049*Sex)))/2.9712"
+def regress_contrast():
+
+    normed_score = {} 
+    return normed_score

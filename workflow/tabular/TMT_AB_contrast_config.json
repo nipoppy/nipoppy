@@ -1,0 +1,83 @@
+{
+    "instrument": {
+        "raw_score_1_name": "TMT A time seconds (Raw score)",
+        "raw_score_2_name": "TMT B time seconds (Raw score)",
+        "normed_score_name": "TMT AB contrast (Normed score)", 
+        "reference": "link to a document",
+        "dtype": "float",
+        "range": {
+            "min": 0, 
+            "max": 1000,
+            "n/a": 999
+        },
+        "norming_procedure": "regression_contrast",
+        "regression_formula": {
+            "hidden_var_A": 
+                "hidden_variable_A = 3*((TMT A time seconds (Raw score) - 38.359) / 12.836) + 10",
+            "hidden_var_B": 
+                "hidden_variable_B = 3*((TMT B time (seconds) (Raw score) - 88.014369) / 39.157) + 10",
+            "hidden_var_AB": 
+                "hidden_variable_AB = (3*(((hidden_variable_B-hidden_variable_A)--0.00000008301)/2.729) + 10) * -1",
+            "TMT A-B contrast (Z-score)":
+                "TMT A-B contrast (Z-score)= =(hidden_variable_AB-(-12.475+(0.007*Age)+(0.131*Education)+(-0.049*Sex)))/2.9712"
+        },
+        "regression_model_coefficients": {
+            "hidden_var_A" : {
+                "mult_1": 3,
+                "offset_1": 38.359,
+                "div_1": 12.836,
+                "offset_2": 10
+            },
+            "hidden_var_B" : {
+                "mult_1": 3,
+                "offset_1": 88.014369,
+                "div_1": 39.157,
+                "offset_2": 10
+            },
+            "hidden_var_AB" : {
+                "mult_1": 3,
+                "offset_1": -0.00000008301,
+                "div_1": 2.729,
+                "offset_2": 10,
+                "mult_2": -1
+            },
+            "Education level test": 0.131,
+            "Sex (1=men; 2=women)": -0.049,
+            "Age at time of assessment": 0.007,
+            "intercept": -12.475,
+            "slope": 2.9712,
+            "log_scale": false
+        }
+    },
+    "data_paths": {
+        "raw_data": "/home/nikhil/projects/Parkinsons/qpn/tabular/assessments/neuropysch/RPQ_neuropsych_raw_data.xlsx",
+        "raw_sheet": "Parkinson patients",
+        "baseline_data": "",
+        "baseline_sheet": "",
+        "normed_data": "/home/nikhil/projects/Parkinsons/qpn/tabular/assessments/neuropysch/RCFT_Copy_norm.xlsx",
+        "normed_sheet": "Normed data",        
+        "participant_id_column": "Patient #"
+        },
+
+    "stratification": {
+        "Age at time of assessment":{
+            "dtype": "continuous",
+            "range": {
+                "min": 30, 
+                "max": 100
+            }
+        },
+        "Sex (1=men; 2=women)":{
+            "dtype": "categorical",
+            "range": [1,2]
+        },
+        "Education level test":{
+            "dtype": "continuous",
+            "range": {
+                "min": 0, 
+                "max": 30,
+                "n/a": 999
+            }
+        }
+    }
+}
