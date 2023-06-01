@@ -5,15 +5,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from trackers.tracker import tracker, get_start_time, get_end_time
+from trackers.tracker import tracker, get_start_time, get_end_time, UNAVAILABLE
 from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
 # from workflow.utils import load_manifest, save_backup # TODO once other PR is merged
 
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
 
 # Globals
 PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"

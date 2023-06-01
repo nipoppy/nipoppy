@@ -1,11 +1,7 @@
 from pathlib import Path
 import os
 
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
+from trackers.tracker import SUCCESS, FAIL, UNAVAILABLE
 
 # Globals
 default_tpl_space = "MNI152NLin2009cAsym" # Allowing res-1 or res-2 
@@ -105,12 +101,12 @@ tracker_configs = {
     "pipeline_complete": check_anat_output,
     
     "PHASE__": {
-            "func": check_func_output
-            },
+        "func": check_func_output
+    },
 
     "STAGE__": {
-            "space-MNI152NLin2009cSym_res-1": check_MNI152NLin2009cSym,
-            "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
-            "space-MNI152Lin_res-1": check_MNI152Lin
-            }
+        "space-MNI152NLin2009cSym_res-1": check_MNI152NLin2009cSym,
+        "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
+        "space-MNI152Lin_res-1": check_MNI152Lin
+    }
 }

@@ -4,6 +4,12 @@ import json
 import os
 from pathlib import Path
 
+# Status flags
+SUCCESS="SUCCESS"
+FAIL="FAIL"
+INCOMPLETE="INCOMPLETE"
+UNAVAILABLE="UNAVAILABLE"
+
 class tracker:
     # constructor
     def __init__(self, global_config_file, dash_schema_file, pipeline):
