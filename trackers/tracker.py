@@ -1,6 +1,8 @@
-import json 
 import datetime
+import glob
+import json 
 import os
+from pathlib import Path
 
 class tracker:
     # constructor
@@ -33,9 +35,9 @@ class tracker:
                 if v["IsPrefixedColumn"]:
                     prefixed_task_dict = tracker_configs[k]
                     for pk, pv in prefixed_task_dict.items():
-                        status_check_dict[f"{k}{pipeline}_{version}__{pk}"] = pv # {k}{pipeline_name}_{pipeline_version}__{pk}
+                        status_check_dict[f"{k}{pipeline}_{version}__{pk}"] = pv
                 else:    
-                    status_check_dict[k] = tracker_configs[k]           
+                    status_check_dict[k] = tracker_configs[k]
             
             else: 
                 is_req = bool(v["IsRequired"])
@@ -51,3 +53,17 @@ def get_start_time(subject_dir):
     # convert timestamp into DateTime object
     dt_m = datetime.datetime.fromtimestamp(m_time)
     return dt_m
+
+def get_end_time(subject_dir):
+
+    # find all the files
+    fpaths = glob.glob(str(Path(subject_dir, '**', '*')))
+
+    # get the timestamps
+    timestamps = [
+        datetime.datetime.fromtimestamp(os.path.getmtime(fpath)) 
+        for fpath in fpaths
+    ]
+
+    # get the latest time
+    return max(timestamps)

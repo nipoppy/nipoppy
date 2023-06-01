@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from trackers.tracker import tracker, get_start_time
+from trackers.tracker import tracker, get_start_time, get_end_time
 from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
 # from workflow.utils import load_manifest, save_backup # TODO once other PR is merged
 
@@ -84,15 +84,15 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
                         status = func(subject_dir, session_id, run_id)
                         # print(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
-                        _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
-                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
+                    _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
+                    _df.loc[bids_id,"pipeline_endtime"] = get_end_time(subject_dir)
                     n_participants += 1
                 else:
                     # print(f"Pipeline output not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = UNAVAILABLE
-                        _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
-                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
+                    _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
+                    _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
                 if testing and n_participants > N_TESTING:
                     break
