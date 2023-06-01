@@ -10,7 +10,7 @@ FAIL="FAIL"
 INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
-class tracker:
+class Tracker:
     # constructor
     def __init__(self, global_config_file, dash_schema_file, pipeline):
         self.pipeline = pipeline

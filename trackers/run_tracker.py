@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from trackers.tracker import tracker, get_start_time, get_end_time, UNAVAILABLE
+from trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE
 from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
 # from workflow.utils import load_manifest, save_backup # TODO once other PR is merged
 
@@ -28,7 +28,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
 
     proc_status_dfs = [] # list of dataframes
     for pipeline in pipelines:
-        pipe_tracker = tracker(global_config_file, dash_schema_file, pipeline) 
+        pipe_tracker = Tracker(global_config_file, dash_schema_file, pipeline) 
         
         mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
         schema = pipe_tracker.get_dash_schema()
