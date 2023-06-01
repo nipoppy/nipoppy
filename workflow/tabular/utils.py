@@ -27,10 +27,10 @@ def read_baseline_scores(instrument):
 
     return df
 
-def get_valid_scores(df,instrument):
+def get_valid_scores(df,instrument,raw_score_name="raw_score_name"):
     """ Check and remove out of bound or NaN scores
     """
-    name = instrument["raw_score_name"]
+    name = instrument[raw_score_name]
     score_range = instrument["range"]
     nan_val = int(score_range["n/a"])
     min_val = int(score_range["min"])
@@ -160,7 +160,8 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name,
     return normed_score, note
 
 def z_score(participant):
-    """Calculates z-score based on mean and SD values provided"""
+    """ Calculates z-score based on mean and SD values provided
+    """
     raw_score = participant["raw_score"]
     mean = participant["Mean"]
     SD = participant["SD"]
@@ -168,14 +169,14 @@ def z_score(participant):
     return z_score
 
 def regress(participant, regress_covars, regress_model_dict):
-    
+    """ Calculates residuals as normed scores based on a given regression model
+    """
     intercept = regress_model_dict["intercept"]
     slope = regress_model_dict["slope"]
     log_scale = regress_model_dict["log_scale"]
 
     raw_score = participant["raw_score"]
     
-    # print(f"Using these covars in the regression: {regress_covars}")
     # Calculate weighted contribution of the stratification covarates
     # e.g. edu_coef*education + sex_coef*sex + age_coef*age
     weighted_covariate_sum = 0
@@ -194,12 +195,38 @@ def regress(participant, regress_covars, regress_model_dict):
 
     return normed_score
 
-### TODO
-#     "hidden_variable_A = 3*((TMT A time seconds (Raw score) - 38.359) / 12.836) + 10",
-#     "hidden_variable_B = 3*((TMT B time (seconds) (Raw score) - 88.014369) / 39.157) + 10",
-#     "hidden_variable_AB = (3*(((Hidden_variable_2-Hidden_variable_1)--0.00000008301)/2.729) + 10) * -1",
-#     "TMT A-B contrast (Z-score)= =(Hidden_variable_3-(-12.475+(0.007*Age)+(0.131*Education)+(-0.049*Sex)))/2.9712"
-def regress_contrast():
+### TMT regression models ###
+# "hidden_variable_A = 3*((TMT A time seconds (Raw score) - 38.359) / 12.836) + 10",
+# "hidden_variable_B = 3*((TMT B time (seconds) (Raw score) - 88.014369) / 39.157) + 10",
+# "hidden_variable_AB = (3*(((Hidden_variable_2-Hidden_variable_1)--0.00000008301)/2.729) + 10) * -1",
+# "TMT A-B contrast (Z-score)= =(Hidden_variable_3-(-12.475+(0.007*Age)+(0.131*Education)+(-0.049*Sex)))/2.9712"
 
-    normed_score = {} 
+def get_contrast_normed_score(participant, stratification, raw_score_A_name, raw_score_B_name, regress_model_dict):
+    """ Calculates contrast normed scores based on hidden variables and a given regression model
+    """
+    # Calculate contrast score (A - B)
+    raw_score_A = participant[raw_score_A_name]
+    raw_score_B = participant[raw_score_B_name]
+
+    HV_A_coef = regress_model_dict["hidden_var_A"]
+    HV_B_coef = regress_model_dict["hidden_var_B"]
+    HV_AB_coef = regress_model_dict["hidden_var_AB"]
+
+    HV_A = HV_A_coef["mult_1"] * ((raw_score_A - HV_A_coef["offset_1"])/HV_A_coef["div_1"]) + HV_A_coef["offset_2"]
+    HV_B = HV_B_coef["mult_1"] * ((raw_score_B - HV_B_coef["offset_1"])/HV_B_coef["div_1"]) + HV_B_coef["offset_2"]
+
+    HV_AB = ( HV_AB_coef["mult_1"] * (((HV_B - HV_A) - HV_AB_coef["offset_1"])/HV_AB_coef["div_1"]) 
+             + HV_AB_coef["offset_2"] ) * HV_AB_coef["mult_2"]
+    
+    # Generate participant dict for final regression model based on HV_AB as raw score
+    participant_dict = {}
+    participant_dict["raw_score"] = HV_AB
+    regress_covars = []
+    for var_name in list(stratification.keys()):
+        participant_dict[var_name] = participant.loc[var_name]
+        if not var_name in [raw_score_A_name,raw_score_B_name]:
+            regress_covars.append(var_name)
+
+    # Get regression residual based on contrast score and covariates
+    normed_score = regress(participant_dict, regress_covars, regress_model_dict)
     return normed_score

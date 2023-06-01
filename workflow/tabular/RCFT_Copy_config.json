@@ -10,8 +10,10 @@
             "n/a": 999
         },
         "norming_procedure": "regression",
-        "regression formula": 
-            "RCFT Copy (Z-score) = (raw score - (0.187*Education - 0.946*Sex - 0.029*Age + 30.858)) / 3.664",
+        "regression formula": {
+            "note": "The referece forumla should reflect the regression_model_coefficients below",
+            "RCFT Copy (Z-score)": "RCFT Copy (Z-score) = (raw score - (0.187*Education - 0.946*Sex - 0.029*Age + 30.858)) / 3.664"
+        },  
         "regression_model_coefficients": {
             "Education level test": 0.187,
             "Sex (1=men; 2=women)": -0.946,

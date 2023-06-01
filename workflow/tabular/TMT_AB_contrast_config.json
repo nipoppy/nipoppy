@@ -1,7 +1,7 @@
 {
     "instrument": {
-        "raw_score_1_name": "TMT A time seconds (Raw score)",
-        "raw_score_2_name": "TMT B time seconds (Raw score)",
+        "raw_score_A_name": "TMT A time seconds (Raw score)",
+        "raw_score_B_name": "TMT B time (seconds) (Raw score)",
         "normed_score_name": "TMT AB contrast (Normed score)", 
         "reference": "link to a document",
         "dtype": "float",
@@ -12,6 +12,7 @@
         },
         "norming_procedure": "regression_contrast",
         "regression_formula": {
+            "note": "These referece forumlas should reflect the regression_model_coefficients below",
             "hidden_var_A": 
                 "hidden_variable_A = 3*((TMT A time seconds (Raw score) - 38.359) / 12.836) + 10",
             "hidden_var_B": 
@@ -19,7 +20,7 @@
             "hidden_var_AB": 
                 "hidden_variable_AB = (3*(((hidden_variable_B-hidden_variable_A)--0.00000008301)/2.729) + 10) * -1",
             "TMT A-B contrast (Z-score)":
-                "TMT A-B contrast (Z-score)= =(hidden_variable_AB-(-12.475+(0.007*Age)+(0.131*Education)+(-0.049*Sex)))/2.9712"
+                "TMT A-B contrast (Z-score) = (hidden_variable_AB-(-12.475+(0.007*Age)+(0.131*Education)+(-0.049*Sex)))/2.9712"
         },
         "regression_model_coefficients": {
             "hidden_var_A" : {
@@ -54,7 +55,7 @@
         "raw_sheet": "Parkinson patients",
         "baseline_data": "",
         "baseline_sheet": "",
-        "normed_data": "/home/nikhil/projects/Parkinsons/qpn/tabular/assessments/neuropysch/RCFT_Copy_norm.xlsx",
+        "normed_data": "/home/nikhil/projects/Parkinsons/qpn/tabular/assessments/neuropysch/TMT_AB_contrast_norm.xlsx",
         "normed_sheet": "Normed data",        
         "participant_id_column": "Patient #"
         },
