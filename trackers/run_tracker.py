@@ -26,7 +26,6 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
     """ driver code running pipeline specific trackers
     """
 
-    proc_status_dfs = [] # list of dataframes
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_config_file, dash_schema_file, pipeline) 
         
@@ -35,9 +34,16 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
-        manifest_df = pd.read_csv(mr_proc_manifest, converters={'datatype': pd.eval}) # TODO change to workflow.utils.load_manifest()
+        manifest_df = pd.read_csv(mr_proc_manifest, converters={'participant_id': str, 'datatype': pd.eval}) # TODO change to workflow.utils.load_manifest()
         participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
+
+        tracker_csv = Path(mr_proc_root_dir, 'derivatives', 'bagel.csv')
+        if tracker_csv.exists():
+            old_proc_status_df = pd.read_csv(tracker_csv)
+            old_proc_status_df = old_proc_status_df[~((old_proc_status_df["pipeline_name"] == pipeline) & (old_proc_status_df["pipeline_version"] == version))]
+        else:
+            old_proc_status_df = None
 
         print("-"*50)
         print(f"pipeline: {pipeline}, version: {version}")
@@ -50,20 +56,19 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         # for prefixed columns we need to generate the column name
         dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if not value["IsPrefixedColumn"])
 
+        proc_status_session_dfs = [] # list of dataframes
         for session_id in session_ids:
             print(f"Checking session: {session_id}")    
             _df = pd.DataFrame(index=participants, columns=dash_col_list)          
             _df["session"] = session_id
             _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
+            _df["bids_id"] = _df.index
+            _df["participant_id"] = manifest_df.drop_duplicates("bids_id").set_index("bids_id").loc[participants, "participant_id"]
             _df["has_mri_data"] = "true" # everyone with a session value has MRI data
             
             n_participants = 0
             for bids_id in participants:
-                participant_id = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
-                _df.loc[bids_id,"participant_id"] = participant_id
-                # print(f"bids_id: {bids_id}, participant_id: {participant_id}")
-
                 if pipeline == "freesurfer":
                     subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
                 elif pipeline in BIDS_PIPES:
@@ -89,20 +94,20 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
                     _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                     _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
+                # don't check all participants if testing
                 if testing and n_participants > N_TESTING:
                     break
 
-            proc_status_dfs.append(_df)
+            proc_status_session_dfs.append(_df)
 
-    proc_status_df = pd.concat(proc_status_dfs, axis='index')
 
-    # Save proc_status_df
-    tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
-    proc_status_df = proc_status_df.drop(columns="bids_id")
-    proc_status_df.index.name = "bids_id"
-    proc_status_df.to_csv(tracker_csv)
+        pipeline_proc_status_df = pd.concat(proc_status_session_dfs, axis='index').reset_index(drop=True)
 
-    print(f"Saved to {tracker_csv}")
+        # save proc_status_df
+        proc_status_df = pd.concat([old_proc_status_df, pipeline_proc_status_df], axis='index')
+        proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", "bids_id"])
+        proc_status_df.to_csv(tracker_csv, index=False, header=True)
+        print(f"Saved to {tracker_csv}")
 
 if __name__ == '__main__':
     # argparse
