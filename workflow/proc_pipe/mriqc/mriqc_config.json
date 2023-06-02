@@ -1,6 +1,0 @@
-{
-	"input_dir": INPUT_DIR,
-    	"results_dir": RESULTS_DIR,
-	"subject_id": SUBJECT_ID,
-    	"session": SESSION_ID
-}

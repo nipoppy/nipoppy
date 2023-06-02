@@ -1,26 +1,30 @@
 import subprocess
 import argparse
-import pandas as pd
+# import json
 
 parser = argparse.ArgumentParser(description='')
 
 parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
-parser.add_argument('--results_dir', type=str, help='path to where to store MRIQC output') 
-parser.add_argument('--participant_list', type=str, help='path to file containing subjects to test') #participants.tsv
-parser.add_argument('--index', type=int, help='index for participant list')
-parser.add_argument('--container', type=str, help='path to where container is located')
+parser.add_argument('--output_dir', type=str, help='overwrite path to put results in case of issues with default')
+parser.add_argument('--participant_id', type=str, help='subject ID to be processed')
+parser.add_argument('--session_id', type=str, help='session ID to be processed')
 
 args = parser.parse_args()
 
-global_config = args.global_config
-container = args.container
-results_dir = args.results_dir
-index = args.index
-participant_list = pd.read_csv(args.participant_list) #pd.read_csv(global_config + '/' + args.participant_list)
-participant_id = participant_list.loc[index]['participant_id']
-participant_label = participant_id.split('-')[-1]
+DATASET_ROOT = args.global_config["DATASET_ROOT"]
+CONTAINER_STORE = args.global_config["CONTAINER_STORE"]
+#is currently mriqc_patch.simg
+MRIQC_CONTAINER = args.global_config["PROC_PIPELINES"]["mriqc"]["CONTAINER"]
 
-subprocess.run(['echo %s >> %s/mriqc_out_%s.log'%(participant_id, results_dir, participant_label)], shell=True)
+# config = json.load(open(args.global_config))
 
-subprocess.run(['singularity run --cleanenv -B %s:/data:ro -B %s:/out %s --no-sub /data /out participant --participant-label %s >> %s/mriqc_out_%s.log'%(global_config, results_dir, container, participant_id, results_dir, participant_label)], shell=True)
+output_dir = args.output_dir
+participant_id = args.participant_id
+session_id = args.session_id
+
+subprocess.run([f"echo subject: {participant_id} session: {session_id} >> {output_dir}/mriqc_out_{participant_id}.log"], shell=True)
+
+subprocess.run([f"singularity run --cleanenv -B {DATASET_ROOT}:/data:ro -B {output_dir}:/out --no-sub /data /out \
+                {CONTAINER_STORE}/{MRIQC_CONTAINER} participant --participant-label {participant_id} --session-id {session_id} \
+                >> {output_dir}/mriqc_out_{participant_id}.log"], shell=True)
 
