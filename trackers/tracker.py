@@ -45,7 +45,7 @@ class Tracker:
                 if v["IsPrefixedColumn"]:
                     prefixed_task_dict = tracker_configs[k]
                     for pk, pv in prefixed_task_dict.items():
-                        status_check_dict[f"{k}{pipeline}_{version}__{pk}"] = pv
+                        status_check_dict[f"{k}{pipeline}-{version}__{pk}"] = pv
                 else:    
                     status_check_dict[k] = tracker_configs[k]
             
