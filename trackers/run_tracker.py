@@ -7,7 +7,8 @@ import pandas as pd
 
 from trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
 from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
-# from workflow.utils import load_manifest, save_backup # TODO once other PR is merged
+# DNAME_BACKUPS_BAGEL = '.bagel' # TODO uncomment once other PR is merged
+# from workflow.utils_copy import load_manifest, save_backup # TODO uncomment once other PR is merged
 
 
 # Globals
@@ -34,14 +35,15 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
-        manifest_df = pd.read_csv(mr_proc_manifest, converters={'participant_id': str, 'datatype': pd.eval}) # TODO change to workflow.utils.load_manifest()
+        manifest_df = pd.read_csv(mr_proc_manifest, converters={'participant_id': str, 'datatype': pd.eval})
+        # manifest_df = load_manifest(mr_proc_manifest) # TODO use this instead of above
         participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
 
         tracker_csv = Path(mr_proc_root_dir, 'derivatives', 'bagel.csv')
         if tracker_csv.exists():
-            old_proc_status_df = pd.read_csv(tracker_csv)
-            old_proc_status_df = old_proc_status_df[~((old_proc_status_df["pipeline_name"] == pipeline) & (old_proc_status_df["pipeline_version"] == version))]
+            old_proc_status_df_full = load_bagel(tracker_csv)
+            old_proc_status_df = old_proc_status_df_full.loc[~(old_proc_status_df_full["pipeline_name"] == pipeline) & (old_proc_status_df_full["pipeline_version"] == version)]
         else:
             old_proc_status_df = None
 
@@ -100,14 +102,45 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
 
             proc_status_session_dfs.append(_df)
 
-
+        # new rows for this pipeline
         pipeline_proc_status_df = pd.concat(proc_status_session_dfs, axis='index').reset_index(drop=True)
 
+        # add old rows from other pipelines and sort for consistent order
+        proc_status_df: pd.DataFrame = pd.concat([old_proc_status_df, pipeline_proc_status_df], axis='index')
+        proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", "bids_id"], ignore_index=True)
+
+        # don't write a new file if no changes
+        if len(proc_status_df.compare(old_proc_status_df_full)) == 0:
+            print(f'\nNo change for pipeline {pipeline}')
+            continue
+        
         # save proc_status_df
-        proc_status_df = pd.concat([old_proc_status_df, pipeline_proc_status_df], axis='index')
-        proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", "bids_id"])
         proc_status_df.to_csv(tracker_csv, index=False, header=True)
         print(f"Saved to {tracker_csv}")
+        # save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGEL) # TODO use this instead of above once PR is merged
+
+def load_bagel(fpath_bagel):
+
+    def time_converter(value):
+        # convert to datetime if possible
+        if str(value) != UNAVAILABLE:
+            return pd.to_datetime(value)
+        return value
+    
+    df_bagel = pd.read_csv(
+        fpath_bagel, 
+        dtype={
+            'has_mri_data': bool,
+            'participant_id': str,
+            'session': str,
+        },
+        converters={
+            'pipeline_starttime': time_converter,
+            'pipeline_endtime': time_converter,
+        }
+    )
+    
+    return df_bagel
 
 if __name__ == '__main__':
     # argparse

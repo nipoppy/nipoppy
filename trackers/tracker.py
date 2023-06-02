@@ -11,8 +11,8 @@ INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
 # boolean values
-TRUE="true"
-FALSE="false"
+TRUE=True
+FALSE=True
 
 class Tracker:
     # constructor
@@ -71,7 +71,7 @@ def get_end_time(subject_dir):
 
     # get the timestamps
     timestamps = [
-        datetime.datetime.fromtimestamp(os.path.getmtime(fpath)) 
+        datetime.datetime.fromtimestamp(os.path.getmtime(fpath))
         for fpath in fpaths
     ]
 
