@@ -10,6 +10,10 @@ FAIL="FAIL"
 INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
+# boolean values
+TRUE="true"
+FALSE="false"
+
 class Tracker:
     # constructor
     def __init__(self, global_config_file, dash_schema_file, pipeline):

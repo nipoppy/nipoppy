@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE
+from trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
 from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
 # from workflow.utils import load_manifest, save_backup # TODO once other PR is merged
 
@@ -65,7 +65,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
             _df["pipeline_version"] = version
             _df["bids_id"] = _df.index
             _df["participant_id"] = manifest_df.drop_duplicates("bids_id").set_index("bids_id").loc[participants, "participant_id"]
-            _df["has_mri_data"] = "true" # everyone with a session value has MRI data
+            _df["has_mri_data"] = TRUE # everyone with a session value has MRI data
             
             n_participants = 0
             for bids_id in participants:
