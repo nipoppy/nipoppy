@@ -27,7 +27,7 @@ def read_baseline_scores(instrument):
 
     return df
 
-def get_valid_scores(df,instrument,raw_score_name="raw_score_name"):
+def get_valid_scores(df, instrument, logger, raw_score_name="raw_score_name"):
     """ Check and remove out of bound or NaN scores
     """
     name = instrument[raw_score_name]
@@ -42,9 +42,9 @@ def get_valid_scores(df,instrument,raw_score_name="raw_score_name"):
 
     n_nan_val = len(df[df[name] == nan_val])
     n_missing_val = len(df[df[name].isna()])
-    print(f"n_listed_participants: {n_participants}, n_multiple_visits: {n_multiple_visits}")
-    print(f"n_nan_val (i.e. {nan_val}): {n_nan_val}, n_missing_val: {n_missing_val}")
-    print(f"Excluding ({n_missing_val}) participants with missing scores")
+    logger.info(f"n_listed_participants: {n_participants}, n_multiple_visits: {n_multiple_visits}")
+    logger.info(f"n_nan_val (i.e. {nan_val}): {n_nan_val}, n_missing_val: {n_missing_val}")
+    logger.info(f"Excluding ({n_missing_val}) participants with missing scores")
     # clean-up
     df[name] = df[name].replace({nan_val:np.NaN})
     df = df[df[name].notna()]
@@ -52,13 +52,13 @@ def get_valid_scores(df,instrument,raw_score_name="raw_score_name"):
     max_available_val = np.max(df[name])
     min_available_val = np.min(df[name])
 
-    print(f"\nPossible score range: ({min_val},{max_val})")
-    print(f"Available score range: ({min_available_val},{max_available_val})")
+    logger.info(f"Possible score range: ({min_val},{max_val})")
+    logger.info(f"Available score range: ({min_available_val},{max_available_val})")
     invalid_df = df[~df[name].isin(range(min_val, max_val+1))] # (min <= score < max)
     n_invalid_scores = len(invalid_df)
     if n_invalid_scores > 0:
-        print(f"n_invalid_scores: {n_invalid_scores}")
-        print(f"Using participants only with valid scores")
+        logger.info(f"n_invalid_scores: {n_invalid_scores}")
+        logger.info(f"Using participants only with valid scores")
         df = df[df[name].isin(range(min_val, max_val+1))]
 
     return df
@@ -87,7 +87,7 @@ def format_baseline_scores(df, stratification, raw_score_name):
         
     return df, baselines_ranges
 
-def get_normed_score(participant, baseline_df, stratification, raw_score_name, 
+def get_normed_score(participant, baseline_df, stratification, raw_score_name, logger,
                      norming_procedure="lookup_scaled_score", regress_model_dict=None):
     """ Filter baseline scores and return match for a given participant
     """
@@ -95,7 +95,7 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name,
     if baseline_df is None:
         if norming_procedure.lower() in ["regress", "regression"]:
             if regress_model_dict == None:
-                print("regress_model_dict with covariate coefficients not provided")
+                logger.error("regress_model_dict with covariate coefficients not provided")
                 normed_score = np.nan
                 note = "Missing regression model coefficients"
 
@@ -110,7 +110,7 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name,
                 normed_score = regress(participant_dict, regress_covars, regress_model_dict)
                 note = "Using regression formula"
         else:
-            print(f"Unknown norming procedure: {norming_procedure}")
+            logger.error(f"Unknown norming procedure: {norming_procedure}")
             normed_score = np.nan
             note = "Unknown norming procedure"
 
@@ -133,8 +133,8 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name,
             note = "Strata not found"
             
         elif len(baseline_match_df) > 1:
-            print(f"Multiple matches found for participant: {participant.name}, {dict(participant)}")
-            print(f"Not assigning a scaled score for {participant.name}")
+            logger.info(f"Multiple matches found for participant: {participant.name}, {dict(participant)}")
+            logger.info(f"Not assigning a scaled score for {participant.name}")
             normed_score = np.nan
             note = "Multiple strata matches found"
 
@@ -153,7 +153,7 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name,
                 note = "zscore"
 
             else:
-                print(f"Unknown norming procedure")
+                logger.error(f"Unknown norming procedure")
                 normed_score = np.nan
                 note = "Unknown norming procedure"
 
@@ -183,7 +183,6 @@ def regress(participant, regress_covars, regress_model_dict):
     for var_name in regress_covars: 
         coef = regress_model_dict[var_name]
         var_value = participant[var_name]
-        # print(f"var_name:{var_name}, coef: {coef}, var_val: {var_value}")
         weighted_var = coef*var_value
         weighted_covariate_sum = weighted_covariate_sum + weighted_var
 
@@ -218,6 +217,7 @@ def get_contrast_normed_score(participant, stratification, raw_score_A_name, raw
     HV_AB = ( HV_AB_coef["mult_1"] * (((HV_B - HV_A) - HV_AB_coef["offset_1"])/HV_AB_coef["div_1"]) 
              + HV_AB_coef["offset_2"] ) * HV_AB_coef["mult_2"]
     
+    HV_scores = {"hidden_var_A":HV_A, "hidden_var_B":HV_B, "hidden_var_AB": HV_AB}
     # Generate participant dict for final regression model based on HV_AB as raw score
     participant_dict = {}
     participant_dict["raw_score"] = HV_AB
@@ -229,4 +229,4 @@ def get_contrast_normed_score(participant, stratification, raw_score_A_name, raw
 
     # Get regression residual based on contrast score and covariates
     normed_score = regress(participant_dict, regress_covars, regress_model_dict)
-    return normed_score
+    return normed_score, HV_scores

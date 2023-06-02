@@ -11,7 +11,7 @@
         },
         "norming_procedure": "regression",
         "regression formula": {
-            "note": "The referece forumla should reflect the regression_model_coefficients below",
+            "note": "The referece formula should reflect the regression_model_coefficients below",
             "RCFT Copy (Z-score)": "RCFT Copy (Z-score) = (raw score - (0.187*Education - 0.946*Sex - 0.029*Age + 30.858)) / 3.664"
         },  
         "regression_model_coefficients": {
