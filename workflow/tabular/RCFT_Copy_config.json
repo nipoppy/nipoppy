@@ -1,0 +1,57 @@
+{
+    "instrument": {
+        "raw_score_name": "RCFT Copy (Raw score)",
+        "normed_score_name": "RCFT Copy (Normed score)", 
+        "reference": "link to a document",
+        "dtype": "float",
+        "range": {
+            "min": 0, 
+            "max": 36,
+            "n/a": 999
+        },
+        "norming_procedure": "regression",
+        "regression formula": {
+            "note": "The referece formula should reflect the regression_model_coefficients below",
+            "RCFT Copy (Z-score)": "RCFT Copy (Z-score) = (raw score - (0.187*Education - 0.946*Sex - 0.029*Age + 30.858)) / 3.664"
+        },  
+        "regression_model_coefficients": {
+            "Education level test": 0.187,
+            "Sex (1=men; 2=women)": -0.946,
+            "Age at time of assessment": -0.029,
+            "intercept": 30.858,
+            "slope": 3.664,
+            "log_scale": false
+        }
+    },
+    "data_paths": {
+        "raw_data": "/home/nikhil/projects/Parkinsons/qpn/tabular/assessments/neuropysch/RPQ_neuropsych_raw_data.xlsx",
+        "raw_sheet": "Parkinson patients",
+        "baseline_data": "",
+        "baseline_sheet": "",
+        "normed_data": "/home/nikhil/projects/Parkinsons/qpn/tabular/assessments/neuropysch/RCFT_Copy_norm.xlsx",
+        "normed_sheet": "Normed data",        
+        "participant_id_column": "Patient #"
+        },
+
+    "stratification": {
+        "Age at time of assessment":{
+            "dtype": "continuous",
+            "range": {
+                "min": 30, 
+                "max": 100
+            }
+        },
+        "Sex (1=men; 2=women)":{
+            "dtype": "categorical",
+            "range": [1,2]
+        },
+        "Education level test":{
+            "dtype": "continuous",
+            "range": {
+                "min": 0, 
+                "max": 30,
+                "n/a": 999
+            }
+        }
+    }
+}
