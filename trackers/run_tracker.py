@@ -7,9 +7,9 @@ import pandas as pd
 
 from trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
 from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
-# DNAME_BACKUPS_BAGEL = '.bagel' # TODO uncomment once other PR is merged
-# from workflow.utils_copy import load_manifest, save_backup # TODO uncomment once other PR is merged
+from workflow.utils import load_manifest, save_backup
 
+DNAME_BACKUPS_BAGEL = '.bagel'
 
 # Globals
 PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
@@ -35,8 +35,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
-        manifest_df = pd.read_csv(mr_proc_manifest, converters={'participant_id': str, 'datatype': pd.eval})
-        # manifest_df = load_manifest(mr_proc_manifest) # TODO use this instead of above
+        manifest_df = load_manifest(mr_proc_manifest)
         participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
 
@@ -110,14 +109,15 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", "bids_id"], ignore_index=True)
 
         # don't write a new file if no changes
-        if len(proc_status_df.compare(old_proc_status_df_full)) == 0:
-            print(f'\nNo change for pipeline {pipeline}')
-            continue
+        try:
+            if len(proc_status_df.compare(old_proc_status_df_full)) == 0:
+                print(f'\nNo change for pipeline {pipeline}')
+                continue
+        except Exception:
+            pass
         
         # save proc_status_df
-        proc_status_df.to_csv(tracker_csv, index=False, header=True)
-        print(f"Saved to {tracker_csv}")
-        # save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGEL) # TODO use this instead of above once PR is merged
+        save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGEL)
 
 def load_bagel(fpath_bagel):
 
