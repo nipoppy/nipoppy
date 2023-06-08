@@ -1,6 +1,3 @@
-import pandas as pd
-import numpy as np
-import glob
 import os
 import logging
 from pathlib import Path
@@ -52,10 +49,12 @@ def copy_dicoms(filelist, dicom_dir, symlink=False):
         os.mkdir(dicom_dir)
         for f in filelist:
             f_basename = os.path.basename(f)
+            fpath_dest = Path(f"{dicom_dir}{f_basename}")
             if symlink:
-                os.symlink(f, f"{dicom_dir}{f_basename}")
+                f = os.path.relpath(f, fpath_dest.parent)
+                os.symlink(f, fpath_dest)
             else:
-                shutil.copyfile(f, f"{dicom_dir}{f_basename}")
+                shutil.copyfile(f, fpath_dest)
     else:
         logger.debug(f"participant dicoms already exist")
 
