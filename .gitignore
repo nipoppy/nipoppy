@@ -18,3 +18,6 @@ notebooks/.ipynb_checkpoints/*
 
 # dataset-specific files
 bids_filter.json 
+workflow/proc_pipe/fmriprep/scripts/fmriprep_sge.sh
+workflow/proc_pipe/fmriprep/scripts/fmriprep_slurm.sh
+
