@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 
-from trackers.tracker import SUCCESS, FAIL, UNAVAILABLE
+from trackers.tracker import SUCCESS, FAIL
 
 # Sample output files
 # sub-MNI0056D864854_ses-01_task-rest_run-1_space-MNI152NLin2009cAsym_res-2_desc-brain_mask.json
@@ -138,7 +138,7 @@ tracker_configs = {
     },
 
     "STAGE__": {
-            "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
-            "space-MNI152Lin_res-1": check_MNI152Lin
-            }
+        "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
+        "space-MNI152Lin_res-1": check_MNI152Lin
+    }
 }
