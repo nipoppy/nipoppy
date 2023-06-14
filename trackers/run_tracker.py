@@ -47,7 +47,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
             if set(participants) != set(old_proc_status_df_full['bids_id'].to_list()) and set(pipelines) != set(old_proc_status_df_full['pipeline_name'].to_list()):
                 raise RuntimeError(
                     'The existing processing status file is obsolete (participant list does not match the manifest)'
-                    f'. Rerun the tracker script with --pipelines {" ".join(set(old_proc_status_df_full["pipeline_name"]))}'
+                    f'. Rerun the tracker script with --pipelines {" ".join(set(old_proc_status_df_full["pipeline_name"]).union(pipelines))}'
                 )
             
             old_proc_status_df = old_proc_status_df_full.loc[~((old_proc_status_df_full["pipeline_name"] == pipeline) & (old_proc_status_df_full["pipeline_version"] == version))]
