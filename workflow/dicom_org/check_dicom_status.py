@@ -29,6 +29,7 @@ from workflow.utils import (
 DPATH_STATUS_RELATIVE = Path('scratch', 'raw_dicom')
 FPATH_MANIFEST_RELATIVE = Path('tabular') / FNAME_MANIFEST
 
+FLAG_EMPTY = '--empty'
 FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 
 GLOBAL_CONFIG_DATASET_ROOT = 'DATASET_ROOT'
@@ -54,15 +55,17 @@ def run(global_config_file, regenerate=False, empty=False):
     df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
 
     # look for existing status file
-    if fpath_status_symlink.exists():
+    if fpath_status_symlink.exists() and not empty:
         df_status_old = pd.read_csv(fpath_status_symlink, dtype=str)
     else:
         df_status_old = None
         
-        if not regenerate:
+        if (not empty) and (not regenerate):
             raise ValueError(
                 f'Did not find an existing {FNAME_STATUS} file'
-                f'. Use {FLAG_REGENERATE} to create one from scratch.'
+                f'. Use {FLAG_EMPTY} to create an empty one'
+                f' or {FLAG_REGENERATE} to create one based on current files'
+                ' in the datset (can be slow)'
             )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
@@ -79,65 +82,56 @@ def run(global_config_file, regenerate=False, empty=False):
 
     if regenerate:
 
-        if not empty:
-
-            try:
-                from dicom_dir_func import participant_id_to_dicom_dir
-                df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
-                    lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
-                )
-
-                # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
-                df_status[COL_DOWNLOAD_STATUS] = check_status(
-                    df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
-                )
-                # print('download_status done')
-
-            except ModuleNotFoundError:
-                warnings.warn(
-                    'Could not find participant ID -> DICOM directory conversion function'
-                    '. If you want to know which DICOM files have been fetched/downloaded'
-                    f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
-                    ' that contains a function definition for participant_id_to_dicom_dir()'
-                    '. See sample_dicom_dir_func.py for an example.'
-                )
-
-            # look for organized DICOM
-            df_status[COL_ORG_STATUS] = check_status(
-                df_status, dpath_organized_dicom, COL_DICOM_ID, session_first=True,
+        try:
+            from dicom_dir_func import participant_id_to_dicom_dir
+            df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
+                lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
             )
-            # print('org done')
 
-            # look for BIDS: bids/bids_id/session
-            df_status[COL_CONV_STATUS] = check_status(
-                df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
+            # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
+            df_status[COL_DOWNLOAD_STATUS] = check_status(
+                df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
             )
-            # print('bids status done')
+
+        except ModuleNotFoundError:
+            warnings.warn(
+                'Could not find participant ID -> DICOM directory conversion function'
+                '. If you want to know which DICOM files have been fetched/downloaded'
+                f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
+                ' that contains a function definition for participant_id_to_dicom_dir()'
+                '. See sample_dicom_dir_func.py for an example.'
+            )
+
+        # look for organized DICOM
+        df_status[COL_ORG_STATUS] = check_status(
+            df_status, dpath_organized_dicom, COL_DICOM_ID, session_first=True,
+        )
+
+        # look for BIDS: bids/bids_id/session
+        df_status[COL_CONV_STATUS] = check_status(
+            df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
+        )
 
     else:
+
+        df_status = df_status.set_index([COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST])
 
         if df_status_old is not None:
             subject_session_pairs_old = pd.Index(zip(
                 df_status_old[COL_SUBJECT_MANIFEST],
                 df_status_old[COL_SESSION_MANIFEST],
             ))
+            df_status_deleted_rows = df_status_old.loc[~subject_session_pairs_old.isin(df_status.index)]
+
+            # error if new status file loses subject-session pairs
+            if len(df_status_deleted_rows) > 0:
+                raise RuntimeError(
+                    'Some of the subject/session pairs in the old status file do not'
+                    ' seem to exist anymore:'
+                    f'\n{df_status_deleted_rows}'
+                    f'\nUse {FLAG_REGENERATE} to fully regenerate the status file')
         else:
             subject_session_pairs_old = pd.Index([])
-
-        print(f'subject_session_pairs_old: {len(subject_session_pairs_old)}')
-        print(subject_session_pairs_old)
-
-        df_status = df_status.set_index([COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST])
-        print(df_status.index)
-
-        # error if new status file loses subject-session pairs
-        df_status_deleted_rows = df_status_old.loc[~subject_session_pairs_old.isin(df_status.index)]
-        if len(df_status_deleted_rows) > 0:
-            raise RuntimeError(
-                'Some of the subject/session pairs in the old status file do not'
-                ' seem to exist anymore:'
-                f'\n{df_status_deleted_rows}'
-                f'\nUse {FLAG_REGENERATE} to fully regenerate the status file')
 
         df_status_new_rows = df_status.loc[~df_status.index.isin(subject_session_pairs_old)]
         df_status_new_rows = df_status_new_rows.reset_index()[COLS_STATUS]
@@ -193,13 +187,13 @@ if __name__ == '__main__':
               ' (default: only append rows for new subjects/sessions)'),
     )
     parser.add_argument(
-        '--empty', action='store_true', 
+        FLAG_EMPTY, action='store_true', 
         help='generate empty status file (without checking what\'s on the disk)')
     args = parser.parse_args()
 
     # parse
     global_config_file = args.global_config
     regenerate = getattr(args, FLAG_REGENERATE.lstrip('-'))
-    empty = args.empty
+    empty = getattr(args, FLAG_EMPTY.lstrip('-'))
 
     run(global_config_file, regenerate=regenerate, empty=empty)
