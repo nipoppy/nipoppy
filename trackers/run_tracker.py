@@ -55,7 +55,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
 
         # only use non-prefixed columns at this stage
         # for prefixed columns we need to generate the column name
-        dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if not value["IsPrefixedColumn"])
+        dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if value["IsRequired"] and not value["IsPrefixedColumn"])
 
         proc_status_session_dfs = [] # list of dataframes
         for session_id in session_ids:
