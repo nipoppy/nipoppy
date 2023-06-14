@@ -7,12 +7,11 @@ from pathlib import Path
 # Status flags
 SUCCESS="SUCCESS"
 FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
 # boolean values
 TRUE=True
-FALSE=True
+FALSE=False
 
 class Tracker:
     # constructor
