@@ -42,7 +42,16 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
         tracker_csv = Path(mr_proc_root_dir, 'derivatives', 'bagel.csv')
         if tracker_csv.exists():
             old_proc_status_df_full = load_bagel(tracker_csv)
-            old_proc_status_df = old_proc_status_df_full.loc[~(old_proc_status_df_full["pipeline_name"] == pipeline) & (old_proc_status_df_full["pipeline_version"] == version)]
+            
+            # make sure the number of participants is consistent across pipelines
+            if set(participants) != set(old_proc_status_df_full['bids_id'].to_list()) and set(pipelines) != set(old_proc_status_df_full['pipeline_name'].to_list()):
+                raise RuntimeError(
+                    'The existing processing status file is obsolete (participant list does not match the manifest)'
+                    f'. Rerun the tracker script with --pipelines {" ".join(set(old_proc_status_df_full["pipeline_name"]))}'
+                )
+            
+            old_proc_status_df = old_proc_status_df_full.loc[~((old_proc_status_df_full["pipeline_name"] == pipeline) & (old_proc_status_df_full["pipeline_version"] == version))]
+            
         else:
             old_proc_status_df = None
 
