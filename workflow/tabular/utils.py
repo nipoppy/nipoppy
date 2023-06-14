@@ -145,7 +145,7 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name, l
                 note = "Scaled score"
 
             elif norming_procedure.lower() in ["zscore", "z-score", "z_score"]:
-                participant_dict = {"raw_score":baseline_match_df[raw_score_name].values[0],
+                participant_dict = {"raw_score":participant[raw_score_name],
                                     "Mean":baseline_match_df["Mean"].values[0],
                                     "SD":baseline_match_df["SD"].values[0]}
 
