@@ -13,7 +13,7 @@ from bids import BIDSLayout
 import workflow.logger as my_logger
 
 #Author: bcmcpher
-#Date: 14-Apr-2023 (last update)
+#Date: 15-Jun-2023
 fname = __file__
 CWD = os.path.dirname(os.path.abspath(fname))
 
@@ -314,7 +314,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
 
-def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
+def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
     """ Runs TractoFlow command with Nextflow
     """
 
@@ -356,22 +356,28 @@ def run_tractoflow(participant_id, global_configs, session_id, output_dir, use_b
     if not os.path.exists(Path(f"{tractoflow_home_dir}")):
         Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
-    ## build paths for working inputs
-    tractoflow_input_dir = f"{tractoflow_dir}/input"
-    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}"
-    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}"
-
-    if not os.path.exists(Path(f"{tractoflow_subj_dir}")):
-        Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
-
-    if not os.path.exists(Path(f"{tractoflow_work_dir}")):
-        Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
-
     ## call the file parser to copy the correct files to the input structure
     dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
 
+    ## nest inputs in rpe/no-rpe folders so tractoflow will parse mixed datasets w/o failing b/c data is "bad"
+    if rpe_file == None:
+        tractoflow_input_dir = f"{tractoflow_dir}/input/no-rpe"
+    else:
+        tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
+
+    ## build paths for working inputs
+    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}"
+    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}"
+
+    ## build input directory if it doesn't exist already to preserve file times
+    if not os.path.exists(Path(f"{tractoflow_subj_dir}")):
+        Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
+
+    ## build working directory if it doesn't exist already to preserve file times
+    if not os.path.exists(Path(f"{tractoflow_work_dir}")):
+        Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
+
     ## just make copies if they aren't already there - resume option cannot work w/ modfied (recopied) files, so check first
-    ## delete on success?
     if len(os.listdir(tractoflow_subj_dir)) == 0:
         shutil.copyfile(dmrifile, Path(tractoflow_subj_dir, 'dwi.nii.gz').joinpath())
         shutil.copyfile(bvalfile, Path(tractoflow_subj_dir, 'bval').joinpath())
@@ -457,4 +463,4 @@ if __name__ == '__main__':
         global_configs = json.load(f)
 
     ## make valid tractoflow call based on inputs    
-    run_tractoflow(participant_id, global_configs, session_id, output_dir, use_bids_filter)
+    run(participant_id, global_configs, session_id, output_dir, use_bids_filter)
