@@ -189,8 +189,8 @@ def regress(participant, regress_covars, regress_model_dict):
     # Based on Rebekah's (Neuropsy team) formula
     if log_scale:
         raw_score = np.log10(raw_score)
-    else:
-        normed_score = (raw_score - (weighted_covariate_sum + intercept))/slope
+    
+    normed_score = (raw_score - (weighted_covariate_sum + intercept))/slope
 
     return normed_score
 
