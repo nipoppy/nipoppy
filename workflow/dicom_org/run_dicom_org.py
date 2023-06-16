@@ -35,7 +35,8 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
     dicom_id = participant_id_to_dicom_id(participant)
     participant_dicom_dir = f"{dicom_dir}/{dicom_id}/"
     
-    copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
+    if len(raw_dcm_list) > 0:
+        copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
     
     # Log skipped invalid dicom list for the participant
     invalid_dicoms_file = f"{invalid_dicom_dir}/{participant}_invalid_dicoms.json"
