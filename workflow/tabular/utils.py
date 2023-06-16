@@ -116,7 +116,7 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name, l
 
     # Using stratified matching
     else:
-        baseline_match_df = baseline_df.copy()
+        baseline_match_df = baseline_df.copy()    
 
         # Filter rows matching participant values
         # Convention: upper limit is not include for demographics and scores: e.g. (0-4) implies {0,1,2,3}
@@ -126,12 +126,12 @@ def get_normed_score(participant, baseline_df, stratification, raw_score_name, l
             else:
                 baseline_match_df = baseline_match_df[(baseline_match_df[f"{k}_min"] <= v) & 
                                             (baseline_match_df[f"{k}_max"] > v) ] # see convention
-
+                
         # Deal with zero or > 1 matches
         if len(baseline_match_df) == 0:
             normed_score = np.nan
             note = "Strata not found"
-            
+
         elif len(baseline_match_df) > 1:
             logger.info(f"Multiple matches found for participant: {participant.name}, {dict(participant)}")
             logger.info(f"Not assigning a scaled score for {participant.name}")

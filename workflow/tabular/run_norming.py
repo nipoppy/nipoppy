@@ -12,6 +12,8 @@ HELPTEXT = """
 Script to perform DICOM to BIDS conversion using HeuDiConv
 """
 
+VISIT_DATE_COL = "Date of assessment"
+
 def run_contrast_norming(instrument_config, logger):
     """ Special function to calculate contrast based norming
     """
@@ -47,8 +49,12 @@ def run_contrast_norming(instrument_config, logger):
     logger.info("Reading raw scores")
     raw_data_df = read_raw_scores(data_paths)
     
-    raw_data_df = raw_data_df[[participant_id_col] + strata_cols]
-    raw_data_df = raw_data_df.set_index(participant_id_col)
+    raw_data_df = raw_data_df[[participant_id_col, VISIT_DATE_COL] + strata_cols]
+
+    # Format date and set unique index (to handle multiple visits)
+    raw_data_df[VISIT_DATE_COL] = raw_data_df[VISIT_DATE_COL].astype(str)
+    raw_data_df = raw_data_df.set_index([participant_id_col,VISIT_DATE_COL])
+
     raw_data_df[raw_score_A_name] = raw_data_df[raw_score_A_name].astype(float)
     raw_data_df[raw_score_B_name] = raw_data_df[raw_score_B_name].astype(float)
 
@@ -63,12 +69,16 @@ def run_contrast_norming(instrument_config, logger):
 
     logger.info(f"Starting contrast score normalization using hidden variables and regression model...")
     normed_data_df = valid_data_df.copy()
+    normed_data_df = normed_data_df.sort_index() # Avoids panda's multiindex perf warning
+    
+    normed_data_df = normed_data_df.reindex(columns = normed_data_df.columns.tolist() + 
+                                            ['hidden_var_A', 'hidden_var_B', 'hidden_var_AB'])
     for idx, participant_data in normed_data_df.iterrows():
         normed_score, HV_scores = get_contrast_normed_score(participant_data, stratification, raw_score_A_name, 
                                                             raw_score_B_name, regress_model_dict)
+        
         hidden_score_names = list(HV_scores.keys())
         hidden_score_vals = list(HV_scores.values())
-        print(hidden_score_vals)
         normed_data_df.loc[idx,hidden_score_names] = hidden_score_vals
         normed_data_df.loc[idx,normed_score_name] = normed_score
         normed_data_df.loc[idx,"note"] = "contrast norming"
@@ -83,7 +93,7 @@ def run_contrast_norming(instrument_config, logger):
 
     save_df = pd.merge(raw_data_df[strata_cols], 
                        normed_data_df[strata_cols + hidden_score_names + [normed_score_name, "note"]], 
-                       on=[participant_id_col] + strata_cols, how="left") 
+                       on=[participant_id_col,VISIT_DATE_COL] + strata_cols, how="left") 
     
     return save_df
 
@@ -105,6 +115,7 @@ def run_variable_norming(instrument_config, logger):
     raw_score_name = instrument["raw_score_name"]
     normed_score_name = instrument["normed_score_name"]
     participant_id_col = data_paths["participant_id_column"]
+    
 
     stratification[raw_score_name] = {"dtype": instrument["dtype"]}
     strata_cols = list(stratification.keys())
@@ -122,8 +133,11 @@ def run_variable_norming(instrument_config, logger):
     logger.info("Reading raw scores")
     raw_data_df = read_raw_scores(data_paths)
 
-    raw_data_df = raw_data_df[[participant_id_col] + strata_cols]
-    raw_data_df = raw_data_df.set_index(participant_id_col)
+    raw_data_df = raw_data_df[[participant_id_col, VISIT_DATE_COL] + strata_cols]
+
+    # Format date and set unique index (to handle multiple visits)
+    raw_data_df[VISIT_DATE_COL] = raw_data_df[VISIT_DATE_COL].astype(str)
+    raw_data_df = raw_data_df.set_index([participant_id_col,VISIT_DATE_COL])
 
     raw_data_df[raw_score_name] = raw_data_df[raw_score_name].astype(float)
 
@@ -149,6 +163,8 @@ def run_variable_norming(instrument_config, logger):
 
     logger.info(f"Starting score normalization based on {norming_procedure}...")
     normed_data_df = valid_data_df.copy()
+    normed_data_df = normed_data_df.sort_index() # Avoids panda's multiindex perf warning
+
     for idx, participant_data in normed_data_df.iterrows():
         normed_score, note = get_normed_score(participant_data, baseline_df, stratification, raw_score_name, 
                                             logger, norming_procedure, regress_model_dict)
@@ -165,7 +181,7 @@ def run_variable_norming(instrument_config, logger):
 
     save_df = pd.merge(raw_data_df[strata_cols], 
                        normed_data_df[strata_cols + [normed_score_name, "note"]], 
-                       on=[participant_id_col] + strata_cols, how="left")
+                       on=[participant_id_col,VISIT_DATE_COL] + strata_cols, how="left")
 
     return save_df
 
@@ -179,6 +195,7 @@ def save_normed_data(instrument_config, save_df, logger):
     normed_sheet = data_paths["normed_sheet"]
 
     logger.info(f"Saving normed data to: {normed_data}")
+    save_df = save_df.reset_index()
     save_df.to_excel(normed_data, sheet_name=normed_sheet)    
 
 if __name__ == '__main__':
