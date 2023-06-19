@@ -22,15 +22,16 @@ def search_dicoms(raw_dicom_dir, skip_dcm_check=False):
     """
     filelist = []
     invalid_dicom_list = []
-    for root, dirs, files in os.walk(raw_dicom_dir):
+    for root, _, files in os.walk(raw_dicom_dir):
         for file in files:
             filepath = os.path.join(root,file)
             if skip_dcm_check:
-                valid_dicom = check_valid_dicom(filepath)
-                if valid_dicom:
+                filelist.append(filepath)
+            else:
+                if check_valid_dicom(filepath):
                     filelist.append(filepath)
                 else:
-                    invalid_dicom_list.append(filepath)
+                    invalid_dicom_list.append(filepath)      
     
     n_dcms = len(filelist)
     unique_dcm = set(filelist)

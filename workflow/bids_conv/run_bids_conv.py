@@ -74,7 +74,7 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
             -ss {session_id} "
 
     else:
-        logger.error("Incorrect Heudiconv stage: {stage}")
+        logger.error(f"Incorrect Heudiconv stage: {stage}")
 
     CMD_ARGS = SINGULARITY_CMD + Heudiconv_CMD 
     CMD = CMD_ARGS.split()
@@ -143,7 +143,7 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2, dicom_id=Non
 
         # Check successful heudiconv runs
         n_heudiconv_success = np.sum(heudiconv_results)
-        logger.info(f"Successfully ran Heudiconv (Stage 1 or Stage 2) for {n_heudiconv_success} out of {n_heudiconv_participants} participants")
+        logger.info(f"Successfully ran Heudiconv (Stage {stage}) for {n_heudiconv_success} out of {n_heudiconv_participants} participants")
 
         # Check succussful bids
         participants_with_bids = {
