@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8084759.svg)](https://doi.org/10.5281/zenodo.8084759)
+
 # mr_proc 
 
 A workflow manager for curating MRI and tabular data and standardized processing. 
