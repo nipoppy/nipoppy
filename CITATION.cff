@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+
+title: "mr_proc"
+
+version: 0.1.0
+
+abstract: A workflow manager for curating MRI and tabular data and standardized processing. 
+
+message: "If you use this software, please cite it as below."
+
+repository-code: "https://github.com/neurodatascience/mr_proc.git"
+
+
+contact:
+  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    email:  nikhil.bhagwat@mcgill.ca
+    family-names: Bhagwat
+    given-names: Nikhil
+
+authors:
+  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    email:  nikhil.bhagwat@mcgill.ca
+    family-names: Bhagwat
+    given-names: Nikhil
+    orcid: "https://orcid.org/0000-0001-6073-7141"
+
+  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    family-names: Wang
+    given-names: Michelle
+    orcid: "https://orcid.org/0000-0002-3432-6899"    
+
+  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    family-names: McPherson
+    given-names: Brent 
+    orcid: "https://orcid.org/0000-0001-8378-8136"    
+
+  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    family-names: Gonzalez Pepe
+    given-names: Ines 
+    orcid: "https://orcid.org/0009-0002-4017-6599"      
+
+  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    family-names: Poline
+    given-names: Jean-Baptiste
+    orcid: "https://orcid.org/0000-0002-9794-749X"    
+
+license: MIT
