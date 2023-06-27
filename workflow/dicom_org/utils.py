@@ -59,7 +59,7 @@ def copy_dicoms(filelist, dicom_dir, symlink=False):
         logger.debug(f"participant dicoms already exist")
 
 def check_valid_dicom(f_dcm):
-    """ checks if the file is vaild dicom
+    """ checks if the file is valid dicom
     """
     status = False
     try:
