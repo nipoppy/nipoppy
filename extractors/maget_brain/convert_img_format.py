@@ -26,15 +26,19 @@ conv_script = args.conv_script
 print(f"nii dir: {nii_dir}, mnc_dir: {mnc_dir}, conv_script: {conv_script}")
 if conv_script in ["nii2mnc"]:
     input_file_list = glob.glob(f"{nii_dir}/*.nii*")
+    output_dir = mnc_dir
     out_file_suffix = "mnc"
 else:
     input_file_list = glob.glob(f"{mnc_dir}/*.mnc")
+    output_dir = nii_dir
     out_file_suffix = "nii"
 
 output_file_list = []
 for f in input_file_list:
+    f = os.path.basename(f)
     out_file_prefix = f.split(".")[0]
-    out_file = f"{out_file_prefix}.{out_file_suffix}"
+    out_file = f"{output_dir}/{out_file_prefix}.{out_file_suffix}"
+    output_file_list.append(output_file)
 
 print(f"number of input files: {len(input_file_list)}")
 for input_file, output_file in list(zip(input_file_list,output_file_list)):
