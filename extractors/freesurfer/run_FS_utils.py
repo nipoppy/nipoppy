@@ -60,8 +60,8 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
-    parser.add_argument('--session_id', type=str, help='session_id')
-    parser.add_argument('--visit_id', type=str, help='visit_id')
+    parser.add_argument('--session_id', type=str, help='session_id', required=True)
+    parser.add_argument('--visit_id', type=str, help='visit_id', required=True)
     parser.add_argument('--group', type=str, default=None, help='filter participants based on a specific group value in the csv')
     parser.add_argument('--output_dir', type=str, default=None, help='out_file path for the processed / aggregated output')
     parser.add_argument('--meas', type=str, default="thickness", help='cortical measure')
