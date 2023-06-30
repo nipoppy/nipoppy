@@ -11,11 +11,11 @@ def get_masked_image(img_path, mask_path, masked_img_path):
 
     # load main image
     img = nib.load(img_path)
-    img_data = img.get_data()
+    img_data = img.get_fdata()
 
     # load anothor image to mask
     mask = nib.load(mask_path)
-    mask_data = mask.get_data()
+    mask_data = mask.get_fdata()
 
     # do masking 
     masked_img_data = mask_data * img_data
@@ -47,7 +47,7 @@ fmriprep_version = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
 maget_version = global_configs["PROC_PIPELINES"]["maget_brain"]["VERSION"]
 
 fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/v{fmriprep_version}/output/"
-maget_dir = f"{DATASET_ROOT}/derivatives/fmriprep/v{maget_version}/output/"
+maget_dir = f"{DATASET_ROOT}/derivatives/maget_brain/v{maget_version}/output/"
 maget_preproc_T1w_nii_dir = f"{maget_dir}/preproc_T1w_nii/"
 
 # get all the subject ids
@@ -58,12 +58,16 @@ bids_id_list = mr_proc_manifest_df["bids_id"].unique()
 for bids_id in bids_id_list:
     # img
     img_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-preproc_T1w.nii.gz"
-    img_path = f"{fmriprep_dir}/{bids_id}/{session_id}/anat/{img_file_name}"
+    img_path = f"{fmriprep_dir}/{bids_id}/ses-{session_id}/anat/{img_file_name}"
     # mask 
     mask_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-brain_mask.nii.gz"
-    mask_path = f"{fmriprep_dir}/{bids_id}/{session_id}/anat/{mask_file_name}"
+    mask_path = f"{fmriprep_dir}/{bids_id}/ses-{session_id}/anat/{mask_file_name}"
 
     masked_img_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-masked_preproc_T1w.nii.gz"
     masked_img_path = f"{maget_preproc_T1w_nii_dir}/{masked_img_file_name}"
     
-    get_masked_image(img_path, mask_path, masked_img_path)
+    try:
+        get_masked_image(img_path, mask_path, masked_img_path)
+    except Exception as e:
+        print(e)
+        
