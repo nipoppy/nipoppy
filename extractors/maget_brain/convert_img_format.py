@@ -33,17 +33,16 @@ else:
     output_dir = nii_dir
     out_file_suffix = "nii"
 
-output_file_list = []
-for f in input_file_list:
-    f = os.path.basename(f)
-    out_file_prefix = f.split(".")[0]
-    out_file = f"{output_dir}/{out_file_prefix}.{out_file_suffix}"
-    output_file_list.append(output_file)
-
 print(f"number of input files: {len(input_file_list)}")
-for input_file, output_file in list(zip(input_file_list,output_file_list)):
+for input_file in input_file_list:
+    # parse output file name
+    f = os.path.basename(input_file)
+    out_file_prefix = f.split(".")[0]
+    output_file = f"{output_dir}/{out_file_prefix}.{out_file_suffix}"
+
     print(f"input file: {input_file}, output file: {output_file}")
 
+    # convert
     if conv_script in ["nii2mnc"]:
         CMD = ["nii2mnc", "-short", f"{input_file}", f"{output_file}"]
         subprocess.run(CMD, check=True)
