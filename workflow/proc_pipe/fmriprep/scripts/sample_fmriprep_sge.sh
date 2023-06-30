@@ -8,13 +8,14 @@
 #$ -l h_vmem=32G
 #$ -q origami.q
 
-#$ -t 2-11
+#$ -t 1-10
 
-source /data/origami/nikhil/my_envs/mr_proc_env/bin/activate
+# TODO replace with local paths
+source "</path/to/mr_proc_env>"
 
-SUBJECT_LIST="<>"
+SUBJECT_LIST="</path/to/subject_list>"
 SESSION_ID="01"
-GLOBAL_CONFIG="<>/global_configs.json"
+GLOBAL_CONFIG="/path/to/global_configs.json"
 
 echo "Number subjects found: `cat $SUBJECT_LIST | wc -l`"
 
