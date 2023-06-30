@@ -35,7 +35,7 @@ def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", 
         
 
 def run(FS_dir, participants_list, out_file, meas, fwhm, template):
-    """ function to exectute FS container with mris_preproc command
+    """ function to execute FS container with mris_preproc command
     """
     FS_CMD_dict = get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas, fwhm, template)
     for hemi, FS_CMD in FS_CMD_dict.items():
