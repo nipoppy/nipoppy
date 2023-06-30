@@ -5,6 +5,7 @@ import sys
 import argparse
 import json
 import pandas as pd
+from pathlib import Path
 
 def get_masked_image(img_path, mask_path, masked_img_path):
     ''' Applies brain binary mask to nii.gz image'''
@@ -48,7 +49,10 @@ maget_version = global_configs["PROC_PIPELINES"]["maget_brain"]["VERSION"]
 
 fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/v{fmriprep_version}/output/"
 maget_dir = f"{DATASET_ROOT}/derivatives/maget_brain/v{maget_version}/output/"
-maget_preproc_T1w_nii_dir = f"{maget_dir}/preproc_T1w_nii/"
+maget_preproc_T1w_nii_dir = f"{maget_dir}/ses-{session_id}/preproc_T1w_nii/"
+
+# Check / create maget subdirs
+Path(maget_preproc_T1w_nii_dir).mkdir(parents=True, exist_ok=True)
 
 # get all the subject ids
 mr_proc_manifest_csv = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
