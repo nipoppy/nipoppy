@@ -10,6 +10,7 @@
     "TEMPLATEFLOW_DIR": "",
 
     "SESSIONS": ["1","2"],
+    "VISITS": ["V01", "V02"],
 
     "BIDS": {
         "heudiconv": {
@@ -39,6 +40,33 @@
             "VERSION": "6.0.1",
             "CONTAINER": "fmriprep_{}.sif",
             "URL": ""
+        }
+    },
+
+    "TABULAR": {
+        "DEMOGRAPHICS": {
+            "SEX": {
+                "VERSION": "",
+                "FILENAME": ""
+            },
+            "DATE_OF_BIRTH": {
+                "VERSION": "",
+                "FILENAME": ""
+            }
+        },
+        "ASSESSMENTS": {
+            "UPDRS_3": {
+                "VERSION": "",
+                "FILENAME": ""
+            },
+            "MOCA": {
+                "VERSION": "",
+                "FILENAME": ""
+            },
+            "GROUP": {
+                "VERSION": "",
+                "FILENAME": ""
+            }
         }
     }
 }
