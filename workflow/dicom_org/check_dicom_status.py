@@ -144,7 +144,7 @@ def run(global_config_file, regenerate=False, empty=False):
         df_status = pd.concat([df_status_old, df_status_new_rows], axis='index')
         print(f'\nAdded {len(df_status_new_rows)} rows to existing status file')
 
-    df_status = df_status[COLS_STATUS]
+    df_status = df_status[COLS_STATUS].drop_duplicates(ignore_index=True)
 
     # do not write file if there are no changes from previous one
     if df_status_old is not None and df_status.equals(df_status_old):
