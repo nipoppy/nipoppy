@@ -6,6 +6,8 @@ import workflow.logger as my_logger
 from joblib import Parallel, delayed
 from pathlib import Path
 
+import pandas as pd
+
 import workflow.catalog as catalog
 from workflow.dicom_org.utils import search_dicoms, copy_dicoms
 from workflow.utils import (
@@ -25,6 +27,9 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
     """ Copy / Symlink raw dicoms into a flat participant dir
     """
     logger.info(f"\nparticipant_id: {participant}")
+
+    if pd.isna(participant_dicom_dir):
+        raise RuntimeError(f"Got null participant_dicom_dir for participant {participant}: {participant_dicom_dir}")
 
     participant_raw_dicom_dir = f"{raw_dicom_dir}/{participant_dicom_dir}/"
 
