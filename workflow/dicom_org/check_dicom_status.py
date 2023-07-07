@@ -65,7 +65,7 @@ def run(global_config_file, regenerate=False, empty=False):
                 f'Did not find an existing {FNAME_STATUS} file'
                 f'. Use {FLAG_EMPTY} to create an empty one'
                 f' or {FLAG_REGENERATE} to create one based on current files'
-                ' in the datset (can be slow)'
+                ' in the dataset (can be slow)'
             )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
