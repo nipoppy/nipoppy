@@ -29,4 +29,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     run(global_config=args.global_config, output_dir=args.output_dir, participant_id=args.participant_id, session_id=args.session_id)
-
