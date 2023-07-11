@@ -7,7 +7,7 @@
 SQUASHFS_OPTIONS="-no-progress -keep-as-directory -all-root -processors 1 -no-duplicates -wildcards"
 
 BASENAME="$(basename $0)"
-EXAMPLE_CALL="$BASENAME --exclude exclude.txt --move /data output.squashfs dirA fileB --no-chmod"
+EXAMPLE_CALL="$BASENAME --exclude exclude.txt --move /data output.squashfs dirA fileB"
 read -r -d '' USAGE_STR << HELPTEXT
 Make a SquashFS file from a list of directories and files.
 
