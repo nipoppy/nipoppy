@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --mem-per-cpu=16G
+#SBATCH --mem=32G
 #SBATCH --time=1-12:00:00
 
 # ========== SETTINGS ==========
@@ -48,8 +48,8 @@ function print() {
     MESSAGE="$2"
     if [[ -z "$MESSAGE" || -z "$PREFIX" ]]
     then
-        error "[ERROR] print() called with empty prefix or message"
-        exit 1
+        echo "[ERROR] print() called with empty prefix or message"
+        exit 3
     fi
     echo "[$PREFIX] $MESSAGE"
 }
@@ -60,7 +60,7 @@ function info() {
 
 function error() {
     print "ERROR" "$@"
-    exit 2
+    exit 1
 }
 
 function run() {
@@ -72,7 +72,7 @@ function run() {
         if [[ $? -ne 0 ]]
         then
             error "Command failed (return code $?): $COMMAND"
-            exit 1
+            exit 2
         fi
     fi
 }
