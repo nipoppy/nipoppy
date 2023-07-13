@@ -1,6 +1,3 @@
-import pandas as pd
-import numpy as np
-import glob
 import os
 import logging
 from pathlib import Path
@@ -20,7 +17,7 @@ file_handler.setFormatter(formatter)
 # Don't forget to add the file handler
 logger.addHandler(file_handler)
 
-def search_dicoms(raw_dicom_dir):
+def search_dicoms(raw_dicom_dir, skip_dcm_check=False):
     """ Search and return list of dicom files from a scanner dicom-dir-tree output
     """
     filelist = []
@@ -28,11 +25,12 @@ def search_dicoms(raw_dicom_dir):
     for root, dirs, files in os.walk(raw_dicom_dir):
         for file in files:
             filepath = os.path.join(root,file)
-            valid_dicom = check_valid_dicom(filepath)
-            if valid_dicom:
-                filelist.append(filepath)
-            else:
-                invalid_dicom_list.append(filepath)
+            if skip_dcm_check:
+                valid_dicom = check_valid_dicom(filepath)
+                if valid_dicom:
+                    filelist.append(filepath)
+                else:
+                    invalid_dicom_list.append(filepath)
     
     n_dcms = len(filelist)
     unique_dcm = set(filelist)
@@ -51,15 +49,17 @@ def copy_dicoms(filelist, dicom_dir, symlink=False):
         os.mkdir(dicom_dir)
         for f in filelist:
             f_basename = os.path.basename(f)
+            fpath_dest = Path(f"{dicom_dir}{f_basename}")
             if symlink:
-                os.symlink(f, f"{dicom_dir}{f_basename}")
+                f = os.path.relpath(f, fpath_dest.parent)
+                os.symlink(f, fpath_dest)
             else:
-                shutil.copyfile(f, f"{dicom_dir}{f_basename}")
+                shutil.copyfile(f, fpath_dest)
     else:
         logger.debug(f"participant dicoms already exist")
 
 def check_valid_dicom(f_dcm):
-    """ checks if the file is vaild dicom
+    """ checks if the file is valid dicom
     """
     status = False
     try:

@@ -80,7 +80,7 @@ def infotodict(seqinfo):
         epiPA:['RS_fMRI_se_PA']
     }
     
-    # These protcols needs special naming based on image type (see below)
+    # These protocols needs special naming based on image type (see below)
     protocols_with_mag_and_phase = {
                                     "boldGREfmap": [boldGREfmapMag, boldGREfmapPhase]
                                     }

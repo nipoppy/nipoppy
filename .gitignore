@@ -16,10 +16,5 @@ share/python-wheels/
 .ipynb_checkpoints
 notebooks/.ipynb_checkpoints/*
 
-*~
-dev-global-config.json
-
-logs
-scratch
-bids
-tabular
+# dataset-specific files
+bids_filter.json 
