@@ -314,7 +314,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
 
-def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, logger=None):
+def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells=1000, fodf_shells=1000, sh_order=6, logger=None):
     """ Runs TractoFlow command with Nextflow
     """
 
@@ -349,6 +349,9 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     if use_bids_filter:
         logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
+        
+    ## call the file parser to copy the correct files to the input structure
+    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
 
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
@@ -366,10 +369,18 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
 
     ## build paths for working inputs
+
+    ## isolate datasets based on input shapes
+    if not rpe_file:
+        tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
+    else:
+        tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
+
+    ## build paths to working inputs
     tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}"
     tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}"
 
-    ## build input directory if it doesn't exist already to preserve file times
+    ## check if working values already exist
     if not os.path.exists(Path(f"{tractoflow_subj_dir}")):
         Path(f"{tractoflow_subj_dir}").mkdir(parents=True, exist_ok=True)
 
@@ -385,16 +396,75 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(anatfile, Path(tractoflow_subj_dir, 't1.nii.gz').joinpath())
         if os.path.exists(rpe_file):
             shutil.copyfile(rpe_file, Path(tractoflow_subj_dir, 'rev_b0.nii.gz').joinpath())
-            
-    ## drop sub- from participant ID
-    tf_id = participant_id.replace('sub-', '')
+                
+    ## PARSE THE SHELL INPUTS / ORDER FROM INPUTS
+    # dti_shells=1000
+    # fodf_shells=1000
+    # sh_order=6
+
+    ## load the bval / bvec data
+    bval = np.loadtxt(bvalfile)
+    bvec = np.loadtxt(bvecfile)
+    sh_order = 6
+
+    ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
+    rval = bval + 99
+    rval = np.floor(rval / 100) * 100
     
-    ## generalize as inputs - eventually
-    dti_shells=1000
-    fodf_shells=1000
-    sh_order=6
+    ## pull the number of shells
+    bunq = np.unique(rval)
+    nshell = bunq.size - 1
+    
+    ## deal with multishell data
+    if nshell == 1:
+
+        ## logical index of b0 values
+        b0idx = rval == 0
+        
+        ## check that vectors are unique
+        tvec = bvec[:,~b0idx]
+        tdir = np.unique(tvec, axis=0)
+
+        ## compute and print the maximum shell
+        plmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
+        logger.info(f"Single shell data has b = {bunq[1]} shell with a maximum possible lmax of {plamx}.")
+
+    ## have to check the utility of every shell
+    else:
+
+        logger.info(f"Multishell data has shells b = {bunq[1:]}")
+        mlmax = []    
+        for shell in bunq[1:]:
+
+            ## pull the shells
+            tndir = rval == shell
+
+            ## check that vectors are unique
+            tvec = bvec[:,~b0idx]
+            tdir = np.unique(tvec, axis=0)
+
+            ## compute and print the maximum shell
+            tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
+            mlmax.append(tlmax)
+            logger.info(f" -- Shell {shell} has max lmax: {tlmax}")
+
+        ## the minimum lmax across shells is used
+        plmax = min(mlmax)
+        logger.info(f"The maximum lmax across shells is: {plmax}")
+        
+    ## if lmax too large, reset with warning
+    if sh_order <= plmax:
+        logger.info(f"Running model with requested lmax: {lmax}")
+    else:
+        logger.info(f"The requested lmax ({lmax}) exceeds the capabilities of the data ({plmax})\n\t - Setting the lmax to: {plamx}")
+        sh_order = plmax
+        
+    ## hard coded inputs to the tractoflow command in mrproc
     profile='fully_reproducible'
     ncore=4
+
+    ## drop sub- from participant ID
+    tf_id = participant_id.replace('sub-', '')
 
     ## path to pipelines
     TRACTOFLOW_PIPE=f'{DATASET_ROOT}/workflow/proc_pipe/tractoflow'
@@ -449,13 +519,19 @@ if __name__ == '__main__':
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--output_dir', type=str, default=None, help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
     parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
-
+    parser.add_argument('--dti_shells', type=str, default='1000', help='shell value(s) on which a tensor will be fit', required=False)
+    parser.add_argument('--fodf_shells', type=str, default='1000', help='shell value(s) on which the CSD will be fit', required=False)
+    parser.add_argument('--sh_order', type=str, default='6', help='The order of the CSD function to fit', required=False)
+    
     ## extract arguments
     args = parser.parse_args()
     global_config_file = args.global_config
     participant_id = args.participant_id
     session_id = args.session_id
     output_dir = args.output_dir # Needed on BIC (QPN) due to weird permissions issues with mkdir
+    dti_shells=args.dti_shells
+    fodf_shells=args.fodf_shells
+    sh_order=args.sh_order
     use_bids_filter = args.use_bids_filter
 
     ## Read global config
@@ -463,4 +539,4 @@ if __name__ == '__main__':
         global_configs = json.load(f)
 
     ## make valid tractoflow call based on inputs    
-    run(participant_id, global_configs, session_id, output_dir, use_bids_filter)
+    run(participant_id, global_configs, session_id, output_dir, dti_shells, fodf_shells, sh_order, use_bids_filter)
