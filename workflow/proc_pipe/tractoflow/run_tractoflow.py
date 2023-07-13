@@ -197,7 +197,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             ## they're the same axis in opposite orientations
             else:
 
-                logger.info(f"Foward Phase Encoding:  {dmrifs1pe}")
+                logger.info(f"Forward Phase Encoding: {dmrifs1pe}")
                 logger.info(f"Reverse Phase Encoding: {dmrifs2pe}")
 
                 ## if the sequences are the same length
@@ -235,7 +235,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                 else:
 
-                    raise ValueError('The sequences are suffieciently mismatched that an acquisition or conversion error is likley to have occurred.')
+                    raise ValueError('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
 
         else:
 
@@ -261,7 +261,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         else:
             rpe = fpe[0]
 
-        logger.info(f"Foward Phase Encoding:  {fpe}")
+        logger.info(f"Forward Phase Encoding: {fpe}")
         logger.info(f"Reverse Phase Encoding: {rpe}")
             
         ## look for the reverse phase encoded file in the other candidates
@@ -388,7 +388,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     if not os.path.exists(Path(f"{tractoflow_work_dir}")):
         Path(f"{tractoflow_work_dir}").mkdir(parents=True, exist_ok=True)
 
-    ## just make copies if they aren't already there - resume option cannot work w/ modfied (recopied) files, so check first
+    ## just make copies if they aren't already there - resume option cannot work w/ modified (recopied) files, so check first
+    ## delete on success?
     if len(os.listdir(tractoflow_subj_dir)) == 0:
         shutil.copyfile(dmrifile, Path(tractoflow_subj_dir, 'dwi.nii.gz').joinpath())
         shutil.copyfile(bvalfile, Path(tractoflow_subj_dir, 'bval').joinpath())
@@ -513,7 +514,7 @@ if __name__ == '__main__':
     Script to run TractoFlow 
     """
 
-    ## parse intputs
+    ## parse inputs
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset', required=True)
     parser.add_argument('--participant_id', type=str, help='participant id', required=True)
