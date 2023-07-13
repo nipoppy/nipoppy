@@ -397,12 +397,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(anatfile, Path(tractoflow_subj_dir, 't1.nii.gz').joinpath())
         if os.path.exists(rpe_file):
             shutil.copyfile(rpe_file, Path(tractoflow_subj_dir, 'rev_b0.nii.gz').joinpath())
-                
-    ## PARSE THE SHELL INPUTS / ORDER FROM INPUTS
-    # dti_shells=1000
-    # fodf_shells=1000
-    # sh_order=6
-
+    
     ## load the bval / bvec data
     bval = np.loadtxt(bvalfile)
     bvec = np.loadtxt(bvecfile)
@@ -478,7 +473,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## compose tractoflow arguments
     TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_shells}" --fodf_shells "0 {fodf_shells}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
-    ## I have no idea why the inputs have to be parsed this way. The TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
+    ## TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
     ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
     ## Obviously, this breaks the calls that nextflow tries to make at somepoint (typically around Normalize_DWI) because half the command becomes an unfinished text block from the mysteriously added quotes.
     ## I don't know if the problem is python printing unhelpful/inaccurate text to the user or if nextflow can't parse its own input arguments correctly.
@@ -490,7 +485,6 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## build command line call
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
     CMD=CMD_ARGS
-    #CMD = CMD_ARGS.split()
 
     ## log what is called
     logger.info(f"Running TractoFlow...")
