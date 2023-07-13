@@ -405,7 +405,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## load the bval / bvec data
     bval = np.loadtxt(bvalfile)
     bvec = np.loadtxt(bvecfile)
-    sh_order = 6
+    sh_order = int(sh_order)
 
     ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
     rval = bval + 99
@@ -427,12 +427,12 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
         ## compute and print the maximum shell
         plmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
-        logger.info(f"Single shell data has b = {bunq[1]} shell with a maximum possible lmax of {plamx}.")
+        logger.info(f"Single shell data has b = {int(bunq[1])} shell with a maximum possible lmax of {plmax}.")
 
     ## have to check the utility of every shell
     else:
 
-        logger.info(f"Multishell data has shells b = {bunq[1:]}")
+        logger.info(f"Multishell data has shells b = {int(bunq[1:])}")
         mlmax = []    
         for shell in bunq[1:]:
 
@@ -454,9 +454,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         
     ## if lmax too large, reset with warning
     if sh_order <= plmax:
-        logger.info(f"Running model with requested lmax: {lmax}")
+        logger.info(f"Running model with requested lmax: {sh_order}")
     else:
-        logger.info(f"The requested lmax ({lmax}) exceeds the capabilities of the data ({plmax})\n\t - Setting the lmax to: {plamx}")
+        logger.info(f"The requested lmax ({sh_order}) exceeds the capabilities of the data ({plmax})")
+        logger.info(f" -- Setting the lmax to: {plmax}")
         sh_order = plmax
         
     ## hard coded inputs to the tractoflow command in mrproc
