@@ -426,12 +426,40 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     sh_order = int(sh_order)
 
     ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
-    rval = bval + 49
+    rval = bval + 49 ## this either does too much or not enough rounding for YLO dataset
     rval = np.floor(rval / 100) * 100
+    rval = rval.astype(int) ## I don't know how to get around just overwriting with the "fix"
+    np.savetxt(Path(tractoflow_subj_dir, 'bval').joinpath(), rval, fmt='%1.0i', newline=' ')
     
     ## pull the number of shells
     bunq = np.unique(rval)
     nshell = bunq.size - 1
+
+    ## fix the passed bvals
+
+    ## pull copy
+    dti_use = dti_shells
+    odf_use = fodf_shells
+
+    ## convert to integer
+    dti_use = list(map(int, dti_use.split(",")))
+    odf_use = list(map(int, odf_use.split(",")))
+
+    ## create merged list of requested shells
+    rshell = np.unique([ dti_use, odf_use ])
+    logger.info(f'Requested shells: {rshell}')
+
+    ## if any requested shell(s) are absent within data, error w/ useful warning
+    mshell = np.setdiff1d(rshell, bunq)
+    if mshell.size == 0:
+        logger.info('Requested shells are available in the data.')
+    else:
+        logger.info(f'Requested shells are not present in the data: {mshell}')
+        raise ValueError('Unable to process shell data not present in the data.')
+
+    ## convert back to space separated strings to tractoflow can parse it
+    dti_use = dti_shells.replace(',', ' ')
+    odf_use = fodf_shells.replace(',', ' ')
     
     ## deal with multishell data
     if nshell == 1:
@@ -465,7 +493,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
             ## compute and print the maximum shell - can get odd numbers?
             tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
             mlmax.append(tlmax)
-            logger.info(f" -- Shell {shell} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
+            logger.info(f" -- Shell {int(shell)} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
 
         ## the minimum lmax across shells is used
         plmax = min(mlmax)
@@ -477,6 +505,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     else:
         logger.info(f"The requested lmax ({sh_order}) exceeds the recommended capabilities of the data ({plmax})")
         logger.info(f" -- You should redo with sh_order set to: {plmax}")
+        logger.info(f"Running model with overrode lmax: {sh_order}")
         #sh_order = plmax
         
     ## hard coded inputs to the tractoflow command in mrproc
@@ -494,7 +523,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf -with-singularity {SINGULARITY_TRACTOFLOW} -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
     
     ## compose tractoflow arguments
-    TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_shells}" --fodf_shells "0 {fodf_shells}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
+    TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
     ## TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
     ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
