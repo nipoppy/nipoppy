@@ -179,6 +179,10 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         dmrifs1pe = dmrifs1.get_metadata()['PhaseEncodingDirection']
         dmrifs2pe = dmrifs2.get_metadata()['PhaseEncodingDirection']
 
+        ## get sequence lengths
+        dmrifs1nv = dmrifs1.get_image().shape[3]
+        dmrifs2nv = dmrifs2.get_image().shape[3]
+
         ## if the phase encodings are the same axis
         if (dmrifs1pe[0] == dmrifs2pe[0]):
 
@@ -208,8 +212,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     ## verify that bvecs match?
 
                     ## pull the number of volumes
-                    dmrifs1nv = dmrifs1.get_image().shape[3]
-                    dmrifs2nv = dmrifs1.get_image().shape[3]
+                    #dmrifs1nv = dmrifs1.get_image().shape[3]
+                    #dmrifs2nv = dmrifs2.get_image().shape[3]
 
                     ## pull the first as forward
                     didx = dmri_files.index(dmrifs1) 
@@ -364,7 +368,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## nest inputs in rpe/no-rpe folders so tractoflow will parse mixed datasets w/o failing b/c data is "bad"
     if rpe_file == None:
-        tractoflow_input_dir = f"{tractoflow_dir}/input/no-rpe"
+        tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
     else:
         tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
 
@@ -535,4 +539,4 @@ if __name__ == '__main__':
         global_configs = json.load(f)
 
     ## make valid tractoflow call based on inputs    
-    run(participant_id, global_configs, session_id, output_dir, dti_shells, fodf_shells, sh_order, use_bids_filter)
+    run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells, fodf_shells, sh_order)
