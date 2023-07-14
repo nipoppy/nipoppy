@@ -211,9 +211,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                     ## verify that bvecs match?
 
-                    ## pull the number of volumes
-                    #dmrifs1nv = dmrifs1.get_image().shape[3]
-                    #dmrifs2nv = dmrifs2.get_image().shape[3]
+                    dmrifs1nv = dmrifs1.get_image().shape[3]
+                    dmrifs2nv = dmrifs1.get_image().shape[3]
 
                     ## pull the first as forward
                     didx = dmri_files.index(dmrifs1) 
@@ -263,7 +262,6 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     ## print a warning to log
                     logger.info('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
                 
-
         else:
 
             raise ValueError(f'The phase encodings are on different axes: {dmrifs1pe}, {dmrifs2pe}\nCannot determine what to do.')
