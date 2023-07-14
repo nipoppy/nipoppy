@@ -231,7 +231,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
 
                     ## write to disk
-                    tmp_dir = tempfile.mkftemp() #TemoraryDirectory()
+                    tmp_dir = tempfile.mkdtemp() #TemoraryDirectory()
                     rpe_out = f'{participant_id}_rpe_b0.nii.gz'
                     rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
                     rpe_shape = rpe_data.shape
@@ -239,7 +239,30 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                 else:
 
-                    raise ValueError('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
+                    didx = dmri_files.index(dmrifs1)
+                    
+                    ## pull the second as reverse
+                    rpeimage = dmrifs2.get_image()
+
+                    ## load image data
+                    rpedata = rpeimage.get_fdata() 
+
+                    ## load bval data
+                    rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
+
+                    ## create average b0 data from sequence
+                    rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
+
+                    ## write to disk
+                    tmp_dir = tempfile.mkdtemp()
+                    rpe_out = f'{participant_id}_rpe_b0.nii.gz'
+                    rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
+                    rpe_shape = rpe_data.shape
+                    nib.save(rpe_data, Path(tmp_dir, rpe_out).joinpath())
+
+                    ## print a warning to log
+                    logger.info('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
+                
 
         else:
 
@@ -354,9 +377,6 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
         
-    ## call the file parser to copy the correct files to the input structure
-    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
-
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
@@ -408,7 +428,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     sh_order = int(sh_order)
 
     ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
-    rval = bval + 99
+    rval = bval + 49
     rval = np.floor(rval / 100) * 100
     
     ## pull the number of shells
@@ -432,21 +452,22 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## have to check the utility of every shell
     else:
 
-        logger.info(f"Multishell data has shells b = {int(bunq[1:])}")
+        logger.info(f"Multishell data has shells b = {bunq[1:]}")
         mlmax = []    
         for shell in bunq[1:]:
 
             ## pull the shells
             tndir = rval == shell
+            b0idx = rval == 0
 
             ## check that vectors are unique
-            tvec = bvec[:,~b0idx]
+            tvec = bvec[:,tndir]
             tdir = np.unique(tvec, axis=0)
 
-            ## compute and print the maximum shell
+            ## compute and print the maximum shell - can get odd numbers?
             tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
             mlmax.append(tlmax)
-            logger.info(f" -- Shell {shell} has max lmax: {tlmax}")
+            logger.info(f" -- Shell {shell} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
 
         ## the minimum lmax across shells is used
         plmax = min(mlmax)
@@ -456,9 +477,9 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     if sh_order <= plmax:
         logger.info(f"Running model with requested lmax: {sh_order}")
     else:
-        logger.info(f"The requested lmax ({sh_order}) exceeds the capabilities of the data ({plmax})")
-        logger.info(f" -- Setting the lmax to: {plmax}")
-        sh_order = plmax
+        logger.info(f"The requested lmax ({sh_order}) exceeds the recommended capabilities of the data ({plmax})")
+        logger.info(f" -- You should redo with sh_order set to: {plmax}")
+        #sh_order = plmax
         
     ## hard coded inputs to the tractoflow command in mrproc
     profile='fully_reproducible'
