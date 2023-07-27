@@ -1,17 +1,14 @@
-import pandas as pd
 import os
 from pathlib import Path
 
 from workflow.utils import (
-    COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
     COL_PARTICIPANT_DICOM_DIR,
-    COL_DICOM_ID,
+    COL_SUBJECT_MANIFEST,
     COL_DOWNLOAD_STATUS,
     COL_ORG_STATUS, 
     COL_SESSION_MANIFEST,
     COL_SUBJECT_MANIFEST,
-    COL_VISIT_MANIFEST,
     load_status,
 )
 
@@ -29,8 +26,8 @@ def read_and_process_status(status_csv, session_id, logger):
         logger.info("Using dicom filename from the status file") 
     else:
         logger.warning(f"{COL_PARTICIPANT_DICOM_DIR} is not specified in the status file")
-        logger.info("Assuming dicom_id is the dicom filename") 
-        status_df[COL_PARTICIPANT_DICOM_DIR] = status_df[COL_DICOM_ID].copy()
+        logger.info("Assuming participant_id is the dicom filename") 
+        status_df[COL_PARTICIPANT_DICOM_DIR] = status_df[COL_SUBJECT_MANIFEST].copy()
 
     return status_df
 
