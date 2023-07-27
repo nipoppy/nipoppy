@@ -43,7 +43,7 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
     if len(raw_dcm_list) > 0:
         copy_dicoms(raw_dcm_list, participant_dicom_dir, use_symlinks)
     else:
-        logger.info(f'No dicoms found for participant {participant}. Not copying files.')
+        logger.error(f'No dicoms found for participant {participant} (dicom directory: {participant_raw_dicom_dir}). Not copying files.')
     
     # Log skipped invalid dicom list for the participant
     invalid_dicoms_file = f"{invalid_dicom_dir}/{participant}_invalid_dicoms.json"
