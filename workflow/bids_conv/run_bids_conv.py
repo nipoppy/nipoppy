@@ -211,7 +211,7 @@ if __name__ == '__main__':
     global_config_file = args.global_config
     session_id = args.session_id
     stage = args.stage
-    overlay = Path(args.overlay).resolve()
+    overlay = args.overlay
     n_jobs = args.n_jobs
     dicom_id = args.dicom_id
     fpaths_to_copy = args.copy_files
@@ -219,5 +219,9 @@ if __name__ == '__main__':
     # Read global configs
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
+
+    # use absolute path
+    if overlay is not None:
+        overlay = Path(overlay).resolve()
 
     run(global_configs, session_id, stage=stage, overlay=overlay, n_jobs=n_jobs, dicom_id=dicom_id, fpaths_to_copy=fpaths_to_copy)
