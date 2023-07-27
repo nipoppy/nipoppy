@@ -29,28 +29,34 @@ from workflow.utils import (
 fname = __file__
 CWD = os.path.dirname(os.path.abspath(fname))
 
-def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
+def run_heudiconv(dicom_id, global_configs, session_id, stage, overlay, logger):
     logger.info(f"\n***Processing participant: {dicom_id}***")
     DATASET_ROOT = global_configs["DATASET_ROOT"]
-    DATASTORE_DIR = global_configs["DATASTORE_DIR"]
     SINGULARITY_PATH = global_configs["SINGULARITY_PATH"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     HEUDICONV_CONTAINER = global_configs["BIDS"]["HEUDICONV"]["CONTAINER"]
     HEUDICONV_VERSION = global_configs["BIDS"]["HEUDICONV"]["VERSION"]
     HEUDICONV_CONTAINER = HEUDICONV_CONTAINER.format(HEUDICONV_VERSION)
     SINGULARITY_HEUDICONV = f"{CONTAINER_STORE}/{HEUDICONV_CONTAINER}"
-
-    logger.info(f"Using SINGULARITY_HEUDICONV: {SINGULARITY_HEUDICONV}")
-
     SINGULARITY_WD = "/scratch"
     SINGULARITY_DICOM_DIR = f"{SINGULARITY_WD}/dicom/ses-{session_id}"
     SINGULARITY_BIDS_DIR = f"{SINGULARITY_WD}/bids"
-    SINGULARITY_DATA_STORE="/data"
     HEURISTIC_FILE=f"{SINGULARITY_WD}/proc/heuristic.py"
 
+    logger.info(f"Using SINGULARITY_HEUDICONV: {SINGULARITY_HEUDICONV}")
+
+    if overlay is not None:
+        logger.info(f"Using overlay: {overlay}")
+        flag_overlay = f'--overlay {overlay}'
+        flag_bind = ''
+        for dname in ['bids', 'tabular', 'proc']:
+            flag_bind += f'--bind {DATASET_ROOT}/{dname}:{SINGULARITY_WD}/{dname} '
+    else:
+        flag_overlay = ''
+        flag_bind = f'--bind {DATASET_ROOT}:{SINGULARITY_WD}'
+
     # Singularity CMD 
-    SINGULARITY_CMD=f"{SINGULARITY_PATH} run -B {DATASET_ROOT}:{SINGULARITY_WD} \
-        -B {DATASTORE_DIR}:{SINGULARITY_DATA_STORE} {SINGULARITY_HEUDICONV} "
+    SINGULARITY_CMD=f"{SINGULARITY_PATH} run {flag_overlay} {flag_bind} {SINGULARITY_HEUDICONV} "
 
     # Heudiconv CMD
     subject = "{subject}"
@@ -74,12 +80,13 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
             -ss {session_id} "
 
     else:
-        logger.error("Incorrect Heudiconv stage: {stage}")
+        logger.error(f"Incorrect Heudiconv stage: {stage}")
 
     CMD_ARGS = SINGULARITY_CMD + Heudiconv_CMD 
     CMD = CMD_ARGS.split()
 
-    logger.info(f"CMD:\n{CMD}")
+    print(f"CMD: {CMD_ARGS}")
+    logger.info(f"CMD:\n{CMD_ARGS}")
     heudiconv_proc_success = True
     try:
         subprocess.run(CMD, check=True) # raises CalledProcessError if non-zero return code
@@ -89,12 +96,15 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, logger):
 
     return heudiconv_proc_success
 
-def run(global_configs, session_id, logger=None, stage=2, n_jobs=2, dicom_id=None):
+def run(global_configs, session_id, stage=2, overlay=None, n_jobs=2, dicom_id=None, logger=None, fpaths_to_copy=None):
     """ Runs the bids conv tasks 
     """
     session = session_id_to_bids_session(session_id)
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
+
+    if fpaths_to_copy is None:
+        fpaths_to_copy = []
 
     if logger is None:
         log_file = f"{log_dir}/bids_conv.log"
@@ -128,17 +138,22 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2, dicom_id=Non
             logger.info(f"Copying ./heuristic.py to {DATASET_ROOT}/proc/heuristic.py (to be seen by Singularity container)")
             shutil.copyfile(f"{CWD}/heuristic.py", f"{DATASET_ROOT}/proc/heuristic.py")
 
+            for fpath in fpaths_to_copy:
+                fpath = Path(fpath)
+                logger.info(f"Copying {fpath} to {DATASET_ROOT}/proc/{fpath.name} (to be seen by Singularity container)")
+                shutil.copyfile(fpath, f"{DATASET_ROOT}/proc/{fpath.name}")
+
         if n_jobs > 1:
             ## Process in parallel! (Won't write to logs)
             heudiconv_results = Parallel(n_jobs=n_jobs)(delayed(run_heudiconv)(
-                dicom_id, global_configs, session_id, stage, logger
+                dicom_id, global_configs, session_id, stage, overlay, logger
                 ) for dicom_id in heudiconv_participants)
 
         else:
             # Useful for debugging
             heudiconv_results = []
             for dicom_id in heudiconv_participants:
-                res = run_heudiconv(dicom_id, global_configs, session_id, stage, logger) 
+                res = run_heudiconv(dicom_id, global_configs, session_id, stage, overlay, logger) 
             heudiconv_results.append(res)
 
         # Check successful heudiconv runs
@@ -163,9 +178,9 @@ def run(global_configs, session_id, logger=None, stage=2, n_jobs=2, dicom_id=Non
         else:
 
             logger.info(f"Current successfully converted BIDS participants for session {session}: {len(participants_with_bids)}")
-            logger.info(f"BIDS conversion completed for the {new_participants_with_bids}/{heudiconv_participants} new participants")
+            logger.info(f"BIDS conversion completed for the {len(new_participants_with_bids)} out of {len(heudiconv_participants)} new participants")
             
-            if new_participants_with_bids > 0:
+            if len(new_participants_with_bids) > 0:
                 heudiconv_df.loc[heudiconv_df[COL_DICOM_ID].isin(new_participants_with_bids), COL_CONV_STATUS] = True
                 df_status.loc[heudiconv_df.index] = heudiconv_df
                 save_backup(df_status, fpath_status, DNAME_BACKUPS_STATUS)
@@ -186,19 +201,23 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset', required=True)
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2, default: 2)')
+    parser.add_argument('--overlay', type=str, help='path to Squashfs overlay')
     parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes (default: 2)')
     parser.add_argument('--dicom_id', type=str, help='dicom id for a single participant to run (default: run on all participants in the status file)')
+    parser.add_argument('--copy_files', nargs='+', type=str, help='path(s) to file(s) to copy to /scratch/proc in the container')
 
     args = parser.parse_args()
 
     global_config_file = args.global_config
     session_id = args.session_id
     stage = args.stage
+    overlay = Path(args.overlay).resolve()
     n_jobs = args.n_jobs
     dicom_id = args.dicom_id
+    fpaths_to_copy = args.copy_files
 
     # Read global configs
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    run(global_configs, session_id, stage=stage, n_jobs=n_jobs, dicom_id=dicom_id)
+    run(global_configs, session_id, stage=stage, overlay=overlay, n_jobs=n_jobs, dicom_id=dicom_id, fpaths_to_copy=fpaths_to_copy)
