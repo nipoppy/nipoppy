@@ -34,8 +34,8 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, overlay, logger):
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     SINGULARITY_PATH = global_configs["SINGULARITY_PATH"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
-    HEUDICONV_CONTAINER = global_configs["BIDS"]["HEUDICONV"]["CONTAINER"]
-    HEUDICONV_VERSION = global_configs["BIDS"]["HEUDICONV"]["VERSION"]
+    HEUDICONV_CONTAINER = global_configs["BIDS"]["heudiconv"]["CONTAINER"]
+    HEUDICONV_VERSION = global_configs["BIDS"]["heudiconv"]["VERSION"]
     HEUDICONV_CONTAINER = HEUDICONV_CONTAINER.format(HEUDICONV_VERSION)
     SINGULARITY_HEUDICONV = f"{CONTAINER_STORE}/{HEUDICONV_CONTAINER}"
     SINGULARITY_WD = "/scratch"
