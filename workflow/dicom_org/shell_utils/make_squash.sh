@@ -1,10 +1,12 @@
 #!/bin/bash
 
-#SBATCH --mem=32G
-#SBATCH --time=1-12:00:00
+#SBATCH --mem=8G
+#SBATCH --time=2-00:00:00
 
 # ========== SETTINGS ==========
-SQUASHFS_OPTIONS="-no-progress -keep-as-directory -all-root -processors 1 -no-duplicates -wildcards"
+# NOTE: fstime is set (to arbitrary value) so that checksums are the same
+SQUASHFS_OPTIONS="-no-progress -keep-as-directory -all-root -processors 1 -no-duplicates -wildcards -fstime 1689602400"
+COMPRESS_OPTIONS="-noD -noI -noX"
 
 BASENAME="$(basename $0)"
 EXAMPLE_CALL="$BASENAME --exclude exclude.txt --move /data output.squashfs dirA fileB"
@@ -16,14 +18,15 @@ calls mksquashfs with the following options:
     $SQUASHFS_OPTIONS
 then optionally moves the files into a subdirectory inside the squashfs.
 
-Usage: $BASENAME [-h/--help] [-e/--exclude FILE] [-m/--move PATH_INSIDE_SQUASHFS] [-d/--dry-run] OUTPUT_FILE PATH1 [PATH2...]
+Usage: $BASENAME [-h/--help] [-e/--exclude FILE] [-m/--move PATH_INSIDE_SQUASHFS] [-d/--dry-run] [-p/--no-chmod] [-c/--no-compress] OUTPUT_FILE PATH1 [PATH2...]
 
 where:
     OUTPUT_FILE         path to output squashfs file (must not already exist)
     PATH1 [PATH2...]    paths to directories or files to squash
     -e/--exclude        exclude files matching patterns in FILE (passed to -ef argument of mksquashfs)
     -m/--move           move files into a subdirectory of the squashfs
-    -n/--no-chmod       do not set file permissions before squashing (to use if file permissions are already correct)
+    -p/--no-chmod       do not set file permissions before squashing (to use if file permissions are already correct)
+    -c/--no-compress    do not compress data, inode table or extended attributes (use options '$COMPRESS_OPTIONS' in mksquashfs call)
     -d/--dry-run        print commands but do not execute them
     -h/--help           print this message and exit
 
@@ -98,7 +101,11 @@ do
             FPATH_EXCLUDE="$2"
             shift 2
             ;;
-        -n|--no-chmod)
+        -c|--no-compress)
+            NO_COMPRESS=1
+            shift
+            ;;
+        -p|--no-chmod)
             NO_CHMOD=1
             shift
             ;;
@@ -159,6 +166,12 @@ then
     SQUASHFS_OPTIONS="$SQUASHFS_OPTIONS -ef $FPATH_EXCLUDE"
 fi
 
+if [ ! -z "$NO_COMPRESS" ]
+then
+    info "Not doing compression"
+    SQUASHFS_OPTIONS="$SQUASHFS_OPTIONS $COMPRESS_OPTIONS"
+fi
+
 if [ ! -z "$NO_CHMOD" ]
 then
     info "Keeping same file permissions"
@@ -186,7 +199,8 @@ then
 
     # create a (hidden) empty file to add to the existing squashfs
     # then use -root-becomes to move previously squashed files to the correct location
-    TMP_FILE=$(mktemp --tmpdir .$(basename $BASENAME .sh)-empty-XXXXXX)
+    TMP_FILE="$TMPDIR/.mksquashfs-empty"
+    touch $TMP_FILE
     trap 'rm -f "$TMP_FILE"' EXIT
 
     # move to $DATA_PATH
