@@ -4,7 +4,6 @@ from pathlib import Path
 from workflow.utils import (
     COL_CONV_STATUS,
     COL_PARTICIPANT_DICOM_DIR,
-    COL_SUBJECT_MANIFEST,
     COL_DOWNLOAD_STATUS,
     COL_ORG_STATUS, 
     COL_SESSION_MANIFEST,
@@ -20,14 +19,6 @@ def read_and_process_status(status_csv, session_id, logger):
     # filter session
     status_df = status_df[status_df[COL_SESSION_MANIFEST] == session]
     status_df[COL_SUBJECT_MANIFEST] = status_df[COL_SUBJECT_MANIFEST].astype(str)
-
-    # check participant dicom dirs
-    if not status_df[COL_PARTICIPANT_DICOM_DIR].isna().all():
-        logger.info("Using dicom filename from the status file") 
-    else:
-        logger.warning(f"{COL_PARTICIPANT_DICOM_DIR} is not specified in the status file")
-        logger.info("Assuming participant_id is the dicom filename") 
-        status_df[COL_PARTICIPANT_DICOM_DIR] = status_df[COL_SUBJECT_MANIFEST].copy()
 
     return status_df
 
@@ -106,6 +97,14 @@ def get_new_raw_dicoms(status_csv, session_id, logger):
     n_downloaded_but_not_reorganized = len(downloaded_but_not_reorganized)
 
     reorg_df = status_df.loc[status_df[COL_SUBJECT_MANIFEST].isin(downloaded_but_not_reorganized)]
+
+    # check participant dicom dirs
+    if not reorg_df[COL_PARTICIPANT_DICOM_DIR].isna().all():
+        logger.info("Using dicom filename from the status file") 
+    else:
+        logger.warning(f"{COL_PARTICIPANT_DICOM_DIR} is not specified in the status file")
+        logger.info(f"Assuming {COL_SUBJECT_MANIFEST} is the dicom filename") 
+        reorg_df[COL_PARTICIPANT_DICOM_DIR] = reorg_df[COL_SUBJECT_MANIFEST].copy()
 
     logger.info("-"*50)
     logger.info(

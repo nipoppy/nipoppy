@@ -14,6 +14,7 @@ jobs:
           - neurodatascience/mr_proc-ppmi
           - neurodatascience/mr_proc-qpn
           - neurodatascience/mr_proc-nimhans_serb
+          - neurodatascience/nipoppy_nimhans
     steps:
       - uses: actions/checkout@v3
         with:
