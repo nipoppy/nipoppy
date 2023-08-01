@@ -33,12 +33,12 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
 
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
         manifest_df = pd.read_csv(mr_proc_manifest)
-        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
-        n_participants = len(participants)
+        participants_total = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
+        n_participants_total = len(participants_total)
 
         print("-"*50)
         print(f"pipeline: {pipeline}, version: {version}")
-        print(f"n_participants: {n_participants}, session_ids: {session_ids}")
+        print(f"n_participants_total: {n_participants_total}, session_ids: {session_ids}")
         print("-"*50)
 
         status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS)
@@ -46,13 +46,18 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
         dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
         
         for session_id in session_ids:
-            print(f"Checking session: {session_id}")    
-            _df = pd.DataFrame(index=participants, columns=dash_col_list)          
+            print(f"Checking session: {session_id}")  
+
+            participants_session = manifest_df[(~manifest_df["bids_id"].isna()) & (manifest_df["session"] == f'ses-{session_id}')]["bids_id"].drop_duplicates().astype(str).str.strip().values
+            n_participants_session = len(participants_session)
+            print(f"n_participants_session: {n_participants_session}")
+
+            _df = pd.DataFrame(index=participants_session, columns=dash_col_list)          
             _df["session"] = session_id
             _df["pipeline_name"] = pipeline        
             _df["pipeline_version"] = version
             
-            for bids_id in participants:
+            for bids_id in participants_session:
                 participant_id = manifest_df[manifest_df["bids_id"]==bids_id]["participant_id"].values[0]
                 _df.loc[bids_id,"participant_id"] = participant_id
                 # print(f"bids_id: {bids_id}, participant_id: {participant_id}")
