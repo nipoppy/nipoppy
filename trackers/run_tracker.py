@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 import argparse
 from tracker import tracker, get_start_time
-import fs_tracker, fmriprep_tracker, mriqc_tracker
+import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 
 # Status flags
 SUCCESS="SUCCESS"
@@ -15,9 +15,10 @@ PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
 pipeline_tracker_config_dict = {
     "freesurfer": fs_tracker.tracker_configs,
     "fmriprep": fmriprep_tracker.tracker_configs,
-    "mriqc": mriqc_tracker.tracker_configs
+    "mriqc": mriqc_tracker.tracker_configs,
+    "tractoflow": tractoflow_tracker.tracker_configs
 }
-BIDS_PIPES = ["mriqc","fmriprep"]
+BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
 
 def run(global_config_file, dash_schema_file, pipelines, run_id=1):
     """ driver code running pipeline specific trackers
