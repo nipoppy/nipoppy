@@ -37,8 +37,8 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
 
         mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
         manifest_df = load_manifest(mr_proc_manifest)
-        participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
-        n_participants = len(participants)
+        participants_total = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
+        n_participants_total = len(participants_total)
 
         tracker_csv = Path(mr_proc_root_dir, 'derivatives', 'bagel.csv')
         if tracker_csv.exists():
@@ -48,7 +48,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
             old_pipelines = set(old_proc_status_df_full['pipeline_name'])
             
             # make sure the number of participants is consistent across pipelines
-            if set(participants) != old_participants and not old_pipelines.issubset(set(pipelines)):
+            if set(participants_total) != old_participants and not old_pipelines.issubset(set(pipelines)):
                 raise RuntimeError(
                     'The existing processing status file is obsolete (participant list does not match the manifest)'
                     f'. Rerun the tracker script with --pipelines {" ".join(old_pipelines.union(pipelines))}'
@@ -61,7 +61,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
 
         print("-"*50)
         print(f"pipeline: {pipeline}, version: {version}")
-        print(f"n_participants: {n_participants}, session_ids: {session_ids}")
+        print(f"n_participants_total: {n_participants_total}, session_ids: {session_ids}")
         print("-"*50)
 
         status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
@@ -72,8 +72,13 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
 
         proc_status_session_dfs = [] # list of dataframes
         for session_id in session_ids:
-            print(f"Checking session: {session_id}")    
-            _df = pd.DataFrame(index=participants, columns=dash_col_list)          
+            print(f"Checking session: {session_id}")  
+
+            participants_session = manifest_df[(~manifest_df["bids_id"].isna()) & (manifest_df["session"] == f'ses-{session_id}')]["bids_id"].drop_duplicates().astype(str).str.strip().values
+            n_participants_session = len(participants_session)
+            print(f"n_participants_session: {n_participants_session}")
+
+            _df = pd.DataFrame(index=participants_session, columns=dash_col_list)          
             _df["session"] = session_id
             _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
@@ -82,7 +87,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
             _df["has_mri_data"] = TRUE # everyone with a session value has MRI data
             
             n_participants = 0
-            for bids_id in participants:
+            for bids_id in participants_session:
                 if pipeline == "freesurfer":
                     subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
                 elif pipeline in BIDS_PIPES:
