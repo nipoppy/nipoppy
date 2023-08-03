@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
-from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker
+from trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from workflow.utils import load_manifest, save_backup
 
 DNAME_BACKUPS_BAGEL = '.bagel'
@@ -16,9 +16,10 @@ PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
 pipeline_tracker_config_dict = {
     "freesurfer": fs_tracker.tracker_configs,
     "fmriprep": fmriprep_tracker.tracker_configs,
-    "mriqc": mriqc_tracker.tracker_configs
+    "mriqc": mriqc_tracker.tracker_configs,
+    "tractoflow": tractoflow_tracker.tracker_configs
 }
-BIDS_PIPES = ["mriqc","fmriprep"]
+BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
 
 # number of participants to check per session when testing
 N_TESTING = 10

@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # merge left and right dfs
     stat_measure_LR_df = pd.merge(hemi_stat_measures_dict["lh"],hemi_stat_measures_dict["rh"], on="subject_id")
 
-    # Drop columns ommited by DKT atlas
+    # Drop columns omitted by DKT atlas
     if stat_file == "aparc.DKTatlas.stats":
         drop_ROIs = ["temporalpole","frontalpole","banks of the superior temporal sulcus"]
         for d_roi in drop_ROIs:
