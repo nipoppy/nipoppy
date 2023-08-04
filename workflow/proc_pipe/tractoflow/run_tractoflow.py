@@ -179,6 +179,10 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         dmrifs1pe = dmrifs1.get_metadata()['PhaseEncodingDirection']
         dmrifs2pe = dmrifs2.get_metadata()['PhaseEncodingDirection']
 
+        ## get sequence lengths
+        dmrifs1nv = dmrifs1.get_image().shape[3]
+        dmrifs2nv = dmrifs2.get_image().shape[3]
+
         ## if the phase encodings are the same axis
         if (dmrifs1pe[0] == dmrifs2pe[0]):
 
@@ -207,7 +211,6 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                     ## verify that bvecs match?
 
-                    ## pull the number of volumes
                     dmrifs1nv = dmrifs1.get_image().shape[3]
                     dmrifs2nv = dmrifs1.get_image().shape[3]
 
@@ -227,7 +230,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
 
                     ## write to disk
-                    tmp_dir = tempfile.mkftemp() #TemoraryDirectory()
+                    tmp_dir = tempfile.mkdtemp() #TemoraryDirectory()
                     rpe_out = f'{participant_id}_rpe_b0.nii.gz'
                     rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
                     rpe_shape = rpe_data.shape
@@ -235,8 +238,30 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                 else:
 
-                    raise ValueError('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
+                    didx = dmri_files.index(dmrifs1)
+                    
+                    ## pull the second as reverse
+                    rpeimage = dmrifs2.get_image()
 
+                    ## load image data
+                    rpedata = rpeimage.get_fdata() 
+
+                    ## load bval data
+                    rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
+
+                    ## create average b0 data from sequence
+                    rpeb0 = np.mean(rpedata[:,:,:,rpeb0s == 0], 3)
+
+                    ## write to disk
+                    tmp_dir = tempfile.mkdtemp()
+                    rpe_out = f'{participant_id}_rpe_b0.nii.gz'
+                    rpe_data = nib.nifti1.Nifti1Image(rpeb0, rpeimage.affine)
+                    rpe_shape = rpe_data.shape
+                    nib.save(rpe_data, Path(tmp_dir, rpe_out).joinpath())
+
+                    ## print a warning to log
+                    logger.info('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
+                
         else:
 
             raise ValueError(f'The phase encodings are on different axes: {dmrifs1pe}, {dmrifs2pe}\nCannot determine what to do.')
@@ -350,9 +375,6 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
         
-    ## call the file parser to copy the correct files to the input structure
-    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
-
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
@@ -364,7 +386,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## nest inputs in rpe/no-rpe folders so tractoflow will parse mixed datasets w/o failing b/c data is "bad"
     if rpe_file == None:
-        tractoflow_input_dir = f"{tractoflow_dir}/input/no-rpe"
+        tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
     else:
         tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
 
@@ -404,12 +426,40 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     sh_order = int(sh_order)
 
     ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
-    rval = bval + 99
+    rval = bval + 49 ## this either does too much or not enough rounding for YLO dataset
     rval = np.floor(rval / 100) * 100
+    rval = rval.astype(int) ## I don't know how to get around just overwriting with the "fix"
+    np.savetxt(Path(tractoflow_subj_dir, 'bval').joinpath(), rval, fmt='%1.0i', newline=' ')
     
     ## pull the number of shells
     bunq = np.unique(rval)
     nshell = bunq.size - 1
+
+    ## fix the passed bvals
+
+    ## pull copy
+    dti_use = dti_shells
+    odf_use = fodf_shells
+
+    ## convert to integer
+    dti_use = list(map(int, dti_use.split(",")))
+    odf_use = list(map(int, odf_use.split(",")))
+
+    ## create merged list of requested shells
+    rshell = np.unique([ dti_use, odf_use ])
+    logger.info(f'Requested shells: {rshell}')
+
+    ## if any requested shell(s) are absent within data, error w/ useful warning
+    mshell = np.setdiff1d(rshell, bunq)
+    if mshell.size == 0:
+        logger.info('Requested shells are available in the data.')
+    else:
+        logger.info(f'Requested shells are not present in the data: {mshell}')
+        raise ValueError('Unable to process shell data not present in the data.')
+
+    ## convert back to space separated strings to tractoflow can parse it
+    dti_use = dti_shells.replace(',', ' ')
+    odf_use = fodf_shells.replace(',', ' ')
     
     ## deal with multishell data
     if nshell == 1:
@@ -428,21 +478,22 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## have to check the utility of every shell
     else:
 
-        logger.info(f"Multishell data has shells b = {int(bunq[1:])}")
+        logger.info(f"Multishell data has shells b = {bunq[1:]}")
         mlmax = []    
         for shell in bunq[1:]:
 
             ## pull the shells
             tndir = rval == shell
+            b0idx = rval == 0
 
             ## check that vectors are unique
-            tvec = bvec[:,~b0idx]
+            tvec = bvec[:,tndir]
             tdir = np.unique(tvec, axis=0)
 
-            ## compute and print the maximum shell
+            ## compute and print the maximum shell - can get odd numbers?
             tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
             mlmax.append(tlmax)
-            logger.info(f" -- Shell {shell} has max lmax: {tlmax}")
+            logger.info(f" -- Shell {int(shell)} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
 
         ## the minimum lmax across shells is used
         plmax = min(mlmax)
@@ -452,9 +503,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     if sh_order <= plmax:
         logger.info(f"Running model with requested lmax: {sh_order}")
     else:
-        logger.info(f"The requested lmax ({sh_order}) exceeds the capabilities of the data ({plmax})")
-        logger.info(f" -- Setting the lmax to: {plmax}")
-        sh_order = plmax
+        logger.info(f"The requested lmax ({sh_order}) exceeds the recommended capabilities of the data ({plmax})")
+        logger.info(f" -- You should redo with sh_order set to: {plmax}")
+        logger.info(f"Running model with overrode lmax: {sh_order}")
+        #sh_order = plmax
         
     ## hard coded inputs to the tractoflow command in mrproc
     profile='fully_reproducible'
@@ -471,7 +523,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf -with-singularity {SINGULARITY_TRACTOFLOW} -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
     
     ## compose tractoflow arguments
-    TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_shells}" --fodf_shells "0 {fodf_shells}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
+    TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
     ## TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
     ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
@@ -535,4 +587,4 @@ if __name__ == '__main__':
         global_configs = json.load(f)
 
     ## make valid tractoflow call based on inputs    
-    run(participant_id, global_configs, session_id, output_dir, dti_shells, fodf_shells, sh_order, use_bids_filter)
+    run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells, fodf_shells, sh_order)
