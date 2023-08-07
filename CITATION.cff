@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 
-title: "mr_proc"
+title: "nipoppy"
 
 version: 0.1.0
 
@@ -8,7 +8,7 @@ abstract: A workflow manager for curating MRI and tabular data and standardized 
 
 message: "If you use this software, please cite it as below."
 
-repository-code: "https://github.com/neurodatascience/mr_proc.git"
+repository-code: "https://github.com/neurodatascience/nipoppy.git"
 
 
 contact:

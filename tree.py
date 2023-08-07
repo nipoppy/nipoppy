@@ -18,7 +18,7 @@ def get_paths(k,v):
     return path_list
 
 
-def run(mr_proc_root, dir_tree_json="tree.json"):
+def run(nipoppy_root, dir_tree_json="tree.json"):
     print("-"*50)
     print(f"Reading {dir_tree_json} to generate list of dir paths")
     path_list = []
@@ -32,23 +32,23 @@ def run(mr_proc_root, dir_tree_json="tree.json"):
     print(f"\nFound {len(path_list)} dir paths")
     # Create dir-tree
     for p in path_list:
-        abs_path = f"{mr_proc_root}/{p}"
+        abs_path = f"{nipoppy_root}/{p}"
         Path(abs_path).mkdir(parents=True, exist_ok=True)
 
-    print(f"Finished generating mr_proc_tree under root: {mr_proc_root}")
+    print(f"Finished generating nipoppy_tree under root: {nipoppy_root}")
     print("-"*50)
 
 if __name__ == '__main__':
     HELPTEXT = """
-    Script to generate mr_proc directory tree (only upto one subdir level)
+    Script to generate nipoppy directory tree (only upto one subdir level)
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--mr_proc_root', type=str, required=True, help='path to mr_proc_root dir')
+    parser.add_argument('--nipoppy_root', type=str, required=True, help='path to nipoppy_root dir')
     parser.add_argument('--dir_tree_json', type=str, default="tree.json", help='path to dir tree')
     args = parser.parse_args()
 
-    mr_proc_root = args.mr_proc_root
+    nipoppy_root = args.nipoppy_root
     dir_tree_json = args.dir_tree_json
 
-    run(mr_proc_root, dir_tree_json)
+    run(nipoppy_root, dir_tree_json)
 
