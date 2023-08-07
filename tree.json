@@ -19,7 +19,7 @@
     
     "tabular":{
         "description": "",
-        "files": ["mr_proc_manifest.csv"],
+        "files": ["manifest.csv"],
         "subdirs": {
             "demographics":{
                 "description": "",

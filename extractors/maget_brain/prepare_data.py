@@ -30,7 +30,7 @@ HELPTEXT = """
 Extractor script to prepare data for maget_brain
 """
 parser = argparse.ArgumentParser(description=HELPTEXT)
-parser.add_argument('--global_config', type=str, required=True, help='path to global config file for your mr_proc dataset')
+parser.add_argument('--global_config', type=str, required=True, help='path to global config file for your nipoppy dataset')
 parser.add_argument('--session_id', type=str, required=True, help='current session or visit ID for the dataset')
 parser.add_argument('--run_id', type=str, default=None, help='run id for the scan')
 
@@ -55,9 +55,9 @@ maget_preproc_T1w_nii_dir = f"{maget_dir}/ses-{session_id}/preproc_T1w_nii/"
 Path(maget_preproc_T1w_nii_dir).mkdir(parents=True, exist_ok=True)
 
 # get all the subject ids
-mr_proc_manifest_csv = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
-mr_proc_manifest_df = pd.read_csv(mr_proc_manifest_csv)
-bids_id_list = mr_proc_manifest_df["bids_id"].unique()
+manifest_csv = f"{DATASET_ROOT}/tabular/manifest.csv"
+manifest_df = pd.read_csv(manifest_csv)
+bids_id_list = manifest_df["bids_id"].unique()
 
 for bids_id in bids_id_list:
     if run_id == None:

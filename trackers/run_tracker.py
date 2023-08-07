@@ -28,11 +28,11 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
     for pipeline in pipelines:
         pipe_tracker = tracker(global_config_file, dash_schema_file, pipeline) 
             
-        mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
+        dataset_root, session_ids, version = pipe_tracker.get_global_configs()
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
-        mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
+        mr_proc_manifest = f"{dataset_root}/tabular/mr_proc_manifest.csv"
         manifest_df = pd.read_csv(mr_proc_manifest)
         participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
@@ -59,9 +59,9 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
                 # print(f"bids_id: {bids_id}, participant_id: {participant_id}")
 
                 if pipeline == "freesurfer":
-                    subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
+                    subject_dir = f"{dataset_root}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
                 elif pipeline in BIDS_PIPES:
-                    subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                    subject_dir = f"{dataset_root}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
                 else:
                     print(f"unknown pipeline: {pipeline}")
                     
@@ -87,7 +87,7 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
     proc_status_df = pd.concat(proc_status_dfs, axis='index')
 
     # Save proc_status_df
-    tracker_csv = f"{mr_proc_root_dir}/derivatives/bagel.csv"
+    tracker_csv = f"{dataset_root}/derivatives/bagel.csv"
     proc_status_df = proc_status_df.drop(columns="bids_id")
     proc_status_df.index.name = "bids_id"
     proc_status_df.to_csv(tracker_csv)
