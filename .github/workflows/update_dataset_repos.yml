@@ -5,16 +5,16 @@ on:
       - 'main'
 jobs:
   update-dataset-repo:
-    if: github.repository == 'neurodatascience/mr_proc'
+    if: github.repository == 'neurodatascience/nipoppy'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         fork:
-          - neurodatascience/mr_proc-ppmi
-          - neurodatascience/mr_proc-qpn
-          - neurodatascience/mr_proc-nimhans_serb
-          - neurodatascience/nipoppy_nimhans
+          - neurodatascience/nipoppy-ppmi
+          - neurodatascience/nipoppy-qpn
+          - neurodatascience/nipoppy-nimhans_retro
+          - neurodatascience/nipoppy-nimhans_YLO
     steps:
       - uses: actions/checkout@v3
         with:
