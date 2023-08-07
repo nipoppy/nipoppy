@@ -28,7 +28,7 @@ _Pull-Organize-Process-Push-Yey!_
 
 ### Organization
 * Under the `neurodatascience` GitHub organization:
-  * The `nipoppy(*)` ("template") repository contains all common code-base: `neurodatascience/mr_proc`
+  * The `nipoppy(*)` ("template") repository contains all common code-base: `neurodatascience/nipoppy`
   * Make a fork for each dataset: `neurodatascience/nipoppy-[dataset]`
 * Under the `user` GitHub account:
   * Make a fork of `nipoppy(*)` ("template") repository: `<user>/nipoppy`
