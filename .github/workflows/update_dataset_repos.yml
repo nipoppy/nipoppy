@@ -14,7 +14,6 @@ jobs:
           - neurodatascience/nipoppy-ppmi
           - neurodatascience/nipoppy-qpn
           - neurodatascience/nipoppy-nimhans_retro
-          - neurodatascience/nipoppy_nimhans
     steps:
       - uses: actions/checkout@v3
         with:
