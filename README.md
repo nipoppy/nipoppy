@@ -56,12 +56,3 @@ _Pull-Organize-Process-Push-Yey!_
 2. `<study_name>/bids`: BIDS dataset comprising all the modalities in Nifti format (i.e. nii.gz and sidecar json)
 
 ---
-
-### Individual containerized pipelines:
-
-- [Heudionv](https://heudiconv.readthedocs.io/en/latest/installation.html#singularity) 
-- [MRIQC](https://mriqc.readthedocs.io/en/stable/)
-- [fMRIPrep](https://fmriprep.org/en/1.5.5/singularity.html) 
-- [TractoFlow](https://github.com/scilus/tractoflow)
-- [MAGeT Brain](https://github.com/CoBrALab/MAGeTbrain)
-
