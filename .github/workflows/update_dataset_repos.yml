@@ -13,7 +13,7 @@ jobs:
         fork:
           - neurodatascience/nipoppy-ppmi
           - neurodatascience/nipoppy-qpn
-          - neurodatascience/nipoppy-nimhans_serb
+          - neurodatascience/nipoppy-nimhans_retro
           - neurodatascience/nipoppy_nimhans
     steps:
       - uses: actions/checkout@v3
