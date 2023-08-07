@@ -1,7 +1,6 @@
 {
     "DATASET_NAME": "",
     "DATASET_ROOT": "",
-    "DATASTORE_DIR": "",
 
     "CONTAINER_STORE": "",
     
@@ -9,8 +8,8 @@
 
     "TEMPLATEFLOW_DIR": "",
 
-    "SESSIONS": ["1","2"],
-    "VISITS": ["V01", "V02"],
+    "SESSIONS": ["A","B"],
+    "VISITS": ["V01","V02"],
 
     "BIDS": {
         "heudiconv": {
@@ -27,7 +26,7 @@
 
     "PROC_PIPELINES": {
         "mriqc": {
-            "VERSION": "",
+            "VERSION": "23.1.0",
             "CONTAINER": "mriqc_{}.sif",
             "URL": ""
         },
@@ -44,29 +43,10 @@
     },
 
     "TABULAR": {
-        "DEMOGRAPHICS": {
-            "SEX": {
-                "VERSION": "",
-                "FILENAME": ""
-            },
-            "DATE_OF_BIRTH": {
-                "VERSION": "",
-                "FILENAME": ""
-            }
-        },
-        "ASSESSMENTS": {
-            "UPDRS_3": {
-                "VERSION": "",
-                "FILENAME": ""
-            },
-            "MOCA": {
-                "VERSION": "",
-                "FILENAME": ""
-            },
-            "GROUP": {
-                "VERSION": "",
-                "FILENAME": ""
-            }
-        }
+        "data_dictionary": {
+            "PATH": "",
+            "VERSION": "",
+            "URL": ""
+        }     
     }
 }
