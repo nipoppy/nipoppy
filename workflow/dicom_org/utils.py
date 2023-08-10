@@ -5,7 +5,7 @@ import shutil
 import pydicom
 
 # logger
-LOG_FILE = "../mr_proc.log"
+LOG_FILE = "../nipoppy.log"
 log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logger = logging.getLogger(__name__)
 

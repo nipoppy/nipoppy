@@ -115,7 +115,6 @@ def run(global_configs, session_id, stage=2, overlay=None, n_jobs=2, dicom_id=No
     logger.info(f"Running HeuDiConv stage: {stage}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    # mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
     fpath_status = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_STATUS)
     bids_dir = f"{DATASET_ROOT}/bids/"
 
@@ -198,7 +197,7 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
-    parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset', required=True)
+    parser.add_argument('--global_config', type=str, help='path to global configs for a given nipoppy dataset', required=True)
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2, default: 2)')
     parser.add_argument('--overlay', type=str, help='path to Squashfs overlay')

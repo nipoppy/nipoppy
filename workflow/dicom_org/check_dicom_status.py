@@ -180,7 +180,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument(
         '--global_config', type=str, required=True,
-        help='path to global config file for your mr_proc dataset (required)')
+        help='path to global config file for your nipoppy dataset (required)')
     parser.add_argument(
         FLAG_REGENERATE, action='store_true',
         help=('regenerate entire status file'
