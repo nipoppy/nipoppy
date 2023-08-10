@@ -59,7 +59,7 @@ if __name__ == '__main__':
     Script to perform DICOM to BIDS conversion using HeuDiConv
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--session_id', type=str, help='session_id', required=True)
     parser.add_argument('--visit_id', type=str, help='visit_id', required=True)
     parser.add_argument('--group', type=str, default=None, help='filter participants based on a specific group value in the csv')
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    mr_proc_root_dir = global_configs["DATASET_ROOT"]
+    dataset_root = global_configs["DATASET_ROOT"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     FMRIPREP_CONTAINER = global_configs["PROC_PIPELINES"]["fmriprep"]["CONTAINER"]
     FMRIPREP_VERSION = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
@@ -96,23 +96,23 @@ if __name__ == '__main__':
     SINGULARITY_FMRIPREP = f"{CONTAINER_STORE}{FMRIPREP_CONTAINER}"
 
     # Paths
-    FS_dir = f"{mr_proc_root_dir}/derivatives/freesurfer/v{FS_VERSION}/output/{session}/" 
+    FS_dir = f"{dataset_root}/derivatives/freesurfer/v{FS_VERSION}/output/{session}/" 
     FS_license = f"{FS_dir}/license.txt"
 
     if output_dir is None:
-        output_dir = f"{mr_proc_root_dir}/derivatives/freesurfer/v{FS_VERSION}/surfmaps/{session}/" 
+        output_dir = f"{dataset_root}/derivatives/freesurfer/v{FS_VERSION}/surfmaps/{session}/" 
 
     # grab bids_ids 
-    mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
+    manifest = f"{dataset_root}/tabular/manifest.csv"
 
     # grab Dx info
-    demographics_csv = f"{mr_proc_root_dir}/tabular/demographics/demographics.csv"
+    demographics_csv = f"{dataset_root}/tabular/demographics/demographics.csv"
         
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity exec -B {FS_dir}:/fsdir -B {output_dir}:/output_dir {SINGULARITY_FMRIPREP} "
 
     # Read participant lists and filter by session and group
-    manifest_df = pd.read_csv(mr_proc_manifest)
+    manifest_df = pd.read_csv(manifest)
     manifest_df = manifest_df[manifest_df["session"] == session]
     manifest_df = manifest_df[~manifest_df["bids_id"].isna()]
     n_bids = len(manifest_df["bids_id"].unique())

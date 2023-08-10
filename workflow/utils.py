@@ -11,7 +11,7 @@ BIDS_SESSION_PREFIX = 'ses-'
 # directory/file names
 DNAME_BACKUPS_MANIFEST = '.manifests'
 DNAME_BACKUPS_STATUS = '.doughnuts'
-FNAME_MANIFEST = 'mr_proc_manifest.csv'
+FNAME_MANIFEST = 'manifest.csv'
 FNAME_STATUS = 'doughnut.csv'
 
 # for creating backups
