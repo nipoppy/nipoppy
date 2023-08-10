@@ -24,7 +24,7 @@ _Pull-Organize-Process-Push-Yey!_
 
 ### GH workflow for contributing to template and dataset-specific forks
 
-![mr_proc_gh_contribution_workflow](https://user-images.githubusercontent.com/29051929/236941655-f7dcc981-a2f4-4f3f-b1fc-8c2afdfcc8cf.png)
+![nipoppy_gh_contribution_workflow](https://user-images.githubusercontent.com/29051929/236941655-f7dcc981-a2f4-4f3f-b1fc-8c2afdfcc8cf.png)
 
 ### Organization
 * Under the `neurodatascience` GitHub organization:

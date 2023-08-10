@@ -32,8 +32,8 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1):
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
-        mr_proc_manifest = f"{dataset_root}/tabular/mr_proc_manifest.csv"
-        manifest_df = pd.read_csv(mr_proc_manifest)
+        manifest = f"{dataset_root}/tabular/manifest.csv"
+        manifest_df = pd.read_csv(manifest)
         participants = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants = len(participants)
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     Script to run trackers on various proc_pipes
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
     args = parser.parse_args()
