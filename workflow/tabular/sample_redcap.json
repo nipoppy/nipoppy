@@ -1,0 +1,17 @@
+{
+    "name": "<study_name>",
+    "url":"https://<URL>/redcap/api/",
+    "queries": {
+        "Q1": {
+            "token": "<>",
+            "content": "report",
+            "format": "json",
+            "report_id": "<>",
+            "csvDelimiter": "",
+            "rawOrLabel": "label",
+            "rawOrLabelHeaders": "label",
+            "exportCheckboxLabel": "false",
+            "returnFormat": "json"
+        }
+    }
+}

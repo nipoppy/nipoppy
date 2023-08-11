@@ -48,5 +48,7 @@
             "VERSION": "",
             "URL": ""
         }     
-    }
+    },
+
+    "WORKFLOWS": ["generate_manifest","dicom_org", "bids_conv"]
 }
