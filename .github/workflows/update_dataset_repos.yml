@@ -21,14 +21,14 @@ jobs:
           repository: ${{ matrix.fork }}
       - name: Get upstream changes
         run: |
-          git remote add upstream https://github.com/neurodatascience/mr_proc.git
+          git remote add upstream https://github.com/neurodatascience/nipoppy.git
           git fetch upstream main:upstream-main
           git reset --hard upstream-main
       - name: Create Pull Request
         id: create-pull-request
         uses: peter-evans/create-pull-request@v4
         with:
-          title: Update to match neurodatascience/mr_proc:main
+          title: Update to match neurodatascience/nipoppy:main
           body: PR created/updated automatically by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action. Will be merged automatically by [automerge-action](https://github.com/pascalgn/automerge-action) if there are no merge conflicts.
           token: ${{ secrets.PAT }}
           branch: main-upstream
@@ -59,4 +59,4 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed("Pull request #${{ steps.automerge-pull-request.outputs.pullRequestNumber }} is not ready to be merged. This is probably due to merge conflicts: fix them in neurodatascience/mr_proc or in each of neurodatascience/mr_proc-[dataset] before trying again.")
+            core.setFailed("Pull request #${{ steps.automerge-pull-request.outputs.pullRequestNumber }} is not ready to be merged. This is probably due to merge conflicts: fix them in neurodatascience/nipoppy or in each of neurodatascience/nipoppy-[dataset] before trying again.")
