@@ -50,12 +50,12 @@ _Pull-Organize-Process-Push-Yey!_
    
 ### Periodic runs
 1. Change dir to `nipoppy code`: `cd /home/<user>/projects/<my_project>/code/nipoppy`
-2. Activate your env: `source nipoppy/bin/activate` (if starting with a new terminal)
+2. Activate your env: `source nipoppy/bin/activate` (if not already active)
 3. Run nipoppy: `python nipoppy.py --global_config <> --session_id <> --n_jobs <>`
    - This will run "workflows" listed inside the `global_configs.json`. Currently we are supporting "generate_manifest", "dicom_org", "bids_conv" workflows. 
    - The "generate_manifest" workflow will update the current list of participants and also generate `bagels` from the RedCap report.
-4. Dashboard: Upload the bagel i.e. `<study_name>/tabular/bagel.csv` file to the (Dashboard)[https://dash.neurobagel.org/] to visualize and query current clinical data. 
-5. Run processing pipelines: Currently this is setup to run either a single subject locally or batch jobs on a cluster. Support for local batch-jobs would be added soon. 
+4. Dashboard: Upload the bagel i.e. `<study_name>/tabular/bagel.csv` file to the [Dashboard](https://dash.neurobagel.org/) to visualize and query current clinical data. 
+5. Run processing pipelines (e.g. mriqc, fmriprep, tractoflow): Currently this is setup to run either a single subject locally or batch-jobs on a cluster. Support for local batch-jobs would be added soon. 
 
 ### Expected output
 1. `<study_name>/dicom`: Participant-level dirs with symlinks to the dicom files in the raw_dicom dir
