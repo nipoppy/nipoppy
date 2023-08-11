@@ -44,7 +44,7 @@ _Pull-Organize-Process-Push-Yey!_
    - Create nipoppy dataset-tree: `tree.py /home/<user>/projects/<my_project>/data/<study_name>`
    - Create and populate `<study_name>/proc/global_configs.json` 
    - Copy your participant-level dicom dirs (e.g. `MNI001`, `MNI002` ...) into `<study_name>/scratch/raw_dicom/`
-5. RedCap: configure RedCap access
+5. RedCap: configure RedCap access. The RedCap query will be used to generate manifest and "bagels" for tabular data dashboard. 
    - Create and save the query in `<study_name>/proc/.redcap.json`
       - See sample redcap.json: `workflow/tabular/sample_redcap.json`
    
@@ -53,7 +53,9 @@ _Pull-Organize-Process-Push-Yey!_
 2. Activate your env: `source nipoppy/bin/activate` (if starting with a new terminal)
 3. Run nipoppy: `python nipoppy.py --global_config <> --session_id <> --n_jobs <>`
    - This will run "workflows" listed inside the `global_configs.json`. Currently we are supporting "generate_manifest", "dicom_org", "bids_conv" workflows. 
-4. Run processing pipelines: Currently this is setup to run either singles subject locally or batch jobs on a cluster. Support for local batch-jobs would be added soon. 
+   - The "generate_manifest" workflow will update the current list of participants and also generate `bagels` from the RedCap report.
+4. Dashboard: Upload the bagel i.e. `<study_name>/tabular/bagel.csv` file to the (Dashboard)[https://dash.neurobagel.org/] to visualize and query current clinical data. 
+5. Run processing pipelines: Currently this is setup to run either a single subject locally or batch jobs on a cluster. Support for local batch-jobs would be added soon. 
 
 ### Expected output
 1. `<study_name>/dicom`: Participant-level dirs with symlinks to the dicom files in the raw_dicom dir
