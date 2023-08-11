@@ -123,14 +123,15 @@ def run(global_configs, session_id, stage=2, overlays=None, n_jobs=2, dicom_id=N
     fpath_status = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_STATUS)
     bids_dir = f"{DATASET_ROOT}/bids/"
 
-    # participants to process with Heudiconv
-    df_status = load_status(fpath_status)
-    heudiconv_df = catalog.get_new_dicoms(fpath_status, session_id, logger)
+    df_status = catalog.read_and_process_status(fpath_status, session_id, logger)
 
-    # filter by DICOM ID if needed
-    if dicom_id is not None:
+    # participants to process with Heudiconv
+    if dicom_id is None:
+        heudiconv_df = catalog.get_new_dicoms(fpath_status, session_id, logger)
+    else:
+        # filter by DICOM ID if needed
         logger.info(f'Only running for participant: {dicom_id}')
-        heudiconv_df = heudiconv_df.loc[heudiconv_df[COL_DICOM_ID] == dicom_id]
+        heudiconv_df = df_status.loc[df_status[COL_DICOM_ID] == dicom_id]
     
     heudiconv_participants = set(heudiconv_df["dicom_id"].values)
     n_heudiconv_participants = len(heudiconv_participants)
