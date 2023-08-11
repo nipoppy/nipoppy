@@ -4,7 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='')
 
-parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset')
+parser.add_argument('--global_config', type=str, help='path to global configs for a given nipoppy dataset')
 parser.add_argument('--output_dir', type=str, help='overwrite path to put results in case of issues with default')
 parser.add_argument('--participant_id', type=str, help='subject ID to be processed')
 parser.add_argument('--session_id', type=str, help='session ID to be processed')

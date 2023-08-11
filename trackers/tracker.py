@@ -14,10 +14,10 @@ class tracker:
         with open(self.global_config_file, 'r') as f:
             global_configs = json.load(f)
 
-        mr_proc_root_dir = global_configs["DATASET_ROOT"]
+        dataset_root = global_configs["DATASET_ROOT"]
         sessions = global_configs["SESSIONS"]
         version = global_configs["PROC_PIPELINES"][self.pipeline]["VERSION"] 
-        return mr_proc_root_dir, sessions, version
+        return dataset_root, sessions, version
 
     def get_dash_schema(self):
         with open(self.dash_schema_file, 'r') as f:

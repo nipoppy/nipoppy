@@ -121,7 +121,7 @@ if __name__ == '__main__':
     Script to reorganize raw (scanner dump) DICOMs into flattened dir structure needed for BIDS conversion using HeuDiConv
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--session_id', type=str, help='session (i.e. visit to process)', required=True)
     parser.add_argument('--no_symlinks', action='store_true', help='copy/duplicate files from raw_dicom to dicom (default: create symlinks)')
     parser.add_argument('--skip_dcm_check', action='store_true', help='skip raw dicoms checks to see if they are derived')

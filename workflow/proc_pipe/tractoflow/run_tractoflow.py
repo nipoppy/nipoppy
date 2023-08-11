@@ -562,7 +562,7 @@ if __name__ == '__main__':
 
     ## parse inputs
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global configs for a given mr_proc dataset', required=True)
+    parser.add_argument('--global_config', type=str, help='path to global configs for a given nipoppy dataset', required=True)
     parser.add_argument('--participant_id', type=str, help='participant id', required=True)
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--output_dir', type=str, default=None, help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
