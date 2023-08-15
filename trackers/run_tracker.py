@@ -31,16 +31,16 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_config_file, dash_schema_file, pipeline) 
         
-        mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
+        dataset_root, session_ids, version = pipe_tracker.get_global_configs()
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
-        mr_proc_manifest = f"{mr_proc_root_dir}/tabular/mr_proc_manifest.csv"
-        manifest_df = load_manifest(mr_proc_manifest)
+        manifest = f"{dataset_root}/tabular/manifest.csv"
+        manifest_df = load_manifest(manifest)
         participants_total = manifest_df[~manifest_df["bids_id"].isna()]["bids_id"].drop_duplicates().astype(str).str.strip().values
         n_participants_total = len(participants_total)
 
-        tracker_csv = Path(mr_proc_root_dir, 'derivatives', 'bagel.csv')
+        tracker_csv = Path(dataset_root, 'derivatives', 'bagel.csv')
         if tracker_csv.exists():
             old_proc_status_df_full = load_bagel(tracker_csv)
 
@@ -83,15 +83,15 @@ def run(global_config_file, dash_schema_file, pipelines, run_id=1, testing=False
             _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
             _df["bids_id"] = _df.index
-            _df["participant_id"] = manifest_df.drop_duplicates("bids_id").set_index("bids_id").loc[participants, "participant_id"]
+            _df["participant_id"] = manifest_df.drop_duplicates("bids_id").set_index("bids_id").loc[participants_session, "participant_id"]
             _df["has_mri_data"] = TRUE # everyone with a session value has MRI data
             
             n_participants = 0
             for bids_id in participants_session:
                 if pipeline == "freesurfer":
-                    subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
+                    subject_dir = f"{dataset_root}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
                 elif pipeline in BIDS_PIPES:
-                    subject_dir = f"{mr_proc_root_dir}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                    subject_dir = f"{dataset_root}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
                 else:
                     print(f"unknown pipeline: {pipeline}")
                     
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     Script to run trackers on various proc_pipes
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
-    parser.add_argument('--global_config', type=str, help='path to global config file for your mr_proc dataset', required=True)
+    parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
     parser.add_argument('--testing', action='store_true', help=f'only check first {N_TESTING} participants with MRI data')
@@ -178,9 +178,8 @@ if __name__ == '__main__':
     # Driver code
     dash_schema_file = args.dash_schema
     pipelines = args.pipelines
+    testing = args.testing
 
     print(f"Tracking pipelines: {pipelines}")
-
-    testing = args.testing
 
     run(global_config_file, dash_schema_file, pipelines, testing=testing)

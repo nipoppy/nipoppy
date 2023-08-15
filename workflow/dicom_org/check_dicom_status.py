@@ -83,7 +83,7 @@ def run(global_config_file, regenerate=False, empty=False):
     if regenerate:
 
         try:
-            from dicom_dir_func import participant_id_to_dicom_dir
+            from workflow.dicom_org.dicom_dir_func import participant_id_to_dicom_dir
             df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
                 lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
             )
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument(
         '--global_config', type=str, required=True,
-        help='path to global config file for your mr_proc dataset (required)')
+        help='path to global config file for your nipoppy dataset (required)')
     parser.add_argument(
         FLAG_REGENERATE, action='store_true',
         help=('regenerate entire status file'

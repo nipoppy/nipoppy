@@ -9,7 +9,7 @@ then
 
     echo -e "\nExample usage:"
     echo "./download_from_loni.sh session_BL.csv narval <DATASET_ROOT>/downloads/ses-BL"
-    echo "(where ~/ppmi is the mr_proc dataset directory)"
+    echo "(where ~/ppmi is the nipoppy dataset directory)"
 
     echo -e "\nNotes:"
     echo "- This script exists because LONI only allows downloads that are made from"
