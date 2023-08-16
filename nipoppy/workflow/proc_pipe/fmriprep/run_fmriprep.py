@@ -3,7 +3,7 @@ import json
 import subprocess
 import os
 from pathlib import Path
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 import shutil
 import logging
 

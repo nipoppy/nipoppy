@@ -1,6 +1,6 @@
-from workflow.proc_pipe.fmriprep.run_fmriprep import run_fmriprep
+from nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep import run_fmriprep
 
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 
 def test_run_fmriprep():
     
