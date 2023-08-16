@@ -11,13 +11,14 @@ from workflow.utils import (
     load_status,
 )
 
-def read_and_process_status(status_csv, session_id, logger):
+def read_and_process_status(status_csv, session_id=None, logger=None):
     # read current participant manifest 
     status_df = load_status(status_csv)
     session = f"ses-{session_id}"
 
     # filter session
-    status_df = status_df[status_df[COL_SESSION_MANIFEST] == session]
+    if session_id is not None:
+        status_df = status_df.loc[status_df[COL_SESSION_MANIFEST] == session]
     status_df[COL_SUBJECT_MANIFEST] = status_df[COL_SUBJECT_MANIFEST].astype(str)
 
     return status_df
@@ -51,7 +52,7 @@ def list_bids(bids_dir, session_id, logger):
 def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
     """ Identify new dicoms not yet inside <DATASET_ROOT>/scratch/raw_dicom
     """
-    status_df = read_and_process_status(status_csv, session_id, logger)
+    status_df = read_and_process_status(status_csv, session_id=session_id, logger=logger)
     participants = set(status_df[COL_SUBJECT_MANIFEST])
     n_participants = len(participants)
 
@@ -84,7 +85,7 @@ def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
 def get_new_raw_dicoms(status_csv, session_id, logger):
     """ Identify new raw_dicoms not yet reorganized inside <DATASET_ROOT>/dicom
     """
-    status_df = read_and_process_status(status_csv, session_id, logger)
+    status_df = read_and_process_status(status_csv, session_id=session_id, logger=logger)
     participants_all = set(status_df[COL_SUBJECT_MANIFEST])
     n_participants_all = len(participants_all)
 
@@ -121,7 +122,7 @@ def get_new_raw_dicoms(status_csv, session_id, logger):
 def get_new_dicoms(status_csv, session_id, logger):
     """ Identify new dicoms not yet BIDSified
     """
-    status_df = read_and_process_status(status_csv, session_id, logger)
+    status_df = read_and_process_status(status_csv, session_id=session_id, logger=logger)
     participants_all = set(status_df[COL_SUBJECT_MANIFEST])
     n_participants_all = len(participants_all)
 
