@@ -9,7 +9,7 @@ def global_config_file() -> Path:
 
 
 def global_config_for_testing(pth: Path) -> dict:
-    """Set up congiguration for testing and create required directories."""
+    """Set up configuration for testing and create required directories."""
     with open(global_config_file(), "r") as f:
         global_configs = json.load(f)
 
