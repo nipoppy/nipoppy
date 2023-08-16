@@ -35,4 +35,4 @@ jobs:
 
     - name: Test
       run: |
-        pytest tests/tests_workflow_fmriprep.py
+        python -m pytest
