@@ -17,11 +17,11 @@ dependencies = [
     "requests",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = ["nipoppy"]
-
 [project.optional-dependencies]
 test = ["pytest"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["nipoppy"]
 
 [tool.codespell]
 skip = '.git,.github,*.pdf,*.svg,pyproject.toml'
