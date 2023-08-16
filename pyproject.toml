@@ -27,6 +27,11 @@ tests = ["nipoppy[test]"]
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
 
+[tool.hatch.build]
+include = [
+    "nipoppy/workflow/proc_pipe/tractoflow/tractoflow",
+]
+
 [tool.codespell]
 skip = '.git,.github,*.pdf,*.svg,pyproject.toml'
 ignore-words-list = 'te,ines'
