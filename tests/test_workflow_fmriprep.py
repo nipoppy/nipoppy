@@ -1,22 +1,27 @@
 from __future__ import annotations
+
 import json
 from pathlib import Path
 
 import pytest
 
 import nipoppy.workflow.logger as my_logger
+import nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep as fmriprep_module
 from nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep import run, run_fmriprep
-import nipoppy.workflow.logger as my_logger
 
 
-def global_config_file()-> Path:
+def global_config_file() -> Path:
     return Path(__file__).parent / "data" / "test_global_configs.json"
 
 
-def global_config_for_testing() -> dict:
-    with open(global_config_file(), 'r') as f:
+def global_config_for_testing(pth: Path) -> dict:
+    """Set up congiguration for testing and create required directories."""
+    with open(global_config_file(), "r") as f:
         global_configs = json.load(f)
+    global_configs["DATASET_ROOT"] = str(pth)
+    (pth / "bids").mkdir(parents=True, exist_ok=True)
     return global_configs
+
 
 def create_dummy_fs_license(pth: Path) -> None:
     pth = pth / "freesurfer"
@@ -25,26 +30,48 @@ def create_dummy_fs_license(pth: Path) -> None:
     license_file.write_text("dummy content")
 
 
-def test_run(tmp_path):
+def dummy_bids_filter_file() -> Path:
+    """TODO probably don't want the bids filter file to be in the module directory"""
+    pth = Path(fmriprep_module.__file__).parent
+    return pth / "bids_filter.json"
 
-    log_file = tmp_path / "fmriprep.log"
-    logger = my_logger.get_logger(log_file)
 
+def create_dummy_bids_filter() -> None:
+    with open(dummy_bids_filter_file(), "w") as f:
+        json.dump({"dummy": "dummy"}, f)
+
+
+def delete_dummy_bids_filter() -> None:
+    dummy_bids_filter_file().unlink(missing_ok=True)
+
+
+@pytest.mark.parametrize("use_bids_filter", [True, False])
+@pytest.mark.parametrize("anat_only", [True, False])
+def test_run(tmp_path, use_bids_filter, anat_only):
     create_dummy_fs_license(tmp_path)
+
+    # TODO because this is set up and torn down after each test
+    # we probably want to turn this into fixture
+    create_dummy_bids_filter()
 
     participant_id = "01"
 
     session_id = "01"
 
+    log_file = tmp_path / "fmriprep.log"
+    logger = my_logger.get_logger(log_file)
+
     run(
         participant_id=participant_id,
-        global_configs=global_config_for_testing(),
+        global_configs=global_config_for_testing(tmp_path),
         session_id=session_id,
         output_dir=tmp_path,
-        use_bids_filter=False,
-        anat_only=False,
-        logger=logger
+        use_bids_filter=use_bids_filter,
+        anat_only=anat_only,
+        logger=logger,
     )
+
+    delete_dummy_bids_filter()
 
 
 @pytest.mark.parametrize("use_bids_filter", [True, False])
@@ -53,7 +80,7 @@ def test_run_fmriprep(tmp_path, use_bids_filter, anat_only):
     log_file = tmp_path / "fmriprep.log"
 
     bids_dir = "bids_dir"
-    fmriprep_dir = "fmriprep_dir"
+    fmriprep_dir = tmp_path / "fmriprep_dir"
     fs_dir = "fs_dir"
     templateflow_dir = "templateflow_dir"
     participant_id = "01"
