@@ -1,6 +1,3 @@
-[submodule "workflow/proc_pipe/tractoflow/tractoflow"]
-	path = workflow/proc_pipe/tractoflow/tractoflow
-	url = git@github.com:scilus/tractoflow.git
 [submodule "nipoppy/workflow/proc_pipe/tractoflow/tractoflow"]
 	path = nipoppy/workflow/proc_pipe/tractoflow/tractoflow
 	url = https://github.com/scilus/tractoflow.git
