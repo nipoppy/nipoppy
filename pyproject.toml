@@ -1,4 +1,3 @@
-# As per https://github.com/pypa/setuptools/blob/main/docs/userguide/quickstart.rst
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
@@ -18,9 +17,16 @@ dependencies = [
     "requests",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["nipoppy"]
+
 [project.optional-dependencies]
 test = ["pytest"]
 
 [tool.codespell]
 skip = '.git,.github,*.pdf,*.svg,pyproject.toml'
 ignore-words-list = 'te,ines'
+
+[tool.pytest.ini_options]
+addopts = "-ra -q -vv "
+testpaths = ["tests/"]
