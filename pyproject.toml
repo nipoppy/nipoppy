@@ -1,7 +1,25 @@
 # As per https://github.com/pypa/setuptools/blob/main/docs/userguide/quickstart.rst
 [build-system]
-requires = ["setuptools==60.10.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nipoppy"
+authors = [{ name = "nikhil153" }]
+version = "0.1.0"
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "joblib",
+    "pydicom",
+    "nibabel",
+    "pybids",
+    "requests",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
 
 [tool.codespell]
 skip = '.git,.github,*.pdf,*.svg,pyproject.toml'

@@ -18,3 +18,5 @@ notebooks/.ipynb_checkpoints/*
 
 # dataset-specific files
 bids_filter.json 
+
+env/
