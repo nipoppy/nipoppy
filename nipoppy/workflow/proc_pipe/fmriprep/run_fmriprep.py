@@ -93,7 +93,7 @@ def run_fmriprep(participant_id: str,
 def run(participant_id: str,
         global_configs,
         session_id: str,
-        output_dir,
+        output_dir: str,
         use_bids_filter: bool,
         anat_only: bool,
         logger=None):
