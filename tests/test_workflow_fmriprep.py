@@ -4,23 +4,11 @@ import json
 from pathlib import Path
 
 import pytest
+from .conftest import global_config_for_testing
 
 import nipoppy.workflow.logger as my_logger
 import nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep as fmriprep_module
 from nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep import run, run_fmriprep
-
-
-def global_config_file() -> Path:
-    return Path(__file__).parent / "data" / "test_global_configs.json"
-
-
-def global_config_for_testing(pth: Path) -> dict:
-    """Set up congiguration for testing and create required directories."""
-    with open(global_config_file(), "r") as f:
-        global_configs = json.load(f)
-    global_configs["DATASET_ROOT"] = str(pth)
-    (pth / "bids").mkdir(parents=True, exist_ok=True)
-    return global_configs
 
 
 def create_dummy_fs_license(pth: Path) -> None:
