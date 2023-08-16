@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # only trigger on upstream repo
-    # if: github.repository_owner == 'neurodatascience' && github.repository == 'nipoppy' 
+    if: github.repository_owner == 'neurodatascience' && github.repository == 'nipoppy' 
 
     steps:
 
