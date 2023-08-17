@@ -22,7 +22,8 @@ from workflow.utils import (
     FNAME_STATUS,
     FNAME_MANIFEST,
     load_manifest,
-    participant_id_to_dicom_id, 
+    participant_id_to_bids_id,
+    participant_id_to_dicom_id,
     save_backup,
 )
 
@@ -52,7 +53,7 @@ def run(global_config_file, regenerate=False, empty=False):
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
     df_manifest = load_manifest(fpath_manifest)
-    df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
+    df_status = df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna()].copy()
 
     # look for existing status file
     if fpath_status_symlink.exists() and not empty:
@@ -67,11 +68,16 @@ def run(global_config_file, regenerate=False, empty=False):
                 f' or {FLAG_REGENERATE} to create one based on current files'
                 ' in the dataset (can be slow)'
             )
+        
+    # generate bids_id
+    df_status.loc[:, COL_BIDS_ID_MANIFEST] = df_status[COL_SUBJECT_MANIFEST].apply(
+        participant_id_to_bids_id
+    )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
     df_status.loc[:, COL_PARTICIPANT_DICOM_DIR] = np.nan
 
-    # populate dicom_id (bids_id should already be populated)
+    # populate dicom_id
     df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(
         participant_id_to_dicom_id
     )
