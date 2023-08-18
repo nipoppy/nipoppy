@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import argparse
 import json
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 from nipoppy.workflow.dicom_org import run_dicom_org
 from nipoppy.workflow.bids_conv import run_bids_conv
 
