@@ -25,6 +25,7 @@ from nipoppy.workflow.utils import (
     load_manifest,
     participant_id_to_bids_id,
     participant_id_to_dicom_id,
+    session_id_to_bids_session,
     save_backup,
 )
 
@@ -35,6 +36,7 @@ FLAG_EMPTY = '--empty'
 FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 
 GLOBAL_CONFIG_DATASET_ROOT = 'DATASET_ROOT'
+GLOBAL_CONFIG_SESSIONS = 'SESSIONS'
 
 def run(global_config_file, regenerate=False, empty=False):
     
@@ -54,7 +56,29 @@ def run(global_config_file, regenerate=False, empty=False):
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
     df_manifest = load_manifest(fpath_manifest)
-    df_status = df_manifest.loc[df_manifest[COL_DATATYPE_MANIFEST].apply(lambda datatypes: len(datatypes) > 0)].copy()
+
+    # validate that sessions are all in global configs
+    sessions_global_config = {
+        session_id_to_bids_session(session)
+        for session in global_config[GLOBAL_CONFIG_SESSIONS]
+    }
+    sessions_manifest = set(df_manifest[COL_SESSION_MANIFEST].apply(session_id_to_bids_session))
+    if not sessions_manifest.issubset(sessions_global_config):
+        raise ValueError(
+            f'Not all sessions in the manifest are in global config:'
+            f'\n{sessions_manifest - sessions_global_config}'
+        )
+
+    # only participants with imaging data have non-empty session column
+    df_status = df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna()].copy()
+
+    # sanity check that everyone who has session_id also has non-empty datatype list
+    has_datatypes = df_status.set_index(COL_SUBJECT_MANIFEST)[COL_DATATYPE_MANIFEST].apply(lambda datatypes: len(datatypes) > 0)
+    participants_without_datatypes = has_datatypes.loc[~has_datatypes].index.values
+    if len(participants_without_datatypes) > 0:
+        raise ValueError(
+            f'Some participants have a value in "{COL_SESSION_MANIFEST}" but nothing in "{COL_DATATYPE_MANIFEST}": {participants_without_datatypes}'
+        )
 
     # look for existing status file
     if fpath_status_symlink.exists() and not empty:
