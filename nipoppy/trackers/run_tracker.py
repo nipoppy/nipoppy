@@ -1,8 +1,8 @@
 import pandas as pd
 from pathlib import Path
 import argparse
-from tracker import tracker, get_start_time
-import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
+from nipoppy.trackers.tracker import tracker, get_start_time
+from nipoppy.trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 
 # Status flags
 SUCCESS="SUCCESS"
