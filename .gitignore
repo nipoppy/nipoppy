@@ -14,7 +14,7 @@ share/python-wheels/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-notebooks/.ipynb_checkpoints/*
+nipoppy/notebooks/.ipynb_checkpoints/*
 
 # dataset-specific files
 bids_filter.json 
