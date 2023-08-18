@@ -1,8 +1,3 @@
-fmriprep.log
-
-# dataset-specific files
-bids_filter.json 
-
 # Bytes
 __pycache__/
 *.py[cod]
@@ -19,6 +14,14 @@ share/python-wheels/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-notebooks/.ipynb_checkpoints/*
+nipoppy/notebooks/.ipynb_checkpoints/*
 
+# dataset-specific files
+bids_filter.json 
+workflow/proc_pipe/fmriprep/scripts/fmriprep_sge.sh
+workflow/proc_pipe/fmriprep/scripts/fmriprep_slurm.sh
+
+# logs/testing
+*.out
+*.log
 env/
