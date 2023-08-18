@@ -25,7 +25,7 @@ COL_BIDS_ID_MANIFEST = 'bids_id'
 COL_VISIT_MANIFEST = 'visit'
 COL_SESSION_MANIFEST = 'session'
 COL_DATATYPE_MANIFEST = 'datatype'
-COLS_MANIFEST = [COL_SUBJECT_MANIFEST, COL_BIDS_ID_MANIFEST, COL_VISIT_MANIFEST, 
+COLS_MANIFEST = [COL_SUBJECT_MANIFEST, COL_VISIT_MANIFEST, 
                  COL_SESSION_MANIFEST, COL_DATATYPE_MANIFEST]
 
 # status file columns
@@ -87,7 +87,7 @@ def load_manifest(fpath_manifest):
         dtype={
             col: str 
             for col 
-            in [COL_SUBJECT_MANIFEST, COL_BIDS_ID_MANIFEST, COL_SESSION_MANIFEST]
+            in [COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST]
         },
         converters={COL_DATATYPE_MANIFEST: pd.eval}
     )
