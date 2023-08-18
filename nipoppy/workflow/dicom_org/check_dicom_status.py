@@ -62,7 +62,7 @@ def run(global_config_file, regenerate=False, empty=False):
         session_id_to_bids_session(session)
         for session in global_config[GLOBAL_CONFIG_SESSIONS]
     }
-    sessions_manifest = set(df_manifest[COL_SESSION_MANIFEST].apply(session_id_to_bids_session))
+    sessions_manifest = set(df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna(), COL_SESSION_MANIFEST].apply(session_id_to_bids_session))
     if not sessions_manifest.issubset(sessions_global_config):
         raise ValueError(
             f'Not all sessions in the manifest are in global config:'
