@@ -3,8 +3,8 @@ from pathlib import Path
 import argparse
 import json
 import workflow.logger as my_logger
-from workflow.dicom_org import run_dicom_org
-from workflow.bids_conv import run_bids_conv
+from nipoppy.workflow.dicom_org import run_dicom_org
+from nipoppy.workflow.bids_conv import run_bids_conv
 
 # argparse
 HELPTEXT = """
