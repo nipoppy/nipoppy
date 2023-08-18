@@ -20,3 +20,8 @@ notebooks/.ipynb_checkpoints/*
 bids_filter.json 
 workflow/proc_pipe/fmriprep/scripts/fmriprep_sge.sh
 workflow/proc_pipe/fmriprep/scripts/fmriprep_slurm.sh
+
+# logs/testing
+*.out
+*.log
+env/
