@@ -88,7 +88,6 @@ def run_heudiconv(dicom_id, global_configs, session_id, stage, overlays, logger)
     CMD_ARGS = SINGULARITY_CMD + Heudiconv_CMD 
     CMD = CMD_ARGS.split()
 
-    print(f"CMD: {CMD_ARGS}")
     logger.info(f"CMD:\n{CMD_ARGS}")
     heudiconv_proc_success = True
     try:
