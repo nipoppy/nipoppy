@@ -11,6 +11,7 @@ import pandas as pd
 from nipoppy.workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
+    COL_DATATYPE_MANIFEST,
     COL_PARTICIPANT_DICOM_DIR,
     COL_DICOM_ID,
     COL_DOWNLOAD_STATUS,
@@ -53,7 +54,7 @@ def run(global_config_file, regenerate=False, empty=False):
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
     df_manifest = load_manifest(fpath_manifest)
-    df_status = df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna()].copy()
+    df_status = df_manifest.loc[df_manifest[COL_DATATYPE_MANIFEST].apply(lambda datatypes: len(datatypes) > 0)].copy()
 
     # look for existing status file
     if fpath_status_symlink.exists() and not empty:
