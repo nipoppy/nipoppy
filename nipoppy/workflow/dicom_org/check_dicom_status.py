@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from workflow.utils import (
+from nipoppy.workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
     COL_PARTICIPANT_DICOM_DIR,
