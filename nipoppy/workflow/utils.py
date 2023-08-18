@@ -58,7 +58,7 @@ def session_id_to_bids_session(session_id):
     else:
         return f'{BIDS_SESSION_PREFIX}{session_id}'
 
-def save_backup(df: pd.DataFrame, fpath_symlink, dname: str):
+def save_backup(df: pd.DataFrame, fpath_symlink, dname: str, use_relative_path=True):
     
     fpath_symlink = Path(fpath_symlink)
 
@@ -71,6 +71,9 @@ def save_backup(df: pd.DataFrame, fpath_symlink, dname: str):
     df.to_csv(fpath_backup, index=False, header=True)
     os.chmod(fpath_backup, 0o664)
     print(f'\nFile written to: {fpath_backup}')
+
+    if use_relative_path:
+        fpath_backup = os.path.relpath(fpath_backup, fpath_symlink.parent)
 
     if fpath_symlink.exists():
         fpath_symlink.unlink()
@@ -104,4 +107,3 @@ def load_status(fpath_status):
             ]
         },
     )
-

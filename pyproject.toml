@@ -1,8 +1,41 @@
-# As per https://github.com/pypa/setuptools/blob/main/docs/userguide/quickstart.rst
 [build-system]
-requires = ["setuptools==60.10.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nipoppy"
+authors = [{ name = "nikhil153" }]
+version = "0.1.0"
+
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "joblib",
+    "pydicom",
+    "nibabel",
+    "pybids",
+    "requests",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+# alias in case of typo
+tests = ["nipoppy[test]"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["nipoppy"]
+
+[tool.hatch.build]
+include = [
+    "nipoppy/workflow/proc_pipe/tractoflow/tractoflow",
+]
 
 [tool.codespell]
 skip = '.git,.github,*.pdf,*.svg,pyproject.toml'
 ignore-words-list = 'te,ines'
+
+[tool.pytest.ini_options]
+addopts = "-ra -q -vv "
+testpaths = ["tests/"]

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from workflow.utils import (
+from nipoppy.workflow.utils import (
     COL_CONV_STATUS,
     COL_PARTICIPANT_DICOM_DIR,
     COL_DOWNLOAD_STATUS,
