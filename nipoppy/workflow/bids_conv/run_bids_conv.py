@@ -13,14 +13,13 @@ from typing import Iterable
 import numpy as np
 from bids.layout import parse_file_entities
 
-import workflow.catalog as catalog
-import workflow.logger as my_logger
-from workflow.utils import (
+import nipoppy.workflow.catalog as catalog
+import nipoppy.workflow.logger as my_logger
+from nipoppy.workflow.utils import (
     COL_CONV_STATUS,
     COL_DICOM_ID,
     DNAME_BACKUPS_STATUS,
     FNAME_STATUS, 
-    load_status,
     save_backup,
     session_id_to_bids_session,
 )

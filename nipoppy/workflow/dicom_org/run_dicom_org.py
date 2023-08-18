@@ -2,15 +2,15 @@
 
 import argparse
 import json
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 from joblib import Parallel, delayed
 from pathlib import Path
 
 import pandas as pd
 
-import workflow.catalog as catalog
-from workflow.dicom_org.utils import search_dicoms, copy_dicoms
-from workflow.utils import (
+import nipoppy.workflow.catalog as catalog
+from nipoppy.workflow.dicom_org.utils import search_dicoms, copy_dicoms
+from nipoppy.workflow.utils import (
     COL_ORG_STATUS, 
     DNAME_BACKUPS_STATUS, 
     load_status,

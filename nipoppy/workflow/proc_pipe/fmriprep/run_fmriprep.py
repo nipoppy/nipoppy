@@ -3,8 +3,9 @@ import json
 import subprocess
 import os
 from pathlib import Path
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 import shutil
+import logging
 
 #Author: nikhil153
 #Date: 31-Mar-2023 (last update)
@@ -21,7 +22,15 @@ os.environ['SINGULARITYENV_TEMPLATEFLOW_HOME'] = SINGULARITY_TEMPLATEFLOW_DIR
 
 MEM_MB = 4000
 
-def run_fmriprep(participant_id, bids_dir, fmriprep_dir, fs_dir, templateflow_dir, SINGULARITY_CONTAINER, use_bids_filter, anat_only, logger):
+def run_fmriprep(participant_id: str,
+                 bids_dir,
+                 fmriprep_dir,
+                 fs_dir,
+                 templateflow_dir,
+                 SINGULARITY_CONTAINER: str,
+                 use_bids_filter: bool,
+                 anat_only: bool,
+                 logger: logging.Logger):
     """ Launch fmriprep container"""
 
     fmriprep_out_dir = f"{fmriprep_dir}/output/"
@@ -55,19 +64,19 @@ def run_fmriprep(participant_id, bids_dir, fmriprep_dir, fs_dir, templateflow_di
 
     # Append optional args
     if use_bids_filter:
-        logger.info(f"Using bids_filter.json")
+        logger.info("Using bids_filter.json")
         bids_filter_str = "--bids-filter-file /data_dir/bids_filter.json"
         fmriprep_CMD = f"{fmriprep_CMD} {bids_filter_str}"
 
     if anat_only:
-        logger.info(f"Using anat_only workflow")
+        logger.info("Using anat_only workflow")
         anat_only_str = "--anat-only"
         fmriprep_CMD = f"{fmriprep_CMD} {anat_only_str}"
 
     CMD_ARGS = SINGULARITY_CMD + fmriprep_CMD 
     CMD = CMD_ARGS.split()
 
-    logger.info(f"Running fmriprep...")
+    logger.info("Running fmriprep...")
     logger.info("-"*50)
     logger.info(f"CMD:\n{CMD}")
     logger.info("-"*50)
@@ -79,8 +88,15 @@ def run_fmriprep(participant_id, bids_dir, fmriprep_dir, fs_dir, templateflow_di
     logger.info(f"Successfully completed fmriprep run for participant: {participant_id}")
     logger.info("-"*75)
     logger.info("")
+    return CMD
 
-def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, anat_only, logger=None):
+def run(participant_id: str,
+        global_configs,
+        session_id: str,
+        output_dir: str,
+        use_bids_filter: bool,
+        anat_only: bool,
+        logger=None):
     """ Runs fmriprep command
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -125,7 +141,15 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
 
     # launch fmriprep
-    run_fmriprep(participant_id, bids_dir, fmriprep_dir, fs_dir, TEMPLATEFLOW_DIR, SINGULARITY_FMRIPREP, use_bids_filter, anat_only, logger)
+    run_fmriprep(participant_id,
+                 bids_dir,
+                 fmriprep_dir,
+                 fs_dir,
+                 TEMPLATEFLOW_DIR,
+                 SINGULARITY_FMRIPREP,
+                 use_bids_filter,
+                 anat_only,
+                 logger)
 
 if __name__ == '__main__':
     # argparse
@@ -138,7 +162,8 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global configs for a given nipoppy dataset')
     parser.add_argument('--participant_id', type=str, help='participant id')
     parser.add_argument('--session_id', type=str, help='session id for the participant')
-    parser.add_argument('--output_dir', type=str, default=None, help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
+    parser.add_argument('--output_dir', type=str, default=None, 
+                        help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
     parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
     parser.add_argument('--anat_only', action='store_true', help='run only anatomical workflow or not')
 
