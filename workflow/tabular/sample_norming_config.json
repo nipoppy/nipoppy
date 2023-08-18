@@ -1,0 +1,41 @@
+{
+    "instrument": {
+        "name": "BNT sans indices (Raw score)", 
+        "range": {
+            "min": 25, 
+            "max": 60,
+            "n/a": 999
+        }
+    },
+    
+    "stratification": {
+        "sex": {
+            "male": "1",
+            "female": "2"
+            },   
+        "language": {
+            "French": "french",
+            "English": "english"
+        },
+        "education":{
+            "range_1": {
+                "min": 0, 
+                "max": 9
+            },
+            "range_2": {
+                "min": 10, 
+                "max": 30
+            }
+        },
+        "age":{
+            "range_1": {
+                "min": 30, 
+                "max": 64
+            },
+            "range_2": {
+                "min": 65, 
+                "max": 100
+            }
+        }
+    }
+}
