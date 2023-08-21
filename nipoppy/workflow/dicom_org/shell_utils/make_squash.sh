@@ -191,6 +191,10 @@ then
     done
 fi
 
+# make output directory
+run "mkdir -p $(dirname $FPATH_OUTPUT)"
+
+# squash
 run "mksquashfs $PATHS_TO_SQUASH $FPATH_OUTPUT $SQUASHFS_OPTIONS"
 
 if [ ! -z "$DPATH_IN_SQUASH" ]
@@ -203,7 +207,7 @@ then
     touch $TMP_FILE
     trap 'rm -f "$TMP_FILE"' EXIT
 
-    # move to $DATA_PATH
+    # move to $DPATH_IN_SQUASH
     while [ ! "$DPATH_IN_SQUASH" == "/" ]
     do
         DEST="$(basename $DPATH_IN_SQUASH)"
