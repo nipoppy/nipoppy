@@ -59,7 +59,6 @@ def test_run(caplog, tmp_path, use_bids_filter):
 
     _delete_dummy_bids_filter(_dummy_bids_filter_pth())
 
-    # fmt: off
     expected_cmd = (f'nextflow run {tmp_path}/workflow/proc_pipe/tractoflow/tractoflow/main.nf '
                     '-with-singularity tractoflow_XX.X.X.sif '
                     f'-work-dir {tmp_path}/tractoflow/vXX.X.X/work/sub-{participant_id} '
@@ -73,7 +72,5 @@ def test_run(caplog, tmp_path, use_bids_filter):
                     '--sh_order 6 '
                     '--profile fully_reproducible '
                     '--processes 4')
-    # fmt: off
-
 
     assert CMD == expected_cmd
