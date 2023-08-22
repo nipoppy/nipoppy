@@ -59,18 +59,20 @@ def test_run(caplog, tmp_path, use_bids_filter):
 
     _delete_dummy_bids_filter(_dummy_bids_filter_pth())
 
-    expected_cmd = (f'nextflow run {tmp_path}/workflow/proc_pipe/tractoflow/tractoflow/main.nf '
-                    '-with-singularity tractoflow_XX.X.X.sif '
-                    f'-work-dir {tmp_path}/tractoflow/vXX.X.X/work/sub-{participant_id} '
-                    f'-with-trace {tmp_path}/scratch/logs/sub-{participant_id}_ses-{session_id}_nf-trace.txt '
-                    f'-with-report {tmp_path}/scratch/logs/sub-{participant_id}_ses-{session_id}_nf-report.html '
-                    f'--input {tmp_path}/tractoflow/vXX.X.X/input/norpe '
-                    f'--output_dir {tmp_path}/tractoflow/vXX.X.X/output/ '
-                    f'--participant-label "{participant_id}" '
-                    '--dti_shells "0 1000" '
-                    '--fodf_shells "0 1000" '
-                    '--sh_order 6 '
-                    '--profile fully_reproducible '
-                    '--processes 4')
+    expected_cmd = (
+        f"nextflow run {tmp_path}/workflow/proc_pipe/tractoflow/tractoflow/main.nf "
+        "-with-singularity tractoflow_XX.X.X.sif "
+        f"-work-dir {tmp_path}/tractoflow/vXX.X.X/work/sub-{participant_id} "
+        f"-with-trace {tmp_path}/scratch/logs/sub-{participant_id}_ses-{session_id}_nf-trace.txt "
+        f"-with-report {tmp_path}/scratch/logs/sub-{participant_id}_ses-{session_id}_nf-report.html "
+        f"--input {tmp_path}/tractoflow/vXX.X.X/input/norpe "
+        f"--output_dir {tmp_path}/tractoflow/vXX.X.X/output/ "
+        f'--participant-label "{participant_id}" '
+        '--dti_shells "0 1000" '
+        '--fodf_shells "0 1000" '
+        "--sh_order 6 "
+        "--profile fully_reproducible "
+        "--processes 4"
+    )
 
     assert CMD == expected_cmd
