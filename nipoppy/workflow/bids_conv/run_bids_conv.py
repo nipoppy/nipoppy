@@ -20,6 +20,7 @@ from nipoppy.workflow.utils import (
     COL_DICOM_ID,
     DNAME_BACKUPS_STATUS,
     FNAME_STATUS, 
+    load_status,
     save_backup,
     session_id_to_bids_session,
 )
@@ -120,7 +121,7 @@ def run(global_configs, session_id, stage=2, overlays=None, n_jobs=2, dicom_id=N
     fpath_status = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_STATUS)
     bids_dir = f"{DATASET_ROOT}/bids/"
 
-    df_status = catalog.read_and_process_status(fpath_status, logger=logger)
+    df_status = load_status(fpath_status)
 
     # participants to process with Heudiconv
     if dicom_id is None:
