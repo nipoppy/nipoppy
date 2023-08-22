@@ -42,11 +42,11 @@ def test_run(caplog, tmp_path, use_bids_filter):
 
     _mock_bids_dataset(pth=bids_dir, dataset="ds004097")
 
-    participant_id = "sub-NDARDD890AYU"
+    participant_id = "NDARDD890AYU"
     session_id = "01"
 
-    run(
-        participant_id=participant_id,
+    CMD = run(
+        participant_id=f"sub-{participant_id}",
         global_configs=global_configs,
         session_id=session_id,
         output_dir=output_dir,
@@ -58,3 +58,22 @@ def test_run(caplog, tmp_path, use_bids_filter):
     )
 
     _delete_dummy_bids_filter(_dummy_bids_filter_pth())
+
+    # fmt: off
+    expected_cmd = (f'nextflow run {tmp_path}/workflow/proc_pipe/tractoflow/tractoflow/main.nf '
+                    '-with-singularity tractoflow_XX.X.X.sif '
+                    f'-work-dir {tmp_path}/tractoflow/vXX.X.X/work/sub-{participant_id} '
+                    f'-with-trace {tmp_path}/scratch/logs/sub-{participant_id}_ses-{session_id}_nf-trace.txt '
+                    f'-with-report {tmp_path}/scratch/logs/sub-{participant_id}_ses-{session_id}_nf-report.html '
+                    f'--input {tmp_path}/tractoflow/vXX.X.X/input/norpe '
+                    f'--output_dir {tmp_path}/tractoflow/vXX.X.X/output/ '
+                    f'--participant-label "{participant_id}" '
+                    '--dti_shells "0 1000" '
+                    '--fodf_shells "0 1000" '
+                    '--sh_order 6 '
+                    '--profile fully_reproducible '
+                    '--processes 4')
+    # fmt: off
+
+
+    assert CMD == expected_cmd

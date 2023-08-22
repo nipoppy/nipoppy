@@ -560,6 +560,8 @@ def run(participant_id,
         logger.error(f"TractoFlow run failed with exceptions: {e}")
         logger.info("-"*75)
 
+    return CMD
+
 
 if __name__ == '__main__':
     ## argparse
