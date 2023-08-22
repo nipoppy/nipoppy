@@ -40,7 +40,7 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, logg
     logger.info(f"output_dir: {output_dir}")
     logger.info(f"work_dir: {mriqc_work_dir}")
 
-    # Singularity CMD 
+    # Singularity CMD
     SINGULARITY_CMD=f"singularity run \
         -B {bids_dir}:/data:ro \
         -B {mriqc_output_dir}:/out \
@@ -56,16 +56,15 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, logg
         --no-sub \
         --work-dir /work \
         --bids-database-wipe"
-        # --bids-database-dir /out/bids_db/{participant_id}"
 
-    CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD 
+    CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD
     CMD = CMD_ARGS.split()
 
-    logger.info(f"Running mriqc container...")
+    logger.info("Running mriqc container...")
     logger.info("-"*50)
     logger.info(f"CMD:\n{CMD}")
     logger.info("-"*50)
-    
+
     try:
         mriqc_proc = subprocess.run(CMD)
         if mriqc_proc.returncode == 0:
@@ -76,12 +75,14 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, logg
     except Exception as e:
         logger.error(f"mriqc run failed with exceptions: {e}")
 
+    return CMD
+
 
 if __name__ == '__main__':
 
     # argparse
     HELPTEXT = """
-    Script to run mriqc 
+    Script to run mriqc
     """
     parser = argparse.ArgumentParser(description=HELPTEXT)
 

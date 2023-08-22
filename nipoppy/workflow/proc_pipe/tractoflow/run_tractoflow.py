@@ -10,7 +10,7 @@ import numpy as np
 import nibabel as nib
 from bids import BIDSLayout
 
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 
 #Author: bcmcpher
 #Date: 15-Jun-2023
@@ -29,14 +29,14 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     subj = participant_id.replace('sub-', '')
 
     logger.info('Building BIDS Layout...')
-    
+
     ## parse directory
     layout = BIDSLayout(bids_dir)
 
     ## pull every t1w / dwi file name from BIDS layout
     anat_files = layout.get(subject=subj, session=session_id, suffix='T1w', extension='.nii.gz', return_type='object')
     dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', extension='.nii.gz', return_type='object')
-        
+
     ## preallocate candidate anatomical files
     canat = []
 
@@ -48,7 +48,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         tvol = anat.get_image()
 
         ## because PPMI doesn't have full sidecars
-        
+
         try:
             tmcmode = tmeta['MatrixCoilMode']
         except:
@@ -63,7 +63,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             tprotocol = tmeta['ProtocolName']
         except:
             tprotocol = 'unknown'
-            
+
         logger.info("- "*25)
         logger.info(anat.filename)
         logger.info(f"Scan Type: {tmcmode}")
@@ -80,10 +80,10 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         ## look for Neuromelanin type scan in name somewhere
         if ('neuromel' in tprotocol.lower()):
             continue
-        
+
         ## heudiconv heuristics file has some fields that could be reused.
         ## how much effort are we supposed to spend generalizing parsing to other inputs?
-        
+
         ## append the data if it passes all the skips
         canat.append(anat)
 
@@ -92,7 +92,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
     ## error if nothing passes
     if len(canat) == 0:
         raise ValueError(f'No valid T1 anat file for {participant_id} in ses-{session_id}.')
-        
+
     ## check how many candidates there are
     if len(canat) > 1:
         logger.info('Still have to pick one...')
@@ -103,13 +103,13 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
     logger.info(f"Selected anat file: {oanat.filename}")
     logger.info("= "*25)
-    
+
     ## preallocate candidate dmri inputs
     cdmri = []
     cbv = np.empty(len(dmri_files))
     cnv = np.empty(len(dmri_files))
     cpe = []
-    
+
     logger.info("Parsing Diffusion Files...")
     for idx, dmri in enumerate(dmri_files):
 
@@ -120,7 +120,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             tpedir = tmeta['PhaseEncodingDirection']
         except:
             raise ValueError("INCOMPLETE SIDECAR: ['PhaseEncodingDirection'] is not defined in sidecar. This is required to accurately parse the dMRI data.")
-            
+
         logger.info("- "*25)
         logger.info(dmri.filename)
         logger.info(f"Encoding Direction: {tmeta['PhaseEncodingDirection']}")
@@ -128,7 +128,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
         ## store phase encoding data
         cpe.append(tmeta['PhaseEncodingDirection'])
-        
+
         ## store image dimension
         if len(tvol.shape) == 4:
             cnv[idx] = tvol.shape[-1]
@@ -136,7 +136,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
             cnv[idx] = 1
         else:
             raise ValueError('dMRI File: {dmri.filename} is not 3D/4D.')
-            
+
         ## build paths to bvec / bval data
         tbvec = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri.filename.replace('.nii.gz', '.bvec')).joinpath()
         tbval = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri.filename.replace('.nii.gz', '.bval')).joinpath()
@@ -151,22 +151,22 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
         ## append to output (?)
         cdmri.append(dmri)
-        
+
     logger.info("- "*25)
 
     ## if there's more than 1 candidate with bv* files
     if sum(cbv == 1) > 1:
-        
+
         logger.info("Continue checks assuming 2 directed files...")
 
         dmrifs = []
-        
+
         ## pull the full sequences
         for idx, x in enumerate(cbv):
             if x == 1:
                 logger.info(f"File {idx+1}: {dmri_files[idx].filename}")
                 dmrifs.append(dmri_files[idx])
-        
+
         ## if there are more than 2, quit - bad input
         if len(dmrifs) > 2:
             raise ValueError('Too many candidate full sequences.')
@@ -174,7 +174,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         ## split out to separate files
         dmrifs1 = dmrifs[0]
         dmrifs2 = dmrifs[1]
-        
+
         ## pull phase encoding direction
         dmrifs1pe = dmrifs1.get_metadata()['PhaseEncodingDirection']
         dmrifs2pe = dmrifs2.get_metadata()['PhaseEncodingDirection']
@@ -206,7 +206,7 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                 ## if the sequences are the same length
                 if (dmrifs1nv == dmrifs2nv):
-                    
+
                     logger.info('N volumes match. Assuming mirrored sequences.')
 
                     ## verify that bvecs match?
@@ -215,13 +215,13 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     dmrifs2nv = dmrifs1.get_image().shape[3]
 
                     ## pull the first as forward
-                    didx = dmri_files.index(dmrifs1) 
+                    didx = dmri_files.index(dmrifs1)
 
                     ## pull the second as reverse
                     rpeimage = dmrifs2.get_image()
 
                     ## load image data
-                    rpedata = rpeimage.get_fdata() 
+                    rpedata = rpeimage.get_fdata()
 
                     ## load bval data
                     rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
@@ -239,12 +239,12 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                 else:
 
                     didx = dmri_files.index(dmrifs1)
-                    
+
                     ## pull the second as reverse
                     rpeimage = dmrifs2.get_image()
 
                     ## load image data
-                    rpedata = rpeimage.get_fdata() 
+                    rpedata = rpeimage.get_fdata()
 
                     ## load bval data
                     rpeb0s = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs2.filename.replace('.nii.gz', '.bval')).joinpath())
@@ -261,25 +261,25 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
                     ## print a warning to log
                     logger.info('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
-                
+
         else:
 
             raise ValueError(f'The phase encodings are on different axes: {dmrifs1pe}, {dmrifs2pe}\nCannot determine what to do.')
-            
+
     else:
-        
+
         logger.info("Continue checks assuming 1 directed file...")
 
         ## pull the index of the bvec that exists
         didx = np.argmax(cbv)
-        
+
         ## pull phase encoding for directed volume
         fpe = cpe[didx]
 
         ## clean fpe of unnecessary + if it's there
         if fpe[-1] == "+":
             fpe = fpe[0]
-        
+
         ## determine the reverse phase encoding
         if (len(fpe) == 1):
             rpe = fpe + "-"
@@ -288,15 +288,15 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
 
         logger.info(f"Forward Phase Encoding: {fpe}")
         logger.info(f"Reverse Phase Encoding: {rpe}")
-            
+
         ## look for the reverse phase encoded file in the other candidates
         if (rpe in cpe):
-            
+
             rpeb0 = dmri_files[cpe.index(rpe)]
             rpevol = rpeb0.get_image()
             tmp_dir = tempfile.mkdtemp() #TemporaryDirectory()
             rpe_out = f'{participant_id}_rpe_b0.nii.gz'
-            
+
             ## if the rpe file has multiple volumes
             if len(rpevol.shape) == 4:
 
@@ -309,21 +309,21 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                 rpe_data = nib.nifti1.Nifti1Image(rpedat, rpevol.affine)
                 rpe_shape = rpe_data.shape
                 nib.save(rpe_data, Path(tmp_dir, rpe_out).joinpath())
-                
+
             else:
 
                 logger.info('An RPE file is present: Copying single the single RPE b0 volume...')
                 ## otherwise, copy the input file to tmp
                 rpe_shape = rpevol.shape
                 shutil.copyfile(rpeb0, rpe_out)
-                            
+
         else:
-            
+
             logger.info("No RPE is found in candidate files")
             rpe_out = None
-            
+
     logger.info("= "*25)
-    
+
     ## default assignments
     dmrifile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename).joinpath()
     bvalfile = Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmri_files[didx].filename.replace('.nii.gz', '.bval')).joinpath()
@@ -335,13 +335,20 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
         rpe_file = None
     else:
         rpe_file = Path(tmp_dir, rpe_out).joinpath()
-        
+
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
 
-def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells=1000, fodf_shells=1000, sh_order=6, logger=None):
-    """ Runs TractoFlow command with Nextflow
-    """
+def run(participant_id,
+        global_configs: str,
+        session_id: str,
+        output_dir: str,
+        use_bids_filter: bool,
+        dti_shells: str = "1000",
+        fodf_shells: str = "1000",
+        sh_order: int = 6,
+        logger = None):
+    """Run TractoFlow command with Nextflow."""
 
     ## extract the config options
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -374,7 +381,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     if use_bids_filter:
         logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
-        
+
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
@@ -417,9 +424,9 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(bvalfile, Path(tractoflow_subj_dir, 'bval').joinpath())
         shutil.copyfile(bvecfile, Path(tractoflow_subj_dir, 'bvec').joinpath())
         shutil.copyfile(anatfile, Path(tractoflow_subj_dir, 't1.nii.gz').joinpath())
-        if os.path.exists(rpe_file):
+        if rpe_file is not None and os.path.exists(rpe_file):
             shutil.copyfile(rpe_file, Path(tractoflow_subj_dir, 'rev_b0.nii.gz').joinpath())
-    
+
     ## load the bval / bvec data
     bval = np.loadtxt(bvalfile)
     bvec = np.loadtxt(bvecfile)
@@ -430,7 +437,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     rval = np.floor(rval / 100) * 100
     rval = rval.astype(int) ## I don't know how to get around just overwriting with the "fix"
     np.savetxt(Path(tractoflow_subj_dir, 'bval').joinpath(), rval, fmt='%1.0i', newline=' ')
-    
+
     ## pull the number of shells
     bunq = np.unique(rval)
     nshell = bunq.size - 1
@@ -460,13 +467,13 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## convert back to space separated strings to tractoflow can parse it
     dti_use = dti_shells.replace(',', ' ')
     odf_use = fodf_shells.replace(',', ' ')
-    
+
     ## deal with multishell data
     if nshell == 1:
 
         ## logical index of b0 values
         b0idx = rval == 0
-        
+
         ## check that vectors are unique
         tvec = bvec[:,~b0idx]
         tdir = np.unique(tvec, axis=0)
@@ -479,7 +486,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     else:
 
         logger.info(f"Multishell data has shells b = {bunq[1:]}")
-        mlmax = []    
+        mlmax = []
         for shell in bunq[1:]:
 
             ## pull the shells
@@ -498,7 +505,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         ## the minimum lmax across shells is used
         plmax = min(mlmax)
         logger.info(f"The maximum lmax across shells is: {plmax}")
-        
+
     ## if lmax too large, reset with warning
     if sh_order <= plmax:
         logger.info(f"Running model with requested lmax: {sh_order}")
@@ -507,7 +514,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         logger.info(f" -- You should redo with sh_order set to: {plmax}")
         logger.info(f"Running model with overrode lmax: {sh_order}")
         #sh_order = plmax
-        
+
     ## hard coded inputs to the tractoflow command in mrproc
     profile='fully_reproducible'
     ncore=4
@@ -517,11 +524,11 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## path to pipelines
     TRACTOFLOW_PIPE=f'{DATASET_ROOT}/workflow/proc_pipe/tractoflow'
-    
+
     ## this is fixed for every run - nextflow is a dependency b/c it's too hard to package in the containers that will call this
     ## this reality prompts the planned migration to micapipe - or anything else, honestly
     NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf -with-singularity {SINGULARITY_TRACTOFLOW} -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
-    
+
     ## compose tractoflow arguments
     TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
@@ -529,13 +536,13 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
     ## Obviously, this breaks the calls that nextflow tries to make at somepoint (typically around Normalize_DWI) because half the command becomes an unfinished text block from the mysteriously added quotes.
     ## I don't know if the problem is python printing unhelpful/inaccurate text to the user or if nextflow can't parse its own input arguments correctly.
-    
+
     ## add resume option if working directory is not empty
     if not len(os.listdir(tractoflow_work_dir)) == 0:
         TRACTOFLOW_CMD = TRACTOFLOW_CMD + " -resume"
-    
+
     ## build command line call
-    CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
+    CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD
     CMD=CMD_ARGS
 
     ## log what is called
@@ -557,7 +564,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 if __name__ == '__main__':
     ## argparse
     HELPTEXT = """
-    Script to run TractoFlow 
+    Script to run TractoFlow
     """
 
     ## parse inputs
@@ -570,7 +577,7 @@ if __name__ == '__main__':
     parser.add_argument('--dti_shells', type=str, default='1000', help='shell value(s) on which a tensor will be fit', required=False)
     parser.add_argument('--fodf_shells', type=str, default='1000', help='shell value(s) on which the CSD will be fit', required=False)
     parser.add_argument('--sh_order', type=str, default='6', help='The order of the CSD function to fit', required=False)
-    
+
     ## extract arguments
     args = parser.parse_args()
     global_config_file = args.global_config
@@ -586,5 +593,5 @@ if __name__ == '__main__':
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    ## make valid tractoflow call based on inputs    
+    ## make valid tractoflow call based on inputs
     run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells, fodf_shells, sh_order)

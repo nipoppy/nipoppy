@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 import argparse
 import json
 import nipoppy.workflow.logger as my_logger
@@ -42,14 +40,14 @@ logger.info(f"Running {workflows} serially")
 for wf in workflows:
     logger.info("-"*50)
     logger.info(f"Starting workflow: {wf}")
-    if wf == "dicom_org":        
+    if wf == "dicom_org":
         run_dicom_org.run(global_configs, session_id, n_jobs=n_jobs)
-    elif wf == "bids_conv": 
+    elif wf == "bids_conv":
         run_bids_conv.run(global_configs, session_id, n_jobs=n_jobs)
     else:
         logger.error(f"Unknown workflow: {wf}")
     logger.info(f"Finishing workflow: {wf}")
     logger.info("-"*50)
 
-logger.info(f"Finishing nipoppy run...")
+logger.info("Finishing nipoppy run...")
 logger.info("-"*75)
