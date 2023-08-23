@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import pandas as pd
+from bids import BIDSLayout, BIDSLayoutIndexer
+import shutil
 
 from nipoppy.workflow.utils import (
     COL_CONV_STATUS,
@@ -152,7 +154,7 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     """ Eat doughnuts (expected) and bagels (on-disk) to identify new participants
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
-    pineline_version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
+    pipeline_version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
 
     session = f"ses-{session_id}"
 
@@ -171,7 +173,7 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
     bagel_df = pd.read_csv(bagel_file)
     bagel_df = bagel_df[bagel_df["session"] == session]
-    bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pineline_version)]
+    bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pipeline_version)]
     on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
     n_on_disk_participants = len(on_disk_participants)
 
@@ -183,3 +185,47 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     logger.info(f"n_new_proc_participants: {n_new_proc_participants}")
 
     return new_proc_participants
+
+def generate_pybids_index(global_configs, session_id, pipeline, logger, bids_db_path=None):
+    """ Generates a pybids index for a selected list of bids_ids using --ignore argument. 
+        You can pass a list of folder names, or a regex pattern to the ignore argument.
+    """
+    DATASET_ROOT = global_configs["DATASET_ROOT"]
+    bids_dir = f"{DATASET_ROOT}/bids"
+    
+    pipeline_version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
+    session = f"ses-{session_id}"
+
+    if bids_db_path == None:
+        bids_db_path = f"{DATASET_ROOT}/proc/bids_db"
+    
+    # Grab processed participants from the bagel
+    bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
+    bagel_df = pd.read_csv(bagel_file)
+    bagel_df = bagel_df[bagel_df["session"] == session]
+    bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pipeline_version)]
+    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
+    n_on_disk_participants = len(on_disk_participants)
+
+    ignore_list = [f"{bids_dir}/{p}" for p in on_disk_participants]
+    logger.info(f"ignoring {n_on_disk_participants} (n_on_disk_participants) from pybids index")
+
+    # Check if old db exists
+    if Path.is_dir(Path(bids_db_path)):
+        shutil.rmtree(bids_db_path)
+        logger.info(f"removed old pybids index at: {bids_db_path}")
+
+    # TODO
+    # Check diff against previous index and only update if there are new participants
+
+    indexer = BIDSLayoutIndexer(ignore=ignore_list)
+    layout = BIDSLayout(bids_dir, indexer=indexer)
+    
+    indexed_subjects = layout.get(return_type='id', target='subject', suffix='T1w')
+    n_indexed_subjects = len(indexed_subjects)
+    logger.debug(f"number of indexed subjects: {n_indexed_subjects}")
+
+    logger.info(f"new pybids index generated at: {bids_db_path}")
+    layout.save(bids_db_path)
+
+    return bids_db_path
