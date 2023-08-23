@@ -39,7 +39,7 @@ jobs:
                 COUNT="0"
                 for FILE in ${CHANGED_FILES}; do
                     if [ -f "${PATH_TEMPLATE_REPO}/${FILE}" ]; then
-                        echo "::error::File exists in the template repository: ${FILE}"
+                        echo "::error file=${FILE}::File exists in the template repository: ${FILE}"
                         COUNT=$((COUNT+1))
                     fi
                 done
