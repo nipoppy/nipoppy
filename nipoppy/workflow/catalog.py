@@ -17,8 +17,7 @@ def read_and_process_status(status_csv, session_id, logger):
     session = f"ses-{session_id}"
 
     # filter session
-    status_df = status_df[status_df[COL_SESSION_MANIFEST] == session]
-    status_df[COL_SUBJECT_MANIFEST] = status_df[COL_SUBJECT_MANIFEST].astype(str)
+    status_df = status_df.loc[status_df[COL_SESSION_MANIFEST] == session]
 
     return status_df
 
