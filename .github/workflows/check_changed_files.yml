@@ -16,8 +16,7 @@ jobs:
             PATH_CURRENT_REPO: repo_to_check
             PATH_TEMPLATE_REPO: template_repo
 
-        if: github.repository_owner == 'neurodatascience' && github.event.repository.name != 'nipoppy'
-
+        if: github.repository_owner == 'neurodatascience' && github.event.repository.name != 'nipoppy' && github.head_ref != 'main-upstream'
         steps:
 
           - name: Checkout current repository
