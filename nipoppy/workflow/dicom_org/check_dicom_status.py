@@ -115,23 +115,26 @@ def run(global_config_file, regenerate=False, empty=False):
 
         try:
             from nipoppy.workflow.dicom_org.dicom_dir_func import participant_id_to_dicom_dir
-            df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
-                lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
-            )
-
-            # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
-            df_status[COL_DOWNLOAD_STATUS] = check_status(
-                df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
-            )
+            conversion_function = (lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config))
 
         except ModuleNotFoundError:
+            conversion_function = participant_id_to_dicom_id
             warnings.warn(
-                'Could not find participant ID -> DICOM directory conversion function'
-                '. If you want to know which DICOM files have been fetched/downloaded'
-                f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
+                'Could not find participant ID -> DICOM directory conversion function, '
+                'using participant_id (after removing non-alphanumeric characters). '
+                f'To use a custom function, make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
                 ' that contains a function definition for participant_id_to_dicom_dir()'
                 '. See sample_dicom_dir_func.py for an example.'
             )
+
+        df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
+            conversion_function
+        )
+
+        # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
+        df_status[COL_DOWNLOAD_STATUS] = check_status(
+            df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
+        )
 
         # look for organized DICOM
         df_status[COL_ORG_STATUS] = check_status(
