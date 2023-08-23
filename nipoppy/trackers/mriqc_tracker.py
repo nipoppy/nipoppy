@@ -30,11 +30,11 @@ def check_staus(subject_dir, session_id, run_id, file_dict):
         else:
             filepath = Path(f"{subject_dir}/" + v.format(session_id, participant_id, session_id, run_id))
 
-        print(f"filepath: {filepath}")
+        # print(f"filepath: {filepath}")
         filepath_status = Path.is_file(filepath)
         filepath_status_list.append(filepath_status)
 
-    print(f"filepath_status_list: {filepath_status_list}")
+    # print(f"filepath_status_list: {filepath_status_list}")
     if not any(filepath_status_list):
         status_msg = FAIL                    
     else:
