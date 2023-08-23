@@ -45,7 +45,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id, run_id=1, logge
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
         # TODO
-        # Check if session_id belogs to session_ids from global configs
+        # Check if session_id belongs to session_ids from global configs
 
         # Grab BIDS participants from the doughnut
         doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
@@ -65,7 +65,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id, run_id=1, logge
         
         logger.info(f"Checking session: {session_id}")    
         _df = pd.DataFrame(index=bids_participants, columns=dash_col_list)          
-        _df["session"] = session_id
+        _df["session"] = session
         _df["pipeline_name"] = pipeline        
         _df["pipeline_version"] = version
         

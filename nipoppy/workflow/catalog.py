@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import pandas as pd
 
 from nipoppy.workflow.utils import (
     COL_CONV_STATUS,
@@ -146,3 +147,39 @@ def get_new_dicoms(status_csv, session_id, logger):
     logger.info("-"*50)
 
     return heudiconv_df
+
+def get_new_proc_participants(global_configs, session_id, pipeline, logger):
+    """ Eat doughnuts (expected) and bagels (on-disk) to identify new participants
+    """
+    DATASET_ROOT = global_configs["DATASET_ROOT"]
+    pineline_version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
+
+    session = f"ses-{session_id}"
+
+    logger.info(f"Identifying new proc participants for session: {session} and pipeline: {pipeline}")
+
+    # Grab BIDS participants from the doughnut
+    doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
+    doughnut_df = pd.read_csv(doughnut_file)
+    doughnut_df["converted"] = doughnut_df["converted"].astype(bool)
+    bids_participants = doughnut_df[(doughnut_df["session"]==session) & (doughnut_df["converted"])]["bids_id"].unique()
+    n_bids_participants = len(bids_participants)
+
+    logger.info(f"n_bids_participants: {n_bids_participants}, session_id: {session_id}")
+
+    # Grab processed participants from the bagel
+    bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
+    bagel_df = pd.read_csv(bagel_file)
+    bagel_df = bagel_df[bagel_df["session"] == session]
+    bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pineline_version)]
+    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
+    n_on_disk_participants = len(on_disk_participants)
+
+    logger.info(f"n_on_disk_participants: {n_on_disk_participants}")
+
+    # Identify new participants
+    new_proc_participants = list(set(bids_participants) - set(on_disk_participants))
+    n_new_proc_participants = len(new_proc_participants)
+    logger.info(f"n_new_proc_participants: {n_new_proc_participants}")
+
+    return new_proc_participants
