@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -53,7 +54,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     
 
     for pipeline in pipelines:
-        pipe_tracker = Tracker(global_config_file, dash_schema_file, pipeline) 
+        pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
         
         mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
         schema = pipe_tracker.get_dash_schema()
@@ -100,13 +101,14 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             session = session_id_to_bids_session(session_id)
             print(f"Checking session: {session}")  
 
-            participants_session = doughnut_df[(~doughnut_df[COL_BIDS_ID_MANIFEST].isna()) & (doughnut_df[session] == session)][COL_BIDS_ID_MANIFEST].drop_duplicates().astype(str).str.strip().values
+            participants_session = doughnut_df[(~doughnut_df[COL_BIDS_ID_MANIFEST].isna()) & (doughnut_df[COL_SESSION_MANIFEST] == session)][COL_BIDS_ID_MANIFEST].drop_duplicates().astype(str).str.strip().values
             n_participants_session = len(participants_session)
             print(f"n_participants_session: {n_participants_session}")
 
-            _df = pd.DataFrame(index=participants_session, columns=dash_col_list)          
-            _df[COL_SESSION_MANIFEST] = session_id
-            _df["pipeline_name"] = pipeline        
+            _df = pd.DataFrame(index=participants_session, columns=dash_col_list)
+            _df.index.name = COL_BIDS_ID_MANIFEST
+            _df[COL_SESSION_MANIFEST] = session
+            _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
             _df["has_mri_data"] = TRUE # everyone with a session value has MRI data
             
@@ -127,7 +129,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                 
                 if dir_status:                
                     for name, func in status_check_dict.items():
-                        status = func(subject_dir, session, run_id)
+                        status = func(subject_dir, session_id, run_id)
                         logger.info(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
@@ -139,14 +141,14 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
-            proc_status_session_dfs.append(_df)
+            proc_status_session_dfs.append(_df.reset_index())
 
         # new rows for this pipeline
         pipeline_proc_status_df = pd.concat(proc_status_session_dfs, axis='index').reset_index(drop=True)
 
         # add old rows from other pipelines and sort for consistent order
         proc_status_df: pd.DataFrame = pd.concat([old_proc_status_df, pipeline_proc_status_df], axis='index')
-        proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", "bids_id"], ignore_index=True)
+        proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", COL_BIDS_ID_MANIFEST], ignore_index=True)
 
         # don't write a new file if no changes
         try:
