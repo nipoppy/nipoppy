@@ -1,10 +1,6 @@
 from pathlib import Path
 
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
+from trackers.tracker import SUCCESS, FAIL
 
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
@@ -100,7 +96,7 @@ def check_parcels(subject_dir, session_id=None, run_id=None):
 tracker_configs = {
     "pipeline_complete": check_run_status,
     
-    "PHASE_": {
-            "parcellations": check_parcels
-            }
+    "PHASE__": {
+        "parcellations": check_parcels
+    }
 }
