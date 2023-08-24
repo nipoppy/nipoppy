@@ -115,23 +115,25 @@ def run(global_config_file, regenerate=False, empty=False):
 
         try:
             from nipoppy.workflow.dicom_org.dicom_dir_func import participant_id_to_dicom_dir
-            df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
-                lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
-            )
-
-            # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
-            df_status[COL_DOWNLOAD_STATUS] = check_status(
-                df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
-            )
 
         except ModuleNotFoundError:
+            from nipoppy.workflow.dicom_org.sample_dicom_dir_func import participant_id_to_dicom_dir
             warnings.warn(
-                'Could not find participant ID -> DICOM directory conversion function'
-                '. If you want to know which DICOM files have been fetched/downloaded'
-                f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
-                ' that contains a function definition for participant_id_to_dicom_dir()'
-                '. See sample_dicom_dir_func.py for an example.'
+                'Could not find participant ID -> DICOM directory conversion function, '
+                'using participant_id as dicom_dir. To use a custom function, make a new file called '
+                f'"dicom_dir_func.py" in {Path(__file__).parent} that contains a '
+                'function definition for participant_id_to_dicom_dir(). '
+                'See sample_dicom_dir_func.py for an example.'
             )
+
+        df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
+            lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
+        )
+
+        # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
+        df_status[COL_DOWNLOAD_STATUS] = check_status(
+            df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
+        )
 
         # look for organized DICOM
         df_status[COL_ORG_STATUS] = check_status(
@@ -142,6 +144,17 @@ def run(global_config_file, regenerate=False, empty=False):
         df_status[COL_CONV_STATUS] = check_status(
             df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
         )
+
+        # warn user if there are rows with a 'True' column after one or more 'False' columns
+        has_lost_files = (
+            (df_status[COL_CONV_STATUS] & ~(df_status[COL_ORG_STATUS] | df_status[COL_DOWNLOAD_STATUS])) |
+            (df_status[COL_ORG_STATUS] & ~df_status[COL_DOWNLOAD_STATUS])
+        )
+        if has_lost_files.any():
+            warnings.warn(
+                'Some participants-session pairs seem to have lost files:'
+                f'\n{df_status.loc[has_lost_files]}'
+            )
 
     else:
 
