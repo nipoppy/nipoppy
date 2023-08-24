@@ -52,11 +52,12 @@ def check_func(subject_dir, session_id, run_id):
     return check_staus(subject_dir, session_id, run_id, func_files_dict)
 
 
+
 tracker_configs = {
     "pipeline_complete": check_T1w,
     
-    "PHASE_": {
+    "PHASE__": {
             "T2w": check_T2w,
             "func": check_func
-            },
+            }
 }
