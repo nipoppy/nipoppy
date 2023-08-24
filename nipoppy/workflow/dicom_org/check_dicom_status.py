@@ -120,7 +120,7 @@ def run(global_config_file, regenerate=False, empty=False):
             from nipoppy.workflow.dicom_org.sample_dicom_dir_func import participant_id_to_dicom_dir
             warnings.warn(
                 'Could not find participant ID -> DICOM directory conversion function, '
-                'using participant_id. To use a custom function, make a new file called '
+                'using participant_id as dicom_dir. To use a custom function, make a new file called '
                 f'"dicom_dir_func.py" in {Path(__file__).parent} that contains a '
                 'function definition for participant_id_to_dicom_dir(). '
                 'See sample_dicom_dir_func.py for an example.'
@@ -145,8 +145,16 @@ def run(global_config_file, regenerate=False, empty=False):
             df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
         )
 
-        # warn user if there are images with a 'True' column after one or more 'False' columns
-        # TODO
+        # warn user if there are rows with a 'True' column after one or more 'False' columns
+        has_lost_files = (
+            (df_status[COL_CONV_STATUS] & ~(df_status[COL_ORG_STATUS] | df_status[COL_DOWNLOAD_STATUS])) |
+            (df_status[COL_ORG_STATUS] & ~df_status[COL_DOWNLOAD_STATUS])
+        )
+        if has_lost_files.any():
+            warnings.warn(
+                'Some participants-session pairs seem to have lost files:'
+                f'\n{df_status.loc[has_lost_files]}'
+            )
 
     else:
 
