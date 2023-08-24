@@ -15,16 +15,14 @@ FALSE=False
 
 class Tracker:
     # constructor
-    def __init__(self, global_config_file, dash_schema_file, pipeline):
+    def __init__(self, global_configs, dash_schema_file, pipeline):
         self.pipeline = pipeline
-        self.global_config_file = global_config_file
+        self.global_configs = global_configs
         self.dash_schema_file = dash_schema_file
 
     # class methods
     def get_global_configs(self):
-        with open(self.global_config_file, 'r') as f:
-            global_configs = json.load(f)
-
+        global_configs = self.global_configs
         dataset_root = global_configs["DATASET_ROOT"]
         sessions = global_configs["SESSIONS"]
         version = global_configs["PROC_PIPELINES"][self.pipeline]["VERSION"] 
