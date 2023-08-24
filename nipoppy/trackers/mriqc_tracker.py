@@ -1,7 +1,6 @@
-import sys
-import json
 import glob
 
+from trackers.tracker import SUCCESS, FAIL
 
 #/scratch/qpn/sub-01/
 
@@ -28,12 +27,13 @@ def eval_mriqc(subject_dir, session_id, run_id=None):
         
         #check if string is an existing path
         if glob.glob(acq_T1w):
-                results['PIPELINE_STATUS_COLUMNS'].append('SUCCESS')
-        else: results['PIPELINE_STATUS_COLUMNS'].append('FAIL')
-            
+            results['PIPELINE_STATUS_COLUMNS'].append(SUCCESS)
+        else: 
+            results['PIPELINE_STATUS_COLUMNS'].append(FAIL)
     
-    else: #no sign participant passed, assume failure for all datatypes
-        results['PIPELINE_STATUS_COLUMNS'].append('FAIL')
+    #no sign participant passed, assume failure for all datatypes
+    else:
+        results['PIPELINE_STATUS_COLUMNS'].append(FAIL)
         
     return results
 
@@ -57,19 +57,19 @@ def check_bold(subject_dir, session_id, run_id=None):
     
     	#check if string is existing path
         if glob.glob(acq_bold):
-                return 'SUCCESS'
-        else: return 'FAIL'
+            return SUCCESS
+        else: return FAIL
 
     else: #no sign participant passed, assume failure for all datatypes
-        return 'FAIL'
+        return FAIL
          
 
 #eval_mriqc returns participant_id and pass/fail while check_bold only returns pass/fail
 tracker_configs = {
     "pipeline_complete": eval_mriqc,
     
-    "STAGE_": {
-            "MRIQC_BOLD": check_bold
-            }
+    "STAGE__": {
+        "MRIQC_BOLD": check_bold
+    }
 }
 
