@@ -14,13 +14,12 @@ from nipoppy.workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_SESSION_MANIFEST,
     COL_CONV_STATUS, 
+    DNAME_BACKUPS_BAGELS,
+    FNAME_BAGEL,
     load_status,
     save_backup,
     session_id_to_bids_session,
 )
-
-FNAME_BAGEL = 'bagel.csv' # TODO move to utils
-DNAME_BACKUPS_BAGEL = '.bagel'
 
 # Globals
 PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
@@ -159,7 +158,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             pass
         
         # save proc_status_df
-        save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGEL)
+        save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGELS)
 
 def load_bagel(fpath_bagel):
 

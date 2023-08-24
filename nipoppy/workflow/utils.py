@@ -11,8 +11,10 @@ BIDS_SESSION_PREFIX = 'ses-'
 # directory/file names
 DNAME_BACKUPS_MANIFEST = '.manifests'
 DNAME_BACKUPS_STATUS = '.doughnuts'
+DNAME_BACKUPS_BAGELS = '.bagels'
 FNAME_MANIFEST = 'manifest.csv'
 FNAME_STATUS = 'doughnut.csv'
+FNAME_BAGEL = 'bagel.csv'
 
 # for creating backups
 TIMESTAMP_FORMAT = '%Y%m%d_%H%M'
