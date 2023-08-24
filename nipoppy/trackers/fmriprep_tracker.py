@@ -1,11 +1,7 @@
 from pathlib import Path
 import os
 
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
+from trackers.tracker import SUCCESS, FAIL
 
 # Sample output files
 # sub-MNI0056D864854_ses-01_task-rest_run-1_space-MNI152NLin2009cAsym_res-2_desc-brain_mask.json
@@ -137,12 +133,12 @@ def check_MNI152Lin(subject_dir, session_id, run_id):
 tracker_configs = {
     "pipeline_complete": check_anat_output,
     
-    "PHASE_": {
-            "func": check_func_output
-            },
+    "PHASE__": {
+        "func": check_func_output
+    },
 
-    "STAGE_": {
-            "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
-            "space-MNI152Lin_res-1": check_MNI152Lin
-            }
+    "STAGE__": {
+        "space-MNI152NLin6Sym_res-1": check_MNI152NLin6Sym,
+        "space-MNI152Lin_res-1": check_MNI152Lin
+    }
 }
