@@ -1,19 +1,25 @@
-import pandas as pd
-from pathlib import Path
-import argparse
-from nipoppy.trackers.tracker import UNAVAILABLE, Tracker, get_start_time
-from nipoppy.trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
-import nipoppy.workflow.logger as my_logger
-import json
+#!/usr/bin/env python
 
+import argparse
+from pathlib import Path
+
+import pandas as pd
+
+import nipoppy.workflow.logger as my_logger
+from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
+from nipoppy.trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from nipoppy.workflow.utils import (
     COL_SUBJECT_MANIFEST,
     COL_BIDS_ID_MANIFEST,
     COL_SESSION_MANIFEST,
     COL_CONV_STATUS, 
     load_status,
-    session_id_to_bids_session
-)   
+    save_backup,
+    session_id_to_bids_session,
+)
+
+FNAME_BAGEL = 'bagel.csv' # TODO move to utils
+DNAME_BACKUPS_BAGEL = '.bagel'
 
 # Globals
 PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
@@ -21,7 +27,7 @@ pipeline_tracker_config_dict = {
     "freesurfer": fs_tracker.tracker_configs,
     "fmriprep": fmriprep_tracker.tracker_configs,
     "mriqc": mriqc_tracker.tracker_configs,
-    "tractoflow": tractoflow_tracker.tracker_configs
+    "tractoflow": tractoflow_tracker.tracker_configs,
 }
 BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
 
@@ -45,45 +51,69 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
 
     logger.info(f"tracking session_ids: {session_ids}")
     
-    proc_status_dfs = [] # list of dataframes
-    for session_id in session_ids:
 
-        session = session_id_to_bids_session(session_id)
+    for pipeline in pipelines:
+        pipe_tracker = Tracker(global_config_file, dash_schema_file, pipeline) 
+        
+        mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
+        schema = pipe_tracker.get_dash_schema()
+        tracker_configs = pipeline_tracker_config_dict[pipeline]
 
-        for pipeline in pipelines:
-            pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
-                
-            # TODO revise tracker class
-            DATASET_ROOT, session_ids, version = pipe_tracker.get_global_configs()
-            schema = pipe_tracker.get_dash_schema()
-            tracker_configs = pipeline_tracker_config_dict[pipeline]
+        # Grab BIDS participants from the doughnut
+        doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
+        doughnut_df = load_status(doughnut_file)
+        participants_total = doughnut_df[doughnut_df[COL_CONV_STATUS]][COL_BIDS_ID_MANIFEST].unique()
+        n_participants_total = len(participants_total)
 
-            # Grab BIDS participants from the doughnut
-            doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
-            doughnut_df = load_status(doughnut_file)
-            bids_participants = doughnut_df[(doughnut_df[COL_SESSION_MANIFEST]==session) & 
-                                            (doughnut_df[COL_CONV_STATUS])][COL_BIDS_ID_MANIFEST].unique()
-            n_bids_participants = len(bids_participants)
+        tracker_csv = Path(mr_proc_root_dir, 'derivatives', FNAME_BAGEL)
+        if tracker_csv.exists():
+            old_proc_status_df_full = load_bagel(tracker_csv)
 
-            logger.info("-"*50)
-            logger.info(f"pipeline: {pipeline}, version: {version}")
-            logger.info(f"n_participants: {n_bids_participants}, session_ids: {session_ids}")
-            logger.info("-"*50)
-
-            status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
-
-            dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
+            old_participants = set(old_proc_status_df_full['bids_id'])
+            old_pipelines = set(old_proc_status_df_full['pipeline_name'])
             
-            logger.info(f"Checking session: {session_id}")    
-            _df = pd.DataFrame(index=bids_participants, columns=dash_col_list)          
-            _df["session"] = session
+            # make sure the number of participants is consistent across pipelines
+            if set(n_participants_total) != old_participants and not old_pipelines.issubset(set(pipelines)):
+                raise RuntimeError(
+                    'The existing processing status file might be obsolete (participant list does not match the status file)'
+                    f'. Rerun the tracker script with --pipelines {" ".join(old_pipelines.union(pipelines))}'
+                )
+            
+            old_proc_status_df = old_proc_status_df_full.loc[~((old_proc_status_df_full["pipeline_name"] == pipeline) & (old_proc_status_df_full["pipeline_version"] == version))]
+            
+        else:
+            old_proc_status_df = None
+
+        print("-"*50)
+        print(f"pipeline: {pipeline}, version: {version}")
+        print(f"n_participants_total: {n_participants_total}, session_ids: {session_ids}")
+        print("-"*50)
+
+        status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
+
+        # only use non-prefixed columns at this stage
+        # for prefixed columns we need to generate the column name
+        dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if value["IsRequired"] and not value["IsPrefixedColumn"])
+
+        proc_status_session_dfs = [] # list of dataframes
+        for session_id in session_ids:
+            session = session_id_to_bids_session(session_id)
+            print(f"Checking session: {session}")  
+
+            participants_session = doughnut_df[(~doughnut_df[COL_BIDS_ID_MANIFEST].isna()) & (doughnut_df[session] == session)][COL_BIDS_ID_MANIFEST].drop_duplicates().astype(str).str.strip().values
+            n_participants_session = len(participants_session)
+            print(f"n_participants_session: {n_participants_session}")
+
+            _df = pd.DataFrame(index=participants_session, columns=dash_col_list)          
+            _df[COL_SESSION_MANIFEST] = session_id
             _df["pipeline_name"] = pipeline        
             _df["pipeline_version"] = version
+            _df["has_mri_data"] = TRUE # everyone with a session value has MRI data
             
-            for bids_id in bids_participants:
+            for bids_id in participants_session:
                 participant_id = doughnut_df[doughnut_df[COL_BIDS_ID_MANIFEST]==bids_id][COL_SUBJECT_MANIFEST].values[0]
                 _df.loc[bids_id,COL_SUBJECT_MANIFEST] = participant_id
-                logger.debug(f"bids_id: {bids_id}, participant_id: {participant_id}")
+                # print(f"bids_id: {bids_id}, participant_id: {participant_id}")
 
                 if pipeline == "freesurfer":
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/ses-{session_id}/{bids_id}" 
@@ -101,7 +131,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         logger.info(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
-                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
+                        _df.loc[bids_id,"pipeline_endtime"] = get_end_time(subject_dir)
                 else:
                     logger.error(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
@@ -109,17 +139,48 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
-            proc_status_dfs.append(_df)
+            proc_status_session_dfs.append(_df)
 
-    proc_status_df = pd.concat(proc_status_dfs, axis='index')
+        # new rows for this pipeline
+        pipeline_proc_status_df = pd.concat(proc_status_session_dfs, axis='index').reset_index(drop=True)
 
-    # Save proc_status_df
-    tracker_csv = f"{DATASET_ROOT}/derivatives/bagel.csv"
-    proc_status_df = proc_status_df.drop(columns=COL_BIDS_ID_MANIFEST)
-    proc_status_df.index.name = COL_BIDS_ID_MANIFEST
-    proc_status_df.to_csv(tracker_csv)
+        # add old rows from other pipelines and sort for consistent order
+        proc_status_df: pd.DataFrame = pd.concat([old_proc_status_df, pipeline_proc_status_df], axis='index')
+        proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", "bids_id"], ignore_index=True)
 
-    logger.info(f"Saved to {tracker_csv}")
+        # don't write a new file if no changes
+        try:
+            if len(proc_status_df.compare(old_proc_status_df_full)) == 0:
+                print(f'\nNo change for pipeline {pipeline}')
+                continue
+        except Exception:
+            pass
+        
+        # save proc_status_df
+        save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGEL)
+
+def load_bagel(fpath_bagel):
+
+    def time_converter(value):
+        # convert to datetime if possible
+        if str(value) != UNAVAILABLE:
+            return pd.to_datetime(value)
+        return value
+    
+    df_bagel = pd.read_csv(
+        fpath_bagel, 
+        dtype={
+            'has_mri_data': bool,
+            'participant_id': str,
+            'session': str,
+        },
+        converters={
+            'pipeline_starttime': time_converter,
+            'pipeline_endtime': time_converter,
+        }
+    )
+    
+    return df_bagel
 
 if __name__ == '__main__':
     # argparse
