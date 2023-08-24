@@ -2,10 +2,10 @@ from pathlib import Path
 import os
 
 # Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
+from nipoppy.trackers.tracker import (
+    SUCCESS,
+    FAIL
+)
 
 # relative to subject_dir
 T1w_files_dict = {

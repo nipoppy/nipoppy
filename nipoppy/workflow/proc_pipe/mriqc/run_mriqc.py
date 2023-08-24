@@ -8,7 +8,6 @@ import os
 def run(participant_id, global_configs, session_id, output_dir, modalities, bids_db_path=None, logger=None):
     """ Runs mriqc command
     """
-
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     MRIQC_CONTAINER = global_configs["PROC_PIPELINES"]["mriqc"]["CONTAINER"]
@@ -65,11 +64,8 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         --no-sub \
         --work-dir /work \
         --bids-database-dir /mriqc_proc/{bids_db_dir}"
-        
         # --bids-database-wipe" # wiping and regerating bids db with catalog.py
     
-        
-
     CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD 
     CMD = CMD_ARGS.split()
 

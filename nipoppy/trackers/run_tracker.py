@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import argparse
-from nipoppy.trackers.tracker import tracker, get_start_time
+from nipoppy.trackers.tracker import UNAVAILABLE, Tracker, get_start_time
 from nipoppy.trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 import nipoppy.workflow.logger as my_logger
 import json
@@ -13,13 +13,7 @@ from nipoppy.workflow.utils import (
     COL_CONV_STATUS, 
     load_status,
     session_id_to_bids_session
-)
-
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
+)   
 
 # Globals
 PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
@@ -57,7 +51,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
         session = session_id_to_bids_session(session_id)
 
         for pipeline in pipelines:
-            pipe_tracker = tracker(global_configs, dash_schema_file, pipeline) 
+            pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
                 
             # TODO revise tracker class
             DATASET_ROOT, session_ids, version = pipe_tracker.get_global_configs()
@@ -76,7 +70,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             logger.info(f"n_participants: {n_bids_participants}, session_ids: {session_ids}")
             logger.info("-"*50)
 
-            status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS)
+            status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
 
             dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
             

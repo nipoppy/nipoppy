@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from trackers.tracker import SUCCESS, FAIL
+from nipoppy.trackers.tracker import SUCCESS, FAIL
 
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
