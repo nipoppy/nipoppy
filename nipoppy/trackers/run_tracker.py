@@ -90,7 +90,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                 elif pipeline in BIDS_PIPES:
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
                 else:
-                    logger.info(f"unknown pipeline: {pipeline}")
+                    logger.error(f"unknown pipeline: {pipeline}")
                     
                 dir_status = Path(subject_dir).is_dir()
                 logger.debug(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
@@ -98,12 +98,12 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                 if dir_status:                
                     for name, func in status_check_dict.items():
                         status = func(subject_dir, session, run_id)
-                        logger.info(f"task_name: {name}, status: {status}")
+                        logger.debug(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
                 else:
-                    logger.error(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
+                    logger.warning(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
@@ -119,7 +119,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     proc_status_df.index.name = COL_BIDS_ID_MANIFEST
     proc_status_df.to_csv(tracker_csv)
 
-    logger.info(f"Saved to {tracker_csv}")
+    logger.info(f"Saved tracker-bagel to {tracker_csv}")
 
 if __name__ == '__main__':
     # argparse

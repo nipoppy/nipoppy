@@ -11,7 +11,14 @@ from nipoppy.workflow.utils import (
     COL_ORG_STATUS, 
     COL_SESSION_MANIFEST,
     COL_SUBJECT_MANIFEST,
+    COL_BIDS_ID_MANIFEST,
     load_status,
+)
+
+from nipoppy.trackers.tracker import (
+    SUCCESS,
+    FAIL,
+    UNAVAILABLE
 )
 
 def read_and_process_status(status_csv, session_id, logger):
@@ -162,8 +169,8 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     # Grab BIDS participants from the doughnut
     doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
     doughnut_df = pd.read_csv(doughnut_file)
-    doughnut_df["converted"] = doughnut_df["converted"].astype(bool)
-    bids_participants = doughnut_df[(doughnut_df["session"]==session) & (doughnut_df["converted"])]["bids_id"].unique()
+    doughnut_df[COL_CONV_STATUS] = doughnut_df[COL_CONV_STATUS].astype(bool)
+    bids_participants = doughnut_df[(doughnut_df[COL_SESSION_MANIFEST]==session) & (doughnut_df[COL_CONV_STATUS])][COL_BIDS_ID_MANIFEST].unique()
     n_bids_participants = len(bids_participants)
 
     logger.info(f"n_bids_participants: {n_bids_participants}, session_id: {session_id}")
@@ -171,9 +178,9 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     # Grab processed participants from the bagel
     bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
     bagel_df = pd.read_csv(bagel_file)
-    bagel_df = bagel_df[bagel_df["session"] == session]
+    bagel_df = bagel_df[bagel_df[COL_SESSION_MANIFEST] == session]
     bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pipeline_version)]
-    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
+    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]==SUCCESS][COL_BIDS_ID_MANIFEST].unique()
     n_on_disk_participants = len(on_disk_participants)
 
     logger.info(f"n_on_disk_participants: {n_on_disk_participants}")
@@ -185,6 +192,7 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
 
     return new_proc_participants
 
+# NOTE - currently not using it because of pybids warning on "absolute_paths=False"
 def generate_pybids_index(global_configs, session_id, pipeline, logger, bids_db_path=None):
     """ Generates a pybids index for a selected list of bids_ids using --ignore argument. 
         You can pass a list of folder names, or a regex pattern to the ignore argument.
@@ -201,12 +209,12 @@ def generate_pybids_index(global_configs, session_id, pipeline, logger, bids_db_
     # Grab processed participants from the bagel
     bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
     bagel_df = pd.read_csv(bagel_file)
-    bagel_df = bagel_df[bagel_df["session"] == session]
+    bagel_df = bagel_df[bagel_df[COL_SESSION_MANIFEST] == session]
     bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pipeline_version)]
-    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
+    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"][COL_BIDS_ID_MANIFEST].unique()
     n_on_disk_participants = len(on_disk_participants)
 
-    ignore_list = [f"{bids_dir}/{p}" for p in on_disk_participants]
+    ignore_list = on_disk_participants #[f"{bids_dir}/{p}" for p in on_disk_participants]
     logger.info(f"ignoring {n_on_disk_participants} (n_on_disk_participants) from pybids index")
 
     # Check if old db exists
@@ -218,7 +226,7 @@ def generate_pybids_index(global_configs, session_id, pipeline, logger, bids_db_
     # Check diff against previous index and only update if there are new participants
 
     indexer = BIDSLayoutIndexer(ignore=ignore_list)
-    layout = BIDSLayout(bids_dir, indexer=indexer)
+    layout = BIDSLayout(bids_dir, indexer=indexer, absolute_paths=False) # Throws deprication warning
     
     indexed_subjects = layout.get(return_type='id', target='subject', suffix='T1w')
     n_indexed_subjects = len(indexed_subjects)

@@ -63,8 +63,8 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         --modalities {modalities_str} \
         --no-sub \
         --work-dir /work \
-        --bids-database-dir /mriqc_proc/{bids_db_dir}"
-        # --bids-database-wipe" # wiping and regerating bids db with catalog.py
+        --bids-database-wipe" # wiping and regerating bids db
+        # --bids-database-dir /mriqc_proc/{bids_db_dir}" # Not working yet because of relative paths deprication in pybids
     
     CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD 
     CMD = CMD_ARGS.split()
