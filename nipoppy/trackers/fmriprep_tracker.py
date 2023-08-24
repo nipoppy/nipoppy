@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 
-from trackers.tracker import SUCCESS, FAIL
+from nipoppy.trackers.tracker import SUCCESS, FAIL
 
 # Sample output files
 # sub-MNI0056D864854_ses-01_task-rest_run-1_space-MNI152NLin2009cAsym_res-2_desc-brain_mask.json
