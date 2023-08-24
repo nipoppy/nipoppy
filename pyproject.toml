@@ -33,7 +33,7 @@ include = [
 ]
 
 [tool.codespell]
-skip = '.git,.github,*.pdf,*.svg,pyproject.toml'
+skip = '.git,.github,*.pdf,*.svg,pyproject.toml,*.ipynb,*.html,ppmi_imaging_descriptions.json'
 ignore-words-list = 'te,ines'
 
 [tool.pytest.ini_options]
