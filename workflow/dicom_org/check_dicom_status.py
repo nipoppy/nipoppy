@@ -51,7 +51,9 @@ def run(global_config_file, regenerate=False, empty=False):
 
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
-    df_manifest = load_manifest(fpath_manifest)
+    # df_manifest = load_manifest(fpath_manifest)
+    df_manifest = pd.read_csv(fpath_manifest)
+
     df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
 
     # look for existing status file

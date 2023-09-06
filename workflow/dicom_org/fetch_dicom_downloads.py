@@ -120,6 +120,7 @@ def run(global_configs, session_id, n_jobs, logger=None):
     raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/{session}/"
     unknown_ses_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/ses-unknown/" # TODO
     tar_bkup_dir = f"{DATASET_ROOT}/scratch/raw_dicom/tars/"
+    participant_dicom_dir_map_file = f"{DATASET_ROOT}/scratch/raw_dicom/participant_dicom_dir_map.csv"
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
 
     # mkdirs
@@ -128,7 +129,7 @@ def run(global_configs, session_id, n_jobs, logger=None):
     Path(f"{tar_bkup_dir}").mkdir(parents=True, exist_ok=True)
     Path(f"{log_dir}").mkdir(parents=True, exist_ok=True)
 
-    mr_proc_manifest = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
+    manifest = f"{DATASET_ROOT}/tabular/manifest.csv"
     
     if logger is None:
         log_file = f"{log_dir}/dicom_fetch.log"
@@ -139,7 +140,7 @@ def run(global_configs, session_id, n_jobs, logger=None):
     logger.info(f"session: {session}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    download_df = catalog.get_new_downloads(mr_proc_manifest, raw_dicom_dir, session_id, logger)
+    download_df = catalog.get_new_downloads(manifest, raw_dicom_dir, session_id, logger)
     download_participants = list(download_df["participant_id"].values)
     n_download_participants = len(download_participants)
     logger.info(f"Found {n_download_participants} new participants for download")
@@ -213,12 +214,15 @@ def run(global_configs, session_id, n_jobs, logger=None):
             if n_new_participant_dicom_downloads > 0:
                 # Add newly processed bids_id to the manifest csv
                 manifest_df = pd.read_csv(mr_proc_manifest)
+                participant_dicom_dir_map_df = pd.read_csv(participant_dicom_dir_map_file)
 
-                logger.info("Updating mr_proc_manifest with dicom file names")
-                manifest_df.loc[(manifest_df["participant_id"].astype(str).isin(download_participants))
-                            & (manifest_df["session"].astype(str) == str(session)), 
-                            "participant_dicom_dir"] = new_participant_dicom_downloads
-                manifest_df.to_csv(mr_proc_manifest, index=None)
+                logger.info("Updating participant_dicom_dir_map_df with dicom file names")
+                df = pd.DataFrame()
+                df["participant_id"] = download_participants
+                df["session"] = str(session)
+                df["participant_dicom_dir"] = new_participant_dicom_downloads
+                participant_dicom_dir_map_df = pd.concat([participant_dicom_dir_map_df, df], axis=0)
+                participant_dicom_dir_map_df.to_csv(participant_dicom_dir_map_csv, index=None)
 
                 logger.info(f"DICOMs (n={n_new_participant_dicom_downloads} of {download_participants}) are now copied into {raw_dicom_dir} and ready for dicom_reorg!")
         else:
