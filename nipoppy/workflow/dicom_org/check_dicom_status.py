@@ -8,10 +8,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from nipoppy.workflow.utils import (
+from workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
-    COL_DATATYPE_MANIFEST,
     COL_PARTICIPANT_DICOM_DIR,
     COL_DICOM_ID,
     COL_DOWNLOAD_STATUS,
@@ -23,9 +22,7 @@ from nipoppy.workflow.utils import (
     FNAME_STATUS,
     FNAME_MANIFEST,
     load_manifest,
-    participant_id_to_bids_id,
-    participant_id_to_dicom_id,
-    session_id_to_bids_session,
+    participant_id_to_dicom_id, 
     save_backup,
 )
 
@@ -36,7 +33,6 @@ FLAG_EMPTY = '--empty'
 FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 
 GLOBAL_CONFIG_DATASET_ROOT = 'DATASET_ROOT'
-GLOBAL_CONFIG_SESSIONS = 'SESSIONS'
 
 def run(global_config_file, regenerate=False, empty=False):
     
@@ -55,30 +51,10 @@ def run(global_config_file, regenerate=False, empty=False):
 
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
-    df_manifest = load_manifest(fpath_manifest)
+    # df_manifest = load_manifest(fpath_manifest)
+    df_manifest = pd.read_csv(fpath_manifest)
 
-    # validate that sessions are all in global configs
-    sessions_global_config = {
-        session_id_to_bids_session(session)
-        for session in global_config[GLOBAL_CONFIG_SESSIONS]
-    }
-    sessions_manifest = set(df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna(), COL_SESSION_MANIFEST].apply(session_id_to_bids_session))
-    if not sessions_manifest.issubset(sessions_global_config):
-        raise ValueError(
-            f'Not all sessions in the manifest are in global config:'
-            f'\n{sessions_manifest - sessions_global_config}'
-        )
-
-    # only participants with imaging data have non-empty session column
-    df_status = df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna()].copy()
-
-    # sanity check that everyone who has session_id also has non-empty datatype list
-    has_datatypes = df_status.set_index(COL_SUBJECT_MANIFEST)[COL_DATATYPE_MANIFEST].apply(lambda datatypes: len(datatypes) > 0)
-    participants_without_datatypes = has_datatypes.loc[~has_datatypes].index.values
-    if len(participants_without_datatypes) > 0:
-        raise ValueError(
-            f'Some participants have a value in "{COL_SESSION_MANIFEST}" but nothing in "{COL_DATATYPE_MANIFEST}": {participants_without_datatypes}'
-        )
+    df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
 
     # look for existing status file
     if fpath_status_symlink.exists() and not empty:
@@ -93,16 +69,11 @@ def run(global_config_file, regenerate=False, empty=False):
                 f' or {FLAG_REGENERATE} to create one based on current files'
                 ' in the dataset (can be slow)'
             )
-        
-    # generate bids_id
-    df_status.loc[:, COL_BIDS_ID_MANIFEST] = df_status[COL_SUBJECT_MANIFEST].apply(
-        participant_id_to_bids_id
-    )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
     df_status.loc[:, COL_PARTICIPANT_DICOM_DIR] = np.nan
 
-    # populate dicom_id
+    # populate dicom_id (bids_id should already be populated)
     df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(
         participant_id_to_dicom_id
     )
@@ -114,7 +85,7 @@ def run(global_config_file, regenerate=False, empty=False):
     if regenerate:
 
         try:
-            from nipoppy.workflow.dicom_org.dicom_dir_func import participant_id_to_dicom_dir
+            from dicom_dir_func import participant_id_to_dicom_dir
             df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
                 lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
             )
@@ -211,7 +182,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument(
         '--global_config', type=str, required=True,
-        help='path to global config file for your nipoppy dataset (required)')
+        help='path to global config file for your mr_proc dataset (required)')
     parser.add_argument(
         FLAG_REGENERATE, action='store_true',
         help=('regenerate entire status file'
