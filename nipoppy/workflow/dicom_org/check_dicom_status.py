@@ -126,8 +126,13 @@ def run(global_config_file, regenerate=False, empty=False):
                 'See sample_dicom_dir_func.py for an example.'
             )
 
-        df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
-            lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
+        df_status[COL_PARTICIPANT_DICOM_DIR] = df_status.apply(
+            lambda row: participant_id_to_dicom_dir(
+                getattr(row, COL_SUBJECT_MANIFEST),
+                getattr(row, COL_SESSION_MANIFEST),
+                global_config,
+            ),
+            axis='columns',
         )
 
         # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
