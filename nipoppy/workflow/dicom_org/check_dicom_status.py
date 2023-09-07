@@ -129,8 +129,8 @@ def run(global_config_file, regenerate=False, empty=False):
 
         df_status[COL_PARTICIPANT_DICOM_DIR] = df_status.apply(
             lambda row: participant_id_to_dicom_dir(
-                getattr(row, COL_SUBJECT_MANIFEST),
-                str(getattr(row, COL_SESSION_MANIFEST)).removeprefix(BIDS_SESSION_PREFIX),
+                row[COL_SUBJECT_MANIFEST],
+                str(row[COL_SESSION_MANIFEST]).removeprefix(BIDS_SESSION_PREFIX),
                 global_config,
             ),
             axis='columns',
