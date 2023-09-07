@@ -53,7 +53,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
         
-        mr_proc_root_dir, session_ids, version = pipe_tracker.get_global_configs()
+        mr_proc_root_dir, _, version = pipe_tracker.get_global_configs()
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
