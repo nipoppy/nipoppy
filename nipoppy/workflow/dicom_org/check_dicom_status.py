@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from nipoppy.workflow.utils import (
+    BIDS_SESSION_PREFIX,
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
     COL_DATATYPE_MANIFEST,
@@ -129,7 +130,7 @@ def run(global_config_file, regenerate=False, empty=False):
         df_status[COL_PARTICIPANT_DICOM_DIR] = df_status.apply(
             lambda row: participant_id_to_dicom_dir(
                 getattr(row, COL_SUBJECT_MANIFEST),
-                getattr(row, COL_SESSION_MANIFEST),
+                str(getattr(row, COL_SESSION_MANIFEST)).removeprefix(BIDS_SESSION_PREFIX),
                 global_config,
             ),
             axis='columns',
