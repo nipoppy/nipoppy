@@ -11,18 +11,18 @@ from nipoppy.workflow.utils import (
     COL_ORG_STATUS, 
     COL_SESSION_MANIFEST,
     COL_SUBJECT_MANIFEST,
-    load_status,
+    load_doughnut,
 )
 
-def read_and_process_status(status_csv, session_id, logger):
+def read_and_process_doughnut(fpath_doughnut, session_id, logger):
     # read current participant manifest 
-    status_df = load_status(status_csv)
+    df_doughnut = load_doughnut(fpath_doughnut)
     session = f"ses-{session_id}"
 
     # filter session
-    status_df = status_df.loc[status_df[COL_SESSION_MANIFEST] == session]
+    df_doughnut = df_doughnut.loc[df_doughnut[COL_SESSION_MANIFEST] == session]
 
-    return status_df
+    return df_doughnut
 
 def list_dicoms(dcm_dir, logger):
     # check current dicom dir
@@ -50,11 +50,11 @@ def list_bids(bids_dir, session_id, logger):
     return current_bids_session_dirs
 
 
-def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
+def get_new_downloads(fpath_doughnut, raw_dicom_dir, session_id, logger):
     """ Identify new dicoms not yet inside <DATASET_ROOT>/scratch/raw_dicom
     """
-    status_df = read_and_process_status(status_csv, session_id, logger)
-    participants = set(status_df[COL_SUBJECT_MANIFEST])
+    df_doughnut = read_and_process_doughnut(fpath_doughnut, session_id, logger)
+    participants = set(df_doughnut[COL_SUBJECT_MANIFEST])
     n_participants = len(participants)
 
     logger.info("-"*50)
@@ -66,52 +66,52 @@ def get_new_downloads(status_csv, raw_dicom_dir, session_id, logger):
     logger.info("-"*50)
     
     n_available_raw_dicom_dirs = len(available_raw_dicom_dirs)
-    available_raw_dicom_dirs_participant_ids = list(status_df[status_df[COL_PARTICIPANT_DICOM_DIR].isin(available_raw_dicom_dirs)][COL_SUBJECT_MANIFEST].astype(str).values)
+    available_raw_dicom_dirs_participant_ids = list(df_doughnut[df_doughnut[COL_PARTICIPANT_DICOM_DIR].isin(available_raw_dicom_dirs)][COL_SUBJECT_MANIFEST].astype(str).values)
 
-    # check mismatch between status file and raw_dicoms
+    # check mismatch between doughnut file and raw_dicoms
     download_dicom_dir_participant_ids = set(participants) - set(available_raw_dicom_dirs_participant_ids)
     n_download_dicom_dirs = len(download_dicom_dir_participant_ids)
 
-    download_df = status_df[status_df[COL_SUBJECT_MANIFEST].isin(download_dicom_dir_participant_ids)]
+    download_df = df_doughnut[df_doughnut[COL_SUBJECT_MANIFEST].isin(download_dicom_dir_participant_ids)]
 
     logger.info("-"*50)
     logger.info(f"Identifying participants to be downloaded\n\n \
-    - n_participants (listed in the status file): {n_participants}\n \
+    - n_participants (listed in the doughnut file): {n_participants}\n \
     - n_available_raw_dicom_dirs: {n_available_raw_dicom_dirs}\n \
     - n_download_dicom_dirs: {n_download_dicom_dirs}\n")
     logger.info("-"*50)
 
     return download_df
 
-def get_new_raw_dicoms(status_csv, session_id, logger):
+def get_new_raw_dicoms(fpath_doughnut, session_id, logger):
     """ Identify new raw_dicoms not yet reorganized inside <DATASET_ROOT>/dicom
     """
-    status_df = read_and_process_status(status_csv, session_id, logger)
-    participants_all = set(status_df[COL_SUBJECT_MANIFEST])
+    df_doughnut = read_and_process_doughnut(fpath_doughnut, session_id, logger)
+    participants_all = set(df_doughnut[COL_SUBJECT_MANIFEST])
     n_participants_all = len(participants_all)
 
     # check raw dicom dir (downloaded)
-    downloaded = set(status_df.loc[status_df[COL_DOWNLOAD_STATUS], COL_SUBJECT_MANIFEST])
+    downloaded = set(df_doughnut.loc[df_doughnut[COL_DOWNLOAD_STATUS], COL_SUBJECT_MANIFEST])
     n_downloaded = len(downloaded)
     
     # check current dicom dir (already reorganized)
-    downloaded_but_not_reorganized = downloaded & set(status_df.loc[~status_df[COL_ORG_STATUS], COL_SUBJECT_MANIFEST])
+    downloaded_but_not_reorganized = downloaded & set(df_doughnut.loc[~df_doughnut[COL_ORG_STATUS], COL_SUBJECT_MANIFEST])
     n_downloaded_but_not_reorganized = len(downloaded_but_not_reorganized)
 
-    reorg_df = status_df.loc[status_df[COL_SUBJECT_MANIFEST].isin(downloaded_but_not_reorganized)]
+    reorg_df = df_doughnut.loc[df_doughnut[COL_SUBJECT_MANIFEST].isin(downloaded_but_not_reorganized)]
 
     # check participant dicom dirs
     if not reorg_df[COL_PARTICIPANT_DICOM_DIR].isna().all():
-        logger.info("Using dicom filename from the status file") 
+        logger.info("Using dicom filename from the doughnut file") 
     else:
-        logger.warning(f"{COL_PARTICIPANT_DICOM_DIR} is not specified in the status file")
+        logger.warning(f"{COL_PARTICIPANT_DICOM_DIR} is not specified in the doughnut file")
         logger.info(f"Assuming {COL_SUBJECT_MANIFEST} is the dicom filename") 
         reorg_df[COL_PARTICIPANT_DICOM_DIR] = reorg_df[COL_SUBJECT_MANIFEST].copy()
 
     logger.info("-"*50)
     logger.info(
         f"Identifying participants to be reorganized\n\n"
-        f"- n_participants_all (listed in the status file): {n_participants_all}\n"
+        f"- n_participants_all (listed in the doughnut file): {n_participants_all}\n"
         f"- n_downloaded: {n_downloaded}\n"
         f"- n_missing: {n_participants_all - n_downloaded}\n"
         f"- n_downloaded_but_not_reorganized: {n_downloaded_but_not_reorganized}\n"
@@ -120,27 +120,27 @@ def get_new_raw_dicoms(status_csv, session_id, logger):
 
     return reorg_df
 
-def get_new_dicoms(status_csv, session_id, logger):
+def get_new_dicoms(fpath_doughnut, session_id, logger):
     """ Identify new dicoms not yet BIDSified
     """
-    status_df = read_and_process_status(status_csv, session_id, logger)
-    participants_all = set(status_df[COL_SUBJECT_MANIFEST])
+    df_doughnut = read_and_process_doughnut(fpath_doughnut, session_id, logger)
+    participants_all = set(df_doughnut[COL_SUBJECT_MANIFEST])
     n_participants_all = len(participants_all)
 
     # check current dicom dir (reorganized)
-    organized = set(status_df.loc[status_df[COL_ORG_STATUS], COL_SUBJECT_MANIFEST])
+    organized = set(df_doughnut.loc[df_doughnut[COL_ORG_STATUS], COL_SUBJECT_MANIFEST])
     n_organized = len(organized)
 
     # check bids dir (already converted)
-    organized_but_not_bids = organized & set(status_df.loc[~status_df[COL_CONV_STATUS], COL_SUBJECT_MANIFEST])
+    organized_but_not_bids = organized & set(df_doughnut.loc[~df_doughnut[COL_CONV_STATUS], COL_SUBJECT_MANIFEST])
     n_organized_but_not_bids = len(organized_but_not_bids)
 
-    heudiconv_df = status_df.loc[status_df[COL_SUBJECT_MANIFEST].isin(organized_but_not_bids)]
+    heudiconv_df = df_doughnut.loc[df_doughnut[COL_SUBJECT_MANIFEST].isin(organized_but_not_bids)]
 
     logger.info("-"*50)
     logger.info(
         "Identifying participants to be BIDSified\n\n"
-        f"- n_participants (listed in the status file): {n_participants_all}\n"
+        f"- n_participants (listed in the doughnut file): {n_participants_all}\n"
         f"- n_organized: {n_organized}\n"
         f"- n_missing: {n_participants_all - n_organized}\n"
         f"- n_organized_but_not_bids: {n_organized_but_not_bids}\n"

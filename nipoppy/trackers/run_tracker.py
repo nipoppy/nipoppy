@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import json
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -13,9 +14,10 @@ from nipoppy.workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_SESSION_MANIFEST,
     COL_CONV_STATUS, 
-    DNAME_BACKUPS_BAGELS,
+    DNAME_BACKUPS_BAGEL,
     FNAME_BAGEL,
-    load_status,
+    FNAME_DOUGHNUT,
+    load_doughnut,
     save_backup,
     session_id_to_bids_session,
 )
@@ -53,13 +55,13 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
         
-        mr_proc_root_dir, _, version = pipe_tracker.get_global_configs()
+        dataset_root, _, version = pipe_tracker.get_global_configs()
         schema = pipe_tracker.get_dash_schema()
         tracker_configs = pipeline_tracker_config_dict[pipeline]
 
         # Grab BIDS participants from the doughnut
-        doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
-        doughnut_df = load_status(doughnut_file)
+        doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/{FNAME_DOUGHNUT}"
+        doughnut_df = load_doughnut(doughnut_file)
         participants_total = doughnut_df[doughnut_df[COL_CONV_STATUS]][COL_BIDS_ID_MANIFEST].unique()
         n_participants_total = len(participants_total)
 
@@ -86,33 +88,33 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             _df[COL_SESSION_MANIFEST] = session
             _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
-            _df["has_mri_data"] = TRUE # everyone in the status file has MRI data
+            _df["has_mri_data"] = TRUE # everyone in the doughnut file has MRI data
 
-            tracker_csv = Path(mr_proc_root_dir, 'derivatives', FNAME_BAGEL)
-            if tracker_csv.exists():
-                old_proc_status_df_full = load_bagel(tracker_csv)
+            fpath_bagel = Path(dataset_root, 'derivatives', FNAME_BAGEL)
+            if fpath_bagel.exists():
+                df_bagel_old_full = load_bagel(fpath_bagel)
 
-                old_proc_status_df_session = old_proc_status_df_full.loc[old_proc_status_df_full[COL_SESSION_MANIFEST] == session]
-                old_participants_session = set(old_proc_status_df_session[COL_BIDS_ID_MANIFEST])
-                old_pipelines_session = set(old_proc_status_df_session['pipeline_name'])
+                df_bagel_old_session = df_bagel_old_full.loc[df_bagel_old_full[COL_SESSION_MANIFEST] == session]
+                old_participants_session = set(df_bagel_old_session[COL_BIDS_ID_MANIFEST])
+                old_pipelines_session = set(df_bagel_old_session['pipeline_name'])
                 
                 # make sure the number of participants is consistent across pipelines
                 if set(participants_session) != old_participants_session and not old_pipelines_session.issubset(set(pipelines)):
-                    raise RuntimeError(
-                        f'The existing processing status file might be obsolete (participant list does not match the status file for session {session})'
+                    warnings.warn(
+                        f'The existing bagel file might be obsolete (participant list does not match the doughnut file for session {session})'
                         f'. Rerun the tracker script with --pipelines {" ".join(old_pipelines_session.union(pipelines))}'
                     )
                 
-                old_proc_status_df = old_proc_status_df_full.loc[
+                df_bagel_old = df_bagel_old_full.loc[
                     ~(
-                        (old_proc_status_df_full["pipeline_name"] == pipeline) &
-                        (old_proc_status_df_full["pipeline_version"] == version) &
-                        (old_proc_status_df_full[COL_SESSION_MANIFEST] == session)
+                        (df_bagel_old_full["pipeline_name"] == pipeline) &
+                        (df_bagel_old_full["pipeline_version"] == version) &
+                        (df_bagel_old_full[COL_SESSION_MANIFEST] == session)
                     )
                 ]
                 
             else:
-                old_proc_status_df = None
+                df_bagel_old = None
             
             for bids_id in participants_session:
                 participant_id = doughnut_df[doughnut_df[COL_BIDS_ID_MANIFEST]==bids_id][COL_SUBJECT_MANIFEST].values[0]
@@ -146,19 +148,19 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             _df = _df.reset_index(drop=True)
 
             # add old rows from other pipelines/sessions and sort for consistent order
-            proc_status_df: pd.DataFrame = pd.concat([old_proc_status_df, _df], axis='index')
-            proc_status_df = proc_status_df.sort_values(["pipeline_name", "pipeline_version", COL_BIDS_ID_MANIFEST], ignore_index=True)
+            df_bagel: pd.DataFrame = pd.concat([df_bagel_old, _df], axis='index')
+            df_bagel = df_bagel.sort_values(["pipeline_name", "pipeline_version", COL_BIDS_ID_MANIFEST], ignore_index=True)
 
             # don't write a new file if no changes
             try:
-                if len(proc_status_df.compare(old_proc_status_df_full)) == 0:
-                    logger.info(f'\nNo change for pipeline {pipeline}, session {session}')
+                if len(df_bagel.compare(df_bagel_old_full)) == 0:
+                    logger.info(f'\nNo change in bagel file for pipeline {pipeline}, session {session}')
                     continue
             except Exception:
                 pass
             
-            # save proc_status_df
-            save_backup(proc_status_df, tracker_csv, DNAME_BACKUPS_BAGELS)
+            # save bagel
+            save_backup(df_bagel, fpath_bagel, DNAME_BACKUPS_BAGEL)
 
 def load_bagel(fpath_bagel):
 

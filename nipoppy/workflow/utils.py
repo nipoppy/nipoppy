@@ -10,10 +10,10 @@ BIDS_SESSION_PREFIX = 'ses-'
 
 # directory/file names
 DNAME_BACKUPS_MANIFEST = '.manifests'
-DNAME_BACKUPS_STATUS = '.doughnuts'
-DNAME_BACKUPS_BAGELS = '.bagels'
+DNAME_BACKUPS_DOUGHNUT = '.doughnuts'
+DNAME_BACKUPS_BAGEL = '.bagels'
 FNAME_MANIFEST = 'manifest.csv'
-FNAME_STATUS = 'doughnut.csv'
+FNAME_DOUGHNUT = 'doughnut.csv'
 FNAME_BAGEL = 'bagel.csv'
 
 # for creating backups
@@ -94,9 +94,9 @@ def load_manifest(fpath_manifest):
         converters={COL_DATATYPE_MANIFEST: pd.eval}
     )
 
-def load_status(fpath_status):
+def load_doughnut(fpath_doughnut):
     return pd.read_csv(
-        fpath_status, 
+        fpath_doughnut, 
         dtype={
             col: str 
             for col in [
