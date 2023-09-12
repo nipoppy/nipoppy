@@ -9,6 +9,7 @@ version = "0.1.0"
 
 
 dependencies = [
+    "boutiques",
     "pandas",
     "numpy",
     "joblib",
