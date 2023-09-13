@@ -1,19 +1,31 @@
+import json
 import os
 import subprocess
 from abc import ABC, abstractmethod
+from logging import Logger
+from pathlib import Path
 from typing import Sequence
 
+import boutiques
 from boutiques import bosh
 
-# TODO add logger
+from nipoppy.base import GlobalConfigs
 
-class BaseRunner():
+class BaseRunner(ABC):
     
-    def __init__(self, global_config, dry_run=False) -> None:
-        if isinstance(global_config, (str, os.PathLike)):
-            pass # TODO load global_config
-        self.global_config = global_config
+    # TODO add logger
+    def __init__(self, global_configs, name=None, logging=True, dry_run=False) -> None:
+        
+        if isinstance(global_configs, (str, os.PathLike)):
+            global_configs = GlobalConfigs(global_configs)
+
+        self.global_configs = global_configs
+        self.name = name
+        self.logging = logging
         self.dry_run = dry_run
+
+        self.logger = self.initialize_logger() # TODO
+        self.command_history = []
 
     def run(self, *args, **kwargs):
         self.run_setup(*args, **kwargs)
@@ -21,39 +33,83 @@ class BaseRunner():
         self.run_cleanup(*args, **kwargs)
 
     def run_setup(self, *args, **kwargs):
-        pass
+        return
 
+    @abstractmethod
     def run_main(self, *args, **kwargs):
         pass
 
     def run_cleanup(self, *args, **kwargs):
+        return
+    
+    def initialize_logger(self) -> Logger:
+        if self.logging:
+            # TODO initialize logger with timestamp and self.name
+            pass
+        else:
+            logger = None
+        # return logger
+    
+    # TODO default logfile path
+    def generate_fpath_log(self) -> Path:
         pass
 
-    def _run_command(self, command: Sequence[str] | str):
+    def run_commands(self, commands: Sequence[Sequence[str] | str]):
+        for command in commands:
+            self.run_command(command)
+
+    def run_command(self, command: Sequence[str] | str):
 
         # build command string
         if not isinstance(command, str):
-            command = ' '.join([str(arg) for arg in command])
+            command = self._args_to_command(command)
 
-        # TODO print/log command string
+        self.log_command(command)
 
         if not self.dry_run:
             # TODO throw error on fail
             subprocess_result = subprocess.run(command.split())
+            return subprocess_result
+        
+        self.command_history.append(command)
+    
+    def _args_to_command(self, args: Sequence[str]) -> str:
+        return ' '.join([str(arg) for arg in args])
 
-        return subprocess_result
+    def log_command(self, command: str):
+        self.log(f'[NIPOPPY] {command}')
+    
+    def log(self, message, level=None):
+        print(message)
+        # if self.logging:
+        #     # TODO log message
+        #     pass
+        # else:
+        #     print(message)
 
-class ParallelRunner(BaseRunner, ABC):
+    # TODO repr, str
 
-    def __init__(self, global_config, n_jobs=1) -> None:
-        super().__init__(global_config)
+class BaseParallelRunner(BaseRunner, ABC):
+
+    def __init__(self, global_configs, n_jobs=1, *args, **kwargs) -> None:
+        super().__init__(global_configs, *args, **kwargs)
         self.n_jobs = n_jobs
+
+    def run_setup(self, *args, **kwargs):
+        # TODO call get_args_for_parallel to get list of kwarg dicts
+        # TODO validate list of kwarg dicts
+        pass
 
     def run_main(self, *args, **kwargs):
         if self.n_jobs == 1:
+            # TODO loop over args
             return self.to_run_in_parallel(*args, **kwargs)
         else:
             pass # TODO
+
+    @abstractmethod
+    def get_kwargs_for_parallel(self, *args, **kwargs):
+        pass
 
     @abstractmethod
     def to_run_in_parallel(self, *args, **kwargs):
@@ -61,44 +117,114 @@ class ParallelRunner(BaseRunner, ABC):
 
 class BoutiquesRunner(BaseRunner):
 
-    def __init__(self, global_config, pipeline_name, pipeline_version=None) -> None:
-        super().__init__(global_config)
-        self.pipeline_name: str = pipeline_name
-        self.pipeline_version: str = pipeline_version
+    dpath_descriptors = Path(__file__).parent / 'descriptors'
+    invocation_kwarg_replacement_map = {
+        '[[NIPOPPY_SUBJECT]]': 'subject',
+        '[[NIPOPPY_SESSION]]': 'session',
+    }
+    invocation_config_replacement_map = {
+        '[[NIPOPPY_DATASET_ROOT]]': 'dataset_root',
+        '[[NIPOPPY_DATASTORE_DIR]]': 'datastore_dir',
+        '[[NIPOPPY_CONTAINER_STORE]]': 'container_store',
+        '[[NIPOPPY_SINGULARITY_PATH]]': 'singularity_path',
+    }
 
-        # TODO check that boutiques/bosh is installed
+    def __init__(self, global_configs, pipeline_name: str, pipeline_version: str | None = None, *args, **kwargs) -> None:
+        super().__init__(global_configs, *args, **kwargs)
+        self.pipeline_name = pipeline_name
+        self.pipeline_version = self.global_configs.check_pipeline_version(
+            self.pipeline_name,
+            pipeline_version,
+        )
 
-        self.descriptor: str = self.load_and_validate_descriptor()
-        self.invocation: str = None # TODO get Boutiques invocation (from global configs)
+        self.descriptor = self.load_descriptor()
+        self.invocation_template: str = self.load_invocation_template()
 
-    def load_and_validate_descriptor(self):
-        descriptor = None # TODO load Boutiques descriptor (from code repo)
-        bosh(["validate", descriptor])
-        return descriptor
+    def load_descriptor(self) -> str:
+        fpath_descriptor_template = self.dpath_descriptors / f'{self.pipeline_name}-{self.pipeline_version}.json'
+        with fpath_descriptor_template.open() as file:
+            descriptor_template = json.load(file)
+        descriptor_template = self.process_boutiques_json(json.dumps(descriptor_template))
+        self.run_bosh_command(['validate', descriptor_template])
+        return descriptor_template
 
-    def run_setup(self, subject, session, invocation, *args, **kwargs):
+    def load_invocation_template(self) -> str:
+        fpath = self.global_configs.get_pipeline_invocation_template(
+            self.pipeline_name,
+            self.pipeline_version,
+        )
 
-        # TODO
-        # load invocation JSON
-        # inject subject/session (run?)
-        # validate the invocation
-        # save invocation as attribute
-        pass
+        with fpath.open() as file:
+            invocation_template = json.load(file)
+        return json.dumps(invocation_template)
+    
+    def run(self, subject=None, session=None, *args, **kwargs):
+        super().run(subject=subject, session=session, *args, **kwargs)
 
     def run_main(self, *args, **kwargs):
-        if self.descriptor is None:
-            raise RuntimeError("No descriptor")
-        if self.invocation is None:
-            raise RuntimeError("No invocation")
-        # TODO run it (bosh execute launch [descriptor] [invocation])
 
+        invocation = self.process_boutiques_json(
+            self.invocation_template,
+            *args,
+            **kwargs,
+        )
 
-# class TestRunner(BoutiquesRunner):
-    
-#     def run_main(self, subject, session, invocation, *args, **kwargs):
-#         print("Running test pipeline")
+        try:
+            self.run_bosh_command(
+                ['invocation', '-i', invocation, self.descriptor],
+            )
+        except boutiques.invocationSchemaHandler.InvocationValidationError:
+            raise RuntimeError(
+                f'Invalid invocation {invocation} '
+                f'for descriptor at {self.descriptor}'
+            )
 
-# if __name__ == "__main__":
-#     runner = TestRunner(None)
-#     print(runner.pipeline_name)
+        self.run_bosh_command(['exec', 'simulate', '-i', invocation, self.descriptor])
+        self.run_bosh_command(['exec', 'launch', '--stream', self.descriptor, invocation])
 
+    def process_boutiques_json(self, json_str: str, **kwargs) -> str:
+        
+        def replace(json_str: str, to_replace: str, replacement):
+            return json_str.replace(to_replace, str(replacement))
+
+        # replacements based on runtime arguments
+        for to_replace, target_kwarg in self.invocation_kwarg_replacement_map.items():
+            if to_replace in json_str:
+                if target_kwarg not in kwargs or kwargs[target_kwarg] is None:
+                    raise ValueError(
+                        f'Expected keyword argument: {target_kwarg}. Cannot '
+                        f'replace {to_replace} in invocation template')
+                
+                json_str = replace(
+                    json_str,
+                    to_replace,
+                    kwargs[target_kwarg],
+                )
+
+        # replacement based on global configs
+        for to_replace, target_attr in self.invocation_config_replacement_map.items():
+            
+            if to_replace in json_str:
+                try:
+                    replacement = getattr(self.global_configs, target_attr)
+                except AttributeError:
+                    raise ValueError(
+                        f'Expected global configs attribute: {target_attr}. '
+                        f'Cannot replace {to_replace} in invocation template'
+                    )
+                                
+                json_str = replace(
+                    json_str,
+                    to_replace,
+                    replacement,
+                )
+
+        return json_str
+        
+    def run_bosh_command(self, args: Sequence):
+        args = [str(arg) for arg in args]
+        command = f'bosh({args})'
+        self.log_command(command)
+        if not self.dry_run:
+            bosh(args)
+        self.command_history.append(command)

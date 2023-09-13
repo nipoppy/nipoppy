@@ -35,5 +35,7 @@ def test_global_config_missing_required_field(required_field):
     with NamedTemporaryFile('w') as file_invalid_global_configs:
         json.dump(invalid_global_configs, file_invalid_global_configs)
         file_invalid_global_configs.flush()
-        with pytest.raises(KeyError, match='Missing required field in global config'):
+        with pytest.raises(GlobalConfigs.MissingFieldException, match='Missing field'):
             GlobalConfigs(file_invalid_global_configs.name)
+
+# TODO test GlobalConfigs.Program
