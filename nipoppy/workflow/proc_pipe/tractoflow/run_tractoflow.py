@@ -447,6 +447,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## create merged list of requested shells
     rshell = np.unique([ dti_use, odf_use ])
+    #rshell = np.unique([ dti_use + odf_use ]) # depends on how the data is passed
     logger.info(f'Requested shells: {rshell}')
 
     ## if any requested shell(s) are absent within data, error w/ useful warning
@@ -472,14 +473,15 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         tdir = np.unique(tvec, axis=0)
 
         ## compute and print the maximum shell
-        plmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
+        plmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
         logger.info(f"Single shell data has b = {int(bunq[1])} shell with a maximum possible lmax of {plmax}.")
 
     ## have to check the utility of every shell
     else:
 
         logger.info(f"Multishell data has shells b = {bunq[1:]}")
-        mlmax = []    
+        mlmax = []
+        mldir = []
         for shell in bunq[1:]:
 
             ## pull the shells
@@ -489,23 +491,25 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
             ## check that vectors are unique
             tvec = bvec[:,tndir]
             tdir = np.unique(tvec, axis=0)
-
-            ## compute and print the maximum shell - can get odd numbers?
-            tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1])) / 2.0))
+            mldir.append(tdir.shape[1])
+            
+            ## compute and print the maximum shell
+            tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
             mlmax.append(tlmax)
             logger.info(f" -- Shell {int(shell)} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
 
-        ## the minimum lmax across shells is used
-        plmax = min(mlmax)
-        logger.info(f"The maximum lmax across shells is: {plmax}")
+        ## the max lmax within any 1 shell is used
+        plmax = max(mlmax)
+        logger.info(f"The maximum lmax for any one shell is: {plmax}")
         
     ## if lmax too large, reset with warning
     if sh_order <= plmax:
         logger.info(f"Running model with requested lmax: {sh_order}")
     else:
         logger.info(f"The requested lmax ({sh_order}) exceeds the recommended capabilities of the data ({plmax})")
+        logger.info(f"Generally, you do not want to fit an lmax in excess of any one shell's ability in the data.")
         logger.info(f" -- You should redo with sh_order set to: {plmax}")
-        logger.info(f"Running model with overrode lmax: {sh_order}")
+        #logger.info(f"Running model with overrode lmax: {sh_order}")
         #sh_order = plmax
         
     ## hard coded inputs to the tractoflow command in mrproc
