@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from .conftest import global_config_for_testing
+from .conftest import global_configs_for_testing
 
 import nipoppy.workflow.logger as my_logger
 import nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep as fmriprep_module
@@ -51,7 +51,7 @@ def test_run(tmp_path, use_bids_filter, anat_only):
 
     run(
         participant_id=participant_id,
-        global_configs=global_config_for_testing(tmp_path),
+        global_configs=global_configs_for_testing(tmp_path),
         session_id=session_id,
         output_dir=tmp_path,
         use_bids_filter=use_bids_filter,
