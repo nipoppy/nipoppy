@@ -5,12 +5,13 @@ from pathlib import Path
 import json
 import subprocess
 import tempfile
-
+import re
+    
 import numpy as np
 import nibabel as nib
-from bids import BIDSLayout
+from bids import BIDSLayout, BIDSLayoutIndexer
 
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 
 #Author: bcmcpher
 #Date: 15-Jun-2023
@@ -21,22 +22,48 @@ CWD = os.path.dirname(os.path.abspath(fname))
 
 MEM_MB = 4000
 
-def parse_data(bids_dir, participant_id, session_id, logger=None):
+def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logger=None):
     """ Parse and verify the input files to build TractoFlow's simplified input to avoid their custom BIDS filter
     """
 
     ## because why parse subject ID the same as bids ID?
     subj = participant_id.replace('sub-', '')
 
-    logger.info('Building BIDS Layout...')
+    ## build a regex of anything not subject id
+    srx = re.compile(f"sub-(?!{subj}.*$)")
     
-    ## parse directory
-    layout = BIDSLayout(bids_dir)
+    logger.info('Building BIDS Layout...')
 
-    ## pull every t1w / dwi file name from BIDS layout
-    anat_files = layout.get(subject=subj, session=session_id, suffix='T1w', extension='.nii.gz', return_type='object')
-    dmri_files = layout.get(subject=subj, session=session_id, suffix='dwi', extension='.nii.gz', return_type='object')
+    ## load the bids filter if it's called
+    if use_bids_filter:
+
+        bidf_path = Path(bids_dir, 'bids_filter.json') ## is this where it will always be?
+        ## or does this need to turn into a path to a filter to load?
         
+        if os.path.exists(bidf_path):
+            logger.info(' -- Expected bids_filter.json is found.')
+            f = open(bidf_path)
+            bidf = json.load(f)
+            f.close()
+
+        else:
+            logger.info(' -- Expected bids_filter.json is not found.')
+            bidf = {} ## make it empty
+    else:
+        logger.info(' -- Not using a bids_filter.json')
+        
+    ## build a BIDSLayoutIndexer to only pull subject ID
+    bidx = BIDSLayoutIndexer(ignore=[srx])
+        
+    ## parse bids directory with subject filter
+    layout = BIDSLayout(bids_dir, indexer=bidx)
+    ## check if DB exists on disk first? BIDSLayout(database_path=var)? where is this saved?
+    ## should this be made / updated as part of BIDS-ification of DCMs?
+    
+    ## pull every t1w / dwi file name from BIDS layout
+    anat_files = layout.get(extension='.nii.gz', **bidf['t1w'])
+    dmri_files = layout.get(extension='.nii.gz', **bidf['dwi'])
+    
     ## preallocate candidate anatomical files
     canat = []
 
@@ -260,7 +287,8 @@ def parse_data(bids_dir, participant_id, session_id, logger=None):
                     nib.save(rpe_data, Path(tmp_dir, rpe_out).joinpath())
 
                     ## print a warning to log
-                    logger.info('The sequences are suffieciently mismatched that an acquisition or conversion error is likely to have occurred.')
+                    logger.info('The reverse sequence has non-b0 directed volumes that cannot be used and will be ignored during processing.')
+                    logger.info('If that is not the desired result, check that the data has been converted correctly.')
                 
         else:
 
@@ -372,8 +400,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
     if use_bids_filter:
-        logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
-        shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
+        logger.info(f"Will utilize bids_filter.json in: {DATASET_ROOT}/bids/bids_filter.json")
+        #logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
+        #shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
+        ## I don't think this ever does anything...?
         
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/"
@@ -382,7 +412,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
     ## call the file parser to copy the correct files to the input structure
-    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, logger)
+    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, use_bids_filter, logger)
+    ## use_bids_filter may need to be path to the filter so it can be loaded, not the logical
 
     ## nest inputs in rpe/no-rpe folders so tractoflow will parse mixed datasets w/o failing b/c data is "bad"
     if rpe_file == None:
@@ -392,7 +423,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## build paths for working inputs
 
-    ## isolate datasets based on input shapes
+    ## isolate datasets based on input shapes - will error if there's a mix of input types
     if not rpe_file:
         tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
     else:
@@ -446,7 +477,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     odf_use = list(map(int, odf_use.split(",")))
 
     ## create merged list of requested shells
-    rshell = np.unique([ dti_use, odf_use ])
+    rshell = np.unique([ dti_use + odf_use ])
     #rshell = np.unique([ dti_use + odf_use ]) # depends on how the data is passed
     logger.info(f'Requested shells: {rshell}')
 
@@ -551,7 +582,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## there's probably a better way to try / catch the .run() call here
     try:
-        tractoflow_proc = subprocess.run(CMD, shell=True)
+        #tractoflow_proc = subprocess.run(CMD, shell=True)
         logger.info("-"*75)
     except Exception as e:
         logger.error(f"TractoFlow run failed with exceptions: {e}")
