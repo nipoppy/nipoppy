@@ -72,7 +72,7 @@ def format_baseline_scores(df, stratification, raw_score_name):
     for col in strata_cols: 
         # No need to parse categrical columns
         if (stratification[col]["dtype"].lower() == "continuous"):
-            # check if column has ranges separate by "-" delimeter
+            # check if column has ranges separate by "-" delimiter
             # Convention: upper limit is not include for demographics and scores: e.g. (0-4) implies {0,1,2,3}
             if df[col].str.contains("-").any():    
                 df[f"{col}_min"] = df[col].astype(str).str.split("-",expand=True)[0].astype(int)

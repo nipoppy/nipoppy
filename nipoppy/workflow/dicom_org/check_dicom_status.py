@@ -56,12 +56,6 @@ def run(global_config_file, regenerate=False, empty=False):
 
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
-<<<<<<< HEAD:nipoppy/workflow/dicom_org/check_dicom_status.py
-    # df_manifest = load_manifest(fpath_manifest)
-    df_manifest = pd.read_csv(fpath_manifest)
-
-    df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
-=======
     df_manifest = load_manifest(fpath_manifest)
 
     # validate that sessions are all in global configs
@@ -86,7 +80,6 @@ def run(global_config_file, regenerate=False, empty=False):
         raise ValueError(
             f'Some participants have a value in "{COL_SESSION_MANIFEST}" but nothing in "{COL_DATATYPE_MANIFEST}": {participants_without_datatypes}'
         )
->>>>>>> 551a99c12dde8fc924a4998b6baf456d89dba733:workflow/dicom_org/check_dicom_status.py
 
     # look for existing status file
     if fpath_status_symlink.exists() and not empty:

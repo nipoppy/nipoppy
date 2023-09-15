@@ -12,7 +12,7 @@
         },
         "norming_procedure": "regression_contrast",
         "regression_formula": {
-            "note": "These forumlas are for reference and should reflect the regression_model_coefficients below",
+            "note": "These formulas are for reference and should reflect the regression_model_coefficients below",
             "hidden_var_A": 
                 "hidden_variable_A = 3*((TMT A time seconds (Raw score) - 38.359) / 12.836) + 10",
             "hidden_var_B": 

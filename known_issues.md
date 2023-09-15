@@ -5,7 +5,7 @@
 - Some participants have multiple dicom dirs for same session (most likely from issues during scanning)
   - Heuristic filter: select dicom_dir with most files 
 - Some dicoms are now "tarred" on bic server and need to be extracted before reorganizing
-- Some dicoms do not have `visit` / `session` infor in the filename (i.e. `MRI01`)
+- Some dicoms do not have `visit` / `session` info in the filename (i.e. `MRI01`)
   - Cross-ref date with recruitment spreadsheet for identifying sessions
 - Some dicoms have `derived` tag in the header 
   - These are excluded from symlinking from `raw_dicom` to `dicom` before bids conversion
