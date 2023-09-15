@@ -15,7 +15,7 @@
 #SBATCH --array=1-10
 
 # TODO replace with local paths
-source "</path/to/mr_proc_env>"
+source "</path/to/nipoppy_env>"
 
 SUBJECT_LIST="</path/to/subject_list>"
 SESSION_ID="01"

@@ -11,7 +11,7 @@ BIDS_SESSION_PREFIX = 'ses-'
 # directory/file names
 DNAME_BACKUPS_MANIFEST = '.manifests'
 DNAME_BACKUPS_STATUS = '.doughnuts'
-FNAME_MANIFEST = 'mr_proc_manifest.csv'
+FNAME_MANIFEST = 'manifest.csv'
 FNAME_STATUS = 'doughnut.csv'
 
 # for creating backups
@@ -25,7 +25,7 @@ COL_BIDS_ID_MANIFEST = 'bids_id'
 COL_VISIT_MANIFEST = 'visit'
 COL_SESSION_MANIFEST = 'session'
 COL_DATATYPE_MANIFEST = 'datatype'
-COLS_MANIFEST = [COL_SUBJECT_MANIFEST, COL_BIDS_ID_MANIFEST, COL_VISIT_MANIFEST, 
+COLS_MANIFEST = [COL_SUBJECT_MANIFEST, COL_VISIT_MANIFEST, 
                  COL_SESSION_MANIFEST, COL_DATATYPE_MANIFEST]
 
 # status file columns
@@ -58,7 +58,7 @@ def session_id_to_bids_session(session_id):
     else:
         return f'{BIDS_SESSION_PREFIX}{session_id}'
 
-def save_backup(df: pd.DataFrame, fpath_symlink, dname: str):
+def save_backup(df: pd.DataFrame, fpath_symlink, dname: str, use_relative_path=True):
     
     fpath_symlink = Path(fpath_symlink)
 
@@ -72,6 +72,9 @@ def save_backup(df: pd.DataFrame, fpath_symlink, dname: str):
     os.chmod(fpath_backup, 0o664)
     print(f'\nFile written to: {fpath_backup}')
 
+    if use_relative_path:
+        fpath_backup = os.path.relpath(fpath_backup, fpath_symlink.parent)
+
     if fpath_symlink.exists():
         fpath_symlink.unlink()
     fpath_symlink.symlink_to(fpath_backup)
@@ -84,7 +87,7 @@ def load_manifest(fpath_manifest):
         dtype={
             col: str 
             for col 
-            in [COL_SUBJECT_MANIFEST, COL_BIDS_ID_MANIFEST, COL_SESSION_MANIFEST]
+            in [COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST]
         },
         converters={COL_DATATYPE_MANIFEST: pd.eval}
     )
@@ -104,4 +107,3 @@ def load_status(fpath_status):
             ]
         },
     )
-

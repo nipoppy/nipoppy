@@ -8,9 +8,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from workflow.utils import (
+from nipoppy.workflow.utils import (
     COL_BIDS_ID_MANIFEST,
     COL_CONV_STATUS,
+    COL_DATATYPE_MANIFEST,
     COL_PARTICIPANT_DICOM_DIR,
     COL_DICOM_ID,
     COL_DOWNLOAD_STATUS,
@@ -22,7 +23,9 @@ from workflow.utils import (
     FNAME_STATUS,
     FNAME_MANIFEST,
     load_manifest,
-    participant_id_to_dicom_id, 
+    participant_id_to_bids_id,
+    participant_id_to_dicom_id,
+    session_id_to_bids_session,
     save_backup,
 )
 
@@ -33,6 +36,7 @@ FLAG_EMPTY = '--empty'
 FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 
 GLOBAL_CONFIG_DATASET_ROOT = 'DATASET_ROOT'
+GLOBAL_CONFIG_SESSIONS = 'SESSIONS'
 
 def run(global_config_file, regenerate=False, empty=False):
     
@@ -51,10 +55,37 @@ def run(global_config_file, regenerate=False, empty=False):
 
     # load manifest
     fpath_manifest = dpath_dataset / FPATH_MANIFEST_RELATIVE
+<<<<<<< HEAD:nipoppy/workflow/dicom_org/check_dicom_status.py
     # df_manifest = load_manifest(fpath_manifest)
     df_manifest = pd.read_csv(fpath_manifest)
 
     df_status = df_manifest.loc[~df_manifest[COL_BIDS_ID_MANIFEST].isna()].copy()
+=======
+    df_manifest = load_manifest(fpath_manifest)
+
+    # validate that sessions are all in global configs
+    sessions_global_config = {
+        session_id_to_bids_session(session)
+        for session in global_config[GLOBAL_CONFIG_SESSIONS]
+    }
+    sessions_manifest = set(df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna(), COL_SESSION_MANIFEST].apply(session_id_to_bids_session))
+    if not sessions_manifest.issubset(sessions_global_config):
+        raise ValueError(
+            f'Not all sessions in the manifest are in global config:'
+            f'\n{sessions_manifest - sessions_global_config}'
+        )
+
+    # only participants with imaging data have non-empty session column
+    df_status = df_manifest.loc[~df_manifest[COL_SESSION_MANIFEST].isna()].copy()
+
+    # sanity check that everyone who has session_id also has non-empty datatype list
+    has_datatypes = df_status.set_index(COL_SUBJECT_MANIFEST)[COL_DATATYPE_MANIFEST].apply(lambda datatypes: len(datatypes) > 0)
+    participants_without_datatypes = has_datatypes.loc[~has_datatypes].index.values
+    if len(participants_without_datatypes) > 0:
+        raise ValueError(
+            f'Some participants have a value in "{COL_SESSION_MANIFEST}" but nothing in "{COL_DATATYPE_MANIFEST}": {participants_without_datatypes}'
+        )
+>>>>>>> 551a99c12dde8fc924a4998b6baf456d89dba733:workflow/dicom_org/check_dicom_status.py
 
     # look for existing status file
     if fpath_status_symlink.exists() and not empty:
@@ -69,11 +100,16 @@ def run(global_config_file, regenerate=False, empty=False):
                 f' or {FLAG_REGENERATE} to create one based on current files'
                 ' in the dataset (can be slow)'
             )
+        
+    # generate bids_id
+    df_status.loc[:, COL_BIDS_ID_MANIFEST] = df_status[COL_SUBJECT_MANIFEST].apply(
+        participant_id_to_bids_id
+    )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
     df_status.loc[:, COL_PARTICIPANT_DICOM_DIR] = np.nan
 
-    # populate dicom_id (bids_id should already be populated)
+    # populate dicom_id
     df_status.loc[:, COL_DICOM_ID] = df_status[COL_SUBJECT_MANIFEST].apply(
         participant_id_to_dicom_id
     )
@@ -85,24 +121,26 @@ def run(global_config_file, regenerate=False, empty=False):
     if regenerate:
 
         try:
-            from dicom_dir_func import participant_id_to_dicom_dir
-            df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
-                lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
-            )
-
-            # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
-            df_status[COL_DOWNLOAD_STATUS] = check_status(
-                df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
-            )
+            from nipoppy.workflow.dicom_org.dicom_dir_func import participant_id_to_dicom_dir
 
         except ModuleNotFoundError:
+            from nipoppy.workflow.dicom_org.sample_dicom_dir_func import participant_id_to_dicom_dir
             warnings.warn(
-                'Could not find participant ID -> DICOM directory conversion function'
-                '. If you want to know which DICOM files have been fetched/downloaded'
-                f', make a new file called "dicom_dir_func.py" in {Path(__file__).parent}'
-                ' that contains a function definition for participant_id_to_dicom_dir()'
-                '. See sample_dicom_dir_func.py for an example.'
+                'Could not find participant ID -> DICOM directory conversion function, '
+                'using participant_id as dicom_dir. To use a custom function, make a new file called '
+                f'"dicom_dir_func.py" in {Path(__file__).parent} that contains a '
+                'function definition for participant_id_to_dicom_dir(). '
+                'See sample_dicom_dir_func.py for an example.'
             )
+
+        df_status[COL_PARTICIPANT_DICOM_DIR] = df_status[COL_SUBJECT_MANIFEST].apply(
+            lambda participant_id: participant_id_to_dicom_dir(participant_id, global_config)
+        )
+
+        # look for raw DICOM: scratch/raw_dicom/session/dicom_dir
+        df_status[COL_DOWNLOAD_STATUS] = check_status(
+            df_status, dpath_downloaded_dicom, COL_PARTICIPANT_DICOM_DIR, session_first=True,
+        )
 
         # look for organized DICOM
         df_status[COL_ORG_STATUS] = check_status(
@@ -113,6 +151,17 @@ def run(global_config_file, regenerate=False, empty=False):
         df_status[COL_CONV_STATUS] = check_status(
             df_status, dpath_converted, COL_BIDS_ID_MANIFEST, session_first=False,
         )
+
+        # warn user if there are rows with a 'True' column after one or more 'False' columns
+        has_lost_files = (
+            (df_status[COL_CONV_STATUS] & ~(df_status[COL_ORG_STATUS] | df_status[COL_DOWNLOAD_STATUS])) |
+            (df_status[COL_ORG_STATUS] & ~df_status[COL_DOWNLOAD_STATUS])
+        )
+        if has_lost_files.any():
+            warnings.warn(
+                'Some participants-session pairs seem to have lost files:'
+                f'\n{df_status.loc[has_lost_files]}'
+            )
 
     else:
 
@@ -141,6 +190,7 @@ def run(global_config_file, regenerate=False, empty=False):
         print(f'\nAdded {len(df_status_new_rows)} rows to existing status file')
 
     df_status = df_status[COLS_STATUS].drop_duplicates(ignore_index=True)
+    df_status = df_status.sort_values([COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST], ignore_index=True)
 
     # do not write file if there are no changes from previous one
     if df_status_old is not None and df_status.equals(df_status_old):
@@ -182,7 +232,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument(
         '--global_config', type=str, required=True,
-        help='path to global config file for your mr_proc dataset (required)')
+        help='path to global config file for your nipoppy dataset (required)')
     parser.add_argument(
         FLAG_REGENERATE, action='store_true',
         help=('regenerate entire status file'

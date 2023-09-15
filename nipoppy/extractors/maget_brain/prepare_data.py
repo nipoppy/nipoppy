@@ -30,9 +30,9 @@ HELPTEXT = """
 Extractor script to prepare data for maget_brain
 """
 parser = argparse.ArgumentParser(description=HELPTEXT)
-parser.add_argument('--global_config', type=str, required=True, help='path to global config file for your mr_proc dataset')
+parser.add_argument('--global_config', type=str, required=True, help='path to global config file for your nipoppy dataset')
 parser.add_argument('--session_id', type=str, required=True, help='current session or visit ID for the dataset')
-parser.add_argument('--run_id', type=str, required=True, help='run id for the scan')
+parser.add_argument('--run_id', type=str, default=None, help='run id for the scan')
 
 args = parser.parse_args()
 session_id = args.session_id
@@ -55,19 +55,23 @@ maget_preproc_T1w_nii_dir = f"{maget_dir}/ses-{session_id}/preproc_T1w_nii/"
 Path(maget_preproc_T1w_nii_dir).mkdir(parents=True, exist_ok=True)
 
 # get all the subject ids
-mr_proc_manifest_csv = f"{DATASET_ROOT}/tabular/mr_proc_manifest.csv"
-mr_proc_manifest_df = pd.read_csv(mr_proc_manifest_csv)
-bids_id_list = mr_proc_manifest_df["bids_id"].unique()
+manifest_csv = f"{DATASET_ROOT}/tabular/manifest.csv"
+manifest_df = pd.read_csv(manifest_csv)
+bids_id_list = manifest_df["bids_id"].unique()
 
 for bids_id in bids_id_list:
-    # img
-    img_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-preproc_T1w.nii.gz"
-    img_path = f"{fmriprep_dir}/{bids_id}/ses-{session_id}/anat/{img_file_name}"
-    # mask 
-    mask_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-brain_mask.nii.gz"
-    mask_path = f"{fmriprep_dir}/{bids_id}/ses-{session_id}/anat/{mask_file_name}"
+    if run_id == None:
+        img_file_name = f"{bids_id}_ses-{session_id}_desc-preproc_T1w.nii.gz"
+        mask_file_name = f"{bids_id}_ses-{session_id}_desc-brain_mask.nii.gz"
+        masked_img_file_name = f"{bids_id}_ses-{session_id}_desc-masked_preproc_T1w.nii.gz"
 
-    masked_img_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-masked_preproc_T1w.nii.gz"
+    else:
+        img_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-preproc_T1w.nii.gz"
+        mask_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-brain_mask.nii.gz"
+        masked_img_file_name = f"{bids_id}_ses-{session_id}_run-{run_id}_desc-masked_preproc_T1w.nii.gz"
+
+    img_path = f"{fmriprep_dir}/{bids_id}/ses-{session_id}/anat/{img_file_name}"
+    mask_path = f"{fmriprep_dir}/{bids_id}/ses-{session_id}/anat/{mask_file_name}"
     masked_img_path = f"{maget_preproc_T1w_nii_dir}/{masked_img_file_name}"
     
     try:
