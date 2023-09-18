@@ -180,7 +180,7 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
         cdmri.append(dmri)
         
     logger.info("- "*25)
-
+    
     ## if there's more than 1 candidate with bv* files
     if sum(cbv == 1) > 1:
         
@@ -193,7 +193,9 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
             if x == 1:
                 logger.info(f"File {idx+1}: {dmri_files[idx].filename}")
                 dmrifs.append(dmri_files[idx])
-        
+
+        ## if each shell is in a separate file, that would need to be determined and fixed here.
+                
         ## if there are more than 2, quit - bad input
         if len(dmrifs) > 2:
             raise ValueError('Too many candidate full sequences.')
@@ -210,6 +212,18 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
         dmrifs1nv = dmrifs1.get_image().shape[3]
         dmrifs2nv = dmrifs2.get_image().shape[3]
 
+        ## get the sequence bvals
+        dmrifs1va = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs[0].filename.replace('.nii.gz', '.bval')).joinpath())
+        dmrifs2va = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs[1].filename.replace('.nii.gz', '.bval')).joinpath())
+
+        ## get the sequence bvecs
+        dmrifs1ve = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs[0].filename.replace('.nii.gz', '.bvec')).joinpath())
+        dmrifs2ve = np.loadtxt(Path(bids_dir, participant_id, 'ses-' + session_id, 'dwi', dmrifs[1].filename.replace('.nii.gz', '.bvec')).joinpath())
+
+        ## get the number of directions
+        dmrifs1nd = dmrifs1ve[:,dmrifs1va > 0].shape[1]
+        dmrifs2nd = dmrifs2ve[:,dmrifs2va > 0].shape[1]
+        
         ## if the phase encodings are the same axis
         if (dmrifs1pe[0] == dmrifs2pe[0]):
 
@@ -218,10 +232,10 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
             ## if the phase encodings match exactly
             if (dmrifs1pe == dmrifs2pe):
 
-                ## THIS HAPPENS WITH A IDENTICAL RUN-1/RUN-2 IN PPMI
-                ## ARE THESE MEANT TO BE TIME 1 / TIME 2?
-                ## UNSURE HOW I SHOULD DEAL WITH MULTIPLE RUNS IN dMRI - NOT COMMON
-                logger.info('Sequences are not reverse encoded. Ignoring second sequence.')
+                ## print log for surprising situation of 
+                logger.info('Sequences are not reverse encoded and are identifcal.')
+                logger.info('Was the phase encoding not flipped during acquisition or are these sequences longitudinal?')
+                logger.info('Unsure how to Ignoring second sequence.')
                 didx = dmri_files.index(dmrifs1)
                 rpe_out = None
 
@@ -288,7 +302,7 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
 
                     ## print a warning to log
                     logger.info('The reverse sequence has non-b0 directed volumes that cannot be used and will be ignored during processing.')
-                    logger.info('If that is not the desired result, check that the data has been converted correctly.')
+                    logger.info('If that is not the expected result, check that the data has been converted correctly.')
                 
         else:
 
