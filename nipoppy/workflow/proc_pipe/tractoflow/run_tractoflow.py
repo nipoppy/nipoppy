@@ -459,7 +459,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## build paths to working inputs
     tractoflow_input_dir = f"{tractoflow_dir}/input"
     tractoflow_nxtf_inp = f"{tractoflow_input_dir}/{participant_id}_ses-{session_id}"
-    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}_ses-{session_id}/input"
+    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}_ses-{session_id}/{participant_id}"
     tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}_ses-{session_id}"
 
     ## check if working values already exist
@@ -586,7 +586,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     NEXTFLOW_CMD=f"nextflow run /scilus_flows/tractoflow/main.nf -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
     
     ## compose tractoflow arguments
-    TRACTOFLOW_CMD=f""" --input {tractoflow_nxtf_inp} --output_dir {tractoflow_out_dir} --run_gibbs_correction --eddy_cmd eddy_openmp --encoding_direction {phase} --readout {readout} --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
+    TRACTOFLOW_CMD=f""" --input {tractoflow_nxtf_inp} --output_dir {tractoflow_out_dir} --run_gibbs_correction --encoding_direction {phase} --readout {readout} --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
     ## TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
     ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
