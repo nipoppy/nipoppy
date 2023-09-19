@@ -39,8 +39,6 @@ def check_staus(bids_layout, participant_id, session_id, run_id, datatype):
                                         extension='json')
         
 
-        print(f"participant_id: {participant_id}, session_id: {session_id}, run_id: {run_id}, datatype: {datatype}, suffix: {suffix}")
-        print(f"scan_file: {scan_file}")
         if (len(scan_file) > 0) & (len(sidecar_file) > 0):
             filepath_status = (Path.is_file(Path(scan_file[0].path))) & (Path.is_file(Path(sidecar_file[0].path)))
         else:

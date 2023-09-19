@@ -29,7 +29,7 @@ pipeline_tracker_config_dict = {
 }
 BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
 
-def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1, logger=None):
+def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1, logger=None, log_level="INFO"):
     """ driver code running pipeline specific trackers
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -45,7 +45,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
     if logger is None:
         log_file = f"{log_dir}/mriqc.log"
-        logger = my_logger.get_logger(log_file)
+        logger = my_logger.get_logger(log_file, level=log_level)
 
     logger.info(f"Tracking pipelines: {pipelines}")
 
@@ -93,6 +93,12 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             _df["pipeline_name"] = pipeline        
             _df["pipeline_version"] = version
 
+            # Set correct dtype based on dash schema to avoid panads warning
+            # i.e. "FutureWarning: Setting an item of incompatible dtype"
+            for dash_col in dash_col_list:
+                dash_col_dtype = schema["GLOBAL_COLUMNS"][dash_col]["dtype"]
+                _df[dash_col] = _df[dash_col].astype(dash_col_dtype)
+
             # BIDS (i.e. heudiconv tracker is slightly different than proc_pipes)
             if pipeline == "heudiconv":
                 # Generate BIDSLayout only once per tracker run and not for each participant
@@ -125,6 +131,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                             status = func(subject_dir, session_id, run_id)
 
                         logger.debug(f"task_name: {name}, status: {status}")
+                        _df[name] = "" # Avoids "FutureWarning: Setting an item of incompatible dtype"
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
@@ -157,6 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
     parser.add_argument('--session_id', type=str, default="ALL", help='session_id (default = ALL')
+    parser.add_argument('--log_level', type=str, default="INFO", help='session_id (default = ALL')
     args = parser.parse_args()
 
     # read global configs
@@ -170,5 +178,6 @@ if __name__ == '__main__':
     dash_schema_file = args.dash_schema
     pipelines = args.pipelines
     session_id = args.session_id
+    log_level = args.log_level
 
-    run(global_configs, dash_schema_file, pipelines, session_id)
+    run(global_configs, dash_schema_file, pipelines, session_id, log_level=log_level)
