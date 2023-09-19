@@ -377,9 +377,21 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
         rpe_file = None
     else:
         rpe_file = Path(tmp_dir, rpe_out).joinpath()
-        
+
+    ## set the phase encoding direction
+    if ('i' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
+        phase = 'x'
+    if ('j' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
+        phase = 'y'
+    else:
+        logger.info('An unlikely phase encoding has been selected.')
+        phase = 'z'
+
+    ## set the total readout time for topup
+    readout = dmri_files[didx].get_metadata()['TotalReadoutTime']
+    
     ## return the paths to the input files to copy
-    return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file)
+    return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file, phase, readout)
 
 def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells=1000, fodf_shells=1000, sh_order=6, logger=None):
     """ Runs TractoFlow command with Nextflow
@@ -391,9 +403,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     TRACTOFLOW_CONTAINER = global_configs["PROC_PIPELINES"]["tractoflow"]["CONTAINER"]
     TRACTOFLOW_VERSION = global_configs["PROC_PIPELINES"]["tractoflow"]["VERSION"]
     TRACTOFLOW_CONTAINER = TRACTOFLOW_CONTAINER.format(TRACTOFLOW_VERSION)
-    SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}{TRACTOFLOW_CONTAINER}"
+    SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}/{TRACTOFLOW_CONTAINER}"
     LOGDIR = f"{DATASET_ROOT}/scratch/logs"
-
+    SINGULARITY_COMMAND = global_configs["SINGULARITY_PATH"]
+    
     ## initialize the logger
     if logger is None:
         log_file = f"{LOGDIR}/{participant_id}_ses-{session_id}_tractoflow.log"
@@ -420,32 +433,34 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         ## I don't think this ever does anything...?
         
     ## build paths for outputs
-    tractoflow_out_dir = f"{tractoflow_dir}/output/"
+    tractoflow_out_dir = f"{tractoflow_dir}/output"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
     if not os.path.exists(Path(f"{tractoflow_home_dir}")):
         Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
     ## call the file parser to copy the correct files to the input structure
-    dmrifile, bvalfile, bvecfile, anatfile, rpe_file = parse_data(bids_dir, participant_id, session_id, use_bids_filter, logger)
+    dmrifile, bvalfile, bvecfile, anatfile, rpe_file, phase, readout = parse_data(bids_dir, participant_id, session_id, use_bids_filter, logger)
     ## use_bids_filter may need to be path to the filter so it can be loaded, not the logical
 
-    ## nest inputs in rpe/no-rpe folders so tractoflow will parse mixed datasets w/o failing b/c data is "bad"
-    if rpe_file == None:
-        tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
-    else:
-        tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
+    # ## nest inputs in rpe/norpe folders so tractoflow will parse mixed datasets w/o failing b/c data is "bad"
+    # if rpe_file == None:
+    #     tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
+    # else:
+    #     tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
 
     ## build paths for working inputs
 
-    ## isolate datasets based on input shapes - will error if there's a mix of input types
-    if not rpe_file:
-        tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
-    else:
-        tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
+    # ## isolate datasets based on input shapes - will error if there's a mix of input types
+    # if not rpe_file:
+    #     tractoflow_input_dir = f"{tractoflow_dir}/input/norpe"
+    # else:
+    #     tractoflow_input_dir = f"{tractoflow_dir}/input/rpe"
 
     ## build paths to working inputs
-    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}"
-    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}"
+    tractoflow_input_dir = f"{tractoflow_dir}/input"
+    tractoflow_nxtf_inp = f"{tractoflow_input_dir}/{participant_id}_ses-{session_id}"
+    tractoflow_subj_dir = f"{tractoflow_input_dir}/{participant_id}_ses-{session_id}/input"
+    tractoflow_work_dir = f"{tractoflow_dir}/work/{participant_id}_ses-{session_id}"
 
     ## check if working values already exist
     if not os.path.exists(Path(f"{tractoflow_subj_dir}")):
@@ -567,12 +582,11 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## path to pipelines
     TRACTOFLOW_PIPE=f'{DATASET_ROOT}/workflow/proc_pipe/tractoflow'
     
-    ## this is fixed for every run - nextflow is a dependency b/c it's too hard to package in the containers that will call this
-    ## this reality prompts the planned migration to micapipe - or anything else, honestly
-    NEXTFLOW_CMD=f"nextflow run {TRACTOFLOW_PIPE}/tractoflow/main.nf -with-singularity {SINGULARITY_TRACTOFLOW} -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
+    ## nextflow arguments for logging - this is fixed for every run
+    NEXTFLOW_CMD=f"nextflow run /scilus_flows/tractoflow/main.nf -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
     
     ## compose tractoflow arguments
-    TRACTOFLOW_CMD=f""" --input {tractoflow_input_dir} --output_dir {tractoflow_out_dir} --participant-label "{tf_id}" --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
+    TRACTOFLOW_CMD=f""" --input {tractoflow_nxtf_inp} --output_dir {tractoflow_out_dir} --run_gibbs_correction --eddy_cmd eddy_openmp --encoding_direction {phase} --readout {readout} --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
 
     ## TractoFlow arguments can be printed multiple ways that appear consistent with the documentation but are parsed incorrectly by nextflow.
     ## .nexflow.log (a run log that documents what is getting parsed by nexflow) shows additional quotes being added around the dti / fodf parameters. Something like: "'0' '1000'"
@@ -585,23 +599,30 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     
     ## build command line call
     CMD_ARGS = NEXTFLOW_CMD + TRACTOFLOW_CMD 
-    CMD=CMD_ARGS
-
+    
     ## log what is called
+    logger.info("-"*75)
     logger.info(f"Running TractoFlow...")
-    logger.info("-"*50)
-    logger.info(f"CMD:\n{CMD_ARGS}")
-    logger.info("-"*50)
-    logger.info(f"Calling TractoFlow for participant: {participant_id}")
+    #logger.info("-"*50)
+    #logger.info(f"CMD:\n{CMD_ARGS}")
+    #logger.info("-"*50)
+    #logger.info(f"Calling TractoFlow for participant: {participant_id}")
 
+    ## singularity 
+    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -B {DATASET_ROOT} {SINGULARITY_TRACTOFLOW}"
+
+    CMD=SINGULARITY_CMD + " " + CMD_ARGS
+    logger.info("+"*75)
+    logger.info(f"{CMD}")
+    logger.info("+"*75)
+    
     ## there's probably a better way to try / catch the .run() call here
     try:
-        #tractoflow_proc = subprocess.run(CMD, shell=True)
-        logger.info("-"*75)
+        tractoflow_proc = subprocess.run(CMD, shell=True)
     except Exception as e:
-        logger.error(f"TractoFlow run failed with exceptions: {e}")
-        logger.info("-"*75)
+        logger.error(f"TractoFlow run failed to launch with exception: {e}")
 
+    logger.info('End of TractoFlow run script.')
 
 if __name__ == '__main__':
     ## argparse
