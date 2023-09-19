@@ -11,6 +11,8 @@ from nipoppy.workflow.dicom_org import check_dicom_status
 from nipoppy.workflow.bids_conv import run_bids_conv
 from nipoppy.workflow.proc_pipe.mriqc import run_mriqc
 from nipoppy.workflow.catalog import get_new_proc_participants
+from nipoppy.workflow.utils import session_id_to_bids_session
+
 # from nipoppy.workflow.catalog import generate_pybids_index
 from nipoppy.trackers import run_tracker
 
@@ -36,7 +38,7 @@ log_dir = f"{DATASET_ROOT}/scratch/logs/"
 log_file = f"{log_dir}/nipoppy.log"
 
 session_id = args.session_id
-session = f"ses-{session_id}"
+session = session_id_to_bids_session(session_id)
 
 log_level = args.log_level.upper()
 
@@ -76,6 +78,8 @@ for wf in workflows:
         modalities = ["T1w", "T2w"]
         
         # Run mriqc tracker to regenerate bagel
+        # Note: The latest schema needs to be downloaded from the dashboard repo
+        # (https://github.com/neurobagel/proc_dash/tree/main/schemas)
         dash_schema_file = f"{DATASET_ROOT}/proc/bagel_schema.json" 
         run_tracker.run(global_configs, dash_schema_file, ["mriqc"], logger=logger)
 

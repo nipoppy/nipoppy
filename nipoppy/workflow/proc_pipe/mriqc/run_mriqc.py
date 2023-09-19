@@ -18,6 +18,12 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
     bids_dir = f"{DATASET_ROOT}/bids/"
     proc_dir = f"{DATASET_ROOT}/proc/"
 
+    # logging
+    log_dir = f"{DATASET_ROOT}/scratch/logs/"
+    if logger is None:
+        log_file = f"{log_dir}/mriqc.log"
+        logger = my_logger.get_logger(log_file)
+
     if bids_db_path is None:
         bids_db_path = f"{DATASET_ROOT}/proc/bids_db"
     bids_db_dir = os.path.basename(bids_db_path)
@@ -33,13 +39,6 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
     # create working dir (intermediate files)
     mriqc_work_dir = f"{output_dir}/mriqc/v{MRIQC_VERSION}/work/"
     Path(mriqc_work_dir).mkdir(parents=True, exist_ok=True)
-
-    # logging
-    log_dir = f"{DATASET_ROOT}/scratch/logs/"
-
-    if logger is None:
-        log_file = f"{log_dir}/mriqc.log"
-        logger = my_logger.get_logger(log_file)
 
     logger.info("Starting mriqc run...")
     logger.info(f"participant: {participant_id}, session: {session_id}")
@@ -63,8 +62,8 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         --modalities {modalities_str} \
         --no-sub \
         --work-dir /work \
-        --bids-database-wipe" # wiping and regerating bids db
-        # --bids-database-dir /mriqc_proc/{bids_db_dir}" # Not working yet because of relative paths deprication in pybids
+        --bids-database-wipe" # wiping and regerating bids db with catalog.py
+        # --bids-database-dir /mriqc_proc/{bids_db_dir}"
     
     CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD 
     CMD = CMD_ARGS.split()
