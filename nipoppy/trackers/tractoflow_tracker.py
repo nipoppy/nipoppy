@@ -10,9 +10,9 @@ UNAVAILABLE="UNAVAILABLE"
 ## dictionary for all output stages / file stems from TractoFlow in execution order
 
 TractoFlow_Stages = {
-    "All": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI', 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues', 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF', 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking' ],
-    "DWIPreproc": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
-    "DWIPreprocEddyTopup": [ 'Bet_Prelim_DWI', 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup' ],
+    "All": [ 'Denoise_DWI', 'Gibbs_correction', 'Prepare_for_Topup', 'Prepare_dwi_for_eddy', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_DWI', 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues', 'Extract_DTI_Shell', 'Extract_FODF_Shell', 'DTI_Metrics', 'FODF_Metrics', 'Compute_FRF', 'PFT_Tracking_Maps', 'PFT_Seeding_Mask', 'PFT_Tracking' ],
+    "DWIPreproc": [ 'Denoise_DWI', 'Eddy', 'Topup', 'Eddy_Topup', 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
+    "DWIPreprocEddyTopup": [ 'Denoise_DWI', 'Gibbs_correction', 'Prepare_for_Topup', 'Prepare_dwi_for_eddy', 'Eddy', 'Topup', 'Eddy_Topup' ],
     "DWIPreprocResampled":[ 'Bet_DWI', 'N4_DWI', 'Crop_DWI', 'Normalize_DWI', 'Extract_B0', 'Resample_B0', 'Resample_DWI' ],
     "AnatPreproc": [ 'Denoise_T1', 'N4_T1', 'Resample_T1', 'Bet_T1', 'Crop_T1', 'Register_T1', 'Segment_Tissues' ],
     "AnatResample": [ 'Denoise_T1', 'N4_T1', 'Resample_T1' ],
@@ -27,7 +27,11 @@ TractoFlow_Stages = {
 
 TractoFlow_Procs = { 
     "Bet_Prelim_DWI": [ '__b0_bet_mask_dilated.nii.gz', '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz' ],
+    "Bet_DWI": [ '__b0_bet_mask.nii.gz', '__b0_bet.nii.gz', '__b0_no_bet.nii.gz', '__dwi_bet.nii.gz' ],
     "Denoise_DWI":  [ '__dwi_denoised.nii.gz' ],
+    "Gibbs_correction": [ '__dwi_gibbs_corrected.nii.gz' ],
+    "Prepare_for_Topup": [ '__b0_mean.nii.gz' ],
+    "Prepare_dwi_for_eddy": [ '__?' ],
     "Eddy":  [ '__bval_eddy', '__dwi_corrected.nii.gz', '__dwi_eddy_corrected.bvec' ],
     "Topup":  [ '__corrected_b0s.nii.gz', '__rev_b0_warped.nii.gz', 'topup_results_fieldcoef.nii.gz', 'topup_results_movpar.txt' ], 
     "Eddy_Topup":  [ '__b0_bet_mask.nii.gz', '__bval_eddy', '__dwi_corrected.nii.gz', '__dwi_eddy_corrected.bvec' ],
@@ -35,8 +39,7 @@ TractoFlow_Procs = {
     "N4_DWI":  [ '__dwi_n4.nii.gz' ],
     "Crop_DWI":  [ '__b0_cropped.nii.gz', '__b0_mask_cropped.nii.gz', '__dwi_cropped.nii.gz' ],
     "Normalize_DWI":  [ '__dwi_normalized.nii.gz', '_fa_wm_mask.nii.gz' ],
-    "Extract_B0":  [ '__b0.nii.gz' ],
-    "Resample_B0":  [ '__b0_mask_resampled.nii.gz', '__b0_resampled.nii.gz' ],
+    "Extract_B0":  [ '__b0_mask_resampled.nii.gz', '__b0_resampled.nii.gz' ],
     "Resample_DWI":  [ '__dwi_resampled.nii.gz' ],
     "Extract_DTI_Shell":  [ '__bval_dti', '__bvec_dti', '__dwi_dti.nii.gz' ],
     "Extract_FODF_Shell":  [ '__bval_fodf', '__bvec_fodf', '__dwi_fodf.nii.gz' ],
@@ -52,7 +55,7 @@ TractoFlow_Procs = {
     "Segment_Tissues":  [ '__map_csf.nii.gz', '__map_gm.nii.gz', '__map_wm.nii.gz', '__mask_csf.nii.gz', '__mask_gm.nii.gz', '__mask_wm.nii.gz' ],
     "PFT_Tracking_Maps":  [ '__interface.nii.gz', '__map_exclude.nii.gz', '__map_include.nii.gz' ],
     "PFT_Seeding_Mask": [ '__pft_seeding_mask.nii.gz' ],
-    "PFT_Tracking": [ '__pft_wholebrain_tracking.trk' ]
+    "PFT_Tracking": [ '__pft_tracking_prob_wm_seed_0.trk' ]
 }
 
     # "Local_Tracking_Mask": [ '__?' ],
@@ -87,11 +90,13 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
     ## check if Topup output exists - if it does, drop Eddy, otherwise drop Topup/Eddy_Topup
     if os.path.exists(subject_dir + '/Topup'):
         try:
+            procs.remove('Prepare_dwi_for_eddy')
             procs.remove('Eddy')
         except ValueError:
             pass
     else:
         try:
+            procs.remove('Prepare_for_Topup')
             procs.remove('Topup')
             procs.remove('Eddy_Topup')
         except ValueError:
@@ -115,6 +120,10 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
                 
     ## build logical if files exist
     filesExist = [ os.path.exists(out) for out in files ]
+
+    ## print missing files
+    #from itertools import compress
+    #print(list(compress(files, [not x for x in filesExist])))
     
     ## fill in possible status files
     if any(filesExist):
