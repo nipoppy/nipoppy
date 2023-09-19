@@ -240,7 +240,7 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
             ## if the phase encodings match exactly
             if (dmrifs1pe == dmrifs2pe):
 
-                ## print log for surprising situation of mathing files
+                ## print log for surprising situation of matching files
                 logger.info('Sequences are not reverse encoded and are identifcal.')
                 logger.info('Was the phase encoding not flipped during acquisition or are these sequences longitudinal?')
                 logger.info('Unsure how to parse. Ignoring shorter (or second) sequence.')
@@ -249,7 +249,7 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
                 if dmrifs1wd.shape[1] >= dmrifs2wd.shape[1]:
                     didx = dmri_files.index(dmrifs1)
                 else:
-                    didx = dmri_files.indes(dmrifs2)
+                    didx = dmri_files.index(dmrifs2)
                     
                 rpe_out = None
 
