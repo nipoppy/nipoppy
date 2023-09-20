@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import os
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -67,17 +68,11 @@ class GlobalConfigs():
                 message_suffix=f'for program: {self.name}',
             )
 
-    def __init__(self, fpath_global_configs) -> None:
+    def __init__(self, fpath_or_dict) -> None:
         """Load global configs from file."""
 
-        fpath_global_configs = Path(fpath_global_configs)
-        if not fpath_global_configs.exists():
-            raise FileNotFoundError(
-                f'Global configs file does not exist: {fpath_global_configs}'
-            )
-        
-        with open(fpath_global_configs, 'r') as file_global_configs:
-            self._global_configs_dict = json.load(file_global_configs)
+        self.fpath_or_dict = fpath_or_dict
+        self._global_configs_dict = self._get_json_dict(fpath_or_dict)
 
         # TODO use a schema for validation ?
         try:
@@ -119,7 +114,30 @@ class GlobalConfigs():
         """Path to derivatives bagel file."""
         return # TODO
     
-    def _process_programs(self, *program_configs_all: Mapping[str, Mapping]) -> dict[str, Program]:
+    @classmethod
+    def _get_json_dict(cls, fpath_or_dict) -> dict:
+        
+        if isinstance(fpath_or_dict, dict):
+            return fpath_or_dict
+        
+        elif isinstance(fpath_or_dict, (str, os.PathLike)):
+            fpath_global_configs = Path(fpath_or_dict)
+            if not fpath_global_configs.exists():
+                raise FileNotFoundError(
+                    f'Global configs file does not exist: {fpath_global_configs}'
+                )
+            
+            with open(fpath_global_configs, 'r') as file_global_configs:
+                return json.load(file_global_configs)
+            
+        else:
+            raise TypeError(
+                f'Expected a dict or a str/path-like object, '
+                f'got {type(fpath_or_dict)}'
+            )
+
+    @classmethod
+    def _process_programs(cls, *program_configs_all: Mapping[str, Mapping]) -> dict[str, Program]:
         programs = {}
         for program_configs in program_configs_all:
             for name, config in program_configs.items():
@@ -127,10 +145,10 @@ class GlobalConfigs():
                     raise RuntimeError(
                         f'Program {name} is not unique'
                     )
-                programs[name] = self.Program(name, config)
+                programs[name] = cls.Program(name, config)
         return programs
     
-    def _get_program(self, program_name: str) -> GlobalConfigs.Program:
+    def get_program(self, program_name: str) -> GlobalConfigs.Program:
         try:
             program = self.programs[program_name]
         except KeyError as exception:
@@ -141,14 +159,14 @@ class GlobalConfigs():
         return program
 
     def check_version(self, program_name: str, program_version: str | None = None) -> str:
-        return self._get_program(program_name).check_version(program_version)
+        return self.get_program(program_name).check_version(program_version)
 
     def get_fpath_container(self, program_name: str, program_version: str | None = None) -> Path:
-        program = self._get_program(program_name)
+        program = self.get_program(program_name)
         return Path(self.container_store) / program.get_fname_container(program_version)
 
     def get_fpath_invocation_template(self, program_name: str, program_version: str | None = None) -> Path:
-        program = self._get_program(program_name)
+        program = self.get_program(program_name)
         return program.get_fpath_invocation_template(program_version)
     
     class MissingFieldException(Exception):

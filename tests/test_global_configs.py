@@ -5,7 +5,7 @@ from typing import Mapping
 
 import pytest
 
-from .conftest import global_configs_file
+from .conftest import global_configs_file, global_configs_for_testing
 from nipoppy.base import GlobalConfigs
 
 @pytest.fixture
@@ -54,12 +54,34 @@ def program(program_name_and_config) -> GlobalConfigs.Program:
     name, config = program_name_and_config
     return GlobalConfigs.Program(name=name, config=config)
 
-def test_global_configs_not_found():
-    with pytest.raises(FileNotFoundError):
-        GlobalConfigs('fake_path.json')
+@pytest.mark.parametrize(
+    'param',
+    [
+        global_configs_file(),
+        global_configs_for_testing(Path()),
+    ],
+)
+def test_global_configs_init(param):
+    assert GlobalConfigs(param)
 
-def test_global_configs_init():
-    assert GlobalConfigs(global_configs_file())
+@pytest.mark.parametrize(
+    'fpath_or_dict',
+    [
+        global_configs_file(),
+        global_configs_for_testing(Path()),
+    ],
+)
+def test_global_configs_get_json_dict(fpath_or_dict):
+    assert isinstance(GlobalConfigs._get_json_dict(fpath_or_dict), dict)
+
+def test_global_configs_get_json_dict_not_found():
+    with pytest.raises(FileNotFoundError):
+        GlobalConfigs._get_json_dict('fake_path.json')
+
+@pytest.mark.parametrize('input', [None, ['x'], 1])
+def test_global_configs_get_json_dict_invalid(input):
+    with pytest.raises(TypeError):
+        GlobalConfigs._get_json_dict(input)
 
 @pytest.mark.parametrize(
     'required_field',
@@ -78,38 +100,33 @@ def test_global_configs_init():
 )
 def test_global_configs_missing_required_field(required_field):
 
-    with global_configs_file().open('r') as file_global_configs:
-        global_configs: dict = json.load(file_global_configs)
-    invalid_global_configs = global_configs.copy()
-    invalid_global_configs.pop(required_field)
+    global_configs = global_configs_for_testing(Path())
+    global_configs.pop(required_field)
 
-    with NamedTemporaryFile('w') as file_invalid_global_configs:
-        json.dump(invalid_global_configs, file_invalid_global_configs)
-        file_invalid_global_configs.flush()
-        with pytest.raises(GlobalConfigs.MissingFieldException, match='Missing field'):
-            GlobalConfigs(file_invalid_global_configs.name)
+    with pytest.raises(GlobalConfigs.MissingFieldException, match='Missing field'):
+        GlobalConfigs(global_configs)
 
 # TODO test fpath_{manifest,doughnut,derivatives_bagel}    
 
-def test_global_configs_process_programs(global_configs: GlobalConfigs, pipeline_configs, bids_configs):
-    programs = global_configs._process_programs(pipeline_configs, bids_configs)
+def test_global_configs_process_programs(pipeline_configs, bids_configs):
+    programs = GlobalConfigs._process_programs(pipeline_configs, bids_configs)
     assert isinstance(programs, Mapping)
     assert len(programs) == len(set(pipeline_configs.keys()) | set(bids_configs.keys()))
     for name, program in programs.items():
         assert isinstance(name, str)
         assert isinstance(program, GlobalConfigs.Program)
 
-def test_global_configs_process_programs_duplicates(global_configs: GlobalConfigs, pipeline_configs):
+def test_global_configs_process_programs_duplicates(pipeline_configs):
     with pytest.raises(RuntimeError, match='not unique'):
-        global_configs._process_programs(pipeline_configs, pipeline_configs)
+        GlobalConfigs._process_programs(pipeline_configs, pipeline_configs)
 
 @pytest.mark.parametrize('name', ['fmriprep', 'heudiconv'])
 def test_global_configs_get_program(global_configs: GlobalConfigs, name):
-    assert global_configs._get_program(name)
+    assert global_configs.get_program(name)
 
 def test_global_configs_get_program_invalid(global_configs: GlobalConfigs):
     with pytest.raises(RuntimeError):
-       global_configs._get_program('fake_program_name')
+       global_configs.get_program('fake_program_name')
 
 @pytest.mark.parametrize('pipeline', ['fmriprep', 'heudiconv'])
 def test_global_configs_check_version(global_configs: GlobalConfigs, pipeline):
