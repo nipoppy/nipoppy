@@ -86,7 +86,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
 
             status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
 
-            dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) 
+            dash_col_list = list(schema["GLOBAL_COLUMNS"].keys()) + list(status_check_dict.keys())
               
             _df = pd.DataFrame(index=bids_participants, columns=dash_col_list)          
             _df["session"] = session
@@ -95,8 +95,8 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
 
             # Set correct dtype based on dash schema to avoid panads warning
             # i.e. "FutureWarning: Setting an item of incompatible dtype"
-            for dash_col in dash_col_list:
-                dash_col_dtype = schema["GLOBAL_COLUMNS"][dash_col]["dtype"]
+            dash_col_dtype = "str"
+            for dash_col, _ in status_check_dict.items():
                 _df[dash_col] = _df[dash_col].astype(dash_col_dtype)
 
             # BIDS (i.e. heudiconv tracker is slightly different than proc_pipes)
@@ -130,8 +130,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         else:
                             status = func(subject_dir, session_id, run_id)
 
-                        logger.debug(f"task_name: {name}, status: {status}")
-                        _df[name] = "" # Avoids "FutureWarning: Setting an item of incompatible dtype"
+                        logger.debug(f"task_name: {name}, status: {status}")                        
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # TODO
@@ -163,8 +162,8 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
-    parser.add_argument('--session_id', type=str, default="ALL", help='session_id (default = ALL')
-    parser.add_argument('--log_level', type=str, default="INFO", help='session_id (default = ALL')
+    parser.add_argument('--session_id', type=str, default="ALL", help='session_id (default = ALL)')
+    parser.add_argument('--log_level', type=str, default="INFO", help='log level')
     args = parser.parse_args()
 
     # read global configs
