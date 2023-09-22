@@ -444,8 +444,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
     if use_bids_filter:
-        logger.info(f"Will utilize bids_filter.json in: {DATASET_ROOT}/bids/bids_filter.json")
-        ## I guess this would copy the bids_filter.json to somewhere for providence?
+        logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
+        shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
         
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output"
@@ -588,7 +588,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     TRACTOFLOW_PIPE=f'{DATASET_ROOT}/workflow/proc_pipe/tractoflow'
     
     ## nextflow arguments for logging - this is fixed for every run
-    NEXTFLOW_CMD=f"nextflow run /scilus_flows/tractoflow/main.nf -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
+    NEXTFLOW_CMD=f"nextflow -log {LOGDIR}/{participant_id}_ses-{session_id}_nf-log.txt run /scilus_flows/tractoflow/main.nf -work-dir {tractoflow_work_dir} -with-trace {LOGDIR}/{participant_id}_ses-{session_id}_nf-trace.txt -with-report {LOGDIR}/{participant_id}_ses-{session_id}_nf-report.html"
     
     ## compose tractoflow arguments
     TRACTOFLOW_CMD=f""" --input {tractoflow_nxtf_inp} --output_dir {tractoflow_out_dir} --run_t1_denoising --run_gibbs_correction --encoding_direction {phase} --readout {readout} --dti_shells "0 {dti_use}" --fodf_shells "0 {odf_use}" --sh_order {sh_order} --profile {profile} --processes {ncore}"""
