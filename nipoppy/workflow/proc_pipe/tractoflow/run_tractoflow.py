@@ -448,7 +448,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
         
     ## build paths for outputs
-    tractoflow_out_dir = f"{tractoflow_dir}/output"
+    tractoflow_out_dir = f"{tractoflow_dir}/output/ses-{session_id}"
     tractoflow_home_dir = f"{tractoflow_out_dir}/{participant_id}"
     if not os.path.exists(Path(f"{tractoflow_home_dir}")):
         Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
@@ -610,7 +610,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     logger.info(f"Running TractoFlow for participant: {participant_id}")
 
     ## singularity 
-    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir}:/nextflow -B {DATASET_ROOT} {SINGULARITY_TRACTOFLOW}"
+    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {DATASET_ROOT} {SINGULARITY_TRACTOFLOW}"
 
     CMD=SINGULARITY_CMD + " " + CMD_ARGS
     logger.info("+"*75)
