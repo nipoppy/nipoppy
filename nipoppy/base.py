@@ -1,12 +1,16 @@
 from __future__ import annotations
+import copy
 import json
 import os
 from pathlib import Path
 from typing import Iterable, Mapping
 
-class GlobalConfigs():
+# TODO decide where to put this (and if this is even needed)
+FNAME_MANIFEST = 'manifest.csv'
+FNAME_DOUGHNUT = 'doughnut.csv'
+FNAME_BAGEL = 'bagel.csv'
 
-    # TODO load tree.json as an object?
+class GlobalConfigs():
 
     class Program():
 
@@ -68,73 +72,64 @@ class GlobalConfigs():
                 message_suffix=f'for program: {self.name}',
             )
 
-    def __init__(self, fpath_or_dict) -> None:
+    def __init__(self, global_config: GlobalConfigs | dict | os.PathLike | str) -> None:
         """Load global configs from file."""
 
-        self.fpath_or_dict = fpath_or_dict
-        self._global_configs_dict = self._get_json_dict(fpath_or_dict)
-
-        # TODO use a schema for validation ?
-        try:
-            self.dataset_name = Path(self._global_configs_dict['DATASET_NAME'])
-            self.dataset_root = Path(self._global_configs_dict['DATASET_ROOT'])
-            self.container_store: str = self._global_configs_dict['CONTAINER_STORE']
-            self.singularity_path: str = self._global_configs_dict['SINGULARITY_PATH']
-            self.sessions: list[str] = self._global_configs_dict['SESSIONS']
-            self.visits: list[str] = self._global_configs_dict['VISITS']
-            self.tabular: dict[str, dict] = self._global_configs_dict['TABULAR']
-            self.workflows: list = self._global_configs_dict['WORKFLOWS']
-            # self.bids = self._process_programs(
-            #     self._global_configs_dict['BIDS']
-            # )
-            # self.pipelines = self._process_programs(
-            #     self._global_configs_dict['PROC_PIPELINES']
-            # )
-            self.programs = self._process_programs(
-                self._global_configs_dict['BIDS'],
-                self._global_configs_dict['PROC_PIPELINES'],
-            )
-        except KeyError as exception:
-            self.raise_missing_field_error(exception)
-
-        # TODO define fpath_{manifest/doughnut/derivatives_bagel} here?
-
-    # @property
-    # def fpath_manifest(self) -> Path:
-    #     """Path to manifest file."""
-    #     return # TODO
-    
-    # @property
-    # def fpath_doughnut(self) -> Path:
-    #     """Path to doughnut file."""
-    #     return # TODO
-    
-    # @property
-    # def fpath_derivatives_bagel(self) -> Path:
-        """Path to derivatives bagel file."""
-        return # TODO
-    
-    @classmethod
-    def _get_json_dict(cls, fpath_or_dict) -> dict:
-        
-        if isinstance(fpath_or_dict, dict):
-            return fpath_or_dict
-        
-        elif isinstance(fpath_or_dict, (str, os.PathLike)):
-            fpath_global_configs = Path(fpath_or_dict)
+        if isinstance(global_config, GlobalConfigs):
+            global_configs_dict = copy.deepcopy(global_config.global_configs_dict)
+        elif isinstance(global_config, dict):
+            global_configs_dict = copy.deepcopy(global_config)
+        elif isinstance(global_config, (str, os.PathLike)):
+            fpath_global_configs = Path(global_config)
             if not fpath_global_configs.exists():
                 raise FileNotFoundError(
                     f'Global configs file does not exist: {fpath_global_configs}'
                 )
-            
             with open(fpath_global_configs, 'r') as file_global_configs:
-                return json.load(file_global_configs)
-            
+                global_configs_dict = json.load(file_global_configs)
         else:
             raise TypeError(
                 f'Expected a dict or a str/path-like object, '
-                f'got {type(fpath_or_dict)}'
+                f'got {type(global_config)}'
             )
+
+        # TODO use a schema for validation ?
+        try:
+            self.dataset_name = Path(global_configs_dict['DATASET_NAME'])
+            self.dataset_root = Path(global_configs_dict['DATASET_ROOT'])
+            self.container_store: str = global_configs_dict['CONTAINER_STORE']
+            self.singularity_path: str = global_configs_dict['SINGULARITY_PATH']
+            self.sessions: list[str] = global_configs_dict['SESSIONS']
+            self.visits: list[str] = global_configs_dict['VISITS']
+            self.tabular: dict[str, dict] = global_configs_dict['TABULAR']
+            self.workflows: list = global_configs_dict['WORKFLOWS']
+            # self.bids = self._process_programs(
+            #     global_configs_dict['BIDS']
+            # )
+            # self.pipelines = self._process_programs(
+            #     global_configs_dict['PROC_PIPELINES']
+            # )
+            self.programs = self._process_programs(
+                global_configs_dict['BIDS'],
+                global_configs_dict['PROC_PIPELINES'],
+            )
+        except KeyError as exception:
+            self.raise_missing_field_error(exception)
+
+        self.global_config = global_config
+        self.global_configs_dict = global_configs_dict
+
+        # TODO add more
+        # TODO load tree.json as an object?
+        self.dpath_bids = self.dataset_root / 'bids'
+        self.dpath_proc = self.dataset_root / 'proc'
+        self.dpath_scratch = self.dataset_root / 'scratch'
+        self.dpath_raw_dicom = self.dpath_scratch / 'raw_dicom'
+        self.dpath_tabular = self.dataset_root / 'tabular'
+        self.dpath_derivatives = self.dataset_root / 'derivatives'
+        self.fpath_manifest = self.dpath_tabular / FNAME_MANIFEST
+        self.fpath_doughnut = self.dpath_raw_dicom / FNAME_DOUGHNUT
+        self.fpath_derivatives_bagel = self.dpath_derivatives / FNAME_BAGEL
 
     @classmethod
     def _process_programs(cls, *program_configs_all: Mapping[str, Mapping]) -> dict[str, Program]:
@@ -154,7 +149,7 @@ class GlobalConfigs():
         except KeyError as exception:
             raise RuntimeError(
                 f'Program {exception} not found in global configs. '
-                f'Available programs are: {self.programs.keys()}'
+                f'Available programs are: {list(self.programs.keys())}'
             )
         return program
 
@@ -164,6 +159,9 @@ class GlobalConfigs():
     def get_fpath_container(self, program_name: str, program_version: str | None = None) -> Path:
         program = self.get_program(program_name)
         return Path(self.container_store) / program.get_fname_container(program_version)
+
+    def get_dpath_pipeline_derivatives(self, pipeline_name: str, pipeline_version: str | None = None) -> Path:
+        return self.dpath_derivatives / pipeline_name / self.check_version(pipeline_name, pipeline_version)
 
     def get_fpath_invocation_template(self, program_name: str, program_version: str | None = None) -> Path:
         program = self.get_program(program_name)
