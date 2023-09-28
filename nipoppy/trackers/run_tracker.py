@@ -44,7 +44,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     # logging
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
     if logger is None:
-        log_file = f"{log_dir}/mriqc.log"
+        log_file = f"{log_dir}/tracker.log"
         logger = my_logger.get_logger(log_file, level=log_level)
 
     logger.info(f"Tracking pipelines: {pipelines}")
