@@ -204,7 +204,7 @@ def generate_pybids_index(global_configs, session_id, pipeline, ignore_patterns,
         bids_db_path = f"{DATASET_ROOT}/proc/bids_db_{pipeline}"
     
     # Get list of on-disk and new participants
-    # We will completely ingore the on-disk participants in the BIDS index
+    # We will completely ignore the on-disk participants in the BIDS index
     # We will ignore certain modalities / acq patterns for the new participants (avoid mriqc and fmriprep errors)
     # Example ignore patterns: ["/anat/{}_{}_{}_NM"]
 
