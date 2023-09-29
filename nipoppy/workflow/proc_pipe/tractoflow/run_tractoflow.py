@@ -22,9 +22,12 @@ CWD = os.path.dirname(os.path.abspath(fname))
 
 MEM_MB = 4000
 
-def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logger=None):
+def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_filter=False, logger=None):
     """ Parse and verify the input files to build TractoFlow's simplified input to avoid their custom BIDS filter
     """
+
+    ## load from global configs
+    DATASET_ROOT = global_configs["DATASET_ROOT"]
 
     ## because why parse subject ID the same as bids ID?
     subj = participant_id.replace('sub-', '')
@@ -45,7 +48,7 @@ def parse_data(bids_dir, participant_id, session_id, use_bids_filter=False, logg
     ## load the bids filter if it's called
     if use_bids_filter:
 
-        bidf_path = Path(bids_dir, 'bids_filter.json') ## is this where it will always be?
+        bidf_path = Path(f"{DATASET_ROOT}", 'proc', 'bids_filter_tractoflow.json') ## is this where it will always be?
         ## or does this need to turn into a path to a filter to load?
 
         ## if a filter exists
@@ -442,10 +445,13 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     bids_dir = f"{DATASET_ROOT}/bids"
     tractoflow_dir = f"{output_dir}/tractoflow/v{TRACTOFLOW_VERSION}"
 
-    ## Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
+    ## Copy bids_filter.json 
     if use_bids_filter:
-        logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
-        shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
+        if not os.path.exists(f"{DATASET_ROOT}/proc/bids_filter_tractoflow.json"):
+            logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/proc/bids_filter_tractoflow.json (to be seen by Singularity container)")
+            shutil.copyfile(f"{CWD}/bids_filter.json", f"{DATASET_ROOT}/proc/bids_filter_tractoflow.json")
+        else:
+            logger.info(f"Using found {DATASET_ROOT}/proc/bids_filter_tractoflow.json")
         
     ## build paths for outputs
     tractoflow_out_dir = f"{tractoflow_dir}/output/ses-{session_id}"
@@ -454,7 +460,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         Path(f"{tractoflow_home_dir}").mkdir(parents=True, exist_ok=True)
 
     ## call the file parser to copy the correct files to the input structure
-    dmrifile, bvalfile, bvecfile, anatfile, rpe_file, phase, readout = parse_data(bids_dir, participant_id, session_id, use_bids_filter, logger)
+    dmrifile, bvalfile, bvecfile, anatfile, rpe_file, phase, readout = parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_filter, logger)
     ## use_bids_filter may need to be path to the filter so it can be loaded, not the logical
 
     ## build paths to working inputs
