@@ -37,11 +37,18 @@ class GlobalConfigs():
             return self._get_optional_field('INVOCATION_TEMPLATE')
 
         def get_fname_container(self, version: str | None = None) -> str:
-            return self.fname_container_template.format(self.check_version(version))
+            version = self.check_version(version)
+            return self.fname_container_template.format(version)
+        
+        def get_fname_bids_ignore(self, version: str | None = None) -> str:
+            version = self.check_version(version)
+            # TODO have default? Include in global configs?
+            return f'ignore_patterns-{self.name}-{version}.txt'
         
         def get_fpath_invocation_template(self, version: str | None = None) -> Path:
+            version = self.check_version(version)
             fpath_invocation_template = Path(
-                self.invocation_template.format(self.check_version(version))
+                self.invocation_template.format(version)
             )
             return fpath_invocation_template
 
@@ -127,9 +134,25 @@ class GlobalConfigs():
         self.dpath_raw_dicom = self.dpath_scratch / 'raw_dicom'
         self.dpath_tabular = self.dataset_root / 'tabular'
         self.dpath_derivatives = self.dataset_root / 'derivatives'
+        self.dpath_bids_ignore = self.dpath_proc / 'bids_ignore'
         self.fpath_manifest = self.dpath_tabular / FNAME_MANIFEST
         self.fpath_doughnut = self.dpath_raw_dicom / FNAME_DOUGHNUT
         self.fpath_derivatives_bagel = self.dpath_derivatives / FNAME_BAGEL
+
+        if not self.dataset_root.exists():
+            raise FileNotFoundError(
+                f'Dataset root does not exist: {self.dataset_root}'
+            )
+
+    @property
+    def templateflow_dir(self) -> Path:
+        return Path(self._get_optional_field('TEMPLATEFLOW_DIR'))
+
+    def _get_optional_field(self, field_name):
+        try:
+            return self.global_configs_dict[field_name]
+        except KeyError as exception:
+            self.raise_missing_field_error(exception)
 
     @classmethod
     def _process_programs(cls, *program_configs_all: Mapping[str, Mapping]) -> dict[str, Program]:
@@ -160,8 +183,14 @@ class GlobalConfigs():
         program = self.get_program(program_name)
         return Path(self.container_store) / program.get_fname_container(program_version)
 
-    def get_dpath_pipeline_derivatives(self, pipeline_name: str, pipeline_version: str | None = None) -> Path:
-        return self.dpath_derivatives / pipeline_name / self.check_version(pipeline_name, pipeline_version)
+    def get_dpath_pipeline_derivatives(self, pipeline_name: str, pipeline_version: str | None = None, check_version=True) -> Path:
+        if check_version:
+            pipeline_version = self.check_version(pipeline_name, pipeline_version)
+        return self.dpath_derivatives / pipeline_name / pipeline_version
+    
+    def get_fpath_bids_ignore(self, programe_name: str, program_version: str | None = None) -> Path:
+        program = self.get_program(programe_name)
+        return self.dpath_bids_ignore / program.get_fname_bids_ignore(program_version)
 
     def get_fpath_invocation_template(self, program_name: str, program_version: str | None = None) -> Path:
         program = self.get_program(program_name)

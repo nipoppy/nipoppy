@@ -1,66 +1,104 @@
+from __future__ import annotations
 import datetime
-import json
 import logging
 import os
 import re
 import shlex
 import subprocess
+import traceback
 from abc import ABC, abstractmethod
+from functools import wraps
 from pathlib import Path
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from nipoppy.base import GlobalConfigs
+from nipoppy.io import load_json
+from nipoppy.workflow.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 class BaseRunner(ABC):
 
-    log_format = '%(asctime)s - %(name)s - %(levelname)s\t- %(message)s'
+    log_format = '%(asctime)s - %(name)s - %(levelname)-7s - %(message)s'
 
-    singularity_bind_flag = '--bind'
-    singularity_bind_sep = ':'
+    sep = '-'
+    dname_logs = 'logs'
+    template_replace_pattern = re.compile('\[\[NIPOPPY\_(.*?)\]\]')
     
     def __init__(self, name: str, global_configs, logger=None, log_level=logging.DEBUG, dry_run=False) -> None:
 
         self.global_configs = GlobalConfigs(global_configs)
         self.name = name
         self.dry_run = dry_run
-        self._logger = logger
+        self.logger: logging.Logger | None = logger
         self.log_level = log_level
 
         self.fpath_log = None
         self.command_failed = False
         self.command_history = []
-        self._singularity_flags = []
 
-    @property
-    def logger(self) -> logging.Logger:
-        if self._logger is None:
-            if self.fpath_log is None:
-                self.fpath_log = self.generate_fpath_log(self.global_configs, self.name)
-            self._logger = self.create_logger(
-                name=str(self),
-                fpath=self.fpath_log,
-                level=self.log_level,
-            )
-        return self._logger
+    def log_errors(func):
 
+        @wraps(func)
+        def _func(self: BaseRunner, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except Exception as exception:
+                if hasattr(self, 'run_cleanup'):
+                    self.run_cleanup(**kwargs)
+                self.error(traceback.format_exc())
+                raise exception
+
+        return _func
+    
+    @log_errors
     def run(self, **kwargs):
         self.run_setup(**kwargs)
         self.run_main(**kwargs)
         self.run_cleanup(**kwargs)
+        return self
 
-    def run_setup(self, **kwargs):
-        self.info('========== BEGIN ==========')
+    def run_setup(self, print_begin=True, **kwargs):
+        if print_begin:
+            self.info('========== BEGIN ==========')
 
     @abstractmethod
     def run_main(self, **kwargs):
         pass
 
-    def run_cleanup(self, **kwargs):
-        self.info('========== END ==========')
+    def run_cleanup(self, print_end=True, **kwargs):
+        if print_end:
+            self.info('========== END ==========')
     
+    def process_template_str(self, template_str: str, resolve_paths=True, **kwargs) -> str:
+
+        def replace(json_str: str, to_replace: str, replacement):
+            if resolve_paths and isinstance(replacement, Path):
+                replacement = replacement.resolve()
+            return json_str.replace(to_replace, str(replacement))
+
+        matches = self.template_replace_pattern.finditer(template_str)
+        for match in matches:
+            if len(match.groups()) != 1:
+                raise ValueError(
+                    f'Expected exactly one match group for match: {match}'
+                )
+            to_replace = match.group()
+            replacement_key = match.groups()[0].lower()
+
+            if replacement_key in kwargs:
+                template_str = replace(template_str, to_replace, kwargs[replacement_key])
+            elif hasattr(self, replacement_key):
+                template_str = replace(template_str, to_replace, getattr(self, replacement_key))
+            elif hasattr(self.global_configs, replacement_key):
+                template_str = replace(template_str, to_replace, getattr(self.global_configs, replacement_key))
+            else:
+                raise RuntimeError(f'Unable to replace {to_replace} in {template_str}')
+            
+        return template_str
+
     @classmethod
     def create_logger(cls, name: str, fpath=None, level=logging.DEBUG) -> logging.Logger:
         
+        # get the logger
         logger = logging.getLogger(name)
         logger.setLevel(level)
 
@@ -81,24 +119,25 @@ class BaseRunner(ABC):
             file_handler.setFormatter(file_formatter)
             logger.addHandler(file_handler)
 
+            logger.info(f'Writing log to file: {fpath}')
+
+        else:
+            logger.warning('No path provided for logger, will not write to a log file.')
+
         return logger
     
-    def generate_fpath_log(self, global_configs: GlobalConfigs, name, tags=None, sep_tag='-') -> Path:
+    def generate_fpath_log(self, tags=None) -> Path:
         if tags is None:
             tags = []
-        elif isinstance(tags, str):
+        elif isinstance(tags, str) or not isinstance(tags, Sequence):
             tags = [tags]
         tags = [str(tag) for tag in tags]
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        dpath_log = global_configs.dpath_scratch / 'logs' / name # TODO don't hardcode path to scratch
-        fname_log = f'{sep_tag.join([name, timestamp] + tags)}.log'
+        dpath_log = self.global_configs.dpath_scratch / self.dname_logs / self.name
+        fname_log = f'{self.sep.join([self.name, timestamp] + tags)}.log'
         return dpath_log / fname_log
 
-    def run_commands(self, seq_of_commands_or_args: Sequence[Sequence[str] | str]):
-        for command in seq_of_commands_or_args:
-            self.run_command(command)
-
-    def run_command(self, command_or_args: Sequence[str] | str, check=True, **kwargs):
+    def run_command(self, command_or_args: Sequence[str] | str, check=True, capture_output=False, **kwargs):
 
         # build command string
         if not isinstance(command_or_args, str):
@@ -110,6 +149,7 @@ class BaseRunner(ABC):
 
         self.log_command(command)
 
+        output_str = ''
         if not self.dry_run:
 
             process = subprocess.Popen(
@@ -121,6 +161,8 @@ class BaseRunner(ABC):
 
             while process.poll() is None:
                 for line in process.stdout:
+                    if capture_output:
+                        output_str += line # store the line as-is
                     line = line.strip('\n')
                     self.debug(f'[RUN OUTPUT] {line}')
 
@@ -129,42 +171,53 @@ class BaseRunner(ABC):
                 self.error(exception)
                 self.command_failed = True
                 raise exception
+            
+            run_output = process
+            
+        else:
+            run_output = command
+
+        # return only the captured stdout/stderr string
+        # instead of the POpen object or command string
+        if capture_output:
+            run_output = output_str
 
         # only include successful commands in history
         self.command_history.append(command_or_args)
 
-        if not self.dry_run:
-            return process
-        else:
-            return command
+        return run_output
     
-    @property
-    def singularity_flags(self) -> str:
-        return shlex.join(self._singularity_flags)
-
-    def add_singularity_bind_flag(self, path_local: str | os.PathLike, path_container: str | os.PathLike | None = None, mode: str = 'rw'):
-        if path_container is None:
-            path_container = path_local
-        self._singularity_flags.extend([
-            self.singularity_bind_flag,
-            self.singularity_bind_sep.join([str(path_local), str(path_container), mode])
-        ])
-        self.run_command(f'mkdir -p {path_local}')
-
     def log_command(self, command: str):
         self.info(f'[RUN] {command}')
     
-    def log(self, message, level=logging.INFO):
-        self.logger.log(level, message)
-
-    def info(self, message):
-        return self.log(message, level=logging.INFO)
+    def _log(self, message, level=logging.INFO, splitlines=True):
+        if self.logger is None:
+            self.fpath_log = self.generate_fpath_log()
+            self.logger = self.create_logger(
+                name=str(self),
+                fpath=self.fpath_log,
+                level=self.log_level,
+            )
+        if splitlines:
+            for line in str(message).splitlines():
+                self.logger.log(level, line)
+        else:
+            self.logger.log(level, message)
 
     def debug(self, message):
-        return self.log(message, level=logging.DEBUG)
+        return self._log(message, level=logging.DEBUG)
+    
+    def info(self, message):
+        return self._log(message, level=logging.INFO)
+    
+    def warning(self, message):
+        return self._log(message, level=logging.WARNING)
     
     def error(self, message):
-        return self.log(message, level=logging.ERROR)
+        return self._log(message, level=logging.ERROR)
+
+    def critical(self, message):
+        return self._log(message, level=logging.CRITICAL)
 
     def _str_helper(self, components=None, names=None, sep=', '):
         if components is None:
@@ -181,35 +234,83 @@ class BaseRunner(ABC):
     def __repr__(self) -> str:
         return self.__str__()
 
-class BaseParallelRunner(BaseRunner, ABC):
+class BaseRunnerSingularity(BaseRunner, ABC):
 
-    def __init__(self, name, global_configs, n_jobs=1, **kwargs) -> None:
-        super().__init__(name, global_configs, **kwargs)
-        self.n_jobs = n_jobs
+    singularity_cleanenv_flag = '--cleanenv'
+    singularity_bind_flag = '--bind'
+    singularity_bind_sep = ':'
+    singularity_env_prefix = 'APPTAINERENV_'
+
+    def __init__(self, name: str, global_configs, logger=None, log_level=logging.DEBUG, dry_run=False, with_templateflow=True) -> None:
+        super().__init__(name, global_configs, logger, log_level, dry_run)
+        self.with_templateflow = with_templateflow
+        self._singularity_flags: list = []
 
     def run_setup(self, **kwargs):
-        # TODO call get_args_for_parallel to get list of kwarg dicts
-        # TODO validate list of kwarg dicts
-        pass
+        output = super().run_setup(**kwargs)
+        self.set_singularity_defaults()
+        return output
+    
+    def set_singularity_defaults(self):
+        self.add_singularity_flags(self.singularity_cleanenv_flag)
+        self.add_singularity_envvar('REQUESTS_CA_BUNDLE', '')
+        if self.with_templateflow:
+            self.setup_templateflow()
 
-    def run_main(self, **kwargs):
-        if self.n_jobs == 1:
-            # TODO loop over args
-            return self.to_run_in_parallel(**kwargs)
-        else:
-            pass # TODO
+    def add_singularity_envvar(self, var_name: str, var_value: str):
+        var_name_processed = f'{self.singularity_env_prefix}{var_name}'
+        self.info(f'Setting environment variable: {var_name_processed}={var_value}')
+        os.environ[var_name_processed] = str(var_value)
 
-    @abstractmethod
-    def get_kwargs_for_parallel(self, **kwargs):
-        pass
+    def setup_templateflow(self):
+        self.add_singularity_envvar(
+            'TEMPLATEFLOW_HOME',
+            self.global_configs.templateflow_dir.resolve(),
+        )
+        self.add_singularity_symmetric_bind_path(
+            self.global_configs.templateflow_dir.resolve(),
+        )
+    
+    @property
+    def singularity_flags(self) -> str:
+        return shlex.join(self._singularity_flags)
+    
+    def add_singularity_flags(self, flags: str | Iterable) -> None:
+        if isinstance(flags, str):
+            flags = [flags]
+        self._singularity_flags.extend(flags)
+    
+    def add_singularity_bind_flag(self, path_local: str | os.PathLike, path_inside_container: str | os.PathLike | None = None, mode: str = 'rw'):
+        
+        path_local = Path(path_local).resolve()
+        if (not self.dry_run) and (not path_local.exists()):
+            raise FileNotFoundError(
+                f'Bind path for Apptainer/Singularity does not exist: {path_local}'
+            )
 
-    @abstractmethod
-    def to_run_in_parallel(self, **kwargs):
-        pass
+        if path_inside_container is None:
+            path_inside_container = path_local
 
-class BoutiquesRunner(BaseRunner):
+        self.add_singularity_flags([
+            self.singularity_bind_flag,
+            self.singularity_bind_sep.join([
+                str(path_local),
+                str(path_inside_container),
+                mode,
+            ])
+        ])
 
-    json_replace_pattern = re.compile('\[\[NIPOPPY\_(.*?)\]\]')
+    def add_singularity_symmetric_bind_path(self, path: str | os.PathLike, mode='rw'):
+        path = Path(path)
+        if not path.exists() and mode == 'rw':
+            self.warning(
+                f'Creating directory because it does not exist: {path}'
+                )
+            self.run_command(f'mkdir -p {path}')
+        self.add_singularity_bind_flag(path, mode=mode)
+
+class BoutiquesRunner(BaseRunnerSingularity):
+
     dpath_descriptors = Path(__file__).parent / 'descriptors' # TODO don't hardcode path?
 
     def __init__(self, global_configs, pipeline_name: str, pipeline_version: str | None = None, **kwargs) -> None:
@@ -232,28 +333,23 @@ class BoutiquesRunner(BaseRunner):
     # TODO when to do validation (file exists, processing success)
     def load_descriptor_template(self) -> str:
         fpath_descriptor_template = self.dpath_descriptors / f'{self.pipeline_name}-{self.pipeline_version}.json'
-        with fpath_descriptor_template.open() as file:
-            descriptor_template = json.load(file)
-        return json.dumps(descriptor_template)
+        return load_json(fpath_descriptor_template, return_str=True)
 
     def load_invocation_template(self) -> str:
         fpath = self.global_configs.get_fpath_invocation_template(
             self.pipeline_name,
             self.pipeline_version,
         )
-
-        with fpath.open() as file:
-            invocation_template = json.load(file)
-        return json.dumps(invocation_template)
+        return load_json(fpath, return_str=True)
 
     def run_main(self, **kwargs):
 
         # process and validate the descriptor
-        descriptor = self.process_boutiques_json(self.descriptor_template)
+        descriptor = self.process_template_str(self.descriptor_template)
         self.run_command(['bosh', 'validate', descriptor])
 
         # process and validate the invocation
-        invocation = self.process_boutiques_json(
+        invocation = self.process_template_str(
             self.invocation_template,
             **kwargs,
         )
@@ -262,76 +358,108 @@ class BoutiquesRunner(BaseRunner):
         # run
         self.run_command(['bosh', 'exec', 'simulate', '-i', invocation, descriptor])
         self.run_command(['bosh', 'exec', 'launch', '--stream', descriptor, invocation])
-
-    def process_boutiques_json(self, json_str: str, **kwargs) -> str:
-
-        def replace(json_str: str, to_replace: str, replacement):
-            return json_str.replace(to_replace, str(replacement))
-
-        matches = self.json_replace_pattern.finditer(json_str)
-        for match in matches:
-            if len(match.groups()) != 1:
-                raise ValueError(
-                    f'Expected exactly one match group for match: {match}'
-                )
-            to_replace = match.group()
-            replacement_key = match.groups()[0].lower()
-
-            if replacement_key in kwargs:
-                json_str = replace(json_str, to_replace, kwargs[replacement_key])
-            elif hasattr(self, replacement_key):
-                json_str = replace(json_str, to_replace, getattr(self, replacement_key))
-            elif hasattr(self.global_configs, replacement_key):
-                json_str = replace(json_str, to_replace, getattr(self.global_configs, replacement_key))
-            else:
-                raise RuntimeError(f'Unable to replace {to_replace} in {json_str}')
-            
-        return json_str
        
     def __str__(self) -> str:
         return self._str_helper([self.pipeline_name, self.pipeline_version])
 
 class ProcpipeRunner(BoutiquesRunner):
 
-    def __init__(self, global_configs, pipeline_name: str, pipeline_version: str | None = None, **kwargs) -> None:
-        super().__init__(global_configs=global_configs, pipeline_name=pipeline_name, pipeline_version=pipeline_version, **kwargs)
+    dname_output = 'output'
+    dname_work = 'work'
+    dname_bids_db = 'bids_db'
 
-    def run(self, subject: str, session: str, **kwargs):
-        return super().run(subject=subject, session=session, **kwargs)
+    def __init__(self, global_configs, pipeline_name: str, subject, session, pipeline_version: str | None = None, with_work_dir=True, with_bids_db=True, with_bids_filter=True, **kwargs) -> None:
+        super().__init__(global_configs=global_configs, pipeline_name=pipeline_name, pipeline_version=pipeline_version, **kwargs)
+        self.subject = str(subject)
+        self.session = str(session)
+        self.with_work_dir = with_work_dir
+        self.with_bids_db = with_bids_db
+        self.layout = None
+        self.with_bids_filter = with_bids_filter
+        self.bids_ignore_patterns = [ # order matters
+            re.compile(rf'^(?!/{BIDS_SUBJECT_PREFIX}({self.subject}))'),
+            re.compile(rf'.*?/{BIDS_SESSION_PREFIX}(?!{self.session})'),
+        ]
+
+    def generate_fpath_log(self):
+        return super().generate_fpath_log([self.subject, self.session])
     
-    def run_setup(self, subject: str, session: str, sep_tag='-', **kwargs):
-        
-        # overwrite log path
-        # need to do this before calling super().run_setup
-        self.fpath_log = self.generate_fpath_log(
-            self.global_configs,
-            self.name,
-            tags=[subject, session],
-            sep_tag=sep_tag,
-        )
+    def run_setup(self, **kwargs):
 
         super().run_setup(**kwargs)
 
-        self.dpath_subject_session_work = (self.dpath_pipeline_work / sep_tag.join([subject, session])).resolve()
+        self.setup_bids_db()
+        self.setup_input_directory()
+        self.setup_output_directories()
+        
+    def setup_bids_db(self):
+        
+        if self.with_bids_db:
 
-        self.add_singularity_bind_flag(self.global_configs.dpath_bids, mode='ro')   # input
-        self.add_singularity_bind_flag(self.dpath_pipeline_output)                  # output
-        self.add_singularity_bind_flag(self.dpath_subject_session_work)             # work
-        self.add_singularity_bind_flag(self.dpath_bids_db)                          # pyBIDS
-    
-    def run_cleanup(self, **kwargs):
+            from bids import BIDSLayout, BIDSLayoutIndexer
 
-        try:
-            dpath_subject_session_work = self.dpath_subject_session_work
-        except AttributeError:
-            raise RuntimeError(
-                'dpath_subject_session_work not defined. '
-                'run_setup must be run before run_cleanup.'
+            # add more BIDS ignore patterns
+            fpath_bids_ignore = self.global_configs.get_fpath_bids_ignore(
+                self.pipeline_name,
+                self.pipeline_version,
             )
+
+            if fpath_bids_ignore.exists():
+                self.info(f'Using BIDS ignore file: {fpath_bids_ignore}')
+                with open(fpath_bids_ignore, 'rt') as file_bids_ignore:
+                    for line in file_bids_ignore:
+                        line = line.strip()
+                        if line:
+                            self.bids_ignore_patterns.append(re.compile(line))
+            else:
+                self.warning(f'No BIDS ignore file found at {fpath_bids_ignore}')
+
+            self.info(f'Building BIDSLayout with ignore patterns: {self.bids_ignore_patterns}')
+            
+            if self.dpath_bids_db.exists():
+                self.warning(
+                    f'Overwriting existing BIDS database directory: {self.dpath_bids_db}'
+                )
+            
+            indexer = BIDSLayoutIndexer(
+                validate=False,
+                ignore=self.bids_ignore_patterns,
+            )
+            self.layout = BIDSLayout(
+                self.global_configs.dpath_bids.resolve(),
+                indexer=indexer,
+                database_path=self.dpath_bids_db,
+                reset_database=True,
+            )
+
+            # list all the files in BIDSLayout
+            # since we are selecting for specific a specific subject and
+            # session, there should not be too many files
+            for file in self.layout.get(return_type='filename'):
+                self.debug(file)
+
+    def setup_input_directory(self):
+        self.add_singularity_symmetric_bind_path(
+            self.global_configs.dpath_bids,
+            mode='ro',
+        )
+
+    def setup_output_directories(self):
+        self.add_singularity_symmetric_bind_path(self.dpath_output)
+        if self.with_work_dir:
+            self.add_singularity_symmetric_bind_path(self.dpath_work)
+        if self.with_bids_db:
+            self.add_singularity_symmetric_bind_path(self.dpath_bids_db)
+
+    def run_cleanup(self, **kwargs):
         
         # delete temporary working directory if no command failed
-        if not self.command_failed:
-            self.run_command(f'rm -rf {dpath_subject_session_work}')
+        if self.with_work_dir and not self.command_failed:
+            self.run_command(f'rm -rf {self.dpath_work}')
+
+        # also delete temporary BIDS database
+        if self.with_bids_db:
+            self.run_command(f'rm -rf {self.dpath_bids_db}')
 
         super().run_cleanup(**kwargs)
     
@@ -342,13 +470,27 @@ class ProcpipeRunner(BoutiquesRunner):
         ).resolve()
     
     @property
-    def dpath_pipeline_output(self) -> Path:
-        return (self.dpath_pipeline_derivatives / 'output').resolve()
+    def dpath_output(self) -> Path:
+        # TODO allow different options depending on pipeline:
+        # - self.dpath_pipeline_derivatives / self.dname_output
+        # - self.dpath_pipeline_derivatives / session_id_to_bids_session(self.session)
+        # - self.dpath_pipeline_derivatives / participant_id_to_bids_id(self.subject)) / session_id_to_bids_session(self.session)
+        return (self.dpath_pipeline_derivatives / self.dname_output).resolve()
     
     @property
-    def dpath_pipeline_work(self) -> Path:
-        return (self.dpath_pipeline_derivatives / 'work').resolve()
+    def dpath_work(self) -> Path: 
+        subject_session_str = self.sep.join([self.subject, self.session]) 
+        return (self.dpath_pipeline_derivatives / self.dname_work / subject_session_str).resolve()
 
     @property
     def dpath_bids_db(self) -> Path:
-        return (self.global_configs.dpath_proc / 'bids_db').resolve()
+        dname_bids_db = self.sep.join([self.pipeline_name, self.pipeline_version, self.subject, self.session])
+        return (self.global_configs.dpath_proc / self.dname_bids_db / dname_bids_db).resolve()
+
+    def __str__(self) -> str:
+        return self._str_helper([
+            self.pipeline_name,
+            self.pipeline_version,
+            self.subject,
+            self.session,
+        ])
