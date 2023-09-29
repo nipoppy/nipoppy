@@ -137,7 +137,8 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         logger.info(f"task_name: {name}, status: {status}")
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
-                        _df.loc[bids_id,"pipeline_endtime"] = get_end_time(subject_dir)
+                        # TODO only check files listed in the tracker config
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
                 else:
                     logger.error(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
