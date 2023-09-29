@@ -85,7 +85,7 @@ for wf in workflows:
     elif wf == "mriqc":
         # Supported modalities (i.e. suffixes) for MRIQC
         modalities = ["T1w", "T2w"]
-        ignore_patterns = ["/anat/{}_{}_{}_NM","/anat/{}_{}_{}_FLAIR",
+        ignore_patterns = ["/anat/{}_{}_acq-NM_{}","/anat/{}_{}_{}_FLAIR",
                            "/fmap/",
                            "/swi/",
                            "/perf"]
