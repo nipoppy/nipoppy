@@ -11,10 +11,11 @@ import pandas as pd
 import nipoppy.workflow.catalog as catalog
 from nipoppy.workflow.dicom_org.utils import search_dicoms, copy_dicoms
 from nipoppy.workflow.utils import (
-    COL_ORG_STATUS, 
-    DNAME_BACKUPS_STATUS, 
-    load_status,
-    participant_id_to_dicom_id, 
+    COL_ORG_STATUS,
+    DNAME_BACKUPS_DOUGHNUT,
+    FNAME_DOUGHNUT,
+    load_doughnut,
+    participant_id_to_dicom_id,
     save_backup,
     session_id_to_bids_session,
 )
@@ -65,8 +66,8 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_che
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
     invalid_dicom_dir = f"{log_dir}/invalid_dicom_dir/"
 
-    fpath_status = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
-    df_status = load_status(fpath_status)
+    fpath_doughnut = f"{DATASET_ROOT}/scratch/raw_dicom/{FNAME_DOUGHNUT}"
+    df_doughnut = load_doughnut(fpath_doughnut)
     
     if logger is None:
         log_file = f"{log_dir}/dicom_org.log"
@@ -78,7 +79,7 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_che
     logger.info(f"session: {session}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    reorg_df = catalog.get_new_raw_dicoms(fpath_status, session_id, logger)
+    reorg_df = catalog.get_new_raw_dicoms(fpath_doughnut, session_id, logger)
     n_dicom_reorg_participants = len(reorg_df)
 
     # start reorganizing
@@ -107,8 +108,8 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_che
         logger.info(f"DICOMs are now copied into {dicom_dir} and ready for bids conversion!")
 
         reorg_df[COL_ORG_STATUS] = True
-        df_status.loc[reorg_df.index] = reorg_df
-        save_backup(df_status, fpath_status, DNAME_BACKUPS_STATUS)
+        df_doughnut.loc[reorg_df.index] = reorg_df
+        save_backup(df_doughnut, fpath_doughnut, DNAME_BACKUPS_DOUGHNUT)
 
     else:
         logger.info(f"No new participants found for dicom reorg...")
