@@ -163,7 +163,7 @@ def run(global_configs, session_id, stage=2, overlays=None, n_jobs=2, dicom_id=N
         n_heudiconv_success = np.sum(heudiconv_results)
         logger.info(f"Successfully ran Heudiconv (Stage 1 or Stage 2) for {n_heudiconv_success} out of {n_heudiconv_participants} participants")
 
-        # Check succussful bids (NOTE: will count partial conversion as successful)
+        # Check successful bids (NOTE: will count partial conversion as successful)
         participants_with_bids = {
             parse_file_entities(dpath)['subject']
             for dpath in

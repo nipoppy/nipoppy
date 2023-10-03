@@ -5,11 +5,15 @@ import nipoppy.workflow.logger as my_logger
 from pathlib import Path
 import os
 
-def run(participant_id, global_configs, session_id, output_dir, modalities, bids_db_path=None, logger=None):
+SINGULARITY_TEMPLATEFLOW_DIR = "/templateflow"
+os.environ['SINGULARITYENV_TEMPLATEFLOW_HOME'] = SINGULARITY_TEMPLATEFLOW_DIR
+
+def run(participant_id, global_configs, session_id, output_dir, modalities, bids_db_dir=None, logger=None):
     """ Runs mriqc command
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
+    TEMPLATEFLOW_DIR = global_configs["TEMPLATEFLOW_DIR"]
     MRIQC_CONTAINER = global_configs["PROC_PIPELINES"]["mriqc"]["CONTAINER"]
     MRIQC_VERSION = global_configs["PROC_PIPELINES"]["mriqc"]["VERSION"]
     MRIQC_CONTAINER = MRIQC_CONTAINER.format(MRIQC_VERSION)
@@ -18,9 +22,15 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
     bids_dir = f"{DATASET_ROOT}/bids/"
     proc_dir = f"{DATASET_ROOT}/proc/"
 
-    if bids_db_path is None:
-        bids_db_path = f"{DATASET_ROOT}/proc/bids_db"
-    bids_db_dir = os.path.basename(bids_db_path)
+    # logging
+    log_dir = f"{DATASET_ROOT}/scratch/logs/"
+    if logger is None:
+        log_file = f"{log_dir}/mriqc.log"
+        logger = my_logger.get_logger(log_file)
+
+    if bids_db_dir is None:
+        bids_db_dir = f"/mriqc_proc/bids_db_mriqc"
+        
     logger.info(f"bids_db_dir: {bids_db_dir}")
 
     if output_dir is None:
@@ -34,13 +44,6 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
     mriqc_work_dir = f"{output_dir}/mriqc/v{MRIQC_VERSION}/work/"
     Path(mriqc_work_dir).mkdir(parents=True, exist_ok=True)
 
-    # logging
-    log_dir = f"{DATASET_ROOT}/scratch/logs/"
-
-    if logger is None:
-        log_file = f"{log_dir}/mriqc.log"
-        logger = my_logger.get_logger(log_file)
-
     logger.info("Starting mriqc run...")
     logger.info(f"participant: {participant_id}, session: {session_id}")
     logger.info(f"bids_dir: {bids_dir}")
@@ -49,21 +52,22 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
 
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity run \
-        -B {bids_dir}:/data:ro \
+        -B {bids_dir}:{bids_dir}:ro \
         -B {proc_dir}:/mriqc_proc \
         -B {mriqc_output_dir}:/out \
         -B {mriqc_work_dir}:/work \
+        -B {TEMPLATEFLOW_DIR}:{SINGULARITY_TEMPLATEFLOW_DIR} \
         {SINGULARITY_CONTAINER} "
 
     # Compose mriqc command
     modalities_str = " ".join(modalities)
-    MRIQC_CMD=f"/data /out participant \
+    MRIQC_CMD=f"{bids_dir} /out participant \
         --participant-label {participant_id} \
         --session-id {session_id} \
         --modalities {modalities_str} \
         --no-sub \
         --work-dir /work \
-        --bids-database-dir /mriqc_proc/{bids_db_dir}"
+        --bids-database-dir {bids_db_dir}"
         # --bids-database-wipe" # wiping and regerating bids db with catalog.py
     
     CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD 

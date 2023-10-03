@@ -49,8 +49,13 @@ def participant_id_to_dicom_id(participant_id):
 def dicom_id_to_bids_id(dicom_id):
     return f'{BIDS_SUBJECT_PREFIX}{dicom_id}'
 
-def participant_id_to_bids_id(participant_id):
-    return dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+def participant_id_to_bids_id(participant_id, custom_map=None):
+    if custom_map == None:
+        bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+    else:
+        _df = pd.read_csv(custom_map)
+        bids_id = _df.loc[(_df["participant_id"]==participant_id)]["bids_id"].values[0]
+    return bids_id
 
 def session_id_to_bids_session(session_id):
     # add BIDS prefix if it doesn't already exist
