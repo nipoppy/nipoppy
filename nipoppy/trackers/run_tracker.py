@@ -59,7 +59,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     if session_id == "ALL":
         sessions = global_configs["SESSIONS"]
     else:
-        sessions = [f"ses-{session_id}"]
+        sessions = [f"{BIDS_SESSION_PREFIX}{session_id}"]
 
     logger.info(f"tracking session: {sessions}")    
 
@@ -194,7 +194,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             # don't write a new file if no changes
             try:
                 if len(df_bagel.compare(df_bagel_old_full)) == 0:
-                    logger.info(f'\nNo change in bagel file for pipeline {pipeline}, session {session}')
+                    logger.info(f'No change in bagel file for pipeline {pipeline}, session {session}')
                     continue
             except Exception:
                 pass
