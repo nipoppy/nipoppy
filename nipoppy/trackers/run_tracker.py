@@ -9,7 +9,7 @@ import pandas as pd
 
 import nipoppy.workflow.logger as my_logger
 from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
-from nipoppy.trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
+from nipoppy.trackers import bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from nipoppy.workflow.utils import (
     BIDS_SUBJECT_PREFIX,
     BIDS_SESSION_PREFIX,
@@ -46,7 +46,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     
     # Grab BIDS participants from the doughnut
     doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
-    doughnut_df = load_status(doughnut_file)
+    doughnut_df = load_doughnut(doughnut_file)
     
     # logging
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
@@ -61,7 +61,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     else:
         sessions = [f"ses-{session_id}"]
 
-    logger.info(f"tracking session_ids: {session_ids}")    
+    logger.info(f"tracking session: {sessions}")    
 
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
@@ -84,7 +84,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
 
         logger.info("-"*50)
         logger.info(f"pipeline: {pipeline}, version: {version}")
-        logger.info(f"n_participants_total: {n_participants_total}, session_ids: {session_ids}")
+        logger.info(f"n_participants_total: {n_participants_total}, sessions: {sessions}")
         logger.info("-"*50)
 
         status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
@@ -92,9 +92,11 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
         # only use non-prefixed columns at this stage
         # for prefixed columns we need to generate the column name
         dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if not value["IsPrefixedColumn"])
+        # status_check_dict will typically only have minimal pipeline_complete key
+        dash_col_list = dash_col_list + list(status_check_dict.keys())
 
-        for session_id in session_ids:
-            session = session_id_to_bids_session(session_id)
+        for session in sessions:
+            # session = session_id_to_bids_session(session_id)
             logger.info(f"Checking session: {session}")
 
             participants_session = doughnut_df[(doughnut_df[COL_BIDS_ID_MANIFEST].isin(participants_total)) & (doughnut_df[COL_SESSION_MANIFEST] == session)][COL_BIDS_ID_MANIFEST].drop_duplicates().astype(str).str.strip().values
@@ -120,7 +122,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                 logger.debug(f"bids_dir: {bids_dir}")
                 logger.debug(f"bids_layout: {bids_layout.get_subjects()}")
                 
-            fpath_bagel = Path(dataset_root, 'derivatives', FNAME_BAGEL)
+            fpath_bagel = Path(DATASET_ROOT, 'derivatives', FNAME_BAGEL)
             if fpath_bagel.exists():
                 df_bagel_old_full = load_bagel(fpath_bagel)
 
