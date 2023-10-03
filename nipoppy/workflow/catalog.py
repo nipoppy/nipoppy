@@ -241,7 +241,7 @@ def generate_pybids_index(global_configs, session_id, pipeline, ignore_patterns,
     # Check diff against previous index and only update if there are new participants
 
     indexer = BIDSLayoutIndexer(ignore=ignore_pattern_list)
-    layout = BIDSLayout(bids_dir, indexer=indexer) # Throws deprication warning
+    layout = BIDSLayout(bids_dir, indexer=indexer) # Throws deprecation warning
     
     indexed_subjects = layout.get(return_type='id', target='subject', suffix='T1w')
     n_indexed_subjects = len(indexed_subjects)
