@@ -11,7 +11,14 @@ from nipoppy.workflow.utils import (
     COL_ORG_STATUS, 
     COL_SESSION_MANIFEST,
     COL_SUBJECT_MANIFEST,
+    COL_BIDS_ID_MANIFEST,
     load_doughnut,
+)
+
+from nipoppy.trackers.tracker import (
+    SUCCESS,
+    FAIL,
+    UNAVAILABLE
 )
 
 def read_and_process_doughnut(fpath_doughnut, session_id, logger):
@@ -162,8 +169,8 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     # Grab BIDS participants from the doughnut
     doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
     doughnut_df = pd.read_csv(doughnut_file)
-    doughnut_df["converted"] = doughnut_df["converted"].astype(bool)
-    bids_participants = doughnut_df[(doughnut_df["session"]==session) & (doughnut_df["converted"])]["bids_id"].unique()
+    doughnut_df[COL_CONV_STATUS] = doughnut_df[COL_CONV_STATUS].astype(bool)
+    bids_participants = doughnut_df[(doughnut_df[COL_SESSION_MANIFEST]==session) & (doughnut_df[COL_CONV_STATUS])][COL_BIDS_ID_MANIFEST].unique()
     n_bids_participants = len(bids_participants)
 
     logger.info(f"n_bids_participants: {n_bids_participants}, session_id: {session_id}")
@@ -171,9 +178,9 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     # Grab processed participants from the bagel
     bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
     bagel_df = pd.read_csv(bagel_file)
-    bagel_df = bagel_df[bagel_df["session"] == session]
+    bagel_df = bagel_df[bagel_df[COL_SESSION_MANIFEST] == session]
     bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pipeline_version)]
-    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
+    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]==SUCCESS][COL_BIDS_ID_MANIFEST].unique()
     n_on_disk_participants = len(on_disk_participants)
 
     logger.info(f"n_on_disk_participants: {n_on_disk_participants}")
@@ -183,31 +190,47 @@ def get_new_proc_participants(global_configs, session_id, pipeline, logger):
     n_new_proc_participants = len(new_proc_participants)
     logger.info(f"n_new_proc_participants: {n_new_proc_participants}")
 
-    return new_proc_participants
+    return new_proc_participants, on_disk_participants
 
-def generate_pybids_index(global_configs, session_id, pipeline, logger, bids_db_path=None):
+# NOTE - currently not using it because of pybids warning on "absolute_paths=False"
+def generate_pybids_index(global_configs, session_id, pipeline, ignore_patterns, logger, run_id=1, bids_db_path=None):
     """ Generates a pybids index for a selected list of bids_ids using --ignore argument. 
         You can pass a list of folder names, or a regex pattern to the ignore argument.
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     bids_dir = f"{DATASET_ROOT}/bids"
-    
-    pipeline_version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
-    session = f"ses-{session_id}"
 
     if bids_db_path == None:
-        bids_db_path = f"{DATASET_ROOT}/proc/bids_db"
+        bids_db_path = f"{DATASET_ROOT}/proc/bids_db_{pipeline}"
     
-    # Grab processed participants from the bagel
-    bagel_file = f"{DATASET_ROOT}/derivatives/bagel.csv"
-    bagel_df = pd.read_csv(bagel_file)
-    bagel_df = bagel_df[bagel_df["session"] == session]
-    bagel_df = bagel_df[(bagel_df["pipeline_name"] == pipeline) & (bagel_df["pipeline_version"] == pipeline_version)]
-    on_disk_participants = bagel_df[bagel_df["pipeline_complete"]=="SUCCESS"]["bids_id"].unique()
-    n_on_disk_participants = len(on_disk_participants)
+    # Get list of on-disk and new participants
+    # We will completely ignore the on-disk participants in the BIDS index
+    # We will ignore certain modalities / acq patterns for the new participants (avoid mriqc and fmriprep errors)
+    # Example ignore patterns: ["/anat/{}_{}_{}_NM"]
 
-    ignore_list = [f"{bids_dir}/{p}" for p in on_disk_participants]
-    logger.info(f"ignoring {n_on_disk_participants} (n_on_disk_participants) from pybids index")
+    new_proc_participants, on_disk_participants = get_new_proc_participants(global_configs, session_id, pipeline, logger)
+
+    n_on_disk_participants = len(on_disk_participants)
+    logger.info(f"ignoring ({n_on_disk_participants}) n_on_disk_participants from pybids index")
+
+    # Completely ignore these subjects
+    ignore_subjects = on_disk_participants
+    ignore_session = f"ses-{session_id}"
+    ignore_run = f"run-{run_id}"
+    # Need to have "ses-" appended to the subject_id to avoid wildcard matching
+    ignore_pattern_list = list(pd.Series(ignore_subjects) + f"/{ignore_session}")
+
+    # Ignore specific sessions and datatypes / acq patterns for these subjects
+    index_subjects = new_proc_participants
+    ignore_SRE_patterns = ignore_patterns
+
+    for sub in index_subjects:
+        for sre_pattern in ignore_SRE_patterns:
+            sre_pattern = sre_pattern.format(sub, ignore_session, ignore_run)
+            ignore_pattern = f"{sub}/{ignore_session}{sre_pattern}"
+            ignore_pattern_list.append(ignore_pattern)
+
+    logger.info(f"ignoring {len(ignore_pattern_list)} subjects + datatype + acq patterns from pybids index")
 
     # Check if old db exists
     if Path.is_dir(Path(bids_db_path)):
@@ -217,8 +240,8 @@ def generate_pybids_index(global_configs, session_id, pipeline, logger, bids_db_
     # TODO
     # Check diff against previous index and only update if there are new participants
 
-    indexer = BIDSLayoutIndexer(ignore=ignore_list)
-    layout = BIDSLayout(bids_dir, indexer=indexer)
+    indexer = BIDSLayoutIndexer(ignore=ignore_pattern_list)
+    layout = BIDSLayout(bids_dir, indexer=indexer) # Throws deprecation warning
     
     indexed_subjects = layout.get(return_type='id', target='subject', suffix='T1w')
     n_indexed_subjects = len(indexed_subjects)

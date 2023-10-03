@@ -95,10 +95,24 @@ def run(global_config_file, regenerate=False, empty=False):
                 ' in the dataset (can be slow)'
             )
         
+    # Check for custom ID maps
+    # example: participant_id --> bids_id 
+    # TODO: Check if this would work for participant_id --> dicom_dir 
+    if "CUSTOM_ID_MAPS" in global_config.keys():
+        custom_id_maps = global_config["CUSTOM_ID_MAPS"]
+        if "participant_id_to_bids_id" in custom_id_maps.keys():            
+            map_file = custom_id_maps["participant_id_to_bids_id"]
+            print(f"Using custom participant_id_to_bids_id mapping from: {map_file}")
+    else:
+        map_file = None
+
     # generate bids_id
-    df_doughnut.loc[:, COL_BIDS_ID_MANIFEST] = df_doughnut[COL_SUBJECT_MANIFEST].apply(
-        participant_id_to_bids_id
-    )
+    df_status[COL_BIDS_ID_MANIFEST] = df_status.apply(
+            lambda row: participant_id_to_bids_id(
+                row[COL_SUBJECT_MANIFEST],
+                map_file),
+            axis='columns'
+        )
     
     # initialize dicom dir (cannot be inferred directly from participant id)
     df_doughnut.loc[:, COL_PARTICIPANT_DICOM_DIR] = np.nan

@@ -161,5 +161,5 @@ if __name__ == '__main__':
         print("-"*50)
     else:
         print("-"*50)
-        print("No partcipants found to process...")
+        print("No participants found to process...")
         print("-"*50)
