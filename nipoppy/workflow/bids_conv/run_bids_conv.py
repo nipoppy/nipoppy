@@ -18,9 +18,9 @@ import nipoppy.workflow.logger as my_logger
 from nipoppy.workflow.utils import (
     COL_CONV_STATUS,
     COL_DICOM_ID,
-    DNAME_BACKUPS_STATUS,
-    FNAME_STATUS, 
-    load_status,
+    DNAME_BACKUPS_DOUGHNUT,
+    FNAME_DOUGHNUT, 
+    load_doughnut,
     save_backup,
     session_id_to_bids_session,
 )
@@ -118,18 +118,18 @@ def run(global_configs, session_id, stage=2, overlays=None, n_jobs=2, dicom_id=N
     logger.info(f"Running HeuDiConv stage: {stage}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    fpath_status = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_STATUS)
+    fpath_doughnut = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_DOUGHNUT)
     bids_dir = f"{DATASET_ROOT}/bids/"
 
-    df_status = load_status(fpath_status)
+    df_doughnut = load_doughnut(fpath_doughnut)
 
     # participants to process with Heudiconv
     if dicom_id is None:
-        heudiconv_df = catalog.get_new_dicoms(fpath_status, session_id, logger)
+        heudiconv_df = catalog.get_new_dicoms(fpath_doughnut, session_id, logger)
     else:
         # filter by DICOM ID if needed
         logger.info(f'Only running for participant: {dicom_id}')
-        heudiconv_df = df_status.loc[df_status[COL_DICOM_ID] == dicom_id]
+        heudiconv_df = df_doughnut.loc[df_doughnut[COL_DICOM_ID] == dicom_id]
     
     heudiconv_participants = set(heudiconv_df["dicom_id"].values)
     n_heudiconv_participants = len(heudiconv_participants)
@@ -185,8 +185,8 @@ def run(global_configs, session_id, stage=2, overlays=None, n_jobs=2, dicom_id=N
             
             if len(new_participants_with_bids) > 0:
                 heudiconv_df.loc[heudiconv_df[COL_DICOM_ID].isin(new_participants_with_bids), COL_CONV_STATUS] = True
-                df_status.loc[heudiconv_df.index] = heudiconv_df
-                save_backup(df_status, fpath_status, DNAME_BACKUPS_STATUS)
+                df_doughnut.loc[heudiconv_df.index] = heudiconv_df
+                save_backup(df_doughnut, fpath_doughnut, DNAME_BACKUPS_DOUGHNUT)
 
     else:
         logger.info(f"No new participants found for bids conversion...")
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     parser.add_argument('--stage', type=int, default=2, help='heudiconv stage (either 1 or 2, default: 2)')
     parser.add_argument('--overlay', type=str, nargs='+', help='path(s) to Squashfs overlay(s)')
     parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes (default: 2)')
-    parser.add_argument('--dicom_id', type=str, help='dicom id for a single participant to run (default: run on all participants in the status file)')
+    parser.add_argument('--dicom_id', type=str, help='dicom id for a single participant to run (default: run on all participants in the doughnut file)')
     parser.add_argument('--copy_files', nargs='+', type=str, help='path(s) to file(s) to copy to /scratch/proc in the container')
 
     args = parser.parse_args()
