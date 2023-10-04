@@ -14,8 +14,6 @@ class GlobalConfigs():
 
     class Program():
 
-        name = None
-
         def __init__(self, name, config) -> None:
             self.name = name
             self._config = config
@@ -79,15 +77,15 @@ class GlobalConfigs():
                 message_suffix=f'for program: {self.name}',
             )
 
-    def __init__(self, global_config: GlobalConfigs | dict | os.PathLike | str) -> None:
+    def __init__(self, source: GlobalConfigs | dict | os.PathLike | str, validate_root=True) -> None:
         """Load global configs from file."""
 
-        if isinstance(global_config, GlobalConfigs):
-            global_configs_dict = copy.deepcopy(global_config.global_configs_dict)
-        elif isinstance(global_config, dict):
-            global_configs_dict = copy.deepcopy(global_config)
-        elif isinstance(global_config, (str, os.PathLike)):
-            fpath_global_configs = Path(global_config)
+        if isinstance(source, GlobalConfigs):
+            global_configs_dict = copy.deepcopy(source.global_configs_dict)
+        elif isinstance(source, dict):
+            global_configs_dict = copy.deepcopy(source)
+        elif isinstance(source, (str, os.PathLike)):
+            fpath_global_configs = Path(source)
             if not fpath_global_configs.exists():
                 raise FileNotFoundError(
                     f'Global configs file does not exist: {fpath_global_configs}'
@@ -97,7 +95,7 @@ class GlobalConfigs():
         else:
             raise TypeError(
                 f'Expected a dict or a str/path-like object, '
-                f'got {type(global_config)}'
+                f'got {type(source)}'
             )
 
         # TODO use a schema for validation ?
@@ -110,12 +108,6 @@ class GlobalConfigs():
             self.visits: list[str] = global_configs_dict['VISITS']
             self.tabular: dict[str, dict] = global_configs_dict['TABULAR']
             self.workflows: list = global_configs_dict['WORKFLOWS']
-            # self.bids = self._process_programs(
-            #     global_configs_dict['BIDS']
-            # )
-            # self.pipelines = self._process_programs(
-            #     global_configs_dict['PROC_PIPELINES']
-            # )
             self.programs = self._process_programs(
                 global_configs_dict['BIDS'],
                 global_configs_dict['PROC_PIPELINES'],
@@ -123,7 +115,7 @@ class GlobalConfigs():
         except KeyError as exception:
             self.raise_missing_field_error(exception)
 
-        self.global_config = global_config
+        self.global_config = source
         self.global_configs_dict = global_configs_dict
 
         # TODO add more
@@ -139,10 +131,11 @@ class GlobalConfigs():
         self.fpath_doughnut = self.dpath_raw_dicom / FNAME_DOUGHNUT
         self.fpath_derivatives_bagel = self.dpath_derivatives / FNAME_BAGEL
 
-        if not self.dataset_root.exists():
-            raise FileNotFoundError(
-                f'Dataset root does not exist: {self.dataset_root}'
-            )
+        if validate_root:
+            if not self.dataset_root.exists():
+                raise FileNotFoundError(
+                    f'Dataset root does not exist: {self.dataset_root}'
+                )
 
     @property
     def templateflow_dir(self) -> Path:
@@ -179,15 +172,15 @@ class GlobalConfigs():
     def check_version(self, program_name: str, program_version: str | None = None) -> str:
         return self.get_program(program_name).check_version(program_version)
 
-    def get_fpath_container(self, program_name: str, program_version: str | None = None) -> Path:
-        program = self.get_program(program_name)
-        return Path(self.container_store) / program.get_fname_container(program_version)
-
     def get_dpath_pipeline_derivatives(self, pipeline_name: str, pipeline_version: str | None = None, check_version=True) -> Path:
         if check_version:
             pipeline_version = self.check_version(pipeline_name, pipeline_version)
         return self.dpath_derivatives / pipeline_name / pipeline_version
     
+    def get_fpath_container(self, program_name: str, program_version: str | None = None) -> Path:
+        program = self.get_program(program_name)
+        return Path(self.container_store) / program.get_fname_container(program_version)
+
     def get_fpath_bids_ignore(self, programe_name: str, program_version: str | None = None) -> Path:
         program = self.get_program(programe_name)
         return self.dpath_bids_ignore / program.get_fname_bids_ignore(program_version)
