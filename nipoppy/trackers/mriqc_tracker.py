@@ -21,7 +21,7 @@ func_files_dict = {
     "json" : "{}/func/{}_{}_task-rest_run-{}_bold.json",
 }
 
-def check_staus(subject_dir, session_id, run_id, file_dict):
+def check_status(subject_dir, session_id, run_id, file_dict):
     bids_id = os.path.basename(subject_dir)
     session = f"ses-{session_id}"
     filepath_status_list = []
@@ -44,14 +44,13 @@ def check_staus(subject_dir, session_id, run_id, file_dict):
     return status_msg
         
 def check_T1w(subject_dir, session_id, run_id):
-    return check_staus(subject_dir, session_id, run_id, T1w_files_dict)
+    return check_status(subject_dir, session_id, run_id, file_dict=T1w_files_dict)
          
 def check_T2w(subject_dir, session_id,run_id):
-    return check_staus(subject_dir, session_id, run_id, T2w_files_dict)
+    return check_status(subject_dir, session_id, run_id, file_dict=T2w_files_dict)
 
 def check_func(subject_dir, session_id, run_id):
-    return check_staus(subject_dir, session_id, run_id, func_files_dict)
-
+    return check_status(subject_dir, session_id, run_id, file_dict=func_files_dict)
 
 
 tracker_configs = {

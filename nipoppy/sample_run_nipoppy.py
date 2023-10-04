@@ -146,7 +146,7 @@ for wf in workflows:
                            "/perf"]
 
         # Run mriqc tracker to regenerate bagel
-        run_tracker.run(global_configs, dash_schema_file, [wf], logger=logger)
+        run_tracker.run(global_configs, dash_schema_file, [wf], session_id=session_id, logger=logger)
 
         proc_participants, _ = get_new_proc_participants(global_configs, session_id, pipeline=wf, logger=logger)
         n_proc_participants = len(proc_participants)        
@@ -186,7 +186,7 @@ for wf in workflows:
                            "/swi/",
                            "/perf"]
          # Run fmriprep tracker to regenerate bagel
-        run_tracker.run(global_configs, dash_schema_file, [wf], logger=logger)
+        run_tracker.run(global_configs, dash_schema_file, [wf], session_id=session_id, logger=logger)
 
         proc_participants, _ = get_new_proc_participants(global_configs, session_id, pipeline=wf, logger=logger)
         n_proc_participants = len(proc_participants)
@@ -238,7 +238,7 @@ for wf in workflows:
 
     elif wf == "tractoflow":
          # Run tractoflow tracker to regenerate bagel
-        run_tracker.run(global_configs, dash_schema_file, [wf], logger=logger)
+        run_tracker.run(global_configs, dash_schema_file, [wf], session_id=session_id, logger=logger)
 
         proc_participants, _ = get_new_proc_participants(global_configs, session_id, pipeline=wf, logger=logger)
         n_proc_participants = len(proc_participants)
@@ -279,7 +279,7 @@ for wf in workflows:
 
 # Rerun tracker(s) to update bagel
 logger.info(f"Running ALL trackers: {ALL_TRACKERS} to update bagel")
-run_tracker.run(global_configs, dash_schema_file, ALL_TRACKERS, logger=logger)
+run_tracker.run(global_configs, dash_schema_file, ALL_TRACKERS, session_id="ALL", logger=logger)
 
 logger.info("-"*75)
 logger.info(f"Finishing nipoppy run...")

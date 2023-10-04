@@ -35,6 +35,7 @@ pipeline_tracker_config_dict = {
     "tractoflow": tractoflow_tracker.tracker_configs,
 }
 BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
+NO_TRACKER_PIPES = ["maget_brain"]
 
 def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1, logger=None, log_level="INFO"):
     """ driver code running pipeline specific trackers
@@ -74,7 +75,11 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
             
         schema = pipe_tracker.get_dash_schema()
-        tracker_configs = pipeline_tracker_config_dict[pipeline]
+
+        if pipeline in list(pipeline_tracker_config_dict.keys()):
+            tracker_configs = pipeline_tracker_config_dict[pipeline]
+        else:
+            logger.warning(f"Skipping pipeline: {pipeline}. Tracker not listed in the config")
 
         # Grab BIDS participants from the doughnut
         doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/{FNAME_DOUGHNUT}"
@@ -96,7 +101,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
         dash_col_list = dash_col_list + list(status_check_dict.keys())
 
         for session in sessions:
-            # session = session_id_to_bids_session(session_id)
+            session_id = session.removeprefix(BIDS_SESSION_PREFIX)
             logger.info(f"Checking session: {session}")
 
             participants_session = doughnut_df[(doughnut_df[COL_BIDS_ID_MANIFEST].isin(participants_total)) & (doughnut_df[COL_SESSION_MANIFEST] == session)][COL_BIDS_ID_MANIFEST].drop_duplicates().astype(str).str.strip().values
@@ -159,13 +164,15 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{session}/{bids_id}" 
                 elif pipeline in BIDS_PIPES:
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                elif pipeline in NO_TRACKER_PIPES:
+                    logger.warning(f"pipeline: {pipeline} does not have a tracker yet...")
                 else:
                     logger.error(f"unknown pipeline: {pipeline}")
                     
                 dir_status = Path(subject_dir).is_dir()
                 logger.debug(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
                 
-                if dir_status:                
+                if dir_status:                                 
                     for name, func in status_check_dict.items():
                         if pipeline == "heudiconv":
                             status = func(bids_layout, participant_id, session_id, run_id)
@@ -179,7 +186,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         # TODO only check files listed in the tracker config
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
                 else:
-                    logger.warning(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
+                    logger.debug(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
@@ -250,4 +257,4 @@ if __name__ == '__main__':
     session_id = args.session_id
     log_level = args.log_level
 
-    run(global_configs, dash_schema_file, pipelines, session_id, log_level=log_level)
+    run(global_configs, dash_schema_file, pipelines, session_id=session_id, log_level=log_level)
