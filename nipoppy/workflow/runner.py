@@ -21,9 +21,11 @@ class BaseRunner(ABC):
 
     sep = '-'
     dname_logs = 'logs'
-    template_replace_pattern = re.compile('\[\[NIPOPPY\_(.*?)\]\]')
+    template_replace_pattern = re.compile('\\[\\[NIPOPPY\\_(.*?)\\]\\]')
+    log_prefix_run = '[RUN]'
+    log_prefix_run_output = '[RUN OUTPUT]'
     
-    def __init__(self, name: str, global_configs, logger=None, log_level=logging.DEBUG, dry_run=False) -> None:
+    def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False) -> None:
 
         self.global_configs = GlobalConfigs(global_configs)
         self.name = name
@@ -42,8 +44,7 @@ class BaseRunner(ABC):
             try:
                 return func(self, *args, **kwargs)
             except Exception as exception:
-                if hasattr(self, 'run_cleanup'):
-                    self.run_cleanup(**kwargs)
+                self.run_cleanup(**kwargs)
                 self.error(traceback.format_exc())
                 raise exception
 
@@ -157,6 +158,7 @@ class BaseRunner(ABC):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                **kwargs,
             )
 
             while process.poll() is None:
@@ -164,7 +166,7 @@ class BaseRunner(ABC):
                     if capture_output:
                         output_str += line # store the line as-is
                     line = line.strip('\n')
-                    self.debug(f'[RUN OUTPUT] {line}')
+                    self.debug(f'{self.log_prefix_run_output} {line}')
 
             if check and process.returncode != 0:
                 exception = subprocess.CalledProcessError(process.returncode, command)
@@ -188,7 +190,7 @@ class BaseRunner(ABC):
         return run_output
     
     def log_command(self, command: str):
-        self.info(f'[RUN] {command}')
+        self.info(f'{self.log_prefix_run} {command}')
     
     def _log(self, message, level=logging.INFO, splitlines=True):
         if self.logger is None:
@@ -241,8 +243,8 @@ class BaseRunnerSingularity(BaseRunner, ABC):
     singularity_bind_sep = ':'
     singularity_env_prefix = 'APPTAINERENV_'
 
-    def __init__(self, name: str, global_configs, logger=None, log_level=logging.DEBUG, dry_run=False, with_templateflow=True) -> None:
-        super().__init__(name, global_configs, logger, log_level, dry_run)
+    def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False, with_templateflow=True) -> None:
+        super().__init__(global_configs, name, logger, log_level, dry_run)
         self.with_templateflow = with_templateflow
         self._singularity_flags: list = []
 
@@ -314,7 +316,7 @@ class BoutiquesRunner(BaseRunnerSingularity):
     dpath_descriptors = Path(__file__).parent / 'descriptors' # TODO don't hardcode path?
 
     def __init__(self, global_configs, pipeline_name: str, pipeline_version: str | None = None, **kwargs) -> None:
-        super().__init__(pipeline_name, global_configs, **kwargs)
+        super().__init__(global_configs, pipeline_name, **kwargs)
         self.pipeline_name = pipeline_name
         self.pipeline_version = self.global_configs.check_version(
             self.pipeline_name,
