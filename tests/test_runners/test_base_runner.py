@@ -1,47 +1,27 @@
 import logging
 import re
 import subprocess
-from copy import deepcopy
 from pathlib import Path
 
 import pytest
 from nipoppy.workflow.runner import BaseRunner
 
-from utils import global_configs_fixture
+from utils import global_configs_fixture, dpath_tmp#, tmp_dir
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def runner(global_configs_fixture, dpath_tmp):
     class DummyRunner(BaseRunner):
         def run_main(self, **kwargs):
             return
     runner = DummyRunner(global_configs_fixture, 'runner', dry_run=True)
-    runner.fpath_log = dpath_tmp / 'runner.log'
+    runner.logger = runner.create_logger(runner.name, dpath_tmp / runner.generate_fpath_log().name)
     return runner
-
-@pytest.fixture
-def dpath_tmp():
-    return Path(__file__).parent / 'tmp'
-
-@pytest.fixture(autouse=True)
-def tmp_dir(dpath_tmp: Path):
-
-    def remove_dir(dpath: Path):
-        for subpath in dpath.iterdir():
-            if subpath.is_dir():
-                remove_dir(subpath)
-            else:
-                subpath.unlink()
-        dpath.rmdir()
-
-    dpath_tmp.mkdir(exist_ok=True)
-    yield
-    remove_dir(dpath_tmp)
 
 def test_abstract_class():
     with pytest.raises(TypeError, match='Can\'t instantiate abstract class'):
         BaseRunner(None, None)
 
-def test_log_errors(runner: BaseRunner, caplog):
+def test_log_errors(runner: BaseRunner, caplog: pytest.LogCaptureFixture):
     
     @BaseRunner.log_errors
     def my_func(self):
@@ -65,8 +45,7 @@ def test_run(runner: BaseRunner):
     'print_begin,substring',
     [(True, 'BEGIN'), (False, None)],
 )
-def test_run_setup(runner: BaseRunner, print_begin, substring, caplog):
-    caplog.set_level(logging.DEBUG)
+def test_run_setup(runner: BaseRunner, print_begin, substring, caplog: pytest.LogCaptureFixture):
     runner.run_setup(print_begin=print_begin)
     if substring is None:
         assert caplog.text == ''
@@ -77,7 +56,7 @@ def test_run_setup(runner: BaseRunner, print_begin, substring, caplog):
     'print_end,substring',
     [(True, 'END'), (False, None)],
 )
-def test_run_cleanup(runner: BaseRunner, print_end, substring, caplog):
+def test_run_cleanup(runner: BaseRunner, print_end, substring, caplog: pytest.LogCaptureFixture):
     caplog.set_level(logging.DEBUG)
     runner.run_cleanup(print_end=print_end)
     if substring is None:
@@ -99,7 +78,6 @@ def test_process_template_str(runner: BaseRunner, template_str, resolve_paths, k
     assert runner.process_template_str(template_str, resolve_paths, **kwargs) == str(expected)
     
 def test_process_template_str_error_pattern(runner: BaseRunner):
-    runner = deepcopy(runner)
     runner.template_replace_pattern = re.compile('\\[\\[NIPOPPY\\_(.*)\\_(.*)\\]\\]')
     with pytest.raises(ValueError, match='Expected exactly one match'):
         runner.process_template_str('[[NIPOPPY_SOME_KWARG]]')
@@ -109,14 +87,21 @@ def test_process_template_str_error_replace(runner: BaseRunner):
         runner.process_template_str('[[NIPOPPY_INVALID]]')
 
 @pytest.mark.parametrize('fpath', [None, 'test.log'])
-def test_create_logger(fpath, dpath_tmp, caplog):
+def test_create_logger(fpath, dpath_tmp, caplog: pytest.LogCaptureFixture):
     if fpath is not None:
         fpath = dpath_tmp / fpath
-    assert BaseRunner.create_logger('test', fpath)
+    assert isinstance(BaseRunner.create_logger('test', fpath), logging.Logger)
     if fpath is not None:
         assert str(fpath) in caplog.text
     else:
         assert 'will not write to a log file' in caplog.text
+
+def test_create_logger_set_fpath(runner: BaseRunner, dpath_tmp: Path):
+    fpath_log = dpath_tmp / 'test.log'
+    if fpath_log.exists():
+        fpath_log.unlink()
+    assert isinstance(runner.create_logger('test', fpath_log), logging.Logger)
+    assert fpath_log.exists()
 
 @pytest.mark.parametrize(
     'tags,sep,substring',
@@ -128,7 +113,6 @@ def test_create_logger(fpath, dpath_tmp, caplog):
     ],
 )
 def test_generate_fpath_log(runner: BaseRunner, tags, sep, substring):
-    runner = deepcopy(runner)
     runner.sep = sep
     fpath = runner.generate_fpath_log(tags)
     assert runner.global_configs.dpath_scratch in fpath.parents
@@ -136,41 +120,51 @@ def test_generate_fpath_log(runner: BaseRunner, tags, sep, substring):
     assert substring in str(fpath)
 
 @pytest.mark.parametrize(
-    'command_or_args,capture_output,expected',
+    'command_or_args,shell,capture_output,expected',
     [
-        ('echo x', False, 'echo x'),
-        (['echo', 'y'], False, 'echo y'),
-        ('echo x', True, 'x\n'),
-        (['echo', 'y'], True, 'y\n'),
+        ('echo x', False, False, 'echo x'),
+        (['echo', 'y'], False, False, 'echo y'),
+        ('echo x', False, True, ('x\n', '')),
+        (['echo', 'y'], False, True, ('y\n', '')),
+        ('echo x && echo y 1>&2', True, True, ('x\n', 'y\n')),
+        (['echo x && echo y 1>&2'], True, True, ('x\n', 'y\n')),
     ],
 )
 @pytest.mark.parametrize('check', [True, False])
-def test_run_command(runner: BaseRunner, command_or_args, check, capture_output, expected):
-    runner = deepcopy(runner)
+def test_run_command(runner: BaseRunner, command_or_args, check, shell, capture_output, expected):
+    
     if capture_output:
         runner.dry_run = False
-    assert expected == runner.run_command(command_or_args, check=check, capture_output=capture_output)
+    
+    assert expected == runner.run_command(command_or_args, check=check, shell=shell, capture_output=capture_output)
 
 @pytest.mark.parametrize('prefix_run', ['[RUN]', '<run>'])
-@pytest.mark.parametrize('prefix_run_output', ['[RUN OUTPUT]', '<run output>'])
-def test_run_command_log(runner: BaseRunner, prefix_run, prefix_run_output, caplog):
-    runner = deepcopy(runner)
+@pytest.mark.parametrize('prefix_run_stdout', ['[RUN STDOUT]', '<run stdout>'])
+@pytest.mark.parametrize('prefix_run_stderr', ['[RUN STDERR]', '<run stderr>'])
+def test_run_command_log(runner: BaseRunner, prefix_run, prefix_run_stdout, prefix_run_stderr, caplog: pytest.LogCaptureFixture):
     runner.dry_run = False
     runner.log_prefix_run = prefix_run
-    runner.log_prefix_run_output = prefix_run_output
-    runner.run_command('echo x')
+    runner.log_prefix_run_stdout = prefix_run_stdout
+    runner.log_prefix_run_stderr = prefix_run_stderr
+    runner.run_command('echo x && echo y 1>&2', shell=True, capture_output=True)
     debug_log_count = 0
+    stdout_log_count = 0
+    stderr_log_count = 0
     for record in reversed(caplog.records):
         if record.levelno == logging.DEBUG:
-            assert record.message.startswith(prefix_run_output)
             debug_log_count += 1
+            if record.message.startswith(prefix_run_stdout):
+                stdout_log_count += 1
+            elif record.message.startswith(prefix_run_stderr):
+                stderr_log_count += 1
         elif record.levelno == logging.INFO:
             assert record.message.startswith(prefix_run)
             break
     assert debug_log_count > 0
+    assert stdout_log_count == 1
+    assert stderr_log_count == 1
 
 def test_run_command_error(runner: BaseRunner):
-    runner = deepcopy(runner)
     runner.dry_run = False
     with pytest.raises(subprocess.CalledProcessError, match='non-zero exit status'):
         runner.run_command('ls invalid_path', check=True)
@@ -178,8 +172,7 @@ def test_run_command_error(runner: BaseRunner):
 
 @pytest.mark.parametrize('command', ['echo x', 'echo y'])
 @pytest.mark.parametrize('prefix_run', ['[RUN]', '<run>'])
-def test_log_command(runner: BaseRunner, command, prefix_run, caplog):
-    runner = deepcopy(runner)
+def test_log_command(runner: BaseRunner, command, prefix_run, caplog: pytest.LogCaptureFixture):
     runner.log_prefix_run = prefix_run
     runner.log_command(command)
     record = caplog.records[-1]
@@ -189,14 +182,14 @@ def test_log_command(runner: BaseRunner, command, prefix_run, caplog):
 
 @pytest.mark.parametrize('message', ['test', 'log'])
 @pytest.mark.parametrize('level', [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL])
-def test_log(runner: BaseRunner, message, level, caplog):
+def test_log(runner: BaseRunner, message, level, caplog: pytest.LogCaptureFixture):
     runner._log(message, level=level)
     record = caplog.records[-1]
     assert record.levelno == level
     assert record.message == message
 
 @pytest.mark.parametrize('level', ['debug', 'info', 'warning', 'error', 'critical'])
-def test_log_levels(runner: BaseRunner, level, caplog):
+def test_log_levels(runner: BaseRunner, level: str, caplog: pytest.LogCaptureFixture):
     getattr(runner, level)('message')
     record = caplog.records[-1]
     assert record.levelname == level.upper()

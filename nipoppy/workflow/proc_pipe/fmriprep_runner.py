@@ -78,12 +78,12 @@ class FmriprepRunner(ProcpipeRunner):
         if self._freesurfer_version is None:
             # run recon-all -version to get version string
             self.info(f'Checking FreeSurfer version from container for fMRIPrep version {self.pipeline_version}')
-            recon_all_output = self.run_command(
+            version_str, _ = self.run_command(
                 f'{self.global_configs.singularity_path} exec {self.fpath_container} recon-all -version',
                 capture_output=True,
             )
             if not self.dry_run:
-                match = self.re_freesurfer_version.search(recon_all_output)
+                match = self.re_freesurfer_version.search(version_str)
                 if match is not None:
                     self._freesurfer_version = match.group()
                 else:

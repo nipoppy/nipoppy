@@ -23,7 +23,8 @@ class BaseRunner(ABC):
     dname_logs = 'logs'
     template_replace_pattern = re.compile('\\[\\[NIPOPPY\\_(.*?)\\]\\]')
     log_prefix_run = '[RUN]'
-    log_prefix_run_output = '[RUN OUTPUT]'
+    log_prefix_run_stdout = '[RUN STDOUT]'
+    log_prefix_run_stderr = '[RUN STDERR]'
     
     def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False) -> None:
 
@@ -138,8 +139,16 @@ class BaseRunner(ABC):
         fname_log = f'{self.sep.join([self.name, timestamp] + tags)}.log'
         return dpath_log / fname_log
 
-    def run_command(self, command_or_args: Sequence[str] | str, check=True, capture_output=False, **kwargs):
+    def run_command(self, command_or_args: Sequence[str] | str, shell=False, check=True, capture_output=False, **kwargs):
 
+        def process_output(output_source: subprocess.IO, output_str: str, log_prefix: str):
+            for line in output_source:
+                if capture_output:
+                    output_str += line # store the line as-is
+                line = line.strip('\n')
+                self.debug(f'{log_prefix} {line}')
+            return output_str
+        
         # build command string
         if not isinstance(command_or_args, str):
             args = [str(arg) for arg in command_or_args]
@@ -148,26 +157,38 @@ class BaseRunner(ABC):
             command = command_or_args
             args = shlex.split(command)
 
+        # only pass a single string if shell is True
+        if not shell:
+            command_or_args = args
+
         self.log_command(command)
 
-        output_str = ''
+        stdout_str = ''
+        stderr_str = ''
         if not self.dry_run:
 
             process = subprocess.Popen(
-                args,
+                command_or_args,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 text=True,
+                shell=shell,
                 **kwargs,
             )
 
             while process.poll() is None:
-                for line in process.stdout:
-                    if capture_output:
-                        output_str += line # store the line as-is
-                    line = line.strip('\n')
-                    self.debug(f'{self.log_prefix_run_output} {line}')
+                stdout_str = process_output(
+                    process.stdout,
+                    stdout_str,
+                    self.log_prefix_run_stdout,
+                )
 
+                stderr_str = process_output(
+                    process.stderr,
+                    stderr_str,
+                    self.log_prefix_run_stderr,
+                )
+            
             if check and process.returncode != 0:
                 exception = subprocess.CalledProcessError(process.returncode, command)
                 self.error(exception)
@@ -179,10 +200,10 @@ class BaseRunner(ABC):
         else:
             run_output = command
 
-        # return only the captured stdout/stderr string
+        # return the captured stdout/stderr strings
         # instead of the POpen object or command string
         if capture_output:
-            run_output = output_str
+            run_output = (stdout_str, stderr_str)
 
         # only include successful commands in history
         self.command_history.append(command_or_args)
@@ -194,7 +215,8 @@ class BaseRunner(ABC):
     
     def _log(self, message, level=logging.INFO, splitlines=True):
         if self.logger is None:
-            self.fpath_log = self.generate_fpath_log()
+            if self.fpath_log is None:
+                self.fpath_log = self.generate_fpath_log()
             self.logger = self.create_logger(
                 name=str(self),
                 fpath=self.fpath_log,
@@ -236,14 +258,17 @@ class BaseRunner(ABC):
     def __repr__(self) -> str:
         return self.__str__()
 
-class BaseRunnerSingularity(BaseRunner, ABC):
+class BaseSingularityRunner(BaseRunner, ABC):
 
     singularity_cleanenv_flag = '--cleanenv'
     singularity_bind_flag = '--bind'
     singularity_bind_sep = ':'
     singularity_env_prefix = 'APPTAINERENV_'
 
-    def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False, with_templateflow=True) -> None:
+    envvar_requests_ca_bundle = 'REQUESTS_CA_BUNDLE'
+    envvar_templateflow_home = 'TEMPLATEFLOW_HOME'
+
+    def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False, with_templateflow=False) -> None:
         super().__init__(global_configs, name, logger, log_level, dry_run)
         self.with_templateflow = with_templateflow
         self._singularity_flags: list = []
@@ -255,9 +280,8 @@ class BaseRunnerSingularity(BaseRunner, ABC):
     
     def set_singularity_defaults(self):
         self.add_singularity_flags(self.singularity_cleanenv_flag)
-        self.add_singularity_envvar('REQUESTS_CA_BUNDLE', '')
-        if self.with_templateflow:
-            self.setup_templateflow()
+        self.add_singularity_envvar(self.envvar_requests_ca_bundle, '')
+        self.setup_templateflow()
 
     def add_singularity_envvar(self, var_name: str, var_value: str):
         var_name_processed = f'{self.singularity_env_prefix}{var_name}'
@@ -265,13 +289,18 @@ class BaseRunnerSingularity(BaseRunner, ABC):
         os.environ[var_name_processed] = str(var_value)
 
     def setup_templateflow(self):
-        self.add_singularity_envvar(
-            'TEMPLATEFLOW_HOME',
-            self.global_configs.templateflow_dir.resolve(),
-        )
-        self.add_singularity_symmetric_bind_path(
-            self.global_configs.templateflow_dir.resolve(),
-        )
+        if self.with_templateflow:
+            dpath_templateflow = self.global_configs.templateflow_dir.resolve()
+            if not dpath_templateflow.exists():
+                raise RuntimeError(
+                    f'Templateflow directory now found: {dpath_templateflow}'
+                    '. Set with_templateflow to False if it is not needed.'
+                )
+            self.add_singularity_envvar(
+                self.envvar_templateflow_home,
+                dpath_templateflow,
+            )
+            self.add_singularity_symmetric_bind_path(dpath_templateflow)
     
     @property
     def singularity_flags(self) -> str:
@@ -282,7 +311,7 @@ class BaseRunnerSingularity(BaseRunner, ABC):
             flags = [flags]
         self._singularity_flags.extend(flags)
     
-    def add_singularity_bind_flag(self, path_local: str | os.PathLike, path_inside_container: str | os.PathLike | None = None, mode: str = 'rw'):
+    def add_singularity_bind_path(self, path_local: str | os.PathLike, path_inside_container: str | os.PathLike | None = None, mode: str = 'rw'):
         
         path_local = Path(path_local).resolve()
         if (not self.dry_run) and (not path_local.exists()):
@@ -309,9 +338,9 @@ class BaseRunnerSingularity(BaseRunner, ABC):
                 f'Creating directory because it does not exist: {path}'
                 )
             self.run_command(f'mkdir -p {path}')
-        self.add_singularity_bind_flag(path, mode=mode)
+        self.add_singularity_bind_path(path, mode=mode)
 
-class BoutiquesRunner(BaseRunnerSingularity):
+class BoutiquesRunner(BaseSingularityRunner):
 
     dpath_descriptors = Path(__file__).parent / 'descriptors' # TODO don't hardcode path?
 
