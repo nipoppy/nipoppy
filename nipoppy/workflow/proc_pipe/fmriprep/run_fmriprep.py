@@ -24,6 +24,7 @@ MEM_MB = 4000
 
 def run_fmriprep(participant_id: str,
                  bids_dir,
+                 proc_dir,
                  fmriprep_dir,
                  fs_dir,
                  templateflow_dir,
@@ -37,23 +38,27 @@ def run_fmriprep(participant_id: str,
     fmriprep_home_dir = f"{fmriprep_out_dir}/fmriprep_home_{participant_id}/"
     Path(f"{fmriprep_home_dir}").mkdir(parents=True, exist_ok=True)
 
+    # BIDS DB created for fmriprep by run_nipoppy.py
+    bids_db_dir = f"/fmripre_proc/bids_db_fmriprep"
+
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity run \
-        -B {bids_dir}:/data_dir \
+        -B {bids_dir}:{bids_dir} \
         -B {fmriprep_home_dir}:/home/fmriprep --home /home/fmriprep --cleanenv \
         -B {fmriprep_out_dir}:/output \
+        -B {proc_dir}:/fmripre_proc \
         -B {templateflow_dir}:{SINGULARITY_TEMPLATEFLOW_DIR} \
         -B {fmriprep_dir}:/work \
         -B {fs_dir}:{SINGULARITY_FS_DIR} \
         {SINGULARITY_CONTAINER}"
 
     # Compose fMRIPrep command
-    fmriprep_CMD=f" /data_dir /output participant --participant-label {participant_id} \
+    fmriprep_CMD=f" {bids_dir} /output participant --participant-label {participant_id} \
         -w /work \
         --output-spaces MNI152NLin2009cAsym:res-2 anat fsnative \
         --fs-subjects-dir {SINGULARITY_FS_DIR} \
         --skip_bids_validation \
-        --bids-database-dir /work/first_run/bids_db/ \
+        --bids-database-dir {bids_db_dir} \
         --fs-license-file {SINGULARITY_FS_LICENSE} \
         --return-all-components -v \
         --write-graph --notrack \
@@ -65,7 +70,7 @@ def run_fmriprep(participant_id: str,
     # Append optional args
     if use_bids_filter:
         logger.info("Using bids_filter.json")
-        bids_filter_str = "--bids-filter-file /data_dir/bids_filter.json"
+        bids_filter_str = f"--bids-filter-file /fmripre_proc/bids_filter_fmriprep.json"
         fmriprep_CMD = f"{fmriprep_CMD} {bids_filter_str}"
 
     if anat_only:
@@ -124,6 +129,7 @@ def run(participant_id: str,
         output_dir = f"{DATASET_ROOT}/derivatives/"
 
     bids_dir = f"{DATASET_ROOT}/bids/"
+    proc_dir = f"{DATASET_ROOT}/proc/"
     fmriprep_dir = f"{output_dir}/fmriprep/v{FMRIPREP_VERSION}"
 
     # Check and create session_dirs for freesurfer since it won't happen automatically
@@ -137,12 +143,13 @@ def run(participant_id: str,
 
     # Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
     if use_bids_filter:
-        logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/bids/bids_filter.json (to be seen by Singularity container)")
-        shutil.copyfile(f"{CWD}/bids_filter.json", f"{bids_dir}/bids_filter.json")
+        logger.info(f"Copying ./bids_filter.json to {proc_dir}/bids_filter_fmriprep.json (to be seen by Singularity container)")
+        shutil.copyfile(f"{CWD}/bids_filter.json", f"{proc_dir}/bids_filter_fmriprep.json")
 
     # launch fmriprep
     run_fmriprep(participant_id,
                  bids_dir,
+                 proc_dir,
                  fmriprep_dir,
                  fs_dir,
                  TEMPLATEFLOW_DIR,

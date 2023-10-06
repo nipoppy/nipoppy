@@ -10,9 +10,11 @@ BIDS_SESSION_PREFIX = 'ses-'
 
 # directory/file names
 DNAME_BACKUPS_MANIFEST = '.manifests'
-DNAME_BACKUPS_STATUS = '.doughnuts'
+DNAME_BACKUPS_DOUGHNUT = '.doughnuts'
+DNAME_BACKUPS_BAGEL = '.bagels'
 FNAME_MANIFEST = 'manifest.csv'
-FNAME_STATUS = 'doughnut.csv'
+FNAME_DOUGHNUT = 'doughnut.csv'
+FNAME_BAGEL = 'bagel.csv'
 
 # for creating backups
 TIMESTAMP_FORMAT = '%Y%m%d_%H%M'
@@ -47,8 +49,13 @@ def participant_id_to_dicom_id(participant_id):
 def dicom_id_to_bids_id(dicom_id):
     return f'{BIDS_SUBJECT_PREFIX}{dicom_id}'
 
-def participant_id_to_bids_id(participant_id):
-    return dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+def participant_id_to_bids_id(participant_id, custom_map=None):
+    if custom_map == None:
+        bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+    else:
+        _df = pd.read_csv(custom_map)
+        bids_id = _df.loc[(_df["participant_id"]==participant_id)]["bids_id"].values[0]
+    return bids_id
 
 def session_id_to_bids_session(session_id):
     # add BIDS prefix if it doesn't already exist
@@ -92,9 +99,9 @@ def load_manifest(fpath_manifest):
         converters={COL_DATATYPE_MANIFEST: pd.eval}
     )
 
-def load_status(fpath_status):
+def load_doughnut(fpath_doughnut):
     return pd.read_csv(
-        fpath_status, 
+        fpath_doughnut, 
         dtype={
             col: str 
             for col in [

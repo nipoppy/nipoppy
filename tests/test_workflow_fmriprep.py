@@ -68,15 +68,17 @@ def test_run_fmriprep(tmp_path, use_bids_filter, anat_only):
     log_file = tmp_path / "fmriprep.log"
 
     bids_dir = "bids_dir"
+    proc_dir = "fmripre_proc"
     fmriprep_dir = tmp_path / "fmriprep_dir"
     fs_dir = "fs_dir"
     templateflow_dir = "templateflow_dir"
     participant_id = "01"
-    singularity_container = "fmriprep.simg"
+    singularity_container = "fmriprep.sif"
 
     cmd = run_fmriprep(
         participant_id=participant_id,
         bids_dir=bids_dir,
+        proc_dir=proc_dir,
         fmriprep_dir=fmriprep_dir,
         fs_dir=fs_dir,
         templateflow_dir=templateflow_dir,
@@ -88,8 +90,9 @@ def test_run_fmriprep(tmp_path, use_bids_filter, anat_only):
     # fmt: off
     expected_cmd = [
         'singularity', 'run', 
-            '-B', f'{bids_dir}:/data_dir', 
-            '-B', f'{fmriprep_dir}/output//fmriprep_home_{participant_id}/:/home/fmriprep', 
+            '-B', f'{bids_dir}:{bids_dir}',
+            '-B', f'{proc_dir}:/fmriprep_proc',  
+            '-B', f'{fmriprep_dir}/output/fmriprep_home_{participant_id}/:/home/fmriprep', 
             '--home', '/home/fmriprep', 
             '--cleanenv', 
             '-B', f'{fmriprep_dir}/output/:/output', 
@@ -102,7 +105,7 @@ def test_run_fmriprep(tmp_path, use_bids_filter, anat_only):
                     '--output-spaces', 'MNI152NLin2009cAsym:res-2', 'anat', 'fsnative', 
                     '--fs-subjects-dir', '/fsdir/', 
                     '--skip_bids_validation', 
-                    '--bids-database-dir', '/work/first_run/bids_db/', 
+                    '--bids-database-dir', '/fmripre_proc/bids_db_fmriprep', 
                     '--fs-license-file', '/fsdir/license.txt', 
                     '--return-all-components', 
                     '-v', 
@@ -114,7 +117,7 @@ def test_run_fmriprep(tmp_path, use_bids_filter, anat_only):
     # fmt: on
 
     if use_bids_filter:
-        expected_cmd += ["--bids-filter-file", "/data_dir/bids_filter.json"]
+        expected_cmd += ["--bids-filter-file", "/fmripre_proc/bids_filter_fmriprep.json"]
 
     if anat_only:
         expected_cmd += ["--anat-only"]

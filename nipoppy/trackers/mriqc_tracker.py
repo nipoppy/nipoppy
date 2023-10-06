@@ -22,13 +22,14 @@ func_files_dict = {
 }
 
 def check_staus(subject_dir, session_id, run_id, file_dict):
-    participant_id = os.path.basename(subject_dir)
+    bids_id = os.path.basename(subject_dir)
+    session = f"ses-{session_id}"
     filepath_status_list = []
     for k,v in file_dict.items():
         if k == "html":
-            filepath = Path(f"{subject_dir}/" + v.format(participant_id, session_id, run_id))
+            filepath = Path(f"{subject_dir}/" + v.format(bids_id, session, run_id))
         else:
-            filepath = Path(f"{subject_dir}/" + v.format(session_id, participant_id, session_id, run_id))
+            filepath = Path(f"{subject_dir}/" + v.format(session, bids_id, session, run_id))
 
         # print(f"filepath: {filepath}")
         filepath_status = Path.is_file(filepath)
