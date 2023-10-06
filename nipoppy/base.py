@@ -10,7 +10,24 @@ FNAME_MANIFEST = 'manifest.csv'
 FNAME_DOUGHNUT = 'doughnut.csv'
 FNAME_BAGEL = 'bagel.csv'
 
-class GlobalConfigs():
+class Base():
+
+    def _str_helper(self, components=None, names=None, sep=', '):
+        if components is None:
+            components = []
+
+        if names is not None:
+            for name in names:
+                components.append(f'{name}={getattr(self, name)}')
+        return f'{type(self).__name__}({sep.join([str(c) for c in components])})'
+
+    def __str__(self) -> str:
+        return self._str_helper()
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+class GlobalConfigs(Base):
 
     class Program():
 
@@ -115,7 +132,7 @@ class GlobalConfigs():
         except KeyError as exception:
             self.raise_missing_field_error(exception)
 
-        self.global_config = source
+        self.source = source
         self.global_configs_dict = global_configs_dict
 
         # TODO add more
@@ -200,3 +217,6 @@ class GlobalConfigs():
 
     def raise_missing_field_error(self, original_exception, message_suffix='from global configs'):
         raise self.MissingFieldException(original_exception, message_suffix=message_suffix)
+
+    def __str__(self) -> str:
+        return self._str_helper([self.source])

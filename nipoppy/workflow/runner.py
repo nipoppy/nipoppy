@@ -11,13 +11,12 @@ from functools import wraps
 from pathlib import Path
 from typing import Iterable, Sequence
 
-from nipoppy.base import GlobalConfigs
+from nipoppy.base import Base, GlobalConfigs
 from nipoppy.io import load_json
+from nipoppy.logging import create_logger
 from nipoppy.workflow.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
-class BaseRunner(ABC):
-
-    log_format = '%(asctime)s - %(name)s - %(levelname)-7s - %(message)s'
+class BaseRunner(Base, ABC):
 
     sep = '-'
     dname_logs = 'logs'
@@ -96,37 +95,6 @@ class BaseRunner(ABC):
                 raise RuntimeError(f'Unable to replace {to_replace} in {template_str}')
             
         return template_str
-
-    @classmethod
-    def create_logger(cls, name: str, fpath=None, level=logging.DEBUG) -> logging.Logger:
-        
-        # get the logger
-        logger = logging.getLogger(name)
-        logger.setLevel(level)
-
-        # always output to terminal
-        stream_handler = logging.StreamHandler()
-        stream_formatter = logging.Formatter(cls.log_format)
-        stream_handler.setFormatter(stream_formatter)
-        logger.addHandler(stream_handler)
-
-        # output to file if fpath is provided
-        if fpath is not None:
-
-            fpath = Path(fpath)
-            fpath.parent.mkdir(parents=True, exist_ok=True)
-
-            file_handler = logging.FileHandler(fpath)
-            file_formatter = logging.Formatter(cls.log_format)
-            file_handler.setFormatter(file_formatter)
-            logger.addHandler(file_handler)
-
-            logger.info(f'Writing log to file: {fpath}')
-
-        else:
-            logger.warning('No path provided for logger, will not write to a log file.')
-
-        return logger
     
     def generate_fpath_log(self, tags=None) -> Path:
         if tags is None:
@@ -217,7 +185,7 @@ class BaseRunner(ABC):
         if self.logger is None:
             if self.fpath_log is None:
                 self.fpath_log = self.generate_fpath_log()
-            self.logger = self.create_logger(
+            self.logger = create_logger(
                 name=str(self),
                 fpath=self.fpath_log,
                 level=self.log_level,
@@ -243,21 +211,6 @@ class BaseRunner(ABC):
     def critical(self, message):
         return self._log(message, level=logging.CRITICAL)
 
-    def _str_helper(self, components=None, names=None, sep=', '):
-        if components is None:
-            components = []
-
-        if names is not None:
-            for name in names:
-                components.append(f'{name}={getattr(self, name)}')
-        return f'{type(self).__name__}({sep.join([str(c) for c in components])})'
-
-    def __str__(self) -> str:
-        return self._str_helper()
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
 class BaseSingularityRunner(BaseRunner, ABC):
 
     singularity_cleanenv_flag = '--cleanenv'
@@ -268,8 +221,8 @@ class BaseSingularityRunner(BaseRunner, ABC):
     envvar_requests_ca_bundle = 'REQUESTS_CA_BUNDLE'
     envvar_templateflow_home = 'TEMPLATEFLOW_HOME'
 
-    def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False, with_templateflow=False) -> None:
-        super().__init__(global_configs, name, logger, log_level, dry_run)
+    def __init__(self, global_configs, name: str, with_templateflow=False, **kwargs) -> None:
+        super().__init__(global_configs, name, **kwargs)
         self.with_templateflow = with_templateflow
         self._singularity_flags: list = []
 
@@ -387,7 +340,7 @@ class BoutiquesRunner(BaseSingularityRunner):
         self.run_command(['bosh', 'invocation', '-i', invocation, descriptor])
 
         # run
-        self.run_command(['bosh', 'exec', 'simulate', '-i', invocation, descriptor])
+        # self.run_command(['bosh', 'exec', 'simulate', '-i', invocation, descriptor])
         self.run_command(['bosh', 'exec', 'launch', '--stream', descriptor, invocation])
        
     def __str__(self) -> str:
@@ -399,14 +352,13 @@ class ProcpipeRunner(BoutiquesRunner):
     dname_work = 'work'
     dname_bids_db = 'bids_db'
 
-    def __init__(self, global_configs, pipeline_name: str, subject, session, pipeline_version: str | None = None, with_work_dir=True, with_bids_db=True, with_bids_filter=True, **kwargs) -> None:
+    def __init__(self, global_configs, pipeline_name: str, subject, session, pipeline_version: str | None = None, with_work_dir=True, with_bids_db=True, **kwargs) -> None:
         super().__init__(global_configs=global_configs, pipeline_name=pipeline_name, pipeline_version=pipeline_version, **kwargs)
         self.subject = str(subject)
         self.session = str(session)
         self.with_work_dir = with_work_dir
         self.with_bids_db = with_bids_db
         self.layout = None
-        self.with_bids_filter = with_bids_filter
         self.bids_ignore_patterns = [ # order matters
             re.compile(rf'^(?!/{BIDS_SUBJECT_PREFIX}({self.subject}))'),
             re.compile(rf'.*?/{BIDS_SESSION_PREFIX}(?!{self.session})'),
