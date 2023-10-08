@@ -27,7 +27,10 @@ class BaseRunner(Base, ABC):
     
     def __init__(self, global_configs, name: str, logger=None, log_level=logging.DEBUG, dry_run=False) -> None:
 
-        self.global_configs = GlobalConfigs(global_configs)
+        if not isinstance(global_configs, GlobalConfigs):
+            global_configs = GlobalConfigs(global_configs)
+
+        self.global_configs = global_configs
         self.name = name
         self.dry_run = dry_run
         self.logger: logging.Logger | None = logger
@@ -298,12 +301,15 @@ class BoutiquesRunner(BaseSingularityRunner):
     dpath_descriptors = Path(__file__).parent / 'descriptors' # TODO don't hardcode path?
 
     def __init__(self, global_configs, pipeline_name: str, pipeline_version: str | None = None, **kwargs) -> None:
-        super().__init__(global_configs, pipeline_name, **kwargs)
-        self.pipeline_name = pipeline_name
-        self.pipeline_version = self.global_configs.check_version(
-            self.pipeline_name,
+        global_configs = GlobalConfigs(global_configs)
+        pipeline_version = global_configs.check_version(
+            pipeline_name,
             pipeline_version,
         )
+        name = self.sep.join([pipeline_name, pipeline_version])
+        super().__init__(global_configs, name, **kwargs)
+        self.pipeline_name = pipeline_name
+        self.pipeline_version = pipeline_version
         self.descriptor_template: str = self.load_descriptor_template()
         self.invocation_template: str = self.load_invocation_template()
 
@@ -316,7 +322,7 @@ class BoutiquesRunner(BaseSingularityRunner):
 
     # TODO when to do validation (file exists, processing success)
     def load_descriptor_template(self) -> str:
-        fpath_descriptor_template = self.dpath_descriptors / f'{self.pipeline_name}-{self.pipeline_version}.json'
+        fpath_descriptor_template = self.dpath_descriptors / f'{self.name}.json'
         return load_json(fpath_descriptor_template, return_str=True)
 
     def load_invocation_template(self) -> str:

@@ -52,7 +52,6 @@ if __name__ == '__main__':
     # get standard args
     parser = get_base_parser(
         description=DESCRIPTION,
-        global_configs=REQUIRED_ARG,
         subject=REQUIRED_ARG,
         session=REQUIRED_ARG,
     )
