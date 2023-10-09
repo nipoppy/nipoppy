@@ -13,7 +13,7 @@ from typing import Iterable, Sequence
 
 from nipoppy.base import Base, GlobalConfigs
 from nipoppy.io import load_json
-from nipoppy.logging import create_logger
+from nipoppy.logger import create_logger
 from nipoppy.workflow.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 class BaseRunner(Base, ABC):

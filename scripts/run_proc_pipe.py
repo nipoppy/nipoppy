@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from functools import partial
 from pathlib import Path
-from nipoppy.logging import create_logger
+from nipoppy.logger import create_logger
 from nipoppy.parser import get_base_parser, REQUIRED_ARG
 from nipoppy.workflow.runner import ProcpipeRunner
 from nipoppy.workflow.proc_pipe.fmriprep.fmriprep_runner import FmriprepRunner

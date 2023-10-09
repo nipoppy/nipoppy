@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 from nipoppy.base import GlobalConfigs
-from nipoppy.logging import create_logger
+from nipoppy.logger import create_logger
 from nipoppy.workflow.utils import BIDS_SUBJECT_PREFIX, BIDS_SESSION_PREFIX
 
 REQUIRED_ARG = 'REQUIRED'
