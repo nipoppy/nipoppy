@@ -37,7 +37,7 @@ pipeline_tracker_config_dict = {
 BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
 NO_TRACKER_PIPES = ["maget_brain"]
 
-def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1, logger=None, log_level="INFO"):
+def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1", acq_label=None, logger=None, log_level="INFO"):
     """ driver code running pipeline specific trackers
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -63,6 +63,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
         sessions = [f"{BIDS_SESSION_PREFIX}{session_id}"]
 
     logger.info(f"tracking session: {sessions}")    
+    logger.info(f"tracking run: {run_id} and acq_label: {acq_label}")    
 
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
@@ -175,9 +176,9 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                 if dir_status:                                 
                     for name, func in status_check_dict.items():
                         if pipeline == "heudiconv":
-                            status = func(bids_layout, participant_id, session_id, run_id)
+                            status = func(bids_layout, participant_id, session_id, run_id, acq_label)
                         else:
-                            status = func(subject_dir, session_id, run_id)
+                            status = func(subject_dir, session_id, run_id, acq_label)
 
                         logger.debug(f"task_name: {name}, status: {status}")                        
 
@@ -240,7 +241,9 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
-    parser.add_argument('--session_id', type=str, default="ALL", help='session_id (default = ALL)')
+    parser.add_argument('--session_id', type=str, default="ALL", help='bids session_id')
+    parser.add_argument('--run_id', type=str, default="1", help='bids run_id')
+    parser.add_argument('--acq_label', type=str, default=None, help='bids acq label')
     parser.add_argument('--log_level', type=str, default="INFO", help='log level')
     args = parser.parse_args()
 
@@ -255,6 +258,12 @@ if __name__ == '__main__':
     dash_schema_file = args.dash_schema
     pipelines = args.pipelines
     session_id = args.session_id
+    run_id = args.run_id
+    acq_label = args.acq_label
     log_level = args.log_level
 
+<<<<<<< HEAD
     run(global_configs, dash_schema_file, pipelines, session_id=session_id, log_level=log_level)
+=======
+    run(global_configs, dash_schema_file, pipelines, session_id, run_id, acq_label, log_level=log_level)
+>>>>>>> b8ee334 (added acq-label to all trackers)
