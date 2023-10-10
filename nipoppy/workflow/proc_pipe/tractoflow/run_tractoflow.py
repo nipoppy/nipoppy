@@ -261,14 +261,13 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
                 
                 logger.info(f"Forward Phase Encoding: {dmrifs1pe}")
                 logger.info(f"Reverse Phase Encoding: {dmrifs2pe}")
-
                 ## if the sequences are the same length
                 if (dmrifs1nv == dmrifs2nv):
                     
                     logger.info('N volumes match. Assuming mirrored sequences.')
 
                     ## verify that bvecs match
-                    if all(dmrifs1wd == dmrifs2wd):
+                    if np.allclose(dmrifs1wd, dmrifs2wd):
                         logger.info(' -- Verified weighted directions match.')
                         ## identity matching bvecs may be fragile - add a failover tolerance?
                         
@@ -497,6 +496,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     bvec = np.loadtxt(bvecfile)
     #sh_order = int(sh_order)
 
+    #logger.info(f'bval: {bval}')
+    
     ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
     rval = bval + 49 ## this either does too much or not enough rounding for YLO dataset
     rval = np.floor(rval / 100) * 100
@@ -509,27 +510,24 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## the default tensor shell
     ## where only the shell closest to 1000 is used
-    dten = rval[np.where(np.abs(rval - 1000) == np.min(rval))[0]]
-
-    if dti_use is None:
+    #dten = rval[np.where(np.abs(rval - 1000) == np.min(np.abs(rval) - 1000))[0]]
+    dten = rval[np.abs(rval-1000) == np.min(np.abs(rval - 1000))][0]
+    
+    if dti_shells is None:
         logger.info(f'No requested shell(s) passed to tensor fitting. Automatically extracting the shell closest to 1000.')
-        dti_use = str(dten[0])
+        dti_use = str(dten)
         logger.info(f'The tensor will be fit on data with b = {dti_use}')
     else:
         dti_use = dti_shells
 
-    if odf_use is None:
+    if fodf_shells is None:
         logger.info(f'No requested shell(s) passed for ODF fitting. Automatically using all non-zero shells.')
         odf_use = ','.join(map(str, np.unique(rval)[1:]))
         logger.info(f'The ODF will be fit on data with b = {odf_use}')
     else:
-        odf_use = odf_use
+        odf_use = fodf_shells
         
     ## fix the passed bvals
-
-    ## pull copy
-    #dti_use = dti_shells
-    #odf_use = fodf_shells
 
     ## convert to integer
     dti_use = list(map(int, dti_use.split(",")))
@@ -548,8 +546,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         raise ValueError('Unable to process shell data not present in the data.')
 
     ## convert back to space separated strings to tractoflow can parse it
-    dti_use = dti_shells.replace(',', ' ')
-    odf_use = fodf_shells.replace(',', ' ')
+    dti_use = ' '.join(map(str, dti_use))
+    odf_use = ' '.join(map(str, odf_use))
 
     ## pull lmax possible from all directions
     
@@ -562,21 +560,24 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     
     ## compute and print the maximum shell
     dlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
-
+    logger.info(f'The largest supported lmax is: {dlmax}')
+    logger.info(f' -- The largest possible lmax is generally determined by the number of values in each shell.')
+    
     if sh_order is None:
-        sh_order = dlmax
+        sh_order = 6
         logger.info(f'No lmax is requested by user. Fitting highest lmax possible based on the data.')
         #logger.info(f' -- Fitting lmax: ({plmax})')
     else:
         if int(sh_order) <= dlmax:
-            logger.info(f'Attempting to fit requested lmax of {sh_order} to the data.')
+            logger.info(f'Determining if data supports an max lmax of {sh_order}.')
         else:
             raise ValueError(f'Requested lmax of {sh_order} is higher than the data can support.')
         
     ## deal with multishell data
     if nshell == 1:
         plmax = dlmax
-        logger.info(f"Single shell data has b = {int(bunq[1])} shell with a maximum possible lmax of {plmax}.")
+        logger.info(f"Single shell data has b = {int(bunq[1])}")
+        logger.info(f" -- Shell b = {int(bunq[1])} has {tdir.shape[1]} directions capable of a max lmax: {plmax}.")
 
     ## have to check the utility of every shell
     else:
@@ -605,14 +606,19 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         logger.info(f"The maximum lmax for any one shell is: {plmax}")
         
     ## if lmax too large, reset with warning
-    if sh_order <= plmax:
+    if int(sh_order) <= plmax:
         logger.info(f"Running model with lmax: {sh_order}")
     else:
-        logger.info(f"The requested lmax ({sh_order}) exceeds the recommended capabilities of the data ({plmax})")
-        logger.info(f"Generally, you do not want to fit an lmax in excess of any one shell's ability in the data.")
-        #logger.info(f"Running model with overrode lmax: {sh_order}")
-        #sh_order = plmax
-        
+        if int(sh_order) <= dlmax:
+            logger.info(f'Running model with lmax: {sh_order}')
+            logger.info(f' -- This lmax is in excess of what any one shell supports, but there are (theoretically) suffienct total directions.')
+        else:
+            logger.warning(f"The requested lmax ({sh_order}) exceeds the theoretical capabilities of the data ({dlmax})")
+            logger.warning(f"Generally, you do not want to fit an lmax in excess of any one shell's ability in the data.")
+            raise ValueError('The requested lmax is not supported by the data. This got past the first raise ValueError.')
+            #logger.info(f"Running model with overrode lmax: {sh_order}")
+            #sh_order = plmax
+
     ## hard coded inputs to the tractoflow command in mrproc
     profile='fully_reproducible'
     ncore=4
@@ -675,9 +681,9 @@ if __name__ == '__main__':
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
     parser.add_argument('--output_dir', type=str, default=None, help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
     parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
-    parser.add_argument('--dti_shells', type=str, default='1000', help='shell value(s) on which a tensor will be fit', required=False)
-    parser.add_argument('--fodf_shells', type=str, default='1000', help='shell value(s) on which the CSD will be fit', required=False)
-    parser.add_argument('--sh_order', type=str, default='6', help='The order of the CSD function to fit', required=False)
+    parser.add_argument('--dti_shells', type=str, default=None, help='shell value(s) on which a tensor will be fit', required=False)
+    parser.add_argument('--fodf_shells', type=str, default=None, help='shell value(s) on which the CSD will be fit', required=False)
+    parser.add_argument('--sh_order', type=str, default=None, help='The order of the CSD function to fit', required=False)
     
     ## extract arguments
     args = parser.parse_args()
