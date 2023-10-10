@@ -16,10 +16,13 @@ def get_mris_preproc_cmd(FS_dir, participants_list, out_file, meas="thickness", 
     """
     participants_str_list = []
     for participant in participants_list:
-        dirpath = Path(f"{FS_dir}/{participant}")
-        dirpath_status = Path.is_dir(dirpath)
-        if dirpath_status:
+        fpath_lh = Path(f"{FS_dir}/{participant}/surf/lh.thickness")
+        fpath_rh = Path(f"{FS_dir}/{participant}/surf/rh.thickness")
+        fpath_status = Path.is_file(fpath_lh) & Path.is_file(fpath_rh)
+        if fpath_status:
             participants_str_list.append(f"--s {participant}")
+        else:
+            print(f"ignoring {participant} with missing surf files...")
 
     participants_str = ' '.join(participants_str_list)
     FS_CMD_dict = {}
@@ -61,7 +64,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=HELPTEXT)
     parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--session_id', type=str, help='session_id', required=True)
-    parser.add_argument('--visit_id', type=str, help='visit_id', required=True)
+    parser.add_argument('--visit_id', type=str, default=None, help='visit_id')
     parser.add_argument('--group', type=str, default=None, help='filter participants based on a specific group value in the csv')
     parser.add_argument('--output_dir', type=str, default=None, help='out_file path for the processed / aggregated output')
     parser.add_argument('--meas', type=str, default="thickness", help='cortical measure')
@@ -81,7 +84,11 @@ if __name__ == '__main__':
     template = args.template
 
     session = f"ses-{session_id}"
-    visit = f"V{visit_id}"
+
+    if visit_id is None:
+        visit = f"V{session_id}"
+    else:
+        visit = f"V{visit_id}"
 
     # Read global config
     with open(global_config_file, 'r') as f:
@@ -99,8 +106,12 @@ if __name__ == '__main__':
     FS_dir = f"{dataset_root}/derivatives/freesurfer/v{FS_VERSION}/output/{session}/" 
     FS_license = f"{FS_dir}/license.txt"
 
+    
+
     if output_dir is None:
         output_dir = f"{dataset_root}/derivatives/freesurfer/v{FS_VERSION}/surfmaps/{session}/" 
+
+    Path(f"{output_dir}").mkdir(parents=True, exist_ok=True)
 
     # grab bids_ids 
     manifest = f"{dataset_root}/tabular/manifest.csv"
@@ -114,6 +125,13 @@ if __name__ == '__main__':
     # Read participant lists and filter by session and group
     manifest_df = pd.read_csv(manifest)
     manifest_df = manifest_df[manifest_df["session"] == session]
+
+    if "bids_id" not in manifest_df.columns:
+        # Append bids id col from id_map_file (participant_id --> bids_id)
+        id_mapping_csv = f"{dataset_root}/scratch/participant_id_bids_id_map.csv"
+        id_mapping_df = pd.read_csv(id_mapping_csv)
+        manifest_df = pd.merge(manifest_df, id_mapping_df[["participant_id","bids_id"]], on=["participant_id"])
+    
     manifest_df = manifest_df[~manifest_df["bids_id"].isna()]
     n_bids = len(manifest_df["bids_id"].unique())
 
@@ -150,9 +168,8 @@ if __name__ == '__main__':
 
         out_file = f"/output_dir/surf_concat_{group}_{fwhm}mm.mgh"
 
-        run(FS_dir, proc_participants, out_file, meas, fwhm, template)
-        
         print("Running mris_preproc separately for left and right hemisphere\n")
+        run(FS_dir, proc_participants, out_file, meas, fwhm, template)
         
         print(" -"*30)
         print("")
