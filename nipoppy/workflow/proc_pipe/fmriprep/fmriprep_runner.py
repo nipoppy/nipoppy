@@ -43,7 +43,13 @@ class FmriprepRunner(ProcpipeRunner):
             f'inputs/id={self.freesurfer_license_descriptor_id}',
         ]).get(self.freesurfer_license_descriptor_id, None)
 
-        if fpath_freesurfer_license is None:
+        if fpath_freesurfer_license is not None:
+            fpath_freesurfer_license = self.process_template_str(
+                fpath_freesurfer_license,
+            )
+
+        # check if environment variable for licence is set
+        else:
             fpath_freesurfer_license = os.environ.get(
                 self.freesurfer_license_envvar,
             )
@@ -97,13 +103,13 @@ class FmriprepRunner(ProcpipeRunner):
     
     @property
     def dpath_output_freesurfer(self) -> Path:
-        tmp = self.global_configs.get_dpath_pipeline_derivatives(
+        dpath_derivatives_freesurfer = self.global_configs.get_dpath_pipeline_derivatives(
             self.freesurfer_name,
             self.freesurfer_version,
             check_version=False, # freesurfer does not need to be in global configs
         )
         bids_session = session_id_to_bids_session(self.session)
-        return tmp / self.dname_output / bids_session
+        return dpath_derivatives_freesurfer / self.dname_output / bids_session
 
     def __str__(self) -> str:
         return self._str_helper([

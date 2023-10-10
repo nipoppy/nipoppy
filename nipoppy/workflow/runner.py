@@ -1,5 +1,6 @@
 from __future__ import annotations
 import datetime
+import json
 import logging
 import os
 import re
@@ -299,6 +300,8 @@ class BaseSingularityRunner(BaseRunner, ABC):
 class BoutiquesRunner(BaseSingularityRunner):
 
     dpath_descriptors = Path(__file__).parent / 'descriptors' # TODO don't hardcode path?
+    custom_descriptor_id = 'custom'
+    config_descriptor_id = 'nipoppy'
 
     def __init__(self, global_configs, pipeline_name: str, pipeline_version: str | None = None, **kwargs) -> None:
         global_configs = GlobalConfigs(global_configs)
@@ -312,6 +315,7 @@ class BoutiquesRunner(BaseSingularityRunner):
         self.pipeline_version = pipeline_version
         self.descriptor_template: str = self.load_descriptor_template()
         self.invocation_template: str = self.load_invocation_template()
+        self.boutiques_config_dict: dict = self.load_boutiques_config_dict()
 
     @property
     def fpath_container(self) -> Path:
@@ -319,8 +323,20 @@ class BoutiquesRunner(BaseSingularityRunner):
             self.pipeline_name,
             self.pipeline_version,
         )
+    
+    def load_boutiques_config_dict(self) -> dict:
+        descriptor_dict = json.loads(self.descriptor_template)
+        try:
+            config = descriptor_dict[self.custom_descriptor_id][self.config_descriptor_id]
+        except (KeyError, TypeError):
+            self.warning(f'No custom config object found in Boutiques descriptor for {self.pipeline_name} {self.pipeline_version}')
+            return None
+        if not isinstance(config, dict):
+            raise TypeError(
+                f'Expected dict type for custom config object, got: {type(config)}'
+            )
+        return config
 
-    # TODO when to do validation (file exists, processing success)
     def load_descriptor_template(self) -> str:
         fpath_descriptor_template = self.dpath_descriptors / f'{self.name}.json'
         return load_json(fpath_descriptor_template, return_str=True)
@@ -357,14 +373,20 @@ class ProcpipeRunner(BoutiquesRunner):
     dname_output = 'output'
     dname_work = 'work'
     dname_bids_db = 'bids_db'
+    tar_ext = '.tar'
+    gzip_ext = '.gz'
+    paths_to_tar_descriptor_id = 'paths_to_tar' # for boutiques query
 
-    def __init__(self, global_configs, pipeline_name: str, subject, session, pipeline_version: str | None = None, with_work_dir=True, with_bids_db=True, **kwargs) -> None:
-        super().__init__(global_configs=global_configs, pipeline_name=pipeline_name, pipeline_version=pipeline_version, **kwargs)
+    def __init__(self, global_configs, pipeline_name: str, subject, session, pipeline_version: str | None = None, with_work_dir=True, with_bids_db=True, tar_outputs=False, zip_tar=False, **kwargs) -> None:
         self.subject = str(subject)
         self.session = str(session)
-        self.with_work_dir = with_work_dir
+        super().__init__(global_configs=global_configs, pipeline_name=pipeline_name, pipeline_version=pipeline_version, **kwargs)
+        self.with_work_dir = with_work_dir 
         self.with_bids_db = with_bids_db
+        self.tar_outputs = tar_outputs
+        self.zip_tar = zip_tar
         self.layout = None
+        self.paths_to_tar = []
         self.bids_ignore_patterns = [ # order matters
             re.compile(rf'^(?!/{BIDS_SUBJECT_PREFIX}({self.subject}))'),
             re.compile(rf'.*?/{BIDS_SESSION_PREFIX}(?!{self.session})'),
@@ -380,6 +402,7 @@ class ProcpipeRunner(BoutiquesRunner):
         self.setup_bids_db()
         self.setup_input_directory()
         self.setup_output_directories()
+        self.check_paths_to_tar()
         
     def setup_bids_db(self):
         
@@ -440,13 +463,51 @@ class ProcpipeRunner(BoutiquesRunner):
         if self.with_bids_db:
             self.add_singularity_symmetric_bind_path(self.dpath_bids_db)
 
+    def check_paths_to_tar(self):
+        if self.tar_outputs:
+
+            # check the Boutiques descriptor for paths to tar
+            try:
+                self.paths_to_tar.extend([
+                    Path(self.process_template_str(path))
+                    for path in 
+                    self.boutiques_config_dict[self.paths_to_tar_descriptor_id]
+                ])
+            except KeyError:
+                pass
+
+            # raise error if tarring is expected but no paths are found
+            if len(self.paths_to_tar) == 0:
+                raise ValueError(
+                    'No path to tar specified for'
+                    f' {self.pipeline_name} {self.pipeline_version}'
+                    '. Set tar_outputs to False if it is not needed, or'
+                    ' specify list of path(s) to tar in a custom property'
+                    'in the Boutiques descriptor'
+                )
+            
+            self.info(f'Paths to tar (on successful completion): {self.paths_to_tar}')
+
     def run_cleanup(self, **kwargs):
         
-        # delete temporary working directory if no command failed
-        if self.with_work_dir and not self.command_failed:
-            self.run_command(f'rm -rf {self.dpath_work}')
+        # cleanup steps if run completed successfully
+        if not self.command_failed:
 
-        # also delete temporary BIDS database
+            # delete working directory
+            if self.with_work_dir:
+                self.run_command(f'rm -rf {self.dpath_work}')
+
+            # tar the results
+            if self.tar_outputs:
+                for path in self.paths_to_tar:
+                    tar_flags = '-cvzf' if self.zip_tar else '-cvf'
+                    path_tarred = f'{path}{self.tar_ext}'
+                    if self.zip_tar:
+                        path_tarred += self.gzip_ext
+                    self.run_command(f'tar {tar_flags} {path_tarred} -C {Path(path).parent} {path.name}')
+                    self.run_command(f'rm -rf {path}')
+
+        # always delete temporary BIDS database
         if self.with_bids_db:
             self.run_command(f'rm -rf {self.dpath_bids_db}')
 

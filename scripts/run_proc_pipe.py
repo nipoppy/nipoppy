@@ -16,7 +16,7 @@ RUNNERS = {
 }
 
 def run(global_configs, pipeline_name, subject, session, pipeline_version=None,
-        logger=None, log_level=None, aggregate_logs=False, dry_run=False):
+        tar_outputs=False, zip_tar=False, logger=None, log_level=None, aggregate_logs=False, dry_run=False):
     
     if logger is None:
         logger = create_logger(name=LOGGER_NAME)
@@ -40,6 +40,7 @@ def run(global_configs, pipeline_name, subject, session, pipeline_version=None,
         subject=subject,
         session=session,
         pipeline_version=pipeline_version,
+        tar_outputs=tar_outputs,
         logger=runner_logger,
         log_level=log_level,
         dry_run=dry_run,
@@ -78,6 +79,18 @@ if __name__ == '__main__':
             ' use the first one listed in the global configs.'
         ),
     )
+    parser.add_argument(
+        '--tar',
+        action='store_true',
+        required=False,
+        help='tar the result files.',
+    )
+    parser.add_argument(
+        '--zip',
+        action='store_true',
+        required=False,
+        help='zip the tar archive(s).',
+    )
     # add common optional args
     parser.add_generic_optional_args(logger_name=LOGGER_NAME)
 
@@ -89,6 +102,8 @@ if __name__ == '__main__':
         pipeline_version=args.pipeline_version,
         subject=args.subject,
         session=args.session,
+        tar_outputs=args.tar,
+        zip_tar=args.zip,
         dry_run=args.dry_run,
         logger=args.logger,
         log_level=args.log_level,

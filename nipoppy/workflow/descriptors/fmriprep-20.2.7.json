@@ -362,7 +362,6 @@
             "optional": true,
             "type": "Flag",
             "value-key": "[FMAP_NO_DEMEAN]",
-            "default-value": false,
             "command-line-flag": "--fmap-no-demean"
         },
         {
@@ -399,7 +398,6 @@
             "optional": true,
             "type": "Flag",
             "value-key": "[HIRES]",
-            "default-value": false,
             "command-line-flag": "--no-submm-recon"
         },
         {
@@ -422,7 +420,6 @@
             "optional": true,
             "type": "Flag",
             "value-key": "[RUN_RECONALL]",
-            "default-value": false,
             "command-line-flag": "--fs-no-reconall"
         },
         {
@@ -528,8 +525,16 @@
     ],
     "tags": {},
     "suggested-resources": {
-        "cpu-cores": 1,
-        "ram": 1,
-        "walltime-estimate": 60
+        "cpu-cores": 8,
+        "ram": 8,
+        "walltime-estimate": 480
+    },
+    "custom": {
+        "nipoppy": {
+            "paths_to_tar": [
+                "[[NIPOPPY_DPATH_OUTPUT]]/fmriprep/sub-[[NIPOPPY_SUBJECT]]/ses-[[NIPOPPY_SESSION]]",
+                "[[NIPOPPY_DPATH_OUTPUT_FREESURFER]]/sub-[[NIPOPPY_SUBJECT]]"
+            ]
+        }
     }
 }
