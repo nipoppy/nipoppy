@@ -413,7 +413,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     ## return the paths to the input files to copy
     return(dmrifile, bvalfile, bvecfile, anatfile, rpe_file, phase, readout)
 
-def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells=1000, fodf_shells=1000, sh_order=6, logger=None):
+def run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells=None, fodf_shells=None, sh_order=None, logger=None):
     """ Runs TractoFlow command with Nextflow
     """
 
@@ -495,7 +495,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## load the bval / bvec data
     bval = np.loadtxt(bvalfile)
     bvec = np.loadtxt(bvecfile)
-    sh_order = int(sh_order)
+    #sh_order = int(sh_order)
 
     ## round shells to get b0s that are ~50 / group shells that are off by +/- 10
     rval = bval + 49 ## this either does too much or not enough rounding for YLO dataset
@@ -507,11 +507,29 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     bunq = np.unique(rval)
     nshell = bunq.size - 1
 
+    ## the default tensor shell
+    ## where only the shell closest to 1000 is used
+    dten = rval[np.where(np.abs(rval - 1000) == np.min(rval))[0]]
+
+    if dti_use is None:
+        logger.info(f'No requested shell(s) passed to tensor fitting. Automatically extracting the shell closest to 1000.')
+        dti_use = str(dten[0])
+        logger.info(f'The tensor will be fit on data with b = {dti_use}')
+    else:
+        dti_use = dti_shells
+
+    if odf_use is None:
+        logger.info(f'No requested shell(s) passed for ODF fitting. Automatically using all non-zero shells.')
+        odf_use = ','.join(map(str, np.unique(rval)[1:]))
+        logger.info(f'The ODF will be fit on data with b = {odf_use}')
+    else:
+        odf_use = odf_use
+        
     ## fix the passed bvals
 
     ## pull copy
-    dti_use = dti_shells
-    odf_use = fodf_shells
+    #dti_use = dti_shells
+    #odf_use = fodf_shells
 
     ## convert to integer
     dti_use = list(map(int, dti_use.split(",")))
@@ -532,19 +550,32 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## convert back to space separated strings to tractoflow can parse it
     dti_use = dti_shells.replace(',', ' ')
     odf_use = fodf_shells.replace(',', ' ')
+
+    ## pull lmax possible from all directions
     
+    ## logical index of b0 values
+    b0idx = rval == 0
+        
+    ## check that vectors are unique
+    tvec = bvec[:,~b0idx]
+    tdir = np.unique(tvec, axis=0)
+    
+    ## compute and print the maximum shell
+    dlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
+
+    if sh_order is None:
+        sh_order = dlmax
+        logger.info(f'No lmax is requested by user. Fitting highest lmax possible based on the data.')
+        #logger.info(f' -- Fitting lmax: ({plmax})')
+    else:
+        if int(sh_order) <= dlmax:
+            logger.info(f'Attempting to fit requested lmax of {sh_order} to the data.')
+        else:
+            raise ValueError(f'Requested lmax of {sh_order} is higher than the data can support.')
+        
     ## deal with multishell data
     if nshell == 1:
-
-        ## logical index of b0 values
-        b0idx = rval == 0
-        
-        ## check that vectors are unique
-        tvec = bvec[:,~b0idx]
-        tdir = np.unique(tvec, axis=0)
-
-        ## compute and print the maximum shell
-        plmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
+        plmax = dlmax
         logger.info(f"Single shell data has b = {int(bunq[1])} shell with a maximum possible lmax of {plmax}.")
 
     ## have to check the utility of every shell
@@ -557,17 +588,17 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
             ## pull the shells
             tndir = rval == shell
-            b0idx = rval == 0
+            #b0idx = rval == 0
 
-            ## check that vectors are unique
+            ## check that directed vectors are unique
             tvec = bvec[:,tndir]
             tdir = np.unique(tvec, axis=0)
             mldir.append(tdir.shape[1])
             
-            ## compute and print the maximum shell
+            ## compute and print the maximum lmax per shell
             tlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
             mlmax.append(tlmax)
-            logger.info(f" -- Shell {int(shell)} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
+            logger.info(f" -- Shell b = {int(shell)} has {tdir.shape[1]} directions capable of a max lmax: {tlmax}")
 
         ## the max lmax within any 1 shell is used
         plmax = max(mlmax)
@@ -575,11 +606,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         
     ## if lmax too large, reset with warning
     if sh_order <= plmax:
-        logger.info(f"Running model with requested lmax: {sh_order}")
+        logger.info(f"Running model with lmax: {sh_order}")
     else:
         logger.info(f"The requested lmax ({sh_order}) exceeds the recommended capabilities of the data ({plmax})")
         logger.info(f"Generally, you do not want to fit an lmax in excess of any one shell's ability in the data.")
-        logger.info(f" -- You should redo with sh_order set to: {plmax}")
         #logger.info(f"Running model with overrode lmax: {sh_order}")
         #sh_order = plmax
         
