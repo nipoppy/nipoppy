@@ -262,8 +262,4 @@ if __name__ == '__main__':
     acq_label = args.acq_label
     log_level = args.log_level
 
-<<<<<<< HEAD
-    run(global_configs, dash_schema_file, pipelines, session_id=session_id, log_level=log_level)
-=======
     run(global_configs, dash_schema_file, pipelines, session_id, run_id, acq_label, log_level=log_level)
->>>>>>> b8ee334 (added acq-label to all trackers)

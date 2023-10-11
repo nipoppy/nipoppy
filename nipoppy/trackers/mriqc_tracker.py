@@ -43,26 +43,14 @@ def check_status(subject_dir, session_id, run_id, file_dict):
 
     return status_msg
         
-<<<<<<< HEAD
-def check_T1w(subject_dir, session_id, run_id):
-    return check_status(subject_dir, session_id, run_id, file_dict=T1w_files_dict)
-         
-def check_T2w(subject_dir, session_id,run_id):
-    return check_status(subject_dir, session_id, run_id, file_dict=T2w_files_dict)
-
-def check_func(subject_dir, session_id, run_id):
-    return check_status(subject_dir, session_id, run_id, file_dict=func_files_dict)
-
-=======
 def check_T1w(subject_dir, session_id, run_id, acq_label=None):
-    return check_staus(subject_dir, session_id, run_id, T1w_files_dict)
+    return check_status(subject_dir, session_id, run_id, T1w_files_dict)
          
 def check_T2w(subject_dir, session_id,run_id, acq_label=None):
-    return check_staus(subject_dir, session_id, run_id, T2w_files_dict)
+    return check_status(subject_dir, session_id, run_id, T2w_files_dict)
 
 def check_func(subject_dir, session_id, run_id, acq_label=None):
-    return check_staus(subject_dir, session_id, run_id, func_files_dict)
->>>>>>> b8ee334 (added acq-label to all trackers)
+    return check_status(subject_dir, session_id, run_id, func_files_dict)
 
 tracker_configs = {
     "pipeline_complete": check_T1w,
