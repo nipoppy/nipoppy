@@ -18,7 +18,7 @@ files_dict = {
     "func": ["bold"]
 }
 
-def check_staus(bids_layout, participant_id, session_id, datatype, run_id, acq_label):
+def check_status(bids_layout, participant_id, session_id, datatype, run_id, acq_label):
     # Remove non-alphanumeric characters from participant_id
     participant_id = participant_id_to_dicom_id(participant_id)
     suffix_list = files_dict[datatype]
@@ -57,22 +57,22 @@ def check_staus(bids_layout, participant_id, session_id, datatype, run_id, acq_l
         
 def check_T1w(bids_layout, participant_id, session_id, run_id, acq_label=None):
     datatype = "anat"
-    status = check_staus(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
+    status = check_status(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
     return status
 
 def check_dwi(bids_layout, participant_id, session_id, run_id, acq_label=None):
     datatype = "dwi"
-    status = check_staus(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
+    status = check_status(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
     return status
 
 def check_fmap(bids_layout, participant_id, session_id, run_id, acq_label=None):
     datatype = "fmap"
-    status = check_staus(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
+    status = check_status(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
     return status
 
 def check_func(bids_layout, participant_id, session_id, run_id, acq_label=None):
     datatype = "func"
-    status = check_staus(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
+    status = check_status(bids_layout, participant_id, session_id, datatype, run_id, acq_label)
     return status
 
 def check_structural(bids_layout, participant_id, session_id, run_id, acq_label=None):

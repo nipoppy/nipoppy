@@ -35,11 +35,12 @@ def check_output(subject_dir, file_check_dict, session_id, run_id, acq_label, mo
                     tpl_spaces=default_tpl_spaces, tpl_resolutions=default_tpl_resolutions, task_label=None):
     
     # bids file-name tags in the correct order
+    bids_id = os.path.basename(subject_dir)
     session = f"ses-{session_id}"
     task = f"task-{task_label}"
     acq = f"acq-{acq_label}"
     run = f"run-{run_id}"
-    participant_id = os.path.basename(subject_dir)
+    
     status_msg = SUCCESS
     for k,v in file_check_dict.items():
         if status_msg == SUCCESS:    
@@ -49,23 +50,23 @@ def check_output(subject_dir, file_check_dict, session_id, run_id, acq_label, mo
                     file_suffix = f"space-{tpl_space}_{tpl_res}_{v}"
                     if modality == "anat":
                         if (run_id == None) & (acq_label == None):
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{file_suffix}")
                         elif (run_id == None) & (acq_label != None):
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{acq}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{acq}_{file_suffix}")
                         elif (run_id != None) & (acq_label == None):
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{run}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{run}_{file_suffix}")
                         else:
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{acq}_{run}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{acq}_{run}_{file_suffix}")
 
                     elif modality == "func":
                         if (run_id == None) & (acq_label == None):
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{task}_{file_suffix}")
                         elif (run_id == None) & (acq_label != None):
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{acq}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{task}_{acq}_{file_suffix}")
                         elif (run_id != None) & (acq_label == None):
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{run}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{task}_{run}_{file_suffix}")
                         else:
-                            filepath = Path(f"{subject_dir}/{session}/{modality}/{participant_id}_{session}_{task}_{acq}_{run}_{file_suffix}")
+                            filepath = Path(f"{subject_dir}/{session}/{modality}/{bids_id}_{session}_{task}_{acq}_{run}_{file_suffix}")
 
                     else:
                         print(f"Unknown modality: {modality}")
