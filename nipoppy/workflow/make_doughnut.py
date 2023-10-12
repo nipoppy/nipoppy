@@ -107,7 +107,7 @@ def run(global_config_file, regenerate=False, empty=False):
         map_file = None
 
     # generate bids_id
-    df_status[COL_BIDS_ID_MANIFEST] = df_status.apply(
+    df_doughnut[COL_BIDS_ID_MANIFEST] = df_doughnut.apply(
             lambda row: participant_id_to_bids_id(
                 row[COL_SUBJECT_MANIFEST],
                 map_file),
@@ -222,7 +222,7 @@ def check_status(df: pd.DataFrame, dpath, col_dname, session_first=True):
         return False
     
     dpath = Path(dpath)
-    status = pd.Series(np.nan, index=df.index)
+    status = pd.Series(np.nan, index=df.index, dtype=bool)
     for session in df[COL_SESSION_MANIFEST].drop_duplicates():
         if pd.isna(session):
             continue

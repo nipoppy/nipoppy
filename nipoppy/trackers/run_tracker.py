@@ -9,7 +9,7 @@ import pandas as pd
 
 import nipoppy.workflow.logger as my_logger
 from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
-from nipoppy.trackers import fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
+from nipoppy.trackers import bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from nipoppy.workflow.utils import (
     BIDS_SUBJECT_PREFIX,
     BIDS_SESSION_PREFIX,
@@ -35,8 +35,9 @@ pipeline_tracker_config_dict = {
     "tractoflow": tractoflow_tracker.tracker_configs,
 }
 BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
+NO_TRACKER_PIPES = ["maget_brain"]
 
-def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1, logger=None, log_level="INFO"):
+def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1", acq_label=None, logger=None, log_level="INFO"):
     """ driver code running pipeline specific trackers
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -46,7 +47,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     
     # Grab BIDS participants from the doughnut
     doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
-    doughnut_df = load_status(doughnut_file)
+    doughnut_df = load_doughnut(doughnut_file)
     
     # logging
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
@@ -59,9 +60,10 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
     if session_id == "ALL":
         sessions = global_configs["SESSIONS"]
     else:
-        sessions = [f"ses-{session_id}"]
+        sessions = [f"{BIDS_SESSION_PREFIX}{session_id}"]
 
-    logger.info(f"tracking session_ids: {session_ids}")    
+    logger.info(f"tracking session: {sessions}")    
+    logger.info(f"tracking run: {run_id} and acq_label: {acq_label}")    
 
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
@@ -74,7 +76,11 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
             
         schema = pipe_tracker.get_dash_schema()
-        tracker_configs = pipeline_tracker_config_dict[pipeline]
+
+        if pipeline in list(pipeline_tracker_config_dict.keys()):
+            tracker_configs = pipeline_tracker_config_dict[pipeline]
+        else:
+            logger.warning(f"Skipping pipeline: {pipeline}. Tracker not listed in the config")
 
         # Grab BIDS participants from the doughnut
         doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/{FNAME_DOUGHNUT}"
@@ -84,7 +90,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
 
         logger.info("-"*50)
         logger.info(f"pipeline: {pipeline}, version: {version}")
-        logger.info(f"n_participants_total: {n_participants_total}, session_ids: {session_ids}")
+        logger.info(f"n_participants_total: {n_participants_total}, sessions: {sessions}")
         logger.info("-"*50)
 
         status_check_dict = pipe_tracker.get_pipe_tasks(tracker_configs, PIPELINE_STATUS_COLUMNS, pipeline, version)
@@ -92,9 +98,11 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
         # only use non-prefixed columns at this stage
         # for prefixed columns we need to generate the column name
         dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if not value["IsPrefixedColumn"])
+        # status_check_dict will typically only have minimal pipeline_complete key
+        dash_col_list = dash_col_list + list(status_check_dict.keys())
 
-        for session_id in session_ids:
-            session = session_id_to_bids_session(session_id)
+        for session in sessions:
+            session_id = session.removeprefix(BIDS_SESSION_PREFIX)
             logger.info(f"Checking session: {session}")
 
             participants_session = doughnut_df[(doughnut_df[COL_BIDS_ID_MANIFEST].isin(participants_total)) & (doughnut_df[COL_SESSION_MANIFEST] == session)][COL_BIDS_ID_MANIFEST].drop_duplicates().astype(str).str.strip().values
@@ -120,7 +128,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                 logger.debug(f"bids_dir: {bids_dir}")
                 logger.debug(f"bids_layout: {bids_layout.get_subjects()}")
                 
-            fpath_bagel = Path(dataset_root, 'derivatives', FNAME_BAGEL)
+            fpath_bagel = Path(DATASET_ROOT, 'derivatives', FNAME_BAGEL)
             if fpath_bagel.exists():
                 df_bagel_old_full = load_bagel(fpath_bagel)
 
@@ -157,18 +165,20 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{session}/{bids_id}" 
                 elif pipeline in BIDS_PIPES:
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                elif pipeline in NO_TRACKER_PIPES:
+                    logger.warning(f"pipeline: {pipeline} does not have a tracker yet...")
                 else:
                     logger.error(f"unknown pipeline: {pipeline}")
                     
                 dir_status = Path(subject_dir).is_dir()
                 logger.debug(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
                 
-                if dir_status:                
+                if dir_status:                                 
                     for name, func in status_check_dict.items():
                         if pipeline == "heudiconv":
-                            status = func(bids_layout, participant_id, session_id, run_id)
+                            status = func(bids_layout, participant_id, session_id, run_id, acq_label)
                         else:
-                            status = func(subject_dir, session_id, run_id)
+                            status = func(subject_dir, session_id, run_id, acq_label)
 
                         logger.debug(f"task_name: {name}, status: {status}")                        
 
@@ -177,7 +187,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
                         # TODO only check files listed in the tracker config
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
                 else:
-                    logger.warning(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
+                    logger.debug(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
@@ -192,7 +202,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id=1,
             # don't write a new file if no changes
             try:
                 if len(df_bagel.compare(df_bagel_old_full)) == 0:
-                    logger.info(f'\nNo change in bagel file for pipeline {pipeline}, session {session}')
+                    logger.info(f'No change in bagel file for pipeline {pipeline}, session {session}')
                     continue
             except Exception:
                 pass
@@ -231,7 +241,9 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global config file for your nipoppy dataset', required=True)
     parser.add_argument('--dash_schema', type=str, help='path to dashboard schema to display tracker status', required=True)
     parser.add_argument('--pipelines', nargs='+', help='list of pipelines to track', required=True)
-    parser.add_argument('--session_id', type=str, default="ALL", help='session_id (default = ALL)')
+    parser.add_argument('--session_id', type=str, default="ALL", help='bids session_id')
+    parser.add_argument('--run_id', type=str, default="1", help='bids run_id')
+    parser.add_argument('--acq_label', type=str, default=None, help='bids acq label')
     parser.add_argument('--log_level', type=str, default="INFO", help='log level')
     args = parser.parse_args()
 
@@ -246,6 +258,8 @@ if __name__ == '__main__':
     dash_schema_file = args.dash_schema
     pipelines = args.pipelines
     session_id = args.session_id
+    run_id = args.run_id
+    acq_label = args.acq_label
     log_level = args.log_level
 
-    run(global_configs, dash_schema_file, pipelines, session_id, log_level=log_level)
+    run(global_configs, dash_schema_file, pipelines, session_id, run_id, acq_label, log_level=log_level)

@@ -140,7 +140,7 @@ def check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_
 #     status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='DWIFODF')
 #     return status_msg
 
-def check_tf_final(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
+def check_tf_final(subject_dir, session_id, run_id, acq_label=None, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages):
     """ Call the function to check for output files with the parameters set to check all the stages
     """
     status_msg = check_tf_output(subject_dir, session_id, run_id, file_check_dict=TractoFlow_Procs, stage_dict=TractoFlow_Stages, task='All')
