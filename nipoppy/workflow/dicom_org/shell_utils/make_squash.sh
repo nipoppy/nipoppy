@@ -6,7 +6,7 @@
 # ========== SETTINGS ==========
 # NOTE: fstime is set (to arbitrary value) so that checksums are the same
 SQUASHFS_OPTIONS="-no-progress -keep-as-directory -all-root -processors 1 -no-duplicates -wildcards -fstime 1689602400"
-COMPRESS_OPTIONS="-noD -noI -noX"
+NOCOMPRESS_OPTIONS="-noD -noI -noX"
 
 BASENAME="$(basename $0)"
 EXAMPLE_CALL="$BASENAME --exclude exclude.txt --move /data output.squashfs dirA fileB"
@@ -26,7 +26,7 @@ where:
     -e/--exclude        exclude files matching patterns in FILE (passed to -ef argument of mksquashfs)
     -m/--move           move files into a subdirectory of the squashfs
     -p/--no-chmod       do not set file permissions before squashing (to use if file permissions are already correct)
-    -c/--no-compress    do not compress data, inode table or extended attributes (use options '$COMPRESS_OPTIONS' in mksquashfs call)
+    -c/--no-compress    do not compress data, inode table or extended attributes (use options '$NOCOMPRESS_OPTIONS' in mksquashfs call)
     -d/--dry-run        print commands but do not execute them
     -h/--help           print this message and exit
 
@@ -169,7 +169,7 @@ fi
 if [ ! -z "$NO_COMPRESS" ]
 then
     info "Not doing compression"
-    SQUASHFS_OPTIONS="$SQUASHFS_OPTIONS $COMPRESS_OPTIONS"
+    SQUASHFS_OPTIONS="$SQUASHFS_OPTIONS $NOCOMPRESS_OPTIONS"
 fi
 
 if [ ! -z "$NO_CHMOD" ]
@@ -191,6 +191,10 @@ then
     done
 fi
 
+# make output directory
+run "mkdir -p $(dirname $FPATH_OUTPUT)"
+
+# squash
 run "mksquashfs $PATHS_TO_SQUASH $FPATH_OUTPUT $SQUASHFS_OPTIONS"
 
 if [ ! -z "$DPATH_IN_SQUASH" ]
@@ -203,7 +207,7 @@ then
     touch $TMP_FILE
     trap 'rm -f "$TMP_FILE"' EXIT
 
-    # move to $DATA_PATH
+    # move to $DPATH_IN_SQUASH
     while [ ! "$DPATH_IN_SQUASH" == "/" ]
     do
         DEST="$(basename $DPATH_IN_SQUASH)"
