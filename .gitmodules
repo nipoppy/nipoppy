@@ -1,4 +1,0 @@
-[submodule "nipoppy/workflow/proc_pipe/tractoflow/tractoflow"]
-	path = nipoppy/workflow/proc_pipe/tractoflow/tractoflow
-	url = https://github.com/scilus/tractoflow.git
-	datalad-url = https://github.com/scilus/tractoflow.git
