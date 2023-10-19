@@ -54,7 +54,7 @@ def get_valid_scores(df, instrument, logger, raw_score_name="raw_score_name"):
 
     logger.info(f"Possible score range: ({min_val},{max_val})")
     logger.info(f"Available score range: ({min_available_val},{max_available_val})")
-    invalid_df = df[~df[name].isin(range(min_val, max_val+1))] # (min <= score < max)
+    invalid_df = df[(df[name] < min_val) | (df[name] > max_val)]
     n_invalid_scores = len(invalid_df)
     if n_invalid_scores > 0:
         logger.info(f"n_invalid_scores: {n_invalid_scores}")

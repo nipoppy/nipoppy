@@ -2,14 +2,14 @@ import pandas as pd
 import numpy as np
 import json
 import argparse
-import workflow.logger as my_logger
+import nipoppy.workflow.logger as my_logger
 from utils import *
 
 #Author: nikhil153
 #Date: 01-Jun-2023
 
 HELPTEXT = """
-Script to perform DICOM to BIDS conversion using HeuDiConv
+Script to perform norming of neuropsy scores
 """
 
 VISIT_DATE_COL = "Date of assessment"
