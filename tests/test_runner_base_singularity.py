@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from nipoppy.workflow.runner import BaseSingularityRunner
 
-from conftest import global_configs_fixture
+from .conftest import global_configs_fixture
 
 ENVVAR_PREFIX = 'APPTAINERENV_'
 

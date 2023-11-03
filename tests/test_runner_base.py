@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from nipoppy.workflow.runner import BaseRunner
 
-from conftest import global_configs_fixture
+from .conftest import global_configs_fixture
 
 @pytest.fixture(scope='function')
 def runner(global_configs_fixture, tmp_path: Path):
