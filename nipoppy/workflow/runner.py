@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 from nipoppy.base import Base, GlobalConfigs
-from nipoppy.io import load_json
+from nipoppy.io import load_json_as_str
 from nipoppy.logger import create_logger
 from nipoppy.workflow.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
@@ -339,14 +339,14 @@ class BoutiquesRunner(BaseSingularityRunner):
 
     def load_descriptor_template(self) -> str:
         fpath_descriptor_template = self.dpath_descriptors / f'{self.name}.json'
-        return load_json(fpath_descriptor_template, return_str=True)
+        return load_json_as_str(fpath_descriptor_template)
 
     def load_invocation_template(self) -> str:
         fpath = self.global_configs.get_fpath_invocation_template(
             self.pipeline_name,
             self.pipeline_version,
         )
-        return load_json(fpath, return_str=True)
+        return load_json_as_str(fpath)
 
     def run_main(self, **kwargs):
 
