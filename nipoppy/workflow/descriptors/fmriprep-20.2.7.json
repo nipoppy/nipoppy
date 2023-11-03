@@ -144,7 +144,7 @@
         {
             "id":            "verbose_count",
             "name":          "Verbose output",
-            "description":   "Increases log verbosity for each occurence, debug level is -vvv",
+            "description":   "Increases log verbosity for each occurrence, debug level is -vvv",
             "type":          "String",
             "optional":      true,
             "value-key":     "[VERBOSE_COUNT]",
