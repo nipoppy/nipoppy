@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 import nipoppy.workflow.logger as my_logger
-from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, TRUE
+from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, INCOMPLETE, TRUE
 from nipoppy.trackers import bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from nipoppy.workflow.utils import (
     BIDS_SUBJECT_PREFIX,
@@ -34,7 +34,7 @@ pipeline_tracker_config_dict = {
     "mriqc": mriqc_tracker.tracker_configs,
     "tractoflow": tractoflow_tracker.tracker_configs,
 }
-BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
+BIDS_PIPES = ["mriqc","fmriprep"]
 NO_TRACKER_PIPES = ["maget_brain"]
 
 def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1", acq_label=None, logger=None, log_level="INFO"):
@@ -62,8 +62,8 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
     else:
         sessions = [f"{BIDS_SESSION_PREFIX}{session_id}"]
 
-    logger.info(f"tracking session: {sessions}")    
-    logger.info(f"tracking run: {run_id} and acq_label: {acq_label}")    
+    logger.info(f"Tracking session: {sessions}")    
+    logger.info(f"Tracking run: {run_id} and acq_label: {acq_label}")    
 
     for pipeline in pipelines:
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
@@ -161,19 +161,23 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
 
                 if pipeline == "heudiconv":
                     subject_dir = f"{DATASET_ROOT}/bids/{bids_id}"
-                elif pipeline == "freesurfer":
+                    subject_ses_dir = f"{subject_dir}/{session}"
+                elif pipeline in ["freesurfer","tractoflow"]:
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{session}/{bids_id}" 
+                    subject_ses_dir = subject_dir
                 elif pipeline in BIDS_PIPES:
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                    subject_ses_dir = f"{subject_dir}/{session}"
                 elif pipeline in NO_TRACKER_PIPES:
                     logger.warning(f"pipeline: {pipeline} does not have a tracker yet...")
                 else:
                     logger.error(f"unknown pipeline: {pipeline}")
                     
-                dir_status = Path(subject_dir).is_dir()
-                logger.debug(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
+                subject_ses_dir_status = Path(subject_ses_dir).is_dir()
+                logger.debug(f"subject_dir:{subject_ses_dir_status}, dir_status: {subject_ses_dir_status}")
                 
-                if dir_status:                                 
+                # TODO incorporate manifest datatype availability
+                if subject_ses_dir_status:                            
                     for name, func in status_check_dict.items():
                         if pipeline == "heudiconv":
                             status = func(bids_layout, participant_id, session_id, run_id, acq_label)
@@ -187,9 +191,9 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                         # TODO only check files listed in the tracker config
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
                 else:
-                    logger.debug(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
+                    logger.debug(f"{pipeline} output is expected based on manifest but not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
-                        _df.loc[bids_id,name] = UNAVAILABLE
+                        _df.loc[bids_id,name] = INCOMPLETE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
 
