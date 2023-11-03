@@ -6,17 +6,17 @@ from pathlib import Path
 import pytest
 from nipoppy.workflow.runner import BaseSingularityRunner
 
-from conftest import global_configs_fixture, dpath_tmp
+from conftest import global_configs_fixture
 
 ENVVAR_PREFIX = 'APPTAINERENV_'
 
 @pytest.fixture(scope='function')
-def runner(global_configs_fixture, dpath_tmp):
+def runner(global_configs_fixture, tmp_path: Path):
     class DummyRunner(BaseSingularityRunner):
         def run_main(self, **kwargs):
             return
     runner = DummyRunner(global_configs_fixture, 'runner', dry_run=True)
-    runner.fpath_log = dpath_tmp / 'runner.log'
+    runner.fpath_log = tmp_path / 'runner.log'
     return runner
 
 
@@ -43,7 +43,7 @@ def test_add_singularity_envvar(runner: BaseSingularityRunner, envvar, value):
 
 
 @pytest.mark.parametrize('templateflow_dir', ['.', __file__])
-def test_setup_templateflow(runner: BaseSingularityRunner, dpath_tmp: Path, templateflow_dir):
+def test_setup_templateflow(runner: BaseSingularityRunner, tmp_path: Path, templateflow_dir):
     templateflow_dir = Path(templateflow_dir).resolve()
     runner = deepcopy(runner)
     runner.with_templateflow = True
@@ -131,9 +131,9 @@ def test_add_singularity_symmetric_bind_path(runner: BaseSingularityRunner, path
 def test_add_singularity_symmetric_bind_path_rw_create(
         runner: BaseSingularityRunner,
         caplog: pytest.LogCaptureFixture,
-        dpath_tmp: Path, path_local_relative,
+        tmp_path: Path, path_local_relative,
     ):
-    path_local = dpath_tmp / path_local_relative
+    path_local = tmp_path / path_local_relative
     runner = deepcopy(runner)
     runner.dry_run = False
     runner.add_singularity_symmetric_bind_path(path_local)

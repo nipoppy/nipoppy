@@ -6,15 +6,15 @@ from pathlib import Path
 import pytest
 from nipoppy.workflow.runner import BaseRunner
 
-from conftest import global_configs_fixture, dpath_tmp
+from conftest import global_configs_fixture
 
 @pytest.fixture(scope='function')
-def runner(global_configs_fixture, dpath_tmp):
+def runner(global_configs_fixture, tmp_path: Path):
     class DummyRunner(BaseRunner):
         def run_main(self, **kwargs):
             return
     runner = DummyRunner(global_configs_fixture, 'runner', dry_run=True)
-    runner.fpath_log = dpath_tmp / runner.generate_fpath_log().name
+    runner.fpath_log = tmp_path / runner.generate_fpath_log().name
     return runner
 
 def test_abstract_class():
