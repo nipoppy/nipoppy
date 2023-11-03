@@ -85,7 +85,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
         tmeta = anat.get_metadata()
         tvol = anat.get_image()
 
-        ## because PPMI doesn't have full sidecars
+        # ## because PPMI doesn't have full sidecars
         
         try:
             tmcmode = tmeta['MatrixCoilMode']
@@ -111,9 +111,9 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
         if tmcmode.lower() == 'sense':
             continue
 
-        ## if it's not a sagittal T1, it's probably not the main
-        if not torient.lower() == 'sag':
-            continue
+        # ## if it's not a sagittal T1, it's probably not the main
+        # if not torient.lower() == 'sag':
+        #     continue
 
         ## look for Neuromelanin type scan in name somewhere
         if ('neuromel' in tprotocol.lower()):
@@ -259,8 +259,10 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
             ## they're the same axis in opposite orientations
             else:
                 
-                logger.info(f"Forward Phase Encoding: {dmrifs1pe}")
-                logger.info(f"Reverse Phase Encoding: {dmrifs2pe}")
+                logger.info(f"Forward Phase Encoding (FPE) File: {dmrifs1.filename}")
+                logger.info(f"Reverse Phase Encoding (RPE) File: {dmrifs2.filename}")
+                logger.info(f"FPE Direction / RPE Direction: {dmrifs1pe} / {dmrifs2pe}")
+                
                 ## if the sequences are the same length
                 if (dmrifs1nv == dmrifs2nv):
                     
@@ -346,10 +348,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
             rpe = fpe + "-"
         else:
             rpe = fpe[0]
-
-        logger.info(f"Forward Phase Encoding: {fpe}")
-        logger.info(f"Reverse Phase Encoding: {rpe}")
-            
+    
         ## look for the reverse phase encoded file in the other candidates
         if (rpe in cpe):
             
@@ -357,11 +356,15 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
             rpevol = rpeb0.get_image()
             tmp_dir = tempfile.mkdtemp() #TemporaryDirectory()
             rpe_out = f'{participant_id}_rpe_b0.nii.gz'
+
+            logger.info(f"Forward Phase Encoding (FPE) File: {dmri_files[didx].filename}")
+            logger.info(f"Reverse Phase Encoding (RPE) File: {rpeb0.filename}")
+            logger.info(f"FPE Direction / RPE Direction: {fpe} / {rpe}")
             
             ## if the rpe file has multiple volumes
             if len(rpevol.shape) == 4:
 
-                logger.info('An RPE file is present: Averaging b0 volumes to single RPE volume...')
+                logger.info('A 4D RPE file is present: Averaging b0 volumes to single RPE volume...')
                 ## load and average the volumes
                 rpedat = rpevol.get_fdata()
                 rpedat = np.mean(rpedat, 3)
@@ -373,14 +376,14 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
                 
             else:
 
-                logger.info('An RPE file is present: Copying single the single RPE b0 volume...')
+                logger.info('A 3D RPE file is present: Copying the single RPE b0 volume...')
                 ## otherwise, copy the input file to tmp
                 rpe_shape = rpevol.shape
                 shutil.copyfile(rpeb0, rpe_out)
                             
         else:
             
-            logger.info("No RPE is found in candidate files")
+            logger.info("No valid RPE file is found in candidate files")
             rpe_out = None
             
     logger.info("= "*25)
@@ -540,10 +543,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     ## if any requested shell(s) are absent within data, error w/ useful warning
     mshell = np.setdiff1d(rshell, bunq)
     if mshell.size == 0:
-        logger.info('Requested shells are available in the data.')
+        logger.info(' -- Requested shells are available in the data.')
     else:
-        logger.info(f'Requested shells are not present in the data: {mshell}')
-        raise ValueError('Unable to process shell data not present in the data.')
+        logger.warning(f' -- Requested shells are not present in the data: {mshell}')
+        raise ValueError('Unable to process - Requested shell(s) not present in the data.')
 
     ## convert back to space separated strings to tractoflow can parse it
     dti_use = ' '.join(map(str, dti_use))
@@ -560,13 +563,14 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     
     ## compute and print the maximum shell
     dlmax = int(np.floor((-3 + np.sqrt(1 + 8 * tdir.shape[1]) / 2.0)))
-    logger.info(f'The largest supported lmax is: {dlmax}')
-    logger.info(f' -- The largest possible lmax is generally determined by the number of values in each shell.')
+    logger.info(f'The largest supported lmax using the whole dMRI sequence is: {dlmax}')
+    logger.info(f' -- The lmax is generally restricted to the highest lmax supported by any one shell.')
+    logger.info(f' -- At most, the lmax should not exceed the highest lmax supported by any one shell.')
     
     if sh_order is None:
-        sh_order = 6
-        logger.info(f'No lmax is requested by user. Fitting highest lmax possible based on the data.')
-        #logger.info(f' -- Fitting lmax: ({plmax})')
+        sh_order = dlmax
+        logger.info(f'No lmax is requested by user. Setting lmax to the largest value supported by the data.')
+        logger.info(f' -- Fitting lmax: ({sh_order})')
     else:
         if int(sh_order) <= dlmax:
             logger.info(f'Determining if data supports an max lmax of {sh_order}.')
@@ -578,7 +582,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         plmax = dlmax
         logger.info(f"Single shell data has b = {int(bunq[1])}")
         logger.info(f" -- Shell b = {int(bunq[1])} has {tdir.shape[1]} directions capable of a max lmax: {plmax}.")
-
+        logger.info(f"The maximum lmax for the single shell data is: {plmax}")
+        
     ## have to check the utility of every shell
     else:
 
@@ -607,19 +612,19 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         
     ## if lmax too large, reset with warning
     if int(sh_order) <= plmax:
-        logger.info(f"Running model with lmax: {sh_order}")
+        logger.info(f"Running CSD model with lmax: {sh_order}")
     else:
         if int(sh_order) <= dlmax:
-            logger.info(f'Running model with lmax: {sh_order}')
+            logger.info(f'Running CSD model with lmax: {sh_order}')
             logger.info(f' -- This lmax is in excess of what any one shell supports, but there are (theoretically) suffienct total directions.')
         else:
             logger.warning(f"The requested lmax ({sh_order}) exceeds the theoretical capabilities of the data ({dlmax})")
             logger.warning(f"Generally, you do not want to fit an lmax in excess of any one shell's ability in the data.")
-            raise ValueError('The requested lmax is not supported by the data. This got past the first raise ValueError.')
-            #logger.info(f"Running model with overrode lmax: {sh_order}")
+            raise ValueError('The requested lmax is not supported by the data. This somehow got past the first raise ValueError.')
+            #logger.warning(f"Overriding requested (or default) lmax due to insufficient directions from lmax={sh_order} to lmax={plmax}")
             #sh_order = plmax
 
-    ## hard coded inputs to the tractoflow command in mrproc
+    ## hard coded inputs to the tractoflow command in nipoppy
     profile='fully_reproducible'
     ncore=4
 
