@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from nipoppy.workflow.runner import BaseRunner
 
-from utils import global_configs_fixture, dpath_tmp#, tmp_dir
+from conftest import global_configs_fixture, dpath_tmp
 
 @pytest.fixture(scope='function')
 def runner(global_configs_fixture, dpath_tmp):
@@ -14,7 +14,7 @@ def runner(global_configs_fixture, dpath_tmp):
         def run_main(self, **kwargs):
             return
     runner = DummyRunner(global_configs_fixture, 'runner', dry_run=True)
-    runner.logger = runner.create_logger(runner.name, dpath_tmp / runner.generate_fpath_log().name)
+    runner.fpath_log = dpath_tmp / runner.generate_fpath_log().name
     return runner
 
 def test_abstract_class():
@@ -57,7 +57,6 @@ def test_run_setup(runner: BaseRunner, print_begin, substring, caplog: pytest.Lo
     [(True, 'END'), (False, None)],
 )
 def test_run_cleanup(runner: BaseRunner, print_end, substring, caplog: pytest.LogCaptureFixture):
-    caplog.set_level(logging.DEBUG)
     runner.run_cleanup(print_end=print_end)
     if substring is None:
         assert caplog.text == ''
@@ -85,23 +84,6 @@ def test_process_template_str_error_pattern(runner: BaseRunner):
 def test_process_template_str_error_replace(runner: BaseRunner):
     with pytest.raises(RuntimeError, match='Unable to replace'):
         runner.process_template_str('[[NIPOPPY_INVALID]]')
-
-@pytest.mark.parametrize('fpath', [None, 'test.log'])
-def test_create_logger(fpath, dpath_tmp, caplog: pytest.LogCaptureFixture):
-    if fpath is not None:
-        fpath = dpath_tmp / fpath
-    assert isinstance(BaseRunner.create_logger('test', fpath), logging.Logger)
-    if fpath is not None:
-        assert str(fpath) in caplog.text
-    else:
-        assert 'will not write to a log file' in caplog.text
-
-def test_create_logger_set_fpath(runner: BaseRunner, dpath_tmp: Path):
-    fpath_log = dpath_tmp / 'test.log'
-    if fpath_log.exists():
-        fpath_log.unlink()
-    assert isinstance(runner.create_logger('test', fpath_log), logging.Logger)
-    assert fpath_log.exists()
 
 @pytest.mark.parametrize(
     'tags,sep,substring',
