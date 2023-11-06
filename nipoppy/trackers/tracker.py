@@ -7,6 +7,7 @@ from pathlib import Path
 # Status flags
 SUCCESS="SUCCESS"
 FAIL="FAIL"
+INCOMPLETE="INCOMPLETE"
 UNAVAILABLE="UNAVAILABLE"
 
 # boolean values
