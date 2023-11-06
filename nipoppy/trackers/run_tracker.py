@@ -8,8 +8,8 @@ from pathlib import Path
 import pandas as pd
 
 import nipoppy.workflow.logger as my_logger
-from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, INCOMPLETE, TRUE
-from nipoppy.trackers import bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
+from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, UNAVAILABLE, INCOMPLETE, TRUE, SUCCESS
+from nipoppy.trackers import bids_tracker, bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from nipoppy.workflow.utils import (
     BIDS_SUBJECT_PREFIX,
     BIDS_SESSION_PREFIX,
@@ -56,6 +56,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
         logger = my_logger.get_logger(log_file, level=log_level)
 
     logger.info(f"Tracking pipelines: {pipelines}")
+    logger.info(f"tracking run: {run_id} and acq_label: {acq_label}")
 
     if session_id == "ALL":
         sessions = global_configs["SESSIONS"]
@@ -159,6 +160,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 _df.loc[bids_id, COL_SUBJECT_MANIFEST] = participant_id
                 _df.loc[bids_id, COL_BIDS_ID_MANIFEST] = bids_id
 
+                fpath_results = None
                 if pipeline == "heudiconv":
                     subject_dir = f"{DATASET_ROOT}/bids/{bids_id}"
                     subject_ses_dir = f"{subject_dir}/{session}"
@@ -174,10 +176,20 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                     logger.error(f"unknown pipeline: {pipeline}")
                     
                 subject_ses_dir_status = Path(subject_ses_dir).is_dir()
-                logger.debug(f"subject_dir:{subject_ses_dir_status}, dir_status: {subject_ses_dir_status}")
+                subject_ses_tar_status = Path(subject_ses_dir).with_suffix('.tar').is_file()
+                logger.debug(f"subject_ses_dir: {subject_ses_dir_status}, dir_status: {subject_ses_dir_status}")
                 
                 # TODO incorporate manifest datatype availability
-                if subject_ses_dir_status:                            
+                if subject_ses_tar_status:
+                    logger.debug(f"subject_ses_dir: {subject_ses_dir} is a tar file")
+                    for name in status_check_dict.keys():  
+                        if name == 'pipeline_complete':                  
+                            _df.loc[bids_id,name] = SUCCESS
+                        else:
+                            _df.loc[bids_id,name] = UNAVAILABLE  # TODO check if files are available in the tar file
+                        _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
+                elif subject_ses_dir_status:
                     for name, func in status_check_dict.items():
                         if pipeline == "heudiconv":
                             status = func(bids_layout, participant_id, session_id, run_id, acq_label)
@@ -190,12 +202,24 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
                         # TODO only check files listed in the tracker config
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
+                elif fpath_results is not None and fpath_results.with_suffix('.tar').is_file():
+                    logger.debug(f"subject_dir:{subject_dir} is a tar file")
+                    for name in status_check_dict.keys():  
+                        if name == 'pipeline_complete':                  
+                            _df.loc[bids_id,name] = SUCCESS
+                        else:
+                            _df.loc[bids_id,name] = UNAVAILABLE
+                        _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
+                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
                 else:
                     logger.debug(f"{pipeline} output is expected based on manifest but not found for bids_id: {bids_id}, session: {session}")
                     for name in status_check_dict.keys():                    
                         _df.loc[bids_id,name] = INCOMPLETE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
+                # if bids_id == 'sub-100012' and session == 'ses-BL':
+                #     import sys
+                #     sys.exit()
 
             _df = _df.reset_index(drop=True)
 
@@ -208,7 +232,8 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 if len(df_bagel.compare(df_bagel_old_full)) == 0:
                     logger.info(f'No change in bagel file for pipeline {pipeline}, session {session}')
                     continue
-            except Exception:
+            except Exception as exception:
+                logger.warning(exception)
                 pass
             
             # save bagel
