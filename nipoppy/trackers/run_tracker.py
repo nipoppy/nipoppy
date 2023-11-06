@@ -11,19 +11,16 @@ import nipoppy.workflow.logger as my_logger
 from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, SUCCESS, UNAVAILABLE, INCOMPLETE, TRUE
 from nipoppy.trackers import bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
 from nipoppy.workflow.utils import (
-    BIDS_SUBJECT_PREFIX,
     BIDS_SESSION_PREFIX,
     COL_DATATYPE_MANIFEST,
     COL_SUBJECT_MANIFEST,
     COL_BIDS_ID_MANIFEST,
     COL_SESSION_MANIFEST,
-    COL_CONV_STATUS, 
     DNAME_BACKUPS_BAGEL,
     FNAME_BAGEL,
     FNAME_MANIFEST,
     load_manifest,
     save_backup,
-    session_id_to_bids_session,
 )
 
 # Globals
@@ -74,7 +71,6 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
         pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
         
         # TODO revise tracker class
-        # DATASET_ROOT, session_ids, version = pipe_tracker.get_global_configs()
         if pipeline == "heudiconv":
             version = global_configs["BIDS"][pipeline]["VERSION"]
         else:
@@ -227,7 +223,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
 
             # add old rows from other pipelines/sessions and sort for consistent order
             df_bagel: pd.DataFrame = pd.concat([df_bagel_old, _df], axis='index')
-            df_bagel = df_bagel.sort_values(["pipeline_name", "pipeline_version", COL_BIDS_ID_MANIFEST], ignore_index=True)
+            df_bagel = df_bagel.sort_values(["pipeline_name", "pipeline_version", COL_BIDS_ID_MANIFEST, COL_SESSION_MANIFEST], ignore_index=True)
 
             # don't write a new file if no changes
             try:
