@@ -39,6 +39,7 @@ PIPELINE_REQUIRED_DATATYPES = {
     "mriqc": ["anat"],
     "tractoflow": ["anat", "dwi"],
 }
+ALL_DATATYPES = sorted(["anat", "dwi", "func", "fmap"])
 BIDS_PIPES = ["mriqc","fmriprep"]
 NO_TRACKER_PIPES = ["maget_brain"]
 
@@ -100,6 +101,8 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
         # for prefixed columns we need to generate the column name
         dash_col_list = list(key for key, value in schema["GLOBAL_COLUMNS"].items() if not value["IsPrefixedColumn"])
         # status_check_dict will typically only have minimal pipeline_complete key
+        for datatype in ALL_DATATYPES:
+            dash_col_list.append(f"HAS_DATATYPE__{datatype}")
         dash_col_list = dash_col_list + list(status_check_dict.keys())
 
         for session in sessions:
@@ -194,6 +197,10 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 ]
                 subject_ses_tar_status = any([path.exists() for path in subject_ses_tar_paths])
                 logger.debug(f"subject_ses_dir: {subject_ses_dir}, dir_status: {subject_ses_dir_status}, subject_ses_tar_status: {subject_ses_tar_status}")
+
+                # populate HAS_DATATYPE__ columns
+                for datatype in ALL_DATATYPES:
+                    _df.loc[bids_id, f"HAS_DATATYPE__{datatype}"] = datatype in datatypes
                 
                 if subject_ses_tar_status:
                     logger.debug(f"subject_ses_dir: {subject_ses_dir} is a tar file")
