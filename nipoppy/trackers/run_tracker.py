@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import argparse
-import json
 import bids 
 import json
+import tarfile
 import warnings
 from pathlib import Path
 import pandas as pd
@@ -168,17 +168,31 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                     subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/{version}/output/{session}/{bids_id}" 
                     subject_ses_dir = subject_dir
                 elif pipeline in BIDS_PIPES:
-                    subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/{version}/output/{bids_id}" 
-                    if pipeline == "fmriprep" and version == "20.2.7":  # NOTE temporary solution while we refactor tracker configs to be version-specific
-                        subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/{version}/output/fmriprep/{bids_id}"
+                    subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/{version}/output/{bids_id}"
+                    # NOTE temporary solution while we refactor tracker configs to be version-specific
+                    if pipeline == "fmriprep":
+                        subject_ses_dir = f"{subject_dir}/{session}"
+                        subject_ses_tar_paths = [
+                            Path(subject_ses_dir).with_suffix('.tar'),
+                            Path(subject_ses_dir).with_suffix('.tar.gz'),
+                        ]
+                        if (
+                            not Path(subject_dir).is_dir() and
+                            not any([path.exists() for path in subject_ses_tar_paths])
+                            ):
+                            subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/{version}/output/fmriprep/{bids_id}"
                     subject_ses_dir = f"{subject_dir}/{session}"
                 elif pipeline in NO_TRACKER_PIPES:
                     logger.warning(f"pipeline: {pipeline} does not have a tracker yet...")
                 else:
                     logger.error(f"unknown pipeline: {pipeline}")
-                    
+                
                 subject_ses_dir_status = Path(subject_ses_dir).is_dir()
-                subject_ses_tar_status = Path(subject_ses_dir).with_suffix('.tar').is_file()
+                subject_ses_tar_paths = [
+                    Path(subject_ses_dir).with_suffix('.tar'),
+                    Path(subject_ses_dir).with_suffix('.tar.gz'),
+                ]
+                subject_ses_tar_status = any([path.exists() for path in subject_ses_tar_paths])
                 logger.debug(f"subject_ses_dir: {subject_ses_dir}, dir_status: {subject_ses_dir_status}, subject_ses_tar_status: {subject_ses_tar_status}")
                 
                 if subject_ses_tar_status:
