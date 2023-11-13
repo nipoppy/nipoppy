@@ -243,12 +243,12 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
             _df = _df.reset_index(drop=True)
 
             # add old rows from other pipelines/sessions and sort for consistent order
-            df_bagel: pd.DataFrame = pd.concat([df_bagel_old, _df], axis='index')
+            df_bagel: pd.DataFrame = pd.concat([df_bagel_old, _df], axis='index', ignore_index=True)
             df_bagel = df_bagel.sort_values(["pipeline_name", "pipeline_version", COL_BIDS_ID_MANIFEST, COL_SESSION_MANIFEST], ignore_index=True)
 
             # don't write a new file if no changes
             try:
-                if len(df_bagel.compare(df_bagel_old_full)) == 0:
+                if (df_bagel.shape == df_bagel_old_full.shape) and (set(df_bagel.columns) == set(df_bagel_old_full.columns)) and (len(df_bagel.compare(df_bagel_old_full)) == 0):
                     logger.info(f'No change in bagel file for pipeline {pipeline}, session {session}')
                     continue
             except Exception as exception:
