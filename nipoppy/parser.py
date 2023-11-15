@@ -27,7 +27,7 @@ class CustomParser(argparse.ArgumentParser):
         self.logger_name = None
         self.with_logging_args = False
     
-    def parse_args(self, args: Sequence[str] | None) -> argparse.Namespace:
+    def parse_args(self, args: Sequence[str] | None = None) -> argparse.Namespace:
         """Parse arguments and create a logger if needed.
 
         Parameters
