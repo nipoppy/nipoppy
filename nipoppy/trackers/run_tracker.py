@@ -159,7 +159,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
             else:
                 df_bagel_old = None
             
-            for bids_id, participant_id, datatypes in df_manifest_session[[COL_BIDS_ID_MANIFEST, COL_SUBJECT_MANIFEST, COL_DATATYPE_MANIFEST]].itertuples(index=False):
+            for bids_id, participant_id, available_datatypes in df_manifest_session[[COL_BIDS_ID_MANIFEST, COL_SUBJECT_MANIFEST, COL_DATATYPE_MANIFEST]].itertuples(index=False):
                 _df.loc[bids_id, COL_SUBJECT_MANIFEST] = participant_id
                 _df.loc[bids_id, COL_BIDS_ID_MANIFEST] = bids_id
 
@@ -199,46 +199,49 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 logger.debug(f"subject_ses_dir: {subject_ses_dir}, dir_status: {subject_ses_dir_status}, subject_ses_tar_status: {subject_ses_tar_status}")
 
                 # populate HAS_DATATYPE__ columns
+                # and check if all required datatypes are available
+                required_datatypes = PIPELINE_REQUIRED_DATATYPES[pipeline]
+                has_required_datatypes = True
                 for datatype in ALL_DATATYPES:
-                    _df.loc[bids_id, f"HAS_DATATYPE__{datatype}"] = datatype in datatypes
+                    _df.loc[bids_id, f"HAS_DATATYPE__{datatype}"] = datatype in available_datatypes
+                    if (datatype in required_datatypes) and (datatype not in available_datatypes):
+                        has_required_datatypes = False
                 
-                if subject_ses_tar_status:
-                    logger.debug(f"subject_ses_dir: {subject_ses_dir} is a tar file")
-                    for name in status_check_dict.keys():
-                        if name == 'pipeline_complete':
-                            _df.loc[bids_id,name] = SUCCESS
-                        else:
-                            _df.loc[bids_id,name] = UNAVAILABLE  # TODO check if files are available in the tar file
-                        _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
-                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
-                elif subject_ses_dir_status:
-                    for name, func in status_check_dict.items():
-                        if pipeline == "heudiconv":
-                            status = func(bids_layout, participant_id, session_id, run_id, acq_label)
-                        else:
-                            status = func(subject_dir, session_id, run_id, acq_label)
+                if has_required_datatypes:
+                    if subject_ses_tar_status:
+                        logger.debug(f"subject_ses_dir: {subject_ses_dir} is a tar file")
+                        for name in status_check_dict.keys():
+                            if name == 'pipeline_complete':
+                                _df.loc[bids_id,name] = SUCCESS
+                            else:
+                                _df.loc[bids_id,name] = UNAVAILABLE  # TODO check if files are available in the tar file
+                            _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
+                            _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
+                    elif subject_ses_dir_status:
+                        for name, func in status_check_dict.items():
+                            if pipeline == "heudiconv":
+                                status = func(bids_layout, participant_id, session_id, run_id, acq_label)
+                            else:
+                                status = func(subject_dir, session_id, run_id, acq_label)
 
-                        logger.debug(f"task_name: {name}, status: {status}")                        
+                            logger.debug(f"task_name: {name}, status: {status}")                        
 
-                        _df.loc[bids_id,name] = status
-                        _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
-                        # TODO only check files listed in the tracker config
-                        _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
-                else:
-                    logger.debug(f"{pipeline} output is expected based on manifest but not found for bids_id: {bids_id}, session: {session}")
-                    for name in status_check_dict.keys():
-
-                        _df.loc[bids_id, name] = INCOMPLETE
-
-                        # check that all required datatypes are available
-                        for datatype in PIPELINE_REQUIRED_DATATYPES[pipeline]:
-                            if datatype not in datatypes:
-                                # if not, set status to UNAVAILABLE
-                                _df.loc[bids_id, name] = UNAVAILABLE
-                                break
-                        
+                            _df.loc[bids_id,name] = status
+                            _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
+                            # TODO only check files listed in the tracker config
+                            _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
+                    else:
+                        logger.debug(f"{pipeline} output is expected based on manifest but not found for bids_id: {bids_id}, session: {session}")
+                        for name in status_check_dict.keys():
+                            _df.loc[bids_id, name] = INCOMPLETE
                         _df.loc[bids_id, "pipeline_starttime"] = UNAVAILABLE
                         _df.loc[bids_id, "pipeline_endtime"] = UNAVAILABLE
+                else:
+                    logger.debug(f"{pipeline} output is not expected based on manifest for bids_id: {bids_id}, session: {session}")
+                    for name in status_check_dict.keys():
+                        _df.loc[bids_id, name] = UNAVAILABLE
+                    _df.loc[bids_id, "pipeline_starttime"] = UNAVAILABLE
+                    _df.loc[bids_id, "pipeline_endtime"] = UNAVAILABLE
 
             _df = _df.reset_index(drop=True)
 
