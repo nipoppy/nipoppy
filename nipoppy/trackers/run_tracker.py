@@ -251,7 +251,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
 
             # don't write a new file if no changes
             try:
-                if (df_bagel.shape == df_bagel_old_full.shape) and (set(df_bagel.columns) == set(df_bagel_old_full.columns)) and (len(df_bagel.compare(df_bagel_old_full)) == 0):
+                if (df_bagel_old is not None) and (df_bagel.shape == df_bagel_old_full.shape) and (set(df_bagel.columns) == set(df_bagel_old_full.columns)) and (len(df_bagel.compare(df_bagel_old_full)) == 0):
                     logger.info(f'No change in bagel file for pipeline {pipeline}, session {session}')
                     continue
             except Exception as exception:
