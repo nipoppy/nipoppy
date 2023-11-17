@@ -190,14 +190,6 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 else:
                     logger.error(f"unknown pipeline: {pipeline}")
                 
-                subject_ses_dir_status = Path(subject_ses_dir).is_dir()
-                subject_ses_tar_paths = [
-                    Path(subject_ses_dir).with_suffix('.tar'),
-                    Path(subject_ses_dir).with_suffix('.tar.gz'),
-                ]
-                subject_ses_tar_status = any([path.exists() for path in subject_ses_tar_paths])
-                logger.debug(f"subject_ses_dir: {subject_ses_dir}, dir_status: {subject_ses_dir_status}, subject_ses_tar_status: {subject_ses_tar_status}")
-
                 # populate HAS_DATATYPE__ columns
                 # and check if all required datatypes are available
                 required_datatypes = PIPELINE_REQUIRED_DATATYPES[pipeline]
@@ -208,12 +200,23 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                         has_required_datatypes = False
                 
                 if has_required_datatypes:
+
+                    subject_ses_dir_status = Path(subject_ses_dir).is_dir()
+                    subject_ses_tar_paths = [
+                        Path(subject_ses_dir).with_suffix('.tar'),
+                        Path(subject_ses_dir).with_suffix('.tar.gz'),
+                    ]
+                    subject_ses_tar_status = any([path.exists() for path in subject_ses_tar_paths])
+                    logger.debug(f"subject_ses_dir: {subject_ses_dir}, dir_status: {subject_ses_dir_status}, subject_ses_tar_status: {subject_ses_tar_status}")
+
                     if subject_ses_tar_status:
                         logger.debug(f"subject_ses_dir: {subject_ses_dir} is a tar file")
                         for name in status_check_dict.keys():
                             if name == 'pipeline_complete':
                                 _df.loc[bids_id,name] = SUCCESS
                             else:
+                                # here, UNAVAILABLE refers to the functionality not being implemented yet for phases/stages
+                                # unrelated to pipeline_complete being UNAVAILABLE, which is related to the datatypes column in the manifest
                                 _df.loc[bids_id,name] = UNAVAILABLE  # TODO check if files are available in the tar file
                             _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                             _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
