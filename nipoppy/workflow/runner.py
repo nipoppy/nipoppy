@@ -8,7 +8,7 @@ import shlex
 import subprocess
 import traceback
 from abc import ABC, abstractmethod
-from functools import wraps
+from functools import wraps, cached_property
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -39,7 +39,7 @@ class BaseRunner(Base, ABC):
 
         self.fpath_log = None
         self.command_failed = False
-        self.command_history = []
+        self.command_history: list = []
 
     def log_errors(func):
 
@@ -313,18 +313,22 @@ class BoutiquesRunner(BaseSingularityRunner):
         super().__init__(global_configs, name, **kwargs)
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
-        self.descriptor_template: str = self.load_descriptor_template()
-        self.invocation_template: str = self.load_invocation_template()
-        self.boutiques_config_dict: dict = self.load_boutiques_config_dict()
 
-    @property
-    def fpath_container(self) -> Path:
-        return self.global_configs.get_fpath_container(
+    @cached_property
+    def descriptor_template(self) -> str:
+        fpath_descriptor_template = self.dpath_descriptors / f'{self.name}.json'
+        return load_json_as_str(fpath_descriptor_template)
+
+    @cached_property
+    def invocation_template(self) -> str:
+        fpath = self.global_configs.get_fpath_invocation_template(
             self.pipeline_name,
             self.pipeline_version,
         )
+        return load_json_as_str(fpath)
     
-    def load_boutiques_config_dict(self) -> dict:
+    @cached_property
+    def boutiques_config_dict(self) -> dict:
         descriptor_dict = json.loads(self.descriptor_template)
         try:
             config = descriptor_dict[self.custom_descriptor_id][self.config_descriptor_id]
@@ -337,16 +341,12 @@ class BoutiquesRunner(BaseSingularityRunner):
             )
         return config
 
-    def load_descriptor_template(self) -> str:
-        fpath_descriptor_template = self.dpath_descriptors / f'{self.name}.json'
-        return load_json_as_str(fpath_descriptor_template)
-
-    def load_invocation_template(self) -> str:
-        fpath = self.global_configs.get_fpath_invocation_template(
+    @cached_property
+    def fpath_container(self) -> Path:
+        return self.global_configs.get_fpath_container(
             self.pipeline_name,
             self.pipeline_version,
         )
-        return load_json_as_str(fpath)
 
     def run_main(self, **kwargs):
 

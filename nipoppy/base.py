@@ -29,7 +29,7 @@ class Base():
 
 class GlobalConfigs(Base):
 
-    class Program():
+    class Program(Base):
 
         def __init__(self, name, config) -> None:
             self.name = name
@@ -93,6 +93,9 @@ class GlobalConfigs(Base):
                 original_exception,
                 message_suffix=f'for program: {self.name}',
             )
+        
+        def __str__(self) -> str:
+            return self._str_helper(names=['name', 'version'])
 
     def __init__(self, source: GlobalConfigs | dict | os.PathLike | str, validate_root=True) -> None:
         """Load global configs from file."""
