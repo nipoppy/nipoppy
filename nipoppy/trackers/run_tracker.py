@@ -62,9 +62,17 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
     fpath_manifest = f"{DATASET_ROOT}/tabular/{FNAME_MANIFEST}"
     df_manifest = load_manifest(fpath_manifest)
 
+    # drop existing BIDS ID column if needed
+    if COL_BIDS_ID_MANIFEST in df_manifest.columns:
+        warnings.warn(
+            f"The manifest is not supposed to have a {COL_BIDS_ID_MANIFEST} "
+            "column, dropping"
+        )
+        df_manifest = df_manifest.drop(columns=COL_BIDS_ID_MANIFEST)
+
     # add BIDS ID column to the manifest
     df_manifest = df_manifest.merge(
-        df_doughnut,
+        df_doughnut[[COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST, COL_BIDS_ID_MANIFEST]],
         on=[COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST],
         how="left",
     )
