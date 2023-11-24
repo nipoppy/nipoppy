@@ -39,11 +39,8 @@ FLAG_REGENERATE = '--regenerate' # TODO move this to common utils?
 GLOBAL_CONFIG_DATASET_ROOT = 'DATASET_ROOT'
 GLOBAL_CONFIG_SESSIONS = 'SESSIONS'
 
-def run(global_config_file, regenerate=False, empty=False):
+def run(global_config: dict, regenerate=False, empty=False):
     
-    # parse global config
-    with open(global_config_file) as file:
-        global_config = json.load(file)
     dpath_dataset = Path(global_config[GLOBAL_CONFIG_DATASET_ROOT])
 
     # generate DICOM/BIDS directory paths
@@ -261,4 +258,8 @@ if __name__ == '__main__':
     regenerate = getattr(args, FLAG_REGENERATE.lstrip('-'))
     empty = getattr(args, FLAG_EMPTY.lstrip('-'))
 
-    run(global_config_file, regenerate=regenerate, empty=empty)
+    # load global config
+    with open(global_config_file) as file:
+        global_config = json.load(file)
+
+    run(global_config, regenerate=regenerate, empty=empty)
