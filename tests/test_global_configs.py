@@ -103,7 +103,8 @@ def test_init_invalid_root(global_configs_dict_invalid_root):
         ('dpath_raw_dicom', Path('scratch', 'raw_dicom')),
         ('dpath_tabular', Path('tabular')),
         ('dpath_derivatives', Path('derivatives')),
-        ('dpath_bids_ignore', Path('proc', 'bids_ignore')),
+        ('dpath_pybids', Path('proc', 'pybids')),
+        ('dpath_pybids_ignore', Path('proc', 'pybids', 'ignore_patterns')),
         ('fpath_manifest', Path('tabular', 'manifest.csv')),
         ('fpath_doughnut', Path('scratch', 'raw_dicom', 'doughnut.csv')),
         ('fpath_derivatives_bagel', Path('derivatives', 'bagel.csv')),
@@ -194,7 +195,7 @@ def test_get_fpath_container(global_configs_dict, pipeline, dpath_container_stor
 
 @pytest.mark.parametrize('pipeline', ['fmriprep', 'mriqc'])
 def test_get_fpath_bids_ignore(global_configs: GlobalConfigs, pipeline):
-    assert global_configs.get_fpath_bids_ignore(pipeline)
+    assert global_configs.get_fpath_pybids_ignore(pipeline)
 
 @pytest.mark.parametrize('pipeline', ['fmriprep', 'heudiconv'])
 def test_get_fpath_invocation_template(global_configs: GlobalConfigs, pipeline):
@@ -259,12 +260,12 @@ def test_program_get_fname_container(program_name_and_config_dict, container, ve
     assert program.get_fname_container() == expected
 
 @pytest.mark.parametrize('version', ['1.0.0', '20.2.7'])
-def test_program_get_fname_bids_ignore(program_name_and_config_dict, version):
+def test_program_get_fname_pybids_ignore(program_name_and_config_dict, version):
     name, config = program_name_and_config_dict
     config: dict = config.copy()
     config['VERSION'] = version
     program = GlobalConfigs.Program(name=name, config=config)
-    assert program.get_fname_bids_ignore() == f'ignore_patterns-fmriprep-{version}.txt'
+    assert program.get_fname_pybids_ignore() == f'fmriprep-{version}.txt'
 
 @pytest.mark.parametrize(
     'invocation_template,version,expected',

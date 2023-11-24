@@ -6,8 +6,6 @@ from pathlib import Path
 import pytest
 from nipoppy.workflow.runner import BaseRunner
 
-from .conftest import global_configs_fixture
-
 @pytest.fixture(scope='function')
 def runner(global_configs_fixture, tmp_path: Path):
     class DummyRunner(BaseRunner):
@@ -39,7 +37,7 @@ def test_log_errors(runner: BaseRunner, caplog: pytest.LogCaptureFixture):
     assert error_log_count > 1
 
 def test_run(runner: BaseRunner):
-    runner.run()
+    assert runner.run() is None
 
 @pytest.mark.parametrize(
     'print_begin,substring',
@@ -68,13 +66,22 @@ def test_run_cleanup(runner: BaseRunner, print_end, substring, caplog: pytest.Lo
     [
         ('no_replace', False, {}, 'no_replace'),
         ('[[NIPOPPY_DNAME_LOGS]]', False, {}, 'logs'),
-        ('[[NIPOPPY_DPATH_BIDS]]', False, {}, 'bids'),
-        ('[[NIPOPPY_DPATH_BIDS]]', True, {}, Path('bids').resolve()),
-        ('[[NIPOPPY_SOME_KWARG]]', False, {'some_kwarg': 'some_value'}, 'some_value'),
+        ('[[NIPOPPY_SOME_KWARG_PATH]]', False, {'some_kwarg_path': Path('a_path')}, 'a_path'),
+        ('[[NIPOPPY_SOME_KWARG_PATH]]', True, {'some_kwarg_path': Path('a_path')}, str(Path('a_path').resolve())),
     ],
 )
 def test_process_template_str(runner: BaseRunner, template_str, resolve_paths, kwargs, expected):
-    assert runner.process_template_str(template_str, resolve_paths, **kwargs) == str(expected)
+    assert runner.process_template_str(template_str, resolve_paths, **kwargs) == expected
+
+@pytest.mark.parametrize(
+    'template_str,expected_relative_path',
+    [
+        ('[[NIPOPPY_DPATH_BIDS]]', 'bids'),
+        ('[[NIPOPPY_DPATH_PYBIDS]]', Path('proc', 'pybids')),
+    ],
+)
+def test_process_template_str_path(runner: BaseRunner, template_str, expected_relative_path):
+    assert runner.process_template_str(template_str) == str(runner.global_configs.dataset_root / expected_relative_path)
     
 def test_process_template_str_error_pattern(runner: BaseRunner):
     runner.template_replace_pattern = re.compile('\\[\\[NIPOPPY\\_(.*)\\_(.*)\\]\\]')

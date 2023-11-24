@@ -63,7 +63,7 @@ def test_init(global_configs_dict: dict, pipeline_name, pipeline_version, expect
 )
 def test_descriptor_template(global_configs_dict: dict, pipeline_name, pipeline_version):
     runner = BoutiquesRunner(global_configs_dict, pipeline_name, pipeline_version)
-    assert runner.descriptor_template
+    assert isinstance(runner.descriptor_template, str)
 
 @pytest.mark.parametrize(
     'pipeline_name,pipeline_version',
@@ -75,7 +75,7 @@ def test_descriptor_template(global_configs_dict: dict, pipeline_name, pipeline_
 )
 def test_invocation_template(global_configs_dict: dict, pipeline_name, pipeline_version):
     runner = BoutiquesRunner(global_configs_dict, pipeline_name, pipeline_version)
-    assert runner.invocation_template
+    assert isinstance(runner.invocation_template, str)
 
 @pytest.mark.parametrize(
     'pipeline_name,pipeline_version,expect_warning',
@@ -93,7 +93,7 @@ def test_boutiques_config_dict(global_configs_dict: dict, pipeline_name, pipelin
         assert log_record.levelname == 'WARNING'
         assert log_record.message.startswith('No custom config object found')
     else:
-        assert runner.boutiques_config_dict
+        assert isinstance(runner.boutiques_config_dict, dict)
 
 @pytest.mark.parametrize(
     'pipeline_name,pipeline_version',
@@ -105,7 +105,7 @@ def test_boutiques_config_dict(global_configs_dict: dict, pipeline_name, pipelin
 )
 def test_fpath_container(global_configs_dict: dict, pipeline_name, pipeline_version):
     runner = BoutiquesRunner(global_configs_dict, pipeline_name, pipeline_version)
-    assert runner.fpath_container
+    assert isinstance(runner.fpath_container, Path)
 
 def test_run_main(global_configs_dict: dict):
     runner = BoutiquesRunner(global_configs_dict, 'mriqc', dry_run=True)

@@ -59,7 +59,6 @@ class BaseRunner(Base, ABC):
         self.run_setup(**kwargs)
         self.run_main(**kwargs)
         self.run_cleanup(**kwargs)
-        return self
 
     def run_setup(self, print_begin=True, **kwargs):
         if print_begin:
@@ -372,7 +371,7 @@ class ProcpipeRunner(BoutiquesRunner):
 
     dname_output = 'output'
     dname_work = 'work'
-    dname_bids_db = 'bids_db'
+    dname_bids_db_parent = 'bids_db'
     tar_ext = '.tar'
     gzip_ext = '.gz'
     paths_to_tar_descriptor_id = 'paths_to_tar' # for boutiques query
@@ -392,63 +391,70 @@ class ProcpipeRunner(BoutiquesRunner):
             re.compile(rf'.*?/{BIDS_SESSION_PREFIX}(?!{self.session})'),
         ]
 
-    def generate_fpath_log(self):
+    def generate_fpath_log(self) -> Path:
         return super().generate_fpath_log([self.subject, self.session])
     
     def run_setup(self, **kwargs):
 
         super().run_setup(**kwargs)
 
-        self.setup_bids_db()
+        if self.with_bids_db:
+            self.setup_bids_db()
+
         self.setup_input_directory()
         self.setup_output_directories()
-        self.check_paths_to_tar()
+
+        if self.tar_outputs:
+            self.check_paths_to_tar()
         
     def setup_bids_db(self):
         
-        if self.with_bids_db:
+        # only import when needed
+        from bids import BIDSLayout, BIDSLayoutIndexer
 
-            from bids import BIDSLayout, BIDSLayoutIndexer
+        # add more BIDS ignore patterns
+        fpath_bids_ignore = self.global_configs.get_fpath_pybids_ignore(
+            self.pipeline_name,
+            self.pipeline_version,
+        )
 
-            # add more BIDS ignore patterns
-            fpath_bids_ignore = self.global_configs.get_fpath_bids_ignore(
-                self.pipeline_name,
-                self.pipeline_version,
+        if fpath_bids_ignore.exists():
+            self.info(f'Using BIDS ignore file: {fpath_bids_ignore}')
+            with open(fpath_bids_ignore, 'rt') as file_bids_ignore:
+                for line in file_bids_ignore:
+                    line = line.strip()
+                    if line:
+                        self.bids_ignore_patterns.append(re.compile(line))
+        else:
+            self.warning(f'No BIDS ignore file found at {fpath_bids_ignore}')
+
+        self.info(f'Building BIDSLayout with ignore patterns: {self.bids_ignore_patterns}')
+        
+        if self.dpath_bids_db.exists():
+            self.warning(
+                f'Overwriting existing BIDS database directory: {self.dpath_bids_db}'
             )
+        
+        indexer = BIDSLayoutIndexer(
+            validate=False,
+            ignore=self.bids_ignore_patterns,
+        )
+        self.layout = BIDSLayout(
+            self.global_configs.dpath_bids.resolve(),
+            indexer=indexer,
+            database_path=self.dpath_bids_db,
+            reset_database=True,
+        )
 
-            if fpath_bids_ignore.exists():
-                self.info(f'Using BIDS ignore file: {fpath_bids_ignore}')
-                with open(fpath_bids_ignore, 'rt') as file_bids_ignore:
-                    for line in file_bids_ignore:
-                        line = line.strip()
-                        if line:
-                            self.bids_ignore_patterns.append(re.compile(line))
-            else:
-                self.warning(f'No BIDS ignore file found at {fpath_bids_ignore}')
+        # list all the files in BIDSLayout
+        # since we are selecting for specific a specific subject and
+        # session, there should not be too many files
+        filenames = self.layout.get(return_type='filename')
+        for filename in filenames:
+            self.debug(filename)
 
-            self.info(f'Building BIDSLayout with ignore patterns: {self.bids_ignore_patterns}')
-            
-            if self.dpath_bids_db.exists():
-                self.warning(
-                    f'Overwriting existing BIDS database directory: {self.dpath_bids_db}'
-                )
-            
-            indexer = BIDSLayoutIndexer(
-                validate=False,
-                ignore=self.bids_ignore_patterns,
-            )
-            self.layout = BIDSLayout(
-                self.global_configs.dpath_bids.resolve(),
-                indexer=indexer,
-                database_path=self.dpath_bids_db,
-                reset_database=True,
-            )
-
-            # list all the files in BIDSLayout
-            # since we are selecting for specific a specific subject and
-            # session, there should not be too many files
-            for file in self.layout.get(return_type='filename'):
-                self.debug(file)
+        if len(filenames) == 0:
+            self.warning('BIDS database is empty')
 
     def setup_input_directory(self):
         self.add_singularity_symmetric_bind_path(
@@ -464,9 +470,9 @@ class ProcpipeRunner(BoutiquesRunner):
             self.add_singularity_symmetric_bind_path(self.dpath_bids_db)
 
     def check_paths_to_tar(self):
-        if self.tar_outputs:
 
-            # check the Boutiques descriptor for paths to tar
+        # check the Boutiques descriptor for paths to tar
+        if self.boutiques_config_dict is not None:
             try:
                 self.paths_to_tar.extend([
                     Path(self.process_template_str(path))
@@ -476,17 +482,17 @@ class ProcpipeRunner(BoutiquesRunner):
             except KeyError:
                 pass
 
-            # raise error if tarring is expected but no paths are found
-            if len(self.paths_to_tar) == 0:
-                raise ValueError(
-                    'No path to tar specified for'
-                    f' {self.pipeline_name} {self.pipeline_version}'
-                    '. Set tar_outputs to False if it is not needed, or'
-                    ' specify list of path(s) to tar in a custom property'
-                    'in the Boutiques descriptor'
-                )
-            
-            self.info(f'Paths to tar (on successful completion): {self.paths_to_tar}')
+        # raise error if tarring is expected but no paths are found
+        if len(self.paths_to_tar) == 0:
+            raise ValueError(
+                'No path to tar specified for'
+                f' {self.pipeline_name} {self.pipeline_version}'
+                '. Set tar_outputs to False if it is not needed, or'
+                ' specify list of path(s) to tar in a custom property'
+                'in the Boutiques descriptor'
+            )
+        
+        self.info(f'Paths to tar (on successful completion): {self.paths_to_tar}')
 
     def run_cleanup(self, **kwargs):
         
@@ -499,27 +505,43 @@ class ProcpipeRunner(BoutiquesRunner):
 
             # tar the results
             if self.tar_outputs:
-                for path in self.paths_to_tar:
-                    tar_flags = '-cvzf' if self.zip_tar else '-cvf'
-                    path_tarred = f'{path}{self.tar_ext}'
-                    if self.zip_tar:
-                        path_tarred += self.gzip_ext
-                    self.run_command(f'tar {tar_flags} {path_tarred} -C {Path(path).parent} {path.name}')
-                    self.run_command(f'rm -rf {path}')
+                self.tar_output_files()
 
         # always delete temporary BIDS database
         if self.with_bids_db:
             self.run_command(f'rm -rf {self.dpath_bids_db}')
 
         super().run_cleanup(**kwargs)
+
+    def tar_output_files(self):
+
+        if any([not Path(path).exists() for path in self.paths_to_tar]):
+            raise FileNotFoundError(
+                f'One or more path to tar does not exist: {self.paths_to_tar}'
+            )
+
+        for path in self.paths_to_tar:
+            tar_flags = '-cvzf' if self.zip_tar else '-cvf'
+            path_tarred = f'{path}{self.tar_ext}'
+            if self.zip_tar:
+                path_tarred += self.gzip_ext
+            self.run_command(f'tar {tar_flags} {path_tarred} -C {Path(path).parent} {path.name}')
+            self.run_command(f'rm -rf {path}')
     
-    @property
+    @cached_property
+    def fpath_pybids_ignore(self) -> Path:
+        return self.global_configs.get_fpath_pybids_ignore(
+            self.pipeline_name,
+            self.pipeline_version,
+        )
+
+    @cached_property
     def dpath_pipeline_derivatives(self) -> Path:
         return self.global_configs.get_dpath_pipeline_derivatives(
             self.pipeline_name, self.pipeline_version
         ).resolve()
     
-    @property
+    @cached_property
     def dpath_output(self) -> Path:
         # TODO allow different options depending on pipeline:
         # - self.dpath_pipeline_derivatives / self.dname_output
@@ -527,15 +549,15 @@ class ProcpipeRunner(BoutiquesRunner):
         # - self.dpath_pipeline_derivatives / participant_id_to_bids_id(self.subject)) / session_id_to_bids_session(self.session)
         return (self.dpath_pipeline_derivatives / self.dname_output).resolve()
     
-    @property
+    @cached_property
     def dpath_work(self) -> Path: 
         subject_session_str = self.sep.join([self.subject, self.session]) 
         return (self.dpath_pipeline_derivatives / self.dname_work / subject_session_str).resolve()
 
-    @property
+    @cached_property
     def dpath_bids_db(self) -> Path:
         dname_bids_db = self.sep.join([self.pipeline_name, self.pipeline_version, self.subject, self.session])
-        return (self.global_configs.dpath_proc / self.dname_bids_db / dname_bids_db).resolve()
+        return (self.global_configs.dpath_pybids / self.dname_bids_db_parent / dname_bids_db).resolve()
 
     def __str__(self) -> str:
         return self._str_helper([
