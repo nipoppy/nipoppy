@@ -10,6 +10,7 @@ import pandas as pd
 import nipoppy.workflow.logger as my_logger
 from nipoppy.trackers.tracker import Tracker, get_start_time, get_end_time, SUCCESS, UNAVAILABLE, INCOMPLETE, TRUE
 from nipoppy.trackers import bids_tracker, fs_tracker, fmriprep_tracker, mriqc_tracker, tractoflow_tracker
+from nipoppy.workflow.make_doughnut import run as run_make_doughnut
 from nipoppy.workflow.utils import (
     BIDS_SESSION_PREFIX,
     COL_DATATYPE_MANIFEST,
@@ -18,7 +19,9 @@ from nipoppy.workflow.utils import (
     COL_SESSION_MANIFEST,
     DNAME_BACKUPS_BAGEL,
     FNAME_BAGEL,
+    FNAME_DOUGHNUT,
     FNAME_MANIFEST,
+    load_doughnut,
     load_manifest,
     save_backup,
 )
@@ -47,6 +50,32 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
     """ driver code running pipeline specific trackers
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
+
+    # load the doughnut (create a new one if needed)
+    fpath_doughnut = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
+    if not Path(fpath_doughnut).exists():
+        warnings.warn(f"No doughnut file found, creating one at: {fpath_doughnut}")
+        run_make_doughnut(global_configs, regenerate=True, empty=False)
+    df_doughnut = load_doughnut(fpath_doughnut)
+
+    # load the manifest
+    fpath_manifest = f"{DATASET_ROOT}/tabular/{FNAME_MANIFEST}"
+    df_manifest = load_manifest(fpath_manifest)
+
+    # drop existing BIDS ID column if needed
+    if COL_BIDS_ID_MANIFEST in df_manifest.columns:
+        warnings.warn(
+            f"The manifest is not supposed to have a {COL_BIDS_ID_MANIFEST} "
+            "column, dropping"
+        )
+        df_manifest = df_manifest.drop(columns=COL_BIDS_ID_MANIFEST)
+
+    # add BIDS ID column to the manifest
+    df_manifest = df_manifest.merge(
+        df_doughnut[[COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST, COL_BIDS_ID_MANIFEST]],
+        on=[COL_SUBJECT_MANIFEST, COL_SESSION_MANIFEST],
+        how="left",
+    )
 
     # for bids tracker
     bids_dir = f"{DATASET_ROOT}/bids/"
@@ -85,8 +114,6 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
             logger.warning(f"Skipping pipeline: {pipeline}. Tracker not listed in the config")
 
         # Grab BIDS participants from the manifest
-        fpath_manifest = f"{DATASET_ROOT}/tabular/{FNAME_MANIFEST}"
-        df_manifest = load_manifest(fpath_manifest)
         df_manifest_imaging = df_manifest.loc[df_manifest[COL_DATATYPE_MANIFEST].apply(lambda x: len(x) != 0)]
         n_participants_with_imaging = len(df_manifest_imaging[COL_BIDS_ID_MANIFEST].unique())
 
