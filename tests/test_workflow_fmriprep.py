@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 import nipoppy.workflow.logger as my_logger
-import nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep as fmriprep_module
 from nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep import run, run_fmriprep
 
 from .conftest import create_dummy_bids_filter, global_config_for_testing
@@ -22,6 +21,7 @@ def _create_dummy_fs_license(pth: Path) -> None:
 @pytest.mark.parametrize("use_bids_filter", [True, False])
 @pytest.mark.parametrize("anat_only", [True, False])
 def test_run(caplog, tmp_path, use_bids_filter, anat_only):
+    """Smoke test."""
     caplog.set_level(logging.CRITICAL)
 
     _create_dummy_fs_license(tmp_path)

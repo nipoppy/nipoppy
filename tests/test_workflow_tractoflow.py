@@ -8,17 +8,22 @@ import pytest
 import nipoppy.workflow.logger as my_logger
 from nipoppy.workflow.proc_pipe.tractoflow.run_tractoflow import run
 
-from .conftest import global_config_for_testing, mock_bids_dataset, create_dummy_bids_filter
+from .conftest import (
+    create_dummy_bids_filter,
+    global_config_for_testing,
+    mock_bids_dataset,
+)
 
 
 @pytest.mark.parametrize("use_bids_filter", [True, False])
 def test_run(caplog, tmp_path, use_bids_filter):
     """Check that a logging error is raised."""
-
     caplog.set_level(logging.CRITICAL)
 
     if use_bids_filter:
-        create_dummy_bids_filter(tmp_path / "proc", filename="bids_filter_tractoflow.json")
+        create_dummy_bids_filter(
+            tmp_path / "proc", filename="bids_filter_tractoflow.json"
+        )
 
     output_dir = tmp_path
     log_file = tmp_path / "tractoflow.log"

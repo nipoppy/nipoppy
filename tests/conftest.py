@@ -4,8 +4,6 @@ import json
 import shutil
 from pathlib import Path
 
-import pytest
-
 
 def _global_config_file() -> Path:
     return Path(__file__).parent / "data" / "test_global_configs.json"
@@ -23,26 +21,19 @@ def global_config_for_testing(pth: Path) -> dict:
     return global_configs
 
 
-@pytest.fixture
-def dummy_bids_filter(tmp_path) -> None:
-    create_dummy_bids_filter(tmp_path)
-
-
-def create_dummy_bids_filter(pth: Path,
-                             filename: str="bids_filter.json") -> None:
+def create_dummy_bids_filter(
+    pth: Path, filename: str = "bids_filter.json"
+) -> None:
+    """Use a modified content from the tractoflow sample."""
     bids_filter = {
-    "t1w": {
-        "datatype": "anat",
-        "session": "01",
-        "run": "1",
-        "suffix": "T1w"
-    },
-    "dwi": {
-	"session": "01",
-	"run": "1",
-	"suffix": "dwi"
+        "t1w": {
+            "datatype": "anat",
+            "session": "01",
+            "run": "1",
+            "suffix": "T1w",
+        },
+        "dwi": {"session": "01", "run": "1", "suffix": "dwi"},
     }
-}
 
     pth.mkdir(parents=True, exist_ok=True)
     with open(pth / filename, "w") as f:

@@ -16,7 +16,6 @@ from .conftest import global_config_for_testing
 @pytest.mark.parametrize("modalities", [["anat"], ["anat", "func"]])
 def test_run(caplog, tmp_path, output_dir, modalities, logger):
     """Check that the proper command is generated."""
-
     caplog.set_level(logging.CRITICAL)
 
     participant_id = "01"
@@ -69,7 +68,6 @@ def test_run(caplog, tmp_path, output_dir, modalities, logger):
 
 def test_logger_error(tmp_path, caplog):
     """Check that a logging error is raised."""
-
     participant_id = "01"
     session_id = "01"
     output_dir = tmp_path
