@@ -4,12 +4,14 @@ import json
 import shutil
 from pathlib import Path
 
+import pytest
+
 
 def _global_config_file() -> Path:
     return Path(__file__).parent / "data" / "test_global_configs.json"
 
 
-def _global_config_for_testing(pth: Path) -> dict:
+def global_config_for_testing(pth: Path) -> dict:
     """Set up configuration for testing and create required directories."""
     with open(_global_config_file(), "r") as f:
         global_configs = json.load(f)
@@ -21,21 +23,24 @@ def _global_config_for_testing(pth: Path) -> dict:
     return global_configs
 
 
-def _dummy_bids_filter_file(pth: Path) -> Path:
-    """TODO probably don't want the bids filter file to be in the module directory"""
-    return pth / "bids_filter.json"
+@pytest.fixture
+def dummy_bids_filter(tmp_path) -> None:
+    create_dummy_bids_filter(tmp_path)
 
 
-def _create_dummy_bids_filter(pth: Path) -> None:
-    with open(_dummy_bids_filter_file(pth), "w") as f:
-        json.dump({"dummy": "dummy"}, f)
+def create_dummy_bids_filter(pth: Path) -> None:
+    bids_filter = {
+        "t1w": {
+            "datatype": "anat",
+            "session": "01",
+            "suffix": "T1w"
+        }
+    }
+    with open(pth / "bids_filter.json", "w") as f:
+        json.dump(bids_filter, f)
 
 
-def _delete_dummy_bids_filter(pth: Path) -> None:
-    _dummy_bids_filter_file(pth).unlink(missing_ok=True)
-
-
-def _mock_bids_dataset(pth: Path, dataset: str) -> Path:
+def mock_bids_dataset(pth: Path, dataset: str) -> Path:
     """Copy a BIDS example dataset to the given path."""
     ds = Path(__file__).parent / "data" / dataset
     print(f"\nCopying {ds} to {pth}\n")

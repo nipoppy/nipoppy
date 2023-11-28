@@ -8,7 +8,7 @@ import pytest
 import nipoppy.workflow.logger as my_logger
 from nipoppy.workflow.proc_pipe.mriqc.run_mriqc import run
 
-from .conftest import _global_config_for_testing
+from .conftest import global_config_for_testing
 
 
 @pytest.mark.parametrize("logger", ["mriqc.log", None])
@@ -29,7 +29,7 @@ def test_run(caplog, tmp_path, output_dir, modalities, logger):
     else:
         (tmp_path / "scratch" / "logs").mkdir(parents=True, exist_ok=True)
 
-    global_configs = _global_config_for_testing(tmp_path)
+    global_configs = global_config_for_testing(tmp_path)
     if output_dir == "tmp_path":
         output_dir = tmp_path
         expected_output_dir = output_dir
@@ -40,7 +40,7 @@ def test_run(caplog, tmp_path, output_dir, modalities, logger):
 
     cmd = run(
         participant_id=participant_id,
-        global_configs=_global_config_for_testing(tmp_path),
+        global_configs=global_config_for_testing(tmp_path),
         session_id=session_id,
         output_dir=output_dir,
         modalities=modalities,
@@ -79,7 +79,7 @@ def test_logger_error(tmp_path, caplog):
 
     run(
         participant_id=participant_id,
-        global_configs=_global_config_for_testing(tmp_path),
+        global_configs=global_config_for_testing(tmp_path),
         session_id=session_id,
         output_dir=output_dir,
         modalities=modalities,

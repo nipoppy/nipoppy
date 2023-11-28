@@ -10,9 +10,7 @@ import nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep as fmriprep_module
 from nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep import run, run_fmriprep
 
 from .conftest import (
-    _create_dummy_bids_filter,
-    _delete_dummy_bids_filter,
-    _global_config_for_testing,
+    global_config_for_testing, create_dummy_bids_filter
 )
 
 
@@ -23,11 +21,6 @@ def _create_dummy_fs_license(pth: Path) -> None:
     license_file.write_text("dummy content")
 
 
-def _dummy_bids_filter_pth() -> Path:
-    """TODO probably don't want the bids filter file to be in the module directory"""
-    return Path(fmriprep_module.__file__).parent
-
-
 @pytest.mark.parametrize("use_bids_filter", [True, False])
 @pytest.mark.parametrize("anat_only", [True, False])
 def test_run(caplog, tmp_path, use_bids_filter, anat_only):
@@ -35,9 +28,10 @@ def test_run(caplog, tmp_path, use_bids_filter, anat_only):
 
     _create_dummy_fs_license(tmp_path)
 
-    # TODO because this is set up and torn down after each test
-    # we probably want to turn this into fixture
-    _create_dummy_bids_filter(_dummy_bids_filter_pth())
+    (tmp_path / "proc").mkdir(exist_ok=True)
+
+    if use_bids_filter:
+        create_dummy_bids_filter(tmp_path)
 
     participant_id = "01"
 
@@ -48,16 +42,13 @@ def test_run(caplog, tmp_path, use_bids_filter, anat_only):
 
     run(
         participant_id=participant_id,
-        global_configs=_global_config_for_testing(tmp_path),
+        global_configs=global_config_for_testing(tmp_path),
         session_id=session_id,
         output_dir=tmp_path,
         use_bids_filter=use_bids_filter,
         anat_only=anat_only,
         logger=logger,
     )
-
-    _delete_dummy_bids_filter(_dummy_bids_filter_pth())
-
 
 @pytest.mark.parametrize("use_bids_filter", [True, False])
 @pytest.mark.parametrize("anat_only", [True, False])
@@ -67,7 +58,7 @@ def test_run_fmriprep(caplog, tmp_path, use_bids_filter, anat_only):
     log_file = tmp_path / "fmriprep.log"
 
     bids_dir = "bids_dir"
-    proc_dir = "fmripre_proc"
+    proc_dir = "fmriprep_proc"
     fmriprep_dir = tmp_path / "fmriprep_dir"
     fs_dir = "fs_dir"
     templateflow_dir = "templateflow_dir"
@@ -90,21 +81,21 @@ def test_run_fmriprep(caplog, tmp_path, use_bids_filter, anat_only):
     expected_cmd = [
         'singularity', 'run',
             '-B', f'{bids_dir}:{bids_dir}',
-            '-B', f'{proc_dir}:/fmriprep_proc',
-            '-B', f'{fmriprep_dir}/output/fmriprep_home_{participant_id}/:/home/fmriprep',
+            '-B', f'{fmriprep_dir}/output//fmriprep_home_{participant_id}/:/home/fmriprep',
             '--home', '/home/fmriprep',
             '--cleanenv',
             '-B', f'{fmriprep_dir}/output/:/output',
+            '-B', 'fmriprep_proc:/fmriprep_proc',
             '-B', f'{templateflow_dir}:/templateflow',
             '-B', f'{fmriprep_dir}:/work',
             '-B', f'{fs_dir}:/fsdir/',
-                singularity_container, '/data_dir', '/output', 'participant',
+                singularity_container, 'bids_dir', '/output', 'participant',
                     '--participant-label', participant_id,
                     '-w', '/work',
                     '--output-spaces', 'MNI152NLin2009cAsym:res-2', 'anat', 'fsnative',
                     '--fs-subjects-dir', '/fsdir/',
                     '--skip_bids_validation',
-                    '--bids-database-dir', '/fmripre_proc/bids_db_fmriprep',
+                    '--bids-database-dir', '/fmriprep_proc/bids_db_fmriprep',
                     '--fs-license-file', '/fsdir/license.txt',
                     '--return-all-components',
                     '-v',
@@ -118,7 +109,7 @@ def test_run_fmriprep(caplog, tmp_path, use_bids_filter, anat_only):
     if use_bids_filter:
         expected_cmd += [
             "--bids-filter-file",
-            "/fmripre_proc/bids_filter_fmriprep.json",
+            "/fmriprep_proc/bids_filter_fmriprep.json",
         ]
 
     if anat_only:
