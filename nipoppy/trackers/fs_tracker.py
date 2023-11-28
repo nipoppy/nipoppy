@@ -1,10 +1,6 @@
 from pathlib import Path
 
-# Status flags
-SUCCESS="SUCCESS"
-FAIL="FAIL"
-INCOMPLETE="INCOMPLETE"
-UNAVAILABLE="UNAVAILABLE"
+from nipoppy.trackers.tracker import SUCCESS, FAIL
 
 # Globals
 FIRST_LEVEL_DIRS = ["label", "mri", "stats", "surf"]
@@ -76,7 +72,7 @@ def check_stats(subject_dir, PARCELS=DEFAULT_PARCELS):
 
     return filepath_status & aseg_status
 
-def check_run_status(subject_dir, session_id=None, run_id=None):
+def check_run_status(subject_dir, session_id=None, run_id=None, acq_label=None):
     check_list = [check_fsdirs,check_mri,check_label,check_surf,check_stats]
     status_list = []
     for cl in check_list:
@@ -88,7 +84,7 @@ def check_run_status(subject_dir, session_id=None, run_id=None):
         status_msg = FAIL
     return status_msg
 
-def check_parcels(subject_dir, session_id=None, run_id=None):
+def check_parcels(subject_dir, session_id=None, run_id=None, acq_label=None):
     stats_status = check_stats(subject_dir,ALL_PARCELS)
     if stats_status:
         status_msg = SUCCESS
@@ -100,7 +96,7 @@ def check_parcels(subject_dir, session_id=None, run_id=None):
 tracker_configs = {
     "pipeline_complete": check_run_status,
     
-    "PHASE_": {
-            "parcellations": check_parcels
-            }
+    "PHASE__": {
+        "parcellations": check_parcels
+    }
 }
