@@ -116,7 +116,10 @@ def test_run_fmriprep(caplog, tmp_path, use_bids_filter, anat_only):
     # fmt: on
 
     if use_bids_filter:
-        expected_cmd += ["--bids-filter-file", "/fmripre_proc/bids_filter_fmriprep.json"]
+        expected_cmd += [
+            "--bids-filter-file",
+            "/fmripre_proc/bids_filter_fmriprep.json",
+        ]
 
     if anat_only:
         expected_cmd += ["--anat-only"]
