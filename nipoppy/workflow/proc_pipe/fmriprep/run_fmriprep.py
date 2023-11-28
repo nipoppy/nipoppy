@@ -144,7 +144,7 @@ def run(participant_id: str,
     # Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
     if use_bids_filter:
         logger.info(f"Copying ./bids_filter.json to {proc_dir}/bids_filter_fmriprep.json (to be seen by Singularity container)")
-        shutil.copyfile(f"{CWD}/bids_filter.json", f"{proc_dir}/bids_filter_fmriprep.json")
+        shutil.copyfile(f"{CWD}/sample_bids_filter.json", f"{proc_dir}/bids_filter_fmriprep.json")
 
     # launch fmriprep
     run_fmriprep(participant_id,
