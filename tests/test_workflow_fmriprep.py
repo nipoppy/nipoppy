@@ -9,9 +9,7 @@ import nipoppy.workflow.logger as my_logger
 import nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep as fmriprep_module
 from nipoppy.workflow.proc_pipe.fmriprep.run_fmriprep import run, run_fmriprep
 
-from .conftest import (
-    global_config_for_testing, create_dummy_bids_filter
-)
+from .conftest import create_dummy_bids_filter, global_config_for_testing
 
 
 def _create_dummy_fs_license(pth: Path) -> None:
@@ -49,6 +47,7 @@ def test_run(caplog, tmp_path, use_bids_filter, anat_only):
         anat_only=anat_only,
         logger=logger,
     )
+
 
 @pytest.mark.parametrize("use_bids_filter", [True, False])
 @pytest.mark.parametrize("anat_only", [True, False])

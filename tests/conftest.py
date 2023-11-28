@@ -28,15 +28,24 @@ def dummy_bids_filter(tmp_path) -> None:
     create_dummy_bids_filter(tmp_path)
 
 
-def create_dummy_bids_filter(pth: Path) -> None:
+def create_dummy_bids_filter(pth: Path,
+                             filename: str="bids_filter.json") -> None:
     bids_filter = {
-        "t1w": {
-            "datatype": "anat",
-            "session": "01",
-            "suffix": "T1w"
-        }
+    "t1w": {
+        "datatype": "anat",
+        "session": "01",
+        "run": "1",
+        "suffix": "T1w"
+    },
+    "dwi": {
+	"session": "01",
+	"run": "1",
+	"suffix": "dwi"
     }
-    with open(pth / "bids_filter.json", "w") as f:
+}
+
+    pth.mkdir(parents=True, exist_ok=True)
+    with open(pth / filename, "w") as f:
         json.dump(bids_filter, f)
 
 

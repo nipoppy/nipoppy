@@ -46,6 +46,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     ## should this be made / updated as part of BIDS-ification of dicoms?
 
     ## load the bids filter if it's called
+    bidf = {}
     if use_bids_filter:
 
         bidf_path = Path(f"{DATASET_ROOT}", 'proc', 'bids_filter_tractoflow.json') ## is this where it will always be?
@@ -62,7 +63,6 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
 
         else:
             logger.info(' -- Expected bids_filter.json is not found.')
-            bidf = {} ## make it empty
 
     else:
         logger.info(' -- Not using a bids_filter.json')
@@ -451,7 +451,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     if use_bids_filter:
         if not os.path.exists(f"{DATASET_ROOT}/proc/bids_filter_tractoflow.json"):
             logger.info(f"Copying ./bids_filter.json to {DATASET_ROOT}/proc/bids_filter_tractoflow.json (to be seen by Singularity container)")
-            shutil.copyfile(f"{CWD}/bids_filter.json", f"{DATASET_ROOT}/proc/bids_filter_tractoflow.json")
+            shutil.copyfile(f"{CWD}/sample_bids_filter.json", f"{DATASET_ROOT}/proc/bids_filter_tractoflow.json")
         else:
             logger.info(f"Using found {DATASET_ROOT}/proc/bids_filter_tractoflow.json")
 

@@ -6,19 +6,19 @@ from pathlib import Path
 import pytest
 
 import nipoppy.workflow.logger as my_logger
-import nipoppy.workflow.proc_pipe.tractoflow.run_tractoflow as tractoflow_module
 from nipoppy.workflow.proc_pipe.tractoflow.run_tractoflow import run
 
-from .conftest import (
-    global_config_for_testing,
-    mock_bids_dataset,
-)
+from .conftest import global_config_for_testing, mock_bids_dataset, create_dummy_bids_filter
+
 
 @pytest.mark.parametrize("use_bids_filter", [True, False])
-def test_run(caplog, tmp_path, dummy_bids_filter, use_bids_filter):
+def test_run(caplog, tmp_path, use_bids_filter):
     """Check that a logging error is raised."""
 
     caplog.set_level(logging.CRITICAL)
+
+    if use_bids_filter:
+        create_dummy_bids_filter(tmp_path / "proc", filename="bids_filter_tractoflow.json")
 
     output_dir = tmp_path
     log_file = tmp_path / "tractoflow.log"
@@ -44,8 +44,6 @@ def test_run(caplog, tmp_path, dummy_bids_filter, use_bids_filter):
         sh_order=6,
         logger=logger,
     )
-
-    _delete_dummy_bids_filter(_dummy_bids_filter_pth())
 
     expected_cmd = (
         f"nextflow run {tmp_path}/workflow/proc_pipe/tractoflow/tractoflow/main.nf "
