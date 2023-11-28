@@ -23,12 +23,12 @@ def get_proc_batches(proc_participants, MAX_BATCH, logger):
     """ Generates MAX_BATCH participants to run at any given time before clean-up
     """
     n_proc_participants = len(proc_participants)
-    if n_proc_participants > MAX_BATCH:
+    if n_proc_participants > MAX_BATCH: 
         n_batches = int(np.ceil(n_proc_participants/MAX_BATCH))
         logger.info(f"Running fmriprep in {n_batches} batches of at most {MAX_BATCH} participants each")
         proc_participant_batches = np.array_split(proc_participants, n_batches)
     else:
-        proc_participant_batches = [proc_participants]
+        proc_participant_batches = [proc_participants]    
 
     return proc_participant_batches
 
@@ -37,16 +37,16 @@ def refresh_bids_db(global_configs, session_id, pipeline, ignore_patterns, logge
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
     # remove old bids_db
-    sql_db_file = f"{DATASET_ROOT}/proc/bids_db_{pipeline}/bids_db.sqlite"
+    sql_db_file = f"{DATASET_ROOT}/proc/bids_db_{pipeline}/bids_db.sqlite" 
     logger.info(f"Removing old bids_db from {sql_db_file}")
     if os.path.exists(sql_db_file):
         os.remove(sql_db_file)
 
     # The default bids_db_path is proc/bids_db_{pipeline}
-    bids_db_path = generate_pybids_index(global_configs, session_id, pipeline=pipeline,
+    bids_db_path = generate_pybids_index(global_configs, session_id, pipeline=pipeline, 
                                          ignore_patterns=ignore_patterns, logger=logger)
     logger.info(f"bids_db_path: {bids_db_path}")
-
+    
     return bids_db_path
 
 # argparse
@@ -75,7 +75,7 @@ log_file = f"{log_dir}/nipoppy.log"
 logger = my_logger.get_logger(log_file, level="INFO")
 
 # Used to run trackers to identify new participants to process
-dash_schema_file = f"{DATASET_ROOT}/proc/bagel_schema.json"
+dash_schema_file = f"{DATASET_ROOT}/proc/bagel_schema.json" 
 
 # bids_db_path
 FMRIPREP_VERSION = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
@@ -91,7 +91,7 @@ hpc_job_list_dir = f"{DATASET_ROOT}/proc/"
 # Number of parallel jobs to run
 n_jobs = args.n_jobs
 # Max number of participants to run BEFORE cleaning up intermediate files
-MAX_BATCH = args.n_max_cleanup
+MAX_BATCH = args.n_max_cleanup 
 # Use HPC to run proc_pipe jobs
 use_hpc = args.use_hpc
 
@@ -131,10 +131,10 @@ for wf in workflows:
         logger.info(f"test run NOT generating manifest")
         make_doughnut.run(global_config_file, regenerate=True, empty=False)
 
-    elif wf == "dicom_org":
+    elif wf == "dicom_org":        
         run_dicom_org.run(global_configs, session_id, n_jobs=n_jobs, logger=logger)
 
-    elif wf == "bids_conv":
+    elif wf == "bids_conv": 
         run_bids_conv.run(global_configs, session_id, n_jobs=n_jobs, logger=logger)
 
     elif wf == "mriqc":
@@ -149,36 +149,36 @@ for wf in workflows:
         run_tracker.run(global_configs, dash_schema_file, [wf], session_id=session_id, logger=logger)
 
         proc_participants, _ = get_new_proc_participants(global_configs, session_id, pipeline=wf, logger=logger)
-        n_proc_participants = len(proc_participants)
+        n_proc_participants = len(proc_participants)        
 
         if n_proc_participants > 0:
             logger.info(f"Running MRIQC on {n_proc_participants} participants from session: {session} and for modalities: {modalities}")
             bids_db_path = refresh_bids_db(global_configs, session_id, wf, ignore_patterns, logger)
 
-            # Generate a list of participants to run on HPC
-            if use_hpc:
+            # Generate a list of participants to run on HPC 
+            if use_hpc:                    
                 hpc_job_list_file = f"{hpc_job_list_dir}/hpc_job_list_{wf}_{session}.txt"
                 logger.info(f"Generating HPC job list for {n_proc_participants} participants: {hpc_job_list_file}")
                 pd.DataFrame(data=proc_participants).to_csv(hpc_job_list_file, header=False, index=False)
-
+                
             else:
                 if n_jobs > 1:
                     # Process in parallel! (Won't write to logs)
                     wf_results = Parallel(n_jobs=n_jobs)(delayed(run_mriqc.run)(
-                        global_configs=global_configs, session_id=session_id, participant_id=participant_id,
-                        modalities=modalities, output_dir=None, logger=logger)
+                        global_configs=global_configs, session_id=session_id, participant_id=participant_id, 
+                        modalities=modalities, output_dir=None, logger=logger) 
                         for participant_id in proc_participants)
 
                 else:
                     # Useful for debugging
                     wf_results = []
                     for participant_id in proc_participants:
-                        res = run_mriqc.run(global_configs=global_configs, session_id=session_id, participant_id=participant_id,
-                                            modalities=modalities, output_dir=None, logger=logger)
-                    wf_results.append(res)
-
+                        res = run_mriqc.run(global_configs=global_configs, session_id=session_id, participant_id=participant_id, 
+                                            modalities=modalities, output_dir=None, logger=logger) 
+                    wf_results.append(res)   
+                
         else:
-            logger.info(f"No new participants to run MRIQC on for session: {session}")
+            logger.info(f"No new participants to run MRIQC on for session: {session}") 
 
     elif wf == "fmriprep":
         ignore_patterns = ["/anat/{}_{}_{}_NM","/anat/{}_{}_{}_echo",
@@ -190,12 +190,12 @@ for wf in workflows:
 
         proc_participants, _ = get_new_proc_participants(global_configs, session_id, pipeline=wf, logger=logger)
         n_proc_participants = len(proc_participants)
-
+        
         if n_proc_participants > 0:
             bids_db_path = refresh_bids_db(global_configs, session_id, wf, ignore_patterns, logger)
 
-            # Generate a list of participants to run on HPC
-            if use_hpc:
+            # Generate a list of participants to run on HPC 
+            if use_hpc:                
                 hpc_job_list_file = f"{hpc_job_list_dir}/hpc_job_list_{wf}_{session}.txt"
                 logger.info(f"Generating HPC job list for {n_proc_participants} participants: {hpc_job_list_file}")
                 pd.DataFrame(data=proc_participants).to_csv(hpc_job_list_file, header=False, index=False)
@@ -208,18 +208,18 @@ for wf in workflows:
                     if n_jobs > 1:
                         # Process in parallel! (Won't write to logs)
                         wf_results = Parallel(n_jobs=n_jobs)(delayed(run_fmriprep.run)(
-                            global_configs=global_configs, session_id=session_id, participant_id=participant_id,
-                            output_dir=None, anat_only=False, use_bids_filter=True, logger=logger)
+                            global_configs=global_configs, session_id=session_id, participant_id=participant_id, 
+                            output_dir=None, anat_only=False, use_bids_filter=True, logger=logger) 
                             for participant_id in proc_participant_batch)
 
                     else:
                         # Useful for debugging
                         wf_results = []
                         for participant_id in proc_participant_batch:
-                            res = run_fmriprep.run(global_configs=global_configs, session_id=session_id, participant_id=participant_id,
-                                                output_dir=None, anat_only=False, use_bids_filter=True, logger=logger)
-                        wf_results.append(res)
-
+                            res = run_fmriprep.run(global_configs=global_configs, session_id=session_id, participant_id=participant_id, 
+                                                output_dir=None, anat_only=False, use_bids_filter=True, logger=logger) 
+                        wf_results.append(res)   
+                    
                     # Clean up intermediate files
                     logger.info(f"Cleaning up intermediate files from {fmriprep_dir}")
                     fmriprep_wf_dir = glob(f"{fmriprep_dir}/fmriprep*wf")
@@ -242,10 +242,10 @@ for wf in workflows:
 
         proc_participants, _ = get_new_proc_participants(global_configs, session_id, pipeline=wf, logger=logger)
         n_proc_participants = len(proc_participants)
-
+        
         if n_proc_participants > 0:
-            # Generate a list of participants to run on HPC
-            if use_hpc:
+            # Generate a list of participants to run on HPC 
+            if use_hpc:                
                 hpc_job_list_file = f"{hpc_job_list_dir}/hpc_job_list_{wf}_{session}.txt"
                 logger.info(f"Generating HPC job list for {n_proc_participants} participants: {hpc_job_list_file}")
                 pd.DataFrame(data=proc_participants).to_csv(hpc_job_list_file, header=False, index=False)
@@ -258,18 +258,18 @@ for wf in workflows:
                     if n_jobs > 1:
                         # Process in parallel! (Won't write to logs)
                         wf_results = Parallel(n_jobs=n_jobs)(delayed(run_fmriprep.run)(
-                            global_configs=global_configs, session_id=session_id, participant_id=participant_id,
-                            output_dir=None, anat_only=False, use_bids_filter=True, logger=logger)
+                            global_configs=global_configs, session_id=session_id, participant_id=participant_id, 
+                            output_dir=None, anat_only=False, use_bids_filter=True, logger=logger) 
                             for participant_id in proc_participant_batch)
 
                     else:
                         # Useful for debugging
                         wf_results = []
                         for participant_id in proc_participant_batch:
-                            res = run_fmriprep.run(global_configs=global_configs, session_id=session_id, participant_id=participant_id,
-                                                output_dir=None, anat_only=False, use_bids_filter=True, logger=logger)
-                        wf_results.append(res)
-
+                            res = run_fmriprep.run(global_configs=global_configs, session_id=session_id, participant_id=participant_id, 
+                                                output_dir=None, anat_only=False, use_bids_filter=True, logger=logger) 
+                        wf_results.append(res)   
+                
     else:
         logger.error(f"Unknown workflow: {wf}")
 
