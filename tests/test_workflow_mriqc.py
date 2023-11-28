@@ -33,7 +33,7 @@ def test_run(caplog, tmp_path, output_dir, modalities, logger):
     if output_dir == "tmp_path":
         output_dir = tmp_path
         expected_output_dir = output_dir
-    elif output_dir is None:
+    if output_dir is None:
         expected_output_dir = (
             Path(global_configs["DATASET_ROOT"]) / "derivatives"
         )
@@ -49,17 +49,19 @@ def test_run(caplog, tmp_path, output_dir, modalities, logger):
 
     # fmt: off
     expected_cmd = ['singularity', 'run',
-                        '-B', f'{str(tmp_path)}/bids/:/data:ro',
+                        '-B', f'{str(tmp_path)}/bids/:{str(tmp_path)}/bids/:ro',
+                        '-B', f'{str(tmp_path)}/proc/:/mriqc_proc',
                         '-B', f'{str(expected_output_dir)}/mriqc/v23.1.0/output/:/out',
                         '-B', f'{str(expected_output_dir)}/mriqc/v23.1.0/work/:/work',
-                            'mriqc_23.1.0.sif', '/data', '/out', 'participant',
+                        '-B', ':/templateflow',
+                            'mriqc_23.1.0.sif', f'{str(tmp_path)}/bids/', '/out', 'participant',
                                 '--participant-label', participant_id,
                                 '--session-id', session_id,
                                 '--modalities']
     expected_cmd.extend(modalities)
     expected_cmd.extend(['--no-sub',
                          '--work-dir', '/work',
-                         '--bids-database-wipe'])
+                         '--bids-database-dir', '/mriqc_proc/bids_db_mriqc'])
     # fmt: on
 
     assert cmd == expected_cmd
