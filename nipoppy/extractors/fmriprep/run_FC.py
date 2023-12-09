@@ -13,16 +13,24 @@ import warnings
 warnings.simplefilter('ignore')
 
 
-def extract_timeseries(func_file, brain_atlas, confound_strategy, dkt_atlas=None):
+def extract_timeseries(func_file, brain_atlas, confound_strategy):
 	""" 
 	Extract timeseries from a given functional file using a given brain atlas 
+	func_file:
+		path to the nifti file containing the functional data
+		This path should be in the fmriprep output directory
+		The functional data is assumed to be preprocessed by fmriprep and transformed to MNI space
 	confound_strategy:
 		'none': no confound regression
 		'no_motion': confound regression with no motion parameters
 		'no_motion_no_gsr': confound regression with no motion parameters and no global signal regression
+		if confound_strategy is no_motion or no_motion_no_gsr, the associated confound files should be 
+			in the same directory as func_file
 	brain_atlas:
+		for now only supports:
 		'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400', 'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000'
 		'DKT'
+		if brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file
 	"""
 	### Load Atlas
 	## schaefer
@@ -38,10 +46,13 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy, dkt_atlas=None
 		# create the masker for extracting time series
 		masker = NiftiLabelsMasker(labels_img=atlas_filename, standardize=True)
 	## DKT
-	elif brain_atlas=='DKT':
-		atlas_filename = dkt_atlas
+	else:
+		atlas_filename = brain_atlas
 		labels = None
 		# create the masker for extracting time series
+		# if file was not found, raise error
+		if not os.path.isfile(atlas_filename):
+			raise ValueError('atlas_filename not found')
 		masker = NiftiLabelsMasker(labels_img=atlas_filename, standardize=True)
 
 	### extract the timeseries
@@ -69,6 +80,8 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy, dkt_atlas=None
 				confounds=confounds,
 				sample_mask=sample_mask
 		)
+	else:
+		raise ValueError('confound_strategy not recognized')
 
 	if labels is None:
 		labels = ['region_'+str(i) for i in range(time_series.shape[1])]
@@ -77,10 +90,10 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy, dkt_atlas=None
 	return time_series, labels
 
 
-def assess_FC(time_series, labels, metric_lst=['correlation']):
+def assess_FC(time_series, labels, metric_list=['correlation']):
 	"""
 	Assess functional connectivity using Nilearn
-	metric_lst:
+	metric_list:
 		'correlation'
 		'precision'
 	"""
@@ -91,14 +104,14 @@ def assess_FC(time_series, labels, metric_lst=['correlation']):
 
 	### functional connectivity assessment
 	## correlation
-	if 'correlation' in metric_lst:
+	if 'correlation' in metric_list:
 		from nilearn.connectome import ConnectivityMeasure
 		correlation_measure = ConnectivityMeasure(kind='correlation')
 		correlation_matrix = correlation_measure.fit_transform([time_series])[0]
 		FC['correlation'] = deepcopy(correlation_matrix)
 
 	## sparse inverse covariance 
-	if 'precision' in metric_lst:
+	if 'precision' in metric_list:
 		try:
 				from sklearn.covariance import GraphicalLassoCV
 		except ImportError:
@@ -118,18 +131,18 @@ def assess_FC(time_series, labels, metric_lst=['correlation']):
 	return FC
 
 def run_FC(
-          participant_id: str,
-          session_id: str,
-          fmriprep_dir,
-		  DKT_dir,
-          FC_dir,
-          brain_atlas_lst,
-		  confound_strategy,
-		  metric_lst,
-		  task,
-		  run,
-		  space,
-		  logger: logging.Logger,
+	participant_id: str,
+	session_id: str,
+	fmriprep_dir,
+	DKT_dir,
+	FC_dir,
+	brain_atlas_list,
+	confound_strategy,
+	metric_list,
+	task,
+	run,
+	space,
+	logger: logging.Logger,
 ):
 	""" Assess functional connectivity using Nilearn"""
 	
@@ -137,18 +150,20 @@ def run_FC(
 	logger.info("-"*50)
 	
 	try:
-		for brain_atlas in brain_atlas_lst:
+		for brain_atlas in brain_atlas_list:
 			logger.info('******** running ' + brain_atlas)
 			### extract time series
 			func_file = f"{fmriprep_dir}/{participant_id}/ses-{session_id}/func/{participant_id}_ses-{session_id}_{task}_{run}_{space}_desc-preproc_bold.nii.gz"
-			dkt_atlas = f"{DKT_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-{run}_{space[:-6]}_atlas-DKTatlas+aseg_dseg.nii.gz" # space[:-6] removes the '_res2' suffix
-			if brain_atlas=='DKT':
-				time_series, labels = extract_timeseries(func_file, brain_atlas, confound_strategy, dkt_atlas)
-			else:
+			if 'schaefer' in brain_atlas:
 				time_series, labels = extract_timeseries(func_file, brain_atlas, confound_strategy)
+			elif brain_atlas=='DKT':
+				dkt_atlas = f"{DKT_dir}/{participant_id}/ses-{session_id}/anat/{participant_id}_ses-{session_id}_run-{run}_{space[:-6]}_atlas-DKTatlas+aseg_dseg.nii.gz" # space[:-6] removes the '_res2' suffix
+				time_series, labels = extract_timeseries(func_file, dkt_atlas, confound_strategy)
+			else:
+				raise ValueError('brain_atlas not supported')
 
 			### assess FC
-			FC = assess_FC(time_series, labels, metric_lst=metric_lst)
+			FC = assess_FC(time_series, labels, metric_list=metric_list)
 
 			## save output 
 			folder = f"{FC_dir}/output/{participant_id}/ses-{session_id}/"
@@ -164,27 +179,28 @@ def run_FC(
 
 
 def run(participant_id: str,
-        global_configs,
-		FC_configs,
-        session_id: str,
-        output_dir: str,
-        logger=None):
+	global_configs,
+	FC_configs,
+	session_id: str,
+	output_dir: str,
+	logger=None
+):
 	""" Runs fmriprep command
 	"""
 	DATASET_ROOT = global_configs["DATASET_ROOT"]
 	FMRIPREP_VERSION = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
 
 	confound_strategy = FC_configs["confound_strategy"]
-	metric_lst = FC_configs["metric_lst"]
-	brain_atlas_lst = FC_configs["brain_atlas_lst"]
+	metric_list = FC_configs["metric_list"]
+	brain_atlas_list = FC_configs["brain_atlas_list"]
 	task = FC_configs["task"]
 	run = FC_configs["run"]
 	space = FC_configs["space"]
 
-	if metric_lst is None:
-		metric_lst = ['correlation']
-	if brain_atlas_lst is None:
-		brain_atlas_lst = [
+	if metric_list is None:
+		metric_list = ['correlation']
+	if brain_atlas_list is None:
+		brain_atlas_list = [
 			'schaefer_100', 'schaefer_200',
 			'schaefer_300', 'schaefer_400',
 			'schaefer_500', 'schaefer_600',
@@ -217,9 +233,9 @@ def run(participant_id: str,
 		fmriprep_dir,
 		DKT_dir,
 		FC_dir,
-		brain_atlas_lst,
+		brain_atlas_list,
 		confound_strategy,
-		metric_lst,
+		metric_list,
 		task,
 		run,
 		space,

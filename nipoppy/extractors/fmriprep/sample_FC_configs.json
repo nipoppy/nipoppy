@@ -1,7 +1,7 @@
 {
     "confound_strategy": "no_motion",
-    "metric_lst": ["correlation"],
-    "brain_atlas_lst": [
+    "metric_list": ["correlation"],
+    "brain_atlas_list": [
         "schaefer_100",
         "schaefer_200", "schaefer_300",
         "schaefer_400", "schaefer_500",
