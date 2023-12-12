@@ -36,13 +36,6 @@ def get_aparc_stats(participant_stats_dir, aparc_cols, parcel="aparc.DKTatlas"):
     
     _df = pd.concat([lh_df,rh_df], axis=0)
 
-    # Drop columns omitted by DKT atlas
-    if stat_file in ["lh.aparc.DKTatlas.stats", "rh.aparc.DKTatlas.stats"]:
-        drop_ROIs = ["temporalpole","frontalpole","banks of the superior temporal sulcus"]
-        for d_roi in drop_ROIs:
-            if d_roi in lh_df.columns:
-                lh_df = lh_df.drop(columns=[d_roi])
-
     return _df
 
 HELPTEXT = """
@@ -131,8 +124,8 @@ for participant_id in bids_participants:
                 # transpose it to wideform               
                 names_col = config_cols[0]
                 values_col = config_cols[1]                
-                cols = ["participant_id"] + list(_df[names_col].values)
-                vals = [participant_id] + list(_df[values_col].values)                
+                cols = ["participant_id"] + list(_df["hemi"] + "." + _df[names_col])
+                vals = [participant_id] + list(_df[values_col])                
                 _df_wide = pd.DataFrame(columns=cols)
                 _df_wide.loc[0] = vals
                 aparc_df = pd.concat([aparc_df,_df_wide], axis=0)
