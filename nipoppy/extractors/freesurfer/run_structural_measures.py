@@ -12,13 +12,17 @@ from nipoppy.workflow.utils import (
 )
 
 # Globals
+# Brainload has two separate functions to extract aseg data. 
+measure_column_names = ["StructName","Structure","Description","Volume_mm3", "unit"]
 aseg_cols = ["StructName", "Volume_mm3"]
 dkt_cols = ["StructName", "ThickAvg"]
 
 def get_aseg_stats(participant_stats_dir, aseg_cols):
     aseg_cols = ["StructName", "Volume_mm3"]
     aseg_stats = bl.stat(f'{participant_stats_dir}/aseg.stats')
-    _df = pd.DataFrame(aseg_stats["table_data"], columns=aseg_stats["table_column_headers"])[aseg_cols]
+    table_df = pd.DataFrame(aseg_stats["table_data"], columns=aseg_stats["table_column_headers"])[aseg_cols]
+    measure_df = pd.DataFrame(data=aseg_stats["measures"], columns=measure_column_names)[aseg_cols]
+    _df = pd.concat([table_df,measure_df],axis=0)
     return _df
 
 def get_aparc_stats(participant_stats_dir, aparc_cols, parcel="aparc.DKTatlas"):
