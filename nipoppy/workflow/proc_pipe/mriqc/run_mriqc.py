@@ -37,11 +37,11 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         output_dir = f"{DATASET_ROOT}/derivatives"
 
     # create output dir
-    mriqc_output_dir = f"{output_dir}/mriqc/v{MRIQC_VERSION}/output/"
+    mriqc_output_dir = f"{output_dir}/mriqc/{MRIQC_VERSION}/output/"
     Path(mriqc_output_dir).mkdir(parents=True, exist_ok=True)
 
     # create working dir (intermediate files)
-    mriqc_work_dir = f"{output_dir}/mriqc/v{MRIQC_VERSION}/work/"
+    mriqc_work_dir = f"{output_dir}/mriqc/{MRIQC_VERSION}/work/"
     Path(mriqc_work_dir).mkdir(parents=True, exist_ok=True)
 
     logger.info("Starting mriqc run...")

@@ -80,7 +80,7 @@ dash_schema_file = f"{DATASET_ROOT}/proc/bagel_schema.json"
 # bids_db_path
 FMRIPREP_VERSION = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
 output_dir = f"{DATASET_ROOT}/derivatives/"
-fmriprep_dir = f"{output_dir}/fmriprep/v{FMRIPREP_VERSION}"
+fmriprep_dir = f"{output_dir}/fmriprep/{FMRIPREP_VERSION}"
 
 session_id = args.session_id
 session = f"ses-{session_id}"
