@@ -89,7 +89,7 @@ if participants_list == None:
     n_bids_participants = len(bids_participants)
     print(f"Running all {n_bids_participants} participants in doughnut with session: {session}")
 else:
-    # use custome list 
+    # use custom list 
     bids_participants = list(pd.read_csv(participants_list)["participant_id"])
 
     n_bids_participants = len(bids_participants)
