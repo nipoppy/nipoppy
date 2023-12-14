@@ -130,10 +130,10 @@ def run(participant_id: str,
 
     bids_dir = f"{DATASET_ROOT}/bids/"
     proc_dir = f"{DATASET_ROOT}/proc/"
-    fmriprep_dir = f"{output_dir}/fmriprep/v{FMRIPREP_VERSION}"
+    fmriprep_dir = f"{output_dir}/fmriprep/{FMRIPREP_VERSION}"
 
     # Check and create session_dirs for freesurfer since it won't happen automatically
-    fs_dir = f"{output_dir}/freesurfer/v{FS_VERSION}/output/ses-{session_id}"
+    fs_dir = f"{output_dir}/freesurfer/{FS_VERSION}/output/ses-{session_id}"
     Path(fs_dir).mkdir(parents=True, exist_ok=True)
 
     # Copy FS license in the session specific output dir (to be seen by Singularity container)
