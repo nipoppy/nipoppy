@@ -30,7 +30,7 @@ from nipoppy.workflow.utils import (
     save_backup,
 )
 
-DPATH_DOUGHNUT_RELATIVE = Path('scratch', 'raw_dicom')
+DPATH_DOUGHNUT_RELATIVE = Path('scratch', 'raw_dicoms')
 FPATH_MANIFEST_RELATIVE = Path('tabular') / FNAME_MANIFEST
 
 FLAG_EMPTY = '--empty'
