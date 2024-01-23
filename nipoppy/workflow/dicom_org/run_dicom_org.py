@@ -32,8 +32,7 @@ def reorg(participant, participant_dicom_dir, raw_dicom_dir, dicom_dir, invalid_
     if pd.isna(participant_dicom_dir):
         raise RuntimeError(f"Got null participant_dicom_dir for participant {participant}: {participant_dicom_dir}")
 
-    participant_raw_dicom_dir = f"{participant_dicom_dir}/"
-    #participant_raw_dicom_dir = f"{raw_dicom_dir}/{participant_dicom_dir}/"
+    participant_raw_dicom_dir = f"{raw_dicom_dir}/{participant_dicom_dir}/"
 
     raw_dcm_list, invalid_dicom_list = search_dicoms(participant_raw_dicom_dir, skip_dcm_check)
     logger.info(f"n_raw_dicom: {len(raw_dcm_list)}, n_skipped (invalid/derived): {len(invalid_dicom_list)}")
@@ -62,12 +61,12 @@ def run(global_configs, session_id, logger=None, use_symlinks=True, skip_dcm_che
 
     # populate relative paths
     DATASET_ROOT = global_configs["DATASET_ROOT"]
-    raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicoms/{session}/"
+    raw_dicom_dir = f"{DATASET_ROOT}/scratch/raw_dicom/{session}/"
     dicom_dir = f"{DATASET_ROOT}/dicom/{session}/"
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
     invalid_dicom_dir = f"{log_dir}/invalid_dicom_dir/"
 
-    fpath_doughnut = f"{DATASET_ROOT}/scratch/raw_dicoms/{FNAME_DOUGHNUT}"
+    fpath_doughnut = f"{DATASET_ROOT}/scratch/raw_dicom/{FNAME_DOUGHNUT}"
     df_doughnut = load_doughnut(fpath_doughnut)
     
     if logger is None:

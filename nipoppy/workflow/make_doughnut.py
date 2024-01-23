@@ -30,7 +30,7 @@ from nipoppy.workflow.utils import (
     save_backup,
 )
 
-DPATH_DOUGHNUT_RELATIVE = Path('scratch', 'raw_dicoms')
+DPATH_DOUGHNUT_RELATIVE = Path('scratch', 'raw_dicom')
 FPATH_MANIFEST_RELATIVE = Path('tabular') / FNAME_MANIFEST
 
 FLAG_EMPTY = '--empty'
@@ -133,7 +133,7 @@ def run(global_config: dict, regenerate=False, empty=False):
             warnings.warn(
                 'Could not find participant ID -> DICOM directory conversion function, '
                 'using participant_id as dicom_dir. To use a custom function, make a new file called '
-                f'"dicom_dir_func.py" in {Path(__file__).parent} that contains a '
+                f'"dicom_dir_func.py" in {Path(__file__).parent}/dicom_org that contains a '
                 'function definition for participant_id_to_dicom_dir(). '
                 'See sample_dicom_dir_func.py for an example.'
             )

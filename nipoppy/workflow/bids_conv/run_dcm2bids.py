@@ -111,7 +111,7 @@ def run(global_configs, session_id, stage=2, overlays=None, n_jobs=2, dicom_id=N
     logger.info(f"Running dcm2bids stage: {stage}")
     logger.info(f"Number of parallel jobs: {n_jobs}")
 
-    fpath_doughnut = Path(DATASET_ROOT, 'scratch', 'raw_dicoms', FNAME_DOUGHNUT)
+    fpath_doughnut = Path(DATASET_ROOT, 'scratch', 'raw_dicom', FNAME_DOUGHNUT)
     bids_dir = f"{DATASET_ROOT}/bids/"
 
     df_doughnut = load_doughnut(fpath_doughnut)
