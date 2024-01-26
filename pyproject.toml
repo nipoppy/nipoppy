@@ -4,14 +4,15 @@ requires = ["hatchling"]
 
 [project]
 authors = [
-    { name = "Nikhil Bhagwat" },
-    { name = "Michelle Wang" },
-    { name = "Brent McPherson" },
-    { name = "Rémi Gau" },
+    {name = "Nikhil Bhagwat"},
+    {name = "Michelle Wang"},
+    {name = "Brent McPherson"},
+    {name = "Rémi Gau"},
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
+    "License :: OSI Approved",
     "Programming Language :: Python",
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
@@ -21,6 +22,7 @@ classifiers = [
 dependencies = [
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
+license = {file = "LICENSE"}
 name = "nipoppy"
 readme = "README.md"
 # TODO requires_python
