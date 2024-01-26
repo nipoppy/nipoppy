@@ -5,17 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "nipoppy"
 authors = [{ name = "nikhil153" }]
-version = "0.1.0"
-
+version = "0.2.0"  # TODO eventually use dynamic versioning
 
 dependencies = [
-    "pandas",
-    "numpy",
-    "joblib",
-    "pydicom",
-    "nibabel",
-    "pybids",
-    "requests",
 ]
 
 [project.optional-dependencies]
@@ -27,14 +19,8 @@ tests = ["nipoppy[test]"]
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
 
-[tool.hatch.build]
-include = [
-    "nipoppy/workflow/proc_pipe/tractoflow/tractoflow",
-]
-
 [tool.codespell]
-skip = '.git,.github,*.pdf,*.svg,pyproject.toml,*.ipynb,*.html,ppmi_imaging_descriptions.json'
-ignore-words-list = 'te,ines'
+skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
 addopts = "-ra -q -vv "
