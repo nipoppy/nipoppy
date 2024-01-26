@@ -1,20 +1,38 @@
 [build-system]
-requires = ["hatchling"]
 build-backend = "hatchling.build"
+requires = ["hatchling"]
 
 [project]
-name = "nipoppy"
-authors = [{ name = "nikhil153" }]
-version = "0.2.0"  # TODO eventually use dynamic versioning
-
+authors = [
+    { name = "Nikhil Bhagwat" },
+    { name = "Michelle Wang" },
+    { name = "Brent McPherson" },
+    { name = "Rémi Gau" },
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+]
 dependencies = [
 ]
+description = "Standardized organization and processing of neuroimaging-clinical datasets"
+name = "nipoppy"
+readme = "README.md"
+# TODO requires_python
+version = "0.2.0"  # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
+dev = [
+    "nipoppy[test]",
+    "pre-commit",
+]
 test = ["pytest"]
-
-# alias in case of typo
-tests = ["nipoppy[test]"]
+tests = ["nipoppy[test]"]  # alias in case of typo
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
