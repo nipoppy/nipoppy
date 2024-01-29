@@ -1,6 +1,6 @@
 """Parsers for the CLI."""
 import logging
-from argparse import ArgumentParser, HelpFormatter
+from argparse import ArgumentParser, HelpFormatter, _SubParsersAction
 from pathlib import Path
 
 DEFAULT_VERBOSITY = "2"  # info
@@ -10,22 +10,6 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
     "2": logging.INFO,
     "3": logging.DEBUG,
 }
-
-
-def get_base_parser(
-    formatter_class: type[HelpFormatter] = HelpFormatter,
-) -> ArgumentParser:
-    """Get the base parser."""
-    parser = ArgumentParser(
-        prog="nipoppy",
-        description="Organize and process neuroimaging-clinical datasets.",
-        formatter_class=formatter_class,
-        add_help=False,
-    )
-    parser.add_argument(
-        "-h", "--help", action="help", help="Show this help message and exit."
-    )
-    return parser
 
 
 def add_arg_dataset_root(parser: ArgumentParser) -> ArgumentParser:
@@ -39,7 +23,15 @@ def add_arg_dataset_root(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
-def add_generic_args(parser: ArgumentParser) -> ArgumentParser:
+def add_arg_help(parser: ArgumentParser) -> ArgumentParser:
+    """Add a help argument."""
+    parser.add_argument(
+        "-h", "--help", action="help", help="Show this help message and exit."
+    )
+    return parser
+
+
+def add_arg_verbosity(parser: ArgumentParser) -> ArgumentParser:
     """Add generic arguments (e.g., verbosity) to the parser."""
 
     def _verbosity_to_log_level(verbosity: str):
@@ -63,10 +55,40 @@ def add_generic_args(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
+def add_subparser_init(
+    subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
+) -> ArgumentParser:
+    """Add subparser for init command."""
+    parser = subparsers.add_parser(
+        "init",
+        help="Initialize a new dataset.",
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser = add_arg_verbosity(parser)
+    parser = add_arg_help(parser)
+
+
 def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Get the global parser."""
-    parser = get_base_parser(formatter_class=formatter_class)
-    parser = add_generic_args(parser)
+    parser = ArgumentParser(
+        prog="nipoppy",
+        description="Organize and process neuroimaging-clinical datasets.",
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+
+    subparsers = parser.add_subparsers(
+        dest="command",
+        help="Choose a subcommand",
+        required=True,
+    )
+
+    add_subparser_init(subparsers, formatter_class=formatter_class)
+
+    parser = add_arg_help(parser)
+
     return parser

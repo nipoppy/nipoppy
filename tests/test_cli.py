@@ -6,7 +6,9 @@ from nipoppy.cli.run import cli
 
 def test_cli():
     """Smoke test."""
-    cli(["nipoppy"])
+    with pytest.raises(SystemExit) as exception:
+        cli(["nipoppy", "-h"])
+    assert exception.value.code == 0
 
 
 def test_cli_invalid():
