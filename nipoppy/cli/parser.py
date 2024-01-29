@@ -1,8 +1,9 @@
 """Parsers for the CLI."""
 import logging
 from argparse import ArgumentParser, HelpFormatter
+from pathlib import Path
 
-DEFAULT_VERBOSITY = 2  # info
+DEFAULT_VERBOSITY = "2"  # info
 VERBOSITY_TO_LOG_LEVEL_MAP = {
     "0": logging.ERROR,
     "1": logging.WARNING,
@@ -14,12 +15,7 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
 def get_base_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
-    """Get the base parser.
-
-    Returns
-    -------
-    ArgumentParser
-    """
+    """Get the base parser."""
     parser = ArgumentParser(
         prog="nipoppy",
         description="Organize and process neuroimaging-clinical datasets.",
@@ -32,18 +28,19 @@ def get_base_parser(
     return parser
 
 
-def add_generic_arguments(parser: ArgumentParser) -> ArgumentParser:
-    """Add generic arguments (e.g., verbosity) to the parser.
+def add_arg_dataset_root(parser: ArgumentParser) -> ArgumentParser:
+    """Add common arguments (e.g., dataset root) to the parser."""
+    parser.add_argument(
+        "--dataset-root",
+        "--dataset_root",
+        type=Path,
+        required=True,
+    )
+    return parser
 
-    Parameters
-    ----------
-    parser : ArgumentParser
-        Parser to add arguments to.
 
-    Returns
-    -------
-    ArgumentParser
-    """
+def add_generic_args(parser: ArgumentParser) -> ArgumentParser:
+    """Add generic arguments (e.g., verbosity) to the parser."""
 
     def _verbosity_to_log_level(verbosity: str):
         try:
@@ -69,12 +66,7 @@ def add_generic_arguments(parser: ArgumentParser) -> ArgumentParser:
 def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
-    """Get the global parser.
-
-    Returns
-    -------
-    ArgumentParser
-    """
+    """Get the global parser."""
     parser = get_base_parser(formatter_class=formatter_class)
-    parser = add_generic_arguments(parser)
+    parser = add_generic_args(parser)
     return parser
