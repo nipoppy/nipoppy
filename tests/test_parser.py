@@ -1,10 +1,10 @@
 """Tests for the parsers."""
-from argparse import HelpFormatter
+from argparse import ArgumentParser, HelpFormatter
 
 import pytest
 from rich_argparse import RichHelpFormatter
 
-from nipoppy.cli.parser import get_base_parser, get_global_parser
+from nipoppy.cli.parser import add_generic_arguments, get_base_parser, get_global_parser
 
 
 @pytest.mark.parametrize(
@@ -33,6 +33,35 @@ def test_base_parser_help(args):
     with pytest.raises(SystemExit) as exception:
         parser.parse_args(args)
     assert exception.value.code == 0, "Help should exit with code 0."
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--verbosity", "2"],
+        ["--verbosity", "3"],
+    ],
+)
+def test_add_generic_arguments(args):
+    """Check generic arguments."""
+    parser = ArgumentParser()
+    parser = add_generic_arguments(parser)
+    assert parser.parse_args(args), "Generic argument(s) not recognized."
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--verbosity", "4"],
+        ["--verbosity", "x"],
+    ],
+)
+def test_add_generic_arguments_errors(args):
+    """Test invalid generic argument values."""
+    parser = ArgumentParser()
+    parser = add_generic_arguments(parser)
+    with pytest.raises(SystemExit):
+        parser.parse_args(args)
 
 
 @pytest.mark.parametrize(
