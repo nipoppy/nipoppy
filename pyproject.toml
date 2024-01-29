@@ -36,6 +36,9 @@ dev = [
 test = ["pytest"]
 tests = ["nipoppy[test]"]  # alias in case of typo
 
+[project.scripts]
+nipoppy = "nipoppy.cli.run:cli"
+
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
 
