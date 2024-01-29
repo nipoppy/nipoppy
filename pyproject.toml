@@ -20,6 +20,7 @@ classifiers = [
     "Operating System :: Unix",
 ]
 dependencies = [
+    "rich",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = {file = "LICENSE"}
