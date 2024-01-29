@@ -21,6 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "rich",
+    "rich_argparse",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = {file = "LICENSE"}

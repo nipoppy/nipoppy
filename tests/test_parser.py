@@ -1,12 +1,22 @@
 """Tests for the parsers."""
+from argparse import HelpFormatter
+
 import pytest
+from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import get_base_parser, get_global_parser
 
 
-def test_base_parser():
+@pytest.mark.parametrize(
+    "formatter_class",
+    [
+        HelpFormatter,
+        RichHelpFormatter,
+    ],
+)
+def test_base_parser(formatter_class: type[HelpFormatter]):
     """Test parser without args."""
-    parser = get_base_parser()
+    parser = get_base_parser(formatter_class=formatter_class)
     parser.parse_args([])
 
 
