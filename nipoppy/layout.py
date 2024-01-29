@@ -35,11 +35,9 @@ class DatasetLayout(_Base):
         self.dpath_demographics = self.dpath_tabular / "demographics"
         self.fpath_manifest = self.dpath_tabular / "manifest.csv"
 
-    def create(self):
-        """Create an empty dataset."""
-        if self.dpath_root.exists():
-            raise FileExistsError(f"Dataset already exists: {self.dpath_root}")
-
+    @property
+    def dpaths(self) -> list[Path]:
+        """Return a list of all directory paths."""
         dpaths = [
             self.dpath_root,
             self.dpath_bids,
@@ -54,8 +52,7 @@ class DatasetLayout(_Base):
             self.dpath_assessments,
             self.dpath_demographics,
         ]
-        for dpath in dpaths:
-            dpath.mkdir(parents=True, exist_ok=True)
+        return dpaths
 
     def __str__(self) -> str:
         return self._str_helper(names=["dpath_root"])
