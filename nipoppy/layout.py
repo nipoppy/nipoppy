@@ -1,8 +1,10 @@
 """Dataset layout."""
 from pathlib import Path
 
+from nipoppy.base import _Base
 
-class DatasetLayout:
+
+class DatasetLayout(_Base):
     """File/directory structure in a dataset."""
 
     def __init__(self, dpath_root: Path | str):
@@ -54,3 +56,6 @@ class DatasetLayout:
         ]
         for dpath in dpaths:
             dpath.mkdir(parents=True, exist_ok=True)
+
+    def __str__(self) -> str:
+        return self._str_helper(names=["dpath_root"])
