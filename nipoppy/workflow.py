@@ -3,7 +3,7 @@ import datetime
 import logging
 import shlex
 import subprocess
-from abc import ABC
+from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
 from typing import Optional, Sequence
@@ -127,3 +127,22 @@ class _Workflow(_Base, ABC):
             run_output = (stdout_str, stderr_str)
 
         return run_output
+
+    def run_setup(self, **kwargs):
+        """Run the setup part of the workflow."""
+        self.logger.info("========== BEGIN ==========")
+
+    @abstractmethod
+    def run_main(self, **kwargs):
+        """Run the main part of the workflow."""
+        pass
+
+    def run_cleanup(self, **kwargs):
+        """Run the cleanup part of the workflow."""
+        self.logger.info("========== END ==========")
+
+    def run(self, **kwargs):
+        """Run the workflow."""
+        self.run_setup(**kwargs)
+        self.run_main(**kwargs)
+        self.run_cleanup(**kwargs)

@@ -12,12 +12,20 @@ from nipoppy.workflow import _Workflow
 @pytest.fixture(params=[get_logger("my_logger"), None])
 def workflow(request: pytest.FixtureRequest, tmp_path: Path):
     class DummyWorkflow(_Workflow):
-        pass
+        def run_main(self):
+            pass
 
     dpath_root = tmp_path / "my_dataset"
-    return DummyWorkflow(
+    workflow = DummyWorkflow(
         dpath_root=dpath_root, name="my_workflow", logger=request.param
     )
+    workflow.logger.setLevel(logging.DEBUG)  # capture all logs
+    return workflow
+
+
+def test_abstract_class():
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        _Workflow(None, None)
 
 
 def test_init(workflow: _Workflow):
@@ -37,7 +45,6 @@ def test_generate_fpath_log(workflow: _Workflow):
 def test_log_command(
     workflow: _Workflow, command, prefix_run, caplog: pytest.LogCaptureFixture
 ):
-    caplog.set_level(level=logging.DEBUG)  # capture all logs
     workflow.log_prefix_run = prefix_run
     workflow.log_command(command)
     assert caplog.records
@@ -70,3 +77,17 @@ def test_run_command(
     assert expected == workflow.run_command(
         command_or_args, check=check, shell=shell, capture_output=capture_output
     )
+
+
+def test_run_setup(workflow: _Workflow, caplog: pytest.LogCaptureFixture):
+    workflow.run_setup()
+    assert "BEGIN" in caplog.text
+
+
+def test_run(workflow: _Workflow):
+    assert workflow.run() is None
+
+
+def test_run_cleanup(workflow: _Workflow, caplog: pytest.LogCaptureFixture):
+    workflow.run_cleanup()
+    assert "END" in caplog.text
