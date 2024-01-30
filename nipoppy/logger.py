@@ -11,6 +11,6 @@ def get_logger(name: Optional[str] = None, level: int = logging.INFO) -> logging
         level=level,
         format="%(message)s",
         datefmt="[%Y-%m-%d %X]",
-        handlers=[RichHandler()],
+        handlers=[RichHandler(markup=True)],
     )
     return logging.getLogger(name=name)
