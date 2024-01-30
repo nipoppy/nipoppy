@@ -14,7 +14,6 @@ from nipoppy.cli.parser import (
 @pytest.mark.parametrize("flag", ["--dataset_root", "--dataset-root"])
 @pytest.mark.parametrize("dataset_root", ["my_dataset", "dataset_dir"])
 def test_add_arg_dataset_root(flag: str, dataset_root: str):
-    """Check dataset_root argument."""
     parser = ArgumentParser()
     parser = add_arg_dataset_root(parser)
     assert parser.parse_args([flag, dataset_root])
@@ -22,7 +21,6 @@ def test_add_arg_dataset_root(flag: str, dataset_root: str):
 
 @pytest.mark.parametrize("verbosity", ["2", "3"])
 def test_add_arg_verbosity(verbosity):
-    """Check generic arguments."""
     parser = ArgumentParser()
     parser = add_arg_verbosity(parser)
     assert parser.parse_args(["--verbosity", verbosity])
@@ -30,7 +28,6 @@ def test_add_arg_verbosity(verbosity):
 
 @pytest.mark.parametrize("verbosity", ["4", "x"])
 def test_add_arg_verbosity_invalid(verbosity):
-    """Test invalid generic argument values."""
     parser = ArgumentParser()
     parser = add_arg_verbosity(parser)
     with pytest.raises(SystemExit) as exception:
@@ -39,7 +36,6 @@ def test_add_arg_verbosity_invalid(verbosity):
 
 
 def test_add_subparser_init():
-    """Test init subparser."""
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
     add_subparser_init(subparsers)
@@ -55,7 +51,6 @@ def test_add_subparser_init():
     ],
 )
 def test_global_parser(args: list[str]):
-    """Test global parser."""
     parser = get_global_parser()
     try:
         parser.parse_args(args)
