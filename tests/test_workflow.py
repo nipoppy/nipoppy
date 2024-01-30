@@ -20,12 +20,12 @@ def workflow(request: pytest.FixtureRequest, tmp_path: Path):
     )
 
 
-def test_workflow_init(workflow: _Workflow):
+def test_init(workflow: _Workflow):
     assert isinstance(workflow.dpath_root, Path)
     assert isinstance(workflow.logger, logging.Logger)
 
 
-def test_workflow_generate_fpath_log(workflow: _Workflow):
+def test_generate_fpath_log(workflow: _Workflow):
     fpath_log = workflow.generate_fpath_log()
     fpath_log.mkdir(parents=True, exist_ok=True)
     fpath_log.touch()
