@@ -1,7 +1,8 @@
 """Base class."""
+from abc import ABC
 
 
-class _Base:
+class _Base(ABC):
     """Base class with utilities for pretty printing."""
 
     def _str_helper(self, components=None, names=None, sep=", "):
