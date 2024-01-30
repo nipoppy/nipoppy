@@ -5,6 +5,7 @@ from typing import Sequence
 from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import get_global_parser
+from nipoppy.dataset_init import DatasetInitWorkflow
 from nipoppy.logger import get_logger
 
 
@@ -20,4 +21,10 @@ def cli(argv: Sequence[str] = None) -> None:
     if len(unknown) > 0:
         parser.error(f"Invalid arguments: {unknown}")
 
-    logger.info(f"Parsed arguments: {args}")
+    # logger.debug(f"Parsed arguments: {args}")
+
+    command = args.command
+    if command == "init":
+        workflow = DatasetInitWorkflow(args.dataset_root, logger=logger)
+
+    workflow.run()

@@ -3,7 +3,7 @@ import logging
 from argparse import ArgumentParser, HelpFormatter, _SubParsersAction
 from pathlib import Path
 
-DEFAULT_VERBOSITY = "2"  # info
+DEFAULT_VERBOSITY = "3"  # debug
 VERBOSITY_TO_LOG_LEVEL_MAP = {
     "0": logging.ERROR,
     "1": logging.WARNING,

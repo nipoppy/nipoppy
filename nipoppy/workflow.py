@@ -130,7 +130,7 @@ class _Workflow(_Base, ABC):
 
     def run_setup(self, **kwargs):
         """Run the setup part of the workflow."""
-        self.logger.info("========== BEGIN ==========")
+        self.logger.info(f"========== BEGIN {self.name.upper()} ==========")
 
     @abstractmethod
     def run_main(self, **kwargs):
@@ -139,7 +139,7 @@ class _Workflow(_Base, ABC):
 
     def run_cleanup(self, **kwargs):
         """Run the cleanup part of the workflow."""
-        self.logger.info("========== END ==========")
+        self.logger.info(f"========== END {self.name.upper()} ==========")
 
     def run(self, **kwargs):
         """Run the workflow."""
