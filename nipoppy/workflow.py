@@ -20,7 +20,7 @@ class _Workflow(_Base, ABC):
 
     path_sep = "-"
     log_prefix_run = "[bright_magenta][RUN][/bright_magenta]"
-    log_prefix_run_stdout = "[bright_yellow]][RUN STDOUT][/bright_yellow]"
+    log_prefix_run_stdout = "[bright_yellow][RUN STDOUT][/bright_yellow]"
     log_prefix_run_stderr = "[bright_red][RUN STDERR][/bright_red]"
 
     def __init__(
