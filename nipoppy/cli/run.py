@@ -18,13 +18,20 @@ def cli(argv: Sequence[str] = None) -> None:
 
     logger = get_logger(level=args.verbosity)
 
-    if len(unknown) > 0:
-        parser.error(f"Invalid arguments: {unknown}")
+    try:
+        if len(unknown) > 0:
+            parser.error(f"Invalid arguments: {unknown}")
 
-    # logger.debug(f"Parsed arguments: {args}")
+        # logger.debug(f"Parsed arguments: {args}")
 
-    command = args.command
-    if command == "init":
-        workflow = DatasetInitWorkflow(args.dataset_root, logger=logger)
+        command = args.command
+        if command == "init":
+            workflow = DatasetInitWorkflow(args.dataset_root, logger=logger)
+        else:
+            raise ValueError(f"Invalid command: {command}")
 
-    workflow.run()
+        workflow.run()
+
+    except Exception as exception:
+        logger.error(exception)
+        sys.exit(1)
