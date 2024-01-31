@@ -5,6 +5,7 @@ import pytest
 
 from nipoppy.cli.parser import (
     add_arg_dataset_root,
+    add_arg_dry_run,
     add_arg_verbosity,
     add_subparser_init,
     get_global_parser,
@@ -17,6 +18,12 @@ def test_add_arg_dataset_root(flag: str, dataset_root: str):
     parser = ArgumentParser()
     parser = add_arg_dataset_root(parser)
     assert parser.parse_args([flag, dataset_root])
+
+
+def test_add_arg_dry_run():
+    parser = ArgumentParser()
+    parser = add_arg_dry_run(parser)
+    assert parser.parse_args(["--dry-run"])
 
 
 @pytest.mark.parametrize("verbosity", ["2", "3"])

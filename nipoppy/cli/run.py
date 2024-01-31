@@ -26,7 +26,11 @@ def cli(argv: Sequence[str] = None) -> None:
 
         command = args.command
         if command == "init":
-            workflow = DatasetInitWorkflow(args.dataset_root, logger=logger)
+            workflow = DatasetInitWorkflow(
+                dpath_root=args.dataset_root,
+                logger=logger,
+                dry_run=args.dry_run,
+            )
         else:
             raise ValueError(f"Invalid command: {command}")
 

@@ -13,12 +13,22 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
 
 
 def add_arg_dataset_root(parser: ArgumentParser) -> ArgumentParser:
-    """Add common arguments (e.g., dataset root) to the parser."""
+    """Add a --dataset-root to the parser."""
     parser.add_argument(
         "--dataset-root",
         "--dataset_root",
         type=Path,
         required=True,
+    )
+    return parser
+
+
+def add_arg_dry_run(parser: ArgumentParser) -> ArgumentParser:
+    """Add a dry-run argument to the parser."""
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print commands but do not execute them.",
     )
     return parser
 
@@ -67,7 +77,9 @@ def add_subparser_init(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_arg_verbosity(parser)
+    parser = add_arg_dry_run(parser)
     parser = add_arg_help(parser)
+    return parser
 
 
 def get_global_parser(
@@ -83,7 +95,7 @@ def get_global_parser(
 
     subparsers = parser.add_subparsers(
         dest="command",
-        help="Choose a subcommand",
+        help="Choose a subcommand.",
         required=True,
     )
 
