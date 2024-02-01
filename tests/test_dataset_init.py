@@ -2,7 +2,7 @@
 from pathlib import Path
 
 import pytest
-from conftest import ATTR_TO_DPATH_MAP
+from conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG
 
 from nipoppy.dataset_init import DatasetInitWorkflow
 
@@ -17,6 +17,7 @@ def test_init(dpath_root: Path):
     workflow.run()
     for path in ATTR_TO_DPATH_MAP.values():
         assert Path(dpath_root, path).exists()
+    assert Path(dpath_root, FPATH_CONFIG).exists()
 
 
 def test_init_error(dpath_root: Path):

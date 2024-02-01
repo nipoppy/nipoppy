@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-FPATH_DATA = Path(__file__).parent.parent / "data"
+FPATH_DATA = Path(__file__).parent / "data"
 FPATH_SAMPLE_CONFIG = FPATH_DATA / "sample_global_configs.json"
 
 
