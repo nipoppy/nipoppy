@@ -1,4 +1,5 @@
 """Utilities for tests."""
+from pathlib import Path
 
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
@@ -19,3 +20,5 @@ ATTR_TO_FPATH_MAP = {
     "fpath_doughnut": "scratch/raw_dicom/doughnut.csv",
     "fpath_manifest": "tabular/manifest.csv",
 }
+
+DPATH_TEST_DATA = Path(__file__).parent / "data"

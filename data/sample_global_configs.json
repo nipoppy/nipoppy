@@ -1,0 +1,20 @@
+{
+    "DATASET_NAME": "<DATASET_NAME>",
+    "DATASET_ROOT": "<PATH_TO_DATASET>",
+    "CONTAINER_STORE": "<PATH_TO_CONTAINERS>",
+    "SESSIONS": [
+        "ses-<SESSION_LABEL>"
+    ],
+    "BIDS": {
+        "<BIDS_TOOL_NAME>": {
+            "VERSION": "<HEUDICONV_VERSION>",
+            "CONTAINER": "<CONTAINER_NAME>"
+        }
+    },
+    "PROC_PIPELINES": {
+        "<BIDS_TOOL_NAME>": {
+            "VERSION": "<HEUDICONV_VERSION>",
+            "CONTAINER": "<CONTAINER_NAME>"
+        }
+    }
+}

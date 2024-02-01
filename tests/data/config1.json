@@ -1,0 +1,47 @@
+{
+    "DATASET_NAME": "my_dataset",
+    "DATASET_ROOT": "/path/to/dataset",
+    "CONTAINER_STORE": "/path/to/containers",
+    "SINGULARITY_PATH": "singularity",
+    "TEMPLATEFLOW_DIR": "/path/to/templateflow",
+    "SESSIONS": [
+        "ses-A",
+        "ses-B"
+    ],
+    "VISITS": [
+        "V01",
+        "V02"
+    ],
+    "BIDS": {
+        "heudiconv": {
+            "VERSION": "0.11.6",
+            "CONTAINER": "heudiconv_{}.sif",
+            "URL": ""
+        }
+    },
+    "PROC_PIPELINES": {
+        "mriqc": {
+            "VERSION": "23.1.0",
+            "CONTAINER": "mriqc_{}.sif",
+            "URL": ""
+        },
+        "fmriprep": {
+            "VERSION": "20.2.7",
+            "CONTAINER": "fmriprep_{}.sif",
+            "URL": ""
+        },
+        "freesurfer": {
+            "VERSION": "6.0.1",
+            "CONTAINER": "fmriprep_{}.sif",
+            "URL": ""
+        }
+    },
+    "TABULAR": {
+        "data_dictionary": {
+            "PATH": "",
+            "VERSION": "",
+            "URL": ""
+        }
+    },
+    "WORKFLOWS": []
+}

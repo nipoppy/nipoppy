@@ -1,0 +1,8 @@
+{
+    "DATASET_NAME": "my_dataset",
+    "CONTAINER_STORE": "/path/to/containers",
+    "SESSIONS": [
+        "ses-A",
+        "ses-B"
+    ]
+}

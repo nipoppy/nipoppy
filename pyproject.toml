@@ -4,10 +4,10 @@ requires = ["hatchling"]
 
 [project]
 authors = [
-    {name = "Nikhil Bhagwat"},
-    {name = "Michelle Wang"},
-    {name = "Brent McPherson"},
-    {name = "Rémi Gau"},
+    { name = "Nikhil Bhagwat" },
+    { name = "Michelle Wang" },
+    { name = "Brent McPherson" },
+    { name = "Rémi Gau" },
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
@@ -19,24 +19,18 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
 ]
-dependencies = [
-    "rich",
-    "rich_argparse",
-]
+dependencies = ["pydantic", "rich", "rich_argparse"]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
 # TODO requires_python
-version = "0.2.0"  # TODO eventually use dynamic versioning
+version = "0.2.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
-dev = [
-    "nipoppy[test]",
-    "pre-commit",
-]
+dev = ["nipoppy[test]", "pre-commit"]
 test = ["pytest"]
-tests = ["nipoppy[test]"]  # alias in case of typo
+tests = ["nipoppy[test]"]             # alias in case of typo
 
 [project.scripts]
 nipoppy = "nipoppy.cli.run:cli"

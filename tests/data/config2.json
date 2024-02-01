@@ -1,0 +1,29 @@
+{
+    "DATASET_NAME": "my_dataset",
+    "DATASET_ROOT": "/path/to/dataset",
+    "CONTAINER_STORE": "/path/to/containers",
+    "SESSIONS": [
+        "ses-A",
+        "ses-B"
+    ],
+    "BIDS": {
+        "heudiconv": {
+            "VERSION": "0.11.6",
+            "CONTAINER": "heudiconv_{}.sif"
+        }
+    },
+    "PROC_PIPELINES": {
+        "mriqc": {
+            "VERSION": "23.1.0",
+            "CONTAINER": "mriqc_{}.sif"
+        },
+        "fmriprep": {
+            "VERSION": "20.2.7",
+            "CONTAINER": "fmriprep_{}.sif"
+        },
+        "freesurfer": {
+            "VERSION": "6.0.1",
+            "CONTAINER": "fmriprep_{}.sif"
+        }
+    }
+}
