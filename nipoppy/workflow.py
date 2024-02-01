@@ -24,12 +24,24 @@ class _Workflow(_Base, ABC):
 
     def __init__(
         self,
-        dpath_root: Path,
+        dpath_root: Path | str,
         name: str,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
     ):
-        """Initialize the object."""
+        """Initialize the workflow instance.
+
+        Parameters
+        ----------
+        dpath_root : Path | str
+            Path the the root directory of the dataset.
+        name : str
+            Name of the workflow, used for logging.
+        logger : logging.Logger, optional
+            Logger, by default None
+        dry_run : bool, optional
+            If True, print commands without executing them, by default False
+        """
         if logger is None:
             logger = get_logger(name=name)
 
@@ -48,6 +60,7 @@ class _Workflow(_Base, ABC):
         return dpath_log / fname_log
 
     def log_command(self, command: str):
+        """Write a command to the log with a special prefix."""
         self.logger.info(f"{self.log_prefix_run} {command}")
 
     def run_command(
@@ -57,8 +70,37 @@ class _Workflow(_Base, ABC):
         check=True,
         capture_output=False,
         **kwargs,
-    ):
+    ) -> subprocess.Popen | tuple[str, str] | str:
+        """Run a command in a subprocess.
+
+        The command's stdout and stderr outputs are written to the log
+        with special prefixes.
+
+        If in "dry run" mode, the command is not executed, and the method returns
+        the command string. Otherwise, the subprocess.Popen object is returned
+        unless capture_output is True.
+
+        Parameters
+        ----------
+        command_or_args : Sequence[str] | str
+            The command to run.
+        shell : bool, optional
+            Passed to `subprocess.Popen`, by default False
+        check : bool, optional
+            If True, raise an error if the process exits with a non-zero code,
+            by default True
+        capture_output : bool, optional
+            If True, return a tuple of strings from stdout and stderr, by default False
+        **kwargs
+            Passed to `subprocess.Popen`.
+
+        Returns
+        -------
+        subprocess.Popen | tuple[str, str] | str
+        """
+
         def process_output(output_source, output_str: str, log_prefix: str):
+            """Consume lines from an IO stream and append them to a string."""
             for line in output_source:
                 if capture_output:
                     output_str += line  # store the line as-is
@@ -116,7 +158,7 @@ class _Workflow(_Base, ABC):
             run_output = command
 
         # return the captured stdout/stderr strings
-        # instead of the POpen object or command string
+        # instead of the Popen object or command string
         if capture_output:
             run_output = (stdout_str, stderr_str)
 

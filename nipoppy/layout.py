@@ -53,6 +53,3 @@ class DatasetLayout(_Base):
             self.dpath_demographics,
         ]
         return dpaths
-
-    def __str__(self) -> str:
-        return self._str_helper(names=["dpath_root"])
