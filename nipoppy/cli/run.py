@@ -4,7 +4,7 @@ from typing import Sequence
 
 from rich_argparse import RichHelpFormatter
 
-from nipoppy.cli.parser import get_global_parser
+from nipoppy.cli.parser import COMMAND_INIT, get_global_parser
 from nipoppy.dataset_init import DatasetInitWorkflow
 from nipoppy.logger import get_logger
 
@@ -14,25 +14,26 @@ def cli(argv: Sequence[str] = None) -> None:
     if argv is None:
         argv = sys.argv
     parser = get_global_parser(formatter_class=RichHelpFormatter)
-    args, unknown = parser.parse_known_args(argv[1:])
+    args = parser.parse_args(argv[1:])
 
+    # common arguments
+    command = args.command
     logger = get_logger(level=args.verbosity)
+    dry_run = args.dry_run
+
+    # to pass to all workflows
+    workflow_kwargs = dict(logger=logger, dry_run=dry_run)
 
     try:
-        if len(unknown) > 0:
-            parser.error(f"Invalid arguments: {unknown}")
+        dpath_root = args.dataset_root
 
-        # logger.debug(f"Parsed arguments: {args}")
-
-        command = args.command
-        if command == "init":
+        if command == COMMAND_INIT:
             workflow = DatasetInitWorkflow(
-                dpath_root=args.dataset_root,
-                logger=logger,
-                dry_run=args.dry_run,
+                dpath_root=dpath_root,
+                **workflow_kwargs,
             )
         else:
-            raise ValueError(f"Invalid command: {command}")
+            raise ValueError(f"Unsupported command: {command}")
 
         workflow.run()
 

@@ -1,7 +1,10 @@
 """Parsers for the CLI."""
 import logging
-from argparse import ArgumentParser, HelpFormatter, _SubParsersAction
+from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
+
+PROGRAM_NAME = "nipoppy"
+COMMAND_INIT = "init"
 
 DEFAULT_VERBOSITY = "3"  # debug
 VERBOSITY_TO_LOG_LEVEL_MAP = {
@@ -12,19 +15,19 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
 }
 
 
-def add_arg_dataset_root(parser: ArgumentParser) -> ArgumentParser:
-    """Add a --dataset-root to the parser."""
+def add_arg_dataset_root(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --dataset-root argument to the parser."""
     parser.add_argument(
         "--dataset-root",
-        "--dataset_root",
         type=Path,
         required=True,
+        help="Path to the root of the dataset.",
     )
     return parser
 
 
-def add_arg_dry_run(parser: ArgumentParser) -> ArgumentParser:
-    """Add a dry-run argument to the parser."""
+def add_arg_dry_run(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --dry-run argument to the parser."""
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -33,16 +36,19 @@ def add_arg_dry_run(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
-def add_arg_help(parser: ArgumentParser) -> ArgumentParser:
-    """Add a help argument."""
+def add_arg_help(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --help argument to the parser."""
     parser.add_argument(
-        "-h", "--help", action="help", help="Show this help message and exit."
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit.",
     )
     return parser
 
 
-def add_arg_verbosity(parser: ArgumentParser) -> ArgumentParser:
-    """Add generic arguments (e.g., verbosity) to the parser."""
+def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --verbosity argument to the parser."""
 
     def _verbosity_to_log_level(verbosity: str):
         try:
@@ -66,19 +72,17 @@ def add_arg_verbosity(parser: ArgumentParser) -> ArgumentParser:
 
 
 def add_subparser_init(
-    subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
+    subparsers: _SubParsersAction,
+    formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for init command."""
     parser = subparsers.add_parser(
-        "init",
+        COMMAND_INIT,
         help="Initialize a new dataset.",
         formatter_class=formatter_class,
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-    parser = add_arg_verbosity(parser)
-    parser = add_arg_dry_run(parser)
-    parser = add_arg_help(parser)
     return parser
 
 
@@ -86,21 +90,26 @@ def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Get the global parser."""
-    parser = ArgumentParser(
-        prog="nipoppy",
+    global_parser = ArgumentParser(
+        prog=PROGRAM_NAME,
         description="Organize and process neuroimaging-clinical datasets.",
         formatter_class=formatter_class,
         add_help=False,
     )
 
-    subparsers = parser.add_subparsers(
+    # subcommand parsers
+    subparsers = global_parser.add_subparsers(
         dest="command",
         help="Choose a subcommand.",
         required=True,
     )
-
     add_subparser_init(subparsers, formatter_class=formatter_class)
 
-    parser = add_arg_help(parser)
+    # add common/global options to main and subcommand parsers
+    for parser in [global_parser] + list(subparsers.choices.values()):
+        common_arg_group = parser.add_argument_group("Global options")
+        add_arg_verbosity(common_arg_group)
+        add_arg_dry_run(common_arg_group)
+        add_arg_help(common_arg_group)
 
-    return parser
+    return global_parser

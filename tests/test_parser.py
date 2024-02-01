@@ -12,12 +12,11 @@ from nipoppy.cli.parser import (
 )
 
 
-@pytest.mark.parametrize("flag", ["--dataset_root", "--dataset-root"])
 @pytest.mark.parametrize("dataset_root", ["my_dataset", "dataset_dir"])
-def test_add_arg_dataset_root(flag: str, dataset_root: str):
+def test_add_arg_dataset_root(dataset_root: str):
     parser = ArgumentParser()
     parser = add_arg_dataset_root(parser)
-    assert parser.parse_args([flag, dataset_root])
+    assert parser.parse_args(["--dataset-root", dataset_root])
 
 
 def test_add_arg_dry_run():
