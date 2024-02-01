@@ -47,8 +47,8 @@ DATASET_ROOT = global_configs["DATASET_ROOT"]
 fmriprep_version = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
 maget_version = global_configs["PROC_PIPELINES"]["maget_brain"]["VERSION"]
 
-fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/v{fmriprep_version}/output/"
-maget_dir = f"{DATASET_ROOT}/derivatives/maget_brain/v{maget_version}/output/"
+fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/{fmriprep_version}/output/"
+maget_dir = f"{DATASET_ROOT}/derivatives/maget_brain/{maget_version}/output/"
 maget_preproc_T1w_nii_dir = f"{maget_dir}/ses-{session_id}/preproc_T1w_nii/"
 
 # Check / create maget subdirs

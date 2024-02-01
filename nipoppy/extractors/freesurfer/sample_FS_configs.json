@@ -1,0 +1,9 @@
+{
+    "version": "v6.0.1",
+    "stat_configs": {
+        "aseg": ["StructName", "Volume_mm3"],
+        "aparc": ["StructName", "ThickAvg"]
+    },
+    "run": "run-1",
+    "space": "fsaverage"
+}
