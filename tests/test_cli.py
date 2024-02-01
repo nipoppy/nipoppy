@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.cli.run import cli
-from nipoppy.dataset_init import DatasetInitWorkflow
+from nipoppy.workflows.dataset_init import DatasetInitWorkflow
 
 
 def test_cli():

@@ -21,5 +21,5 @@ def load_json(fpath: str | Path, **kwargs) -> dict:
     dict
         The JSON object.
     """
-    with Path(fpath).open() as file:
+    with open(fpath, "r") as file:
         return json.load(file, **kwargs)

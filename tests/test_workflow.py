@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.logger import get_logger
-from nipoppy.workflow import _Workflow
+from nipoppy.workflows.workflow import _Workflow
 
 
 @pytest.fixture(params=[get_logger("my_logger"), None])

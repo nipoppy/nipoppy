@@ -2,7 +2,7 @@
 from pathlib import Path
 
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
-from nipoppy.workflow import _Workflow
+from nipoppy.workflows.workflow import _Workflow
 
 
 class DatasetInitWorkflow(_Workflow):

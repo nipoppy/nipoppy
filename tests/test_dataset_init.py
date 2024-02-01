@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG
 
-from nipoppy.dataset_init import DatasetInitWorkflow
+from nipoppy.workflows.dataset_init import DatasetInitWorkflow
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])
