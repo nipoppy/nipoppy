@@ -37,6 +37,6 @@ def cli(argv: Sequence[str] = None) -> None:
 
         workflow.run()
 
-    except Exception as exception:
-        logger.error(exception)
+    except Exception:
+        logger.exception("Error when creating/running a workflow")
         sys.exit(1)
