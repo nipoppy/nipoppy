@@ -4,7 +4,6 @@ import logging
 import shlex
 import subprocess
 from abc import ABC, abstractmethod
-from functools import cached_property
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -19,9 +18,9 @@ class _Workflow(_Base, ABC):
     """Base class with logging/subprocess utilities."""
 
     path_sep = "-"
-    log_prefix_run = "[bright_magenta][RUN][/bright_magenta]"
-    log_prefix_run_stdout = "[bright_yellow][RUN STDOUT][/bright_yellow]"
-    log_prefix_run_stderr = "[bright_red][RUN STDERR][/bright_red]"
+    log_prefix_run = "[RUN]"
+    log_prefix_run_stdout = "[RUN STDOUT]"
+    log_prefix_run_stderr = "[RUN STDERR]"
 
     def __init__(
         self,
@@ -47,11 +46,6 @@ class _Workflow(_Base, ABC):
         dpath_log = self.layout.dpath_logs / self.name
         fname_log = f"{self.path_sep.join([self.name, timestamp])}{LOG_SUFFIX}"
         return dpath_log / fname_log
-
-    @cached_property
-    def fpath_log(self) -> Path:
-        """Return the path to the log file."""
-        return self.generate_fpath_log()
 
     def log_command(self, command: str):
         self.logger.info(f"{self.log_prefix_run} {command}")
@@ -131,6 +125,11 @@ class _Workflow(_Base, ABC):
     def run_setup(self, **kwargs):
         """Run the setup part of the workflow."""
         self.logger.info(f"========== BEGIN {self.name.upper()} ==========")
+        self.logger.info(self)
+        if self.dry_run:
+            self.logger.info(
+                f"Doing a dry run: {self.log_prefix_run} commands will not be executed"
+            )
 
     @abstractmethod
     def run_main(self, **kwargs):

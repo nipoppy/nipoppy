@@ -6,7 +6,7 @@ from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import COMMAND_INIT, get_global_parser
 from nipoppy.dataset_init import DatasetInitWorkflow
-from nipoppy.logger import get_logger
+from nipoppy.logger import add_logfile, get_logger
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -35,7 +35,13 @@ def cli(argv: Sequence[str] = None) -> None:
         else:
             raise ValueError(f"Unsupported command: {command}")
 
+        # cannot log to file in init since the dataset doesn't exist yet
+        if command != COMMAND_INIT:
+            add_logfile(logger, workflow.generate_fpath_log())
+
         workflow.run()
+
+        return workflow
 
     except Exception:
         logger.exception("Error when creating/running a workflow")
