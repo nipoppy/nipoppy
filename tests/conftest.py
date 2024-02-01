@@ -1,6 +1,9 @@
 """Utilities for tests."""
 from pathlib import Path
 
+FPATH_CONFIG = "proc/global_configs.json"
+DPATH_TEST_DATA = Path(__file__).parent / "data"
+
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
     "dpath_derivatives": "derivatives",
@@ -16,9 +19,7 @@ ATTR_TO_DPATH_MAP = {
 }
 
 ATTR_TO_FPATH_MAP = {
-    "fpath_config": "global_configs.json",
+    "fpath_config": FPATH_CONFIG,
     "fpath_doughnut": "scratch/raw_dicom/doughnut.csv",
     "fpath_manifest": "tabular/manifest.csv",
 }
-
-DPATH_TEST_DATA = Path(__file__).parent / "data"

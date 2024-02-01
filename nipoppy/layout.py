@@ -21,18 +21,18 @@ class DatasetLayout(_Base):
         self.dpath_derivatives = self.dpath_root / "derivatives"
         self.dpath_dicom = self.dpath_root / "dicom"
         self.dpath_downloads = self.dpath_root / "downloads"
-
         self.dpath_proc = self.dpath_root / "proc"
-        self.fpath_config = self.dpath_root / "global_configs.json"
 
         self.dpath_scratch = self.dpath_root / "scratch"
         self.dpath_raw_dicom = self.dpath_scratch / "raw_dicom"
-        self.fpath_doughnut = self.dpath_raw_dicom / "doughnut.csv"
         self.dpath_logs = self.dpath_scratch / "logs"
 
         self.dpath_tabular = self.dpath_root / "tabular"
         self.dpath_assessments = self.dpath_tabular / "assessments"
         self.dpath_demographics = self.dpath_tabular / "demographics"
+
+        self.fpath_config = self.dpath_proc / "global_configs.json"
+        self.fpath_doughnut = self.dpath_raw_dicom / "doughnut.csv"
         self.fpath_manifest = self.dpath_tabular / "manifest.csv"
 
     @property
@@ -53,3 +53,34 @@ class DatasetLayout(_Base):
             self.dpath_demographics,
         ]
         return dpaths
+
+    @property
+    def fpaths(self) -> list[Path]:
+        """Return a list of all file paths."""
+        fpaths = [
+            self.fpath_config,
+            self.fpath_doughnut,
+            self.fpath_manifest,
+        ]
+        return fpaths
+
+    def _find_missing_paths(self) -> list[Path]:
+        """Return a list of missing paths."""
+        missing = []
+        for dpath in self.dpaths:
+            if not dpath.exists():
+                missing.append(dpath)
+        for fpath in self.fpaths:
+            if not fpath.exists():
+                missing.append(fpath)
+        return missing
+
+    def validate(self) -> bool:
+        """Validate that all the expected paths exist."""
+        missing_paths = self._find_missing_paths()
+        if len(missing_paths) != 0:
+            raise FileNotFoundError(
+                f"Missing {len(missing_paths)} paths"
+                f": {[str(path) for path in missing_paths]}"
+            )
+        return True
