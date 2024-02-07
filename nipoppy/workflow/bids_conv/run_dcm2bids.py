@@ -3,7 +3,6 @@
 import argparse
 import json
 import glob
-import os
 import shutil
 import subprocess
 from joblib import Parallel, delayed
@@ -25,8 +24,6 @@ from nipoppy.workflow.utils import (
     session_id_to_bids_session,
 )
 
-#Author: nikhil153
-#Date: 07-Oct-2022
 
 def run_dcm2bids(dicom_id, global_configs, session_id, stage, overlays, logger):
     logger.info(f"\n***Processing participant: {dicom_id}***")
@@ -202,7 +199,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--global_config', type=str, help='path to global configs for a given nipoppy dataset', required=True)
     parser.add_argument('--session_id', type=str, help='session id for the participant', required=True)
-    parser.add_argument('--stage', type=int, default=2, help='dcm2bids stage (either 1 to help generate a config file or 2 if a config file is already made, default: 2)')
+    parser.add_argument('--stage', type=int, default=2, help='dcm2bids stage - either 1 to help generate a config file (a template is created at <DATASET_ROOT>/proc/dcm2bids_config.json), or 2 if a config file has already been created (at the same location), default: 2)')
     parser.add_argument('--overlay', type=str, nargs='+', help='path(s) to Squashfs overlay(s)')
     parser.add_argument('--n_jobs', type=int, default=2, help='number of parallel processes (default: 2)')
     parser.add_argument('--dicom_id', type=str, help='dicom id for a single participant to run (default: run on all participants in the doughnut file)')
