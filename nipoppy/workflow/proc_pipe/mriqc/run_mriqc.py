@@ -34,7 +34,7 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
     # if it is never provided then we should remove that argument and just always use the default
     if bids_db_dir is None:
         bids_db_dir = f"/mriqc_proc/{DEFAULT_DNAME_BIDS_DB}"
-        
+
         bids_db_dir_outside_container = f"{proc_dir}/{DEFAULT_DNAME_BIDS_DB}"
         if not Path(bids_db_dir_outside_container).exist():
             logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
@@ -66,6 +66,7 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         -B {mriqc_output_dir}:/out \
         -B {mriqc_work_dir}:/work \
         -B {TEMPLATEFLOW_DIR}:{SINGULARITY_TEMPLATEFLOW_DIR} \
+        --cleanenv \
         {SINGULARITY_CONTAINER} "
 
     # Compose mriqc command
