@@ -5,6 +5,7 @@ import nipoppy.workflow.logger as my_logger
 from pathlib import Path
 import os
 
+DEFAULT_DNAME_BIDS_DB = 'bids_db_mriqc'
 SINGULARITY_TEMPLATEFLOW_DIR = "/templateflow"
 os.environ['SINGULARITYENV_TEMPLATEFLOW_HOME'] = SINGULARITY_TEMPLATEFLOW_DIR
 
@@ -28,10 +29,18 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         log_file = f"{log_dir}/mriqc.log"
         logger = my_logger.get_logger(log_file)
 
+    # path inside the container
+    # TODO what do we do if the bids_db_dir is provided? Is it the name of the directory relative to proc?
+    # if it is never provided then we should remove that argument and just always use the default
     if bids_db_dir is None:
-        bids_db_dir = f"/mriqc_proc/bids_db_mriqc"
+        bids_db_dir = f"/mriqc_proc/{DEFAULT_DNAME_BIDS_DB}"
         
-    logger.info(f"bids_db_dir: {bids_db_dir}")
+        bids_db_dir_outside_container = f"{proc_dir}/{DEFAULT_DNAME_BIDS_DB}"
+        if not Path(bids_db_dir_outside_container).exist():
+            logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
+            Path(bids_db_dir_outside_container).mkdir(parents=True, exist_ok=True)        
+       
+    logger.info(f"bids_db_dir: {bids_db_dir_outside_container}")
 
     if output_dir is None:
         output_dir = f"{DATASET_ROOT}/derivatives"
@@ -68,7 +77,7 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         --no-sub \
         --work-dir /work \
         --bids-database-dir {bids_db_dir}"
-        # --bids-database-wipe" # wiping and regerating bids db with catalog.py
+        # --bids-database-wipe" # wiping and regenerating bids db with catalog.py
     
     CMD_ARGS = SINGULARITY_CMD + MRIQC_CMD 
     CMD = CMD_ARGS.split()

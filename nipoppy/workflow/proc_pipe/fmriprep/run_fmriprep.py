@@ -16,6 +16,7 @@ CWD = os.path.dirname(os.path.abspath(fname))
 SINGULARITY_FS_DIR = "/fsdir/"
 SINGULARITY_TEMPLATEFLOW_DIR = "/templateflow"
 SINGULARITY_FS_LICENSE = "/fsdir/license.txt"
+DNAME_BIDS_DB = 'bids_db_fmriprep'
 os.environ['SINGULARITYENV_SUBJECTS_DIR'] = SINGULARITY_FS_DIR
 os.environ['SINGULARITYENV_FS_LICENSE'] = SINGULARITY_FS_LICENSE
 os.environ['SINGULARITYENV_TEMPLATEFLOW_HOME'] = SINGULARITY_TEMPLATEFLOW_DIR
@@ -38,8 +39,12 @@ def run_fmriprep(participant_id: str,
     fmriprep_home_dir = f"{fmriprep_out_dir}/fmriprep_home_{participant_id}/"
     Path(f"{fmriprep_home_dir}").mkdir(parents=True, exist_ok=True)
 
-    # BIDS DB created for fmriprep by run_nipoppy.py
-    bids_db_dir = f"/fmripre_proc/bids_db_fmriprep"
+    bids_db_dir = f"/fmripre_proc/{DNAME_BIDS_DB}"
+
+    bids_db_dir_outside_container = f"{proc_dir}/{DNAME_BIDS_DB}"
+    if not Path(bids_db_dir_outside_container).exists():
+        logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
+        Path(bids_db_dir_outside_container).mkdir(parents=True, exist_ok=True)
 
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity run \
