@@ -7,11 +7,11 @@ import nipoppy.workflow.logger as my_logger
 from pathlib import Path
 import os
 
-DEFAULT_DNAME_BIDS_DB = 'bids_db_mriqc'
+DNAME_BIDS_DB = 'bids_db_mriqc'
 SINGULARITY_TEMPLATEFLOW_DIR = "/templateflow"
 os.environ['SINGULARITYENV_TEMPLATEFLOW_HOME'] = SINGULARITY_TEMPLATEFLOW_DIR
 
-def run(participant_id, global_configs, session_id, output_dir, modalities, bids_db_dir=None, logger=None, regenerate_bids_db=False):
+def run(participant_id, global_configs, session_id, output_dir, modalities, logger=None, regenerate_bids_db=False):
     """ Runs mriqc command
     """
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -31,16 +31,13 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, bids
         log_file = f"{log_dir}/mriqc.log"
         logger = my_logger.get_logger(log_file)
 
-    # TODO what do we do if the bids_db_dir is provided? Is it the name of the directory relative to proc?
-    # if it is never provided then we should remove that argument and just always use the default
-    if bids_db_dir is None:
-        # path inside the container
-        bids_db_dir = f"/mriqc_proc/{DEFAULT_DNAME_BIDS_DB}"
+    # path inside the container
+    bids_db_dir = f"/mriqc_proc/{DNAME_BIDS_DB}"
 
-        bids_db_dir_outside_container = f"{proc_dir}/{DEFAULT_DNAME_BIDS_DB}"
-        if not Path(bids_db_dir_outside_container).exists():
-            logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
-            Path(bids_db_dir_outside_container).mkdir(parents=True, exist_ok=True)
+    bids_db_dir_outside_container = f"{proc_dir}/{DNAME_BIDS_DB}"
+    if not Path(bids_db_dir_outside_container).exists():
+        logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
+        Path(bids_db_dir_outside_container).mkdir(parents=True, exist_ok=True)
        
     logger.info(f"bids_db_dir: {bids_db_dir_outside_container}")
 
@@ -123,7 +120,6 @@ if __name__ == '__main__':
     parser.add_argument('--session_id', type=str, required=True, help='session id for the participant')
     parser.add_argument('--output_dir', type=str, default=None, help='specify custom output dir (if None, output is saved at <DATASET_ROOT>/derivatives/mriqc)')
     parser.add_argument('--modalities', nargs="*", required=True, help='specify modalities (i.e. suffixes) to QC. Possible options: T1w, T2w, bold, dwi')
-    parser.add_argument('--bids_db_path', type=str, default=None, help='path pybids layout db')
     parser.add_argument('--regenerate_bids_db', action='store_true', help='regenerate PyBIDS database (default: use existing if available)')
 
     args = parser.parse_args()
@@ -133,7 +129,6 @@ if __name__ == '__main__':
     session_id = args.session_id
     output_dir = args.output_dir
     modalities = args.modalities
-    bids_db_path = args.bids_db_path
     regenerate_bids_db = args.regenerate_bids_db
 
     # Read global configs
@@ -144,4 +139,4 @@ if __name__ == '__main__':
     participant_id = args.participant_id
     session_id = args.session_id
 
-    run(participant_id, global_configs, session_id, output_dir, modalities, bids_db_path, regenerate_bids_db=regenerate_bids_db)
+    run(participant_id, global_configs, session_id, output_dir, modalities, regenerate_bids_db=regenerate_bids_db)
