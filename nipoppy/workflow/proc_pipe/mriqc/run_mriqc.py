@@ -38,9 +38,9 @@ def run(participant_id, global_configs, session_id, output_dir, modalities, logg
     if not Path(bids_db_dir_outside_container).exists():
         logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
         Path(bids_db_dir_outside_container).mkdir(parents=True, exist_ok=True)
+    else:
+        logger.info(f"Using existing BIDS database directory: {bids_db_dir_outside_container}")
        
-    logger.info(f"bids_db_dir: {bids_db_dir_outside_container}")
-
     if regenerate_bids_db:
         for path in Path(bids_db_dir_outside_container).glob("*"):
             if path.is_file():
