@@ -137,7 +137,7 @@ def run(participant_id: str,
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
 
     if logger is None:
-        log_file = f"{log_dir}/fmriprep1.log"
+        log_file = f"{log_dir}/fmriprep.log"
         logger = my_logger.get_logger(log_file)
 
     logger.info("-"*75)
