@@ -5,8 +5,8 @@ from typing import Sequence
 from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import COMMAND_INIT, get_global_parser
-from nipoppy.dataset_init import DatasetInitWorkflow
 from nipoppy.logger import add_logfile, get_logger
+from nipoppy.workflows.dataset_init import DatasetInitWorkflow
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -39,6 +39,7 @@ def cli(argv: Sequence[str] = None) -> None:
         if command != COMMAND_INIT:
             add_logfile(logger, workflow.generate_fpath_log())
 
+        # run the workflow
         workflow.run()
 
         return workflow
