@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
 ]
-dependencies = ["pydantic", "rich", "rich_argparse"]
+dependencies = ["pandas", "pydantic", "rich", "rich_argparse"]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
 name = "nipoppy"

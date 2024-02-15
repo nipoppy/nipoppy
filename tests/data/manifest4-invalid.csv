@@ -1,0 +1,5 @@
+participant_id,visit,session
+01,MRI1,ses-MRI1
+01,MOCA1,ses-MOCA1
+02,MRI1,ses-MRI1
+02,MOCA1,ses-MOCA1
