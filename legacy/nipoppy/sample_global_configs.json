@@ -8,7 +8,7 @@
 
     "TEMPLATEFLOW_DIR": "",
 
-    "SESSIONS": ["A","B"],
+    "SESSIONS": ["ses-A","ses-B"],
     "VISITS": ["V01","V02"],
 
     "BIDS": {
