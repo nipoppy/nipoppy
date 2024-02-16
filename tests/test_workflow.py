@@ -111,6 +111,16 @@ def test_config_not_found(workflow: _Workflow):
 def test_manifest(workflow: _Workflow):
     workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
+    config = Config(
+        DATASET_NAME="test",
+        DATASET_ROOT=workflow.dpath_root,
+        CONTAINER_STORE=workflow.dpath_root,
+        SESSIONS=["ses-BL", "ses-M12"],
+        BIDS={},
+        PROC_PIPELINES={},
+    )
+    workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
+    config.save(workflow.layout.fpath_config)
     assert isinstance(workflow.manifest, Manifest)
 
 

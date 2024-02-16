@@ -1,6 +1,7 @@
 """Dataset configuration."""
 
 from pathlib import Path
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -21,7 +22,7 @@ class Config(BaseModel):
     DATASET_ROOT: Path
     CONTAINER_STORE: Path
     SINGULARITY_PATH: str = "singularity"
-    TEMPLATEFLOW_DIR: Path = None
+    TEMPLATEFLOW_DIR: Optional[Path] = None
     SESSIONS: list[str]
     VISITS: list[str] = []
     BIDS: dict[str, WorkflowConfig]

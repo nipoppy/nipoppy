@@ -205,8 +205,14 @@ class _Workflow(_Base, ABC):
     @cached_property
     def manifest(self) -> Manifest:
         """Load the manifest."""
+        expected_sessions = self.config.SESSIONS
+        expected_visits = self.config.VISITS
         try:
-            return Manifest.load(self.layout.fpath_manifest)
+            return Manifest.load(
+                self.layout.fpath_manifest,
+                sessions=expected_sessions,
+                visits=expected_visits,
+            )
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Manifest file not found: {self.layout.fpath_manifest}"
