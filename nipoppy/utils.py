@@ -25,3 +25,23 @@ def load_json(fpath: str | Path, **kwargs) -> dict:
     """
     with open(fpath, "r") as file:
         return json.load(file, **kwargs)
+
+
+def save_json(obj: dict, fpath: str | Path, **kwargs):
+    """Save a JSON object to a file.
+
+    Parameters
+    ----------
+    obj : dict
+        The JSON object
+    fpath : str | Path
+        Path to the JSON file to write
+    indent : int, optional
+        Indentation level, by default 4
+    **kwargs :
+        Keyword arguments to pass to json.dump
+    """
+    if "indent" not in kwargs:
+        kwargs["indent"] = 4
+    with open(fpath, "w") as file:
+        json.dump(obj, file, **kwargs)
