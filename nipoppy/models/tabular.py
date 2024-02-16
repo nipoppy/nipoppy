@@ -70,19 +70,18 @@ class _Tabular(pd.DataFrame, ABC):
             )
         df = cls(pd.read_csv(fpath, dtype=str, **kwargs))
         if validate:
-            df = cls.validate(df)
+            df = df.validate()
         return df
 
-    @staticmethod
-    def validate(df: _Tabular) -> _Tabular:
+    def validate(self) -> _Tabular:
         """Validate the dataframe based on the model."""
-        records = df.to_dict(orient="records")
+        records = self.to_dict(orient="records")
         try:
-            df_validated = df.__class__(
-                [df.model(**record).model_dump() for record in records]
+            df_validated = self.__class__(
+                [self.model(**record).model_dump() for record in records]
             )
 
-            missing_cols = set(df_validated.columns) - set(df.columns)
+            missing_cols = set(df_validated.columns) - set(self.columns)
             if len(missing_cols) > 0:
                 raise ValueError(f"Missing column(s): {missing_cols})")
 
@@ -91,7 +90,7 @@ class _Tabular(pd.DataFrame, ABC):
             if isinstance(exception, ValidationError):
                 error_message += str(exception.errors())
             raise ValueError(
-                f"Error when validating the {df.__class__.__name__.lower()}"
+                f"Error when validating the {self.__class__.__name__.lower()}"
                 f": {error_message}"
             )
         return df_validated

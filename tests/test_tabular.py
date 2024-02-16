@@ -55,13 +55,13 @@ def test_load_error(dtype):
 def test_validate(data, is_valid):
     tabular = TabularWithModel(data)
     with pytest.raises(ValueError) if not is_valid else nullcontext():
-        assert isinstance(TabularWithModel.validate(tabular), TabularWithModel)
+        assert isinstance(tabular.validate(), TabularWithModel)
 
 
 def test_validate_all_fields_present():
     tabular = TabularWithModel([{"a": "A"}])
     with pytest.raises(ValueError):
-        assert isinstance(TabularWithModel.validate(tabular), TabularWithModel)
+        assert isinstance(tabular.validate(), TabularWithModel)
 
 
 def test_constructor_overrides():

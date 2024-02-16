@@ -25,6 +25,9 @@ class Manifest(_Tabular):
     session: pd.Series
     datatype: pd.Series
 
+    sessions = None
+    visits = None
+
     class ManifestModel(_TabularModel):
         """Model for the manifest."""
 
@@ -47,3 +50,30 @@ class Manifest(_Tabular):
 
     # set the model
     model = ManifestModel
+
+    @classmethod
+    def load(cls, *args, sessions=None, visits=None, **kwargs) -> Manifest:
+        """Load the manifest."""
+        manifest: Manifest = super().load(*args, **kwargs)
+        manifest.sessions = sessions
+        manifest.visits = visits
+        return manifest
+
+    def validate(self, *args, **kwargs) -> Manifest:
+        """Validate the manifest."""
+        manifest = super().validate(*args, **kwargs)
+        if self.sessions is not None:
+            self._check_values(self.col_session, self.sessions)
+        if self.visits is not None:
+            self._check_values(self.col_visit, self.visits)
+        return manifest
+
+    def _check_values(self, col, allowed_values):
+        """Check that the column values are in the allowed values."""
+        invalid_values = set(self[col]) - set(allowed_values)
+        if len(invalid_values) > 0:
+            raise ValueError(
+                f"Invalid values for column {col}: {invalid_values}. "
+                f"Expected only values from : {allowed_values}"
+            )
+        return self
