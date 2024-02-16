@@ -1,0 +1,5 @@
+participant_id ,session ,dicom_id ,bids_id ,downloaded ,organized ,converted
+            01 ,ses-BL  ,      01 ,sub-01  ,False      ,False     ,True
+            01 ,ses-M12 ,      01 ,sub-01  ,False      ,False     ,True
+            02 ,ses-BL  ,      01 ,sub-02  ,False      ,False     ,True
+            02 ,ses-M12 ,      01 ,sub-02  ,False      ,False     ,True
