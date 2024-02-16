@@ -46,15 +46,6 @@ class _TabularModel(BaseModel):
         """Validate model-specific fields. To be overridden in subclass if needed."""
         return input
 
-    @model_validator(mode="after")
-    def check_fields_all_present(self) -> _TabularModel:
-        for name in self.model_fields.keys():
-            print(name)
-            try:
-                getattr(self, name)
-            except AttributeError:
-                raise ValueError(f"Field {name} is required")
-
 
 class _Tabular(pd.DataFrame, ABC):
     """
