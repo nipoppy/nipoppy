@@ -1,8 +1,9 @@
 """Tests for the nipoppy dataset init workflow."""
+
 from pathlib import Path
 
 import pytest
-from conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG
+from conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
 
 from nipoppy.workflows.dataset_init import DatasetInitWorkflow
 
@@ -18,6 +19,7 @@ def test_init(dpath_root: Path):
     for path in ATTR_TO_DPATH_MAP.values():
         assert Path(dpath_root, path).exists()
     assert Path(dpath_root, FPATH_CONFIG).exists()
+    assert Path(dpath_root, FPATH_MANIFEST).exists()
 
 
 def test_init_error(dpath_root: Path):
