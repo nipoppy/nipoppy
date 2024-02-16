@@ -1,4 +1,5 @@
 """Command-line interface."""
+
 import sys
 from typing import Sequence
 
@@ -41,8 +42,6 @@ def cli(argv: Sequence[str] = None) -> None:
 
         # run the workflow
         workflow.run()
-
-        return workflow
 
     except Exception:
         logger.exception("Error when creating/running a workflow")

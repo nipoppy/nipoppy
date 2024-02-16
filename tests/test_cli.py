@@ -1,10 +1,10 @@
 """Tests for the CLI."""
+
 from pathlib import Path
 
 import pytest
 
 from nipoppy.cli.run import cli
-from nipoppy.workflows.dataset_init import DatasetInitWorkflow
 
 
 def test_cli():
@@ -20,5 +20,6 @@ def test_cli_invalid():
 
 
 def test_cli_init(tmp_path: Path):
-    output = cli(["nipoppy", "init", "--dataset-root", str(tmp_path / "my_dataset")])
-    assert isinstance(output, DatasetInitWorkflow)
+    assert (
+        cli(["nipoppy", "init", "--dataset-root", str(tmp_path / "my_dataset")]) is None
+    )

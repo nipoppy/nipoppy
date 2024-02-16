@@ -26,14 +26,13 @@ class DatasetInitWorkflow(_Workflow):
 
         # copy sample config file
         self.run_command(f"cp {FPATH_SAMPLE_CONFIG} {self.layout.fpath_config}")
-        self.logger.info(
-            f"Sample configuration file copied to: {self.layout.fpath_config}"
-            " (should be customized for the specific dataset)"
-        )
 
         # copy sample manifest file
         self.run_command(f"cp {FPATH_SAMPLE_MANIFEST} {self.layout.fpath_manifest}")
-        self.logger.info(
-            f"Sample manifest file copied to: {self.layout.fpath_config}"
-            " (should be customized for the specific dataset)"
+
+        # inform user to edit the sample files
+        self.logger.warning(
+            f"Sample config and manifest files copied to {self.layout.fpath_config}"
+            f" and {self.layout.fpath_manifest} respectively. They should be edited"
+            " to match your dataset"
         )
