@@ -1,4 +1,8 @@
 """Tests for the config module."""
+
+import json
+from pathlib import Path
+
 import pytest
 from conftest import DPATH_TEST_DATA
 
@@ -11,6 +15,22 @@ REQUIRED_FIELDS = [
     "CONTAINER_STORE",
     "SESSIONS",
 ]
+
+
+def test_save(tmp_path: Path):
+    fpath_out = tmp_path / "config.json"
+    config = Config(
+        DATASET_NAME="ds000001",
+        DATASET_ROOT=DPATH_TEST_DATA,
+        CONTAINER_STORE=tmp_path,
+        SESSIONS=["ses-BL", "ses-M12"],
+        BIDS={},
+        PROC_PIPELINES={},
+    )
+    config.save(fpath_out)
+    assert fpath_out.exists()
+    with fpath_out.open("r") as file:
+        assert isinstance(json.load(file), dict)
 
 
 @pytest.mark.parametrize(

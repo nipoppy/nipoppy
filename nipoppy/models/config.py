@@ -1,4 +1,5 @@
 """Dataset configuration."""
+
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -26,6 +27,19 @@ class Config(BaseModel):
     BIDS: dict[str, WorkflowConfig]
     PROC_PIPELINES: dict[str, WorkflowConfig]
     WORKFLOW: list = []
+
+    def save(self, fpath: str | Path, **kwargs):
+        """Save the config to a JSON file.
+
+        Parameters
+        ----------
+        fpath : str | Path
+            Path to the JSON file to write
+        """
+        if "indent" not in kwargs:
+            kwargs["indent"] = 4
+        with open(fpath, "w") as file:
+            file.write(self.model_dump_json(**kwargs))
 
 
 def load_config(path: str | Path) -> Config:
