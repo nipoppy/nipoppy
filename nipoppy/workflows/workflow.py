@@ -1,15 +1,19 @@
 """Workflow utilities."""
+
 import datetime
 import logging
 import shlex
 import subprocess
 from abc import ABC, abstractmethod
+from functools import cached_property
 from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import _Base
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.models.config import Config, load_config
+from nipoppy.models.manifest import Manifest
 
 LOG_SUFFIX = ".log"
 
@@ -187,3 +191,23 @@ class _Workflow(_Base, ABC):
         self.run_setup(**kwargs)
         self.run_main(**kwargs)
         self.run_cleanup(**kwargs)
+
+    @cached_property
+    def config(self) -> Config:
+        """Load the configuration."""
+        try:
+            return load_config(self.layout.fpath_config)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Config file not found: {self.layout.fpath_config}"
+            )
+
+    @cached_property
+    def manifest(self) -> Manifest:
+        """Load the manifest."""
+        try:
+            return Manifest.load(self.layout.fpath_manifest)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Manifest file not found: {self.layout.fpath_manifest}"
+            )

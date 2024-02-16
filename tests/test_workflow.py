@@ -1,11 +1,15 @@
 """Tests for the workflow module."""
 
 import logging
+import shutil
 from pathlib import Path
 
 import pytest
 
 from nipoppy.logger import get_logger
+from nipoppy.models.config import Config
+from nipoppy.models.manifest import Manifest
+from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.workflow import _Workflow
 
 
@@ -91,3 +95,25 @@ def test_run(workflow: _Workflow):
 def test_run_cleanup(workflow: _Workflow, caplog: pytest.LogCaptureFixture):
     workflow.run_cleanup()
     assert "END" in caplog.text
+
+
+def test_config(workflow: _Workflow):
+    workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(FPATH_SAMPLE_CONFIG, workflow.layout.fpath_config)
+    assert isinstance(workflow.config, Config)
+
+
+def test_config_not_found(workflow: _Workflow):
+    with pytest.raises(FileNotFoundError):
+        workflow.config
+
+
+def test_manifest(workflow: _Workflow):
+    workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
+    assert isinstance(workflow.manifest, Manifest)
+
+
+def test_manifest_not_found(workflow: _Workflow):
+    with pytest.raises(FileNotFoundError):
+        workflow.manifest
