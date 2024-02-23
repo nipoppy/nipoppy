@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import json
-import bids 
+import bids
 import json
 import warnings
 from pathlib import Path
@@ -16,7 +16,7 @@ from nipoppy.workflow.utils import (
     COL_SUBJECT_MANIFEST,
     COL_BIDS_ID_MANIFEST,
     COL_SESSION_MANIFEST,
-    COL_CONV_STATUS, 
+    COL_CONV_STATUS,
     DNAME_BACKUPS_BAGEL,
     FNAME_BAGEL,
     FNAME_DOUGHNUT,
@@ -28,13 +28,13 @@ from nipoppy.workflow.utils import (
 # Globals
 PIPELINE_STATUS_COLUMNS = "PIPELINE_STATUS_COLUMNS"
 pipeline_tracker_config_dict = {
-    "heudiconv": bids_tracker.tracker_configs, 
+    "heudiconv": bids_tracker.tracker_configs,
     "freesurfer": fs_tracker.tracker_configs,
     "fmriprep": fmriprep_tracker.tracker_configs,
     "mriqc": mriqc_tracker.tracker_configs,
     "tractoflow": tractoflow_tracker.tracker_configs,
 }
-BIDS_PIPES = ["mriqc","fmriprep", "tractoflow"]
+BIDS_PIPES = ["mriqc", "fmriprep", "tractoflow"]
 NO_TRACKER_PIPES = ["maget_brain"]
 
 def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1", acq_label=None, logger=None, log_level="INFO"):
@@ -44,11 +44,11 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
 
     # for bids tracker
     bids_dir = f"{DATASET_ROOT}/bids/"
-    
+
     # Grab BIDS participants from the doughnut
     doughnut_file = f"{DATASET_ROOT}/scratch/raw_dicom/doughnut.csv"
     doughnut_df = load_doughnut(doughnut_file)
-    
+
     # logging
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
     if logger is None:
@@ -62,19 +62,19 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
     else:
         sessions = [f"{BIDS_SESSION_PREFIX}{session_id}"]
 
-    logger.info(f"tracking session: {sessions}")    
-    logger.info(f"tracking run: {run_id} and acq_label: {acq_label}")    
+    logger.info(f"tracking session: {sessions}")
+    logger.info(f"tracking run: {run_id} and acq_label: {acq_label}")
 
     for pipeline in pipelines:
-        pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline) 
-        
+        pipe_tracker = Tracker(global_configs, dash_schema_file, pipeline)
+
         # TODO revise tracker class
         # DATASET_ROOT, session_ids, version = pipe_tracker.get_global_configs()
         if pipeline == "heudiconv":
             version = global_configs["BIDS"][pipeline]["VERSION"]
         else:
             version = global_configs["PROC_PIPELINES"][pipeline]["VERSION"]
-            
+
         schema = pipe_tracker.get_dash_schema()
 
         if pipeline in list(pipeline_tracker_config_dict.keys()):
@@ -113,21 +113,21 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
             _df[COL_SESSION_MANIFEST] = session
             _df["pipeline_name"] = pipeline
             _df["pipeline_version"] = version
-            _df["has_mri_data"] = TRUE # everyone in the doughnut file has MRI data
+            _df["has_mri_data"] = TRUE  # everyone in the doughnut file has MRI data
 
             # Set correct dtype based on dash schema to avoid panads warning
             # i.e. "FutureWarning: Setting an item of incompatible dtype"
             dash_col_dtype = "str"
             for dash_col, _ in status_check_dict.items():
                 _df[dash_col] = _df[dash_col].astype(dash_col_dtype)
-                
+
             # BIDS (i.e. heudiconv tracker is slightly different than proc_pipes)
             if pipeline == "heudiconv":
                 # Generate BIDSLayout only once per tracker run and not for each participant
                 bids_layout = bids.BIDSLayout(bids_dir, validate=False)
                 logger.debug(f"bids_dir: {bids_dir}")
                 logger.debug(f"bids_layout: {bids_layout.get_subjects()}")
-                
+
             fpath_bagel = Path(DATASET_ROOT, 'derivatives', FNAME_BAGEL)
             if fpath_bagel.exists():
                 df_bagel_old_full = load_bagel(fpath_bagel)
@@ -135,14 +135,14 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 df_bagel_old_session = df_bagel_old_full.loc[df_bagel_old_full[COL_SESSION_MANIFEST] == session]
                 old_participants_session = set(df_bagel_old_session[COL_BIDS_ID_MANIFEST])
                 old_pipelines_session = set(df_bagel_old_session['pipeline_name'])
-                
+
                 # make sure the number of participants is consistent across pipelines
                 if set(participants_session) != old_participants_session and not old_pipelines_session.issubset(set(pipelines)):
                     warnings.warn(
                         f'The existing bagel file might be obsolete (participant list does not match the doughnut file for session {session})'
                         f'. Rerun the tracker script with --pipelines {" ".join(old_pipelines_session.union(pipelines))}'
                     )
-                
+
                 df_bagel_old = df_bagel_old_full.loc[
                     ~(
                         (df_bagel_old_full["pipeline_name"] == pipeline) &
@@ -150,10 +150,10 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                         (df_bagel_old_full[COL_SESSION_MANIFEST] == session)
                     )
                 ]
-                
+
             else:
                 df_bagel_old = None
-            
+
             for bids_id in participants_session:
                 participant_id = doughnut_df[doughnut_df[COL_BIDS_ID_MANIFEST]==bids_id][COL_SUBJECT_MANIFEST].values[0]
                 _df.loc[bids_id, COL_SUBJECT_MANIFEST] = participant_id
@@ -162,25 +162,25 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                 if pipeline == "heudiconv":
                     subject_dir = f"{DATASET_ROOT}/bids/{bids_id}"
                 elif pipeline == "freesurfer":
-                    subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{session}/{bids_id}" 
+                    subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{session}/{bids_id}"
                 elif pipeline in BIDS_PIPES:
-                    subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{bids_id}" 
+                    subject_dir = f"{DATASET_ROOT}/derivatives/{pipeline}/v{version}/output/{bids_id}"
                 elif pipeline in NO_TRACKER_PIPES:
                     logger.warning(f"pipeline: {pipeline} does not have a tracker yet...")
                 else:
                     logger.error(f"unknown pipeline: {pipeline}")
-                    
+
                 dir_status = Path(subject_dir).is_dir()
                 logger.debug(f"subject_dir:{subject_dir}, dir_status: {dir_status}")
-                
-                if dir_status:                                 
+
+                if dir_status:
                     for name, func in status_check_dict.items():
                         if pipeline == "heudiconv":
                             status = func(bids_layout, participant_id, session_id, run_id, acq_label)
                         else:
                             status = func(subject_dir, session_id, run_id, acq_label)
 
-                        logger.debug(f"task_name: {name}, status: {status}")                        
+                        logger.debug(f"task_name: {name}, status: {status}")
 
                         _df.loc[bids_id,name] = status
                         _df.loc[bids_id,"pipeline_starttime"] = get_start_time(subject_dir)
@@ -188,7 +188,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE # get_end_time(subject_dir)
                 else:
                     logger.debug(f"Output for pipeline: {pipeline} not found for bids_id: {bids_id}, session: {session}")
-                    for name in status_check_dict.keys():                    
+                    for name in status_check_dict.keys():
                         _df.loc[bids_id,name] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_starttime"] = UNAVAILABLE
                         _df.loc[bids_id,"pipeline_endtime"] = UNAVAILABLE
@@ -206,7 +206,7 @@ def run(global_configs, dash_schema_file, pipelines, session_id="ALL", run_id="1
                     continue
             except Exception:
                 pass
-            
+
             # save bagel
             save_backup(df_bagel, fpath_bagel, DNAME_BACKUPS_BAGEL)
 
@@ -216,9 +216,9 @@ def load_bagel(fpath_bagel):
         if str(value) != UNAVAILABLE:
             return pd.to_datetime(value)
         return value
-    
+
     df_bagel = pd.read_csv(
-        fpath_bagel, 
+        fpath_bagel,
         dtype={
             'has_mri_data': bool,
             'participant_id': str,
@@ -229,7 +229,7 @@ def load_bagel(fpath_bagel):
             'pipeline_endtime': time_converter,
         }
     )
-   
+
     return df_bagel
 
 if __name__ == '__main__':
@@ -253,7 +253,7 @@ if __name__ == '__main__':
     # Read global configs
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
-    
+
     # Driver code
     dash_schema_file = args.dash_schema
     pipelines = args.pipelines
