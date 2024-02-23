@@ -30,9 +30,9 @@ def test_load(fpath, validate):
     ],
 )
 def test_validate(fpath, is_valid):
-    df_manifest = Manifest.load(fpath, validate=False)
+    manifest = Manifest.load(fpath, validate=False)
     with pytest.raises(ValueError) if not is_valid else nullcontext():
-        assert isinstance(Manifest.validate(df_manifest), Manifest)
+        assert isinstance(Manifest.validate(manifest), Manifest)
 
 
 @pytest.mark.parametrize(
@@ -45,11 +45,30 @@ def test_validate(fpath, is_valid):
     ],
 )
 def test_validate_sessions_visits(sessions, visits, is_valid):
-    df_manifest = Manifest.load(
+    manifest = Manifest.load(
         DPATH_TEST_DATA / "manifest1.csv",
         sessions=sessions,
         visits=visits,
         validate=False,
     )
     with pytest.raises(ValueError) if not is_valid else nullcontext():
-        assert isinstance(Manifest.validate(df_manifest), Manifest)
+        assert isinstance(Manifest.validate(manifest), Manifest)
+
+
+@pytest.mark.parametrize(
+    "participant_id,session,visit,datatype",
+    [
+        ("01", "BL", "ses-BL", ["anat"]),
+        ("01", "M12", "ses-M12", ["anat"]),
+        ("02", "M12", "ses-M12", ["anat", "dwi"]),
+    ],
+)
+def test_add_record(participant_id, visit, session, datatype):
+    manifest = Manifest().add_record(
+        participant_id=participant_id,
+        visit=visit,
+        session=session,
+        datatype=datatype,
+    )
+    assert isinstance(manifest, Manifest)
+    assert len(manifest) == 1

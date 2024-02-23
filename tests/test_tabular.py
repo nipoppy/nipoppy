@@ -64,6 +64,19 @@ def test_validate_all_fields_present():
         assert isinstance(tabular.validate(), TabularWithModel)
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"a": "A", "b": "1"},
+        {"a": "A", "b": 1},
+    ],
+)
+def test_add_record(data: dict):
+    tabular = TabularWithModel().add_record(**data)
+    assert len(tabular) == 1
+    assert isinstance(tabular, TabularWithModel)
+
+
 def test_constructor_overrides():
     colnames = ["a", "b"]
     data = {colname: [colname] + [pd.NA] for colname in colnames}

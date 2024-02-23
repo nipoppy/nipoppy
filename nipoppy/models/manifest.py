@@ -18,13 +18,6 @@ class Manifest(_Tabular):
     col_session = "session"
     col_datatype = "datatype"
 
-    # for code autocompletion
-    # should match above column names
-    participant_id: pd.Series
-    visit: pd.Series
-    session: pd.Series
-    datatype: pd.Series
-
     sessions = None
     visits = None
 
@@ -59,9 +52,17 @@ class Manifest(_Tabular):
         manifest.visits = visits
         return manifest
 
-    def validate(self, *args, **kwargs) -> Manifest:
+    def add_record(self, **kwargs) -> Manifest:
+        """
+        Add a record to the manifest.
+
+        Note that this creates a new Manifest object. The existing one is not modified.
+        """
+        return super().add_record(**kwargs)
+
+    def validate(self) -> Manifest:
         """Validate the manifest."""
-        manifest = super().validate(*args, **kwargs)
+        manifest = super().validate()
         if self.sessions is not None:
             self._check_values(self.col_session, self.sessions)
         if self.visits is not None:

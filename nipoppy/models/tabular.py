@@ -95,6 +95,21 @@ class _Tabular(pd.DataFrame, ABC):
             )
         return df_validated
 
+    def add_record(self, **kwargs) -> _Tabular:
+        """Add a record.
+
+        Note that this creates a new object. The existing one is not modified.
+        """
+        for key, value in kwargs.items():
+            if (
+                isinstance(value, Sequence) or not isinstance(value, str)
+            ) or not pd.isna(value):
+                kwargs[key] = str(value)
+        new_record = self.model(**kwargs).model_dump()
+        records = self.to_dict(orient="records")
+        records.append(new_record)
+        return self.__class__(records)
+
     @property
     def _constructor(self):
         """Override pd.DataFrame._constructor to return the subclass."""
