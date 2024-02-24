@@ -95,20 +95,28 @@ class _Tabular(pd.DataFrame, ABC):
             )
         return df_validated
 
+    def add_records(self, records: Sequence[dict]) -> _Tabular:
+        """Add multiple records.
+
+        Note that this creates a new object. The existing one is not modified.
+        """
+        for record in records:
+            for key, value in record.items():
+                if (
+                    isinstance(value, Sequence) or not isinstance(value, str)
+                ) or not pd.isna(value):
+                    record[key] = str(value)
+        new_records = [self.model(**record).model_dump() for record in records]
+        records = self.to_dict(orient="records")
+        records.extend(new_records)
+        return self.__class__(records)
+
     def add_record(self, **kwargs) -> _Tabular:
         """Add a record.
 
         Note that this creates a new object. The existing one is not modified.
         """
-        for key, value in kwargs.items():
-            if (
-                isinstance(value, Sequence) or not isinstance(value, str)
-            ) or not pd.isna(value):
-                kwargs[key] = str(value)
-        new_record = self.model(**kwargs).model_dump()
-        records = self.to_dict(orient="records")
-        records.append(new_record)
-        return self.__class__(records)
+        return self.add_records([kwargs])
 
     @property
     def _constructor(self):

@@ -77,6 +77,19 @@ def test_add_record(data: dict):
     assert isinstance(tabular, TabularWithModel)
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        [{"a": "A", "b": "1"}],
+        [{"a": "A", "b": "1"}, {"a": "A", "b": 1}],
+    ],
+)
+def test_add_records(data: list[dict]):
+    tabular = TabularWithModel().add_records(data)
+    assert len(tabular) == len(data)
+    assert isinstance(tabular, TabularWithModel)
+
+
 def test_constructor_overrides():
     colnames = ["a", "b"]
     data = {colname: [colname] + [pd.NA] for colname in colnames}
