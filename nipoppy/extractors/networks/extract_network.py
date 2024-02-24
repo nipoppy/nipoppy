@@ -41,7 +41,6 @@ def create_dkt_atlas(inp_parc, out_parc):
     print('------------------------')
 
     # load the mgz
-    # dkt = nib.load('aparc.DKTatlas+aseg.mgz')
     dkt = nib.load(inp_parc)
 
     # print the file type labels are loaded from
@@ -104,7 +103,7 @@ def create_dkt_atlas(inp_parc, out_parc):
 
     # write the .nii.gz of the data to disk
     nib.save(nii, out_parc)
-
+    
     print(f'Created output file: {out_parc}')
 
 
@@ -164,15 +163,13 @@ def create_structural(inp_labels, inp_tracks, inp_output):
         np.savetxt(outf, M, delimiter='\t')
 
 
-def run(participant_id, global_configs, output_dir,
-        tractoflow_dir, fmriprep_dir, freesurfer_dir):
+def run(participant_id, global_configs, session_id, output_dir,
+        tractoflow_dir, fmriprep_dir, freesurfer_dir, logger=None):
     """
     Parse the inputs to create the DKT and Schaefer networks for the requested participant
     """
 
-    #
-    # copy fmriprep config parsing
-    #
+    # copy fmriprep config parsing - minor extensions for tractoflow needed
 
     # extract paths
     DATASET_ROOT = global_configs["DATASET_ROOT"]
@@ -190,46 +187,49 @@ def run(participant_id, global_configs, output_dir,
     # set up logs
     log_dir = f"{DATASET_ROOT}/scratch/logs/"
 
-    if logger is None:
-        log_file = f"{log_dir}/fmriprep.log"
-        logger = my_logger.get_logger(log_file)
+    #if logger is None:
+        #log_file = f"{log_dir}/network_extractor.log"
+        #logger = my_logger.get_logger(log_file)
 
-    logger.info("-"*75)
-    logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
-    logger.info(f"Using participant_id: {participant_id}, session_id:{session_id}")
+    #logger.info("-"*75)
+    #logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
+    #logger.info(f"Using participant_id: {participant_id}, session_id:{session_id}")
     # logger.info(f"Optional args: --anat_only={anat_only}, --use_bids_filter={use_bids_filter}")
-
+    print(f"Using DATASET_ROOT: {DATASET_ROOT}")
+    print(f"Using PARTICIPANT_ID: {participant_id}, SESSION_ID: {session_id}")
+    
     if output_dir is None:
         output_dir = f"{DATASET_ROOT}/derivatives/networks/v0.9.0"
 
     if tractoflow_dir is None:
-        tractoflow_dir = f"{DATASET_ROOT}/derivatives/tractoflow/{TRACTOFLOW_VERSION}/results"
+        tractoflow_dir = f"{DATASET_ROOT}/derivatives/tractoflow/{TRACTOFLOW_VERSION}/output/ses-{session_id}"
 
     if fmriprep_dir is None:
-        fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/{FMRIPREP_VERSION}"
+        fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/{FMRIPREP_VERSION}/output"
 
     if freesurfer_dir is None:
-        freesurfer_dir = f"{DATASET_ROOT}/derivatives/freesurfer/{FS_VERSION}/{session_id}"
+        freesurfer_dir = f"{DATASET_ROOT}/derivatives/freesurfer/{FS_VERSION}/output/ses-{session_id}"
 
-    #
-    # I use these paths to build everything
-    #
+    # these paths build all the input / output files
 
     # define paths to outputs
     LABPATH = Path(output_dir)
-    SEGPATH = Path(output_dir, participant_id, session_id, 'anat')
-    NETPATH = Path(output_dir, participant_id, session_id, 'dwi')
-    # FUNPATH = Path(output_dir, participant_id, session_id, 'func')
+    SEGPATH = Path(output_dir, f"sub-{participant_id}", f"ses-{session_id}", 'anat')
+    NETPATH = Path(output_dir, f"sub{participant_id}", f"ses-{session_id}", 'dwi')
+    # FUNPATH = Path(output_dir, f"sub-{participant_id}", f"ses-{session_id}", 'func')
     # add functional as part of this? easy to load...
 
     # make output paths if they don't exist
     if ~os.path.exists(LABPATH):
+        # print("Make labels directory")
         os.makedirs(LABPATH)
 
     if ~os.path.exists(SEGPATH):
+        # print("Make segmentation directory")
         os.makedirs(SEGPATH)
 
     if ~os.path.exists(NETPATH):
+        # print("Make network directory")
         os.makedirs(NETPATH)
 
     # the input results directories, passed inputs
@@ -239,26 +239,26 @@ def run(participant_id, global_configs, output_dir,
 
     # create full path file names for inputs / ouptuts
 
-    # path to dwi space T2 image
-    ANAT_DWI = Path(TF_PATH, participant_id, session_id, 'anat', f"{participant_id}_{session_id}_space-dwi_T1w.nii.gz")
-
     # space to freesurfer .mgz DKT labels
-    DKT_MGZ = Path(FS_PATH, 'output', session_id, participant_id, 'mri', 'aparc.DKTatlas+aseg.mgz')
+    DKT_MGZ = Path(FS_PATH, f"ses-{session_id}", f"sub-{participant_id}", 'mri', 'aparc.DKTatlas+aseg.mgz')
 
     # output paths for converted DKT labels
-    DKT_NII = Path(SEGPATH, f"{participant_id}_{session_id}_space-fsnative_atlas-DKTatlas+aseg_dseg.nii.gz")
-    DKT_MNI = Path(SEGPATH, f"{participant_id}_{session_id}_space-MNI152NLin2009cAsym_atlas-DKTatlas+aseg_dseg.nii.gz")
-    DKT_DWI = Path(SEGPATH, f"{participant_id}_{session_id}_space-dwi_atlas-DKTatlas+aseg_dseg.nii.gz")
+    DKT_NII = Path(SEGPATH, f"sub-{participant_id}_ses-{session_id}_space-fsnative_atlas-DKTatlas+aseg_dseg.nii.gz")
+    DKT_MNI = Path(SEGPATH, f"sub-{participant_id}_ses-{session_id}_space-MNI152NLin2009cAsym_atlas-DKTatlas+aseg_dseg.nii.gz")
+    DKT_DWI = Path(SEGPATH, f"sub-{participant_id}_ses-{session_id}_space-dwi_atlas-DKTatlas+aseg_dseg.nii.gz")
 
     # paths to ANTs xfom files
-    ANAT2MNI_ALL = Path(FP_PATH, 'output', participant_id, session_id, 'anat', f"{participant_id}_{session_id}_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5")
-    MNI2ANAT_ALL = Path(FP_PATH, 'output', participant_id, session_id, 'anat', f"{participant_id}_{session_id}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5")
-    FS2ANAT_AFF = Path(FP_PATH, 'output', participant_id, session_id, 'anat', f"{participant_id}_{session_id}_from-fsnative_to-T1w_mode-image_xfm.txt")
+    ANAT2MNI_ALL = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5")
+    MNI2ANAT_ALL = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5")
+    FS2ANAT_AFF = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_from-fsnative_to-T1w_mode-image_xfm.txt")
 
-    # these are the bids-ified paths, not the tractoflow ones - fix these to actual tractoflow paths
-    ANAT2DWI_AFF = Path(TF_PATH, participant_id, session_id, 'xfm', f"{participant_id}_{session_id}_desc-tractoflow_from-T1w_to-dwi_0GenericAffine.mat")
-    ANAT2DWI_SYN = Path(TF_PATH, participant_id, session_id, 'xfm', f"{participant_id}_{session_id}_desc-tractoflow_from-T1w_to-dwi_1Warp.nii.gz")
-    TRACTOGRAPHY = Path(TF_PATH, participant_id, session_id, 'dwi', f"{participant_id}_{session_id}_model-tracking_desc-wholebrain.trk")
+    # path to space-dwi T1 image
+    ANAT_DWI = Path(TF_PATH, f"sub-{participant_id}", 'Register_T1', f"sub-{participant_id}__t1w_warped.nii.gz")
+
+    # paths to tractoflow native alignment files
+    ANAT2DWI_AFF = Path(TF_PATH, f"sub-{participant_id}", 'Register_T1', f"sub-{participant_id}__output0GenericAffine.mat")
+    ANAT2DWI_SYN = Path(TF_PATH, f"sub-{participant_id}", 'Register_T1', f"sub-{participant_id}__output1Warp.nii.gz")
+    TRACTOGRAPHY = Path(TF_PATH, f"sub-{participant_id}", 'PFT_Tracking', f"sub-{participant_id}__pft_tracking_prob_wm_seed_0.trk")
 
     # path to templateflow space / labels / reference volume
     MNIPATH = Path(TEMPLATEFLOW_DIR, 'tpl-MNI152NLin2009cAsym')
@@ -266,6 +266,12 @@ def run(participant_id, global_configs, output_dir,
 
     # convert the DKT cortical parcellation from .mgz to .nii.gz
     create_dkt_atlas(DKT_MGZ, DKT_NII)
+
+    # copy the full set of labels - Ideally prune down to just the cortical...
+    if ~os.path.exists(Path(LABPATH, f"atlas-DKT_dseg.tsv")):
+        print("Copy DKT labels file to output")
+        shutil.copyfile(Path(TEMPLATEFLOW_DIR, 'tpl-fsaverage', "tpl-fsaverage.tsv"),
+                        Path(LABPATH, f"atlas-DKT_dseg.tsv"))
 
     # convert DKT cortical labels to MNI space
     print(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {MNITEMP} -o {DKT_MNI} -n GenericLabel -v 1 -t {ANAT2MNI_ALL} {FS2ANAT_AFF}')
@@ -285,11 +291,12 @@ def run(participant_id, global_configs, output_dir,
 
         # copy the labels to the output if they don't already exist there
         if ~os.path.exists(Path(LABPATH, f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv")):
+            print("Copy labels file to output")
             shutil.copyfile(Path(TEMPLATEFLOW_DIR, 'tpl-MNI152NLin2009cAsym', f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv"),
                             Path(LABPATH, f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv"))
 
         # warp the corresponding resolution / label file to the DWI space
-        print(f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/{participant_id}_{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}')
+        print(f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/sub-{participant_id}_ses-{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}')
 
     # for all of the converted labels, create an adjacency network in a .tsv
     create_structural(SEGPATH, TRACTOGRAPHY, NETPATH)
@@ -301,9 +308,7 @@ if __name__ == '__main__':
     Extract count networks from TractoFlow and fMRIPrep derivatives.
     """
 
-    #
     # parse arguments
-    #
 
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
@@ -328,13 +333,11 @@ if __name__ == '__main__':
     fmriprep_dir = args.fmriprep
     freesurfer_dir = args.freesurfer
 
-    #
     # load inputs
-    #
 
     # load global config
     with open(global_config_files, 'r') as f:
         global_configs = json.load(f)
 
     # invoke run command
-    run(participant_id, global_configs, session_id, output_dir)
+    run(participant_id, global_configs, session_id, output_dir, tractoflow_dir, fmriprep_dir, freesurfer_dir)
