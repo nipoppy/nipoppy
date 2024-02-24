@@ -3,7 +3,7 @@ import json
 import subprocess
 import os
 from pathlib import Path
-import nipoppy.workflow.logger as my_logger
+#import nipoppy.workflow.logger as my_logger
 import shutil
 import logging
 
@@ -176,20 +176,23 @@ def run(participant_id, global_configs, session_id, output_dir,
     TEMPLATEFLOW_DIR = global_configs["TEMPLATEFLOW_DIR"]
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     FMRIPREP_CONTAINER = global_configs["PROC_PIPELINES"]["fmriprep"]["CONTAINER"]
+    TRACTOFLOW_CONTAINER = global_configs["PROC_PIPELINES"]["tractoflow"]["CONTAINER"]
     FMRIPREP_VERSION = global_configs["PROC_PIPELINES"]["fmriprep"]["VERSION"]
     TRACTOFLOW_VERSION = global_configs["PROC_PIPELINES"]["tractoflow"]["VERSION"]
     FS_VERSION = global_configs["PROC_PIPELINES"]["freesurfer"]["VERSION"]
     FMRIPREP_CONTAINER = FMRIPREP_CONTAINER.format(FMRIPREP_VERSION)
+    TRACTOFLOW_CONTAINER = TRACTOFLOW_CONTAINER.format(TRACTOFLOW_VERSION)
 
-    # pick the container
+    # pick the container - I'm not sure fMRIPrep has Dipy - TractoFlow container definitely has ANTs / Dipy
     SINGULARITY_FMRIPREP = f"{CONTAINER_STORE}{FMRIPREP_CONTAINER}"
+    SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}{TRACTOFLOW_CONTAINER}"
 
     # set up logs
-    log_dir = f"{DATASET_ROOT}/scratch/logs/"
+    #log_dir = f"{DATASET_ROOT}/scratch/logs"
 
     #if logger is None:
-        #log_file = f"{log_dir}/network_extractor.log"
-        #logger = my_logger.get_logger(log_file)
+    #    log_file = f"{log_dir}/network_extractor.log"
+    #    logger = my_logger.get_logger(log_file)
 
     #logger.info("-"*75)
     #logger.info(f"Using DATASET_ROOT: {DATASET_ROOT}")
@@ -221,17 +224,17 @@ def run(participant_id, global_configs, session_id, output_dir,
 
     # make output paths if they don't exist
     if ~os.path.exists(LABPATH):
-        # print("Make labels directory")
         os.makedirs(LABPATH)
 
     if ~os.path.exists(SEGPATH):
-        # print("Make segmentation directory")
         os.makedirs(SEGPATH)
 
     if ~os.path.exists(NETPATH):
-        # print("Make network directory")
         os.makedirs(NETPATH)
 
+    # SPLIT HERE TO MAKE run_extractor() FOR EASIER INVOCATION
+    # ... IT DOES NOT MAKE IT EASIER...
+        
     # the input results directories, passed inputs
     TF_PATH = tractoflow_dir
     FP_PATH = fmriprep_dir
@@ -270,14 +273,14 @@ def run(participant_id, global_configs, session_id, output_dir,
     # copy the full set of labels - Ideally prune down to just the cortical...
     if ~os.path.exists(Path(LABPATH, f"atlas-DKT_dseg.tsv")):
         print("Copy DKT labels file to output")
-        shutil.copyfile(Path(TEMPLATEFLOW_DIR, 'tpl-fsaverage', "tpl-fsaverage.tsv"),
+        shutil.copyfile(Path(TEMPLATEFLOW_DIR, 'tpl-fsaverage', "tpl-fsaverage_dseg.tsv"),
                         Path(LABPATH, f"atlas-DKT_dseg.tsv"))
 
     # convert DKT cortical labels to MNI space
-    print(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {MNITEMP} -o {DKT_MNI} -n GenericLabel -v 1 -t {ANAT2MNI_ALL} {FS2ANAT_AFF}')
+    subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {MNITEMP} -o {DKT_MNI} -n GenericLabel -v 1 -t {ANAT2MNI_ALL} {FS2ANAT_AFF}')
 
     # convert DKT cortical labels into participant DWI space
-    print(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {ANAT_DWI} -o {DKT_DWI} -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {FS2ANAT_AFF}')
+    subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {ANAT_DWI} -o {DKT_DWI} -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {FS2ANAT_AFF}')
 
     # define Schaefer 2018 resolutions
     schaeferRes = [100, 200, 300, 400, 500, 600, 800, 1000]
@@ -296,7 +299,7 @@ def run(participant_id, global_configs, session_id, output_dir,
                             Path(LABPATH, f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv"))
 
         # warp the corresponding resolution / label file to the DWI space
-        print(f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/sub-{participant_id}_ses-{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}')
+        subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/sub-{participant_id}_ses-{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}')
 
     # for all of the converted labels, create an adjacency network in a .tsv
     create_structural(SEGPATH, TRACTOGRAPHY, NETPATH)
