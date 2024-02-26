@@ -1,7 +1,5 @@
 """Class for the doughnut file."""
 
-import pandas as pd
-
 from nipoppy.models.tabular import _Tabular, _TabularModel
 
 
@@ -18,16 +16,7 @@ class Doughnut(_Tabular):
     col_organized = "organized"
     col_converted = "converted"
 
-    # for code autocompletion
-    # should match above column names
-    participant_id: pd.Series
-    session: pd.Series
-    participant_dicom_dir: pd.Series
-    dicom_id: pd.Series
-    bids_id: pd.Series
-    downloaded: pd.Series
-    organized: pd.Series
-    converted: pd.Series
+    sort_cols = [col_participant_id, col_session]
 
     class DoughnutModel(_TabularModel):
         """Model for the doughnut file."""

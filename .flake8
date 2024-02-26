@@ -5,10 +5,9 @@ exclude =
 docstring-convention = numpy
 max_complexity = 12
 max_function_length = 150
-ignore = D105
 per-file-ignores =
     tests/*: D101, D103
 # for compatibility with black
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 max-line-length = 88
-extend-ignore = E203, E704
+extend-ignore = D105, E203, E704

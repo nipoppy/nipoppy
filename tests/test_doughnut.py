@@ -30,6 +30,6 @@ def test_load(fpath, validate):
     ],
 )
 def test_validate(fpath, is_valid):
-    df_manifest = Doughnut.load(fpath, validate=False)
+    df_doughnut = Doughnut.load(fpath, validate=False)
     with pytest.raises(ValueError) if not is_valid else nullcontext():
-        assert isinstance(Doughnut.validate(df_manifest), Doughnut)
+        assert isinstance(Doughnut.validate(df_doughnut), Doughnut)

@@ -1,14 +1,13 @@
 """Generic class for tabular data."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
-from functools import cached_property
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Optional, Self, Sequence
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
+
+from nipoppy.utils import save_df_with_backup
 
 
 class _TabularModel(BaseModel):
@@ -54,6 +53,9 @@ class _Tabular(pd.DataFrame, ABC):
     See https://pandas.pydata.org/docs/development/extending.html.
     """
 
+    _series_classes = {}
+    sort_cols = None
+
     @property
     @abstractmethod
     def model(self) -> type[_TabularModel]:
@@ -61,7 +63,7 @@ class _Tabular(pd.DataFrame, ABC):
         raise NotImplementedError("model must be assigned in subclass")
 
     @classmethod
-    def load(cls, fpath: str | Path, validate=True, **kwargs) -> _Tabular:
+    def load(cls, fpath: str | Path, validate=True, **kwargs) -> Self:
         """Load (and optionally validate) a tabular data file."""
         if "dtype" in kwargs:
             raise ValueError(
@@ -73,7 +75,7 @@ class _Tabular(pd.DataFrame, ABC):
             df = df.validate()
         return df
 
-    def validate(self) -> _Tabular:
+    def validate(self) -> Self:
         """Validate the dataframe based on the model."""
         records = self.to_dict(orient="records")
         try:
@@ -95,7 +97,7 @@ class _Tabular(pd.DataFrame, ABC):
             )
         return df_validated
 
-    def add_records(self, records: Sequence[dict]) -> _Tabular:
+    def add_records(self, records: Sequence[dict]) -> Self:
         """Add multiple records.
 
         Note that this creates a new object. The existing one is not modified.
@@ -111,34 +113,80 @@ class _Tabular(pd.DataFrame, ABC):
         records.extend(new_records)
         return self.__class__(records)
 
-    def add_record(self, **kwargs) -> _Tabular:
+    def add_record(self, **kwargs) -> Self:
         """Add a record.
 
         Note that this creates a new object. The existing one is not modified.
         """
         return self.add_records([kwargs])
 
+    def save_with_backup(
+        self,
+        fpath_symlink: str | Path,
+        dname_backups: Optional[str] = None,
+        use_relative_path=True,
+        sort=True,
+    ) -> Path | None:
+        """Save the dataframe to a file with a backup."""
+        if sort:
+            tabular_new = self.sort_values()
+        else:
+            tabular_new = self
+        if fpath_symlink.exists():
+            tabular_old = self.load(fpath_symlink)
+            if sort:
+                tabular_old = tabular_old.sort_values()
+            if tabular_new.equals(tabular_old):
+                return None
+        return save_df_with_backup(
+            tabular_new,
+            fpath_symlink,
+            dname_backups,
+            use_relative_path,
+        )
+
+    def equals(self, other: object) -> Self:
+        try:
+            pd.testing.assert_frame_equal(
+                self,
+                other,
+                check_like=True,
+                obj=str(self.__class__.__name__),
+            )
+            return True
+        except AssertionError:
+            return False
+
+    def sort_values(self, **kwargs):
+        """Sort the dataframe, by default on specific columns and ignoring the index."""
+        sort_kwargs = {"by": self.sort_cols, "ignore_index": True}
+        sort_kwargs.update(kwargs)
+        return super().sort_values(**sort_kwargs)
+
+    def get_series_class(self) -> type[pd.Series]:
+        """Get the series class associated with a dataframe."""
+        tabular_class_id = id(self.__class__)
+        if tabular_class_id not in self._series_classes:
+
+            class _Series(pd.Series):
+                @property
+                def _constructor(_self):
+                    return _Series
+
+                @property
+                def _constructor_expanddim(_self):
+                    return self.__class__
+
+            self._series_classes[tabular_class_id] = _Series
+
+        return self._series_classes[tabular_class_id]
+
     @property
-    def _constructor(self):
+    def _constructor(self) -> type[pd.DataFrame]:
         """Override pd.DataFrame._constructor to return the subclass."""
         return self.__class__
 
     @property
-    def _constructor_sliced(self):
+    def _constructor_sliced(self) -> type[pd.Series]:
         """Override pd.DataFrame._constructor_sliced to return the series subclass."""
-        return self.series_class
-
-    @cached_property
-    def series_class(self) -> type[pd.Series]:
-        """Generator for the series subclass."""
-
-        class _Series(pd.Series):
-            @property
-            def _constructor(_self):
-                return _Series
-
-            @property
-            def _constructor_expanddim(_self):
-                return self.__class__
-
-        return _Series
+        return self.get_series_class()

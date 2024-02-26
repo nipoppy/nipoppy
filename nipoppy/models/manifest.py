@@ -1,8 +1,6 @@
 """Class for the dataset manifest."""
 
-from __future__ import annotations
-
-from typing import Optional
+from typing import Optional, Self
 
 import pandas as pd
 
@@ -20,6 +18,8 @@ class Manifest(_Tabular):
 
     sessions = None
     visits = None
+
+    sort_cols = [col_participant_id, col_visit, col_session]
 
     class ManifestModel(_TabularModel):
         """Model for the manifest."""
@@ -45,22 +45,14 @@ class Manifest(_Tabular):
     model = ManifestModel
 
     @classmethod
-    def load(cls, *args, sessions=None, visits=None, **kwargs) -> Manifest:
+    def load(cls, *args, sessions=None, visits=None, **kwargs) -> Self:
         """Load the manifest."""
-        manifest: Manifest = super().load(*args, **kwargs)
+        manifest = super().load(*args, **kwargs)
         manifest.sessions = sessions
         manifest.visits = visits
         return manifest
 
-    def add_record(self, **kwargs) -> Manifest:
-        """
-        Add a record to the manifest.
-
-        Note that this creates a new Manifest object. The existing one is not modified.
-        """
-        return super().add_record(**kwargs)
-
-    def validate(self) -> Manifest:
+    def validate(self) -> Self:
         """Validate the manifest."""
         manifest = super().validate()
         if self.sessions is not None:
@@ -69,7 +61,7 @@ class Manifest(_Tabular):
             self._check_values(self.col_visit, self.visits)
         return manifest
 
-    def _check_values(self, col, allowed_values):
+    def _check_values(self, col, allowed_values) -> Self:
         """Check that the column values are in the allowed values."""
         invalid_values = set(self[col]) - set(allowed_values)
         if len(invalid_values) > 0:
