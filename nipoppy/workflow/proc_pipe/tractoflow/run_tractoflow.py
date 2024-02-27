@@ -420,13 +420,13 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     """
 
     ## extract the config options
-    DATASET_ROOT = global_configs["DATASET_ROOT"]
+    DATASET_ROOT = Path(global_configs["DATASET_ROOT"]).resolve()
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     TRACTOFLOW_CONTAINER = global_configs["PROC_PIPELINES"]["tractoflow"]["CONTAINER"]
     TRACTOFLOW_VERSION = global_configs["PROC_PIPELINES"]["tractoflow"]["VERSION"]
     TRACTOFLOW_CONTAINER = TRACTOFLOW_CONTAINER.format(TRACTOFLOW_VERSION)
     SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}/{TRACTOFLOW_CONTAINER}"
-    LOGDIR = f"{DATASET_ROOT}/scratch/logs"
+    LOGDIR = Path(f"{DATASET_ROOT}/scratch/logs").resolve()
     SINGULARITY_COMMAND = global_configs["SINGULARITY_PATH"]
     
     ## initialize the logger
@@ -441,10 +441,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## define default output_dir if it's not overwrote
     if output_dir is None:
-        output_dir = f"{DATASET_ROOT}/derivatives"
+        output_dir = Path(f"{DATASET_ROOT}/derivatives").resolve()
 
     ## build paths to files
-    bids_dir = f"{DATASET_ROOT}/bids"
+    bids_dir = Path(f"{DATASET_ROOT}/bids").resolve()
     tractoflow_dir = f"{output_dir}/tractoflow/{TRACTOFLOW_VERSION}"
 
     ## Copy bids_filter.json 
@@ -657,7 +657,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     logger.info(f"Running TractoFlow for participant: {participant_id}")
 
     ## singularity 
-    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {DATASET_ROOT} {SINGULARITY_TRACTOFLOW}"
+    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {LOGDIR} -B {output_dir} {SINGULARITY_TRACTOFLOW}"
 
     CMD=SINGULARITY_CMD + " " + CMD_ARGS
     logger.info("+"*75)
