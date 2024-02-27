@@ -46,6 +46,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     ## should this be made / updated as part of BIDS-ification of dicoms?
 
     ## load the bids filter if it's called
+    bidf = {}  ## make it empty by default
     if use_bids_filter:
 
         bidf_path = Path(f"{DATASET_ROOT}", 'proc', 'bids_filter_tractoflow.json') ## is this where it will always be?
@@ -62,7 +63,6 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     
         else:
             logger.info(' -- Expected bids_filter.json is not found.')
-            bidf = {} ## make it empty
             
     else:
         logger.info(' -- Not using a bids_filter.json')
