@@ -12,6 +12,7 @@ import nibabel as nib
 from bids import BIDSLayout, BIDSLayoutIndexer
 
 import nipoppy.workflow.logger as my_logger
+from nipoppy.workflow.utils import participant_id_to_bids_id
 
 #Author: bcmcpher
 #Date: 15-Jun-2023
@@ -706,6 +707,9 @@ if __name__ == '__main__':
     ## Read global config
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
+
+    # add sub- prefix to participant_id if needed
+    participant_id = participant_id_to_bids_id(participant_id, double_prefix=False)
 
     ## make valid tractoflow call based on inputs    
     run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells, fodf_shells, sh_order)

@@ -49,9 +49,13 @@ def participant_id_to_dicom_id(participant_id):
 def dicom_id_to_bids_id(dicom_id):
     return f'{BIDS_SUBJECT_PREFIX}{dicom_id}'
 
-def participant_id_to_bids_id(participant_id, custom_map=None):
+def participant_id_to_bids_id(participant_id, custom_map=None, double_prefix=True):
     if custom_map == None:
-        bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+        participant_id = str(participant_id)
+        if participant_id.startswith(BIDS_SUBJECT_PREFIX) and not double_prefix:
+            bids_id = participant_id
+        else:
+            bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
     else:
         _df = pd.read_csv(custom_map)
         bids_id = _df.loc[(_df["participant_id"]==participant_id)]["bids_id"].values[0]
