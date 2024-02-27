@@ -329,7 +329,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
 
             raise ValueError(f'The phase encodings are on different axes: {dmrifs1pe}, {dmrifs2pe}\nCannot determine what to do.')
             
-    else:
+    elif sum(cbv == 1) == 1:
         
         logger.info("Continue checks assuming 1 directed file...")
 
@@ -385,6 +385,8 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
             
             logger.info("No valid RPE file is found in candidate files")
             rpe_out = None
+    else:
+        raise ValueError('No valid dMRI files found.')
             
     logger.info("= "*25)
     
