@@ -29,14 +29,17 @@ version = "0.2.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
 dev = ["nipoppy[test]", "pre-commit"]
-test = ["pytest"]
-tests = ["nipoppy[test]"]             # alias in case of typo
+test = ["pytest", "fids@git+https://github.com/neurodatascience/FIDS.git"]
+tests = ["nipoppy[test]"]                                                  # alias in case of typo
 
 [project.scripts]
 nipoppy = "nipoppy.cli.run:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.codespell]
 skip = '.git,.github,pyproject.toml'

@@ -7,7 +7,55 @@ import pandas as pd
 import pytest
 from conftest import DPATH_TEST_DATA
 
-from nipoppy.utils import load_json, save_df_with_backup, save_json
+from nipoppy.utils import (
+    check_session,
+    dicom_id_to_bids_id,
+    load_json,
+    participant_id_to_bids_id,
+    participant_id_to_dicom_id,
+    save_df_with_backup,
+    save_json,
+    strip_session,
+)
+
+
+@pytest.mark.parametrize(
+    "participant_id,expected",
+    [("123", "123"), ("P_123", "P123"), ("sub!@#-", "sub")],
+)
+def test_participant_id_to_dicom_id(participant_id, expected):
+    assert participant_id_to_dicom_id(participant_id) == expected
+
+
+@pytest.mark.parametrize(
+    "dicom_id,expected",
+    [("123", "sub-123"), ("P123", "sub-P123"), ("sub", "sub-sub")],
+)
+def test_dicom_id_to_bids_id(dicom_id, expected):
+    assert dicom_id_to_bids_id(dicom_id) == expected
+
+
+@pytest.mark.parametrize(
+    "participant_id,expected",
+    [("123", "sub-123"), ("P_123", "sub-P123"), ("sub!@#-", "sub-sub")],
+)
+def test_participant_id_to_bids_id(participant_id, expected):
+    assert participant_id_to_bids_id(participant_id) == expected
+
+
+@pytest.mark.parametrize(
+    "session,expected",
+    [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12")],
+)
+def test_check_session(session, expected):
+    assert check_session(session) == expected
+
+
+@pytest.mark.parametrize(
+    "session,expected", [("ses-BL", "BL"), ("BL", "BL"), ("ses-01", "01")]
+)
+def test_strip_session(session, expected):
+    assert strip_session(session) == expected
 
 
 def test_load_json():

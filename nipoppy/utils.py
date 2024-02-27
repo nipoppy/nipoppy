@@ -8,9 +8,55 @@ from typing import Optional
 
 import pandas as pd
 
+# BIDS
+BIDS_SUBJECT_PREFIX = "sub-"
+BIDS_SESSION_PREFIX = "ses-"
+
+# paths
 FPATH_DATA = Path(__file__).parent / "data"
 FPATH_SAMPLE_CONFIG = FPATH_DATA / "sample_global_configs.json"
 FPATH_SAMPLE_MANIFEST = FPATH_DATA / "sample_manifest.csv"
+
+
+def participant_id_to_dicom_id(participant_id: str):
+    """Convert a participant ID to a BIDS-compatible DICOM ID."""
+    # keep only alphanumeric characters
+    participant_id = str(participant_id)
+    dicom_id = "".join(filter(str.isalnum, participant_id))
+    return dicom_id
+
+
+def dicom_id_to_bids_id(dicom_id: str):
+    """Add the BIDS prefix to a DICOM ID."""
+    return f"{BIDS_SUBJECT_PREFIX}{dicom_id}"
+
+
+def participant_id_to_bids_id(participant_id: str):
+    """Convert a participant ID to a BIDS-compatible participant ID."""
+    bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+    # TODO allow custom_map (?)
+    # if custom_map == None:
+    #     bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+    # else:
+    #     _df = pd.read_csv(custom_map)
+    #     bids_id =_df.loc[(_df["participant_id"]==participant_id)]["bids_id"].values[0]
+    return bids_id
+
+
+def check_session(session: str):
+    """Check/process a session string."""
+    # add BIDS prefix if it doesn't already exist
+    session = str(session)
+    if session.startswith(BIDS_SESSION_PREFIX):
+        return session
+    else:
+        return f"{BIDS_SESSION_PREFIX}{session}"
+
+
+def strip_session(session: str):
+    """Strip the BIDS prefix from a session string."""
+    session = str(session)
+    return session.removeprefix(BIDS_SESSION_PREFIX)
 
 
 def load_json(fpath: str | Path, **kwargs) -> dict:
@@ -48,6 +94,8 @@ def save_json(obj: dict, fpath: str | Path, **kwargs):
     """
     if "indent" not in kwargs:
         kwargs["indent"] = 4
+    fpath = Path(fpath)
+    fpath.parent.mkdir(parents=True, exist_ok=True)
     with open(fpath, "w") as file:
         json.dump(obj, file, **kwargs)
 

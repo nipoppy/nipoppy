@@ -72,3 +72,55 @@ def test_add_record(participant_id, visit, session, datatype):
     )
     assert isinstance(manifest, Manifest)
     assert len(manifest) == 1
+
+
+@pytest.mark.parametrize(
+    "data,session,expected_count",
+    [
+        (
+            {
+                "participant_id": ["01"],
+                "visit": ["BL"],
+                "session": [None],
+                "datatype": [[]],
+            },
+            "ses-BL",
+            0,
+        ),
+        (
+            {
+                "participant_id": ["01"],
+                "visit": ["BL"],
+                "session": ["ses-BL"],
+                "datatype": [["anat"]],
+            },
+            "ses-BL",
+            1,
+        ),
+        (
+            {
+                "participant_id": ["01", "02"],
+                "visit": ["BL", "M12"],
+                "session": ["ses-BL", "ses-M12"],
+                "datatype": [["anat"], ["anat", "dwi"]],
+            },
+            "ses-BL",
+            1,
+        ),
+        (
+            {
+                "participant_id": ["01", "02"],
+                "visit": ["BL", "M12"],
+                "session": ["ses-BL", "ses-M12"],
+                "datatype": [["anat"], ["anat", "dwi"]],
+            },
+            None,
+            2,
+        ),
+    ],
+)
+def test_imaging_only(data, session, expected_count):
+    manifest = Manifest(data)
+    manifest_with_imaging_only = manifest.get_imaging_only(session=session)
+    assert isinstance(manifest_with_imaging_only, Manifest)
+    assert len(manifest_with_imaging_only) == expected_count

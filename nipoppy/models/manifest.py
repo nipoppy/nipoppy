@@ -70,3 +70,10 @@ class Manifest(_Tabular):
                 f"Expected only values from : {allowed_values}"
             )
         return self
+
+    def get_imaging_only(self, session: Optional[str] = None):
+        """Get records with imaging data."""
+        manifest = self[self[self.col_session].notna()]
+        if session is not None:
+            return manifest[manifest[self.col_session] == session]
+        return manifest
