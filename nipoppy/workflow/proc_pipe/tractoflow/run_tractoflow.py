@@ -405,7 +405,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     ## set the phase encoding direction
     if ('i' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
         phase = 'x'
-    if ('j' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
+    elif ('j' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
         phase = 'y'
     else:
         logger.info('An unlikely phase encoding has been selected.')
