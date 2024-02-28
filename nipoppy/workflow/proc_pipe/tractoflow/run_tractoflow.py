@@ -12,6 +12,7 @@ import nibabel as nib
 from bids import BIDSLayout, BIDSLayoutIndexer
 
 import nipoppy.workflow.logger as my_logger
+from nipoppy.workflow.utils import participant_id_to_bids_id
 
 #Author: bcmcpher
 #Date: 15-Jun-2023
@@ -46,6 +47,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     ## should this be made / updated as part of BIDS-ification of dicoms?
 
     ## load the bids filter if it's called
+    bidf = {}  ## make it empty by default
     if use_bids_filter:
 
         bidf_path = Path(f"{DATASET_ROOT}", 'proc', 'bids_filter_tractoflow.json') ## is this where it will always be?
@@ -62,7 +64,6 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     
         else:
             logger.info(' -- Expected bids_filter.json is not found.')
-            bidf = {} ## make it empty
             
     else:
         logger.info(' -- Not using a bids_filter.json')
@@ -329,7 +330,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
 
             raise ValueError(f'The phase encodings are on different axes: {dmrifs1pe}, {dmrifs2pe}\nCannot determine what to do.')
             
-    else:
+    elif sum(cbv == 1) == 1:
         
         logger.info("Continue checks assuming 1 directed file...")
 
@@ -385,6 +386,8 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
             
             logger.info("No valid RPE file is found in candidate files")
             rpe_out = None
+    else:
+        raise ValueError('No valid dMRI files found.')
             
     logger.info("= "*25)
     
@@ -403,7 +406,7 @@ def parse_data(global_configs, bids_dir, participant_id, session_id, use_bids_fi
     ## set the phase encoding direction
     if ('i' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
         phase = 'x'
-    if ('j' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
+    elif ('j' in dmri_files[didx].get_metadata()['PhaseEncodingDirection']):
         phase = 'y'
     else:
         logger.info('An unlikely phase encoding has been selected.')
@@ -420,13 +423,13 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     """
 
     ## extract the config options
-    DATASET_ROOT = global_configs["DATASET_ROOT"]
+    DATASET_ROOT = Path(global_configs["DATASET_ROOT"]).resolve()
     CONTAINER_STORE = global_configs["CONTAINER_STORE"]
     TRACTOFLOW_CONTAINER = global_configs["PROC_PIPELINES"]["tractoflow"]["CONTAINER"]
     TRACTOFLOW_VERSION = global_configs["PROC_PIPELINES"]["tractoflow"]["VERSION"]
     TRACTOFLOW_CONTAINER = TRACTOFLOW_CONTAINER.format(TRACTOFLOW_VERSION)
     SINGULARITY_TRACTOFLOW = f"{CONTAINER_STORE}/{TRACTOFLOW_CONTAINER}"
-    LOGDIR = f"{DATASET_ROOT}/scratch/logs"
+    LOGDIR = Path(f"{DATASET_ROOT}/scratch/logs").resolve()
     SINGULARITY_COMMAND = global_configs["SINGULARITY_PATH"]
     
     ## initialize the logger
@@ -441,10 +444,10 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## define default output_dir if it's not overwrote
     if output_dir is None:
-        output_dir = f"{DATASET_ROOT}/derivatives"
+        output_dir = Path(f"{DATASET_ROOT}/derivatives").resolve()
 
     ## build paths to files
-    bids_dir = f"{DATASET_ROOT}/bids"
+    bids_dir = Path(f"{DATASET_ROOT}/bids").resolve()
     tractoflow_dir = f"{output_dir}/tractoflow/{TRACTOFLOW_VERSION}"
 
     ## Copy bids_filter.json 
@@ -657,7 +660,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     logger.info(f"Running TractoFlow for participant: {participant_id}")
 
     ## singularity 
-    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {DATASET_ROOT} {SINGULARITY_TRACTOFLOW}"
+    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {LOGDIR} -B {output_dir} {SINGULARITY_TRACTOFLOW}"
 
     CMD=SINGULARITY_CMD + " " + CMD_ARGS
     logger.info("+"*75)
@@ -704,6 +707,9 @@ if __name__ == '__main__':
     ## Read global config
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
+
+    # add sub- prefix to participant_id if needed
+    participant_id = participant_id_to_bids_id(participant_id, double_prefix=False)
 
     ## make valid tractoflow call based on inputs    
     run(participant_id, global_configs, session_id, output_dir, use_bids_filter, dti_shells, fodf_shells, sh_order)
