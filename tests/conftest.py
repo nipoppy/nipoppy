@@ -30,15 +30,12 @@ ATTR_TO_FPATH_MAP = {
 }
 
 
-def _fake_dataset_helper(
-    dpath_root: str | Path,
+def _process_participants_sessions(
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str] | dict[str, list[str]]] = None,
 ):
-    """Process arguments for creating a fake dataset."""
-    dpath_root = Path(dpath_root)
-    dpath_root.mkdir(parents=True, exist_ok=True)
+    """Process participant/session arguments."""
     if participants_and_sessions is None:
         if participants is None:
             participants = ["01", "02"]
@@ -47,12 +44,11 @@ def _fake_dataset_helper(
         participants_and_sessions = {
             participant: sessions for participant in participants
         }
-    return dpath_root, participants_and_sessions
+    return participants_and_sessions
 
 
-def _fake_dicom_dataset(
-    dpath_root: str | Path,
-    dpath_dicom_rel: str | Path,
+def _fake_dicoms(
+    dpath: str | Path,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str]] = None,
@@ -66,8 +62,8 @@ def _fake_dicom_dataset(
     rng_seed: int = 3791,
 ):
     """Generate a fake dataset with raw DICOM files."""
-    dpath_root, participants_and_sessions = _fake_dataset_helper(
-        dpath_root, participants_and_sessions, participants, sessions
+    participants_and_sessions = _process_participants_sessions(
+        participants_and_sessions, participants, sessions
     )
 
     if n_images < 1:
@@ -76,22 +72,22 @@ def _fake_dicom_dataset(
         raise ValueError("min_n_files_per_image must be at least 1")
     if max_n_files_per_image < min_n_files_per_image:
         raise ValueError("max_n_files_per_image must be at least min_n_files_per_image")
-    if min_n_subdir_levels < 1:
-        raise ValueError("min_n_subdir_levels must be at least 1")
+    if min_n_subdir_levels < 0:
+        raise ValueError("min_n_subdir_levels must be at least 0")
     if max_n_subdir_levels < min_n_subdir_levels:
         raise ValueError("max_n_subdir_levels must be at least min_n_subdir_levels")
 
     rng = np.random.default_rng(rng_seed)
 
-    dpath_raw_dicom = dpath_root / dpath_dicom_rel
-    dpath_raw_dicom.mkdir(parents=True, exist_ok=True)
+    dpath = Path(dpath)
+    dpath.mkdir(parents=True, exist_ok=True)
 
     for participant, participant_sessions in participants_and_sessions.items():
         for session in participant_sessions:
             if participant_first:
-                dpath_dicom_parent = dpath_raw_dicom / participant / session
+                dpath_dicom_parent = dpath / participant / session
             else:
-                dpath_dicom_parent = dpath_raw_dicom / session / participant
+                dpath_dicom_parent = dpath / session / participant
 
             for i_image in range(n_images):
                 n_subdir_levels = rng.integers(
@@ -116,7 +112,7 @@ def _fake_dicom_dataset(
 
 
 def fake_dicoms_downloaded(
-    dpath_root: str | Path,
+    dpath: str | Path,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str]] = None,
@@ -129,9 +125,8 @@ def fake_dicoms_downloaded(
     max_dname_dicom: int = 1000000,
     rng_seed: int = 3791,
 ):
-    _fake_dicom_dataset(
-        dpath_root=dpath_root,
-        dpath_dicom_rel=ATTR_TO_DPATH_MAP["dpath_raw_dicom"],
+    _fake_dicoms(
+        dpath=dpath,
         participants_and_sessions=participants_and_sessions,
         participants=participants,
         sessions=sessions,
@@ -147,7 +142,7 @@ def fake_dicoms_downloaded(
 
 
 def fake_dicoms_organized(
-    dpath_root: str | Path,
+    dpath: str | Path,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str]] = None,
@@ -158,17 +153,16 @@ def fake_dicoms_organized(
     max_dname_dicom: int = 1000000,
     rng_seed: int = 3791,
 ):
-    _fake_dicom_dataset(
-        dpath_root=dpath_root,
-        dpath_dicom_rel=ATTR_TO_DPATH_MAP["dpath_dicom"],
+    _fake_dicoms(
+        dpath=dpath,
         participants_and_sessions=participants_and_sessions,
         participants=participants,
         sessions=sessions,
         n_images=n_images,
         min_n_files_per_image=min_n_files_per_image,
         max_n_files_per_image=max_n_files_per_image,
-        min_n_subdir_levels=1,
-        max_n_subdir_levels=1,
+        min_n_subdir_levels=0,
+        max_n_subdir_levels=0,
         participant_first=participant_first,
         max_dname_dicom=max_dname_dicom,
         rng_seed=rng_seed,

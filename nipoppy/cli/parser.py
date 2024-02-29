@@ -1,10 +1,12 @@
 """Parsers for the CLI."""
+
 import logging
 from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
+COMMAND_DOUGHNUT = "doughnut"
 
 DEFAULT_VERBOSITY = "3"  # debug
 VERBOSITY_TO_LOG_LEVEL_MAP = {
@@ -86,6 +88,37 @@ def add_subparser_init(
     return parser
 
 
+def add_subparser_doughnut(
+    subparsers: _SubParsersAction,
+    formatter_class: type[HelpFormatter] = HelpFormatter,
+) -> ArgumentParser:
+    """Add subparser for doughnut command."""
+    parser = subparsers.add_parser(
+        COMMAND_DOUGHNUT,
+        help="Create/update a dataset's doughnut file.",
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser.add_argument(
+        "--empty",
+        action="store_true",
+        help=(
+            "Set all statuses to False in newly added records"
+            " (regardless of what is on disk)."
+        ),
+    )
+    parser.add_argument(
+        "--regenerate",
+        action="store_true",
+        help=(
+            "Regenerate the doughnut file even if it already exists"
+            " (default: only append rows for new records)"
+        ),
+    )
+    return parser
+
+
 def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
@@ -104,6 +137,7 @@ def get_global_parser(
         required=True,
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
+    add_subparser_doughnut(subparsers, formatter_class=formatter_class)
 
     # add common/global options to main and subcommand parsers
     for parser in [global_parser] + list(subparsers.choices.values()):

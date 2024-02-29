@@ -1,4 +1,5 @@
 """Tests for the parsers."""
+
 from argparse import ArgumentParser
 
 import pytest
@@ -7,6 +8,7 @@ from nipoppy.cli.parser import (
     add_arg_dataset_root,
     add_arg_dry_run,
     add_arg_verbosity,
+    add_subparser_doughnut,
     add_subparser_init,
     get_global_parser,
 )
@@ -51,9 +53,26 @@ def test_add_subparser_init():
 @pytest.mark.parametrize(
     "args",
     [
+        ["--dataset-root", "my_dataset"],
+        ["--dataset-root", "my_dataset", "--empty"],
+        ["--dataset-root", "my_dataset", "--regenerate"],
+        ["--dataset-root", "my_dataset", "--empty", "--regenerate"],
+    ],
+)
+def test_add_subparser_doughnut(args):
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_doughnut(subparsers)
+    assert parser.parse_args(["doughnut"] + args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
         ["-h"],
         ["init", "-h"],
         ["init", "--dataset-root", "my_dataset"],
+        ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
     ],
 )
 def test_global_parser(args: list[str]):

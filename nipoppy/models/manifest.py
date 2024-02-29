@@ -16,30 +16,30 @@ class Manifest(_Tabular):
     col_session = "session"
     col_datatype = "datatype"
 
-    sessions = None
-    visits = None
-
-    sort_cols = [col_participant_id, col_visit, col_session]
+    index_cols = [col_participant_id, col_visit]
 
     class ManifestModel(_TabularModel):
         """Model for the manifest."""
 
         participant_id: str
         visit: str
-        session: Optional[str] = None
-        datatype: list[str] = []
+        session: Optional[str]
+        datatype: Optional[list[str]]
 
         @classmethod
-        def _validate_fields(cls, input: dict):
-            if Manifest.col_datatype in input:
+        def validate_fields(cls, data: dict):
+            """Validate manifest-specific fields."""
+            datatype = data.get(Manifest.col_datatype)
+            if datatype is not None and not isinstance(datatype, list):
                 try:
-                    input[Manifest.col_datatype] = pd.eval(input[Manifest.col_datatype])
+                    data[Manifest.col_datatype] = pd.eval(datatype)
                 except Exception:
                     raise ValueError(
-                        f"Invalid datatype: {input[Manifest.col_datatype]}"
-                        ". Must be a list or left empty"
+                        f"Invalid datatype: {datatype} ({type(datatype)}))"
+                        ". Must be a list, a string representation of a list"
+                        ", or left empty"
                     )
-            return input
+            return data
 
     # set the model
     model = ManifestModel
@@ -52,9 +52,14 @@ class Manifest(_Tabular):
         manifest.visits = visits
         return manifest
 
-    def validate(self) -> Self:
+    def __init__(self, *args, sessions=None, visits=None, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.sessions = sessions
+        self.visits = visits
+
+    def validate(self, *args, **kwargs) -> Self:
         """Validate the manifest."""
-        manifest = super().validate()
+        manifest = super().validate(*args, **kwargs)
         if self.sessions is not None:
             self._check_values(self.col_session, self.sessions)
         if self.visits is not None:

@@ -1,14 +1,12 @@
 """Class for the doughnut file."""
 
-from nipoppy.models.tabular import _Tabular, _TabularModel
+from nipoppy.models.manifest import Manifest
 
 
-class Doughnut(_Tabular):
+class Doughnut(Manifest):
     """A dataset's doughnut, for tracking DICOM-to-BIDS conversion status."""
 
     # column names
-    col_participant_id = "participant_id"
-    col_session = "session"
     col_participant_dicom_dir = "participant_dicom_dir"
     col_dicom_id = "dicom_id"
     col_bids_id = "bids_id"
@@ -16,13 +14,9 @@ class Doughnut(_Tabular):
     col_organized = "organized"
     col_converted = "converted"
 
-    sort_cols = [col_participant_id, col_session]
-
-    class DoughnutModel(_TabularModel):
+    class DoughnutModel(Manifest.ManifestModel):
         """Model for the doughnut file."""
 
-        participant_id: str
-        session: str
         participant_dicom_dir: str
         dicom_id: str
         bids_id: str
@@ -32,3 +26,5 @@ class Doughnut(_Tabular):
 
     # set the model
     model = DoughnutModel
+
+    index_cols = [Manifest.col_participant_id, Manifest.col_session]

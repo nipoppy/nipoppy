@@ -5,9 +5,10 @@ from typing import Sequence
 
 from rich_argparse import RichHelpFormatter
 
-from nipoppy.cli.parser import COMMAND_INIT, get_global_parser
+from nipoppy.cli.parser import COMMAND_DOUGHNUT, COMMAND_INIT, get_global_parser
 from nipoppy.logger import add_logfile, get_logger
 from nipoppy.workflows.dataset_init import DatasetInitWorkflow
+from nipoppy.workflows.update_doughnut import DoughnutWorkflow
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -19,7 +20,7 @@ def cli(argv: Sequence[str] = None) -> None:
 
     # common arguments
     command = args.command
-    logger = get_logger(level=args.verbosity)
+    logger = get_logger(name=command, level=args.verbosity)
     dry_run = args.dry_run
 
     # to pass to all workflows
@@ -31,6 +32,13 @@ def cli(argv: Sequence[str] = None) -> None:
         if command == COMMAND_INIT:
             workflow = DatasetInitWorkflow(
                 dpath_root=dpath_root,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_DOUGHNUT:
+            workflow = DoughnutWorkflow(
+                dpath_root=dpath_root,
+                empty=args.empty,
+                regenerate=args.regenerate,
                 **workflow_kwargs,
             )
         else:

@@ -1,4 +1,4 @@
-"""Tests for the nipoppy dataset init workflow."""
+"""Tests for the dataset init workflow."""
 
 from pathlib import Path
 

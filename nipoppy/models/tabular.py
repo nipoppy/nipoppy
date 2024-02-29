@@ -20,30 +20,42 @@ class _TabularModel(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _validate_input(cls, input: Any):
+    def validate_input(cls, data: Any):
         """Validate the raw input."""
-        if isinstance(input, dict):
+        if isinstance(data, dict):
             # generic validation
-            # remove empty fields so that the default is set correctly
+            optional_fields = {
+                field
+                for field, info in cls.model_fields.items()
+                if not info.is_required()
+            }
             keys_to_remove = []
-            for key, value in input.items():
+            for key, value in data.items():
                 if (
                     isinstance(value, str) or not isinstance(value, Sequence)
                 ) and pd.isna(value):
-                    keys_to_remove.append(key)
+                    # remove optional fields with missing values
+                    # so that the default is set correctly
+                    if key in optional_fields:
+                        keys_to_remove.append(key)
+
+                    # otherwise use None for missing values
+                    else:
+                        data[key] = None
+
             for key in keys_to_remove:
-                input.pop(key)
+                data.pop(key)
 
             # model-specific validation
             # to be overridden in subclass if needed
-            input = cls._validate_fields(input)
+            data = cls.validate_fields(data)
 
-        return input
+        return data
 
     @classmethod
-    def _validate_fields(cls, input: dict):
+    def validate_fields(cls, data: dict):
         """Validate model-specific fields. To be overridden in subclass if needed."""
-        return input
+        return data
 
 
 class _Tabular(pd.DataFrame, ABC):
@@ -54,7 +66,7 @@ class _Tabular(pd.DataFrame, ABC):
     """
 
     _series_classes = {}
-    sort_cols = None
+    index_cols = None
 
     @property
     @abstractmethod
@@ -68,24 +80,29 @@ class _Tabular(pd.DataFrame, ABC):
         if "dtype" in kwargs:
             raise ValueError(
                 "This function does not accept 'dtype' as a keyword argument"
-                ". Everything is read as a string and validated later."
+                ". Everything is read as a string and (optionally) validated later."
             )
         df = cls(pd.read_csv(fpath, dtype=str, **kwargs))
         if validate:
             df = df.validate()
         return df
 
+    def __init__(self, *args, **kwargs) -> None:
+        """Instantiate a tabular data object."""
+        super().__init__(*args, **kwargs)
+
+        # set column names if the dataframe is empty
+        if self.empty:
+            for col in self.model.model_fields.keys():
+                self[col] = None
+
     def validate(self) -> Self:
         """Validate the dataframe based on the model."""
         records = self.to_dict(orient="records")
         try:
             df_validated = self.__class__(
-                [self.model(**record).model_dump() for record in records]
+                [self.model(**record).model_dump() for record in records],
             )
-
-            missing_cols = set(df_validated.columns) - set(self.columns)
-            if len(missing_cols) > 0:
-                raise ValueError(f"Missing column(s): {missing_cols})")
 
         except Exception as exception:
             error_message = str(exception)
@@ -95,13 +112,25 @@ class _Tabular(pd.DataFrame, ABC):
                 f"Error when validating the {self.__class__.__name__.lower()}"
                 f": {error_message}"
             )
+
+        if self.index_cols is not None:
+            duplicated = df_validated.duplicated(subset=self.index_cols)
+            if duplicated.any():
+                raise ValueError(
+                    f"Duplicate records found in {self.__class__.__name__.lower()}"
+                    f". Columns {self.index_cols} must uniquely identify a record"
+                    f". Got duplicates:\n{df_validated.loc[duplicated]}"
+                )
+
         return df_validated
 
-    def add_records(self, records: Sequence[dict]) -> Self:
+    def add_records(self, records: Sequence[dict] | dict, validate=True) -> Self:
         """Add multiple records.
 
         Note that this creates a new object. The existing one is not modified.
         """
+        if isinstance(records, dict):
+            records = [records]
         for record in records:
             for key, value in record.items():
                 if (
@@ -111,14 +140,42 @@ class _Tabular(pd.DataFrame, ABC):
         new_records = [self.model(**record).model_dump() for record in records]
         records = self.to_dict(orient="records")
         records.extend(new_records)
-        return self.__class__(records)
 
-    def add_record(self, **kwargs) -> Self:
-        """Add a record.
+        new_df = self.__class__(records)
+        if validate:
+            new_df = new_df.validate()
 
-        Note that this creates a new object. The existing one is not modified.
+        return new_df
+
+    def get_diff(self, other: Self, cols=None) -> Self:
+        """Get the difference between two dataframes.
+
+        Returns a slice of self. If cols is None, the index_cols of the first
+        object is used.
         """
-        return self.add_records([kwargs])
+        if cols is None:
+            cols = self.index_cols
+
+        for df in [self, other]:
+            col_diff = set(cols) - set(df.columns)
+            if len(col_diff) > 0:
+                raise ValueError(
+                    f"The columns {cols} are not present in the dataframe:\n{df}"
+                )
+
+        index_self = pd.Index(zip(*[self.loc[:, col] for col in cols]))
+        index_other = pd.Index(zip(*[other.loc[:, col] for col in cols]))
+
+        diff = self.loc[~index_self.isin(index_other)]
+
+        return diff
+
+    def concatenate(self, other: Self, validate=True) -> Self:
+        """Concatenate two dataframes."""
+        concatenated: Self = pd.concat([self, other], ignore_index=True)
+        if validate:
+            concatenated = concatenated.validate()
+        return concatenated
 
     def save_with_backup(
         self,
@@ -133,11 +190,14 @@ class _Tabular(pd.DataFrame, ABC):
         else:
             tabular_new = self
         if fpath_symlink.exists():
-            tabular_old = self.load(fpath_symlink)
-            if sort:
-                tabular_old = tabular_old.sort_values()
-            if tabular_new.equals(tabular_old):
-                return None
+            try:
+                tabular_old = self.load(fpath_symlink)
+                if sort:
+                    tabular_old = tabular_old.sort_values()
+                if tabular_new.equals(tabular_old):
+                    return None
+            except Exception:
+                pass
         return save_df_with_backup(
             tabular_new,
             fpath_symlink,
@@ -159,7 +219,7 @@ class _Tabular(pd.DataFrame, ABC):
 
     def sort_values(self, **kwargs):
         """Sort the dataframe, by default on specific columns and ignoring the index."""
-        sort_kwargs = {"by": self.sort_cols, "ignore_index": True}
+        sort_kwargs = {"by": self.index_cols, "ignore_index": True}
         sort_kwargs.update(kwargs)
         return super().sort_values(**sort_kwargs)
 
