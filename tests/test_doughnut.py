@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import pytest
 from conftest import DPATH_TEST_DATA
 
-from nipoppy.models.doughnut import Doughnut
+from nipoppy.tabular.doughnut import Doughnut
 
 
 @pytest.mark.parametrize(

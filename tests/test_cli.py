@@ -30,7 +30,7 @@ def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
         cli(["nipoppy", "doughnut", "--dataset-root", str(dpath_root)])
-    except Exception:
+    except BaseException:
         pass
 
     # check that a logfile was created

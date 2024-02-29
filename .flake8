@@ -7,6 +7,7 @@ max_complexity = 12
 max_function_length = 150
 per-file-ignores =
     tests/*: D101, D103
+    __init__.py:F401
 # for compatibility with black
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 max-line-length = 88

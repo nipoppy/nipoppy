@@ -12,7 +12,7 @@
         }
     },
     "PROC_PIPELINES": {
-        "<BIDS_TOOL_NAME>": {
+        "<PROC_TOOL_NAME>": {
             "VERSION": "<HEUDICONV_VERSION>",
             "CONTAINER": "<CONTAINER_NAME>"
         }

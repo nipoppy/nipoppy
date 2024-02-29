@@ -4,7 +4,7 @@ from typing import Optional, Self
 
 import pandas as pd
 
-from nipoppy.models.tabular import _Tabular, _TabularModel
+from nipoppy.tabular.tabular import _Tabular, _TabularModel
 
 
 class Manifest(_Tabular):

@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import _Base
+from nipoppy.config import Config, load_config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
-from nipoppy.models.config import Config, load_config
-from nipoppy.models.manifest import Manifest
+from nipoppy.tabular.manifest import Manifest
 
 LOG_SUFFIX = ".log"
 

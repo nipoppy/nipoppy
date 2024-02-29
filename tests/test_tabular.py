@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from conftest import DPATH_TEST_DATA
 
-from nipoppy.models.tabular import _Tabular, _TabularModel
+from nipoppy.tabular.tabular import _Tabular, _TabularModel
 
 
 class Tabular(_Tabular):

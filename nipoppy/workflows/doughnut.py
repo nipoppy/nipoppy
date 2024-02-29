@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.logger import get_logger
-from nipoppy.models.doughnut import Doughnut
-from nipoppy.models.manifest import Manifest
+from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import participant_id_to_bids_id, participant_id_to_dicom_id
 from nipoppy.workflows.workflow import _Workflow
 

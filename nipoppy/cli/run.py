@@ -7,8 +7,8 @@ from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import COMMAND_DOUGHNUT, COMMAND_INIT, get_global_parser
 from nipoppy.logger import add_logfile, get_logger
-from nipoppy.workflows.dataset_init import DatasetInitWorkflow
-from nipoppy.workflows.update_doughnut import DoughnutWorkflow
+from nipoppy.workflows.dataset_init import InitWorkflow
+from nipoppy.workflows.doughnut import DoughnutWorkflow
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -30,7 +30,7 @@ def cli(argv: Sequence[str] = None) -> None:
         dpath_root = args.dataset_root
 
         if command == COMMAND_INIT:
-            workflow = DatasetInitWorkflow(
+            workflow = InitWorkflow(
                 dpath_root=dpath_root,
                 **workflow_kwargs,
             )

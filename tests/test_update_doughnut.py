@@ -13,11 +13,11 @@ from conftest import (
 )
 from fids.fids import create_fake_bids_dataset
 
-from nipoppy.models.config import Config
-from nipoppy.models.doughnut import Doughnut
-from nipoppy.models.manifest import Manifest
+from nipoppy.config import Config
+from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json, strip_session
-from nipoppy.workflows.update_doughnut import (
+from nipoppy.workflows.doughnut import (
     DoughnutWorkflow,
     generate_doughnut,
     update_doughnut,

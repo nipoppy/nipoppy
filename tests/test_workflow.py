@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
+from nipoppy.config import Config
 from nipoppy.logger import get_logger
-from nipoppy.models.config import Config
-from nipoppy.models.manifest import Manifest
+from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.workflow import _Workflow
 

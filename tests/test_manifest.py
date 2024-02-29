@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import pytest
 from conftest import DPATH_TEST_DATA
 
-from nipoppy.models.manifest import Manifest
+from nipoppy.tabular.manifest import Manifest
 
 
 @pytest.mark.parametrize(

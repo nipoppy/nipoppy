@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from conftest import DPATH_TEST_DATA
 
-from nipoppy.models.config import Config, load_config
+from nipoppy.config import Config, load_config
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 REQUIRED_FIELDS = [

@@ -6,7 +6,7 @@ from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.workflow import _Workflow
 
 
-class DatasetInitWorkflow(_Workflow):
+class InitWorkflow(_Workflow):
     """Workflow for init command."""
 
     def __init__(self, dpath_root: Path, **kwargs):

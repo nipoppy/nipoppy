@@ -1,6 +1,6 @@
 """Class for the doughnut file."""
 
-from nipoppy.models.manifest import Manifest
+from nipoppy.tabular.manifest import Manifest
 
 
 class Doughnut(Manifest):
