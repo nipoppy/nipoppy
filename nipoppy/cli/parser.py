@@ -8,7 +8,7 @@ PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
 COMMAND_DOUGHNUT = "doughnut"
 
-DEFAULT_VERBOSITY = "3"  # debug
+DEFAULT_VERBOSITY = "2"  # info
 VERBOSITY_TO_LOG_LEVEL_MAP = {
     "0": logging.ERROR,
     "1": logging.WARNING,
@@ -129,6 +129,7 @@ def get_global_parser(
         formatter_class=formatter_class,
         add_help=False,
     )
+    add_arg_help(global_parser)
 
     # subcommand parsers
     subparsers = global_parser.add_subparsers(
@@ -139,8 +140,8 @@ def get_global_parser(
     add_subparser_init(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
 
-    # add common/global options to main and subcommand parsers
-    for parser in [global_parser] + list(subparsers.choices.values()):
+    # add common/global options to subcommand parsers
+    for parser in list(subparsers.choices.values()):
         common_arg_group = parser.add_argument_group("Global options")
         add_arg_verbosity(common_arg_group)
         add_arg_dry_run(common_arg_group)
