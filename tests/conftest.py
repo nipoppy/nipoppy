@@ -4,6 +4,12 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import pandas as pd
+from fids.fids import create_fake_bids_dataset
+
+from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.manifest import Manifest
+from nipoppy.utils import strip_session
 
 FPATH_CONFIG = "proc/global_configs.json"
 FPATH_MANIFEST = "tabular/manifest.csv"
@@ -167,3 +173,94 @@ def fake_dicoms_organized(
         max_dname_dicom=max_dname_dicom,
         rng_seed=rng_seed,
     )
+
+
+def _prepare_dataset(
+    participants_and_sessions_manifest: dict[str, list[str]],
+    participants_and_sessions_downloaded: Optional[dict[str, list[str]]] = None,
+    participants_and_sessions_organized: Optional[dict[str, list[str]]] = None,
+    participants_and_sessions_converted: Optional[dict[str, list[str]]] = None,
+    dpath_downloaded: Optional[str | Path] = None,
+    dpath_organized: Optional[str | Path] = None,
+    dpath_converted: Optional[str | Path] = None,
+):
+    # create the manifest
+    data_manifest = []
+    for participant in participants_and_sessions_manifest:
+        for session in participants_and_sessions_manifest[participant]:
+            data_manifest.append(
+                {
+                    Manifest.col_participant_id: participant,
+                    Manifest.col_session: session,
+                    Manifest.col_visit: session,
+                    Manifest.col_datatype: [],
+                }
+            )
+    manifest = Manifest(data_manifest)
+
+    # create fake downloaded DICOMs
+    if (
+        participants_and_sessions_downloaded is not None
+        and dpath_downloaded is not None
+    ):
+        fake_dicoms_downloaded(
+            dpath_downloaded,
+            participants_and_sessions_downloaded,
+        )
+
+    # create fake organized DICOMs
+    if participants_and_sessions_organized is not None and dpath_organized is not None:
+        fake_dicoms_organized(
+            dpath_organized,
+            participants_and_sessions_organized,
+        )
+
+    # create fake BIDS dataset
+    if participants_and_sessions_converted is not None and dpath_converted is not None:
+        for participant, sessions in participants_and_sessions_converted.items():
+            create_fake_bids_dataset(
+                Path(dpath_converted),
+                subjects=participant,
+                sessions=[strip_session(session) for session in sessions],
+                datatypes=["anat"],
+            )
+
+    return manifest
+
+
+def _check_doughnut(
+    doughnut: Doughnut,
+    participants_and_sessions_manifest,
+    participants_and_sessions_downloaded,
+    participants_and_sessions_organized,
+    participants_and_sessions_converted,
+    empty,
+):
+    if empty:
+        for col in [
+            doughnut.col_downloaded,
+            doughnut.col_organized,
+            doughnut.col_converted,
+        ]:
+            assert (~doughnut[col]).all()
+    else:
+        for participant in participants_and_sessions_manifest:
+            for session in participants_and_sessions_manifest[participant]:
+                for col, participants_and_sessions_true in {
+                    doughnut.col_downloaded: participants_and_sessions_downloaded,
+                    doughnut.col_organized: participants_and_sessions_organized,
+                    doughnut.col_converted: participants_and_sessions_converted,
+                }.items():
+                    status: pd.Series = doughnut.loc[
+                        (doughnut[doughnut.col_participant_id] == participant)
+                        & (doughnut[doughnut.col_session] == session),
+                        col,
+                    ]
+
+                    assert len(status) == 1
+                    status = status.iloc[0]
+
+                    assert status == (
+                        participant in participants_and_sessions_true
+                        and session in participants_and_sessions_true[participant]
+                    )

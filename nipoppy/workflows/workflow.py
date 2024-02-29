@@ -13,6 +13,7 @@ from nipoppy.base import _Base
 from nipoppy.config import Config, load_config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
 
 LOG_SUFFIX = ".log"
@@ -170,7 +171,7 @@ class _Workflow(_Base, ABC):
 
     def run_setup(self, **kwargs):
         """Run the setup part of the workflow."""
-        self.logger.info(f"========== BEGIN {self.name.upper()} ==========")
+        self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.info(self)
         if self.dry_run:
             self.logger.info(
@@ -184,7 +185,7 @@ class _Workflow(_Base, ABC):
 
     def run_cleanup(self, **kwargs):
         """Run the cleanup part of the workflow."""
-        self.logger.info(f"========== END {self.name.upper()} ==========")
+        self.logger.info(f"========== END {self.name.upper()} WORKFLOW ==========")
 
     def run(self, **kwargs):
         """Run the workflow."""
@@ -195,8 +196,10 @@ class _Workflow(_Base, ABC):
     @cached_property
     def config(self) -> Config:
         """Load the configuration."""
+        fpath_config = self.layout.fpath_config
         try:
-            return load_config(self.layout.fpath_config)
+            self.logger.info(f"Loading config from {fpath_config}")
+            return load_config(fpath_config)
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Config file not found: {self.layout.fpath_config}"
@@ -205,15 +208,47 @@ class _Workflow(_Base, ABC):
     @cached_property
     def manifest(self) -> Manifest:
         """Load the manifest."""
+        fpath_manifest = self.layout.fpath_manifest
         expected_sessions = self.config.SESSIONS
         expected_visits = self.config.VISITS
         try:
             return Manifest.load(
-                self.layout.fpath_manifest,
+                fpath_manifest,
                 sessions=expected_sessions,
                 visits=expected_visits,
             )
         except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Manifest file not found: {self.layout.fpath_manifest}"
+            raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
+
+    @cached_property
+    def doughnut(self) -> Doughnut:
+        """Load the doughnut."""
+        logger = self.logger
+        fpath_doughnut = self.layout.fpath_doughnut
+        try:
+            return Doughnut.load(fpath_doughnut)
+        except FileNotFoundError:
+            self.logger.warning(
+                f"Doughnut file not found: {fpath_doughnut}"
+                ". Generating a new one on-the-fly"
             )
+            doughnut = generate_doughnut(
+                manifest=self.manifest,
+                dpath_downloaded=self.layout.dpath_raw_dicom,
+                dpath_organized=self.layout.dpath_dicom,
+                dpath_converted=self.layout.dpath_bids,
+                empty=False,
+                logger=self.logger,
+            )
+
+            if not self.dry_run:
+                fpath_doughnut_backup = doughnut.save_with_backup(fpath_doughnut)
+                logger.info(
+                    f"Saved doughnut to {fpath_doughnut} (-> {fpath_doughnut_backup})"
+                )
+            else:
+                logger.info(
+                    f"Not writing doughnut to {fpath_doughnut} since this is a dry run"
+                )
+
+            return doughnut

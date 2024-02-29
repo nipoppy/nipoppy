@@ -1,4 +1,4 @@
 """Classes for tabular data representation/manipulation."""
 
-from .doughnut import Doughnut
+from .doughnut import Doughnut, generate_doughnut, update_doughnut
 from .manifest import Manifest
