@@ -10,6 +10,7 @@ from conftest import DPATH_TEST_DATA
 from nipoppy.utils import (
     check_session,
     dicom_id_to_bids_id,
+    get_pipeline_tag,
     load_json,
     participant_id_to_bids_id,
     participant_id_to_dicom_id,
@@ -56,6 +57,14 @@ def test_check_session(session, expected):
 )
 def test_strip_session(session, expected):
     assert strip_session(session) == expected
+
+
+@pytest.mark.parametrize(
+    "name,version,expected",
+    [("my_pipeline", "1.0", "my_pipeline-1.0"), ("pipeline", "2.0", "pipeline-2.0")],
+)
+def test_get_pipeline_tag(name, version, expected):
+    assert get_pipeline_tag(name, version) == expected
 
 
 def test_load_json():

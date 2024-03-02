@@ -34,12 +34,6 @@ def dicom_id_to_bids_id(dicom_id: str):
 def participant_id_to_bids_id(participant_id: str):
     """Convert a participant ID to a BIDS-compatible participant ID."""
     bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
-    # TODO allow custom_map (?)
-    # if custom_map == None:
-    #     bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
-    # else:
-    #     _df = pd.read_csv(custom_map)
-    #     bids_id =_df.loc[(_df["participant_id"]==participant_id)]["bids_id"].values[0]
     return bids_id
 
 
@@ -57,6 +51,11 @@ def strip_session(session: str):
     """Strip the BIDS prefix from a session string."""
     session = str(session)
     return session.removeprefix(BIDS_SESSION_PREFIX)
+
+
+def get_pipeline_tag(name: str, version: str):
+    """Generate a tag for a pipeline."""
+    return f"{name}-{version}"
 
 
 def load_json(fpath: str | Path, **kwargs) -> dict:

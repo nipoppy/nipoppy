@@ -1,33 +1,61 @@
 """Dataset configuration."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from nipoppy.utils import load_json
 
 
-class WorkflowConfig(BaseModel):
+class SingularityConfig(BaseModel):
+    """Model for Singularity/Apptainer configuration."""
+
+    COMMAND: str = "singularity"
+    ARGS: list[str] = []
+    ENV_VARS: dict[str, str] = {}
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class PipelineConfig(BaseModel):
     """Model for workflow configuration."""
 
-    VERSION: str | list[str]
-    CONTAINER: Path = None
+    CONTAINER: Optional[Path] = None
+    URI: Optional[str] = None
+    SINGULARITY_CONFIG: Optional[SingularityConfig] = None
+    DESCRIPTOR: Optional[Path] = None
+    INVOCATION: Optional[dict] = None
+    PYBIDS_IGNORE: list[str] = []
+    DESCRIPTION: Optional[str] = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class Config(BaseModel):
     """Model for dataset configuration."""
 
     DATASET_NAME: str
-    DATASET_ROOT: Path
-    CONTAINER_STORE: Path
-    SINGULARITY_PATH: str = "singularity"
-    TEMPLATEFLOW_DIR: Optional[Path] = None
     SESSIONS: list[str]
     VISITS: list[str] = []
-    BIDS: dict[str, WorkflowConfig]
-    PROC_PIPELINES: dict[str, WorkflowConfig]
-    WORKFLOW: list = []
+    SINGULARITY_CONFIG: Optional[SingularityConfig] = SingularityConfig()
+    BIDS: dict[str, dict[str, PipelineConfig]] = {}
+    PROC_PIPELINES: dict[str, dict[str, PipelineConfig]]
+
+    model_config = ConfigDict(extra="allow")
+
+    @model_validator(mode="after")
+    def check_no_duplicate_pipeline(self) -> Self:
+        """Check that BIDS and PROC_PIPELINES do not have common pipelines."""
+        bids_pipelines = set(self.BIDS.keys())
+        proc_pipelines = set(self.PROC_PIPELINES.keys())
+        print(bids_pipelines)
+        print(proc_pipelines)
+        if len(bids_pipelines & proc_pipelines) != 0:
+            raise ValueError(
+                "Cannot have the same pipeline under BIDS and PROC_PIPELINES"
+                f", got {bids_pipelines} and {proc_pipelines}"
+            )
 
     def save(self, fpath: str | Path, **kwargs):
         """Save the config to a JSON file.
@@ -41,6 +69,18 @@ class Config(BaseModel):
             kwargs["indent"] = 4
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
+
+    def get_pipeline_config(
+        self, pipeline_name: str, pipeline_version: str
+    ) -> PipelineConfig:
+        """Get the config for a pipeline."""
+        try:
+            if pipeline_name in self.BIDS:
+                return self.BIDS[pipeline_name][pipeline_version]
+            else:
+                return self.PROC_PIPELINES[pipeline_name][pipeline_version]
+        except KeyError:
+            raise ValueError(f"No config found for {pipeline_name} {pipeline_version}")
 
 
 def load_config(path: str | Path) -> Config:
