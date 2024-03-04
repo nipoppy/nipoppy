@@ -37,6 +37,41 @@ def test_validate(fpath, is_valid):
 
 
 @pytest.mark.parametrize(
+    "status_col,participant,session,expected_count",
+    [
+        ("downloaded", None, None, 3),
+        ("organized", None, None, 2),
+        ("converted", None, None, 1),
+        ("downloaded", "01", None, 2),
+        ("organized", None, "ses-M12", 0),
+        ("converted", "01", "ses-BL", 1),
+    ],
+)
+def test_get_participant_sessions_helper(
+    status_col, participant, session, expected_count
+):
+    data = {
+        "participant_id": ["01", "01", "02", "02"],
+        "visit": ["BL", "M12", "BL", "M12"],
+        "session": ["ses-BL", "ses-M12", "ses-BL", "ses-M12"],
+        "datatype": ["anat", "anat", "anat", "anat"],
+        "participant_dicom_dir": ["01", "01", "02", "02"],
+        "dicom_id": ["01", "01", "02", "02"],
+        "bids_id": ["01", "01", "02", "02"],
+        "downloaded": [True, True, True, False],
+        "organized": [True, False, True, False],
+        "converted": [True, False, False, False],
+    }
+    doughnut = Doughnut(data)
+    count = 0
+    for participant, session in doughnut._get_participant_sessions_helper(
+        status_col=status_col, participant=participant, session=session
+    ):
+        count += 1
+    assert count == expected_count
+
+
+@pytest.mark.parametrize(
     (
         "participants_and_sessions_manifest1"
         ",participants_and_sessions_manifest2"

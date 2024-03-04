@@ -76,9 +76,33 @@ class Manifest(_Tabular):
             )
         return self
 
-    def get_imaging_only(self, session: Optional[str] = None):
+    def get_imaging_subset(self, session: Optional[str] = None):
         """Get records with imaging data."""
         manifest = self[self[self.col_session].notna()]
         if session is not None:
             return manifest[manifest[self.col_session] == session]
         return manifest
+
+    def get_participants_sessions(
+        self, participant: Optional[str] = None, session: Optional[str] = None
+    ):
+        """Get participants and sessions."""
+        if participant is None:
+            participants = set(self[self.col_participant_id])
+        else:
+            participants = {participant}
+        if session is None:
+            sessions = self[self.col_session]
+            sessions = set(sessions[sessions.notna()])
+        else:
+            sessions = {session}
+
+        manifest_subset = self[
+            (self[self.col_participant_id].isin(participants))
+            & (self[self.col_session].isin(sessions))
+        ]
+
+        for current_participant, current_session in manifest_subset[
+            [self.col_participant_id, self.col_session]
+        ].itertuples(index=False):
+            yield current_participant, current_session

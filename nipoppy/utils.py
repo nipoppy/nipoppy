@@ -53,9 +53,9 @@ def strip_session(session: str):
     return session.removeprefix(BIDS_SESSION_PREFIX)
 
 
-def get_pipeline_tag(name: str, version: str):
+def get_pipeline_tag(pipeline_name: str, pipeline_version: str):
     """Generate a tag for a pipeline."""
-    return f"{name}-{version}"
+    return f"{pipeline_name}-{pipeline_version}"
 
 
 def load_json(fpath: str | Path, **kwargs) -> dict:

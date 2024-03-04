@@ -1,4 +1,5 @@
 """Tests for dataset layout class."""
+
 import shutil
 from pathlib import Path
 
@@ -104,3 +105,58 @@ def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
     layout = DatasetLayout(dpath_root=dpath_root)
     with pytest.raises(FileNotFoundError, match="Missing"):
         layout.validate()
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected",
+    [
+        ("my_pipeline", "v1", "derivatives/my_pipeline-v1"),
+        ("pipeline", "v2", "derivatives/pipeline-v2"),
+    ],
+)
+def test_dpath_pipeline(dpath_root: Path, pipeline_name, pipeline_version, expected):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline(
+            pipeline_name=pipeline_name, pipeline_version=pipeline_version
+        )
+        == dpath_root / expected
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected",
+    [
+        ("my_pipeline", "v1", "derivatives/my_pipeline-v1/work"),
+        ("pipeline", "v2", "derivatives/pipeline-v2/work"),
+    ],
+)
+def test_dpath_pipeline_work(
+    dpath_root: Path, pipeline_name, pipeline_version, expected
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_work(
+            pipeline_name=pipeline_name, pipeline_version=pipeline_version
+        )
+        == dpath_root / expected
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected",
+    [
+        ("my_pipeline", "v1", "derivatives/my_pipeline-v1/output"),
+        ("pipeline", "v2", "derivatives/pipeline-v2/output"),
+    ],
+)
+def test_dpath_pipeline_output(
+    dpath_root: Path, pipeline_name, pipeline_version, expected
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_output(
+            pipeline_name=pipeline_name, pipeline_version=pipeline_version
+        )
+        == dpath_root / expected
+    )

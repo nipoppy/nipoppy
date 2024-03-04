@@ -1,7 +1,9 @@
 """Dataset layout."""
+
 from pathlib import Path
 
 from nipoppy.base import _Base
+from nipoppy.utils import get_pipeline_tag
 
 
 class DatasetLayout(_Base):
@@ -34,6 +36,9 @@ class DatasetLayout(_Base):
         self.fpath_config = self.dpath_proc / "global_configs.json"
         self.fpath_doughnut = self.dpath_raw_dicom / "doughnut.csv"
         self.fpath_manifest = self.dpath_tabular / "manifest.csv"
+
+        self.dname_pipeline_work = "work"
+        self.dname_pipeline_output = "output"
 
     @property
     def dpaths(self) -> list[Path]:
@@ -84,3 +89,27 @@ class DatasetLayout(_Base):
                 f": {[str(path) for path in missing_paths]}"
             )
         return True
+
+    def get_dpath_pipeline(self, pipeline_name: str, pipeline_version: str) -> Path:
+        """Return the path to a pipeline's directory."""
+        return self.dpath_derivatives / get_pipeline_tag(
+            pipeline_name, pipeline_version
+        )
+
+    def get_dpath_pipeline_work(
+        self, pipeline_name: str, pipeline_version: str
+    ) -> Path:
+        """Return the path to a pipeline's working directory."""
+        return (
+            self.get_dpath_pipeline(pipeline_name, pipeline_version)
+            / self.dname_pipeline_work
+        )
+
+    def get_dpath_pipeline_output(
+        self, pipeline_name: str, pipeline_version: str
+    ) -> Path:
+        """Return the path to a pipeline's working directory."""
+        return (
+            self.get_dpath_pipeline(pipeline_name, pipeline_version)
+            / self.dname_pipeline_output
+        )

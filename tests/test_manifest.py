@@ -100,8 +100,57 @@ def test_validate_sessions_visits(sessions, visits, is_valid):
         ),
     ],
 )
-def test_imaging_only(data, session, expected_count):
+def test_get_imaging_subset(data, session, expected_count):
     manifest = Manifest(data)
-    manifest_with_imaging_only = manifest.get_imaging_only(session=session)
+    manifest_with_imaging_only = manifest.get_imaging_subset(session=session)
     assert isinstance(manifest_with_imaging_only, Manifest)
     assert len(manifest_with_imaging_only) == expected_count
+
+
+@pytest.mark.parametrize(
+    "participant,session,expected_count",
+    [
+        (None, None, 6),
+        ("01", None, 3),
+        ("02", None, 2),
+        ("03", None, 1),
+        (None, "ses-BL", 3),
+        (None, "ses-M12", 2),
+        (None, "ses-M24", 1),
+        ("01", "ses-M24", 1),
+        ("02", "ses-M12", 1),
+        ("03", "ses-BL", 1),
+    ],
+)
+def get_participants_sessions(participant, session, expected_count):
+    data = (
+        {
+            "participant_id": ["01", "01", "01", "02", "02", "03", "04"],
+            "visit": ["BL", "M12", "M24", "BL", "M12", "BL", "SC"],
+            "session": [
+                "ses-BL",
+                "ses-M12",
+                "ses-M24",
+                "ses-BL",
+                "ses-M12",
+                "ses-BL",
+                None,
+            ],
+            "datatype": [
+                ["anat"],
+                ["anat"],
+                ["anat"],
+                ["anat"],
+                ["anat"],
+                ["anat"],
+                [],
+            ],
+        },
+    )
+    manifest = Manifest(data)
+    count = 0
+    for _ in manifest.get_participants_sessions(
+        participant=participant, session=session
+    ):
+        count += 1
+    assert count == expected_count

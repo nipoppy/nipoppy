@@ -35,6 +35,39 @@ class Doughnut(Manifest):
 
     index_cols = [Manifest.col_participant_id, Manifest.col_session]
 
+    def _get_participant_sessions_helper(
+        self, status_col: str, participant: Optional[str], session: Optional[str]
+    ):
+        """Get subset of participants/sessions based on a status column."""
+        doughnut_subset: Doughnut = self.loc[self[status_col]]
+        return doughnut_subset.get_participants_sessions(
+            participant=participant, session=session
+        )
+
+    def get_downloaded_participants_sessions(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Get participants and sessions with downloaded data."""
+        return self._get_participant_sessions_helper(
+            self.col_downloaded, participant=participant, session=session
+        )
+
+    def get_organized_participants_sessions(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Get participants and sessions with organized data."""
+        return self._get_participant_sessions_helper(
+            self.col_organized, participant=participant, session=session
+        )
+
+    def get_converted_participants_sessions(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Get participants and sessions with converted data."""
+        return self._get_participant_sessions_helper(
+            self.col_converted, participant=participant, session=session
+        )
+
 
 def generate_doughnut(
     manifest: Manifest,
@@ -73,7 +106,7 @@ def generate_doughnut(
 
     # get participants/sessions with imaging data
     logger.debug(f"Full manifest:\n{manifest}")
-    manifest_imaging_only = manifest.get_imaging_only()
+    manifest_imaging_only = manifest.get_imaging_subset()
     logger.debug(f"Imaging-only manifest:\n{manifest_imaging_only}")
 
     doughnut_records = []
