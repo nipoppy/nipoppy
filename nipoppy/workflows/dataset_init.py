@@ -9,9 +9,11 @@ from nipoppy.workflows.workflow import _Workflow
 class InitWorkflow(_Workflow):
     """Workflow for init command."""
 
-    def __init__(self, dpath_root: Path, **kwargs):
+    def __init__(self, dpath_root: Path, logger=None, dry_run=False):
         """Initialize the workflow."""
-        super().__init__(dpath_root=dpath_root, name="init", **kwargs)
+        super().__init__(
+            dpath_root=dpath_root, name="init", logger=logger, dry_run=dry_run
+        )
 
     def run_main(self):
         """Create dataset directory structure."""

@@ -9,9 +9,18 @@ from nipoppy.workflows.workflow import _Workflow
 class DoughnutWorkflow(_Workflow):
     """Workflow for creating/updating a dataset's doughnut file."""
 
-    def __init__(self, dpath_root: Path, empty=False, regenerate=False, **kwargs):
+    def __init__(
+        self,
+        dpath_root: Path,
+        empty=False,
+        regenerate=False,
+        logger=None,
+        dry_run=False,
+    ):
         """Initialize the workflow."""
-        super().__init__(dpath_root=dpath_root, name="doughnut", **kwargs)
+        super().__init__(
+            dpath_root=dpath_root, name="doughnut", logger=logger, dry_run=dry_run
+        )
 
         self.empty = empty
         self.regenerate = regenerate

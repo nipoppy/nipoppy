@@ -1,4 +1,5 @@
 """Logger."""
+
 import logging
 from pathlib import Path
 from typing import Optional
@@ -17,6 +18,7 @@ def get_logger(name: Optional[str] = None, level: int = logging.INFO) -> logging
         format="%(message)s",
         datefmt=DATE_FORMAT,
         handlers=[RichHandler(markup=True, rich_tracebacks=True)],
+        force=True,
     )
     return logging.getLogger(name=name)
 

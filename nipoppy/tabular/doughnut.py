@@ -1,6 +1,6 @@
 """Class for the doughnut file."""
 
-from logging import Logger
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -42,7 +42,7 @@ def generate_doughnut(
     dpath_organized: Optional[str | Path] = None,
     dpath_converted: Optional[str | Path] = None,
     empty=False,
-    logger: Optional[Logger] = None,
+    logger: Optional[logging.Logger] = None,
     # TODO allow custom map from participant_id to participant_dicom_dir
 ) -> Doughnut:
     """Generate a doughnut object."""
@@ -139,7 +139,7 @@ def update_doughnut(
     dpath_organized: Optional[str | Path] = None,
     dpath_converted: Optional[str | Path] = None,
     empty=False,
-    logger: Optional[Logger] = None,
+    logger: Optional[logging.Logger] = None,
 ) -> Doughnut:
     """Update an existing doughnut file."""
     if logger is None:
