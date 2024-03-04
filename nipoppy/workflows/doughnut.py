@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
-from nipoppy.workflows.workflow import _Workflow
+from nipoppy.workflows.base import _Workflow
 
 
 class DoughnutWorkflow(_Workflow):

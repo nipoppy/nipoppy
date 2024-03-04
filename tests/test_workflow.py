@@ -10,7 +10,7 @@ from nipoppy.config import Config
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
-from nipoppy.workflows.workflow import _Workflow
+from nipoppy.workflows.base import _Workflow
 
 
 @pytest.fixture(params=[get_logger("my_logger"), None])

@@ -8,7 +8,7 @@ from typing import Optional
 
 from nipoppy.config import PipelineConfig
 from nipoppy.utils import get_pipeline_tag
-from nipoppy.workflows.workflow import _Workflow
+from nipoppy.workflows.base import _Workflow
 
 
 class _PipelineWorkflow(_Workflow, ABC):

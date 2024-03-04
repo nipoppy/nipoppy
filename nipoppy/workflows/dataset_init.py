@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
-from nipoppy.workflows.workflow import _Workflow
+from nipoppy.workflows.base import _Workflow
 
 
 class InitWorkflow(_Workflow):
