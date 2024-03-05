@@ -110,7 +110,7 @@ class _Workflow(_Base, ABC):
                 if capture_output:
                     output_str += line  # store the line as-is
                 line = line.strip("\n")
-                self.logger.debug(f"{log_prefix} {line}")
+                self.logger.info(f"{log_prefix} {line}")
             return output_str
 
         # build command string
@@ -174,9 +174,7 @@ class _Workflow(_Base, ABC):
         self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.info(self)
         if self.dry_run:
-            self.logger.info(
-                f"Doing a dry run: {self.log_prefix_run} commands will not be executed"
-            )
+            self.logger.info("Doing a dry run")
 
     @abstractmethod
     def run_main(self, **kwargs):

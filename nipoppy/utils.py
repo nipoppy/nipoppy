@@ -3,6 +3,7 @@
 import datetime
 import json
 import os
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -12,10 +13,15 @@ import pandas as pd
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
 
+# pipeline configs
+TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
+
 # paths
-FPATH_DATA = Path(__file__).parent / "data"
-FPATH_SAMPLE_CONFIG = FPATH_DATA / "sample_global_configs.json"
-FPATH_SAMPLE_MANIFEST = FPATH_DATA / "sample_manifest.csv"
+DPATH_DATA = Path(__file__).parent / "data"
+DPATH_SAMPLE_DATA = DPATH_DATA / "sample_data"
+FPATH_SAMPLE_CONFIG = DPATH_SAMPLE_DATA / "sample_global_configs.json"
+FPATH_SAMPLE_MANIFEST = DPATH_SAMPLE_DATA / "sample_manifest.csv"
+DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 
 
 def participant_id_to_dicom_id(participant_id: str):
@@ -164,3 +170,46 @@ def save_df_with_backup(
     fpath_symlink.symlink_to(fpath_backup_to_link)
 
     return Path(fpath_backup_full)
+
+
+def process_template_str(
+    template_str: str, resolve_paths=True, objs=None, lower=True, **kwargs
+) -> str:
+    """Replace template strings with values from kwargs or objects."""
+
+    def replace(json_str: str, to_replace: str, replacement):
+        if resolve_paths and isinstance(replacement, Path):
+            replacement = replacement.resolve()
+        return json_str.replace(to_replace, str(replacement))
+
+    def replace_from_objs(json_str: str, to_replace: str, objs):
+        for obj in objs:
+            if hasattr(obj, replacement_key):
+                return replace(json_str, to_replace, getattr(obj, replacement_key))
+        raise RuntimeError(f"Unable to replace {to_replace} in {template_str_original}")
+
+    if objs is None:
+        objs = []
+
+    template_str_original = template_str
+
+    matches = TEMPLATE_REPLACE_PATTERN.finditer(template_str)
+    for match in matches:
+        if len(match.groups()) != 1:
+            raise ValueError(f"Expected exactly one match group for match: {match}")
+        to_replace = match.group()
+        replacement_key = match.groups()[0]
+        if lower:
+            replacement_key = replacement_key.lower()
+
+        if not str.isidentifier(replacement_key):
+            raise ValueError(
+                f"Invalid identifier name {replacement_key} in {template_str}"
+            )
+
+        if replacement_key in kwargs:
+            template_str = replace(template_str, to_replace, kwargs[replacement_key])
+        else:
+            template_str = replace_from_objs(template_str, to_replace, objs)
+
+    return template_str

@@ -7,15 +7,56 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from nipoppy.utils import load_json
 
+SINGULARITY_BIND_FLAG = "--bind"
+SINGULARITY_BIND_SEP = ":"
+SINGULARITY_ENVVAR_PREFIX = "APPTAINERENV_"
+
 
 class SingularityConfig(BaseModel):
     """Model for Singularity/Apptainer configuration."""
 
     COMMAND: str = "singularity"
+    SUBCOMMAND: str = "run"
     ARGS: list[str] = []
     ENV_VARS: dict[str, str] = {}
 
     model_config = ConfigDict(extra="forbid")
+
+    def build_command(self) -> str:
+        """Build the full Singularity command (command + subcommand + args)."""
+        args = [self.COMMAND, self.SUBCOMMAND, *self.ARGS]
+        return " ".join(args)
+
+    def add_bind_path(
+        self,
+        path_local: str | Path,
+        path_inside_container: Optional[str | Path] = None,
+        mode: str = "rw",
+        check_exists: bool = True,
+    ):
+        """Add a bind path (mount point for the container)."""
+        # use absolute paths
+        path_local = Path(path_local).resolve()
+        if check_exists and (not path_local.exists()):
+            raise FileNotFoundError(
+                f"Bind path for Apptainer/Singularity does not exist: {path_local}"
+            )
+
+        if path_inside_container is None:
+            path_inside_container = path_local
+
+        self.ARGS.extend(
+            [
+                SINGULARITY_BIND_FLAG,
+                SINGULARITY_BIND_SEP.join(
+                    [
+                        str(path_local),
+                        str(path_inside_container),
+                        mode,
+                    ]
+                ),
+            ]
+        )
 
 
 class PipelineConfig(BaseModel):
@@ -23,13 +64,17 @@ class PipelineConfig(BaseModel):
 
     CONTAINER: Optional[Path] = None
     URI: Optional[str] = None
-    SINGULARITY_CONFIG: Optional[SingularityConfig] = None
-    DESCRIPTOR: Optional[Path] = None
+    SINGULARITY_CONFIG: SingularityConfig = SingularityConfig()
+    DESCRIPTOR: Optional[dict] = None
     INVOCATION: Optional[dict] = None
     PYBIDS_IGNORE: list[str] = []
     DESCRIPTION: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
+
+    def get_singularity_config(self) -> SingularityConfig:
+        """Return the pipeline's Singularity config object."""
+        return self.SINGULARITY_CONFIG
 
 
 class Config(BaseModel):

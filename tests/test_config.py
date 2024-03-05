@@ -1,6 +1,7 @@
 """Tests for the config module."""
 
 import json
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -57,13 +58,62 @@ def test_singularity_config_no_extra_fields():
 
 
 @pytest.mark.parametrize(
+    "data, expected",
+    [
+        ({}, "singularity run"),
+        (
+            {
+                "COMMAND": "/path/to/singularity",
+                "SUBCOMMAND": "exec",
+                "ARGS": ["--cleanenv"],
+            },
+            "/path/to/singularity exec --cleanenv",
+        ),
+    ],
+)
+def test_singularity_config_build_command(data, expected):
+    assert SingularityConfig(**data).build_command() == expected
+
+
+@pytest.mark.parametrize("path_local", [Path(__file__).parent, "."])
+@pytest.mark.parametrize("path_container", ["/abc", "/abc/def"])
+@pytest.mark.parametrize("mode", ["rw", "ro"])
+def test_singularity_config_bind_path(path_local, path_container, mode):
+    singularity_config = SingularityConfig()
+    singularity_config.add_bind_path(path_local, path_container, mode=mode)
+    # make sure local path is absolute in output
+    path_local = Path(path_local).resolve()
+    expected_args = ["--bind", f"{path_local}:{path_container}:{mode}"]
+    assert singularity_config.ARGS == expected_args
+
+
+@pytest.mark.parametrize("path_local", [Path(__file__).parent, "."])
+@pytest.mark.parametrize("mode", ["rw", "ro"])
+def test_add_singularity_path_no_path_container(path_local, mode):
+    singularity_config = SingularityConfig()
+    singularity_config.add_bind_path(path_local, mode=mode)
+    path_local = Path(path_local).resolve()
+    expected_args = ["--bind", f"{path_local}:{path_local}:{mode}"]
+    assert singularity_config.ARGS == expected_args
+
+
+@pytest.mark.parametrize("check_exists", [True, False])
+def test_add_singularity_path_ro_error(check_exists):
+    singularity_config = SingularityConfig()
+    with pytest.raises(FileNotFoundError) if check_exists else nullcontext():
+        singularity_config.add_bind_path(
+            "fake_path", mode="ro", check_exists=check_exists
+        )
+
+
+@pytest.mark.parametrize(
     "data",
     [
         {},
         {"CONTAINER": "/my/container"},
         {"URI": "docker://container"},
         {"SINGULARITY_CONFIG": {"ARGS": ["--cleanenv"]}},
-        {"DESCRIPTOR": "/my/descriptor"},
+        {"DESCRIPTOR": {}},
         {"INVOCATION": {"arg1": "val1", "arg2": "val2"}},
         {"PYBIDS_IGNORE": ["ignore1", "ignore2"]},
         {"DESCRIPTION": "My pipeline"},
@@ -77,6 +127,10 @@ def test_pipeline_config(data):
 def test_pipeline_config_no_extra_fields():
     with pytest.raises(ValidationError):
         PipelineConfig(not_a_field="a")
+
+
+def test_pipeline_config_get_singularity_config():
+    assert isinstance(PipelineConfig().get_singularity_config(), SingularityConfig)
 
 
 @pytest.mark.parametrize("field_name", ["not_a_field", "also_not_a_field"])

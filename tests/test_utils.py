@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from conftest import DPATH_TEST_DATA
 
+from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     check_session,
     dicom_id_to_bids_id,
@@ -14,6 +15,7 @@ from nipoppy.utils import (
     load_json,
     participant_id_to_bids_id,
     participant_id_to_dicom_id,
+    process_template_str,
     save_df_with_backup,
     save_json,
     strip_session,
@@ -101,3 +103,50 @@ def test_save_df_with_backup(
     assert fpath_symlink.exists()
     assert fpath_backup.exists()
     assert fpath_backup.parent == fpath_symlink.parent / dname_backups
+
+
+@pytest.mark.parametrize(
+    "template_str,resolve_paths,objs,kwargs,expected",
+    [
+        ("no_replace", False, None, {}, "no_replace"),
+        (
+            "[[NIPOPPY_DPATH_ROOT]]",
+            False,
+            [DatasetLayout("my_dataset")],
+            {},
+            "my_dataset",
+        ),
+        (
+            "[[NIPOPPY_SOME_KWARG_PATH]]",
+            False,
+            [],
+            {"some_kwarg_path": Path("a_path")},
+            "a_path",
+        ),
+        (
+            "[[NIPOPPY_SOME_KWARG_PATH]]",
+            True,
+            [],
+            {"some_kwarg_path": Path("a_path")},
+            str(Path("a_path").resolve()),
+        ),
+    ],
+)
+def test_process_template_str(template_str, resolve_paths, objs, kwargs, expected):
+    assert (
+        process_template_str(
+            template_str, resolve_paths=resolve_paths, objs=objs, **kwargs
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize("template_str", ["[[NIPOPPY_123]]", "[[NIPOPPY_-]]"])
+def test_process_template_str_error_identifier(template_str):
+    with pytest.raises(ValueError, match="Invalid identifier name"):
+        process_template_str(template_str)
+
+
+def test_process_template_str_error_replace():
+    with pytest.raises(RuntimeError, match="Unable to replace"):
+        process_template_str("[[NIPOPPY_INVALID]]")
