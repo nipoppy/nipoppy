@@ -52,9 +52,19 @@ def test_fpaths(dpath_root: Path):
     "paths_to_delete",
     [
         [],
-        ["dicom", "downloads"],
-        ["bids", "derivatives"],
-        ["proc", "proc/global_configs.json"],
+        ["sourcedata", "downloads"],
+        ["rawdata", "derivatives"],
+        [
+            "code",
+            "code/containers",
+            "code/descriptors",
+            "code/invocations",
+            "code/scripts",
+            "code/global_configs.json",
+            "code/pybids",
+            "code/pybids/bids_db",
+            "code/pybids/ignore_patterns",
+        ],
         [
             "scratch",
             "scratch/logs",
@@ -83,14 +93,19 @@ def test_validate(dpath_root: Path):
 @pytest.mark.parametrize(
     "paths_to_delete",
     [
-        ["dicom", "downloads"],
-        ["bids", "derivatives"],
-        ["proc", "proc/global_configs.json"],
+        ["sourcedata", "downloads"],
+        ["rawdata", "derivatives"],
+        ["code", "code/global_configs.json"],
         [
-            "scratch",
-            "scratch/logs",
-            "scratch/raw_dicom",
-            "scratch/raw_dicom/doughnut.csv",
+            "code",
+            "code/containers",
+            "code/descriptors",
+            "code/invocations",
+            "code/scripts",
+            "code/global_configs.json",
+            "code/pybids",
+            "code/pybids/bids_db",
+            "code/pybids/ignore_patterns",
         ],
         [
             "tabular",
@@ -114,7 +129,9 @@ def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
         ("pipeline", "v2", "derivatives/pipeline-v2"),
     ],
 )
-def test_dpath_pipeline(dpath_root: Path, pipeline_name, pipeline_version, expected):
+def test_get_dpath_pipeline(
+    dpath_root: Path, pipeline_name, pipeline_version, expected
+):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
         layout.get_dpath_pipeline(
@@ -125,19 +142,48 @@ def test_dpath_pipeline(dpath_root: Path, pipeline_name, pipeline_version, expec
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,expected",
+    "pipeline_name,pipeline_version,participant,session,expected",
     [
-        ("my_pipeline", "v1", "derivatives/my_pipeline-v1/work"),
-        ("pipeline", "v2", "derivatives/pipeline-v2/work"),
+        (
+            "my_pipeline",
+            "v1",
+            None,
+            None,
+            "derivatives/my_pipeline-v1/work/my_pipeline-v1",
+        ),
+        (
+            "pipeline",
+            "v2",
+            "3000",
+            None,
+            "derivatives/pipeline-v2/work/pipeline-v2-3000",
+        ),
+        (
+            "pipeline",
+            "v2",
+            None,
+            "ses-BL",
+            "derivatives/pipeline-v2/work/pipeline-v2-BL",
+        ),
+        (
+            "pipeline",
+            "v2",
+            "01",
+            "1",
+            "derivatives/pipeline-v2/work/pipeline-v2-01-1",
+        ),
     ],
 )
-def test_dpath_pipeline_work(
-    dpath_root: Path, pipeline_name, pipeline_version, expected
+def test_get_dpath_pipeline_work(
+    dpath_root: Path, pipeline_name, pipeline_version, participant, session, expected
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
         layout.get_dpath_pipeline_work(
-            pipeline_name=pipeline_name, pipeline_version=pipeline_version
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            participant=participant,
+            session=session,
         )
         == dpath_root / expected
     )
@@ -150,13 +196,35 @@ def test_dpath_pipeline_work(
         ("pipeline", "v2", "derivatives/pipeline-v2/output"),
     ],
 )
-def test_dpath_pipeline_output(
+def test_get_dpath_pipeline_output(
     dpath_root: Path, pipeline_name, pipeline_version, expected
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
         layout.get_dpath_pipeline_output(
             pipeline_name=pipeline_name, pipeline_version=pipeline_version
+        )
+        == dpath_root / expected
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,participant,session,expected",
+    [
+        ("my_pipeline", "v1", None, None, "code/pybids/bids_db/my_pipeline-v1"),
+        ("pipeline", "v2", "01", "ses-1", "code/pybids/bids_db/pipeline-v2-01-1"),
+    ],
+)
+def test_get_dpath_bids_db(
+    dpath_root: Path, pipeline_name, pipeline_version, participant, session, expected
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_bids_db(
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            participant=participant,
+            session=session,
         )
         == dpath_root / expected
     )

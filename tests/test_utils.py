@@ -1,11 +1,13 @@
 """Tests for the utils module."""
 
 import json
+import re
 from pathlib import Path
 
 import pandas as pd
 import pytest
 from conftest import DPATH_TEST_DATA
+from fids import fids
 
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
@@ -62,11 +64,58 @@ def test_strip_session(session, expected):
 
 
 @pytest.mark.parametrize(
-    "name,version,expected",
-    [("my_pipeline", "1.0", "my_pipeline-1.0"), ("pipeline", "2.0", "pipeline-2.0")],
+    "dpath_bids_db,ignore_patterns,expected_count",
+    [
+        (None, None, 8),
+        ("bids_db", [re.compile("^(?!/sub-(02))")], 6),
+        ("bids_db", [re.compile(".*?/ses-(?!3)")], 2),
+        ("bids_db", [re.compile("^(?!/sub-(01))"), re.compile(".*?/ses-(?!3)")], 0),
+        ("bids_db", [re.compile(".*/anat/")], 3),
+        ("bids_db", ["sub-01"], 6),
+    ],
 )
-def test_get_pipeline_tag(name, version, expected):
-    assert get_pipeline_tag(name, version) == expected
+@pytest.mark.parametrize("resolve_paths", [True, False])
+def test_create_bids_db(
+    dpath_bids_db, ignore_patterns, expected_count, resolve_paths, tmp_path: Path
+):
+    from nipoppy.utils import create_bids_db
+
+    dpath_bids = tmp_path / "bids"
+    if dpath_bids_db is not None:
+        dpath_bids_db: Path = tmp_path / dpath_bids_db
+
+    fids.create_fake_bids_dataset(
+        output_dir=dpath_bids, subjects=["01"], sessions=["1", "2"], datatypes=["anat"]
+    )
+    fids.create_fake_bids_dataset(
+        output_dir=dpath_bids,
+        subjects=["02"],
+        sessions=["1", "2", "3"],
+        datatypes=["anat", "func"],
+    )
+
+    bids_layout = create_bids_db(
+        dpath_bids=dpath_bids,
+        dpath_bids_db=dpath_bids_db,
+        ignore_patterns=ignore_patterns,
+        resolve_paths=resolve_paths,
+    )
+    assert len(bids_layout.get(extension="nii.gz")) == expected_count
+    if dpath_bids_db is not None:
+        assert dpath_bids_db.exists()
+
+
+@pytest.mark.parametrize(
+    "name,version,participant,session,expected",
+    [
+        ("my_pipeline", "1.0", None, None, "my_pipeline-1.0"),
+        ("pipeline", "2.0", "3000", None, "pipeline-2.0-3000"),
+        ("pipeline", "2.0", None, "ses-BL", "pipeline-2.0-BL"),
+        ("pipeline", "2.0", "3000", "BL", "pipeline-2.0-3000-BL"),
+    ],
+)
+def test_get_pipeline_tag(name, version, participant, session, expected):
+    assert get_pipeline_tag(name, version, participant, session) == expected
 
 
 def test_load_json():

@@ -1,6 +1,7 @@
 """Dataset layout."""
 
 from pathlib import Path
+from typing import Optional
 
 from nipoppy.base import _Base
 from nipoppy.utils import get_pipeline_tag
@@ -19,24 +20,38 @@ class DatasetLayout(_Base):
         """
         self.dpath_root = Path(dpath_root)
 
-        self.dpath_bids = self.dpath_root / "bids"
+        # subdirectories
+        self.dpath_bids = self.dpath_root / "rawdata"
         self.dpath_derivatives = self.dpath_root / "derivatives"
-        self.dpath_dicom = self.dpath_root / "dicom"
+        self.dpath_dicom = self.dpath_root / "sourcedata"
         self.dpath_downloads = self.dpath_root / "downloads"
-        self.dpath_proc = self.dpath_root / "proc"
 
+        # code
+        self.dpath_proc = self.dpath_root / "code"
+        self.dpath_containers = self.dpath_proc / "containers"
+        self.dpath_descriptors = self.dpath_proc / "descriptors"
+        self.dpath_invocations = self.dpath_proc / "invocations"
+        self.dpath_scripts = self.dpath_proc / "scripts"
+        self.dpath_pybids = self.dpath_proc / "pybids"
+        self.dpath_bids_db = self.dpath_pybids / "bids_db"
+        self.dpath_bids_ignore_patterns = self.dpath_pybids / "ignore_patterns"
+
+        # scratch
         self.dpath_scratch = self.dpath_root / "scratch"
         self.dpath_raw_dicom = self.dpath_scratch / "raw_dicom"
         self.dpath_logs = self.dpath_scratch / "logs"
 
+        # tabular
         self.dpath_tabular = self.dpath_root / "tabular"
         self.dpath_assessments = self.dpath_tabular / "assessments"
         self.dpath_demographics = self.dpath_tabular / "demographics"
 
+        # files
         self.fpath_config = self.dpath_proc / "global_configs.json"
         self.fpath_doughnut = self.dpath_raw_dicom / "doughnut.csv"
         self.fpath_manifest = self.dpath_tabular / "manifest.csv"
 
+        # directory names
         self.dname_pipeline_work = "work"
         self.dname_pipeline_output = "output"
 
@@ -50,6 +65,13 @@ class DatasetLayout(_Base):
             self.dpath_dicom,
             self.dpath_downloads,
             self.dpath_proc,
+            self.dpath_containers,
+            self.dpath_descriptors,
+            self.dpath_invocations,
+            self.dpath_scripts,
+            self.dpath_pybids,
+            self.dpath_bids_db,
+            self.dpath_bids_ignore_patterns,
             self.dpath_scratch,
             self.dpath_raw_dicom,
             self.dpath_logs,
@@ -97,12 +119,22 @@ class DatasetLayout(_Base):
         )
 
     def get_dpath_pipeline_work(
-        self, pipeline_name: str, pipeline_version: str
+        self,
+        pipeline_name: str,
+        pipeline_version: str,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
             self.get_dpath_pipeline(pipeline_name, pipeline_version)
             / self.dname_pipeline_work
+            / get_pipeline_tag(
+                pipeline_name,
+                pipeline_version,
+                participant=participant,
+                session=session,
+            )
         )
 
     def get_dpath_pipeline_output(
@@ -113,3 +145,16 @@ class DatasetLayout(_Base):
             self.get_dpath_pipeline(pipeline_name, pipeline_version)
             / self.dname_pipeline_output
         )
+
+    def get_dpath_bids_db(
+        self,
+        pipeline_name: str,
+        pipeline_version: str,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
+    ) -> Path:
+        """Return the path to a pipeline's BIDS database directory."""
+        dname = get_pipeline_tag(
+            pipeline_name, pipeline_version, participant=participant, session=session
+        )
+        return self.dpath_bids_db / dname

@@ -1,7 +1,9 @@
 """Dataset configuration."""
 
+import os
+import re
 from pathlib import Path
-from typing import Optional, Self
+from typing import Optional, Self, Sequence
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -9,7 +11,16 @@ from nipoppy.utils import load_json
 
 SINGULARITY_BIND_FLAG = "--bind"
 SINGULARITY_BIND_SEP = ":"
-SINGULARITY_ENVVAR_PREFIX = "APPTAINERENV_"
+SINGULARITY_ENVVAR_PREFIXES = ["SINGULARITYENV_", "APPTAINERENV_"]
+
+
+class BoutiquesConfig(BaseModel):
+    """Model for custom configuration within a Boutiques descriptor."""
+
+    # dpath_participant_session_result (for tarring/zipping/extracting)
+    # run_on (for choosing which participants/sessions to run on)
+    # bids_input (for pybids)
+    pass
 
 
 class SingularityConfig(BaseModel):
@@ -58,6 +69,12 @@ class SingularityConfig(BaseModel):
             ]
         )
 
+    def set_env_vars(self) -> None:
+        """Set environment variables for the container."""
+        for key, value in self.ENV_VARS.items():
+            for prefix in SINGULARITY_ENVVAR_PREFIXES:
+                os.environ[f"{prefix}{key}"] = value
+
 
 class PipelineConfig(BaseModel):
     """Model for workflow configuration."""
@@ -67,7 +84,7 @@ class PipelineConfig(BaseModel):
     SINGULARITY_CONFIG: SingularityConfig = SingularityConfig()
     DESCRIPTOR: Optional[dict] = None
     INVOCATION: Optional[dict] = None
-    PYBIDS_IGNORE: list[str] = []
+    PYBIDS_IGNORE: list[re.Pattern] = []
     DESCRIPTION: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
@@ -75,6 +92,25 @@ class PipelineConfig(BaseModel):
     def get_singularity_config(self) -> SingularityConfig:
         """Return the pipeline's Singularity config object."""
         return self.SINGULARITY_CONFIG
+
+    def get_container(self) -> Path:
+        """Return the path to the pipeline's container."""
+        if self.CONTAINER is None:
+            raise RuntimeError("No container specified for the pipeline")
+        return self.CONTAINER
+
+    def add_pybids_ignore_patterns(
+        self,
+        patterns: Sequence[str | re.Pattern] | str | re.Pattern,
+    ):
+        """Add pattern(s) to ignore for PyBIDS."""
+        if isinstance(patterns, (str, re.Pattern)):
+            patterns = [patterns]
+        for pattern in patterns:
+            if isinstance(pattern, str):
+                pattern = re.compile(pattern)
+            if pattern not in self.PYBIDS_IGNORE:
+                self.PYBIDS_IGNORE.append(pattern)
 
 
 class Config(BaseModel):
@@ -94,8 +130,6 @@ class Config(BaseModel):
         """Check that BIDS and PROC_PIPELINES do not have common pipelines."""
         bids_pipelines = set(self.BIDS.keys())
         proc_pipelines = set(self.PROC_PIPELINES.keys())
-        print(bids_pipelines)
-        print(proc_pipelines)
         if len(bids_pipelines & proc_pipelines) != 0:
             raise ValueError(
                 "Cannot have the same pipeline under BIDS and PROC_PIPELINES"

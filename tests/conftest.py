@@ -11,16 +11,23 @@ from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import strip_session
 
-FPATH_CONFIG = "proc/global_configs.json"
+FPATH_CONFIG = "code/global_configs.json"
 FPATH_MANIFEST = "tabular/manifest.csv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 
 ATTR_TO_DPATH_MAP = {
-    "dpath_bids": "bids",
+    "dpath_bids": "rawdata",
     "dpath_derivatives": "derivatives",
-    "dpath_dicom": "dicom",
+    "dpath_dicom": "sourcedata",
     "dpath_downloads": "downloads",
-    "dpath_proc": "proc",
+    "dpath_proc": "code",
+    "dpath_containers": "code/containers",
+    "dpath_descriptors": "code/descriptors",
+    "dpath_invocations": "code/invocations",
+    "dpath_scripts": "code/scripts",
+    "dpath_pybids": "code/pybids",
+    "dpath_bids_db": "code/pybids/bids_db",
+    "dpath_bids_ignore_patterns": "code/pybids/ignore_patterns",
     "dpath_scratch": "scratch",
     "dpath_raw_dicom": "scratch/raw_dicom",
     "dpath_logs": "scratch/logs",

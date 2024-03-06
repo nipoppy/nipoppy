@@ -3,9 +3,11 @@
 from pathlib import Path
 
 import pytest
+from fids import fids
 
 from nipoppy.config import Config, PipelineConfig, SingularityConfig
 from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import PipelineRunner, _PipelineWorkflow
 
 
@@ -34,9 +36,11 @@ class PipelineWorkflow(_PipelineWorkflow):
                     "1.0": {
                         "CONTAINER": "my_container.sif",
                         "DESCRIPTOR": {},
-                        "INVOCATION": {"arg1": "val1"},
+                        "INVOCATION": {},
                     }
                 },
+                # pipeline without a container
+                "no_container": {"2.0": {}},
             },
         )
 
@@ -77,6 +81,37 @@ def test_config_properties():
     assert isinstance(workflow.pipeline_config, PipelineConfig)
     assert isinstance(workflow.singularity_config, SingularityConfig)
     assert isinstance(workflow.singularity_command, str)
+
+
+def test_container(tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=(tmp_path / "my_dataset"),
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+    workflow.layout.dpath_containers.mkdir(parents=True, exist_ok=True)
+    (workflow.layout.dpath_containers / "my_container.sif").touch()
+    assert isinstance(workflow.container, Path)
+
+
+def test_container_not_in_config():
+    workflow = PipelineWorkflow(
+        dpath_root="my_dataset",
+        pipeline_name="no_container",
+        pipeline_version="2.0",
+    )
+    with pytest.raises(RuntimeError, match="No container specified for the pipeline"):
+        workflow.container
+
+
+def test_container_not_found():
+    workflow = PipelineWorkflow(
+        dpath_root="my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+        workflow.container
 
 
 @pytest.mark.parametrize(
@@ -173,8 +208,18 @@ def test_runner(tmp_path: Path):
             }
         },
     )
+
     participant = "01"
     session = "ses-BL"
+
+    fids.create_fake_bids_dataset(
+        runner.layout.dpath_bids,
+        subjects=participant,
+        sessions=strip_session(session),
+    )
+
+    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
+    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
     descriptor_str, invocation_str = runner.run_single(participant, session)
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str

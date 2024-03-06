@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+import bids
 import pandas as pd
 
 # BIDS
@@ -59,9 +60,50 @@ def strip_session(session: str):
     return session.removeprefix(BIDS_SESSION_PREFIX)
 
 
-def get_pipeline_tag(pipeline_name: str, pipeline_version: str):
+def create_bids_db(
+    dpath_bids: Path | str,
+    dpath_bids_db: Optional[Path | str] = None,
+    validate=False,
+    reset_database=True,
+    ignore_patterns: Optional[list[str | re.Pattern] | str | re.Pattern] = None,
+    resolve_paths=True,
+) -> bids.BIDSLayout:
+    """Create a BIDSLayout using an indexer."""
+    dpath_bids = Path(dpath_bids)
+    if resolve_paths:
+        dpath_bids = dpath_bids.resolve()
+
+    if dpath_bids_db is not None:
+        dpath_bids_db = Path(dpath_bids_db)
+
+    indexer = bids.BIDSLayoutIndexer(
+        validate=validate,
+        ignore=ignore_patterns,
+    )
+    bids_layout = bids.BIDSLayout(
+        root=dpath_bids,
+        indexer=indexer,
+        validate=validate,
+        database_path=dpath_bids_db,
+        reset_database=reset_database,
+    )
+    return bids_layout
+
+
+def get_pipeline_tag(
+    pipeline_name: str,
+    pipeline_version: str,
+    participant: Optional[str] = None,
+    session: Optional[str] = None,
+    sep="-",
+):
     """Generate a tag for a pipeline."""
-    return f"{pipeline_name}-{pipeline_version}"
+    components = [pipeline_name, pipeline_version]
+    if participant is not None:
+        components.append(participant)
+    if session is not None:
+        components.append(strip_session(session))
+    return sep.join(components)
 
 
 def load_json(fpath: str | Path, **kwargs) -> dict:
