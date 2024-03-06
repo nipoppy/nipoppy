@@ -44,9 +44,11 @@ def participant_id_to_bids_id(participant_id: str):
     return bids_id
 
 
-def check_session(session: str):
+def check_session(session: Optional[str]):
     """Check/process a session string."""
     # add BIDS prefix if it doesn't already exist
+    if session is None:
+        return session
     session = str(session)
     if session.startswith(BIDS_SESSION_PREFIX):
         return session
@@ -54,8 +56,10 @@ def check_session(session: str):
         return f"{BIDS_SESSION_PREFIX}{session}"
 
 
-def strip_session(session: str):
+def strip_session(session: Optional[str]):
     """Strip the BIDS prefix from a session string."""
+    if session is None:
+        return session
     session = str(session)
     return session.removeprefix(BIDS_SESSION_PREFIX)
 

@@ -39,9 +39,15 @@ def test_init(workflow: _Workflow):
 
 def test_generate_fpath_log(workflow: _Workflow):
     fpath_log = workflow.generate_fpath_log()
-    fpath_log.mkdir(parents=True, exist_ok=True)
-    fpath_log.touch()
     assert isinstance(fpath_log, Path)
+    assert fpath_log.stem.startswith(workflow.name)
+
+
+@pytest.mark.parametrize("fname_stem", ["123", "test", "my_workflow"])
+def test_generate_fpath_log_custom(fname_stem, workflow: _Workflow):
+    fpath_log = workflow.generate_fpath_log(fname_stem=fname_stem)
+    assert isinstance(fpath_log, Path)
+    assert fpath_log.stem.startswith(fname_stem)
 
 
 @pytest.mark.parametrize("command", ["echo x", "echo y"])

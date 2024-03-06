@@ -52,12 +52,13 @@ class _PipelineWorkflow(_Workflow, ABC):
     @cached_property
     def dpath_pipeline(self) -> Path:
         """Return the path to the pipeline's derivatives directory."""
-        return self.layout.get_dpath_pipeline(self.pipeline_name, self.pipeline_version)
+        return self.layout.get_dpath_pipeline(
+            pipeline_name=self.pipeline_name, pipeline_version=self.pipeline_version
+        )
 
     @cached_property
     def dpath_pipeline_output(self) -> Path:
         """Return the path to the pipeline's output directory."""
-        # always the same no matter if participant/session is specified
         return self.layout.get_dpath_pipeline_output(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
@@ -101,7 +102,7 @@ class _PipelineWorkflow(_Workflow, ABC):
         return self.singularity_config.build_command()
 
     @cached_property
-    def container(self) -> Path:
+    def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
         fpath_container = (
             self.layout.dpath_containers / self.pipeline_config.get_container()
@@ -188,7 +189,7 @@ class _PipelineWorkflow(_Workflow, ABC):
             self.logger.debug(filename)
 
         if len(filenames) == 0:
-            raise RuntimeError("BIDS database is empty")
+            self.logger.warning("BIDS database is empty")
 
         return bids_layout
 
@@ -225,7 +226,8 @@ class _PipelineWorkflow(_Workflow, ABC):
 
     def run_cleanup(self, **kwargs):
         """Run pipeline cleanup."""
-        self.run_command(["rm", "-rf", self.dpath_pipeline_work])
+        if self.dpath_pipeline_work.exists():
+            self.run_command(["rm", "-rf", self.dpath_pipeline_work])
         return super().run_cleanup(**kwargs)
 
     def get_participants_sessions_to_run(
@@ -247,6 +249,16 @@ class _PipelineWorkflow(_Workflow, ABC):
     def run_single(self, participant: Optional[str], session: Optional[str]):
         """Run on a single participant/session."""
         pass
+
+    def generate_fpath_log(self) -> Path:
+        return super().generate_fpath_log(
+            fname_stem=get_pipeline_tag(
+                pipeline_name=self.pipeline_name,
+                pipeline_version=self.pipeline_version,
+                participant=self.participant,
+                session=self.session,
+            )
+        )
 
 
 class PipelineRunner(_PipelineWorkflow):
@@ -308,20 +320,6 @@ class PipelineRunner(_PipelineWorkflow):
         )
 
         return descriptor_str, invocation_str
-
-
-# workflow = PipelineRunner(
-#     dpath_root="/data/origami/michelle/scratch/test_ppmi",
-#     pipeline_name="mriqc",
-#     pipeline_version="23.1.0",
-#     participant="100012",
-#     session="ses-BL",
-# )
-# # workflow.logger.setLevel(-100)
-# from nipoppy.logger import add_logfile
-
-# add_logfile(workflow.logger, "/data/origami/michelle/scratch/test_ppmi/mriqc.log")
-# workflow.run()
 
 
 class PipelineTracker(_PipelineWorkflow):

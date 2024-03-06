@@ -1,19 +1,42 @@
 """Tests for _PipelineWorkflow, PipelineRunner, and PipelineTracker."""
 
+from logging import Logger
 from pathlib import Path
 
 import pytest
+from conftest import _prepare_dataset
 from fids import fids
 
 from nipoppy.config import Config, PipelineConfig, SingularityConfig
-from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import PipelineRunner, _PipelineWorkflow
 
 
 class PipelineWorkflow(_PipelineWorkflow):
+    def __init__(
+        self,
+        dpath_root: Path | str,
+        pipeline_name: str,
+        pipeline_version: str,
+        participant=None,
+        session=None,
+        logger: Logger | None = None,
+        dry_run=False,
+    ):
+        self._n_runs = 0
+        super().__init__(
+            dpath_root,
+            pipeline_name,
+            pipeline_version,
+            participant,
+            session,
+            logger,
+            dry_run,
+        )
+
     def run_single(self, subject: str, session: str):
         """Run on a single subject/session."""
+        self._n_runs += 1
         self.logger.info(f"Running on {subject}/{session}")
 
     @property
@@ -68,8 +91,9 @@ def test_init(args):
     assert hasattr(workflow, "participant")
     assert hasattr(workflow, "session")
     assert isinstance(workflow.dpath_pipeline, Path)
-    assert isinstance(workflow.dpath_pipeline_work, Path)
     assert isinstance(workflow.dpath_pipeline_output, Path)
+    assert isinstance(workflow.dpath_pipeline_work, Path)
+    assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
 def test_config_properties():
@@ -83,7 +107,7 @@ def test_config_properties():
     assert isinstance(workflow.singularity_command, str)
 
 
-def test_container(tmp_path: Path):
+def test_fpath_container(tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=(tmp_path / "my_dataset"),
         pipeline_name="my_pipeline",
@@ -91,27 +115,27 @@ def test_container(tmp_path: Path):
     )
     workflow.layout.dpath_containers.mkdir(parents=True, exist_ok=True)
     (workflow.layout.dpath_containers / "my_container.sif").touch()
-    assert isinstance(workflow.container, Path)
+    assert isinstance(workflow.fpath_container, Path)
 
 
-def test_container_not_in_config():
+def test_fpath_container_not_in_config():
     workflow = PipelineWorkflow(
         dpath_root="my_dataset",
         pipeline_name="no_container",
         pipeline_version="2.0",
     )
     with pytest.raises(RuntimeError, match="No container specified for the pipeline"):
-        workflow.container
+        workflow.fpath_container
 
 
-def test_container_not_found():
+def test_fpath_container_not_found():
     workflow = PipelineWorkflow(
         dpath_root="my_dataset",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
     )
     with pytest.raises(FileNotFoundError, match="No container image file found at"):
-        workflow.container
+        workflow.fpath_container
 
 
 @pytest.mark.parametrize(
@@ -132,6 +156,47 @@ def test_invocation(pipeline_name, pipeline_version, tmp_path: Path):
     assert isinstance(workflow.invocation, dict)
 
 
+@pytest.mark.parametrize(
+    "participant,session,expected_count",
+    [
+        (None, None, 7),
+        ("01", None, 3),
+        ("02", None, 4),
+        (None, "ses-1", 3),
+        (None, "ses-2", 3),
+        (None, "ses-3", 1),
+        ("01", "ses-3", 1),
+        ("02", "ses-3", 0),
+    ],
+)
+def test_set_up_bids_db(participant, session, expected_count, tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+    dpath_bids_db = tmp_path / "bids_db"
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+        subjects="01",
+        sessions=["1", "2", "3"],
+        datatypes=["anat"],
+    )
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+        subjects="02",
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+    bids_layout = workflow.set_up_bids_db(
+        dpath_bids_db=dpath_bids_db,
+        participant=participant,
+        session=strip_session(session),
+    )
+    assert dpath_bids_db.exists()
+    assert len(bids_layout.get(extension=".nii.gz")) == expected_count
+
+
 @pytest.mark.parametrize("dry_run", [True, False])
 def test_run_setup(dry_run: bool, tmp_path: Path):
     workflow = PipelineWorkflow(
@@ -145,6 +210,7 @@ def test_run_setup(dry_run: bool, tmp_path: Path):
         workflow.dpath_pipeline,
         workflow.dpath_pipeline_work,
         workflow.dpath_pipeline_output,
+        workflow.dpath_pipeline_bids_db,
     ]:
         assert dpath_to_check.exists() == (not dry_run)
 
@@ -152,15 +218,82 @@ def test_run_setup(dry_run: bool, tmp_path: Path):
     workflow.run_setup()
 
 
-def test_run_main(tmp_path: Path):
+@pytest.mark.parametrize(
+    "participant,session,expected_count",
+    [(None, None, 4), ("01", None, 3), ("01", "ses-2", 1)],
+)
+def test_run_main(participant, session, expected_count, tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
+        participant=participant,
+        session=session,
     )
-    # make an empty doughnut
-    Doughnut().save_with_backup(workflow.layout.fpath_doughnut)
+
+    participants_and_sessions = {"01": ["ses-1", "ses-2", "ses-3"], "02": ["ses-1"]}
+    manifest = _prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_converted=participants_and_sessions,
+        dpath_converted=workflow.layout.dpath_bids,
+    )
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
+    assert workflow._n_runs == expected_count
+
+
+@pytest.mark.parametrize(
+    "participant,session,expected_count",
+    [(None, None, 4), ("01", None, 3), ("02", None, 1), ("01", "ses-2", 1)],
+)
+def test_get_participants_sessions_to_run(
+    participant, session, expected_count, tmp_path: Path
+):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+        participant=participant,
+        session=session,
+    )
+
+    participants_and_sessions_manifest = {
+        "01": ["ses-1", "ses-2", "ses-3"],
+        "02": ["ses-1", "ses-2", "ses-3"],
+    }
+    participants_and_sessions_converted = {
+        "01": ["ses-1", "ses-2", "ses-3"],
+        "02": ["ses-1"],
+    }
+    manifest = _prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions_manifest,
+        participants_and_sessions_converted=participants_and_sessions_converted,
+        dpath_converted=workflow.layout.dpath_bids,
+    )
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    workflow.run_main()
+    assert workflow._n_runs == expected_count
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,participant,session,expected_stem",
+    [
+        ("pipeline1", "v1", "sub1", None, "pipeline1-v1-sub1"),
+        ("pipeline2", "2.0", None, "ses-1", "pipeline2-2.0-1"),
+    ],
+)
+def test_generate_fpath_log(
+    pipeline_name, pipeline_version, participant, session, expected_stem, tmp_path: Path
+):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+        participant=participant,
+        session=session,
+    )
+    fpath_log = workflow.generate_fpath_log()
+    assert fpath_log.stem.startswith(expected_stem)
 
 
 def test_runner(tmp_path: Path):

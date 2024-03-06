@@ -1,6 +1,7 @@
 """Tests for the config module."""
 
 import json
+import os
 import re
 from contextlib import nullcontext
 from pathlib import Path
@@ -79,7 +80,7 @@ def test_singularity_config_build_command(data, expected):
 @pytest.mark.parametrize("path_local", [Path(__file__).parent, "."])
 @pytest.mark.parametrize("path_container", ["/abc", "/abc/def"])
 @pytest.mark.parametrize("mode", ["rw", "ro"])
-def test_singularity_config_bind_path(path_local, path_container, mode):
+def test_singularity_config_add_bind_path(path_local, path_container, mode):
     singularity_config = SingularityConfig()
     singularity_config.add_bind_path(path_local, path_container, mode=mode)
     # make sure local path is absolute in output
@@ -90,7 +91,7 @@ def test_singularity_config_bind_path(path_local, path_container, mode):
 
 @pytest.mark.parametrize("path_local", [Path(__file__).parent, "."])
 @pytest.mark.parametrize("mode", ["rw", "ro"])
-def test_add_singularity_path_no_path_container(path_local, mode):
+def test_singularity_config_add_bind_path_no_path_container(path_local, mode):
     singularity_config = SingularityConfig()
     singularity_config.add_bind_path(path_local, mode=mode)
     path_local = Path(path_local).resolve()
@@ -99,12 +100,28 @@ def test_add_singularity_path_no_path_container(path_local, mode):
 
 
 @pytest.mark.parametrize("check_exists", [True, False])
-def test_add_singularity_path_ro_error(check_exists):
+def test_singularity_config_add_bind_path_ro_error(check_exists):
     singularity_config = SingularityConfig()
     with pytest.raises(FileNotFoundError) if check_exists else nullcontext():
         singularity_config.add_bind_path(
             "fake_path", mode="ro", check_exists=check_exists
         )
+
+
+@pytest.mark.parametrize(
+    "env_vars",
+    [
+        {"VAR1": "1"},
+        {"VAR2": "test"},
+        {"VAR3": "123", "VAR4": ""},
+    ],
+)
+def test_singularity_config_set_env_vars(env_vars: dict):
+    singularity_config = SingularityConfig(ENV_VARS=env_vars)
+    singularity_config.set_env_vars()
+    for key, value in env_vars.items():
+        assert os.environ[f"SINGULARITYENV_{key}"] == value
+        assert os.environ[f"APPTAINERENV_{key}"] == value
 
 
 @pytest.mark.parametrize(

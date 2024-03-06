@@ -57,11 +57,13 @@ class _Workflow(_Base, ABC):
 
         self.layout = DatasetLayout(self.dpath_root)
 
-    def generate_fpath_log(self) -> Path:
+    def generate_fpath_log(self, fname_stem=None) -> Path:
         """Generate a log file path."""
+        if fname_stem is None:
+            fname_stem = self.name
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         dpath_log = self.layout.dpath_logs / self.name
-        fname_log = f"{self.path_sep.join([self.name, timestamp])}{LOG_SUFFIX}"
+        fname_log = f"{self.path_sep.join([fname_stem, timestamp])}{LOG_SUFFIX}"
         return dpath_log / fname_log
 
     def log_command(self, command: str):

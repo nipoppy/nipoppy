@@ -50,14 +50,14 @@ def test_participant_id_to_bids_id(participant_id, expected):
 
 @pytest.mark.parametrize(
     "session,expected",
-    [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12")],
+    [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
 )
 def test_check_session(session, expected):
     assert check_session(session) == expected
 
 
 @pytest.mark.parametrize(
-    "session,expected", [("ses-BL", "BL"), ("BL", "BL"), ("ses-01", "01")]
+    "session,expected", [("ses-BL", "BL"), ("BL", "BL"), ("ses-01", "01"), (None, None)]
 )
 def test_strip_session(session, expected):
     assert strip_session(session) == expected
