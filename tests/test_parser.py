@@ -8,8 +8,11 @@ from nipoppy.cli.parser import (
     add_arg_dataset_root,
     add_arg_dry_run,
     add_arg_verbosity,
+    add_args_participant_and_session,
+    add_args_pipeline,
     add_subparser_doughnut,
     add_subparser_init,
+    add_subparser_pipeline_run,
     get_global_parser,
 )
 
@@ -19,6 +22,34 @@ def test_add_arg_dataset_root(dataset_root: str):
     parser = ArgumentParser()
     parser = add_arg_dataset_root(parser)
     assert parser.parse_args(["--dataset-root", dataset_root])
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--pipeline", "my_pipeline"],
+        ["--pipeline", "my_other_pipeline", "--pipeline-version", "1.0.0"],
+    ],
+)
+def test_add_args_pipeline(args):
+    parser = ArgumentParser()
+    parser = add_args_pipeline(parser)
+    assert parser.parse_args(args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        [],
+        ["--participant", "1000"],
+        ["--session", "1"],
+        ["--participant", "sub-123", "--session", "ses-1"],
+    ],
+)
+def test_add_args_participant_and_session(args):
+    parser = ArgumentParser()
+    parser = add_args_participant_and_session(parser)
+    assert parser.parse_args(args)
 
 
 def test_add_arg_dry_run():
@@ -69,10 +100,50 @@ def test_add_subparser_doughnut(args):
 @pytest.mark.parametrize(
     "args",
     [
+        ["--dataset-root", "my_dataset", "--pipeline", "pipeline1"],
+        [
+            "--dataset-root",
+            "my_dataset",
+            "--pipeline",
+            "pipeline1",
+            "--pipeline-version",
+            "1.2.3",
+        ],
+        [
+            "--dataset-root",
+            "my_dataset",
+            "--pipeline",
+            "pipeline2",
+            "--participant",
+            "1000",
+        ],
+        [
+            "--dataset-root",
+            "my_dataset",
+            "--pipeline",
+            "pipeline2",
+            "--participant",
+            "1000",
+            "--session",
+            "BL",
+        ],
+    ],
+)
+def test_add_subparser_pipeline_run(args):
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_pipeline_run(subparsers)
+    assert parser.parse_args(["run"] + args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
         ["-h"],
         ["init", "-h"],
         ["init", "--dataset-root", "my_dataset"],
         ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
+        ["run", "--dataset-root", "my_dataset", "--pipeline", "a_pipeline"],
     ],
 )
 def test_global_parser(args: list[str]):

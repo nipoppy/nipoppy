@@ -11,6 +11,7 @@ from fids import fids
 
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
+    check_participant,
     check_session,
     dicom_id_to_bids_id,
     get_pipeline_tag,
@@ -46,6 +47,14 @@ def test_dicom_id_to_bids_id(dicom_id, expected):
 )
 def test_participant_id_to_bids_id(participant_id, expected):
     assert participant_id_to_bids_id(participant_id) == expected
+
+
+@pytest.mark.parametrize(
+    "participant,expected",
+    [("sub-01", "01"), ("01", "01"), (None, None)],
+)
+def test_check_participant(participant, expected):
+    assert check_participant(participant) == expected
 
 
 @pytest.mark.parametrize(

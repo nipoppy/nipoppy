@@ -4,9 +4,17 @@ import logging
 from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
 
+from nipoppy.utils import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    check_participant,
+    check_session,
+)
+
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
 COMMAND_DOUGHNUT = "doughnut"
+COMMAND_PIPELINE_RUN = "run"
 
 DEFAULT_VERBOSITY = "2"  # info
 VERBOSITY_TO_LOG_LEVEL_MAP = {
@@ -24,6 +32,40 @@ def add_arg_dataset_root(parser: _ActionsContainer) -> _ActionsContainer:
         type=Path,
         required=True,
         help="Path to the root of the dataset.",
+    )
+    return parser
+
+
+def add_args_participant_and_session(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add --participant and --session arguments to the parser."""
+    parser.add_argument(
+        "--participant",
+        type=check_participant,
+        required=False,
+        help=f"Participant ID (with or without the {BIDS_SUBJECT_PREFIX} prefix).",
+    )
+    parser.add_argument(
+        "--session",
+        type=check_session,
+        required=False,
+        help=f"Session ID (with or without the {BIDS_SESSION_PREFIX} prefix).",
+    )
+    return parser
+
+
+def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add pipeline-related arguments to the parser."""
+    parser.add_argument(
+        "--pipeline",
+        type=str,
+        required=True,
+        help="Pipeline name.",
+    )
+    parser.add_argument(
+        "--pipeline-version",
+        type=str,
+        required=False,
+        help="Pipeline version.",
     )
     return parser
 
@@ -119,6 +161,22 @@ def add_subparser_doughnut(
     return parser
 
 
+def add_subparser_pipeline_run(
+    subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
+) -> ArgumentParser:
+    """Add subparser for run command."""
+    parser = subparsers.add_parser(
+        COMMAND_PIPELINE_RUN,
+        help="Run a pipeline.",
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser = add_args_pipeline(parser)
+    parser = add_args_participant_and_session(parser)
+    return parser
+
+
 def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
@@ -139,6 +197,7 @@ def get_global_parser(
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
+    add_subparser_pipeline_run(subparsers, formatter_class=formatter_class)
 
     # add common/global options to subcommand parsers
     for parser in list(subparsers.choices.values()):

@@ -5,10 +5,16 @@ from typing import Sequence
 
 from rich_argparse import RichHelpFormatter
 
-from nipoppy.cli.parser import COMMAND_DOUGHNUT, COMMAND_INIT, get_global_parser
+from nipoppy.cli.parser import (
+    COMMAND_DOUGHNUT,
+    COMMAND_INIT,
+    COMMAND_PIPELINE_RUN,
+    get_global_parser,
+)
 from nipoppy.logger import add_logfile, get_logger
 from nipoppy.workflows.dataset_init import InitWorkflow
 from nipoppy.workflows.doughnut import DoughnutWorkflow
+from nipoppy.workflows.pipeline import PipelineRunner
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -39,6 +45,15 @@ def cli(argv: Sequence[str] = None) -> None:
                 dpath_root=dpath_root,
                 empty=args.empty,
                 regenerate=args.regenerate,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_PIPELINE_RUN:
+            workflow = PipelineRunner(
+                dpath_root=dpath_root,
+                pipeline_name=args.pipeline,
+                pipeline_version=args.pipeline_version,
+                participant=args.participant,
+                session=args.session,
                 **workflow_kwargs,
             )
         else:

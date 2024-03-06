@@ -15,6 +15,8 @@ from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     DPATH_DESCRIPTORS,
+    check_participant,
+    check_session,
     create_bids_db,
     get_pipeline_tag,
     load_json,
@@ -46,8 +48,8 @@ class _PipelineWorkflow(_Workflow, ABC):
         )
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
-        self.participant = participant
-        self.session = session
+        self.participant = check_participant(participant)
+        self.session = check_session(session)
 
     @cached_property
     def dpath_pipeline(self) -> Path:
