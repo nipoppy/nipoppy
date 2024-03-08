@@ -73,11 +73,9 @@ class _Workflow(_Base, ABC):
     def run_command(
         self,
         command_or_args: Sequence[str] | str,
-        shell=False,
         check=True,
-        capture_output=False,
         **kwargs,
-    ) -> subprocess.Popen | tuple[str, str] | str:
+    ) -> subprocess.Popen | str:
         """Run a command in a subprocess.
 
         The command's stdout and stderr outputs are written to the log
@@ -91,26 +89,20 @@ class _Workflow(_Base, ABC):
         ----------
         command_or_args : Sequence[str] | str
             The command to run.
-        shell : bool, optional
-            Passed to `subprocess.Popen`, by default False
         check : bool, optional
             If True, raise an error if the process exits with a non-zero code,
             by default True
-        capture_output : bool, optional
-            If True, return a tuple of strings from stdout and stderr, by default False
         **kwargs
             Passed to `subprocess.Popen`.
 
         Returns
         -------
-        subprocess.Popen | tuple[str, str] | str
+        subprocess.Popen | str
         """
 
         def process_output(output_source, output_str: str, log_prefix: str):
             """Consume lines from an IO stream and append them to a string."""
             for line in output_source:
-                if capture_output:
-                    output_str += line  # store the line as-is
                 line = line.strip("\n")
                 self.logger.info(f"{log_prefix} {line}")
             return output_str
@@ -124,7 +116,7 @@ class _Workflow(_Base, ABC):
             args = shlex.split(command)
 
         # only pass a single string if shell is True
-        if not shell:
+        if not kwargs.get("shell"):
             command_or_args = args
 
         self.log_command(command)
@@ -137,7 +129,6 @@ class _Workflow(_Base, ABC):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                shell=shell,
                 **kwargs,
             )
 
@@ -156,18 +147,12 @@ class _Workflow(_Base, ABC):
 
             if check and process.returncode != 0:
                 exception = subprocess.CalledProcessError(process.returncode, command)
-                self.logger.error(exception)
                 raise exception
 
             run_output = process
 
         else:
             run_output = command
-
-        # return the captured stdout/stderr strings
-        # instead of the Popen object or command string
-        if capture_output:
-            run_output = (stdout_str, stderr_str)
 
         return run_output
 

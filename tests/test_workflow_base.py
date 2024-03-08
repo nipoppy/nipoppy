@@ -2,6 +2,7 @@
 
 import logging
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import _Workflow
 
 
-@pytest.fixture(params=[get_logger("my_logger"), None])
+@pytest.fixture(params=[get_logger("my_logger"), None], scope="function")
 def workflow(request: pytest.FixtureRequest, tmp_path: Path):
     class DummyWorkflow(_Workflow):
         def run_main(self):
@@ -64,29 +65,31 @@ def test_log_command(
     assert command in record.message
 
 
-@pytest.mark.parametrize(
-    "command_or_args,shell,capture_output,expected",
-    [
-        ("echo x", False, False, "echo x"),
-        (["echo", "y"], False, False, "echo y"),
-        ("echo x", False, True, ("x\n", "")),
-        (["echo", "y"], False, True, ("y\n", "")),
-        ("echo x && echo y 1>&2", True, True, ("x\n", "y\n")),
-        (["echo x && echo y 1>&2"], True, True, ("x\n", "y\n")),
-    ],
-)
-@pytest.mark.parametrize("check", [True, False])
-def test_run_command(
-    workflow: _Workflow, command_or_args, shell, capture_output, expected, check
-):
-    if capture_output:
-        workflow.dry_run = False
-    else:
-        workflow.dry_run = True
+def test_run_command(workflow: _Workflow, tmp_path: Path):
+    fpath = tmp_path / "test.txt"
+    process = workflow.run_command(["touch", fpath])
+    assert process.returncode == 0
+    assert fpath.exists()
 
-    assert expected == workflow.run_command(
-        command_or_args, check=check, shell=shell, capture_output=capture_output
-    )
+
+def test_run_command_single_string(workflow: _Workflow, tmp_path: Path):
+    fpath = tmp_path / "test.txt"
+    process = workflow.run_command(f"touch {fpath}", shell=True)
+    assert process.returncode == 0
+    assert fpath.exists()
+
+
+def test_run_command_dry_run(workflow: _Workflow, tmp_path: Path):
+    workflow.dry_run = True
+    fpath = tmp_path / "test.txt"
+    command = workflow.run_command(["touch", fpath])
+    assert command == f"touch {fpath}"
+    assert not fpath.exists()
+
+
+def test_run_command_check(workflow: _Workflow):
+    with pytest.raises(subprocess.CalledProcessError):
+        workflow.run_command(["which", "probably_fake_command"], check=True)
 
 
 def test_run_setup(workflow: _Workflow, caplog: pytest.LogCaptureFixture):
