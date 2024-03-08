@@ -1,16 +1,15 @@
 """Tests for the config module."""
 
 import json
-import os
 import re
-from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
 from conftest import DPATH_TEST_DATA
 from pydantic import ValidationError
 
-from nipoppy.config import Config, PipelineConfig, SingularityConfig, load_config
+from nipoppy.config.base import Config, PipelineConfig, load_config
+from nipoppy.config.singularity import SingularityConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "SESSIONS", "PROC_PIPELINES"]
@@ -22,7 +21,6 @@ FIELDS_PIPELINE = [
     "INVOCATION",
     "PYBIDS_IGNORE",
 ]
-FIELDS_SINGULARITY = ["COMMAND", "ARGS", "ENV_VARS"]
 
 
 @pytest.fixture(scope="function")
@@ -44,90 +42,6 @@ def valid_config_data():
     "data",
     [
         {},
-        {"COMMAND": "apptainer"},
-        {"ARGS": ["--cleanenv", "-H /my/path"]},
-        {"ENV_VARS": {"TEMPLATEFLOW_HOME": "/path/to/templateflow"}},
-    ],
-)
-def test_singularity_config(data):
-    for field in FIELDS_SINGULARITY:
-        assert hasattr(SingularityConfig(**data), field)
-
-
-def test_singularity_config_no_extra_fields():
-    with pytest.raises(ValidationError):
-        SingularityConfig(not_a_field="a")
-
-
-@pytest.mark.parametrize(
-    "data, expected",
-    [
-        ({}, "singularity run"),
-        (
-            {
-                "COMMAND": "/path/to/singularity",
-                "SUBCOMMAND": "exec",
-                "ARGS": ["--cleanenv"],
-            },
-            "/path/to/singularity exec --cleanenv",
-        ),
-    ],
-)
-def test_singularity_config_build_command(data, expected):
-    assert SingularityConfig(**data).build_command() == expected
-
-
-@pytest.mark.parametrize("path_local", [Path(__file__).parent, "."])
-@pytest.mark.parametrize("path_container", ["/abc", "/abc/def"])
-@pytest.mark.parametrize("mode", ["rw", "ro"])
-def test_singularity_config_add_bind_path(path_local, path_container, mode):
-    singularity_config = SingularityConfig()
-    singularity_config.add_bind_path(path_local, path_container, mode=mode)
-    # make sure local path is absolute in output
-    path_local = Path(path_local).resolve()
-    expected_args = ["--bind", f"{path_local}:{path_container}:{mode}"]
-    assert singularity_config.ARGS == expected_args
-
-
-@pytest.mark.parametrize("path_local", [Path(__file__).parent, "."])
-@pytest.mark.parametrize("mode", ["rw", "ro"])
-def test_singularity_config_add_bind_path_no_path_container(path_local, mode):
-    singularity_config = SingularityConfig()
-    singularity_config.add_bind_path(path_local, mode=mode)
-    path_local = Path(path_local).resolve()
-    expected_args = ["--bind", f"{path_local}:{path_local}:{mode}"]
-    assert singularity_config.ARGS == expected_args
-
-
-@pytest.mark.parametrize("check_exists", [True, False])
-def test_singularity_config_add_bind_path_ro_error(check_exists):
-    singularity_config = SingularityConfig()
-    with pytest.raises(FileNotFoundError) if check_exists else nullcontext():
-        singularity_config.add_bind_path(
-            "fake_path", mode="ro", check_exists=check_exists
-        )
-
-
-@pytest.mark.parametrize(
-    "env_vars",
-    [
-        {"VAR1": "1"},
-        {"VAR2": "test"},
-        {"VAR3": "123", "VAR4": ""},
-    ],
-)
-def test_singularity_config_set_env_vars(env_vars: dict):
-    singularity_config = SingularityConfig(ENV_VARS=env_vars)
-    singularity_config.set_env_vars()
-    for key, value in env_vars.items():
-        assert os.environ[f"SINGULARITYENV_{key}"] == value
-        assert os.environ[f"APPTAINERENV_{key}"] == value
-
-
-@pytest.mark.parametrize(
-    "data",
-    [
-        {},
         {"CONTAINER": "/my/container"},
         {"URI": "docker://container"},
         {"SINGULARITY_CONFIG": {"ARGS": ["--cleanenv"]}},
@@ -140,10 +54,6 @@ def test_singularity_config_set_env_vars(env_vars: dict):
 def test_pipeline_config(data):
     for field in FIELDS_PIPELINE:
         assert hasattr(PipelineConfig(**data), field)
-
-
-def test_pipeline_config_get_singularity_config():
-    assert isinstance(PipelineConfig().get_singularity_config(), SingularityConfig)
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
@@ -187,11 +97,63 @@ def test_config_extra_fields_allowed(field_name, valid_config_data):
     assert hasattr(Config(**args), field_name)
 
 
-def test_config_no_duplicate_pipeline(valid_config_data):
+def test_config_check_no_duplicate_pipeline(valid_config_data):
     data = valid_config_data
     data["PROC_PIPELINES"].update(data["BIDS"])
     with pytest.raises(ValidationError):
         Config(**data)
+
+
+@pytest.mark.parametrize(
+    "data_root,data_pipeline,data_expected",
+    [
+        (
+            {"ARGS": ["--cleanenv"]},
+            {"ARGS": ["--fakeroot"]},
+            {"ARGS": ["--fakeroot", "--cleanenv"]},
+        ),
+        (
+            {"ARGS": ["--cleanenv"]},
+            {"ARGS": ["--fakeroot"], "INHERIT": "false"},
+            {"ARGS": ["--fakeroot"], "INHERIT": "false"},
+        ),
+        (
+            {"ENV_VARS": {"VAR1": "1"}},
+            {"ENV_VARS": {"VAR2": "2"}},
+            {"ENV_VARS": {"VAR1": "1", "VAR2": "2"}},
+        ),
+        (
+            {"ENV_VARS": {"VAR1": "1"}},
+            {"ENV_VARS": {"VAR2": "2"}, "INHERIT": "false"},
+            {"ENV_VARS": {"VAR2": "2"}, "INHERIT": "false"},
+        ),
+    ],
+)
+@pytest.mark.parametrize("pipeline_type", ["BIDS", "PROC_PIPELINES"])
+def test_config_propagate_singularity_config(
+    data_root, data_pipeline, data_expected, pipeline_type
+):
+    pipeline_name = "pipeline1"
+    pipeline_version = "1.0"
+    data = {
+        "DATASET_NAME": "my_dataset",
+        "SESSIONS": [],
+        "SINGULARITY_CONFIG": data_root,
+        "BIDS": {},
+        "PROC_PIPELINES": {},
+    }
+    data.update(
+        {
+            pipeline_type: {
+                pipeline_name: {pipeline_version: {"SINGULARITY_CONFIG": data_pipeline}}
+            }
+        }
+    )
+    print(f"data: {data}")
+    singularity_config = getattr(Config(**data), pipeline_type)[pipeline_name][
+        pipeline_version
+    ].get_singularity_config()
+    assert singularity_config == SingularityConfig(**data_expected)
 
 
 @pytest.mark.parametrize(

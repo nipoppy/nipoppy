@@ -10,7 +10,7 @@ from conftest import (
     _prepare_dataset,
 )
 
-from nipoppy.config import Config
+from nipoppy.config.base import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json

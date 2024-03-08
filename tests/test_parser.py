@@ -101,6 +101,7 @@ def test_add_subparser_doughnut(args):
     "args",
     [
         ["--dataset-root", "my_dataset", "--pipeline", "pipeline1"],
+        ["--dataset-root", "my_dataset", "--pipeline", "pipeline1", "--simulate"],
         [
             "--dataset-root",
             "my_dataset",

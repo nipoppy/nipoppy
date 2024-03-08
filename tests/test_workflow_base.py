@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config import Config
+from nipoppy.config.base import Config
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST

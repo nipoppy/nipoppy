@@ -38,3 +38,34 @@ def test_cli_doughnut(tmp_path: Path):
         len(list((dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob("doughnut/*.log")))
         == 1
     )
+
+
+def test_cli_pipeline_run(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    try:
+        cli(
+            [
+                "nipoppy",
+                "run",
+                "--dataset-root",
+                str(dpath_root),
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+            ]
+        )
+    except BaseException:
+        pass
+
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "my_pipeline-1.0/*.log"
+                )
+            )
+        )
+        == 1
+    )

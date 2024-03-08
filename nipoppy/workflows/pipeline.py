@@ -9,8 +9,14 @@ from typing import Optional
 
 import bids
 from boutiques import bosh
+from pydantic import ValidationError
 
-from nipoppy.config import PipelineConfig, SingularityConfig
+from nipoppy.config.base import PipelineConfig
+from nipoppy.config.boutiques import (
+    BoutiquesConfig,
+    get_boutiques_config_from_descriptor,
+)
+from nipoppy.config.singularity import prepare_singularity
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -94,16 +100,6 @@ class _PipelineWorkflow(_Workflow, ABC):
         )
 
     @cached_property
-    def singularity_config(self) -> SingularityConfig:
-        """Get the Singularity config for the pipeline."""
-        return self.pipeline_config.get_singularity_config()
-
-    @property
-    def singularity_command(self) -> str:
-        """Build the Singularity command to run the pipeline."""
-        return self.singularity_config.build_command()
-
-    @cached_property
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
         fpath_container = (
@@ -137,6 +133,7 @@ class _PipelineWorkflow(_Workflow, ABC):
                 )
         else:
             self.logger.info("Loaded descriptor from pipeline config")
+
         return descriptor
 
     @cached_property
@@ -145,6 +142,90 @@ class _PipelineWorkflow(_Workflow, ABC):
         # for now just get the invocation directly
         # TODO eventually add option to load from file
         return self.pipeline_config.INVOCATION
+
+    def process_template_json(
+        self,
+        template_json: dict,
+        participant: str,
+        session: str,
+        bids_id: Optional[str] = None,
+        session_short: Optional[str] = None,
+        objs: Optional[list] = None,
+        return_str: bool = False,
+        **kwargs,
+    ):
+        """Replace template strings in a JSON object."""
+        if not (isinstance(participant, str) and isinstance(session, str)):
+            raise ValueError(
+                "participant and session must be strings"
+                f", got {participant} ({type(participant)})"
+                f" and {session} ({type(session)})"
+            )
+
+        if bids_id is None:
+            bids_id = participant_id_to_bids_id(participant)
+        if session_short is None:
+            session_short = strip_session(session)
+
+        if objs is None:
+            objs = []
+        objs.extend([self, self.layout])
+
+        kwargs["participant"] = participant
+        kwargs["session"] = session
+        kwargs["bids_id"] = bids_id
+        kwargs["session_short"] = session_short
+
+        self.logger.debug("Available replacement strings: ")
+        max_len = max(len(k) for k in kwargs)
+        for k, v in kwargs.items():
+            print(k, v)
+            self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
+        self.logger.debug(f"\t+ all attributes in: {objs}")
+
+        template_json_str = process_template_str(
+            json.dumps(template_json),
+            objs=objs,
+            **kwargs,
+        )
+
+        if return_str:
+            return template_json_str
+        else:
+            return json.loads(template_json_str)
+
+    def get_boutiques_config(self, participant: str, session: str):
+        """Get the Boutiques configuration."""
+        try:
+            boutiques_config = get_boutiques_config_from_descriptor(
+                self.descriptor,
+                func_to_apply=(
+                    lambda json_data: self.process_template_json(
+                        json_data,
+                        participant=participant,
+                        session=session,
+                        return_str=False,
+                    )
+                ),
+            )
+        except ValidationError as exception:
+            error_message = str(exception) + str(exception.errors())
+            raise ValueError(
+                f"Error when loading the Boutiques config from descriptor"
+                f": {error_message}"
+            )
+        except RuntimeError as exception:
+            self.logger.debug(
+                "Caught exception when trying to load Boutiques config"
+                f": {type(exception).__name__}: {exception}"
+            )
+            self.logger.debug(
+                "Assuming Boutiques config is not in descriptor. Using default"
+            )
+            return BoutiquesConfig()
+
+        self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
+        return boutiques_config
 
     def set_up_bids_db(
         self,
@@ -166,27 +247,28 @@ class _PipelineWorkflow(_Workflow, ABC):
 
         pybids_ignore_patterns = self.pipeline_config.PYBIDS_IGNORE
         self.logger.info(
-            "Building BIDSLayout with ignore patterns:"
-            f" {[str(pattern) for pattern in pybids_ignore_patterns]}"
+            f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore patterns:"
+            f" {pybids_ignore_patterns}"
         )
-        self.logger.debug(pybids_ignore_patterns)
 
-        if dpath_bids_db.exists():
+        if dpath_bids_db.exists() and len(list(dpath_bids_db.iterdir())) > 0:
             self.logger.warning(
                 f"Overwriting existing BIDS database directory: {dpath_bids_db}"
             )
 
-        self.logger.debug(self.layout.dpath_bids)
+        self.logger.debug(f"Path to BIDS data: {self.layout.dpath_bids}")
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
             dpath_bids_db=dpath_bids_db,
             ignore_patterns=pybids_ignore_patterns,
+            reset_database=True,
         )
 
         # list all the files in BIDSLayout
         # since we are selecting for specific a specific subject and
         # session, there should not be too many files
         filenames = bids_layout.get(return_type="filename")
+        self.logger.debug(f"Found {len(filenames)} files in BIDS database:")
         for filename in filenames:
             self.logger.debug(filename)
 
@@ -199,12 +281,14 @@ class _PipelineWorkflow(_Workflow, ABC):
         """Run pipeline setup."""
         to_return = super().run_setup(**kwargs)
 
+        # make sure the pipeline config exists
+        self.pipeline_config
+
         # create pipeline directories if needed
         for dpath in [
             self.dpath_pipeline,
             self.dpath_pipeline_output,
             self.dpath_pipeline_work,
-            self.dpath_pipeline_bids_db,
         ]:
             if not dpath.exists():
                 self.logger.warning(
@@ -266,62 +350,105 @@ class _PipelineWorkflow(_Workflow, ABC):
 class PipelineRunner(_PipelineWorkflow):
     """Pipeline runner."""
 
+    def __init__(
+        self,
+        dpath_root: Path | str,
+        pipeline_name: str,
+        pipeline_version: str,
+        participant=None,
+        session=None,
+        simulate=False,
+        logger: Optional[logging.Logger] = None,
+        dry_run=False,
+    ):
+        super().__init__(
+            dpath_root=dpath_root,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            participant=participant,
+            session=session,
+            logger=logger,
+            dry_run=dry_run,
+        )
+        self.simulate = simulate
+
     def run_single(self, participant: str, session: str):
         """Run pipeline on a single participant/session."""
+        # get singularity config
+        singularity_config = self.pipeline_config.get_singularity_config()
+        self.logger.debug(f"Initial Singularity config: {singularity_config}")
+
+        # update singularity config with based on Boutiques config
+        boutiques_config = self.get_boutiques_config(participant, session)
+        self.logger.debug(f"Boutiques config: {boutiques_config}")
+        if boutiques_config != BoutiquesConfig():
+            self.logger.info("Updating Singularity config with config from descriptor")
+            singularity_config.merge_args_and_env_vars(
+                boutiques_config.get_singularity_config()
+            )
+
         # set up PyBIDS database
         self.set_up_bids_db(
             dpath_bids_db=self.dpath_pipeline_bids_db,
             participant=participant,
             session=session,
         )
-        self.singularity_config.add_bind_path(self.dpath_pipeline_bids_db)
+        singularity_config.add_bind_path(self.dpath_pipeline_bids_db)
 
-        # set up template string replacement
-        kwargs = dict(
-            participant=participant,
-            session=session,
-            bids_id=participant_id_to_bids_id(participant),
-            session_short=strip_session(session),
+        # update singularity config
+        singularity_config.add_bind_path(self.layout.dpath_bids)
+        singularity_config.add_bind_path(self.dpath_pipeline_output)
+        singularity_config.add_bind_path(self.dpath_pipeline_work)
+        self.logger.info(f"Using Singularity config: {singularity_config}")
+
+        # get final singularity command
+        singularity_command = prepare_singularity(
+            singularity_config, check=True, logger=self.logger
         )
-        objs = [self, self.layout]
-        self.logger.debug("Available replacement strings: ")
-        for k, v in kwargs.items():
-            self.logger.debug(f"\t{k}: {v}")
-        self.logger.debug(f"+ all attributes in: {objs}")
 
         # process and validate the descriptor
-        descriptor_str = process_template_str(
-            json.dumps(self.descriptor),
-            objs=objs,
-            **kwargs,
+        self.logger.info("Processing the JSON descriptor")
+        descriptor_str = self.process_template_json(
+            self.descriptor,
+            participant=participant,
+            session=session,
+            singularity_command=singularity_command,
+            return_str=True,
         )
+        self.logger.debug(f"Descriptor string: {descriptor_str}")
         self.logger.info("Validating the JSON descriptor")
-        self.logger.debug(descriptor_str)
         bosh(["validate", descriptor_str])
 
         # process and validate the invocation
-        invocation_str = process_template_str(
-            json.dumps(self.invocation),
-            objs=objs,
-            **kwargs,
+        self.logger.info("Processing the JSON invocation")
+        invocation_str = self.process_template_json(
+            self.invocation,
+            participant=participant,
+            session=session,
+            singularity_command=singularity_command,
+            return_str=True,
         )
+        self.logger.debug(f"Invocation string: {invocation_str}")
         self.logger.info("Validating the JSON invocation")
-        self.logger.debug(invocation_str)
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
-        # update singularity config
-        self.singularity_config.add_bind_path(self.layout.dpath_bids, mode="ro")
-        self.singularity_config.add_bind_path(self.dpath_pipeline_output)
-        self.singularity_config.add_bind_path(self.dpath_pipeline_work)
-        self.logger.info(f"Using Singularity config: {self.singularity_config}")
-        self.singularity_config.set_env_vars()
-
         # run as a subprocess so that stdout/error are captured in the log
-        self.run_command(
-            ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
-        )
+        if self.simulate:
+            self.run_command(
+                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
+            )
+        else:
+            self.run_command(
+                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
+            )
 
         return descriptor_str, invocation_str
+
+    def run_cleanup(self, **kwargs):
+        """Run pipeline runner cleanup."""
+        if self.dpath_pipeline_bids_db.exists():
+            self.run_command(["rm", "-rf", self.dpath_pipeline_bids_db])
+        return super().run_cleanup(**kwargs)
 
 
 class PipelineTracker(_PipelineWorkflow):

@@ -1,97 +1,26 @@
 """Dataset configuration."""
 
-import os
 import re
 from pathlib import Path
 from typing import Optional, Self, Sequence
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import ConfigDict, model_validator
 
+from nipoppy.config.singularity import ModelWithSingularityConfig
 from nipoppy.utils import load_json
 
-SINGULARITY_BIND_FLAG = "--bind"
-SINGULARITY_BIND_SEP = ":"
-SINGULARITY_ENVVAR_PREFIXES = ["SINGULARITYENV_", "APPTAINERENV_"]
 
-
-class BoutiquesConfig(BaseModel):
-    """Model for custom configuration within a Boutiques descriptor."""
-
-    # dpath_participant_session_result (for tarring/zipping/extracting)
-    # run_on (for choosing which participants/sessions to run on)
-    # bids_input (for pybids)
-    pass
-
-
-class SingularityConfig(BaseModel):
-    """Model for Singularity/Apptainer configuration."""
-
-    COMMAND: str = "singularity"
-    SUBCOMMAND: str = "run"
-    ARGS: list[str] = []
-    ENV_VARS: dict[str, str] = {}
-
-    model_config = ConfigDict(extra="forbid")
-
-    def build_command(self) -> str:
-        """Build the full Singularity command (command + subcommand + args)."""
-        args = [self.COMMAND, self.SUBCOMMAND, *self.ARGS]
-        return " ".join(args)
-
-    def add_bind_path(
-        self,
-        path_local: str | Path,
-        path_inside_container: Optional[str | Path] = None,
-        mode: str = "rw",
-        check_exists: bool = True,
-    ):
-        """Add a bind path (mount point for the container)."""
-        # use absolute paths
-        path_local = Path(path_local).resolve()
-        if check_exists and (not path_local.exists()):
-            raise FileNotFoundError(
-                f"Bind path for Apptainer/Singularity does not exist: {path_local}"
-            )
-
-        if path_inside_container is None:
-            path_inside_container = path_local
-
-        self.ARGS.extend(
-            [
-                SINGULARITY_BIND_FLAG,
-                SINGULARITY_BIND_SEP.join(
-                    [
-                        str(path_local),
-                        str(path_inside_container),
-                        mode,
-                    ]
-                ),
-            ]
-        )
-
-    def set_env_vars(self) -> None:
-        """Set environment variables for the container."""
-        for key, value in self.ENV_VARS.items():
-            for prefix in SINGULARITY_ENVVAR_PREFIXES:
-                os.environ[f"{prefix}{key}"] = value
-
-
-class PipelineConfig(BaseModel):
+class PipelineConfig(ModelWithSingularityConfig):
     """Model for workflow configuration."""
 
     CONTAINER: Optional[Path] = None
     URI: Optional[str] = None
-    SINGULARITY_CONFIG: SingularityConfig = SingularityConfig()
     DESCRIPTOR: Optional[dict] = None
     INVOCATION: Optional[dict] = None
     PYBIDS_IGNORE: list[re.Pattern] = []
     DESCRIPTION: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
-
-    def get_singularity_config(self) -> SingularityConfig:
-        """Return the pipeline's Singularity config object."""
-        return self.SINGULARITY_CONFIG
 
     def get_container(self) -> Path:
         """Return the path to the pipeline's container."""
@@ -113,20 +42,18 @@ class PipelineConfig(BaseModel):
                 self.PYBIDS_IGNORE.append(pattern)
 
 
-class Config(BaseModel):
+class Config(ModelWithSingularityConfig):
     """Model for dataset configuration."""
 
     DATASET_NAME: str
     SESSIONS: list[str]
     VISITS: list[str] = []
-    SINGULARITY_CONFIG: Optional[SingularityConfig] = SingularityConfig()
     BIDS: dict[str, dict[str, PipelineConfig]] = {}
     PROC_PIPELINES: dict[str, dict[str, PipelineConfig]]
 
     model_config = ConfigDict(extra="allow")
 
-    @model_validator(mode="after")
-    def check_no_duplicate_pipeline(self) -> Self:
+    def _check_no_duplicate_pipeline(self) -> Self:
         """Check that BIDS and PROC_PIPELINES do not have common pipelines."""
         bids_pipelines = set(self.BIDS.keys())
         proc_pipelines = set(self.PROC_PIPELINES.keys())
@@ -135,6 +62,33 @@ class Config(BaseModel):
                 "Cannot have the same pipeline under BIDS and PROC_PIPELINES"
                 f", got {bids_pipelines} and {proc_pipelines}"
             )
+
+    def _propagate_singularity_config(self) -> Self:
+        """Propagate the Singularity config to all pipelines."""
+
+        def _propagate(pipeline_dicts: dict[dict[PipelineConfig]]):
+            for pipeline_name in pipeline_dicts:
+                for pipeline_version in pipeline_dicts[pipeline_name]:
+                    pipeline_config: PipelineConfig = pipeline_dicts[pipeline_name][
+                        pipeline_version
+                    ]
+                    singularity_config = pipeline_config.get_singularity_config()
+                    if singularity_config.INHERIT:
+                        singularity_config.merge_args_and_env_vars(
+                            self.SINGULARITY_CONFIG
+                        )
+
+        _propagate(self.BIDS)
+        _propagate(self.PROC_PIPELINES)
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_and_process(self) -> Self:
+        """Validate and process the configuration."""
+        self._check_no_duplicate_pipeline()
+        self._propagate_singularity_config()
+        return self
 
     def save(self, fpath: str | Path, **kwargs):
         """Save the config to a JSON file.

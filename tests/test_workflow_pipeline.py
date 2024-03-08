@@ -1,5 +1,6 @@
 """Tests for _PipelineWorkflow, PipelineRunner, and PipelineTracker."""
 
+import json
 from logging import Logger
 from pathlib import Path
 
@@ -7,7 +8,8 @@ import pytest
 from conftest import _prepare_dataset
 from fids import fids
 
-from nipoppy.config import Config, PipelineConfig, SingularityConfig
+from nipoppy.config.base import Config, PipelineConfig
+from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import PipelineRunner, _PipelineWorkflow
 
@@ -58,12 +60,26 @@ class PipelineWorkflow(_PipelineWorkflow):
                 "my_pipeline": {
                     "1.0": {
                         "CONTAINER": "my_container.sif",
-                        "DESCRIPTOR": {},
+                        "DESCRIPTOR": {
+                            "custom": {
+                                "nipoppy": {
+                                    "SINGULARITY_CONFIG": {
+                                        "ARGS": ["--pipeline-specific-arg"]
+                                    }
+                                }
+                            }
+                        },
                         "INVOCATION": {},
                     }
                 },
                 # pipeline without a container
                 "no_container": {"2.0": {}},
+                "no_boutiques_config": {"1.0": {"DESCRIPTOR": {}}},
+                "bad_boutiques_config": {
+                    "1.0": {
+                        "DESCRIPTOR": {"custom": {"nipoppy": {"INVALID_ARG": "value"}}}
+                    },
+                },
             },
         )
 
@@ -96,15 +112,13 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
-def test_config_properties():
+def test_pipeline_config():
     workflow = PipelineWorkflow(
         dpath_root="my_dataset",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
     )
     assert isinstance(workflow.pipeline_config, PipelineConfig)
-    assert isinstance(workflow.singularity_config, SingularityConfig)
-    assert isinstance(workflow.singularity_command, str)
 
 
 def test_fpath_container(tmp_path: Path):
@@ -154,6 +168,101 @@ def test_invocation(pipeline_name, pipeline_version, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
     assert isinstance(workflow.invocation, dict)
+
+
+@pytest.mark.parametrize("return_str", [True, False])
+def test_process_template_json(return_str, tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+
+    class Test:
+        extra2 = "extra_obj_attribute"
+
+    processed = workflow.process_template_json(
+        {
+            "[[NIPOPPY_BIDS_ID]]": "[[NIPOPPY_PARTICIPANT]]",
+            "[[NIPOPPY_SESSION]]": "[[NIPOPPY_SESSION_SHORT]]",
+            "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
+            "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
+        },
+        participant="01",
+        session="ses-1",
+        extra1="extra_kwarg",
+        objs=[Test()],
+        return_str=return_str,
+    )
+
+    if return_str:
+        assert isinstance(processed, str)
+    else:
+        assert isinstance(processed, dict)
+        processed = json.dumps(processed)
+
+    # check that everything was replaced
+    for pattern in [
+        "[[NIPOPPY_BIDS_ID]]",
+        "[[NIPOPPY_PARTICIPANT]]",
+        "[[NIPOPPY_SESSION]]",
+        "[[NIPOPPY_SESSION_SHORT]]",
+        "[[NIPOPPY_DPATH_PIPELINE]]",
+        "[[NIPOPPY_DPATH_BIDS]]",
+        "[[NIPOPPY_EXTRA1]]",
+        "[[NIPOPPY_EXTRA2]]",
+    ]:
+        assert pattern not in processed
+
+
+@pytest.mark.parametrize("participant,session", [("123", None), (None, "ses-1")])
+def test_process_template_json_error(participant, session, tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+
+    with pytest.raises(ValueError, match="participant and session must be strings"):
+        workflow.process_template_json(
+            {},
+            participant=participant,
+            session=session,
+        )
+
+
+def test_get_boutiques_config(tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+    boutiques_config = workflow.get_boutiques_config(participant="01", session="ses-1")
+    assert isinstance(boutiques_config, BoutiquesConfig)
+    # should not be the default
+    assert boutiques_config != BoutiquesConfig()
+
+
+def test_get_boutiques_config_default(tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="no_boutiques_config",
+        pipeline_version="1.0",
+    )
+    boutiques_config = workflow.get_boutiques_config(participant="01", session="ses-1")
+    assert isinstance(boutiques_config, BoutiquesConfig)
+    # expect the default
+    assert boutiques_config == BoutiquesConfig()
+
+
+def test_get_boutiques_config_invalid(tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="bad_boutiques_config",
+        pipeline_version="1.0",
+    )
+    with pytest.raises(ValueError, match="Error when loading the Boutiques config"):
+        workflow.get_boutiques_config(participant="01", session="ses-1")
 
 
 @pytest.mark.parametrize(
@@ -210,7 +319,6 @@ def test_run_setup(dry_run: bool, tmp_path: Path):
         workflow.dpath_pipeline,
         workflow.dpath_pipeline_work,
         workflow.dpath_pipeline_output,
-        workflow.dpath_pipeline_bids_db,
     ]:
         assert dpath_to_check.exists() == (not dry_run)
 
@@ -296,17 +404,20 @@ def test_generate_fpath_log(
     assert fpath_log.stem.startswith(expected_stem)
 
 
-def test_runner(tmp_path: Path):
+@pytest.mark.parametrize("simulate", [True, False])
+def test_runner(simulate, tmp_path: Path):
     pipeline_name = "dummy_pipeline"
     pipeline_version = "1.0.0"
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
+        simulate=simulate,
     )
     runner.config = Config(
         DATASET_NAME="my_dataset",
         SESSIONS=["ses-BL", "ses-V04"],
+        SINGULARITY_CONFIG={"COMMAND": "echo"},  # dummy command
         PROC_PIPELINES={
             pipeline_name: {
                 pipeline_version: {
@@ -336,6 +447,9 @@ def test_runner(tmp_path: Path):
                     "INVOCATION": {
                         "arg1": "[[NIPOPPY_PARTICIPANT]] [[NIPOPPY_SESSION]]",
                         "arg2": 10,
+                    },
+                    "SINGULARITY_CONFIG": {
+                        "COMMAND": "echo",
                     },
                 }
             }

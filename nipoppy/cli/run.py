@@ -54,6 +54,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 pipeline_version=args.pipeline_version,
                 participant=args.participant,
                 session=args.session,
+                simulate=args.simulate,
                 **workflow_kwargs,
             )
         else:

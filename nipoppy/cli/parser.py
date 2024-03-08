@@ -174,6 +174,11 @@ def add_subparser_pipeline_run(
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
     parser = add_args_participant_and_session(parser)
+    parser.add_argument(
+        "--simulate",
+        action="store_true",
+        help="Simulate the pipeline run without executing the generated command-line.",
+    )
     return parser
 
 

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import _Base
-from nipoppy.config import Config, load_config
+from nipoppy.config.base import Config, load_config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
