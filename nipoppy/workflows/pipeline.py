@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Optional
 
 import bids
-from boutiques import bosh
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -16,7 +15,6 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.config.singularity import prepare_singularity
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -33,7 +31,7 @@ from nipoppy.utils import (
 from nipoppy.workflows.base import BaseWorkflow
 
 
-class _PipelineWorkflow(BaseWorkflow, ABC):
+class BasePipelineWorkflow(BaseWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
 
     def __init__(
@@ -319,6 +317,7 @@ class _PipelineWorkflow(BaseWorkflow, ABC):
     def get_participants_sessions_to_run(
         self, participant: Optional[str], session: Optional[str]
     ):
+        """Return participant-session pairs to run the pipeline on."""
         # TODO add option in Boutiques descriptor of pipeline
         # 1. "manifest" (or "all"?)
         # 2. "downloaded" (from doughnut)
@@ -337,6 +336,7 @@ class _PipelineWorkflow(BaseWorkflow, ABC):
         pass
 
     def generate_fpath_log(self) -> Path:
+        """Generate a log file path."""
         return super().generate_fpath_log(
             fname_stem=get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
@@ -345,130 +345,3 @@ class _PipelineWorkflow(BaseWorkflow, ABC):
                 session=self.session,
             )
         )
-
-
-class PipelineRunner(_PipelineWorkflow):
-    """Pipeline runner."""
-
-    def __init__(
-        self,
-        dpath_root: Path | str,
-        pipeline_name: str,
-        pipeline_version: str,
-        participant=None,
-        session=None,
-        simulate=False,
-        logger: Optional[logging.Logger] = None,
-        dry_run=False,
-    ):
-        super().__init__(
-            dpath_root=dpath_root,
-            pipeline_name=pipeline_name,
-            pipeline_version=pipeline_version,
-            participant=participant,
-            session=session,
-            logger=logger,
-            dry_run=dry_run,
-        )
-        self.simulate = simulate
-
-    def run_single(self, participant: str, session: str):
-        """Run pipeline on a single participant/session."""
-        # get singularity config
-        singularity_config = self.pipeline_config.get_singularity_config()
-        self.logger.debug(f"Initial Singularity config: {singularity_config}")
-
-        # update singularity config with based on Boutiques config
-        boutiques_config = self.get_boutiques_config(participant, session)
-        self.logger.debug(f"Boutiques config: {boutiques_config}")
-        if boutiques_config != BoutiquesConfig():
-            self.logger.info("Updating Singularity config with config from descriptor")
-            singularity_config.merge_args_and_env_vars(
-                boutiques_config.get_singularity_config()
-            )
-
-        # set up PyBIDS database
-        self.set_up_bids_db(
-            dpath_bids_db=self.dpath_pipeline_bids_db,
-            participant=participant,
-            session=session,
-        )
-        singularity_config.add_bind_path(self.dpath_pipeline_bids_db)
-
-        # update singularity config
-        singularity_config.add_bind_path(self.layout.dpath_bids)
-        singularity_config.add_bind_path(self.dpath_pipeline_output)
-        singularity_config.add_bind_path(self.dpath_pipeline_work)
-        self.logger.info(f"Using Singularity config: {singularity_config}")
-
-        # get final singularity command
-        singularity_command = prepare_singularity(
-            singularity_config, check=True, logger=self.logger
-        )
-
-        # process and validate the descriptor
-        self.logger.info("Processing the JSON descriptor")
-        descriptor_str = self.process_template_json(
-            self.descriptor,
-            participant=participant,
-            session=session,
-            singularity_command=singularity_command,
-            return_str=True,
-        )
-        self.logger.debug(f"Descriptor string: {descriptor_str}")
-        self.logger.info("Validating the JSON descriptor")
-        bosh(["validate", descriptor_str])
-
-        # process and validate the invocation
-        self.logger.info("Processing the JSON invocation")
-        invocation_str = self.process_template_json(
-            self.invocation,
-            participant=participant,
-            session=session,
-            singularity_command=singularity_command,
-            return_str=True,
-        )
-        self.logger.debug(f"Invocation string: {invocation_str}")
-        self.logger.info("Validating the JSON invocation")
-        bosh(["invocation", "-i", invocation_str, descriptor_str])
-
-        # run as a subprocess so that stdout/error are captured in the log
-        if self.simulate:
-            self.run_command(
-                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
-            )
-        else:
-            self.run_command(
-                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
-            )
-
-        return descriptor_str, invocation_str
-
-    def run_cleanup(self, **kwargs):
-        """Run pipeline runner cleanup."""
-        if self.dpath_pipeline_bids_db.exists():
-            self.run_command(["rm", "-rf", self.dpath_pipeline_bids_db])
-        return super().run_cleanup(**kwargs)
-
-
-class PipelineTracker(_PipelineWorkflow):
-    """Pipeline tracker."""
-
-    def run_setup(self, **kwargs):
-        """Load/initialize the bagel file."""
-        # TODO
-        return super().run_setup(**kwargs)
-
-    def run_single(self, participant: str, session: str):
-        """Run tracker on a single participant/session."""
-        # get list of paths
-
-        # check status and add to bagel file
-
-        # TODO handle potentially zipped archives
-
-        pass
-
-    def run_cleanup(self, **kwargs):
-        """Save the bagel file."""
-        return super().run_cleanup(**kwargs)

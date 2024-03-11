@@ -14,7 +14,7 @@ from nipoppy.cli.parser import (
 from nipoppy.logger import add_logfile, get_logger
 from nipoppy.workflows.dataset_init import InitWorkflow
 from nipoppy.workflows.doughnut import DoughnutWorkflow
-from nipoppy.workflows.pipeline import PipelineRunner
+from nipoppy.workflows.runner import PipelineRunner
 
 
 def cli(argv: Sequence[str] = None) -> None:
