@@ -1,45 +1,13 @@
 """Dataset configuration."""
 
-import re
 from pathlib import Path
-from typing import Optional, Self, Sequence
+from typing import Self
 
 from pydantic import ConfigDict, model_validator
 
+from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.singularity import ModelWithSingularityConfig
 from nipoppy.utils import load_json
-
-
-class PipelineConfig(ModelWithSingularityConfig):
-    """Model for workflow configuration."""
-
-    CONTAINER: Optional[Path] = None
-    URI: Optional[str] = None
-    DESCRIPTOR: Optional[dict] = None
-    INVOCATION: Optional[dict] = None
-    PYBIDS_IGNORE: list[re.Pattern] = []
-    DESCRIPTION: Optional[str] = None
-
-    model_config = ConfigDict(extra="forbid")
-
-    def get_container(self) -> Path:
-        """Return the path to the pipeline's container."""
-        if self.CONTAINER is None:
-            raise RuntimeError("No container specified for the pipeline")
-        return self.CONTAINER
-
-    def add_pybids_ignore_patterns(
-        self,
-        patterns: Sequence[str | re.Pattern] | str | re.Pattern,
-    ):
-        """Add pattern(s) to ignore for PyBIDS."""
-        if isinstance(patterns, (str, re.Pattern)):
-            patterns = [patterns]
-        for pattern in patterns:
-            if isinstance(pattern, str):
-                pattern = re.compile(pattern)
-            if pattern not in self.PYBIDS_IGNORE:
-                self.PYBIDS_IGNORE.append(pattern)
 
 
 class Config(ModelWithSingularityConfig):
@@ -90,6 +58,18 @@ class Config(ModelWithSingularityConfig):
         self._propagate_singularity_config()
         return self
 
+    def get_pipeline_config(
+        self, pipeline_name: str, pipeline_version: str
+    ) -> PipelineConfig:
+        """Get the config for a pipeline."""
+        try:
+            if pipeline_name in self.BIDS:
+                return self.BIDS[pipeline_name][pipeline_version]
+            else:
+                return self.PROC_PIPELINES[pipeline_name][pipeline_version]
+        except KeyError:
+            raise ValueError(f"No config found for {pipeline_name} {pipeline_version}")
+
     def save(self, fpath: str | Path, **kwargs):
         """Save the config to a JSON file.
 
@@ -103,19 +83,7 @@ class Config(ModelWithSingularityConfig):
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
 
-    def get_pipeline_config(
-        self, pipeline_name: str, pipeline_version: str
-    ) -> PipelineConfig:
-        """Get the config for a pipeline."""
-        try:
-            if pipeline_name in self.BIDS:
-                return self.BIDS[pipeline_name][pipeline_version]
-            else:
-                return self.PROC_PIPELINES[pipeline_name][pipeline_version]
-        except KeyError:
-            raise ValueError(f"No config found for {pipeline_name} {pipeline_version}")
-
-
-def load_config(path: str | Path) -> Config:
-    """Load a dataset configuration."""
-    return Config(**load_json(path))
+    @classmethod
+    def load(cls, path: str | Path) -> Self:
+        """Load a dataset configuration."""
+        return cls(**load_json(path))

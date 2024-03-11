@@ -11,12 +11,12 @@ from nipoppy.config.base import Config
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
-from nipoppy.workflows.base import _Workflow
+from nipoppy.workflows.base import BaseWorkflow
 
 
 @pytest.fixture(params=[get_logger("my_logger"), None], scope="function")
 def workflow(request: pytest.FixtureRequest, tmp_path: Path):
-    class DummyWorkflow(_Workflow):
+    class DummyWorkflow(BaseWorkflow):
         def run_main(self):
             pass
 
@@ -30,22 +30,22 @@ def workflow(request: pytest.FixtureRequest, tmp_path: Path):
 
 def test_abstract_class():
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        _Workflow(None, None)
+        BaseWorkflow(None, None)
 
 
-def test_init(workflow: _Workflow):
+def test_init(workflow: BaseWorkflow):
     assert isinstance(workflow.dpath_root, Path)
     assert isinstance(workflow.logger, logging.Logger)
 
 
-def test_generate_fpath_log(workflow: _Workflow):
+def test_generate_fpath_log(workflow: BaseWorkflow):
     fpath_log = workflow.generate_fpath_log()
     assert isinstance(fpath_log, Path)
     assert fpath_log.stem.startswith(workflow.name)
 
 
 @pytest.mark.parametrize("fname_stem", ["123", "test", "my_workflow"])
-def test_generate_fpath_log_custom(fname_stem, workflow: _Workflow):
+def test_generate_fpath_log_custom(fname_stem, workflow: BaseWorkflow):
     fpath_log = workflow.generate_fpath_log(fname_stem=fname_stem)
     assert isinstance(fpath_log, Path)
     assert fpath_log.stem.startswith(fname_stem)
@@ -54,7 +54,7 @@ def test_generate_fpath_log_custom(fname_stem, workflow: _Workflow):
 @pytest.mark.parametrize("command", ["echo x", "echo y"])
 @pytest.mark.parametrize("prefix_run", ["[RUN]", "<run>"])
 def test_log_command(
-    workflow: _Workflow, command, prefix_run, caplog: pytest.LogCaptureFixture
+    workflow: BaseWorkflow, command, prefix_run, caplog: pytest.LogCaptureFixture
 ):
     workflow.log_prefix_run = prefix_run
     workflow.log_command(command)
@@ -65,21 +65,21 @@ def test_log_command(
     assert command in record.message
 
 
-def test_run_command(workflow: _Workflow, tmp_path: Path):
+def test_run_command(workflow: BaseWorkflow, tmp_path: Path):
     fpath = tmp_path / "test.txt"
     process = workflow.run_command(["touch", fpath])
     assert process.returncode == 0
     assert fpath.exists()
 
 
-def test_run_command_single_string(workflow: _Workflow, tmp_path: Path):
+def test_run_command_single_string(workflow: BaseWorkflow, tmp_path: Path):
     fpath = tmp_path / "test.txt"
     process = workflow.run_command(f"touch {fpath}", shell=True)
     assert process.returncode == 0
     assert fpath.exists()
 
 
-def test_run_command_dry_run(workflow: _Workflow, tmp_path: Path):
+def test_run_command_dry_run(workflow: BaseWorkflow, tmp_path: Path):
     workflow.dry_run = True
     fpath = tmp_path / "test.txt"
     command = workflow.run_command(["touch", fpath])
@@ -87,37 +87,37 @@ def test_run_command_dry_run(workflow: _Workflow, tmp_path: Path):
     assert not fpath.exists()
 
 
-def test_run_command_check(workflow: _Workflow):
+def test_run_command_check(workflow: BaseWorkflow):
     with pytest.raises(subprocess.CalledProcessError):
         workflow.run_command(["which", "probably_fake_command"], check=True)
 
 
-def test_run_setup(workflow: _Workflow, caplog: pytest.LogCaptureFixture):
+def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     workflow.run_setup()
     assert "BEGIN" in caplog.text
 
 
-def test_run(workflow: _Workflow):
+def test_run(workflow: BaseWorkflow):
     assert workflow.run() is None
 
 
-def test_run_cleanup(workflow: _Workflow, caplog: pytest.LogCaptureFixture):
+def test_run_cleanup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     workflow.run_cleanup()
     assert "END" in caplog.text
 
 
-def test_config(workflow: _Workflow):
+def test_config(workflow: BaseWorkflow):
     workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_CONFIG, workflow.layout.fpath_config)
     assert isinstance(workflow.config, Config)
 
 
-def test_config_not_found(workflow: _Workflow):
+def test_config_not_found(workflow: BaseWorkflow):
     with pytest.raises(FileNotFoundError):
         workflow.config
 
 
-def test_manifest(workflow: _Workflow):
+def test_manifest(workflow: BaseWorkflow):
     workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
     config = Config(
@@ -133,6 +133,6 @@ def test_manifest(workflow: _Workflow):
     assert isinstance(workflow.manifest, Manifest)
 
 
-def test_manifest_not_found(workflow: _Workflow):
+def test_manifest_not_found(workflow: BaseWorkflow):
     with pytest.raises(FileNotFoundError):
         workflow.manifest

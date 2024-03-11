@@ -4,10 +4,10 @@ from typing import Optional, Self
 
 import pandas as pd
 
-from nipoppy.tabular.tabular import _Tabular, _TabularModel
+from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 
 
-class Manifest(_Tabular):
+class Manifest(BaseTabular):
     """A dataset's manifest."""
 
     # column names
@@ -18,7 +18,7 @@ class Manifest(_Tabular):
 
     index_cols = [col_participant_id, col_visit]
 
-    class ManifestModel(_TabularModel):
+    class ManifestModel(BaseTabularModel):
         """Model for the manifest."""
 
         participant_id: str

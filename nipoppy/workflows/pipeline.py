@@ -11,11 +11,11 @@ import bids
 from boutiques import bosh
 from pydantic import ValidationError
 
-from nipoppy.config.base import PipelineConfig
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
+from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.singularity import prepare_singularity
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
@@ -30,10 +30,10 @@ from nipoppy.utils import (
     process_template_str,
     strip_session,
 )
-from nipoppy.workflows.base import _Workflow
+from nipoppy.workflows.base import BaseWorkflow
 
 
-class _PipelineWorkflow(_Workflow, ABC):
+class _PipelineWorkflow(BaseWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
 
     def __init__(

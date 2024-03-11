@@ -10,7 +10,7 @@ from pydantic import BaseModel, ValidationError, model_validator
 from nipoppy.utils import save_df_with_backup
 
 
-class _TabularModel(BaseModel):
+class BaseTabularModel(BaseModel):
     """
     Helper class for validating tabular data.
 
@@ -58,7 +58,7 @@ class _TabularModel(BaseModel):
         return data
 
 
-class _Tabular(pd.DataFrame, ABC):
+class BaseTabular(pd.DataFrame, ABC):
     """
     Generic class with utilities for tabular data.
 
@@ -70,7 +70,7 @@ class _Tabular(pd.DataFrame, ABC):
 
     @property
     @abstractmethod
-    def model(self) -> type[_TabularModel]:
+    def model(self) -> type[BaseTabularModel]:
         """Model class associated with the tabular data."""
         raise NotImplementedError("model must be assigned in subclass")
 
@@ -206,6 +206,7 @@ class _Tabular(pd.DataFrame, ABC):
         )
 
     def equals(self, other: object) -> Self:
+        """Check if two dataframes are equal."""
         try:
             pd.testing.assert_frame_equal(
                 self,

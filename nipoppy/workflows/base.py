@@ -9,8 +9,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional, Sequence
 
-from nipoppy.base import _Base
-from nipoppy.config.base import Config, load_config
+from nipoppy.base import Base
+from nipoppy.config.base import Config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
@@ -19,7 +19,7 @@ from nipoppy.tabular.manifest import Manifest
 LOG_SUFFIX = ".log"
 
 
-class _Workflow(_Base, ABC):
+class BaseWorkflow(Base, ABC):
     """Base class with logging/subprocess utilities."""
 
     path_sep = "-"
@@ -184,7 +184,7 @@ class _Workflow(_Base, ABC):
         fpath_config = self.layout.fpath_config
         try:
             self.logger.info(f"Loading config from {fpath_config}")
-            return load_config(fpath_config)
+            return Config.load(fpath_config)
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Config file not found: {self.layout.fpath_config}"

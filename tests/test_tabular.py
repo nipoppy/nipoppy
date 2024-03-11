@@ -8,29 +8,29 @@ import pandas as pd
 import pytest
 from conftest import DPATH_TEST_DATA
 
-from nipoppy.tabular.tabular import _Tabular, _TabularModel
+from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 
 
-class Tabular(_Tabular):
-    model = _TabularModel
+class Tabular(BaseTabular):
+    model = BaseTabularModel
 
 
-class TabularWithModel(_Tabular):
-    class _Model(_TabularModel):
+class TabularWithModel(BaseTabular):
+    class _Model(BaseTabularModel):
         a: str
         b: Optional[int] = 0
         c: list = []
 
-    model: _TabularModel = _Model
+    model: BaseTabularModel = _Model
     index_cols = ["b"]
 
 
-class TabularWithModelNoList(_Tabular):
-    class _Model(_TabularModel):
+class TabularWithModelNoList(BaseTabular):
+    class _Model(BaseTabularModel):
         a: str
         b: int = 0
 
-    model: _TabularModel = _Model
+    model: BaseTabularModel = _Model
     index_cols = ["b"]
 
 
@@ -49,7 +49,7 @@ def test_empty_has_columns():
     ],
 )
 @pytest.mark.parametrize("tabular_class", [Tabular, TabularWithModel])
-def test_load(fpath, tabular_class: _Tabular):
+def test_load(fpath, tabular_class: BaseTabular):
     assert isinstance(tabular_class.load(fpath, validate=False), tabular_class)
 
 

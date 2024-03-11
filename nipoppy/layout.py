@@ -3,11 +3,11 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.base import _Base
+from nipoppy.base import Base
 from nipoppy.utils import get_pipeline_tag
 
 
-class DatasetLayout(_Base):
+class DatasetLayout(Base):
     """File/directory structure in a dataset."""
 
     def __init__(self, dpath_root: Path | str):

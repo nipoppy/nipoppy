@@ -3,10 +3,10 @@
 from pathlib import Path
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
-from nipoppy.workflows.base import _Workflow
+from nipoppy.workflows.base import BaseWorkflow
 
 
-class DoughnutWorkflow(_Workflow):
+class DoughnutWorkflow(BaseWorkflow):
     """Workflow for creating/updating a dataset's doughnut file."""
 
     def __init__(

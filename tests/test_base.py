@@ -1,23 +1,24 @@
 """Tests for the base module."""
+
 import pytest
 
-from nipoppy.base import _Base
+from nipoppy.base import Base
 
 
-class BaseA(_Base):
+class BaseA(Base):
     def __init__(self, pos_arg, kw_arg=None, *args, **kwargs):
         self.pos_arg = pos_arg
         self.kw_arg = kw_arg
 
 
-class BaseB(_Base):
+class BaseB(Base):
     def __init__(self, arg1, arg2=2, arg3="3"):
         self.arg1 = arg1
         self.arg2 = arg2
         self.arg3 = arg3
 
 
-class BadBase(_Base):
+class BadBase(Base):
     def __init__(self, arg):
         pass
 
@@ -30,7 +31,7 @@ class BadBase(_Base):
         (BaseB(1), None, None, ", ", "BaseB()"),
     ],
 )
-def test_str_helper(base: _Base, components, names, sep, expected):
+def test_str_helper(base: Base, components, names, sep, expected):
     assert base._str_helper(components, names, sep) == expected
 
 
@@ -43,7 +44,7 @@ def test_str_helper(base: _Base, components, names, sep, expected):
         (BaseB("B"), "BaseB(arg1=B, arg2=2, arg3=3)"),
     ],
 )
-def test_str_and_repr(base: _Base, expected):
+def test_str_and_repr(base: Base, expected):
     assert str(base) == expected
     assert repr(base) == expected
 

@@ -1,10 +1,11 @@
 """Base class."""
+
 import inspect
 from abc import ABC
 from typing import Optional, Sequence
 
 
-class _Base(ABC):
+class Base(ABC):
     """Base class with utilities for pretty string representations."""
 
     def _str_helper(

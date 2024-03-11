@@ -3,10 +3,10 @@
 from pathlib import Path
 
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
-from nipoppy.workflows.base import _Workflow
+from nipoppy.workflows.base import BaseWorkflow
 
 
-class InitWorkflow(_Workflow):
+class InitWorkflow(BaseWorkflow):
     """Workflow for init command."""
 
     def __init__(self, dpath_root: Path, logger=None, dry_run=False):
