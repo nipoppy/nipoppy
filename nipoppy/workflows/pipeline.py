@@ -306,7 +306,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Running {self.pipeline_name} {self.pipeline_version}"
                 f" on participant {participant}, session {session}"
             )
-            self.run_single(participant, session)
+            try:
+                self.run_single(participant, session)
+            except Exception as exception:
+                self.logger.error(
+                    f"Error running {self.pipeline_name} {self.pipeline_version}"
+                    f" on participant {participant}, session {session}"
+                    f": {exception}"
+                )
 
     def run_cleanup(self, **kwargs):
         """Run pipeline cleanup."""

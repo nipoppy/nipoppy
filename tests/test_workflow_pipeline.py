@@ -26,6 +26,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         dry_run=False,
     ):
         self._n_runs = 0
+        self._n_errors = 0
         super().__init__(
             dpath_root,
             pipeline_name,
@@ -40,6 +41,9 @@ class PipelineWorkflow(BasePipelineWorkflow):
         """Run on a single subject/session."""
         self._n_runs += 1
         self.logger.info(f"Running on {subject}/{session}")
+        if subject == "FAIL":
+            self._n_errors += 1
+            raise RuntimeError("FAIL")
 
     @property
     def config(self) -> Config:
@@ -348,6 +352,27 @@ def test_run_main(participant, session, expected_count, tmp_path: Path):
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
     assert workflow._n_runs == expected_count
+
+
+def test_run_main_catch_errors(tmp_path: Path):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+        participant="FAIL",
+        session="1",
+    )
+
+    participants_and_sessions = {"FAIL": ["ses-1"]}
+    manifest = _prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_converted=participants_and_sessions,
+        dpath_converted=workflow.layout.dpath_bids,
+    )
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    workflow.run_main()
+    assert workflow._n_runs == 1
+    assert workflow._n_errors == 1
 
 
 @pytest.mark.parametrize(
