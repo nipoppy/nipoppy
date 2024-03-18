@@ -697,30 +697,32 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
         logger.info('Attempting Run')
         tractoflow_proc = subprocess.run(CMD, shell=True)
 
-        # do clean-up
-
-        # check if tractogram is a valid file
-        trk = nib.streamlines.load(Path(tractoflow_out_dir, 'PFT_Tracking', f"{participant_id}__pft_tracking_prob_wm_seed_0.trk"))
-
-        # if the the last file created (tractogram) can be validly loaded,
-        # processing is done.
-        if trk:
-
-            # find every file in the output path (this should grab symlinks)
-            out_files = Path(tractoflow_out_dir).rglob("*")
-
-            # convert symlinks to real files
-            for out in out_files:
-                move_target_to_symlink(out)
-
-            # remove tractoflow_input_dir
-            shutil.rmtree(tractoflow_input_dir)
-
-            # remove tractoflow_work_dir
-            shutil.rmtree(tractoflow_work_dir)
-
     except Exception as e:
         logger.error(f"TractoFlow run failed to launch with exception: {e}")
+
+    # do clean-up
+
+    # check if tractogram is a valid file
+    trk = nib.streamlines.load(Path(tractoflow_out_dir, 'PFT_Tracking', f"{participant_id}__pft_tracking_prob_wm_seed_0.trk"))
+
+    # if the the last file created (tractogram) can be validly loaded,
+    # processing is done.
+    if trk:
+
+        logger.info('Cleaning up symlinks and input directories...')
+
+        # find every file in the output path (this should grab symlinks)
+        out_files = Path(tractoflow_out_dir).rglob("*")
+
+        # convert symlinks to real files
+        for out in out_files:
+            move_target_to_symlink(out)
+
+        # remove tractoflow_input_dir
+        shutil.rmtree(tractoflow_nxtf_inp)
+
+        # remove tractoflow_work_dir
+        shutil.rmtree(tractoflow_work_dir)
 
     logger.info('End of TractoFlow run script.')
 
