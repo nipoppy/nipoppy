@@ -473,7 +473,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## build paths to files
     bids_dir = Path(f"{DATASET_ROOT}/bids").resolve()
-    tractoflow_dir = f"{output_dir}/tractoflow/{TRACTOFLOW_VERSION}"
+    tractoflow_dir = Path(f"{output_dir}/tractoflow/{TRACTOFLOW_VERSION}").resolve()
 
     ## Copy bids_filter.json
     if use_bids_filter:
@@ -685,7 +685,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     logger.info(f"Running TractoFlow for participant: {participant_id}")
 
     ## singularity
-    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {LOGDIR} -B {output_dir} {SINGULARITY_TRACTOFLOW}"
+    SINGULARITY_CMD = f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {LOGDIR} -B {tractoflow_dir} {SINGULARITY_TRACTOFLOW}"
 
     CMD=SINGULARITY_CMD + " " + CMD_ARGS
     logger.info("+"*75)
@@ -703,7 +703,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     # do clean-up
 
     # check if tractogram is a valid file
-    trk = nib.streamlines.load(Path(tractoflow_out_dir, 'PFT_Tracking', f"{participant_id}__pft_tracking_prob_wm_seed_0.trk"))
+    trk = nib.streamlines.load(str(Path(tractoflow_out_dir, participant_id, 'PFT_Tracking', f'{participant_id}__pft_tracking_prob_wm_seed_0.trk')))
 
     # if the the last file created (tractogram) can be validly loaded,
     # processing is done.
@@ -716,7 +716,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
         # convert symlinks to real files
         for out in out_files:
-            move_target_to_symlink(out)
+            if out.is_symlink():
+                move_target_to_symlink(out)
 
         # remove tractoflow_input_dir
         shutil.rmtree(tractoflow_nxtf_inp)
