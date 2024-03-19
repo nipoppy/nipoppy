@@ -78,8 +78,10 @@ class Config(ModelWithSingularityConfig):
         fpath : str | Path
             Path to the JSON file to write
         """
+        fpath = Path(fpath)
         if "indent" not in kwargs:
             kwargs["indent"] = 4
+        fpath.parent.mkdir(parents=True, exist_ok=True)
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
 

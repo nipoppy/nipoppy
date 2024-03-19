@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self
 
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest, ManifestModel
@@ -31,13 +31,56 @@ class Doughnut(Manifest):
     col_organized = "organized"
     col_converted = "converted"
 
+    status_cols = [col_downloaded, col_organized, col_converted]
+
     # set the model
     model = DoughnutModel
 
     index_cols = [Manifest.col_participant_id, Manifest.col_session]
 
+    _metadata = Manifest._metadata + [
+        "col_participant_dicom_dir",
+        "col_dicom_id",
+        "col_bids_id",
+        "col_downloaded",
+        "col_organized",
+        "col_converted",
+    ]
+
+    @classmethod
+    def _check_status_col(cls, col: str) -> str:
+        if col not in cls.status_cols:
+            raise ValueError(
+                f"Invalid status column: {col}. Must be one of {cls.status_cols}"
+            )
+        return col
+
+    @classmethod
+    def _check_status_value(cls, value: bool) -> bool:
+        if not isinstance(value, bool):
+            raise ValueError(f"Invalid status value: {value}. Must be a boolean")
+        return value
+
+    def get_status(self, participant: str, session: str, col: str) -> bool:
+        """Get one of the statuses for an existing record."""
+        col = self._check_status_col(col)
+        return self.set_index(self.index_cols).loc[(participant, session), col]
+
+    def set_status(
+        self, participant: str, session: str, col: str, status: bool
+    ) -> Self:
+        """Set one of the statuses for an existing record."""
+        col = self._check_status_col(col)
+        status = self._check_status_value(status)
+        self.set_index(self.index_cols, inplace=True)
+        self.loc[(participant, session), col] = status
+        return self.reset_index(inplace=True)
+
     def _get_participant_sessions_helper(
-        self, status_col: str, participant: Optional[str], session: Optional[str]
+        self,
+        status_col: str,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
     ):
         """Get subset of participants/sessions based on a status column."""
         doughnut_subset: Doughnut = self.loc[self[status_col]]
@@ -46,7 +89,9 @@ class Doughnut(Manifest):
         )
 
     def get_downloaded_participants_sessions(
-        self, participant: Optional[str], session: Optional[str]
+        self,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
     ):
         """Get participants and sessions with downloaded data."""
         return self._get_participant_sessions_helper(
@@ -54,7 +99,9 @@ class Doughnut(Manifest):
         )
 
     def get_organized_participants_sessions(
-        self, participant: Optional[str], session: Optional[str]
+        self,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
     ):
         """Get participants and sessions with organized data."""
         return self._get_participant_sessions_helper(
@@ -62,7 +109,9 @@ class Doughnut(Manifest):
         )
 
     def get_converted_participants_sessions(
-        self, participant: Optional[str], session: Optional[str]
+        self,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
     ):
         """Get participants and sessions with converted data."""
         return self._get_participant_sessions_helper(

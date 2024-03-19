@@ -45,6 +45,15 @@ class Manifest(BaseTabular):
     # set the model
     model = ManifestModel
 
+    _metadata = BaseTabular._metadata + [
+        "col_participant_id",
+        "col_visit",
+        "col_session",
+        "col_datatype",
+        "index_cols",
+        "model",
+    ]
+
     @classmethod
     def load(cls, *args, sessions=None, visits=None, validate=True, **kwargs) -> Self:
         """Load the manifest."""

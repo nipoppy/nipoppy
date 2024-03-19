@@ -14,6 +14,7 @@ from nipoppy.utils import (
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
 COMMAND_DOUGHNUT = "doughnut"
+COMMAND_DICOM_REORG = "reorg"
 COMMAND_PIPELINE_RUN = "run"
 COMMAND_PIPELINE_TRACK = "track"
 
@@ -162,6 +163,26 @@ def add_subparser_doughnut(
     return parser
 
 
+def add_subparser_dicom_reorg(
+    subparsers: _SubParsersAction,
+    formatter_class: type[HelpFormatter] = HelpFormatter,
+) -> ArgumentParser:
+    """Add subparser for reorg command."""
+    parser = subparsers.add_parser(
+        COMMAND_DICOM_REORG,
+        help="(Re)organize raw DICOM files.",  # TODO give paths in layout model
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser.add_argument(
+        "--copy-files",
+        action="store_true",
+        help=("Copy files when reorganizing (default: create symlinks)."),
+    )
+    return parser
+
+
 def add_subparser_pipeline_run(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
@@ -219,6 +240,7 @@ def get_global_parser(
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
+    add_subparser_dicom_reorg(subparsers, formatter_class=formatter_class)
     add_subparser_pipeline_run(subparsers, formatter_class=formatter_class)
     add_subparser_pipeline_track(subparsers, formatter_class=formatter_class)
 

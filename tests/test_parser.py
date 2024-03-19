@@ -10,6 +10,7 @@ from nipoppy.cli.parser import (
     add_arg_verbosity,
     add_args_participant_and_session,
     add_args_pipeline,
+    add_subparser_dicom_reorg,
     add_subparser_doughnut,
     add_subparser_init,
     add_subparser_pipeline_run,
@@ -101,6 +102,20 @@ def test_add_subparser_doughnut(args):
 @pytest.mark.parametrize(
     "args",
     [
+        ["--dataset-root", "my_dataset"],
+        ["--dataset-root", "my_dataset", "--copy-files"],
+    ],
+)
+def test_add_subparser_dicom_reorg(args):
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_dicom_reorg(subparsers)
+    assert parser.parse_args(["reorg"] + args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
         ["--dataset-root", "my_dataset", "--pipeline", "pipeline1"],
         ["--dataset-root", "my_dataset", "--pipeline", "pipeline1", "--simulate"],
         [
@@ -166,6 +181,7 @@ def test_add_subparser_pipeline_track(args):
         ["init", "-h"],
         ["init", "--dataset-root", "my_dataset"],
         ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
+        ["reorg", "--dataset-root", "my_dataset", "--copy-files"],
         ["run", "--dataset-root", "my_dataset", "--pipeline", "a_pipeline"],
         ["track", "--dataset-root", "my_dataset", "--pipeline", "another_pipeline"],
     ],

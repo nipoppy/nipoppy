@@ -1,1 +1,1 @@
-"""Parsers and entrypoing for the command-line interface."""
+"""Parsers and entrypoint for the command-line interface."""

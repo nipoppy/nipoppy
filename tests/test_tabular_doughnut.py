@@ -9,6 +9,22 @@ from conftest import DPATH_TEST_DATA, _check_doughnut, _prepare_dataset
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 
 
+@pytest.fixture
+def data():
+    return {
+        Doughnut.col_participant_id: ["01", "01", "02", "02"],
+        Doughnut.col_visit: ["BL", "M12", "BL", "M12"],
+        Doughnut.col_session: ["ses-BL", "ses-M12", "ses-BL", "ses-M12"],
+        Doughnut.col_datatype: ["anat", "anat", "anat", "anat"],
+        Doughnut.col_participant_dicom_dir: ["01", "01", "02", "02"],
+        Doughnut.col_dicom_id: ["01", "01", "02", "02"],
+        Doughnut.col_bids_id: ["01", "01", "02", "02"],
+        Doughnut.col_downloaded: [True, True, True, False],
+        Doughnut.col_organized: [True, False, True, False],
+        Doughnut.col_converted: [True, False, False, False],
+    }
+
+
 @pytest.mark.parametrize(
     "fpath",
     [
@@ -37,6 +53,60 @@ def test_validate(fpath, is_valid):
 
 
 @pytest.mark.parametrize(
+    "col", [Doughnut.col_downloaded, Doughnut.col_organized, Doughnut.col_converted]
+)
+def test_check_status_col(col):
+    assert Doughnut._check_status_col(col) == col
+
+
+def test_check_status_col_invalid():
+    with pytest.raises(ValueError, match="Invalid status column"):
+        Doughnut._check_status_col("invalid_col")
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_check_status_value(value):
+    assert Doughnut._check_status_value(value) == value
+
+
+def test_check_status_value_invalid():
+    with pytest.raises(ValueError, match="Invalid status value"):
+        assert Doughnut._check_status_value("123")
+
+
+@pytest.mark.parametrize(
+    "participant,session,col,expected_status",
+    [
+        ("01", "ses-BL", Doughnut.col_downloaded, True),
+        ("01", "ses-BL", Doughnut.col_organized, True),
+        ("01", "ses-BL", Doughnut.col_converted, True),
+        ("02", "ses-M12", Doughnut.col_downloaded, False),
+        ("02", "ses-M12", Doughnut.col_organized, False),
+        ("02", "ses-M12", Doughnut.col_converted, False),
+    ],
+)
+def test_get_status(data, participant, session, col, expected_status):
+    assert Doughnut(data).get_status(participant, session, col) == expected_status
+
+
+@pytest.mark.parametrize(
+    "participant,session,col,status",
+    [
+        ("01", "ses-BL", Doughnut.col_downloaded, False),
+        ("01", "ses-BL", Doughnut.col_organized, False),
+        ("01", "ses-BL", Doughnut.col_converted, False),
+        ("02", "ses-M12", Doughnut.col_downloaded, True),
+        ("02", "ses-M12", Doughnut.col_organized, True),
+        ("02", "ses-M12", Doughnut.col_converted, True),
+    ],
+)
+def test_set_status(data, participant, session, col, status):
+    doughnut = Doughnut(data)
+    doughnut.set_status(participant, session, col, status)
+    assert doughnut.get_status(participant, session, col) == status
+
+
+@pytest.mark.parametrize(
     "status_col,participant,session,expected_count",
     [
         ("downloaded", None, None, 3),
@@ -48,20 +118,8 @@ def test_validate(fpath, is_valid):
     ],
 )
 def test_get_participant_sessions_helper(
-    status_col, participant, session, expected_count
+    data, status_col, participant, session, expected_count
 ):
-    data = {
-        "participant_id": ["01", "01", "02", "02"],
-        "visit": ["BL", "M12", "BL", "M12"],
-        "session": ["ses-BL", "ses-M12", "ses-BL", "ses-M12"],
-        "datatype": ["anat", "anat", "anat", "anat"],
-        "participant_dicom_dir": ["01", "01", "02", "02"],
-        "dicom_id": ["01", "01", "02", "02"],
-        "bids_id": ["01", "01", "02", "02"],
-        "downloaded": [True, True, True, False],
-        "organized": [True, False, True, False],
-        "converted": [True, False, False, False],
-    }
     doughnut = Doughnut(data)
     count = 0
     for participant, session in doughnut._get_participant_sessions_helper(

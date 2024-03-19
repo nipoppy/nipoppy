@@ -89,7 +89,6 @@ def test_propagate_singularity_config(
             }
         }
     )
-    print(f"data: {data}")
     singularity_config = getattr(Config(**data), pipeline_type)[pipeline_name][
         pipeline_version
     ].get_singularity_config()

@@ -40,6 +40,24 @@ def test_cli_doughnut(tmp_path: Path):
     )
 
 
+def test_cli_dicom_reorg(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    try:
+        cli(["nipoppy", "reorg", "--dataset-root", str(dpath_root)])
+    except BaseException:
+        pass
+
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob("dicom_reorg/*.log")
+            )
+        )
+        == 1
+    )
+
+
 def test_cli_pipeline_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:

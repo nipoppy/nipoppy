@@ -6,6 +6,7 @@ from typing import Sequence
 from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import (
+    COMMAND_DICOM_REORG,
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
     COMMAND_PIPELINE_RUN,
@@ -14,6 +15,7 @@ from nipoppy.cli.parser import (
 )
 from nipoppy.logger import add_logfile, get_logger
 from nipoppy.workflows.dataset_init import InitWorkflow
+from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 from nipoppy.workflows.doughnut import DoughnutWorkflow
 from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
@@ -47,6 +49,12 @@ def cli(argv: Sequence[str] = None) -> None:
                 dpath_root=dpath_root,
                 empty=args.empty,
                 regenerate=args.regenerate,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_DICOM_REORG:
+            workflow = DicomReorgWorkflow(
+                dpath_root=dpath_root,
+                copy_files=args.copy_files,
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_RUN:

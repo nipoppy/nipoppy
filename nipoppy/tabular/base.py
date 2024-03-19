@@ -154,7 +154,7 @@ class BaseTabular(pd.DataFrame, ABC):
             records = [records]
 
         # set the index (temporary)
-        tabular_with_index = self.set_index(self.index_cols)
+        self.set_index(self.index_cols, inplace=True)
 
         # identify non-index columns
         non_index_cols = set(self.columns) - set(self.index_cols)
@@ -166,12 +166,13 @@ class BaseTabular(pd.DataFrame, ABC):
 
             # add/update
             for col in non_index_cols:
-                tabular_with_index.loc[
+                self.loc[
                     tuple([record[col] for col in self.index_cols]),
                     col,
                 ] = record[col]
 
-        return tabular_with_index.reset_index()
+        self.reset_index(inplace=True)
+        return self
 
     def concatenate(self, other: Self, validate=True) -> Self:
         """Concatenate two dataframes."""
