@@ -473,7 +473,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
     ## build paths to files
     bids_dir = Path(f"{DATASET_ROOT}/bids").resolve()
-    tractoflow_dir = f"{output_dir}/tractoflow/{TRACTOFLOW_VERSION}"
+    tractoflow_dir = Path(f"{output_dir}/tractoflow/{TRACTOFLOW_VERSION}").resolve()
 
     ## Copy bids_filter.json
     if use_bids_filter:
@@ -685,7 +685,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     logger.info(f"Running TractoFlow for participant: {participant_id}")
 
     ## singularity
-    SINGULARITY_CMD=f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {LOGDIR} -B {output_dir} {SINGULARITY_TRACTOFLOW}"
+    SINGULARITY_CMD = f"{SINGULARITY_COMMAND} exec --cleanenv -H {nextflow_logdir} -B {nextflow_logdir}:/nextflow -B {LOGDIR} -B {tractoflow_dir} {SINGULARITY_TRACTOFLOW}"
 
     CMD=SINGULARITY_CMD + " " + CMD_ARGS
     logger.info("+"*75)
