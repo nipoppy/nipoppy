@@ -9,12 +9,14 @@ from nipoppy.cli.parser import (
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
     COMMAND_PIPELINE_RUN,
+    COMMAND_PIPELINE_TRACK,
     get_global_parser,
 )
 from nipoppy.logger import add_logfile, get_logger
 from nipoppy.workflows.dataset_init import InitWorkflow
 from nipoppy.workflows.doughnut import DoughnutWorkflow
 from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.workflows.tracker import PipelineTracker
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -55,6 +57,15 @@ def cli(argv: Sequence[str] = None) -> None:
                 participant=args.participant,
                 session=args.session,
                 simulate=args.simulate,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_PIPELINE_TRACK:
+            workflow = PipelineTracker(
+                dpath_root=dpath_root,
+                pipeline_name=args.pipeline,
+                pipeline_version=args.pipeline_version,
+                participant=args.participant,
+                session=args.session,
                 **workflow_kwargs,
             )
         else:

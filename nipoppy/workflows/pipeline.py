@@ -37,6 +37,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def __init__(
         self,
         dpath_root: Path | str,
+        name: str,
         pipeline_name: str,
         pipeline_version: str,
         participant=None,
@@ -46,7 +47,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     ):
         super().__init__(
             dpath_root=dpath_root,
-            name=get_pipeline_tag(pipeline_name, pipeline_version),
+            name=name,
             logger=logger,
             dry_run=dry_run,
         )
@@ -119,7 +120,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             # TODO then check if the pipeline config specifies a path
 
             # finally check if there is a built-in descriptor
-            fpath_descriptor_builtin = DPATH_DESCRIPTORS / f"{self.name}.json"
+            fpath_descriptor_builtin = (
+                DPATH_DESCRIPTORS
+                / f"{get_pipeline_tag(self.pipeline_name, self.pipeline_version)}.json"
+            )
             try:
                 descriptor = load_json(fpath_descriptor_builtin)
                 self.logger.info("Using built-in descriptor")
@@ -177,7 +181,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.logger.debug("Available replacement strings: ")
         max_len = max(len(k) for k in kwargs)
         for k, v in kwargs.items():
-            print(k, v)
             self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
         self.logger.debug(f"\t+ all attributes in: {objs}")
 
@@ -275,6 +278,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         return bids_layout
 
+    def check_dir(self, dpath: Path):
+        """Create directory if it does not exist."""
+        if not dpath.exists():
+            self.logger.warning(
+                f"Creating directory because it does not exist: {dpath}"
+            )
+            if not self.dry_run:
+                dpath.mkdir(parents=True, exist_ok=True)
+
     def run_setup(self, **kwargs):
         """Run pipeline setup."""
         to_return = super().run_setup(**kwargs)
@@ -282,18 +294,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # make sure the pipeline config exists
         self.pipeline_config
 
-        # create pipeline directories if needed
-        for dpath in [
-            self.dpath_pipeline,
-            self.dpath_pipeline_output,
-            self.dpath_pipeline_work,
-        ]:
-            if not dpath.exists():
-                self.logger.warning(
-                    f"Creating directory because it does not exist: {dpath}"
-                )
-                if not self.dry_run:
-                    dpath.mkdir(parents=True, exist_ok=True)
+        self.check_dir(self.dpath_pipeline)
 
         return to_return
 
@@ -302,10 +303,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         for participant, session in self.get_participants_sessions_to_run(
             self.participant, self.session
         ):
-            self.logger.info(
-                f"Running {self.pipeline_name} {self.pipeline_version}"
-                f" on participant {participant}, session {session}"
-            )
+            self.logger.info(f"Running on participant {participant}, session {session}")
             try:
                 self.run_single(participant, session)
             except Exception as exception:
@@ -345,10 +343,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def generate_fpath_log(self) -> Path:
         """Generate a log file path."""
         return super().generate_fpath_log(
+            dname_parent=get_pipeline_tag(
+                pipeline_name=self.pipeline_name,
+                pipeline_version=self.pipeline_version,
+            ),
             fname_stem=get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
                 participant=self.participant,
                 session=self.session,
-            )
+            ),
         )

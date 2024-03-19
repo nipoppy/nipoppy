@@ -27,6 +27,7 @@ class PipelineRunner(BasePipelineWorkflow):
     ):
         super().__init__(
             dpath_root=dpath_root,
+            name="run",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             participant=participant,
@@ -35,6 +36,14 @@ class PipelineRunner(BasePipelineWorkflow):
             dry_run=dry_run,
         )
         self.simulate = simulate
+
+    def run_setup(self, **kwargs):
+        """Create output and work directories."""
+        to_return = super().run_setup(**kwargs)
+
+        for dpath in [self.dpath_pipeline_output, self.dpath_pipeline_work]:
+            self.check_dir(dpath)
+        return to_return
 
     def run_single(self, participant: str, session: str):
         """Run pipeline on a single participant/session."""

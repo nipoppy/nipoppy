@@ -61,16 +61,5 @@ class DoughnutWorkflow(BaseWorkflow):
                 logger=logger,
             )
 
-        logger.info(f"New/updated doughnut (shape: {doughnut.shape})")
-        if not self.dry_run:
-            fpath_doughnut_backup = doughnut.save_with_backup(fpath_doughnut)
-            if fpath_doughnut_backup is not None:
-                logger.info(
-                    f"Saved doughnut to {fpath_doughnut} (-> {fpath_doughnut_backup})"
-                )
-            else:
-                logger.info(f"No changes to doughnut at {fpath_doughnut}")
-        else:
-            logger.info(
-                f"Not writing doughnut to {fpath_doughnut} since this is a dry run"
-            )
+        logger.info(f"New/updated doughnut shape: {doughnut.shape}")
+        self.save_tabular_file(doughnut, fpath_doughnut)

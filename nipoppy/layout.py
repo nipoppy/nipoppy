@@ -50,6 +50,7 @@ class DatasetLayout(Base):
         self.fpath_config = self.dpath_proc / "global_configs.json"
         self.fpath_doughnut = self.dpath_raw_dicom / "doughnut.csv"
         self.fpath_manifest = self.dpath_tabular / "manifest.csv"
+        self.fpath_imaging_bagel = self.dpath_derivatives / "bagel.csv"
 
         # directory names
         self.dname_pipeline_work = "work"
@@ -88,6 +89,7 @@ class DatasetLayout(Base):
             self.fpath_config,
             self.fpath_doughnut,
             self.fpath_manifest,
+            self.fpath_imaging_bagel,
         ]
         return fpaths
 

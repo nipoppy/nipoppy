@@ -17,6 +17,11 @@
                 "URI": "docker://nipreps/fmriprep:{version}",
                 "INVOCATION": {
                     "": ""
+                },
+                "TRACKER_CONFIG": {
+                    "pipeline_complete": [
+                        "<PATH_OR_GLOB_EXPRESSION>"
+                    ]
                 }
             }
         },

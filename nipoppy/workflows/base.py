@@ -13,6 +13,7 @@ from nipoppy.base import Base
 from nipoppy.config.base import Config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
 
@@ -57,12 +58,22 @@ class BaseWorkflow(Base, ABC):
 
         self.layout = DatasetLayout(self.dpath_root)
 
-    def generate_fpath_log(self, fname_stem=None) -> Path:
+    def generate_fpath_log(
+        self,
+        dname_parent: Optional[list[str]] = None,
+        fname_stem: Optional[str] = None,
+    ) -> Path:
         """Generate a log file path."""
+        if dname_parent is None:
+            dname_parent = []
+        if isinstance(dname_parent, str):
+            dname_parent = [dname_parent]
         if fname_stem is None:
             fname_stem = self.name
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         dpath_log = self.layout.dpath_logs / self.name
+        for dname in dname_parent:
+            dpath_log = dpath_log / dname
         fname_log = f"{self.path_sep.join([fname_stem, timestamp])}{LOG_SUFFIX}"
         return dpath_log / fname_log
 
@@ -155,6 +166,17 @@ class BaseWorkflow(Base, ABC):
             run_output = command
 
         return run_output
+
+    def save_tabular_file(self, tabular: BaseTabular, fpath: Path):
+        """Save a tabular file."""
+        if not self.dry_run:
+            fpath_doughnut_backup = tabular.save_with_backup(fpath)
+            if fpath_doughnut_backup is not None:
+                self.logger.info(f"Saved to {fpath} (-> {fpath_doughnut_backup})")
+            else:
+                self.logger.info(f"No changes to file at {fpath}")
+        else:
+            self.logger.info(f"Not writing to {fpath} since this is a dry run")
 
     def run_setup(self, **kwargs):
         """Run the setup part of the workflow."""

@@ -7,6 +7,30 @@ import pandas as pd
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 
 
+class ManifestModel(BaseTabularModel):
+    """Model for the manifest."""
+
+    participant_id: str
+    visit: str
+    session: Optional[str]
+    datatype: Optional[list[str]]
+
+    @classmethod
+    def validate_fields(cls, data: dict):
+        """Validate manifest-specific fields."""
+        datatype = data.get(Manifest.col_datatype)
+        if datatype is not None and not isinstance(datatype, list):
+            try:
+                data[Manifest.col_datatype] = pd.eval(datatype)
+            except Exception:
+                raise ValueError(
+                    f"Invalid datatype: {datatype} ({type(datatype)}))"
+                    ". Must be a list, a string representation of a list"
+                    ", or left empty"
+                )
+        return data
+
+
 class Manifest(BaseTabular):
     """A dataset's manifest."""
 
@@ -18,36 +42,13 @@ class Manifest(BaseTabular):
 
     index_cols = [col_participant_id, col_visit]
 
-    class ManifestModel(BaseTabularModel):
-        """Model for the manifest."""
-
-        participant_id: str
-        visit: str
-        session: Optional[str]
-        datatype: Optional[list[str]]
-
-        @classmethod
-        def validate_fields(cls, data: dict):
-            """Validate manifest-specific fields."""
-            datatype = data.get(Manifest.col_datatype)
-            if datatype is not None and not isinstance(datatype, list):
-                try:
-                    data[Manifest.col_datatype] = pd.eval(datatype)
-                except Exception:
-                    raise ValueError(
-                        f"Invalid datatype: {datatype} ({type(datatype)}))"
-                        ". Must be a list, a string representation of a list"
-                        ", or left empty"
-                    )
-            return data
-
     # set the model
     model = ManifestModel
 
     @classmethod
-    def load(cls, *args, sessions=None, visits=None, **kwargs) -> Self:
+    def load(cls, *args, sessions=None, visits=None, validate=True, **kwargs) -> Self:
         """Load the manifest."""
-        manifest = super().load(*args, **kwargs)
+        manifest = super().load(*args, validate=validate, **kwargs)
         manifest.sessions = sessions
         manifest.visits = visits
         return manifest

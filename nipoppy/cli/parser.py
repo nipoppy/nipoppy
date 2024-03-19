@@ -15,6 +15,7 @@ PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
 COMMAND_DOUGHNUT = "doughnut"
 COMMAND_PIPELINE_RUN = "run"
+COMMAND_PIPELINE_TRACK = "track"
 
 DEFAULT_VERBOSITY = "2"  # info
 VERBOSITY_TO_LOG_LEVEL_MAP = {
@@ -182,6 +183,22 @@ def add_subparser_pipeline_run(
     return parser
 
 
+def add_subparser_pipeline_track(
+    subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
+) -> ArgumentParser:
+    """Add subparser for track command."""
+    parser = subparsers.add_parser(
+        COMMAND_PIPELINE_TRACK,
+        help="Track the processing status of a pipeline.",
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser = add_args_pipeline(parser)
+    parser = add_args_participant_and_session(parser)
+    return parser
+
+
 def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
@@ -203,6 +220,7 @@ def get_global_parser(
     add_subparser_init(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
     add_subparser_pipeline_run(subparsers, formatter_class=formatter_class)
+    add_subparser_pipeline_track(subparsers, formatter_class=formatter_class)
 
     # add common/global options to subcommand parsers
     for parser in list(subparsers.choices.values()):

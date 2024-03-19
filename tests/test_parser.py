@@ -13,6 +13,7 @@ from nipoppy.cli.parser import (
     add_subparser_doughnut,
     add_subparser_init,
     add_subparser_pipeline_run,
+    add_subparser_pipeline_track,
     get_global_parser,
 )
 
@@ -140,11 +141,33 @@ def test_add_subparser_pipeline_run(args):
 @pytest.mark.parametrize(
     "args",
     [
+        ["--dataset-root", "my_dataset", "--pipeline", "pipeline1"],
+        [
+            "--dataset-root",
+            "my_dataset",
+            "--pipeline",
+            "pipeline1",
+            "--pipeline-version",
+            "1.2.3",
+        ],
+    ],
+)
+def test_add_subparser_pipeline_track(args):
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_pipeline_track(subparsers)
+    assert parser.parse_args(["track"] + args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
         ["-h"],
         ["init", "-h"],
         ["init", "--dataset-root", "my_dataset"],
         ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
         ["run", "--dataset-root", "my_dataset", "--pipeline", "a_pipeline"],
+        ["track", "--dataset-root", "my_dataset", "--pipeline", "another_pipeline"],
     ],
 )
 def test_global_parser(args: list[str]):

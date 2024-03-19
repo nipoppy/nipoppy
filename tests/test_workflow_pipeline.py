@@ -29,6 +29,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         self._n_errors = 0
         super().__init__(
             dpath_root,
+            "test",
             pipeline_name,
             pipeline_version,
             participant,
@@ -319,12 +320,7 @@ def test_run_setup(dry_run: bool, tmp_path: Path):
         dry_run=dry_run,
     )
     workflow.run_setup()
-    for dpath_to_check in [
-        workflow.dpath_pipeline,
-        workflow.dpath_pipeline_work,
-        workflow.dpath_pipeline_output,
-    ]:
-        assert dpath_to_check.exists() == (not dry_run)
+    assert workflow.dpath_pipeline.exists() == (not dry_run)
 
     # run again, should not fail even if directories already exist
     workflow.run_setup()

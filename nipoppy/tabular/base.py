@@ -67,6 +67,7 @@ class BaseTabular(pd.DataFrame, ABC):
 
     _series_classes = {}
     index_cols = None
+    _metadata = []
 
     @property
     @abstractmethod
@@ -124,29 +125,6 @@ class BaseTabular(pd.DataFrame, ABC):
 
         return df_validated
 
-    def add_records(self, records: Sequence[dict] | dict, validate=True) -> Self:
-        """Add multiple records.
-
-        Note that this creates a new object. The existing one is not modified.
-        """
-        if isinstance(records, dict):
-            records = [records]
-        for record in records:
-            for key, value in record.items():
-                if (
-                    isinstance(value, Sequence) or not isinstance(value, str)
-                ) or not pd.isna(value):
-                    record[key] = str(value)
-        new_records = [self.model(**record).model_dump() for record in records]
-        records = self.to_dict(orient="records")
-        records.extend(new_records)
-
-        new_df = self.__class__(records)
-        if validate:
-            new_df = new_df.validate()
-
-        return new_df
-
     def get_diff(self, other: Self, cols=None) -> Self:
         """Get the difference between two dataframes.
 
@@ -169,6 +147,31 @@ class BaseTabular(pd.DataFrame, ABC):
         diff = self.loc[~index_self.isin(index_other)]
 
         return diff
+
+    def add_or_update_records(self, records: list[dict] | dict, validate=True) -> Self:
+        """Add or update records."""
+        if isinstance(records, dict):
+            records = [records]
+
+        # set the index (temporary)
+        tabular_with_index = self.set_index(self.index_cols)
+
+        # identify non-index columns
+        non_index_cols = set(self.columns) - set(self.index_cols)
+
+        for record in records:
+            # process record data
+            if validate:
+                record = self.model(**record).model_dump()
+
+            # add/update
+            for col in non_index_cols:
+                tabular_with_index.loc[
+                    tuple([record[col] for col in self.index_cols]),
+                    col,
+                ] = record[col]
+
+        return tabular_with_index.reset_index()
 
     def concatenate(self, other: Self, validate=True) -> Self:
         """Concatenate two dataframes."""

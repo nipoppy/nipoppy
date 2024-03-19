@@ -22,13 +22,14 @@ FIELDS_PIPELINE = [
     "data",
     [
         {},
+        {"DESCRIPTION": "My pipeline"},
         {"CONTAINER": "/my/container"},
         {"URI": "docker://container"},
         {"SINGULARITY_CONFIG": {"ARGS": ["--cleanenv"]}},
         {"DESCRIPTOR": {}},
         {"INVOCATION": {"arg1": "val1", "arg2": "val2"}},
         {"PYBIDS_IGNORE": ["ignore1", "ignore2"]},
-        {"DESCRIPTION": "My pipeline"},
+        {"TRACKER_CONFIG": {"pipeline_complete": ["pattern1", "pattern2"]}},
     ],
 )
 def test_pipeline_config(data):

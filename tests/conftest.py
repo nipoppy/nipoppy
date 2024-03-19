@@ -40,6 +40,7 @@ ATTR_TO_FPATH_MAP = {
     "fpath_config": FPATH_CONFIG,
     "fpath_manifest": FPATH_MANIFEST,
     "fpath_doughnut": "scratch/raw_dicom/doughnut.csv",
+    "fpath_imaging_bagel": "derivatives/bagel.csv",
 }
 
 

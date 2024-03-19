@@ -12,12 +12,13 @@ from nipoppy.config.singularity import ModelWithSingularityConfig
 class PipelineConfig(ModelWithSingularityConfig):
     """Model for workflow configuration."""
 
+    DESCRIPTION: Optional[str] = None
     CONTAINER: Optional[Path] = None
     URI: Optional[str] = None
     DESCRIPTOR: Optional[dict] = None
     INVOCATION: Optional[dict] = None
     PYBIDS_IGNORE: list[re.Pattern] = []
-    DESCRIPTION: Optional[str] = None
+    TRACKER_CONFIG: dict[str, list[str]] = {}
 
     model_config = ConfigDict(extra="forbid")
 

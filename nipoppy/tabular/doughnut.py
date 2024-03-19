@@ -5,8 +5,19 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.logger import get_logger
-from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.manifest import Manifest, ManifestModel
 from nipoppy.utils import participant_id_to_bids_id, participant_id_to_dicom_id
+
+
+class DoughnutModel(ManifestModel):
+    """Model for the doughnut file."""
+
+    participant_dicom_dir: str
+    dicom_id: str
+    bids_id: str
+    downloaded: bool
+    organized: bool
+    converted: bool
 
 
 class Doughnut(Manifest):
@@ -19,16 +30,6 @@ class Doughnut(Manifest):
     col_downloaded = "downloaded"
     col_organized = "organized"
     col_converted = "converted"
-
-    class DoughnutModel(Manifest.ManifestModel):
-        """Model for the doughnut file."""
-
-        participant_dicom_dir: str
-        dicom_id: str
-        bids_id: str
-        downloaded: bool
-        organized: bool
-        converted: bool
 
     # set the model
     model = DoughnutModel

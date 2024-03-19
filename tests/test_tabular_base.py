@@ -101,27 +101,6 @@ def test_validate_duplicate_records(data):
 
 
 @pytest.mark.parametrize(
-    "data,n_records",
-    [
-        ({"a": "A", "b": "1"}, 1),
-        ([{"a": "A", "b": "1"}, 1]),
-        ([{"a": "A", "b": "1"}, {"a": "A", "b": 2}], 2),
-    ],
-)
-def test_add_records(data: list[dict], n_records):
-    tabular = TabularWithModel().add_records(data)
-    assert len(tabular) == n_records
-    assert isinstance(tabular, TabularWithModel)
-
-
-def test_add_records_error():
-    data = [{"a": "A", "b": "1"}]
-    tabular = TabularWithModel().add_records(data)
-    with pytest.raises(ValueError):
-        tabular.add_records(data)
-
-
-@pytest.mark.parametrize(
     "data1,data2,expected_count",
     [
         (

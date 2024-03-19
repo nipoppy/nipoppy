@@ -53,7 +53,7 @@ def test_fpaths(dpath_root: Path):
     [
         [],
         ["sourcedata", "downloads"],
-        ["rawdata", "derivatives"],
+        ["rawdata", "derivatives", "derivatives/bagel.csv"],
         [
             "code",
             "code/containers",
