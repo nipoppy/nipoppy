@@ -716,7 +716,8 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
 
         # convert symlinks to real files
         for out in out_files:
-            move_target_to_symlink(out)
+            if out.is_symlink():
+                move_target_to_symlink(out)
 
         # remove tractoflow_input_dir
         shutil.rmtree(tractoflow_nxtf_inp)
