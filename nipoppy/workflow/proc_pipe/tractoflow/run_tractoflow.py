@@ -703,7 +703,7 @@ def run(participant_id, global_configs, session_id, output_dir, use_bids_filter,
     # do clean-up
 
     # check if tractogram is a valid file
-    trk = nib.streamlines.load(Path(tractoflow_out_dir, 'PFT_Tracking', f"{participant_id}__pft_tracking_prob_wm_seed_0.trk"))
+    trk = nib.streamlines.load(str(Path(tractoflow_out_dir, participant_id, 'PFT_Tracking', f'{participant_id}__pft_tracking_prob_wm_seed_0.trk')))
 
     # if the the last file created (tractogram) can be validly loaded,
     # processing is done.
