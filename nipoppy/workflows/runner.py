@@ -7,7 +7,7 @@ from typing import Optional
 from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.singularity import prepare_singularity
+from nipoppy.config.singularity import SingularityConfig, prepare_singularity
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -50,12 +50,28 @@ class PipelineRunner(BasePipelineWorkflow):
         if bind_paths is None:
             bind_paths = []
 
-        # get singularity config
+        # get and process Singularity config
         singularity_config = self.pipeline_config.get_singularity_config()
+        singularity_config = SingularityConfig(
+            **self.process_template_json(
+                singularity_config.model_dump(),
+                participant=participant,
+                session=session,
+            )
+        )
         self.logger.debug(f"Initial Singularity config: {singularity_config}")
 
-        # update singularity config with additional information from Boutiques config
+        # get and process Boutiques config
         boutiques_config = self.get_boutiques_config(participant, session)
+        boutiques_config = BoutiquesConfig(
+            **self.process_template_json(
+                boutiques_config.model_dump(),
+                participant=participant,
+                session=session,
+            )
+        )
+
+        # update singularity config with additional information from Boutiques config
         self.logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
             self.logger.info("Updating Singularity config with config from descriptor")
@@ -140,6 +156,7 @@ class PipelineRunner(BasePipelineWorkflow):
             ],
         )
 
+        # run pipeline with Boutiques
         self.launch_boutiques_run(
             participant, session, singularity_command=singularity_command
         )

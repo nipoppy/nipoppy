@@ -201,14 +201,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         try:
             boutiques_config = get_boutiques_config_from_descriptor(
                 self.descriptor,
-                func_to_apply=(
-                    lambda json_data: self.process_template_json(
-                        json_data,
-                        participant=participant,
-                        session=session,
-                        return_str=False,
-                    )
-                ),
             )
         except ValidationError as exception:
             error_message = str(exception) + str(exception.errors())

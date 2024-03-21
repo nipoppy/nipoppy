@@ -21,7 +21,8 @@
             "type": "String",
             "optional": true,
             "command-line-flag": "-d",
-            "value-key": "[DICOM_DIR_TEMPLATE]"
+            "value-key": "[DICOM_DIR_TEMPLATE]",
+            "default-value": "[[NIPOPPY_DPATH_DICOM]]/[[NIPOPPY_SESSION]]/[[NIPOPPY_PARTICIPANT]]/*"
         },
         {
             "name": "files",
@@ -39,7 +40,8 @@
             "type": "String",
             "optional": true,
             "command-line-flag": "-s",
-            "value-key": "[SUBJS]"
+            "value-key": "[SUBJS]",
+            "default-value": "[[NIPOPPY_PARTICIPANT]]"
         },
         {
             "name": "converter",
@@ -61,9 +63,9 @@
             "description": "Output directory for conversion setup (for further customization and future reference. This directory will refer to non-anonymized subject IDs.",
             "type": "String",
             "optional": true,
-            "default-value": "/data/origami/michelle/scratch",
             "command-line-flag": "-o",
-            "value-key": "[OUTDIR]"
+            "value-key": "[OUTDIR]",
+            "default-value": "[[NIPOPPY_DPATH_BIDS]]"
         },
         {
             "name": "locator",
@@ -117,7 +119,8 @@
             "type": "String",
             "optional": true,
             "command-line-flag": "-ss",
-            "value-key": "[SESSION]"
+            "value-key": "[SESSION]",
+            "default-value": "[[NIPOPPY_SESSION]]"
         },
         {
             "name": "bids_options",

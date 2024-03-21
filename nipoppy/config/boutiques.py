@@ -1,7 +1,5 @@
 """Boutiques configuration model and utility functions."""
 
-from typing import Callable, Optional
-
 from pydantic import ConfigDict
 
 from nipoppy.config.singularity import ModelWithSingularityConfig
@@ -20,9 +18,7 @@ class BoutiquesConfig(ModelWithSingularityConfig):
     model_config = ConfigDict(extra="forbid")
 
 
-def get_boutiques_config_from_descriptor(
-    descriptor: dict, func_to_apply: Optional[Callable[[dict], dict]] = None
-) -> BoutiquesConfig:
+def get_boutiques_config_from_descriptor(descriptor: dict) -> BoutiquesConfig:
     """Return the Boutiques configuration object from a descriptor."""
     try:
         data = descriptor[BOUTIQUES_CUSTOM_KEY][BOUTIQUES_CONFIG_KEY]
@@ -31,6 +27,4 @@ def get_boutiques_config_from_descriptor(
             "The Boutiques descriptor does not have a"
             f" {BOUTIQUES_CUSTOM_KEY}/{BOUTIQUES_CONFIG_KEY} field: {descriptor}"
         )
-    if func_to_apply is not None:
-        data = func_to_apply(data)
     return BoutiquesConfig(**data)
