@@ -16,7 +16,7 @@ class Config(ModelWithSingularityConfig):
     DATASET_NAME: str
     SESSIONS: list[str]
     VISITS: list[str] = []
-    BIDS: dict[str, dict[str, PipelineConfig]] = {}
+    BIDS: dict[str, dict[str, dict[str, PipelineConfig]]] = {}
     PROC_PIPELINES: dict[str, dict[str, PipelineConfig]]
 
     model_config = ConfigDict(extra="allow")
@@ -34,17 +34,17 @@ class Config(ModelWithSingularityConfig):
     def _propagate_singularity_config(self) -> Self:
         """Propagate the Singularity config to all pipelines."""
 
-        def _propagate(pipeline_dicts: dict[dict[PipelineConfig]]):
-            for pipeline_name in pipeline_dicts:
-                for pipeline_version in pipeline_dicts[pipeline_name]:
-                    pipeline_config: PipelineConfig = pipeline_dicts[pipeline_name][
-                        pipeline_version
-                    ]
-                    singularity_config = pipeline_config.get_singularity_config()
-                    if singularity_config.INHERIT:
-                        singularity_config.merge_args_and_env_vars(
-                            self.SINGULARITY_CONFIG
-                        )
+        def _propagate(pipeline_or_pipeline_dicts: dict | PipelineConfig):
+            if isinstance(pipeline_or_pipeline_dicts, PipelineConfig):
+                pipeline_config = pipeline_or_pipeline_dicts
+                singularity_config = pipeline_config.get_singularity_config()
+                if singularity_config.INHERIT:
+                    singularity_config.merge_args_and_env_vars(self.SINGULARITY_CONFIG)
+            else:
+                for (
+                    child_pipeline_or_pipeline_dicts
+                ) in pipeline_or_pipeline_dicts.values():
+                    _propagate(child_pipeline_or_pipeline_dicts)
 
         _propagate(self.BIDS)
         _propagate(self.PROC_PIPELINES)
@@ -59,16 +59,27 @@ class Config(ModelWithSingularityConfig):
         return self
 
     def get_pipeline_config(
-        self, pipeline_name: str, pipeline_version: str
+        self,
+        pipeline_name: str,
+        pipeline_version: str,
     ) -> PipelineConfig:
         """Get the config for a pipeline."""
         try:
-            if pipeline_name in self.BIDS:
-                return self.BIDS[pipeline_name][pipeline_version]
-            else:
-                return self.PROC_PIPELINES[pipeline_name][pipeline_version]
+            return self.PROC_PIPELINES[pipeline_name][pipeline_version]
         except KeyError:
             raise ValueError(f"No config found for {pipeline_name} {pipeline_version}")
+
+    def get_bids_pipeline_config(
+        self, pipeline_name: str, pipeline_version: str, pipeline_step: str
+    ) -> PipelineConfig:
+        """Get the config for a BIDS conversion pipeline."""
+        try:
+            return self.BIDS[pipeline_name][pipeline_version][pipeline_step]
+        except KeyError:
+            raise ValueError(
+                "No config found for "
+                f"{pipeline_name} {pipeline_version} {pipeline_step}"
+            )
 
     def save(self, fpath: str | Path, **kwargs):
         """Save the config to a JSON file.

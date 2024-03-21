@@ -6,6 +6,7 @@ from typing import Sequence
 from rich_argparse import RichHelpFormatter
 
 from nipoppy.cli.parser import (
+    COMMAND_BIDS_CONVERSION,
     COMMAND_DICOM_REORG,
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
@@ -14,6 +15,7 @@ from nipoppy.cli.parser import (
     get_global_parser,
 )
 from nipoppy.logger import add_logfile, get_logger
+from nipoppy.workflows.bids_conversion import BidsConversionRunner
 from nipoppy.workflows.dataset_init import InitWorkflow
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 from nipoppy.workflows.doughnut import DoughnutWorkflow
@@ -55,6 +57,17 @@ def cli(argv: Sequence[str] = None) -> None:
             workflow = DicomReorgWorkflow(
                 dpath_root=dpath_root,
                 copy_files=args.copy_files,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_BIDS_CONVERSION:
+            workflow = BidsConversionRunner(
+                dpath_root=dpath_root,
+                pipeline_name=args.pipeline,
+                pipeline_version=args.pipeline_version,
+                pipeline_step=args.pipeline_step,
+                participant=args.participant,
+                session=args.session,
+                simulate=args.simulate,
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_RUN:

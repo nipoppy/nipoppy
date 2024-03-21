@@ -60,19 +60,19 @@ class BaseWorkflow(Base, ABC):
 
     def generate_fpath_log(
         self,
-        dname_parent: Optional[list[str]] = None,
+        dnames_parent: Optional[str | list[str]] = None,
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""
-        if dname_parent is None:
-            dname_parent = []
-        if isinstance(dname_parent, str):
-            dname_parent = [dname_parent]
+        if dnames_parent is None:
+            dnames_parent = []
+        if isinstance(dnames_parent, str):
+            dnames_parent = [dnames_parent]
         if fname_stem is None:
             fname_stem = self.name
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         dpath_log = self.layout.dpath_logs / self.name
-        for dname in dname_parent:
+        for dname in dnames_parent:
             dpath_log = dpath_log / dname
         fname_log = f"{self.path_sep.join([fname_stem, timestamp])}{LOG_SUFFIX}"
         return dpath_log / fname_log

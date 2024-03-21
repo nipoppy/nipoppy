@@ -107,12 +107,15 @@ def create_bids_db(
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
+    pipeline_step: Optional[str] = None,
     participant: Optional[str] = None,
     session: Optional[str] = None,
     sep="-",
 ):
     """Generate a tag for a pipeline."""
     components = [pipeline_name, pipeline_version]
+    if pipeline_step is not None:
+        components.append(pipeline_step)
     if participant is not None:
         components.append(participant)
     if session is not None:

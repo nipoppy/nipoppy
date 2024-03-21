@@ -36,22 +36,25 @@ class PipelineRunner(BasePipelineWorkflow):
             dry_run=dry_run,
         )
         self.simulate = simulate
+        self.dpaths_to_check.extend(
+            [self.dpath_pipeline_output, self.dpath_pipeline_work]
+        )
 
-    def run_setup(self, **kwargs):
-        """Create output and work directories."""
-        to_return = super().run_setup(**kwargs)
+    def process_singularity_config(
+        self,
+        participant: str,
+        session: str,
+        bind_paths: Optional[list[str | Path]] = None,
+    ) -> str:
+        """Update Singularity config and generate Singularity command."""
+        if bind_paths is None:
+            bind_paths = []
 
-        for dpath in [self.dpath_pipeline_output, self.dpath_pipeline_work]:
-            self.check_dir(dpath)
-        return to_return
-
-    def run_single(self, participant: str, session: str):
-        """Run pipeline on a single participant/session."""
         # get singularity config
         singularity_config = self.pipeline_config.get_singularity_config()
         self.logger.debug(f"Initial Singularity config: {singularity_config}")
 
-        # update singularity config with based on Boutiques config
+        # update singularity config with additional information from Boutiques config
         boutiques_config = self.get_boutiques_config(participant, session)
         self.logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
@@ -60,32 +63,30 @@ class PipelineRunner(BasePipelineWorkflow):
                 boutiques_config.get_singularity_config()
             )
 
-        # set up PyBIDS database
-        self.set_up_bids_db(
-            dpath_bids_db=self.dpath_pipeline_bids_db,
-            participant=participant,
-            session=session,
-        )
-        singularity_config.add_bind_path(self.dpath_pipeline_bids_db)
+        # add bind paths
+        for bind_path in bind_paths:
+            singularity_config.add_bind_path(bind_path)
 
-        # update singularity config
-        singularity_config.add_bind_path(self.layout.dpath_bids)
-        singularity_config.add_bind_path(self.dpath_pipeline_output)
-        singularity_config.add_bind_path(self.dpath_pipeline_work)
         self.logger.info(f"Using Singularity config: {singularity_config}")
 
-        # get final singularity command
         singularity_command = prepare_singularity(
             singularity_config, check=True, logger=self.logger
         )
 
+        return singularity_command
+
+    def launch_boutiques_run(
+        self, participant: str, session: str, objs: Optional[list] = None, **kwargs
+    ):
+        """Launch a pipeline run using Boutiques."""
         # process and validate the descriptor
         self.logger.info("Processing the JSON descriptor")
         descriptor_str = self.process_template_json(
             self.descriptor,
             participant=participant,
             session=session,
-            singularity_command=singularity_command,
+            objs=objs,
+            **kwargs,
             return_str=True,
         )
         self.logger.debug(f"Descriptor string: {descriptor_str}")
@@ -98,7 +99,8 @@ class PipelineRunner(BasePipelineWorkflow):
             self.invocation,
             participant=participant,
             session=session,
-            singularity_command=singularity_command,
+            objs=objs,
+            **kwargs,
             return_str=True,
         )
         self.logger.debug(f"Invocation string: {invocation_str}")
@@ -116,6 +118,31 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         return descriptor_str, invocation_str
+
+    def run_single(self, participant: str, session: str):
+        """Run pipeline on a single participant/session."""
+        # set up PyBIDS database
+        self.set_up_bids_db(
+            dpath_bids_db=self.dpath_pipeline_bids_db,
+            participant=participant,
+            session=session,
+        )
+
+        # get singularity command
+        singularity_command = self.process_singularity_config(
+            participant=participant,
+            session=session,
+            bind_paths=[
+                self.layout.dpath_bids,
+                self.dpath_pipeline_output,
+                self.dpath_pipeline_work,
+                self.dpath_pipeline_bids_db,
+            ],
+        )
+
+        self.launch_boutiques_run(
+            participant, session, singularity_command=singularity_command
+        )
 
     def run_cleanup(self, **kwargs):
         """Run pipeline runner cleanup."""

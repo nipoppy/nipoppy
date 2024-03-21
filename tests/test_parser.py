@@ -7,9 +7,11 @@ import pytest
 from nipoppy.cli.parser import (
     add_arg_dataset_root,
     add_arg_dry_run,
+    add_arg_simulate,
     add_arg_verbosity,
     add_args_participant_and_session,
     add_args_pipeline,
+    add_subparser_bids_conversion,
     add_subparser_dicom_reorg,
     add_subparser_doughnut,
     add_subparser_init,
@@ -24,6 +26,12 @@ def test_add_arg_dataset_root(dataset_root: str):
     parser = ArgumentParser()
     parser = add_arg_dataset_root(parser)
     assert parser.parse_args(["--dataset-root", dataset_root])
+
+
+def test_add_arg_simulate():
+    parser = ArgumentParser()
+    parser = add_arg_simulate(parser)
+    assert parser.parse_args(["--simulate"])
 
 
 @pytest.mark.parametrize(
@@ -123,6 +131,28 @@ def test_add_subparser_dicom_reorg(args):
             "my_dataset",
             "--pipeline",
             "pipeline1",
+            "--pipeline-step",
+            "step1",
+        ],
+    ],
+)
+def test_add_subparser_bids_conversion(args):
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_bids_conversion(subparsers)
+    assert parser.parse_args(["convert"] + args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--dataset-root", "my_dataset", "--pipeline", "pipeline1"],
+        ["--dataset-root", "my_dataset", "--pipeline", "pipeline1", "--simulate"],
+        [
+            "--dataset-root",
+            "my_dataset",
+            "--pipeline",
+            "pipeline1",
             "--pipeline-version",
             "1.2.3",
         ],
@@ -182,6 +212,7 @@ def test_add_subparser_pipeline_track(args):
         ["init", "--dataset-root", "my_dataset"],
         ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
         ["reorg", "--dataset-root", "my_dataset", "--copy-files"],
+        ["convert", "--dataset-root", "my_dataset", "--pipeline", "a_bids_pipeline"],
         ["run", "--dataset-root", "my_dataset", "--pipeline", "a_pipeline"],
         ["track", "--dataset-root", "my_dataset", "--pipeline", "another_pipeline"],
     ],

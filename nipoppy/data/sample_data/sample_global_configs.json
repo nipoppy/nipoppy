@@ -6,7 +6,9 @@
     "BIDS": {
         "<BIDS_TOOL_NAME>": {
             "<BIDS_TOOL_VERSION>": {
-                "CONTAINER": "<CONTAINER_NAME_OR_PATH>"
+                "<STEP_NAME>": {
+                    "CONTAINER": "<CONTAINER_NAME_OR_PATH>"
+                }
             }
         }
     },

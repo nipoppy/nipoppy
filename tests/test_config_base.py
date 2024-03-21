@@ -21,7 +21,12 @@ def valid_config_data():
         "DATASET_NAME": "my_dataset",
         "SESSIONS": ["ses-1"],
         "BIDS": {
-            "bids_converter": {"1.0": {"CONTAINER": "path"}},
+            "bids_converter": {
+                "1.0": {
+                    "step1": {"CONTAINER": "path"},
+                    "step2": {"CONTAINER": "other_path"},
+                }
+            },
         },
         "PROC_PIPELINES": {
             "pipeline1": {"v1": {}, "v2": {"CONTAINER": "path"}},
@@ -69,10 +74,7 @@ def test_check_no_duplicate_pipeline(valid_config_data):
         ),
     ],
 )
-@pytest.mark.parametrize("pipeline_type", ["BIDS", "PROC_PIPELINES"])
-def test_propagate_singularity_config(
-    data_root, data_pipeline, data_expected, pipeline_type
-):
+def test_propagate_singularity_config(data_root, data_pipeline, data_expected):
     pipeline_name = "pipeline1"
     pipeline_version = "1.0"
     data = {
@@ -80,28 +82,88 @@ def test_propagate_singularity_config(
         "SESSIONS": [],
         "SINGULARITY_CONFIG": data_root,
         "BIDS": {},
+        "PROC_PIPELINES": {
+            pipeline_name: {pipeline_version: {"SINGULARITY_CONFIG": data_pipeline}}
+        },
+    }
+
+    singularity_config = (
+        Config(**data)
+        .get_pipeline_config(pipeline_name, pipeline_version)
+        .get_singularity_config()
+    )
+
+    assert singularity_config == SingularityConfig(**data_expected)
+
+
+@pytest.mark.parametrize(
+    "data_root,data_pipeline,data_expected",
+    [
+        (
+            {"ARGS": ["--cleanenv"]},
+            {"ARGS": ["--fakeroot"]},
+            {"ARGS": ["--fakeroot", "--cleanenv"]},
+        ),
+        (
+            {"ARGS": ["--cleanenv"]},
+            {"ARGS": ["--fakeroot"], "INHERIT": "false"},
+            {"ARGS": ["--fakeroot"], "INHERIT": "false"},
+        ),
+        (
+            {"ENV_VARS": {"VAR1": "1"}},
+            {"ENV_VARS": {"VAR2": "2"}},
+            {"ENV_VARS": {"VAR1": "1", "VAR2": "2"}},
+        ),
+        (
+            {"ENV_VARS": {"VAR1": "1"}},
+            {"ENV_VARS": {"VAR2": "2"}, "INHERIT": "false"},
+            {"ENV_VARS": {"VAR2": "2"}, "INHERIT": "false"},
+        ),
+    ],
+)
+def test_propagate_singularity_config_bids(data_root, data_pipeline, data_expected):
+    pipeline_name = "pipeline1"
+    pipeline_version = "1.0"
+    step_name = "step1"
+    data = {
+        "DATASET_NAME": "my_dataset",
+        "SESSIONS": [],
+        "SINGULARITY_CONFIG": data_root,
+        "BIDS": {
+            pipeline_name: {
+                pipeline_version: {step_name: {"SINGULARITY_CONFIG": data_pipeline}}
+            }
+        },
         "PROC_PIPELINES": {},
     }
-    data.update(
-        {
-            pipeline_type: {
-                pipeline_name: {pipeline_version: {"SINGULARITY_CONFIG": data_pipeline}}
-            }
-        }
+
+    singularity_config = (
+        Config(**data)
+        .get_bids_pipeline_config(pipeline_name, pipeline_version, step_name)
+        .get_singularity_config()
     )
-    singularity_config = getattr(Config(**data), pipeline_type)[pipeline_name][
-        pipeline_version
-    ].get_singularity_config()
+
     assert singularity_config == SingularityConfig(**data_expected)
 
 
 @pytest.mark.parametrize(
     "pipeline,version",
-    [("pipeline1", "v1"), ("pipeline2", "2.0"), ("bids_converter", "1.0")],
+    [("pipeline1", "v1"), ("pipeline2", "2.0")],
 )
 def test_get_pipeline_config(pipeline, version, valid_config_data):
     assert isinstance(
         Config(**valid_config_data).get_pipeline_config(pipeline, version),
+        PipelineConfig,
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline,version,step",
+    [("bids_converter", "1.0", "step1"), ("bids_converter", "1.0", "step2")],
+)
+def test_get_bids_pipeline_config(pipeline, version, step, valid_config_data):
+    assert isinstance(
+        Config(**valid_config_data).get_bids_pipeline_config(pipeline, version, step),
         PipelineConfig,
     )
 

@@ -55,6 +55,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_version = pipeline_version
         self.participant = check_participant(participant)
         self.session = check_session(session)
+        self.dpaths_to_check = [self.dpath_pipeline]
 
     @cached_property
     def dpath_pipeline(self) -> Path:
@@ -294,7 +295,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # make sure the pipeline config exists
         self.pipeline_config
 
-        self.check_dir(self.dpath_pipeline)
+        for dpath in self.dpaths_to_check:
+            self.check_dir(dpath)
 
         return to_return
 
@@ -340,17 +342,24 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Run on a single participant/session."""
         pass
 
-    def generate_fpath_log(self) -> Path:
+    def generate_fpath_log(
+        self,
+        dnames_parent: Optional[str | list[str]] = None,
+        fname_stem: Optional[str] = None,
+    ) -> Path:
         """Generate a log file path."""
-        return super().generate_fpath_log(
-            dname_parent=get_pipeline_tag(
+        if dnames_parent is None:
+            dnames_parent = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
-            ),
-            fname_stem=get_pipeline_tag(
+            )
+        if fname_stem is None:
+            fname_stem = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
                 participant=self.participant,
                 session=self.session,
-            ),
+            )
+        return super().generate_fpath_log(
+            dnames_parent=dnames_parent, fname_stem=fname_stem
         )

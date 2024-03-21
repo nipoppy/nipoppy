@@ -58,6 +58,39 @@ def test_cli_dicom_reorg(tmp_path: Path):
     )
 
 
+def test_cli_bids_conversion(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    try:
+        cli(
+            [
+                "nipoppy",
+                "convert",
+                "--dataset-root",
+                str(dpath_root),
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+                "--pipeline-step",
+                "step1",
+            ]
+        )
+    except BaseException:
+        pass
+
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "bids_conversion/my_pipeline-1.0-step1/*.log"
+                )
+            )
+        )
+        == 1
+    )
+
+
 def test_cli_pipeline_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
