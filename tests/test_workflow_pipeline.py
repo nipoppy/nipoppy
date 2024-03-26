@@ -38,28 +38,22 @@ class PipelineWorkflow(BasePipelineWorkflow):
             dry_run,
         )
 
-    def run_single(self, subject: str, session: str):
-        """Run on a single subject/session."""
-        self._n_runs += 1
-        self.logger.info(f"Running on {subject}/{session}")
-        if subject == "FAIL":
-            self._n_errors += 1
-            raise RuntimeError("FAIL")
-
-    @property
-    def config(self) -> Config:
-        """Override the config."""
-        return Config(
+        # override the config
+        self.config = Config(
             DATASET_NAME="my_dataset",
             SESSIONS=["ses-1"],
             VISITS=["1"],
             PROC_PIPELINES={
-                # built-in pipeline
+                # built-in pipelines
                 "fmriprep": {
                     "23.1.3": {
                         "CONTAINER": "fmriprep.sif",
                         "INVOCATION": {"arg1": "val1"},
-                    }
+                    },
+                    "20.2.7": {},
+                },
+                "mriqc": {
+                    "23.1.0": {},
                 },
                 # user-added pipeline
                 "my_pipeline": {
@@ -79,7 +73,9 @@ class PipelineWorkflow(BasePipelineWorkflow):
                 },
                 # pipeline without a container
                 "no_container": {"2.0": {}},
+                # pipeline without a descriptor without a boutiques config
                 "no_boutiques_config": {"1.0": {"DESCRIPTOR": {}}},
+                # pipeline with a descriptor with an invalid boutiques config
                 "bad_boutiques_config": {
                     "1.0": {
                         "DESCRIPTOR": {"custom": {"nipoppy": {"INVALID_ARG": "value"}}}
@@ -87,6 +83,29 @@ class PipelineWorkflow(BasePipelineWorkflow):
                 },
             },
         )
+
+    def run_single(self, subject: str, session: str):
+        """Run on a single subject/session."""
+        self._n_runs += 1
+        self.logger.info(f"Running on {subject}/{session}")
+        if subject == "FAIL":
+            self._n_errors += 1
+            raise RuntimeError("FAIL")
+
+
+@pytest.fixture
+def workflow(tmp_path: Path):
+    return PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+
+
+def _make_dummy_json(fpath: str | Path):
+    fpath = Path(fpath)
+    fpath.parent.mkdir(parents=True, exist_ok=True)
+    fpath.write_text("{}\n")
 
 
 @pytest.mark.parametrize(
@@ -117,12 +136,7 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
-def test_pipeline_config():
-    workflow = PipelineWorkflow(
-        dpath_root="my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
-    )
+def test_pipeline_config(workflow: PipelineWorkflow):
     assert isinstance(workflow.pipeline_config, PipelineConfig)
 
 
@@ -147,22 +161,69 @@ def test_fpath_container_not_in_config():
         workflow.fpath_container
 
 
-def test_fpath_container_not_found():
-    workflow = PipelineWorkflow(
-        dpath_root="my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
-    )
+def test_fpath_container_not_found(workflow: PipelineWorkflow):
     with pytest.raises(FileNotFoundError, match="No container image file found at"):
         workflow.fpath_container
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version", [("my_pipeline", "1.0"), ("fmriprep", "23.1.3")]
+    "fpath_json,fpaths",
+    [
+        ("test.json", ["test.json", "dpath1/test.json", "dpath1/test2.json"]),
+        ("dpath1/test.json", ["test.json", "dpath1/test.json", "dpath1/test2.json"]),
+        ("dpath1/test2.json", ["test.json", "dpath1/test.json", "dpath1/test2.json"]),
+    ],
+)
+def test_check_files_for_json_direct(
+    fpath_json, fpaths, workflow: PipelineWorkflow, tmp_path: Path
+):
+    fpath_json: Path = tmp_path / fpath_json
+    _make_dummy_json(fpath_json)
+    assert isinstance(
+        workflow._check_files_for_json([tmp_path / fpath for fpath in fpaths]), dict
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("my_pipeline", "1.0"),
+        ("fmriprep", "20.2.7"),
+        ("fmriprep", "23.1.3"),
+        ("mriqc", "23.1.0"),
+        ("my_pipeline_with_arbitrary_descriptor_path", "1.0"),
+        ("my_pipeline_with_relative_descriptor_path", "1.0"),
+    ],
 )
 def test_descriptor(pipeline_name, pipeline_version, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
+
+    # user-added pipelines with descriptor file
+    fpath_descriptor_arbitrary = tmp_path / "descriptor_at_arbitrary_path.json"
+    fpath_descriptor_relative = (
+        workflow.layout.dpath_descriptors / "descriptor_at_relative_path.json"
+    )
+    workflow.config.PROC_PIPELINES.update(
+        {
+            "my_pipeline_with_arbitrary_descriptor_path": {
+                "1.0": PipelineConfig(
+                    CONTAINER="my_container.sif",
+                    DESCRIPTOR_FILE=fpath_descriptor_arbitrary,
+                    INVOCATION={},
+                )
+            },
+            "my_pipeline_with_relative_descriptor_path": {
+                "1.0": PipelineConfig(
+                    CONTAINER="my_container.sif",
+                    DESCRIPTOR_FILE="descriptor_at_relative_path.json",
+                    INVOCATION={},
+                )
+            },
+        },
+    )
+    for fpath_descriptor in [fpath_descriptor_arbitrary, fpath_descriptor_relative]:
+        _make_dummy_json(fpath_descriptor)
     assert isinstance(workflow.descriptor, dict)
 
 

@@ -112,30 +112,80 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
         return fpath_container
 
+    def _check_files_for_json(self, fpaths: str | Path | list[str | Path]) -> dict:
+        if isinstance(fpaths, (str, Path)):
+            fpaths = [fpaths]
+        for fpath in fpaths:
+            self.logger.debug(f"Checking for file: {fpath}")
+            if fpath.exists():
+                try:
+                    return load_json(fpath)
+                except json.JSONDecodeError as exception:
+                    self.logger.error(
+                        f"Error loading JSON file at {fpath}: {exception}"
+                    )
+        raise FileNotFoundError(
+            f"No file found in any of the following paths: {fpaths}"
+        )
+
+    def get_fpath_descriptor_builtin(self, fname=None) -> Path:
+        """Get the path to the built-in descriptor file."""
+        if fname is None:
+            pipeline_tag = get_pipeline_tag(self.pipeline_name, self.pipeline_version)
+            fname = f"{pipeline_tag}.json"
+        return DPATH_DESCRIPTORS / fname
+
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline's Boutiques descriptor."""
         # first check if the pipeline config has the descriptor itself
         descriptor = self.pipeline_config.DESCRIPTOR
-        if descriptor is None:
-            # TODO then check if the pipeline config specifies a path
+        if descriptor is not None:
+            self.logger.info("Using descriptor from pipeline config")
 
-            # finally check if there is a built-in descriptor
-            fpath_descriptor_builtin = (
-                DPATH_DESCRIPTORS
-                / f"{get_pipeline_tag(self.pipeline_name, self.pipeline_version)}.json"
-            )
-            try:
-                descriptor = load_json(fpath_descriptor_builtin)
-                self.logger.info("Using built-in descriptor")
-            except FileNotFoundError:
-                raise RuntimeError(
-                    "No built-in descriptor found for pipeline"
-                    f" {self.pipeline_name}, version {self.pipeline_version}"
-                    # TODO dump a list of built-in descriptors
-                )
+        # then try to find the descriptor file
         else:
-            self.logger.info("Loaded descriptor from pipeline config")
+            # user-provided descriptor file
+            fpath_descriptor_raw = self.pipeline_config.DESCRIPTOR_FILE
+            if fpath_descriptor_raw is not None:
+                self.logger.info(
+                    f"Descriptor file specified in config: {fpath_descriptor_raw}"
+                )
+                fpaths_descriptor_to_check = [
+                    fpath_descriptor_raw,
+                    self.layout.dpath_descriptors / fpath_descriptor_raw,
+                    DPATH_DESCRIPTORS / fpath_descriptor_raw,
+                ]
+                try:
+                    descriptor = self._check_files_for_json(fpaths_descriptor_to_check)
+                except FileNotFoundError:
+                    raise FileNotFoundError(
+                        f"Could not find a descriptor file for pipeline"
+                        f" {self.pipeline_name}, version {self.pipeline_version}"
+                        f" in any of the following paths: {fpaths_descriptor_to_check}"
+                    )
+                self.logger.info(
+                    "Loaded descriptor from file specified in global config"
+                )
+
+            # built-in descriptor file
+            else:
+                fpath_descriptor_builtin = self.get_fpath_descriptor_builtin()
+                self.logger.info(
+                    "No descriptor file specified in config"
+                    ", checking if there is a built-in descriptor"
+                    f" at {fpath_descriptor_builtin}"
+                )
+
+                try:
+                    descriptor = self._check_files_for_json(fpath_descriptor_builtin)
+                except FileNotFoundError:
+                    raise RuntimeError(
+                        "Could not find a built-in descriptor file for pipeline"
+                        f" {self.pipeline_name}, version {self.pipeline_version}"
+                        # ". Available built-in pipelines are: "  # TODO
+                    )
+                self.logger.info("Using built-in descriptor")
 
         return descriptor
 

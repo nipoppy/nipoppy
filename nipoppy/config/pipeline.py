@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Optional, Sequence
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, model_validator
 
 from nipoppy.config.singularity import ModelWithSingularityConfig
 
@@ -16,11 +16,38 @@ class PipelineConfig(ModelWithSingularityConfig):
     CONTAINER: Optional[Path] = None
     URI: Optional[str] = None
     DESCRIPTOR: Optional[dict] = None
+    DESCRIPTOR_FILE: Optional[Path] = None
     INVOCATION: Optional[dict] = None
+    INVOCATION_FILE: Optional[Path] = None
     PYBIDS_IGNORE: list[re.Pattern] = []
     TRACKER_CONFIG: dict[str, list[str]] = {}
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def check_fields(self):
+        """
+        Check that <FIELD> and <FIELD>_FILE fields are not both set.
+
+        Also add an empty invocation if none is provided.
+        """
+        field_pairs = [
+            ("DESCRIPTOR", "DESCRIPTOR_FILE"),
+            ("INVOCATION", "INVOCATION_FILE"),
+        ]
+        for field_json, field_file in field_pairs:
+            value_json = getattr(self, field_json)
+            value_file = getattr(self, field_file)
+            if value_json is not None and value_file is not None:
+                raise ValueError(
+                    f"Cannot specify both {field_json} and {field_file}"
+                    f". Got {value_json} and {value_file} respectively."
+                )
+
+        if self.INVOCATION is None and self.INVOCATION_FILE is None:
+            self.INVOCATION = {}
+
+        return self
 
     def get_container(self) -> Path:
         """Return the path to the pipeline's container."""

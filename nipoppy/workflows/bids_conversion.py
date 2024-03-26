@@ -48,6 +48,17 @@ class BidsConversionRunner(PipelineRunner):
             self.pipeline_step,
         )
 
+    def get_fpath_descriptor_builtin(self) -> Path:
+        """Get the path to the built-in descriptor file."""
+        fname_descriptor_builtin = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
+        return super().get_fpath_descriptor_builtin(
+            fname=f"{fname_descriptor_builtin}.json"
+        )
+
     def get_participants_sessions_to_run(
         self, participant: Optional[str], session: Optional[str]
     ):

@@ -13,7 +13,9 @@ FIELDS_PIPELINE = [
     "URI",
     "SINGULARITY_CONFIG",
     "DESCRIPTOR",
+    "DESCRIPTOR_FILE",
     "INVOCATION",
+    "INVOCATION_FILE",
     "PYBIDS_IGNORE",
 ]
 
@@ -35,6 +37,30 @@ FIELDS_PIPELINE = [
 def test_pipeline_config(data):
     for field in FIELDS_PIPELINE:
         assert hasattr(PipelineConfig(**data), field)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"DESCRIPTOR": {}, "INVOCATION_FILE": "invocation.json"},
+        {"DESCRIPTOR_FILE": "descriptor.json", "INVOCATION": {}},
+    ],
+)
+def test_file_or_json(data):
+    assert PipelineConfig(**data).check_fields() is not None
+
+
+@pytest.mark.parametrize(
+    "field_json,field_file",
+    [("DESCRIPTOR", "DESCRIPTOR_FILE"), ("INVOCATION", "INVOCATION_FILE")],
+)
+def test_file_and_json_not_allowed(field_json: str, field_file: str):
+    data = {
+        field_json: {"arg": "val"},
+        field_file: "path.json",
+    }
+    with pytest.raises(ValidationError, match="Cannot specify both"):
+        PipelineConfig(**data)
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
