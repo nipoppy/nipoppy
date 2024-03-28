@@ -6,7 +6,7 @@ from pathlib import Path
 def test_bidscoin(tmp_path):
 
     output_path = tmp_path
-    # output_path = Path.cwd()
+    output_path = Path.cwd()
 
     rawdata = output_path / "raw"
 
