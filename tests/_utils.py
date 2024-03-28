@@ -36,7 +36,6 @@ def create_fake_source_dataset(
     subjects: str | int | list[str | int] = None,
     sessions: None | str | int | list[str | int | None] = None,
     datatypes: str | list[str] = None,
-    layout: str = "nested",
     config=None,
 ) -> None:
     """Create a fake BIDS dataset."""
@@ -55,15 +54,13 @@ def create_fake_source_dataset(
     else:
         subjects_to_create = subjects
 
-    if layout == "flat" or sessions is None:
+    if config["layout"] == "flat" or sessions is None:
         sessions_to_create = [None]
     elif isinstance(sessions, (str, int)):
         sessions_to_create = [sessions]
     else:
         sessions_to_create = sessions
 
-    if layout == "flat":
-        datatypes = ["anat", "func"]
     if isinstance(datatypes, (str)):
         datatypes = [datatypes]
 
@@ -96,26 +93,27 @@ def create_fake_source_dataset(
                     if datatype_ in ["anat", "dwi"]:
                         for run in range(1, config[datatype_].get("runs", 1)):
                             entities["run"] = run
+                            entities["timestamp"] = timestamp
                             filepath = _create_file(
                                 output_dir,
-                                entities=entities,
-                                layout=layout,
                                 timestamp=timestamp,
                                 config=config,
                             )
+                            timestamp = timestamp + timedelta(minutes=10)
 
                     if datatype_ == "func":
                         for i, task in enumerate(config["func"]["tasks"]):
                             for run in range(1, config["func"]["runs"][i] + 1):
                                 entities["task"] = task
                                 entities["run"] = run
+                                entities["timestamp"] = timestamp
                                 filepath = _create_file(
                                     output_dir,
                                     entities=entities,
-                                    layout=layout,
                                     timestamp=timestamp,
                                     config=config,
                                 )
+                                timestamp = timestamp + timedelta(minutes=15)
                             # _create_sidecar(filepath)
 
 
@@ -157,15 +155,13 @@ def _img_4d_rand_eye(affine=_affine_eye()):
 def _create_file(
     output_dir: Path,
     entities: dict[str, str | int],
-    layout,
-    timestamp,
     config=None,
 ) -> Path:
     """Create an dummy file."""
     if config is None:
         config = _default_config()
 
-    timestamp = timestamp.strftime(config["timestamp_format"])
+    timestamp =  entities["timestamp"].strftime(config["timestamp_format"])
 
     subject = entities['subject']
 
@@ -187,7 +183,7 @@ def _create_file(
     filepath = output_dir / f"sub-{entities['subject']}"
     if entities.get("session"):
         filepath = filepath / entities["session"]
-    if layout != "flat":
+    if config["layout"] != "flat":
         filepath = filepath / entities["datatype"]
 
     filepath = filepath / filename
