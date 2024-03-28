@@ -22,16 +22,19 @@ def _default_config() -> CONFIG_TYPE:
         "func": {
             "suffix": ["bold", "events"],
             "tasks": ["main", "rest"],
-            "runs": [2, 1],
+            "runs": [2, 1],  # nb runs for each task
         },
-        "anat": {"suffix": ["t1w"], "runs": 2},
+        "anat": {
+            "suffix": ["t1w", "t2w"],
+            "runs": [2, 1],  # nb runs for each suffix
+        },
         "dwi": {"suffix": ["dwi"]},
         # other config
         "subject_folder_prefix": "sub-",
         "session_folder_prefix": "ses-",
         "timestamp_format": "%Y%m%d_%H%M%S",
         "default_nifti_ext": ".nii.gz",
-        "layout": "nested",  # flat or nested
+        "layout": "flat",  # flat or nested
         "filename_template": "$subject_$suffix_$task_$run_$timestamp",
     }
 
@@ -46,12 +49,12 @@ def create_fake_source_dataset(
     """Create a fake nifti dataset.
 
     The layout of the output dataset will depend on the config passed
-    adn the arguments passed.
+    and the arguments passed.
 
-    If no sesssion is passed then there won't be a session level folder
+    If no session is passed then there won't be a session level folder
     in the output.
 
-    nested layouts will have subfolders for each datatpe
+    nested layouts will have subfolders for each datatype
     - sub/datatype/files
 
     whereas flat layouts will have all files in a single subject folder
@@ -65,7 +68,7 @@ def create_fake_source_dataset(
     if subjects is None:
         subjects = ["01", "02"]
     if sessions is None:
-        sessions = ["01", "a"]
+        sessions = [""]
     if datatypes is None:
         datatypes = ["anat", "func"]
     if config is None:
@@ -76,9 +79,7 @@ def create_fake_source_dataset(
     else:
         subjects_to_create = subjects
 
-    if config["layout"] == "flat" or sessions is None:
-        sessions_to_create = [None]
-    elif isinstance(sessions, (str, int)):
+    if isinstance(sessions, (str, int)):
         sessions_to_create = [sessions]
     else:
         sessions_to_create = sessions
@@ -118,11 +119,12 @@ def create_fake_source_dataset(
                     )
                     continue
 
-                for suffix_ in config[datatype_]["suffix"]:
+                for i_suffix, suffix_ in enumerate(config[datatype_]["suffix"]):
                     entities["suffix"] = suffix_
 
                     if datatype_ in ["anat", "dwi"]:
-                        for run in range(1, config[datatype_].get("runs", 1)):
+                        nb_runs = _get_nb_runs(config, datatype_, i_suffix)
+                        for run in range(1, nb_runs):
                             entities["run"] = run
                             entities["timestamp"] = timestamp
                             filepath = _create_file(
@@ -133,8 +135,9 @@ def create_fake_source_dataset(
                             timestamp = timestamp + timedelta(minutes=10)
 
                     if datatype_ == "func":
-                        for i, task in enumerate(config["func"]["tasks"]):
-                            for run in range(1, config["func"]["runs"][i] + 1):
+                        for i_task, task in enumerate(config["func"]["tasks"]):
+                            nb_runs = _get_nb_runs(config, datatype_, i_task)
+                            for run in range(1, nb_runs + 1):
                                 entities["task"] = task
                                 entities["run"] = run
                                 entities["timestamp"] = timestamp
@@ -146,9 +149,80 @@ def create_fake_source_dataset(
                                 timestamp = timestamp + timedelta(minutes=15)
                             # _create_sidecar(filepath)
 
-    print(f"Dataset succesfully generated in:\n{output_dir}")
+    print(f"Dataset successfully generated in:\n{output_dir}")
 
     return output_dir
+
+
+def _get_nb_runs(config, datatype, index):
+    return config[datatype]["runs"][index] if config[datatype].get("runs") else 1
+
+
+def _create_file(
+    output_dir: Path,
+    entities: dict[str, str | int],
+    config: CONFIG_TYPE | None = None,
+) -> Path:
+    """Create an dummy file."""
+    if config is None:
+        config = _default_config()
+
+    filename = _generate_filename(entities, config)
+
+    filepath = output_dir / f"{config['subject_folder_prefix']}{entities['subject']}"
+    if entities.get("session"):
+        filepath = filepath / f"{config['session_folder_prefix']}{entities['session']}"
+    if config["layout"] != "flat":
+        filepath = filepath / entities["datatype"]
+    filepath = filepath / filename
+
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
+    extension = _set_extension(entities, config)
+    if extension in [".nii", ".nii.gz"]:
+        image = _img_3d_rand_eye()
+        if entities["datatype"] in ["func", "dwi"]:
+            image = _img_4d_rand_eye()
+        nib.save(image, filepath)
+
+    return filepath
+
+
+def _generate_filename(entities: dict[str, str | int], config: CONFIG_TYPE) -> str:
+    subject = entities["subject"]
+    timestamp = entities["timestamp"].strftime(config["timestamp_format"])
+    suffix = entities["suffix"]
+    run = entities.get("run")
+    task = entities.get("task")
+
+    filename = config["filename_template"]
+    for t, c in zip(
+        ["subject", "suffix", "timestamp", "run", "task"],
+        [subject, suffix, timestamp, run, task],
+    ):
+        if c is None:
+            filename = filename.replace(f"_${t}", "")
+        else:
+            filename = filename.replace(f"${t}", str(c))
+    filename += _set_extension(entities, config)
+
+    return filename
+
+
+def _set_extension(entities, config):
+    extension = entities.get("extension", config["default_nifti_ext"])
+    if entities["suffix"] == "events":
+        extension = ".tsv"
+    return extension
+
+
+def _create_sidecar(filepath: Path) -> None:
+    """Create a sidecar JSON file."""
+
+    metadata = {}
+    with open(filepath.with_suffix(".json"), "w") as f:
+        json.dump(metadata, f, indent=4)
+
 
 def _rng(seed=42):
     return np.random.default_rng(seed)
@@ -185,71 +259,6 @@ def _img_4d_rand_eye(affine=_affine_eye()):
     return Nifti1Image(data, affine)
 
 
-def _create_file(
-    output_dir: Path,
-    entities: dict[str, str | int],
-    config: CONFIG_TYPE | None = None,
-) -> Path:
-    """Create an dummy file."""
-    if config is None:
-        config = _default_config()
-
-    filename = _generate_filename(entities, config)
-
-    filepath = output_dir / f"{config['subject_folder_prefix']}{entities['subject']}"
-    if entities.get("session"):
-        filepath = filepath / f"{config['session_folder_prefix']}{entities['session']}"
-    if config["layout"] != "flat":
-        filepath = filepath / entities["datatype"]
-    filepath = filepath / filename
-
-    print(filepath)
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    extension = _set_extension(entities, config)
-    if extension in [".nii", ".nii.gz"]:
-        image = _img_3d_rand_eye()
-        if entities["datatype"] in ["func", "dwi"]:
-            image = _img_4d_rand_eye()
-        nib.save(image, filepath)
-
-    return filepath
-
-
-def _generate_filename(entities: dict[str, str | int], config: CONFIG_TYPE) -> str:
-    subject = entities["subject"]
-    timestamp = entities["timestamp"].strftime(config["timestamp_format"])
-    suffix = entities["suffix"]
-    run = entities.get("run")
-    task = entities.get("task")
-
-    filename = config["filename_template"]
-    for t, c in zip(
-        ["subject", "suffix", "timestamp", "run", "task"],
-        [subject, suffix, timestamp, run, task],
-    ):
-        if c is None:
-            filename = filename.replace(f"_${t}", "")
-        else:
-            filename = filename.replace(f"${t}", str(c))
-    filename += _set_extension(entities, config)
-
-    return filename
-
-def _set_extension(entities, config):
-    extension = entities.get("extension", config["default_nifti_ext"])
-    if entities["suffix"] == "events":
-        extension = ".tsv"
-    return extension
-
-def _create_sidecar(filepath: Path) -> None:
-    """Create a sidecar JSON file."""
-
-    metadata = {}
-    with open(filepath.with_suffix(".json"), "w") as f:
-        json.dump(metadata, f, indent=4)
-
-
 if __name__ == "__main__":
     create_fake_source_dataset(
         output_dir=Path.cwd() / "sourcedata",
@@ -260,7 +269,7 @@ if __name__ == "__main__":
             "bob",
             "aaa",
         ],
-        sessions=["01", "2"],
+        sessions=[1, 2],
         datatypes=["anat", "func", "dwi", "fmap", "motion"],
         config=_default_config(),
     )
