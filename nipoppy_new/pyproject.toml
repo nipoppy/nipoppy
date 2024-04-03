@@ -25,7 +25,7 @@ license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
 # TODO requires_python
-version = "0.2.0" # TODO eventually use dynamic versioning
+version = "1.0.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
 dev = ["nipoppy[test]", "pre-commit"]
