@@ -75,12 +75,12 @@ def test_strip_session(session, expected):
 @pytest.mark.parametrize(
     "dpath_bids_db,ignore_patterns,expected_count",
     [
-        (None, None, 8),
-        ("bids_db", [re.compile("^(?!/sub-(02))")], 6),
-        ("bids_db", [re.compile(".*?/ses-(?!3)")], 2),
+        (None, None, 13),
+        ("bids_db", [re.compile("^(?!/sub-(02))")], 9),
+        ("bids_db", [re.compile(".*?/ses-(?!3)")], 3),
         ("bids_db", [re.compile("^(?!/sub-(01))"), re.compile(".*?/ses-(?!3)")], 0),
         ("bids_db", [re.compile(".*/anat/")], 3),
-        ("bids_db", ["sub-01"], 6),
+        ("bids_db", ["sub-01"], 9),
     ],
 )
 @pytest.mark.parametrize("resolve_paths", [True, False])

@@ -337,13 +337,13 @@ def test_get_boutiques_config_invalid(tmp_path: Path):
 @pytest.mark.parametrize(
     "participant,session,expected_count",
     [
-        (None, None, 7),
-        ("01", None, 3),
-        ("02", None, 4),
-        (None, "ses-1", 3),
-        (None, "ses-2", 3),
-        (None, "ses-3", 1),
-        ("01", "ses-3", 1),
+        (None, None, 12),
+        ("01", None, 6),
+        ("02", None, 6),
+        (None, "ses-1", 5),
+        (None, "ses-2", 5),
+        (None, "ses-3", 2),
+        ("01", "ses-3", 2),
         ("02", "ses-3", 0),
     ],
 )
