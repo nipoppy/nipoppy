@@ -1,6 +1,8 @@
+#!/usr/bin/env python
 import argparse
 import json
 import subprocess
+import sys
 import os
 from pathlib import Path
 import nipoppy.workflow.logger as my_logger
@@ -16,6 +18,7 @@ CWD = os.path.dirname(os.path.abspath(fname))
 SINGULARITY_FS_DIR = "/fsdir/"
 SINGULARITY_TEMPLATEFLOW_DIR = "/templateflow"
 SINGULARITY_FS_LICENSE = "/fsdir/license.txt"
+DNAME_BIDS_DB = 'bids_db_fmriprep'
 os.environ['SINGULARITYENV_SUBJECTS_DIR'] = SINGULARITY_FS_DIR
 os.environ['SINGULARITYENV_FS_LICENSE'] = SINGULARITY_FS_LICENSE
 os.environ['SINGULARITYENV_TEMPLATEFLOW_HOME'] = SINGULARITY_TEMPLATEFLOW_DIR
@@ -31,15 +34,31 @@ def run_fmriprep(participant_id: str,
                  SINGULARITY_CONTAINER: str,
                  use_bids_filter: bool,
                  anat_only: bool,
-                 logger: logging.Logger):
+                 logger: logging.Logger,
+                 regenerate_bids_db: bool = False):
     """ Launch fmriprep container"""
 
     fmriprep_out_dir = f"{fmriprep_dir}/output/"
     fmriprep_home_dir = f"{fmriprep_out_dir}/fmriprep_home_{participant_id}/"
     Path(f"{fmriprep_home_dir}").mkdir(parents=True, exist_ok=True)
 
-    # BIDS DB created for fmriprep by run_nipoppy.py
-    bids_db_dir = f"/fmripre_proc/bids_db_fmriprep"
+    bids_db_dir = f"/fmripre_proc/{DNAME_BIDS_DB}"
+
+    bids_db_dir_outside_container = f"{proc_dir}/{DNAME_BIDS_DB}"
+    if not Path(bids_db_dir_outside_container).exists():
+        logger.warning(f"Creating the BIDS database directory because it does not exist: {bids_db_dir_outside_container}")
+        Path(bids_db_dir_outside_container).mkdir(parents=True, exist_ok=True)
+    else:
+        logger.info(f"Using existing BIDS database directory: {bids_db_dir_outside_container}")
+
+    if regenerate_bids_db:
+        for path in Path(bids_db_dir_outside_container).glob("*"):
+            if path.is_file():
+                logger.warning(f"Removing existing BIDS database file: {path}")
+                path.unlink()
+            else:
+                logger.error(f"Expected to find only files in {bids_db_dir_outside_container} but found directory {path}")
+                sys.exit(1)
 
     # Singularity CMD 
     SINGULARITY_CMD=f"singularity run \
@@ -101,6 +120,7 @@ def run(participant_id: str,
         output_dir: str,
         use_bids_filter: bool,
         anat_only: bool,
+        regenerate_bids_db: bool = False,
         logger=None):
     """ Runs fmriprep command
     """
@@ -156,7 +176,9 @@ def run(participant_id: str,
                  SINGULARITY_FMRIPREP,
                  use_bids_filter,
                  anat_only,
-                 logger)
+                 logger,
+                 regenerate_bids_db=regenerate_bids_db,
+                 )
 
 if __name__ == '__main__':
     # argparse
@@ -173,6 +195,7 @@ if __name__ == '__main__':
                         help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
     parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
     parser.add_argument('--anat_only', action='store_true', help='run only anatomical workflow or not')
+    parser.add_argument('--regenerate_bids_db', action='store_true', help='regenerate PyBIDS database (default: use existing if available)')
 
     args = parser.parse_args()
 
@@ -182,9 +205,10 @@ if __name__ == '__main__':
     output_dir = args.output_dir # Needed on BIC (QPN) due to weird permissions issues with mkdir
     use_bids_filter = args.use_bids_filter
     anat_only = args.anat_only
+    regenerate_bids_db = args.regenerate_bids_db
 
     # Read global configs
     with open(global_config_file, 'r') as f:
         global_configs = json.load(f)
 
-    run(participant_id, global_configs, session_id, output_dir, use_bids_filter, anat_only)
+    run(participant_id, global_configs, session_id, output_dir, use_bids_filter, anat_only, regenerate_bids_db=regenerate_bids_db)
