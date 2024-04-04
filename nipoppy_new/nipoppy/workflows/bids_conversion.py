@@ -19,21 +19,23 @@ class BidsConversionRunner(PipelineRunner):
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
-        participant=None,
-        session=None,
-        simulate=False,
+        participant: str = None,
+        session: str = None,
+        simulate: bool = False,
+        fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
-        dry_run=False,
+        dry_run: bool = False,
     ):
         super().__init__(
-            dpath_root,
-            pipeline_name,
-            pipeline_version,
-            participant,
-            session,
-            simulate,
-            logger,
-            dry_run,
+            dpath_root=dpath_root,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            participant=participant,
+            session=session,
+            simulate=simulate,
+            fpath_layout=fpath_layout,
+            logger=logger,
+            dry_run=dry_run,
         )
         self.name = "bids_conversion"
         self.pipeline_step = pipeline_step
@@ -74,7 +76,7 @@ class BidsConversionRunner(PipelineRunner):
             participant=participant,
             session=session,
             bind_paths=[
-                self.layout.dpath_dicom,
+                self.layout.dpath_sourcedata,
                 self.layout.dpath_bids,
             ],
         )

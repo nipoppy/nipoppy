@@ -1,8 +1,9 @@
 """Tests for BasePipelineWorkflow."""
 
 import json
-from logging import Logger
+import logging
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from conftest import _prepare_dataset
@@ -20,22 +21,24 @@ class PipelineWorkflow(BasePipelineWorkflow):
         dpath_root: Path | str,
         pipeline_name: str,
         pipeline_version: str,
-        participant=None,
-        session=None,
-        logger: Logger | None = None,
-        dry_run=False,
+        participant: str = None,
+        session: str = None,
+        fpath_layout: Optional[Path] = None,
+        logger: Optional[logging.Logger] = None,
+        dry_run: bool = False,
     ):
         self._n_runs = 0
         self._n_errors = 0
         super().__init__(
-            dpath_root,
-            "test",
-            pipeline_name,
-            pipeline_version,
-            participant,
-            session,
-            logger,
-            dry_run,
+            dpath_root=dpath_root,
+            name="test",
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            participant=participant,
+            session=session,
+            fpath_layout=fpath_layout,
+            logger=logger,
+            dry_run=dry_run,
         )
 
         # override the config

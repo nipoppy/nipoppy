@@ -16,10 +16,11 @@ class PipelineTracker(BasePipelineWorkflow):
         dpath_root: Path | str,
         pipeline_name: str,
         pipeline_version: str,
-        participant=None,
-        session=None,
+        participant: str = None,
+        session: str = None,
+        fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
-        dry_run=False,
+        dry_run: bool = False,
     ):
         super().__init__(
             dpath_root=dpath_root,
@@ -28,6 +29,7 @@ class PipelineTracker(BasePipelineWorkflow):
             pipeline_version=pipeline_version,
             participant=participant,
             session=session,
+            fpath_layout=fpath_layout,
             logger=logger,
             dry_run=dry_run,
         )

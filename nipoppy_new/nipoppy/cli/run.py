@@ -32,11 +32,12 @@ def cli(argv: Sequence[str] = None) -> None:
 
     # common arguments
     command = args.command
+    fpath_layout = args.fpath_layout
     logger = get_logger(name=command, level=args.verbosity)
     dry_run = args.dry_run
 
     # to pass to all workflows
-    workflow_kwargs = dict(logger=logger, dry_run=dry_run)
+    workflow_kwargs = dict(fpath_layout=fpath_layout, logger=logger, dry_run=dry_run)
 
     try:
         dpath_root = args.dataset_root

@@ -4,9 +4,11 @@ import shutil
 from pathlib import Path
 
 import pytest
-from conftest import ATTR_TO_DPATH_MAP, ATTR_TO_FPATH_MAP
+from conftest import ATTR_TO_DPATH_MAP, ATTR_TO_FPATH_MAP, DPATH_TEST_DATA
+from pydantic import ValidationError
 
-from nipoppy.layout import DatasetLayout
+from nipoppy.layout import DatasetLayout, PathInfo
+from nipoppy.utils import DPATH_LAYOUT, FPATH_DEFAULT_LAYOUT
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])
@@ -27,11 +29,60 @@ def _create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
         shutil.rmtree(dpath_root / path, ignore_errors=True)
 
 
-@pytest.mark.parametrize("dpath_root", ["my_dataset", "dataset_dir"])
-def test_init(dpath_root):
+def test_config_path_infos():
+    config = DatasetLayout("my_dataset").config
+    assert all([isinstance(path_info, PathInfo) for path_info in config.path_infos])
+
+
+def test_init_default(dpath_root):
     layout = DatasetLayout(dpath_root=dpath_root)
     for attr, path in {**ATTR_TO_DPATH_MAP, **ATTR_TO_FPATH_MAP}.items():
         assert getattr(layout, attr) == Path(dpath_root) / path
+
+
+@pytest.mark.parametrize(
+    "fpath_spec",
+    [
+        None,
+        FPATH_DEFAULT_LAYOUT,
+        DPATH_LAYOUT / "layout-0.1.0.json",
+        DPATH_TEST_DATA / "layout1.json",
+        DPATH_TEST_DATA / "layout2.json",
+    ],
+)
+def test_init_custom_layout(dpath_root, fpath_spec):
+    DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_spec)
+
+
+@pytest.mark.parametrize(
+    "fpath_spec",
+    [
+        DPATH_TEST_DATA / "layout3-invalid.json",
+        DPATH_TEST_DATA / "layout4-invalid.json",
+    ],
+)
+def test_init_invalid_layout(dpath_root, fpath_spec):
+    with pytest.raises(ValidationError):
+        DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_spec)
+
+
+def test_init_layout_not_found(dpath_root):
+    with pytest.raises(FileNotFoundError, match="Layout config file not found"):
+        DatasetLayout(dpath_root=dpath_root, fpath_config="fake_path")
+
+
+@pytest.mark.parametrize(
+    "dpath_root,path,expected",
+    [
+        ("my_dataset", "relative/path", Path("my_dataset/relative/path")),
+        ("my_dataset", Path("relative/path"), Path("my_dataset/relative/path")),
+        (Path("my_dataset"), "relative/path", Path("my_dataset/relative/path")),
+        ("dataset_root", "other/path", Path("dataset_root/other/path")),
+    ],
+)
+def test_get_full_path(dpath_root: Path, path, expected):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert layout.get_full_path(path) == expected
 
 
 def test_dpaths(dpath_root: Path):
@@ -53,17 +104,17 @@ def test_fpaths(dpath_root: Path):
     [
         [],
         ["sourcedata", "downloads"],
-        ["rawdata", "derivatives", "derivatives/bagel.csv"],
+        ["bids", "derivatives", "derivatives/bagel.csv"],
         [
-            "code",
-            "code/containers",
-            "code/descriptors",
-            "code/invocations",
-            "code/scripts",
-            "code/global_configs.json",
-            "code/pybids",
-            "code/pybids/bids_db",
-            "code/pybids/ignore_patterns",
+            "proc",
+            "proc/containers",
+            "proc/descriptors",
+            "proc/invocations",
+            "proc/scripts",
+            "proc/global_configs.json",
+            "proc/pybids",
+            "proc/pybids/bids_db",
+            "proc/pybids/ignore_patterns",
         ],
         [
             "scratch",
@@ -90,22 +141,28 @@ def test_validate(dpath_root: Path):
     assert DatasetLayout(dpath_root=dpath_root).validate()
 
 
+def test_dpath_descriptions():
+    fpath_spec = DPATH_TEST_DATA / "layout1.json"
+    layout = DatasetLayout(dpath_root="my_dataset", fpath_config=fpath_spec)
+    assert layout.dpath_descriptions == [(Path("my_dataset/bids"), "BIDS data")]
+
+
 @pytest.mark.parametrize(
     "paths_to_delete",
     [
         ["sourcedata", "downloads"],
-        ["rawdata", "derivatives"],
-        ["code", "code/global_configs.json"],
+        ["bids", "derivatives"],
+        ["proc", "proc/global_configs.json"],
         [
-            "code",
-            "code/containers",
-            "code/descriptors",
-            "code/invocations",
-            "code/scripts",
-            "code/global_configs.json",
-            "code/pybids",
-            "code/pybids/bids_db",
-            "code/pybids/ignore_patterns",
+            "proc",
+            "proc/containers",
+            "proc/descriptors",
+            "proc/invocations",
+            "proc/scripts",
+            "proc/global_configs.json",
+            "proc/pybids",
+            "proc/pybids/bids_db",
+            "proc/pybids/ignore_patterns",
         ],
         [
             "tabular",
@@ -211,8 +268,8 @@ def test_get_dpath_pipeline_output(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant,session,expected",
     [
-        ("my_pipeline", "v1", None, None, "code/pybids/bids_db/my_pipeline-v1"),
-        ("pipeline", "v2", "01", "ses-1", "code/pybids/bids_db/pipeline-v2-01-1"),
+        ("my_pipeline", "v1", None, None, "proc/pybids/bids_db/my_pipeline-v1"),
+        ("pipeline", "v2", "01", "ses-1", "proc/pybids/bids_db/pipeline-v2-01-1"),
     ],
 )
 def test_get_dpath_bids_db(

@@ -27,11 +27,13 @@ class BaseWorkflow(Base, ABC):
     log_prefix_run = "[RUN]"
     log_prefix_run_stdout = "[RUN STDOUT]"
     log_prefix_run_stderr = "[RUN STDERR]"
+    validate_layout = True
 
     def __init__(
         self,
         dpath_root: Path | str,
         name: str,
+        fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
     ):
@@ -53,10 +55,11 @@ class BaseWorkflow(Base, ABC):
 
         self.dpath_root = Path(dpath_root)
         self.name = name
+        self.fpath_layout = fpath_layout
         self.logger = logger
         self.dry_run = dry_run
 
-        self.layout = DatasetLayout(self.dpath_root)
+        self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
 
     def generate_fpath_log(
         self,
@@ -111,11 +114,13 @@ class BaseWorkflow(Base, ABC):
         subprocess.Popen | str
         """
 
-        def process_output(output_source, output_str: str, log_prefix: str):
+        def process_output(
+            output_source, output_str: str, log_prefix: str, log_level=logging.INFO
+        ):
             """Consume lines from an IO stream and append them to a string."""
             for line in output_source:
                 line = line.strip("\n")
-                self.logger.info(f"{log_prefix} {line}")
+                self.logger.log(level=log_level, msg=f"{log_prefix} {line}")
             return output_str
 
         # build command string
@@ -154,6 +159,7 @@ class BaseWorkflow(Base, ABC):
                     process.stderr,
                     stderr_str,
                     self.log_prefix_run_stderr,
+                    log_level=logging.ERROR,
                 )
 
             if check and process.returncode != 0:
@@ -184,6 +190,13 @@ class BaseWorkflow(Base, ABC):
         self.logger.info(self)
         if self.dry_run:
             self.logger.info("Doing a dry run")
+        if self.validate_layout:
+            try:
+                self.layout.validate()
+            except FileNotFoundError as exception:
+                raise RuntimeError(
+                    f"Dataset does not follow expected directory structure: {exception}"
+                )
 
     @abstractmethod
     def run_main(self, **kwargs):
@@ -242,7 +255,7 @@ class BaseWorkflow(Base, ABC):
             doughnut = generate_doughnut(
                 manifest=self.manifest,
                 dpath_downloaded=self.layout.dpath_raw_dicom,
-                dpath_organized=self.layout.dpath_dicom,
+                dpath_organized=self.layout.dpath_sourcedata,
                 dpath_converted=self.layout.dpath_bids,
                 empty=False,
                 logger=self.logger,

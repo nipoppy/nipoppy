@@ -1,6 +1,8 @@
 """Workflow for init command."""
 
+import logging
 from pathlib import Path
+from typing import Optional
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 from nipoppy.workflows.base import BaseWorkflow
@@ -12,14 +14,19 @@ class DoughnutWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        empty=False,
-        regenerate=False,
-        logger=None,
-        dry_run=False,
+        empty: bool = False,
+        regenerate: bool = False,
+        fpath_layout: Optional[Path] = None,
+        logger: Optional[logging.Logger] = None,
+        dry_run: bool = False,
     ):
         """Initialize the workflow."""
         super().__init__(
-            dpath_root=dpath_root, name="doughnut", logger=logger, dry_run=dry_run
+            dpath_root=dpath_root,
+            name="doughnut",
+            fpath_layout=fpath_layout,
+            logger=logger,
+            dry_run=dry_run,
         )
 
         self.empty = empty
@@ -29,7 +36,7 @@ class DoughnutWorkflow(BaseWorkflow):
         """Generate/update the dataset's doughnut file."""
         fpath_doughnut = self.layout.fpath_doughnut
         dpath_downloaded = self.layout.dpath_raw_dicom
-        dpath_organized = self.layout.dpath_dicom
+        dpath_organized = self.layout.dpath_sourcedata
         dpath_converted = self.layout.dpath_bids
         empty = self.empty
         logger = self.logger

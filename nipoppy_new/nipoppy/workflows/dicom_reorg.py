@@ -16,12 +16,17 @@ class DicomReorgWorkflow(BaseWorkflow):
         self,
         dpath_root: Path | str,
         copy_files: bool = True,
+        fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
-        dry_run=False,
+        dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""
         super().__init__(
-            dpath_root=dpath_root, name="dicom_reorg", logger=logger, dry_run=dry_run
+            dpath_root=dpath_root,
+            name="dicom_reorg",
+            fpath_layout=fpath_layout,
+            logger=logger,
+            dry_run=dry_run,
         )
         self.copy_files = copy_files
 
@@ -36,7 +41,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             )
 
         # do reorg
-        dpath_reorganized: Path = self.layout.dpath_dicom / participant / session
+        dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
         dpath_reorganized.mkdir(parents=True, exist_ok=True)
         for dpath, _, fnames in os.walk(dpath_downloaded):
             for fname in fnames:

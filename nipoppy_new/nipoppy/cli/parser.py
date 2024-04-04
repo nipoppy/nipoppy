@@ -83,6 +83,20 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_layout(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --layout argument to the parser."""
+    parser.add_argument(
+        "--layout",
+        dest="fpath_layout",
+        type=Path,
+        required=False,
+        help=(
+            "Path to a custom layout specification file"
+            ", to be used instead of the default layout."
+        ),  # TODO point to example
+    )
+
+
 def add_arg_dry_run(parser: _ActionsContainer) -> _ActionsContainer:
     """Add a --dry-run argument to the parser."""
     parser.add_argument(
@@ -278,6 +292,7 @@ def get_global_parser(
     # add common/global options to subcommand parsers
     for parser in list(subparsers.choices.values()):
         common_arg_group = parser.add_argument_group("Global options")
+        add_arg_layout(common_arg_group)
         add_arg_verbosity(common_arg_group)
         add_arg_dry_run(common_arg_group)
         add_arg_help(common_arg_group)

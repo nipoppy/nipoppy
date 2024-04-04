@@ -40,14 +40,16 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         name: str,
         pipeline_name: str,
         pipeline_version: str,
-        participant=None,
-        session=None,
+        participant: str = None,
+        session: str = None,
+        fpath_layout: Optional[Path | str] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
     ):
         super().__init__(
             dpath_root=dpath_root,
             name=name,
+            fpath_layout=fpath_layout,
             logger=logger,
             dry_run=dry_run,
         )

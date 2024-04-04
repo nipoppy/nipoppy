@@ -1,97 +1,185 @@
 """Dataset layout."""
 
+from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, Tuple
+
+from pydantic import BaseModel, ConfigDict
 
 from nipoppy.base import Base
-from nipoppy.utils import get_pipeline_tag
+from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
+
+
+class PathInfo(BaseModel):
+    """Relative path and description for a directory or file."""
+
+    _is_directory: bool
+
+    path: Path
+    description: Optional[str] = None
+
+
+class DpathInfo(PathInfo):
+    """Relative path and description for a directory."""
+
+    _is_directory = True
+
+
+class FpathInfo(PathInfo):
+    """Relative path and description for a file."""
+
+    _is_directory = False
+
+
+class LayoutConfig(BaseModel):
+    """Relative paths for the dataset layout."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dpath_bids: DpathInfo
+    dpath_derivatives: DpathInfo
+    dpath_sourcedata: DpathInfo
+    dpath_downloads: DpathInfo
+    dpath_proc: DpathInfo
+    dpath_releases: DpathInfo
+    dpath_containers: DpathInfo
+    dpath_descriptors: DpathInfo
+    dpath_invocations: DpathInfo
+    dpath_scripts: DpathInfo
+    dpath_pybids: DpathInfo
+    dpath_bids_db: DpathInfo
+    dpath_bids_ignore_patterns: DpathInfo
+    dpath_scratch: DpathInfo
+    dpath_raw_dicom: DpathInfo
+    dpath_logs: DpathInfo
+    dpath_tabular: DpathInfo
+    dpath_assessments: DpathInfo
+    dpath_demographics: DpathInfo
+
+    fpath_config: FpathInfo
+    fpath_doughnut: FpathInfo
+    fpath_manifest: FpathInfo
+    fpath_imaging_bagel: FpathInfo
+
+    @cached_property
+    def path_labels(self) -> list[str]:
+        """Return a list of all path labels defined in the layout."""
+        return [path_label for path_label in self.model_dump().keys()]
+
+    @cached_property
+    def path_infos(self) -> list[PathInfo]:
+        """Return a list of all PathInfo objects defined in the layout."""
+        return [getattr(self, path_label) for path_label in self.path_labels]
+
+    def get_path_info(self, path_label: str) -> PathInfo:
+        """Return the PathInfo object associated with the given path label."""
+        return getattr(self, path_label)
 
 
 class DatasetLayout(Base):
-    """File/directory structure in a dataset."""
+    """File/directory structure for a specific dataset."""
 
-    def __init__(self, dpath_root: Path | str):
+    def __init__(
+        self, dpath_root: Path | str, fpath_config: Optional[Path | str] = None
+    ):
         """Initialize the object.
 
         Parameters
         ----------
-        dataset_root : Path | str
+        dataset_root: Path | str
             Path to the root directory of the dataset.
+        fpath_config: Path | str | None
+            Path to layout config to use, by default None.
+            If None, the default layout will be used.
         """
+        # use the default layout if none is specified
+        if fpath_config is None:
+            fpath_config = FPATH_DEFAULT_LAYOUT
+
+        fpath_config = Path(fpath_config)
+        if not fpath_config.exists():
+            raise FileNotFoundError(f"Layout config file not found: {fpath_config}")
+
+        # load the config
+        config = LayoutConfig(**load_json(fpath_config))
+
         self.dpath_root = Path(dpath_root)
+        self.fpath_spec = Path(fpath_config)
+        self.config = config
 
-        # subdirectories
-        self.dpath_bids = self.dpath_root / "rawdata"
-        self.dpath_derivatives = self.dpath_root / "derivatives"
-        self.dpath_dicom = self.dpath_root / "sourcedata"
-        self.dpath_downloads = self.dpath_root / "downloads"
+        # directories (for type hinting)
+        self.dpath_bids: Path
+        self.dpath_derivatives: Path
+        self.dpath_sourcedata: Path
+        self.dpath_downloads: Path
+        self.dpath_proc: Path
+        self.dpath_releases: Path
+        self.dpath_containers: Path
+        self.dpath_descriptors: Path
+        self.dpath_invocations: Path
+        self.dpath_scripts: Path
+        self.dpath_pybids: Path
+        self.dpath_bids_db: Path
+        self.dpath_bids_ignore_patterns: Path
+        self.dpath_scratch: Path
+        self.dpath_raw_dicom: Path
+        self.dpath_logs: Path
+        self.dpath_tabular: Path
+        self.dpath_assessments: Path
+        self.dpath_demographics: Path
 
-        # code
-        self.dpath_proc = self.dpath_root / "code"
-        self.dpath_containers = self.dpath_proc / "containers"
-        self.dpath_descriptors = self.dpath_proc / "descriptors"
-        self.dpath_invocations = self.dpath_proc / "invocations"
-        self.dpath_scripts = self.dpath_proc / "scripts"
-        self.dpath_pybids = self.dpath_proc / "pybids"
-        self.dpath_bids_db = self.dpath_pybids / "bids_db"
-        self.dpath_bids_ignore_patterns = self.dpath_pybids / "ignore_patterns"
-
-        # scratch
-        self.dpath_scratch = self.dpath_root / "scratch"
-        self.dpath_raw_dicom = self.dpath_scratch / "raw_dicom"
-        self.dpath_logs = self.dpath_scratch / "logs"
-
-        # tabular
-        self.dpath_tabular = self.dpath_root / "tabular"
-        self.dpath_assessments = self.dpath_tabular / "assessments"
-        self.dpath_demographics = self.dpath_tabular / "demographics"
-
-        # files
-        self.fpath_config = self.dpath_proc / "global_configs.json"
-        self.fpath_doughnut = self.dpath_raw_dicom / "doughnut.csv"
-        self.fpath_manifest = self.dpath_tabular / "manifest.csv"
-        self.fpath_imaging_bagel = self.dpath_derivatives / "bagel.csv"
+        # files (for type hinting)
+        self.fpath_config: Path
+        self.fpath_doughnut: Path
+        self.fpath_manifest: Path
+        self.fpath_imaging_bagel: Path
 
         # directory names
         self.dname_pipeline_work = "work"
         self.dname_pipeline_output = "output"
 
-    @property
+    def get_full_path(self, path: str | Path) -> Path:
+        """Build a full path from a relative path."""
+        return self.dpath_root / path
+
+    def __getattribute__(self, name: str) -> Any:
+        try:
+            return super().__getattribute__(name)
+        except AttributeError as exception:
+            if name in self.config.path_labels:
+                return self.get_full_path(self.config.get_path_info(name).path)
+            else:
+                raise exception
+
+    def get_paths(self, directory=True) -> list[Path]:
+        """Return a list of all directory or file paths."""
+        paths = []
+        for path_info in self.config.path_infos:
+            if directory == path_info._is_directory:
+                paths.append(self.get_full_path(path_info.path))
+        return paths
+
+    @cached_property
     def dpaths(self) -> list[Path]:
         """Return a list of all directory paths."""
-        dpaths = [
-            self.dpath_root,
-            self.dpath_bids,
-            self.dpath_derivatives,
-            self.dpath_dicom,
-            self.dpath_downloads,
-            self.dpath_proc,
-            self.dpath_containers,
-            self.dpath_descriptors,
-            self.dpath_invocations,
-            self.dpath_scripts,
-            self.dpath_pybids,
-            self.dpath_bids_db,
-            self.dpath_bids_ignore_patterns,
-            self.dpath_scratch,
-            self.dpath_raw_dicom,
-            self.dpath_logs,
-            self.dpath_tabular,
-            self.dpath_assessments,
-            self.dpath_demographics,
-        ]
-        return dpaths
+        return self.get_paths(directory=True)
 
-    @property
+    @cached_property
     def fpaths(self) -> list[Path]:
         """Return a list of all file paths."""
-        fpaths = [
-            self.fpath_config,
-            self.fpath_doughnut,
-            self.fpath_manifest,
-            self.fpath_imaging_bagel,
-        ]
-        return fpaths
+        return self.get_paths(directory=False)
+
+    @cached_property
+    def dpath_descriptions(self) -> list[Tuple[Path, str]]:
+        """Return a list of directory paths and associated description strings."""
+        info_list = []
+        for path_info in self.config.path_infos:
+            if path_info._is_directory:
+                if path_info.description is not None:
+                    info_list.append(
+                        (self.get_full_path(path_info.path), path_info.description)
+                    )
+        return info_list
 
     def _find_missing_paths(self) -> list[Path]:
         """Return a list of missing paths."""
