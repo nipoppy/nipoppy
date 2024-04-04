@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from conftest import create_empty_dataset
 
 from nipoppy.config.base import Config
 from nipoppy.config.pipeline import PipelineConfig
@@ -55,6 +56,7 @@ def test_setup(config: Config, tmp_path: Path):
         pipeline_version="0.12.2",
         pipeline_step="prepare",
     )
+    create_empty_dataset(workflow.dpath_root)
     config.save(workflow.layout.fpath_config)
     workflow.run_setup()
     assert not workflow.dpath_pipeline.exists()

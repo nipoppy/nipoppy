@@ -4,7 +4,7 @@ from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
-from conftest import DPATH_TEST_DATA, _check_doughnut, _prepare_dataset
+from conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 
@@ -193,7 +193,7 @@ def test_generate_and_update(
         dpath_converted = str(dpath_converted)
 
     # create the manifest
-    manifest1 = _prepare_dataset(
+    manifest1 = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
@@ -214,7 +214,7 @@ def test_generate_and_update(
     # the doughnut should have the same number of records as the manifest
     assert len(doughnut1) == len(manifest1)
 
-    _check_doughnut(
+    check_doughnut(
         doughnut=doughnut1,
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
@@ -224,7 +224,7 @@ def test_generate_and_update(
     )
 
     # create a new manifest
-    manifest2 = _prepare_dataset(participants_and_sessions_manifest2)
+    manifest2 = prepare_dataset(participants_and_sessions_manifest2)
     doughnut2 = update_doughnut(
         doughnut=doughnut1,
         manifest=manifest2,
@@ -235,7 +235,7 @@ def test_generate_and_update(
     )
     assert len(doughnut2) == len(manifest2)
 
-    _check_doughnut(
+    check_doughnut(
         doughnut=doughnut2,
         participants_and_sessions_manifest=participants_and_sessions_manifest2,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
@@ -256,7 +256,7 @@ def test_generate_missing_paths(tmp_path: Path):
     dpath_organized = None
     dpath_converted = dpath_root / "bids"
 
-    manifest = _prepare_dataset(
+    manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_downloaded=participants_and_sessions,
         participants_and_sessions_organized=participants_and_sessions,

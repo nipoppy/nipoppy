@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from conftest import create_empty_dataset
 from fids import fids
 
 from nipoppy.config.base import Config
@@ -61,6 +62,7 @@ def test_run_setup(config: Config, tmp_path: Path):
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
+    create_empty_dataset(runner.dpath_root)
     config.save(runner.layout.fpath_config)
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()

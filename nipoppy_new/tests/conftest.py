@@ -37,12 +37,24 @@ ATTR_TO_DPATH_MAP = {
     "dpath_demographics": "tabular/demographics",
 }
 
-ATTR_TO_FPATH_MAP = {
+ATTR_TO_REQUIRED_FPATH_MAP = {
     "fpath_config": FPATH_CONFIG,
     "fpath_manifest": FPATH_MANIFEST,
+}
+
+ATTR_TO_FPATH_MAP = {
+    **ATTR_TO_REQUIRED_FPATH_MAP,
     "fpath_doughnut": "scratch/raw_dicom/doughnut.csv",
     "fpath_imaging_bagel": "derivatives/bagel.csv",
 }
+
+
+def create_empty_dataset(dpath_root: Path):
+    """Create an empty dataset with all required directory and files."""
+    for dpath in ATTR_TO_DPATH_MAP.values():
+        (dpath_root / dpath).mkdir(parents=True, exist_ok=True)
+    for fpath in ATTR_TO_REQUIRED_FPATH_MAP.values():
+        (dpath_root / fpath).touch()
 
 
 def _process_participants_sessions(
@@ -186,7 +198,7 @@ def fake_dicoms_organized(
     )
 
 
-def _prepare_dataset(
+def prepare_dataset(
     participants_and_sessions_manifest: dict[str, list[str]],
     participants_and_sessions_downloaded: Optional[dict[str, list[str]]] = None,
     participants_and_sessions_organized: Optional[dict[str, list[str]]] = None,
@@ -195,6 +207,7 @@ def _prepare_dataset(
     dpath_organized: Optional[str | Path] = None,
     dpath_converted: Optional[str | Path] = None,
 ):
+    """Create dummy imaging files for testing the DICOM-to-BIDS conversion process."""
     # create the manifest
     data_manifest = []
     for participant in participants_and_sessions_manifest:
@@ -239,7 +252,7 @@ def _prepare_dataset(
     return manifest
 
 
-def _check_doughnut(
+def check_doughnut(
     doughnut: Doughnut,
     participants_and_sessions_manifest,
     participants_and_sessions_downloaded,
@@ -247,6 +260,7 @@ def _check_doughnut(
     participants_and_sessions_converted,
     empty,
 ):
+    """Check that a doughnut has the corrected statuses."""
     if empty:
         for col in [
             doughnut.col_downloaded,

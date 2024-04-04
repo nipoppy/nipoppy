@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from conftest import create_empty_dataset
 
 from nipoppy.config.base import Config
 from nipoppy.logger import get_logger
@@ -93,11 +94,13 @@ def test_run_command_check(workflow: BaseWorkflow):
 
 
 def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
+    create_empty_dataset(workflow.dpath_root)
     workflow.run_setup()
     assert "BEGIN" in caplog.text
 
 
 def test_run(workflow: BaseWorkflow):
+    create_empty_dataset(workflow.dpath_root)
     assert workflow.run() is None
 
 

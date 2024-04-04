@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pytest
-from conftest import _prepare_dataset
+from conftest import create_empty_dataset, prepare_dataset
 
 from nipoppy.config import Config
 from nipoppy.tabular.manifest import Manifest
@@ -40,7 +40,7 @@ from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
     ],
 )
 @pytest.mark.parametrize("copy_files", [True, False])
-def test_dicom_reorg_workflow(
+def test_run(
     participants_and_sessions_manifest: dict,
     participants_and_sessions_downloaded: dict,
     copy_files: bool,
@@ -50,8 +50,9 @@ def test_dicom_reorg_workflow(
     workflow = DicomReorgWorkflow(
         dpath_root=tmp_path / dataset_name, copy_files=copy_files
     )
+    create_empty_dataset(workflow.layout.dpath_root)
 
-    manifest: Manifest = _prepare_dataset(
+    manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         dpath_downloaded=workflow.layout.dpath_raw_dicom,
@@ -101,14 +102,14 @@ def test_dicom_reorg_workflow(
                 assert not dpath_to_check.exists()
 
 
-def test_dicom_reorg_workflow_run_single_error_file_exists(tmp_path: Path):
+def test_run_single_error_file_exists(tmp_path: Path):
     participant = "01"
     session = "ses-1"
     participants_and_sessions = {participant: [session]}
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
 
-    manifest: Manifest = _prepare_dataset(
+    manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_downloaded=participants_and_sessions,
         dpath_downloaded=workflow.layout.dpath_raw_dicom,
@@ -136,14 +137,14 @@ def test_dicom_reorg_workflow_run_single_error_file_exists(tmp_path: Path):
         workflow.run_single(participant, session)
 
 
-def test_dicom_reorg_workflow_run_single_error_no_data(tmp_path: Path):
+def test_run_single_error_no_data(tmp_path: Path):
     participant = "01"
     session = "ses-1"
     participants_and_sessions = {participant: [session]}
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
 
-    manifest: Manifest = _prepare_dataset(
+    manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_downloaded=participants_and_sessions,
         dpath_downloaded=workflow.layout.dpath_raw_dicom,

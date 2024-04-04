@@ -14,6 +14,7 @@ class PathInfo(BaseModel):
     """Relative path and description for a directory or file."""
 
     _is_directory: bool
+    _is_required: bool = True
 
     path: Path
     description: Optional[str] = None
@@ -29,6 +30,12 @@ class FpathInfo(PathInfo):
     """Relative path and description for a file."""
 
     _is_directory = False
+
+
+class OptionalFpathInfo(FpathInfo):
+    """Relative path and description for a file that is optional."""
+
+    _is_required = False
 
 
 class LayoutConfig(BaseModel):
@@ -57,9 +64,9 @@ class LayoutConfig(BaseModel):
     dpath_demographics: DpathInfo
 
     fpath_config: FpathInfo
-    fpath_doughnut: FpathInfo
     fpath_manifest: FpathInfo
-    fpath_imaging_bagel: FpathInfo
+    fpath_doughnut: OptionalFpathInfo
+    fpath_imaging_bagel: OptionalFpathInfo
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -151,22 +158,24 @@ class DatasetLayout(Base):
             else:
                 raise exception
 
-    def get_paths(self, directory=True) -> list[Path]:
+    def get_paths(self, directory=True, include_optional=False) -> list[Path]:
         """Return a list of all directory or file paths."""
         paths = []
         for path_info in self.config.path_infos:
-            if directory == path_info._is_directory:
+            if directory == path_info._is_directory and (
+                include_optional or path_info._is_required
+            ):
                 paths.append(self.get_full_path(path_info.path))
         return paths
 
     @cached_property
     def dpaths(self) -> list[Path]:
-        """Return a list of all directory paths."""
+        """Return a list of all required directory paths."""
         return self.get_paths(directory=True)
 
     @cached_property
     def fpaths(self) -> list[Path]:
-        """Return a list of all file paths."""
+        """Return a list of all required file paths."""
         return self.get_paths(directory=False)
 
     @cached_property

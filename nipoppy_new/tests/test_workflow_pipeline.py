@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
-from conftest import _prepare_dataset
+from conftest import create_empty_dataset, prepare_dataset
 from fids import fids
 
 from nipoppy.config.base import Config, PipelineConfig
@@ -383,6 +383,7 @@ def test_run_setup(dry_run: bool, tmp_path: Path):
         pipeline_version="1.0",
         dry_run=dry_run,
     )
+    create_empty_dataset(workflow.layout.dpath_root)
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 
@@ -404,7 +405,7 @@ def test_run_main(participant, session, expected_count, tmp_path: Path):
     )
 
     participants_and_sessions = {"01": ["ses-1", "ses-2", "ses-3"], "02": ["ses-1"]}
-    manifest = _prepare_dataset(
+    manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_converted=participants_and_sessions,
         dpath_converted=workflow.layout.dpath_bids,
@@ -424,7 +425,7 @@ def test_run_main_catch_errors(tmp_path: Path):
     )
 
     participants_and_sessions = {"FAIL": ["ses-1"]}
-    manifest = _prepare_dataset(
+    manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_converted=participants_and_sessions,
         dpath_converted=workflow.layout.dpath_bids,
@@ -458,7 +459,7 @@ def test_get_participants_sessions_to_run(
         "01": ["ses-1", "ses-2", "ses-3"],
         "02": ["ses-1"],
     }
-    manifest = _prepare_dataset(
+    manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_converted=participants_and_sessions_converted,
         dpath_converted=workflow.layout.dpath_bids,

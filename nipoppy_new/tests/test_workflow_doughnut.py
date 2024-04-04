@@ -6,8 +6,9 @@ import pytest
 from conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_FPATH_MAP,
-    _check_doughnut,
-    _prepare_dataset,
+    check_doughnut,
+    create_empty_dataset,
+    prepare_dataset,
 )
 
 from nipoppy.config.base import Config
@@ -47,7 +48,7 @@ from nipoppy.workflows.doughnut import DoughnutWorkflow
     ],
 )
 @pytest.mark.parametrize("empty", [True, False])
-def test_doughnut_workflow(
+def test_run(
     participants_and_sessions_manifest1: dict[str, list[str]],
     participants_and_sessions_manifest2: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
@@ -65,7 +66,8 @@ def test_doughnut_workflow(
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
     fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
 
-    manifest1 = _prepare_dataset(
+    create_empty_dataset(dpath_root)
+    manifest1 = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
@@ -92,7 +94,7 @@ def test_doughnut_workflow(
     doughnut1 = Doughnut.load(fpath_doughnut)
 
     assert len(doughnut1) == len(manifest1)
-    _check_doughnut(
+    check_doughnut(
         doughnut=doughnut1,
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
@@ -102,7 +104,7 @@ def test_doughnut_workflow(
     )
 
     # update the manifest
-    manifest2 = _prepare_dataset(participants_and_sessions_manifest2)
+    manifest2 = prepare_dataset(participants_and_sessions_manifest2)
     manifest2.save_with_backup(fpath_manifest)
 
     # update the doughnut
@@ -110,7 +112,7 @@ def test_doughnut_workflow(
     doughnut2 = Doughnut.load(fpath_doughnut)
 
     assert len(doughnut2) == len(manifest2)
-    _check_doughnut(
+    check_doughnut(
         doughnut=doughnut2,
         participants_and_sessions_manifest=participants_and_sessions_manifest2,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
@@ -143,7 +145,7 @@ def test_doughnut_workflow(
     ],
 )
 @pytest.mark.parametrize("empty", [True, False])
-def test_doughnut_workflow_regenerate(
+def test_run_regenerate(
     participants_and_sessions_manifest: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
@@ -152,6 +154,7 @@ def test_doughnut_workflow_regenerate(
     tmp_path: Path,
 ):
     dpath_root = tmp_path / "my_dataset"
+    create_empty_dataset(dpath_root)
 
     dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_dicom"]
     dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
@@ -160,7 +163,7 @@ def test_doughnut_workflow_regenerate(
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
     fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
 
-    manifest = _prepare_dataset(
+    manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
@@ -208,7 +211,7 @@ def test_doughnut_workflow_regenerate(
     doughnut = Doughnut.load(fpath_doughnut)
 
     assert len(doughnut) == len(manifest)
-    _check_doughnut(
+    check_doughnut(
         doughnut=doughnut,
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
