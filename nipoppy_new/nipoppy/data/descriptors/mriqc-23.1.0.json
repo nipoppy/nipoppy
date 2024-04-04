@@ -3,8 +3,26 @@
     "description": "mriqc",
     "tool-version": "23.1.0",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_SINGULARITY_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [[NIPOPPY_DPATH_BIDS]] [[NIPOPPY_DPATH_PIPELINE_OUTPUT]] [ANALYSIS_LEVEL] --participant-label [[NIPOPPY_PARTICIPANT]] --session-id [[NIPOPPY_SESSION_SHORT]] --work-dir [[NIPOPPY_DPATH_PIPELINE_WORK]] --bids-database-dir [[NIPOPPY_DPATH_PIPELINE_BIDS_DB]] [VERBOSE_COUNT] [SPECIES] [RUN_ID] [TASK_ID] [MODALITIES] [DSNAME] [BIDS_DATABASE_WIPE] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [DEBUG] [FLOAT32] [PDB] [VERBOSE_REPORTS] [REPORTS_ONLY] [WRITE_GRAPH] [DRY_RUN] [RESOURCE_MONITOR] [USE_PLUGIN] [NO_SUB] [EMAIL] [WEBAPI_URL] [WEBAPI_PORT] [UPLOAD_STRICT] [NOTRACK] [ANTS_FLOAT] [ANTS_SETTINGS] [FFT_SPIKES_DETECTOR] [FD_THRES] [DEOBLIQUE] [DESPIKE] [START_IDX] [STOP_IDX]",
+    "command-line": "[[NIPOPPY_SINGULARITY_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [VERSION] [VERBOSE_COUNT] [SPECIES] [PARTICIPANT_LABEL] [SESSION_ID] [RUN_ID] [TASK_ID] [MODALITIES] [DSNAME] [BIDS_DATABASE_DIR] [BIDS_DATABASE_WIPE] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [DEBUG] [FLOAT32] [PDB] [WORK_DIR] [VERBOSE_REPORTS] [REPORTS_ONLY] [WRITE_GRAPH] [DRY_RUN] [RESOURCE_MONITOR] [USE_PLUGIN] [NO_SUB] [EMAIL] [WEBAPI_URL] [WEBAPI_PORT] [UPLOAD_STRICT] [NOTRACK] [ANTS_FLOAT] [ANTS_SETTINGS] [FFT_SPIKES_DETECTOR] [FD_THRES] [DEOBLIQUE] [DESPIKE] [START_IDX] [STOP_IDX]",
     "inputs": [
+        {
+            "id": "bids_dir",
+            "name": "bids_dir",
+            "description": "The root folder of a BIDS valid dataset (sub-XXXXX folders should be found at the top level in this folder).",
+            "optional": false,
+            "type": "String",
+            "value-key": "[BIDS_DIR]",
+            "default-value": "[[NIPOPPY_DPATH_BIDS]]"
+        },
+        {
+            "id": "output_dir",
+            "name": "output_dir",
+            "description": "The directory where the output files should be stored. If you are running group level analysis this folder should be prepopulated with the results of the participant level analysis.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[OUTPUT_DIR]",
+            "default-value": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
+        },
         {
             "id": "analysis_level",
             "name": "analysis_level",
@@ -15,14 +33,24 @@
             "value-choices": [
                 "participant",
                 "group"
-            ]
+            ],
+            "default-value": "participant"
+        },
+        {
+            "id": "version",
+            "name": "version",
+            "description": "show program's version number and exit",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[VERSION]",
+            "command-line-flag": "--version"
         },
         {
             "id": "verbose_count",
-            "name": "Verbose output",
-            "description": "Increases log verbosity for each occurrence, debug level is -vvv",
-            "type": "String",
+            "name": "verbose_count",
+            "description": "Increases log verbosity for each occurrence, debug level is -vvv.",
             "optional": true,
+            "type": "String",
             "value-key": "[VERBOSE_COUNT]",
             "value-choices": [
                 "-v",
@@ -43,6 +71,29 @@
                 "rat"
             ],
             "command-line-flag": "--species"
+        },
+        {
+            "id": "participant_label",
+            "name": "participant_label",
+            "description": "A space delimited list of participant identifiers or a single identifier (the sub- prefix can be removed).",
+            "optional": true,
+            "type": "String",
+            "value-key": "[PARTICIPANT_LABEL]",
+            "list": true,
+            "command-line-flag": "--participant-label",
+            "default-value": [
+                "[[NIPOPPY_PARTICIPANT]]"
+            ]
+        },
+        {
+            "id": "session_id",
+            "name": "session_id",
+            "description": "Filter input dataset by session ID.",
+            "optional": true,
+            "type": "String",
+            "value-key": "[SESSION_ID]",
+            "command-line-flag": "--session-id",
+            "default-value": "[[NIPOPPY_SESSION_SHORT]]"
         },
         {
             "id": "run_id",
@@ -92,6 +143,16 @@
             "type": "String",
             "value-key": "[DSNAME]",
             "command-line-flag": "--dsname"
+        },
+        {
+            "id": "bids_database_dir",
+            "name": "bids_database_dir",
+            "description": "Path to an existing PyBIDS database folder, for faster indexing (especially useful for large datasets).",
+            "optional": true,
+            "type": "String",
+            "value-key": "[BIDS_DATABASE_DIR]",
+            "command-line-flag": "--bids-database-dir",
+            "default-value": "[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]"
         },
         {
             "id": "bids_database_wipe",
@@ -156,6 +217,16 @@
             "type": "Flag",
             "value-key": "[PDB]",
             "command-line-flag": "--pdb"
+        },
+        {
+            "id": "work_dir",
+            "name": "work_dir",
+            "description": "Path where intermediate results should be stored.",
+            "optional": true,
+            "type": "String",
+            "value-key": "[WORK_DIR]",
+            "command-line-flag": "-w",
+            "default-value": "[[NIPOPPY_DPATH_PIPELINE_WORK]]"
         },
         {
             "id": "verbose_reports",

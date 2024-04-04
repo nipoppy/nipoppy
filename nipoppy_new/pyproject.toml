@@ -19,7 +19,14 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
 ]
-dependencies = ["boutiques", "pandas", "pybids", "pydantic", "rich", "rich_argparse"]
+dependencies = [
+    "boutiques",
+    "pandas",
+    "pybids",
+    "pydantic",
+    "rich",
+    "rich_argparse",
+]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
 name = "nipoppy"
@@ -29,8 +36,12 @@ version = "1.0.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
 dev = ["nipoppy[test]", "pre-commit"]
-test = ["pytest", "fids@git+https://github.com/neurodatascience/FIDS.git"]
-tests = ["nipoppy[test]"]                                                  # alias in case of typo
+test = [
+    "pytest",
+    "pytest-mock",
+    "fids@git+https://github.com/neurodatascience/FIDS.git",
+]
+tests = ["nipoppy[test]"] # alias in case of typo
 
 [project.scripts]
 nipoppy = "nipoppy.cli.run:cli"

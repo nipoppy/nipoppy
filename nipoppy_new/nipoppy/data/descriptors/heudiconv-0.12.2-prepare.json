@@ -49,13 +49,13 @@
             "description": "Tool to use for DICOM conversion. Setting to \"none\" disables the actual conversion step -- useful for testing heuristics.",
             "type": "String",
             "optional": true,
-            "default-value": "none",
             "command-line-flag": "-c",
             "value-key": "[CONVERTER]",
             "value-choices": [
                 "dcm2niix",
                 "none"
-            ]
+            ],
+            "default-value": "none"
         },
         {
             "name": "outdir",
