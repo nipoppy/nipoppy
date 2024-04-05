@@ -1,20 +1,42 @@
 {
     "data_sources": {
+        "description": "data sources with their configurations includding relative paths to nipoppy dataset",
         "redcap": {
-            "api_config": "proc/.redcap.json",
-            "default_report": "QPN MoCA-UPDRS-Neuropsy data_Sarah",
-            "global_query": "global_records_query"
+            "COPN_MRI_export": {
+                "path": "tabular/redcap/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
+                "index_cols": ["Record ID:","Event Name"]
+            },
+            "sarah_report": {
+                "path": "tabular/redcap/QPN MoCA-UPDRS-Neuropsy data_Sarah.csv",
+                "index_cols": ["record_id","redcap_event_name"]
+            },
+            "global_query": {
+                "path": "tabular/redcap/global_records_query.csv",
+                "index_cols": ["record_id","redcap_event_name"]
+            }
         },
-        "local": {
-            "redcap_export": "tabular/assessments/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
-            "legacy_DOB": "tabular/legacy_freeze/QPN-DOB-90subjects.csv",
-            "MRI_dates": "tabular/MRI_acqdata.csv",
-            "Suivi_RPQ": "tabular/demographics/Suivi_RPQ.xlsx",  
-            "manifest": "tabular/manifest.csv"
+        "local": {            
+            "legacy_DOB": {
+                "path": "tabular/recruitment/legacy_freeze/QPN-DOB-90subjects.csv",
+                "index_cols": ["participant_id"]
+            },
+            "Suivi_RPQ": {
+                "path": "tabular/recruitment/Suivi_RPQ_En_cours.csv",
+                "index_cols": ["participant_id"]
+            },
+            "MRI_dates": {
+                "path": "tabular/recruitment/MRI_acqdata.csv",
+                "index_cols": ["participant_id","visit"]
+            },
+            "manifest": {
+                "path": "tabular/manifest.csv",
+                "index_cols": ["participant_id","visit"]
+            }
         }
     },
 
     "variables": {
+        "description": "Map of internal and external variable names and their soruces",
         
         "diagnosis": {       
             "type": "int",
@@ -26,6 +48,14 @@
                 "redcap": {
                     "default_report": ["diagnosis_determined"],
                     "global_query": ["diagnosis_determined"]
+                }
+            }
+        },
+        "MRI_date": {
+            "type": "date",
+            "sources": {
+                "local":{
+                    "MRI_dates": ["TODO"]
                 }
             }
         },

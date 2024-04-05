@@ -1,82 +1,97 @@
 {
     "data_sources": {
+        "description": "data sources with their configurations includding relative paths to nipoppy dataset",
         "redcap": {
-            "api_config": "proc/.redcap.json",
-            "default_report": "QPN MoCA-UPDRS-Neuropsy data_Sarah",
-            "global_query": "global_records_query"
+            "COPN_MRI_export": {
+                "path": "tabular/redcap/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
+                "index_cols": ["Record ID:","Event Name"]
+            },
+            "sarah_report": {
+                "path": "tabular/redcap/QPN MoCA-UPDRS-Neuropsy data_Sarah.csv",
+                "index_cols": ["record_id","redcap_event_name"]
+            },
+            "global_query": {
+                "path": "tabular/redcap/global_records_query.csv",
+                "index_cols": ["record_id","redcap_event_name"]
+            }
         },
-        "local": {
-            "redcap_export": "tabular/assessments/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
-            "legacy_DOB": "tabular/legacy_freeze/QPN-DOB-90subjects.csv",
-            "MRI_dates": "tabular/MRI_acqdata.csv",
-            "Suivi_RPQ": "tabular/demographics/Suivi_RPQ.xlsx",  
-            "manifest": "tabular/manifest.csv"
+        "local": {            
+            "legacy_DOB": {
+                "path": "tabular/recruitment/legacy_freeze/QPN-DOB-90subjects.csv",
+                "index_cols": ["participant_id"]
+            },
+            "Suivi_RPQ": {
+                "path": "tabular/recruitment/Suivi_RPQ_En_cours.csv",
+                "index_cols": ["participant_id"]
+            },
+            "MRI_dates": {
+                "path": "tabular/recruitment/MRI_acqdata.csv",
+                "index_cols": ["participant_id","visit"]
+            },
+            "manifest": {
+                "path": "tabular/manifest.csv",
+                "index_cols": ["participant_id","visit"]
+            }
         }
     },
 
     "variables": {
+        "description": "Map of internal and external variable names and their data sources / instruments",
         "participant_id": {
             "type": "string",
+            "primary_source": "local",
+            "primary_instrument": "manifest",
             "sources": {
                 "local":{
-                    "manifest": "participant_id",
-                    "MRI_dates": "participant_id",
-                    "redcap_export": "Record ID:",
-                    "legacy_DOB": "Record ID",
-                    "Suivi_RPQ": "subj_id"
+                    "manifest": ["participant_id"]                                                           
                 },
                 "redcap": {
-                    "default_report": "record_id",
-                    "global_query": "record_id"
-                }
-            }
-        },
-        "visit": {
-            "type": "string",
-            "sources": {
-                "local":{
-                    "manifest":"visit",
-                    "MRI_dates":"visit",
-                    "redcap_export": "Event Name"
-                },
-                "redcap": {
-                    "default_report": "redcap_event_name",
-                    "global_query": "redcap_event_name"
+                    "COPN_MRI_export": ["Record ID:"],
+                    "sarah_report": ["record_id"],
+                    "global_query": ["record_id"]
                 }
             }
         },
         "dob": {            
             "type": "date",
+            "primary_source": "redcap",
+            "primary_instrument":"COPN_MRI_export",
             "sources": {
                 "local": {
-                    "redcap_export":"Date of Birth/Date de naissance:",
-                    "legacy_DOB":"Date of Birth/Date de naissance"
+                    "legacy_DOB":["Date of Birth/Date de naissance"]
+                },
+                "redcap": {
+                    "COPN_MRI_export":["Date of Birth"]
                 }
             }
         },
         "sex": {
                 "type": "string",
+                "primary_source": "redcap",
+                "primary_instrument":"COPN_MRI_export",
                 "sources": {
                     "local":{
-                        "Suivi_RPQ":"Sex (M-F-Trans)",
-                        "redcap_export":"1. Gender/Genre:"
+                        "Suivi_RPQ":["Sex (M-F-Trans)"]                       
                     },
                     "redcap": {
-                        "default_report": "gender",
-                        "global_query": "gender"
+                        "COPN_MRI_export":["1. Sex"],
+                        "default_report": ["gender"],
+                        "global_query": ["gender"]
                     }
                 }
         },
         "group": {
             "type": "string",
+            "primary_source": "redcap",
+            "primary_instrument":"COPN_MRI_export",
             "sources": {
                 "local":{
-                    "Suivi_RPQ":"Group",
-                    "redcap_export":"Enrolment Group:    Groupe d'inscription:"
+                    "Suivi_RPQ":["Group"]
                 },
                 "redcap": {
-                    "default_report": "enrolment_group_v2",
-                    "global_query": "enrolment_group_v2"
+                    "COPN_MRI_export":["Enrolment Group:"],
+                    "default_report": ["enrolment_group_v2"],
+                    "global_query": ["enrolment_group_v2"]
                 }
             }
         }
