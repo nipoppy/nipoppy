@@ -1,0 +1,95 @@
+{
+    "data_sources": {
+        "redcap": {
+            "api_config": "proc/.redcap.json",
+            "default_report": "QPN MoCA-UPDRS-Neuropsy data_Sarah",
+            "global_query": "global_records_query"
+        },
+        "local": {
+            "redcap_export": "tabular/assessments/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
+            "legacy_DOB": "tabular/legacy_freeze/QPN-DOB-90subjects.csv",
+            "MRI_dates": "tabular/MRI_acqdata.csv",
+            "Suivi_RPQ": "tabular/demographics/Suivi_RPQ.xlsx",  
+            "manifest": "tabular/manifest.csv"
+        }
+    },
+
+    "variables": {
+        
+        "diagnosis": {       
+            "type": "int",
+            "sources": {
+                "local":{
+                    "Suivi_RPQ": [],
+                    "redcap_export": ["Determined diagnosis:  If score = 0, Parkinson's Disease (PD)  If score = 1, Progressive Supranuclear Palsy (PSP)  If score = 2, Multiple System Atrophy (MSA)  If score = 3, Corticobasal Syndrome (CBS)  If score = 4, Dementia with Lewy Bodies (DLB)  If score = 5, Frontotemporal Dementia (FTD)  If score = 6, Essential Tremor (ET)  If score = 7, REM Sleep Behaviour Disorder (RBD)"]
+                },
+                "redcap": {
+                    "default_report": ["diagnosis_determined"],
+                    "global_query": ["diagnosis_determined"]
+                }
+            }
+        },
+        "updrs_score": {
+            "type": "int",
+            "sources": {
+                "local":{
+                    "redcap_export": []
+                },
+                "redcap": {
+                    "default_report": ["updrs_score_part_1", "updrs_score_part_2", "updrs_score_part_3", "updrs_score_part_4"],
+                    "global_query": ["updrs_score_part_1", "updrs_score_part_2", "updrs_score_part_3", "updrs_score_part_4"]
+                }
+            }
+        },
+        "moca_score": {
+            "type": "int",
+            "sources": {
+                "local":{
+                    "redcap_export": []
+                },
+                "redcap": {
+                    "default_report": ["moca_result", "moca_calculation"],
+                    "global_query": ["moca_result", "moca_calculation"]
+                }
+            }
+        },
+        "diagnosis_date": {       
+            "type": "string",
+            "sources": {
+                "local":{
+                    "Suivi_RPQ": [],
+                    "redcap_export": ["2. What is the date of diagnosis?    2. Quelle est la date de diagnostic? "]
+                },
+                "redcap": {
+                    "default_report": [],
+                    "global_query": []
+                }
+            }
+        },
+        "updrs_date": {
+            "type": "date",
+            "sources": {
+                "local":{
+                    "redcap_export": ["MDS-UPDRS Assessment completed:     Évaluation remplie:  "]
+                },
+                "redcap": {
+                    "default_report": ["full_mds_date_1"],
+                    "global_query": ["full_mds_date_1"]
+                }
+            }
+        },
+        "moca_date": {
+            "type": "date",
+            "sources": {
+                "local":{
+                    "redcap_export": ["Date of MoCA administration     Date d'administration du MoCA"]
+                },
+                "redcap": {
+                    "default_report": [],
+                    "global_query": []
+                }
+            }
+        }
+    }
+}
+
