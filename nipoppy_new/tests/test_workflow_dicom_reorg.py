@@ -11,6 +11,99 @@ from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
 
 @pytest.mark.parametrize(
+    "participant,session,fpaths,participant_first",
+    [
+        ("01", "ses-1", ["01/ses-1/file1.dcm", "01/ses-1/file2.dcm"], True),
+        (
+            "02",
+            "ses-2",
+            ["ses-2/02/001.dcm", "ses-2/02/002.dcm", "ses-2/02/003.dcm"],
+            False,
+        ),
+    ],
+)
+def test_get_fpaths_to_reorg(
+    participant, session, fpaths, participant_first, tmp_path: Path
+):
+    dpath_root = tmp_path / "my_dataset"
+
+    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+    for fpath in fpaths:
+        fpath_full = workflow.layout.dpath_raw_dicom / fpath
+        fpath_full.parent.mkdir(parents=True, exist_ok=True)
+        fpath_full.touch()
+
+    assert len(
+        workflow.get_fpaths_to_reorg(
+            participant=participant,
+            session=session,
+            participant_first=participant_first,
+        )
+    ) == len(fpaths)
+
+
+def test_get_fpaths_to_reorg_error_not_found(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+
+    with pytest.raises(FileNotFoundError, match="Raw DICOM directory not found"):
+        workflow.get_fpaths_to_reorg("XXX", "ses-X")
+
+
+@pytest.mark.parametrize(
+    "mapping_func,expected",
+    [(lambda x: x, "123456.dcm"), (lambda x: "dicoms.tar.gz", "dicoms.tar.gz")],
+)
+def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+    workflow.apply_fname_mapping = mapping_func
+
+    fname = "123456.dcm"
+    assert workflow.apply_fname_mapping(fname) == expected
+
+
+@pytest.mark.parametrize(
+    "fname_source,expected",
+    [
+        ("123456.dcm", "123456.dcm"),
+        (Path("123456.dcm"), Path("123456.dcm")),
+        ("dicoms.tar.gz", "dicoms.tar.gz"),
+    ],
+)
+def test_apply_fname_mapping_default(fname_source, expected, tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+
+    assert workflow.apply_fname_mapping(fname_source) == expected
+
+
+def test_run_single_error_file_exists(tmp_path: Path):
+    participant = "01"
+    session = "ses-1"
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+
+    # create the same file in both the downloaded and organized directories
+    fname = "test.dcm"
+    for fpath in [
+        workflow.layout.dpath_raw_dicom / session / participant / fname,
+        workflow.layout.dpath_sourcedata / participant / session / fname,
+    ]:
+        fpath.parent.mkdir(parents=True, exist_ok=True)
+        fpath.touch()
+
+    with pytest.raises(FileExistsError, match="Cannot move file"):
+        workflow.run_single(participant, session)
+
+
+def test_copy_files_default(tmp_path: Path):
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+    assert workflow.copy_files is False
+
+
+@pytest.mark.parametrize(
     "participants_and_sessions_manifest,participants_and_sessions_downloaded",
     [
         (
@@ -100,73 +193,3 @@ def test_run(
 
             else:
                 assert not dpath_to_check.exists()
-
-
-def test_run_single_error_file_exists(tmp_path: Path):
-    participant = "01"
-    session = "ses-1"
-    participants_and_sessions = {participant: [session]}
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-
-    manifest: Manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_downloaded=participants_and_sessions,
-        dpath_downloaded=workflow.layout.dpath_raw_dicom,
-    )
-
-    config = Config(
-        DATASET_NAME=dataset_name,
-        SESSIONS=manifest[manifest.col_session].unique(),
-        PROC_PIPELINES={},
-    )
-
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
-    config.save(workflow.layout.fpath_config)
-
-    # create the same file in both the downloaded and organized directories
-    fname = "test.dcm"
-    for fpath in [
-        workflow.layout.dpath_raw_dicom / session / participant / fname,
-        workflow.layout.dpath_sourcedata / participant / session / fname,
-    ]:
-        fpath.parent.mkdir(parents=True, exist_ok=True)
-        fpath.touch()
-
-    with pytest.raises(FileExistsError, match="Cannot move file"):
-        workflow.run_single(participant, session)
-
-
-def test_run_single_error_no_data(tmp_path: Path):
-    participant = "01"
-    session = "ses-1"
-    participants_and_sessions = {participant: [session]}
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-
-    manifest: Manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_downloaded=participants_and_sessions,
-        dpath_downloaded=workflow.layout.dpath_raw_dicom,
-    )
-
-    config = Config(
-        DATASET_NAME=dataset_name,
-        SESSIONS=manifest[manifest.col_session].unique(),
-        PROC_PIPELINES={},
-    )
-
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
-    config.save(workflow.layout.fpath_config)
-
-    # create the same file in both the downloaded and organized directories
-    fname = "test.dcm"
-    for fpath in [
-        workflow.layout.dpath_raw_dicom / session / participant / fname,
-        workflow.layout.dpath_sourcedata / participant / session / fname,
-    ]:
-        fpath.parent.mkdir(parents=True, exist_ok=True)
-        fpath.touch()
-
-    with pytest.raises(FileNotFoundError, match="Raw DICOM directory not found"):
-        workflow.run_single("XXX", "ses-X")

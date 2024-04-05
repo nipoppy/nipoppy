@@ -15,7 +15,7 @@ class DicomReorgWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_root: Path | str,
-        copy_files: bool = True,
+        copy_files: bool = False,
         fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
@@ -30,45 +30,86 @@ class DicomReorgWorkflow(BaseWorkflow):
         )
         self.copy_files = copy_files
 
-    def run_single(self, participant: str, session: str):
-        """Reorganize downloaded DICOM files for a single participant and session."""
-        # find directory with files to reorganize
-        dpath_downloaded: Path = self.layout.dpath_raw_dicom / session / participant
+    def get_fpaths_to_reorg(
+        self, participant: str, session: str, participant_first=True
+    ) -> list[Path]:
+        """
+        Get file paths to reorganize for a single participant and session.
+
+        This method can be overridden if the raw DICOM layout is different than what
+        is typically expected.
+        """
+        # support both participant-first and session-first raw DICOM layouts
+        if participant_first:
+            dpath_downloaded = self.layout.dpath_raw_dicom / participant / session
+        else:
+            dpath_downloaded = self.layout.dpath_raw_dicom / session / participant
+
+        # make sure directory exists
         if not dpath_downloaded.exists():
             raise FileNotFoundError(
                 f"Raw DICOM directory not found for participant {participant}"
                 f" session {session}: {dpath_downloaded}"
             )
 
+        # crawl through directory tree and get all file paths
+        fpaths = []
+        for dpath, _, fnames in os.walk(dpath_downloaded):
+            for fname in fnames:
+                fpaths.append(Path(dpath, fname))
+
+        return fpaths
+
+    def apply_fname_mapping(self, fname_source: str) -> str:
+        """
+        Apply a mapping to the file name.
+
+        This method does not change the file name by default, but it can be overridden
+        if the file names need to be changed during reorganization (e.g. for easier
+        BIDS conversion).
+        """
+        return fname_source
+
+    def run_single(self, participant: str, session: str):
+        """Reorganize downloaded DICOM files for a single participant and session."""
+        # get paths to reorganize
+        # TODO add config option for session-first or participant-first raw DICOM layout
+        fpaths_to_reorg = self.get_fpaths_to_reorg(
+            participant, session, participant_first=False
+        )
+
         # do reorg
         dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
         dpath_reorganized.mkdir(parents=True, exist_ok=True)
-        for dpath, _, fnames in os.walk(dpath_downloaded):
-            for fname in fnames:
-                fpath_source = Path(dpath, fname)
-                fpath_dest = dpath_reorganized / fname
+        for fpath_source in fpaths_to_reorg:
+            fpath_dest = dpath_reorganized / self.apply_fname_mapping(fpath_source.name)
 
-                # do not overwrite existing files
-                if fpath_dest.exists():
-                    raise FileExistsError(
-                        f"Cannot move file {fpath_source} to {fpath_dest}"
-                        " because it already exists"
-                    )
+            # do not overwrite existing files
+            if fpath_dest.exists():
+                raise FileExistsError(
+                    f"Cannot move file {fpath_source} to {fpath_dest}"
+                    " because it already exists"
+                )
 
-                # either create symlinks or copy original files
+            # either create symlinks or copy original files
+            if not self.dry_run:
                 if self.copy_files:
-                    shutil.copyfile(fpath_source, fpath_dest)
+                    self.logger.debug(f"Copying {fpath_source} to {fpath_dest}")
+                    shutil.copy2(fpath_source, fpath_dest)
                 else:
+                    self.logger.debug(
+                        f"Creating a symlink from {fpath_source} to {fpath_dest}"
+                    )
                     fpath_source = os.path.relpath(fpath_source, fpath_dest.parent)
                     os.symlink(fpath_source, fpath_dest)
 
-                # update doughnut entry
-                self.doughnut.set_status(
-                    participant=participant,
-                    session=session,
-                    col=self.doughnut.col_organized,
-                    status=True,
-                )
+        # update doughnut entry
+        self.doughnut.set_status(
+            participant=participant,
+            session=session,
+            col=self.doughnut.col_organized,
+            status=True,
+        )
 
     def run_main(self):
         """Reorganize all downloaded DICOM files."""
