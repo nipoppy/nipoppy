@@ -2,6 +2,7 @@
 
 from contextlib import nullcontext
 
+import pandas as pd
 import pytest
 from conftest import DPATH_TEST_DATA
 
@@ -13,6 +14,7 @@ from nipoppy.tabular.manifest import Manifest
     [
         DPATH_TEST_DATA / "manifest1.csv",
         DPATH_TEST_DATA / "manifest2.csv",
+        DPATH_TEST_DATA / "manifest3.csv",
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
@@ -20,13 +22,21 @@ def test_load(fpath, validate):
     assert isinstance(Manifest.load(fpath, validate=validate), Manifest)
 
 
+def test_load_keep_extra_cols():
+    fpath = DPATH_TEST_DATA / "manifest3.csv"
+    expected_cols = pd.read_csv(fpath).columns
+    manifest = Manifest.load(fpath)
+    assert set(manifest.columns) == set(expected_cols)
+    assert isinstance(manifest.validate(), Manifest)
+
+
 @pytest.mark.parametrize(
     "fpath,is_valid",
     [
         (DPATH_TEST_DATA / "manifest1.csv", True),
         (DPATH_TEST_DATA / "manifest2.csv", True),
-        (DPATH_TEST_DATA / "manifest3-invalid.csv", False),
-        (DPATH_TEST_DATA / "manifest4-invalid.csv", False),
+        (DPATH_TEST_DATA / "manifest_invalid1.csv", False),
+        (DPATH_TEST_DATA / "manifest_invalid2.csv", False),
     ],
 )
 def test_validate(fpath, is_valid):

@@ -42,8 +42,8 @@ def test_load(fpath, validate):
     [
         (DPATH_TEST_DATA / "doughnut1.csv", True),
         (DPATH_TEST_DATA / "doughnut2.csv", True),
-        (DPATH_TEST_DATA / "doughnut3-invalid.csv", False),
-        (DPATH_TEST_DATA / "doughnut4-invalid.csv", False),
+        (DPATH_TEST_DATA / "doughnut_invalid1.csv", False),
+        (DPATH_TEST_DATA / "doughnut_invalid2.csv", False),
     ],
 )
 def test_validate(fpath, is_valid):

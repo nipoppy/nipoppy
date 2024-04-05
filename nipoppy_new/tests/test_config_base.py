@@ -199,4 +199,4 @@ def test_load(path):
 
 def test_load_missing_required():
     with pytest.raises(ValueError):
-        Config.load(DPATH_TEST_DATA / "config3-invalid.json")
+        Config.load(DPATH_TEST_DATA / "config_invalid1.json")

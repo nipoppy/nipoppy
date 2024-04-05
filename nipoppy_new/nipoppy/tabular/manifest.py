@@ -3,6 +3,7 @@
 from typing import Optional, Self
 
 import pandas as pd
+from pydantic import ConfigDict
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 
@@ -29,6 +30,9 @@ class ManifestModel(BaseTabularModel):
                     ", or left empty"
                 )
         return data
+
+    # allow extra columns
+    model_config = ConfigDict(extra="allow")
 
 
 class Manifest(BaseTabular):

@@ -44,8 +44,8 @@ def test_empty_has_columns():
     [
         DPATH_TEST_DATA / "manifest1.csv",
         DPATH_TEST_DATA / "manifest2.csv",
-        DPATH_TEST_DATA / "manifest3-invalid.csv",
-        DPATH_TEST_DATA / "manifest4-invalid.csv",
+        DPATH_TEST_DATA / "manifest_invalid1.csv",
+        DPATH_TEST_DATA / "manifest_invalid2.csv",
     ],
 )
 @pytest.mark.parametrize("tabular_class", [Tabular, TabularWithModel])

@@ -55,8 +55,8 @@ def test_init_custom_layout(dpath_root, fpath_spec):
 @pytest.mark.parametrize(
     "fpath_spec",
     [
-        DPATH_TEST_DATA / "layout3-invalid.json",
-        DPATH_TEST_DATA / "layout4-invalid.json",
+        DPATH_TEST_DATA / "layout_invalid1.json",
+        DPATH_TEST_DATA / "layout_invalid2.json",
     ],
 )
 def test_init_invalid_layout(dpath_root, fpath_spec):
