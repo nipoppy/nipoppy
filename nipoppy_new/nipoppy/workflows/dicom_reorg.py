@@ -2,7 +2,6 @@
 
 import logging
 import os
-import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -80,7 +79,7 @@ class DicomReorgWorkflow(BaseWorkflow):
 
         # do reorg
         dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
-        dpath_reorganized.mkdir(parents=True, exist_ok=True)
+        self.mkdir(dpath_reorganized)
         for fpath_source in fpaths_to_reorg:
             fpath_dest = dpath_reorganized / self.apply_fname_mapping(fpath_source.name)
 
@@ -94,14 +93,12 @@ class DicomReorgWorkflow(BaseWorkflow):
             # either create symlinks or copy original files
             if not self.dry_run:
                 if self.copy_files:
-                    self.logger.debug(f"Copying {fpath_source} to {fpath_dest}")
-                    shutil.copy2(fpath_source, fpath_dest)
+                    self.copy(fpath_source, fpath_dest)
                 else:
-                    self.logger.debug(
-                        f"Creating a symlink from {fpath_source} to {fpath_dest}"
-                    )
                     fpath_source = os.path.relpath(fpath_source, fpath_dest.parent)
-                    os.symlink(fpath_source, fpath_dest)
+                    self.create_symlink(
+                        fpath_source=fpath_source, fpath_dest=fpath_dest
+                    )
 
         # update doughnut entry
         self.doughnut.set_status(

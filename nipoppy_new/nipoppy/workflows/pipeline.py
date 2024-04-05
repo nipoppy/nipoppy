@@ -326,11 +326,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def check_dir(self, dpath: Path):
         """Create directory if it does not exist."""
         if not dpath.exists():
-            self.logger.warning(
-                f"Creating directory because it does not exist: {dpath}"
-            )
-            if not self.dry_run:
-                dpath.mkdir(parents=True, exist_ok=True)
+            self.mkdir(dpath, log_level=logging.WARNING)
 
     def run_setup(self, **kwargs):
         """Run pipeline setup."""
@@ -362,7 +358,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def run_cleanup(self, **kwargs):
         """Run pipeline cleanup."""
         if self.dpath_pipeline_work.exists():
-            self.run_command(["rm", "-rf", self.dpath_pipeline_work])
+            self.rm(self.dpath_pipeline_work)
         return super().run_cleanup(**kwargs)
 
     def get_participants_sessions_to_run(

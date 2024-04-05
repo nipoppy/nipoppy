@@ -1,7 +1,9 @@
 """Workflow utilities."""
 
 import logging
+import os
 import shlex
+import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -175,12 +177,10 @@ class BaseWorkflow(Base, ABC):
         """Save a tabular file."""
         if not self.dry_run:
             fpath_doughnut_backup = tabular.save_with_backup(fpath)
-            if fpath_doughnut_backup is not None:
-                self.logger.info(f"Saved to {fpath} (-> {fpath_doughnut_backup})")
-            else:
-                self.logger.info(f"No changes to file at {fpath}")
+        if fpath_doughnut_backup is not None:
+            self.logger.info(f"Saved to {fpath} (-> {fpath_doughnut_backup})")
         else:
-            self.logger.info(f"Not writing to {fpath} since this is a dry run")
+            self.logger.info(f"No changes to file at {fpath}")
 
     def run_setup(self, **kwargs):
         """Run the setup part of the workflow."""
@@ -210,6 +210,50 @@ class BaseWorkflow(Base, ABC):
         self.run_setup(**kwargs)
         self.run_main(**kwargs)
         self.run_cleanup(**kwargs)
+
+    def mkdir(self, dpath, log_level=logging.INFO, **kwargs):
+        """
+        Create a directory (by default including parents).
+
+        Do nothing if the directory already exists.
+        """
+        kwargs_to_use = {"parents": True, "exist_ok": True}
+        kwargs_to_use.update(kwargs)
+
+        dpath = Path(dpath)
+
+        if not dpath.exists():
+            self.logger.log(level=log_level, msg=f"Creating directory {dpath}")
+            if not self.dry_run:
+                dpath.mkdir(**kwargs_to_use)
+        else:
+            if not dpath.is_dir():
+                raise FileExistsError(
+                    f"Path already exists but is not a directory: {dpath}"
+                )
+
+    def copy(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+        """Copy a file or directory."""
+        self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
+        if not self.dry_run:
+            shutil.copy2(src=path_source, dst=path_dest, **kwargs)
+
+    def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+        """Create a symlink to another path."""
+        self.logger.log(
+            level=log_level,
+            msg=f"Creating a symlink from {path_source} to {path_dest}",
+        )
+        if not self.dry_run:
+            os.symlink(path_source, path_dest, **kwargs)
+
+    def rm(self, path, log_level=logging.INFO, **kwargs):
+        """Remove a file or directory."""
+        kwargs_to_use = {"ignore_errors": True}
+        kwargs_to_use.update(kwargs)
+        self.logger.log(level=log_level, msg=f"Removing {path}")
+        if not self.dry_run:
+            shutil.rmtree(path, **kwargs_to_use)
 
     @cached_property
     def config(self) -> Config:

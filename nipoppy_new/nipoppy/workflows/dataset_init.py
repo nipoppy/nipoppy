@@ -39,7 +39,7 @@ class InitWorkflow(BaseWorkflow):
 
         # create directories
         for dpath in self.layout.dpaths:
-            self.run_command(f"mkdir -p {dpath}")
+            self.mkdir(dpath)
 
         for dpath, description in self.layout.dpath_descriptions:
             fpath_readme = dpath / self.fname_readme
@@ -48,11 +48,9 @@ class InitWorkflow(BaseWorkflow):
 
         self.logger.info(f"Created an empty dataset at {self.dpath_root}")
 
-        # copy sample config file
-        self.run_command(f"cp {FPATH_SAMPLE_CONFIG} {self.layout.fpath_config}")
-
-        # copy sample manifest file
-        self.run_command(f"cp {FPATH_SAMPLE_MANIFEST} {self.layout.fpath_manifest}")
+        # copy sample config and manifest files
+        self.copy(FPATH_SAMPLE_CONFIG, self.layout.fpath_config)
+        self.copy(FPATH_SAMPLE_MANIFEST, self.layout.fpath_manifest)
 
         # inform user to edit the sample files
         self.logger.warning(
