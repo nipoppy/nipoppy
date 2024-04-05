@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
+from conftest import datetime_fixture  # noqa F401
 from conftest import create_empty_dataset, prepare_dataset
 from fids import fids
 
@@ -472,12 +473,18 @@ def test_get_participants_sessions_to_run(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant,session,expected_stem",
     [
-        ("pipeline1", "v1", "sub1", None, "pipeline1-v1-sub1"),
-        ("pipeline2", "2.0", None, "ses-1", "pipeline2-2.0-1"),
+        ("pipeline1", "v1", "sub1", None, "test/pipeline1-v1/pipeline1-v1-sub1"),
+        ("pipeline2", "2.0", None, "ses-1", "test/pipeline2-2.0/pipeline2-2.0-1"),
     ],
 )
 def test_generate_fpath_log(
-    pipeline_name, pipeline_version, participant, session, expected_stem, tmp_path: Path
+    pipeline_name,
+    pipeline_version,
+    participant,
+    session,
+    expected_stem,
+    tmp_path: Path,
+    datetime_fixture,  # noqa F811
 ):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
@@ -487,4 +494,6 @@ def test_generate_fpath_log(
         session=session,
     )
     fpath_log = workflow.generate_fpath_log()
-    assert fpath_log.stem.startswith(expected_stem)
+    assert (
+        fpath_log == workflow.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
+    )

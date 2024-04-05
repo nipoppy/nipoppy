@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from conftest import create_empty_dataset
+from conftest import create_empty_dataset, datetime_fixture  # noqa F401
 
 from nipoppy.config.base import Config
 from nipoppy.logger import get_logger
@@ -39,17 +39,25 @@ def test_init(workflow: BaseWorkflow):
     assert isinstance(workflow.logger, logging.Logger)
 
 
-def test_generate_fpath_log(workflow: BaseWorkflow):
+def test_generate_fpath_log(workflow: BaseWorkflow, datetime_fixture):  # noqa F811
     fpath_log = workflow.generate_fpath_log()
     assert isinstance(fpath_log, Path)
-    assert fpath_log.stem.startswith(workflow.name)
+    assert (
+        fpath_log
+        == workflow.layout.dpath_logs / "my_workflow/my_workflow-20240404_1234.log"
+    )
 
 
 @pytest.mark.parametrize("fname_stem", ["123", "test", "my_workflow"])
-def test_generate_fpath_log_custom(fname_stem, workflow: BaseWorkflow):
+def test_generate_fpath_log_custom(
+    fname_stem, workflow: BaseWorkflow, datetime_fixture  # noqa F811
+):
     fpath_log = workflow.generate_fpath_log(fname_stem=fname_stem)
     assert isinstance(fpath_log, Path)
-    assert fpath_log.stem.startswith(fname_stem)
+    assert (
+        fpath_log
+        == workflow.layout.dpath_logs / f"my_workflow/{fname_stem}-20240404_1234.log"
+    )
 
 
 @pytest.mark.parametrize("command", ["echo x", "echo y"])

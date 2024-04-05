@@ -15,9 +15,9 @@ def get_logger(name: Optional[str] = None, level: int = logging.INFO) -> logging
     """Create/get a logger with rich formatting."""
     logging.basicConfig(
         level=level,
-        format="%(message)s",
+        format=FORMAT_RICH,
         datefmt=DATE_FORMAT,
-        handlers=[RichHandler(markup=True, rich_tracebacks=True)],
+        handlers=[RichHandler(show_time=False, markup=True, rich_tracebacks=True)],
         force=True,
     )
     return logging.getLogger(name=name)

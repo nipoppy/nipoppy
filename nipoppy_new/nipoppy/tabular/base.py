@@ -115,15 +115,22 @@ class BaseTabular(pd.DataFrame, ABC):
             )
 
         if self.index_cols is not None:
-            duplicated = df_validated.duplicated(subset=self.index_cols)
-            if duplicated.any():
+            df_duplicated = df_validated.find_duplicates()
+            if len(df_duplicated) > 0:
                 raise ValueError(
                     f"Duplicate records found in {self.__class__.__name__.lower()}"
                     f". Columns {self.index_cols} must uniquely identify a record"
-                    f". Got duplicates:\n{df_validated.loc[duplicated]}"
+                    f". Got duplicates:\n{df_duplicated}"
                 )
 
         return df_validated
+
+    def find_duplicates(self, cols=None) -> Self:
+        """Find duplicate records."""
+        if cols is None:
+            cols = self.index_cols
+
+        return self[self.duplicated(subset=cols, keep=False)]
 
     def get_diff(self, other: Self, cols=None) -> Self:
         """Get the difference between two dataframes.

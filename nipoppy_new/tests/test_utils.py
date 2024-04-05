@@ -6,11 +6,13 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from conftest import DPATH_TEST_DATA
+from conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
 from fids import fids
 
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
+    add_path_suffix,
+    add_path_timestamp,
     check_participant,
     check_session,
     dicom_id_to_bids_id,
@@ -149,6 +151,41 @@ def test_save_json(tmp_path: Path):
         assert json.load(file) == json_object
 
 
+@pytest.mark.parametrize(
+    "path,suffix,sep,expected",
+    [
+        ("path/to/file.txt", "suffix", "-", Path("path/to/file-suffix.txt")),
+        (Path("path/to/file.txt"), "suffix", "_", Path("path/to/file_suffix.txt")),
+        (
+            ".path/to/hidden/file.txt",
+            "suffix",
+            "-",
+            Path(".path/to/hidden/file-suffix.txt"),
+        ),
+        (
+            "file_without_extension",
+            "suffix",
+            "-",
+            Path("file_without_extension-suffix"),
+        ),
+    ],
+)
+def test_add_path_suffix(path, suffix, sep, expected):
+    assert add_path_suffix(path, suffix, sep) == expected
+
+
+@pytest.mark.parametrize(
+    "timestamp_format,expected",
+    [
+        ("%Y%m%d_%H%M", Path("/path/to/file-20240404_1234.txt")),
+        ("%Y%m%d_%H%M_%S_%f", Path("/path/to/file-20240404_1234_56_789000.txt")),
+    ],
+)
+def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # noqa F811
+    path = "/path/to/file.txt"
+    assert add_path_timestamp(path=path, timestamp_format=timestamp_format) == expected
+
+
 @pytest.mark.parametrize("dname_backups", [None, ".tests"])
 @pytest.mark.parametrize(
     "fname,dname_backups_processed",
@@ -170,6 +207,15 @@ def test_save_df_with_backup(
     assert fpath_symlink.exists()
     assert fpath_backup.exists()
     assert fpath_backup.parent == fpath_symlink.parent / dname_backups
+
+
+def test_save_df_with_backup_broken_symlink(tmp_path: Path):
+    fpath_symlink = tmp_path / "test.csv"
+    fpath_symlink.symlink_to("non_existent_file.csv")
+    df = pd.DataFrame()
+
+    # should not raise an error
+    assert save_df_with_backup(df, fpath_symlink) is not None
 
 
 @pytest.mark.parametrize(

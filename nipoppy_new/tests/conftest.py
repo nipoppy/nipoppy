@@ -1,10 +1,13 @@
 """Utilities for tests."""
 
+import datetime
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import pandas as pd
+import pytest
+import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.tabular.doughnut import Doughnut
@@ -47,6 +50,21 @@ ATTR_TO_FPATH_MAP = {
     "fpath_doughnut": "scratch/raw_dicom/doughnut.csv",
     "fpath_imaging_bagel": "derivatives/bagel.csv",
 }
+
+MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
+
+
+@pytest.fixture()
+def datetime_fixture(
+    mocker: pytest_mock.MockerFixture,
+):
+    """Mock the datetime module so that it produces predictable outputs.
+
+    See https://stackoverflow.com/a/75591976 for mocking datetime.datetime.now
+    """
+    mocked_datetime = mocker.patch("nipoppy.utils.datetime")
+    mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
+    yield mocked_datetime
 
 
 def create_empty_dataset(dpath_root: Path):

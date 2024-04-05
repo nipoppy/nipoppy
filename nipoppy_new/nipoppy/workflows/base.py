@@ -1,6 +1,5 @@
 """Workflow utilities."""
 
-import datetime
 import logging
 import shlex
 import subprocess
@@ -16,6 +15,7 @@ from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.utils import add_path_timestamp
 
 LOG_SUFFIX = ".log"
 
@@ -73,12 +73,10 @@ class BaseWorkflow(Base, ABC):
             dnames_parent = [dnames_parent]
         if fname_stem is None:
             fname_stem = self.name
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         dpath_log = self.layout.dpath_logs / self.name
         for dname in dnames_parent:
             dpath_log = dpath_log / dname
-        fname_log = f"{self.path_sep.join([fname_stem, timestamp])}{LOG_SUFFIX}"
-        return dpath_log / fname_log
+        return dpath_log / add_path_timestamp(f"{fname_stem}{LOG_SUFFIX}")
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""

@@ -166,16 +166,27 @@ def save_json(obj: dict, fpath: str | Path, **kwargs):
         json.dump(obj, file, **kwargs)
 
 
+def add_path_suffix(path: Path | str, suffix: str, sep="-") -> Path:
+    """Add a suffix to a path, before the last file extension (if any)."""
+    path = Path(path)
+    return Path(path.parent, f"{path.stem}{sep}{suffix}{path.suffix}")
+
+
+def add_path_timestamp(
+    path: Path | str, timestamp_format="%Y%m%d_%H%M", sep="-"
+) -> Path:
+    """Add a timestamp to a path, before the last file extension (if any)."""
+    timestamp = datetime.datetime.now().strftime(timestamp_format)
+    return add_path_suffix(path=path, suffix=timestamp, sep=sep)
+
+
 def save_df_with_backup(
     df: pd.DataFrame,
     fpath_symlink: str | Path,
     dname_backups: Optional[str] = None,
     use_relative_path=True,
-    timestamp_format="%Y%m%d_%H%M",
-    ext_symbol=".",
-    sep_fname_backup="-",
     **kwargs,
-):
+) -> Path | None:
     """Save a dataframe as a symlink pointing to a timestamped "backup" file.
 
     Parameters
@@ -189,44 +200,32 @@ def save_df_with_backup(
         (automatically determined if None), by default None
     use_relative_path : bool, optional
         Use relative instead of absolute path for the symlink, by default True
-    timestamp_format : str, optional
-        Format string for strftime, by default "%Y%m%d_%H%M"
-    ext_symbol : str, optional
-        File extension separator, by default "."
-    sep_fname_backup : str, optional
-        Separator before the timestamp in name of the backup file, by default "-"
 
     Returns
     -------
-    Path
-        _description_
+    Path or None
+        None if no file was saved, otherwise the path to the backup file
     """
     if "index" not in kwargs:
         kwargs["index"] = False
 
     fpath_symlink = Path(fpath_symlink)
 
-    timestamp_format = datetime.datetime.now().strftime(timestamp_format)
-    fpath_symlink_components = fpath_symlink.name.split(ext_symbol)
-    fname_backup = ext_symbol.join(
-        [f"{fpath_symlink_components[0]}{sep_fname_backup}{timestamp_format}"]
-        + fpath_symlink_components[1:]
-    )
+    fname_backup = add_path_timestamp(fpath_symlink.name)
     if dname_backups is None:
-        dname_backups = f".{fpath_symlink_components[0]}s"
+        dname_backups = f".{fpath_symlink.stem}s"
 
     fpath_backup_full: Path = fpath_symlink.parent / dname_backups / fname_backup
 
     fpath_backup_full.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(fpath_backup_full, **kwargs)
-    os.chmod(fpath_backup_full, 0o664)
 
     if use_relative_path:
         fpath_backup_to_link = os.path.relpath(fpath_backup_full, fpath_symlink.parent)
     else:
         fpath_backup_to_link = fpath_backup_full
 
-    if fpath_symlink.exists():
+    if fpath_symlink.is_symlink() or fpath_symlink.exists():
         fpath_symlink.unlink()
     fpath_symlink.symlink_to(fpath_backup_to_link)
 
