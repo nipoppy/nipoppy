@@ -6,6 +6,10 @@
                 "path": "tabular/redcap/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
                 "index_cols": ["Record ID:","Event Name"]
             },
+            "sarah_extended_export":{
+                "path": "tabular/redcap/COPN-QPNMoCAUPDRSNeuropsy_DATA_LABELS_2024-04-04_1137(Nikhil).csv",
+                "index_cols": ["Record ID:","Event Name"]
+            },
             "sarah_report": {
                 "path": "tabular/redcap/QPN MoCA-UPDRS-Neuropsy data_Sarah.csv",
                 "index_cols": ["record_id","redcap_event_name"]
@@ -18,7 +22,7 @@
         "local": {            
             "legacy_DOB": {
                 "path": "tabular/recruitment/legacy_freeze/QPN-DOB-90subjects.csv",
-                "index_cols": ["participant_id"]
+                "index_cols": ["Record ID"]
             },
             "Suivi_RPQ": {
                 "path": "tabular/recruitment/Suivi_RPQ_En_cours.csv",
@@ -26,7 +30,7 @@
             },
             "MRI_dates": {
                 "path": "tabular/recruitment/MRI_acqdata.csv",
-                "index_cols": ["participant_id","visit"]
+                "index_cols": ["participant_id","session"]
             },
             "manifest": {
                 "path": "tabular/manifest.csv",
