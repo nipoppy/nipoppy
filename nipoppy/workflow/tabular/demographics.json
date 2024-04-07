@@ -34,7 +34,7 @@
             },
             "manifest": {
                 "path": "tabular/manifest.csv",
-                "index_cols": ["participant_id","visit"]
+                "index_cols": ["participant_id","visit","session"]
             }
         }
     },
