@@ -59,7 +59,9 @@ class DicomReorgWorkflow(BaseWorkflow):
 
         return fpaths
 
-    def apply_fname_mapping(self, fname_source: str) -> str:
+    def apply_fname_mapping(
+        self, fname_source: str, participant: str, session: str
+    ) -> str:
         """
         Apply a mapping to the file name.
 
@@ -81,7 +83,9 @@ class DicomReorgWorkflow(BaseWorkflow):
         dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
         self.mkdir(dpath_reorganized)
         for fpath_source in fpaths_to_reorg:
-            fpath_dest = dpath_reorganized / self.apply_fname_mapping(fpath_source.name)
+            fpath_dest = dpath_reorganized / self.apply_fname_mapping(
+                fpath_source.name, participant=participant, session=session
+            )
 
             # do not overwrite existing files
             if fpath_dest.exists():
@@ -96,9 +100,7 @@ class DicomReorgWorkflow(BaseWorkflow):
                     self.copy(fpath_source, fpath_dest)
                 else:
                     fpath_source = os.path.relpath(fpath_source, fpath_dest.parent)
-                    self.create_symlink(
-                        fpath_source=fpath_source, fpath_dest=fpath_dest
-                    )
+                    self.create_symlink(path_source=fpath_source, path_dest=fpath_dest)
 
         # update doughnut entry
         self.doughnut.set_status(

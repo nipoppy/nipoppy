@@ -52,7 +52,14 @@ def test_get_fpaths_to_reorg_error_not_found(tmp_path: Path):
 
 @pytest.mark.parametrize(
     "mapping_func,expected",
-    [(lambda x: x, "123456.dcm"), (lambda x: "dicoms.tar.gz", "dicoms.tar.gz")],
+    [
+        (lambda fname, participant, session: fname, "123456.dcm"),
+        (lambda fname, participant, session: "dicoms.tar.gz", "dicoms.tar.gz"),
+        (
+            lambda fname, participant, session: f"{participant}-{session}.tar.gz",
+            "01-ses-1.tar.gz",
+        ),
+    ],
 )
 def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
@@ -60,7 +67,9 @@ def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
     workflow.apply_fname_mapping = mapping_func
 
     fname = "123456.dcm"
-    assert workflow.apply_fname_mapping(fname) == expected
+    participant = "01"
+    session = "ses-1"
+    assert workflow.apply_fname_mapping(fname, participant, session) == expected
 
 
 @pytest.mark.parametrize(
@@ -75,7 +84,12 @@ def test_apply_fname_mapping_default(fname_source, expected, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
 
-    assert workflow.apply_fname_mapping(fname_source) == expected
+    assert (
+        workflow.apply_fname_mapping(
+            fname_source=fname_source, participant="", session=""
+        )
+        == expected
+    )
 
 
 def test_run_single_error_file_exists(tmp_path: Path):
