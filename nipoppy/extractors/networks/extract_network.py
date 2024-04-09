@@ -3,9 +3,9 @@ import json
 import subprocess
 import os
 from pathlib import Path
-#import nipoppy.workflow.logger as my_logger
+# import nipoppy.workflow.logger as my_logger
 import shutil
-import logging
+# import logging
 
 import numpy as np
 
@@ -103,7 +103,7 @@ def create_dkt_atlas(inp_parc, out_parc):
 
     # write the .nii.gz of the data to disk
     nib.save(nii, out_parc)
-    
+
     print(f'Created output file: {out_parc}')
 
 
@@ -200,7 +200,7 @@ def run(participant_id, global_configs, session_id, output_dir,
     # logger.info(f"Optional args: --anat_only={anat_only}, --use_bids_filter={use_bids_filter}")
     print(f"Using DATASET_ROOT: {DATASET_ROOT}")
     print(f"Using PARTICIPANT_ID: {participant_id}, SESSION_ID: {session_id}")
-    
+
     if output_dir is None:
         output_dir = f"{DATASET_ROOT}/derivatives/networks/v0.9.0"
 
@@ -218,7 +218,7 @@ def run(participant_id, global_configs, session_id, output_dir,
     # define paths to outputs
     LABPATH = Path(output_dir)
     SEGPATH = Path(output_dir, f"sub-{participant_id}", f"ses-{session_id}", 'anat')
-    NETPATH = Path(output_dir, f"sub{participant_id}", f"ses-{session_id}", 'dwi')
+    NETPATH = Path(output_dir, f"sub-{participant_id}", f"ses-{session_id}", 'dwi')
     # FUNPATH = Path(output_dir, f"sub-{participant_id}", f"ses-{session_id}", 'func')
     # add functional as part of this? easy to load...
 
@@ -234,7 +234,7 @@ def run(participant_id, global_configs, session_id, output_dir,
 
     # SPLIT HERE TO MAKE run_extractor() FOR EASIER INVOCATION
     # ... IT DOES NOT MAKE IT EASIER...
-        
+
     # the input results directories, passed inputs
     TF_PATH = tractoflow_dir
     FP_PATH = fmriprep_dir
@@ -251,12 +251,12 @@ def run(participant_id, global_configs, session_id, output_dir,
     DKT_DWI = Path(SEGPATH, f"sub-{participant_id}_ses-{session_id}_space-dwi_atlas-DKTatlas+aseg_dseg.nii.gz")
 
     # paths to ANTs xfom files
-    ANAT2MNI_ALL = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5")
-    MNI2ANAT_ALL = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5")
-    FS2ANAT_AFF = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_from-fsnative_to-T1w_mode-image_xfm.txt")
+    ANAT2MNI_ALL = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_run-1_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5")
+    MNI2ANAT_ALL = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_run-1_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5")
+    FS2ANAT_AFF = Path(FP_PATH, f"sub-{participant_id}", f"ses-{session_id}", 'anat', f"sub-{participant_id}_ses-{session_id}_run-1_from-fsnative_to-T1w_mode-image_xfm.txt")
 
     # path to space-dwi T1 image
-    ANAT_DWI = Path(TF_PATH, f"sub-{participant_id}", 'Register_T1', f"sub-{participant_id}__t1w_warped.nii.gz")
+    ANAT_DWI = Path(TF_PATH, f"sub-{participant_id}", 'Register_T1', f"sub-{participant_id}__t1_warped.nii.gz")
 
     # paths to tractoflow native alignment files
     ANAT2DWI_AFF = Path(TF_PATH, f"sub-{participant_id}", 'Register_T1', f"sub-{participant_id}__output0GenericAffine.mat")
@@ -277,10 +277,16 @@ def run(participant_id, global_configs, session_id, output_dir,
                         Path(LABPATH, f"atlas-DKT_dseg.tsv"))
 
     # convert DKT cortical labels to MNI space
-    subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {MNITEMP} -o {DKT_MNI} -n GenericLabel -v 1 -t {ANAT2MNI_ALL} {FS2ANAT_AFF}')
+    # subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {MNITEMP} -o {DKT_MNI} -n GenericLabel -v 1 -t {ANAT2MNI_ALL} {FS2ANAT_AFF}')
+    sub_dkt_mni = f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {MNITEMP} -o {DKT_MNI} -n GenericLabel -v 1 -t {ANAT2MNI_ALL} {FS2ANAT_AFF}'
+    cmd_dkt_mni = sub_dkt_mni.split()
+    subprocess.run(cmd_dkt_mni)
 
     # convert DKT cortical labels into participant DWI space
-    subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {ANAT_DWI} -o {DKT_DWI} -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {FS2ANAT_AFF}')
+    # subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {ANAT_DWI} -o {DKT_DWI} -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {FS2ANAT_AFF}')
+    sub_dkt_dwi = f'antsApplyTransforms -d 3 -e 0 -i {DKT_NII} -r {ANAT_DWI} -o {DKT_DWI} -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {FS2ANAT_AFF}'
+    cmd_dkt_dwi = sub_dkt_dwi.split()
+    subprocess.run(cmd_dkt_dwi)
 
     # define Schaefer 2018 resolutions
     schaeferRes = [100, 200, 300, 400, 500, 600, 800, 1000]
@@ -295,11 +301,14 @@ def run(participant_id, global_configs, session_id, output_dir,
         # copy the labels to the output if they don't already exist there
         if ~os.path.exists(Path(LABPATH, f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv")):
             print("Copy labels file to output")
-            shutil.copyfile(Path(TEMPLATEFLOW_DIR, 'tpl-MNI152NLin2009cAsym', f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv"),
+            shutil.copyfile(Path(TEMPLATEFLOW_DIR, 'tpl-MNI152NLin2009cAsym', f"tpl-MNI152NLin2009cAsym_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv"),
                             Path(LABPATH, f"atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.tsv"))
 
         # warp the corresponding resolution / label file to the DWI space
-        subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/sub-{participant_id}_ses-{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}')
+        # subprocess.run(f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/sub-{participant_id}_ses-{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}')
+        sub_ant_dwi = f'antsApplyTransforms -d 3 -e 0 -i {MNIPATH}/tpl-MNI152NLin2009cAsym_res-02_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -r {ANAT_DWI} -o {SEGPATH}/sub-{participant_id}_ses-{session_id}_space-dwi_atlas-Schaefer2018_desc-{out[0]}Parcels{out[1]}Networks_dseg.nii.gz -n GenericLabel -v 1 -t {ANAT2DWI_SYN} {ANAT2DWI_AFF} {MNI2ANAT_ALL}'
+        cmd_ant_dwi = sub_ant_dwi.split()
+        subprocess.run(cmd_ant_dwi)
 
     # for all of the converted labels, create an adjacency network in a .tsv
     create_structural(SEGPATH, TRACTOGRAPHY, NETPATH)
