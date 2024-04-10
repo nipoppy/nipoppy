@@ -3,9 +3,10 @@
 from pathlib import Path
 
 import pytest
-from conftest import ATTR_TO_DPATH_MAP
 
 from nipoppy.cli.run import cli
+
+from .conftest import ATTR_TO_DPATH_MAP
 
 
 def test_cli():

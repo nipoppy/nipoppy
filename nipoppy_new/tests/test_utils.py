@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
 from fids import fids
 
 from nipoppy.layout import DatasetLayout
@@ -25,6 +24,8 @@ from nipoppy.utils import (
     save_json,
     strip_session,
 )
+
+from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
 
 
 @pytest.mark.parametrize(

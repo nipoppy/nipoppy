@@ -3,11 +3,12 @@
 from pathlib import Path
 
 import pytest
-from conftest import create_empty_dataset, prepare_dataset
 
 from nipoppy.config import Config
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
+
+from .conftest import create_empty_dataset, prepare_dataset
 
 
 @pytest.mark.parametrize(

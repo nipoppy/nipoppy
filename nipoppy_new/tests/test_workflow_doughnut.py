@@ -3,19 +3,20 @@
 from pathlib import Path
 
 import pytest
-from conftest import (
-    ATTR_TO_DPATH_MAP,
-    ATTR_TO_FPATH_MAP,
-    check_doughnut,
-    create_empty_dataset,
-    prepare_dataset,
-)
 
 from nipoppy.config.base import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json
 from nipoppy.workflows.doughnut import DoughnutWorkflow
+
+from .conftest import (
+    ATTR_TO_DPATH_MAP,
+    ATTR_TO_FPATH_MAP,
+    check_doughnut,
+    create_empty_dataset,
+    prepare_dataset,
+)
 
 
 @pytest.mark.parametrize(

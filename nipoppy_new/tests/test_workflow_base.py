@@ -6,13 +6,14 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from conftest import create_empty_dataset, datetime_fixture  # noqa F401
 
 from nipoppy.config.base import Config
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import BaseWorkflow
+
+from .conftest import create_empty_dataset, datetime_fixture  # noqa F401
 
 
 @pytest.fixture(params=[get_logger("my_logger"), None], scope="function")

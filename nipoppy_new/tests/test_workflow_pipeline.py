@@ -6,14 +6,15 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
-from conftest import datetime_fixture  # noqa F401
-from conftest import create_empty_dataset, prepare_dataset
 from fids import fids
 
 from nipoppy.config.base import Config, PipelineConfig
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
+
+from .conftest import datetime_fixture  # noqa F401
+from .conftest import create_empty_dataset, prepare_dataset
 
 
 class PipelineWorkflow(BasePipelineWorkflow):

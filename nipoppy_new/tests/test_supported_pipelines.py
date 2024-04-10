@@ -4,11 +4,12 @@ from pathlib import Path
 
 import pytest
 import pytest_mock
-from conftest import create_empty_dataset, prepare_dataset
 
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 from nipoppy.workflows import BidsConversionRunner, PipelineRunner
+
+from .conftest import create_empty_dataset, prepare_dataset
 
 
 @pytest.fixture()

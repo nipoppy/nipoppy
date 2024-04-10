@@ -4,13 +4,14 @@ import json
 from pathlib import Path
 
 import pytest
-from conftest import DPATH_TEST_DATA
 from pydantic import ValidationError
 
 from nipoppy.config.base import Config
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.singularity import SingularityConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
+
+from .conftest import DPATH_TEST_DATA
 
 REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "SESSIONS", "PROC_PIPELINES"]
 

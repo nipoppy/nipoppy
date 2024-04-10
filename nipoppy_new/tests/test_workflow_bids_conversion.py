@@ -3,11 +3,12 @@
 from pathlib import Path
 
 import pytest
-from conftest import create_empty_dataset
 
 from nipoppy.config.base import Config
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
+
+from .conftest import create_empty_dataset
 
 
 @pytest.fixture

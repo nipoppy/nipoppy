@@ -3,10 +3,11 @@
 from pathlib import Path
 
 import pytest
-from conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
 
 from nipoppy.utils import DPATH_LAYOUT
 from nipoppy.workflows.dataset_init import InitWorkflow
+
+from .conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])

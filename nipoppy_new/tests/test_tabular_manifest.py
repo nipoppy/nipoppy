@@ -4,9 +4,10 @@ from contextlib import nullcontext
 
 import pandas as pd
 import pytest
-from conftest import DPATH_TEST_DATA
 
 from nipoppy.tabular.manifest import Manifest
+
+from .conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(

@@ -4,9 +4,10 @@ from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
-from conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
+
+from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 
 
 @pytest.fixture

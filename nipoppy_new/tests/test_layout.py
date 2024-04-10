@@ -4,16 +4,17 @@ import shutil
 from pathlib import Path
 
 import pytest
-from conftest import (
+from pydantic import ValidationError
+
+from nipoppy.layout import DatasetLayout, PathInfo
+from nipoppy.utils import DPATH_LAYOUT, FPATH_DEFAULT_LAYOUT
+
+from .conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_REQUIRED_FPATH_MAP,
     DPATH_TEST_DATA,
     create_empty_dataset,
 )
-from pydantic import ValidationError
-
-from nipoppy.layout import DatasetLayout, PathInfo
-from nipoppy.utils import DPATH_LAYOUT, FPATH_DEFAULT_LAYOUT
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])

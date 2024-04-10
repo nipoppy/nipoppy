@@ -3,12 +3,13 @@
 from pathlib import Path
 
 import pytest
-from conftest import create_empty_dataset
 from fids import fids
 
 from nipoppy.config.base import Config
 from nipoppy.utils import strip_session
 from nipoppy.workflows.runner import PipelineRunner
+
+from .conftest import create_empty_dataset
 
 
 @pytest.fixture

@@ -6,9 +6,10 @@ from typing import Optional
 
 import pandas as pd
 import pytest
-from conftest import DPATH_TEST_DATA
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
+
+from .conftest import DPATH_TEST_DATA
 
 
 class Tabular(BaseTabular):
