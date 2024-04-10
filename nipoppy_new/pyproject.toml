@@ -35,7 +35,8 @@ readme = "README.md"
 version = "1.0.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
-dev = ["nipoppy[test]", "pre-commit"]
+dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
+doc = ["furo", "sphinx", "sphinx-argparse", "myst-parser"]
 test = [
     "pytest",
     "pytest-mock",

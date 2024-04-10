@@ -28,3 +28,6 @@ env/
 
 # VS Code
 .vscode/
+
+# docs
+nipoppy_new/docs/build
