@@ -147,9 +147,11 @@ def add_subparser_init(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for init command."""
+    description = "Initialize a new dataset."
     parser = subparsers.add_parser(
         COMMAND_INIT,
-        help="Initialize a new dataset.",
+        description=description,
+        help=description,
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -162,9 +164,11 @@ def add_subparser_doughnut(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for doughnut command."""
+    description = "Create/update a dataset's doughnut file."
     parser = subparsers.add_parser(
         COMMAND_DOUGHNUT,
-        help="Create/update a dataset's doughnut file.",
+        description=description,
+        help=description,
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -193,9 +197,11 @@ def add_subparser_dicom_reorg(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for reorg command."""
+    description = "(Re)organize raw DICOM files."  # TODO give paths in layout model
     parser = subparsers.add_parser(
         COMMAND_DICOM_REORG,
-        help="(Re)organize raw DICOM files.",  # TODO give paths in layout model
+        description=description,
+        help=description,
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -212,9 +218,11 @@ def add_subparser_bids_conversion(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
+    description = "Convert to BIDS."
     parser = subparsers.add_parser(
         COMMAND_BIDS_CONVERSION,
-        help="Convert to BIDS.",
+        description=description,
+        help=description,
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -235,9 +243,11 @@ def add_subparser_pipeline_run(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
+    description = "Run a pipeline."
     parser = subparsers.add_parser(
         COMMAND_PIPELINE_RUN,
-        help="Run a pipeline.",
+        description=description,
+        help=description,
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -252,9 +262,11 @@ def add_subparser_pipeline_track(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for track command."""
+    description = "Track the processing status of a pipeline."
     parser = subparsers.add_parser(
         COMMAND_PIPELINE_TRACK,
-        help="Track the processing status of a pipeline.",
+        description=description,
+        help=description,
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -271,6 +283,10 @@ def get_global_parser(
     global_parser = ArgumentParser(
         prog=PROGRAM_NAME,
         description="Organize and process neuroimaging-clinical datasets.",
+        epilog=(
+            f"Run '{PROGRAM_NAME} COMMAND --help'"
+            " for more information on a subcommand."
+        ),
         formatter_class=formatter_class,
         add_help=False,
     )
@@ -278,8 +294,8 @@ def get_global_parser(
 
     # subcommand parsers
     subparsers = global_parser.add_subparsers(
+        title="Subcommands",
         dest="command",
-        help="Choose a subcommand.",
         required=True,
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
