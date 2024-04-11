@@ -39,3 +39,12 @@ ignore-words-list = 'te,ines'
 [tool.pytest.ini_options]
 addopts = "-ra -q -vv "
 testpaths = ["tests/"]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+combine_as_imports = true
+line_length = 88
+profile = "black"
+skip_gitignore = true
