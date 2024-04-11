@@ -243,10 +243,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             **kwargs,
         )
 
-        if return_str:
-            return template_json_str
-        else:
-            return json.loads(template_json_str)
+        return template_json_str if return_str else json.loads(template_json_str)
 
     def get_boutiques_config(self, participant: str, session: str):
         """Get the Boutiques configuration."""
@@ -297,7 +294,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             f" {pybids_ignore_patterns}"
         )
 
-        if dpath_bids_db.exists() and len(list(dpath_bids_db.iterdir())) > 0:
+        if dpath_bids_db.exists() and list(dpath_bids_db.iterdir()):
             self.logger.warning(
                 f"Overwriting existing BIDS database directory: {dpath_bids_db}"
             )

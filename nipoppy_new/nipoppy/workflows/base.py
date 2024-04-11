@@ -226,11 +226,10 @@ class BaseWorkflow(Base, ABC):
             self.logger.log(level=log_level, msg=f"Creating directory {dpath}")
             if not self.dry_run:
                 dpath.mkdir(**kwargs_to_use)
-        else:
-            if not dpath.is_dir():
-                raise FileExistsError(
-                    f"Path already exists but is not a directory: {dpath}"
-                )
+        elif not dpath.is_dir():
+            raise FileExistsError(
+                f"Path already exists but is not a directory: {dpath}"
+            )
 
     def copy(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Copy a file or directory."""

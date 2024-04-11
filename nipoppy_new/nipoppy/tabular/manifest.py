@@ -116,7 +116,6 @@ class Manifest(BaseTabular):
             & (self[self.col_session].isin(sessions))
         ]
 
-        for current_participant, current_session in manifest_subset[
+        yield from manifest_subset[
             [self.col_participant_id, self.col_session]
-        ].itertuples(index=False):
-            yield current_participant, current_session
+        ].itertuples(index=False)

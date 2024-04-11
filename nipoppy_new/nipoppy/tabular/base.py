@@ -1,5 +1,7 @@
 """Generic class for tabular data."""
 
+
+import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Optional, Self, Sequence
@@ -173,10 +175,9 @@ class BaseTabular(pd.DataFrame, ABC):
 
             # add/update
             for col in non_index_cols:
-                self.loc[
-                    tuple([record[col] for col in self.index_cols]),
-                    col,
-                ] = record[col]
+                self.loc[tuple(record[col] for col in self.index_cols), col] = record[
+                    col
+                ]
 
         self.reset_index(inplace=True)
         return self
@@ -196,19 +197,14 @@ class BaseTabular(pd.DataFrame, ABC):
         sort=True,
     ) -> Path | None:
         """Save the dataframe to a file with a backup."""
-        if sort:
-            tabular_new = self.sort_values()
-        else:
-            tabular_new = self
+        tabular_new = self.sort_values() if sort else self
         if fpath_symlink.exists():
-            try:
+            with contextlib.suppress(Exception):
                 tabular_old = self.load(fpath_symlink)
                 if sort:
                     tabular_old = tabular_old.sort_values()
                 if tabular_new.equals(tabular_old):
                     return None
-            except Exception:
-                pass
         return save_df_with_backup(
             tabular_new,
             fpath_symlink,

@@ -71,7 +71,7 @@ class LayoutConfig(BaseModel):
     @cached_property
     def path_labels(self) -> list[str]:
         """Return a list of all path labels defined in the layout."""
-        return [path_label for path_label in self.model_dump().keys()]
+        return list(self.model_dump().keys())
 
     @cached_property
     def path_infos(self) -> list[PathInfo]:
@@ -160,12 +160,12 @@ class DatasetLayout(Base):
 
     def get_paths(self, directory=True, include_optional=False) -> list[Path]:
         """Return a list of all directory or file paths."""
-        paths = []
-        for path_info in self.config.path_infos:
-            if directory == path_info._is_directory and (
-                include_optional or path_info._is_required
-            ):
-                paths.append(self.get_full_path(path_info.path))
+        paths = [
+            self.get_full_path(path_info.path)
+            for path_info in self.config.path_infos
+            if directory == path_info._is_directory
+            and (include_optional or path_info._is_required)
+        ]
         return paths
 
     @cached_property
@@ -181,21 +181,16 @@ class DatasetLayout(Base):
     @cached_property
     def dpath_descriptions(self) -> list[Tuple[Path, str]]:
         """Return a list of directory paths and associated description strings."""
-        info_list = []
-        for path_info in self.config.path_infos:
-            if path_info._is_directory:
-                if path_info.description is not None:
-                    info_list.append(
-                        (self.get_full_path(path_info.path), path_info.description)
-                    )
+        info_list = [
+            (self.get_full_path(path_info.path), path_info.description)
+            for path_info in self.config.path_infos
+            if path_info._is_directory and path_info.description is not None
+        ]
         return info_list
 
     def _find_missing_paths(self) -> list[Path]:
         """Return a list of missing paths."""
-        missing = []
-        for dpath in self.dpaths:
-            if not dpath.exists():
-                missing.append(dpath)
+        missing = [dpath for dpath in self.dpaths if not dpath.exists()]
         for fpath in self.fpaths:
             if not fpath.exists():
                 missing.append(fpath)

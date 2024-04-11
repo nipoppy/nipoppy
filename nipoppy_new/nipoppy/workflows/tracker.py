@@ -58,7 +58,7 @@ class PipelineTracker(BasePipelineWorkflow):
             # TODO handle potentially zipped archives
             matches = list(self.dpath_pipeline_output.glob(relative_path))
             self.logger.debug(f"Matches: {matches}")
-            if len(matches) == 0:
+            if not matches:
                 return Bagel.status_fail
 
         return Bagel.status_success
