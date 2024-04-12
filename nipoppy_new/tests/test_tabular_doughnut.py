@@ -123,7 +123,7 @@ def test_get_participant_sessions_helper(
 ):
     doughnut = Doughnut(data)
     count = 0
-    for participant, session in doughnut._get_participant_sessions_helper(
+    for _ in doughnut._get_participant_sessions_helper(
         status_col=status_col, participant=participant, session=session
     ):
         count += 1
