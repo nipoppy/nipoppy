@@ -4,9 +4,10 @@ from pathlib import Path
 
 import pytest
 import pytest_mock
+from boutiques import bosh
 
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import FPATH_SAMPLE_CONFIG
+from nipoppy.utils import DPATH_DESCRIPTORS, FPATH_SAMPLE_CONFIG
 from nipoppy.workflows import BidsConversionRunner, PipelineRunner
 
 from .conftest import create_empty_dataset, prepare_dataset
@@ -51,6 +52,15 @@ def single_subject_dataset(
     )
 
     return layout, participant, session
+
+
+def get_fpaths_descriptors() -> list[str]:
+    return [str(fpath) for fpath in Path(DPATH_DESCRIPTORS).iterdir()]
+
+
+@pytest.mark.parametrize("fpath_descriptor", get_fpaths_descriptors())
+def test_boutiques_descriptors(fpath_descriptor):
+    bosh(["validate", fpath_descriptor])
 
 
 @pytest.mark.parametrize(

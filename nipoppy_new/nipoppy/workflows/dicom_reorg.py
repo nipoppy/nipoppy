@@ -54,9 +54,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         # crawl through directory tree and get all file paths
         fpaths = []
         for dpath, _, fnames in os.walk(dpath_downloaded):
-            for fname in fnames:
-                fpaths.append(Path(dpath, fname))
-
+            fpaths.extend(Path(dpath, fname) for fname in fnames)
         return fpaths
 
     def apply_fname_mapping(

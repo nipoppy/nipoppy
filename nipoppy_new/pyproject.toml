@@ -44,7 +44,7 @@ doc = [
     "myst-parser",
 ]
 test = [
-    "pytest",
+    "pytest>=6.0.0",
     "pytest-mock",
     "fids@git+https://github.com/neurodatascience/FIDS.git",
 ]
@@ -65,3 +65,5 @@ skip = '.git,.github,pyproject.toml'
 [tool.pytest.ini_options]
 addopts = "-ra -q -vv "
 testpaths = ["tests/"]
+minversion = "6.0"
+xfail_strict = true
