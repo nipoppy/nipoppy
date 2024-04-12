@@ -15,15 +15,10 @@ author = "NeuroDataScience-ORIGAMI Lab"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "autoapi.extension",
+    "autodoc2",
     "myst_parser",
     "sphinxarg.ext",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
-    # "sphinx.ext.linkcode",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.autodoc.typehints",
 ]
 
 templates_path = ["_templates"]
@@ -45,24 +40,40 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
 
-# -- Autodoc/AutoAPI configuration ----------------------------------------------------
+# -- MyST configuration -------------------------------------------------------
 
-autodoc_typehints = "description"
+myst_enable_extensions = ["fieldlist"]
 
-autoapi_dirs = ["../../nipoppy"]
-autoapi_options = [
-    "members",
-    "undoc-members",
-    # "private-members",
-    "show-inheritance",
-    # "show-module-summary",
-    # "special-members",
-    "imported-members",
+# -- Autodoc2 configuration --------------------------------------------
+
+autodoc2_packages = [
+    "../../nipoppy",
 ]
-autoapi_member_order = "groupwise"
-autoapi_own_page_level = "class"
-autoapi_template_dir = "_templates/autoapi"
-
+autodoc2_hidden_objects = [
+    "private",
+    "inherited",
+]
+autodoc2_index_template = (
+    "Python interface\n"
+    "================\n"
+    "\n"
+    "This page contains auto-generated API reference documentation [#f1]_.\n"
+    "\n"
+    ".. toctree::\n"
+    "   :titlesonly:\n"
+    "{% for package in top_level %}\n"
+    "   {{ package }}\n"
+    "{%- endfor %}\n"
+    "\n"
+    ".. [#f1] Created with `sphinx-autodoc2 "
+    "<https://github.com/chrisjsewell/sphinx-autodoc2>`_\n"
+    "\n"
+)
+autodoc2_docstring_parser_regexes = [
+    # this will render all docstrings as Markdown
+    (r".*", "myst"),
+]
+autodoc2_sort_names = True
 
 # # TODO
 # def linkcode_resolve(domain, info):
