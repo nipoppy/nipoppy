@@ -36,7 +36,13 @@ version = "1.0.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
 dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
-doc = ["furo", "sphinx", "sphinx-argparse", "myst-parser"]
+doc = [
+    "furo",
+    "sphinx",
+    "sphinx-argparse",
+    "sphinx-autoapi~=3.0.0",
+    "myst-parser",
+]
 test = [
     "pytest",
     "pytest-mock",
