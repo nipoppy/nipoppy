@@ -1,6 +1,6 @@
 {
     "data_sources": {
-        "description": "data sources with their configurations includding relative paths to nipoppy dataset",
+        "description": "data sources with their configurations including relative paths to nipoppy dataset",
         "redcap": {
             "COPN_MRI_export": {
                 "path": "tabular/redcap/COPN-MRIDataReport2023110_DATA_LABELS_2024-02-19_0851.csv",
@@ -40,7 +40,7 @@
     },
 
     "variables": {
-        "description": "Map of internal and external variable names and their soruces",
+        "description": "Map of internal and external variable names and their sources",
         
         "diagnosis": {       
             "type": "int",
