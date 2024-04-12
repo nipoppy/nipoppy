@@ -145,7 +145,7 @@ def generate_doughnut(
             else:
                 dpath_participant = dpath / participant_dname / session
             if dpath_participant.exists():
-                status = not (next(dpath_participant.iterdir(), None) is None)
+                status = next(dpath_participant.iterdir(), None) is not None
             else:
                 status = False
             logger.debug(f"Status for {dpath_participant}: {status}")
