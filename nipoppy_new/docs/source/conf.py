@@ -18,6 +18,8 @@ extensions = [
     "autodoc2",
     "myst_parser",
     "sphinxarg.ext",
+    "sphinx_copybutton",
+    "sphinx_togglebutton",
     "sphinx.ext.intersphinx",
 ]
 
@@ -44,7 +46,8 @@ intersphinx_mapping = {
 
 myst_enable_extensions = ["fieldlist"]
 
-# -- Autodoc2 configuration --------------------------------------------
+
+# -- Autodoc2 configuration ---------------------------------------------------
 
 autodoc2_packages = [
     "../../nipoppy",
@@ -74,6 +77,9 @@ autodoc2_docstring_parser_regexes = [
     (r".*", "myst"),
 ]
 autodoc2_sort_names = True
+
+# -- Copybutton configuration -------------------------------------------------
+copybutton_exclude = ".linenos, .gp"
 
 # # TODO
 # def linkcode_resolve(domain, info):
