@@ -12,6 +12,3 @@ Nipoppy is a lightweight framework for standardized organization and processing 
 - **Extract** imaging features from {term}`MRI` derivatives data for downstream analysis
 
 Nipoppy is very flexible, leveraging the {term}`Boutiques` framework for the execution of image processing pipelines and {term}`BIDS` conversion software. Several existing containerized pipelines are supported out-of-the-box, and new pipelines can be added easily by the user.
-
-% TODO add Quickstart page (?)
-To get started, see the [Installation instructions](#installation-instructions).

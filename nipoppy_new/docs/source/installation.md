@@ -3,7 +3,9 @@
 
 Nipoppy is a Python package. We recommend installing it in a new or existing Python environment. The most common ways to create Python environments are through {term}`conda` and {term}`venv`.
 
+```{note}
 If you already have an existing Python environment setup, you can go directly to the [](#pip-install-section) section.
+```
 
 ## Python environment
 

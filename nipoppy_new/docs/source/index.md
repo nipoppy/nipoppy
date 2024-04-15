@@ -1,6 +1,8 @@
 ```{include} ../../README.md
 ```
 
+To get started, see the [Installation instructions](#installation) and/or the [Quickstart guide](#quickstart).
+
 ```{toctree}
 ---
 hidden:
@@ -10,6 +12,7 @@ caption: Overview
 ---
 
 installation
+quickstart
 ```
 
 ```{toctree}
@@ -19,8 +22,6 @@ includehidden:
 titlesonly:
 caption: Tutorials
 ---
-
-
 ```
 
 ```{toctree}
@@ -28,7 +29,16 @@ caption: Tutorials
 hidden:
 includehidden:
 titlesonly:
-caption: Reference guides
+caption: Detailed user guide
+---
+```
+
+```{toctree}
+---
+hidden:
+includehidden:
+titlesonly:
+caption: Reference
 ---
 
 cli_reference/index
