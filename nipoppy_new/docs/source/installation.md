@@ -1,3 +1,4 @@
+(installation-instructions)=
 # Installation
 
 Nipoppy is a Python package. We recommend installing it in a new or existing Python environment. The most common ways to create Python environments are through {term}`conda` and {term}`venv`.
@@ -67,6 +68,7 @@ The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal 
 $ pip install nipoppy
 ```
 
+(github-install-section)=
 ### From GitHub
 
 If you wish to use the latest (potentially unstable) version of the package, you can get it from the [GitHub repository](https://github.com/neurodatascience/nipoppy).

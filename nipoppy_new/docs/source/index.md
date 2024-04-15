@@ -1,4 +1,5 @@
-# Nipoppy
+```{include} ../../README.md
+```
 
 ```{toctree}
 ---
@@ -42,6 +43,6 @@ titlesonly:
 caption: Extra
 ---
 
-developer
+contributing
 glossary
 ```
