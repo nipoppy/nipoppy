@@ -5,6 +5,9 @@
 API
     Application Programming Interface, how software interacts with other software.
 
+CLI
+    Command-line interface, i.e. software that can be run in the Terminal.
+
 BIDS
     The Brain Imaging Data Structure, a community standard for organizing neuroimaging (and other) data. See the [BIDS website](https://bids.neuroimaging.io/) for more information.
 
@@ -16,6 +19,9 @@ Boutiques
 
 HPC
     High-perfomance computing system, i.e. a compute cluster or supercomputer.
+
+JSON
+    JavaScript Object Notation, a file format for storing and sharing data. JSON structures are combinations of *objects* (key-value pairs) and *arrays* (ordered lists). See the [website](https://www.json.org/json-en.html) for more information.
 
 MRI
     Magnetic resonance imaging, the most widely used neuroimaging modality.

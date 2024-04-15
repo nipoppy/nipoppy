@@ -38,6 +38,7 @@ version = "1.0.0" # TODO eventually use dynamic versioning
 dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
+    "pygments-csv-lexer",
     "sphinx",
     "sphinx-argparse",
     "sphinx-autodoc2",

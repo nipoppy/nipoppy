@@ -45,8 +45,9 @@ If you have multiple versions of Python installed, you should specify which one 
 ```
 
 ````{admonition} On Compute Canada/Digital Research Alliance of Canada systems
-:class: dropdown
-
+---
+class: dropdown
+---
 If you are using one of the [Compute Canada/Digital Research Alliance of Canada](https://docs.alliancecan.ca/wiki/Technical_documentation) {term}`HPC` systems, you should instead use `virtualenv`:
 ```{code-block} console
 $ virtualenv --no-download nipoppy_env
@@ -96,6 +97,13 @@ You can also install the package with `dev` dependencies (e.g., for running test
 $ pip install -e .[dev]
 ```
 ````
+
+### Verify install
+
+Nipoppy was installed successfully if the {term}`CLI` runs:
+```{code-block} console
+$ nipoppy -h
+```
 
 ## Troubleshooting
 
