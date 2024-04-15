@@ -27,7 +27,7 @@ test = [
 # alias in case of typo
 tests = ["nipoppy[test]"]
 
-bidscoin = ["bidscoin>3.7.1"]
+bidscoin = ["bidscoin@git+https://github.com/Donders-Institute/bidscoin.git"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
@@ -36,6 +36,8 @@ packages = ["nipoppy"]
 include = [
     "nipoppy/workflow/proc_pipe/tractoflow/tractoflow",
 ]
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.codespell]
 skip = '.git,.github,*.pdf,*.svg,pyproject.toml,*.ipynb,*.html,ppmi_imaging_descriptions.json'

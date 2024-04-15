@@ -81,7 +81,7 @@ def test_bidscoin_enigma(tmp_path):
         "session_folder_prefix": "ses-",
         "timestamp_format": "%Y%m%d_%H%M%S",
         "default_nifti_ext": ".nii.gz",
-        "layout": "nested",  # flat or nested
+        "layout": "flat",  # flat or nested
         "filename_template": "COGT_$subject_$suffix",
     }
 
