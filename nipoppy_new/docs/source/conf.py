@@ -60,7 +60,7 @@ autodoc2_index_template = (
     "Python interface\n"
     "================\n"
     "\n"
-    "This page contains auto-generated API reference documentation [#f1]_.\n"
+    "This page contains auto-generated :term:`API` reference documentation [#f1]_.\n"
     "\n"
     ".. toctree::\n"
     "   :titlesonly:\n"

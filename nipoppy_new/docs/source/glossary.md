@@ -2,6 +2,9 @@
 
 ```{glossary}
 
+API
+    Application Programming Interface, how software interacts with other software.
+
 BIDS
     The Brain Imaging Data Structure, a community standard for organizing neuroimaging (and other) data. See the [BIDS website](https://bids.neuroimaging.io/) for more information.
 
