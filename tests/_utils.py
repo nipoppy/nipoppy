@@ -92,7 +92,7 @@ def create_fake_source_dataset(
     timestamp = datetime.now()
 
     for sub_label in subjects_to_create:
-
+        
         entities = {"subject": sub_label}
 
         timestamp = timestamp + timedelta(days=1)
@@ -124,8 +124,9 @@ def create_fake_source_dataset(
 
                     if datatype_ in ["anat", "dwi"]:
                         nb_runs = _get_nb_runs(config, datatype_, i_suffix)
-                        for run in range(1, nb_runs):
+                        for run in range(1, nb_runs + 1):
                             entities["run"] = run
+
                             entities["timestamp"] = timestamp
                             filepath = _create_file(
                                 output_dir,
@@ -149,7 +150,7 @@ def create_fake_source_dataset(
                                 timestamp = timestamp + timedelta(minutes=15)
                             # _create_sidecar(filepath)
 
-    print(f"Dataset successfully generated in:\n{output_dir}")
+    print(f"\nDataset successfully generated in:\n{output_dir}")
 
     return output_dir
 
