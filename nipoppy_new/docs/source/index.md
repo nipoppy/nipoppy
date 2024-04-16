@@ -43,6 +43,7 @@ caption: Reference
 
 cli_reference/index
 apidocs/index
+schemas/index
 ```
 
 ```{toctree}

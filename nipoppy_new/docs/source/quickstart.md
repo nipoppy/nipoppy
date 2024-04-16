@@ -32,6 +32,7 @@ Nipoppy requires two user-provided files in each dataset: a **{term}`JSON` confi
 The [`nipoppy init`](#cli_reference/init) command copies examples of these files to the expected paths within a new dataset, but you will most likely have to modify/overwrite them.
 ```
 
+(customizing-config)=
 ### Customizing the configuration file
 
 The configuration file at `<PATH_TO_DATASET_ROOT>/proc/global_configs.json` contains general information about a dataset (e.g. name, visit and session names) and configurations for running processing pipelines (e.g., pipeline version and runtime parameters).
@@ -56,7 +57,9 @@ language: json
 
 % TODO point to config pages for detailed guide once those are written
 
-% TODO point to config schema
+```{tip}
+See the {ref}`schema reference <config-schema>` for more information about each config field.
+```
 
 ### Generating the manifest file
 
@@ -89,7 +92,9 @@ It is extremely unlikely that this manifest file works for your dataset, so you 
 
 % TODO point to example script for generating a manifest
 
-% TODO point to manifest schema
+```{tip}
+See the {ref}`schema reference <manifest-schema>` for more information about each column.
+```
 
 % ## Next steps
 

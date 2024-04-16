@@ -19,12 +19,15 @@ extensions = [
     "myst_parser",
     "sphinxarg.ext",
     "sphinx_copybutton",
+    "sphinx-jsonschema",
     "sphinx_togglebutton",
     "sphinx.ext.intersphinx",
 ]
 
 templates_path = ["_templates"]
 exclude_patterns = []
+
+nitpicky = True
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -80,6 +83,13 @@ autodoc2_sort_names = True
 
 # -- Copybutton configuration -------------------------------------------------
 copybutton_exclude = ".linenos, .gp"
+
+# -- JSON Schema configuration ------------------------------------------------
+jsonschema_options = {
+    "lift_definitions": True,
+    "auto_reference": True,
+    "auto_target": True,
+}
 
 # # TODO
 # def linkcode_resolve(domain, info):
