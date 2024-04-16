@@ -100,7 +100,8 @@ $ pip install -e .[dev]
 
 ### Verify install
 
-Nipoppy was installed successfully if the {term}`CLI` runs:
+% TODO replace with nipoppy --version once that is available
+Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
 ```{code-block} console
 $ nipoppy -h
 ```
@@ -109,7 +110,7 @@ $ nipoppy -h
 
 ### Error when installing `pydantic-core`
 
-The `pydantic-core` package (required by `pydantic`) is written in Rust, not pure Python. If package needs to be compiled during the install, but Rust is not available, then there might be an error complaining that Rust and/or Cargo cannot be found. In that case, if you are on an {term}`HPC` system that uses `lmod`, try loading Rust before installing:
+The latest version of the `pydantic-core` package (required by `pydantic`) is written in Rust, not pure Python. If package needs to be compiled during the install, but Rust is not available, then there might be an error complaining that Rust and/or Cargo cannot be found. In that case, if you are on an {term}`HPC` system that uses `lmod`, try loading Rust before installing:
 ```{code-block} console
 $ module load rust
 ```

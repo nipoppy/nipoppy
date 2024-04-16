@@ -29,6 +29,8 @@ Global configuration file
     See the :ref:`Quickstart guide <customizing-config>` for an example config file
     that shows these nested structures.
 
+Below is the schema used for the global configuration :term:`JSON` file.
+
 .. jsonschema:: config.json
 
 .. _manifest-schema:

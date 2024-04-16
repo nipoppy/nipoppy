@@ -10,7 +10,6 @@ includehidden:
 titlesonly:
 caption: Overview
 ---
-
 installation
 quickstart
 ```
@@ -22,6 +21,10 @@ includehidden:
 titlesonly:
 caption: Tutorials
 ---
+tutorials/bids_conversion
+tutorials/pipeline_runner
+tutorials/pipeline_tracker
+tutorials/custom_pipeline
 ```
 
 ```{toctree}
@@ -40,7 +43,6 @@ includehidden:
 titlesonly:
 caption: Reference
 ---
-
 cli_reference/index
 apidocs/index
 schemas/index
@@ -51,9 +53,8 @@ schemas/index
 hidden:
 includehidden:
 titlesonly:
-caption: Extra
+caption: Other
 ---
-
 contributing
 glossary
 ```
