@@ -33,10 +33,10 @@ jobs:
 
     - name: Install
       run: |
-        cd nipoppy_new
+        cd nipoppy_cli
         pip install -U pip
         pip install .[tests]
 
     - name: Test
       run: |
-        python -m pytest nipoppy_new
+        python -m pytest nipoppy_cli
