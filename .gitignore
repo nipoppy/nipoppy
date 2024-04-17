@@ -30,6 +30,6 @@ env/
 .vscode/
 
 # docs
-nipoppy_new/docs/build
-nipoppy_new/docs/source/apidocs
-nipoppy_new/docs/source/schemas/*.json
+nipoppy_cli/docs/build
+nipoppy_cli/docs/source/apidocs
+nipoppy_cli/docs/source/schemas/*.json
