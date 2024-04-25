@@ -148,12 +148,18 @@ def run_FC(
 	
 	logger.info("Running FC assessment...")
 	logger.info("-"*50)
+
+	func_file = f"{fmriprep_dir}/{participant_id}/ses-{session_id}/func/{participant_id}_ses-{session_id}_{task}_{run}_{space}_desc-preproc_bold.nii.gz"
+	# check if the func file exists
+	if not os.path.exists(func_file):
+		logger.error(f"func file not found: {func_file}")
+		logger.error(f"Skipping participant: {participant_id}")
+		return
 	
 	try:
 		for brain_atlas in brain_atlas_list:
 			logger.info('******** running ' + brain_atlas)
 			### extract time series
-			func_file = f"{fmriprep_dir}/{participant_id}/ses-{session_id}/func/{participant_id}_ses-{session_id}_{task}_{run}_{space}_desc-preproc_bold.nii.gz"
 			if 'schaefer' in brain_atlas:
 				time_series, labels = extract_timeseries(func_file, brain_atlas, confound_strategy)
 			elif brain_atlas=='DKT':
@@ -170,10 +176,11 @@ def run_FC(
 			if not os.path.exists(folder):
 				os.makedirs(folder)
 			np.save(f"{folder}/{participant_id}_ses-{session_id}_{task}_{space}_FC_{brain_atlas}.npy", FC)
+			logger.info(f"Successfully completed FC assessment for participant: {participant_id}")
 	except Exception as e:
 		logger.error(f"FC assessment failed with exceptions: {e}")
+		logger.error(f"Failed participant: {participant_id}")
 
-	logger.info(f"Successfully completed FC assessment for participant: {participant_id}")
 	logger.info("-"*75)
 	logger.info("")
 
@@ -225,6 +232,15 @@ def run(participant_id: str,
 	fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/{FMRIPREP_VERSION}/output"
 	DKT_dir = f"{DATASET_ROOT}/derivatives/networks/0.9.0/output"
 	FC_dir = f"{output_dir}/FC"
+
+	# check if the func/ exists in fmriprep_dir
+	func_dir = f"{fmriprep_dir}/{participant_id}/ses-{session_id}/func/"
+	if not os.path.exists(func_dir):
+		logger.error(
+			f"func data not found: {func_dir}"
+		)
+		logger.error(f"Skipping participant: {participant_id}")
+		return
 
 	# assess FC
 	run_FC(
