@@ -65,7 +65,7 @@ def test_cli_bids_conversion(tmp_path: Path):
         cli(
             [
                 "nipoppy",
-                "convert",
+                "bidsify",
                 "--dataset-root",
                 str(dpath_root),
                 "--pipeline",

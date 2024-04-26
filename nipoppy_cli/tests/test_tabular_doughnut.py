@@ -22,7 +22,7 @@ def data():
         Doughnut.col_bids_id: ["01", "01", "02", "02"],
         Doughnut.col_downloaded: [True, True, True, False],
         Doughnut.col_organized: [True, False, True, False],
-        Doughnut.col_converted: [True, False, False, False],
+        Doughnut.col_bidsified: [True, False, False, False],
     }
 
 
@@ -54,7 +54,7 @@ def test_validate(fpath, is_valid):
 
 
 @pytest.mark.parametrize(
-    "col", [Doughnut.col_downloaded, Doughnut.col_organized, Doughnut.col_converted]
+    "col", [Doughnut.col_downloaded, Doughnut.col_organized, Doughnut.col_bidsified]
 )
 def test_check_status_col(col):
     assert Doughnut._check_status_col(col) == col
@@ -80,10 +80,10 @@ def test_check_status_value_invalid():
     [
         ("01", "ses-BL", Doughnut.col_downloaded, True),
         ("01", "ses-BL", Doughnut.col_organized, True),
-        ("01", "ses-BL", Doughnut.col_converted, True),
+        ("01", "ses-BL", Doughnut.col_bidsified, True),
         ("02", "ses-M12", Doughnut.col_downloaded, False),
         ("02", "ses-M12", Doughnut.col_organized, False),
-        ("02", "ses-M12", Doughnut.col_converted, False),
+        ("02", "ses-M12", Doughnut.col_bidsified, False),
     ],
 )
 def test_get_status(data, participant, session, col, expected_status):
@@ -95,10 +95,10 @@ def test_get_status(data, participant, session, col, expected_status):
     [
         ("01", "ses-BL", Doughnut.col_downloaded, False),
         ("01", "ses-BL", Doughnut.col_organized, False),
-        ("01", "ses-BL", Doughnut.col_converted, False),
+        ("01", "ses-BL", Doughnut.col_bidsified, False),
         ("02", "ses-M12", Doughnut.col_downloaded, True),
         ("02", "ses-M12", Doughnut.col_organized, True),
-        ("02", "ses-M12", Doughnut.col_converted, True),
+        ("02", "ses-M12", Doughnut.col_bidsified, True),
     ],
 )
 def test_set_status(data, participant, session, col, status):
@@ -112,10 +112,10 @@ def test_set_status(data, participant, session, col, status):
     [
         ("downloaded", None, None, 3),
         ("organized", None, None, 2),
-        ("converted", None, None, 1),
+        ("bidsified", None, None, 1),
         ("downloaded", "01", None, 2),
         ("organized", None, "ses-M12", 0),
-        ("converted", "01", "ses-BL", 1),
+        ("bidsified", "01", "ses-BL", 1),
     ],
 )
 def test_get_participant_sessions_helper(
@@ -136,10 +136,10 @@ def test_get_participant_sessions_helper(
         ",participants_and_sessions_manifest2"
         ",participants_and_sessions_downloaded"
         ",participants_and_sessions_organized"
-        ",participants_and_sessions_converted"
+        ",participants_and_sessions_bidsified"
         ",dpath_downloaded_relative"
         ",dpath_organized_relative"
-        ",dpath_converted_relative"
+        ",dpath_bidsified_relative"
     ),
     [
         (
@@ -154,7 +154,7 @@ def test_get_participant_sessions_helper(
             {"01": ["ses-BL", "ses-M12"], "03": ["ses-M12"]},
             "downloaded",
             "organized",
-            "converted",
+            "bidsified",
         ),
         (
             {"PD01": ["ses-BL"], "PD02": ["ses-BL"]},
@@ -175,10 +175,10 @@ def test_generate_and_update(
     participants_and_sessions_manifest2: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
-    participants_and_sessions_converted: dict[str, list[str]],
+    participants_and_sessions_bidsified: dict[str, list[str]],
     dpath_downloaded_relative: str | Path,
     dpath_organized_relative: str | Path,
-    dpath_converted_relative: str | Path,
+    dpath_bidsified_relative: str | Path,
     empty: bool,
     str_paths: bool,
     tmp_path: Path,
@@ -186,22 +186,22 @@ def test_generate_and_update(
     dpath_root = tmp_path / "my_dataset"
     dpath_downloaded = dpath_root / dpath_downloaded_relative
     dpath_organized = dpath_root / dpath_organized_relative
-    dpath_converted = dpath_root / dpath_converted_relative
+    dpath_bidsified = dpath_root / dpath_bidsified_relative
 
     if str_paths:
         dpath_downloaded = str(dpath_downloaded)
         dpath_organized = str(dpath_organized)
-        dpath_converted = str(dpath_converted)
+        dpath_bidsified = str(dpath_bidsified)
 
     # create the manifest
     manifest1 = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
     )
 
     # generate the doughnut
@@ -209,7 +209,7 @@ def test_generate_and_update(
         manifest=manifest1,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
         empty=empty,
     )
     # the doughnut should have the same number of records as the manifest
@@ -220,7 +220,7 @@ def test_generate_and_update(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
     )
 
@@ -231,7 +231,7 @@ def test_generate_and_update(
         manifest=manifest2,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
         empty=empty,
     )
     assert len(doughnut2) == len(manifest2)
@@ -241,7 +241,7 @@ def test_generate_and_update(
         participants_and_sessions_manifest=participants_and_sessions_manifest2,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
     )
 
@@ -255,26 +255,26 @@ def test_generate_missing_paths(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     dpath_downloaded = dpath_root / "downloaded"
     dpath_organized = None
-    dpath_converted = dpath_root / "bids"
+    dpath_bidsified = dpath_root / "bids"
 
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_downloaded=participants_and_sessions,
         participants_and_sessions_organized=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
     )
 
     doughnut = generate_doughnut(
         manifest=manifest,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
         empty=False,
     )
 
     assert doughnut[Doughnut.col_downloaded].all()
     assert (~doughnut[Doughnut.col_organized]).all()
-    assert doughnut[Doughnut.col_converted].all()
+    assert doughnut[Doughnut.col_bidsified].all()

@@ -409,8 +409,8 @@ def test_run_main(participant, session, expected_count, tmp_path: Path):
     participants_and_sessions = {"01": ["ses-1", "ses-2", "ses-3"], "02": ["ses-1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
-        dpath_converted=workflow.layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
@@ -429,8 +429,8 @@ def test_run_main_catch_errors(tmp_path: Path):
     participants_and_sessions = {"FAIL": ["ses-1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
-        dpath_converted=workflow.layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
@@ -457,14 +457,14 @@ def test_get_participants_sessions_to_run(
         "01": ["ses-1", "ses-2", "ses-3"],
         "02": ["ses-1", "ses-2", "ses-3"],
     }
-    participants_and_sessions_converted = {
+    participants_and_sessions_bidsified = {
         "01": ["ses-1", "ses-2", "ses-3"],
         "02": ["ses-1"],
     }
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
-        participants_and_sessions_converted=participants_and_sessions_converted,
-        dpath_converted=workflow.layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()

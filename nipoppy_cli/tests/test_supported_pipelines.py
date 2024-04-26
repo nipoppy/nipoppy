@@ -33,8 +33,8 @@ def single_subject_dataset(
     create_empty_dataset(dataset_root)
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
-        dpath_converted=layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=layout.dpath_bids,
     )
     manifest.save_with_backup(layout.fpath_manifest)
 

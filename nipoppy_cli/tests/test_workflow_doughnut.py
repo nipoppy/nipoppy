@@ -25,7 +25,7 @@ from .conftest import (
         ",participants_and_sessions_manifest2"
         ",participants_and_sessions_downloaded"
         ",participants_and_sessions_organized"
-        ",participants_and_sessions_converted"
+        ",participants_and_sessions_bidsified"
     ),
     [
         (
@@ -54,7 +54,7 @@ def test_run(
     participants_and_sessions_manifest2: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
-    participants_and_sessions_converted: dict[str, list[str]],
+    participants_and_sessions_bidsified: dict[str, list[str]],
     empty: bool,
     tmp_path: Path,
 ):
@@ -62,7 +62,7 @@ def test_run(
 
     dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_dicom"]
     dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
-    dpath_converted = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
+    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
     fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
@@ -72,10 +72,10 @@ def test_run(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
     )
     manifest1.save_with_backup(fpath_manifest)
 
@@ -100,7 +100,7 @@ def test_run(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
     )
 
@@ -118,7 +118,7 @@ def test_run(
         participants_and_sessions_manifest=participants_and_sessions_manifest2,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
     )
 
@@ -128,7 +128,7 @@ def test_run(
         "participants_and_sessions_manifest"
         ",participants_and_sessions_downloaded"
         ",participants_and_sessions_organized"
-        ",participants_and_sessions_converted"
+        ",participants_and_sessions_bidsified"
     ),
     [
         (
@@ -150,7 +150,7 @@ def test_run_regenerate(
     participants_and_sessions_manifest: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
-    participants_and_sessions_converted: dict[str, list[str]],
+    participants_and_sessions_bidsified: dict[str, list[str]],
     empty: bool,
     tmp_path: Path,
 ):
@@ -159,7 +159,7 @@ def test_run_regenerate(
 
     dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_dicom"]
     dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
-    dpath_converted = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
+    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
     fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
@@ -168,10 +168,10 @@ def test_run_regenerate(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
-        dpath_converted=dpath_converted,
+        dpath_bidsified=dpath_bidsified,
     )
     manifest.save_with_backup(fpath_manifest)
 
@@ -201,7 +201,7 @@ def test_run_regenerate(
                 Doughnut.col_bids_id: f"sub-{participant}",
                 Doughnut.col_downloaded: True,
                 Doughnut.col_organized: True,
-                Doughnut.col_converted: True,
+                Doughnut.col_bidsified: True,
             }
         )
     doughnut_old = Doughnut(doughnut_records)
@@ -217,6 +217,6 @@ def test_run_regenerate(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        participants_and_sessions_converted=participants_and_sessions_converted,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
     )

@@ -220,10 +220,10 @@ def prepare_dataset(
     participants_and_sessions_manifest: dict[str, list[str]],
     participants_and_sessions_downloaded: Optional[dict[str, list[str]]] = None,
     participants_and_sessions_organized: Optional[dict[str, list[str]]] = None,
-    participants_and_sessions_converted: Optional[dict[str, list[str]]] = None,
+    participants_and_sessions_bidsified: Optional[dict[str, list[str]]] = None,
     dpath_downloaded: Optional[str | Path] = None,
     dpath_organized: Optional[str | Path] = None,
-    dpath_converted: Optional[str | Path] = None,
+    dpath_bidsified: Optional[str | Path] = None,
 ):
     """Create dummy imaging files for testing the DICOM-to-BIDS conversion process."""
     # create the manifest
@@ -258,10 +258,10 @@ def prepare_dataset(
         )
 
     # create fake BIDS dataset
-    if participants_and_sessions_converted is not None and dpath_converted is not None:
-        for participant, sessions in participants_and_sessions_converted.items():
+    if participants_and_sessions_bidsified is not None and dpath_bidsified is not None:
+        for participant, sessions in participants_and_sessions_bidsified.items():
             create_fake_bids_dataset(
-                Path(dpath_converted),
+                Path(dpath_bidsified),
                 subjects=participant,
                 sessions=[strip_session(session) for session in sessions],
                 datatypes=["anat"],
@@ -275,7 +275,7 @@ def check_doughnut(
     participants_and_sessions_manifest,
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,
-    participants_and_sessions_converted,
+    participants_and_sessions_bidsified,
     empty,
 ):
     """Check that a doughnut has the corrected statuses."""
@@ -283,7 +283,7 @@ def check_doughnut(
         for col in [
             doughnut.col_downloaded,
             doughnut.col_organized,
-            doughnut.col_converted,
+            doughnut.col_bidsified,
         ]:
             assert (~doughnut[col]).all()
     else:
@@ -292,7 +292,7 @@ def check_doughnut(
                 for col, participants_and_sessions_true in {
                     doughnut.col_downloaded: participants_and_sessions_downloaded,
                     doughnut.col_organized: participants_and_sessions_organized,
-                    doughnut.col_converted: participants_and_sessions_converted,
+                    doughnut.col_bidsified: participants_and_sessions_bidsified,
                 }.items():
                     status: pd.Series = doughnut.loc[
                         (doughnut[doughnut.col_participant_id] == participant)

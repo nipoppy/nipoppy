@@ -17,7 +17,7 @@ class DoughnutModel(ManifestModel):
     bids_id: str
     downloaded: bool
     organized: bool
-    converted: bool
+    bidsified: bool
 
 
 class Doughnut(Manifest):
@@ -29,9 +29,9 @@ class Doughnut(Manifest):
     col_bids_id = "bids_id"
     col_downloaded = "downloaded"
     col_organized = "organized"
-    col_converted = "converted"
+    col_bidsified = "bidsified"
 
-    status_cols = [col_downloaded, col_organized, col_converted]
+    status_cols = [col_downloaded, col_organized, col_bidsified]
 
     # set the model
     model = DoughnutModel
@@ -44,7 +44,7 @@ class Doughnut(Manifest):
         "col_bids_id",
         "col_downloaded",
         "col_organized",
-        "col_converted",
+        "col_bidsified",
     ]
 
     @classmethod
@@ -108,14 +108,14 @@ class Doughnut(Manifest):
             self.col_organized, participant=participant, session=session
         )
 
-    def get_converted_participants_sessions(
+    def get_bidsified_participants_sessions(
         self,
         participant: Optional[str] = None,
         session: Optional[str] = None,
     ):
-        """Get participants and sessions with converted data."""
+        """Get participants and sessions with BIDS data."""
         return self._get_participant_sessions_helper(
-            self.col_converted, participant=participant, session=session
+            self.col_bidsified, participant=participant, session=session
         )
 
 
@@ -123,7 +123,7 @@ def generate_doughnut(
     manifest: Manifest,
     dpath_downloaded: Optional[str | Path] = None,
     dpath_organized: Optional[str | Path] = None,
-    dpath_converted: Optional[str | Path] = None,
+    dpath_bidsified: Optional[str | Path] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
     # TODO allow custom map from participant_id to participant_dicom_dir
@@ -174,7 +174,7 @@ def generate_doughnut(
         if empty:
             status_downloaded = False
             status_organized = False
-            status_converted = False
+            status_bidsified = False
         else:
             status_downloaded = check_status(
                 dpath_downloaded,
@@ -188,8 +188,8 @@ def generate_doughnut(
                 session,
                 session_first=True,
             )
-            status_converted = check_status(
-                dpath_converted,
+            status_bidsified = check_status(
+                dpath_bidsified,
                 bids_id,
                 session,
                 session_first=False,
@@ -206,7 +206,7 @@ def generate_doughnut(
                 Doughnut.col_bids_id: bids_id,
                 Doughnut.col_downloaded: status_downloaded,
                 Doughnut.col_organized: status_organized,
-                Doughnut.col_converted: status_converted,
+                Doughnut.col_bidsified: status_bidsified,
             }
         )
 
@@ -220,7 +220,7 @@ def update_doughnut(
     manifest: Manifest,
     dpath_downloaded: Optional[str | Path] = None,
     dpath_organized: Optional[str | Path] = None,
-    dpath_converted: Optional[str | Path] = None,
+    dpath_bidsified: Optional[str | Path] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
 ) -> Doughnut:
@@ -241,7 +241,7 @@ def update_doughnut(
             manifest=manifest_subset,
             dpath_downloaded=dpath_downloaded,
             dpath_organized=dpath_organized,
-            dpath_converted=dpath_converted,
+            dpath_bidsified=dpath_bidsified,
             empty=empty,
             logger=logger,
         )

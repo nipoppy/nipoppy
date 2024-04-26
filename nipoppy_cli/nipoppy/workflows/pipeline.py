@@ -366,11 +366,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # 1. "manifest" (or "all"?)
         # 2. "downloaded" (from doughnut)
         # 3. "organized" (from doughnut)
-        # 4. "converted" (from doughnut)
+        # 4. "bidsified" (from doughnut)
         # 5. "dataset" (i.e. apply on entire dataset, do not loop over anything)
 
         # for now just check the participants/sessions that have BIDS data
-        return self.doughnut.get_converted_participants_sessions(
+        return self.doughnut.get_bidsified_participants_sessions(
             participant=participant, session=session
         )
 
