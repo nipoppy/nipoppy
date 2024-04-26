@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 

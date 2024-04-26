@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import Base
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular

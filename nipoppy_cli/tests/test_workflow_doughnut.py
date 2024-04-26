@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json

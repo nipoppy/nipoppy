@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from fids import fids
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.utils import strip_session
 from nipoppy.workflows.runner import PipelineRunner
 

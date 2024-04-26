@@ -8,8 +8,8 @@ from typing import Optional
 import pytest
 from fids import fids
 
-from nipoppy.config.base import Config, PipelineConfig
 from nipoppy.config.boutiques import BoutiquesConfig
+from nipoppy.config.main import Config, PipelineConfig
 from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 

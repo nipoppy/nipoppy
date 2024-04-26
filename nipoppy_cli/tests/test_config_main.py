@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.singularity import SingularityConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
