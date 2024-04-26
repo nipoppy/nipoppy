@@ -49,8 +49,12 @@ class InitWorkflow(BaseWorkflow):
         self.logger.info(f"Created an empty dataset at {self.dpath_root}")
 
         # copy sample config and manifest files
-        self.copy(FPATH_SAMPLE_CONFIG, self.layout.fpath_config)
-        self.copy(FPATH_SAMPLE_MANIFEST, self.layout.fpath_manifest)
+        self.copy(
+            FPATH_SAMPLE_CONFIG, self.layout.fpath_config, log_level=logging.DEBUG
+        )
+        self.copy(
+            FPATH_SAMPLE_MANIFEST, self.layout.fpath_manifest, log_level=logging.DEBUG
+        )
 
         # inform user to edit the sample files
         self.logger.warning(
