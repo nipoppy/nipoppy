@@ -9,12 +9,12 @@ import pytest
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.main import Config, PipelineConfig
+from nipoppy.config.main import PipelineConfig
 from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
-from .conftest import create_empty_dataset, prepare_dataset
+from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 
 class PipelineWorkflow(BasePipelineWorkflow):
@@ -44,11 +44,9 @@ class PipelineWorkflow(BasePipelineWorkflow):
         )
 
         # override the config
-        self.config = Config(
-            DATASET_NAME="my_dataset",
-            SESSIONS=["ses-1"],
-            VISITS=["1"],
-            PROC_PIPELINES={
+        self.config = get_config(
+            visits=["1"],
+            proc_pipelines={
                 # built-in pipelines
                 "fmriprep": {
                     "23.1.3": {

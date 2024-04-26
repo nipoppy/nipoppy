@@ -9,16 +9,15 @@ from nipoppy.config.main import Config
 from nipoppy.utils import strip_session
 from nipoppy.workflows.runner import PipelineRunner
 
-from .conftest import create_empty_dataset
+from .conftest import create_empty_dataset, get_config
 
 
 @pytest.fixture
 def config():
-    return Config(
-        DATASET_NAME="my_dataset",
-        SESSIONS=["ses-BL", "ses-V04"],
-        SINGULARITY_CONFIG={"COMMAND": "echo"},  # dummy command
-        PROC_PIPELINES={
+    return get_config(
+        visits=["BL", "V04"],
+        singularity_config={"COMMAND": "echo"},  # dummy command
+        proc_pipelines={
             "dummy_pipeline": {
                 "1.0.0": {
                     "DESCRIPTOR": {

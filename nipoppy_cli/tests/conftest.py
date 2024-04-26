@@ -10,6 +10,7 @@ import pytest
 import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
+from nipoppy.config.main import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import strip_session
@@ -65,6 +66,37 @@ def datetime_fixture(
     mocked_datetime = mocker.patch("nipoppy.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     yield mocked_datetime
+
+
+def get_config(
+    dataset_name="my_dataset",
+    sessions=None,
+    visits=None,
+    bids=None,
+    proc_pipelines=None,
+    singularity_config=None,
+):
+    """Create a valid Config object with all required parameters."""
+    # everything empty by default
+    if sessions is None:
+        sessions = []
+    if visits is None:
+        visits = []
+    if bids is None:
+        bids = {}
+    if proc_pipelines is None:
+        proc_pipelines = {}
+    if singularity_config is None:
+        singularity_config = {}
+
+    return Config(
+        DATASET_NAME=dataset_name,
+        VISITS=visits,
+        SESSIONS=sessions,
+        BIDS=bids,
+        PROC_PIPELINES=proc_pipelines,
+        SINGULARITY_CONFIG=singularity_config,
+    )
 
 
 def create_empty_dataset(dpath_root: Path):

@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.main import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json
@@ -15,6 +14,7 @@ from .conftest import (
     ATTR_TO_FPATH_MAP,
     check_doughnut,
     create_empty_dataset,
+    get_config,
     prepare_dataset,
 )
 
@@ -80,13 +80,8 @@ def test_run(
     manifest1.save_with_backup(fpath_manifest)
 
     # prepare config file
-    config = Config(
-        DATASET_NAME="my_dataset",
-        DATASET_ROOT=dpath_root,
-        CONTAINER_STORE="fake_path",
-        SESSIONS=list(manifest1[Manifest.col_session].unique()),
-        BIDS={},
-        PROC_PIPELINES={},
+    config = get_config(
+        visits=list(manifest1[Manifest.col_visit].unique()),
     )
     save_json(config.model_dump(mode="json"), fpath_config)
 
@@ -176,13 +171,8 @@ def test_run_regenerate(
     manifest.save_with_backup(fpath_manifest)
 
     # prepare config file
-    config = Config(
-        DATASET_NAME="my_dataset",
-        DATASET_ROOT=dpath_root,
-        CONTAINER_STORE="fake_path",
-        SESSIONS=list(manifest[Manifest.col_session].unique()),
-        BIDS={},
-        PROC_PIPELINES={},
+    config = get_config(
+        visits=list(manifest[Manifest.col_visit].unique()),
     )
     save_json(config.model_dump(mode="json"), fpath_config)
 

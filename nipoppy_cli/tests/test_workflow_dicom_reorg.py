@@ -4,11 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config import Config
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
-from .conftest import create_empty_dataset, prepare_dataset
+from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 
 @pytest.mark.parametrize(
@@ -166,10 +165,9 @@ def test_run(
         dpath_downloaded=workflow.layout.dpath_raw_dicom,
     )
 
-    config = Config(
-        DATASET_NAME=dataset_name,
-        SESSIONS=manifest[manifest.col_session].unique(),
-        PROC_PIPELINES={},
+    config = get_config(
+        dataset_name=dataset_name,
+        visits=list(manifest[Manifest.col_visit].unique()),
     )
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)

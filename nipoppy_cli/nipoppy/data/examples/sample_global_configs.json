@@ -1,5 +1,8 @@
 {
     "DATASET_NAME": "<DATASET_NAME>",
+    "VISITS": [
+        "<VISIT_LABEL>"
+    ],
     "SESSIONS": [
         "ses-<SESSION_LABEL>"
     ],

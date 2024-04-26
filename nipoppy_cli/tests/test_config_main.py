@@ -20,6 +20,7 @@ REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "SESSIONS", "PROC_PIPELINES"]
 def valid_config_data():
     return {
         "DATASET_NAME": "my_dataset",
+        "VISITS": ["1"],
         "SESSIONS": ["ses-1"],
         "BIDS": {
             "bids_converter": {
@@ -51,6 +52,24 @@ def test_check_no_duplicate_pipeline(valid_config_data):
 
 
 @pytest.mark.parametrize(
+    "visits,expected_sessions",
+    [
+        (["V01", "V02"], ["ses-V01", "ses-V02"]),
+        (["ses-1", "2"], ["ses-1", "ses-2"]),
+    ],
+)
+def test_sessions_inferred(visits, expected_sessions):
+    data = {
+        "DATASET_NAME": "my_dataset",
+        "VISITS": visits,
+        "BIDS": {},
+        "PROC_PIPELINES": {},
+    }
+    config = Config(**data)
+    assert config.SESSIONS == expected_sessions
+
+
+@pytest.mark.parametrize(
     "data_root,data_pipeline,data_expected",
     [
         (
@@ -75,17 +94,15 @@ def test_check_no_duplicate_pipeline(valid_config_data):
         ),
     ],
 )
-def test_propagate_singularity_config(data_root, data_pipeline, data_expected):
+def test_propagate_singularity_config(
+    valid_config_data, data_root, data_pipeline, data_expected
+):
     pipeline_name = "pipeline1"
     pipeline_version = "1.0"
-    data = {
-        "DATASET_NAME": "my_dataset",
-        "SESSIONS": [],
-        "SINGULARITY_CONFIG": data_root,
-        "BIDS": {},
-        "PROC_PIPELINES": {
-            pipeline_name: {pipeline_version: {"SINGULARITY_CONFIG": data_pipeline}}
-        },
+    data = valid_config_data
+    data["SINGULARITY_CONFIG"] = data_root
+    data["PROC_PIPELINES"] = {
+        pipeline_name: {pipeline_version: {"SINGULARITY_CONFIG": data_pipeline}}
     }
 
     singularity_config = (
@@ -122,20 +139,18 @@ def test_propagate_singularity_config(data_root, data_pipeline, data_expected):
         ),
     ],
 )
-def test_propagate_singularity_config_bids(data_root, data_pipeline, data_expected):
-    pipeline_name = "pipeline1"
+def test_propagate_singularity_config_bids(
+    valid_config_data, data_root, data_pipeline, data_expected
+):
+    pipeline_name = "bids_converter"
     pipeline_version = "1.0"
     step_name = "step1"
-    data = {
-        "DATASET_NAME": "my_dataset",
-        "SESSIONS": [],
-        "SINGULARITY_CONFIG": data_root,
-        "BIDS": {
-            pipeline_name: {
-                pipeline_version: {step_name: {"SINGULARITY_CONFIG": data_pipeline}}
-            }
-        },
-        "PROC_PIPELINES": {},
+    data = valid_config_data
+    data["SINGULARITY_CONFIG"] = data_root
+    data["BIDS"] = {
+        pipeline_name: {
+            pipeline_version: {step_name: {"SINGULARITY_CONFIG": data_pipeline}}
+        }
     }
 
     singularity_config = (

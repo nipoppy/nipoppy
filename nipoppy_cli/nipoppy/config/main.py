@@ -1,21 +1,21 @@
 """Dataset configuration."""
 
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 from pydantic import ConfigDict, model_validator
 
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.singularity import ModelWithSingularityConfig
-from nipoppy.utils import load_json
+from nipoppy.utils import check_session, load_json
 
 
 class Config(ModelWithSingularityConfig):
     """Model for dataset configuration."""
 
     DATASET_NAME: str
-    SESSIONS: list[str]
-    VISITS: list[str] = []
+    VISITS: list[str]
+    SESSIONS: list[str] = []
     BIDS: dict[str, dict[str, dict[str, PipelineConfig]]] = {}
     PROC_PIPELINES: dict[str, dict[str, PipelineConfig]]
 
@@ -50,6 +50,21 @@ class Config(ModelWithSingularityConfig):
         _propagate(self.PROC_PIPELINES)
 
         return self
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_input(cls, data: Any):
+        """Validate the raw input."""
+        key_sessions = "SESSIONS"
+        key_visits = "VISITS"
+        if isinstance(data, dict):
+            # if sessions are not given, infer from visits
+            if key_sessions not in data:
+                data[key_sessions] = [
+                    check_session(visit) for visit in data[key_visits]
+                ]
+
+        return data
 
     @model_validator(mode="after")
     def validate_and_process(self) -> Self:
