@@ -1,7 +1,7 @@
 {
     "DATASET_NAME": "my_dataset",
-    "SINGULARITY_CONFIG": {
-        "COMMAND": "singularity",
+    "CONTAINER_CONFIG": {
+        "COMMAND": "apptainer",
         "ARGS": [
             "--cleanenv"
         ]

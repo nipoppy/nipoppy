@@ -2,13 +2,13 @@
 
 from pydantic import ConfigDict
 
-from nipoppy.config.singularity import ModelWithSingularityConfig
+from nipoppy.config.container import ModelWithContainerConfig
 
 BOUTIQUES_CUSTOM_KEY = "custom"  # as defined by Boutiques schema
 BOUTIQUES_CONFIG_KEY = "nipoppy"
 
 
-class BoutiquesConfig(ModelWithSingularityConfig):
+class BoutiquesConfig(ModelWithContainerConfig):
     """Model for custom configuration within a Boutiques descriptor."""
 
     # dpath_participant_session_result (for tarring/zipping/extracting)

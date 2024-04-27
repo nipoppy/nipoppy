@@ -5,12 +5,12 @@ from typing import Any, Self
 
 from pydantic import ConfigDict, model_validator
 
+from nipoppy.config.container import ModelWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.config.singularity import ModelWithSingularityConfig
 from nipoppy.utils import check_session, load_json
 
 
-class Config(ModelWithSingularityConfig):
+class Config(ModelWithContainerConfig):
     """Model for dataset configuration."""
 
     DATASET_NAME: str
@@ -31,15 +31,15 @@ class Config(ModelWithSingularityConfig):
                 f", got {bids_pipelines} and {proc_pipelines}"
             )
 
-    def _propagate_singularity_config(self) -> Self:
-        """Propagate the Singularity config to all pipelines."""
+    def _propagate_container_config(self) -> Self:
+        """Propagate the container config to all pipelines."""
 
         def _propagate(pipeline_or_pipeline_dicts: dict | PipelineConfig):
             if isinstance(pipeline_or_pipeline_dicts, PipelineConfig):
                 pipeline_config = pipeline_or_pipeline_dicts
-                singularity_config = pipeline_config.get_singularity_config()
-                if singularity_config.INHERIT:
-                    singularity_config.merge_args_and_env_vars(self.SINGULARITY_CONFIG)
+                container_config = pipeline_config.get_container_config()
+                if container_config.INHERIT:
+                    container_config.merge_args_and_env_vars(self.CONTAINER_CONFIG)
             else:
                 for (
                     child_pipeline_or_pipeline_dicts
@@ -70,7 +70,7 @@ class Config(ModelWithSingularityConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_no_duplicate_pipeline()
-        self._propagate_singularity_config()
+        self._propagate_container_config()
         return self
 
     def get_pipeline_config(

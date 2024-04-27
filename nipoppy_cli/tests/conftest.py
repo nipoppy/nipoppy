@@ -74,7 +74,7 @@ def get_config(
     visits=None,
     bids=None,
     proc_pipelines=None,
-    singularity_config=None,
+    container_config=None,
 ):
     """Create a valid Config object with all required parameters."""
     # everything empty by default
@@ -86,8 +86,8 @@ def get_config(
         bids = {}
     if proc_pipelines is None:
         proc_pipelines = {}
-    if singularity_config is None:
-        singularity_config = {}
+    if container_config is None:
+        container_config = {}
 
     return Config(
         DATASET_NAME=dataset_name,
@@ -95,7 +95,7 @@ def get_config(
         SESSIONS=sessions,
         BIDS=bids,
         PROC_PIPELINES=proc_pipelines,
-        SINGULARITY_CONFIG=singularity_config,
+        CONTAINER_CONFIG=container_config,
     )
 
 

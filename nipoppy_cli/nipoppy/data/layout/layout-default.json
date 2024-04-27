@@ -25,7 +25,7 @@
     },
     "dpath_containers": {
         "path": "proc/containers",
-        "description": "This directory contains the Singularity containers for the processing pipelines."
+        "description": "This directory contains the container image files for the processing pipelines."
     },
     "dpath_descriptors": {
         "path": "proc/descriptors",

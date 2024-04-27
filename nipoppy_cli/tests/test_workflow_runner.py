@@ -16,7 +16,7 @@ from .conftest import create_empty_dataset, get_config
 def config():
     return get_config(
         visits=["BL", "V04"],
-        singularity_config={"COMMAND": "echo"},  # dummy command
+        container_config={"COMMAND": "echo"},  # dummy command
         proc_pipelines={
             "dummy_pipeline": {
                 "1.0.0": {
@@ -47,7 +47,7 @@ def config():
                         "arg1": "[[NIPOPPY_PARTICIPANT]] [[NIPOPPY_SESSION]]",
                         "arg2": 10,
                     },
-                    "SINGULARITY_CONFIG": {
+                    "CONTAINER_CONFIG": {
                         "COMMAND": "echo",
                     },
                 }
@@ -91,7 +91,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
     descriptor_str, invocation_str = runner.launch_boutiques_run(
-        participant, session, singularity_command=""
+        participant, session, container_command=""
     )
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str

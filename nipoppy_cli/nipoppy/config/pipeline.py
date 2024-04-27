@@ -6,10 +6,10 @@ from typing import Optional, Sequence
 
 from pydantic import ConfigDict, model_validator
 
-from nipoppy.config.singularity import ModelWithSingularityConfig
+from nipoppy.config.container import ModelWithContainerConfig
 
 
-class PipelineConfig(ModelWithSingularityConfig):
+class PipelineConfig(ModelWithContainerConfig):
     """Model for workflow configuration."""
 
     DESCRIPTION: Optional[str] = None

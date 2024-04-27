@@ -65,7 +65,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
                         "DESCRIPTOR": {
                             "custom": {
                                 "nipoppy": {
-                                    "SINGULARITY_CONFIG": {
+                                    "CONTAINER_CONFIG": {
                                         "ARGS": ["--pipeline-specific-arg"]
                                     }
                                 }

@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.config.singularity import SingularityConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
@@ -94,24 +94,24 @@ def test_sessions_inferred(visits, expected_sessions):
         ),
     ],
 )
-def test_propagate_singularity_config(
+def test_propagate_container_config(
     valid_config_data, data_root, data_pipeline, data_expected
 ):
     pipeline_name = "pipeline1"
     pipeline_version = "1.0"
     data = valid_config_data
-    data["SINGULARITY_CONFIG"] = data_root
+    data["CONTAINER_CONFIG"] = data_root
     data["PROC_PIPELINES"] = {
-        pipeline_name: {pipeline_version: {"SINGULARITY_CONFIG": data_pipeline}}
+        pipeline_name: {pipeline_version: {"CONTAINER_CONFIG": data_pipeline}}
     }
 
-    singularity_config = (
+    container_config = (
         Config(**data)
         .get_pipeline_config(pipeline_name, pipeline_version)
-        .get_singularity_config()
+        .get_container_config()
     )
 
-    assert singularity_config == SingularityConfig(**data_expected)
+    assert container_config == ContainerConfig(**data_expected)
 
 
 @pytest.mark.parametrize(
@@ -139,27 +139,27 @@ def test_propagate_singularity_config(
         ),
     ],
 )
-def test_propagate_singularity_config_bids(
+def test_propagate_container_config_bids(
     valid_config_data, data_root, data_pipeline, data_expected
 ):
     pipeline_name = "bids_converter"
     pipeline_version = "1.0"
     step_name = "step1"
     data = valid_config_data
-    data["SINGULARITY_CONFIG"] = data_root
+    data["CONTAINER_CONFIG"] = data_root
     data["BIDS"] = {
         pipeline_name: {
-            pipeline_version: {step_name: {"SINGULARITY_CONFIG": data_pipeline}}
+            pipeline_version: {step_name: {"CONTAINER_CONFIG": data_pipeline}}
         }
     }
 
-    singularity_config = (
+    container_config = (
         Config(**data)
         .get_bids_pipeline_config(pipeline_name, pipeline_version, step_name)
-        .get_singularity_config()
+        .get_container_config()
     )
 
-    assert singularity_config == SingularityConfig(**data_expected)
+    assert container_config == ContainerConfig(**data_expected)
 
 
 @pytest.mark.parametrize(

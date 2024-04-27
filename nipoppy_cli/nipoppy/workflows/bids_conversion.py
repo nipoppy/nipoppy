@@ -71,8 +71,8 @@ class BidsConversionRunner(PipelineRunner):
 
     def run_single(self, participant: str, session: str):
         """Run BIDS conversion on a single participant/session."""
-        # get singularity command
-        singularity_command = self.process_singularity_config(
+        # get container command
+        container_command = self.process_container_config(
             participant=participant,
             session=session,
             bind_paths=[
@@ -83,7 +83,7 @@ class BidsConversionRunner(PipelineRunner):
 
         # run pipeline with Boutiques
         self.launch_boutiques_run(
-            participant, session, singularity_command=singularity_command
+            participant, session, container_command=container_command
         )
 
         # update status

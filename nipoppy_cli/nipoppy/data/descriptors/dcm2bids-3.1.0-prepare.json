@@ -3,7 +3,7 @@
     "description": "dcm2bids_helper",
     "tool-version": "3.1.0",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_SINGULARITY_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] dcm2bids_helper [DICOM_DIR] [OUTPUT_DIR] [NEST] [OVERWRITE] [LOG_LEVEL]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] dcm2bids_helper [DICOM_DIR] [OUTPUT_DIR] [NEST] [OVERWRITE] [LOG_LEVEL]",
     "inputs": [
         {
             "name": "dicom_dir",
@@ -72,7 +72,7 @@
     },
     "custom": {
         "nipoppy": {
-            "SINGULARITY_CONFIG": {
+            "CONTAINER_CONFIG": {
                 "ARGS": [
                     "--bind",
                     "[[NIPOPPY_DPATH_SCRATCH]]/dcm2bids_helper"

@@ -1,4 +1,4 @@
-"""Tests for Singularity configuration and utilities."""
+"""Tests for container configuration and utilities."""
 
 import os
 from pathlib import Path
@@ -6,17 +6,17 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.singularity import (
-    ModelWithSingularityConfig,
-    SingularityConfig,
+from nipoppy.config.container import (
+    ContainerConfig,
+    ModelWithContainerConfig,
     add_bind_path_to_args,
-    check_singularity_args,
-    check_singularity_command,
-    prepare_singularity,
-    set_singularity_env_vars,
+    check_container_args,
+    check_container_command,
+    prepare_container,
+    set_container_env_vars,
 )
 
-FIELDS_SINGULARITY = ["COMMAND", "SUBCOMMAND", "ARGS", "ENV_VARS", "INHERIT"]
+FIELDS_CONTAINER = ["COMMAND", "SUBCOMMAND", "ARGS", "ENV_VARS", "INHERIT"]
 
 
 @pytest.mark.parametrize(
@@ -28,9 +28,9 @@ FIELDS_SINGULARITY = ["COMMAND", "SUBCOMMAND", "ARGS", "ENV_VARS", "INHERIT"]
         {"ENV_VARS": {"TEMPLATEFLOW_HOME": "/path/to/templateflow"}},
     ],
 )
-def test_singularity_config(data):
-    for field in FIELDS_SINGULARITY:
-        assert hasattr(SingularityConfig(**data), field)
+def test_container_config(data):
+    for field in FIELDS_CONTAINER:
+        assert hasattr(ContainerConfig(**data), field)
 
 
 @pytest.mark.parametrize(
@@ -68,30 +68,28 @@ def test_singularity_config(data):
         ),
     ],
 )
-def test_singularity_config_merge_args_and_env_vars(data1, data2, data_expected):
-    merged = SingularityConfig(**data1).merge_args_and_env_vars(
-        SingularityConfig(**data2)
-    )
-    assert merged == SingularityConfig(**data_expected)
+def test_container_config_merge_args_and_env_vars(data1, data2, data_expected):
+    merged = ContainerConfig(**data1).merge_args_and_env_vars(ContainerConfig(**data2))
+    assert merged == ContainerConfig(**data_expected)
 
 
-def test_singularity_config_merge_args_and_env_vars_error():
+def test_container_config_merge_args_and_env_vars_error():
     with pytest.raises(TypeError, match="Cannot merge"):
-        SingularityConfig().merge_args_and_env_vars("bad_arg")
+        ContainerConfig().merge_args_and_env_vars("bad_arg")
 
 
-def test_singularity_config_no_extra_fields():
+def test_container_config_no_extra_fields():
     with pytest.raises(ValidationError):
-        SingularityConfig(not_a_field="a")
+        ContainerConfig(not_a_field="a")
 
 
-def test_singularity_config_mixin():
-    class ClassWithSingularityConfig(ModelWithSingularityConfig):
+def test_container_config_mixin():
+    class ClassWithContainerConfig(ModelWithContainerConfig):
         pass
 
     assert isinstance(
-        ClassWithSingularityConfig(a=1, b=2).get_singularity_config(),
-        SingularityConfig,
+        ClassWithContainerConfig(a=1, b=2).get_container_config(),
+        ContainerConfig,
     )
 
 
@@ -145,65 +143,59 @@ def test_add_bind_path_to_args(args, path_local, path_inside_container, mode, ex
         ["--bind", "/", "--bind", "/:relative_path_in_container", "--bind", "/:/:ro"],
     ],
 )
-def test_check_singularity_args(args):
+def test_check_container_args(args):
     # no change to arguments
-    assert check_singularity_args(args=args) == args
+    assert check_container_args(args=args) == args
 
 
-def test_check_singularity_args_relative(caplog: pytest.LogCaptureFixture):
-    assert check_singularity_args(args=["--bind", "."]) == [
+def test_check_container_args_relative():
+    assert check_container_args(args=["--bind", "."]) == [
         "--bind",
         str(Path(".").resolve()),
     ]
     # assert "Resolving path" in caplog.text
 
 
-def test_check_singularity_args_symlink(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-):
+def test_check_container_args_symlink(tmp_path: Path):
     path_symlink = tmp_path / "symlink"
     path_real = tmp_path / "file.txt"
     path_real.touch()
     path_symlink.symlink_to(path_real)
-    assert check_singularity_args(args=["--bind", str(path_symlink)]) == [
+    assert check_container_args(args=["--bind", str(path_symlink)]) == [
         "--bind",
         str(path_real),
     ]
     # assert "Resolving path" in caplog.text
 
 
-def test_check_singularity_args_missing(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-):
+def test_check_container_args_missing(tmp_path: Path):
     dpath = tmp_path / "missing"
-    check_singularity_args(args=["--bind", str(dpath)])
+    check_container_args(args=["--bind", str(dpath)])
     assert dpath.exists()
     # assert "Creating missing directory" in caplog.text
 
 
-def test_check_singularity_args_error():
+def test_check_container_args_error():
     with pytest.raises(RuntimeError, match="Error parsing"):
-        check_singularity_args(args=["--bind"])
+        check_container_args(args=["--bind"])
 
 
 @pytest.mark.parametrize("command", ["echo", "python"])
-def test_check_singularity_command(command):
+def test_check_container_command(command):
     # should not raise error
-    check_singularity_command(command=command)
+    check_container_command(command=command)
 
 
 @pytest.mark.parametrize("command", ["123", "this_command_probably_does_not_exist123"])
-def test_check_singularity_command_error(command):
-    with pytest.raises(
-        RuntimeError, match="Singularity/Apptainer executable not found"
-    ):
-        check_singularity_command(command=command)
+def test_check_container_command_error(command):
+    with pytest.raises(RuntimeError, match="Container executable not found"):
+        check_container_command(command=command)
 
 
 @pytest.mark.parametrize(
     "data, expected",
     [
-        ({}, "singularity run"),
+        ({}, "apptainer run"),
         (
             {
                 "COMMAND": "/path/to/singularity",
@@ -214,8 +206,8 @@ def test_check_singularity_command_error(command):
         ),
     ],
 )
-def test_prepare_singularity(data, expected):
-    assert prepare_singularity(SingularityConfig(**data), check=False) == expected
+def test_prepare_container(data, expected):
+    assert prepare_container(ContainerConfig(**data), check=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -226,8 +218,8 @@ def test_prepare_singularity(data, expected):
         {"VAR3": "123", "VAR4": ""},
     ],
 )
-def test_set_singularity_env_vars(env_vars: dict):
-    set_singularity_env_vars(env_vars)
+def test_set_container_env_vars(env_vars: dict):
+    set_container_env_vars(env_vars)
     for key, value in env_vars.items():
         assert os.environ[f"SINGULARITYENV_{key}"] == value
         assert os.environ[f"APPTAINERENV_{key}"] == value
