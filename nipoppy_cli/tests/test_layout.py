@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.layout import DatasetLayout, PathInfo
-from nipoppy.utils import DPATH_LAYOUT, FPATH_DEFAULT_LAYOUT
+from nipoppy.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 
 from .conftest import (
     ATTR_TO_DPATH_MAP,
@@ -44,7 +44,7 @@ def test_init_default(dpath_root):
     [
         None,
         FPATH_DEFAULT_LAYOUT,
-        DPATH_LAYOUT / "layout-0.1.0.json",
+        DPATH_LAYOUTS / "layout-0.1.0.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],

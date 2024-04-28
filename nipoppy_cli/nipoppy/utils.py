@@ -23,8 +23,8 @@ DPATH_EXAMPLES = DPATH_DATA / "examples"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_configs.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
 DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
-DPATH_LAYOUT = DPATH_DATA / "layout"
-FPATH_DEFAULT_LAYOUT = DPATH_LAYOUT / "layout-default.json"
+DPATH_LAYOUTS = DPATH_DATA / "layouts"
+FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 
 
 def participant_id_to_dicom_id(participant_id: str):
