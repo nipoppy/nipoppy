@@ -14,10 +14,10 @@ from nipoppy.workflow.utils import (
 # Globals
 # Brainload has two separate functions to extract aseg data. 
 measure_column_names = ["StructName","Structure","Description","Volume_mm3", "unit"]
-aseg_cols = ["StructName", "Volume_mm3"]
-dkt_cols = ["StructName", "ThickAvg"]
 
 def get_aseg_stats(participant_stats_dir, aseg_cols):
+    """ Parses the aseg.stats file
+    """
     aseg_cols = ["StructName", "Volume_mm3"]
     aseg_stats = bl.stat(f'{participant_stats_dir}/aseg.stats')
     table_df = pd.DataFrame(aseg_stats["table_data"], columns=aseg_stats["table_column_headers"])[aseg_cols]
@@ -26,6 +26,8 @@ def get_aseg_stats(participant_stats_dir, aseg_cols):
     return _df
 
 def get_DKT_stats(participant_stats_dir, dkt_cols, parcel="aparc.DKTatlas"):
+    """ Parses the <>.aparc.DKTatlas.stats file
+    """
     hemi = "lh"
     stat_file = f"{hemi}.{parcel}.stats"
     lh_dkt_stats = bl.stat(f'{participant_stats_dir}/{stat_file}')
@@ -34,7 +36,7 @@ def get_DKT_stats(participant_stats_dir, dkt_cols, parcel="aparc.DKTatlas"):
 
     hemi = "rh"
     stat_file = f"{hemi}.{parcel}.stats"
-    rh_dkt_stats = bl.stat(f'{participant_stats_dir}/rh.aparc.DKTatlas.stats')
+    rh_dkt_stats = bl.stat(f'{participant_stats_dir}/{stat_file}')
     rh_df = pd.DataFrame(rh_dkt_stats["table_data"], columns=rh_dkt_stats["table_column_headers"])[dkt_cols]
     rh_df["hemi"] = hemi
     
