@@ -4,8 +4,8 @@ requires = ["hatchling"]
 
 [project]
 authors = [
-    { name = "Nikhil Bhagwat" },
     { name = "Michelle Wang" },
+    { name = "Nikhil Bhagwat" },
     { name = "Brent McPherson" },
     { name = "Rémi Gau" },
 ]
