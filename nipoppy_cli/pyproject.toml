@@ -1,0 +1,63 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[project]
+authors = [
+    { name = "Michelle Wang" },
+    { name = "Nikhil Bhagwat" },
+    { name = "Brent McPherson" },
+    { name = "Rémi Gau" },
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+]
+dependencies = [
+    "boutiques",
+    "pandas",
+    "pybids",
+    "pydantic",
+    "rich",
+    "rich_argparse",
+]
+description = "Standardized organization and processing of neuroimaging-clinical datasets"
+license = { file = "LICENSE" }
+name = "nipoppy"
+readme = "README.md"
+# TODO requires_python
+version = "1.0.0" # TODO eventually use dynamic versioning
+
+[project.optional-dependencies]
+dev = ["nipoppy[test]", "pre-commit"]
+test = [
+    "pytest>=6.0.0",
+    "pytest-cov",
+    "pytest-mock",
+    "fids@git+https://github.com/neurodatascience/FIDS.git",
+]
+tests = ["nipoppy[test]"] # alias in case of typo
+
+[project.scripts]
+nipoppy = "nipoppy.cli.run:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nipoppy"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.codespell]
+skip = '.git,.github,pyproject.toml'
+
+[tool.pytest.ini_options]
+addopts = "-ra -q -vv "
+testpaths = ["tests/"]
+minversion = "6.0"
+xfail_strict = true
