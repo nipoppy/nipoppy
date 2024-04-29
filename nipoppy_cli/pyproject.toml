@@ -38,6 +38,7 @@ version = "1.0.0" # TODO eventually use dynamic versioning
 dev = ["nipoppy[test]", "pre-commit"]
 test = [
     "pytest>=6.0.0",
+    "pytest-cov",
     "pytest-mock",
     "fids@git+https://github.com/neurodatascience/FIDS.git",
 ]
