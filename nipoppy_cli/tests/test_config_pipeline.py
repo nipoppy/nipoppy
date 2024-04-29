@@ -11,7 +11,7 @@ from nipoppy.config.pipeline import PipelineConfig
 FIELDS_PIPELINE = [
     "CONTAINER",
     "URI",
-    "SINGULARITY_CONFIG",
+    "CONTAINER_CONFIG",
     "DESCRIPTOR",
     "DESCRIPTOR_FILE",
     "INVOCATION",
@@ -27,7 +27,7 @@ FIELDS_PIPELINE = [
         {"DESCRIPTION": "My pipeline"},
         {"CONTAINER": "/my/container"},
         {"URI": "docker://container"},
-        {"SINGULARITY_CONFIG": {"ARGS": ["--cleanenv"]}},
+        {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}},
         {"DESCRIPTOR": {}},
         {"INVOCATION": {"arg1": "val1", "arg2": "val2"}},
         {"PYBIDS_IGNORE": ["ignore1", "ignore2"]},

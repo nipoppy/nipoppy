@@ -7,7 +7,7 @@ from typing import Optional
 from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.singularity import SingularityConfig, prepare_singularity
+from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -42,26 +42,26 @@ class PipelineRunner(BasePipelineWorkflow):
             [self.dpath_pipeline_output, self.dpath_pipeline_work]
         )
 
-    def process_singularity_config(
+    def process_container_config(
         self,
         participant: str,
         session: str,
         bind_paths: Optional[list[str | Path]] = None,
     ) -> str:
-        """Update Singularity config and generate Singularity command."""
+        """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
 
-        # get and process Singularity config
-        singularity_config = self.pipeline_config.get_singularity_config()
-        singularity_config = SingularityConfig(
+        # get and process container config
+        container_config = self.pipeline_config.get_container_config()
+        container_config = ContainerConfig(
             **self.process_template_json(
-                singularity_config.model_dump(),
+                container_config.model_dump(),
                 participant=participant,
                 session=session,
             )
         )
-        self.logger.debug(f"Initial Singularity config: {singularity_config}")
+        self.logger.debug(f"Initial container config: {container_config}")
 
         # get and process Boutiques config
         boutiques_config = self.get_boutiques_config(participant, session)
@@ -73,25 +73,25 @@ class PipelineRunner(BasePipelineWorkflow):
             )
         )
 
-        # update singularity config with additional information from Boutiques config
+        # update container config with additional information from Boutiques config
         self.logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
-            self.logger.info("Updating Singularity config with config from descriptor")
-            singularity_config.merge_args_and_env_vars(
-                boutiques_config.get_singularity_config()
+            self.logger.info("Updating container config with config from descriptor")
+            container_config.merge_args_and_env_vars(
+                boutiques_config.get_container_config()
             )
 
         # add bind paths
         for bind_path in bind_paths:
-            singularity_config.add_bind_path(bind_path)
+            container_config.add_bind_path(bind_path)
 
-        self.logger.info(f"Using Singularity config: {singularity_config}")
+        self.logger.info(f"Using container config: {container_config}")
 
-        singularity_command = prepare_singularity(
-            singularity_config, check=True, logger=self.logger
+        container_command = prepare_container(
+            container_config, check=True, logger=self.logger
         )
 
-        return singularity_command
+        return container_command
 
     def launch_boutiques_run(
         self, participant: str, session: str, objs: Optional[list] = None, **kwargs
@@ -146,8 +146,8 @@ class PipelineRunner(BasePipelineWorkflow):
             session=session,
         )
 
-        # get singularity command
-        singularity_command = self.process_singularity_config(
+        # get container command
+        container_command = self.process_container_config(
             participant=participant,
             session=session,
             bind_paths=[
@@ -160,7 +160,7 @@ class PipelineRunner(BasePipelineWorkflow):
 
         # run pipeline with Boutiques
         self.launch_boutiques_run(
-            participant, session, singularity_command=singularity_command
+            participant, session, container_command=container_command
         )
 
     def run_cleanup(self, **kwargs):

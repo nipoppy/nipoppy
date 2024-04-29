@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.layout import DatasetLayout, PathInfo
-from nipoppy.utils import DPATH_LAYOUT, FPATH_DEFAULT_LAYOUT
+from nipoppy.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 
 from .conftest import (
     ATTR_TO_DPATH_MAP,
@@ -44,7 +44,7 @@ def test_init_default(dpath_root):
     [
         None,
         FPATH_DEFAULT_LAYOUT,
-        DPATH_LAYOUT / "layout-0.1.0.json",
+        DPATH_LAYOUTS / "layout-0.1.0.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],
@@ -185,8 +185,8 @@ def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,expected",
     [
-        ("my_pipeline", "v1", "derivatives/my_pipeline-v1"),
-        ("pipeline", "v2", "derivatives/pipeline-v2"),
+        ("my_pipeline", "v1", "derivatives/my_pipeline/v1"),
+        ("pipeline", "v2", "derivatives/pipeline/v2"),
     ],
 )
 def test_get_dpath_pipeline(
@@ -209,28 +209,28 @@ def test_get_dpath_pipeline(
             "v1",
             None,
             None,
-            "derivatives/my_pipeline-v1/work/my_pipeline-v1",
+            "derivatives/my_pipeline/v1/work/my_pipeline-v1",
         ),
         (
             "pipeline",
             "v2",
             "3000",
             None,
-            "derivatives/pipeline-v2/work/pipeline-v2-3000",
+            "derivatives/pipeline/v2/work/pipeline-v2-3000",
         ),
         (
             "pipeline",
             "v2",
             None,
             "ses-BL",
-            "derivatives/pipeline-v2/work/pipeline-v2-BL",
+            "derivatives/pipeline/v2/work/pipeline-v2-BL",
         ),
         (
             "pipeline",
             "v2",
             "01",
             "1",
-            "derivatives/pipeline-v2/work/pipeline-v2-01-1",
+            "derivatives/pipeline/v2/work/pipeline-v2-01-1",
         ),
     ],
 )
@@ -252,8 +252,8 @@ def test_get_dpath_pipeline_work(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,expected",
     [
-        ("my_pipeline", "v1", "derivatives/my_pipeline-v1/output"),
-        ("pipeline", "v2", "derivatives/pipeline-v2/output"),
+        ("my_pipeline", "v1", "derivatives/my_pipeline/v1/output"),
+        ("pipeline", "v2", "derivatives/pipeline/v2/output"),
     ],
 )
 def test_get_dpath_pipeline_output(

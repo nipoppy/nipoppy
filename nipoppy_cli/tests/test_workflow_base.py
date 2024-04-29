@@ -7,13 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import BaseWorkflow
 
-from .conftest import create_empty_dataset, datetime_fixture  # noqa F401
+from .conftest import datetime_fixture  # noqa F401
+from .conftest import create_empty_dataset, get_config
 
 
 @pytest.fixture(params=[get_logger("my_logger"), None], scope="function")
@@ -132,13 +133,8 @@ def test_config_not_found(workflow: BaseWorkflow):
 def test_manifest(workflow: BaseWorkflow):
     workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
-    config = Config(
-        DATASET_NAME="test",
-        DATASET_ROOT=workflow.dpath_root,
-        CONTAINER_STORE=workflow.dpath_root,
-        SESSIONS=["ses-BL", "ses-M12"],
-        BIDS={},
-        PROC_PIPELINES={},
+    config = get_config(
+        visits=["BL", "M12"],
     )
     workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
     config.save(workflow.layout.fpath_config)

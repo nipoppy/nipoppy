@@ -8,13 +8,13 @@ from typing import Optional
 import pytest
 from fids import fids
 
-from nipoppy.config.base import Config, PipelineConfig
 from nipoppy.config.boutiques import BoutiquesConfig
+from nipoppy.config.main import PipelineConfig
 from nipoppy.utils import strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
-from .conftest import create_empty_dataset, prepare_dataset
+from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 
 class PipelineWorkflow(BasePipelineWorkflow):
@@ -44,11 +44,9 @@ class PipelineWorkflow(BasePipelineWorkflow):
         )
 
         # override the config
-        self.config = Config(
-            DATASET_NAME="my_dataset",
-            SESSIONS=["ses-1"],
-            VISITS=["1"],
-            PROC_PIPELINES={
+        self.config = get_config(
+            visits=["1"],
+            proc_pipelines={
                 # built-in pipelines
                 "fmriprep": {
                     "23.1.3": {
@@ -67,7 +65,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
                         "DESCRIPTOR": {
                             "custom": {
                                 "nipoppy": {
-                                    "SINGULARITY_CONFIG": {
+                                    "CONTAINER_CONFIG": {
                                         "ARGS": ["--pipeline-specific-arg"]
                                     }
                                 }
@@ -409,8 +407,8 @@ def test_run_main(participant, session, expected_count, tmp_path: Path):
     participants_and_sessions = {"01": ["ses-1", "ses-2", "ses-3"], "02": ["ses-1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
-        dpath_converted=workflow.layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
@@ -429,8 +427,8 @@ def test_run_main_catch_errors(tmp_path: Path):
     participants_and_sessions = {"FAIL": ["ses-1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
-        dpath_converted=workflow.layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
@@ -457,14 +455,14 @@ def test_get_participants_sessions_to_run(
         "01": ["ses-1", "ses-2", "ses-3"],
         "02": ["ses-1", "ses-2", "ses-3"],
     }
-    participants_and_sessions_converted = {
+    participants_and_sessions_bidsified = {
         "01": ["ses-1", "ses-2", "ses-3"],
         "02": ["ses-1"],
     }
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
-        participants_and_sessions_converted=participants_and_sessions_converted,
-        dpath_converted=workflow.layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()

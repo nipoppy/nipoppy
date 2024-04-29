@@ -208,9 +208,7 @@ class DatasetLayout(Base):
 
     def get_dpath_pipeline(self, pipeline_name: str, pipeline_version: str) -> Path:
         """Return the path to a pipeline's directory."""
-        return self.dpath_derivatives / get_pipeline_tag(
-            pipeline_name, pipeline_version
-        )
+        return self.dpath_derivatives / pipeline_name / pipeline_version
 
     def get_dpath_pipeline_work(
         self,
@@ -235,7 +233,7 @@ class DatasetLayout(Base):
         self, pipeline_name: str, pipeline_version: str
     ) -> Path:
         """
-        Return the path to a pipeline's working directory.
+        Return the path to a pipeline's output directory.
 
         Note: This path is the same given a pipeline name and version
         (i.e. does not depend on participant or session).

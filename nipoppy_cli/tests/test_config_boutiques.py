@@ -8,7 +8,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 
-FIELDS_BOUTIQUES = ["SINGULARITY_CONFIG"]
+FIELDS_BOUTIQUES = ["CONTAINER_CONFIG"]
 
 
 def test_boutiques_config():
@@ -28,7 +28,7 @@ def test_boutiques_config_no_extra_fields():
     [
         {"custom": {"nipoppy": {}}},
         {"custom": {"nipoppy": {}}},
-        {"custom": {"nipoppy": {"SINGULARITY_CONFIG": {"ARGS": ["--cleanenv"]}}}},
+        {"custom": {"nipoppy": {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}}}},
     ],
 )
 def test_get_boutiques_config_from_descriptor(descriptor):

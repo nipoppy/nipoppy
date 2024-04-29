@@ -1,9 +1,12 @@
 {
     "DATASET_NAME": "<DATASET_NAME>",
+    "VISITS": [
+        "<VISIT_LABEL>"
+    ],
     "SESSIONS": [
         "ses-<SESSION_LABEL>"
     ],
-    "SINGULARITY_CONFIG": {
+    "CONTAINER_CONFIG": {
         "ARGS": [
             "--cleanenv"
         ]
@@ -26,7 +29,7 @@
                         "overwrite": true,
                         "minmeta": true
                     },
-                    "SINGULARITY_CONFIG": {
+                    "CONTAINER_CONFIG": {
                         "ARGS": [
                             "--bind",
                             "<PATH_TO_HEURISTIC_FILE>"
@@ -47,7 +50,7 @@
                     "INVOCATION": {
                         "config": "<PATH_TO_CONFIG_FILE>"
                     },
-                    "SINGULARITY_CONFIG": {
+                    "CONTAINER_CONFIG": {
                         "ARGS": [
                             "--bind",
                             "<PATH_TO_CONFIG_FILE>"
@@ -73,7 +76,7 @@
                     "memory_gb": "4G",
                     "verbose_count": "-v"
                 },
-                "SINGULARITY_CONFIG": {
+                "CONTAINER_CONFIG": {
                     "ARGS": [
                         "--bind",
                         "<PATH_TO_FREESURFER_LICENSE_FILE>"
@@ -95,7 +98,7 @@
                     "memory_gb": "4G",
                     "verbose_count": "-v"
                 },
-                "SINGULARITY_CONFIG": {
+                "CONTAINER_CONFIG": {
                     "ARGS": [
                         "--bind",
                         "<PATH_TO_FREESURFER_LICENSE_FILE>"

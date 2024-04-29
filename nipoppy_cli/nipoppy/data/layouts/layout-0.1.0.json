@@ -1,0 +1,94 @@
+{
+    "dpath_bids": {
+        "path": "bids",
+        "description": "This directory contains the raw dataset converted to the BIDS standard."
+    },
+    "dpath_derivatives": {
+        "path": "derivatives",
+        "description": "This directory contains the outputs of image processing pipelines. Outputs of different pipelines are stored in `<pipeline_name>-<pipeline_version>` subdirectories. Each subdirectory has two additional subdirectories for the actual output (under `output`) and temporary working directory (under `work`)."
+    },
+    "dpath_sourcedata": {
+        "path": "dicom",
+        "description": "This directory contains the organized source data that is ready for BIDS conversion."
+    },
+    "dpath_downloads": {
+        "path": "downloads",
+        "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
+    },
+    "dpath_releases": {
+        "path": "releases",
+        "description": "This directory is contains dataset releases (e.g., associated with specific publications)."
+    },
+    "dpath_proc": {
+        "path": "proc",
+        "description": "This directory contains the Nipoppy configuration information and custom code."
+    },
+    "dpath_containers": {
+        "path": "proc/containers",
+        "description": "This directory contains the container image files for the processing pipelines."
+    },
+    "dpath_descriptors": {
+        "path": "proc/descriptors",
+        "description": "This directory is for storing Boutiques descriptors for user-added pipelines. Descriptors can also be directly specified in the JSON config file."
+    },
+    "dpath_invocations": {
+        "path": "proc/invocations",
+        "description": "This directory is for storing Boutiques invocations for processing pipelines. Invocations can also be directly specified in the JSON config file."
+    },
+    "dpath_scripts": {
+        "path": "proc/scripts",
+        "description": "This directory is for custom, dataset-specific scripts."
+    },
+    "dpath_pybids": {
+        "path": "proc/pybids",
+        "description": "This directory contains PyBIDS-specific data/configurations."
+    },
+    "dpath_bids_db": {
+        "path": "proc/pybids/bids_db",
+        "description": "This directory is for PyBIDS databases generated/used during processing."
+    },
+    "dpath_bids_ignore_patterns": {
+        "path": "proc/pybids/ignore_patterns",
+        "description": "This directory is for storing ignore patterns to be used by PyBIDS during dataset indexing. Ignore patterns can also be directly specified in the JSON config file."
+    },
+    "dpath_scratch": {
+        "path": "scratch",
+        "description": "This directory is for scratch data."
+    },
+    "dpath_raw_dicom": {
+        "path": "scratch/raw_dicom",
+        "description": "This directory is for raw, unorganized DICOM dumps."
+    },
+    "dpath_logs": {
+        "path": "scratch/logs",
+        "description": "This directory contains log files."
+    },
+    "dpath_tabular": {
+        "path": "tabular",
+        "description": "This directory contains tabular/phenotypic data."
+    },
+    "dpath_assessments": {
+        "path": "tabular/assessments",
+        "description": "This directory contains assessments data."
+    },
+    "dpath_demographics": {
+        "path": "tabular/demographics",
+        "description": "This directory contains demographics data."
+    },
+    "fpath_config": {
+        "path": "proc/global_configs.json",
+        "description": "The configuration for a dataset is where all data processing is configured."
+    },
+    "fpath_doughnut": {
+        "path": "scratch/raw_dicom/doughnut.csv",
+        "description": "The doughnut file is generated/updated internally and is used to keep track of the raw data organization and BIDS conversion process."
+    },
+    "fpath_manifest": {
+        "path": "tabular/manifest.csv",
+        "description": "The manifest file lists all expected study participants and visits."
+    },
+    "fpath_imaging_bagel": {
+        "path": "derivatives/bagel.csv",
+        "description": "The imaging bagel file lists availability of derived imaging data and pipeline processing statuses."
+    }
+}

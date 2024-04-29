@@ -1,8 +1,8 @@
 {
     "DATASET_NAME": "my_dataset",
-    "SESSIONS": [
-        "ses-A",
-        "ses-B"
+    "VISITS": [
+        "V01",
+        "V02"
     ],
     "PROC_PIPELINES": {
         "mriqc": {

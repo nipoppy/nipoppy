@@ -23,8 +23,8 @@ DPATH_EXAMPLES = DPATH_DATA / "examples"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_configs.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
 DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
-DPATH_LAYOUT = DPATH_DATA / "layout"
-FPATH_DEFAULT_LAYOUT = DPATH_LAYOUT / "layout-default.json"
+DPATH_LAYOUTS = DPATH_DATA / "layouts"
+FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 
 
 def participant_id_to_dicom_id(participant_id: str):
@@ -185,6 +185,7 @@ def save_df_with_backup(
     fpath_symlink: str | Path,
     dname_backups: Optional[str] = None,
     use_relative_path=True,
+    dry_run=False,
     **kwargs,
 ) -> Path | None:
     """Save a dataframe as a symlink pointing to a timestamped "backup" file.
@@ -200,6 +201,8 @@ def save_df_with_backup(
         (automatically determined if None), by default None
     use_relative_path : bool, optional
         Use relative instead of absolute path for the symlink, by default True
+    dry_run : bool, optional
+        Return the file path but do not save the file, by default False
 
     Returns
     -------
@@ -217,17 +220,20 @@ def save_df_with_backup(
 
     fpath_backup_full: Path = fpath_symlink.parent / dname_backups / fname_backup
 
-    fpath_backup_full.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(fpath_backup_full, **kwargs)
+    if not dry_run:
+        fpath_backup_full.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(fpath_backup_full, **kwargs)
 
-    if use_relative_path:
-        fpath_backup_to_link = os.path.relpath(fpath_backup_full, fpath_symlink.parent)
-    else:
-        fpath_backup_to_link = fpath_backup_full
+        if use_relative_path:
+            fpath_backup_to_link = os.path.relpath(
+                fpath_backup_full, fpath_symlink.parent
+            )
+        else:
+            fpath_backup_to_link = fpath_backup_full
 
-    if fpath_symlink.is_symlink() or fpath_symlink.exists():
-        fpath_symlink.unlink()
-    fpath_symlink.symlink_to(fpath_backup_to_link)
+        if fpath_symlink.is_symlink() or fpath_symlink.exists():
+            fpath_symlink.unlink()
+        fpath_symlink.symlink_to(fpath_backup_to_link)
 
     return Path(fpath_backup_full)
 

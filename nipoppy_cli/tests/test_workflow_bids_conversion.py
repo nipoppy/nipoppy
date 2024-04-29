@@ -4,24 +4,20 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
-from .conftest import create_empty_dataset
+from .conftest import create_empty_dataset, get_config
 
 
 @pytest.fixture
 def config() -> Config:
-    return Config(
-        DATASET_NAME="my_dataset",
-        SESSIONS=[],
-        VISITS=[],
-        BIDS={
+    return get_config(
+        bids={
             "heudiconv": {"0.12.2": {"prepare": {}, "convert": {}}},
             "dcm2bids": {"3.1.0": {"prepare": {}, "convert": {}}},
-        },
-        PROC_PIPELINES={},
+        }
     )
 
 

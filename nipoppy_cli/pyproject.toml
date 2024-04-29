@@ -4,8 +4,8 @@ requires = ["hatchling"]
 
 [project]
 authors = [
-    { name = "Nikhil Bhagwat" },
     { name = "Michelle Wang" },
+    { name = "Nikhil Bhagwat" },
     { name = "Brent McPherson" },
     { name = "Rémi Gau" },
 ]
@@ -35,21 +35,10 @@ readme = "README.md"
 version = "1.0.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
-doc = [
-    "furo",
-    "pygments-csv-lexer",
-    "sphinx",
-    "sphinx-argparse",
-    "sphinx-autodoc2",
-    "sphinx-copybutton",
-    "sphinx-jsonschema",
-    "sphinx-togglebutton",
-    "mdit-py-plugins>0.3.4",
-    "myst-parser",
-]
+dev = ["nipoppy[test]", "pre-commit"]
 test = [
     "pytest>=6.0.0",
+    "pytest-cov",
     "pytest-mock",
     "fids@git+https://github.com/neurodatascience/FIDS.git",
 ]

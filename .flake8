@@ -2,12 +2,19 @@
 exclude =
     .git,
     __pycache__,
+    build,
+    dist,
+	env,
+	venv,
+per-file-ignores =
+    # - docstrings rules that should not be applied to tests
+	**/test_*: D100, D103, D104
+    __init__.py:F401
+    # allow "weird indentation"
+	tests/test_workflow_*.py: D100, D103, D104, E131, E127, E501
 docstring-convention = numpy
 max_complexity = 12
 max_function_length = 150
-per-file-ignores =
-    **/test_*: D101, D103
-    __init__.py:F401
 # for compatibility with black
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 max-line-length = 88

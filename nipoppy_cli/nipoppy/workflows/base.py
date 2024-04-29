@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import Base
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
@@ -175,10 +175,9 @@ class BaseWorkflow(Base, ABC):
 
     def save_tabular_file(self, tabular: BaseTabular, fpath: Path):
         """Save a tabular file."""
-        if not self.dry_run:
-            fpath_doughnut_backup = tabular.save_with_backup(fpath)
-        if fpath_doughnut_backup is not None:
-            self.logger.info(f"Saved to {fpath} (-> {fpath_doughnut_backup})")
+        fpath_backup = tabular.save_with_backup(fpath, dry_run=self.dry_run)
+        if fpath_backup is not None:
+            self.logger.info(f"Saved to {fpath} (-> {fpath_backup})")
         else:
             self.logger.info(f"No changes to file at {fpath}")
 
@@ -297,7 +296,7 @@ class BaseWorkflow(Base, ABC):
                 manifest=self.manifest,
                 dpath_downloaded=self.layout.dpath_raw_dicom,
                 dpath_organized=self.layout.dpath_sourcedata,
-                dpath_converted=self.layout.dpath_bids,
+                dpath_bidsified=self.layout.dpath_bids,
                 empty=False,
                 logger=self.logger,
             )

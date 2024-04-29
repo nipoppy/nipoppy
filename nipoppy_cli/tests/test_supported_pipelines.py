@@ -20,7 +20,7 @@ def single_subject_dataset(
     dataset_root = tmp_path / "my_dataset"
     participant = "01"
     session = "ses-01"
-    singularity_command = "singularity"
+    container_command = "apptainer"
     config_files_map = {
         "<PATH_TO_FREESURFER_LICENSE_FILE>": "freesurfer_license.txt",
         "<PATH_TO_HEURISTIC_FILE>": "heuristic.py",
@@ -33,8 +33,8 @@ def single_subject_dataset(
     create_empty_dataset(dataset_root)
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_converted=participants_and_sessions,
-        dpath_converted=layout.dpath_bids,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=layout.dpath_bids,
     )
     manifest.save_with_backup(layout.fpath_manifest)
 
@@ -45,10 +45,10 @@ def single_subject_dataset(
         fpath.touch()
     layout.fpath_config.write_text(config_text)
 
-    # patch so that the test runs even if Singularity is not available
+    # patch so that the test runs even if the command is not available
     mocker.patch(
-        "nipoppy.config.singularity.check_singularity_command",
-        return_value=singularity_command,
+        "nipoppy.config.container.check_container_command",
+        return_value=container_command,
     )
 
     return layout, participant, session

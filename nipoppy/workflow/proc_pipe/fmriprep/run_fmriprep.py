@@ -42,7 +42,7 @@ def run_fmriprep(participant_id: str,
     fmriprep_home_dir = f"{fmriprep_out_dir}/fmriprep_home_{participant_id}/"
     Path(f"{fmriprep_home_dir}").mkdir(parents=True, exist_ok=True)
 
-    bids_db_dir = f"/fmripre_proc/{DNAME_BIDS_DB}"
+    bids_db_dir = f"/fmriprep_proc/{DNAME_BIDS_DB}"
 
     bids_db_dir_outside_container = f"{proc_dir}/{DNAME_BIDS_DB}"
     if not Path(bids_db_dir_outside_container).exists():
@@ -60,12 +60,12 @@ def run_fmriprep(participant_id: str,
                 logger.error(f"Expected to find only files in {bids_db_dir_outside_container} but found directory {path}")
                 sys.exit(1)
 
-    # Singularity CMD 
+    # Singularity CMD
     SINGULARITY_CMD=f"singularity run \
         -B {bids_dir}:{bids_dir} \
         -B {fmriprep_home_dir}:/home/fmriprep --home /home/fmriprep --cleanenv \
         -B {fmriprep_out_dir}:/output \
-        -B {proc_dir}:/fmripre_proc \
+        -B {proc_dir}:/fmriprep_proc \
         -B {templateflow_dir}:{SINGULARITY_TEMPLATEFLOW_DIR} \
         -B {fmriprep_dir}:/work \
         -B {fs_dir}:{SINGULARITY_FS_DIR} \
@@ -89,7 +89,7 @@ def run_fmriprep(participant_id: str,
     # Append optional args
     if use_bids_filter:
         logger.info("Using bids_filter.json")
-        bids_filter_str = f"--bids-filter-file /fmripre_proc/bids_filter_fmriprep.json"
+        bids_filter_str = f"--bids-filter-file /fmriprep_proc/bids_filter_fmriprep.json"
         fmriprep_CMD = f"{fmriprep_CMD} {bids_filter_str}"
 
     if anat_only:
@@ -97,7 +97,7 @@ def run_fmriprep(participant_id: str,
         anat_only_str = "--anat-only"
         fmriprep_CMD = f"{fmriprep_CMD} {anat_only_str}"
 
-    CMD_ARGS = SINGULARITY_CMD + fmriprep_CMD 
+    CMD_ARGS = SINGULARITY_CMD + fmriprep_CMD
     CMD = CMD_ARGS.split()
 
     logger.info("Running fmriprep...")
@@ -108,7 +108,7 @@ def run_fmriprep(participant_id: str,
         fmriprep_proc = subprocess.run(CMD)
     except Exception as e:
         logger.error(f"fmriprep run failed with exceptions: {e}")
-    
+
     logger.info(f"Successfully completed fmriprep run for participant: {participant_id}")
     logger.info("-"*75)
     logger.info("")
@@ -164,7 +164,7 @@ def run(participant_id: str,
     # Copy bids_filter.json `<DATASET_ROOT>/bids/bids_filter.json`
     if use_bids_filter:
         logger.info(f"Copying ./bids_filter.json to {proc_dir}/bids_filter_fmriprep.json (to be seen by Singularity container)")
-        shutil.copyfile(f"{CWD}/bids_filter.json", f"{proc_dir}/bids_filter_fmriprep.json")
+        shutil.copyfile(f"{CWD}/sample_bids_filter.json", f"{proc_dir}/bids_filter_fmriprep.json")
 
     # launch fmriprep
     run_fmriprep(participant_id,
@@ -183,7 +183,7 @@ def run(participant_id: str,
 if __name__ == '__main__':
     # argparse
     HELPTEXT = """
-    Script to run fMRIPrep 
+    Script to run fMRIPrep
     """
 
     parser = argparse.ArgumentParser(description=HELPTEXT)
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument('--global_config', type=str, help='path to global configs for a given nipoppy dataset')
     parser.add_argument('--participant_id', type=str, help='participant id')
     parser.add_argument('--session_id', type=str, help='session id for the participant')
-    parser.add_argument('--output_dir', type=str, default=None, 
+    parser.add_argument('--output_dir', type=str, default=None,
                         help='specify custom output dir (if None --> <DATASET_ROOT>/derivatives)')
     parser.add_argument('--use_bids_filter', action='store_true', help='use bids filter or not')
     parser.add_argument('--anat_only', action='store_true', help='run only anatomical workflow or not')

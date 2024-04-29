@@ -140,7 +140,7 @@ def test_add_subparser_bids_conversion(args):
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
     add_subparser_bids_conversion(subparsers)
-    assert parser.parse_args(["convert"] + args)
+    assert parser.parse_args(["bidsify"] + args)
 
 
 @pytest.mark.parametrize(
@@ -212,7 +212,7 @@ def test_add_subparser_pipeline_track(args):
         ["init", "--dataset-root", "my_dataset"],
         ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
         ["reorg", "--dataset-root", "my_dataset", "--copy-files"],
-        ["convert", "--dataset-root", "my_dataset", "--pipeline", "a_bids_pipeline"],
+        ["bidsify", "--dataset-root", "my_dataset", "--pipeline", "a_bids_pipeline"],
         ["run", "--dataset-root", "my_dataset", "--pipeline", "a_pipeline"],
         ["track", "--dataset-root", "my_dataset", "--pipeline", "another_pipeline"],
     ],
