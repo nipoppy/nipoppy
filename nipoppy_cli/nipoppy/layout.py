@@ -233,7 +233,7 @@ class DatasetLayout(Base):
         self, pipeline_name: str, pipeline_version: str
     ) -> Path:
         """
-        Return the path to a pipeline's working directory.
+        Return the path to a pipeline's output directory.
 
         Note: This path is the same given a pipeline name and version
         (i.e. does not depend on participant or session).

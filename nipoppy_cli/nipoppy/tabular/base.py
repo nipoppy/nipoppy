@@ -1,6 +1,5 @@
 """Generic class for tabular data."""
 
-
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -135,7 +134,7 @@ class BaseTabular(pd.DataFrame, ABC):
         return self[self.duplicated(subset=cols, keep=False)]
 
     def get_diff(self, other: Self, cols=None) -> Self:
-        """Get the difference between two dataframes.
+        """Get the difference between two dataframes (self - other).
 
         Returns a slice of self. If cols is None, the index_cols of the first
         object is used.
