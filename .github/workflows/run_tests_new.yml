@@ -39,7 +39,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest nipoppy_cli --cov=nipoppy_cli --cov-report=xml
+        python -m pytest nipoppy_cli --cov=nipoppy_cli/nipoppy --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

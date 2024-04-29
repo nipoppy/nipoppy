@@ -175,10 +175,9 @@ class BaseWorkflow(Base, ABC):
 
     def save_tabular_file(self, tabular: BaseTabular, fpath: Path):
         """Save a tabular file."""
-        if not self.dry_run:
-            fpath_doughnut_backup = tabular.save_with_backup(fpath)
-        if fpath_doughnut_backup is not None:
-            self.logger.info(f"Saved to {fpath} (-> {fpath_doughnut_backup})")
+        fpath_backup = tabular.save_with_backup(fpath, dry_run=self.dry_run)
+        if fpath_backup is not None:
+            self.logger.info(f"Saved to {fpath} (-> {fpath_backup})")
         else:
             self.logger.info(f"No changes to file at {fpath}")
 

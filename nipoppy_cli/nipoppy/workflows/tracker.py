@@ -33,7 +33,7 @@ class PipelineTracker(BasePipelineWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
-        self.bagel: Bagel = Bagel()
+        self.bagel: Bagel = Bagel()  # may get overwritten
 
     def run_setup(self, **kwargs):
         """Load/initialize the bagel file."""
@@ -73,17 +73,17 @@ class PipelineTracker(BasePipelineWorkflow):
         )
 
         # check status and update bagel
+        status = self.check_status(tracker_config["pipeline_complete"])
         self.bagel = self.bagel.add_or_update_records(
             {
                 Bagel.col_participant_id: participant,
                 Bagel.col_session: session,
                 Bagel.col_pipeline_name: self.pipeline_name,
                 Bagel.col_pipeline_version: self.pipeline_version,
-                Bagel.col_pipeline_complete: self.check_status(
-                    tracker_config["pipeline_complete"]
-                ),
+                Bagel.col_pipeline_complete: status,
             }
         )
+        return status
 
     def run_cleanup(self, **kwargs):
         """Save the bagel file."""

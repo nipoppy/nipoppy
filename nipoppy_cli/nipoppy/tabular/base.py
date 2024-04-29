@@ -194,6 +194,7 @@ class BaseTabular(pd.DataFrame, ABC):
         dname_backups: Optional[str] = None,
         use_relative_path=True,
         sort=True,
+        dry_run=False,
     ) -> Path | None:
         """Save the dataframe to a file with a backup."""
         tabular_new = self.sort_values() if sort else self
@@ -206,9 +207,10 @@ class BaseTabular(pd.DataFrame, ABC):
                     return None
         return save_df_with_backup(
             tabular_new,
-            fpath_symlink,
-            dname_backups,
-            use_relative_path,
+            fpath_symlink=fpath_symlink,
+            dname_backups=dname_backups,
+            use_relative_path=use_relative_path,
+            dry_run=dry_run,
         )
 
     def equals(self, other: object) -> Self:
