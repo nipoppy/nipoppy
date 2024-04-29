@@ -1,0 +1,138 @@
+{
+    "name": "dcm2bids",
+    "description": "dcm2bids",
+    "tool-version": "3.1.1",
+    "schema-version": "0.5",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] dcm2bids [DICOM_DIR] [PARTICIPANT] [SESSION] [CONFIG] [OUTPUT_DIR] [AUTO_EXTRACT_ENTITIES] [BIDS_VALIDATE] [FORCE_DCM2BIDS] [SKIP_DCM2NIIX] [CLOBBER] [LOG_LEVEL] [VERSION]",
+    "inputs": [
+        {
+            "name": "dicom_dir",
+            "id": "dicom_dir",
+            "description": "DICOM directory(ies) or archive(s) (tar, tar.bz2, tar.gz or zip).",
+            "type": "String",
+            "list": true,
+            "optional": false,
+            "command-line-flag": "-d",
+            "value-key": "[DICOM_DIR]",
+            "default-value": [
+                "[[NIPOPPY_DPATH_SOURCEDATA]]/[[NIPOPPY_SESSION]]/[[NIPOPPY_PARTICIPANT]]"
+            ]
+        },
+        {
+            "name": "participant",
+            "id": "participant",
+            "description": "Participant ID.",
+            "type": "String",
+            "optional": false,
+            "command-line-flag": "-p",
+            "value-key": "[PARTICIPANT]",
+            "default-value": "[[NIPOPPY_PARTICIPANT]]"
+        },
+        {
+            "name": "session",
+            "id": "session",
+            "description": "Session ID.",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "-s",
+            "value-key": "[SESSION]",
+            "default-value": "[[NIPOPPY_SESSION_SHORT]]"
+        },
+        {
+            "name": "config",
+            "id": "config",
+            "description": "JSON configuration file (see example/config.json).",
+            "type": "String",
+            "optional": false,
+            "command-line-flag": "-c",
+            "value-key": "[CONFIG]"
+        },
+        {
+            "name": "output_dir",
+            "id": "output_dir",
+            "description": "Output BIDS directory. [%(default)s]",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "-o",
+            "value-key": "[OUTPUT_DIR]",
+            "default-value": "[[NIPOPPY_DPATH_BIDS]]"
+        },
+        {
+            "name": "auto_extract_entities",
+            "id": "auto_extract_entities",
+            "description": "If set, it will automatically try to extract entityinformation [task, dir, echo] based on the suffix and datatype. [%(default)s]",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--auto_extract_entities",
+            "value-key": "[AUTO_EXTRACT_ENTITIES]"
+        },
+        {
+            "name": "bids_validate",
+            "id": "bids_validate",
+            "description": "If set, once your conversion is done it will check if your output folder is BIDS valid. [%(default)s]\nbids-validator needs to be installed check: https://github.com/bids-standard/bids-validator#quickstart",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--bids_validate",
+            "value-key": "[BIDS_VALIDATE]"
+        },
+        {
+            "name": "force_dcm2bids",
+            "id": "force_dcm2bids",
+            "description": "Overwrite previous temporary dcm2bids output if it exists.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--force_dcm2bids",
+            "value-key": "[FORCE_DCM2BIDS]"
+        },
+        {
+            "name": "skip_dcm2niix",
+            "id": "skip_dcm2niix",
+            "description": "Skip dcm2niix conversion. Option -d should contains NIFTI and json files.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--skip_dcm2niix",
+            "value-key": "[SKIP_DCM2NIIX]"
+        },
+        {
+            "name": "clobber",
+            "id": "clobber",
+            "description": "Overwrite output if it exists.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--clobber",
+            "value-key": "[CLOBBER]"
+        },
+        {
+            "name": "log_level",
+            "id": "log_level",
+            "description": "Set logging level to the console. [%(default)s]",
+            "type": "String",
+            "optional": true,
+            "default-value": "INFO",
+            "command-line-flag": "-l",
+            "value-key": "[LOG_LEVEL]",
+            "value-choices": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+            ]
+        },
+        {
+            "name": "version",
+            "id": "version",
+            "description": "Report dcm2bids version and the BIDS version.",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "-v",
+            "value-key": "[VERSION]"
+        }
+    ],
+    "tags": {},
+    "suggested-resources": {
+        "cpu-cores": 1,
+        "ram": 1,
+        "walltime-estimate": 60
+    }
+}

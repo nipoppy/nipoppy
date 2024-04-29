@@ -1,0 +1,71 @@
+{
+    "dpath_bids": {
+        "path": "bids"
+    },
+    "dpath_derivatives": {
+        "path": "derivatives"
+    },
+    "dpath_sourcedata": {
+        "path": "dicom"
+    },
+    "dpath_downloads": {
+        "path": "downloads"
+    },
+    "dpath_releases": {
+        "path": "releases"
+    },
+    "dpath_proc": {
+        "path": "proc"
+    },
+    "dpath_containers": {
+        "path": "proc/containers"
+    },
+    "dpath_descriptors": {
+        "path": "proc/descriptors"
+    },
+    "dpath_invocations": {
+        "path": "proc/invocations"
+    },
+    "dpath_scripts": {
+        "path": "proc/scripts"
+    },
+    "dpath_pybids": {
+        "path": "proc/pybids"
+    },
+    "dpath_bids_db": {
+        "path": "proc/pybids/bids_db"
+    },
+    "dpath_bids_ignore_patterns": {
+        "path": "proc/pybids/ignore_patterns"
+    },
+    "dpath_scratch": {
+        "path": "scratch"
+    },
+    "dpath_raw_dicom": {
+        "path": "scratch/raw_dicom"
+    },
+    "dpath_logs": {
+        "path": "scratch/logs"
+    },
+    "dpath_tabular": {
+        "path": "tabular"
+    },
+    "dpath_assessments": {
+        "path": "tabular/assessments"
+    },
+    "dpath_demographics": {
+        "path": "tabular/demographics"
+    },
+    "fpath_config": {
+        "path": "proc/global_configs.json"
+    },
+    "fpath_doughnut": {
+        "path": "scratch/raw_dicom/doughnut.csv"
+    },
+    "fpath_manifest": {
+        "path": "tabular/manifest.csv"
+    },
+    "fpath_imaging_bagel": {
+        "path": "derivatives/bagel.csv"
+    }
+}
