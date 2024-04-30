@@ -9,6 +9,6 @@ This command calls the {py:class}`nipoppy.workflows.bids_conversion.BidsConversi
 ref: nipoppy.cli.parser.get_global_parser
 prog: nipoppy
 nodefault: true
-path: convert
+path: bidsify
 ---
 ```

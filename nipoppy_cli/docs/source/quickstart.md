@@ -46,7 +46,7 @@ You can also delete (or not) any configuration for a software/version that you d
 class: dropdown
 ---
 Here is the default content of `<PATH_TO_DATASET_ROOT>/proc/global_configs.json`:
-```{literalinclude} ../../nipoppy/data/sample_data/sample_global_configs.json
+```{literalinclude} ../../nipoppy/data/examples/sample_global_configs.json
 ---
 linenos: True
 emphasize-lines: 2, 4, 25, 32, 48, 53, 66, 79, 88, 101
@@ -70,7 +70,7 @@ There must be only **one row** per unique participant/visit combination.
 The example manifest looks like this:
 ```{csv-table}
 ---
-file: ../../nipoppy/data/sample_data/sample_manifest.csv
+file: ../../nipoppy/data/examples/sample_manifest.csv
 header-rows: 1
 ---
 ```
@@ -79,7 +79,7 @@ header-rows: 1
 ---
 class: dropdown
 ---
-```{literalinclude} ../../nipoppy/data/sample_data/sample_manifest.csv
+```{literalinclude} ../../nipoppy/data/examples/sample_manifest.csv
 ---
 linenos: True
 language: csv

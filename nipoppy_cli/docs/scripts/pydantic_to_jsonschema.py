@@ -4,7 +4,7 @@
 import json
 from pathlib import Path
 
-from nipoppy.config.base import Config
+from nipoppy.config.main import Config
 from nipoppy.tabular.bagel import BagelModel
 from nipoppy.tabular.doughnut import DoughnutModel
 from nipoppy.tabular.manifest import ManifestModel
