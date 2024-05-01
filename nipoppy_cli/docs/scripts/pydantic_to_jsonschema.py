@@ -4,7 +4,9 @@
 import json
 from pathlib import Path
 
+from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.main import Config
+from nipoppy.layout import LayoutConfig
 from nipoppy.tabular.bagel import BagelModel
 from nipoppy.tabular.doughnut import DoughnutModel
 from nipoppy.tabular.manifest import ManifestModel
@@ -12,7 +14,9 @@ from nipoppy.tabular.manifest import ManifestModel
 DPATH_SCHEMA = Path(__file__).parent / ".." / "source" / "schemas"
 
 MODEL_FILENAME_MAP = {
+    BoutiquesConfig: "boutiques.json",
     Config: "config.json",
+    LayoutConfig: "layout.json",
     BagelModel: "bagel.json",
     DoughnutModel: "doughnut.json",
     ManifestModel: "manifest.json",
@@ -38,6 +42,13 @@ if __name__ == "__main__":
             schema["properties"]["SINGULARITY_CONFIG"] = singularity_config
         except KeyError:
             pass
+
+        # # TODO figure out $ref/$$target things
+        # try:
+        #     for subschema_name, subschema in schema["definitions"].items():
+        #         pass
+        # except KeyError:
+        #     pass
 
         schema_str = json.dumps(schema, indent=4)
         fpath_schema.write_text(schema_str)

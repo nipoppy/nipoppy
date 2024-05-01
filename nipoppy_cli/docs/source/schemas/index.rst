@@ -68,4 +68,16 @@ Here is the schema used for each row in the bagel file:
 .. jsonschema:: bagel.json
     :lift_title: False
 
+
+Layout configuration
+--------------------
+
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Here is the schema used for :term:`JSON` files that define the layout of the dataset:
+
+.. jsonschema:: layout.json
+    :lift_title: False
+
 .. [#f1] Created with `sphinx-jsonschema <https://github.com/lnoor/sphinx-jsonschema>`_
