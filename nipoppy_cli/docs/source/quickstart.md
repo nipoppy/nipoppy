@@ -49,7 +49,7 @@ Here is the default content of `<PATH_TO_DATASET_ROOT>/proc/global_configs.json`
 ```{literalinclude} ../../nipoppy/data/examples/sample_global_configs.json
 ---
 linenos: True
-emphasize-lines: 2, 4, 25, 32, 48, 53, 66, 79, 88, 101
+emphasize-lines: 2, 4, 7, 28, 35, 51, 56, 69, 82, 91, 104
 language: json
 ---
 ```

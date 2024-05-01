@@ -44,7 +44,7 @@ titlesonly:
 caption: Reference
 ---
 cli_reference/index
-apidocs/index
+autoapi/index
 schemas/index
 ```
 
