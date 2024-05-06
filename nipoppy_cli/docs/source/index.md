@@ -1,4 +1,7 @@
-```{include} ../../README.md
+```{include} README.md
+---
+end-before: See the [documentation website]
+---
 ```
 
 To get started, see the [Installation instructions](#installation) and/or the [Quickstart guide](#quickstart).
