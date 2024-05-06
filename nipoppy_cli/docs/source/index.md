@@ -1,5 +1,7 @@
-```{include} README.md
+```{include} ../../README.md
 ---
+relative-docs: docs/
+relative-images:
 end-before: See the [documentation website]
 ---
 ```
