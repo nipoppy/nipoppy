@@ -26,6 +26,14 @@ DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 
+# descriptions for common fields in the Pydantic models
+FIELD_DESCRIPTION_MAP = {
+    "bids_id": "BIDS-compliant participant identifier (e.g., sub-01)",
+    "participant_id": "Participant identifier",
+    "session": "BIDS-compliant identifier imaging session (e.g., ses-1)",
+    "visit": "Visit identifier",
+}
+
 
 def participant_id_to_dicom_id(participant_id: str):
     """Convert a participant ID to a BIDS-compatible DICOM ID."""

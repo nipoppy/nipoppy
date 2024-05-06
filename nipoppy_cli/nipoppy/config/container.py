@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.logger import get_logger
 
@@ -21,11 +21,33 @@ APPTAINER_ENVVAR_PREFIXES = ["APPTAINERENV_", "SINGULARITYENV_"]
 class ContainerConfig(BaseModel):
     """Model for container configuration."""
 
-    COMMAND: str = "apptainer"
-    SUBCOMMAND: str = "run"
-    ARGS: list[str] = []
-    ENV_VARS: dict[str, str] = {}
-    INHERIT: bool = True
+    COMMAND: str = Field(
+        default="apptainer",
+        description="Name of or path to Apptainer/Singularity executable",
+    )
+    SUBCOMMAND: str = Field(
+        default="run", description="Subcommand for Apptainer/Singularity call"
+    )
+    ARGS: list[str] = Field(
+        default=[],
+        description=(
+            "Arguments for Apptainer/Singularity call"
+            " (to be appended after the subcommand)"
+        ),
+    )
+    ENV_VARS: dict[str, str] = Field(
+        default={},
+        description=(
+            "Environment variables that should be available inside the container"
+        ),
+    )
+    INHERIT: bool = Field(
+        default=True,
+        description=(
+            "Whether this config should inherit from higher-lever container configs."
+            " If false, will override higher-level configs"
+        ),
+    )
 
     model_config = ConfigDict(extra="forbid")
 

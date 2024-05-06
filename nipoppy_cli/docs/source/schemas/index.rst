@@ -75,9 +75,34 @@ Layout configuration
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
+.. admonition:: The default Nipoppy layout
+    :class: dropdown
+
+    The default Nipoppy layout uses the following configuration:
+
+    .. literalinclude:: ../../../nipoppy/data/layouts/layout-default.json
+        :linenos:
+        :language: json
+
 Here is the schema used for :term:`JSON` files that define the layout of the dataset:
 
 .. jsonschema:: layout.json
     :lift_title: False
 
+Custom Nipoppy configurations in a Boutiques descriptor
+-------------------------------------------------------
+
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Nipoppy can read additional configurations from a Boutiques descriptor, under the
+``custom\nipoppy`` key. The :term:`JSON` object is expected to comply with the following schema:
+
+.. This has a link to the ContainerConfig schema pointing to the one that appears
+.. under the Config schema, but there is another ContainerConfig schema under the
+.. BoutiquesConfig schema
+.. jsonschema:: boutiques.json
+    :lift_title: False
+
+.. Footer
 .. [#f1] Created with `sphinx-jsonschema <https://github.com/lnoor/sphinx-jsonschema>`_

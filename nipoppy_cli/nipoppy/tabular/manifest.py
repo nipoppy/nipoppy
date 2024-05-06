@@ -3,18 +3,26 @@
 from typing import Optional, Self
 
 import pandas as pd
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
+from nipoppy.utils import FIELD_DESCRIPTION_MAP
 
 
 class ManifestModel(BaseTabularModel):
-    """Model for the manifest."""
+    """A user-provided listing of participant and visits available in the dataset."""
 
-    participant_id: str
-    visit: str
-    session: Optional[str]
-    datatype: Optional[list[str]]
+    participant_id: str = Field(
+        title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
+    )
+    visit: str = Field(description=FIELD_DESCRIPTION_MAP["visit"])
+    session: Optional[str] = Field(description=FIELD_DESCRIPTION_MAP["session"])
+    datatype: Optional[list[str]] = Field(
+        description=(
+            "Imaging datatype, as recognized by BIDS (see "
+            "https://bids-specification.readthedocs.io/en/stable/common-principles.html)"  # noqa E501
+        )
+    )
 
     @classmethod
     def validate_fields(cls, data: dict):

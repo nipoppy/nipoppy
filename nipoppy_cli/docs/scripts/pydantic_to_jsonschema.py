@@ -37,9 +37,9 @@ if __name__ == "__main__":
 
         # move singularity config to last property
         try:
-            singularity_config = schema["properties"]["SINGULARITY_CONFIG"]
-            del schema["properties"]["SINGULARITY_CONFIG"]
-            schema["properties"]["SINGULARITY_CONFIG"] = singularity_config
+            CONTAINER_CONFIG = schema["properties"]["CONTAINER_CONFIG"]
+            del schema["properties"]["CONTAINER_CONFIG"]
+            schema["properties"]["CONTAINER_CONFIG"] = CONTAINER_CONFIG
         except KeyError:
             pass
 

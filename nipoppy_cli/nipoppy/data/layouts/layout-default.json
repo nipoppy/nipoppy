@@ -9,7 +9,7 @@
     },
     "dpath_sourcedata": {
         "path": "sourcedata",
-        "description": "This directory contains the organized source data that is ready for BIDS conversion."
+        "description": "This directory is for the organized source data that is ready for BIDS conversion."
     },
     "dpath_downloads": {
         "path": "downloads",
@@ -17,15 +17,15 @@
     },
     "dpath_releases": {
         "path": "releases",
-        "description": "This directory is contains dataset releases (e.g., associated with specific publications)."
+        "description": "This directory is for dataset releases (e.g., associated with specific publications)."
     },
     "dpath_proc": {
         "path": "proc",
-        "description": "This directory contains the Nipoppy configuration information and custom code."
+        "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
     "dpath_containers": {
         "path": "proc/containers",
-        "description": "This directory contains the container image files for the processing pipelines."
+        "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
     },
     "dpath_descriptors": {
         "path": "proc/descriptors",
@@ -41,7 +41,7 @@
     },
     "dpath_pybids": {
         "path": "proc/pybids",
-        "description": "This directory contains PyBIDS-specific data/configurations."
+        "description": "This directory is for PyBIDS-specific data/configurations."
     },
     "dpath_bids_db": {
         "path": "proc/pybids/bids_db",
@@ -65,15 +65,15 @@
     },
     "dpath_tabular": {
         "path": "tabular",
-        "description": "This directory contains tabular/phenotypic data."
+        "description": "This directory is for tabular/phenotypic data."
     },
     "dpath_assessments": {
         "path": "tabular/assessments",
-        "description": "This directory contains assessments data."
+        "description": "This directory is for assessments data."
     },
     "dpath_demographics": {
         "path": "tabular/demographics",
-        "description": "This directory contains demographics data."
+        "description": "This directory is for demographics data."
     },
     "fpath_config": {
         "path": "proc/global_configs.json",
