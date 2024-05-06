@@ -16,7 +16,7 @@ The framework includes three components:
     ![Nipoppy specification](img/nipoppy_specification.jpg)
 
 2. A protocol for data organization, curation and processing, with steps that include the following:
-    - **Conversion** of raw scanner output to BIDS
+    - **Organization** of raw data, including conversion of raw scanner output to [BIDS](https://bids.neuroimaging.io/)
     - **Processing** of imaging data with existing or custom pipelines
     - **Tracking** of data availability and processing status
     - **Extraction** of imaging-derived phenotypes (IDPs)
