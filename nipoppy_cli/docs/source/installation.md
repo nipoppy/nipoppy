@@ -7,7 +7,7 @@ Nipoppy is a Python package. We recommend installing it in a new or existing Pyt
 If you already have an existing Python environment setup, you can go directly to the [](#pip-install-section) section.
 ```
 
-## Python environment
+## Setting up a Python environment
 
 ```{tip}
 If you do not already have Python set up on your system and/or wish to run Nipoppy locally, we recommend using {term}`conda` instead of {term}`venv`.
@@ -66,10 +66,13 @@ $ source nipoppy_env/bin/activate
 
 ### From {term}`PyPI`
 
-The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal window, run:
-```{code-block} console
-$ pip install nipoppy
-```
+% TODO
+We are actively working on publishing the package on PyPI, but for now it can only be installed by cloning the GitHub repository (see next section). Come back later for updates!
+
+% The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal window, run:
+% ```{code-block} console
+% $ pip install nipoppy
+% ```
 
 (github-install-section)=
 ### From GitHub
@@ -81,9 +84,13 @@ Clone the repository in a directory of your choice:
 $ git clone https://github.com/neurodatascience/nipoppy.git
 ```
 
-Move into that directory:
+Move into that directory and the `nipoppy_cli` subdirectory:
 ```{code-block} console
-$ cd nipoppy
+$ cd nipoppy/nipoppy_cli
+```
+
+```{note}
+The `nipoppy_cli` subdirectory contains the newer version of the code, which has been refactored into a CLI. Eventually, it will become the only maintained version of the code. For the moment, the soon-to-be legacy code is still at the top level of the GitHub repository.
 ```
 
 Install from the local source code in editable mode:
@@ -98,7 +105,7 @@ $ pip install -e .[dev]
 ```
 ````
 
-### Verify install
+### Verifying the install
 
 % TODO replace with nipoppy --version once that is available
 Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
@@ -114,3 +121,7 @@ The latest version of the `pydantic-core` package (required by `pydantic`) is wr
 ```{code-block} console
 $ module load rust
 ```
+
+## Next steps
+
+All done? See the [Quickstart guide](quickstart) next for instructions on how to set up a Nipoppy dataset and configure pipelines.

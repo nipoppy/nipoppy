@@ -96,7 +96,11 @@ It is extremely unlikely that this manifest file works for your dataset, so you 
 See the {ref}`schema reference <manifest-schema>` for more information about each column.
 ```
 
-% ## Next steps
+## Next steps
+
+The rest of this documentation is still work in progress. At a starting point, refer to the [commands](cli_reference/index) associated with the data organization or processing step(s) you wish to perform.
+
+![Nipoppy protocol](_static/img/nipoppy_protocol.jpg)
 
 % TODO point to tutorials once they are created (running BIDS conversion, running a pipeline)
 
