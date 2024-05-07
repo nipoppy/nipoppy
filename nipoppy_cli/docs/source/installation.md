@@ -15,7 +15,7 @@ If you do not already have Python set up on your system and/or wish to run Nipop
 
 ### {term}`conda` setup
 
-Install {term}`conda` (e.g. through Miniconda) following instructions from [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
+Install `conda` (e.g. through Miniconda) following instructions from [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
 Create a new environment (if needed) with Python version of at least `3.9`. Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
 ```{code-block} console
@@ -23,7 +23,7 @@ $ conda create --name nipoppy_env python=3.12
 ```
 
 ```{tip}
-The {term}`conda` [cheatsheet](https://docs.conda.io/projects/conda/en/latest/user-guide/cheatsheet.html) is a useful reference for the most commonly used {term}`conda` commands.
+The [conda cheatsheet](https://docs.conda.io/projects/conda/en/latest/user-guide/cheatsheet.html) is a useful reference for the most commonly used `conda` commands.
 ```
 
 Activate the environment, e.g. by running:
@@ -114,6 +114,8 @@ $ nipoppy -h
 ```
 
 ## Troubleshooting
+
+Please create a [GitHub issue](https://github.com/neurodatascience/nipoppy/issues/new) for any error not covered below.
 
 ### Error when installing `pydantic-core`
 
