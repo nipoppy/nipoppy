@@ -36,5 +36,4 @@ env/
 
 # docs
 nipoppy_cli/docs/build
-nipoppy_cli/docs/source/apidocs
 nipoppy_cli/docs/source/schemas/*.json

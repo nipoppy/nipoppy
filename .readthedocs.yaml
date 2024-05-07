@@ -16,7 +16,7 @@ python:
   - method: pip
     path: nipoppy_cli
     extra_requirements:
-    - docs
+    - doc
 
 # Build documentation with Sphinx
 sphinx:
