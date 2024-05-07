@@ -1,6 +1,6 @@
-```{include} ../../README.md
+```{include} ../../../README.md
 ---
-relative-docs: docs/
+relative-docs: nipoppy_cli/docs/
 relative-images:
 end-before: See the [documentation website]
 ---
