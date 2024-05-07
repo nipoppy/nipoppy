@@ -1,9 +1,9 @@
 """Dataset configuration."""
 
 from pathlib import Path
-from typing import Any, Self
+from typing import Any, Optional, Self
 
-from pydantic import ConfigDict, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from nipoppy.config.container import ModelWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
@@ -13,11 +13,21 @@ from nipoppy.utils import check_session, load_json
 class Config(ModelWithContainerConfig):
     """Model for dataset configuration."""
 
-    DATASET_NAME: str
-    VISITS: list[str]
-    SESSIONS: list[str] = []
-    BIDS: dict[str, dict[str, dict[str, PipelineConfig]]] = {}
-    PROC_PIPELINES: dict[str, dict[str, PipelineConfig]]
+    DATASET_NAME: str = Field(description="Name of the dataset")
+    VISITS: list[str] = Field(description="List of visits available in the study")
+    SESSIONS: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "List of sessions available in the study"
+            " (inferred from VISITS if not given)"
+        ),
+    )
+    BIDS: dict[str, dict[str, dict[str, PipelineConfig]]] = Field(
+        default={}, description="Configurations for BIDS converters, if any"
+    )
+    PROC_PIPELINES: dict[str, dict[str, PipelineConfig]] = Field(
+        description="Configurations for processing pipelines"
+    )
 
     model_config = ConfigDict(extra="allow")
 

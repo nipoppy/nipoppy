@@ -4,20 +4,44 @@ import logging
 from pathlib import Path
 from typing import Optional, Self
 
+from pydantic import Field
+
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest, ManifestModel
-from nipoppy.utils import participant_id_to_bids_id, participant_id_to_dicom_id
+from nipoppy.utils import (
+    FIELD_DESCRIPTION_MAP,
+    participant_id_to_bids_id,
+    participant_id_to_dicom_id,
+)
 
 
 class DoughnutModel(ManifestModel):
-    """Model for the doughnut file."""
+    """
+    An internally- or user-generated file to keep track of the BIDS conversion process.
 
-    participant_dicom_dir: str
-    dicom_id: str
-    bids_id: str
-    downloaded: bool
-    organized: bool
-    bidsified: bool
+    Should contain exactly the same data as the manifest, with some additional columns.
+    """
+
+    participant_dicom_dir: str = Field(
+        title="Participant DICOM directory",
+        description=(
+            "Path to the directory containing raw DICOMs "
+            "(in potentially messy tree structure) for the participant-visit pair, "
+            "relative to the raw data directory"
+        ),
+    )
+    dicom_id: str = Field(
+        title="DICOM ID",
+        description="Participant identifier used in DICOM file names/paths",
+    )
+    bids_id: str = Field(title="BIDS ID", description=FIELD_DESCRIPTION_MAP["bids_id"])
+    downloaded: bool = Field(description="Whether files are available on disk")
+    organized: bool = Field(
+        description="Whether files have been organized in the sourcedata directory"
+    )
+    bidsified: bool = Field(
+        title="BIDSified", description="Whether files have been converted to BIDS"
+    )
 
 
 class Doughnut(Manifest):

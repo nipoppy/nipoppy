@@ -17,7 +17,7 @@
     },
     "dpath_releases": {
         "path": "releases",
-        "description": "This directory is contains dataset releases (e.g., associated with specific publications)."
+        "description": "This directory contains dataset releases (e.g., associated with specific publications)."
     },
     "dpath_proc": {
         "path": "proc",
