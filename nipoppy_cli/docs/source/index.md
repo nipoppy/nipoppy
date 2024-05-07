@@ -24,19 +24,6 @@ quickstart
 hidden:
 includehidden:
 titlesonly:
-caption: Tutorials
----
-tutorials/bids_conversion
-tutorials/pipeline_runner
-tutorials/pipeline_tracker
-tutorials/custom_pipeline
-```
-
-```{toctree}
----
-hidden:
-includehidden:
-titlesonly:
 caption: Detailed user guide
 ---
 ```
