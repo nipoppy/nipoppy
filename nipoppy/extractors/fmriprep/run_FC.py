@@ -229,7 +229,7 @@ def run(participant_id: str,
 	if output_dir is None:
 		output_dir = f"{DATASET_ROOT}/derivatives/"
 
-	fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/{FMRIPREP_VERSION}/output"
+	fmriprep_dir = f"{DATASET_ROOT}/derivatives/fmriprep/v{FMRIPREP_VERSION}/output"
 	DKT_dir = f"{DATASET_ROOT}/derivatives/networks/0.9.0/output"
 	FC_dir = f"{output_dir}/FC"
 
