@@ -24,3 +24,4 @@ python:
 # Build documentation with Sphinx
 sphinx:
   configuration: nipoppy_cli/docs/source/conf.py
+  fail_on_warning: true
