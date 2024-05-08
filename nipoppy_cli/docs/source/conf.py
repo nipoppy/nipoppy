@@ -31,12 +31,19 @@ exclude_patterns = []
 
 nitpicky = True
 
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
 html_static_path = ["_static"]
+
+# -- Furo configuration ------------------------------------------------------
+#  https://pradyunsg.me/furo/customisation/#customisation
+html_theme_options = {
+    "source_repository": "https://github.com/neurodatascience/nipoppy",
+    "source_branch": "main",
+    "source_directory": "nipoppy_cli/docs/source",
+}
 
 # -- Intersphinx configuration ------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
