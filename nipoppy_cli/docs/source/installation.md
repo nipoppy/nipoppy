@@ -101,7 +101,7 @@ $ pip install -e .
 ````{note}
 You can also install the package with `dev` dependencies (e.g., for running tests and building documentation):
 ```{code-block} console
-$ pip install -e .[dev]
+$ pip install -e '.[dev]'
 ```
 ````
 
