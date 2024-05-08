@@ -42,7 +42,7 @@ html_static_path = ["_static"]
 html_theme_options = {
     "source_repository": "https://github.com/neurodatascience/nipoppy",
     "source_branch": "main",
-    "source_directory": "nipoppy_cli/docs/",
+    "source_directory": "nipoppy_cli/docs/source",
 }
 
 # -- Intersphinx configuration ------------------------------------------------
