@@ -31,6 +31,7 @@ exclude_patterns = []
 
 nitpicky = True
 
+# -- Furo configuration ------------------------------------------------------
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
