@@ -1,0 +1,57 @@
+{
+    "DATASET_NAME": "my_dataset",
+    "CONTAINER_CONFIG": {
+        "COMMAND": "apptainer",
+        "ARGS": [
+            "--cleanenv"
+        ]
+    },
+    "SESSIONS": [
+        "ses-A",
+        "ses-B"
+    ],
+    "VISITS": [
+        "V01",
+        "V02"
+    ],
+    "BIDS": {
+        "heudiconv": {
+            "0.11.6": {
+                "stage1": {
+                    "CONTAINER": "heudiconv_{version}.sif",
+                    "URI": "docker://nipy/heudiconv:{version}",
+                    "INVOCATION": {}
+                }
+            }
+        }
+    },
+    "PROC_PIPELINES": {
+        "mriqc": {
+            "23.1.0": {
+                "CONTAINER": "mriqc_{version}.sif",
+                "URI": "docker://nipreps/mriqc:{version}",
+                "INVOCATION": {}
+            }
+        },
+        "fmriprep": {
+            "20.2.7": {
+                "CONTAINER": "fmriprep_{version}.sif",
+                "URI": "docker://nipreps/fmriprep:{version}",
+                "INVOCATION": {}
+            }
+        },
+        "freesurfer": {
+            "6.0.1": {
+                "DESCRIPTION": "FreeSurfer version associated with fMRIPrep 20.2.7"
+            }
+        }
+    },
+    "TABULAR": {
+        "data_dictionary": {
+            "PATH": "",
+            "VERSION": "",
+            "URL": ""
+        }
+    },
+    "WORKFLOWS": []
+}
