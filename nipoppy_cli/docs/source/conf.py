@@ -76,6 +76,18 @@ autoapi_member_order = "groupwise"
 autoapi_own_page_level = "class"
 autoapi_template_dir = "_templates/autoapi"
 
+# ignore some auto doc related warnings
+#  see https://github.com/sphinx-doc/sphinx/issues/10785
+nitpick_ignore = [
+    ("py:class", "Path"),
+    ("py:class", "optional"),
+    ("py:class", "pd.DataFrame"),
+    ("py:class", "bids.BIDSLayout"),
+    ("py:class", "argparse.HelpFormatter"),
+    ("py:class", "argparse._SubParsersAction"),
+    ("py:class", "argparse._ActionsContainer"),
+]
+
 # -- Copybutton configuration -------------------------------------------------
 copybutton_exclude = ".linenos, .gp"
 
