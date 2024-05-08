@@ -52,7 +52,7 @@ test = [
     "pytest>=6.0.0",
     "pytest-cov",
     "pytest-mock",
-    "fids@git+https://github.com/neurodatascience/FIDS.git",
+    "fids>=0.1.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
 
