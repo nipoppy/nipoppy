@@ -24,6 +24,7 @@ dependencies = [
     "pandas",
     "pybids",
     "pydantic",
+    "pydicom",
     "rich",
     "rich_argparse",
 ]
@@ -48,12 +49,7 @@ doc = [
     "mdit-py-plugins>=0.4.0",
     "myst-parser>=2.0.0",
 ]
-test = [
-    "pytest>=6.0.0",
-    "pytest-cov",
-    "pytest-mock",
-    "fids>=0.1.0",
-]
+test = ["pytest>=6.0.0", "pytest-cov", "pytest-mock", "fids>=0.1.0"]
 tests = ["nipoppy[test]"] # alias in case of typo
 
 [project.scripts]

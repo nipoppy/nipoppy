@@ -1,13 +1,26 @@
 """Tests for DicomReorgWorkflow."""
 
+import logging
+import shutil
 from pathlib import Path
 
 import pytest
 
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
+from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
-from .conftest import create_empty_dataset, get_config, prepare_dataset
+from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
+
+
+@pytest.mark.parametrize(
+    "fpath,expected_result",
+    [
+        (DPATH_TEST_DATA / "dicom-not_derived.dcm", False),
+        (DPATH_TEST_DATA / "dicom-derived.dcm", True),
+    ],
+)
+def test_is_derived_dicom(fpath, expected_result):
+    assert is_derived_dicom(fpath) == expected_result
 
 
 @pytest.mark.parametrize(
@@ -111,10 +124,57 @@ def test_run_single_error_file_exists(tmp_path: Path):
         workflow.run_single(participant, session)
 
 
+def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    participant = "01"
+    session = "ses-1"
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
+
+    # use derived DICOM file
+    fpath_dicom = workflow.layout.dpath_raw_dicom / session / participant / "test.dcm"
+    fpath_dicom.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(DPATH_TEST_DATA / "dicom-derived.dcm", fpath_dicom)
+
+    try:
+        workflow.run_single(participant, session)
+    except Exception:
+        pass
+
+    assert any(
+        [
+            "Derived DICOM file detected" in record.message
+            and record.levelno == logging.WARNING
+            for record in caplog.records
+        ]
+    )
+
+
+def test_run_single_error_dicom_read(tmp_path: Path):
+    participant = "01"
+    session = "ses-1"
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
+
+    # create an invalid DICOM file
+    fname = "test.dcm"
+    fpath = workflow.layout.dpath_raw_dicom / session / participant / fname
+    fpath.parent.mkdir(parents=True, exist_ok=True)
+    fpath.touch()
+
+    with pytest.raises(RuntimeError, match="Error checking DICOM file"):
+        workflow.run_single(participant, session)
+
+
 def test_copy_files_default(tmp_path: Path):
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
     assert workflow.copy_files is False
+
+
+def test_check_dicoms_default(tmp_path: Path):
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+    assert workflow.check_dicoms is False
 
 
 @pytest.mark.parametrize(

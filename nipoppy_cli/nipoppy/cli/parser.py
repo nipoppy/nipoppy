@@ -209,7 +209,16 @@ def add_subparser_dicom_reorg(
     parser.add_argument(
         "--copy-files",
         action="store_true",
-        help=("Copy files when reorganizing (default: create symlinks)."),
+        help="Copy files when reorganizing (default: create symlinks).",
+    )
+    parser.add_argument(
+        "--check-dicoms",
+        action="store_true",
+        help=(
+            "Read DICOM file headers when reorganizing and check if they have the "
+            '"DERIVED" image type (which can be problematic for some BIDS '
+            "converters). The paths to the derived DICOMs will be written to the log."
+        ),
     )
     return parser
 

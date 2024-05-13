@@ -11,16 +11,20 @@ FORMAT_RICH = "%(message)s"
 FORMAT_FILE = "%(asctime)s %(levelname)-7s %(message)s"
 
 
-def get_logger(name: Optional[str] = None, level: int = logging.INFO) -> logging.Logger:
+def get_logger(
+    name: Optional[str] = "nipoppy", level: int = logging.INFO
+) -> logging.Logger:
     """Create/get a logger with rich formatting."""
-    logging.basicConfig(
-        level=level,
-        format=FORMAT_RICH,
-        datefmt=DATE_FORMAT,
-        handlers=[RichHandler(show_time=False, markup=True, rich_tracebacks=True)],
-        force=True,
-    )
-    return logging.getLogger(name=name)
+    # create logger
+    logger = logging.getLogger(name=name)
+    logger.setLevel(level)
+
+    # stream to stderr with rich formatting
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter(FORMAT_RICH, datefmt=DATE_FORMAT))
+    logger.addHandler(stream_handler)
+    logger.addHandler(RichHandler(show_time=False, markup=True, rich_tracebacks=True))
+    return logger
 
 
 def add_logfile(logger: logging.Logger, fpath_log: Path | str) -> None:

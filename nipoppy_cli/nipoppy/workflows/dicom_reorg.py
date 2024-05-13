@@ -5,7 +5,20 @@ import os
 from pathlib import Path
 from typing import Optional
 
+import pydicom
+
 from nipoppy.workflows.base import BaseWorkflow
+
+
+def is_derived_dicom(fpath: Path) -> bool:
+    """
+    Read a DICOM file's header and check if it is a derived file.
+
+    Some BIDS converters (e.g. Heudiconv) do not support derived DICOM files.
+    """
+    dcm_info = pydicom.dcmread(fpath)
+    img_types = dcm_info.ImageType
+    return "DERIVED" in img_types
 
 
 class DicomReorgWorkflow(BaseWorkflow):
@@ -15,6 +28,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         self,
         dpath_root: Path | str,
         copy_files: bool = False,
+        check_dicoms: bool = False,
         fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
@@ -28,6 +42,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dry_run=dry_run,
         )
         self.copy_files = copy_files
+        self.check_dicoms = check_dicoms
 
     def get_fpaths_to_reorg(
         self, participant: str, session: str, participant_first=True
@@ -81,6 +96,18 @@ class DicomReorgWorkflow(BaseWorkflow):
         dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
         self.mkdir(dpath_reorganized)
         for fpath_source in fpaths_to_reorg:
+            # check file (though only error out if DICOM cannot be read)
+            if self.check_dicoms:
+                try:
+                    if is_derived_dicom(fpath_source):
+                        self.logger.warning(
+                            f"Derived DICOM file detected: {fpath_source}"
+                        )
+                except Exception as exception:
+                    raise RuntimeError(
+                        f"Error checking DICOM file {fpath_source}: {exception}"
+                    )
+
             fpath_dest = dpath_reorganized / self.apply_fname_mapping(
                 fpath_source.name, participant=participant, session=session
             )
