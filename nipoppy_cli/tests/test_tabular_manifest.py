@@ -67,6 +67,46 @@ def test_validate_sessions_visits(sessions, visits, is_valid):
 
 
 @pytest.mark.parametrize(
+    "participant_ids,is_valid", [(["01", "02", "03"], True), (["sub-01", "02"], False)]
+)
+def test_validate_participant_id(participant_ids, is_valid):
+    manifest = Manifest(
+        data={
+            Manifest.col_participant_id: participant_ids,
+            Manifest.col_visit: ["1" for _ in participant_ids],
+            Manifest.col_session: ["ses-1" for _ in participant_ids],
+            Manifest.col_datatype: [[] for _ in participant_ids],
+        }
+    )
+    with (
+        pytest.raises(ValueError, match="Participant ID should not start with")
+        if not is_valid
+        else nullcontext()
+    ):
+        assert isinstance(Manifest.validate(manifest), Manifest)
+
+
+@pytest.mark.parametrize(
+    "sessions,is_valid", [(["ses-1", "ses-2"], True), (["ses-1", "2"], False)]
+)
+def test_validate_session(sessions, is_valid):
+    manifest = Manifest(
+        data={
+            Manifest.col_participant_id: ["01" for _ in sessions],
+            Manifest.col_visit: sessions,
+            Manifest.col_session: sessions,
+            Manifest.col_datatype: [[] for _ in sessions],
+        }
+    )
+    with (
+        pytest.raises(ValueError, match="Session should start with")
+        if not is_valid
+        else nullcontext()
+    ):
+        assert isinstance(Manifest.validate(manifest), Manifest)
+
+
+@pytest.mark.parametrize(
     "data,session,expected_count",
     [
         (
