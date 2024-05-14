@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
@@ -40,9 +41,16 @@ def test_get_fpaths_to_reorg(
 ):
     dpath_root = tmp_path / "my_dataset"
 
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest={participant: [session]}
+    )
+
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+    workflow.dicom_dir_map = DicomDirMap.load_or_generate(
+        manifest=manifest, fpath_dicom_dir_map=None, participant_first=participant_first
+    )
     for fpath in fpaths:
-        fpath_full = workflow.layout.dpath_raw_dicom / fpath
+        fpath_full: Path = workflow.layout.dpath_raw_dicom / fpath
         fpath_full.parent.mkdir(parents=True, exist_ok=True)
         fpath_full.touch()
 
@@ -50,14 +58,22 @@ def test_get_fpaths_to_reorg(
         workflow.get_fpaths_to_reorg(
             participant=participant,
             session=session,
-            participant_first=participant_first,
         )
     ) == len(fpaths)
 
 
 def test_get_fpaths_to_reorg_error_not_found(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
+    participant = "XXX"
+    session = "ses-X"
+
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest={participant: [session]}
+    )
+    workflow.dicom_dir_map = DicomDirMap.load_or_generate(
+        manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
+    )
 
     with pytest.raises(FileNotFoundError, match="Raw DICOM directory not found"):
         workflow.get_fpaths_to_reorg("XXX", "ses-X")
@@ -109,12 +125,20 @@ def test_run_single_error_file_exists(tmp_path: Path):
     participant = "01"
     session = "ses-1"
     dataset_name = "my_dataset"
+
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest={participant: [session]}
+    )
+    workflow.dicom_dir_map = DicomDirMap.load_or_generate(
+        manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
+    )
 
     # create the same file in both the downloaded and organized directories
     fname = "test.dcm"
     for fpath in [
-        workflow.layout.dpath_raw_dicom / session / participant / fname,
+        workflow.layout.dpath_raw_dicom / participant / session / fname,
         workflow.layout.dpath_sourcedata / participant / session / fname,
     ]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
@@ -130,8 +154,15 @@ def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixtu
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
 
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest={participant: [session]}
+    )
+    workflow.dicom_dir_map = DicomDirMap.load_or_generate(
+        manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
+    )
+
     # use derived DICOM file
-    fpath_dicom = workflow.layout.dpath_raw_dicom / session / participant / "test.dcm"
+    fpath_dicom = workflow.layout.dpath_raw_dicom / participant / session / "test.dcm"
     fpath_dicom.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(DPATH_TEST_DATA / "dicom-derived.dcm", fpath_dicom)
 
@@ -155,9 +186,16 @@ def test_run_single_error_dicom_read(tmp_path: Path):
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
 
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest={participant: [session]}
+    )
+    workflow.dicom_dir_map = DicomDirMap.load_or_generate(
+        manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
+    )
+
     # create an invalid DICOM file
     fname = "test.dcm"
-    fpath = workflow.layout.dpath_raw_dicom / session / participant / fname
+    fpath = workflow.layout.dpath_raw_dicom / participant / session / fname
     fpath.parent.mkdir(parents=True, exist_ok=True)
     fpath.touch()
 

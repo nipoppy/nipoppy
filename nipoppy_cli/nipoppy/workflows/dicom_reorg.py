@@ -45,19 +45,15 @@ class DicomReorgWorkflow(BaseWorkflow):
         self.check_dicoms = check_dicoms
 
     def get_fpaths_to_reorg(
-        self, participant: str, session: str, participant_first=True
+        self,
+        participant: str,
+        session: str,
     ) -> list[Path]:
-        """
-        Get file paths to reorganize for a single participant and session.
-
-        This method can be overridden if the raw DICOM layout is different than what
-        is typically expected.
-        """
-        # support both participant-first and session-first raw DICOM layouts
-        if participant_first:
-            dpath_downloaded = self.layout.dpath_raw_dicom / participant / session
-        else:
-            dpath_downloaded = self.layout.dpath_raw_dicom / session / participant
+        """Get file paths to reorganize for a single participant and session."""
+        dpath_downloaded = (
+            self.layout.dpath_raw_dicom
+            / self.dicom_dir_map.get_dicom_dir(participant=participant, session=session)
+        )
 
         # make sure directory exists
         if not dpath_downloaded.exists():
@@ -87,10 +83,7 @@ class DicomReorgWorkflow(BaseWorkflow):
     def run_single(self, participant: str, session: str):
         """Reorganize downloaded DICOM files for a single participant and session."""
         # get paths to reorganize
-        # TODO add config option for session-first or participant-first raw DICOM layout
-        fpaths_to_reorg = self.get_fpaths_to_reorg(
-            participant, session, participant_first=False
-        )
+        fpaths_to_reorg = self.get_fpaths_to_reorg(participant, session)
 
         # do reorg
         dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session

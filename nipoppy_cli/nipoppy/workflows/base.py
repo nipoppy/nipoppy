@@ -15,6 +15,7 @@ from nipoppy.config.main import Config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
+from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import add_path_timestamp
@@ -294,6 +295,7 @@ class BaseWorkflow(Base, ABC):
             )
             doughnut = generate_doughnut(
                 manifest=self.manifest,
+                dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.layout.dpath_raw_dicom,
                 dpath_organized=self.layout.dpath_sourcedata,
                 dpath_bidsified=self.layout.dpath_bids,
@@ -312,3 +314,16 @@ class BaseWorkflow(Base, ABC):
                 )
 
             return doughnut
+
+    @cached_property
+    def dicom_dir_map(self) -> DicomDirMap:
+        """Get the DICOM directory mapping."""
+        if self.config.DICOM_DIR_MAP_FILE is not None:
+            self.logger.info(
+                f"Loading DICOM directory map from {self.config.DICOM_DIR_MAP_FILE}"
+            )
+        return DicomDirMap.load_or_generate(
+            manifest=self.manifest,
+            fpath_dicom_dir_map=self.config.DICOM_DIR_MAP_FILE,
+            participant_first=self.config.DICOM_DIR_PARTICIPANT_FIRST,
+        )

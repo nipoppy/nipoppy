@@ -7,6 +7,7 @@ from typing import Optional, Self
 from pydantic import Field
 
 from nipoppy.logger import get_logger
+from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
 from nipoppy.utils import (
     FIELD_DESCRIPTION_MAP,
@@ -145,29 +146,25 @@ class Doughnut(Manifest):
 
 def generate_doughnut(
     manifest: Manifest,
+    dicom_dir_map: DicomDirMap,
     dpath_downloaded: Optional[str | Path] = None,
     dpath_organized: Optional[str | Path] = None,
     dpath_bidsified: Optional[str | Path] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
-    # TODO allow custom map from participant_id to participant_dicom_dir
 ) -> Doughnut:
     """Generate a doughnut object."""
 
     def check_status(
         dpath: Optional[str | Path],
-        participant_dname: str,
-        session: str,
-        session_first=False,
+        dname_subdirectory: str | Path,
     ):
+        dname_subdirectory = Path(dname_subdirectory)
         if dpath is None:
             status = False
         else:
             dpath = Path(dpath)
-            if session_first:
-                dpath_participant = dpath / session / participant_dname
-            else:
-                dpath_participant = dpath / participant_dname / session
+            dpath_participant = dpath / dname_subdirectory
             if dpath_participant.exists():
                 status = next(dpath_participant.iterdir(), None) is not None
             else:
@@ -189,7 +186,9 @@ def generate_doughnut(
         session = manifest_record[manifest.col_session]
 
         # get DICOM dir
-        participant_dicom_dir = participant
+        participant_dicom_dir = dicom_dir_map.get_dicom_dir(
+            participant=participant, session=session
+        )
 
         # get DICOM and BIDS IDs
         dicom_id = participant_id_to_dicom_id(participant)
@@ -201,22 +200,14 @@ def generate_doughnut(
             status_bidsified = False
         else:
             status_downloaded = check_status(
-                dpath_downloaded,
-                participant_dicom_dir,
-                session,
-                session_first=True,
+                dpath=dpath_downloaded,
+                dname_subdirectory=participant_dicom_dir,
             )
             status_organized = check_status(
-                dpath_organized,
-                dicom_id,
-                session,
-                session_first=True,
+                dpath=dpath_organized, dname_subdirectory=Path(dicom_id, session)
             )
             status_bidsified = check_status(
-                dpath_bidsified,
-                bids_id,
-                session,
-                session_first=False,
+                dpath=dpath_bidsified, dname_subdirectory=Path(bids_id, session)
             )
 
         doughnut_records.append(
@@ -242,6 +233,7 @@ def generate_doughnut(
 def update_doughnut(
     doughnut: Doughnut,
     manifest: Manifest,
+    dicom_dir_map: DicomDirMap,
     dpath_downloaded: Optional[str | Path] = None,
     dpath_organized: Optional[str | Path] = None,
     dpath_bidsified: Optional[str | Path] = None,
@@ -263,6 +255,7 @@ def update_doughnut(
     updated_doughnut = doughnut.concatenate(
         generate_doughnut(
             manifest=manifest_subset,
+            dicom_dir_map=dicom_dir_map,
             dpath_downloaded=dpath_downloaded,
             dpath_organized=dpath_organized,
             dpath_bidsified=dpath_bidsified,
