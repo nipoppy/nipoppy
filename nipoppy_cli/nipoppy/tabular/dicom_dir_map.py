@@ -3,10 +3,10 @@
 from pathlib import Path
 from typing import Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.tabular.base import BaseTabular, BaseTabularModel, model_validator
+from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
@@ -83,20 +83,23 @@ class DicomDirMap(BaseTabular):
 
         Parameters
         ----------
-        manifest : Manifest
-            Manifest for generating the DicomDirMap.
+        manifest : :class:`nipoppy.tabular.manifest.Manifest`
+            Manifest for generating the mapping (not used if ``fpath_dicom_dir_map``
+            is not ``None``).
         fpath_dicom_dir_map : str | Path | None
-            Path to a custom DICOM directory mapping file. If None,
+            Path to a custom DICOM directory mapping file. If ``None``,
             the DICOM directory mapping will be generated from the manifest.
         participant_first : bool
-            Whether the generated uses "<PARTICIPANT>/<SESSION>" order
-            (True) or "<SESSION>/<PARTICIPANT>" (False)
+            Whether the generated uses ``<PARTICIPANT>/<SESSION>`` order
+            (True) or ``<SESSION>/<PARTICIPANT>`` (False). Not used if
+            ``fpath_dicom_dir_map`` is not ``None``
         validate : bool, optional
-            Whether to validate (through Pydantic) the created object, by default True
+            Whether to validate (through Pydantic) the created object,
+            by default ``True``
 
         Returns
         -------
-        DicomDirMap
+        :class:`nipoppy.tabular.dicom_dir_map.DicomDirMap`
         """
         # if these is a custom dicom_dir_map, use it
         if fpath_dicom_dir_map is not None:
