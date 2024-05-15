@@ -5,10 +5,12 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypeVar, Union
 
 import bids
 import pandas as pd
+
+StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
@@ -85,11 +87,13 @@ def strip_session(session: Optional[str]):
 
 
 def create_bids_db(
-    dpath_bids: Path | str,
-    dpath_bids_db: Optional[Path | str] = None,
+    dpath_bids: StrOrPathLike,
+    dpath_bids_db: Optional[StrOrPathLike] = None,
     validate=False,
     reset_database=True,
-    ignore_patterns: Optional[list[str | re.Pattern] | str | re.Pattern] = None,
+    ignore_patterns: Optional[
+        Union[list[Union[str, re.Pattern]], str, re.Pattern]
+    ] = None,
     resolve_paths=True,
 ) -> bids.BIDSLayout:
     """Create a BIDSLayout using an indexer."""
@@ -133,12 +137,12 @@ def get_pipeline_tag(
     return sep.join(components)
 
 
-def load_json(fpath: str | Path, **kwargs) -> dict:
+def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
     """Load a JSON file.
 
     Parameters
     ----------
-    fpath : str | Path
+    fpath : StrOrPathLike
         Path to the JSON file
     **kwargs :
         Keyword arguments to pass to json.load
@@ -152,14 +156,14 @@ def load_json(fpath: str | Path, **kwargs) -> dict:
         return json.load(file, **kwargs)
 
 
-def save_json(obj: dict, fpath: str | Path, **kwargs):
+def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     """Save a JSON object to a file.
 
     Parameters
     ----------
     obj : dict
         The JSON object
-    fpath : str | Path
+    fpath : StrOrPathLike
         Path to the JSON file to write
     indent : int, optional
         Indentation level, by default 4
@@ -174,14 +178,14 @@ def save_json(obj: dict, fpath: str | Path, **kwargs):
         json.dump(obj, file, **kwargs)
 
 
-def add_path_suffix(path: Path | str, suffix: str, sep="-") -> Path:
+def add_path_suffix(path: StrOrPathLike, suffix: str, sep="-") -> Path:
     """Add a suffix to a path, before the last file extension (if any)."""
     path = Path(path)
     return Path(path.parent, f"{path.stem}{sep}{suffix}{path.suffix}")
 
 
 def add_path_timestamp(
-    path: Path | str, timestamp_format="%Y%m%d_%H%M", sep="-"
+    path: StrOrPathLike, timestamp_format="%Y%m%d_%H%M", sep="-"
 ) -> Path:
     """Add a timestamp to a path, before the last file extension (if any)."""
     timestamp = datetime.datetime.now().strftime(timestamp_format)
@@ -190,19 +194,19 @@ def add_path_timestamp(
 
 def save_df_with_backup(
     df: pd.DataFrame,
-    fpath_symlink: str | Path,
+    fpath_symlink: StrOrPathLike,
     dname_backups: Optional[str] = None,
     use_relative_path=True,
     dry_run=False,
     **kwargs,
-) -> Path | None:
+) -> Union[Path, None]:
     """Save a dataframe as a symlink pointing to a timestamped "backup" file.
 
     Parameters
     ----------
     df : pd.DataFrame
         The dataframe to save
-    fpath_symlink : str | Path
+    fpath_symlink : StrOrPathLike
         The path to the symlink
     dname_backups : Optional[str], optional
         The directory where the timestamped backup file should be written

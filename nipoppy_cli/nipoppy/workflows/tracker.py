@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.tabular.bagel import Bagel
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -13,7 +14,7 @@ class PipelineTracker(BasePipelineWorkflow):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
         participant: str = None,

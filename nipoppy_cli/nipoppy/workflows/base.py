@@ -8,7 +8,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
@@ -17,7 +17,7 @@ from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import add_path_timestamp
+from nipoppy.utils import StrOrPathLike, add_path_timestamp
 
 LOG_SUFFIX = ".log"
 
@@ -33,7 +33,7 @@ class BaseWorkflow(Base, ABC):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         name: str,
         fpath_layout: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
@@ -43,7 +43,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        dpath_root : Path | str
+        dpath_root : StrOrPathLike
             Path the the root directory of the dataset.
         name : str
             Name of the workflow, used for logging.
@@ -65,7 +65,7 @@ class BaseWorkflow(Base, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[str | list[str]] = None,
+        dnames_parent: Optional[Union[str, list[str]]] = None,
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""
@@ -86,10 +86,10 @@ class BaseWorkflow(Base, ABC):
 
     def run_command(
         self,
-        command_or_args: Sequence[str] | str,
+        command_or_args: Union[Sequence[str], str],
         check=True,
         **kwargs,
-    ) -> subprocess.Popen | str:
+    ) -> Union[subprocess.Popen, str]:
         """Run a command in a subprocess.
 
         The command's stdout and stderr outputs are written to the log
@@ -101,7 +101,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        command_or_args : Sequence[str] | str
+        command_or_args : Union[Sequence[str], str]
             The command to run.
         check : bool, optional
             If True, raise an error if the process exits with a non-zero code,
@@ -111,7 +111,7 @@ class BaseWorkflow(Base, ABC):
 
         Returns
         -------
-        subprocess.Popen | str
+        subprocess.Popen or str
         """
 
         def process_output(

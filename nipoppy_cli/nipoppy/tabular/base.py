@@ -5,12 +5,12 @@ from __future__ import annotations
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Self, Sequence
+from typing import Any, Optional, Self, Sequence, Union
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
 
-from nipoppy.utils import save_df_with_backup
+from nipoppy.utils import StrOrPathLike, save_df_with_backup
 
 
 class BaseTabularModel(BaseModel):
@@ -79,7 +79,7 @@ class BaseTabular(pd.DataFrame, ABC):
         raise NotImplementedError("model must be assigned in subclass")
 
     @classmethod
-    def load(cls, fpath: str | Path, validate=True, **kwargs) -> Self:
+    def load(cls, fpath: StrOrPathLike, validate=True, **kwargs) -> Self:
         """Load (and optionally validate) a tabular data file."""
         if "dtype" in kwargs:
             raise ValueError(
@@ -158,7 +158,9 @@ class BaseTabular(pd.DataFrame, ABC):
 
         return diff
 
-    def add_or_update_records(self, records: list[dict] | dict, validate=True) -> Self:
+    def add_or_update_records(
+        self, records: Union[list[dict], dict], validate=True
+    ) -> Self:
         """Add or update records."""
         if isinstance(records, dict):
             records = [records]
@@ -192,12 +194,12 @@ class BaseTabular(pd.DataFrame, ABC):
 
     def save_with_backup(
         self,
-        fpath_symlink: str | Path,
+        fpath_symlink: StrOrPathLike,
         dname_backups: Optional[str] = None,
         use_relative_path=True,
         sort=True,
         dry_run=False,
-    ) -> Path | None:
+    ) -> Union[Path, None]:
         """Save the dataframe to a file with a backup."""
         tabular_new = self.sort_values() if sort else self
         if fpath_symlink.exists():

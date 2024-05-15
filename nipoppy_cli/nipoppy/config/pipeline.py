@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 from pydantic import ConfigDict, model_validator
 
@@ -57,7 +57,7 @@ class PipelineConfig(ModelWithContainerConfig):
 
     def add_pybids_ignore_patterns(
         self,
-        patterns: Sequence[str | re.Pattern] | str | re.Pattern,
+        patterns: Union[Sequence[Union[str, re.Pattern]], str, re.Pattern],
     ):
         """Add pattern(s) to ignore for PyBIDS."""
         if isinstance(patterns, (str, re.Pattern)):

@@ -8,6 +8,7 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -16,7 +17,7 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
         participant: str = None,
@@ -46,7 +47,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         participant: str,
         session: str,
-        bind_paths: Optional[list[str | Path]] = None,
+        bind_paths: Optional[list[StrOrPathLike]] = None,
     ) -> str:
         """Update container config and generate container command."""
         if bind_paths is None:

@@ -3,10 +3,10 @@
 import logging
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import get_pipeline_tag
+from nipoppy.utils import StrOrPathLike, get_pipeline_tag
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -15,7 +15,7 @@ class BidsConversionRunner(PipelineRunner):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
@@ -96,7 +96,7 @@ class BidsConversionRunner(PipelineRunner):
 
     def generate_fpath_log(
         self,
-        dname_parent: Optional[str | list[str]] = None,
+        dname_parent: Optional[Union[str, list[str]]] = None,
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""

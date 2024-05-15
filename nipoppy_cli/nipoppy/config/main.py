@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Self
+from typing import Any, Optional, Self, Union
 
 from pydantic import ConfigDict, Field, model_validator
 
 from nipoppy.config.container import ModelWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import check_session, load_json
+from nipoppy.utils import StrOrPathLike, check_session, load_json
 
 
 class Config(ModelWithContainerConfig):
@@ -46,7 +46,7 @@ class Config(ModelWithContainerConfig):
     def _propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""
 
-        def _propagate(pipeline_or_pipeline_dicts: dict | PipelineConfig):
+        def _propagate(pipeline_or_pipeline_dicts: Union[dict, PipelineConfig]):
             if isinstance(pipeline_or_pipeline_dicts, PipelineConfig):
                 pipeline_config = pipeline_or_pipeline_dicts
                 container_config = pipeline_config.get_container_config()
@@ -108,12 +108,12 @@ class Config(ModelWithContainerConfig):
                 f"{pipeline_name} {pipeline_version} {pipeline_step}"
             )
 
-    def save(self, fpath: str | Path, **kwargs):
+    def save(self, fpath: StrOrPathLike, **kwargs):
         """Save the config to a JSON file.
 
         Parameters
         ----------
-        fpath : str | Path
+        fpath : StrOrPathLike
             Path to the JSON file to write
         """
         fpath = Path(fpath)
@@ -124,6 +124,6 @@ class Config(ModelWithContainerConfig):
             file.write(self.model_dump_json(**kwargs))
 
     @classmethod
-    def load(cls, path: str | Path) -> Self:
+    def load(cls, path: StrOrPathLike) -> Self:
         """Load a dataset configuration."""
         return cls(**load_json(path))
