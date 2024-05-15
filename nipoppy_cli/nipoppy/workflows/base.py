@@ -269,7 +269,7 @@ class BaseWorkflow(Base, ABC):
     @cached_property
     def manifest(self) -> Manifest:
         """Load the manifest."""
-        fpath_manifest = self.layout.fpath_manifest
+        fpath_manifest = Path(self.layout.fpath_manifest)
         expected_sessions = self.config.SESSIONS
         expected_visits = self.config.VISITS
         try:
@@ -285,7 +285,7 @@ class BaseWorkflow(Base, ABC):
     def doughnut(self) -> Doughnut:
         """Load the doughnut."""
         logger = self.logger
-        fpath_doughnut = self.layout.fpath_doughnut
+        fpath_doughnut = Path(self.layout.fpath_doughnut)
         try:
             return Doughnut.load(fpath_doughnut)
         except FileNotFoundError:
@@ -318,8 +318,10 @@ class BaseWorkflow(Base, ABC):
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:
         """Get the DICOM directory mapping."""
-        if self.config.DICOM_DIR_MAP_FILE is not None:
-            if not self.config.DICOM_DIR_MAP_FILE.exists():
+        fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
+        if fpath_dicom_dir_map is not None:
+            fpath_dicom_dir_map = Path(fpath_dicom_dir_map)
+            if not fpath_dicom_dir_map.exists():
                 raise FileNotFoundError(
                     "DICOM directory map file not found"
                     f": {self.config.DICOM_DIR_MAP_FILE}"
@@ -327,6 +329,6 @@ class BaseWorkflow(Base, ABC):
 
         return DicomDirMap.load_or_generate(
             manifest=self.manifest,
-            fpath_dicom_dir_map=self.config.DICOM_DIR_MAP_FILE,
+            fpath_dicom_dir_map=fpath_dicom_dir_map,
             participant_first=self.config.DICOM_DIR_PARTICIPANT_FIRST,
         )

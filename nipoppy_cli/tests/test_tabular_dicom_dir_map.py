@@ -30,10 +30,17 @@ def test_load_invalid(fname):
         DicomDirMap.load(DPATH_TEST_DATA / fname)
 
 
-def test_load_or_generate_load():
+@pytest.mark.parametrize(
+    "fpath_dicom_dir_map",
+    [
+        DPATH_TEST_DATA / "dicom_dir_map1.csv",
+        str(DPATH_TEST_DATA / "dicom_dir_map1.csv"),
+    ],
+)
+def test_load_or_generate_load(fpath_dicom_dir_map):
     dicom_dir_map = DicomDirMap.load_or_generate(
         manifest=Manifest(),
-        fpath_dicom_dir_map=DPATH_TEST_DATA / "dicom_dir_map1.csv",
+        fpath_dicom_dir_map=fpath_dicom_dir_map,
         participant_first=True,
     )
     assert isinstance(dicom_dir_map, DicomDirMap)

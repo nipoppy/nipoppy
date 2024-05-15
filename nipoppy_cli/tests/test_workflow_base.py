@@ -158,3 +158,10 @@ def test_dicom_dir_map_custom(workflow: BaseWorkflow):
     workflow.config = get_config()
     workflow.config.DICOM_DIR_MAP_FILE = DPATH_TEST_DATA / "dicom_dir_map1.csv"
     assert isinstance(workflow.dicom_dir_map, DicomDirMap)
+
+
+def test_dicom_dir_map_not_found(workflow: BaseWorkflow):
+    workflow.config = get_config()
+    workflow.config.DICOM_DIR_MAP_FILE = "fake_path"
+    with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
+        workflow.dicom_dir_map

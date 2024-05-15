@@ -103,7 +103,7 @@ class DicomDirMap(BaseTabular):
         """
         # if these is a custom dicom_dir_map, use it
         if fpath_dicom_dir_map is not None:
-            return cls.load(fpath_dicom_dir_map, validate=validate)
+            return cls.load(Path(fpath_dicom_dir_map), validate=validate)
 
         # else depends on participant_first or no
         else:
