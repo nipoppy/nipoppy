@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Self
+from typing import Any, Optional
 
 from pydantic import ConfigDict, Field, model_validator
+from typing_extensions import Self
 
 from nipoppy.config.container import ModelWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig

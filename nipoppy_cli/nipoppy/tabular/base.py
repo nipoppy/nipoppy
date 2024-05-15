@@ -5,10 +5,11 @@ from __future__ import annotations
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Self, Sequence
+from typing import Any, Optional, Sequence
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
+from typing_extensions import Self
 
 from nipoppy.utils import StrOrPathLike, save_df_with_backup
 

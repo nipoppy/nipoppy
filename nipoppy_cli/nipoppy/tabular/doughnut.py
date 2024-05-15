@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional, Self
+from typing import Optional
 
 from pydantic import Field
+from typing_extensions import Self
 
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest, ManifestModel

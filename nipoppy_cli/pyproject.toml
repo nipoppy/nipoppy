@@ -26,6 +26,7 @@ dependencies = [
     "pydantic",
     "rich",
     "rich_argparse",
+    "typing-extensions",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
