@@ -7,9 +7,9 @@ from pydantic import ConfigDict, Field, model_validator
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.utils import (
-    BIDS_SESSION_PREFIX,
-    BIDS_SUBJECT_PREFIX,
     FIELD_DESCRIPTION_MAP,
+    check_participant_id_strict,
+    check_session_strict,
 )
 
 
@@ -46,18 +46,8 @@ class ManifestModel(BaseTabularModel):
     @model_validator(mode="after")
     def validate_after(self) -> Self:
         """Validate fields after instance creation."""
-        if self.participant_id.startswith(BIDS_SUBJECT_PREFIX):
-            raise ValueError(
-                f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
-                f", got {self.participant_id}"
-            )
-        if self.session is not None and not self.session.startswith(
-            BIDS_SESSION_PREFIX
-        ):
-            raise ValueError(
-                f'Session should start with "{BIDS_SESSION_PREFIX}"'
-                f", got {self.session}"
-            )
+        check_participant_id_strict(self.participant_id)
+        check_session_strict(self.session)
         return self
 
     # allow extra columns

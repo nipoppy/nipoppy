@@ -9,7 +9,12 @@ from nipoppy.config.container import ModelWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.utils import BIDS_SESSION_PREFIX, check_session, load_json
+from nipoppy.utils import (
+    BIDS_SESSION_PREFIX,
+    check_session,
+    check_session_strict,
+    load_json,
+)
 
 
 class Config(ModelWithContainerConfig):
@@ -57,11 +62,7 @@ class Config(ModelWithContainerConfig):
     def _check_sessions_have_prefix(self) -> Self:
         """Check that sessions have the BIDS prefix."""
         for session in self.SESSIONS:
-            if not session.startswith(BIDS_SESSION_PREFIX):
-                raise ValueError(
-                    f'Sessions should start with "{BIDS_SESSION_PREFIX}"'
-                    f", got {session}"
-                )
+            check_session_strict(session)
         return self
 
     def _check_dicom_dir_options(self) -> Self:
