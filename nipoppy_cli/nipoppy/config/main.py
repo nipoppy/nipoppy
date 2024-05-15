@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Self, Union
+from typing import Any, Optional, Self
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -46,7 +46,7 @@ class Config(ModelWithContainerConfig):
     def _propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""
 
-        def _propagate(pipeline_or_pipeline_dicts: Union[dict, PipelineConfig]):
+        def _propagate(pipeline_or_pipeline_dicts: dict | PipelineConfig):
             if isinstance(pipeline_or_pipeline_dicts, PipelineConfig):
                 pipeline_config = pipeline_or_pipeline_dicts
                 container_config = pipeline_config.get_container_config()

@@ -1,5 +1,7 @@
 """Workflow utilities."""
 
+from __future__ import annotations
+
 import logging
 import os
 import shlex
@@ -8,7 +10,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
@@ -65,7 +67,7 @@ class BaseWorkflow(Base, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[Union[str, list[str]]] = None,
+        dnames_parent: Optional[str | list[str]] = None,
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""
@@ -86,10 +88,10 @@ class BaseWorkflow(Base, ABC):
 
     def run_command(
         self,
-        command_or_args: Union[Sequence[str], str],
+        command_or_args: Sequence[str] | str,
         check=True,
         **kwargs,
-    ) -> Union[subprocess.Popen, str]:
+    ) -> subprocess.Popen | str:
         """Run a command in a subprocess.
 
         The command's stdout and stderr outputs are written to the log
@@ -101,7 +103,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        command_or_args : Union[Sequence[str], str]
+        command_or_args : Sequence[str]  |  str
             The command to run.
         check : bool, optional
             If True, raise an error if the process exits with a non-zero code,

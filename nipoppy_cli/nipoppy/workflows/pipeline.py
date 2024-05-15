@@ -1,11 +1,13 @@
 """Base class for pipeline workflows."""
 
+from __future__ import annotations
+
 import json
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import bids
 from pydantic import ValidationError
@@ -116,7 +118,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         return fpath_container
 
     def _check_files_for_json(
-        self, fpaths: Union[StrOrPathLike, list[StrOrPathLike]]
+        self, fpaths: StrOrPathLike | list[StrOrPathLike]
     ) -> dict:
         if isinstance(fpaths, (str, Path)):
             fpaths = [fpaths]
@@ -384,7 +386,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[Union[str, list[str]]] = None,
+        dnames_parent: Optional[str | list[str]] = None,
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""

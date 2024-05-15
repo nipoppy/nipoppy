@@ -1,11 +1,13 @@
 """Utility functions."""
 
+from __future__ import annotations
+
 import datetime
 import json
 import os
 import re
 from pathlib import Path
-from typing import Optional, TypeVar, Union
+from typing import Optional, TypeVar
 
 import bids
 import pandas as pd
@@ -91,9 +93,7 @@ def create_bids_db(
     dpath_bids_db: Optional[StrOrPathLike] = None,
     validate=False,
     reset_database=True,
-    ignore_patterns: Optional[
-        Union[list[Union[str, re.Pattern]], str, re.Pattern]
-    ] = None,
+    ignore_patterns: Optional[list[str | re.Pattern] | str | re.Pattern] = None,
     resolve_paths=True,
 ) -> bids.BIDSLayout:
     """Create a BIDSLayout using an indexer."""
@@ -199,7 +199,7 @@ def save_df_with_backup(
     use_relative_path=True,
     dry_run=False,
     **kwargs,
-) -> Union[Path, None]:
+) -> Path | None:
     """Save a dataframe as a symlink pointing to a timestamped "backup" file.
 
     Parameters

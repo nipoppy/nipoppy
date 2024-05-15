@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Self, Sequence, Union
+from typing import Any, Optional, Self, Sequence
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -158,9 +158,7 @@ class BaseTabular(pd.DataFrame, ABC):
 
         return diff
 
-    def add_or_update_records(
-        self, records: Union[list[dict], dict], validate=True
-    ) -> Self:
+    def add_or_update_records(self, records: list[dict] | dict, validate=True) -> Self:
         """Add or update records."""
         if isinstance(records, dict):
             records = [records]
@@ -199,7 +197,7 @@ class BaseTabular(pd.DataFrame, ABC):
         use_relative_path=True,
         sort=True,
         dry_run=False,
-    ) -> Union[Path, None]:
+    ) -> Path | None:
         """Save the dataframe to a file with a backup."""
         tabular_new = self.sort_values() if sort else self
         if fpath_symlink.exists():

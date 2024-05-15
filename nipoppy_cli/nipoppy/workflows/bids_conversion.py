@@ -1,9 +1,11 @@
 """Workflow for convert command."""
 
+from __future__ import annotations
+
 import logging
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.utils import StrOrPathLike, get_pipeline_tag
@@ -96,7 +98,7 @@ class BidsConversionRunner(PipelineRunner):
 
     def generate_fpath_log(
         self,
-        dname_parent: Optional[Union[str, list[str]]] = None,
+        dname_parent: Optional[str | list[str]] = None,
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""

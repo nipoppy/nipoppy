@@ -1,8 +1,10 @@
 """Utilities for tests."""
 
+from __future__ import annotations
+
 import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -110,7 +112,7 @@ def create_empty_dataset(dpath_root: Path):
 def _process_participants_sessions(
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
-    sessions: Optional[Union[list[str], dict[str, list[str]]]] = None,
+    sessions: Optional[list[str] | dict[str, list[str]]] = None,
 ):
     """Process participant/session arguments."""
     if participants_and_sessions is None:
