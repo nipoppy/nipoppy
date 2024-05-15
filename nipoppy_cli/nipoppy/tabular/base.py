@@ -1,5 +1,7 @@
 """Generic class for tabular data."""
 
+from __future__ import annotations
+
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path

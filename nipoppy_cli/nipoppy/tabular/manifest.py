@@ -1,5 +1,7 @@
 """Class for the dataset manifest."""
 
+from __future__ import annotations
+
 from typing import Optional, Self
 
 import pandas as pd
