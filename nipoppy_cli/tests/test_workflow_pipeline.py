@@ -46,45 +46,53 @@ class PipelineWorkflow(BasePipelineWorkflow):
         # override the config
         self.config = get_config(
             visits=["1"],
-            proc_pipelines={
+            proc_pipelines=[
                 # built-in pipelines
-                "fmriprep": {
-                    "23.1.3": {
-                        "CONTAINER": "fmriprep.sif",
-                        "INVOCATION": {"arg1": "val1"},
-                    },
-                    "20.2.7": {},
+                {
+                    "NAME": "fmriprep",
+                    "VERSION": "23.1.3",
+                    "CONTAINER": "fmriprep.sif",
+                    "INVOCATION": {"arg1": "val1"},
                 },
-                "mriqc": {
-                    "23.1.0": {},
+                {
+                    "NAME": "fmriprep",
+                    "VERSION": "20.2.7",
+                },
+                {
+                    "NAME": "mriqc",
+                    "VERSION": "23.1.0",
                 },
                 # user-added pipeline
-                "my_pipeline": {
-                    "1.0": {
-                        "CONTAINER": "my_container.sif",
-                        "DESCRIPTOR": {
-                            "custom": {
-                                "nipoppy": {
-                                    "CONTAINER_CONFIG": {
-                                        "ARGS": ["--pipeline-specific-arg"]
-                                    }
+                {
+                    "NAME": "my_pipeline",
+                    "VERSION": "1.0",
+                    "CONTAINER": "my_container.sif",
+                    "DESCRIPTOR": {
+                        "custom": {
+                            "nipoppy": {
+                                "CONTAINER_CONFIG": {
+                                    "ARGS": ["--pipeline-specific-arg"]
                                 }
                             }
-                        },
-                        "INVOCATION": {},
-                    }
+                        }
+                    },
+                    "INVOCATION": {},
                 },
                 # pipeline without a container
-                "no_container": {"2.0": {}},
+                {"NAME": "no_container", "VERSION": "2.0"},
                 # pipeline without a descriptor without a boutiques config
-                "no_boutiques_config": {"1.0": {"DESCRIPTOR": {}}},
-                # pipeline with a descriptor with an invalid boutiques config
-                "bad_boutiques_config": {
-                    "1.0": {
-                        "DESCRIPTOR": {"custom": {"nipoppy": {"INVALID_ARG": "value"}}}
-                    },
+                {
+                    "NAME": "no_boutiques_config",
+                    "VERSION": "1.0",
+                    "DESCRIPTOR": {},
                 },
-            },
+                # pipeline with a descriptor with an invalid boutiques config
+                {
+                    "NAME": "bad_boutiques_config",
+                    "VERSION": "1.0",
+                    "DESCRIPTOR": {"custom": {"nipoppy": {"INVALID_ARG": "value"}}},
+                },
+            ],
         )
 
     def run_single(self, subject: str, session: str):
@@ -207,23 +215,23 @@ def test_descriptor(pipeline_name, pipeline_version, tmp_path: Path):
     fpath_descriptor_relative = (
         workflow.layout.dpath_descriptors / "descriptor_at_relative_path.json"
     )
-    workflow.config.PROC_PIPELINES.update(
-        {
-            "my_pipeline_with_arbitrary_descriptor_path": {
-                "1.0": PipelineConfig(
-                    CONTAINER="my_container.sif",
-                    DESCRIPTOR_FILE=fpath_descriptor_arbitrary,
-                    INVOCATION={},
-                )
-            },
-            "my_pipeline_with_relative_descriptor_path": {
-                "1.0": PipelineConfig(
-                    CONTAINER="my_container.sif",
-                    DESCRIPTOR_FILE="descriptor_at_relative_path.json",
-                    INVOCATION={},
-                )
-            },
-        },
+    workflow.config.PROC_PIPELINES.extend(
+        [
+            PipelineConfig(
+                NAME="my_pipeline_with_arbitrary_descriptor_path",
+                VERSION="1.0",
+                CONTAINER="my_container.sif",
+                DESCRIPTOR_FILE=fpath_descriptor_arbitrary,
+                INVOCATION={},
+            ),
+            PipelineConfig(
+                NAME="my_pipeline_with_relative_descriptor_path",
+                VERSION="1.0",
+                CONTAINER="my_container.sif",
+                DESCRIPTOR_FILE="descriptor_at_relative_path.json",
+                INVOCATION={},
+            ),
+        ]
     )
     for fpath_descriptor in [fpath_descriptor_arbitrary, fpath_descriptor_relative]:
         _make_dummy_json(fpath_descriptor)

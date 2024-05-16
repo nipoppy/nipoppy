@@ -38,18 +38,18 @@ def tracker(tmp_path: Path):
 
     config: Config = get_config(
         visits=["1", "2"],
-        proc_pipelines={
-            pipeline_name: {
-                pipeline_version: {
-                    "TRACKER_CONFIG": {
-                        "pipeline_complete": [
-                            "[[NIPOPPY_PARTICIPANT]]/[[NIPOPPY_SESSION]]/results.txt",
-                            "file.txt",
-                        ]
-                    }
-                }
-            }
-        },
+        proc_pipelines=[
+            {
+                "NAME": pipeline_name,
+                "VERSION": pipeline_version,
+                "TRACKER_CONFIG": {
+                    "pipeline_complete": [
+                        "[[NIPOPPY_PARTICIPANT]]/[[NIPOPPY_SESSION]]/results.txt",
+                        "file.txt",
+                    ]
+                },
+            },
+        ],
     )
     config.save(tracker.layout.fpath_config)
 

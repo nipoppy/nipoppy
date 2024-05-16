@@ -83,9 +83,9 @@ def get_config(
     if visits is None:
         visits = []
     if bids is None:
-        bids = {}
+        bids = []
     if proc_pipelines is None:
-        proc_pipelines = {}
+        proc_pipelines = []
     if container_config is None:
         container_config = {}
 

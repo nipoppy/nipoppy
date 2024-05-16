@@ -17,42 +17,42 @@ def config():
     return get_config(
         visits=["BL", "V04"],
         container_config={"COMMAND": "echo"},  # dummy command
-        proc_pipelines={
-            "dummy_pipeline": {
-                "1.0.0": {
-                    "DESCRIPTOR": {
-                        "name": "dummy_pipeline",
-                        "tool-version": "1.0.0",
-                        "description": "A dummy pipeline for testing",
-                        "schema-version": "0.5",
-                        "command-line": "echo [ARG1] [ARG2] [[NIPOPPY_DPATH_BIDS]]",
-                        "inputs": [
-                            {
-                                "id": "arg1",
-                                "name": "arg1",
-                                "type": "String",
-                                "command-line-flag": "--arg1",
-                                "value-key": "[ARG1]",
-                            },
-                            {
-                                "id": "arg2",
-                                "name": "arg2",
-                                "type": "Number",
-                                "command-line-flag": "--arg2",
-                                "value-key": "[ARG2]",
-                            },
-                        ],
-                    },
-                    "INVOCATION": {
-                        "arg1": "[[NIPOPPY_PARTICIPANT]] [[NIPOPPY_SESSION]]",
-                        "arg2": 10,
-                    },
-                    "CONTAINER_CONFIG": {
-                        "COMMAND": "echo",
-                    },
-                }
+        proc_pipelines=[
+            {
+                "NAME": "dummy_pipeline",
+                "VERSION": "1.0.0",
+                "DESCRIPTOR": {
+                    "name": "dummy_pipeline",
+                    "tool-version": "1.0.0",
+                    "description": "A dummy pipeline for testing",
+                    "schema-version": "0.5",
+                    "command-line": "echo [ARG1] [ARG2] [[NIPOPPY_DPATH_BIDS]]",
+                    "inputs": [
+                        {
+                            "id": "arg1",
+                            "name": "arg1",
+                            "type": "String",
+                            "command-line-flag": "--arg1",
+                            "value-key": "[ARG1]",
+                        },
+                        {
+                            "id": "arg2",
+                            "name": "arg2",
+                            "type": "Number",
+                            "command-line-flag": "--arg2",
+                            "value-key": "[ARG2]",
+                        },
+                    ],
+                },
+                "INVOCATION": {
+                    "arg1": "[[NIPOPPY_PARTICIPANT]] [[NIPOPPY_SESSION]]",
+                    "arg2": 10,
+                },
+                "CONTAINER_CONFIG": {
+                    "COMMAND": "echo",
+                },
             }
-        },
+        ],
     )
 
 

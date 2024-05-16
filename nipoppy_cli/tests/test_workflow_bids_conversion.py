@@ -14,10 +14,12 @@ from .conftest import create_empty_dataset, get_config
 @pytest.fixture
 def config() -> Config:
     return get_config(
-        bids={
-            "heudiconv": {"0.12.2": {"prepare": {}, "convert": {}}},
-            "dcm2bids": {"3.1.0": {"prepare": {}, "convert": {}}},
-        }
+        bids=[
+            {"NAME": "heudiconv", "VERSION": "0.12.2", "STEP": "prepare"},
+            {"NAME": "heudiconv", "VERSION": "0.12.2", "STEP": "convert"},
+            {"NAME": "dcm2bids", "VERSION": "3.1.0", "STEP": "prepare"},
+            {"NAME": "dcm2bids", "VERSION": "3.1.0", "STEP": "convert"},
+        ]
     )
 
 
