@@ -210,6 +210,11 @@ def test_get_pipeline_config(pipeline, version, valid_config_data):
     )
 
 
+def test_get_pipeline_config_missing(valid_config_data):
+    with pytest.raises(ValueError):
+        Config(**valid_config_data).get_pipeline_config("not_a_pipeline", "v1")
+
+
 @pytest.mark.parametrize(
     "pipeline,version,step",
     [("bids_converter", "1.0", "step1"), ("bids_converter", "1.0", "step2")],
@@ -221,9 +226,11 @@ def test_get_bids_pipeline_config(pipeline, version, step, valid_config_data):
     )
 
 
-def test_get_pipeline_config_missing(valid_config_data):
+def test_get_bids_pipeline_config_missing(valid_config_data):
     with pytest.raises(ValueError):
-        Config(**valid_config_data).get_pipeline_config("not_a_pipeline", "v1")
+        Config(**valid_config_data).get_bids_pipeline_config(
+            "not_a_bids_pipeline", "v1", "step1"
+        )
 
 
 def test_save(tmp_path: Path, valid_config_data):
