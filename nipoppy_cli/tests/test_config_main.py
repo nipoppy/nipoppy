@@ -22,18 +22,26 @@ def valid_config_data():
         "DATASET_NAME": "my_dataset",
         "VISITS": ["1"],
         "SESSIONS": ["ses-1"],
-        "BIDS": {
-            "bids_converter": {
-                "1.0": {
-                    "step1": {"CONTAINER": "path"},
-                    "step2": {"CONTAINER": "other_path"},
-                }
+        "BIDS": [
+            {
+                "NAME": "bids_converter",
+                "VERSION": "1.0",
+                "STEP": "step1",
+                "CONTAINER": "path",
             },
-        },
-        "PROC_PIPELINES": {
-            "pipeline1": {"v1": {}, "v2": {"CONTAINER": "path"}},
-            "pipeline2": {"1.0": {"URI": "uri"}, "2.0": {"INVOCATION": {}}},
-        },
+            {
+                "NAME": "bids_converter",
+                "VERSION": "1.0",
+                "STEP": "step2",
+                "CONTAINER": "other_path",
+            },
+        ],
+        "PROC_PIPELINES": [
+            {"NAME": "pipeline1", "VERSION": "v1"},
+            {"NAME": "pipeline1", "VERSION": "v2", "CONTAINER": "path"},
+            {"NAME": "pipeline2", "VERSION": "1.0", "URI": "uri"},
+            {"NAME": "pipeline2", "VERSION": "2.0", "INVOCATION": {}},
+        ],
     }
 
 
@@ -46,7 +54,7 @@ def test_extra_fields_allowed(field_name, valid_config_data):
 
 def test_check_no_duplicate_pipeline(valid_config_data):
     data: dict = valid_config_data
-    data["PROC_PIPELINES"].update(data["BIDS"])
+    data["PROC_PIPELINES"].extend(data["BIDS"])
     with pytest.raises(ValidationError):
         Config(**data)
 
@@ -62,8 +70,8 @@ def test_sessions_inferred(visits, expected_sessions):
     data = {
         "DATASET_NAME": "my_dataset",
         "VISITS": visits,
-        "BIDS": {},
-        "PROC_PIPELINES": {},
+        "BIDS": [],
+        "PROC_PIPELINES": [],
     }
     config = Config(**data)
     assert config.SESSIONS == expected_sessions
@@ -101,9 +109,13 @@ def test_propagate_container_config(
     pipeline_version = "1.0"
     data = valid_config_data
     data["CONTAINER_CONFIG"] = data_root
-    data["PROC_PIPELINES"] = {
-        pipeline_name: {pipeline_version: {"CONTAINER_CONFIG": data_pipeline}}
-    }
+    data["PROC_PIPELINES"] = [
+        {
+            "NAME": pipeline_name,
+            "VERSION": pipeline_version,
+            "CONTAINER_CONFIG": data_pipeline,
+        }
+    ]
 
     container_config = (
         Config(**data)
@@ -147,11 +159,14 @@ def test_propagate_container_config_bids(
     step_name = "step1"
     data = valid_config_data
     data["CONTAINER_CONFIG"] = data_root
-    data["BIDS"] = {
-        pipeline_name: {
-            pipeline_version: {step_name: {"CONTAINER_CONFIG": data_pipeline}}
+    data["BIDS"] = [
+        {
+            "NAME": pipeline_name,
+            "VERSION": pipeline_version,
+            "STEP": step_name,
+            "CONTAINER_CONFIG": data_pipeline,
         }
-    }
+    ]
 
     container_config = (
         Config(**data)

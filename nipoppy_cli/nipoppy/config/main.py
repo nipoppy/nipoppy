@@ -1,12 +1,12 @@
 """Dataset configuration."""
 
 from pathlib import Path
-from typing import Any, Optional, Self
+from typing import Any, Callable, Optional, Self, Tuple
 
 from pydantic import ConfigDict, Field, model_validator
 
 from nipoppy.config.container import ModelWithContainerConfig
-from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline import BidsPipelineConfig, PipelineConfig
 from nipoppy.utils import check_session, load_json
 
 
@@ -22,10 +22,10 @@ class Config(ModelWithContainerConfig):
             " (inferred from VISITS if not given)"
         ),
     )
-    BIDS: dict[str, dict[str, dict[str, PipelineConfig]]] = Field(
-        default={}, description="Configurations for BIDS converters, if any"
+    BIDS: list[BidsPipelineConfig] = Field(
+        default=[], description="Configurations for BIDS converters, if any"
     )
-    PROC_PIPELINES: dict[str, dict[str, PipelineConfig]] = Field(
+    PROC_PIPELINES: list[PipelineConfig] = Field(
         description="Configurations for processing pipelines"
     )
 
@@ -33,28 +33,48 @@ class Config(ModelWithContainerConfig):
 
     def _check_no_duplicate_pipeline(self) -> Self:
         """Check that BIDS and PROC_PIPELINES do not have common pipelines."""
-        bids_pipelines = set(self.BIDS.keys())
-        proc_pipelines = set(self.PROC_PIPELINES.keys())
-        if len(bids_pipelines & proc_pipelines) != 0:
+
+        def _check_pipeline_infos(
+            pipeline_configs: list[PipelineConfig],
+            pipeline_type: str,
+            info_func: Callable[[PipelineConfig | BidsPipelineConfig], Tuple],
+        ):
+            pipeline_infos = set()
+            for pipeline_config in pipeline_configs:
+                pipeline_info = info_func(pipeline_config)
+                if pipeline_info in pipeline_infos:
+                    raise ValueError(
+                        f"Found multiple configurations for {pipeline_type} pipeline: "
+                        f"{pipeline_info}"
+                    )
+                pipeline_infos.add(pipeline_info)
+            return pipeline_infos
+
+        pipeline_infos = _check_pipeline_infos(
+            self.PROC_PIPELINES,
+            pipeline_type="processing",
+            info_func=lambda x: (x.NAME, x.VERSION),
+        )
+        bids_pipeline_infos = _check_pipeline_infos(
+            self.BIDS,
+            pipeline_type="BIDS conversion",
+            info_func=lambda x: (x.NAME, x.VERSION, x.STEP),
+        )
+        common_pipelines = pipeline_infos & bids_pipeline_infos
+        if len(common_pipelines) != 0:
             raise ValueError(
                 "Cannot have the same pipeline under BIDS and PROC_PIPELINES"
-                f", got {bids_pipelines} and {proc_pipelines}"
+                f", got the following duplicates: {common_pipelines}"
             )
 
     def _propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""
 
-        def _propagate(pipeline_or_pipeline_dicts: dict | PipelineConfig):
-            if isinstance(pipeline_or_pipeline_dicts, PipelineConfig):
-                pipeline_config = pipeline_or_pipeline_dicts
+        def _propagate(pipeline_configs: list[PipelineConfig]):
+            for pipeline_config in pipeline_configs:
                 container_config = pipeline_config.get_container_config()
                 if container_config.INHERIT:
                     container_config.merge_args_and_env_vars(self.CONTAINER_CONFIG)
-            else:
-                for (
-                    child_pipeline_or_pipeline_dicts
-                ) in pipeline_or_pipeline_dicts.values():
-                    _propagate(child_pipeline_or_pipeline_dicts)
 
         _propagate(self.BIDS)
         _propagate(self.PROC_PIPELINES)
@@ -89,22 +109,37 @@ class Config(ModelWithContainerConfig):
         pipeline_version: str,
     ) -> PipelineConfig:
         """Get the config for a pipeline."""
-        try:
-            return self.PROC_PIPELINES[pipeline_name][pipeline_version]
-        except KeyError:
-            raise ValueError(f"No config found for {pipeline_name} {pipeline_version}")
+        for pipeline_config in self.PROC_PIPELINES:
+            if (
+                pipeline_config.NAME == pipeline_name
+                and pipeline_config.VERSION == pipeline_version
+            ):
+                return pipeline_config
+
+        raise ValueError(
+            "No config found for pipeline with "
+            f"NAME={pipeline_name}, "
+            f"VERSION={pipeline_version}"
+        )
 
     def get_bids_pipeline_config(
         self, pipeline_name: str, pipeline_version: str, pipeline_step: str
-    ) -> PipelineConfig:
-        """Get the config for a BIDS conversion pipeline."""
-        try:
-            return self.BIDS[pipeline_name][pipeline_version][pipeline_step]
-        except KeyError:
-            raise ValueError(
-                "No config found for "
-                f"{pipeline_name} {pipeline_version} {pipeline_step}"
-            )
+    ) -> BidsPipelineConfig:
+        """Get the config for a BIDS pipeline."""
+        for pipeline_config in self.BIDS:
+            if (
+                pipeline_config.NAME == pipeline_name
+                and pipeline_config.VERSION == pipeline_version
+                and pipeline_config.STEP == pipeline_step
+            ):
+                return pipeline_config
+
+        raise ValueError(
+            "No config found for BIDS pipeline with "
+            f"NAME={pipeline_name}, "
+            f"VERSION={pipeline_version}, "
+            f"STEP={pipeline_step}"
+        )
 
     def save(self, fpath: str | Path, **kwargs):
         """Save the config to a JSON file.
