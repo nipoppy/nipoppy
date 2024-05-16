@@ -76,7 +76,7 @@
         "description": "This directory is for demographics data."
     },
     "fpath_config": {
-        "path": "proc/global_configs.json",
+        "path": "proc/global_config.json",
         "description": "The configuration for a dataset is where all data processing is configured."
     },
     "fpath_doughnut": {

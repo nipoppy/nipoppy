@@ -15,7 +15,7 @@ from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import strip_session
 
-FPATH_CONFIG = "proc/global_configs.json"
+FPATH_CONFIG = "proc/global_config.json"
 FPATH_MANIFEST = "tabular/manifest.csv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 
