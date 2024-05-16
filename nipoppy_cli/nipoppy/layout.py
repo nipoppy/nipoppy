@@ -142,9 +142,9 @@ class DatasetLayout(Base):
 
         Parameters
         ----------
-        dpath_root : StrOrPathLike
+        dpath_root : nipoppy.utils.StrOrPathLike
             Path to the root directory of the dataset.
-        fpath_config : Optional[StrOrPathLike], optional
+        fpath_config : Optional[nipoppy.utils.StrOrPathLike], optional
             Path to the layout config to use, by default None.
             If None, the default layout will be used.
 

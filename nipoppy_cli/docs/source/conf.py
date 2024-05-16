@@ -86,6 +86,9 @@ nitpick_ignore = [
     ("py:class", "argparse.HelpFormatter"),
     ("py:class", "argparse._SubParsersAction"),
     ("py:class", "argparse._ActionsContainer"),
+    ("py:class", "StrOrPathLike"),
+    ("py:class", "nipoppy.utils.StrOrPathLike"),
+    ("py:class", "typing_extensions.Self"),
 ]
 
 # -- Copybutton configuration -------------------------------------------------

@@ -114,7 +114,7 @@ class Config(ModelWithContainerConfig):
 
         Parameters
         ----------
-        fpath : StrOrPathLike
+        fpath : nipoppy.utils.StrOrPathLike
             Path to the JSON file to write
         """
         fpath = Path(fpath)
