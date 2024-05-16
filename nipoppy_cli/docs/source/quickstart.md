@@ -35,7 +35,7 @@ The [`nipoppy init`](#cli_reference/init) command copies examples of these files
 (customizing-config)=
 ### Customizing the configuration file
 
-The configuration file at `<PATH_TO_DATASET_ROOT>/proc/global_configs.json` contains general information about a dataset (e.g. name, visit and session names) and configurations for running processing pipelines (e.g., pipeline version and runtime parameters).
+The configuration file at `<PATH_TO_DATASET_ROOT>/proc/global_config.json` contains general information about a dataset (e.g. name, visit and session names) and configurations for running processing pipelines (e.g., pipeline version and runtime parameters).
 
 The example config file contains configurations for all BIDS conversion and image processing software that are supported out-of-the-box by Nipoppy. You should replace the placeholder strings/substrings (e.g. `<DATASET_NAME>`) by more appropriate values for your dataset. See dropdown below (lines that should be changed are highlighted).
 
@@ -45,7 +45,7 @@ You can also delete (or not) any configuration for a software/version that you d
 ---
 class: dropdown
 ---
-Here is the default content of `<PATH_TO_DATASET_ROOT>/proc/global_configs.json`:
+Here is the default content of `<PATH_TO_DATASET_ROOT>/proc/global_config.json`:
 ```{literalinclude} ../../nipoppy/data/examples/sample_global_config-latest_pipelines.json
 ---
 linenos: True
