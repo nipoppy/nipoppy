@@ -1,5 +1,6 @@
 """Dataset configuration."""
 
+import json
 from pathlib import Path
 from typing import Any, Callable, Optional, Self, Tuple
 
@@ -20,6 +21,14 @@ class Config(ModelWithContainerConfig):
         description=(
             "List of sessions available in the study"
             " (inferred from VISITS if not given)"
+        ),
+    )
+    GLOBALS: dict[str, str] = Field(
+        default={},
+        description=(
+            "Top-level mapping for replacing placeholder expressions in the rest "
+            "of the config file. Note: the replacement only happens if the config "
+            "is loaded from a file with :func:`nipoppy.config.main.Config.load`"
         ),
     )
     BIDS_PIPELINES: list[BidsPipelineConfig] = Field(
@@ -151,6 +160,14 @@ class Config(ModelWithContainerConfig):
             file.write(self.model_dump_json(**kwargs))
 
     @classmethod
-    def load(cls, path: str | Path) -> Self:
+    def load(cls, path: str | Path, apply_globals_replacement=True) -> Self:
         """Load a dataset configuration."""
-        return cls(**load_json(path))
+        config = cls(**load_json(path))
+
+        if apply_globals_replacement:
+            config_text = config.model_dump_json()
+            for key, value in config.GLOBALS.items():
+                config_text = config_text.replace(key, value)
+                config = cls(**json.loads(config_text))
+
+        return config

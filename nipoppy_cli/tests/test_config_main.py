@@ -253,3 +253,45 @@ def test_load(path):
 def test_load_missing_required():
     with pytest.raises(ValueError):
         Config.load(DPATH_TEST_DATA / "config_invalid1.json")
+
+
+def test_globals(valid_config_data, tmp_path: Path):
+    pattern_to_replace1 = "[[FREESURFER_LICENSE_FILE]]"
+    replacement_value1 = "/path/to/license.txt"
+    pattern_to_replace2 = "[[TEMPLATEFLOW_HOME]]"
+    replacement_value2 = "/path/to/templateflow"
+
+    valid_config_data["GLOBALS"] = {
+        pattern_to_replace1: replacement_value1,
+        pattern_to_replace2: replacement_value2,
+    }
+    valid_config_data["PROC_PIPELINES"] = [
+        {
+            "NAME": "fmriprep",
+            "VERSION": "23.1.3",
+            "INVOCATION": {
+                "fs_license_file": pattern_to_replace1,
+            },
+            "CONTAINER_CONFIG": {
+                "ARGS": ["--bind", pattern_to_replace1, "--bind", pattern_to_replace2],
+                "ENV_VARS": {"TEMPLATEFLOW_HOME": pattern_to_replace2},
+            },
+        },
+    ]
+
+    fpath = tmp_path / "config.json"
+    Config(**valid_config_data).save(fpath)
+    config_to_check = Config.load(fpath, apply_globals_replacement=True)
+    assert config_to_check.PROC_PIPELINES[0] == PipelineConfig(
+        **{
+            "NAME": "fmriprep",
+            "VERSION": "23.1.3",
+            "INVOCATION": {
+                "fs_license_file": replacement_value1,
+            },
+            "CONTAINER_CONFIG": {
+                "ARGS": ["--bind", replacement_value1, "--bind", replacement_value2],
+                "ENV_VARS": {"TEMPLATEFLOW_HOME": replacement_value2},
+            },
+        },
+    )
