@@ -22,7 +22,7 @@ def valid_config_data():
         "DATASET_NAME": "my_dataset",
         "VISITS": ["1"],
         "SESSIONS": ["ses-1"],
-        "BIDS": [
+        "BIDS_PIPELINES": [
             {
                 "NAME": "bids_converter",
                 "VERSION": "1.0",
@@ -76,7 +76,7 @@ def test_check_no_duplicate_pipeline(
 ):
     data: dict = valid_config_data
     data["PROC_PIPELINES"] = proc_pipelines_data
-    data["BIDS"] = bids_pipelines_data
+    data["BIDS_PIPELINES"] = bids_pipelines_data
     with pytest.raises(ValidationError, match="Found multiple configurations for"):
         Config(**data)
 
@@ -92,7 +92,7 @@ def test_sessions_inferred(visits, expected_sessions):
     data = {
         "DATASET_NAME": "my_dataset",
         "VISITS": visits,
-        "BIDS": [],
+        "BIDS_PIPELINES": [],
         "PROC_PIPELINES": [],
     }
     config = Config(**data)
@@ -181,7 +181,7 @@ def test_propagate_container_config_bids(
     step_name = "step1"
     data = valid_config_data
     data["CONTAINER_CONFIG"] = data_root
-    data["BIDS"] = [
+    data["BIDS_PIPELINES"] = [
         {
             "NAME": pipeline_name,
             "VERSION": pipeline_version,

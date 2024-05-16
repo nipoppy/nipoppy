@@ -22,8 +22,8 @@ class Config(ModelWithContainerConfig):
             " (inferred from VISITS if not given)"
         ),
     )
-    BIDS: list[BidsPipelineConfig] = Field(
-        default=[], description="Configurations for BIDS converters, if any"
+    BIDS_PIPELINES: list[BidsPipelineConfig] = Field(
+        default=[], description="Configurations for BIDS conversion, if applicable"
     )
     PROC_PIPELINES: list[PipelineConfig] = Field(
         description="Configurations for processing pipelines"
@@ -56,7 +56,7 @@ class Config(ModelWithContainerConfig):
             info_func=lambda x: (x.NAME, x.VERSION),
         )
         _check_pipeline_infos(
-            self.BIDS,
+            self.BIDS_PIPELINES,
             pipeline_type="BIDS conversion",
             info_func=lambda x: (x.NAME, x.VERSION, x.STEP),
         )
@@ -70,7 +70,7 @@ class Config(ModelWithContainerConfig):
                 if container_config.INHERIT:
                     container_config.merge_args_and_env_vars(self.CONTAINER_CONFIG)
 
-        _propagate(self.BIDS)
+        _propagate(self.BIDS_PIPELINES)
         _propagate(self.PROC_PIPELINES)
 
         return self
@@ -120,7 +120,7 @@ class Config(ModelWithContainerConfig):
         self, pipeline_name: str, pipeline_version: str, pipeline_step: str
     ) -> BidsPipelineConfig:
         """Get the config for a BIDS pipeline."""
-        for pipeline_config in self.BIDS:
+        for pipeline_config in self.BIDS_PIPELINES:
             if (
                 pipeline_config.NAME == pipeline_name
                 and pipeline_config.VERSION == pipeline_version

@@ -72,7 +72,7 @@ def get_config(
     dataset_name="my_dataset",
     sessions=None,
     visits=None,
-    bids=None,
+    bids_pipelines=None,
     proc_pipelines=None,
     container_config=None,
 ):
@@ -82,8 +82,8 @@ def get_config(
         sessions = []
     if visits is None:
         visits = []
-    if bids is None:
-        bids = []
+    if bids_pipelines is None:
+        bids_pipelines = []
     if proc_pipelines is None:
         proc_pipelines = []
     if container_config is None:
@@ -93,7 +93,7 @@ def get_config(
         DATASET_NAME=dataset_name,
         VISITS=visits,
         SESSIONS=sessions,
-        BIDS=bids,
+        BIDS_PIPELINES=bids_pipelines,
         PROC_PIPELINES=proc_pipelines,
         CONTAINER_CONFIG=container_config,
     )
