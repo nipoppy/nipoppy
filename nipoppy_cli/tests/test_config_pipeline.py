@@ -9,6 +9,9 @@ from pydantic import ValidationError
 from nipoppy.config.pipeline import PipelineConfig
 
 FIELDS_PIPELINE = [
+    "NAME",
+    "VERSION",
+    "VARIANT",
     "CONTAINER",
     "URI",
     "CONTAINER_CONFIG",
@@ -20,10 +23,19 @@ FIELDS_PIPELINE = [
 ]
 
 
+@pytest.fixture(scope="function")
+def valid_data() -> dict:
+    return {
+        "NAME": "my_pipeline",
+        "VERSION": "1.0.0",
+    }
+
+
 @pytest.mark.parametrize(
-    "data",
+    "additional_data",
     [
         {},
+        {"VARIANT": "my_variant"},
         {"DESCRIPTION": "My pipeline"},
         {"CONTAINER": "/my/container"},
         {"URI": "docker://container"},
@@ -34,28 +46,40 @@ FIELDS_PIPELINE = [
         {"TRACKER_CONFIG": {"pipeline_complete": ["pattern1", "pattern2"]}},
     ],
 )
-def test_pipeline_config(data):
+def test_pipeline_config(valid_data, additional_data):
+    data = {**valid_data, **additional_data}
     for field in FIELDS_PIPELINE:
         assert hasattr(PipelineConfig(**data), field)
 
 
 @pytest.mark.parametrize(
     "data",
+    [{}, {"NAME": "my_pipeline"}, {"VERSION": "1.0.0"}],
+)
+def test_pipeline_config_invalid(data):
+    with pytest.raises(ValidationError):
+        PipelineConfig(**data)
+
+
+@pytest.mark.parametrize(
+    "additional_data",
     [
         {"DESCRIPTOR": {}, "INVOCATION_FILE": "invocation.json"},
         {"DESCRIPTOR_FILE": "descriptor.json", "INVOCATION": {}},
     ],
 )
-def test_file_or_json(data):
-    assert PipelineConfig(**data).check_fields() is not None
+def test_file_or_json(valid_data, additional_data):
+    data = {**valid_data, **additional_data}
+    assert PipelineConfig(**data).check_fields()
 
 
 @pytest.mark.parametrize(
     "field_json,field_file",
     [("DESCRIPTOR", "DESCRIPTOR_FILE"), ("INVOCATION", "INVOCATION_FILE")],
 )
-def test_file_and_json_not_allowed(field_json: str, field_file: str):
+def test_file_and_json_not_allowed(valid_data, field_json: str, field_file: str):
     data = {
+        **valid_data,
         field_json: {"arg": "val"},
         field_file: "path.json",
     }
@@ -64,13 +88,13 @@ def test_file_and_json_not_allowed(field_json: str, field_file: str):
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
-def test_get_container(container):
-    pipeline_config = PipelineConfig(CONTAINER=container)
+def test_get_container(valid_data, container):
+    pipeline_config = PipelineConfig(**valid_data, CONTAINER=container)
     assert pipeline_config.get_container() == Path(container)
 
 
-def test_get_container_error():
-    pipeline_config = PipelineConfig()
+def test_get_container_error(valid_data):
+    pipeline_config = PipelineConfig(**valid_data)
     with pytest.raises(RuntimeError, match="No container specified for the pipeline"):
         pipeline_config.get_container()
 
@@ -86,12 +110,12 @@ def test_get_container_error():
         ([re.compile("a")], ["b"], [re.compile("a"), re.compile("b")]),
     ],
 )
-def test_add_pybids_ignore_patterns(orig_patterns, new_patterns, expected):
-    pipeline_config = PipelineConfig(PYBIDS_IGNORE=orig_patterns)
+def test_add_pybids_ignore_patterns(valid_data, orig_patterns, new_patterns, expected):
+    pipeline_config = PipelineConfig(**valid_data, PYBIDS_IGNORE=orig_patterns)
     pipeline_config.add_pybids_ignore_patterns(new_patterns)
     assert pipeline_config.PYBIDS_IGNORE == expected
 
 
-def test_pipeline_config_no_extra_fields():
+def test_pipeline_config_no_extra_fields(valid_data):
     with pytest.raises(ValidationError):
-        PipelineConfig(not_a_field="a")
+        PipelineConfig(**valid_data, not_a_field="a")

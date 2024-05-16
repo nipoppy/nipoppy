@@ -12,6 +12,9 @@ from nipoppy.config.container import ModelWithContainerConfig
 class PipelineConfig(ModelWithContainerConfig):
     """Model for workflow configuration."""
 
+    NAME: str
+    VERSION: str
+    VARIANT: Optional[str] = None
     DESCRIPTION: Optional[str] = None
     CONTAINER: Optional[Path] = None
     URI: Optional[str] = None
@@ -25,11 +28,13 @@ class PipelineConfig(ModelWithContainerConfig):
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
-    def check_fields(self):
+    def validate_after(self):
         """
-        Check that <FIELD> and <FIELD>_FILE fields are not both set.
+        Validate the pipeline configuration after creation.
 
-        Also add an empty invocation if none is provided.
+        Specifically:
+        - Check that <FIELD> and <FIELD>_FILE fields are not both set
+        - Add an empty invocation if none is provided
         """
         field_pairs = [
             ("DESCRIPTOR", "DESCRIPTOR_FILE"),
