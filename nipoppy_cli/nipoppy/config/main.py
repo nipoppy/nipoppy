@@ -50,22 +50,16 @@ class Config(ModelWithContainerConfig):
                 pipeline_infos.add(pipeline_info)
             return pipeline_infos
 
-        pipeline_infos = _check_pipeline_infos(
+        _check_pipeline_infos(
             self.PROC_PIPELINES,
             pipeline_type="processing",
             info_func=lambda x: (x.NAME, x.VERSION),
         )
-        bids_pipeline_infos = _check_pipeline_infos(
+        _check_pipeline_infos(
             self.BIDS,
             pipeline_type="BIDS conversion",
             info_func=lambda x: (x.NAME, x.VERSION, x.STEP),
         )
-        common_pipelines = pipeline_infos & bids_pipeline_infos
-        if len(common_pipelines) != 0:
-            raise ValueError(
-                "Cannot have the same pipeline under BIDS and PROC_PIPELINES"
-                f", got the following duplicates: {common_pipelines}"
-            )
 
     def _propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""

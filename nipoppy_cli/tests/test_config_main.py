@@ -52,10 +52,32 @@ def test_extra_fields_allowed(field_name, valid_config_data):
     assert hasattr(Config(**args), field_name)
 
 
-def test_check_no_duplicate_pipeline(valid_config_data):
+@pytest.mark.parametrize(
+    "proc_pipelines_data,bids_pipelines_data",
+    [
+        (
+            [
+                {"NAME": "pipeline1", "VERSION": "v1"},
+                {"NAME": "pipeline1", "VERSION": "v1"},
+            ],
+            [],
+        ),
+        (
+            [],
+            [
+                {"NAME": "pipeline1", "VERSION": "v1", "STEP": "step1"},
+                {"NAME": "pipeline1", "VERSION": "v1", "STEP": "step1"},
+            ],
+        ),
+    ],
+)
+def test_check_no_duplicate_pipeline(
+    valid_config_data, proc_pipelines_data, bids_pipelines_data
+):
     data: dict = valid_config_data
-    data["PROC_PIPELINES"].extend(data["BIDS"])
-    with pytest.raises(ValidationError):
+    data["PROC_PIPELINES"] = proc_pipelines_data
+    data["BIDS"] = bids_pipelines_data
+    with pytest.raises(ValidationError, match="Found multiple configurations for"):
         Config(**data)
 
 
