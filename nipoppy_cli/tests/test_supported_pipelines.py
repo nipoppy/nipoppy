@@ -7,7 +7,7 @@ import pytest_mock
 from boutiques import bosh
 
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import DPATH_DESCRIPTORS, FPATH_SAMPLE_CONFIG
+from nipoppy.utils import DPATH_DESCRIPTORS, FPATH_SAMPLE_CONFIG_FULL
 from nipoppy.workflows import BidsConversionRunner, PipelineRunner
 
 from .conftest import create_empty_dataset, prepare_dataset
@@ -38,7 +38,7 @@ def single_subject_dataset(
     )
     manifest.save_with_backup(layout.fpath_manifest)
 
-    config_text = FPATH_SAMPLE_CONFIG.read_text()
+    config_text = FPATH_SAMPLE_CONFIG_FULL.read_text()
     for placeholder, fname in config_files_map.items():
         fpath = layout.dpath_root / fname
         config_text = config_text.replace(placeholder, str(fpath))
