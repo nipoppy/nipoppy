@@ -6,19 +6,18 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline import BidsPipelineConfig, PipelineConfig
 
 FIELDS_PIPELINE = [
     "NAME",
     "VERSION",
-    "VARIANT",
     "CONTAINER",
     "URI",
     "CONTAINER_CONFIG",
     "DESCRIPTOR",
     "DESCRIPTOR_FILE",
     "INVOCATION",
-    "INVOCATION_FILE",
+    # "INVOCATION_FILE",
     "PYBIDS_IGNORE",
 ]
 
@@ -35,7 +34,6 @@ def valid_data() -> dict:
     "additional_data",
     [
         {},
-        {"VARIANT": "my_variant"},
         {"DESCRIPTION": "My pipeline"},
         {"CONTAINER": "/my/container"},
         {"URI": "docker://container"},
@@ -64,18 +62,20 @@ def test_pipeline_config_invalid(data):
 @pytest.mark.parametrize(
     "additional_data",
     [
-        {"DESCRIPTOR": {}, "INVOCATION_FILE": "invocation.json"},
+        {"DESCRIPTOR": {}, "INVOCATION": {}},
+        # {"DESCRIPTOR": {}, "INVOCATION_FILE": "invocation.json"},
         {"DESCRIPTOR_FILE": "descriptor.json", "INVOCATION": {}},
     ],
 )
 def test_file_or_json(valid_data, additional_data):
     data = {**valid_data, **additional_data}
-    assert PipelineConfig(**data).check_fields()
+    assert PipelineConfig(**data).validate_after()
 
 
 @pytest.mark.parametrize(
     "field_json,field_file",
-    [("DESCRIPTOR", "DESCRIPTOR_FILE"), ("INVOCATION", "INVOCATION_FILE")],
+    [("DESCRIPTOR", "DESCRIPTOR_FILE")],
+    # [("DESCRIPTOR", "DESCRIPTOR_FILE"), ("INVOCATION", "INVOCATION_FILE")],
 )
 def test_file_and_json_not_allowed(valid_data, field_json: str, field_file: str):
     data = {
@@ -119,3 +119,8 @@ def test_add_pybids_ignore_patterns(valid_data, orig_patterns, new_patterns, exp
 def test_pipeline_config_no_extra_fields(valid_data):
     with pytest.raises(ValidationError):
         PipelineConfig(**valid_data, not_a_field="a")
+
+
+def test_bids_pipeline_config(valid_data):
+    bids_pipeline_config = BidsPipelineConfig(**valid_data, STEP="step_name")
+    assert isinstance(bids_pipeline_config, PipelineConfig)
