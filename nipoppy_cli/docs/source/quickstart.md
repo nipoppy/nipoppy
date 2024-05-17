@@ -98,10 +98,13 @@ See the {ref}`schema reference <manifest-schema>` for more information about eac
 
 ## Next steps
 
-The rest of this documentation is still work in progress. At a starting point, refer to the [commands](cli_reference/index) associated with the data organization or processing step(s) you wish to perform.
+```{note}
+
+The rest of this documentation is still work in progress. If the information you are looking for is not available in the user guide, refer to the [commands](cli_reference/index) associated with the data organization or processing step(s) you wish to perform.
 
 ![Nipoppy protocol](_static/img/nipoppy_protocol.jpg)
+```
 
-% TODO point to tutorials once they are created (running BIDS conversion, running a pipeline)
+Once the Nipoppy dataset is created, the next steps are typically to [move and organize raw imaging data (typically DICOMs) into a regular structure](user_guide/organization.md), then [convert the data to BIDS](user_guide/bids_conversion.md). However, depending on the type of raw data you have, your workflow might be a little different. See [here](user_guide/index.md) for all the available documentation in the User guide.
 
 % TODO mention that all other commands create log files in scratch/logs (?)

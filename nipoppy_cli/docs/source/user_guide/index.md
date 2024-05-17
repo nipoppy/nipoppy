@@ -1,6 +1,6 @@
 # User guide
 
-This guide covers the main steps of the Nipoppy protocol.
+This guide covers the main steps in the Nipoppy protocol:
 
 ```{toctree}
 ---
@@ -12,5 +12,3 @@ processing
 tracking
 extraction
 ```
-
-![Nipoppy protocol](_static/img/nipoppy_protocol.jpg)
