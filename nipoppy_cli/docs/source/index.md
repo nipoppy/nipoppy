@@ -24,8 +24,9 @@ quickstart
 hidden:
 includehidden:
 titlesonly:
-caption: Detailed user guide
+caption: User guide
 ---
+user_guide/index
 ```
 
 ```{toctree}
