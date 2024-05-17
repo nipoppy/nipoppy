@@ -73,13 +73,13 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
         "--pipeline",
         type=str,
         required=True,
-        help="Pipeline name.",
+        help="Pipeline name, as written in the config file.",
     )
     parser.add_argument(
         "--pipeline-version",
         type=str,
         required=False,
-        help="Pipeline version.",
+        help="Pipeline version, as written in the config file.",
     )
     return parser
 
@@ -179,7 +179,7 @@ def add_subparser_doughnut(
         action="store_true",
         help=(
             "Set all statuses to False in newly added records"
-            " (regardless of what is on disk)."
+            " (regardless of what is on disk). May be useful to reduce runtime."
         ),
     )
     parser.add_argument(
@@ -199,9 +199,9 @@ def add_subparser_dicom_reorg(
 ) -> ArgumentParser:
     """Add subparser for reorg command."""
     description = (
-        "(Re)organize raw DICOM files, from the raw DICOM directory "
-        f"(default: {DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) to the organized "
-        f"sourcedata directory (default: {DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
+        "(Re)organize raw (DICOM) files, from the raw DICOM directory "
+        f"({DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) to the organized "
+        f"sourcedata directory ({DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
     )
     parser = subparsers.add_parser(
         COMMAND_DICOM_REORG,
@@ -246,7 +246,7 @@ def add_subparser_bids_conversion(
         "--pipeline-step",
         type=str,
         required=False,
-        help="Pipeline step.",
+        help="Pipeline step, as written in the config file.",
     )
     parser = add_args_participant_and_session(parser)
     parser = add_arg_simulate(parser)
