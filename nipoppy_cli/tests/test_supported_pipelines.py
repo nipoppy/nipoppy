@@ -25,6 +25,7 @@ def single_subject_dataset(
         "<PATH_TO_FREESURFER_LICENSE_FILE>": "freesurfer_license.txt",
         "<PATH_TO_HEURISTIC_FILE>": "heuristic.py",
         "<PATH_TO_CONFIG_FILE>": "dcm2bids_config.json",
+        "<PATH_TO_TEMPLATEFLOW_DIRECTORY>": "templateflow",
     }
 
     participants_and_sessions = {participant: [session]}
