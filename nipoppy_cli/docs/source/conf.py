@@ -56,7 +56,13 @@ intersphinx_mapping = {
 
 # -- MyST configuration -------------------------------------------------------
 
-myst_enable_extensions = ["fieldlist"]
+myst_enable_extensions = ["fieldlist", "substitution"]
+
+myst_substitutions = {
+    "dpath_root": "`<DATASET_ROOT>`",
+    "dpath_downloads": "`<DATASET_ROOT>/downloads`",
+    "dpath_raw_imaging": "`<DATASET_ROOT>/scratch/raw_imaging`",
+}
 
 # -- Autodoc/AutoAPI configuration ----------------------------------------------------
 
