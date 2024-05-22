@@ -43,7 +43,7 @@ The purpose of the {{dpath_raw_imaging}} directory is for storing **raw data as 
 
 ## Next steps
 
-For imaging data, the next step is to [reorganize the data](organization.md) in a way that prepares it for {term}`BIDS` conversion.
+For imaging data, the next step is to [reorganize the data](organization_imaging.md) in a way that prepares it for {term}`BIDS` conversion.
 
 <!-- TODO uncomment when tabular page is done
 If you have tabular data, we also provide guidelines for wrangling and linking tabular data [here](organization_tabular.md) -->

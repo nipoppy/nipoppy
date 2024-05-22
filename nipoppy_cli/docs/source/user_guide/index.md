@@ -8,7 +8,8 @@ includehidden:
 titlesonly:
 ---
 populating
-organization
+organization_tabular
+organization_imaging
 bids_conversion
 processing
 tracking
