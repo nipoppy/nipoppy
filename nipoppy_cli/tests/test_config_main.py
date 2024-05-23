@@ -27,19 +27,23 @@ def valid_config_data():
                 "NAME": "bids_converter",
                 "VERSION": "1.0",
                 "STEP": "step1",
-                "CONTAINER": "path",
+                "CONTAINER_INFO": {"PATH": "path"},
             },
             {
                 "NAME": "bids_converter",
                 "VERSION": "1.0",
                 "STEP": "step2",
-                "CONTAINER": "other_path",
+                "CONTAINER_INFO": {"PATH": "other_path"},
             },
         ],
         "PROC_PIPELINES": [
             {"NAME": "pipeline1", "VERSION": "v1"},
-            {"NAME": "pipeline1", "VERSION": "v2", "CONTAINER": "path"},
-            {"NAME": "pipeline2", "VERSION": "1.0", "URI": "uri"},
+            {
+                "NAME": "pipeline1",
+                "VERSION": "v2",
+                "CONTAINER_INFO": {"PATH": "other_path"},
+            },
+            {"NAME": "pipeline2", "VERSION": "1.0", "CONTAINER_INFO": {"URI": "uri"}},
             {"NAME": "pipeline2", "VERSION": "2.0", "INVOCATION": {}},
         ],
     }

@@ -8,27 +8,20 @@ from typing import Optional, Sequence
 
 from pydantic import ConfigDict, Field, model_validator
 
-from nipoppy.config.container import ModelWithContainerConfig
+from nipoppy.config.container import ContainerInfo, SchemaWithContainerConfig
 
 
-class PipelineConfig(ModelWithContainerConfig):
-    """Model for processing pipeline configuration."""
+class PipelineConfig(SchemaWithContainerConfig):
+    """Schema for processing pipeline configuration."""
 
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
         default=None, description="Free description field"
     )
-    CONTAINER: Optional[Path] = Field(
-        default=None,
-        description=(
-            "Path to the container associated with the pipeline"
-            ", relative to the containers directory"  # TODO add default path
-        ),
-    )
-    URI: Optional[str] = Field(
-        default=None,
-        description="The Docker or Apptainer/Singularity URI for the container",
+    CONTAINER_INFO: ContainerInfo = Field(
+        default=ContainerInfo(),
+        description="Information about the container image file",
     )
     DESCRIPTOR: Optional[dict] = Field(
         default=None,
@@ -93,9 +86,9 @@ class PipelineConfig(ModelWithContainerConfig):
 
     def get_container(self) -> Path:
         """Return the path to the pipeline's container."""
-        if self.CONTAINER is None:
+        if self.CONTAINER_INFO.PATH is None:
             raise RuntimeError("No container specified for the pipeline")
-        return self.CONTAINER
+        return self.CONTAINER_INFO.PATH
 
     def add_pybids_ignore_patterns(
         self,
@@ -113,7 +106,7 @@ class PipelineConfig(ModelWithContainerConfig):
 
 class BidsPipelineConfig(PipelineConfig):
     """
-    Model for BIDS conversion pipeline configuration.
+    Schema for BIDS conversion pipeline configuration.
 
     This is the same as the :class:`nipoppy.config.pipeline.PipelineConfig` model
     except it requires an additional ``STEP`` field.

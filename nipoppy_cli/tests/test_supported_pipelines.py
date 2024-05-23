@@ -82,7 +82,9 @@ def test_pipeline_runner(pipeline_name, pipeline_version, single_subject_dataset
         simulate=True,
     )
 
-    fpath_container: Path = layout.dpath_containers / runner.pipeline_config.CONTAINER
+    fpath_container: Path = (
+        layout.dpath_containers / runner.pipeline_config.CONTAINER_INFO.PATH
+    )
     fpath_container.touch()
 
     runner.run_single(participant=participant, session=session)
@@ -110,7 +112,9 @@ def test_bids_conversion_runner(
         simulate=True,
     )
 
-    fpath_container: Path = layout.dpath_containers / runner.pipeline_config.CONTAINER
+    fpath_container: Path = (
+        layout.dpath_containers / runner.pipeline_config.CONTAINER_INFO.PATH
+    )
     fpath_container.touch()
 
     runner.run_single(participant=participant, session=session)

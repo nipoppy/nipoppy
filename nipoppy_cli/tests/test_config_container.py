@@ -8,7 +8,8 @@ from pydantic import ValidationError
 
 from nipoppy.config.container import (
     ContainerConfig,
-    ModelWithContainerConfig,
+    ContainerInfo,
+    SchemaWithContainerConfig,
     add_bind_path_to_args,
     check_container_args,
     check_container_command,
@@ -16,7 +17,15 @@ from nipoppy.config.container import (
     set_container_env_vars,
 )
 
-FIELDS_CONTAINER = ["COMMAND", "SUBCOMMAND", "ARGS", "ENV_VARS", "INHERIT"]
+FIELDS_CONTAINER_CONFIG = [
+    "COMMAND",
+    "SUBCOMMAND",
+    "ARGS",
+    "ENV_VARS",
+    "INHERIT",
+]
+
+FIELDS_CONTAINER_INFO = ["PATH", "URI"]
 
 
 @pytest.mark.parametrize(
@@ -29,7 +38,7 @@ FIELDS_CONTAINER = ["COMMAND", "SUBCOMMAND", "ARGS", "ENV_VARS", "INHERIT"]
     ],
 )
 def test_container_config(data):
-    for field in FIELDS_CONTAINER:
+    for field in FIELDS_CONTAINER_CONFIG:
         assert hasattr(ContainerConfig(**data), field)
 
 
@@ -83,8 +92,21 @@ def test_container_config_no_extra_fields():
         ContainerConfig(not_a_field="a")
 
 
-def test_container_config_mixin():
-    class ClassWithContainerConfig(ModelWithContainerConfig):
+@pytest.mark.parametrize(
+    "data",
+    [
+        {},
+        {"PATH": "path/to/container.sif"},
+        {"URI": "docker://my/container"},
+    ],
+)
+def test_container_image(data):
+    for field in FIELDS_CONTAINER_INFO:
+        assert hasattr(ContainerInfo(**data), field)
+
+
+def test_schema_with_container_config():
+    class ClassWithContainerConfig(SchemaWithContainerConfig):
         pass
 
     assert isinstance(

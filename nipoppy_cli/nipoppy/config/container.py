@@ -20,7 +20,11 @@ APPTAINER_ENVVAR_PREFIXES = ["APPTAINERENV_", "SINGULARITYENV_"]
 
 
 class ContainerConfig(BaseModel):
-    """Model for container configuration."""
+    """
+    Schema for container configuration.
+
+    Does not include information about the container image.
+    """
 
     COMMAND: str = Field(
         default="apptainer",
@@ -89,10 +93,29 @@ class ContainerConfig(BaseModel):
         return self
 
 
-class ModelWithContainerConfig(BaseModel):
-    """To be inherited by configs that have a ContaienrConfig sub-config."""
+class ContainerInfo(BaseModel):
+    """Schema for container image (i.e., file) information."""
 
-    CONTAINER_CONFIG: ContainerConfig = ContainerConfig()
+    PATH: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the container associated with the pipeline"
+            ", relative to the root directory of the dataset"
+        ),
+    )
+    URI: Optional[str] = Field(
+        default=None,
+        description="The Docker or Apptainer/Singularity URI for the container",
+    )
+
+
+class SchemaWithContainerConfig(BaseModel):
+    """To be inherited by configs that have a ContainerConfig sub-config."""
+
+    CONTAINER_CONFIG: ContainerConfig = Field(
+        default=ContainerConfig(),
+        description="Configuration for running a container",
+    )
 
     def get_container_config(self) -> ContainerConfig:
         """Return the pipeline's ContainerConfig object."""

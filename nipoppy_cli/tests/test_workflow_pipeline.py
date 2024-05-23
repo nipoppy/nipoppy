@@ -9,6 +9,7 @@ import pytest
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
+from nipoppy.config.container import ContainerInfo
 from nipoppy.config.main import PipelineConfig
 from nipoppy.utils import StrOrPathLike, strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -51,7 +52,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
                 {
                     "NAME": "fmriprep",
                     "VERSION": "23.1.3",
-                    "CONTAINER": "fmriprep.sif",
+                    "CONTAINER_INFO": {"PATH": "fmriprep.sif"},
                     "INVOCATION": {"arg1": "val1"},
                 },
                 {
@@ -66,7 +67,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
                 {
                     "NAME": "my_pipeline",
                     "VERSION": "1.0",
-                    "CONTAINER": "my_container.sif",
+                    "CONTAINER_INFO": {"PATH": "my_container.sif"},
                     "DESCRIPTOR": {
                         "custom": {
                             "nipoppy": {
@@ -220,14 +221,14 @@ def test_descriptor(pipeline_name, pipeline_version, tmp_path: Path):
             PipelineConfig(
                 NAME="my_pipeline_with_arbitrary_descriptor_path",
                 VERSION="1.0",
-                CONTAINER="my_container.sif",
+                CONTAINER_INFO=ContainerInfo(PATH="my_container.sif"),
                 DESCRIPTOR_FILE=fpath_descriptor_arbitrary,
                 INVOCATION={},
             ),
             PipelineConfig(
                 NAME="my_pipeline_with_relative_descriptor_path",
                 VERSION="1.0",
-                CONTAINER="my_container.sif",
+                CONTAINER_INFO=ContainerInfo(PATH="my_container.sif"),
                 DESCRIPTOR_FILE="descriptor_at_relative_path.json",
                 INVOCATION={},
             ),

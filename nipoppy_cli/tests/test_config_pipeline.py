@@ -11,8 +11,7 @@ from nipoppy.config.pipeline import BidsPipelineConfig, PipelineConfig
 FIELDS_PIPELINE = [
     "NAME",
     "VERSION",
-    "CONTAINER",
-    "URI",
+    "CONTAINER_INFO",
     "CONTAINER_CONFIG",
     "DESCRIPTOR",
     "DESCRIPTOR_FILE",
@@ -35,8 +34,6 @@ def valid_data() -> dict:
     [
         {},
         {"DESCRIPTION": "My pipeline"},
-        {"CONTAINER": "/my/container"},
-        {"URI": "docker://container"},
         {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}},
         {"DESCRIPTOR": {}},
         {"INVOCATION": {"arg1": "val1", "arg2": "val2"}},
@@ -89,7 +86,7 @@ def test_file_and_json_not_allowed(valid_data, field_json: str, field_file: str)
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
 def test_get_container(valid_data, container):
-    pipeline_config = PipelineConfig(**valid_data, CONTAINER=container)
+    pipeline_config = PipelineConfig(**valid_data, CONTAINER_INFO={"PATH": container})
     assert pipeline_config.get_container() == Path(container)
 
 

@@ -9,13 +9,13 @@ from typing import Any, Callable, Optional, Tuple
 from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
-from nipoppy.config.container import ModelWithContainerConfig
+from nipoppy.config.container import SchemaWithContainerConfig
 from nipoppy.config.pipeline import BidsPipelineConfig, PipelineConfig
 from nipoppy.utils import StrOrPathLike, check_session, load_json
 
 
-class Config(ModelWithContainerConfig):
-    """Model for dataset configuration."""
+class Config(SchemaWithContainerConfig):
+    """Schema for dataset configuration."""
 
     DATASET_NAME: str = Field(description="Name of the dataset")
     VISITS: list[str] = Field(description="List of visits available in the study")
