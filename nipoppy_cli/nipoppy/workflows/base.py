@@ -37,7 +37,7 @@ class BaseWorkflow(Base, ABC):
         self,
         dpath_root: StrOrPathLike,
         name: str,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
     ):

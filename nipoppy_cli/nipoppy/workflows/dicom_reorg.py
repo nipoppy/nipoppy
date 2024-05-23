@@ -16,7 +16,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         self,
         dpath_root: StrOrPathLike,
         copy_files: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):

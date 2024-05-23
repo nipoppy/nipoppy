@@ -1,7 +1,6 @@
 """PipelineRunner workflow."""
 
 import logging
-from pathlib import Path
 from typing import Optional
 
 from boutiques import bosh
@@ -23,7 +22,7 @@ class PipelineRunner(BasePipelineWorkflow):
         participant: str = None,
         session: str = None,
         simulate: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):

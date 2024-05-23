@@ -1,7 +1,6 @@
 """PipelineTracker workflow."""
 
 import logging
-from pathlib import Path
 from typing import Optional
 
 from nipoppy.tabular.bagel import Bagel
@@ -19,7 +18,7 @@ class PipelineTracker(BasePipelineWorkflow):
         pipeline_version: str,
         participant: str = None,
         session: str = None,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
