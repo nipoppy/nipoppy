@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
+from nipoppy.utils import StrOrPathLike
 
 from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 
@@ -176,9 +177,9 @@ def test_generate_and_update(
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
     participants_and_sessions_bidsified: dict[str, list[str]],
-    dpath_downloaded_relative: str | Path,
-    dpath_organized_relative: str | Path,
-    dpath_bidsified_relative: str | Path,
+    dpath_downloaded_relative: StrOrPathLike,
+    dpath_organized_relative: StrOrPathLike,
+    dpath_bidsified_relative: StrOrPathLike,
     empty: bool,
     str_paths: bool,
     tmp_path: Path,

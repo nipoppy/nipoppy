@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -13,9 +14,9 @@ class DicomReorgWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         copy_files: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):

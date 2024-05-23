@@ -26,12 +26,13 @@ dependencies = [
     "pydantic",
     "rich",
     "rich_argparse",
+    "typing-extensions",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "../README.md"
-# TODO requires_python
+requires-python = ">=3.9"
 version = "1.0.0" # TODO eventually use dynamic versioning
 
 [project.optional-dependencies]
@@ -41,19 +42,14 @@ doc = [
     "pygments-csv-lexer>=0.1.3",
     "sphinx>=7.2.6",
     "sphinx-argparse>=0.4.0",
-    "sphinx-autoapi>=3.0.0",
+    "sphinx-autoapi==3.0.0",
     "sphinx-copybutton>=0.5.2",
     "sphinx-jsonschema>=1.19.1",
     "sphinx-togglebutton>=0.3.2",
     "mdit-py-plugins>=0.4.0",
     "myst-parser>=2.0.0",
 ]
-test = [
-    "pytest>=6.0.0",
-    "pytest-cov",
-    "pytest-mock",
-    "fids>=0.1.0",
-]
+test = ["pytest>=6.0.0", "pytest-cov", "pytest-mock", "fids>=0.1.0"]
 tests = ["nipoppy[test]"] # alias in case of typo
 
 [project.scripts]

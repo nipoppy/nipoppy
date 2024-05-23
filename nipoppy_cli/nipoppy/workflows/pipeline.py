@@ -1,5 +1,7 @@
 """Base class for pipeline workflows."""
 
+from __future__ import annotations
+
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -19,6 +21,7 @@ from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     DPATH_DESCRIPTORS,
+    StrOrPathLike,
     check_participant,
     check_session,
     create_bids_db,
@@ -36,13 +39,13 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         name: str,
         pipeline_name: str,
         pipeline_version: str,
         participant: str = None,
         session: str = None,
-        fpath_layout: Optional[Path | str] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
     ):
@@ -114,7 +117,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
         return fpath_container
 
-    def _check_files_for_json(self, fpaths: str | Path | list[str | Path]) -> dict:
+    def _check_files_for_json(
+        self, fpaths: StrOrPathLike | list[StrOrPathLike]
+    ) -> dict:
         if isinstance(fpaths, (str, Path)):
             fpaths = [fpaths]
         for fpath in fpaths:
@@ -272,7 +277,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def set_up_bids_db(
         self,
-        dpath_bids_db: Path | str,
+        dpath_bids_db: StrOrPathLike,
         participant: Optional[str] = None,
         session: Optional[str] = None,
     ) -> bids.BIDSLayout:

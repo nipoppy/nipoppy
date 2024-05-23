@@ -1,9 +1,12 @@
 """Class for the dataset manifest."""
 
-from typing import Optional, Self
+from __future__ import annotations
+
+from typing import Optional
 
 import pandas as pd
 from pydantic import ConfigDict, Field
+from typing_extensions import Self
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.utils import FIELD_DESCRIPTION_MAP
