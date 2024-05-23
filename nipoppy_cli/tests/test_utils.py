@@ -3,6 +3,7 @@
 import json
 import re
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import pytest
@@ -194,7 +195,7 @@ def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # no
 )
 def test_save_df_with_backup(
     fname: str,
-    dname_backups: str | None,
+    dname_backups: Optional[str],
     dname_backups_processed: str,
     tmp_path: Path,
 ):

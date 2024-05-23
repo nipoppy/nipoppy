@@ -7,7 +7,12 @@ from typing import Any, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
+from nipoppy.utils import (
+    FPATH_DEFAULT_LAYOUT,
+    StrOrPathLike,
+    get_pipeline_tag,
+    load_json,
+)
 
 
 class PathInfo(BaseModel):
@@ -129,17 +134,24 @@ class DatasetLayout(Base):
     """File/directory structure for a specific dataset."""
 
     def __init__(
-        self, dpath_root: Path | str, fpath_config: Optional[Path | str] = None
+        self,
+        dpath_root: StrOrPathLike,
+        fpath_config: Optional[StrOrPathLike] = None,
     ):
         """Initialize the object.
 
         Parameters
         ----------
-        dataset_root: Path | str
+        dpath_root : nipoppy.utils.StrOrPathLike
             Path to the root directory of the dataset.
-        fpath_config: Path | str | None
-            Path to layout config to use, by default None.
+        fpath_config : Optional[nipoppy.utils.StrOrPathLike], optional
+            Path to the layout config to use, by default None.
             If None, the default layout will be used.
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``fpath_config`` does not exist.
         """
         # use the default layout if none is specified
         if fpath_config is None:
@@ -187,7 +199,7 @@ class DatasetLayout(Base):
         self.dname_pipeline_work = "work"
         self.dname_pipeline_output = "output"
 
-    def get_full_path(self, path: str | Path) -> Path:
+    def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
         return self.dpath_root / path
 

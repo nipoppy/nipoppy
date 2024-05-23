@@ -1,5 +1,7 @@
 """Utilities for tests."""
 
+from __future__ import annotations
+
 import datetime
 from pathlib import Path
 from typing import Optional
@@ -13,7 +15,7 @@ from fids.fids import create_fake_bids_dataset
 from nipoppy.config.main import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import strip_session
+from nipoppy.utils import StrOrPathLike, strip_session
 
 FPATH_CONFIG = "proc/global_configs.json"
 FPATH_MANIFEST = "tabular/manifest.csv"
@@ -125,7 +127,7 @@ def _process_participants_sessions(
 
 
 def _fake_dicoms(
-    dpath: str | Path,
+    dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str]] = None,
@@ -189,7 +191,7 @@ def _fake_dicoms(
 
 
 def fake_dicoms_downloaded(
-    dpath: str | Path,
+    dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str]] = None,
@@ -220,7 +222,7 @@ def fake_dicoms_downloaded(
 
 
 def fake_dicoms_organized(
-    dpath: str | Path,
+    dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
     sessions: Optional[list[str]] = None,
@@ -253,9 +255,9 @@ def prepare_dataset(
     participants_and_sessions_downloaded: Optional[dict[str, list[str]]] = None,
     participants_and_sessions_organized: Optional[dict[str, list[str]]] = None,
     participants_and_sessions_bidsified: Optional[dict[str, list[str]]] = None,
-    dpath_downloaded: Optional[str | Path] = None,
-    dpath_organized: Optional[str | Path] = None,
-    dpath_bidsified: Optional[str | Path] = None,
+    dpath_downloaded: Optional[StrOrPathLike] = None,
+    dpath_organized: Optional[StrOrPathLike] = None,
+    dpath_bidsified: Optional[StrOrPathLike] = None,
 ):
     """Create dummy imaging files for testing the DICOM-to-BIDS conversion process."""
     # create the manifest

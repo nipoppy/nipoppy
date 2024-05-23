@@ -1,13 +1,16 @@
 """Dataset configuration."""
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Optional, Self
+from typing import Any, Optional
 
 from pydantic import ConfigDict, Field, model_validator
+from typing_extensions import Self
 
 from nipoppy.config.container import ModelWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import check_session, load_json
+from nipoppy.utils import StrOrPathLike, check_session, load_json
 
 
 class Config(ModelWithContainerConfig):
@@ -106,12 +109,12 @@ class Config(ModelWithContainerConfig):
                 f"{pipeline_name} {pipeline_version} {pipeline_step}"
             )
 
-    def save(self, fpath: str | Path, **kwargs):
+    def save(self, fpath: StrOrPathLike, **kwargs):
         """Save the config to a JSON file.
 
         Parameters
         ----------
-        fpath : str | Path
+        fpath : nipoppy.utils.StrOrPathLike
             Path to the JSON file to write
         """
         fpath = Path(fpath)
@@ -122,6 +125,6 @@ class Config(ModelWithContainerConfig):
             file.write(self.model_dump_json(**kwargs))
 
     @classmethod
-    def load(cls, path: str | Path) -> Self:
+    def load(cls, path: StrOrPathLike) -> Self:
         """Load a dataset configuration."""
         return cls(**load_json(path))

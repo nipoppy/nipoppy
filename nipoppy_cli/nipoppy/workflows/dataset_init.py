@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
+from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST, StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -17,7 +17,7 @@ class InitWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):

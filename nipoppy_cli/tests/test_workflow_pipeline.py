@@ -10,7 +10,7 @@ from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.main import PipelineConfig
-from nipoppy.utils import strip_session
+from nipoppy.utils import StrOrPathLike, strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
@@ -20,12 +20,12 @@ from .conftest import create_empty_dataset, get_config, prepare_dataset
 class PipelineWorkflow(BasePipelineWorkflow):
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
         participant: str = None,
         session: str = None,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
@@ -105,7 +105,7 @@ def workflow(tmp_path: Path):
     )
 
 
-def _make_dummy_json(fpath: str | Path):
+def _make_dummy_json(fpath: StrOrPathLike):
     fpath = Path(fpath)
     fpath.parent.mkdir(parents=True, exist_ok=True)
     fpath.write_text("{}\n")
