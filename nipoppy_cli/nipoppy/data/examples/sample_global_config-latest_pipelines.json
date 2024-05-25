@@ -21,61 +21,50 @@
         {
             "NAME": "heudiconv",
             "VERSION": "0.12.2",
-            "STEP": "prepare",
             "CONTAINER_INFO": {
                 "PATH": "heudiconv_0.12.2.sif",
                 "URI": "docker://nipy/heudiconv:0.12.2"
             },
-            "INVOCATION": {
-                "overwrite": true
-            }
-        },
-        {
-            "NAME": "heudiconv",
-            "VERSION": "0.12.2",
-            "STEP": "convert",
-            "CONTAINER_INFO": {
-                "PATH": "heudiconv_0.12.2.sif",
-                "URI": "docker://nipy/heudiconv:0.12.2"
-            },
-            "INVOCATION": {
-                "heuristic": "[[HEUDICONV_HEURISTIC_FILE]]",
-                "overwrite": true,
-                "minmeta": true
-            },
-            "CONTAINER_CONFIG": {
-                "ARGS": [
-                    "--bind",
-                    "[[HEUDICONV_HEURISTIC_FILE]]"
-                ]
-            }
+            "STEPS": [
+                {
+                    "NAME": "prepare",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/heudiconv-0.12.2-prepare.json"
+                },
+                {
+                    "NAME": "convert",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/heudiconv-0.12.2-convert.json",
+                    "CONTAINER_CONFIG": {
+                        "ARGS": [
+                            "--bind",
+                            "[[HEUDICONV_HEURISTIC_FILE]]"
+                        ]
+                    }
+                }
+            ]
         },
         {
             "NAME": "dcm2bids",
             "VERSION": "3.1.0",
-            "STEP": "prepare",
-            "CONTAINER_INFO": {
-                "PATH": "dcm2bids_3.1.0.sif",
-                "URI": "docker://unfmontreal/dcm2bids:3.1.0"
-            }
-        },
-        {
-            "NAME": "dcm2bids",
-            "VERSION": "3.1.0",
-            "STEP": "convert",
             "CONTAINER_INFO": {
                 "PATH": "dcm2bids_3.1.0.sif",
                 "URI": "docker://unfmontreal/dcm2bids:3.1.0"
             },
-            "INVOCATION": {
-                "config": "[[DCM2BIDS_CONFIG_FILE]]"
-            },
-            "CONTAINER_CONFIG": {
-                "ARGS": [
-                    "--bind",
-                    "[[DCM2BIDS_CONFIG_FILE]]"
-                ]
-            }
+            "STEPS": [
+                {
+                    "NAME": "prepare",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/dcm2bids-3.1.0-prepare.json"
+                },
+                {
+                    "NAME": "convert",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/dcm2bids-3.1.0-convert.json",
+                    "CONTAINER_CONFIG": {
+                        "ARGS": [
+                            "--bind",
+                            "[[DCM2BIDS_CONFIG_FILE]]"
+                        ]
+                    }
+                }
+            ]
         }
     ],
     "PROC_PIPELINES": [
@@ -85,17 +74,6 @@
             "CONTAINER_INFO": {
                 "PATH": "fmriprep_23.1.3.sif",
                 "URI": "docker://nipreps/fmriprep:23.1.3"
-            },
-            "INVOCATION": {
-                "fs_license_file": "[[FREESURFER_LICENSE_FILE]]",
-                "skip_bids_validation": true,
-                "regressors_all_comps": true,
-                "write_graph": true,
-                "notrack": true,
-                "nprocs": "8",
-                "omp_nthreads": "4",
-                "memory_gb": "4G",
-                "verbose_count": "-v"
             },
             "CONTAINER_CONFIG": {
                 "ENV_VARS": {
@@ -107,7 +85,12 @@
                     "--bind",
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
-            }
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/fmriprep-23.1.3.json"
+                }
+            ]
         },
         {
             "NAME": "mriqc",
@@ -115,14 +98,6 @@
             "CONTAINER_INFO": {
                 "PATH": "mriqc_23.1.0.sif",
                 "URI": "docker://nipreps/mriqc:23.1.0"
-            },
-            "INVOCATION": {
-                "modalities": [
-                    "T1w",
-                    "T2w"
-                ],
-                "no_sub": true,
-                "nprocs": "4"
             },
             "CONTAINER_CONFIG": {
                 "ENV_VARS": {
@@ -133,6 +108,11 @@
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
             },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/mriqc-23.1.0.json"
+                }
+            ],
             "TRACKER_CONFIG": {
                 "pipeline_complete": [
                     "[[NIPOPPY_BIDS_ID]]/[[NIPOPPY_SESSION]]/anat/[[NIPOPPY_BIDS_ID]]_[[NIPOPPY_SESSION]]_*_T1w.json",

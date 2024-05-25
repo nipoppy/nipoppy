@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from pydantic import ConfigDict, Field, model_validator
 
 from nipoppy.config.container import ContainerInfo, SchemaWithContainerConfig
+from nipoppy.config.pipeline_step import PipelineStepConfig
 
 
 class PipelineConfig(SchemaWithContainerConfig):
@@ -23,31 +23,9 @@ class PipelineConfig(SchemaWithContainerConfig):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    DESCRIPTOR: Optional[dict] = Field(
-        default=None,
-        description=(
-            "Descriptor for the pipeline, as a JSON object"
-            ". Note: DESCRIPTOR and DESCRIPTOR_FILE cannot both be specified"
-        ),
-    )
-    DESCRIPTOR_FILE: Optional[Path] = Field(
-        default=None,
-        description=(
-            "Path to the JSON descriptor file"
-            ". Note: DESCRIPTOR_FILE and DESCRIPTOR cannot both be specified"
-        ),
-    )
-    INVOCATION: Optional[dict] = Field(
-        default=None,
-        description="Invocation for the pipeline, as a JSON object",
-    )
-    # INVOCATION_FILE: Optional[Path] = None  # TODO
-    PYBIDS_IGNORE: list[re.Pattern] = Field(
+    STEPS: list[PipelineStepConfig] = Field(
         default=[],
-        description=(
-            "List of regex patterns (strings) to ignore when "
-            "building the PyBIDS layout"
-        ),
+        description="List of pipeline step configurations",
     )
     TRACKER_CONFIG: dict[str, list[str]] = Field(
         default={},
@@ -62,25 +40,25 @@ class PipelineConfig(SchemaWithContainerConfig):
         Validate the pipeline configuration after creation.
 
         Specifically:
-        - Check that <FIELD> and <FIELD>_FILE fields are not both set
-        - Add an empty invocation if none is provided
+        - If STEPS has more than one item, make sure that each step has a unique name.
         """
-        field_pairs = [
-            ("DESCRIPTOR", "DESCRIPTOR_FILE"),
-            # ("INVOCATION", "INVOCATION_FILE"),
-        ]
-        for field_json, field_file in field_pairs:
-            value_json = getattr(self, field_json)
-            value_file = getattr(self, field_file)
-            if value_json is not None and value_file is not None:
-                raise ValueError(
-                    f"Cannot specify both {field_json} and {field_file}"
-                    f". Got {value_json} and {value_file} respectively."
-                )
-
-        # if self.INVOCATION is None and self.INVOCATION_FILE is None:
-        if self.INVOCATION is None:
-            self.INVOCATION = {}
+        if len(self.STEPS) > 1:
+            step_names = []
+            for step in self.STEPS:
+                if step.NAME is None:
+                    raise ValueError(
+                        "Found at least one step with undefined NAME field"
+                        f" for pipeline {self.NAME} {self.VERSION}"
+                        ". Pipeline steps must have names except "
+                        "if there is only one step"
+                    )
+                if step.NAME in step_names:
+                    raise ValueError(
+                        f'Found at least two steps with NAME "{step.NAME}"'
+                        f" for pipeline {self.NAME} {self.VERSION}"
+                        ". Pipeline names must be unique"
+                    )
+                step_names.append(step.NAME)
 
         return self
 
@@ -90,26 +68,33 @@ class PipelineConfig(SchemaWithContainerConfig):
             raise RuntimeError("No container specified for the pipeline")
         return self.CONTAINER_INFO.PATH
 
-    def add_pybids_ignore_patterns(
-        self,
-        patterns: Sequence[str | re.Pattern] | str | re.Pattern,
-    ):
-        """Add pattern(s) to ignore for PyBIDS."""
-        if isinstance(patterns, (str, re.Pattern)):
-            patterns = [patterns]
-        for pattern in patterns:
-            if isinstance(pattern, str):
-                pattern = re.compile(pattern)
-            if pattern not in self.PYBIDS_IGNORE:
-                self.PYBIDS_IGNORE.append(pattern)
+    def get_step_config(self, step_name: Optional[str] = None) -> PipelineStepConfig:
+        """
+        Return the configuration for the given step.
 
+        If step_name is None, return the configuration for the first step.
+        """
+        if step_name is None:
+            return self.STEPS[0]
+        for step in self.STEPS:
+            if step.NAME == step_name:
+                return step
+        raise ValueError(
+            f"Step {step_name} not found in pipeline {self.NAME} {self.VERSION}"
+        )
 
-class BidsPipelineConfig(PipelineConfig):
-    """
-    Schema for BIDS conversion pipeline configuration.
+    def get_invocation_file(self, step_name: Optional[str] = None) -> Path:
+        """
+        Return the path to the invocation file for the given step.
 
-    This is the same as the :class:`nipoppy.config.pipeline.PipelineConfig` model
-    except it requires an additional ``STEP`` field.
-    """
+        Is step is None, return the invocation file for the first step.
+        """
+        return self.get_step_config(step_name).INVOCATION_FILE
 
-    STEP: str = Field(description="Step name")
+    def get_descriptor_file(self, step_name: Optional[str] = None) -> Path:
+        """
+        Return the path to the descriptor file for the given step.
+
+        If step is None, return the descriptor file for the first step.
+        """
+        return self.get_step_config(step_name).DESCRIPTOR_FILE
