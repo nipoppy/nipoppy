@@ -7,7 +7,7 @@ import pytest_mock
 from boutiques import bosh
 
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import DPATH_DESCRIPTORS, FPATH_SAMPLE_CONFIG_FULL
+from nipoppy.utils import DPATH_DESCRIPTORS, DPATH_INVOCATIONS, FPATH_SAMPLE_CONFIG_FULL
 from nipoppy.workflows import BidsConversionRunner, PipelineRunner
 
 from .conftest import create_empty_dataset, prepare_dataset
@@ -22,6 +22,7 @@ def single_subject_dataset(
     session = "ses-01"
     container_command = "apptainer"
     config_files_map = {
+        "[[NIPOPPY_DPATH_INVOCATIONS]]": DPATH_INVOCATIONS,
         "<PATH_TO_FREESURFER_LICENSE_FILE>": "freesurfer_license.txt",
         "<PATH_TO_HEURISTIC_FILE>": "heuristic.py",
         "<PATH_TO_CONFIG_FILE>": "dcm2bids_config.json",
