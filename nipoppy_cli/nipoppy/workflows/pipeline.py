@@ -22,6 +22,7 @@ from nipoppy.utils import (
     BIDS_SUBJECT_PREFIX,
     DPATH_DESCRIPTORS,
     StrOrPathLike,
+    add_pybids_ignore_patterns,
     check_participant,
     check_session,
     create_bids_db,
@@ -43,6 +44,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         name: str,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -58,6 +60,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
+        self.pipeline_step = pipeline_step
         self.participant = check_participant(participant)
         self.session = check_session(session)
         self.dpaths_to_check = [self.dpath_pipeline]
@@ -117,91 +120,59 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
         return fpath_container
 
-    def _check_files_for_json(
-        self, fpaths: StrOrPathLike | list[StrOrPathLike]
-    ) -> dict:
-        if isinstance(fpaths, (str, Path)):
-            fpaths = [fpaths]
-        for fpath in fpaths:
-            self.logger.debug(f"Checking for file: {fpath}")
-            if fpath.exists():
-                try:
-                    return load_json(fpath)
-                except json.JSONDecodeError as exception:
-                    self.logger.error(
-                        f"Error loading JSON file at {fpath}: {exception}"
-                    )
-        raise FileNotFoundError(
-            f"No file found in any of the following paths: {fpaths}"
-        )
-
-    def get_fpath_descriptor_builtin(self, fname=None) -> Path:
+    def get_fpath_descriptor_builtin(self) -> Path:
         """Get the path to the built-in descriptor file."""
-        if fname is None:
-            pipeline_tag = get_pipeline_tag(self.pipeline_name, self.pipeline_version)
-            fname = f"{pipeline_tag}.json"
+        pipeline_tag = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
+        fname = f"{pipeline_tag}.json"
         return DPATH_DESCRIPTORS / fname
 
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline's Boutiques descriptor."""
-        # first check if the pipeline config has the descriptor itself
-        descriptor = self.pipeline_config.DESCRIPTOR
-        if descriptor is not None:
-            self.logger.info("Using descriptor from pipeline config")
+        # user-provided descriptor file
+        fpath_descriptor = self.pipeline_config.get_descriptor_file(
+            step_name=self.pipeline_step
+        )
+        if fpath_descriptor is not None:
+            self.logger.info(f"Descriptor file specified in config: {fpath_descriptor}")
 
-        # then try to find the descriptor file
+        # built-in descriptor file
         else:
-            # user-provided descriptor file
-            fpath_descriptor_raw = self.pipeline_config.DESCRIPTOR_FILE
-            if fpath_descriptor_raw is not None:
-                self.logger.info(
-                    f"Descriptor file specified in config: {fpath_descriptor_raw}"
-                )
-                fpaths_descriptor_to_check = [
-                    fpath_descriptor_raw,
-                    self.layout.dpath_descriptors / fpath_descriptor_raw,
-                    DPATH_DESCRIPTORS / fpath_descriptor_raw,
-                ]
-                try:
-                    descriptor = self._check_files_for_json(fpaths_descriptor_to_check)
-                except FileNotFoundError:
-                    raise FileNotFoundError(
-                        f"Could not find a descriptor file for pipeline"
-                        f" {self.pipeline_name}, version {self.pipeline_version}"
-                        f" in any of the following paths: {fpaths_descriptor_to_check}"
-                    )
-                self.logger.info(
-                    "Loaded descriptor from file specified in global config"
-                )
+            fpath_descriptor = self.get_fpath_descriptor_builtin()
+            self.logger.info(
+                "No descriptor file specified in config"
+                ", checking if there is a built-in descriptor"
+                f" at {fpath_descriptor}"
+            )
 
-            # built-in descriptor file
-            else:
-                fpath_descriptor_builtin = self.get_fpath_descriptor_builtin()
-                self.logger.info(
-                    "No descriptor file specified in config"
-                    ", checking if there is a built-in descriptor"
-                    f" at {fpath_descriptor_builtin}"
+            if not fpath_descriptor.exists():
+                raise RuntimeError(
+                    "Could not find a built-in descriptor file for pipeline"
+                    f" {self.pipeline_name}, version {self.pipeline_version}"
+                    f", step {self.pipeline_step}"
+                    # ". Available built-in pipelines are: "  # TODO
                 )
+            self.logger.info("Using built-in descriptor")
 
-                try:
-                    descriptor = self._check_files_for_json(fpath_descriptor_builtin)
-                except FileNotFoundError:
-                    raise RuntimeError(
-                        "Could not find a built-in descriptor file for pipeline"
-                        f" {self.pipeline_name}, version {self.pipeline_version}"
-                        # ". Available built-in pipelines are: "  # TODO
-                    )
-                self.logger.info("Using built-in descriptor")
+        # TODO process substitutions
 
-        return descriptor
+        return load_json(fpath_descriptor)
 
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline's Boutiques invocation."""
-        # for now just get the invocation directly
-        # TODO eventually add option to load from file
-        return self.pipeline_config.INVOCATION
+        fpath_invocation = self.pipeline_config.get_invocation_file(
+            step_name=self.pipeline_step
+        )
+        if fpath_invocation is None:
+            raise ValueError("No invocation file specified in config")
+        invocation = load_json(fpath_invocation)
+        # TODO process substitutions
+        return invocation
 
     def process_template_json(
         self,
@@ -250,7 +221,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         return template_json_str if return_str else json.loads(template_json_str)
 
-    def get_boutiques_config(self, participant: str, session: str):
+    def get_boutiques_config(self):
         """Get the Boutiques configuration."""
         try:
             boutiques_config = get_boutiques_config_from_descriptor(
@@ -282,18 +253,23 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         session: Optional[str] = None,
     ) -> bids.BIDSLayout:
         """Set up the BIDS database."""
-        dpath_bids_db = Path(dpath_bids_db)
+        dpath_bids_db: Path = Path(dpath_bids_db)
+
+        pybids_ignore_patterns = self.pipeline_config.get_pybids_ignore(
+            step_name=self.pipeline_step
+        )
 
         if participant is not None:
-            self.pipeline_config.add_pybids_ignore_patterns(
-                f"^(?!/{BIDS_SUBJECT_PREFIX}({participant}))"
+            add_pybids_ignore_patterns(
+                current=pybids_ignore_patterns,
+                new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant}))",
             )
         if session is not None:
-            self.pipeline_config.add_pybids_ignore_patterns(
-                f".*?/{BIDS_SESSION_PREFIX}(?!{strip_session(session)})"
+            add_pybids_ignore_patterns(
+                current=pybids_ignore_patterns,
+                new=f".*?/{BIDS_SESSION_PREFIX}(?!{strip_session(session)})",
             )
 
-        pybids_ignore_patterns = self.pipeline_config.PYBIDS_IGNORE
         self.logger.info(
             f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore patterns:"
             f" {pybids_ignore_patterns}"
@@ -369,9 +345,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Return participant-session pairs to run the pipeline on."""
         # TODO add option in Boutiques descriptor of pipeline
         # 1. "manifest" (or "all"?)
-        # 2. "downloaded" (from doughnut)
-        # 3. "organized" (from doughnut)
-        # 4. "bidsified" (from doughnut)
+        # 2. "downloaded" but not "organized" (from doughnut)
+        # 3. "organized" but not "bidsified" (from doughnut)
+        # 4. "bidsified" but not completed (from doughnut/bagel)
         # 5. "dataset" (i.e. apply on entire dataset, do not loop over anything)
 
         # for now just check the participants/sessions that have BIDS data

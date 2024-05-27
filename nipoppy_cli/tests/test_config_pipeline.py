@@ -1,5 +1,6 @@
 """Tests for the pipeline configuration class."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -84,7 +85,7 @@ def test_get_container(valid_data, container):
 
 def test_get_container_error(valid_data):
     pipeline_config = PipelineConfig(**valid_data)
-    with pytest.raises(RuntimeError, match="No container specified for the pipeline"):
+    with pytest.raises(RuntimeError, match="No container specified for pipeline"):
         pipeline_config.get_container()
 
 
@@ -108,9 +109,19 @@ def test_get_step_config(valid_data, step_name, expected_name):
     assert pipeling_config.get_step_config(step_name).NAME == expected_name
 
 
+def test_get_step_config_no_steps(valid_data):
+    pipeline_config = PipelineConfig(**valid_data, STEPS=[])
+    with pytest.raises(ValueError, match="No steps specified for pipeline"):
+        pipeline_config.get_step_config()
+
+
 def test_get_step_config_invalid(valid_data):
     pipeline_config = PipelineConfig(
         **valid_data,
+        STEPS=[
+            PipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
+            PipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+        ],
     )
     with pytest.raises(ValueError, match="not found in pipeline"):
         pipeline_config.get_step_config("invalid_step")
@@ -146,3 +157,19 @@ def test_get_descriptor_file(valid_data, step_name, descriptor_file):
     )
 
     assert pipeline_config.get_descriptor_file(step_name) == descriptor_file
+
+
+@pytest.mark.parametrize(
+    "step_name,pybids_ignore",
+    [("step1", [re.compile("1")]), ("step2", [re.compile("2")])],
+)
+def test_get_pybids_ignore(valid_data, step_name, pybids_ignore):
+    pipeline_config = PipelineConfig(
+        **valid_data,
+        STEPS=[
+            PipelineStepConfig(NAME="step1", PYBIDS_IGNORE=["1"]),
+            PipelineStepConfig(NAME="step2", PYBIDS_IGNORE=["2"]),
+        ],
+    )
+
+    assert pipeline_config.get_pybids_ignore(step_name) == pybids_ignore

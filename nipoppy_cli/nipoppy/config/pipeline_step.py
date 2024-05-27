@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from pydantic import ConfigDict, Field
 
@@ -37,16 +37,3 @@ class PipelineStepConfig(SchemaWithContainerConfig):
     )
 
     model_config = ConfigDict(extra="forbid")
-
-    def add_pybids_ignore_patterns(
-        self,
-        patterns: Sequence[str | re.Pattern] | str | re.Pattern,
-    ):
-        """Add pattern(s) to ignore for PyBIDS."""
-        if isinstance(patterns, (str, re.Pattern)):
-            patterns = [patterns]
-        for pattern in patterns:
-            if isinstance(pattern, str):
-                pattern = re.compile(pattern)
-            if pattern not in self.PYBIDS_IGNORE:
-                self.PYBIDS_IGNORE.append(pattern)

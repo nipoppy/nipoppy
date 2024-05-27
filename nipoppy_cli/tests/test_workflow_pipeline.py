@@ -10,7 +10,8 @@ from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerInfo
-from nipoppy.config.main import PipelineConfig
+from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline_step import PipelineStepConfig
 from nipoppy.utils import StrOrPathLike, strip_session
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -24,6 +25,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -37,6 +39,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
             name="test",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant=participant,
             session=session,
             fpath_layout=fpath_layout,
@@ -47,51 +50,29 @@ class PipelineWorkflow(BasePipelineWorkflow):
         # override the config
         self.config = get_config(
             visits=["1"],
+            bids_pipelines=[
+                # built-in pipelines
+                {
+                    "NAME": "heudiconv",
+                    "VERSION": "0.12.2",
+                    "CONTAINER_INFO": {"PATH": "heudiconv.sif"},
+                    "STEPS": [{"NAME": "prepare"}, {"NAME": "convert"}],
+                }
+            ],
             proc_pipelines=[
                 # built-in pipelines
                 {
                     "NAME": "fmriprep",
                     "VERSION": "23.1.3",
                     "CONTAINER_INFO": {"PATH": "fmriprep.sif"},
-                    "INVOCATION": {"arg1": "val1"},
-                },
-                {
-                    "NAME": "fmriprep",
-                    "VERSION": "20.2.7",
-                },
-                {
-                    "NAME": "mriqc",
-                    "VERSION": "23.1.0",
+                    "STEPS": [{}],
                 },
                 # user-added pipeline
                 {
                     "NAME": "my_pipeline",
                     "VERSION": "1.0",
                     "CONTAINER_INFO": {"PATH": "my_container.sif"},
-                    "DESCRIPTOR": {
-                        "custom": {
-                            "nipoppy": {
-                                "CONTAINER_CONFIG": {
-                                    "ARGS": ["--pipeline-specific-arg"]
-                                }
-                            }
-                        }
-                    },
-                    "INVOCATION": {},
-                },
-                # pipeline without a container
-                {"NAME": "no_container", "VERSION": "2.0"},
-                # pipeline without a descriptor without a boutiques config
-                {
-                    "NAME": "no_boutiques_config",
-                    "VERSION": "1.0",
-                    "DESCRIPTOR": {},
-                },
-                # pipeline with a descriptor with an invalid boutiques config
-                {
-                    "NAME": "bad_boutiques_config",
-                    "VERSION": "1.0",
-                    "DESCRIPTOR": {"custom": {"nipoppy": {"INVALID_ARG": "value"}}},
+                    "STEPS": [{}],
                 },
             ],
         )
@@ -115,7 +96,7 @@ def workflow(tmp_path: Path):
 
 
 def _make_dummy_json(fpath: StrOrPathLike):
-    fpath = Path(fpath)
+    fpath: Path = Path(fpath)
     fpath.parent.mkdir(parents=True, exist_ok=True)
     fpath.write_text("{}\n")
 
@@ -140,6 +121,7 @@ def test_init(args):
     assert isinstance(workflow, BasePipelineWorkflow)
     assert hasattr(workflow, "pipeline_name")
     assert hasattr(workflow, "pipeline_version")
+    assert hasattr(workflow, "pipeline_step")
     assert hasattr(workflow, "participant")
     assert hasattr(workflow, "session")
     assert isinstance(workflow.dpath_pipeline, Path)
@@ -163,89 +145,62 @@ def test_fpath_container(tmp_path: Path):
     assert isinstance(workflow.fpath_container, Path)
 
 
-def test_fpath_container_not_in_config():
-    workflow = PipelineWorkflow(
-        dpath_root="my_dataset",
-        pipeline_name="no_container",
-        pipeline_version="2.0",
-    )
-    with pytest.raises(RuntimeError, match="No container specified for the pipeline"):
-        workflow.fpath_container
-
-
 def test_fpath_container_not_found(workflow: PipelineWorkflow):
     with pytest.raises(FileNotFoundError, match="No container image file found at"):
         workflow.fpath_container
 
 
 @pytest.mark.parametrize(
-    "fpath_json,fpaths",
+    "pipeline_name,pipeline_version,pipeline_step",
     [
-        ("test.json", ["test.json", "dpath1/test.json", "dpath1/test2.json"]),
-        ("dpath1/test.json", ["test.json", "dpath1/test.json", "dpath1/test2.json"]),
-        ("dpath1/test2.json", ["test.json", "dpath1/test.json", "dpath1/test2.json"]),
+        ("fmriprep", "23.1.3", None),  # built-in pipeline
+        ("heudiconv", "0.12.2", "prepare"),  # built-in pipeline
+        ("custom_pipeline", "1.0", None),
     ],
 )
-def test_check_files_for_json_direct(
-    fpath_json, fpaths, workflow: PipelineWorkflow, tmp_path: Path
-):
-    fpath_json: Path = tmp_path / fpath_json
-    _make_dummy_json(fpath_json)
-    assert isinstance(
-        workflow._check_files_for_json([tmp_path / fpath for fpath in fpaths]), dict
-    )
-
-
-@pytest.mark.parametrize(
-    "pipeline_name,pipeline_version",
-    [
-        ("my_pipeline", "1.0"),
-        ("fmriprep", "20.2.7"),
-        ("fmriprep", "23.1.3"),
-        ("mriqc", "23.1.0"),
-        ("my_pipeline_with_arbitrary_descriptor_path", "1.0"),
-        ("my_pipeline_with_relative_descriptor_path", "1.0"),
-    ],
-)
-def test_descriptor(pipeline_name, pipeline_version, tmp_path: Path):
+def test_descriptor(pipeline_name, pipeline_version, pipeline_step, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
+    workflow = PipelineWorkflow(
+        dpath_root, pipeline_name, pipeline_version, pipeline_step
+    )
 
     # user-added pipelines with descriptor file
-    fpath_descriptor_arbitrary = tmp_path / "descriptor_at_arbitrary_path.json"
-    fpath_descriptor_relative = (
-        workflow.layout.dpath_descriptors / "descriptor_at_relative_path.json"
-    )
+    fpath_descriptor_custom = tmp_path / "custom_pipeline.json"
     workflow.config.PROC_PIPELINES.extend(
         [
             PipelineConfig(
-                NAME="my_pipeline_with_arbitrary_descriptor_path",
+                NAME="custom_pipeline",
                 VERSION="1.0",
                 CONTAINER_INFO=ContainerInfo(PATH="my_container.sif"),
-                DESCRIPTOR_FILE=fpath_descriptor_arbitrary,
-                INVOCATION={},
-            ),
-            PipelineConfig(
-                NAME="my_pipeline_with_relative_descriptor_path",
-                VERSION="1.0",
-                CONTAINER_INFO=ContainerInfo(PATH="my_container.sif"),
-                DESCRIPTOR_FILE="descriptor_at_relative_path.json",
-                INVOCATION={},
+                STEPS=[PipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor_custom)],
             ),
         ]
     )
-    for fpath_descriptor in [fpath_descriptor_arbitrary, fpath_descriptor_relative]:
-        _make_dummy_json(fpath_descriptor)
+    _make_dummy_json(fpath_descriptor_custom)
     assert isinstance(workflow.descriptor, dict)
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version", [("my_pipeline", "1.0"), ("fmriprep", "23.1.3")]
+    "pipeline_name,pipeline_version,invocation",
+    [
+        ("my_pipeline", "1.0", {"key1": "val1", "key2": "val2"}),
+        ("fmriprep", "23.1.3", {}),
+    ],
 )
-def test_invocation(pipeline_name, pipeline_version, tmp_path: Path):
+def test_invocation(pipeline_name, pipeline_version, invocation, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
-    assert isinstance(workflow.invocation, dict)
+
+    fpath_invocation = tmp_path / "invocation.json"
+    fpath_invocation.write_text(json.dumps(invocation))
+
+    workflow.pipeline_config.get_step_config().INVOCATION_FILE = fpath_invocation
+    assert workflow.invocation == invocation
+
+
+def test_invocation_none(workflow: PipelineWorkflow):
+    with pytest.raises(ValueError, match="No invocation file specified in config"):
+        workflow.invocation
 
 
 @pytest.mark.parametrize("return_str", [True, False])
@@ -315,7 +270,13 @@ def test_get_boutiques_config(tmp_path: Path):
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
     )
-    boutiques_config = workflow.get_boutiques_config(participant="01", session="ses-1")
+    workflow.descriptor = {
+        "custom": {
+            "nipoppy": {"CONTAINER_CONFIG": {"ARGS": ["--pipeline-specific-arg"]}}
+        }
+    }
+
+    boutiques_config = workflow.get_boutiques_config()
     assert isinstance(boutiques_config, BoutiquesConfig)
     # should not be the default
     assert boutiques_config != BoutiquesConfig()
@@ -327,7 +288,8 @@ def test_get_boutiques_config_default(tmp_path: Path):
         pipeline_name="no_boutiques_config",
         pipeline_version="1.0",
     )
-    boutiques_config = workflow.get_boutiques_config(participant="01", session="ses-1")
+    workflow.descriptor = {}
+    boutiques_config = workflow.get_boutiques_config()
     assert isinstance(boutiques_config, BoutiquesConfig)
     # expect the default
     assert boutiques_config == BoutiquesConfig()
@@ -339,8 +301,10 @@ def test_get_boutiques_config_invalid(tmp_path: Path):
         pipeline_name="bad_boutiques_config",
         pipeline_version="1.0",
     )
+    workflow.descriptor = {"custom": {"nipoppy": {"INVALID_ARG": "value"}}}
+
     with pytest.raises(ValueError, match="Error when loading the Boutiques config"):
-        workflow.get_boutiques_config(participant="01", session="ses-1")
+        workflow.get_boutiques_config()
 
 
 @pytest.mark.parametrize(

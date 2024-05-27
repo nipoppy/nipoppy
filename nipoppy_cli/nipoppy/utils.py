@@ -7,7 +7,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Optional, TypeVar
+from typing import List, Optional, Sequence, TypeVar
 
 import bids
 import pandas as pd
@@ -117,6 +117,20 @@ def create_bids_db(
         reset_database=reset_database,
     )
     return bids_layout
+
+
+def add_pybids_ignore_patterns(
+    current: List[re.Pattern],
+    new: Sequence[str | re.Pattern] | str | re.Pattern,
+):
+    """Add pattern(s) to ignore for PyBIDS."""
+    if isinstance(new, (str, re.Pattern)):
+        new = [new]
+    for pattern in new:
+        if isinstance(pattern, str):
+            pattern = re.compile(pattern)
+        if pattern not in current:
+            current.append(pattern)
 
 
 def get_pipeline_tag(

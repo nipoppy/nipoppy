@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -65,7 +66,9 @@ class PipelineConfig(SchemaWithContainerConfig):
     def get_container(self) -> Path:
         """Return the path to the pipeline's container."""
         if self.CONTAINER_INFO.PATH is None:
-            raise RuntimeError("No container specified for the pipeline")
+            raise RuntimeError(
+                f"No container specified for pipeline {self.NAME} {self.VERSION}"
+            )
         return self.CONTAINER_INFO.PATH
 
     def get_step_config(self, step_name: Optional[str] = None) -> PipelineStepConfig:
@@ -74,7 +77,11 @@ class PipelineConfig(SchemaWithContainerConfig):
 
         If step_name is None, return the configuration for the first step.
         """
-        if step_name is None:
+        if len(self.STEPS) == 0:
+            raise ValueError(
+                f"No steps specified for pipeline {self.NAME} {self.VERSION}"
+            )
+        elif step_name is None:
             return self.STEPS[0]
         for step in self.STEPS:
             if step.NAME == step_name:
@@ -98,3 +105,11 @@ class PipelineConfig(SchemaWithContainerConfig):
         If step is None, return the descriptor file for the first step.
         """
         return self.get_step_config(step_name).DESCRIPTOR_FILE
+
+    def get_pybids_ignore(self, step_name: Optional[str] = None) -> list[re.Pattern]:
+        """
+        Return the list of regex patterns to ignore when building the PyBIDS layout.
+
+        If step is None, return the patterns for the first step.
+        """
+        return self.get_step_config(step_name).PYBIDS_IGNORE

@@ -19,6 +19,7 @@ class PipelineRunner(BasePipelineWorkflow):
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
         simulate: bool = False,
@@ -31,6 +32,7 @@ class PipelineRunner(BasePipelineWorkflow):
             name="run",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant=participant,
             session=session,
             fpath_layout=fpath_layout,
@@ -64,7 +66,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.debug(f"Initial container config: {container_config}")
 
         # get and process Boutiques config
-        boutiques_config = self.get_boutiques_config(participant, session)
+        boutiques_config = self.get_boutiques_config()
         boutiques_config = BoutiquesConfig(
             **self.process_template_json(
                 boutiques_config.model_dump(),

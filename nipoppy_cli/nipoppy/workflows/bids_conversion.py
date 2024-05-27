@@ -32,6 +32,7 @@ class BidsConversionRunner(PipelineRunner):
             dpath_root=dpath_root,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant=participant,
             session=session,
             simulate=simulate,
@@ -40,27 +41,14 @@ class BidsConversionRunner(PipelineRunner):
             dry_run=dry_run,
         )
         self.name = "bids_conversion"
-        self.pipeline_step = pipeline_step
         self.dpaths_to_check = []  # do not create any pipeline-specific directory
 
     @cached_property
     def pipeline_config(self) -> PipelineConfig:
         """Get the user config for the BIDS conversion software."""
-        return self.config.get_bids_pipeline_config(
+        return self.config.get_pipeline_config(
             self.pipeline_name,
             self.pipeline_version,
-            self.pipeline_step,
-        )
-
-    def get_fpath_descriptor_builtin(self) -> Path:
-        """Get the path to the built-in descriptor file."""
-        fname_descriptor_builtin = get_pipeline_tag(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-        )
-        return super().get_fpath_descriptor_builtin(
-            fname=f"{fname_descriptor_builtin}.json"
         )
 
     def get_participants_sessions_to_run(

@@ -13,6 +13,7 @@ from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     add_path_suffix,
     add_path_timestamp,
+    add_pybids_ignore_patterns,
     check_participant,
     check_session,
     dicom_id_to_bids_id,
@@ -26,7 +27,8 @@ from nipoppy.utils import (
     strip_session,
 )
 
-from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
+from .conftest import datetime_fixture  # noqa F401
+from .conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(
@@ -116,6 +118,26 @@ def test_create_bids_db(
     assert len(bids_layout.get(extension="nii.gz")) == expected_count
     if dpath_bids_db is not None:
         assert dpath_bids_db.exists()
+
+
+@pytest.mark.parametrize(
+    "orig_patterns,new_patterns,expected",
+    [
+        ([], [], []),
+        ([re.compile("a")], "b", [re.compile("a"), re.compile("b")]),
+        ([re.compile("a")], ["b"], [re.compile("a"), re.compile("b")]),
+        (
+            [re.compile("a")],
+            ["b", "c"],
+            [re.compile("a"), re.compile("b"), re.compile("c")],
+        ),
+        ([re.compile("a")], "a", [re.compile("a")]),
+        ([re.compile("a")], ["b"], [re.compile("a"), re.compile("b")]),
+    ],
+)
+def test_add_pybids_ignore_patterns(orig_patterns, new_patterns, expected):
+    add_pybids_ignore_patterns(current=orig_patterns, new=new_patterns)
+    assert orig_patterns == expected
 
 
 @pytest.mark.parametrize(
