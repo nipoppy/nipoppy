@@ -26,7 +26,7 @@ class Config(SchemaWithContainerConfig):
             " (inferred from VISITS if not given)"
         ),
     )
-    GLOBALS: dict[str, str] = Field(
+    SUBSTITUTIONS: dict[str, str] = Field(
         default={},
         description=(
             "Top-level mapping for replacing placeholder expressions in the rest "
@@ -138,13 +138,13 @@ class Config(SchemaWithContainerConfig):
             file.write(self.model_dump_json(**kwargs))
 
     @classmethod
-    def load(cls, path: StrOrPathLike, apply_globals_replacement=True) -> Self:
+    def load(cls, path: StrOrPathLike, apply_substitutions=True) -> Self:
         """Load a dataset configuration."""
         config = cls(**load_json(path))
 
-        if apply_globals_replacement:
+        if apply_substitutions:
             config_text = config.model_dump_json()
-            for key, value in config.GLOBALS.items():
+            for key, value in config.SUBSTITUTIONS.items():
                 config_text = config_text.replace(key, value)
                 config = cls(**json.loads(config_text))
 

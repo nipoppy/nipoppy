@@ -11,7 +11,7 @@
             "--cleanenv"
         ]
     },
-    "GLOBALS": {
+    "SUBSTITUTIONS": {
         "[[HEUDICONV_HEURISTIC_FILE]]": "<PATH_TO_HEURISTIC_FILE>",
         "[[DCM2BIDS_CONFIG_FILE]]": "<PATH_TO_CONFIG_FILE>",
         "[[FREESURFER_LICENSE_FILE]]": "<PATH_TO_FREESURFER_LICENSE_FILE>",

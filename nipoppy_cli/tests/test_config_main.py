@@ -219,13 +219,13 @@ def test_load_missing_required():
         Config.load(DPATH_TEST_DATA / "config_invalid1.json")
 
 
-def test_globals(valid_config_data, tmp_path: Path):
+def test_substitutions(valid_config_data, tmp_path: Path):
     pattern_to_replace1 = "[[FREESURFER_LICENSE_FILE]]"
     replacement_value1 = "/path/to/license.txt"
     pattern_to_replace2 = "[[TEMPLATEFLOW_HOME]]"
     replacement_value2 = "/path/to/templateflow"
 
-    valid_config_data["GLOBALS"] = {
+    valid_config_data["SUBSTITUTIONS"] = {
         pattern_to_replace1: replacement_value1,
         pattern_to_replace2: replacement_value2,
     }
@@ -252,7 +252,7 @@ def test_globals(valid_config_data, tmp_path: Path):
 
     fpath = tmp_path / "config.json"
     Config(**valid_config_data).save(fpath)
-    config_to_check = Config.load(fpath, apply_globals_replacement=True)
+    config_to_check = Config.load(fpath, apply_substitutions=True)
     assert config_to_check.PROC_PIPELINES[0] == PipelineConfig(
         **{
             "NAME": "fmriprep",
