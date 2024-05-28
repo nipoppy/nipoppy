@@ -169,7 +169,12 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
         The JSON object.
     """
     with open(fpath, "r") as file:
-        return json.load(file, **kwargs)
+        try:
+            return json.load(file, **kwargs)
+        except json.JSONDecodeError as exception:
+            raise json.JSONDecodeError(
+                f"Error loading JSON file at {fpath}", exception.doc, exception.pos
+            )
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):

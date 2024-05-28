@@ -1,6 +1,5 @@
 """Tests for the pipeline configuration class."""
 
-import re
 from pathlib import Path
 
 import pytest
@@ -160,16 +159,16 @@ def test_get_descriptor_file(valid_data, step_name, descriptor_file):
 
 
 @pytest.mark.parametrize(
-    "step_name,pybids_ignore",
-    [("step1", [re.compile("1")]), ("step2", [re.compile("2")])],
+    "step_name,pybids_ignore_file",
+    [("step1", Path("patterns1.json")), ("step2", Path("patterns2.json"))],
 )
-def test_get_pybids_ignore(valid_data, step_name, pybids_ignore):
+def test_get_pybids_ignore(valid_data, step_name, pybids_ignore_file):
     pipeline_config = PipelineConfig(
         **valid_data,
         STEPS=[
-            PipelineStepConfig(NAME="step1", PYBIDS_IGNORE=["1"]),
-            PipelineStepConfig(NAME="step2", PYBIDS_IGNORE=["2"]),
+            PipelineStepConfig(NAME="step1", PYBIDS_IGNORE_FILE="patterns1.json"),
+            PipelineStepConfig(NAME="step2", PYBIDS_IGNORE_FILE="patterns2.json"),
         ],
     )
 
-    assert pipeline_config.get_pybids_ignore(step_name) == pybids_ignore
+    assert pipeline_config.get_pybids_ignore_file(step_name) == pybids_ignore_file

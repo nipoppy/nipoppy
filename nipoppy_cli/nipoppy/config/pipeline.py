@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -90,7 +89,7 @@ class PipelineConfig(SchemaWithContainerConfig):
             f"Step {step_name} not found in pipeline {self.NAME} {self.VERSION}"
         )
 
-    def get_invocation_file(self, step_name: Optional[str] = None) -> Path:
+    def get_invocation_file(self, step_name: Optional[str] = None) -> Path | None:
         """
         Return the path to the invocation file for the given step.
 
@@ -98,7 +97,7 @@ class PipelineConfig(SchemaWithContainerConfig):
         """
         return self.get_step_config(step_name).INVOCATION_FILE
 
-    def get_descriptor_file(self, step_name: Optional[str] = None) -> Path:
+    def get_descriptor_file(self, step_name: Optional[str] = None) -> Path | None:
         """
         Return the path to the descriptor file for the given step.
 
@@ -106,10 +105,10 @@ class PipelineConfig(SchemaWithContainerConfig):
         """
         return self.get_step_config(step_name).DESCRIPTOR_FILE
 
-    def get_pybids_ignore(self, step_name: Optional[str] = None) -> list[re.Pattern]:
+    def get_pybids_ignore_file(self, step_name: Optional[str] = None) -> Path | None:
         """
         Return the list of regex patterns to ignore when building the PyBIDS layout.
 
         If step is None, return the patterns for the first step.
         """
-        return self.get_step_config(step_name).PYBIDS_IGNORE
+        return self.get_step_config(step_name).PYBIDS_IGNORE_FILE

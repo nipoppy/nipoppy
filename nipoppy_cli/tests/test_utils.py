@@ -167,6 +167,13 @@ def test_load_json():
     assert isinstance(load_json(DPATH_TEST_DATA / "config1.json"), dict)
 
 
+def test_load_json_invalid(tmp_path: Path):
+    fpath_invalid = tmp_path / "invalid.json"
+    fpath_invalid.write_text("invalid")
+    with pytest.raises(json.JSONDecodeError, match="Error loading JSON file"):
+        load_json(fpath_invalid)
+
+
 def test_save_json(tmp_path: Path):
     json_object = {"a": 1, "b": 2}
     fpath = tmp_path / "test.json"

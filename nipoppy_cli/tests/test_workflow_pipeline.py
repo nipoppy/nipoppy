@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -279,6 +280,44 @@ def test_invocation_substitutions(tmp_path: Path, substitutions, expected_invoca
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
     assert workflow.invocation == expected_invocation
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,patterns",
+    [
+        ("my_pipeline", "1.0", ["PATTERN1", "PATTERN2"]),
+        ("fmriprep", "23.1.3", ["PATTERN3", "PATTERN4"]),
+    ],
+)
+def test_pybids_ignore_patterns(
+    pipeline_name, pipeline_version, patterns, tmp_path: Path
+):
+    dpath_root = tmp_path / "my_dataset"
+    workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
+
+    fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
+    fpath_patterns.write_text(json.dumps(patterns))
+    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = fpath_patterns
+
+    assert workflow.pybids_ignore_patterns == [
+        re.compile(pattern) for pattern in patterns
+    ]
+
+
+def test_pybids_ignore_patterns_no_file(workflow: PipelineWorkflow):
+    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = None
+    assert workflow.pybids_ignore_patterns == []
+
+
+def test_pybids_ignore_patterns_invalid_format(
+    workflow: PipelineWorkflow, tmp_path: Path
+):
+    fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
+    fpath_patterns.write_text(json.dumps({"key": "value"}))
+    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = fpath_patterns
+
+    with pytest.raises(ValueError, match="Expected a list of strings"):
+        workflow.pybids_ignore_patterns
 
 
 @pytest.mark.parametrize("return_str", [True, False])

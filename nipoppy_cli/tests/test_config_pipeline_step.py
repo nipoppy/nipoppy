@@ -9,7 +9,7 @@ FIELDS_STEP = [
     "NAME",
     "DESCRIPTOR_FILE",
     "INVOCATION_FILE",
-    "PYBIDS_IGNORE",
+    "PYBIDS_IGNORE_FILE",
     "CONTAINER_CONFIG",
 ]
 
@@ -20,7 +20,7 @@ FIELDS_STEP = [
         {"NAME": "step_name"},
         {"DESCRIPTOR_FILE": "PATH_TO_DESCRIPTOR_FILE"},
         {"INVOCATION_FILE": "PATH_TO_INVOCATION_FILE"},
-        {"PYBIDS_IGNORE": ["ignore1", "ignore2"]},
+        {"PYBIDS_IGNORE_FILE": "PATH_TO_PYBIDS_IGNORE_FILE"},
         {"CONTAINER_CONFIG": {}},
     ],
 )

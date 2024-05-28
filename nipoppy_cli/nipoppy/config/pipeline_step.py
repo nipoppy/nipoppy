@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -28,11 +27,11 @@ class PipelineStepConfig(SchemaWithContainerConfig):
         default=None,
         description=("Path to the JSON invocation file"),
     )
-    PYBIDS_IGNORE: list[re.Pattern] = Field(
-        default=[],
+    PYBIDS_IGNORE_FILE: Optional[Path] = Field(
+        default=None,
         description=(
-            "List of regex patterns (strings) to ignore when "
-            "building the PyBIDS layout"
+            "Path to file containing a list of regex patterns (strings) to ignore "
+            "when building the PyBIDS layout"
         ),
     )
 

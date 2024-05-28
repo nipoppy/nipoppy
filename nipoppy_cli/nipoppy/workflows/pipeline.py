@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
@@ -124,19 +125,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
         return fpath_container
 
-    def get_fpath_descriptor_builtin(self) -> Path:
-        """Get the path to the built-in descriptor file."""
-        pipeline_tag = get_pipeline_tag(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-        )
-        fname = f"{pipeline_tag}.json"
-        return DPATH_DESCRIPTORS / fname
-
     @cached_property
     def descriptor(self) -> dict:
-        """Load the pipeline's Boutiques descriptor."""
+        """Load the pipeline step's Boutiques descriptor."""
         # user-provided descriptor file
         fpath_descriptor = self.pipeline_config.get_descriptor_file(
             step_name=self.pipeline_step
@@ -170,7 +161,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     @cached_property
     def invocation(self) -> dict:
-        """Load the pipeline's Boutiques invocation."""
+        """Load the pipeline step's Boutiques invocation."""
         fpath_invocation = self.pipeline_config.get_invocation_file(
             step_name=self.pipeline_step
         )
@@ -179,6 +170,39 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         invocation = load_json(fpath_invocation)
         invocation = self.config.apply_substitutions_to_json(invocation)
         return invocation
+
+    @cached_property
+    def pybids_ignore_patterns(self) -> list[str]:
+        """Load the pipeline step's PyBIDS ignore pattern list."""
+        fpath_pybids_ignore = self.pipeline_config.get_pybids_ignore_file(
+            step_name=self.pipeline_step
+        )
+
+        # no file specified
+        if fpath_pybids_ignore is None:
+            return []
+
+        # load patterns from file
+        patterns = load_json(fpath_pybids_ignore)
+
+        # validate format
+        if not isinstance(patterns, list):
+            raise ValueError(
+                f"Expected a list of strings in {fpath_pybids_ignore}"
+                f", got {patterns} ({type(patterns)})"
+            )
+
+        return [re.compile(pattern) for pattern in patterns]
+
+    def get_fpath_descriptor_builtin(self) -> Path:
+        """Get the path to the built-in descriptor file."""
+        pipeline_tag = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
+        fname = f"{pipeline_tag}.json"
+        return DPATH_DESCRIPTORS / fname
 
     def process_template_json(
         self,
@@ -261,24 +285,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Set up the BIDS database."""
         dpath_bids_db: Path = Path(dpath_bids_db)
 
-        pybids_ignore_patterns = self.pipeline_config.get_pybids_ignore(
-            step_name=self.pipeline_step
-        )
-
         if participant is not None:
             add_pybids_ignore_patterns(
-                current=pybids_ignore_patterns,
+                current=self.pybids_ignore_patterns,
                 new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant}))",
             )
         if session is not None:
             add_pybids_ignore_patterns(
-                current=pybids_ignore_patterns,
+                current=self.pybids_ignore_patterns,
                 new=f".*?/{BIDS_SESSION_PREFIX}(?!{strip_session(session)})",
             )
 
         self.logger.info(
-            f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore patterns:"
-            f" {pybids_ignore_patterns}"
+            f"Building BIDSLayout with {len(self.pybids_ignore_patterns)} ignore "
+            f"patterns: {self.pybids_ignore_patterns}"
         )
 
         if dpath_bids_db.exists() and list(dpath_bids_db.iterdir()):
@@ -290,7 +310,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
             dpath_bids_db=dpath_bids_db,
-            ignore_patterns=pybids_ignore_patterns,
+            ignore_patterns=self.pybids_ignore_patterns,
             reset_database=True,
         )
 
