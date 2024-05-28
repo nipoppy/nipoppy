@@ -267,7 +267,11 @@ def save_df_with_backup(
 
 
 def process_template_str(
-    template_str: str, resolve_paths=True, objs=None, lower=True, **kwargs
+    template_str: str,
+    resolve_paths=True,
+    objs=None,
+    ignore_unknowns=False,
+    **kwargs,
 ) -> str:
     """Replace template strings with values from kwargs or objects."""
 
@@ -280,7 +284,11 @@ def process_template_str(
         for obj in objs:
             if hasattr(obj, replacement_key):
                 return replace(json_str, to_replace, getattr(obj, replacement_key))
-        raise RuntimeError(f"Unable to replace {to_replace} in {template_str_original}")
+        if not ignore_unknowns:
+            raise RuntimeError(
+                f"Unable to replace {to_replace} in {template_str_original}"
+            )
+        return json_str
 
     if objs is None:
         objs = []
@@ -292,9 +300,7 @@ def process_template_str(
         if len(match.groups()) != 1:
             raise ValueError(f"Expected exactly one match group for match: {match}")
         to_replace = match.group()
-        replacement_key = match.groups()[0]
-        if lower:
-            replacement_key = replacement_key.lower()
+        replacement_key = match.groups()[0].lower()  # always convert to lowercase
 
         if not str.isidentifier(replacement_key):
             raise ValueError(

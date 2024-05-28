@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import shlex
@@ -19,7 +20,7 @@ from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import StrOrPathLike, add_path_timestamp
+from nipoppy.utils import StrOrPathLike, add_path_timestamp, process_template_str
 
 LOG_SUFFIX = ".log"
 
@@ -261,11 +262,24 @@ class BaseWorkflow(Base, ABC):
         fpath_config = self.layout.fpath_config
         try:
             self.logger.info(f"Loading config from {fpath_config}")
-            return Config.load(fpath_config)
+            config = Config.load(fpath_config)
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Config file not found: {self.layout.fpath_config}"
             )
+
+        # replace path placeholders in the config
+        config = Config(
+            **json.loads(
+                process_template_str(
+                    config.model_dump_json(),
+                    objs=[self.layout],
+                    ignore_unknowns=True,
+                )
+            )
+        )
+
+        return config
 
     @cached_property
     def manifest(self) -> Manifest:

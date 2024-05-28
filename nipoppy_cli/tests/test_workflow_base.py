@@ -130,6 +130,12 @@ def test_config_not_found(workflow: BaseWorkflow):
         workflow.config
 
 
+def test_config_replacement(workflow: BaseWorkflow):
+    config = get_config(dataset_name="[[NIPOPPY_DPATH_ROOT]]")
+    config.save(workflow.layout.fpath_config)
+    assert str(workflow.config.DATASET_NAME) == str(workflow.dpath_root)
+
+
 def test_manifest(workflow: BaseWorkflow):
     workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
