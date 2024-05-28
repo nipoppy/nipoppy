@@ -1,6 +1,6 @@
 """Boutiques configuration model and utility functions."""
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from nipoppy.config.container import SchemaWithContainerConfig
 
@@ -11,6 +11,9 @@ BOUTIQUES_CONFIG_KEY = "nipoppy"
 class BoutiquesConfig(SchemaWithContainerConfig):
     """Schema for custom configuration within a Boutiques descriptor."""
 
+    CONTAINER_SUBCOMMAND: str = Field(
+        default="run", description="Subcommand for Apptainer/Singularity call"
+    )
     # dpath_participant_session_result (for tarring/zipping/extracting)
     # run_on (for choosing which participants/sessions to run on)
     # with_pybids (for pybids)

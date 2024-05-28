@@ -19,7 +19,6 @@ from nipoppy.config.container import (
 
 FIELDS_CONTAINER_CONFIG = [
     "COMMAND",
-    "SUBCOMMAND",
     "ARGS",
     "ENV_VARS",
     "INHERIT",
@@ -221,10 +220,9 @@ def test_check_container_command_error(command):
         (
             {
                 "COMMAND": "/path/to/singularity",
-                "SUBCOMMAND": "exec",
                 "ARGS": ["--cleanenv"],
             },
-            "/path/to/singularity exec --cleanenv",
+            "/path/to/singularity run --cleanenv",
         ),
     ],
 )

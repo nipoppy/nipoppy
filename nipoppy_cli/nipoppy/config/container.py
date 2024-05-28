@@ -30,9 +30,6 @@ class ContainerConfig(BaseModel):
         default="apptainer",
         description="Name of or path to Apptainer/Singularity executable",
     )
-    SUBCOMMAND: str = Field(
-        default="run", description="Subcommand for Apptainer/Singularity call"
-    )
     ARGS: list[str] = Field(
         default=[],
         description=(
@@ -245,6 +242,7 @@ def check_container_command(command: str) -> str:
 
 def prepare_container(
     container_config: ContainerConfig,
+    subcommand: str = "run",
     check=True,
     logger: Optional[logging.Logger] = None,
 ) -> str:
@@ -266,7 +264,6 @@ def prepare_container(
         The command string
     """
     command = container_config.COMMAND
-    subcommand = container_config.SUBCOMMAND
     args = container_config.ARGS
     env_vars = container_config.ENV_VARS
 

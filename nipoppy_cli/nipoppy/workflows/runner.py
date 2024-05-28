@@ -97,7 +97,10 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.info(f"Using container config: {container_config}")
 
         container_command = prepare_container(
-            container_config, check=True, logger=self.logger
+            container_config,
+            subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
+            check=True,
+            logger=self.logger,
         )
 
         return container_command

@@ -13,7 +13,7 @@ from nipoppy.workflows.runner import PipelineRunner
 from .conftest import create_empty_dataset, get_config
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def config(tmp_path: Path):
     fpath_descriptor = tmp_path / "descriptor.json"
     fpath_invocation = tmp_path / "invocation.json"
@@ -40,6 +40,7 @@ def config(tmp_path: Path):
                 "value-key": "[ARG2]",
             },
         ],
+        "custom": {"nipoppy": {"CONTAINER_SUBCOMMAND": "exec"}},
     }
     invocation = {
         "arg1": "[[NIPOPPY_PARTICIPANT]] [[NIPOPPY_SESSION]]",
@@ -111,3 +112,25 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
     assert "[[NIPOPPY_PARTICIPANT]]" not in invocation_str
     assert "[[NIPOPPY_SESSION]]" not in invocation_str
+
+
+def test_process_container_config_boutiques_subcommand(config: Config, tmp_path: Path):
+    # check that the container subcommand from the Boutiques container config is used
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    config.save(runner.layout.fpath_config)
+
+    participant = "01"
+    session = "ses-BL"
+
+    # the container command in the config is "echo"
+    # because otherwise the check for the container command fails
+    # if Singularity/Apptainer is not on the PATH
+    assert (
+        runner.process_container_config(participant=participant, session=session)
+        == "echo exec"
+    )
