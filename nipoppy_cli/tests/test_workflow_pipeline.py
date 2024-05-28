@@ -24,7 +24,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: str,
+        pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
@@ -71,6 +71,12 @@ class PipelineWorkflow(BasePipelineWorkflow):
                 {
                     "NAME": "my_pipeline",
                     "VERSION": "1.0",
+                    "CONTAINER_INFO": {"PATH": "my_container.sif"},
+                    "STEPS": [{}],
+                },
+                {
+                    "NAME": "my_pipeline",
+                    "VERSION": "2.0",
                     "CONTAINER_INFO": {"PATH": "my_container.sif"},
                     "STEPS": [{}],
                 },
@@ -128,6 +134,14 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_output, Path)
     assert isinstance(workflow.dpath_pipeline_work, Path)
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
+
+
+def test_pipeline_version_optional():
+    workflow = PipelineWorkflow(
+        dpath_root="my_dataset",
+        pipeline_name="my_pipeline",
+    )
+    assert workflow.pipeline_version is None
 
 
 def test_pipeline_config(workflow: PipelineWorkflow):
@@ -412,8 +426,26 @@ def test_set_up_bids_db(participant, session, expected_count, tmp_path: Path):
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
 
 
+@pytest.mark.parametrize(
+    "pipeline_name,expected_version",
+    [("heudiconv", "0.12.2"), ("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
+)
+def test_check_pipeline_version(
+    pipeline_name, expected_version, tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    # initialize with version=None
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name=pipeline_name,
+        pipeline_version=None,
+    )
+    workflow.check_pipeline_version()
+    assert workflow.pipeline_version == expected_version
+    # assert f"using version {expected_version}" in caplog.text
+
+
 @pytest.mark.parametrize("dry_run", [True, False])
-def test_run_setup(dry_run: bool, tmp_path: Path):
+def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="my_pipeline",
@@ -509,8 +541,21 @@ def test_get_participants_sessions_to_run(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant,session,expected_stem",
     [
-        ("pipeline1", "v1", "sub1", None, "test/pipeline1-v1/pipeline1-v1-sub1"),
-        ("pipeline2", "2.0", None, "ses-1", "test/pipeline2-2.0/pipeline2-2.0-1"),
+        (
+            "my_pipeline",
+            "1.0",
+            "sub1",
+            None,
+            "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
+        ),
+        (
+            "my_pipeline",
+            None,
+            "sub1",
+            None,
+            "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
+        ),
+        ("fmriprep", None, None, "ses-1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
     ],
 )
 def test_generate_fpath_log(

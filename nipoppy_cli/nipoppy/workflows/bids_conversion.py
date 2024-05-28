@@ -19,8 +19,8 @@ class BidsConversionRunner(PipelineRunner):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: str,
-        pipeline_step: str,
+        pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
         simulate: bool = False,
@@ -41,7 +41,12 @@ class BidsConversionRunner(PipelineRunner):
             dry_run=dry_run,
         )
         self.name = "bids_conversion"
-        self.dpaths_to_check = []  # do not create any pipeline-specific directory
+
+    @cached_property
+    def dpaths_to_check(self) -> list[Path]:
+        """Directory paths to create if needed during the setup phase."""
+        # no pipeline-specific directories for BIDS conversion
+        return []
 
     @cached_property
     def pipeline_config(self) -> PipelineConfig:

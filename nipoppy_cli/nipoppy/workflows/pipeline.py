@@ -43,7 +43,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         pipeline_name: str,
-        pipeline_version: str,
+        pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
@@ -63,7 +63,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant = check_participant(participant)
         self.session = check_session(session)
-        self.dpaths_to_check = [self.dpath_pipeline]
+
+    @cached_property
+    def dpaths_to_check(self) -> list[Path]:
+        """Directory paths to create if needed during the setup phase."""
+        return [self.dpath_pipeline]
 
     @cached_property
     def dpath_pipeline(self) -> Path:
@@ -308,12 +312,21 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if not dpath.exists():
             self.mkdir(dpath, log_level=logging.WARNING)
 
+    def check_pipeline_version(self):
+        """Set the pipeline version based on the config if it is not given."""
+        if self.pipeline_version is None:
+            self.pipeline_version = self.config.get_pipeline_version(
+                pipeline_name=self.pipeline_name
+            )
+            self.logger.warning(
+                f"Pipeline version not specified, using version {self.pipeline_version}"
+            )
+
     def run_setup(self, **kwargs):
         """Run pipeline setup."""
         to_return = super().run_setup(**kwargs)
 
-        # make sure the pipeline config exists
-        self.pipeline_config
+        self.check_pipeline_version()
 
         for dpath in self.dpaths_to_check:
             self.check_dir(dpath)
@@ -368,6 +381,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         fname_stem: Optional[str] = None,
     ) -> Path:
         """Generate a log file path."""
+        # make sure that pipeline version is not None
+        self.check_pipeline_version()
         if dnames_parent is None:
             dnames_parent = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,

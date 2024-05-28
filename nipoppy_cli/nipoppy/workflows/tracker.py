@@ -15,7 +15,7 @@ class PipelineTracker(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: str,
+        pipeline_version: Optional[str] = None,
         participant: str = None,
         session: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,

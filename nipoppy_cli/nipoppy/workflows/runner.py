@@ -1,6 +1,8 @@
 """PipelineRunner workflow."""
 
 import logging
+from functools import cached_property
+from pathlib import Path
 from typing import Optional
 
 from boutiques import bosh
@@ -18,7 +20,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: str,
+        pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
@@ -40,9 +42,14 @@ class PipelineRunner(BasePipelineWorkflow):
             dry_run=dry_run,
         )
         self.simulate = simulate
-        self.dpaths_to_check.extend(
-            [self.dpath_pipeline_output, self.dpath_pipeline_work]
-        )
+
+    @cached_property
+    def dpaths_to_check(self) -> list[Path]:
+        """Directory paths to create if needed during the setup phase."""
+        return super().dpaths_to_check + [
+            self.dpath_pipeline_output,
+            self.dpath_pipeline_work,
+        ]
 
     def process_container_config(
         self,

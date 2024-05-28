@@ -102,6 +102,28 @@ class Config(SchemaWithContainerConfig):
         self._propagate_container_config()
         return self
 
+    def get_pipeline_version(self, pipeline_name: str) -> str:
+        """Get the first version associated with a pipeline.
+
+        Parameters
+        ----------
+        pipeline_name : str
+            Name of the pipeline, as specified in the config
+
+        Returns
+        -------
+        str
+            The pipeline version
+        """
+        # assume there are no duplicates
+        # technically BIDS_PIPELINES and PROC_PIPELINES can share a pipeline name
+        # and have different versions, but this is unlikely (and probably a mistake)
+        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
+            if pipeline_config.NAME == pipeline_name:
+                return pipeline_config.VERSION
+
+        raise ValueError(f"No config found for pipeline with NAME={pipeline_name}")
+
     def get_pipeline_config(
         self,
         pipeline_name: str,

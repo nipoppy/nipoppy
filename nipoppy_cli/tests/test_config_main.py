@@ -29,6 +29,10 @@ def valid_config_data():
                 "CONTAINER_INFO": {"PATH": "path"},
                 "STEPS": [{"NAME": "step1"}, {"NAME": "step2"}],
             },
+            {
+                "NAME": "bids_converter",
+                "VERSION": "older_version",
+            },
         ],
         "PROC_PIPELINES": [
             {"NAME": "pipeline1", "VERSION": "v1"},
@@ -167,6 +171,20 @@ def test_propagate_container_config(
     )
 
     assert container_config == ContainerConfig(**data_expected)
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,expected_version",
+    [("pipeline1", "v1"), ("pipeline2", "1.0"), ("bids_converter", "1.0")],
+)
+def test_get_pipeline_version(valid_config_data, pipeline_name, expected_version):
+    config = Config(**valid_config_data)
+    assert config.get_pipeline_version(pipeline_name) == expected_version
+
+
+def test_get_pipeline_version_invalid_name(valid_config_data):
+    with pytest.raises(ValueError, match="No config found for pipeline"):
+        Config(**valid_config_data).get_pipeline_version("not_a_pipeline")
 
 
 @pytest.mark.parametrize(
