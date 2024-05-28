@@ -69,14 +69,14 @@ class Config(SchemaWithContainerConfig):
             for pipeline_config in pipeline_configs:
                 pipeline_container_config = pipeline_config.get_container_config()
                 if pipeline_container_config.INHERIT:
-                    pipeline_container_config.merge_args_and_env_vars(
-                        self.CONTAINER_CONFIG
+                    pipeline_container_config.merge(
+                        self.CONTAINER_CONFIG, overwrite_command=True
                     )
                 for pipeline_step in pipeline_config.STEPS:
                     step_container_config = pipeline_step.get_container_config()
                     if step_container_config.INHERIT:
-                        step_container_config.merge_args_and_env_vars(
-                            pipeline_container_config
+                        step_container_config.merge(
+                            pipeline_container_config, overwrite_command=True
                         )
 
         _propagate(self.BIDS_PIPELINES)

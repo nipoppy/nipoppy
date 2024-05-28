@@ -76,14 +76,40 @@ def test_container_config(data):
         ),
     ],
 )
-def test_container_config_merge_args_and_env_vars(data1, data2, data_expected):
-    merged = ContainerConfig(**data1).merge_args_and_env_vars(ContainerConfig(**data2))
+def test_container_config_merge(data1, data2, data_expected):
+    merged = ContainerConfig(**data1).merge(ContainerConfig(**data2))
     assert merged == ContainerConfig(**data_expected)
 
 
-def test_container_config_merge_args_and_env_vars_error():
+@pytest.mark.parametrize(
+    "data1,data2,overwrite_command,data_expected",
+    [
+        (
+            {"COMMAND": "apptainer"},
+            {"COMMAND": "singularity"},
+            True,
+            {"COMMAND": "singularity"},
+        ),
+        (
+            {"COMMAND": "apptainer"},
+            {"COMMAND": "singularity"},
+            False,
+            {"COMMAND": "apptainer"},
+        ),
+    ],
+)
+def test_container_config_merge_overwrite_command(
+    data1, data2, overwrite_command, data_expected
+):
+    merged = ContainerConfig(**data1).merge(
+        ContainerConfig(**data2), overwrite_command=overwrite_command
+    )
+    assert merged == ContainerConfig(**data_expected)
+
+
+def test_container_config_merge_error():
     with pytest.raises(TypeError, match="Cannot merge"):
-        ContainerConfig().merge_args_and_env_vars("bad_arg")
+        ContainerConfig().merge("bad_arg")
 
 
 def test_container_config_no_extra_fields():

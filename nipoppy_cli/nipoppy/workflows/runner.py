@@ -86,9 +86,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
             self.logger.info("Updating container config with config from descriptor")
-            container_config.merge_args_and_env_vars(
-                boutiques_config.get_container_config()
-            )
+            container_config.merge(boutiques_config.get_container_config())
 
         # add bind paths
         for bind_path in bind_paths:

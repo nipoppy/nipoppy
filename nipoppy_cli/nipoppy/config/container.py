@@ -67,18 +67,26 @@ class ContainerConfig(BaseModel):
             mode=mode,
         )
 
-    def merge_args_and_env_vars(self, other: Any):
+    def merge(self, other: Any, overwrite_command=False):
         """
-        Merge arguments and environment variables with another instance.
+        Combine with another ContainerConfig instance.
 
-        Arguments from other are appended to arguments of the current instance,
-        but environment variables from other do not overwrite those of the current
-        instance.
+        By default this only changes arguments and environment variables, and no
+        information is overwritten:
+        - Arguments from other are appended to arguments of the current instance
+        - Environment variables from other do not overwrite those of the current
+        instance
+
+        If overwrite_command is True, the command of the current instance is
+        replaced with that of the other instance.
         """
         if not isinstance(other, self.__class__):
             raise TypeError(
                 f"Cannot merge {self.__class__} with object of type {type(other)}"
             )
+
+        if overwrite_command:
+            self.COMMAND = other.COMMAND
 
         if self.ARGS != other.ARGS:
             self.ARGS.extend(other.ARGS)

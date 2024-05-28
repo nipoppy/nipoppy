@@ -57,9 +57,6 @@ def config(tmp_path: Path):
             {
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
-                "CONTAINER_CONFIG": {
-                    "COMMAND": "echo",
-                },
                 "STEPS": [
                     {
                         "DESCRIPTOR_FILE": fpath_descriptor,
