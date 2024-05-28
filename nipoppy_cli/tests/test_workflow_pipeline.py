@@ -181,6 +181,38 @@ def test_descriptor(pipeline_name, pipeline_version, pipeline_step, tmp_path: Pa
 
 
 @pytest.mark.parametrize(
+    "substitutions,expected_descriptor",
+    [
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+    ],
+)
+def test_descriptor_substitutions(tmp_path: Path, substitutions, expected_descriptor):
+    dpath_root = tmp_path / "my_dataset"
+    pipeline_name = "custom_pipeline"
+    pipeline_version = "1.0"
+    workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
+
+    # set substitutions
+    workflow.config.SUBSTITUTIONS = substitutions
+
+    # set descriptor file and write descriptor content
+    fpath_descriptor = tmp_path / "custom_pipeline.json"
+    workflow.config.PROC_PIPELINES.extend(
+        [
+            PipelineConfig(
+                NAME=pipeline_name,
+                VERSION=pipeline_version,
+                STEPS=[PipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
+            ),
+        ]
+    )
+    fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
+
+    assert workflow.descriptor == expected_descriptor
+
+
+@pytest.mark.parametrize(
     "pipeline_name,pipeline_version,invocation",
     [
         ("my_pipeline", "1.0", {"key1": "val1", "key2": "val2"}),
@@ -201,6 +233,38 @@ def test_invocation(pipeline_name, pipeline_version, invocation, tmp_path: Path)
 def test_invocation_none(workflow: PipelineWorkflow):
     with pytest.raises(ValueError, match="No invocation file specified in config"):
         workflow.invocation
+
+
+@pytest.mark.parametrize(
+    "substitutions,expected_invocation",
+    [
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+    ],
+)
+def test_invocation_substitutions(tmp_path: Path, substitutions, expected_invocation):
+    dpath_root = tmp_path / "my_dataset"
+    pipeline_name = "custom_pipeline"
+    pipeline_version = "1.0"
+    workflow = PipelineWorkflow(dpath_root, pipeline_name, pipeline_version)
+
+    # set substitutions
+    workflow.config.SUBSTITUTIONS = substitutions
+
+    # set invocation file and write invocation content
+    fpath_invocation = tmp_path / "invocation.json"
+    workflow.config.PROC_PIPELINES.extend(
+        [
+            PipelineConfig(
+                NAME=pipeline_name,
+                VERSION=pipeline_version,
+                STEPS=[PipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
+            ),
+        ]
+    )
+    fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
+
+    assert workflow.invocation == expected_invocation
 
 
 @pytest.mark.parametrize("return_str", [True, False])

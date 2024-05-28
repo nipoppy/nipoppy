@@ -200,6 +200,26 @@ def test_save(tmp_path: Path, valid_config_data):
 
 
 @pytest.mark.parametrize(
+    "substitutions,json_obj,expected",
+    [
+        (
+            {"VALUE1": "AAA", "VALUE2": "BBB"},
+            {"KEY": "VALUE1 VALUE2"},
+            {"KEY": "AAA BBB"},
+        ),
+        (
+            {"VALUE1": "CCC", "VALUE2": "DDD"},
+            ["AAA BBB VALUE1", "VALUE2"],
+            ["AAA BBB CCC", "DDD"],
+        ),
+    ],
+)
+def test_apply_substitutions(valid_config_data, substitutions, json_obj, expected):
+    config = Config(**valid_config_data, SUBSTITUTIONS=substitutions)
+    assert config.apply_substitutions_to_json(json_obj) == expected
+
+
+@pytest.mark.parametrize(
     "path",
     [
         FPATH_SAMPLE_CONFIG,
@@ -219,16 +239,17 @@ def test_load_missing_required():
         Config.load(DPATH_TEST_DATA / "config_invalid1.json")
 
 
-def test_substitutions(valid_config_data, tmp_path: Path):
+def test_load_apply_substitutions(valid_config_data, tmp_path: Path):
     pattern_to_replace1 = "[[FREESURFER_LICENSE_FILE]]"
     replacement_value1 = "/path/to/license.txt"
     pattern_to_replace2 = "[[TEMPLATEFLOW_HOME]]"
     replacement_value2 = "/path/to/templateflow"
 
-    valid_config_data["SUBSTITUTIONS"] = {
+    substitutions = {
         pattern_to_replace1: replacement_value1,
         pattern_to_replace2: replacement_value2,
     }
+    valid_config_data["SUBSTITUTIONS"] = substitutions
     valid_config_data["PROC_PIPELINES"] = [
         {
             "NAME": "fmriprep",
@@ -272,4 +293,49 @@ def test_substitutions(valid_config_data, tmp_path: Path):
                 },
             ],
         },
+    )
+
+    # also check that the SUBSTITUTIONS field remains the same
+    assert config_to_check.SUBSTITUTIONS == substitutions
+
+
+@pytest.mark.parametrize(
+    "apply_substitutions,substitutions",
+    [
+        (False, {"[[PATTERN1]]": "replacement1", "[[PATTERN2]]": "replacement2"}),
+        (True, {}),
+    ],
+)
+def test_load_no_substitutions(
+    valid_config_data, tmp_path: Path, apply_substitutions, substitutions
+):
+    valid_config_data["SUBSTITUTIONS"] = substitutions
+    valid_config_data["PROC_PIPELINES"] = [
+        {
+            "NAME": "fmriprep",
+            "VERSION": "23.1.3",
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "path/to/invocation.json",
+                    "CONTAINER_CONFIG": {
+                        "ARGS": [
+                            "--bind",
+                            "[[PATTERN1]]",
+                            "--bind",
+                            "[[PATERN2]]",
+                        ],
+                        "ENV_VARS": {"TEMPLATEFLOW_HOME": "[[PATTERN2]]"},
+                    },
+                },
+            ],
+        },
+    ]
+
+    fpath = tmp_path / "config.json"
+    config_expected = Config(**valid_config_data)
+    config_expected.save(fpath)
+
+    # check that the loaded config is the same
+    assert (
+        Config.load(fpath, apply_substitutions=apply_substitutions) == config_expected
     )

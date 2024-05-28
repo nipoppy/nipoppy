@@ -158,9 +158,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 )
             self.logger.info("Using built-in descriptor")
 
-        # TODO process substitutions
+        # load descriptor and process substitutions
+        descriptor = load_json(fpath_descriptor)
+        descriptor = self.config.apply_substitutions_to_json(descriptor)
 
-        return load_json(fpath_descriptor)
+        return descriptor
 
     @cached_property
     def invocation(self) -> dict:
@@ -171,7 +173,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if fpath_invocation is None:
             raise ValueError("No invocation file specified in config")
         invocation = load_json(fpath_invocation)
-        # TODO process substitutions
+        invocation = self.config.apply_substitutions_to_json(invocation)
         return invocation
 
     def process_template_json(

@@ -130,22 +130,35 @@ class Config(SchemaWithContainerConfig):
         fpath : nipoppy.utils.StrOrPathLike
             Path to the JSON file to write
         """
-        fpath = Path(fpath)
+        fpath: Path = Path(fpath)
         if "indent" not in kwargs:
             kwargs["indent"] = 4
         fpath.parent.mkdir(parents=True, exist_ok=True)
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
 
+    def apply_substitutions_to_json(self, json_obj: dict | list) -> dict | list:
+        """Apply substitutions to a JSON object."""
+        # convert json_obj to string
+        json_text = json.dumps(json_obj)
+        for key, value in self.SUBSTITUTIONS.items():
+            json_text = json_text.replace(key, value)
+        return json.loads(json_text)
+
     @classmethod
     def load(cls, path: StrOrPathLike, apply_substitutions=True) -> Self:
-        """Load a dataset configuration."""
-        config = cls(**load_json(path))
+        """Load a dataset configuration from a file."""
+        config_raw = cls(**load_json(path))
 
-        if apply_substitutions:
-            config_text = config.model_dump_json()
-            for key, value in config.SUBSTITUTIONS.items():
-                config_text = config_text.replace(key, value)
-                config = cls(**json.loads(config_text))
+        if apply_substitutions and config_raw.SUBSTITUTIONS:
+            # apply substitutions to all fields except SUBSTITUTIONS itself
+            config = cls(
+                **config_raw.apply_substitutions_to_json(
+                    config_raw.model_dump(exclude="SUBSTITUTIONS", mode="json")
+                )
+            )
+            config.SUBSTITUTIONS = config_raw.SUBSTITUTIONS
+        else:
+            config = config_raw
 
         return config
