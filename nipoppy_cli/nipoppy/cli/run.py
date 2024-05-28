@@ -76,6 +76,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
                 pipeline_version=args.pipeline_version,
+                pipeline_step=args.pipeline_step,
                 participant=args.participant,
                 session=args.session,
                 simulate=args.simulate,
