@@ -313,3 +313,14 @@ def process_template_str(
             template_str = replace_from_objs(template_str, to_replace, objs)
 
     return template_str
+
+
+def apply_substitutions_to_json(
+    json_obj: dict | list, substitutions: dict[str, str]
+) -> dict | list:
+    """Apply substitutions to a JSON object."""
+    # convert json_obj to string
+    json_text = json.dumps(json_obj)
+    for key, value in substitutions.items():
+        json_text = json_text.replace(key, value)
+    return json.loads(json_text)

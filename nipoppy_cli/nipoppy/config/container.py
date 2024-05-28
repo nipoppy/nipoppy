@@ -50,7 +50,7 @@ class ContainerConfig(BaseModel):
         default=True,
         description=(
             "Whether this config should inherit from higher-lever container configs."
-            " If false, will override higher-level configs"
+            " If false, will ignore higher-level configs"
         ),
     )
 

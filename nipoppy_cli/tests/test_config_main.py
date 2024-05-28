@@ -126,6 +126,12 @@ def test_sessions_inferred(visits, expected_sessions):
             {"ARGS": ["--no-home"], "INHERIT": "false"},
         ),
         (
+            {"ARGS": ["--cleanenv"]},
+            {},
+            {"ARGS": ["--bind", "[[HEUDICONV_HEURISTIC_FILE]]"]},
+            {"ARGS": ["--bind", "[[HEUDICONV_HEURISTIC_FILE]]", "--cleanenv"]},
+        ),
+        (
             {"ENV_VARS": {"VAR1": "1"}},
             {"ENV_VARS": {"VAR2": "2"}},
             {},
@@ -165,6 +171,7 @@ def test_propagate_container_config(
 
     container_config = (
         Config(**data)
+        .propagate_container_config()
         .get_pipeline_config(pipeline_name, pipeline_version)
         .get_step_config(step_name)
         .get_container_config()

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Optional
 
@@ -11,7 +10,12 @@ from typing_extensions import Self
 
 from nipoppy.config.container import SchemaWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import StrOrPathLike, check_session, load_json
+from nipoppy.utils import (
+    StrOrPathLike,
+    apply_substitutions_to_json,
+    check_session,
+    load_json,
+)
 
 
 class Config(SchemaWithContainerConfig):
@@ -58,7 +62,7 @@ class Config(SchemaWithContainerConfig):
 
         return self
 
-    def _propagate_container_config(self) -> Self:
+    def propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""
 
         def _propagate(pipeline_configs: list[PipelineConfig]):
@@ -99,7 +103,6 @@ class Config(SchemaWithContainerConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_no_duplicate_pipeline()
-        self._propagate_container_config()
         return self
 
     def get_pipeline_version(self, pipeline_name: str) -> str:
@@ -161,26 +164,19 @@ class Config(SchemaWithContainerConfig):
 
     def apply_substitutions_to_json(self, json_obj: dict | list) -> dict | list:
         """Apply substitutions to a JSON object."""
-        # convert json_obj to string
-        json_text = json.dumps(json_obj)
-        for key, value in self.SUBSTITUTIONS.items():
-            json_text = json_text.replace(key, value)
-        return json.loads(json_text)
+        return apply_substitutions_to_json(json_obj, self.SUBSTITUTIONS)
 
     @classmethod
     def load(cls, path: StrOrPathLike, apply_substitutions=True) -> Self:
         """Load a dataset configuration from a file."""
-        config_raw = cls(**load_json(path))
-
-        if apply_substitutions and config_raw.SUBSTITUTIONS:
-            # apply substitutions to all fields except SUBSTITUTIONS itself
-            config = cls(
-                **config_raw.apply_substitutions_to_json(
-                    config_raw.model_dump(exclude="SUBSTITUTIONS", mode="json")
-                )
-            )
-            config.SUBSTITUTIONS = config_raw.SUBSTITUTIONS
+        substitutions_key = "SUBSTITUTIONS"
+        config_dict = load_json(path)
+        substitutions = config_dict.get(substitutions_key, {})
+        if apply_substitutions and substitutions:
+            # apply user-defined substitutions to all fields except SUBSTITUTIONS itself
+            config = cls(**apply_substitutions_to_json(config_dict, substitutions))
+            config.SUBSTITUTIONS = substitutions
         else:
-            config = config_raw
+            config = cls(**config_dict)
 
         return config

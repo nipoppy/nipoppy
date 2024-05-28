@@ -14,6 +14,7 @@ from nipoppy.utils import (
     add_path_suffix,
     add_path_timestamp,
     add_pybids_ignore_patterns,
+    apply_substitutions_to_json,
     check_participant,
     check_session,
     dicom_id_to_bids_id,
@@ -294,3 +295,15 @@ def test_process_template_str_ignore_unknowns():
         process_template_str("[[NIPOPPY_INVALID]]", ignore_unknowns=True)
         == "[[NIPOPPY_INVALID]]"
     )
+
+
+@pytest.mark.parametrize(
+    "json_obj,substitutions,expected_output",
+    [
+        ({"key1": "TO_REPLACE"}, {"TO_REPLACE": "value1"}, {"key1": "value1"}),
+        ({"key1": ["TO_REPLACE"]}, {"TO_REPLACE": "value1"}, {"key1": ["value1"]}),
+        ([{"key1": "TO_REPLACE"}], {"TO_REPLACE": "value1"}, [{"key1": "value1"}]),
+    ],
+)
+def test_apply_substitutions_to_json(json_obj, substitutions, expected_output):
+    assert apply_substitutions_to_json(json_obj, substitutions) == expected_output
