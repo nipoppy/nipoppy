@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import StrOrPathLike, get_pipeline_tag
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -88,17 +88,3 @@ class BidsConversionRunner(PipelineRunner):
             col=self.doughnut.col_bidsified,
             status=True,
         )
-
-    def generate_fpath_log(
-        self,
-        dname_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
-    ) -> Path:
-        """Generate a log file path."""
-        if dname_parent is None:
-            dname_parent = get_pipeline_tag(
-                pipeline_name=self.pipeline_name,
-                pipeline_version=self.pipeline_version,
-                pipeline_step=self.pipeline_step,
-            )
-        return super().generate_fpath_log(dname_parent, fname_stem)

@@ -274,7 +274,6 @@ class BaseWorkflow(Base, ABC):
                 process_template_str(
                     config.model_dump_json(),
                     objs=[self.layout],
-                    ignore_unknowns=True,
                 )
             )
         )

@@ -31,7 +31,7 @@ ATTR_TO_DPATH_MAP = {
     "dpath_containers": "proc/containers",
     "dpath_descriptors": "proc/descriptors",
     "dpath_invocations": "proc/invocations",
-    "dpath_scripts": "proc/scripts",
+    "dpath_tracker_configs": "proc/tracker_configs",
     "dpath_pybids": "proc/pybids",
     "dpath_bids_db": "proc/pybids/bids_db",
     "dpath_bids_ignore_patterns": "proc/pybids/ignore_patterns",

@@ -23,8 +23,8 @@
     "dpath_invocations": {
         "path": "code/invocations"
     },
-    "dpath_scripts": {
-        "path": "code/scripts"
+    "dpath_tracker_configs": {
+        "path": "code/tracker_configs"
     },
     "dpath_pybids": {
         "path": "code/pybids"

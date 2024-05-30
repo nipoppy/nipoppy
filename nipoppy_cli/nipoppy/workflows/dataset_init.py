@@ -6,6 +6,7 @@ from typing import Optional
 
 from nipoppy.utils import (
     DPATH_INVOCATIONS,
+    DPATH_TRACKER_CONFIGS,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     StrOrPathLike,
@@ -58,6 +59,14 @@ class InitWorkflow(BaseWorkflow):
             self.copy(
                 fpath_invocation,
                 self.layout.dpath_invocations / fpath_invocation.name,
+                log_level=logging.DEBUG,
+            )
+
+        # copy sample tracker config files
+        for fpath_tracker_config in DPATH_TRACKER_CONFIGS.iterdir():
+            self.copy(
+                fpath_tracker_config,
+                self.layout.dpath_tracker_configs / fpath_tracker_config.name,
                 log_level=logging.DEBUG,
             )
 

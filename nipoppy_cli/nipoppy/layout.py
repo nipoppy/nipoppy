@@ -75,7 +75,9 @@ class LayoutConfig(BaseModel):
     dpath_invocations: DpathInfo = Field(
         description="Directory for storing Boutiques invocations for pipelines"
     )
-    dpath_scripts: DpathInfo = Field(description="Directory for storing custom scripts")
+    dpath_tracker_configs: DpathInfo = Field(
+        description="Directory for storing tracker configurations"
+    )
     dpath_pybids: DpathInfo = Field(
         description="Directory for storing PyBIDS configurations/databases"
     )
@@ -178,7 +180,7 @@ class DatasetLayout(Base):
         self.dpath_containers: Path
         self.dpath_descriptors: Path
         self.dpath_invocations: Path
-        self.dpath_scripts: Path
+        self.dpath_tracker_configs: Path
         self.dpath_pybids: Path
         self.dpath_bids_db: Path
         self.dpath_bids_ignore_patterns: Path

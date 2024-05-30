@@ -14,7 +14,7 @@ FIELDS_PIPELINE = [
     "CONTAINER_INFO",
     "CONTAINER_CONFIG",
     "STEPS",
-    "TRACKER_CONFIG",
+    "TRACKER_CONFIG_FILE",
 ]
 
 
@@ -33,7 +33,7 @@ def valid_data() -> dict:
         {"DESCRIPTION": "My pipeline"},
         {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}},
         {"STEPS": []},
-        {"TRACKER_CONFIG": {"pipeline_complete": ["pattern1", "pattern2"]}},
+        {"TRACKER_CONFIG_FILE": "path/to/tracker/config/file"},
     ],
 )
 def test_fields(valid_data, additional_data):

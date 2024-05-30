@@ -27,9 +27,14 @@ class PipelineConfig(SchemaWithContainerConfig):
         default=[],
         description="List of pipeline step configurations",
     )
-    TRACKER_CONFIG: dict[str, list[str]] = Field(
-        default={},
-        description="Configuration for the tracker associated with the pipeline",
+    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the tracker configuration file associated with the pipeline"
+            ". This file must contain a list of tracker configurations"
+            ", each of which must be a dictionary with a NAME field (string)"
+            " and a PATHS field (non-empty list of strings)"
+        ),
     )
 
     model_config = ConfigDict(extra="forbid")

@@ -297,13 +297,6 @@ def test_process_template_str_error_replace():
         process_template_str("[[NIPOPPY_INVALID]]")
 
 
-def test_process_template_str_ignore_unknowns():
-    assert (
-        process_template_str("[[NIPOPPY_INVALID]]", ignore_unknowns=True)
-        == "[[NIPOPPY_INVALID]]"
-    )
-
-
 @pytest.mark.parametrize(
     "json_obj,substitutions,expected_output",
     [

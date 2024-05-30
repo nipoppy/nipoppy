@@ -27,8 +27,8 @@
     "dpath_invocations": {
         "path": "proc/invocations"
     },
-    "dpath_scripts": {
-        "path": "proc/scripts"
+    "dpath_tracker_configs": {
+        "path": "code/tracker_configs"
     },
     "dpath_pybids": {
         "path": "proc/pybids"

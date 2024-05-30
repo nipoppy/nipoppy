@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.utils import DPATH_INVOCATIONS, DPATH_LAYOUTS
+from nipoppy.utils import DPATH_INVOCATIONS, DPATH_LAYOUTS, DPATH_TRACKER_CONFIGS
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 from .conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
@@ -32,6 +32,12 @@ def test_run(dpath_root: Path):
     for fpath in DPATH_INVOCATIONS.iterdir():
         assert Path(
             dpath_root, ATTR_TO_DPATH_MAP["dpath_invocations"], fpath.name
+        ).exists()
+
+    # check that sample tracker config files have been copied
+    for fpath in DPATH_TRACKER_CONFIGS.iterdir():
+        assert Path(
+            dpath_root, ATTR_TO_DPATH_MAP["dpath_tracker_configs"], fpath.name
         ).exists()
 
 

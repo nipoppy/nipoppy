@@ -28,6 +28,7 @@ FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.js
 FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
 DPATH_INVOCATIONS = DPATH_EXAMPLES / "sample_invocations"
+DPATH_TRACKER_CONFIGS = DPATH_EXAMPLES / "sample_tracker_configs"
 DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
@@ -275,7 +276,6 @@ def process_template_str(
     template_str: str,
     resolve_paths=True,
     objs=None,
-    ignore_unknowns=False,
     **kwargs,
 ) -> str:
     """Replace template strings with values from kwargs or objects."""
@@ -289,11 +289,7 @@ def process_template_str(
         for obj in objs:
             if hasattr(obj, replacement_key):
                 return replace(json_str, to_replace, getattr(obj, replacement_key))
-        if not ignore_unknowns:
-            raise RuntimeError(
-                f"Unable to replace {to_replace} in {template_str_original}"
-            )
-        return json_str
+        raise RuntimeError(f"Unable to replace {to_replace} in {template_str_original}")
 
     if objs is None:
         objs = []
