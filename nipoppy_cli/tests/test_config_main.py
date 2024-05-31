@@ -13,7 +13,14 @@ from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
 
-REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "SESSIONS", "PROC_PIPELINES"]
+REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISITS", "PROC_PIPELINES"]
+FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
+    "SESSIONS",
+    "SUBSTITUTIONS",
+    "BIDS_PIPELINES",
+    "CUSTOM",
+    "CONTAINER_CONFIG",
+]
 
 
 @pytest.fixture(scope="function")
@@ -51,11 +58,18 @@ def valid_config_data():
     }
 
 
-@pytest.mark.parametrize("field_name", ["not_a_field", "also_not_a_field"])
-def test_extra_fields_allowed(field_name, valid_config_data):
-    args = valid_config_data
-    args[field_name] = "extra"
-    assert hasattr(Config(**args), field_name)
+def test_fields(valid_config_data: dict):
+    config = Config(
+        **{k: v for (k, v) in valid_config_data.items() if k in REQUIRED_FIELDS_CONFIG}
+    )
+    for field in FIELDS_CONFIG:
+        assert hasattr(config, field)
+    assert len(config.model_fields) == len(FIELDS_CONFIG)
+
+
+def test_no_extra_fields(valid_config_data):
+    with pytest.raises(ValidationError):
+        Config(**valid_config_data, NOT_A_FIELD="x")
 
 
 @pytest.mark.parametrize(

@@ -63,12 +63,7 @@
             "DESCRIPTION": "FreeSurfer version associated with fMRIPrep 20.2.7"
         }
     ],
-    "TABULAR": {
-        "data_dictionary": {
-            "PATH": "",
-            "VERSION": "",
-            "URL": ""
-        }
-    },
-    "WORKFLOWS": []
+    "CUSTOM": {
+        "some_key": "this can be anything"
+    }
 }

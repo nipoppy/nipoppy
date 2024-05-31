@@ -44,8 +44,12 @@ class Config(SchemaWithContainerConfig):
     PROC_PIPELINES: list[PipelineConfig] = Field(
         description="Configurations for processing pipelines"
     )
+    CUSTOM: dict = Field(
+        default={},
+        description="Free field that can be used for any purpose",
+    )
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     def _check_no_duplicate_pipeline(self) -> Self:
         """Check that BIDS_PIPELINES and PROC_PIPELINES do not have common pipelines."""
