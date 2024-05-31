@@ -1,9 +1,9 @@
 """Classes for the DICOM directory mapping."""
 
 from pathlib import Path
-from typing import Self
 
 from pydantic import Field, model_validator
+from typing_extensions import Self
 
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
