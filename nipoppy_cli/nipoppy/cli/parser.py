@@ -4,6 +4,7 @@ import logging
 from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
 
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -189,7 +190,7 @@ def add_subparser_doughnut(
         action="store_true",
         help=(
             "Set all statuses to False in newly added records"
-            " (regardless of what is on disk)."
+            " (regardless of what is on disk). May be useful to reduce runtime."
         ),
     )
     parser.add_argument(
@@ -208,7 +209,11 @@ def add_subparser_dicom_reorg(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for reorg command."""
-    description = "(Re)organize raw DICOM files."  # TODO give paths in layout model
+    description = (
+        "(Re)organize raw (DICOM) files, from the raw DICOM directory "
+        f"({DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) to the organized "
+        f"sourcedata directory ({DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
+    )
     parser = subparsers.add_parser(
         COMMAND_DICOM_REORG,
         description=description,
@@ -220,7 +225,16 @@ def add_subparser_dicom_reorg(
     parser.add_argument(
         "--copy-files",
         action="store_true",
-        help=("Copy files when reorganizing (default: create symlinks)."),
+        help="Copy files when reorganizing (default: create symlinks).",
+    )
+    parser.add_argument(
+        "--check-dicoms",
+        action="store_true",
+        help=(
+            "Read DICOM file headers when reorganizing and check if they have the "
+            '"DERIVED" image type (which can be problematic for some BIDS '
+            "converters). The paths to the derived DICOMs will be written to the log."
+        ),
     )
     return parser
 

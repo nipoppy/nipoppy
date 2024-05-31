@@ -10,10 +10,14 @@ from typing_extensions import Self
 
 from nipoppy.config.container import SchemaWithContainerConfig
 from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
+from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import (
+    BIDS_SESSION_PREFIX,
     StrOrPathLike,
     apply_substitutions_to_json,
     check_session,
+    check_session_strict,
     load_json,
 )
 
@@ -24,10 +28,31 @@ class Config(SchemaWithContainerConfig):
     DATASET_NAME: str = Field(description="Name of the dataset")
     VISITS: list[str] = Field(description="List of visits available in the study")
     SESSIONS: Optional[list[str]] = Field(
+        default=None,  # will be a list after validation
+        description=(
+            "List of BIDS-compliant sessions available in the study"
+            f', prefixed with "{BIDS_SESSION_PREFIX}"'
+            " (inferred from VISITS if not given)"
+        ),
+    )
+    DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
-            "List of sessions available in the study"
-            " (inferred from VISITS if not given)"
+            "Path to a CSV file mapping participant IDs to DICOM directories"
+            ", to be used in the DICOM reorg step. Note: this field and "
+            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified"
+            f'. The CSV should have three columns: "{DicomDirMap.col_participant_id}"'
+            f' , "{DicomDirMap.col_session}"'
+            f', and "{DicomDirMap.col_participant_dicom_dir}"'
+        ),
+    )
+    DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Whether subdirectories under the raw dicom directory (default: "
+            f"{DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) follow the pattern "
+            "<PARTICIPANT>/<SESSION> (default) or <SESSION>/<PARTICIPANT>. Note: "
+            "this field and and DICOM_DIR_MAP_FILE cannot both be specified"
         ),
     )
     SUBSTITUTIONS: dict[str, str] = Field(
@@ -50,6 +75,27 @@ class Config(SchemaWithContainerConfig):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    def _check_sessions_have_prefix(self) -> Self:
+        """Check that sessions have the BIDS prefix."""
+        for session in self.SESSIONS:
+            check_session_strict(session)
+        return self
+
+    def _check_dicom_dir_options(self) -> Self:
+        """Check that only one DICOM directory mapping option is given."""
+        if (
+            self.DICOM_DIR_MAP_FILE is not None
+            and self.DICOM_DIR_PARTICIPANT_FIRST is not None
+        ):
+            raise ValueError(
+                "Cannot specify both DICOM_DIR_MAP_FILE and DICOM_DIR_PARTICIPANT_FIRST"
+            )
+        # otherwise set the default if needed
+        elif self.DICOM_DIR_PARTICIPANT_FIRST is None:
+            self.DICOM_DIR_PARTICIPANT_FIRST = True
+
+        return self
 
     def _check_no_duplicate_pipeline(self) -> Self:
         """Check that BIDS_PIPELINES and PROC_PIPELINES do not have common pipelines."""
@@ -106,6 +152,8 @@ class Config(SchemaWithContainerConfig):
     @model_validator(mode="after")
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
+        self._check_sessions_have_prefix()
+        self._check_dicom_dir_options()
         self._check_no_duplicate_pipeline()
         return self
 

@@ -136,7 +136,7 @@ def _fake_dicoms(
     max_n_files_per_image: int = 5,
     min_n_subdir_levels: int = 1,
     max_n_subdir_levels: int = 2,
-    participant_first: bool = False,
+    participant_first: bool = True,
     max_dname_dicom: int = 1000000,
     rng_seed: int = 3791,
 ):
@@ -200,7 +200,7 @@ def fake_dicoms_downloaded(
     max_n_files_per_image: int = 5,
     min_n_subdir_levels: int = 1,
     max_n_subdir_levels: int = 2,
-    participant_first: bool = False,
+    participant_first: bool = True,
     max_dname_dicom: int = 1000000,
     rng_seed: int = 3791,
 ):
@@ -229,7 +229,7 @@ def fake_dicoms_organized(
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
-    participant_first: bool = False,
+    participant_first: bool = True,
     max_dname_dicom: int = 1000000,
     rng_seed: int = 3791,
 ):
