@@ -67,6 +67,20 @@ def check_participant(participant: Optional[str]):
     return str(participant).removeprefix(BIDS_SUBJECT_PREFIX)
 
 
+def check_participant_id_strict(participant_id: str):
+    """
+    Make sure participant_id does not have the BIDS prefix.
+
+    To use when validating user-provided files (e.g. the manifest).
+    """
+    if participant_id.startswith(BIDS_SUBJECT_PREFIX):
+        raise ValueError(
+            f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
+            f", got {participant_id}"
+        )
+    return participant_id
+
+
 def check_session(session: Optional[str]):
     """Check/process a session string."""
     if session is None:
@@ -78,6 +92,19 @@ def check_session(session: Optional[str]):
         return session
     else:
         return f"{BIDS_SESSION_PREFIX}{session}"
+
+
+def check_session_strict(session: Optional[str]):
+    """
+    Make sure session has the BIDS prefix.
+
+    To use when validating user-provided files (e.g. the manifest).
+    """
+    if session is not None and not session.startswith(BIDS_SESSION_PREFIX):
+        raise ValueError(
+            f'Session should start with "{BIDS_SESSION_PREFIX}"' f", got {session}"
+        )
+    return session
 
 
 def strip_session(session: Optional[str]):

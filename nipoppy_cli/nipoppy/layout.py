@@ -309,3 +309,7 @@ class DatasetLayout(Base):
             pipeline_name, pipeline_version, participant=participant, session=session
         )
         return self.dpath_bids_db / dname
+
+
+# for printing defaults in docs
+DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<DATASET_ROOT>")

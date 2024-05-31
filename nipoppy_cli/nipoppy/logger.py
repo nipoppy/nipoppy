@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from rich.console import Console
 from rich.logging import RichHandler
 
 from nipoppy.utils import StrOrPathLike
@@ -13,16 +14,32 @@ FORMAT_RICH = "%(message)s"
 FORMAT_FILE = "%(asctime)s %(levelname)-7s %(message)s"
 
 
-def get_logger(name: Optional[str] = None, level: int = logging.INFO) -> logging.Logger:
+def get_logger(
+    name: Optional[str] = "nipoppy", level: int = logging.INFO
+) -> logging.Logger:
     """Create/get a logger with rich formatting."""
-    logging.basicConfig(
-        level=level,
-        format=FORMAT_RICH,
-        datefmt=DATE_FORMAT,
-        handlers=[RichHandler(show_time=False, markup=True, rich_tracebacks=True)],
-        force=True,
+    # create logger
+    logger = logging.getLogger(name=name)
+    logger.setLevel(level)
+
+    # stream WARNING and above to stderr with rich formatting
+    stderr_handler = RichHandler(
+        console=Console(stderr=True), show_time=False, markup=True, rich_tracebacks=True
     )
-    return logging.getLogger(name=name)
+    stderr_handler.addFilter(lambda record: record.levelno >= logging.WARNING)
+    logger.addHandler(stderr_handler)
+
+    # stream levels below WARNING to stdout with rich formatting
+    stdout_handler = RichHandler(
+        console=Console(stderr=False),
+        show_time=False,
+        markup=True,
+        rich_tracebacks=True,
+    )
+    stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+    logger.addHandler(stdout_handler)
+
+    return logger
 
 
 def add_logfile(logger: logging.Logger, fpath_log: StrOrPathLike) -> None:

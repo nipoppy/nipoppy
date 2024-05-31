@@ -112,6 +112,7 @@ def test_add_subparser_doughnut(args):
     [
         ["--dataset-root", "my_dataset"],
         ["--dataset-root", "my_dataset", "--copy-files"],
+        ["--dataset-root", "my_dataset", "--check-dicoms"],
     ],
 )
 def test_add_subparser_dicom_reorg(args):

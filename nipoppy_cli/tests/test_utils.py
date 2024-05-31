@@ -2,6 +2,7 @@
 
 import json
 import re
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
@@ -14,7 +15,9 @@ from nipoppy.utils import (
     add_path_suffix,
     add_path_timestamp,
     check_participant,
+    check_participant_id_strict,
     check_session,
+    check_session_strict,
     dicom_id_to_bids_id,
     get_pipeline_tag,
     load_json,
@@ -61,12 +64,32 @@ def test_check_participant(participant, expected):
     assert check_participant(participant) == expected
 
 
+@pytest.mark.parametrize("participant_id,is_valid", [("01", True), ("sub-01", False)])
+def test_check_participant_id_strict(participant_id, is_valid):
+    with (
+        pytest.raises(ValueError, match="Participant ID should not start with")
+        if not is_valid
+        else nullcontext()
+    ):
+        assert check_participant_id_strict(participant_id) == participant_id
+
+
 @pytest.mark.parametrize(
     "session,expected",
     [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
 )
 def test_check_session(session, expected):
     assert check_session(session) == expected
+
+
+@pytest.mark.parametrize("session,is_valid", [("ses-1", True), ("1", False)])
+def test_check_session_strict(session, is_valid):
+    with (
+        pytest.raises(ValueError, match="Session should start with")
+        if not is_valid
+        else nullcontext()
+    ):
+        assert check_session_strict(session) == session
 
 
 @pytest.mark.parametrize(
