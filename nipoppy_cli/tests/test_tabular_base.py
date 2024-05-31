@@ -189,7 +189,7 @@ def test_concatenate_error(data1: list[dict], data2: list[dict]):
 )
 def test_save_with_backup(
     fname: str,
-    dname_backups: str | None,
+    dname_backups: Optional[str],
     dname_backups_processed: str,
     tmp_path: Path,
 ):

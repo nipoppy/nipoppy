@@ -1,16 +1,20 @@
 """Class for the doughnut file."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Optional, Self
+from typing import Optional
 
 from pydantic import Field
+from typing_extensions import Self
 
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
 from nipoppy.utils import (
     FIELD_DESCRIPTION_MAP,
+    StrOrPathLike,
     participant_id_to_bids_id,
     participant_id_to_dicom_id,
 )
@@ -147,17 +151,17 @@ class Doughnut(Manifest):
 def generate_doughnut(
     manifest: Manifest,
     dicom_dir_map: DicomDirMap,
-    dpath_downloaded: Optional[str | Path] = None,
-    dpath_organized: Optional[str | Path] = None,
-    dpath_bidsified: Optional[str | Path] = None,
+    dpath_downloaded: Optional[StrOrPathLike] = None,
+    dpath_organized: Optional[StrOrPathLike] = None,
+    dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
 ) -> Doughnut:
     """Generate a doughnut object."""
 
     def check_status(
-        dpath: Optional[str | Path],
-        dname_subdirectory: str | Path,
+        dpath: Optional[StrOrPathLike],
+        dname_subdirectory: StrOrPathLike,
     ):
         dname_subdirectory = Path(dname_subdirectory)
         if dpath is None:
@@ -234,9 +238,9 @@ def update_doughnut(
     doughnut: Doughnut,
     manifest: Manifest,
     dicom_dir_map: DicomDirMap,
-    dpath_downloaded: Optional[str | Path] = None,
-    dpath_organized: Optional[str | Path] = None,
-    dpath_bidsified: Optional[str | Path] = None,
+    dpath_downloaded: Optional[StrOrPathLike] = None,
+    dpath_organized: Optional[StrOrPathLike] = None,
+    dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
 ) -> Doughnut:

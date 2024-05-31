@@ -7,6 +7,8 @@ from typing import Optional
 from rich.console import Console
 from rich.logging import RichHandler
 
+from nipoppy.utils import StrOrPathLike
+
 DATE_FORMAT = "[%Y-%m-%d %X]"
 FORMAT_RICH = "%(message)s"
 FORMAT_FILE = "%(asctime)s %(levelname)-7s %(message)s"
@@ -40,7 +42,7 @@ def get_logger(
     return logger
 
 
-def add_logfile(logger: logging.Logger, fpath_log: Path | str) -> None:
+def add_logfile(logger: logging.Logger, fpath_log: StrOrPathLike) -> None:
     """Add a file handler to the logger."""
     fpath_log = Path(fpath_log)
 

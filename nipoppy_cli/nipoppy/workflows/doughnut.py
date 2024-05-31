@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -16,7 +17,7 @@ class DoughnutWorkflow(BaseWorkflow):
         dpath_root: Path,
         empty: bool = False,
         regenerate: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):

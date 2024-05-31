@@ -1,5 +1,7 @@
 """Workflow utilities."""
 
+from __future__ import annotations
+
 import logging
 import os
 import shlex
@@ -18,7 +20,7 @@ from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import add_path_timestamp
+from nipoppy.utils import StrOrPathLike, add_path_timestamp
 
 LOG_SUFFIX = ".log"
 
@@ -34,9 +36,9 @@ class BaseWorkflow(Base, ABC):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         name: str,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
     ):
@@ -44,7 +46,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        dpath_root : Path | str
+        dpath_root : nipoppy.utils.StrOrPathLike
             Path the the root directory of the dataset.
         name : str
             Name of the workflow, used for logging.
@@ -102,7 +104,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        command_or_args : Sequence[str] | str
+        command_or_args : Sequence[str]  |  str
             The command to run.
         check : bool, optional
             If True, raise an error if the process exits with a non-zero code,
@@ -112,7 +114,7 @@ class BaseWorkflow(Base, ABC):
 
         Returns
         -------
-        subprocess.Popen | str
+        subprocess.Popen or str
         """
 
         def process_output(
