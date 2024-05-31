@@ -1,5 +1,7 @@
 """Classes for the DICOM directory mapping."""
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from pydantic import Field, model_validator
