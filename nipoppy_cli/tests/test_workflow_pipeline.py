@@ -480,7 +480,7 @@ def test_check_pipeline_version(
     )
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
-    # assert f"using version {expected_version}" in caplog.text
+    assert f"using version {expected_version}" in caplog.text
 
 
 @pytest.mark.parametrize("dry_run", [True, False])

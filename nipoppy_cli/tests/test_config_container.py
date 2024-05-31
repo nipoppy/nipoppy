@@ -195,15 +195,15 @@ def test_check_container_args(args):
     assert check_container_args(args=args) == args
 
 
-def test_check_container_args_relative():
+def test_check_container_args_relative(caplog: pytest.LogCaptureFixture):
     assert check_container_args(args=["--bind", "."]) == [
         "--bind",
         str(Path(".").resolve()),
     ]
-    # assert "Resolving path" in caplog.text
+    assert "Resolving path" in caplog.text
 
 
-def test_check_container_args_symlink(tmp_path: Path):
+def test_check_container_args_symlink(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     path_symlink = tmp_path / "symlink"
     path_real = tmp_path / "file.txt"
     path_real.touch()
@@ -212,14 +212,14 @@ def test_check_container_args_symlink(tmp_path: Path):
         "--bind",
         str(path_real),
     ]
-    # assert "Resolving path" in caplog.text
+    assert "Resolving path" in caplog.text
 
 
-def test_check_container_args_missing(tmp_path: Path):
+def test_check_container_args_missing(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     dpath = tmp_path / "missing"
     check_container_args(args=["--bind", str(dpath)])
     assert dpath.exists()
-    # assert "Creating missing directory" in caplog.text
+    assert "Creating missing directory" in caplog.text
 
 
 def test_check_container_args_error():
