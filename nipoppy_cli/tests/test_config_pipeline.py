@@ -77,15 +77,9 @@ def test_step_names_error_duplicate(valid_data):
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
-def test_get_container(valid_data, container):
+def test_get_fpath_container(valid_data, container):
     pipeline_config = PipelineConfig(**valid_data, CONTAINER_INFO={"PATH": container})
-    assert pipeline_config.get_container() == Path(container)
-
-
-def test_get_container_error(valid_data):
-    pipeline_config = PipelineConfig(**valid_data)
-    with pytest.raises(RuntimeError, match="No container specified for pipeline"):
-        pipeline_config.get_container()
+    assert pipeline_config.get_fpath_container() == Path(container)
 
 
 @pytest.mark.parametrize(

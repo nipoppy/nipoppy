@@ -67,12 +67,8 @@ class PipelineConfig(SchemaWithContainerConfig):
 
         return self
 
-    def get_container(self) -> Path:
+    def get_fpath_container(self) -> Path:
         """Return the path to the pipeline's container."""
-        if self.CONTAINER_INFO.PATH is None:
-            raise RuntimeError(
-                f"No container specified for pipeline {self.NAME} {self.VERSION}"
-            )
         return self.CONTAINER_INFO.PATH
 
     def get_step_config(self, step_name: Optional[str] = None) -> PipelineStepConfig:
