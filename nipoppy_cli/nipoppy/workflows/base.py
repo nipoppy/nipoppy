@@ -35,6 +35,10 @@ class BaseWorkflow(Base, ABC):
     log_prefix_run_stderr = "[RUN STDERR]"
     validate_layout = True
 
+    # hack to avoid errors when loading/processing the default config
+    pipeline_name = "[[NIPOPPY_PIPELINE_NAME]]"
+    pipeline_version = "[[NIPOPPY_PIPELINE_VERSION]]"
+
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -274,7 +278,7 @@ class BaseWorkflow(Base, ABC):
             **json.loads(
                 process_template_str(
                     config.model_dump_json(),
-                    objs=[self.layout],
+                    objs=[self, self.layout],
                 )
             )
         )

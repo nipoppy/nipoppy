@@ -316,8 +316,8 @@ def test_process_template_str_error_identifier(template_str):
 
 
 def test_process_template_str_error_replace():
-    with pytest.raises(RuntimeError, match="Unable to replace"):
-        process_template_str("[[NIPOPPY_INVALID]]")
+    with pytest.warns(UserWarning, match="Unable to replace"):
+        assert process_template_str("[[NIPOPPY_INVALID]]") == "[[NIPOPPY_INVALID]]"
 
 
 @pytest.mark.parametrize(

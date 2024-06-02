@@ -6,6 +6,7 @@ import datetime
 import json
 import os
 import re
+import warnings
 from pathlib import Path
 from typing import List, Optional, Sequence, TypeVar
 
@@ -316,7 +317,8 @@ def process_template_str(
         for obj in objs:
             if hasattr(obj, replacement_key):
                 return replace(json_str, to_replace, getattr(obj, replacement_key))
-        raise RuntimeError(f"Unable to replace {to_replace} in {template_str_original}")
+        warnings.warn(f"Unable to replace {to_replace} in {template_str_original}")
+        return json_str
 
     if objs is None:
         objs = []
