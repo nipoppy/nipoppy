@@ -23,6 +23,7 @@ def single_subject_dataset(
     session = "ses-01"
     container_command = "apptainer"
     substitutions = {
+        "[[NIPOPPY_DPATH_DESCRIPTORS]]": str(DPATH_DESCRIPTORS),
         "[[NIPOPPY_DPATH_INVOCATIONS]]": str(DPATH_INVOCATIONS),
         "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": str(tmp_path / "heuristic.py"),
@@ -115,4 +116,5 @@ def test_bids_conversion_runner(
 
     runner.pipeline_config.get_fpath_container().touch()
 
+    print(runner.invocation)
     runner.run_single(participant=participant, session=session)

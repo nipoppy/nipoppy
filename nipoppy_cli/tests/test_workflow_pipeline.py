@@ -10,7 +10,6 @@ import pytest
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.container import ContainerInfo
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.pipeline_step import PipelineStepConfig
 from nipoppy.utils import StrOrPathLike, strip_session
@@ -175,11 +174,11 @@ def test_fpath_container_not_found(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,pipeline_step",
+    "pipeline_name,pipeline_version,pipeline_step,descriptor",
     [
-        ("fmriprep", "23.1.3", None),  # built-in pipeline
-        ("heudiconv", "0.12.2", "prepare"),  # built-in pipeline
-        ("custom_pipeline", "1.0", None),
+        ("fmriprep", "23.1.3", None, {}),
+        ("heudiconv", "0.12.2", "prepare", {"key1": "value1"}),
+        ("my_pipeline", "1.0", None, {"key2": "value2"}),
     ],
 )
 def test_descriptor(
@@ -187,6 +186,7 @@ def test_descriptor(
     pipeline_name,
     pipeline_version,
     pipeline_step,
+    descriptor,
     tmp_path: Path,
 ):
     workflow.pipeline_name = pipeline_name
@@ -194,19 +194,15 @@ def test_descriptor(
     workflow.pipeline_step = pipeline_step
 
     # user-added pipelines with descriptor file
-    fpath_descriptor_custom = tmp_path / "custom_pipeline.json"
-    workflow.config.PROC_PIPELINES.extend(
-        [
-            PipelineConfig(
-                NAME="custom_pipeline",
-                VERSION="1.0",
-                CONTAINER_INFO=ContainerInfo(PATH="my_container.sif"),
-                STEPS=[PipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor_custom)],
-            ),
-        ]
-    )
-    _make_dummy_json(fpath_descriptor_custom)
-    assert isinstance(workflow.descriptor, dict)
+    fpath_descriptor = tmp_path / "custom_pipeline.json"
+    workflow.pipeline_config.get_step_config().DESCRIPTOR_FILE = fpath_descriptor
+    fpath_descriptor.write_text(json.dumps(descriptor))
+    assert workflow.descriptor == descriptor
+
+
+def test_descriptor_none(workflow: PipelineWorkflow):
+    with pytest.raises(ValueError, match="No descriptor file specified for pipeline"):
+        workflow.descriptor
 
 
 @pytest.mark.parametrize(
@@ -260,7 +256,7 @@ def test_invocation(
 
 
 def test_invocation_none(workflow: PipelineWorkflow):
-    with pytest.raises(ValueError, match="No invocation file specified in config"):
+    with pytest.raises(ValueError, match="No invocation file specified for pipeline"):
         workflow.invocation
 
 

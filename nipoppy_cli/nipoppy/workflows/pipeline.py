@@ -21,7 +21,6 @@ from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
-    DPATH_DESCRIPTORS,
     StrOrPathLike,
     add_pybids_ignore_patterns,
     check_participant,
@@ -132,35 +131,17 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        # user-provided descriptor file
         fpath_descriptor = self.pipeline_config.get_descriptor_file(
             step_name=self.pipeline_step
         )
-        if fpath_descriptor is not None:
-            self.logger.info(f"Descriptor file specified in config: {fpath_descriptor}")
-
-        # built-in descriptor file
-        else:
-            fpath_descriptor = self.get_fpath_descriptor_builtin()
-            self.logger.info(
-                "No descriptor file specified in config"
-                ", checking if there is a built-in descriptor"
-                f" at {fpath_descriptor}"
+        if fpath_descriptor is None:
+            raise ValueError(
+                "No descriptor file specified for pipeline"
+                f" {self.pipeline_name} {self.pipeline_version}"
             )
-
-            if not fpath_descriptor.exists():
-                raise RuntimeError(
-                    "Could not find a built-in descriptor file for pipeline"
-                    f" {self.pipeline_name}, version {self.pipeline_version}"
-                    f", step {self.pipeline_step}"
-                    # ". Available built-in pipelines are: "  # TODO
-                )
-            self.logger.info("Using built-in descriptor")
-
-        # load descriptor and process substitutions
+        self.logger.info(f"Loading descriptor from {fpath_descriptor}")
         descriptor = load_json(fpath_descriptor)
         descriptor = self.config.apply_substitutions_to_json(descriptor)
-
         return descriptor
 
     @cached_property
@@ -170,14 +151,23 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             step_name=self.pipeline_step
         )
         if fpath_invocation is None:
-            raise ValueError("No invocation file specified in config")
+            raise ValueError(
+                "No invocation file specified for pipeline"
+                f" {self.pipeline_name} {self.pipeline_version}"
+            )
+        self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
         invocation = self.config.apply_substitutions_to_json(invocation)
         return invocation
 
     @cached_property
     def pybids_ignore_patterns(self) -> list[str]:
-        """Load the pipeline step's PyBIDS ignore pattern list."""
+        """
+        Load the pipeline step's PyBIDS ignore pattern list.
+
+        Note: this does not apply any substitutions, since the subject/session
+        patterns are always added.
+        """
         fpath_pybids_ignore = self.pipeline_config.get_pybids_ignore_file(
             step_name=self.pipeline_step
         )
@@ -197,16 +187,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
 
         return [re.compile(pattern) for pattern in patterns]
-
-    def get_fpath_descriptor_builtin(self) -> Path:
-        """Get the path to the built-in descriptor file."""
-        pipeline_tag = get_pipeline_tag(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-        )
-        fname = f"{pipeline_tag}.json"
-        return DPATH_DESCRIPTORS / fname
 
     def process_template_json(
         self,
