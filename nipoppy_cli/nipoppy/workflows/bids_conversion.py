@@ -1,12 +1,14 @@
 """Workflow for convert command."""
 
+from __future__ import annotations
+
 import logging
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import get_pipeline_tag
+from nipoppy.utils import StrOrPathLike, get_pipeline_tag
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -15,14 +17,14 @@ class BidsConversionRunner(PipelineRunner):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
         participant: str = None,
         session: str = None,
         simulate: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):

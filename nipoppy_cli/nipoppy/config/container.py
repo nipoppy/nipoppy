@@ -11,6 +11,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.logger import get_logger
+from nipoppy.utils import StrOrPathLike
 
 # Apptainer
 APPTAINER_BIND_FLAG = "--bind"
@@ -53,8 +54,8 @@ class ContainerConfig(BaseModel):
 
     def add_bind_path(
         self,
-        path_local: str | Path,
-        path_inside_container: Optional[str | Path] = None,
+        path_local: StrOrPathLike,
+        path_inside_container: Optional[StrOrPathLike] = None,
         mode: str = "rw",
     ):
         """Add a bind path."""
@@ -100,8 +101,8 @@ class ModelWithContainerConfig(BaseModel):
 
 def add_bind_path_to_args(
     args: list[str],
-    path_local: str | Path,
-    path_inside_container: Optional[str | Path] = None,
+    path_local: StrOrPathLike,
+    path_inside_container: Optional[StrOrPathLike] = None,
     mode: Optional[str] = "rw",
 ):
     """Add a bind path to the container arguments.
@@ -110,10 +111,10 @@ def add_bind_path_to_args(
     ----------
     args : list[str]
         Existing arguments
-    path_local : str | Path
+    path_local : nipoppy.utils.StrOrPathLike
         Path on disk. If this is a relative path or contains symlinks,
         it will be resolved
-    path_inside_container : Optional[str  |  Path], optional
+    path_inside_container : Optional[nipoppy.utils.StrOrPathLike], optional
         Path inside the container (if None, will be the same as the local path),
         by default None
     mode : str, optional

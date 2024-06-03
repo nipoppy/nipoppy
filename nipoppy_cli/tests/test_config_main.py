@@ -1,6 +1,7 @@
 """Tests for the config module."""
 
 import json
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -67,6 +68,29 @@ def test_sessions_inferred(visits, expected_sessions):
     }
     config = Config(**data)
     assert config.SESSIONS == expected_sessions
+
+
+@pytest.mark.parametrize(
+    "dicom_dir_map_file,dicom_dir_participant_first,is_valid",
+    [
+        (None, None, True),
+        ("path", None, True),
+        (None, True, True),
+        (None, False, True),
+        ("path", True, False),
+    ],
+)
+def test_check_dicom_dir_options(
+    valid_config_data, dicom_dir_map_file, dicom_dir_participant_first, is_valid
+):
+    valid_config_data["DICOM_DIR_MAP_FILE"] = dicom_dir_map_file
+    valid_config_data["DICOM_DIR_PARTICIPANT_FIRST"] = dicom_dir_participant_first
+    with (
+        pytest.raises(ValueError, match="Cannot specify both")
+        if not is_valid
+        else nullcontext()
+    ):
+        assert isinstance(Config(**valid_config_data), Config)
 
 
 @pytest.mark.parametrize(
@@ -213,6 +237,13 @@ def test_load(path):
         assert hasattr(config, field)
 
 
-def test_load_missing_required():
+@pytest.mark.parametrize(
+    "path",
+    [
+        DPATH_TEST_DATA / "config_invalid1.json",  # missing required
+        DPATH_TEST_DATA / "config_invalid2.json",  # invalid sessions
+    ],
+)
+def test_load_invalid(path):
     with pytest.raises(ValueError):
-        Config.load(DPATH_TEST_DATA / "config_invalid1.json")
+        Config.load(path)

@@ -1,14 +1,17 @@
 """Generic class for tabular data."""
 
+from __future__ import annotations
+
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Self, Sequence
+from typing import Any, Optional, Sequence
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
+from typing_extensions import Self
 
-from nipoppy.utils import save_df_with_backup
+from nipoppy.utils import StrOrPathLike, save_df_with_backup
 
 
 class BaseTabularModel(BaseModel):
@@ -16,12 +19,12 @@ class BaseTabularModel(BaseModel):
     Helper class for validating tabular data.
 
     Subclasses should define fields and their types,
-    and optionally override the _validate_fields() method.
+    and optionally override the _validate_before_fields() method.
     """
 
     @model_validator(mode="before")
     @classmethod
-    def validate_input(cls, data: Any):
+    def validate_before(cls, data: Any):
         """Validate the raw input."""
         if isinstance(data, dict):
             # generic validation
@@ -49,12 +52,12 @@ class BaseTabularModel(BaseModel):
 
             # model-specific validation
             # to be overridden in subclass if needed
-            data = cls.validate_fields(data)
+            data = cls._validate_before_fields(data)
 
         return data
 
     @classmethod
-    def validate_fields(cls, data: dict):
+    def _validate_before_fields(cls, data: dict):
         """Validate model-specific fields. To be overridden in subclass if needed."""
         return data
 
@@ -77,7 +80,7 @@ class BaseTabular(pd.DataFrame, ABC):
         raise NotImplementedError("model must be assigned in subclass")
 
     @classmethod
-    def load(cls, fpath: str | Path, validate=True, **kwargs) -> Self:
+    def load(cls, fpath: StrOrPathLike, validate=True, **kwargs) -> Self:
         """Load (and optionally validate) a tabular data file."""
         if "dtype" in kwargs:
             raise ValueError(
@@ -190,7 +193,7 @@ class BaseTabular(pd.DataFrame, ABC):
 
     def save_with_backup(
         self,
-        fpath_symlink: str | Path,
+        fpath_symlink: StrOrPathLike,
         dname_backups: Optional[str] = None,
         use_relative_path=True,
         sort=True,

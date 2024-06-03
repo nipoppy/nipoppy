@@ -4,6 +4,9 @@ For the full list of built-in configuration values, see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
+# for substitutions
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -59,10 +62,12 @@ intersphinx_mapping = {
 myst_enable_extensions = ["fieldlist", "substitution"]
 
 myst_substitutions = {
-    "dpath_root": "`<DATASET_ROOT>`",
-    "dpath_downloads": "`<DATASET_ROOT>/downloads`",
-    "dpath_scratch": "`<DATASET_ROOT>/scratch`",
-    "dpath_raw_imaging": "`<DATASET_ROOT>/scratch/raw_imaging`",
+    "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
+    "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
+    "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
+    "dpath_raw_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_raw_dicom}`",
+    "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
+    "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
 }
 
 # -- Autodoc/AutoAPI configuration ----------------------------------------------------
@@ -93,6 +98,9 @@ nitpick_ignore = [
     ("py:class", "argparse.HelpFormatter"),
     ("py:class", "argparse._SubParsersAction"),
     ("py:class", "argparse._ActionsContainer"),
+    ("py:class", "StrOrPathLike"),
+    ("py:class", "nipoppy.utils.StrOrPathLike"),
+    ("py:class", "typing_extensions.Self"),
 ]
 
 # -- Copybutton configuration -------------------------------------------------
