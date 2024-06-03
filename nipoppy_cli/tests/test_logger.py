@@ -1,12 +1,11 @@
 """Tests for the logger module."""
 
 import logging
-import warnings
 from pathlib import Path
 
 import pytest
 
-from nipoppy.logger import add_logfile, capture_warnings, get_logger
+from nipoppy.logger import add_logfile, get_logger
 
 
 @pytest.mark.parametrize("level", [logging.INFO, logging.DEBUG])
@@ -34,21 +33,6 @@ def test_get_logger_stderr(capsys: pytest.CaptureFixture):
     captured = capsys.readouterr()
     assert not captured.out
     assert captured.err
-
-
-def test_capture_warnings(caplog: pytest.LogCaptureFixture):
-    logging.captureWarnings(True)
-    logger = get_logger()
-    capture_warnings(logger)
-    warning_message = "This is a warning!"
-    warnings.warn(warning_message)
-    assert any(
-        [
-            record.levelno == logging.WARNING and warning_message in record.message
-            for record in caplog.records
-        ]
-    )
-    logging.captureWarnings(False)
 
 
 @pytest.mark.parametrize(
