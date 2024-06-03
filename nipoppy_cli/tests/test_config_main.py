@@ -290,6 +290,7 @@ def test_apply_substitutions(valid_config_data, substitutions, json_obj, expecte
         FPATH_SAMPLE_CONFIG,
         DPATH_TEST_DATA / "config1.json",
         DPATH_TEST_DATA / "config2.json",
+        DPATH_TEST_DATA / "config3.json",
     ],
 )
 def test_load(path):

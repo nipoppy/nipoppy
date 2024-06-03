@@ -122,9 +122,18 @@ def test_run_cleanup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     assert "END" in caplog.text
 
 
-def test_config(workflow: BaseWorkflow):
+@pytest.mark.parametrize(
+    "fpath_config",
+    [
+        FPATH_SAMPLE_CONFIG,
+        DPATH_TEST_DATA / "config1.json",
+        DPATH_TEST_DATA / "config2.json",
+        DPATH_TEST_DATA / "config3.json",
+    ],
+)
+def test_config(workflow: BaseWorkflow, fpath_config):
     workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(FPATH_SAMPLE_CONFIG, workflow.layout.fpath_config)
+    shutil.copy(fpath_config, workflow.layout.fpath_config)
     assert isinstance(workflow.config, Config)
 
 

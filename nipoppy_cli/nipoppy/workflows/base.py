@@ -266,6 +266,7 @@ class BaseWorkflow(Base, ABC):
         """Load the configuration."""
         fpath_config = self.layout.fpath_config
         try:
+            # load and apply user-defined substitutions
             self.logger.info(f"Loading config from {fpath_config}")
             config = Config.load(fpath_config)
         except FileNotFoundError:

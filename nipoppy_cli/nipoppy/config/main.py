@@ -90,10 +90,9 @@ class Config(SchemaWithContainerConfig):
         ):
             raise ValueError(
                 "Cannot specify both DICOM_DIR_MAP_FILE and DICOM_DIR_PARTICIPANT_FIRST"
+                f". Got DICOM_DIR_MAP_FILE={self.DICOM_DIR_MAP_FILE} and "
+                f"DICOM_DIR_PARTICIPANT_FIRST={self.DICOM_DIR_PARTICIPANT_FIRST}"
             )
-        # otherwise set the default if needed
-        elif self.DICOM_DIR_PARTICIPANT_FIRST is None:
-            self.DICOM_DIR_PARTICIPANT_FIRST = True
 
         return self
 

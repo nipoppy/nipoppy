@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 from pydantic import Field, model_validator
 from typing_extensions import Self
@@ -78,7 +79,7 @@ class DicomDirMap(BaseTabular):
         cls,
         manifest: Manifest,
         fpath_dicom_dir_map: str | Path | None,
-        participant_first: bool,
+        participant_first: Optional[bool],
         validate: bool = True,
     ) -> Self:
         """Load or generate a DicomDirMap instance.
@@ -111,7 +112,7 @@ class DicomDirMap(BaseTabular):
         else:
             data_dicom_dir_map = []
             for participant, session in manifest.get_participants_sessions():
-                if participant_first:
+                if participant_first is not False:
                     participant_dicom_dir = f"{participant}/{session}"
                 else:
                     participant_dicom_dir = f"{session}/{participant}"
