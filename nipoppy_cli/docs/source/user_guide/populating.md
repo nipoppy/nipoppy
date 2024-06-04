@@ -11,15 +11,17 @@ Depending on the study you are working with, there might not be any data to put 
 ## Summary
 
 ### Prerequisites
+
 - An empty Nipoppy dataset, as created by [`nipoppy init`](../cli_reference/init.md)
     - See the [Quickstart guide](../quickstart.md) for full instructions on
     initializing a new dataset
 
-### Where to put data
+### Data directories
+
 | Directory | Content description |
 |---|---|
 | {{dpath_downloads}} | Data archives, web downloads, etc. (imaging and non-imaging data) |
-| {{dpath_raw_imaging}} | Arbitrarily organized raw imaging data (DICOMs or NIfTIs) |
+| {{dpath_raw_imaging}} | {{content_dpath_raw_imaging}} |
 
 ## Data archives and web downloads
 
@@ -45,4 +47,4 @@ If both DICOMs and NIfTIs are available, we recommend starting over with the DIC
 
 For imaging data, the next step is to [reorganize the data](organization_imaging.md) in a way that prepares it for {term}`BIDS` conversion.
 
-If you have tabular non-imaging (e.g., demographic or assessments) data, we provide guidelines for wrangling and linking tabular data [here](organization_tabular.md)
+If you have tabular non-imaging (e.g., demographic or assessments) data, guidelines for wrangling and linking tabular data can be found [here](organization_tabular.md)
