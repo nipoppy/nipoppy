@@ -61,7 +61,7 @@ class PipelineConfig(SchemaWithContainerConfig):
                     raise ValueError(
                         f'Found at least two steps with NAME "{step.NAME}"'
                         f" for pipeline {self.NAME} {self.VERSION}"
-                        ". Pipeline names must be unique"
+                        ". Step names must be unique"
                     )
                 step_names.append(step.NAME)
 
