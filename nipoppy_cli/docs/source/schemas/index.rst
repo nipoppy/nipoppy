@@ -68,6 +68,19 @@ Here is the schema used for each row in the bagel file:
 .. jsonschema:: bagel.json
     :lift_title: False
 
+.. _dicom-dir-map-schema:
+
+DICOM directory mapping file
+----------------------------
+
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Here is the schema used for each row in the DICOM directory mapping file:
+
+.. jsonschema:: dicom_dir_map.json
+    :lift_title: False
+
 
 Layout configuration
 --------------------
