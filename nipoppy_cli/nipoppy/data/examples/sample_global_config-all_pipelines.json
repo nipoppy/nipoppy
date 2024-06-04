@@ -14,6 +14,7 @@
         "[[TEMPLATEFLOW_HOME]]": "<PATH_TO_TEMPLATEFLOW_DIRECTORY>"
     },
     "CONTAINER_CONFIG": {
+        "COMMAND": "apptainer",
         "ARGS": [
             "--cleanenv"
         ]
@@ -147,5 +148,6 @@
             ],
             "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]].json"
         }
-    ]
+    ],
+    "CUSTOM": {}
 }
