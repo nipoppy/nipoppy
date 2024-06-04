@@ -101,7 +101,7 @@ class ContainerConfig(BaseModel):
 class ContainerInfo(BaseModel):
     """Schema for container image (i.e., file) information."""
 
-    PATH: Optional[Path] = Field(
+    FILE: Optional[Path] = Field(
         default=None,
         description=(
             "Path to the container associated with the pipeline"
@@ -112,6 +112,8 @@ class ContainerInfo(BaseModel):
         default=None,
         description="The Docker or Apptainer/Singularity URI for the container",
     )
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class SchemaWithContainerConfig(BaseModel):

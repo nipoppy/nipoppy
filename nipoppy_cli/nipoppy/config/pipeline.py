@@ -69,7 +69,7 @@ class PipelineConfig(SchemaWithContainerConfig):
 
     def get_fpath_container(self) -> Path:
         """Return the path to the pipeline's container."""
-        return self.CONTAINER_INFO.PATH
+        return self.CONTAINER_INFO.FILE
 
     def get_step_config(self, step_name: Optional[str] = None) -> PipelineStepConfig:
         """

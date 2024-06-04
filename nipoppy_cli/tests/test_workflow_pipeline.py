@@ -86,7 +86,7 @@ def workflow(tmp_path: Path):
                 "NAME": "my_pipeline",
                 "VERSION": "1.0",
                 "CONTAINER_INFO": {
-                    "PATH": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif"
+                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif"
                 },
                 "STEPS": [{}],
             },
@@ -157,13 +157,13 @@ def test_fpath_container(workflow: PipelineWorkflow):
 
 def test_fpath_container_custom(workflow: PipelineWorkflow):
     fpath_custom = workflow.dpath_root / "my_container.sif"
-    workflow.pipeline_config.CONTAINER_INFO.PATH = fpath_custom
+    workflow.pipeline_config.CONTAINER_INFO.FILE = fpath_custom
     fpath_custom.touch()
     assert isinstance(workflow.fpath_container, Path)
 
 
 def test_fpath_container_not_specified(workflow: PipelineWorkflow):
-    workflow.pipeline_config.CONTAINER_INFO.PATH = None
+    workflow.pipeline_config.CONTAINER_INFO.FILE = None
     with pytest.raises(RuntimeError, match="No container image file specified"):
         workflow.fpath_container
 

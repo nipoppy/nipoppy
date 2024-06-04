@@ -78,7 +78,7 @@ def test_step_names_error_duplicate(valid_data):
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
 def test_get_fpath_container(valid_data, container):
-    pipeline_config = PipelineConfig(**valid_data, CONTAINER_INFO={"PATH": container})
+    pipeline_config = PipelineConfig(**valid_data, CONTAINER_INFO={"FILE": container})
     assert pipeline_config.get_fpath_container() == Path(container)
 
 

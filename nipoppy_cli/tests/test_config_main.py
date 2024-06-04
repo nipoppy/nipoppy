@@ -36,7 +36,7 @@ def valid_config_data():
             {
                 "NAME": "bids_converter",
                 "VERSION": "1.0",
-                "CONTAINER_INFO": {"PATH": "path"},
+                "CONTAINER_INFO": {"FILE": "path"},
                 "STEPS": [{"NAME": "step1"}, {"NAME": "step2"}],
             },
             {
@@ -49,7 +49,7 @@ def valid_config_data():
             {
                 "NAME": "pipeline1",
                 "VERSION": "v2",
-                "CONTAINER_INFO": {"PATH": "other_path"},
+                "CONTAINER_INFO": {"FILE": "other_path"},
             },
             {"NAME": "pipeline2", "VERSION": "1.0", "CONTAINER_INFO": {"URI": "uri"}},
             {
