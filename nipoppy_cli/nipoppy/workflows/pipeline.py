@@ -188,6 +188,32 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         return [re.compile(pattern) for pattern in patterns]
 
+    @cached_property
+    def boutiques_config(self):
+        """Get the Boutiques configuration."""
+        try:
+            boutiques_config = get_boutiques_config_from_descriptor(
+                self.descriptor,
+            )
+        except ValidationError as exception:
+            error_message = str(exception) + str(exception.errors())
+            raise ValueError(
+                f"Error when loading the Boutiques config from descriptor"
+                f": {error_message}"
+            )
+        except RuntimeError as exception:
+            self.logger.debug(
+                "Caught exception when trying to load Boutiques config"
+                f": {type(exception).__name__}: {exception}"
+            )
+            self.logger.debug(
+                "Assuming Boutiques config is not in descriptor. Using default"
+            )
+            return BoutiquesConfig()
+
+        self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
+        return boutiques_config
+
     def process_template_json(
         self,
         template_json: dict,
@@ -234,31 +260,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
         return template_json_str if return_str else json.loads(template_json_str)
-
-    def get_boutiques_config(self):
-        """Get the Boutiques configuration."""
-        try:
-            boutiques_config = get_boutiques_config_from_descriptor(
-                self.descriptor,
-            )
-        except ValidationError as exception:
-            error_message = str(exception) + str(exception.errors())
-            raise ValueError(
-                f"Error when loading the Boutiques config from descriptor"
-                f": {error_message}"
-            )
-        except RuntimeError as exception:
-            self.logger.debug(
-                "Caught exception when trying to load Boutiques config"
-                f": {type(exception).__name__}: {exception}"
-            )
-            self.logger.debug(
-                "Assuming Boutiques config is not in descriptor. Using default"
-            )
-            return BoutiquesConfig()
-
-        self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
-        return boutiques_config
 
     def set_up_bids_db(
         self,

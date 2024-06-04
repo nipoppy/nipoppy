@@ -73,10 +73,9 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.debug(f"Initial container config: {container_config}")
 
         # get and process Boutiques config
-        boutiques_config = self.get_boutiques_config()
         boutiques_config = BoutiquesConfig(
             **self.process_template_json(
-                boutiques_config.model_dump(),
+                self.boutiques_config.model_dump(),
                 participant=participant,
                 session=session,
             )

@@ -388,7 +388,7 @@ def test_process_template_json_error(participant, session, tmp_path: Path):
         )
 
 
-def test_get_boutiques_config(tmp_path: Path):
+def test_boutiques_config(tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="my_pipeline",
@@ -400,26 +400,26 @@ def test_get_boutiques_config(tmp_path: Path):
         }
     }
 
-    boutiques_config = workflow.get_boutiques_config()
+    boutiques_config = workflow.boutiques_config
     assert isinstance(boutiques_config, BoutiquesConfig)
     # should not be the default
     assert boutiques_config != BoutiquesConfig()
 
 
-def test_get_boutiques_config_default(tmp_path: Path):
+def test_boutiques_config_default(tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="no_boutiques_config",
         pipeline_version="1.0",
     )
     workflow.descriptor = {}
-    boutiques_config = workflow.get_boutiques_config()
+    boutiques_config = workflow.boutiques_config
     assert isinstance(boutiques_config, BoutiquesConfig)
     # expect the default
     assert boutiques_config == BoutiquesConfig()
 
 
-def test_get_boutiques_config_invalid(tmp_path: Path):
+def test_boutiques_config_invalid(tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="bad_boutiques_config",
@@ -428,7 +428,7 @@ def test_get_boutiques_config_invalid(tmp_path: Path):
     workflow.descriptor = {"custom": {"nipoppy": {"INVALID_ARG": "value"}}}
 
     with pytest.raises(ValueError, match="Error when loading the Boutiques config"):
-        workflow.get_boutiques_config()
+        workflow.boutiques_config
 
 
 @pytest.mark.parametrize(
