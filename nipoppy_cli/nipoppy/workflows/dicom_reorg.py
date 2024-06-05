@@ -142,3 +142,8 @@ class DicomReorgWorkflow(BaseWorkflow):
                     "Error reorganizing DICOM files"
                     f" for participant {participant} session {session}: {exception}"
                 )
+
+    def run_cleanup(self):
+        """Write the updated doughnut file."""
+        self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        return super().run_cleanup()

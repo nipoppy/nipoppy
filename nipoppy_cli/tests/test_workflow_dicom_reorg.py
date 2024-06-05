@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
+from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
@@ -304,3 +305,33 @@ def test_run(
 
             else:
                 assert not dpath_to_check.exists()
+
+
+@pytest.mark.parametrize(
+    "doughnut",
+    [
+        Doughnut(),
+        Doughnut(
+            data={
+                Doughnut.col_participant_id: ["01"],
+                Doughnut.col_visit: ["1"],
+                Doughnut.col_session: ["ses-1"],
+                Doughnut.col_datatype: "['anat']",
+                Doughnut.col_bids_id: ["sub-01"],
+                Doughnut.col_dicom_id: ["01"],
+                Doughnut.col_participant_dicom_dir: ["01"],
+                Doughnut.col_downloaded: [True],
+                Doughnut.col_organized: [True],
+                Doughnut.col_bidsified: [True],
+            }
+        ).validate(),
+    ],
+)
+def test_cleanup(doughnut: Doughnut, tmp_path: Path):
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / "my_dataset")
+    workflow.doughnut = doughnut
+
+    workflow.run_cleanup()
+
+    assert workflow.layout.fpath_doughnut.exists()
+    assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
