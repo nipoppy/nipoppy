@@ -25,6 +25,9 @@ class DoughnutModel(ManifestModel):
     An internally- or user-generated file to keep track of the BIDS conversion process.
 
     Should contain exactly the same data as the manifest, with some additional columns.
+
+    Note: This class is called "model" to be consistent with Pydantic nomenclature,
+    but it can be thought of as a schema for each row in the doughnut file.
     """
 
     participant_dicom_dir: str = Field(

@@ -19,7 +19,12 @@ from nipoppy.utils import (
 
 
 class DicomDirMapModel(BaseTabularModel):
-    """Model for file mapping participant IDs to DICOM directories."""
+    """
+    A file for mapping participant IDs to DICOM directories.
+
+    Note: This class is called "model" to be consistent with Pydantic nomenclature,
+    but it can be thought of as a schema for each row in the mapping file.
+    """
 
     participant_id: str = Field(
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
