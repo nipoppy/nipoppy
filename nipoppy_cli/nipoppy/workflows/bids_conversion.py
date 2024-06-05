@@ -96,6 +96,11 @@ class BidsConversionRunner(PipelineRunner):
             status=True,
         )
 
+    def run_cleanup(self, **kwargs):
+        """Write updated doughnut file."""
+        self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        return super().run_cleanup(**kwargs)
+
     def generate_fpath_log(
         self,
         dname_parent: Optional[str | list[str]] = None,
