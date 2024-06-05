@@ -88,7 +88,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         )
 
     def get_participants_sessions_to_run(
-        self, participant: str | None, session: str | None
+        self, participant: Optional[str], session: Optional[str]
     ):
         """Only run on participant/sessions with BIDS data."""
         return self.doughnut.get_bidsified_participants_sessions(
