@@ -372,7 +372,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         This is an abstract method that should be defined explicitly in subclasses.
         """
-        pass
 
     @abstractmethod
     def run_single(self, participant: Optional[str], session: Optional[str]):
@@ -381,7 +380,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         This is an abstract method that should be defined explicitly in subclasses.
         """
-        pass
 
     def generate_fpath_log(
         self,
