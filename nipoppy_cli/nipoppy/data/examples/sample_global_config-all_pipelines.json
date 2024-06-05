@@ -1,10 +1,12 @@
 {
     "DATASET_NAME": "<DATASET_NAME>",
     "VISITS": [
-        "<VISIT_LABEL>"
+        "<VISIT_LABEL>",
+        "<OTHER_VISIT_LABEL>"
     ],
     "SESSIONS": [
-        "ses-<SESSION_LABEL>"
+        "ses-<SESSION_LABEL>",
+        "ses-<OTHER_SESSION_LABEL>"
     ],
     "SUBSTITUTIONS": {
         "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_CONTAINER_STORE_DIRECTORY>",
