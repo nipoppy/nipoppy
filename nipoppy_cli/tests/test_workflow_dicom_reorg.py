@@ -216,6 +216,85 @@ def test_check_dicoms_default(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
+    (
+        "participants_and_sessions_downloaded"
+        ",participants_and_sessions_organized"
+        ",expected"
+    ),
+    [
+        (
+            {
+                "S01": ["ses-1", "ses-2", "ses-3"],
+                "S02": ["ses-1", "ses-2"],
+                "S03": ["ses-3"],
+            },
+            {
+                "S03": ["ses-3"],
+            },
+            [
+                ("S01", "ses-1"),
+                ("S01", "ses-2"),
+                ("S01", "ses-3"),
+                ("S02", "ses-1"),
+                ("S02", "ses-2"),
+            ],
+        ),
+        (
+            {
+                "S01": ["ses-1", "ses-2", "ses-3"],
+                "S02": ["ses-1", "ses-2", "ses-3"],
+                "S03": ["ses-1", "ses-2", "ses-3"],
+            },
+            {
+                "S01": ["ses-1", "ses-3"],
+            },
+            [
+                ("S01", "ses-2"),
+                ("S02", "ses-1"),
+                ("S02", "ses-2"),
+                ("S02", "ses-3"),
+                ("S03", "ses-1"),
+                ("S03", "ses-2"),
+                ("S03", "ses-3"),
+            ],
+        ),
+    ],
+)
+def test_get_participants_sessions_to_run(
+    participants_and_sessions_downloaded,
+    participants_and_sessions_organized,
+    expected,
+    tmp_path: Path,
+):
+    participants_and_sessions_manifest = {
+        "S01": ["ses-1", "ses-2", "ses-3"],
+        "S02": ["ses-1", "ses-2", "ses-3"],
+        "S03": ["ses-1", "ses-2", "ses-3"],
+    }
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+    create_empty_dataset(workflow.layout.dpath_root)
+
+    manifest: Manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions_manifest,
+        participants_and_sessions_downloaded=participants_and_sessions_downloaded,
+        participants_and_sessions_organized=participants_and_sessions_organized,
+        dpath_downloaded=workflow.layout.dpath_raw_dicom,
+        dpath_organized=workflow.layout.dpath_sourcedata,
+    )
+
+    config = get_config(
+        dataset_name=dataset_name,
+        visits=list(manifest[Manifest.col_visit].unique()),
+    )
+
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    config.save(workflow.layout.fpath_config)
+
+    assert [tuple(x) for x in workflow.get_participants_sessions_to_run()] == expected
+
+
+@pytest.mark.parametrize(
     "participants_and_sessions_manifest,participants_and_sessions_downloaded",
     [
         (

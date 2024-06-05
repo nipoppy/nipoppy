@@ -129,12 +129,21 @@ class DicomReorgWorkflow(BaseWorkflow):
             status=True,
         )
 
+    def get_participants_sessions_to_run(self):
+        """Return participant-session pairs to reorganize."""
+        participants_sessions_organized = set(
+            self.doughnut.get_organized_participants_sessions()
+        )
+        for participant_session in self.doughnut.get_downloaded_participants_sessions():
+            if participant_session not in participants_sessions_organized:
+                yield participant_session
+
     def run_main(self):
         """Reorganize all downloaded DICOM files."""
         for (
             participant,
             session,
-        ) in self.doughnut.get_downloaded_participants_sessions():
+        ) in self.get_participants_sessions_to_run():
             try:
                 self.run_single(participant, session)
             except Exception as exception:
