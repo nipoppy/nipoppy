@@ -20,7 +20,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ### Commands
 
-- CLI: [`nipoppy reorg`](<project:../cli_reference/reorg.md>)
+- Command-line interface: [`nipoppy reorg`](<project:../cli_reference/reorg.md>)
 - Python API: {class}`nipoppy.workflows.DicomReorgWorkflow`
 
 ## Running the data reorganization tool
@@ -112,3 +112,7 @@ Running this script on the data shown above will create the following organized 
 ```{literalinclude} ./file_trees/custom_dicom_reorg-after.txt
 :class: no-copybutton
 ```
+
+## Next steps
+
+Now that the raw imaging data has been organized in a standardized participant-session structure, it is ready for [BIDS conversion](<project:bids_conversion.md>)!
