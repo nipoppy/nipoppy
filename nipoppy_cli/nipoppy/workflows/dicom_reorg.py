@@ -45,6 +45,11 @@ class DicomReorgWorkflow(BaseWorkflow):
         self.copy_files = copy_files
         self.check_dicoms = check_dicoms
 
+        # the message logged in run_cleanup will depend on
+        # the final values for these attributes (updated in run_main)
+        self.n_success = 0
+        self.n_total = 0
+
     def get_fpaths_to_reorg(
         self,
         participant: str,
@@ -135,10 +140,42 @@ class DicomReorgWorkflow(BaseWorkflow):
             participant,
             session,
         ) in self.doughnut.get_downloaded_participants_sessions():
+            self.n_total += 1
             try:
                 self.run_single(participant, session)
+                self.n_success += 1
             except Exception as exception:
                 self.logger.error(
                     "Error reorganizing DICOM files"
                     f" for participant {participant} session {session}: {exception}"
                 )
+
+    def run_cleanup(self):
+        """Log a summary message."""
+        if self.n_total == 0:
+            self.logger.warning(
+                "No participant-session pairs found to reorganize"
+                ". Make sure there are no mistakes in the dataset's manifest or "
+                "config file, and/or check the doughnut file at "
+                f"{self.layout.fpath_doughnut}"
+            )
+        else:
+            # change the message depending on how successful the run was
+            prefix = "Reorganized"
+            suffix = ""
+            if self.n_success == 0:
+                color = "red"
+            elif self.n_success == self.n_total:
+                color = "green"
+                prefix = "Successfully reorganized"
+                suffix = "!"
+            else:
+                color = "yellow"
+
+            self.logger.info(
+                (
+                    f"[{color}]{prefix} files for {self.n_success} out of "
+                    f"{self.n_total} participant-session pairs{suffix}[/]"
+                )
+            )
+        return super().run_cleanup()

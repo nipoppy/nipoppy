@@ -13,6 +13,14 @@ from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
 
 
+def test_init_attributes(tmp_path: Path):
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path)
+    assert workflow.copy_files is False
+    assert workflow.check_dicoms is False
+    assert workflow.n_success == 0
+    assert workflow.n_total == 0
+
+
 @pytest.mark.parametrize(
     "fpath,expected_result",
     [
@@ -203,18 +211,6 @@ def test_run_single_error_dicom_read(tmp_path: Path):
         workflow.run_single(participant, session)
 
 
-def test_copy_files_default(tmp_path: Path):
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    assert workflow.copy_files is False
-
-
-def test_check_dicoms_default(tmp_path: Path):
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    assert workflow.check_dicoms is False
-
-
 @pytest.mark.parametrize(
     "participants_and_sessions_manifest,participants_and_sessions_downloaded",
     [
@@ -245,7 +241,7 @@ def test_check_dicoms_default(tmp_path: Path):
     ],
 )
 @pytest.mark.parametrize("copy_files", [True, False])
-def test_run(
+def test_run_main(
     participants_and_sessions_manifest: dict,
     participants_and_sessions_downloaded: dict,
     copy_files: bool,
@@ -271,7 +267,7 @@ def test_run(
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     config.save(workflow.layout.fpath_config)
 
-    workflow.run()
+    workflow.run_main()
 
     for participant, sessions in participants_and_sessions_manifest.items():
         for session in sessions:
@@ -304,3 +300,29 @@ def test_run(
 
             else:
                 assert not dpath_to_check.exists()
+
+
+@pytest.mark.parametrize(
+    "n_success,n_total,expected_message",
+    [
+        (0, 0, "No participant-session pairs found"),
+        (0, 1, "[red]Reorganized files for"),
+        (1, 2, "[yellow]Reorganized files for"),
+        (2, 2, "[green]Successfully reorganized files for"),
+    ],
+)
+def test_run_cleanup(
+    n_success,
+    n_total,
+    expected_message,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+
+    workflow.n_success = n_success
+    workflow.n_total = n_total
+    workflow.run_cleanup()
+
+    assert expected_message in caplog.text
