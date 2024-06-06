@@ -360,6 +360,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 self.run_single(participant, session)
                 self.n_success += 1
             except Exception as exception:
+                self.return_code = 1
                 self.logger.error(
                     f"Error running {self.pipeline_name} {self.pipeline_version}"
                     f" on participant {participant}, session {session}"

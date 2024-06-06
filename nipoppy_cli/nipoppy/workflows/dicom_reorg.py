@@ -145,6 +145,7 @@ class DicomReorgWorkflow(BaseWorkflow):
                 self.run_single(participant, session)
                 self.n_success += 1
             except Exception as exception:
+                self.return_code = 1
                 self.logger.error(
                     "Error reorganizing DICOM files"
                     f" for participant {participant} session {session}: {exception}"

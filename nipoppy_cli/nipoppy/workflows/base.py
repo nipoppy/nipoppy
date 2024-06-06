@@ -64,6 +64,9 @@ class BaseWorkflow(Base, ABC):
         self.logger = logger
         self.dry_run = dry_run
 
+        # for the CLI
+        self.return_code = 0
+
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
 
     def generate_fpath_log(

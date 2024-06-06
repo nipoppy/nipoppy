@@ -430,6 +430,7 @@ def test_run_main_catch_errors(tmp_path: Path):
     workflow.run_main()
     assert workflow.n_total == 1
     assert workflow.n_success == 0
+    assert workflow.return_code == 1
 
 
 @pytest.mark.parametrize(

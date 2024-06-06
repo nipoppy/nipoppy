@@ -305,6 +305,38 @@ def test_run_main(
     assert workflow.n_success == workflow.n_total
 
 
+def test_run_main_error(tmp_path: Path):
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+    create_empty_dataset(workflow.layout.dpath_root)
+
+    manifest: Manifest = prepare_dataset(
+        participants_and_sessions_manifest={
+            "S01": ["ses-1", "ses-2", "ses-3"],
+            "S02": ["ses-1", "ses-2", "ses-3"],
+            "S03": ["ses-1", "ses-2", "ses-3"],
+        },
+    )
+
+    config = get_config(
+        dataset_name=dataset_name,
+        visits=list(manifest[Manifest.col_visit].unique()),
+    )
+
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    config.save(workflow.layout.fpath_config)
+
+    # will cause the workflow to fail because the directories cannot be found
+    workflow.doughnut[workflow.doughnut.col_downloaded] = True
+
+    try:
+        workflow.run_main()
+    except Exception:
+        pass
+
+    assert workflow.return_code == 1
+
+
 @pytest.mark.parametrize(
     "n_success,n_total,expected_message",
     [
