@@ -84,7 +84,7 @@ workflow = DicomReorgWorkflow(dpath_root=dpath_root)
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments (they are the same as for the [CLI](<project:../cli_reference/reorg.md>)).
+See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.md>)).
 
 (customizing-dicom-reorg)=
 #### Customizing input and output file paths

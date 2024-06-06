@@ -77,7 +77,7 @@ myst_substitutions = {
         "that facilitates BIDS conversion"
     ),
     "content_dpath_bids": (
-        "Raw imaging data (NIfTIs) organized following the BIDS standard"
+        "Raw imaging data (NIfTIs) organized according to the BIDS standard"
     ),
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
     "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",

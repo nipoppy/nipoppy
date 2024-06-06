@@ -1,6 +1,12 @@
 # Converting a dataset to BIDS
 
-TODO
+Organizing imaging data following the {term}`Brain Imaging Data Structure <BIDS>` standard can greatly facilitate downstream processing and sharing of data. However, BIDS conversion can be a tricky process, especially for retrospective and/or messy datasets. Some manual work and trial-and-error process is usually needed to create an accurate configuration file to map the raw DICOMs (or NIfTIs) to valid BIDS paths.
+
+Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) are populated with descriptor files and default invocation files for the following BIDS converters:
+- [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/latest), a user-friendly DICOM converter that is configured with a {term}`JSON` file
+- [HeuDiConv](https://heudiconv.readthedocs.io/en/latest/), a flexible DICOM converter that is configured with a heuristic Python file
+
+% TODO link to a page explaining Boutiques and how it works with Nipoppy
 
 ## Summary
 
@@ -10,6 +16,17 @@ TODO
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Organized (but not BIDS) imaging data in {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
     - See <project:organizing_imaging.md>
+
+**If using the default configuration**:
+- The Apptainer (formerly Singularity) container platform installed on your system
+    - See [here](https://apptainer.org/docs/user/main/quick_start.html) for installation instructions
+    - **Note**: Apptainer is only natively supported on Linux systems
+- The container image file for the pipeline you wish to use
+    - This can be downloaded by e.g., running `apptainer pull <URI>` inside your container directory (see the configuration file for URI). Make sure the file path is the same as what is specified in the configuration file!
+
+```{caution}
+Although it is *possible* to use Nipoppy without containers by modifying the default invocation files, we highly recommend using containerized pipelines to make your workflow as reproducible as possible. Using containers instead of locally installed software can also help avoid conflicts or unwanted interactions between different software/versions.
+```
 
 ### Data directories
 
@@ -25,4 +42,66 @@ TODO
 
 ## Running the BIDS conversion
 
-TODO
+Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default configuration splits BIDS conversion pipelines into the following steps:
+* [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
+    * Step `prepare`: run [`dcm2bids_helper`](https://unfmontreal.github.io/Dcm2Bids/3.1.1/tutorial/first-steps/#dcm2bids_helper-command), which will convert DICOM files to NIfTI files with JSON sidecars and store them in a temporary directory
+        * The JSON configuration file is expected to be created based on information in the sidecars
+    * Step `convert`: run the actual conversion using the configuration file
+* [`heudiconv`](https://heudiconv.readthedocs.io/en/latest/)
+    * Step `prepare`: extract information from DICOM headers that can be used to write/test the heuristic file
+    * Step `convert`: run the actual conversion
+
+```{note}
+These step names `prepare` and `convert` are a Nipoppy convention based on the general BIDS conversion process. The BIDS conversion tools themselves do not use these names.
+```
+
+### Using the command-line interface
+
+To convert all participants and sessions in a dataset, run:
+```console
+$ nipoppy bidsify \
+    --dataset-root <DATASET_ROOT> \
+    --pipeline <PIPELINE_NAME> \
+    --pipeline-step <PIPELINE_STEP_NAME>
+```
+where `<PIPELINE_NAME>` and `<PIPELINE_STEP_NAME>` correspond to the pipeline name and the step name as specified in the configuration file.
+
+```{note}
+If `--pipeline-step` is not specified, the first step defined in the configuration file will be used.
+```
+
+The BIDS conversion can also be run on a single participant and/or session at a time:
+```console
+$ nipoppy bidsify \
+    --dataset-root <DATASET_ROOT> \
+    --pipeline <PIPELINE_NAME> \
+    --pipeline-step <PIPELINE_STEP_NAME> \
+    --participant <PARTICIPANT_ID> \
+    --session <SESSION_ID>
+```
+
+See the [CLI reference page](<project:../cli_reference/bidsify.md>) for more information on additional optional arguments.
+
+```{note}
+Log files for this command will be written to {{dpath_logs}}`/bids_conversion`
+```
+
+### Using the Python API
+
+```python
+from nipoppy.workflows import BidsConversionRunner
+
+# replace by appropriate values
+dpath_root = "<DATASET_ROOT>"
+pipeline_name = "<PIPELINE_NAME>"
+pipeline_step = "<PIPELINE_STEP>"
+
+workflow = BidsConversionRunner(
+    dpath_root=dpath_root,
+    pipeline_name=pipeline_name,
+    pipeline_step=pipeline_step,
+)
+workflow.run()
+```
+
+See the API reference for {class}`nipoppy.workflows.BidsConversionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.md>)).
