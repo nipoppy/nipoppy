@@ -301,6 +301,9 @@ def test_run_main(
             else:
                 assert not dpath_to_check.exists()
 
+    assert workflow.n_total != 0
+    assert workflow.n_success == workflow.n_total
+
 
 @pytest.mark.parametrize(
     "n_success,n_total,expected_message",

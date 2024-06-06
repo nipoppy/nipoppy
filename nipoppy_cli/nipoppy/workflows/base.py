@@ -184,7 +184,7 @@ class BaseWorkflow(Base, ABC):
         else:
             self.logger.info(f"No changes to file at {fpath}")
 
-    def run_setup(self, **kwargs):
+    def run_setup(self):
         """Run the setup part of the workflow."""
         self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.info(self)
@@ -199,19 +199,19 @@ class BaseWorkflow(Base, ABC):
                 )
 
     @abstractmethod
-    def run_main(self, **kwargs):
+    def run_main(self):
         """Run the main part of the workflow."""
         pass
 
-    def run_cleanup(self, **kwargs):
+    def run_cleanup(self):
         """Run the cleanup part of the workflow."""
         self.logger.info(f"========== END {self.name.upper()} WORKFLOW ==========")
 
-    def run(self, **kwargs):
+    def run(self):
         """Run the workflow."""
-        self.run_setup(**kwargs)
-        self.run_main(**kwargs)
-        self.run_cleanup(**kwargs)
+        self.run_setup()
+        self.run_main()
+        self.run_cleanup()
 
     def mkdir(self, dpath, log_level=logging.INFO, **kwargs):
         """

@@ -170,7 +170,7 @@ class Config(ModelWithContainerConfig):
         fpath : nipoppy.utils.StrOrPathLike
             Path to the JSON file to write
         """
-        fpath = Path(fpath)
+        fpath: Path = Path(fpath)
         if "indent" not in kwargs:
             kwargs["indent"] = 4
         fpath.parent.mkdir(parents=True, exist_ok=True)

@@ -330,9 +330,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if not dpath.exists():
             self.mkdir(dpath, log_level=logging.WARNING)
 
-    def run_setup(self, **kwargs):
+    def run_setup(self):
         """Run pipeline setup."""
-        to_return = super().run_setup(**kwargs)
+        to_return = super().run_setup()
 
         # make sure the pipeline config exists
         self.pipeline_config
@@ -342,7 +342,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         return to_return
 
-    def run_main(self, **kwargs):
+    def run_main(self):
         """Run the pipeline."""
         for participant, session in self.get_participants_sessions_to_run(
             self.participant, self.session
@@ -357,11 +357,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     f": {exception}"
                 )
 
-    def run_cleanup(self, **kwargs):
+    def run_cleanup(self):
         """Run pipeline cleanup."""
         if self.dpath_pipeline_work.exists():
             self.rm(self.dpath_pipeline_work)
-        return super().run_cleanup(**kwargs)
+        return super().run_cleanup()
 
     def get_participants_sessions_to_run(
         self, participant: Optional[str], session: Optional[str]

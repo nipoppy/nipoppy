@@ -61,12 +61,12 @@ class InitWorkflow(BaseWorkflow):
             " to match your dataset"
         )
 
-    def run_cleanup(self, **kwargs):
+    def run_cleanup(self):
         """Log a success message."""
         self.logger.info(
             f"[green]Successfully initialized a dataset at {self.dpath_root}![/]"
         )
-        return super().run_cleanup(**kwargs)
+        return super().run_cleanup()
 
     @property
     def config(self):
