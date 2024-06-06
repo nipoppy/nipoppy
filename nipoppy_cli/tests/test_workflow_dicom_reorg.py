@@ -308,7 +308,7 @@ def test_run_main(
 @pytest.mark.parametrize(
     "n_success,n_total,expected_message",
     [
-        (0, 0, "No participant-session pairs found"),
+        (0, 0, "No participant-session pairs to reorganize"),
         (0, 1, "[red]Reorganized files for"),
         (1, 2, "[yellow]Reorganized files for"),
         (2, 2, "[green]Successfully reorganized files for"),

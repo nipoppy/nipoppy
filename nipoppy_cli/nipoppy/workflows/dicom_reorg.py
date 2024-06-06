@@ -154,10 +154,9 @@ class DicomReorgWorkflow(BaseWorkflow):
         """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
-                "No participant-session pairs found to reorganize"
-                ". Make sure there are no mistakes in the dataset's manifest or "
-                "config file, and/or check the doughnut file at "
-                f"{self.layout.fpath_doughnut}"
+                "No participant-session pairs to reorganize. Make sure there are no "
+                "mistakes in the dataset's manifest or config file, and/or check the "
+                f"doughnut file at {self.layout.fpath_doughnut}"
             )
         else:
             # change the message depending on how successful the run was
@@ -167,7 +166,7 @@ class DicomReorgWorkflow(BaseWorkflow):
                 color = "red"
             elif self.n_success == self.n_total:
                 color = "green"
-                prefix = "Successfully reorganized"
+                prefix = f"Successfully {prefix.lower()}"
                 suffix = "!"
             else:
                 color = "yellow"
