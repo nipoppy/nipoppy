@@ -29,8 +29,6 @@ class PipelineWorkflow(BasePipelineWorkflow):
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
-        self._n_runs = 0
-        self._n_errors = 0
         super().__init__(
             dpath_root=dpath_root,
             name="test",
@@ -89,10 +87,8 @@ class PipelineWorkflow(BasePipelineWorkflow):
 
     def run_single(self, subject: str, session: str):
         """Run on a single subject/session."""
-        self._n_runs += 1
         self.logger.info(f"Running on {subject}/{session}")
         if subject == "FAIL":
-            self._n_errors += 1
             raise RuntimeError("FAIL")
 
 
@@ -412,7 +408,7 @@ def test_run_main(participant, session, expected_count, tmp_path: Path):
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
-    assert workflow._n_runs == expected_count
+    assert workflow.n_total == expected_count
 
 
 def test_run_main_catch_errors(tmp_path: Path):
@@ -432,8 +428,40 @@ def test_run_main_catch_errors(tmp_path: Path):
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
-    assert workflow._n_runs == 1
-    assert workflow._n_errors == 1
+    assert workflow.n_total == 1
+    assert workflow.n_success == 0
+
+
+@pytest.mark.parametrize(
+    "n_success,n_total,expected_message",
+    [
+        (0, 0, "No participant-session pairs to run"),
+        (0, 1, "[red]Ran"),
+        (1, 2, "[yellow]Ran"),
+        (2, 2, "[green]Successfully ran"),
+    ],
+)
+def test_run_cleanup(
+    n_success,
+    n_total,
+    expected_message,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+
+    workflow.n_success = n_success
+    workflow.n_total = n_total
+    workflow.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
+
+    workflow.run_cleanup()
+
+    assert not workflow.dpath_pipeline_work.exists()
+    assert expected_message in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -466,7 +494,7 @@ def test_get_participants_sessions_to_run(
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
-    assert workflow._n_runs == expected_count
+    assert workflow.n_total == expected_count
 
 
 @pytest.mark.parametrize(
