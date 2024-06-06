@@ -118,6 +118,7 @@ nitpick_ignore = [
 
 # -- Copybutton configuration -------------------------------------------------
 copybutton_exclude = ".linenos, .gp"
+copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 
 # -- JSON Schema configuration ------------------------------------------------
 jsonschema_options = {

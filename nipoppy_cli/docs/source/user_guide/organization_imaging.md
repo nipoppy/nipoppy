@@ -18,7 +18,12 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 | {{dpath_raw_imaging}} | **Input** -- {{content_dpath_raw_imaging}} |
 | {{dpath_sourcedata}} | **Output** -- {{content_dpath_sourcedata}} |
 
-## Running the data reorganization step
+### Commands
+
+- CLI: [`nipoppy reorg`](<project:../cli_reference/reorg.md>)
+- Python API: {class}`nipoppy.workflows.DicomReorgWorkflow`
+
+## Running the data reorganization tool
 
 This step moves raw imaging data from the {{dpath_raw_imaging}} directory to the {{dpath_sourcedata}} directory. Nipoppy can automatically handle two common cases of input data organization:
 1. Participant-level directories with nested session-level directories
@@ -74,14 +79,36 @@ Log files for this command will be written to {{dpath_logs}}`/dicom_reorg`
 ```python
 from nipoppy.workflows import DicomReorgWorkflow
 
-dpath_root = "."  # path to dataset root directory
+dpath_root = "."  # replace by path to dataset root directory
 workflow = DicomReorgWorkflow(dpath_root=dpath_root)
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments.
+See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments (they are the same as for the [CLI](<project:../cli_reference/reorg.md>)).
 
 (customizing-dicom-reorg)=
 #### Customizing input and output file paths
 
-TODO
+There may be datasets where the raw imaging files are not organized in a participant-session directory. An example of this would a dataset whose raw DICOM files are in archives, like so:
+```{literalinclude} ./file_trees/custom_dicom_reorg-before.txt
+:class: no-copybutton
+```
+
+In this case, using a DICOM directory mapping file as described above is not enough, since files from different imaging sessions are in the same directory.
+
+The {class}`nipoppy.workflows.DicomReorgWorkflow` class exposes two functions for finer control of input paths and output filenames:
+- {func}`nipoppy.workflows.DicomReorgWorkflow.get_fpaths_to_reorg` can be overridden to map a participant ID and session ID to a list of absolute filepaths to be reorganized
+- {func}`nipoppy.workflows.DicomReorgWorkflow.apply_fname_mapping` can be overridden to rename output files
+  - Note: output files will still be in the {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
+
+Here is an example of custom imaging data reorganization script:
+```{literalinclude} ./scripts/custom_dicom_reorg.py
+---
+language: python
+---
+```
+
+Running this script on the data shown above will create the following organized files (by default symlinks):
+```{literalinclude} ./file_trees/custom_dicom_reorg-after.txt
+:class: no-copybutton
+```
