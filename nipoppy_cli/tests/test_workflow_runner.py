@@ -145,8 +145,8 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "ses-3", True],
             ],
             None,
-            "pipeline1",
-            "1.0",
+            "dummy_pipeline",
+            "1.0.0",
             [("01", "ses-2"), ("01", "ses-3")],
         ),
         (
@@ -156,8 +156,8 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "ses-3", True],
             ],
             [],
-            "pipeline1",
-            "1.0",
+            "dummy_pipeline",
+            "1.0.0",
             [("01", "ses-2"), ("01", "ses-3")],
         ),
         (
@@ -167,12 +167,12 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "ses-3", True],
             ],
             [
-                ["01", "ses-1", "pipeline1", "1.0", Bagel.status_success],
-                ["01", "ses-2", "pipeline1", "1.0", Bagel.status_success],
-                ["01", "ses-3", "pipeline1", "1.0", Bagel.status_success],
+                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_success],
             ],
-            "pipeline1",
-            "1.0",
+            "dummy_pipeline",
+            "1.0.0",
             [],
         ),
         (
@@ -182,13 +182,29 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "ses-3", True],
             ],
             [
-                ["01", "ses-1", "pipeline1", "1.0", Bagel.status_fail],
-                ["01", "ses-2", "pipeline1", "1.0", Bagel.status_success],
-                ["01", "ses-3", "pipeline1", "1.0", Bagel.status_fail],
-                ["01", "ses-1", "pipeline1", "2.0", Bagel.status_success],
+                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-1", "dummy_pipeline", "2.0", Bagel.status_success],
             ],
-            "pipeline1",
-            "1.0",
+            "dummy_pipeline",
+            "1.0.0",
+            [("01", "ses-1"), ("01", "ses-3")],
+        ),
+        (
+            [
+                ["01", "ses-1", True],
+                ["01", "ses-2", True],
+                ["01", "ses-3", True],
+            ],
+            [
+                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-1", "dummy_pipeline", "2.0", Bagel.status_success],
+            ],
+            "dummy_pipeline",
+            None,
             [("01", "ses-1"), ("01", "ses-3")],
         ),
     ],
@@ -199,6 +215,7 @@ def test_get_participants_sessions_to_run(
     pipeline_name,
     pipeline_version,
     expected,
+    config: Config,
     tmp_path: Path,
 ):
     participant = None
@@ -210,6 +227,7 @@ def test_get_participants_sessions_to_run(
         participant=participant,
         session=session,
     )
+    config.save(runner.layout.fpath_config)
     runner.doughnut = Doughnut().add_or_update_records(
         records=[
             {

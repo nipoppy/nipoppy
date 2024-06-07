@@ -156,6 +156,7 @@ class PipelineRunner(BasePipelineWorkflow):
         who have not previously successfully completed the pipeline (according)
         to the bagel file.
         """
+        self.check_pipeline_version()  # in case this is called outside of run()
         if self.layout.fpath_imaging_bagel.exists():
             bagel = Bagel.load(self.layout.fpath_imaging_bagel)
             participants_sessions_completed = set(
