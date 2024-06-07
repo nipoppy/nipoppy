@@ -6,8 +6,6 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 - [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/latest), a user-friendly DICOM converter that is configured with a {term}`JSON` file
 - [HeuDiConv](https://heudiconv.readthedocs.io/en/latest/), a flexible DICOM converter that is configured with a heuristic Python file
 
-% TODO link to a page explaining Boutiques and how it works with Nipoppy
-
 ## Summary
 
 ### Prerequisites
@@ -32,7 +30,18 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 - Command-line interface: [`nipoppy bidsify`](<project:../cli_reference/bidsify.md>)
 - Python API: {class}`nipoppy.workflows.BidsConversionRunner`
 
-## Running the BIDS conversion
+### Workflow
+
+% TODO link to doughnut page
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_sourcedata}} but *do not have* BIDS data in {{dpath_bids}} according to the doughnut file
+2. For each participant-session pair:
+    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
+    2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
+    3. The doughnut file is updated to indicate that this participant-session pair now has BIDS data
+
+## Configuring the BIDS conversion
+
+% TODO link to a page explaining Boutiques and how it works with Nipoppy
 
 Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default configuration splits BIDS conversion pipelines into the following steps:
 * [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
@@ -46,6 +55,8 @@ Most BIDS conversion tools are designed to be run in steps, with some manual wor
 ```{note}
 These step names `prepare` and `convert` are a Nipoppy convention based on the general BIDS conversion process. The BIDS conversion tools themselves do not use these names.
 ```
+
+## Running the BIDS conversion
 
 ### Using the command-line interface
 
@@ -101,3 +112,7 @@ workflow.run()
 ```
 
 See the API reference for {class}`nipoppy.workflows.BidsConversionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.md>)).
+
+## Next steps
+
+Now that the imaging data is in BIDS, it is time to [run image processing pipelines](processing.md) on it!

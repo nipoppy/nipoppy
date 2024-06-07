@@ -23,7 +23,14 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 - Command-line interface: [`nipoppy track`](<project:../cli_reference/track.md>)
 - Python API: {class}`nipoppy.workflows.PipelineTracker`
 
-## The tracker configuration file
+### Workflow
+
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the doughnut file
+2. For each participant-session pair:
+    1. Paths in the pipeline's tracker configuration will be processed such that template strings related to the participant/session are replaced by the appropriate values
+    2. Each path in the list is checked, then a status is assigned, and the bagel file is updated accordingly
+
+## Configuring a pipeline tracker
 
 The global configuration file should include paths to tracker configuration files, which are {term}`JSON` files containing lists of dictionaries.
 
@@ -46,6 +53,9 @@ Currently, only the tracker configuration with `pipeline_complete` in the `NAME`
 
 Given a dataset with the following content in {{dpath_derivatives}}:
 ```{literalinclude} ./inserts/mriqc_outputs.txt
+---
+class: no-copybutton
+---
 ```
 
 Running the tracker with the above configuration will result in the imaging bagel file showing:
@@ -64,10 +74,7 @@ The `pipeline_complete` column can have the following values:
 * `SUCCESS`: all specified paths have been found
 * `FAIL`: at least one of the paths has not been found
 
-## Running a tracker
-
-% TODO add link to notes on doughnut file
-Trackers are run on participants/sessions that have BIDS data (according to the doughnut file). For each available participant-session pair, each path in the list is checked, then a status is assigned and added to the bagel file.
+## Running a pipeline tracker
 
 ### Using the command-line interface
 
@@ -115,3 +122,9 @@ workflow.run()
 ```
 
 See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.md>)).
+
+## Next steps
+
+If some participants/sessions have failed processing or have not been run yet, they should be [run again](./processing.md).
+
+Once the entire dataset has been processed with a pipeline, [Nipoppy extractors](./extraction.md) can be used to obtain analysis-ready imaging-derived phenotypes (IDPs).

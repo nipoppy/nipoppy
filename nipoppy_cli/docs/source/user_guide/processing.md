@@ -8,8 +8,6 @@ Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques 
 Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.io/about/), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating a Boutiques descriptor file and modifying the configuration file accordingly.
 ```
 
-% TODO link to a page explaining Boutiques and how it works with Nipoppy
-
 ## Summary
 
 ### Prerequisites
@@ -40,6 +38,18 @@ class: no-copybutton
 
 - Command-line interface: [`nipoppy run`](<project:../cli_reference/run.md>)
 - Python API: {class}`nipoppy.workflows.PipelineRunner`
+
+### Workflow
+
+% TODO link to doughnut page
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the doughnut file but *have not* yet successfully completed the pipeline according the the imaging derivatives bagel file
+2. For each participant-session pair:
+    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
+    2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
+
+## Configuring processing pipelines
+
+% TODO link to a page explaining Boutiques and how it works with Nipoppy
 
 ## Running a processing pipeline
 
@@ -95,3 +105,9 @@ workflow.run()
 ```
 
 See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/run.md>)).
+
+## Next steps
+
+[Nipoppy trackers](./tracking.md) can be used to assess the status of processing pipelines being run on participants/sessions in a dataset.
+
+Once the entire dataset has been processed with a pipeline, [Nipoppy extractors](./extraction.md) can be used to obtain analysis-ready imaging-derived phenotypes (IDPs).

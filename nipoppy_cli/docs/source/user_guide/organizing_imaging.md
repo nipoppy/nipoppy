@@ -23,9 +23,18 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 - Command-line interface: [`nipoppy reorg`](<project:../cli_reference/reorg.md>)
 - Python API: {class}`nipoppy.workflows.DicomReorgWorkflow`
 
-## Running the data reorganization tool
+### Workflow
 
-This step moves raw imaging data from the {{dpath_raw_imaging}} directory to the {{dpath_sourcedata}} directory. Nipoppy can automatically handle two common cases of input data organization:
+% TODO link to doughnut page
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_raw_imaging}} but *do not have* data in {{dpath_sourcedata}} according to the doughnut file
+    - If the doughnut file does not exist, it will be automatically generated
+2. For each participant-session pair:
+    1. Files from the {{dpath_raw_imaging}} directory will be "copied" (the default is to create symlinks) to the {{dpath_sourcedata}} directory into a flat list
+    2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_sourcedata}}
+
+## Configuring the reorganization
+
+Nipoppy can automatically handle two common cases of input data organization:
 1. Participant-level directories with nested session-level directories
     - E.g., {{dpath_raw_imaging}}`/001/ses-1`
     - This is the default behaviour
@@ -61,6 +70,8 @@ All files in participant-session subdirectories (and sub-subdirectories, if appl
 ```{note}
 More granular customization can also be achieved for both the input file paths and the output file names, see [](#customizing-dicom-reorg).
 ```
+
+## Running the reorganization
 
 ### Using the command-line interface
 
@@ -119,4 +130,4 @@ class: no-copybutton
 
 ## Next steps
 
-Now that the raw imaging data has been organized in a standardized participant-session structure, it is ready for [BIDS conversion](<project:bids_conversion.md>)!
+Now that the raw imaging data has been organized in a standardized participant-session structure, it is ready for [BIDS conversion](./bids_conversion.md)!
