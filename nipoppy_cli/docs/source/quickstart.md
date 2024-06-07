@@ -49,7 +49,7 @@ Here is the default content of {{fpath_config}}:
 ```{literalinclude} ../../nipoppy/data/examples/sample_global_config-latest_pipelines.json
 ---
 linenos: True
-emphasize-lines: 2, 4, 7, 10-14
+emphasize-lines: 2, 4-5, 8-9, 12-16
 language: json
 ---
 ```
