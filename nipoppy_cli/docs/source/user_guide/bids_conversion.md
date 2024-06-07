@@ -41,8 +41,6 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 
 ## Configuring the BIDS conversion
 
-% TODO link to a page explaining Boutiques and how it works with Nipoppy
-
 Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default configuration splits BIDS conversion pipelines into the following steps:
 * [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
     * Step `prepare`: run [`dcm2bids_helper`](https://unfmontreal.github.io/Dcm2Bids/3.1.1/tutorial/first-steps/#dcm2bids_helper-command), which will convert DICOM files to NIfTI files with JSON sidecars and store them in a temporary directory
@@ -55,6 +53,13 @@ Most BIDS conversion tools are designed to be run in steps, with some manual wor
 ```{note}
 These step names `prepare` and `convert` are a Nipoppy convention based on the general BIDS conversion process. The BIDS conversion tools themselves do not use these names.
 ```
+
+### Customizing BIDS pipeline invocations
+
+```{include} ./inserts/boutiques_stub.md
+```
+
+{{template_strings_bids_runner}}
 
 ## Running the BIDS conversion
 

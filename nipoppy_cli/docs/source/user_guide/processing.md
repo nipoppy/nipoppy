@@ -45,11 +45,29 @@ class: no-copybutton
     - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
-    2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
+    2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_bids_db}}
+    3. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
 
 ## Configuring processing pipelines
 
-% TODO link to a page explaining Boutiques and how it works with Nipoppy
+Just like with BIDS converters, pipeline and pipeline step configurations are set in the global configuration file (see [here](./global_config.md) for a more complete guide on the fields in this file).
+
+There are several files in pipeline step configurations that can be further modified to customize pipeline runs:
+- `INVOCATION_FILE`: a {term}`JSON` file containing key-value pairs specifying runtime parameters. The keys correspond to entries in the pipeline's descriptor file.
+    - Invocation files are in the {{dpath_invocations}} directory, while descriptor files are in the {{dpath_descriptors}}
+- `PYBIDS_IGNORE_FILE`: a {term}`JSON` file containing a list of file names or patterns to ignore when building the [PyBIDS](https://bids-standard.github.io/pybids/) database
+    - These files should be in the {{dpath_bids_ignore_patterns}} directory
+
+```{warning}
+Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points to the {term}`Boutiques` descriptor of a pipeline. Although descriptor files can be modified, it is not needed and we recommend that less advanced users keep the default.
+```
+
+### Customizing pipeline invocations
+
+```{include} ./inserts/boutiques_stub.md
+```
+
+{{template_strings_proc_runner}}
 
 ## Running a processing pipeline
 

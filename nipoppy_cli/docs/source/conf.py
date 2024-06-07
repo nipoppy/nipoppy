@@ -30,7 +30,10 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = [
+    # not ideal but otherwise we wrongly get a warning
+    "user_guide/inserts/boutiques_stub.md",
+]
 
 nitpicky = True
 
@@ -61,6 +64,29 @@ intersphinx_mapping = {
 
 myst_enable_extensions = ["fieldlist", "substitution"]
 
+template_strings_bids_runner = [
+    "",
+    "The default pipeline invocation files in {{dpath_invocations}} can be modified by changing existing values or adding new key-value pairs.",
+    "",
+    "```{tip}",
+    "Run the pipeline on a single participant and session with the `--simulate` flag to check/debug custom invocation files.",
+    "```",
+    "```{note}",
+    "To account for invocations needing to be different for different participants and sessions (amongst other things), Nipoppy invocations are actually templates that need to be slightly processed at runtime to replace template strings by actual values. Recognized template strings include:",
+    "- `[[NIPOPPY_PARTICIPANT]]`: the participant ID *without* the `sub-` prefix",
+    "- `[[NIPOPPY_SESSION_SHORT]]`: the session ID *without* the `ses-` prefix",
+    "- `[[NIPOPPY_BIDS_ID]]`: the participant ID *with* the `sub-` prefix",
+    "- `[[NIPOPPY_SESSION]]`: the session ID *with* the `ses-` prefix",
+    "- `[[NIPOPPY_<LAYOUT_PROPERTY>]]`, where `<LAYOUT_PROPERTY>` is a property in the Nipoppy {ref}`dataset layout configuration file <layout-schema>` (all uppercase): any path defined in the Nipoppy dataset layout",
+    "```",
+]
+template_strings_proc_runner = template_strings_bids_runner[:-1] + [
+    f"- `[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]`: the output directory for this pipeline, i.e. `{DEFAULT_LAYOUT_INFO.dpath_derivatives}/<PIPELINE_NAME>/<PIPELINE_VERSION>/output`",
+    f"- `[[NIPOPPY_DPATH_PIPELINE_WORK]]`: the working directory for this pipeline run, which will be a subdirectory of `{DEFAULT_LAYOUT_INFO.dpath_derivatives}/<PIPELINE_NAME>/<PIPELINE_VERSION>/work`",
+    "- `[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]`: the [PyBIDS](https://bids-standard.github.io/pybids/) database for the participant and session",
+    "```",
+]
+
 myst_substitutions = {
     "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
@@ -70,8 +96,14 @@ myst_substitutions = {
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
+    "dpath_invocations": f"`{DEFAULT_LAYOUT_INFO.dpath_invocations}`",
+    "dpath_descriptors": f"`{DEFAULT_LAYOUT_INFO.dpath_descriptors}`",
+    "dpath_bids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_db}`",
+    "dpath_bids_ignore_patterns": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_ignore_patterns}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
+    "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
+    "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
     "content_dpath_raw_imaging": (
         "Arbitrarily organized raw imaging data (DICOMs or NIfTIs)"
     ),
@@ -83,8 +115,8 @@ myst_substitutions = {
         "Raw imaging data (NIfTIs) organized according to the BIDS standard"
     ),
     "content_dpath_derivatives": ("Derivative files produced by processing pipelines"),
-    "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
-    "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
+    "template_strings_bids_runner": "\n".join(template_strings_bids_runner),
+    "template_strings_proc_runner": "\n".join(template_strings_proc_runner),
 }
 
 # -- Autodoc/AutoAPI configuration ----------------------------------------------------

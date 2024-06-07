@@ -81,6 +81,7 @@ Here is the schema used for each row in the DICOM directory mapping file:
 .. jsonschema:: dicom_dir_map.json
     :lift_title: False
 
+.. _layout-schema:
 
 Layout configuration
 --------------------
