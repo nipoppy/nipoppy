@@ -4,6 +4,7 @@
         "V01",
         "V02"
     ],
+    "DICOM_DIR_MAP_FILE": "dicom_dir_map.csv",
     "PROC_PIPELINES": [
         {
             "NAME": "mriqc",
