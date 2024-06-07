@@ -17,15 +17,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 - Organized (but not BIDS) imaging data in {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
     - See <project:organizing_imaging.md>
 
-**If using the default configuration**:
-- The Apptainer (formerly Singularity) container platform installed on your system
-    - See [here](https://apptainer.org/docs/user/main/quick_start.html) for installation instructions
-    - **Note**: Apptainer is only natively supported on Linux systems
-- The container image file for the pipeline you wish to use
-    - This can be downloaded by e.g., running `apptainer pull <URI>` inside your container directory (see the configuration file for URI). Make sure the file path is the same as what is specified in the configuration file!
-
-```{caution}
-Although it is *possible* to use Nipoppy without containers by modifying the default invocation files, we highly recommend using containerized pipelines to make your workflow as reproducible as possible. Using containers instead of locally installed software can also help avoid conflicts or unwanted interactions between different software/versions.
+```{include} apptainer_stub.md
 ```
 
 ### Data directories
@@ -78,6 +70,10 @@ $ nipoppy bidsify \
     --pipeline-step <PIPELINE_STEP_NAME> \
     --participant <PARTICIPANT_ID> \
     --session <SESSION_ID>
+```
+
+```{hint}
+The `--simulate` argument will make Nipoppy print out the command to be executed with Boutiques (instead of actually executing it). It can be useful for checking runtime parameters or debugging the invocation file.
 ```
 
 See the [CLI reference page](<project:../cli_reference/bidsify.md>) for more information on additional optional arguments.

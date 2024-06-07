@@ -91,7 +91,9 @@ See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more
 
 There may be datasets where the raw imaging files are not organized in a participant-session directory. An example of this would a dataset whose raw DICOM files are in archives, like so:
 ```{literalinclude} ./file_trees/custom_dicom_reorg-before.txt
-:class: no-copybutton
+---
+class: no-copybutton
+---
 ```
 
 In this case, using a DICOM directory mapping file as described above is not enough, since files from different imaging sessions are in the same directory.
@@ -110,7 +112,9 @@ language: python
 
 Running this script on the data shown above will create the following organized files (by default symlinks):
 ```{literalinclude} ./file_trees/custom_dicom_reorg-after.txt
-:class: no-copybutton
+---
+class: no-copybutton
+---
 ```
 
 ## Next steps
