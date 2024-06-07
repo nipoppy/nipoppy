@@ -17,7 +17,12 @@ from nipoppy.utils import (
 
 
 class ManifestModel(BaseTabularModel):
-    """A user-provided listing of participant and visits available in the dataset."""
+    """
+    A user-provided listing of participant and visits available in the dataset.
+
+    Note: This class is called "model" to be consistent with Pydantic nomenclature,
+    but it can be thought of as a schema for each row in the manifest file.
+    """
 
     participant_id: str = Field(
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]

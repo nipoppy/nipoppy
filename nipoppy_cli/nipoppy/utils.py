@@ -6,8 +6,9 @@ import datetime
 import json
 import os
 import re
+import warnings
 from pathlib import Path
-from typing import Optional, TypeVar
+from typing import List, Optional, Sequence, TypeVar
 
 import bids
 import pandas as pd
@@ -24,8 +25,11 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 # paths
 DPATH_DATA = Path(__file__).parent / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_configs.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.json"
+FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
+DPATH_INVOCATIONS = DPATH_EXAMPLES / "sample_invocations"
+DPATH_TRACKER_CONFIGS = DPATH_EXAMPLES / "sample_tracker_configs"
 DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
@@ -145,6 +149,20 @@ def create_bids_db(
     return bids_layout
 
 
+def add_pybids_ignore_patterns(
+    current: List[re.Pattern],
+    new: Sequence[str | re.Pattern] | str | re.Pattern,
+):
+    """Add pattern(s) to ignore for PyBIDS."""
+    if isinstance(new, (str, re.Pattern)):
+        new = [new]
+    for pattern in new:
+        if isinstance(pattern, str):
+            pattern = re.compile(pattern)
+        if pattern not in current:
+            current.append(pattern)
+
+
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
@@ -180,7 +198,12 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
         The JSON object.
     """
     with open(fpath, "r") as file:
-        return json.load(file, **kwargs)
+        try:
+            return json.load(file, **kwargs)
+        except json.JSONDecodeError as exception:
+            raise json.JSONDecodeError(
+                f"Error loading JSON file at {fpath}", exception.doc, exception.pos
+            )
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
@@ -278,7 +301,10 @@ def save_df_with_backup(
 
 
 def process_template_str(
-    template_str: str, resolve_paths=True, objs=None, lower=True, **kwargs
+    template_str: str,
+    resolve_paths=True,
+    objs=None,
+    **kwargs,
 ) -> str:
     """Replace template strings with values from kwargs or objects."""
 
@@ -291,7 +317,8 @@ def process_template_str(
         for obj in objs:
             if hasattr(obj, replacement_key):
                 return replace(json_str, to_replace, getattr(obj, replacement_key))
-        raise RuntimeError(f"Unable to replace {to_replace} in {template_str_original}")
+        warnings.warn(f"Unable to replace {to_replace} in {template_str_original}")
+        return json_str
 
     if objs is None:
         objs = []
@@ -303,9 +330,7 @@ def process_template_str(
         if len(match.groups()) != 1:
             raise ValueError(f"Expected exactly one match group for match: {match}")
         to_replace = match.group()
-        replacement_key = match.groups()[0]
-        if lower:
-            replacement_key = replacement_key.lower()
+        replacement_key = match.groups()[0].lower()  # always convert to lowercase
 
         if not str.isidentifier(replacement_key):
             raise ValueError(
@@ -318,3 +343,14 @@ def process_template_str(
             template_str = replace_from_objs(template_str, to_replace, objs)
 
     return template_str
+
+
+def apply_substitutions_to_json(
+    json_obj: dict | list, substitutions: dict[str, str]
+) -> dict | list:
+    """Apply substitutions to a JSON object."""
+    # convert json_obj to string
+    json_text = json.dumps(json_obj)
+    for key, value in substitutions.items():
+        json_text = json_text.replace(key, value)
+    return json.loads(json_text)
