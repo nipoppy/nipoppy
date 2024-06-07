@@ -20,6 +20,9 @@ class BaseTabularModel(BaseModel):
 
     Subclasses should define fields and their types,
     and optionally override the _validate_before_fields() method.
+
+    Note: This class is called "model" to be consistent with Pydantic nomenclature,
+    but it can be thought of as a schema for each row in the tabular file.
     """
 
     @model_validator(mode="before")
