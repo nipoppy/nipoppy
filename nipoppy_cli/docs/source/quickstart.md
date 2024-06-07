@@ -46,10 +46,10 @@ You can also delete (or not) any configuration for a software/version that you d
 class: dropdown
 ---
 Here is the default content of {{fpath_config}}:
-```{literalinclude} ../../nipoppy/data/examples/sample_global_configs.json
+```{literalinclude} ../../nipoppy/data/examples/sample_global_config-latest_pipelines.json
 ---
 linenos: True
-emphasize-lines: 2, 4, 7, 28, 35, 51, 56, 69, 82, 91, 104
+emphasize-lines: 2, 4-5, 8-9, 12-16
 language: json
 ---
 ```
