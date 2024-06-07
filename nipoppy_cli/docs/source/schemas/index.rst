@@ -44,6 +44,8 @@ Here is the schema used for each row in the manifest file:
 .. jsonschema:: manifest.json
     :lift_title: False
 
+.. _doughnut-schema:
+
 Doughnut file
 -------------
 

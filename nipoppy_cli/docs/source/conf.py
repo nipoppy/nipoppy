@@ -70,6 +70,7 @@ myst_substitutions = {
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
+    "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
     "content_dpath_raw_imaging": (
         "Arbitrarily organized raw imaging data (DICOMs or NIfTIs)"

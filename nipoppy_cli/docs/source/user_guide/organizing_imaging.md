@@ -25,9 +25,10 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ### Workflow
 
-% TODO link to doughnut page
-1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_raw_imaging}} but *do not have* data in {{dpath_sourcedata}} according to the doughnut file
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_raw_imaging}} but *do not have* data in {{dpath_sourcedata}} according to the {term}`doughnut file`
     - If the doughnut file does not exist, it will be automatically generated
+    - If there is an existing doughnut file but it does not have all the rows in the manifest, new entries will be automatically added to the doughnut file
+    - The doughnut file can also be completely regenerated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
     1. Files from the {{dpath_raw_imaging}} directory will be "copied" (the default is to create symlinks) to the {{dpath_sourcedata}} directory into a flat list
     2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_sourcedata}}

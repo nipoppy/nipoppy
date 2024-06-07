@@ -32,8 +32,8 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 
 ### Workflow
 
-% TODO link to doughnut page
-1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_sourcedata}} but *do not have* BIDS data in {{dpath_bids}} according to the doughnut file
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_sourcedata}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
+    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression

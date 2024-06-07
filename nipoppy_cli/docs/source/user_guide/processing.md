@@ -41,8 +41,8 @@ class: no-copybutton
 
 ### Workflow
 
-% TODO link to doughnut page
-1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the doughnut file but *have not* yet successfully completed the pipeline according the the imaging derivatives bagel file
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according the the imaging derivatives bagel file
+    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
