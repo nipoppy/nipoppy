@@ -73,13 +73,24 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
         "--pipeline",
         type=str,
         required=True,
-        help="Pipeline name, as written in the config file.",
+        help="Pipeline name, as specified in the config file.",
     )
     parser.add_argument(
         "--pipeline-version",
         type=str,
         required=False,
-        help="Pipeline version, as written in the config file.",
+        help="Pipeline version, as specified in the config file.",
+    )
+    return parser
+
+
+def add_arg_pipeline_step(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --pipeline-step argument to the parser."""
+    parser.add_argument(
+        "--pipeline-step",
+        type=str,
+        required=False,
+        help="Pipeline step, as specified in the config file (default: first step).",
     )
     return parser
 
@@ -242,12 +253,7 @@ def add_subparser_bids_conversion(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
-    parser.add_argument(
-        "--pipeline-step",
-        type=str,
-        required=False,
-        help="Pipeline step, as written in the config file.",
-    )
+    parser = add_arg_pipeline_step(parser)
     parser = add_args_participant_and_session(parser)
     parser = add_arg_simulate(parser)
     return parser
@@ -267,6 +273,7 @@ def add_subparser_pipeline_run(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
+    parser = add_arg_pipeline_step(parser)
     parser = add_args_participant_and_session(parser)
     parser = add_arg_simulate(parser)
     return parser

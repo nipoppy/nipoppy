@@ -14,6 +14,8 @@ from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     add_path_suffix,
     add_path_timestamp,
+    add_pybids_ignore_patterns,
+    apply_substitutions_to_json,
     check_participant,
     check_participant_id_strict,
     check_session,
@@ -29,7 +31,8 @@ from nipoppy.utils import (
     strip_session,
 )
 
-from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
+from .conftest import datetime_fixture  # noqa F401
+from .conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(
@@ -142,6 +145,26 @@ def test_create_bids_db(
 
 
 @pytest.mark.parametrize(
+    "orig_patterns,new_patterns,expected",
+    [
+        ([], [], []),
+        ([re.compile("a")], "b", [re.compile("a"), re.compile("b")]),
+        ([re.compile("a")], ["b"], [re.compile("a"), re.compile("b")]),
+        (
+            [re.compile("a")],
+            ["b", "c"],
+            [re.compile("a"), re.compile("b"), re.compile("c")],
+        ),
+        ([re.compile("a")], "a", [re.compile("a")]),
+        ([re.compile("a")], ["b"], [re.compile("a"), re.compile("b")]),
+    ],
+)
+def test_add_pybids_ignore_patterns(orig_patterns, new_patterns, expected):
+    add_pybids_ignore_patterns(current=orig_patterns, new=new_patterns)
+    assert orig_patterns == expected
+
+
+@pytest.mark.parametrize(
     "name,version,step,participant,session,expected",
     [
         ("my_pipeline", "1.0", None, None, None, "my_pipeline-1.0"),
@@ -165,6 +188,13 @@ def test_get_pipeline_tag(name, version, participant, step, session, expected):
 
 def test_load_json():
     assert isinstance(load_json(DPATH_TEST_DATA / "config1.json"), dict)
+
+
+def test_load_json_invalid(tmp_path: Path):
+    fpath_invalid = tmp_path / "invalid.json"
+    fpath_invalid.write_text("invalid")
+    with pytest.raises(json.JSONDecodeError, match="Error loading JSON file"):
+        load_json(fpath_invalid)
 
 
 def test_save_json(tmp_path: Path):
@@ -286,5 +316,17 @@ def test_process_template_str_error_identifier(template_str):
 
 
 def test_process_template_str_error_replace():
-    with pytest.raises(RuntimeError, match="Unable to replace"):
-        process_template_str("[[NIPOPPY_INVALID]]")
+    with pytest.warns(UserWarning, match="Unable to replace"):
+        assert process_template_str("[[NIPOPPY_INVALID]]") == "[[NIPOPPY_INVALID]]"
+
+
+@pytest.mark.parametrize(
+    "json_obj,substitutions,expected_output",
+    [
+        ({"key1": "TO_REPLACE"}, {"TO_REPLACE": "value1"}, {"key1": "value1"}),
+        ({"key1": ["TO_REPLACE"]}, {"TO_REPLACE": "value1"}, {"key1": ["value1"]}),
+        ([{"key1": "TO_REPLACE"}], {"TO_REPLACE": "value1"}, [{"key1": "value1"}]),
+    ],
+)
+def test_apply_substitutions_to_json(json_obj, substitutions, expected_output):
+    assert apply_substitutions_to_json(json_obj, substitutions) == expected_output
