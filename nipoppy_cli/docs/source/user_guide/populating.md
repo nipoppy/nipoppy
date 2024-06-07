@@ -1,6 +1,6 @@
 # Populating an empty dataset
 
-Once an empty Nipoppy dataset has been created, the next step is to populate it with the raw data available in the study.
+Once an empty Nipoppy dataset has been created, the next step is to manually populate it with the raw data available in the study.
 
 In general, all data pertaining to the study should be stored together (i.e., under {{dpath_root}}), as that makes it easier to maintain the dataset, link data between modalities, and keep track of the available data.
 
@@ -29,7 +29,7 @@ The {{dpath_downloads}} directory is for storing data archives (e.g., `.zip`, `.
 
 There is no specification for the internal organization inside this directory, though it should be internally consistent. If downloads are made at multiple points in time, files should be labelled with a timestamp (and not overwritten).
 
-```{caution}
+```{attention}
 If you have imaging data that does not need to be uncompressed/extracted (for example, if the {term}`BIDS` conversion pipeline you plan to use can handle data archives), then it should *not* go in the {{dpath_downloads}} directory. Instead, those files should go directly to the appropriate imaging data directory.
 ```
 

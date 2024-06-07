@@ -1,3 +1,3 @@
-# Extracting imaging-derived phenotypes from pipeline derivatives
+# Extracting IDPs from pipeline derivatives
 
 Work in progress!

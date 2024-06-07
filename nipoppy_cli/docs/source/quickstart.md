@@ -106,5 +106,3 @@ The rest of this documentation is still work in progress. If the information you
 ```
 
 Once the Nipoppy dataset is created, the next steps are typically to [populate it with raw data](user_guide/populating.md), [move and organize raw imaging data (typically DICOMs) into a regular structure](user_guide/organizing_imaging.md), then [convert the data to BIDS](user_guide/bids_conversion.md). However, depending on the type of raw data you have, your workflow might be a little different. See [here](user_guide/index.md) for all the available documentation in the User guide.
-
-% TODO mention that all other commands create log files in scratch/logs (?)

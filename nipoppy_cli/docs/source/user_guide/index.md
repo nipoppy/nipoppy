@@ -7,6 +7,7 @@ This guide covers the main steps in the Nipoppy protocol:
 includehidden:
 titlesonly:
 ---
+global_config
 populating
 organizing_tabular
 organizing_imaging
