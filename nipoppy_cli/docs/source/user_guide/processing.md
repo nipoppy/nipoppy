@@ -19,7 +19,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 - Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_bids}} directory
     - See <project:bids_conversion.md>
 
-```{include} apptainer_stub.md
+```{include} ./inserts/apptainer_stub.md
 ```
 
 ### Data directories
@@ -27,10 +27,10 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 | Directory | Content description |
 |---|---|
 | {{dpath_bids}} | **Input** -- {{content_dpath_bids}} |
-| {{dpath_derivatives}} | **Output** -- Derivative files produced by processing pipelines |
+| {{dpath_derivatives}} | **Output** -- {{content_dpath_derivatives}} |
 
 Within the {{dpath_derivatives}} directory, output files for a specific pipeline are organized like this:
-```{literalinclude} ./file_trees/pipeline_derivatives.txt
+```{literalinclude} ./inserts/pipeline_derivatives.txt
 ---
 class: no-copybutton
 ---
@@ -51,7 +51,7 @@ $ nipoppy run \
     --dataset-root <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
-where `<PIPELINE_NAME>` correspond to the pipeline name and the step name as specified in the configuration file.
+where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the configuration file.
 
 ```{note}
 If there are multiple versions for the same pipeline in the configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.

@@ -1,3 +1,117 @@
 # Tracking pipeline processing status
 
-Work in progress!
+Nipoppy trackers search for expected file paths or patterns in pipeline output files. They are specific to pipelines and versions, and can be configured to include custom paths for various levels of granularity.
+
+## Summary
+
+### Prerequisites
+
+- A Nipoppy dataset with a valid configuration file and an accurate manifest
+    - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
+- Processed imaging data the {{dpath_derivatives}} directory
+    - See <project:processing.md> for expected subdirectory structure
+
+### Data directories and files
+
+| Directory or file | Content description |
+|---|---|
+| {{dpath_derivatives}} | **Input** -- {{content_dpath_derivatives}} |
+| {{fpath_imaging_bagel}} | **Output** -- Tabular file containing processing status for each participant/session and pipeline |
+
+### Commands
+
+- Command-line interface: [`nipoppy track`](<project:../cli_reference/track.md>)
+- Python API: {class}`nipoppy.workflows.PipelineTracker`
+
+## The tracker configuration file
+
+The global configuration file should include paths to tracker configuration files, which are {term}`JSON` files containing lists of dictionaries.
+
+Here is example of tracker configuration file (default for MRIQC 23.1.0):
+```{literalinclude} ../../../nipoppy/data/examples/sample_tracker_configs/mriqc-23.1.0.json
+```
+
+```{tip}
+- The paths are expected to be relative to the {{dpath_derivatives}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
+- "Glob" expressions (i.e., that include `*`) are allowed in paths.
+```
+
+```{note}
+The template strings `[[NIPOPPY_<ATTRIBUTE_NAME>]]` work the same way as the ones in the global configuration file and the pipeline invocation files -- they are replaced at runtime by appropriate values.
+```
+
+```{attention}
+Currently, only the tracker configuration with `pipeline_complete` in the `NAME` field will be used, but we are planning to extend trackers to allow multiple statuses per pipeline. Stay tuned!
+```
+
+Given a dataset with the following content in {{dpath_derivatives}}:
+```{literalinclude} ./inserts/mriqc_outputs.txt
+```
+
+Running the tracker with the above configuration will result in the imaging bagel file showing:
+```{csv-table}
+---
+file: ./inserts/mriqc_bagel.csv
+header-rows: 1
+---
+```
+
+```{note}
+If there is an existing bagel, the rows relevant to the specific pipeline, participants, and sessions will be updated. Other rows will be left as-is.
+```
+
+The `pipeline_complete` column can have the following values:
+* `SUCCESS`: all specified paths have been found
+* `FAIL`: at least one of the paths has not been found
+
+## Running a tracker
+
+% TODO add link to notes on doughnut file
+Trackers are run on participants/sessions that have BIDS data (according to the doughnut file). For each available participant-session pair, each path in the list is checked, then a status is assigned and added to the bagel file.
+
+### Using the command-line interface
+
+To track all available participants and sessions, run:
+```console
+$ nipoppy track \
+    --dataset-root <DATASET_ROOT> \
+    --pipeline <PIPELINE_NAME>
+```
+where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the configuration file.
+
+```{note}
+If there are multiple versions for the same pipeline in the configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.
+```
+
+The tracker can also be run on a single participant and/or session at a time:
+```console
+$ nipoppy track \
+    --dataset-root <DATASET_ROOT> \
+    --pipeline <PIPELINE_NAME> \
+    --participant <PARTICIPANT_ID> \
+    --session <SESSION_ID>
+```
+
+See the [CLI reference page](<project:../cli_reference/track.md>) for more information on additional optional arguments.
+
+```{note}
+Log files for this command will be written to {{dpath_logs}}`/track`
+```
+
+### Using the Python API
+
+```python
+from nipoppy.workflows import PipelineTracker
+
+# replace by appropriate values
+dpath_root = "<DATASET_ROOT>"
+pipeline_name = "<PIPELINE_NAME>"
+
+workflow = PipelineTracker(
+    dpath_root=dpath_root,
+    pipeline_name=pipeline_name,
+)
+workflow.run()
+```
+
+See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.md>)).

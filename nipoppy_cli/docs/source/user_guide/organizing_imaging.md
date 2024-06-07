@@ -90,7 +90,7 @@ See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more
 #### Customizing input and output file paths
 
 There may be datasets where the raw imaging files are not organized in a participant-session directory. An example of this would a dataset whose raw DICOM files are in archives, like so:
-```{literalinclude} ./file_trees/custom_dicom_reorg-before.txt
+```{literalinclude} ./inserts/custom_dicom_reorg-before.txt
 ---
 class: no-copybutton
 ---
@@ -104,14 +104,14 @@ The {class}`nipoppy.workflows.DicomReorgWorkflow` class exposes two functions fo
   - Note: output files will still be in the {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
 
 Here is an example of custom imaging data reorganization script:
-```{literalinclude} ./scripts/custom_dicom_reorg.py
+```{literalinclude} ./inserts/custom_dicom_reorg.py
 ---
 language: python
 ---
 ```
 
 Running this script on the data shown above will create the following organized files (by default symlinks):
-```{literalinclude} ./file_trees/custom_dicom_reorg-after.txt
+```{literalinclude} ./inserts/custom_dicom_reorg-after.txt
 ---
 class: no-copybutton
 ---

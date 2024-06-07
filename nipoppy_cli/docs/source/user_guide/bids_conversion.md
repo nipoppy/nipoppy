@@ -17,7 +17,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 - Organized (but not BIDS) imaging data in {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
     - See <project:organizing_imaging.md>
 
-```{include} apptainer_stub.md
+```{include} ./inserts/apptainer_stub.md
 ```
 
 ### Data directories
