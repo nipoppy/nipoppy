@@ -35,13 +35,17 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ## Configuring the reorganization
 
-Nipoppy can automatically handle two common cases of input data organization:
-1. Participant-level directories with nested session-level directories
-    - E.g., {{dpath_raw_imaging}}`/001/ses-1`
-    - This is the default behaviour
-2. Session-level directories with nested participant-level directories
-    - E.g., {{dpath_raw_imaging}}`/ses-1/001`
-    - This can be enabled by setting `"DICOM_DIR_PARTICIPANT_FIRST"` to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`
+By default, Nipoppy expects "participant-first" organization, like the following:
+```{literalinclude} ./inserts/default_dicom_reorg-before.txt
+```
+
+All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>`, creating a flat list of files, like this:
+```{literalinclude} ./inserts/default_dicom_reorg-after.txt
+```
+
+By default, the output files will be relative symbolic links ("symlinks") to avoid duplication of files.
+
+If `"DICOM_DIR_PARTICIPANT_FIRST"` is set to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`, then Nipoppy will instead expect session-level directories with nested participant-level directories (e.g., {{dpath_raw_imaging}}`/ses-1/01`).
 
 (dicom-dir-map-example)=
 If the raw imaging data is not organized in any of these two structures, a custom comma-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_raw_imaging}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
@@ -67,10 +71,8 @@ language: csv
 ```
 ````
 
-All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>`, creating a flat list of files. By default, the output files will be relative symbolic links ("symlinks") to avoid duplication of files.
-
 ```{note}
-More granular customization can also be achieved for both the input file paths and the output file names, see [](#customizing-dicom-reorg).
+More granular customization can also be achieved for both the input file paths and the output file names, see <project:#customizing-dicom-reorg>.
 ```
 
 ## Running the reorganization
