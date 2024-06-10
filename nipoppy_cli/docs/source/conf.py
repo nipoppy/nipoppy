@@ -64,6 +64,8 @@ intersphinx_mapping = {
 
 myst_enable_extensions = ["fieldlist", "substitution"]
 
+myst_heading_anchors = 5
+
 template_strings_bids_runner = [
     "",
     "The default pipeline invocation files in {{dpath_invocations}} can be modified by changing existing values or adding new key-value pairs.",

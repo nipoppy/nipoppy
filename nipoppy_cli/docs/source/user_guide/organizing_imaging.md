@@ -6,7 +6,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ### Prerequisites
 
-- A Nipoppy dataset with a valid configuration file and an accurate manifest
+- A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Raw imaging data in {{dpath_raw_imaging}}
     - See <project:populating.md>
@@ -41,9 +41,10 @@ Nipoppy can automatically handle two common cases of input data organization:
     - This is the default behaviour
 2. Session-level directories with nested participant-level directories
     - E.g., {{dpath_raw_imaging}}`/ses-1/001`
-    - This can be enabled by setting `"DICOM_DIR_PARTICIPANT_FIRST"` to `"false"` in the {ref}`configuration file <config-schema>`
+    - This can be enabled by setting `"DICOM_DIR_PARTICIPANT_FIRST"` to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`
 
-If the raw imaging data is not organized in any of these two structures, a custom comma-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_raw_imaging}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {ref}`configuration file <config-schema>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
+(dicom-dir-map-example)=
+If the raw imaging data is not organized in any of these two structures, a custom comma-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_raw_imaging}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
 
 Here is an example file for a dataset that does not use the `ses-` prefix for sessions:
 

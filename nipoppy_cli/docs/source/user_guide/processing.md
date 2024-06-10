@@ -5,14 +5,14 @@ Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques 
 - [MRIQC](https://mriqc.readthedocs.io/en/latest/index.html), a pipeline for automated quality control (QC) metric extraction
 
 ```{note}
-Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.io/about/), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating a Boutiques descriptor file and modifying the configuration file accordingly.
+Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.io/about/), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating a Boutiques descriptor file and modifying the global configuration file accordingly.
 ```
 
 ## Summary
 
 ### Prerequisites
 
-- A Nipoppy dataset with a valid configuration file and an accurate manifest
+- A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_bids}} directory
     - See <project:bids_conversion.md>
@@ -79,12 +79,12 @@ $ nipoppy run \
     --dataset-root <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
-where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the configuration file.
+where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
 
 ```{note}
-If there are multiple versions for the same pipeline in the configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.
+If there are multiple versions for the same pipeline in the global configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.
 
-Similarly, if `--pipeline-step` is not specified, the first step defined in the configuration file will be used.
+Similarly, if `--pipeline-step` is not specified, the first step defined in the global configuration file will be used.
 ```
 
 The pipeline can also be run on a single participant and/or session at a time:

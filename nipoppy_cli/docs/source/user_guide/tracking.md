@@ -6,7 +6,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 ### Prerequisites
 
-- A Nipoppy dataset with a valid configuration file and an accurate manifest
+- A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Processed imaging data the {{dpath_derivatives}} directory
     - See <project:processing.md> for expected subdirectory structure
@@ -84,10 +84,10 @@ $ nipoppy track \
     --dataset-root <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
-where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the configuration file.
+where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
 
 ```{note}
-If there are multiple versions for the same pipeline in the configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.
+If there are multiple versions for the same pipeline in the global configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.
 ```
 
 The tracker can also be run on a single participant and/or session at a time:

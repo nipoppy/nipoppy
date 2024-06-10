@@ -10,7 +10,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 
 ### Prerequisites
 
-- A Nipoppy dataset with a valid configuration file and an accurate manifest
+- A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Organized (but not BIDS) imaging data in {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
     - See <project:organizing_imaging.md>
@@ -41,7 +41,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 
 ## Configuring the BIDS conversion
 
-Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default configuration splits BIDS conversion pipelines into the following steps:
+Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default global config splits BIDS conversion pipelines into the following steps:
 * [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
     * Step `prepare`: run [`dcm2bids_helper`](https://unfmontreal.github.io/Dcm2Bids/3.1.1/tutorial/first-steps/#dcm2bids_helper-command), which will convert DICOM files to NIfTI files with JSON sidecars and store them in a temporary directory
         * The JSON configuration file is expected to be created based on information in the sidecars
@@ -72,10 +72,10 @@ $ nipoppy bidsify \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME>
 ```
-where `<PIPELINE_NAME>` and `<PIPELINE_STEP_NAME>` correspond to the pipeline name and the step name as specified in the configuration file.
+where `<PIPELINE_NAME>` and `<PIPELINE_STEP_NAME>` correspond to the pipeline name and the step name as specified in the global configuration file.
 
 ```{note}
-If `--pipeline-step` is not specified, the first step defined in the configuration file will be used.
+If `--pipeline-step` is not specified, the first step defined in the global configuration file will be used.
 ```
 
 The BIDS conversion can also be run on a single participant and/or session at a time:

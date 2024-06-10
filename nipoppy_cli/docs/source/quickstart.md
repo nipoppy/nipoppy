@@ -33,15 +33,15 @@ The [`nipoppy init`](#cli_reference/init) command copies examples of these files
 ```
 
 (customizing-config)=
-### Customizing the configuration file
+### Customizing the global configuration file
 
-The configuration file at {{fpath_config}} contains general information about a dataset (e.g. name, visit and session names) and configurations for running processing pipelines (e.g., pipeline version and runtime parameters).
+The global configuration file at {{fpath_config}} contains general information about a dataset (e.g. name, visit and session names) and configurations for running processing pipelines (e.g., pipeline version and runtime parameters).
 
-The example config file contains configurations for all BIDS conversion and image processing software that are supported out-of-the-box by Nipoppy. You should replace the placeholder strings/substrings (e.g. `<DATASET_NAME>`) by more appropriate values for your dataset. See dropdown below (lines that should be changed are highlighted).
+The example global config file contains configurations for all BIDS conversion and image processing software that are supported out-of-the-box by Nipoppy. You should replace the placeholder strings/substrings (e.g. `<DATASET_NAME>`) by more appropriate values for your dataset. See dropdown below (lines that should be changed are highlighted).
 
 You can also delete (or not) any configuration for a software/version that you do not plan to use.
 
-````{admonition} The example config file
+````{admonition} The example global config file
 ---
 class: dropdown
 ---
@@ -55,10 +55,8 @@ language: json
 ```
 ````
 
-% TODO point to config pages for detailed guide once those are written
-
 ```{tip}
-See the {ref}`schema reference <config-schema>` for more information about each config field.
+See the <project:./user_guide/global_config.md> for more information about each config field.
 ```
 
 ### Generating the manifest file
