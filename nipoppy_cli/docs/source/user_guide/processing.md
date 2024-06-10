@@ -67,6 +67,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 ```{include} ./inserts/boutiques_stub.md
 ```
 
+(invocation-template-strings)=
 {{template_strings_proc_runner}}
 
 ## Running a processing pipeline

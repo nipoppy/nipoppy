@@ -44,7 +44,7 @@ Here is example of tracker configuration file (default for MRIQC 23.1.0):
 ```
 
 ```{note}
-The template strings `[[NIPOPPY_<ATTRIBUTE_NAME>]]` work the same way as the ones in the global configuration file and the pipeline invocation files -- they are replaced at runtime by appropriate values.
+The template strings `[[NIPOPPY_<ATTRIBUTE_NAME>]]` work the same way as the ones in the [global configuration file](<global-config-template-strings>) and the [pipeline invocation files](<invocation-template-strings>) -- they are replaced at runtime by appropriate values.
 ```
 
 ```{attention}
