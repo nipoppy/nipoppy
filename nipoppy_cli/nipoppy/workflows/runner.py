@@ -9,6 +9,7 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
+from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -145,6 +146,35 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         return descriptor_str, invocation_str
+
+    def get_participants_sessions_to_run(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Generate a list of participants and sessions to run.
+
+        Specifically, this list will include participants who have BIDS data but
+        who have not previously successfully completed the pipeline (according)
+        to the bagel file.
+        """
+        self.check_pipeline_version()  # in case this is called outside of run()
+        if self.layout.fpath_imaging_bagel.exists():
+            bagel = Bagel.load(self.layout.fpath_imaging_bagel)
+            participants_sessions_completed = set(
+                bagel.get_completed_participants_sessions(
+                    pipeline_name=self.pipeline_name,
+                    pipeline_version=self.pipeline_version,
+                    participant=participant,
+                    session=session,
+                )
+            )
+        else:
+            participants_sessions_completed = {}
+
+        for participant_session in self.doughnut.get_bidsified_participants_sessions(
+            participant=participant, session=session
+        ):
+            if participant_session not in participants_sessions_completed:
+                yield participant_session
 
     def run_single(self, participant: str, session: str):
         """Run pipeline on a single participant/session."""

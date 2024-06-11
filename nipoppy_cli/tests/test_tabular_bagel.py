@@ -192,3 +192,76 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
     bagel = bagel.add_or_update_records(data_new)
     expected_bagel = Bagel(data_expected).validate()
     assert bagel.equals(expected_bagel)
+
+
+@pytest.mark.parametrize(
+    "data,pipeline_name,pipeline_version,participant,session,expected",
+    [
+        (
+            [
+                ["01", "ses-1", "pipeline1", "1.0", Bagel.status_success],
+                ["02", "ses-1", "pipeline1", "1.0", Bagel.status_fail],
+                ["03", "ses-1", "pipeline1", "1.0", Bagel.status_incomplete],
+                ["04", "ses-1", "pipeline1", "1.0", Bagel.status_unavailable],
+            ],
+            "pipeline1",
+            "1.0",
+            None,
+            None,
+            [("01", "ses-1")],
+        ),
+        (
+            [
+                ["S01", "ses-BL", "pipeline1", "1.0", Bagel.status_success],
+                ["S01", "ses-BL", "pipeline1", "2.0", Bagel.status_success],
+                ["S01", "ses-BL", "pipeline2", "1.0", Bagel.status_success],
+                ["S01", "ses-BL", "pipeline2", "2.0", Bagel.status_success],
+            ],
+            "pipeline2",
+            "2.0",
+            None,
+            None,
+            [("S01", "ses-BL")],
+        ),
+        (
+            [
+                ["S01", "ses-BL", "pipeline1", "1.0", Bagel.status_success],
+                ["S01", "ses-BL", "pipeline1", "2.0", Bagel.status_success],
+                ["S01", "ses-BL", "pipeline2", "1.0", Bagel.status_success],
+                ["S01", "ses-M12", "pipeline2", "2.0", Bagel.status_success],
+                ["S02", "ses-BL", "pipeline1", "1.0", Bagel.status_success],
+                ["S02", "ses-BL", "pipeline1", "2.0", Bagel.status_success],
+                ["S02", "ses-BL", "pipeline2", "2.0", Bagel.status_success],
+                ["S02", "ses-M12", "pipeline2", "2.0", Bagel.status_success],
+            ],
+            "pipeline2",
+            "2.0",
+            "S02",
+            "ses-M12",
+            [("S02", "ses-M12")],
+        ),
+    ],
+)
+def test_get_completed_participants_sessions(
+    data, pipeline_name, pipeline_version, participant, session, expected
+):
+    bagel = Bagel(
+        data,
+        columns=[
+            Bagel.col_participant_id,
+            Bagel.col_session,
+            Bagel.col_pipeline_name,
+            Bagel.col_pipeline_version,
+            Bagel.col_pipeline_complete,
+        ],
+    ).validate()
+
+    assert [
+        tuple(x)
+        for x in bagel.get_completed_participants_sessions(
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            participant=participant,
+            session=session,
+        )
+    ] == expected
