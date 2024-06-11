@@ -7,6 +7,7 @@ from typing import Optional
 
 import pydicom
 
+from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -137,6 +138,18 @@ class DicomReorgWorkflow(BaseWorkflow):
         for participant_session in self.doughnut.get_downloaded_participants_sessions():
             if participant_session not in participants_sessions_organized:
                 yield participant_session
+
+    def run_setup(self):
+        """Update the doughnut in case it is not up-to-date."""
+        self.doughnut = update_doughnut(
+            doughnut=self.doughnut,
+            manifest=self.manifest,
+            dicom_dir_map=self.dicom_dir_map,
+            dpath_downloaded=self.layout.dpath_raw_dicom,
+            dpath_organized=self.layout.dpath_sourcedata,
+            dpath_bidsified=self.layout.dpath_bids,
+            logger=self.logger,
+        )
 
     def run_main(self):
         """Reorganize all downloaded DICOM files."""
