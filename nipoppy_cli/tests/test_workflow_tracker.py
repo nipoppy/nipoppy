@@ -8,6 +8,7 @@ import pytest
 
 from nipoppy.config.main import Config
 from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.tracker import PipelineTracker
 
@@ -101,6 +102,65 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
         fpath.touch()
 
     assert tracker.check_status(relative_paths) == expected_status
+
+
+@pytest.mark.parametrize(
+    "doughnut_data,participant,session,expected",
+    [
+        (
+            [
+                ["S01", "ses-1", False],
+                ["S01", "ses-2", True],
+                ["S02", "ses-3", False],
+            ],
+            None,
+            None,
+            [("S01", "ses-2")],
+        ),
+        (
+            [
+                ["P01", "ses-A", False],
+                ["P01", "ses-B", True],
+                ["P02", "ses-B", True],
+            ],
+            "P01",
+            "ses-B",
+            [("P01", "ses-B")],
+        ),
+    ],
+)
+def test_get_participants_sessions_to_run(
+    doughnut_data, participant, session, expected, tmp_path: Path
+):
+    tracker = PipelineTracker(
+        dpath_root=tmp_path,
+        pipeline_name="",
+        pipeline_version="",
+    )
+    tracker.doughnut = Doughnut().add_or_update_records(
+        records=[
+            {
+                Doughnut.col_participant_id: data[0],
+                Doughnut.col_session: data[1],
+                Doughnut.col_visit: data[1],
+                Doughnut.col_bidsified: data[2],
+                Doughnut.col_datatype: None,
+                Doughnut.col_participant_dicom_dir: "",
+                Doughnut.col_dicom_id: "",
+                Doughnut.col_bids_id: "",
+                Doughnut.col_downloaded: False,
+                Doughnut.col_organized: False,
+            }
+            for data in doughnut_data
+        ]
+    )
+
+    assert [
+        tuple(x)
+        for x in tracker.get_participants_sessions_to_run(
+            participant=participant, session=session
+        )
+    ] == expected
 
 
 @pytest.mark.parametrize(

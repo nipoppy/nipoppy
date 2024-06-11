@@ -216,6 +216,121 @@ def test_check_dicoms_default(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
+    (
+        "participants_and_sessions_downloaded"
+        ",participants_and_sessions_organized"
+        ",expected"
+    ),
+    [
+        (
+            {
+                "S01": ["ses-1", "ses-2", "ses-3"],
+                "S02": ["ses-1", "ses-2"],
+                "S03": ["ses-3"],
+            },
+            {
+                "S03": ["ses-3"],
+            },
+            [
+                ("S01", "ses-1"),
+                ("S01", "ses-2"),
+                ("S01", "ses-3"),
+                ("S02", "ses-1"),
+                ("S02", "ses-2"),
+            ],
+        ),
+        (
+            {
+                "S01": ["ses-1", "ses-2", "ses-3"],
+                "S02": ["ses-1", "ses-2", "ses-3"],
+                "S03": ["ses-1", "ses-2", "ses-3"],
+            },
+            {
+                "S01": ["ses-1", "ses-3"],
+            },
+            [
+                ("S01", "ses-2"),
+                ("S02", "ses-1"),
+                ("S02", "ses-2"),
+                ("S02", "ses-3"),
+                ("S03", "ses-1"),
+                ("S03", "ses-2"),
+                ("S03", "ses-3"),
+            ],
+        ),
+    ],
+)
+def test_get_participants_sessions_to_run(
+    participants_and_sessions_downloaded,
+    participants_and_sessions_organized,
+    expected,
+    tmp_path: Path,
+):
+    participants_and_sessions_manifest = {
+        "S01": ["ses-1", "ses-2", "ses-3"],
+        "S02": ["ses-1", "ses-2", "ses-3"],
+        "S03": ["ses-1", "ses-2", "ses-3"],
+    }
+    dataset_name = "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+    create_empty_dataset(workflow.layout.dpath_root)
+
+    manifest: Manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions_manifest,
+        participants_and_sessions_downloaded=participants_and_sessions_downloaded,
+        participants_and_sessions_organized=participants_and_sessions_organized,
+        dpath_downloaded=workflow.layout.dpath_raw_dicom,
+        dpath_organized=workflow.layout.dpath_sourcedata,
+    )
+
+    config = get_config(
+        dataset_name=dataset_name,
+        visits=list(manifest[Manifest.col_visit].unique()),
+    )
+
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    config.save(workflow.layout.fpath_config)
+
+    assert [tuple(x) for x in workflow.get_participants_sessions_to_run()] == expected
+
+
+def test_run_setup(tmp_path: Path):
+    dataset_name = "my_dataset"
+    participants_and_sessions1 = {"01": ["ses-1"]}
+    participants_and_sessions2 = {"01": ["ses-1", "ses-2"], "02": ["ses-1"]}
+    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+
+    create_empty_dataset(workflow.layout.dpath_root)
+
+    manifest1 = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions1,
+    )
+    manifest1.save_with_backup(workflow.layout.fpath_manifest)
+
+    config = get_config(
+        dataset_name=dataset_name,
+        visits=list(manifest1[Manifest.col_visit].unique()),
+    )
+    config.save(workflow.layout.fpath_config)
+
+    # generate first doughnut with the smaller manifest
+    doughnut1 = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name).doughnut
+
+    # update manifest
+    manifest2 = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions2,
+    )
+    manifest2.save_with_backup(workflow.layout.fpath_manifest)
+    workflow.manifest = manifest2
+
+    # check that doughnut was regenerated
+    workflow.run_setup()
+
+    assert not workflow.doughnut.equals(doughnut1)
+    assert len(workflow.doughnut) == len(manifest2)
+
+
+@pytest.mark.parametrize(
     "participants_and_sessions_manifest,participants_and_sessions_downloaded",
     [
         (
@@ -245,7 +360,7 @@ def test_check_dicoms_default(tmp_path: Path):
     ],
 )
 @pytest.mark.parametrize("copy_files", [True, False])
-def test_run(
+def test_run_main(
     participants_and_sessions_manifest: dict,
     participants_and_sessions_downloaded: dict,
     copy_files: bool,
@@ -255,7 +370,6 @@ def test_run(
     workflow = DicomReorgWorkflow(
         dpath_root=tmp_path / dataset_name, copy_files=copy_files
     )
-    create_empty_dataset(workflow.layout.dpath_root)
 
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
@@ -271,7 +385,7 @@ def test_run(
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     config.save(workflow.layout.fpath_config)
 
-    workflow.run()
+    workflow.run_main()
 
     for participant, sessions in participants_and_sessions_manifest.items():
         for session in sessions:

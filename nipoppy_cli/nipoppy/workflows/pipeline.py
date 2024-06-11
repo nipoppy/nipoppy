@@ -359,26 +359,23 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.rm(self.dpath_pipeline_work)
         return super().run_cleanup(**kwargs)
 
+    @abstractmethod
     def get_participants_sessions_to_run(
         self, participant: Optional[str], session: Optional[str]
     ):
-        """Return participant-session pairs to run the pipeline on."""
-        # TODO add option in Boutiques descriptor of pipeline
-        # 1. "manifest" (or "all"?)
-        # 2. "downloaded" but not "organized" (from doughnut)
-        # 3. "organized" but not "bidsified" (from doughnut)
-        # 4. "bidsified" but not completed (from doughnut/bagel)
-        # 5. "dataset" (i.e. apply on entire dataset, do not loop over anything)
+        """
+        Return participant-session pairs to loop over with run_single().
 
-        # for now just check the participants/sessions that have BIDS data
-        return self.doughnut.get_bidsified_participants_sessions(
-            participant=participant, session=session
-        )
+        This is an abstract method that should be defined explicitly in subclasses.
+        """
 
     @abstractmethod
     def run_single(self, participant: Optional[str], session: Optional[str]):
-        """Run on a single participant/session."""
-        pass
+        """
+        Run on a single participant/session.
+
+        This is an abstract method that should be defined explicitly in subclasses.
+        """
 
     def generate_fpath_log(
         self,
