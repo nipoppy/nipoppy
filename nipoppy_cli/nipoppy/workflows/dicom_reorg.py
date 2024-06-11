@@ -5,7 +5,22 @@ import os
 from pathlib import Path
 from typing import Optional
 
+import pydicom
+
+from nipoppy.tabular.doughnut import update_doughnut
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
+
+
+def is_derived_dicom(fpath: Path) -> bool:
+    """
+    Read a DICOM file's header and check if it is a derived file.
+
+    Some BIDS converters (e.g. Heudiconv) do not support derived DICOM files.
+    """
+    dcm_info = pydicom.dcmread(fpath)
+    img_types = dcm_info.ImageType
+    return "DERIVED" in img_types
 
 
 class DicomReorgWorkflow(BaseWorkflow):
@@ -13,9 +28,10 @@ class DicomReorgWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         copy_files: bool = False,
-        fpath_layout: Optional[Path] = None,
+        check_dicoms: bool = False,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
@@ -28,21 +44,18 @@ class DicomReorgWorkflow(BaseWorkflow):
             dry_run=dry_run,
         )
         self.copy_files = copy_files
+        self.check_dicoms = check_dicoms
 
     def get_fpaths_to_reorg(
-        self, participant: str, session: str, participant_first=True
+        self,
+        participant: str,
+        session: str,
     ) -> list[Path]:
-        """
-        Get file paths to reorganize for a single participant and session.
-
-        This method can be overridden if the raw DICOM layout is different than what
-        is typically expected.
-        """
-        # support both participant-first and session-first raw DICOM layouts
-        if participant_first:
-            dpath_downloaded = self.layout.dpath_raw_dicom / participant / session
-        else:
-            dpath_downloaded = self.layout.dpath_raw_dicom / session / participant
+        """Get file paths to reorganize for a single participant and session."""
+        dpath_downloaded = (
+            self.layout.dpath_raw_dicom
+            / self.dicom_dir_map.get_dicom_dir(participant=participant, session=session)
+        )
 
         # make sure directory exists
         if not dpath_downloaded.exists():
@@ -72,15 +85,24 @@ class DicomReorgWorkflow(BaseWorkflow):
     def run_single(self, participant: str, session: str):
         """Reorganize downloaded DICOM files for a single participant and session."""
         # get paths to reorganize
-        # TODO add config option for session-first or participant-first raw DICOM layout
-        fpaths_to_reorg = self.get_fpaths_to_reorg(
-            participant, session, participant_first=False
-        )
+        fpaths_to_reorg = self.get_fpaths_to_reorg(participant, session)
 
         # do reorg
         dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
         self.mkdir(dpath_reorganized)
         for fpath_source in fpaths_to_reorg:
+            # check file (though only error out if DICOM cannot be read)
+            if self.check_dicoms:
+                try:
+                    if is_derived_dicom(fpath_source):
+                        self.logger.warning(
+                            f"Derived DICOM file detected: {fpath_source}"
+                        )
+                except Exception as exception:
+                    raise RuntimeError(
+                        f"Error checking DICOM file {fpath_source}: {exception}"
+                    )
+
             fpath_dest = dpath_reorganized / self.apply_fname_mapping(
                 fpath_source.name, participant=participant, session=session
             )
@@ -108,12 +130,33 @@ class DicomReorgWorkflow(BaseWorkflow):
             status=True,
         )
 
+    def get_participants_sessions_to_run(self):
+        """Return participant-session pairs to reorganize."""
+        participants_sessions_organized = set(
+            self.doughnut.get_organized_participants_sessions()
+        )
+        for participant_session in self.doughnut.get_downloaded_participants_sessions():
+            if participant_session not in participants_sessions_organized:
+                yield participant_session
+
+    def run_setup(self):
+        """Update the doughnut in case it is not up-to-date."""
+        self.doughnut = update_doughnut(
+            doughnut=self.doughnut,
+            manifest=self.manifest,
+            dicom_dir_map=self.dicom_dir_map,
+            dpath_downloaded=self.layout.dpath_raw_dicom,
+            dpath_organized=self.layout.dpath_sourcedata,
+            dpath_bidsified=self.layout.dpath_bids,
+            logger=self.logger,
+        )
+
     def run_main(self):
         """Reorganize all downloaded DICOM files."""
         for (
             participant,
             session,
-        ) in self.doughnut.get_downloaded_participants_sessions():
+        ) in self.get_participants_sessions_to_run():
             try:
                 self.run_single(participant, session)
             except Exception as exception:

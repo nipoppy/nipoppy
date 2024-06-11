@@ -1,12 +1,14 @@
 """Workflow for convert command."""
 
+from __future__ import annotations
+
 import logging
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import get_pipeline_tag
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -15,14 +17,14 @@ class BidsConversionRunner(PipelineRunner):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: str,
-        pipeline_step: str,
+        pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
         simulate: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
@@ -30,6 +32,7 @@ class BidsConversionRunner(PipelineRunner):
             dpath_root=dpath_root,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant=participant,
             session=session,
             simulate=simulate,
@@ -38,36 +41,35 @@ class BidsConversionRunner(PipelineRunner):
             dry_run=dry_run,
         )
         self.name = "bids_conversion"
-        self.pipeline_step = pipeline_step
-        self.dpaths_to_check = []  # do not create any pipeline-specific directory
+
+    @cached_property
+    def dpaths_to_check(self) -> list[Path]:
+        """Directory paths to create if needed during the setup phase."""
+        # no pipeline-specific directories for BIDS conversion
+        return []
 
     @cached_property
     def pipeline_config(self) -> PipelineConfig:
         """Get the user config for the BIDS conversion software."""
-        return self.config.get_bids_pipeline_config(
+        return self.config.get_pipeline_config(
             self.pipeline_name,
             self.pipeline_version,
-            self.pipeline_step,
-        )
-
-    def get_fpath_descriptor_builtin(self) -> Path:
-        """Get the path to the built-in descriptor file."""
-        fname_descriptor_builtin = get_pipeline_tag(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-        )
-        return super().get_fpath_descriptor_builtin(
-            fname=f"{fname_descriptor_builtin}.json"
         )
 
     def get_participants_sessions_to_run(
         self, participant: Optional[str], session: Optional[str]
     ):
         """Return participant-session pairs to run the pipeline on."""
-        return self.doughnut.get_organized_participants_sessions(
-            participant=participant, session=session
+        participants_sessions_bidsified = set(
+            self.doughnut.get_bidsified_participants_sessions(
+                participant=participant, session=session
+            )
         )
+        for participant_session in self.doughnut.get_organized_participants_sessions(
+            participant=participant, session=session
+        ):
+            if participant_session not in participants_sessions_bidsified:
+                yield participant_session
 
     def run_single(self, participant: str, session: str):
         """Run BIDS conversion on a single participant/session."""
@@ -93,17 +95,3 @@ class BidsConversionRunner(PipelineRunner):
             col=self.doughnut.col_bidsified,
             status=True,
         )
-
-    def generate_fpath_log(
-        self,
-        dname_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
-    ) -> Path:
-        """Generate a log file path."""
-        if dname_parent is None:
-            dname_parent = get_pipeline_tag(
-                pipeline_name=self.pipeline_name,
-                pipeline_version=self.pipeline_version,
-                pipeline_step=self.pipeline_step,
-            )
-        return super().generate_fpath_log(dname_parent, fname_stem)

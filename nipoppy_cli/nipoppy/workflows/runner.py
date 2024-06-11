@@ -1,6 +1,7 @@
 """PipelineRunner workflow."""
 
 import logging
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
@@ -8,6 +9,8 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
+from nipoppy.tabular.bagel import Bagel
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -16,13 +19,14 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def __init__(
         self,
-        dpath_root: Path | str,
+        dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: str,
+        pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
         participant: str = None,
         session: str = None,
         simulate: bool = False,
-        fpath_layout: Optional[Path] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
@@ -31,6 +35,7 @@ class PipelineRunner(BasePipelineWorkflow):
             name="run",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant=participant,
             session=session,
             fpath_layout=fpath_layout,
@@ -38,15 +43,20 @@ class PipelineRunner(BasePipelineWorkflow):
             dry_run=dry_run,
         )
         self.simulate = simulate
-        self.dpaths_to_check.extend(
-            [self.dpath_pipeline_output, self.dpath_pipeline_work]
-        )
+
+    @cached_property
+    def dpaths_to_check(self) -> list[Path]:
+        """Directory paths to create if needed during the setup phase."""
+        return super().dpaths_to_check + [
+            self.dpath_pipeline_output,
+            self.dpath_pipeline_work,
+        ]
 
     def process_container_config(
         self,
         participant: str,
         session: str,
-        bind_paths: Optional[list[str | Path]] = None,
+        bind_paths: Optional[list[StrOrPathLike]] = None,
     ) -> str:
         """Update container config and generate container command."""
         if bind_paths is None:
@@ -64,10 +74,9 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.debug(f"Initial container config: {container_config}")
 
         # get and process Boutiques config
-        boutiques_config = self.get_boutiques_config(participant, session)
         boutiques_config = BoutiquesConfig(
             **self.process_template_json(
-                boutiques_config.model_dump(),
+                self.boutiques_config.model_dump(),
                 participant=participant,
                 session=session,
             )
@@ -77,9 +86,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
             self.logger.info("Updating container config with config from descriptor")
-            container_config.merge_args_and_env_vars(
-                boutiques_config.get_container_config()
-            )
+            container_config.merge(boutiques_config.get_container_config())
 
         # add bind paths
         for bind_path in bind_paths:
@@ -88,7 +95,10 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.info(f"Using container config: {container_config}")
 
         container_command = prepare_container(
-            container_config, check=True, logger=self.logger
+            container_config,
+            subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
+            check=True,
+            logger=self.logger,
         )
 
         return container_command
@@ -136,6 +146,35 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         return descriptor_str, invocation_str
+
+    def get_participants_sessions_to_run(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Generate a list of participants and sessions to run.
+
+        Specifically, this list will include participants who have BIDS data but
+        who have not previously successfully completed the pipeline (according)
+        to the bagel file.
+        """
+        self.check_pipeline_version()  # in case this is called outside of run()
+        if self.layout.fpath_imaging_bagel.exists():
+            bagel = Bagel.load(self.layout.fpath_imaging_bagel)
+            participants_sessions_completed = set(
+                bagel.get_completed_participants_sessions(
+                    pipeline_name=self.pipeline_name,
+                    pipeline_version=self.pipeline_version,
+                    participant=participant,
+                    session=session,
+                )
+            )
+        else:
+            participants_sessions_completed = {}
+
+        for participant_session in self.doughnut.get_bidsified_participants_sessions(
+            participant=participant, session=session
+        ):
+            if participant_session not in participants_sessions_completed:
+                yield participant_session
 
     def run_single(self, participant: str, session: str):
         """Run pipeline on a single participant/session."""

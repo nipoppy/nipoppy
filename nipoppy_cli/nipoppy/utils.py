@@ -1,14 +1,19 @@
 """Utility functions."""
 
+from __future__ import annotations
+
 import datetime
 import json
 import os
 import re
+import warnings
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Sequence, TypeVar
 
 import bids
 import pandas as pd
+
+StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
@@ -20,8 +25,11 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 # paths
 DPATH_DATA = Path(__file__).parent / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_configs.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.json"
+FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
+DPATH_INVOCATIONS = DPATH_EXAMPLES / "sample_invocations"
+DPATH_TRACKER_CONFIGS = DPATH_EXAMPLES / "sample_tracker_configs"
 DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
@@ -63,6 +71,20 @@ def check_participant(participant: Optional[str]):
     return str(participant).removeprefix(BIDS_SUBJECT_PREFIX)
 
 
+def check_participant_id_strict(participant_id: str):
+    """
+    Make sure participant_id does not have the BIDS prefix.
+
+    To use when validating user-provided files (e.g. the manifest).
+    """
+    if participant_id.startswith(BIDS_SUBJECT_PREFIX):
+        raise ValueError(
+            f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
+            f", got {participant_id}"
+        )
+    return participant_id
+
+
 def check_session(session: Optional[str]):
     """Check/process a session string."""
     if session is None:
@@ -76,6 +98,19 @@ def check_session(session: Optional[str]):
         return f"{BIDS_SESSION_PREFIX}{session}"
 
 
+def check_session_strict(session: Optional[str]):
+    """
+    Make sure session has the BIDS prefix.
+
+    To use when validating user-provided files (e.g. the manifest).
+    """
+    if session is not None and not session.startswith(BIDS_SESSION_PREFIX):
+        raise ValueError(
+            f'Session should start with "{BIDS_SESSION_PREFIX}"' f", got {session}"
+        )
+    return session
+
+
 def strip_session(session: Optional[str]):
     """Strip the BIDS prefix from a session string."""
     if session is None:
@@ -85,8 +120,8 @@ def strip_session(session: Optional[str]):
 
 
 def create_bids_db(
-    dpath_bids: Path | str,
-    dpath_bids_db: Optional[Path | str] = None,
+    dpath_bids: StrOrPathLike,
+    dpath_bids_db: Optional[StrOrPathLike] = None,
     validate=False,
     reset_database=True,
     ignore_patterns: Optional[list[str | re.Pattern] | str | re.Pattern] = None,
@@ -114,6 +149,20 @@ def create_bids_db(
     return bids_layout
 
 
+def add_pybids_ignore_patterns(
+    current: List[re.Pattern],
+    new: Sequence[str | re.Pattern] | str | re.Pattern,
+):
+    """Add pattern(s) to ignore for PyBIDS."""
+    if isinstance(new, (str, re.Pattern)):
+        new = [new]
+    for pattern in new:
+        if isinstance(pattern, str):
+            pattern = re.compile(pattern)
+        if pattern not in current:
+            current.append(pattern)
+
+
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
@@ -133,12 +182,12 @@ def get_pipeline_tag(
     return sep.join(components)
 
 
-def load_json(fpath: str | Path, **kwargs) -> dict:
+def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
     """Load a JSON file.
 
     Parameters
     ----------
-    fpath : str | Path
+    fpath : nipoppy.utils.StrOrPathLike
         Path to the JSON file
     **kwargs :
         Keyword arguments to pass to json.load
@@ -149,17 +198,22 @@ def load_json(fpath: str | Path, **kwargs) -> dict:
         The JSON object.
     """
     with open(fpath, "r") as file:
-        return json.load(file, **kwargs)
+        try:
+            return json.load(file, **kwargs)
+        except json.JSONDecodeError as exception:
+            raise json.JSONDecodeError(
+                f"Error loading JSON file at {fpath}", exception.doc, exception.pos
+            )
 
 
-def save_json(obj: dict, fpath: str | Path, **kwargs):
+def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     """Save a JSON object to a file.
 
     Parameters
     ----------
     obj : dict
         The JSON object
-    fpath : str | Path
+    fpath : nipoppy.utils.StrOrPathLike
         Path to the JSON file to write
     indent : int, optional
         Indentation level, by default 4
@@ -174,14 +228,14 @@ def save_json(obj: dict, fpath: str | Path, **kwargs):
         json.dump(obj, file, **kwargs)
 
 
-def add_path_suffix(path: Path | str, suffix: str, sep="-") -> Path:
+def add_path_suffix(path: StrOrPathLike, suffix: str, sep="-") -> Path:
     """Add a suffix to a path, before the last file extension (if any)."""
     path = Path(path)
     return Path(path.parent, f"{path.stem}{sep}{suffix}{path.suffix}")
 
 
 def add_path_timestamp(
-    path: Path | str, timestamp_format="%Y%m%d_%H%M", sep="-"
+    path: StrOrPathLike, timestamp_format="%Y%m%d_%H%M", sep="-"
 ) -> Path:
     """Add a timestamp to a path, before the last file extension (if any)."""
     timestamp = datetime.datetime.now().strftime(timestamp_format)
@@ -190,7 +244,7 @@ def add_path_timestamp(
 
 def save_df_with_backup(
     df: pd.DataFrame,
-    fpath_symlink: str | Path,
+    fpath_symlink: StrOrPathLike,
     dname_backups: Optional[str] = None,
     use_relative_path=True,
     dry_run=False,
@@ -202,7 +256,7 @@ def save_df_with_backup(
     ----------
     df : pd.DataFrame
         The dataframe to save
-    fpath_symlink : str | Path
+    fpath_symlink : nipoppy.utils.StrOrPathLike
         The path to the symlink
     dname_backups : Optional[str], optional
         The directory where the timestamped backup file should be written
@@ -247,7 +301,10 @@ def save_df_with_backup(
 
 
 def process_template_str(
-    template_str: str, resolve_paths=True, objs=None, lower=True, **kwargs
+    template_str: str,
+    resolve_paths=True,
+    objs=None,
+    **kwargs,
 ) -> str:
     """Replace template strings with values from kwargs or objects."""
 
@@ -260,7 +317,8 @@ def process_template_str(
         for obj in objs:
             if hasattr(obj, replacement_key):
                 return replace(json_str, to_replace, getattr(obj, replacement_key))
-        raise RuntimeError(f"Unable to replace {to_replace} in {template_str_original}")
+        warnings.warn(f"Unable to replace {to_replace} in {template_str_original}")
+        return json_str
 
     if objs is None:
         objs = []
@@ -272,9 +330,7 @@ def process_template_str(
         if len(match.groups()) != 1:
             raise ValueError(f"Expected exactly one match group for match: {match}")
         to_replace = match.group()
-        replacement_key = match.groups()[0]
-        if lower:
-            replacement_key = replacement_key.lower()
+        replacement_key = match.groups()[0].lower()  # always convert to lowercase
 
         if not str.isidentifier(replacement_key):
             raise ValueError(
@@ -287,3 +343,14 @@ def process_template_str(
             template_str = replace_from_objs(template_str, to_replace, objs)
 
     return template_str
+
+
+def apply_substitutions_to_json(
+    json_obj: dict | list, substitutions: dict[str, str]
+) -> dict | list:
+    """Apply substitutions to a JSON object."""
+    # convert json_obj to string
+    json_text = json.dumps(json_obj)
+    for key, value in substitutions.items():
+        json_text = json_text.replace(key, value)
+    return json.loads(json_text)
