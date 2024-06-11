@@ -7,6 +7,8 @@ import pytest
 from fids import fids
 
 from nipoppy.config.main import Config
+from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import strip_session
 from nipoppy.workflows.runner import PipelineRunner
 
@@ -131,3 +133,133 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
         runner.process_container_config(participant=participant, session=session)
         == "echo exec"
     )
+
+
+@pytest.mark.parametrize(
+    "doughnut_data,bagel_data,pipeline_name,pipeline_version,expected",
+    [
+        (
+            [
+                ["01", "ses-1", False],
+                ["01", "ses-2", True],
+                ["01", "ses-3", True],
+            ],
+            None,
+            "dummy_pipeline",
+            "1.0.0",
+            [("01", "ses-2"), ("01", "ses-3")],
+        ),
+        (
+            [
+                ["01", "ses-1", False],
+                ["01", "ses-2", True],
+                ["01", "ses-3", True],
+            ],
+            [],
+            "dummy_pipeline",
+            "1.0.0",
+            [("01", "ses-2"), ("01", "ses-3")],
+        ),
+        (
+            [
+                ["01", "ses-1", False],
+                ["01", "ses-2", True],
+                ["01", "ses-3", True],
+            ],
+            [
+                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_success],
+            ],
+            "dummy_pipeline",
+            "1.0.0",
+            [],
+        ),
+        (
+            [
+                ["01", "ses-1", True],
+                ["01", "ses-2", True],
+                ["01", "ses-3", True],
+            ],
+            [
+                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-1", "dummy_pipeline", "2.0", Bagel.status_success],
+            ],
+            "dummy_pipeline",
+            "1.0.0",
+            [("01", "ses-1"), ("01", "ses-3")],
+        ),
+        (
+            [
+                ["01", "ses-1", True],
+                ["01", "ses-2", True],
+                ["01", "ses-3", True],
+            ],
+            [
+                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "ses-1", "dummy_pipeline", "2.0", Bagel.status_success],
+            ],
+            "dummy_pipeline",
+            None,
+            [("01", "ses-1"), ("01", "ses-3")],
+        ),
+    ],
+)
+def test_get_participants_sessions_to_run(
+    doughnut_data,
+    bagel_data,
+    pipeline_name,
+    pipeline_version,
+    expected,
+    config: Config,
+    tmp_path: Path,
+):
+    participant = None
+    session = None
+    runner = PipelineRunner(
+        dpath_root=tmp_path,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+        participant=participant,
+        session=session,
+    )
+    config.save(runner.layout.fpath_config)
+    runner.doughnut = Doughnut().add_or_update_records(
+        records=[
+            {
+                Doughnut.col_participant_id: data[0],
+                Doughnut.col_session: data[1],
+                Doughnut.col_visit: data[1],
+                Doughnut.col_bidsified: data[2],
+                Doughnut.col_datatype: None,
+                Doughnut.col_participant_dicom_dir: "",
+                Doughnut.col_dicom_id: "",
+                Doughnut.col_bids_id: "",
+                Doughnut.col_downloaded: False,
+                Doughnut.col_organized: False,
+            }
+            for data in doughnut_data
+        ]
+    )
+    if bagel_data is not None:
+        Bagel(
+            bagel_data,
+            columns=[
+                Bagel.col_participant_id,
+                Bagel.col_session,
+                Bagel.col_pipeline_name,
+                Bagel.col_pipeline_version,
+                Bagel.col_pipeline_complete,
+            ],
+        ).validate().save_with_backup(runner.layout.fpath_imaging_bagel)
+
+    assert [
+        tuple(x)
+        for x in runner.get_participants_sessions_to_run(
+            participant=participant, session=session
+        )
+    ] == expected

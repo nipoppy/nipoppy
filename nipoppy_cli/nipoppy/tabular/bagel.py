@@ -104,3 +104,36 @@ class Bagel(BaseTabular):
 
     # set the model
     model = BagelModel
+
+    def get_completed_participants_sessions(
+        self,
+        pipeline_name: str,
+        pipeline_version: str,
+        participant: Optional[str] = None,
+        session: Optional[str] = None,
+    ):
+        """
+        Get participant-session pairs that have successfully completed a pipeline run.
+
+        Can optionally filter within a specific participant and/or session.
+        """
+        if participant is None:
+            participants = set(self[self.col_participant_id])
+        else:
+            participants = {participant}
+        if session is None:
+            session = set(self[self.col_session])
+        else:
+            session = {session}
+
+        bagel_subset = self.loc[
+            (self[self.col_pipeline_name] == pipeline_name)
+            & (self[self.col_pipeline_version] == pipeline_version)
+            & (self[self.col_participant_id].isin(participants))
+            & (self[self.col_session].isin(session))
+            & (self[self.col_pipeline_complete] == self.status_success)
+        ]
+
+        yield from bagel_subset[[self.col_participant_id, self.col_session]].itertuples(
+            index=False
+        )
