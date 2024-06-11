@@ -55,7 +55,6 @@ class PipelineWorkflow(BasePipelineWorkflow):
 
     def run_single(self, subject: str, session: str):
         """Run on a single participant/session."""
-        self._n_runs += 1
         self.logger.info(f"Running on {subject}/{session}")
         if subject == "FAIL":
             raise RuntimeError("FAIL")
@@ -530,6 +529,7 @@ def test_run_main(
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
     assert workflow.n_total == expected_count
+    assert workflow.n_success == expected_count
 
 
 def test_run_main_catch_errors(workflow: PipelineWorkflow):
