@@ -60,9 +60,16 @@ class BidsConversionRunner(PipelineRunner):
         self, participant: Optional[str], session: Optional[str]
     ):
         """Return participant-session pairs to run the pipeline on."""
-        return self.doughnut.get_organized_participants_sessions(
-            participant=participant, session=session
+        participants_sessions_bidsified = set(
+            self.doughnut.get_bidsified_participants_sessions(
+                participant=participant, session=session
+            )
         )
+        for participant_session in self.doughnut.get_organized_participants_sessions(
+            participant=participant, session=session
+        ):
+            if participant_session not in participants_sessions_bidsified:
+                yield participant_session
 
     def run_single(self, participant: str, session: str):
         """Run BIDS conversion on a single participant/session."""

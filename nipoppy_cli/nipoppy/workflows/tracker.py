@@ -58,13 +58,20 @@ class PipelineTracker(BasePipelineWorkflow):
                 f"Checking path {self.dpath_pipeline_output / relative_path}"
             )
 
-            # TODO handle potentially zipped archives
             matches = list(self.dpath_pipeline_output.glob(str(relative_path)))
             self.logger.debug(f"Matches: {matches}")
             if not matches:
                 return Bagel.status_fail
 
         return Bagel.status_success
+
+    def get_participants_sessions_to_run(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Get participant-session pairs with BIDS data to run the tracker on."""
+        return self.doughnut.get_bidsified_participants_sessions(
+            participant=participant, session=session
+        )
 
     def run_single(self, participant: str, session: str):
         """Run tracker on a single participant/session."""

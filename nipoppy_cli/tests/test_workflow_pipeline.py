@@ -47,8 +47,16 @@ class PipelineWorkflow(BasePipelineWorkflow):
             dry_run=dry_run,
         )
 
+    def get_participants_sessions_to_run(
+        self, participant: Optional[str], session: Optional[str]
+    ):
+        """Only run on participant/sessions with BIDS data."""
+        return self.doughnut.get_bidsified_participants_sessions(
+            participant=participant, session=session
+        )
+
     def run_single(self, subject: str, session: str):
-        """Run on a single subject/session."""
+        """Run on a single participant/session."""
         self._n_runs += 1
         self.logger.info(f"Running on {subject}/{session}")
         if subject == "FAIL":
@@ -541,34 +549,6 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     workflow.run_main()
     assert workflow._n_runs == 1
     assert workflow._n_errors == 1
-
-
-@pytest.mark.parametrize(
-    "participant,session,expected_count",
-    [(None, None, 4), ("01", None, 3), ("02", None, 1), ("01", "ses-2", 1)],
-)
-def test_get_participants_sessions_to_run(
-    participant, session, expected_count, workflow: PipelineWorkflow
-):
-    workflow.participant = participant
-    workflow.session = session
-
-    participants_and_sessions_manifest = {
-        "01": ["ses-1", "ses-2", "ses-3"],
-        "02": ["ses-1", "ses-2", "ses-3"],
-    }
-    participants_and_sessions_bidsified = {
-        "01": ["ses-1", "ses-2", "ses-3"],
-        "02": ["ses-1"],
-    }
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions_manifest,
-        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        dpath_bidsified=workflow.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
-    workflow.run_main()
-    assert workflow._n_runs == expected_count
 
 
 @pytest.mark.parametrize(
