@@ -85,10 +85,12 @@ def test_check_session(session, expected):
     assert check_session(session) == expected
 
 
-@pytest.mark.parametrize("session,is_valid", [("ses-1", True), ("1", False)])
+@pytest.mark.parametrize(
+    "session,is_valid", [("ses-1", False), ("1", True), (None, True)]
+)
 def test_check_session_strict(session, is_valid):
     with (
-        pytest.raises(ValueError, match="Session should start with")
+        pytest.raises(ValueError, match="Session ID should not start with")
         if not is_valid
         else nullcontext()
     ):

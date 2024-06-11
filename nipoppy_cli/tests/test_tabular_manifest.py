@@ -52,9 +52,9 @@ def test_validate(fpath, is_valid):
     "sessions,visits,is_valid",
     [
         (None, None, True),
-        (["ses-BL", "ses-M12"], ["BL", "M12"], True),
-        (["ses-BL"], ["BL", "M12"], False),
-        (["ses-BL", "ses-M12"], ["M12"], False),
+        (["BL", "M12"], ["BL", "M12"], True),
+        (["BL"], ["BL", "M12"], False),
+        (["BL", "M12"], ["M12"], False),
     ],
 )
 def test_validate_sessions_visits(sessions, visits, is_valid):
@@ -72,49 +72,46 @@ def test_validate_sessions_visits(sessions, visits, is_valid):
     "data,session,expected_count",
     [
         (
-            {
-                "participant_id": ["01"],
-                "visit": ["BL"],
-                "session": [None],
-                "datatype": [[]],
-            },
-            "ses-BL",
+            (["01"], ["BL"], None, [[]]),
+            "BL",
             0,
         ),
         (
-            {
-                "participant_id": ["01"],
-                "visit": ["BL"],
-                "session": ["ses-BL"],
-                "datatype": [["anat"]],
-            },
-            "ses-BL",
+            (["01"], ["BL"], "BL", [["anat"]]),
+            "BL",
             1,
         ),
         (
-            {
-                "participant_id": ["01", "02"],
-                "visit": ["BL", "M12"],
-                "session": ["ses-BL", "ses-M12"],
-                "datatype": [["anat"], ["anat", "dwi"]],
-            },
-            "ses-BL",
+            (
+                ["01", "02"],
+                ["BL", "M12"],
+                ["BL", "M12"],
+                [["anat"], ["anat", "dwi"]],
+            ),
+            "BL",
             1,
         ),
         (
-            {
-                "participant_id": ["01", "02"],
-                "visit": ["BL", "M12"],
-                "session": ["ses-BL", "ses-M12"],
-                "datatype": [["anat"], ["anat", "dwi"]],
-            },
+            (
+                ["01", "02"],
+                ["BL", "M12"],
+                ["BL", "M12"],
+                [["anat"], ["anat", "dwi"]],
+            ),
             None,
             2,
         ),
     ],
 )
 def test_get_imaging_subset(data, session, expected_count):
-    manifest = Manifest(data)
+    manifest = Manifest(
+        {
+            Manifest.col_participant_id: data[0],
+            Manifest.col_visit: data[1],
+            Manifest.col_session: data[2],
+            Manifest.col_datatype: data[3],
+        }
+    )
     manifest_with_imaging_only = manifest.get_imaging_subset(session=session)
     assert isinstance(manifest_with_imaging_only, Manifest)
     assert len(manifest_with_imaging_only) == expected_count

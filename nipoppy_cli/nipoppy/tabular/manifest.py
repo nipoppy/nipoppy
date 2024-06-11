@@ -27,8 +27,8 @@ class ManifestModel(BaseTabularModel):
     participant_id: str = Field(
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
     )
-    visit: str = Field(description=FIELD_DESCRIPTION_MAP["visit"])
-    session: Optional[str] = Field(description=FIELD_DESCRIPTION_MAP["session"])
+    visit_id: str = Field(description=FIELD_DESCRIPTION_MAP["visit"])
+    session_id: Optional[str] = Field(description=FIELD_DESCRIPTION_MAP["session"])
     datatype: Optional[list[str]] = Field(
         description=(
             "Imaging datatype, as recognized by BIDS (see "
@@ -55,7 +55,7 @@ class ManifestModel(BaseTabularModel):
     def validate_after(self) -> Self:
         """Validate fields after instance creation."""
         check_participant_id_strict(self.participant_id)
-        check_session_strict(self.session)
+        check_session_strict(self.session_id)
         return self
 
     # allow extra columns
@@ -67,8 +67,8 @@ class Manifest(BaseTabular):
 
     # column names
     col_participant_id = "participant_id"
-    col_visit = "visit"
-    col_session = "session"
+    col_visit = "visit_id"
+    col_session = "session_id"
     col_datatype = "datatype"
 
     index_cols = [col_participant_id, col_visit]

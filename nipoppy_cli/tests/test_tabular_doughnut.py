@@ -17,7 +17,7 @@ def data():
     return {
         Doughnut.col_participant_id: ["01", "01", "02", "02"],
         Doughnut.col_visit: ["BL", "M12", "BL", "M12"],
-        Doughnut.col_session: ["ses-BL", "ses-M12", "ses-BL", "ses-M12"],
+        Doughnut.col_session: ["BL", "M12", "BL", "M12"],
         Doughnut.col_datatype: ["anat", "anat", "anat", "anat"],
         Doughnut.col_participant_dicom_dir: ["01", "01", "02", "02"],
         Doughnut.col_dicom_id: ["01", "01", "02", "02"],
@@ -80,12 +80,12 @@ def test_check_status_value_invalid():
 @pytest.mark.parametrize(
     "participant,session,col,expected_status",
     [
-        ("01", "ses-BL", Doughnut.col_downloaded, True),
-        ("01", "ses-BL", Doughnut.col_organized, True),
-        ("01", "ses-BL", Doughnut.col_bidsified, True),
-        ("02", "ses-M12", Doughnut.col_downloaded, False),
-        ("02", "ses-M12", Doughnut.col_organized, False),
-        ("02", "ses-M12", Doughnut.col_bidsified, False),
+        ("01", "BL", Doughnut.col_downloaded, True),
+        ("01", "BL", Doughnut.col_organized, True),
+        ("01", "BL", Doughnut.col_bidsified, True),
+        ("02", "M12", Doughnut.col_downloaded, False),
+        ("02", "M12", Doughnut.col_organized, False),
+        ("02", "M12", Doughnut.col_bidsified, False),
     ],
 )
 def test_get_status(data, participant, session, col, expected_status):
@@ -95,12 +95,12 @@ def test_get_status(data, participant, session, col, expected_status):
 @pytest.mark.parametrize(
     "participant,session,col,status",
     [
-        ("01", "ses-BL", Doughnut.col_downloaded, False),
-        ("01", "ses-BL", Doughnut.col_organized, False),
-        ("01", "ses-BL", Doughnut.col_bidsified, False),
-        ("02", "ses-M12", Doughnut.col_downloaded, True),
-        ("02", "ses-M12", Doughnut.col_organized, True),
-        ("02", "ses-M12", Doughnut.col_bidsified, True),
+        ("01", "BL", Doughnut.col_downloaded, False),
+        ("01", "BL", Doughnut.col_organized, False),
+        ("01", "BL", Doughnut.col_bidsified, False),
+        ("02", "M12", Doughnut.col_downloaded, True),
+        ("02", "M12", Doughnut.col_organized, True),
+        ("02", "M12", Doughnut.col_bidsified, True),
     ],
 )
 def test_set_status(data, participant, session, col, status):
@@ -116,8 +116,8 @@ def test_set_status(data, participant, session, col, status):
         ("organized", None, None, 2),
         ("bidsified", None, None, 1),
         ("downloaded", "01", None, 2),
-        ("organized", None, "ses-M12", 0),
-        ("bidsified", "01", "ses-BL", 1),
+        ("organized", None, "M12", 0),
+        ("bidsified", "01", "BL", 1),
     ],
 )
 def test_get_participant_sessions_helper(
@@ -145,25 +145,25 @@ def test_get_participant_sessions_helper(
     ),
     [
         (
-            {"01": ["ses-BL", "ses-M12"], "02": ["ses-BL", "ses-M12"]},
+            {"01": ["BL", "M12"], "02": ["BL", "M12"]},
             {
-                "01": ["ses-BL", "ses-M12"],
-                "02": ["ses-BL", "ses-M12"],
-                "03": ["ses-BL", "ses-M12"],
+                "01": ["BL", "M12"],
+                "02": ["BL", "M12"],
+                "03": ["BL", "M12"],
             },
-            {"01": ["ses-BL", "ses-M12"], "02": ["ses-BL"]},
-            {"01": ["ses-BL"], "02": ["ses-BL"], "03": ["ses-BL"]},
-            {"01": ["ses-BL", "ses-M12"], "03": ["ses-M12"]},
+            {"01": ["BL", "M12"], "02": ["BL"]},
+            {"01": ["BL"], "02": ["BL"], "03": ["BL"]},
+            {"01": ["BL", "M12"], "03": ["M12"]},
             "downloaded",
             "organized",
             "bidsified",
         ),
         (
-            {"PD01": ["ses-BL"], "PD02": ["ses-BL"]},
-            {"PD01": ["ses-BL", "ses-M12"], "PD02": ["ses-BL", "ses-M12"]},
-            {"PD01": ["ses-BL", "ses-M12"], "PD02": ["ses-BL", "ses-M12"]},
-            {"PD01": ["ses-BL"], "PD02": ["ses-BL", "ses-M12"]},
-            {"PD01": ["ses-BL"], "PD02": ["ses-BL"]},
+            {"PD01": ["BL"], "PD02": ["BL"]},
+            {"PD01": ["BL", "M12"], "PD02": ["BL", "M12"]},
+            {"PD01": ["BL", "M12"], "PD02": ["BL", "M12"]},
+            {"PD01": ["BL"], "PD02": ["BL", "M12"]},
+            {"PD01": ["BL"], "PD02": ["BL"]},
             Path("scratch", "raw_dicom"),
             Path("dicom"),
             Path("bids"),
@@ -256,8 +256,8 @@ def test_generate_and_update(
 
 def test_generate_missing_paths(tmp_path: Path):
     participants_and_sessions = {
-        "01": ["ses-BL", "ses-M12"],
-        "02": ["ses-BL", "ses-M12"],
+        "01": ["BL", "M12"],
+        "02": ["BL", "M12"],
     }
 
     dpath_root = tmp_path / "my_dataset"

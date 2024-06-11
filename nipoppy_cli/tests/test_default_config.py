@@ -20,7 +20,7 @@ def single_subject_dataset(
 ) -> DatasetLayout:
     dataset_root = tmp_path / "my_dataset"
     participant = "01"
-    session = "ses-01"
+    session = "01"
     container_command = "apptainer"
     substitutions = {
         "[[NIPOPPY_DPATH_DESCRIPTORS]]": str(DPATH_DESCRIPTORS),

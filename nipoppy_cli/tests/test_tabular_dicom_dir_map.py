@@ -49,8 +49,8 @@ def test_load_or_generate_load(fpath_dicom_dir_map):
 @pytest.mark.parametrize(
     "participant_ids,sessions,participant_first,expected",
     [
-        (["01", "02"], ["ses-1", "ses-2"], True, ["01/ses-1", "02/ses-2"]),
-        (["P01", "P02"], ["ses-BL", "ses-BL"], False, ["ses-BL/P01", "ses-BL/P02"]),
+        (["01", "02"], ["1", "2"], True, ["01/1", "02/2"]),
+        (["P01", "P02"], ["BL", "BL"], False, ["BL/P01", "BL/P02"]),
     ],
 )
 def test_load_or_generate_generate(

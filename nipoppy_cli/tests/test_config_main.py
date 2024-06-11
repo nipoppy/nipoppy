@@ -31,7 +31,7 @@ def valid_config_data():
     return {
         "DATASET_NAME": "my_dataset",
         "VISITS": ["1"],
-        "SESSIONS": ["ses-1"],
+        "SESSIONS": ["1"],
         "BIDS_PIPELINES": [
             {
                 "NAME": "bids_converter",
@@ -106,8 +106,8 @@ def test_check_no_duplicate_pipeline(
 @pytest.mark.parametrize(
     "visits,expected_sessions",
     [
-        (["V01", "V02"], ["ses-V01", "ses-V02"]),
-        (["ses-1", "2"], ["ses-1", "ses-2"]),
+        (["V01", "V02"], ["V01", "V02"]),
+        (["1", "2"], ["1", "2"]),
     ],
 )
 def test_sessions_inferred(visits, expected_sessions):

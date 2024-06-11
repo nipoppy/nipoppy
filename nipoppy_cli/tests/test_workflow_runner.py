@@ -94,7 +94,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     config.save(runner.layout.fpath_config)
 
     participant = "01"
-    session = "ses-BL"
+    session = "BL"
 
     fids.create_fake_bids_dataset(
         runner.layout.dpath_bids,
@@ -124,7 +124,7 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
     config.save(runner.layout.fpath_config)
 
     participant = "01"
-    session = "ses-BL"
+    session = "BL"
 
     # the container command in the config is "echo"
     # because otherwise the check for the container command fails
@@ -140,36 +140,36 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
     [
         (
             [
-                ["01", "ses-1", False],
-                ["01", "ses-2", True],
-                ["01", "ses-3", True],
+                ["01", "1", False],
+                ["01", "2", True],
+                ["01", "3", True],
             ],
             None,
             "dummy_pipeline",
             "1.0.0",
-            [("01", "ses-2"), ("01", "ses-3")],
+            [("01", "2"), ("01", "3")],
         ),
         (
             [
-                ["01", "ses-1", False],
-                ["01", "ses-2", True],
-                ["01", "ses-3", True],
+                ["01", "1", False],
+                ["01", "2", True],
+                ["01", "3", True],
             ],
             [],
             "dummy_pipeline",
             "1.0.0",
-            [("01", "ses-2"), ("01", "ses-3")],
+            [("01", "2"), ("01", "3")],
         ),
         (
             [
-                ["01", "ses-1", False],
-                ["01", "ses-2", True],
-                ["01", "ses-3", True],
+                ["01", "1", False],
+                ["01", "2", True],
+                ["01", "3", True],
             ],
             [
-                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_success],
             ],
             "dummy_pipeline",
             "1.0.0",
@@ -177,35 +177,35 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
         ),
         (
             [
-                ["01", "ses-1", True],
-                ["01", "ses-2", True],
-                ["01", "ses-3", True],
+                ["01", "1", True],
+                ["01", "2", True],
+                ["01", "3", True],
             ],
             [
-                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "ses-1", "dummy_pipeline", "2.0", Bagel.status_success],
+                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "1", "dummy_pipeline", "2.0", Bagel.status_success],
             ],
             "dummy_pipeline",
             "1.0.0",
-            [("01", "ses-1"), ("01", "ses-3")],
+            [("01", "1"), ("01", "3")],
         ),
         (
             [
-                ["01", "ses-1", True],
-                ["01", "ses-2", True],
-                ["01", "ses-3", True],
+                ["01", "1", True],
+                ["01", "2", True],
+                ["01", "3", True],
             ],
             [
-                ["01", "ses-1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "ses-2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "ses-3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "ses-1", "dummy_pipeline", "2.0", Bagel.status_success],
+                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
+                ["01", "1", "dummy_pipeline", "2.0", Bagel.status_success],
             ],
             "dummy_pipeline",
             None,
-            [("01", "ses-1"), ("01", "ses-3")],
+            [("01", "1"), ("01", "3")],
         ),
     ],
 )

@@ -21,8 +21,8 @@ def tracker(tmp_path: Path):
     pipeline_name = "test_pipeline"
     pipeline_version = "0.1.0"
     participants_and_sessions = {
-        "01": ["ses-1", "ses-2"],
-        "02": ["ses-1", "ses-2"],
+        "01": ["1", "2"],
+        "02": ["1", "2"],
     }
 
     tracker = PipelineTracker(
@@ -75,7 +75,7 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
     bagel = Bagel(
         data={
             Bagel.col_participant_id: ["01"],
-            Bagel.col_session: ["ses-1"],
+            Bagel.col_session: ["1"],
             Bagel.col_pipeline_name: ["some_pipeline"],
             Bagel.col_pipeline_version: ["some_version"],
             Bagel.col_pipeline_complete: [Bagel.status_success],
@@ -91,12 +91,12 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
 @pytest.mark.parametrize(
     "relative_paths,expected_status",
     [
-        (["01_ses-1.txt", "file.txt"], Bagel.status_success),
-        (["01_ses-1.txt", "file.txt", "missing.txt"], Bagel.status_fail),
+        (["01_1.txt", "file.txt"], Bagel.status_success),
+        (["01_1.txt", "file.txt", "missing.txt"], Bagel.status_fail),
     ],
 )
 def test_check_status(tracker: PipelineTracker, relative_paths, expected_status):
-    for relative_path_to_write in ["01_ses-1.txt", "file.txt"]:
+    for relative_path_to_write in ["01_1.txt", "file.txt"]:
         fpath = tracker.dpath_pipeline_output / relative_path_to_write
         fpath.mkdir(parents=True, exist_ok=True)
         fpath.touch()
@@ -109,23 +109,23 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
     [
         (
             [
-                ["S01", "ses-1", False],
-                ["S01", "ses-2", True],
-                ["S02", "ses-3", False],
+                ["S01", "1", False],
+                ["S01", "2", True],
+                ["S02", "3", False],
             ],
             None,
             None,
-            [("S01", "ses-2")],
+            [("S01", "2")],
         ),
         (
             [
-                ["P01", "ses-A", False],
-                ["P01", "ses-B", True],
-                ["P02", "ses-B", True],
+                ["P01", "A", False],
+                ["P01", "B", True],
+                ["P02", "B", True],
             ],
             "P01",
-            "ses-B",
-            [("P01", "ses-B")],
+            "B",
+            [("P01", "B")],
         ),
     ],
 )
@@ -165,13 +165,13 @@ def test_get_participants_sessions_to_run(
 
 @pytest.mark.parametrize(
     "participant,session,expected_status",
-    [("01", "ses-1", Bagel.status_success), ("02", "ses-2", Bagel.status_fail)],
+    [("01", "1", Bagel.status_success), ("02", "2", Bagel.status_fail)],
 )
 def test_run_single(participant, session, expected_status, tracker: PipelineTracker):
     for relative_path_to_write in [
-        "01/ses-1/results.txt",
+        "01/1/results.txt",
         "file.txt",
-        "02/ses-1/results.txt",
+        "02/1/results.txt",
     ]:
         fpath = tracker.dpath_pipeline_output / relative_path_to_write
         fpath.mkdir(parents=True, exist_ok=True)
@@ -194,7 +194,7 @@ def test_run_single_multiple_configs(
         {"NAME": "tracker2", "PATHS": ["path2"]},
     ]
     tracker.pipeline_config.TRACKER_CONFIG_FILE.write_text(json.dumps(tracker_configs))
-    tracker.run_single("01", "ses-1")
+    tracker.run_single("01", "1")
 
     assert any(
         [
@@ -208,7 +208,7 @@ def test_run_single_multiple_configs(
 def test_run_single_no_config(tracker: PipelineTracker):
     tracker.pipeline_config.TRACKER_CONFIG_FILE = None
     with pytest.raises(ValueError, match="No tracker config file specified for"):
-        tracker.run_single("01", "ses-1")
+        tracker.run_single("01", "1")
 
 
 @pytest.mark.parametrize(
@@ -218,7 +218,7 @@ def test_run_single_no_config(tracker: PipelineTracker):
         Bagel(
             data={
                 Bagel.col_participant_id: ["01"],
-                Bagel.col_session: ["ses-1"],
+                Bagel.col_session: ["1"],
                 Bagel.col_pipeline_name: ["some_pipeline"],
                 Bagel.col_pipeline_version: ["some_version"],
                 Bagel.col_pipeline_complete: [Bagel.status_success],

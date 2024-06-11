@@ -354,7 +354,7 @@ def test_process_template_json(return_str, tmp_path: Path):
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
         },
         participant="01",
-        session="ses-1",
+        session="1",
         extra1="extra_kwarg",
         objs=[Test()],
         return_str=return_str,
@@ -380,7 +380,7 @@ def test_process_template_json(return_str, tmp_path: Path):
         assert pattern not in processed
 
 
-@pytest.mark.parametrize("participant,session", [("123", None), (None, "ses-1")])
+@pytest.mark.parametrize("participant,session", [("123", None), (None, "1")])
 def test_process_template_json_error(participant, session, tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
@@ -445,11 +445,11 @@ def test_boutiques_config_invalid(tmp_path: Path):
         (None, None, 12),
         ("01", None, 6),
         ("02", None, 6),
-        (None, "ses-1", 5),
-        (None, "ses-2", 5),
-        (None, "ses-3", 2),
-        ("01", "ses-3", 2),
-        ("02", "ses-3", 0),
+        (None, "1", 5),
+        (None, "2", 5),
+        (None, "3", 2),
+        ("01", "3", 2),
+        ("02", "3", 0),
     ],
 )
 def test_set_up_bids_db(
@@ -513,7 +513,7 @@ def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
 
 @pytest.mark.parametrize(
     "participant,session,expected_count",
-    [(None, None, 4), ("01", None, 3), ("01", "ses-2", 1)],
+    [(None, None, 4), ("01", None, 3), ("01", "2", 1)],
 )
 def test_run_main(
     workflow: PipelineWorkflow,
@@ -524,7 +524,7 @@ def test_run_main(
     workflow.participant = participant
     workflow.session = session
 
-    participants_and_sessions = {"01": ["ses-1", "ses-2", "ses-3"], "02": ["ses-1"]}
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
@@ -537,7 +537,7 @@ def test_run_main(
 
 def test_run_main_catch_errors(workflow: PipelineWorkflow):
     workflow.participant = "FAIL"
-    workflow.session = "ses-1"
+    workflow.session = "1"
 
     participants_and_sessions = {workflow.participant: [workflow.session]}
     manifest = prepare_dataset(
@@ -568,7 +568,7 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
             None,
             "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
         ),
-        ("fmriprep", None, None, "ses-1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
+        ("fmriprep", None, None, "1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
     ],
 )
 def test_generate_fpath_log(

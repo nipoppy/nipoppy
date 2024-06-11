@@ -12,9 +12,9 @@ from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    BIDS_SESSION_PREFIX,
-    BIDS_SUBJECT_PREFIX,
     FIELD_DESCRIPTION_MAP,
+    check_participant_id_strict,
+    check_session_strict,
 )
 
 
@@ -41,16 +41,8 @@ class DicomDirMapModel(BaseTabularModel):
     @model_validator(mode="after")
     def validate_after(self) -> Self:
         """Validate participant_id and session fields."""
-        if self.participant_id.startswith(BIDS_SUBJECT_PREFIX):
-            raise ValueError(
-                f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
-                f", got {self.participant_id}"
-            )
-        if not self.session.startswith(BIDS_SESSION_PREFIX):
-            raise ValueError(
-                f'Session should start with "{BIDS_SESSION_PREFIX}"'
-                f", got {self.session}"
-            )
+        check_participant_id_strict(self.participant_id)
+        check_session_strict(self.session)
         return self
 
 

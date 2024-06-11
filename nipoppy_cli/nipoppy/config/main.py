@@ -16,8 +16,6 @@ from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     StrOrPathLike,
     apply_substitutions_to_json,
-    check_session,
-    check_session_strict,
     load_json,
 )
 
@@ -75,12 +73,6 @@ class Config(SchemaWithContainerConfig):
     )
 
     model_config = ConfigDict(extra="forbid")
-
-    def _check_sessions_have_prefix(self) -> Self:
-        """Check that sessions have the BIDS prefix."""
-        for session in self.SESSIONS:
-            check_session_strict(session)
-        return self
 
     def _check_dicom_dir_options(self) -> Self:
         """Check that only one DICOM directory mapping option is given."""
@@ -140,18 +132,15 @@ class Config(SchemaWithContainerConfig):
         key_sessions = "SESSIONS"
         key_visits = "VISITS"
         if isinstance(data, dict):
-            # if sessions are not given, infer from visits
+            # if sessions are not given, set to be the same as visits
             if key_sessions not in data:
-                data[key_sessions] = [
-                    check_session(visit) for visit in data[key_visits]
-                ]
+                data[key_sessions] = data[key_visits]
 
         return data
 
     @model_validator(mode="after")
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
-        self._check_sessions_have_prefix()
         self._check_dicom_dir_options()
         self._check_no_duplicate_pipeline()
         return self

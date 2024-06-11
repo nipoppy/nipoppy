@@ -7,8 +7,8 @@
         ]
     },
     "SESSIONS": [
-        "ses-A",
-        "ses-B"
+        "A",
+        "B"
     ],
     "VISITS": [
         "V01",
