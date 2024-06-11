@@ -43,22 +43,9 @@ FIELD_DESCRIPTION_MAP = {
 }
 
 
-def participant_id_to_dicom_id(participant_id: str):
-    """Convert a participant ID to a BIDS-compatible DICOM ID."""
-    # keep only alphanumeric characters
-    participant_id = str(participant_id)
-    dicom_id = "".join(filter(str.isalnum, participant_id))
-    return dicom_id
-
-
-def dicom_id_to_bids_id(dicom_id: str):
-    """Add the BIDS prefix to a DICOM ID."""
-    return f"{BIDS_SUBJECT_PREFIX}{dicom_id}"
-
-
 def participant_id_to_bids_id(participant_id: str):
     """Convert a participant ID to a BIDS-compatible participant ID."""
-    bids_id = dicom_id_to_bids_id(participant_id_to_dicom_id(participant_id))
+    bids_id = f"{BIDS_SUBJECT_PREFIX}{participant_id}"
     return bids_id
 
 

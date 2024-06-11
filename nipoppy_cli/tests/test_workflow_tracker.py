@@ -146,8 +146,6 @@ def test_get_participants_sessions_to_run(
                 Doughnut.col_bidsified: data[2],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_dicom_id: "",
-                Doughnut.col_bids_id: "",
                 Doughnut.col_downloaded: False,
                 Doughnut.col_organized: False,
             }

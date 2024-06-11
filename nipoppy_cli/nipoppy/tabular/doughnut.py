@@ -12,13 +12,7 @@ from typing_extensions import Self
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
-from nipoppy.utils import (
-    FIELD_DESCRIPTION_MAP,
-    StrOrPathLike,
-    check_session,
-    participant_id_to_bids_id,
-    participant_id_to_dicom_id,
-)
+from nipoppy.utils import StrOrPathLike, check_session, participant_id_to_bids_id
 
 
 class DoughnutModel(ManifestModel):
@@ -39,11 +33,6 @@ class DoughnutModel(ManifestModel):
             "relative to the raw data directory"
         ),
     )
-    dicom_id: str = Field(
-        title="DICOM ID",
-        description="Participant identifier used in DICOM file names/paths",
-    )
-    bids_id: str = Field(title="BIDS ID", description=FIELD_DESCRIPTION_MAP["bids_id"])
     downloaded: bool = Field(description="Whether files are available on disk")
     organized: bool = Field(
         description="Whether files have been organized in the sourcedata directory"
@@ -58,8 +47,6 @@ class Doughnut(Manifest):
 
     # column names
     col_participant_dicom_dir = "participant_dicom_dir"
-    col_dicom_id = "dicom_id"
-    col_bids_id = "bids_id"
     col_downloaded = "downloaded"
     col_organized = "organized"
     col_bidsified = "bidsified"
@@ -73,8 +60,6 @@ class Doughnut(Manifest):
 
     _metadata = Manifest._metadata + [
         "col_participant_dicom_dir",
-        "col_dicom_id",
-        "col_bids_id",
         "col_downloaded",
         "col_organized",
         "col_bidsified",
@@ -199,7 +184,6 @@ def generate_doughnut(
         )
 
         # get DICOM and BIDS IDs
-        dicom_id = participant_id_to_dicom_id(participant)
         bids_id = participant_id_to_bids_id(participant)
         bids_session = check_session(session)
 
@@ -213,7 +197,7 @@ def generate_doughnut(
                 dname_subdirectory=participant_dicom_dir,
             )
             status_organized = check_status(
-                dpath=dpath_organized, dname_subdirectory=Path(dicom_id, session)
+                dpath=dpath_organized, dname_subdirectory=Path(participant, session)
             )
             status_bidsified = check_status(
                 dpath=dpath_bidsified, dname_subdirectory=Path(bids_id, bids_session)
@@ -226,8 +210,6 @@ def generate_doughnut(
                 Doughnut.col_session: session,
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_dicom_dir,
-                Doughnut.col_dicom_id: dicom_id,
-                Doughnut.col_bids_id: bids_id,
                 Doughnut.col_downloaded: status_downloaded,
                 Doughnut.col_organized: status_organized,
                 Doughnut.col_bidsified: status_bidsified,

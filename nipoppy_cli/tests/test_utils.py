@@ -20,11 +20,9 @@ from nipoppy.utils import (
     check_participant_id_strict,
     check_session,
     check_session_strict,
-    dicom_id_to_bids_id,
     get_pipeline_tag,
     load_json,
     participant_id_to_bids_id,
-    participant_id_to_dicom_id,
     process_template_str,
     save_df_with_backup,
     save_json,
@@ -36,24 +34,7 @@ from .conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(
-    "participant_id,expected",
-    [("123", "123"), ("P_123", "P123"), ("sub!@#-", "sub")],
-)
-def test_participant_id_to_dicom_id(participant_id, expected):
-    assert participant_id_to_dicom_id(participant_id) == expected
-
-
-@pytest.mark.parametrize(
-    "dicom_id,expected",
-    [("123", "sub-123"), ("P123", "sub-P123"), ("sub", "sub-sub")],
-)
-def test_dicom_id_to_bids_id(dicom_id, expected):
-    assert dicom_id_to_bids_id(dicom_id) == expected
-
-
-@pytest.mark.parametrize(
-    "participant_id,expected",
-    [("123", "sub-123"), ("P_123", "sub-P123"), ("sub!@#-", "sub-sub")],
+    "participant_id,expected", [("123", "sub-123"), ("sub01", "sub-sub01")]
 )
 def test_participant_id_to_bids_id(participant_id, expected):
     assert participant_id_to_bids_id(participant_id) == expected

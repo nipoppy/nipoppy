@@ -187,8 +187,6 @@ def test_run_regenerate(
                 Doughnut.col_session: manifest_record[Manifest.col_session],
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant,
-                Doughnut.col_dicom_id: participant,
-                Doughnut.col_bids_id: f"sub-{participant}",
                 Doughnut.col_downloaded: True,
                 Doughnut.col_organized: True,
                 Doughnut.col_bidsified: True,

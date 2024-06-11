@@ -1,4 +1,4 @@
-"""Tests for the manifest."""
+"""Tests for the doughnut."""
 
 from contextlib import nullcontext
 from pathlib import Path
@@ -20,8 +20,6 @@ def data():
         Doughnut.col_session: ["BL", "M12", "BL", "M12"],
         Doughnut.col_datatype: ["anat", "anat", "anat", "anat"],
         Doughnut.col_participant_dicom_dir: ["01", "01", "02", "02"],
-        Doughnut.col_dicom_id: ["01", "01", "02", "02"],
-        Doughnut.col_bids_id: ["01", "01", "02", "02"],
         Doughnut.col_downloaded: [True, True, True, False],
         Doughnut.col_organized: [True, False, True, False],
         Doughnut.col_bidsified: [True, False, False, False],
