@@ -29,7 +29,7 @@ class DicomDirMapModel(BaseTabularModel):
     participant_id: str = Field(
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
     )
-    session: str = Field(description=FIELD_DESCRIPTION_MAP["session"])
+    session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session"])
     participant_dicom_dir: str = Field(
         title="Participant's raw DICOM directory",
         description=(
@@ -42,7 +42,7 @@ class DicomDirMapModel(BaseTabularModel):
     def validate_after(self) -> Self:
         """Validate participant_id and session fields."""
         check_participant_id_strict(self.participant_id)
-        check_session_strict(self.session)
+        check_session_strict(self.session_id)
         return self
 
 
@@ -55,7 +55,7 @@ class DicomDirMap(BaseTabular):
 
     # column names
     col_participant_id = "participant_id"
-    col_session = "session"
+    col_session = "session_id"
     col_participant_dicom_dir = "participant_dicom_dir"
 
     index_cols = [col_participant_id, col_session]
