@@ -202,7 +202,7 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         # run pipeline with Boutiques
-        self.launch_boutiques_run(
+        return self.launch_boutiques_run(
             participant_id, session_id, container_command=container_command
         )
 

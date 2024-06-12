@@ -8,7 +8,12 @@ from boutiques import bosh
 
 from nipoppy.config.main import Config
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import DPATH_DESCRIPTORS, DPATH_INVOCATIONS, FPATH_SAMPLE_CONFIG_FULL
+from nipoppy.utils import (
+    DPATH_DESCRIPTORS,
+    DPATH_INVOCATIONS,
+    FPATH_SAMPLE_CONFIG_FULL,
+    TEMPLATE_REPLACE_PATTERN,
+)
 from nipoppy.workflows import BidsConversionRunner, PipelineRunner
 
 from .conftest import create_empty_dataset, prepare_dataset
@@ -77,7 +82,11 @@ def test_boutiques_descriptors(fpath_descriptor):
         ("mriqc", "23.1.0"),
     ],
 )
-def test_pipeline_runner(pipeline_name, pipeline_version, single_subject_dataset):
+def test_pipeline_runner(
+    pipeline_name,
+    pipeline_version,
+    single_subject_dataset,
+):
     layout, participant_id, session_id = single_subject_dataset
     layout: DatasetLayout
     runner = PipelineRunner(
@@ -89,7 +98,12 @@ def test_pipeline_runner(pipeline_name, pipeline_version, single_subject_dataset
 
     runner.pipeline_config.get_fpath_container().touch()
 
-    runner.run_single(participant_id=participant_id, session_id=session_id)
+    invocation_str, descriptor_str = runner.run_single(
+        participant_id=participant_id, session_id=session_id
+    )
+
+    assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
+    assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
 
 
 @pytest.mark.parametrize(
@@ -116,5 +130,9 @@ def test_bids_conversion_runner(
 
     runner.pipeline_config.get_fpath_container().touch()
 
-    print(runner.invocation)
-    runner.run_single(participant_id=participant_id, session_id=session_id)
+    invocation_str, descriptor_str = runner.run_single(
+        participant_id=participant_id, session_id=session_id
+    )
+
+    assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
+    assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None

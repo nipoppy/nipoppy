@@ -84,7 +84,7 @@ class BidsConversionRunner(PipelineRunner):
         )
 
         # run pipeline with Boutiques
-        self.launch_boutiques_run(
+        invocation_and_descriptor = self.launch_boutiques_run(
             participant_id, session_id, container_command=container_command
         )
 
@@ -95,3 +95,5 @@ class BidsConversionRunner(PipelineRunner):
             col=self.doughnut.col_bidsified,
             status=True,
         )
+
+        return invocation_and_descriptor
