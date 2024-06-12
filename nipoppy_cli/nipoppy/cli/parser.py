@@ -46,14 +46,14 @@ def add_arg_simulate(parser: _ActionsContainer) -> _ActionsContainer:
 
 
 def add_args_participant_and_session(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add --participant and --session arguments to the parser."""
+    """Add --participant-id and --session-id arguments to the parser."""
     parser.add_argument(
-        "--participant",
+        "--participant-id",
         required=False,
         help=f"Participant ID (with or without the {BIDS_SUBJECT_PREFIX} prefix).",
     )
     parser.add_argument(
-        "--session",
+        "--session-id",
         required=False,
         help=f"Session ID (with or without the {BIDS_SESSION_PREFIX} prefix).",
     )
