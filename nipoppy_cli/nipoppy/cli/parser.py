@@ -204,7 +204,7 @@ def add_subparser_dicom_reorg(
     """Add subparser for reorg command."""
     description = (
         "(Re)organize raw (DICOM) files, from the raw DICOM directory "
-        f"({DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) to the organized "
+        f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to the organized "
         f"sourcedata directory ({DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
     )
     parser = subparsers.add_parser(

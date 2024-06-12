@@ -48,7 +48,7 @@ class Config(SchemaWithContainerConfig):
         default=None,
         description=(
             "Whether subdirectories under the raw dicom directory (default: "
-            f"{DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) follow the pattern "
+            f"{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) follow the pattern "
             "<PARTICIPANT>/<SESSION> (default) or <SESSION>/<PARTICIPANT>. Note: "
             "this field and and DICOM_DIR_MAP_FILE cannot both be specified"
         ),
