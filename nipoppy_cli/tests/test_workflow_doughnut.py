@@ -81,7 +81,7 @@ def test_run(
 
     # prepare config file
     config = get_config(
-        visits=list(manifest1[Manifest.col_visit_id].unique()),
+        visit_ids=list(manifest1[Manifest.col_visit_id].unique()),
     )
     save_json(config.model_dump(mode="json"), fpath_config)
 
@@ -172,7 +172,7 @@ def test_run_regenerate(
 
     # prepare config file
     config = get_config(
-        visits=list(manifest[Manifest.col_visit_id].unique()),
+        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
     )
     save_json(config.model_dump(mode="json"), fpath_config)
 

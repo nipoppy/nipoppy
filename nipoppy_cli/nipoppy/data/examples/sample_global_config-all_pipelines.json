@@ -1,10 +1,10 @@
 {
     "DATASET_NAME": "<DATASET_NAME>",
-    "VISITS": [
+    "VISIT_IDS": [
         "<VISIT_LABEL>",
         "<OTHER_VISIT_LABEL>"
     ],
-    "SESSIONS": [
+    "SESSION_IDS": [
         "<SESSION_LABEL>",
         "<OTHER_SESSION_LABEL>"
     ],

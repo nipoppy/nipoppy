@@ -76,18 +76,18 @@ def datetime_fixture(
 
 def get_config(
     dataset_name="my_dataset",
-    sessions=None,
-    visits=None,
+    session_ids=None,
+    visit_ids=None,
     bids_pipelines=None,
     proc_pipelines=None,
     container_config=None,
 ):
     """Create a valid Config object with all required parameters."""
     # everything empty by default
-    if sessions is None:
-        sessions = []
-    if visits is None:
-        visits = []
+    if session_ids is None:
+        session_ids = []
+    if visit_ids is None:
+        visit_ids = []
     if bids_pipelines is None:
         bids_pipelines = []
     if proc_pipelines is None:
@@ -97,8 +97,8 @@ def get_config(
 
     return Config(
         DATASET_NAME=dataset_name,
-        VISITS=visits,
-        SESSIONS=sessions,
+        VISIT_IDS=visit_ids,
+        SESSION_IDS=session_ids,
         BIDS_PIPELINES=bids_pipelines,
         PROC_PIPELINES=proc_pipelines,
         CONTAINER_CONFIG=container_config,

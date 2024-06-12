@@ -6,11 +6,11 @@
             "--cleanenv"
         ]
     },
-    "SESSIONS": [
+    "SESSION_IDS": [
         "A",
         "B"
     ],
-    "VISITS": [
+    "VISIT_IDS": [
         "V01",
         "V02"
     ],

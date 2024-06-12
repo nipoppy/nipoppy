@@ -25,7 +25,7 @@ class DicomDirMapModel(BaseTabularModel):
     participant_id: str = Field(
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
     )
-    session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session"])
+    session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
     participant_dicom_dir: str = Field(
         title="Participant's raw DICOM directory",
         description=(

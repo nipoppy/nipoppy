@@ -52,7 +52,7 @@ def config(tmp_path: Path):
     fpath_invocation.write_text(json.dumps(invocation))
 
     return get_config(
-        visits=["BL", "V04"],
+        visit_ids=["BL", "V04"],
         container_config={"COMMAND": "echo"},  # dummy command
         proc_pipelines=[
             {
@@ -249,7 +249,7 @@ def test_get_participants_sessions_to_run(
             bagel_data,
             columns=[
                 Bagel.col_participant_id,
-                Bagel.col_session,
+                Bagel.col_session_id,
                 Bagel.col_pipeline_name,
                 Bagel.col_pipeline_version,
                 Bagel.col_pipeline_complete,

@@ -52,7 +52,7 @@ def tracker(tmp_path: Path):
     fpath_tracker_config.write_text(json.dumps(tracker_config))
 
     config: Config = get_config(
-        visits=["1", "2"],
+        visit_ids=["1", "2"],
         proc_pipelines=[
             {
                 "NAME": pipeline_name,
@@ -75,7 +75,7 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
     bagel = Bagel(
         data={
             Bagel.col_participant_id: ["01"],
-            Bagel.col_session: ["1"],
+            Bagel.col_session_id: ["1"],
             Bagel.col_pipeline_name: ["some_pipeline"],
             Bagel.col_pipeline_version: ["some_version"],
             Bagel.col_pipeline_complete: [Bagel.status_success],
@@ -180,7 +180,7 @@ def test_run_single(
     assert tracker.run_single(participant_id, session_id) == expected_status
 
     assert (
-        tracker.bagel.set_index([Bagel.col_participant_id, Bagel.col_session])
+        tracker.bagel.set_index([Bagel.col_participant_id, Bagel.col_session_id])
         .loc[:, Bagel.col_pipeline_complete]
         .item()
     ) == expected_status
@@ -218,7 +218,7 @@ def test_run_single_no_config(tracker: PipelineTracker):
         Bagel(
             data={
                 Bagel.col_participant_id: ["01"],
-                Bagel.col_session: ["1"],
+                Bagel.col_session_id: ["1"],
                 Bagel.col_pipeline_name: ["some_pipeline"],
                 Bagel.col_pipeline_version: ["some_version"],
                 Bagel.col_pipeline_complete: [Bagel.status_success],

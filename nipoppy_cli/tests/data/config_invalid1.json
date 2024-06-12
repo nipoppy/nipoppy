@@ -1,6 +1,6 @@
 {
     "DATASET_NAME": "my_dataset",
-    "SESSIONS": [
+    "SESSION_IDS": [
         "A",
         "B"
     ]

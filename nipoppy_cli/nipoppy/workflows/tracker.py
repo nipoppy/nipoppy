@@ -107,7 +107,7 @@ class PipelineTracker(BasePipelineWorkflow):
         self.bagel = self.bagel.add_or_update_records(
             {
                 Bagel.col_participant_id: participant_id,
-                Bagel.col_session: session_id,
+                Bagel.col_session_id: session_id,
                 Bagel.col_pipeline_name: self.pipeline_name,
                 Bagel.col_pipeline_version: self.pipeline_version,
                 Bagel.col_pipeline_complete: status,

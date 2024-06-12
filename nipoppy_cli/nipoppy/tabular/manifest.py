@@ -23,8 +23,8 @@ class ManifestModel(BaseTabularModel):
     participant_id: str = Field(
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
     )
-    visit_id: str = Field(description=FIELD_DESCRIPTION_MAP["visit"])
-    session_id: Optional[str] = Field(description=FIELD_DESCRIPTION_MAP["session"])
+    visit_id: str = Field(description=FIELD_DESCRIPTION_MAP["visit_id"])
+    session_id: Optional[str] = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
     datatype: Optional[list[str]] = Field(
         description=(
             "Imaging datatype, as recognized by BIDS (see "
@@ -82,25 +82,27 @@ class Manifest(BaseTabular):
     ]
 
     @classmethod
-    def load(cls, *args, sessions=None, visits=None, validate=True, **kwargs) -> Self:
+    def load(
+        cls, *args, session_ids=None, visit_ids=None, validate=True, **kwargs
+    ) -> Self:
         """Load the manifest."""
         manifest = super().load(*args, validate=validate, **kwargs)
-        manifest.sessions = sessions
-        manifest.visits = visits
+        manifest.session_ids = session_ids
+        manifest.visit_ids = visit_ids
         return manifest
 
-    def __init__(self, *args, sessions=None, visits=None, **kwargs) -> None:
+    def __init__(self, *args, session_ids=None, visit_ids=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.sessions = sessions
-        self.visits = visits
+        self.session_ids = session_ids
+        self.visit_ids = visit_ids
 
     def validate(self, *args, **kwargs) -> Self:
         """Validate the manifest."""
         manifest = super().validate(*args, **kwargs)
-        if self.sessions is not None:
-            self._check_values(self.col_session_id, self.sessions)
-        if self.visits is not None:
-            self._check_values(self.col_visit_id, self.visits)
+        if self.session_ids is not None:
+            self._check_values(self.col_session_id, self.session_ids)
+        if self.visit_ids is not None:
+            self._check_values(self.col_visit_id, self.visit_ids)
         return manifest
 
     def _check_values(self, col, allowed_values) -> Self:

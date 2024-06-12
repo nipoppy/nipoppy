@@ -73,7 +73,7 @@ def workflow(tmp_path: Path):
     )
     # write config
     config = get_config(
-        visits=["1"],
+        visit_ids=["1"],
         bids_pipelines=[
             # built-in pipelines
             {

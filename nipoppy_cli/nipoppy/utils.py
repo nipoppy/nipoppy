@@ -36,10 +36,12 @@ FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 
 # descriptions for common fields in the Pydantic models
 FIELD_DESCRIPTION_MAP = {
-    "bids_id": "BIDS-compliant participant identifier (e.g., sub-01)",
-    "participant_id": "Participant identifier",
-    "session": "BIDS-compliant identifier imaging session (e.g., ses-1)",
-    "visit": "Visit identifier",
+    "participant_id": "Participant identifier, without the BIDS prefix",
+    "session_id": "Imaging session identifier, without the BIDS prefix",
+    "bids_participant": "Participant identifier with BIDS prefix (e.g., sub-01)",
+    # only for bagel
+    "bids_session": "Participant identifier with BIDS prefix (e.g., sub-01)",
+    "visit_id": "Visit identifier",
 }
 
 

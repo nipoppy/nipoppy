@@ -49,7 +49,7 @@ def test_validate(fpath, is_valid):
 
 
 @pytest.mark.parametrize(
-    "sessions,visits,is_valid",
+    "session_ids,visit_ids,is_valid",
     [
         (None, None, True),
         (["BL", "M12"], ["BL", "M12"], True),
@@ -57,11 +57,11 @@ def test_validate(fpath, is_valid):
         (["BL", "M12"], ["M12"], False),
     ],
 )
-def test_validate_sessions_visits(sessions, visits, is_valid):
+def test_validate_sessions_visits(session_ids, visit_ids, is_valid):
     manifest = Manifest.load(
         DPATH_TEST_DATA / "manifest1.csv",
-        sessions=sessions,
-        visits=visits,
+        session_ids=session_ids,
+        visit_ids=visit_ids,
         validate=False,
     )
     with pytest.raises(ValueError) if not is_valid else nullcontext():
