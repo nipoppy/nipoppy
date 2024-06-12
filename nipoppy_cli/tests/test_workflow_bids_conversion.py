@@ -47,24 +47,9 @@ def test_setup(config: Config, tmp_path: Path):
     [
         (
             [
-                {
-                    Doughnut.col_participant_id: "S01",
-                    Doughnut.col_session: "1",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
-                {
-                    Doughnut.col_participant_id: "S01",
-                    Doughnut.col_session: "2",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: True,
-                },
-                {
-                    Doughnut.col_participant_id: "S02",
-                    Doughnut.col_session: "3",
-                    Doughnut.col_organized: False,
-                    Doughnut.col_bidsified: False,
-                },
+                ["S01", "1", True, False],
+                ["S01", "2", True, True],
+                ["S02", "3", False, False],
             ],
             None,
             None,
@@ -72,24 +57,9 @@ def test_setup(config: Config, tmp_path: Path):
         ),
         (
             [
-                {
-                    Doughnut.col_participant_id: "P01",
-                    Doughnut.col_session: "A",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
-                {
-                    Doughnut.col_participant_id: "P01",
-                    Doughnut.col_session: "B",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
-                {
-                    Doughnut.col_participant_id: "P02",
-                    Doughnut.col_session: "B",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
+                ["P01", "A", True, False],
+                ["P01", "B", True, False],
+                ["P02", "B", True, False],
             ],
             "P01",
             "B",
@@ -109,8 +79,11 @@ def test_get_participants_sessions_to_run(
     workflow.doughnut = Doughnut().add_or_update_records(
         records=[
             {
-                **data,
-                Doughnut.col_visit: data[Doughnut.col_session],
+                Doughnut.col_participant_id: data[0],
+                Doughnut.col_session_id: data[1],
+                Doughnut.col_organized: data[2],
+                Doughnut.col_bidsified: data[3],
+                Doughnut.col_visit_id: data[1],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
                 Doughnut.col_downloaded: False,

@@ -277,8 +277,8 @@ def prepare_dataset(
             data_manifest.append(
                 {
                     Manifest.col_participant_id: participant_id,
-                    Manifest.col_session: session_id,
-                    Manifest.col_visit: session_id,
+                    Manifest.col_session_id: session_id,
+                    Manifest.col_visit_id: session_id,
                     Manifest.col_datatype: [],
                 }
             )
@@ -340,7 +340,7 @@ def check_doughnut(
                 }.items():
                     status: pd.Series = doughnut.loc[
                         (doughnut[doughnut.col_participant_id] == participant_id)
-                        & (doughnut[doughnut.col_session] == session_id),
+                        & (doughnut[doughnut.col_session_id] == session_id),
                         col,
                     ]
 

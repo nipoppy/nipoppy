@@ -63,19 +63,19 @@ class Manifest(BaseTabular):
 
     # column names
     col_participant_id = "participant_id"
-    col_visit = "visit_id"
-    col_session = "session_id"
+    col_visit_id = "visit_id"
+    col_session_id = "session_id"
     col_datatype = "datatype"
 
-    index_cols = [col_participant_id, col_visit]
+    index_cols = [col_participant_id, col_visit_id]
 
     # set the model
     model = ManifestModel
 
     _metadata = BaseTabular._metadata + [
         "col_participant_id",
-        "col_visit",
-        "col_session",
+        "col_visit_id",
+        "col_session_id",
         "col_datatype",
         "index_cols",
         "model",
@@ -98,9 +98,9 @@ class Manifest(BaseTabular):
         """Validate the manifest."""
         manifest = super().validate(*args, **kwargs)
         if self.sessions is not None:
-            self._check_values(self.col_session, self.sessions)
+            self._check_values(self.col_session_id, self.sessions)
         if self.visits is not None:
-            self._check_values(self.col_visit, self.visits)
+            self._check_values(self.col_visit_id, self.visits)
         return manifest
 
     def _check_values(self, col, allowed_values) -> Self:
@@ -115,9 +115,9 @@ class Manifest(BaseTabular):
 
     def get_imaging_subset(self, session_id: Optional[str] = None):
         """Get records with imaging data."""
-        manifest = self[self[self.col_session].notna()]
+        manifest = self[self[self.col_session_id].notna()]
         if session_id is not None:
-            return manifest[manifest[self.col_session] == session_id]
+            return manifest[manifest[self.col_session_id] == session_id]
         return manifest
 
     def get_participants_sessions(
@@ -129,16 +129,16 @@ class Manifest(BaseTabular):
         else:
             participant_ids = {participant_id}
         if session_id is None:
-            session_ids = self[self.col_session]
+            session_ids = self[self.col_session_id]
             session_ids = set(session_ids[session_ids.notna()])
         else:
             session_ids = {session_id}
 
         manifest_subset = self[
             (self[self.col_participant_id].isin(participant_ids))
-            & (self[self.col_session].isin(session_ids))
+            & (self[self.col_session_id].isin(session_ids))
         ]
 
         yield from manifest_subset[
-            [self.col_participant_id, self.col_session]
+            [self.col_participant_id, self.col_session_id]
         ].itertuples(index=False)

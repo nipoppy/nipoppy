@@ -293,7 +293,7 @@ def test_get_participants_sessions_to_run(
 
     config = get_config(
         dataset_name=dataset_name,
-        visits=list(manifest[Manifest.col_visit].unique()),
+        visits=list(manifest[Manifest.col_visit_id].unique()),
     )
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)
@@ -317,7 +317,7 @@ def test_run_setup(tmp_path: Path):
 
     config = get_config(
         dataset_name=dataset_name,
-        visits=list(manifest1[Manifest.col_visit].unique()),
+        visits=list(manifest1[Manifest.col_visit_id].unique()),
     )
     config.save(workflow.layout.fpath_config)
 
@@ -387,7 +387,7 @@ def test_run_main(
 
     config = get_config(
         dataset_name=dataset_name,
-        visits=list(manifest[Manifest.col_visit].unique()),
+        visits=list(manifest[Manifest.col_visit_id].unique()),
     )
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)

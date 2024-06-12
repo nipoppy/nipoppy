@@ -51,17 +51,17 @@ class DicomDirMap(BaseTabular):
 
     # column names
     col_participant_id = "participant_id"
-    col_session = "session_id"
+    col_session_id = "session_id"
     col_participant_dicom_dir = "participant_dicom_dir"
 
-    index_cols = [col_participant_id, col_session]
+    index_cols = [col_participant_id, col_session_id]
 
     # set the model
     model = DicomDirMapModel
 
     _metadata = BaseTabular._metadata + [
         "col_participant_id",
-        "col_session",
+        "col_session_id",
         "col_participant_dicom_dir",
         "index_cols",
         "model",
@@ -112,7 +112,7 @@ class DicomDirMap(BaseTabular):
                 data_dicom_dir_map.append(
                     {
                         cls.col_participant_id: participant_id,
-                        cls.col_session: session_id,
+                        cls.col_session_id: session_id,
                         cls.col_participant_dicom_dir: participant_dicom_dir,
                     }
                 )

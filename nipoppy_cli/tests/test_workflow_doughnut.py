@@ -81,7 +81,7 @@ def test_run(
 
     # prepare config file
     config = get_config(
-        visits=list(manifest1[Manifest.col_visit].unique()),
+        visits=list(manifest1[Manifest.col_visit_id].unique()),
     )
     save_json(config.model_dump(mode="json"), fpath_config)
 
@@ -172,7 +172,7 @@ def test_run_regenerate(
 
     # prepare config file
     config = get_config(
-        visits=list(manifest[Manifest.col_visit].unique()),
+        visits=list(manifest[Manifest.col_visit_id].unique()),
     )
     save_json(config.model_dump(mode="json"), fpath_config)
 
@@ -183,8 +183,8 @@ def test_run_regenerate(
         doughnut_records.append(
             {
                 Doughnut.col_participant_id: participant_id,
-                Doughnut.col_visit: manifest_record[Manifest.col_visit],
-                Doughnut.col_session: manifest_record[Manifest.col_session],
+                Doughnut.col_visit_id: manifest_record[Manifest.col_visit_id],
+                Doughnut.col_session_id: manifest_record[Manifest.col_session_id],
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_id,
                 Doughnut.col_downloaded: True,

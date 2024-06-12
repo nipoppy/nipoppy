@@ -59,8 +59,8 @@ def test_load_or_generate_generate(
     manifest = Manifest(
         data={
             Manifest.col_participant_id: participant_ids,
-            Manifest.col_visit: sessions,
-            Manifest.col_session: sessions,
+            Manifest.col_visit_id: sessions,
+            Manifest.col_session_id: sessions,
             Manifest.col_datatype: [[] for _ in participant_ids],
         }
     )

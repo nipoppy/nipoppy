@@ -107,8 +107,8 @@ def test_get_imaging_subset(data, session_id, expected_count):
     manifest = Manifest(
         {
             Manifest.col_participant_id: data[0],
-            Manifest.col_visit: data[1],
-            Manifest.col_session: data[2],
+            Manifest.col_visit_id: data[1],
+            Manifest.col_session_id: data[2],
             Manifest.col_datatype: data[3],
         }
     )

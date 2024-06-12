@@ -233,8 +233,8 @@ def test_get_participants_sessions_to_run(
         records=[
             {
                 Doughnut.col_participant_id: data[0],
-                Doughnut.col_session: data[1],
-                Doughnut.col_visit: data[1],
+                Doughnut.col_session_id: data[1],
+                Doughnut.col_visit_id: data[1],
                 Doughnut.col_bidsified: data[2],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",

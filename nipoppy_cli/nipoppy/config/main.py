@@ -40,7 +40,7 @@ class Config(SchemaWithContainerConfig):
             ", to be used in the DICOM reorg step. Note: this field and "
             "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified"
             f'. The CSV should have three columns: "{DicomDirMap.col_participant_id}"'
-            f' , "{DicomDirMap.col_session}"'
+            f' , "{DicomDirMap.col_session_id}"'
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),
     )

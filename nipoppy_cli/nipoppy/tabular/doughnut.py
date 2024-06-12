@@ -60,7 +60,7 @@ class Doughnut(Manifest):
     # set the model
     model = DoughnutModel
 
-    index_cols = [Manifest.col_participant_id, Manifest.col_session]
+    index_cols = [Manifest.col_participant_id, Manifest.col_session_id]
 
     _metadata = Manifest._metadata + [
         "col_participant_dicom_dir",
@@ -180,7 +180,7 @@ def generate_doughnut(
     doughnut_records = []
     for _, manifest_record in manifest_imaging_only.iterrows():
         participant_id = manifest_record[manifest.col_participant_id]
-        session_id = manifest_record[manifest.col_session]
+        session_id = manifest_record[manifest.col_session_id]
 
         # get DICOM dir
         participant_dicom_dir = dicom_dir_map.get_dicom_dir(
@@ -212,8 +212,8 @@ def generate_doughnut(
         doughnut_records.append(
             {
                 Doughnut.col_participant_id: participant_id,
-                Doughnut.col_visit: manifest_record[Manifest.col_visit],
-                Doughnut.col_session: session_id,
+                Doughnut.col_visit_id: manifest_record[Manifest.col_visit_id],
+                Doughnut.col_session_id: session_id,
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_dicom_dir,
                 Doughnut.col_downloaded: status_downloaded,

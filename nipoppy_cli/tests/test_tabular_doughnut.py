@@ -16,8 +16,8 @@ from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 def data():
     return {
         Doughnut.col_participant_id: ["01", "01", "02", "02"],
-        Doughnut.col_visit: ["BL", "M12", "BL", "M12"],
-        Doughnut.col_session: ["BL", "M12", "BL", "M12"],
+        Doughnut.col_visit_id: ["BL", "M12", "BL", "M12"],
+        Doughnut.col_session_id: ["BL", "M12", "BL", "M12"],
         Doughnut.col_datatype: ["anat", "anat", "anat", "anat"],
         Doughnut.col_participant_dicom_dir: ["01", "01", "02", "02"],
         Doughnut.col_downloaded: [True, True, True, False],
