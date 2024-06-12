@@ -325,18 +325,18 @@ def check_doughnut(
     """Check that a doughnut has the corrected statuses."""
     if empty:
         for col in [
-            doughnut.col_downloaded,
-            doughnut.col_organized,
-            doughnut.col_bidsified,
+            doughnut.col_in_raw_imaging,
+            doughnut.col_in_sourcedata,
+            doughnut.col_in_bids,
         ]:
             assert (~doughnut[col]).all()
     else:
         for participant_id in participants_and_sessions_manifest:
             for session_id in participants_and_sessions_manifest[participant_id]:
                 for col, participants_and_sessions_true in {
-                    doughnut.col_downloaded: participants_and_sessions_downloaded,
-                    doughnut.col_organized: participants_and_sessions_organized,
-                    doughnut.col_bidsified: participants_and_sessions_bidsified,
+                    doughnut.col_in_raw_imaging: participants_and_sessions_downloaded,
+                    doughnut.col_in_sourcedata: participants_and_sessions_organized,
+                    doughnut.col_in_bids: participants_and_sessions_bidsified,
                 }.items():
                     status: pd.Series = doughnut.loc[
                         (doughnut[doughnut.col_participant_id] == participant_id)

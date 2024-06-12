@@ -37,11 +37,11 @@ class DoughnutModel(ManifestModel):
             "relative to the raw data directory"
         ),
     )
-    downloaded: bool = Field(description="Whether files are available on disk")
-    organized: bool = Field(
+    in_raw_imaging: bool = Field(description="Whether files are available on disk")
+    in_sourcedata: bool = Field(
         description="Whether files have been organized in the sourcedata directory"
     )
-    bidsified: bool = Field(
+    in_bids: bool = Field(
         title="BIDSified", description="Whether files have been converted to BIDS"
     )
 
@@ -51,11 +51,11 @@ class Doughnut(Manifest):
 
     # column names
     col_participant_dicom_dir = "participant_dicom_dir"
-    col_downloaded = "downloaded"
-    col_organized = "organized"
-    col_bidsified = "bidsified"
+    col_in_raw_imaging = "in_raw_imaging"
+    col_in_sourcedata = "in_sourcedata"
+    col_in_bids = "in_bids"
 
-    status_cols = [col_downloaded, col_organized, col_bidsified]
+    status_cols = [col_in_raw_imaging, col_in_sourcedata, col_in_bids]
 
     # set the model
     model = DoughnutModel
@@ -64,9 +64,9 @@ class Doughnut(Manifest):
 
     _metadata = Manifest._metadata + [
         "col_participant_dicom_dir",
-        "col_downloaded",
-        "col_organized",
-        "col_bidsified",
+        "col_in_raw_imaging",
+        "col_in_sourcedata",
+        "col_in_bids",
     ]
 
     @classmethod
@@ -117,7 +117,9 @@ class Doughnut(Manifest):
     ):
         """Get participants and sessions with downloaded data."""
         return self._get_participant_sessions_helper(
-            self.col_downloaded, participant_id=participant_id, session_id=session_id
+            self.col_in_raw_imaging,
+            participant_id=participant_id,
+            session_id=session_id,
         )
 
     def get_organized_participants_sessions(
@@ -127,7 +129,7 @@ class Doughnut(Manifest):
     ):
         """Get participants and sessions with organized data."""
         return self._get_participant_sessions_helper(
-            self.col_organized, participant_id=participant_id, session_id=session_id
+            self.col_in_sourcedata, participant_id=participant_id, session_id=session_id
         )
 
     def get_bidsified_participants_sessions(
@@ -137,7 +139,7 @@ class Doughnut(Manifest):
     ):
         """Get participants and sessions with BIDS data."""
         return self._get_participant_sessions_helper(
-            self.col_bidsified, participant_id=participant_id, session_id=session_id
+            self.col_in_bids, participant_id=participant_id, session_id=session_id
         )
 
 
@@ -216,9 +218,9 @@ def generate_doughnut(
                 Doughnut.col_session_id: session_id,
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_dicom_dir,
-                Doughnut.col_downloaded: status_downloaded,
-                Doughnut.col_organized: status_organized,
-                Doughnut.col_bidsified: status_bidsified,
+                Doughnut.col_in_raw_imaging: status_downloaded,
+                Doughnut.col_in_sourcedata: status_organized,
+                Doughnut.col_in_bids: status_bidsified,
             }
         )
 

@@ -137,7 +137,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         self.doughnut.set_status(
             participant_id=participant_id,
             session_id=session_id,
-            col=self.doughnut.col_organized,
+            col=self.doughnut.col_in_sourcedata,
             status=True,
         )
 

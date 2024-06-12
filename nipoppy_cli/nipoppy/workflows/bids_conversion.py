@@ -92,7 +92,7 @@ class BidsConversionRunner(PipelineRunner):
         self.doughnut.set_status(
             participant_id=participant_id,
             session_id=session_id,
-            col=self.doughnut.col_bidsified,
+            col=self.doughnut.col_in_bids,
             status=True,
         )
 

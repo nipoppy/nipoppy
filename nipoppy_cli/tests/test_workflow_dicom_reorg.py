@@ -425,7 +425,7 @@ def test_run_main(
                 assert workflow.doughnut.get_status(
                     participant_id=participant_id,
                     session_id=session_id,
-                    col=workflow.doughnut.col_organized,
+                    col=workflow.doughnut.col_in_sourcedata,
                 )
 
             else:

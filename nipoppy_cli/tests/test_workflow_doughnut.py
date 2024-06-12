@@ -187,9 +187,9 @@ def test_run_regenerate(
                 Doughnut.col_session_id: manifest_record[Manifest.col_session_id],
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_id,
-                Doughnut.col_downloaded: True,
-                Doughnut.col_organized: True,
-                Doughnut.col_bidsified: True,
+                Doughnut.col_in_raw_imaging: True,
+                Doughnut.col_in_sourcedata: True,
+                Doughnut.col_in_bids: True,
             }
         )
     doughnut_old = Doughnut(doughnut_records)

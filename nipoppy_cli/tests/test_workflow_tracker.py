@@ -143,11 +143,11 @@ def test_get_participants_sessions_to_run(
                 Doughnut.col_participant_id: data[0],
                 Doughnut.col_session_id: data[1],
                 Doughnut.col_visit_id: data[1],
-                Doughnut.col_bidsified: data[2],
+                Doughnut.col_in_bids: data[2],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_downloaded: False,
-                Doughnut.col_organized: False,
+                Doughnut.col_in_raw_imaging: False,
+                Doughnut.col_in_sourcedata: False,
             }
             for data in doughnut_data
         ]
