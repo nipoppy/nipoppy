@@ -15,7 +15,7 @@ from fids.fids import create_fake_bids_dataset
 from nipoppy.config.main import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import StrOrPathLike, strip_session
+from nipoppy.utils import StrOrPathLike, check_session, participant_id_to_bids_id
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.csv"
@@ -126,7 +126,7 @@ def _process_participants_sessions(
     return participants_and_sessions
 
 
-def _fake_dicoms(
+def _fake_dicoms(  # noqa: C901
     dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
     participants: Optional[list[str]] = None,
@@ -137,6 +137,7 @@ def _fake_dicoms(
     min_n_subdir_levels: int = 1,
     max_n_subdir_levels: int = 2,
     participant_first: bool = True,
+    with_prefixes: bool = False,
     max_dname_dicom: int = 1000000,
     rng_seed: int = 3791,
 ):
@@ -158,11 +159,15 @@ def _fake_dicoms(
 
     rng = np.random.default_rng(rng_seed)
 
-    dpath = Path(dpath)
+    dpath: Path = Path(dpath)
     dpath.mkdir(parents=True, exist_ok=True)
 
     for participant, participant_sessions in participants_and_sessions.items():
+        if with_prefixes:
+            participant = participant_id_to_bids_id(participant)
         for session in participant_sessions:
+            if with_prefixes:
+                session = check_session(session)
             if participant_first:
                 dpath_dicom_parent = dpath / participant / session
             else:
@@ -245,6 +250,7 @@ def fake_dicoms_organized(
         min_n_subdir_levels=0,
         max_n_subdir_levels=0,
         participant_first=participant_first,
+        with_prefixes=True,
         max_dname_dicom=max_dname_dicom,
         rng_seed=rng_seed,
     )
@@ -297,7 +303,7 @@ def prepare_dataset(
             create_fake_bids_dataset(
                 Path(dpath_bidsified),
                 subjects=participant,
-                sessions=[strip_session(session) for session in sessions],
+                sessions=sessions,
                 datatypes=["anat"],
             )
 

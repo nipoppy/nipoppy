@@ -8,7 +8,7 @@ from typing import Optional
 import pydicom
 
 from nipoppy.tabular.doughnut import update_doughnut
-from nipoppy.utils import StrOrPathLike
+from nipoppy.utils import StrOrPathLike, check_session, participant_id_to_bids_id
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -87,9 +87,14 @@ class DicomReorgWorkflow(BaseWorkflow):
         # get paths to reorganize
         fpaths_to_reorg = self.get_fpaths_to_reorg(participant, session)
 
-        # do reorg
-        dpath_reorganized: Path = self.layout.dpath_sourcedata / participant / session
+        dpath_reorganized: Path = (
+            self.layout.dpath_sourcedata
+            / participant_id_to_bids_id(participant)
+            / check_session(session)
+        )
         self.mkdir(dpath_reorganized)
+
+        # do reorg
         for fpath_source in fpaths_to_reorg:
             # check file (though only error out if DICOM cannot be read)
             if self.check_dicoms:

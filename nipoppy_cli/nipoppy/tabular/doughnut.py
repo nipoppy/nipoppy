@@ -197,7 +197,7 @@ def generate_doughnut(
                 dname_subdirectory=participant_dicom_dir,
             )
             status_organized = check_status(
-                dpath=dpath_organized, dname_subdirectory=Path(participant, session)
+                dpath=dpath_organized, dname_subdirectory=Path(bids_id, bids_session)
             )
             status_bidsified = check_status(
                 dpath=dpath_bidsified, dname_subdirectory=Path(bids_id, bids_session)

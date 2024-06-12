@@ -8,6 +8,7 @@ import pytest
 
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.utils import check_session, participant_id_to_bids_id
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
 from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
@@ -139,7 +140,10 @@ def test_run_single_error_file_exists(tmp_path: Path):
     fname = "test.dcm"
     for fpath in [
         workflow.layout.dpath_raw_dicom / participant / session / fname,
-        workflow.layout.dpath_sourcedata / participant / session / fname,
+        workflow.layout.dpath_sourcedata
+        / participant_id_to_bids_id(participant)
+        / check_session(session)
+        / fname,
     ]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
@@ -390,7 +394,9 @@ def test_run_main(
     for participant, sessions in participants_and_sessions_manifest.items():
         for session in sessions:
             dpath_to_check: Path = (
-                workflow.layout.dpath_sourcedata / participant / session
+                workflow.layout.dpath_sourcedata
+                / participant_id_to_bids_id(participant)
+                / check_session(session)
             )
 
             if (
