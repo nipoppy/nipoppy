@@ -75,8 +75,8 @@ class BidsConversionRunner(PipelineRunner):
         """Run BIDS conversion on a single participant/session."""
         # get container command
         container_command = self.process_container_config(
-            participant=participant,
-            session=session,
+            participant_id=participant,
+            session_id=session,
             bind_paths=[
                 self.layout.dpath_sourcedata,
                 self.layout.dpath_bids,

@@ -54,7 +54,7 @@
             "list": true,
             "command-line-flag": "--participant-label",
             "default-value": [
-                "[[NIPOPPY_PARTICIPANT]]"
+                "[[NIPOPPY_PARTICIPANT_ID]]"
             ]
         },
         {
@@ -509,7 +509,7 @@
             "type": "String",
             "value-key": "[FS_SUBJECTS_DIR]",
             "command-line-flag": "--fs-subjects-dir",
-            "default-value": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_SESSION]]"
+            "default-value": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION]]"
         },
         {
             "id": "hires",
@@ -663,14 +663,14 @@
             "CONTAINER_CONFIG": {
                 "ARGS": [
                     "--bind",
-                    "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_SESSION]]"
+                    "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION]]"
                 ]
             }
         },
         "nipoppy_old": {
             "paths_to_tar": [
-                "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/sub-[[NIPOPPY_PARTICIPANT]]/ses-[[NIPOPPY_SESSION]]",
-                "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_SESSION]]/sub-[[NIPOPPY_PARTICIPANT]]"
+                "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/sub-[[NIPOPPY_PARTICIPANT_ID]]/ses-[[NIPOPPY_BIDS_SESSION]]",
+                "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION]]/sub-[[NIPOPPY_PARTICIPANT_ID]]"
             ]
         }
     }

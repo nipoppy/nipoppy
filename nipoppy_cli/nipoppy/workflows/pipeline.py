@@ -30,6 +30,7 @@ from nipoppy.utils import (
     load_json,
     participant_id_to_bids_participant,
     process_template_str,
+    session_id_to_bids_session,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -216,35 +217,35 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def process_template_json(
         self,
         template_json: dict,
-        participant: str,
-        session: str,
-        bids_id: Optional[str] = None,
-        session_short: Optional[str] = None,
+        participant_id: str,
+        session_id: str,
+        bids_participant: Optional[str] = None,
+        bids_session: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
-        if not (isinstance(participant, str) and isinstance(session, str)):
+        if not (isinstance(participant_id, str) and isinstance(session_id, str)):
             raise ValueError(
-                "participant and session must be strings"
-                f", got {participant} ({type(participant)})"
-                f" and {session} ({type(session)})"
+                "participant_id and session_id must be strings"
+                f", got {participant_id} ({type(participant_id)})"
+                f" and {session_id} ({type(session_id)})"
             )
 
-        if bids_id is None:
-            bids_id = participant_id_to_bids_participant(participant)
-        if session_short is None:
-            session_short = session
+        if bids_participant is None:
+            bids_participant = participant_id_to_bids_participant(participant_id)
+        if bids_session is None:
+            bids_session = session_id_to_bids_session(session_id)
 
         if objs is None:
             objs = []
         objs.extend([self, self.layout])
 
-        kwargs["participant"] = participant
-        kwargs["session"] = session
-        kwargs["bids_id"] = bids_id
-        kwargs["session_short"] = session_short
+        kwargs["participant_id"] = participant_id
+        kwargs["session_id"] = session_id
+        kwargs["bids_participant"] = bids_participant
+        kwargs["bids_session"] = bids_session
 
         self.logger.debug("Available replacement strings: ")
         max_len = max(len(k) for k in kwargs)

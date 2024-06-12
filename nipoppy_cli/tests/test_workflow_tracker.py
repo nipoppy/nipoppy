@@ -44,7 +44,7 @@ def tracker(tmp_path: Path):
         {
             "NAME": "pipeline_complete",
             "PATHS": [
-                "[[NIPOPPY_PARTICIPANT]]/[[NIPOPPY_SESSION]]/results.txt",
+                "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION]]/results.txt",
                 "file.txt",
             ],
         },
@@ -91,12 +91,12 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
 @pytest.mark.parametrize(
     "relative_paths,expected_status",
     [
-        (["01_1.txt", "file.txt"], Bagel.status_success),
-        (["01_1.txt", "file.txt", "missing.txt"], Bagel.status_fail),
+        (["01_ses-1.txt", "file.txt"], Bagel.status_success),
+        (["01_ses-1.txt", "file.txt", "missing.txt"], Bagel.status_fail),
     ],
 )
 def test_check_status(tracker: PipelineTracker, relative_paths, expected_status):
-    for relative_path_to_write in ["01_1.txt", "file.txt"]:
+    for relative_path_to_write in ["01_ses-1.txt", "file.txt"]:
         fpath = tracker.dpath_pipeline_output / relative_path_to_write
         fpath.mkdir(parents=True, exist_ok=True)
         fpath.touch()
@@ -167,9 +167,9 @@ def test_get_participants_sessions_to_run(
 )
 def test_run_single(participant, session, expected_status, tracker: PipelineTracker):
     for relative_path_to_write in [
-        "01/1/results.txt",
+        "01/ses-1/results.txt",
         "file.txt",
-        "02/1/results.txt",
+        "02/ses-1/results.txt",
     ]:
         fpath = tracker.dpath_pipeline_output / relative_path_to_write
         fpath.mkdir(parents=True, exist_ok=True)

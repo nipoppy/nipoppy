@@ -44,7 +44,7 @@ def config(tmp_path: Path):
         "custom": {"nipoppy": {"CONTAINER_SUBCOMMAND": "exec"}},
     }
     invocation = {
-        "arg1": "[[NIPOPPY_PARTICIPANT]] [[NIPOPPY_SESSION]]",
+        "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION]]",
         "arg2": 10,
     }
 
@@ -108,8 +108,8 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     )
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
-    assert "[[NIPOPPY_PARTICIPANT]]" not in invocation_str
-    assert "[[NIPOPPY_SESSION]]" not in invocation_str
+    assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
+    assert "[[NIPOPPY_BIDS_SESSION]]" not in invocation_str
 
 
 def test_process_container_config_boutiques_subcommand(config: Config, tmp_path: Path):
@@ -122,14 +122,16 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
 
     config.save(runner.layout.fpath_config)
 
-    participant = "01"
-    session = "BL"
+    participant_id = "01"
+    session_id = "BL"
 
     # the container command in the config is "echo"
     # because otherwise the check for the container command fails
     # if Singularity/Apptainer is not on the PATH
     assert (
-        runner.process_container_config(participant=participant, session=session)
+        runner.process_container_config(
+            participant_id=participant_id, session_id=session_id
+        )
         == "echo exec"
     )
 

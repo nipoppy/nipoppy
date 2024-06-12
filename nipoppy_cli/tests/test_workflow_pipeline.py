@@ -363,13 +363,13 @@ def test_process_template_json(return_str, tmp_path: Path):
 
     processed = workflow.process_template_json(
         {
-            "[[NIPOPPY_BIDS_ID]]": "[[NIPOPPY_PARTICIPANT]]",
-            "[[NIPOPPY_SESSION]]": "[[NIPOPPY_SESSION_SHORT]]",
+            "[[NIPOPPY_BIDS_PARTICIPANT]]": "[[NIPOPPY_PARTICIPANT_ID]]",
+            "[[NIPOPPY_BIDS_SESSION]]": "[[NIPOPPY_SESSION_ID]]",
             "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
         },
-        participant="01",
-        session="1",
+        participant_id="01",
+        session_id="1",
         extra1="extra_kwarg",
         objs=[Test()],
         return_str=return_str,
@@ -383,10 +383,10 @@ def test_process_template_json(return_str, tmp_path: Path):
 
     # check that everything was replaced
     for pattern in [
-        "[[NIPOPPY_BIDS_ID]]",
-        "[[NIPOPPY_PARTICIPANT]]",
-        "[[NIPOPPY_SESSION]]",
-        "[[NIPOPPY_SESSION_SHORT]]",
+        "[[NIPOPPY_BIDS_PARTICIPANT]]",
+        "[[NIPOPPY_PARTICIPANT_ID]]",
+        "[[NIPOPPY_BIDS_SESSION]]",
+        "[[NIPOPPY_SESSION_ID]]",
         "[[NIPOPPY_DPATH_PIPELINE]]",
         "[[NIPOPPY_DPATH_BIDS]]",
         "[[NIPOPPY_EXTRA1]]",
@@ -395,19 +395,21 @@ def test_process_template_json(return_str, tmp_path: Path):
         assert pattern not in processed
 
 
-@pytest.mark.parametrize("participant,session", [("123", None), (None, "1")])
-def test_process_template_json_error(participant, session, tmp_path: Path):
+@pytest.mark.parametrize("participant_id,session_id", [("123", None), (None, "1")])
+def test_process_template_json_error(participant_id, session_id, tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
     )
 
-    with pytest.raises(ValueError, match="participant and session must be strings"):
+    with pytest.raises(
+        ValueError, match="participant_id and session_id must be strings"
+    ):
         workflow.process_template_json(
             {},
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
 
 

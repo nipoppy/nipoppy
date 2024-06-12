@@ -54,8 +54,8 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def process_container_config(
         self,
-        participant: str,
-        session: str,
+        participant_id: str,
+        session_id: str,
         bind_paths: Optional[list[StrOrPathLike]] = None,
     ) -> str:
         """Update container config and generate container command."""
@@ -67,8 +67,8 @@ class PipelineRunner(BasePipelineWorkflow):
         container_config = ContainerConfig(
             **self.process_template_json(
                 container_config.model_dump(),
-                participant=participant,
-                session=session,
+                participant_id=participant_id,
+                session_id=session_id,
             )
         )
         self.logger.debug(f"Initial container config: {container_config}")
@@ -77,8 +77,8 @@ class PipelineRunner(BasePipelineWorkflow):
         boutiques_config = BoutiquesConfig(
             **self.process_template_json(
                 self.boutiques_config.model_dump(),
-                participant=participant,
-                session=session,
+                participant_id=participant_id,
+                session_id=session_id,
             )
         )
 
@@ -104,15 +104,19 @@ class PipelineRunner(BasePipelineWorkflow):
         return container_command
 
     def launch_boutiques_run(
-        self, participant: str, session: str, objs: Optional[list] = None, **kwargs
+        self,
+        participant_id: str,
+        session_id: str,
+        objs: Optional[list] = None,
+        **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
         # process and validate the descriptor
         self.logger.info("Processing the JSON descriptor")
         descriptor_str = self.process_template_json(
             self.descriptor,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             objs=objs,
             **kwargs,
             return_str=True,
@@ -125,8 +129,8 @@ class PipelineRunner(BasePipelineWorkflow):
         self.logger.info("Processing the JSON invocation")
         invocation_str = self.process_template_json(
             self.invocation,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             objs=objs,
             **kwargs,
             return_str=True,
@@ -187,8 +191,8 @@ class PipelineRunner(BasePipelineWorkflow):
 
         # get container command
         container_command = self.process_container_config(
-            participant=participant,
-            session=session,
+            participant_id=participant,
+            session_id=session,
             bind_paths=[
                 self.layout.dpath_bids,
                 self.dpath_pipeline_output,

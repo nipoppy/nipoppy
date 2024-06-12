@@ -73,7 +73,7 @@ class PipelineTracker(BasePipelineWorkflow):
             participant=participant, session=session
         )
 
-    def run_single(self, participant: str, session: str):
+    def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
         # load tracker configs from file
         fpath_tracker_config = self.pipeline_config.TRACKER_CONFIG_FILE
@@ -85,8 +85,8 @@ class PipelineTracker(BasePipelineWorkflow):
         # replace template strings
         tracker_configs = self.process_template_json(
             load_json(fpath_tracker_config),
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
         # convert to list of TrackerConfig objects and validate
         tracker_configs = TypeAdapter(List[TrackerConfig]).validate_python(
@@ -106,8 +106,8 @@ class PipelineTracker(BasePipelineWorkflow):
         status = self.check_status(tracker_config.PATHS)
         self.bagel = self.bagel.add_or_update_records(
             {
-                Bagel.col_participant_id: participant,
-                Bagel.col_session: session,
+                Bagel.col_participant_id: participant_id,
+                Bagel.col_session: session_id,
                 Bagel.col_pipeline_name: self.pipeline_name,
                 Bagel.col_pipeline_version: self.pipeline_version,
                 Bagel.col_pipeline_complete: status,
