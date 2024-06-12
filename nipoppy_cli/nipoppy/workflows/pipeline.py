@@ -18,18 +18,18 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import (  # check_session,
+from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     StrOrPathLike,
     add_pybids_ignore_patterns,
-    check_participant,
+    check_participant_id,
+    check_session_id,
     create_bids_db,
     get_pipeline_tag,
     load_json,
     participant_id_to_bids_participant,
     process_template_str,
-    strip_session,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -60,8 +60,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
-        self.participant = check_participant(participant)
-        self.session = session  # check_session(session)
+        self.participant = check_participant_id(participant)
+        self.session = check_session_id(session)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -235,7 +235,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if bids_id is None:
             bids_id = participant_id_to_bids_participant(participant)
         if session_short is None:
-            session_short = strip_session(session)
+            session_short = session
 
         if objs is None:
             objs = []
@@ -277,7 +277,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if session is not None:
             add_pybids_ignore_patterns(
                 current=self.pybids_ignore_patterns,
-                new=f".*?/{BIDS_SESSION_PREFIX}(?!{strip_session(session)})",
+                new=f".*?/{BIDS_SESSION_PREFIX}(?!{session})",
             )
 
         self.logger.info(

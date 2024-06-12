@@ -9,7 +9,6 @@ from fids import fids
 from nipoppy.config.main import Config
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
-from nipoppy.utils import strip_session
 from nipoppy.workflows.runner import PipelineRunner
 
 from .conftest import create_empty_dataset, get_config
@@ -99,7 +98,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     fids.create_fake_bids_dataset(
         runner.layout.dpath_bids,
         subjects=participant,
-        sessions=strip_session(session),
+        sessions=session,
     )
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)

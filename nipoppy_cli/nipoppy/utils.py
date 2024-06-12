@@ -43,71 +43,88 @@ FIELD_DESCRIPTION_MAP = {
 }
 
 
-def participant_id_to_bids_participant(participant_id: str):
-    """Convert a participant ID to a BIDS-compatible participant ID."""
-    bids_id = f"{BIDS_SUBJECT_PREFIX}{participant_id}"
-    return bids_id
+def participant_id_to_bids_participant(participant_id: str) -> str:
+    """Add the BIDS prefix to a participant ID."""
+    return f"{BIDS_SUBJECT_PREFIX}{participant_id}"
 
 
-def check_participant(participant: Optional[str]):
-    """Check/process a participant string."""
-    if participant is None:
-        return participant
-
-    # remove the BIDS prefix if it exists
-    return str(participant).removeprefix(BIDS_SUBJECT_PREFIX)
-
-
-def check_participant_id_strict(participant_id: str):
+def session_id_to_bids_session(session_id: Optional[str]) -> str:
     """
-    Make sure participant_id does not have the BIDS prefix.
+    Add the BIDS prefix to a session ID.
 
-    To use when validating user-provided files (e.g. the manifest).
+    If session_id is None, returns None.
     """
+    if session_id is None:
+        return session_id
+
+    return f"{BIDS_SESSION_PREFIX}{session_id}"
+
+
+def check_participant_id(participant_id: Optional[str], raise_error=False):
+    """Make sure a participant ID does not have the BIDS prefix.
+
+    Parameters
+    ----------
+    participant_id : Optional[str]
+        The participant ID to check. If None, returns None.
+    strict : bool, optional
+        Whether to raise an error if the participant ID has the prefix, by default False
+
+    Returns
+    -------
+    str
+        The participant ID without the BIDS prefix
+
+    Raises
+    ------
+    ValueError
+    """
+    if participant_id is None:
+        return participant_id
+
     if participant_id.startswith(BIDS_SUBJECT_PREFIX):
-        raise ValueError(
-            f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
-            f", got {participant_id}"
-        )
+        if raise_error:
+            raise ValueError(
+                f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
+                f", got {participant_id}"
+            )
+        else:
+            return participant_id.removeprefix(BIDS_SUBJECT_PREFIX)
+
     return participant_id
 
 
-def session_id_to_bids_session(session: Optional[str]):
-    """Check/process a session string."""
-    if session is None:
-        return session
+def check_session_id(session_id: Optional[str], raise_error=False):
+    """Make sure a session ID does not have the BIDS prefix.
 
-    # add BIDS prefix if it doesn't already exist
-    session = str(session)
-    if session.startswith(BIDS_SESSION_PREFIX):
-        return session
-    else:
-        return f"{BIDS_SESSION_PREFIX}{session}"
+    Parameters
+    ----------
+    session_id : Optional[str]
+        The session ID to check. If None, returns None.
+    strict : bool, optional
+        Whether to raise an error if the session ID has the prefix, by default False
 
+    Returns
+    -------
+    str
+        The session ID without the BIDS prefix
 
-def check_session_strict(session: Optional[str]):
+    Raises
+    ------
+    ValueError
     """
-    Make sure session_id does not have the BIDS prefix.
+    if session_id is None:
+        return session_id
 
-    To use when validating user-provided files (e.g. the manifest).
-    """
-    if session is None:
-        return session
-
-    if session.startswith(BIDS_SESSION_PREFIX):
-        raise ValueError(
-            f'Session ID should not start with "{BIDS_SESSION_PREFIX}"'
-            f", got {session}"
-        )
-    return session
-
-
-def strip_session(session: Optional[str]):
-    """Strip the BIDS prefix from a session string."""
-    if session is None:
-        return session
-    session = str(session)
-    return session.removeprefix(BIDS_SESSION_PREFIX)
+    if session_id.startswith(BIDS_SESSION_PREFIX):
+        if raise_error:
+            raise ValueError(
+                f'Session ID should not start with "{BIDS_SESSION_PREFIX}"'
+                f", got {session_id}"
+            )
+        else:
+            return session_id.removeprefix(BIDS_SESSION_PREFIX)
+    return session_id
 
 
 def create_bids_db(
@@ -169,7 +186,7 @@ def get_pipeline_tag(
     if participant is not None:
         components.append(participant)
     if session is not None:
-        components.append(strip_session(session))
+        components.append(session)
     return sep.join(components)
 
 

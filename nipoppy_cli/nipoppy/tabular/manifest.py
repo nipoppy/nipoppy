@@ -9,11 +9,7 @@ from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
-from nipoppy.utils import (
-    FIELD_DESCRIPTION_MAP,
-    check_participant_id_strict,
-    check_session_strict,
-)
+from nipoppy.utils import FIELD_DESCRIPTION_MAP, check_participant_id, check_session_id
 
 
 class ManifestModel(BaseTabularModel):
@@ -54,8 +50,8 @@ class ManifestModel(BaseTabularModel):
     @model_validator(mode="after")
     def validate_after(self) -> Self:
         """Validate fields after instance creation."""
-        check_participant_id_strict(self.participant_id)
-        check_session_strict(self.session_id)
+        check_participant_id(self.participant_id, raise_error=True)
+        check_session_id(self.session_id, raise_error=True)
         return self
 
     # allow extra columns

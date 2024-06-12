@@ -5,11 +5,7 @@ from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParse
 from pathlib import Path
 
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.utils import (  # check_session,
-    BIDS_SESSION_PREFIX,
-    BIDS_SUBJECT_PREFIX,
-    check_participant,
-)
+from nipoppy.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
@@ -53,13 +49,11 @@ def add_args_participant_and_session(parser: _ActionsContainer) -> _ActionsConta
     """Add --participant and --session arguments to the parser."""
     parser.add_argument(
         "--participant",
-        type=check_participant,
         required=False,
         help=f"Participant ID (with or without the {BIDS_SUBJECT_PREFIX} prefix).",
     )
     parser.add_argument(
         "--session",
-        # type=check_session,
         required=False,
         help=f"Session ID (with or without the {BIDS_SESSION_PREFIX} prefix).",
     )

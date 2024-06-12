@@ -12,7 +12,7 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import PipelineConfig
 from nipoppy.config.pipeline_step import PipelineStepConfig
-from nipoppy.utils import StrOrPathLike, strip_session
+from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
@@ -109,12 +109,6 @@ def workflow(tmp_path: Path):
     return workflow
 
 
-def _make_dummy_json(fpath: StrOrPathLike):
-    fpath: Path = Path(fpath)
-    fpath.parent.mkdir(parents=True, exist_ok=True)
-    fpath.write_text("{}\n")
-
-
 @pytest.mark.parametrize(
     "args",
     [
@@ -142,6 +136,27 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_output, Path)
     assert isinstance(workflow.dpath_pipeline_work, Path)
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
+
+
+@pytest.mark.parametrize(
+    "participant,session,participant_expected,session_expected",
+    [
+        ("01", "BL", "01", "BL"),
+        ("sub-01", "ses-BL", "01", "BL"),
+    ],
+)
+def test_init_participant_session(
+    participant, session, participant_expected, session_expected
+):
+    workflow = PipelineWorkflow(
+        dpath_root="my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+        participant=participant,
+        session=session,
+    )
+    assert workflow.participant == participant_expected
+    assert workflow.session == session_expected
 
 
 def test_pipeline_version_optional():
@@ -471,7 +486,7 @@ def test_set_up_bids_db(
     bids_layout = workflow.set_up_bids_db(
         dpath_bids_db=dpath_bids_db,
         participant=participant,
-        session=strip_session(session),
+        session=session,
     )
     assert dpath_bids_db.exists()
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count

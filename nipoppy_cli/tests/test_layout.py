@@ -225,13 +225,6 @@ def test_get_dpath_pipeline(
         (
             "pipeline",
             "v2",
-            None,
-            "ses-BL",
-            "derivatives/pipeline/v2/work/pipeline-v2-BL",
-        ),
-        (
-            "pipeline",
-            "v2",
             "01",
             "1",
             "derivatives/pipeline/v2/work/pipeline-v2-01-1",
@@ -276,7 +269,7 @@ def test_get_dpath_pipeline_output(
     "pipeline_name,pipeline_version,participant,session,expected",
     [
         ("my_pipeline", "v1", None, None, "proc/pybids/bids_db/my_pipeline-v1"),
-        ("pipeline", "v2", "01", "ses-1", "proc/pybids/bids_db/pipeline-v2-01-1"),
+        ("pipeline", "v2", "01", "1", "proc/pybids/bids_db/pipeline-v2-01-1"),
     ],
 )
 def test_get_dpath_bids_db(

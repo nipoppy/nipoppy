@@ -11,21 +11,19 @@ import pytest
 from fids import fids
 
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import (  # check_session,
+from nipoppy.utils import (
     add_path_suffix,
     add_path_timestamp,
     add_pybids_ignore_patterns,
     apply_substitutions_to_json,
-    check_participant,
-    check_participant_id_strict,
-    check_session_strict,
+    check_participant_id,
+    check_session_id,
     get_pipeline_tag,
     load_json,
     participant_id_to_bids_participant,
     process_template_str,
     save_df_with_backup,
     save_json,
-    strip_session,
 )
 
 from .conftest import datetime_fixture  # noqa F401
@@ -40,48 +38,43 @@ def test_participant_id_to_bids_participant(participant_id, expected):
 
 
 @pytest.mark.parametrize(
-    "participant,expected",
-    [("sub-01", "01"), ("01", "01"), (None, None)],
+    "participant_id,raise_error,is_valid,expected",
+    [
+        ("sub-01", False, True, "01"),
+        ("01", False, True, "01"),
+        (None, False, True, None),
+        ("sub-01", True, False, None),
+        ("01", True, True, "01"),
+        (None, True, True, None),
+    ],
 )
-def test_check_participant(participant, expected):
-    assert check_participant(participant) == expected
-
-
-@pytest.mark.parametrize("participant_id,is_valid", [("01", True), ("sub-01", False)])
-def test_check_participant_id_strict(participant_id, is_valid):
+def test_check_participant_id(participant_id, raise_error, is_valid, expected):
     with (
         pytest.raises(ValueError, match="Participant ID should not start with")
         if not is_valid
         else nullcontext()
     ):
-        assert check_participant_id_strict(participant_id) == participant_id
-
-
-# @pytest.mark.parametrize(
-#     "session,expected",
-#     [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
-# )
-# def test_check_session(session, expected):
-#     assert check_session(session) == expected
+        assert check_participant_id(participant_id, raise_error=raise_error) == expected
 
 
 @pytest.mark.parametrize(
-    "session,is_valid", [("ses-1", False), ("1", True), (None, True)]
+    "session,raise_error,is_valid,expected",
+    [
+        ("ses-BL", False, True, "BL"),
+        ("M12", False, True, "M12"),
+        (None, False, True, None),
+        ("ses-1", True, False, None),
+        ("1", True, True, "1"),
+        (None, True, True, None),
+    ],
 )
-def test_check_session_strict(session, is_valid):
+def test_check_session_id(session, raise_error, is_valid, expected):
     with (
         pytest.raises(ValueError, match="Session ID should not start with")
         if not is_valid
         else nullcontext()
     ):
-        assert check_session_strict(session) == session
-
-
-@pytest.mark.parametrize(
-    "session,expected", [("ses-BL", "BL"), ("BL", "BL"), ("ses-01", "01"), (None, None)]
-)
-def test_strip_session(session, expected):
-    assert strip_session(session) == expected
+        assert check_session_id(session, raise_error=raise_error) == expected
 
 
 @pytest.mark.parametrize(
@@ -151,7 +144,7 @@ def test_add_pybids_ignore_patterns(orig_patterns, new_patterns, expected):
     [
         ("my_pipeline", "1.0", None, None, None, "my_pipeline-1.0"),
         ("pipeline", "2.0", None, "3000", None, "pipeline-2.0-3000"),
-        ("pipeline", "2.0", None, None, "ses-BL", "pipeline-2.0-BL"),
+        ("pipeline", "2.0", None, None, "BL", "pipeline-2.0-BL"),
         ("pipeline", "2.0", "step1", "3000", "BL", "pipeline-2.0-step1-3000-BL"),
     ],
 )
