@@ -206,7 +206,7 @@ def test_get_dpath_pipeline(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant,session,expected",
+    "pipeline_name,pipeline_version,participant_id,session_id,expected",
     [
         (
             "my_pipeline",
@@ -232,15 +232,20 @@ def test_get_dpath_pipeline(
     ],
 )
 def test_get_dpath_pipeline_work(
-    dpath_root: Path, pipeline_name, pipeline_version, participant, session, expected
+    dpath_root: Path,
+    pipeline_name,
+    pipeline_version,
+    participant_id,
+    session_id,
+    expected,
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
         layout.get_dpath_pipeline_work(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
         == dpath_root / expected
     )
@@ -266,22 +271,27 @@ def test_get_dpath_pipeline_output(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant,session,expected",
+    "pipeline_name,pipeline_version,participant_id,session_id,expected",
     [
         ("my_pipeline", "v1", None, None, "proc/pybids/bids_db/my_pipeline-v1"),
         ("pipeline", "v2", "01", "1", "proc/pybids/bids_db/pipeline-v2-01-1"),
     ],
 )
 def test_get_dpath_bids_db(
-    dpath_root: Path, pipeline_name, pipeline_version, participant, session, expected
+    dpath_root: Path,
+    pipeline_name,
+    pipeline_version,
+    participant_id,
+    session_id,
+    expected,
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
         layout.get_dpath_bids_db(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
         == dpath_root / expected
     )

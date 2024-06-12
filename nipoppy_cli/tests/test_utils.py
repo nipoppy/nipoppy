@@ -58,7 +58,7 @@ def test_check_participant_id(participant_id, raise_error, is_valid, expected):
 
 
 @pytest.mark.parametrize(
-    "session,raise_error,is_valid,expected",
+    "session_id,raise_error,is_valid,expected",
     [
         ("ses-BL", False, True, "BL"),
         ("M12", False, True, "M12"),
@@ -68,13 +68,13 @@ def test_check_participant_id(participant_id, raise_error, is_valid, expected):
         (None, True, True, None),
     ],
 )
-def test_check_session_id(session, raise_error, is_valid, expected):
+def test_check_session_id(session_id, raise_error, is_valid, expected):
     with (
         pytest.raises(ValueError, match="Session ID should not start with")
         if not is_valid
         else nullcontext()
     ):
-        assert check_session_id(session, raise_error=raise_error) == expected
+        assert check_session_id(session_id, raise_error=raise_error) == expected
 
 
 @pytest.mark.parametrize(
@@ -140,7 +140,7 @@ def test_add_pybids_ignore_patterns(orig_patterns, new_patterns, expected):
 
 
 @pytest.mark.parametrize(
-    "name,version,step,participant,session,expected",
+    "name,version,step,participant_id,session_id,expected",
     [
         ("my_pipeline", "1.0", None, None, None, "my_pipeline-1.0"),
         ("pipeline", "2.0", None, "3000", None, "pipeline-2.0-3000"),
@@ -148,14 +148,14 @@ def test_add_pybids_ignore_patterns(orig_patterns, new_patterns, expected):
         ("pipeline", "2.0", "step1", "3000", "BL", "pipeline-2.0-step1-3000-BL"),
     ],
 )
-def test_get_pipeline_tag(name, version, participant, step, session, expected):
+def test_get_pipeline_tag(name, version, participant_id, step, session_id, expected):
     assert (
         get_pipeline_tag(
             pipeline_name=name,
             pipeline_version=version,
             pipeline_step=step,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
         == expected
     )

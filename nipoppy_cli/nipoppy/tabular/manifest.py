@@ -113,30 +113,30 @@ class Manifest(BaseTabular):
             )
         return self
 
-    def get_imaging_subset(self, session: Optional[str] = None):
+    def get_imaging_subset(self, session_id: Optional[str] = None):
         """Get records with imaging data."""
         manifest = self[self[self.col_session].notna()]
-        if session is not None:
-            return manifest[manifest[self.col_session] == session]
+        if session_id is not None:
+            return manifest[manifest[self.col_session] == session_id]
         return manifest
 
     def get_participants_sessions(
-        self, participant: Optional[str] = None, session: Optional[str] = None
+        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
     ):
-        """Get participants and sessions."""
-        if participant is None:
-            participants = set(self[self.col_participant_id])
+        """Get participant IDs and session IDs."""
+        if participant_id is None:
+            participant_ids = set(self[self.col_participant_id])
         else:
-            participants = {participant}
-        if session is None:
-            sessions = self[self.col_session]
-            sessions = set(sessions[sessions.notna()])
+            participant_ids = {participant_id}
+        if session_id is None:
+            session_ids = self[self.col_session]
+            session_ids = set(session_ids[session_ids.notna()])
         else:
-            sessions = {session}
+            session_ids = {session_id}
 
         manifest_subset = self[
-            (self[self.col_participant_id].isin(participants))
-            & (self[self.col_session].isin(sessions))
+            (self[self.col_participant_id].isin(participant_ids))
+            & (self[self.col_session].isin(session_ids))
         ]
 
         yield from manifest_subset[

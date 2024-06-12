@@ -195,7 +195,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
 
 
 @pytest.mark.parametrize(
-    "data,pipeline_name,pipeline_version,participant,session,expected",
+    "data,pipeline_name,pipeline_version,participant_id,session_id,expected",
     [
         (
             [
@@ -243,7 +243,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
     ],
 )
 def test_get_completed_participants_sessions(
-    data, pipeline_name, pipeline_version, participant, session, expected
+    data, pipeline_name, pipeline_version, participant_id, session_id, expected
 ):
     bagel = Bagel(
         data,
@@ -261,7 +261,7 @@ def test_get_completed_participants_sessions(
         for x in bagel.get_completed_participants_sessions(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
     ] == expected

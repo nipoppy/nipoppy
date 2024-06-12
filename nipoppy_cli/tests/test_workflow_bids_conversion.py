@@ -43,7 +43,7 @@ def test_setup(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,participant,session,expected",
+    "doughnut_data,participant_id,session_id,expected",
     [
         (
             [
@@ -98,7 +98,7 @@ def test_setup(config: Config, tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data, participant, session, expected, tmp_path: Path
+    doughnut_data, participant_id, session_id, expected, tmp_path: Path
 ):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
@@ -121,6 +121,6 @@ def test_get_participants_sessions_to_run(
     assert [
         tuple(x)
         for x in workflow.get_participants_sessions_to_run(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         )
     ] == expected

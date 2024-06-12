@@ -115,17 +115,17 @@ def create_empty_dataset(dpath_root: Path):
 
 def _process_participants_sessions(
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participants: Optional[list[str]] = None,
-    sessions: Optional[list[str] | dict[str, list[str]]] = None,
+    participant_ids: Optional[list[str]] = None,
+    session_ids: Optional[list[str] | dict[str, list[str]]] = None,
 ):
     """Process participant/session arguments."""
     if participants_and_sessions is None:
-        if participants is None:
-            participants = ["01", "02"]
-        if sessions is None:
-            sessions = ["ses-BL", "ses-M12"]
+        if participant_ids is None:
+            participant_ids = ["01", "02"]
+        if session_ids is None:
+            session_ids = ["ses-BL", "ses-M12"]
         participants_and_sessions = {
-            participant: sessions for participant in participants
+            participant: session_ids for participant in participant_ids
         }
     return participants_and_sessions
 
@@ -133,8 +133,8 @@ def _process_participants_sessions(
 def _fake_dicoms(  # noqa: C901
     dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participants: Optional[list[str]] = None,
-    sessions: Optional[list[str]] = None,
+    participant_ids: Optional[list[str]] = None,
+    session_ids: Optional[list[str]] = None,
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
@@ -147,7 +147,7 @@ def _fake_dicoms(  # noqa: C901
 ):
     """Generate a fake dataset with raw DICOM files."""
     participants_and_sessions = _process_participants_sessions(
-        participants_and_sessions, participants, sessions
+        participants_and_sessions, participant_ids, session_ids
     )
 
     if n_images < 1:
@@ -166,16 +166,16 @@ def _fake_dicoms(  # noqa: C901
     dpath: Path = Path(dpath)
     dpath.mkdir(parents=True, exist_ok=True)
 
-    for participant, participant_sessions in participants_and_sessions.items():
+    for participant_id, participant_session_ids in participants_and_sessions.items():
         if with_prefixes:
-            participant = participant_id_to_bids_participant(participant)
-        for session in participant_sessions:
+            participant_id = participant_id_to_bids_participant(participant_id)
+        for session_id in participant_session_ids:
             if with_prefixes:
-                session = session_id_to_bids_session(session)
+                session_id = session_id_to_bids_session(session_id)
             if participant_first:
-                dpath_dicom_parent = dpath / participant / session
+                dpath_dicom_parent = dpath / participant_id / session_id
             else:
-                dpath_dicom_parent = dpath / session / participant
+                dpath_dicom_parent = dpath / session_id / participant_id
 
             for i_image in range(n_images):
                 n_subdir_levels = rng.integers(
@@ -202,8 +202,8 @@ def _fake_dicoms(  # noqa: C901
 def fake_dicoms_downloaded(
     dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participants: Optional[list[str]] = None,
-    sessions: Optional[list[str]] = None,
+    participant_ids: Optional[list[str]] = None,
+    session_ids: Optional[list[str]] = None,
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
@@ -217,8 +217,8 @@ def fake_dicoms_downloaded(
     _fake_dicoms(
         dpath=dpath,
         participants_and_sessions=participants_and_sessions,
-        participants=participants,
-        sessions=sessions,
+        participant_ids=participant_ids,
+        session_ids=session_ids,
         n_images=n_images,
         min_n_files_per_image=min_n_files_per_image,
         max_n_files_per_image=max_n_files_per_image,
@@ -233,8 +233,8 @@ def fake_dicoms_downloaded(
 def fake_dicoms_organized(
     dpath: StrOrPathLike,
     participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participants: Optional[list[str]] = None,
-    sessions: Optional[list[str]] = None,
+    participant_ids: Optional[list[str]] = None,
+    session_ids: Optional[list[str]] = None,
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
@@ -246,8 +246,8 @@ def fake_dicoms_organized(
     _fake_dicoms(
         dpath=dpath,
         participants_and_sessions=participants_and_sessions,
-        participants=participants,
-        sessions=sessions,
+        participant_ids=participant_ids,
+        session_ids=session_ids,
         n_images=n_images,
         min_n_files_per_image=min_n_files_per_image,
         max_n_files_per_image=max_n_files_per_image,
@@ -272,13 +272,13 @@ def prepare_dataset(
     """Create dummy imaging files for testing the DICOM-to-BIDS conversion process."""
     # create the manifest
     data_manifest = []
-    for participant in participants_and_sessions_manifest:
-        for session in participants_and_sessions_manifest[participant]:
+    for participant_id in participants_and_sessions_manifest:
+        for session_id in participants_and_sessions_manifest[participant_id]:
             data_manifest.append(
                 {
-                    Manifest.col_participant_id: participant,
-                    Manifest.col_session: session,
-                    Manifest.col_visit: session,
+                    Manifest.col_participant_id: participant_id,
+                    Manifest.col_session: session_id,
+                    Manifest.col_visit: session_id,
                     Manifest.col_datatype: [],
                 }
             )
@@ -303,11 +303,11 @@ def prepare_dataset(
 
     # create fake BIDS dataset
     if participants_and_sessions_bidsified is not None and dpath_bidsified is not None:
-        for participant, sessions in participants_and_sessions_bidsified.items():
+        for participant_id, session_ids in participants_and_sessions_bidsified.items():
             create_fake_bids_dataset(
                 Path(dpath_bidsified),
-                subjects=participant,
-                sessions=sessions,
+                subjects=participant_id,
+                sessions=session_ids,
                 datatypes=["anat"],
             )
 
@@ -331,16 +331,16 @@ def check_doughnut(
         ]:
             assert (~doughnut[col]).all()
     else:
-        for participant in participants_and_sessions_manifest:
-            for session in participants_and_sessions_manifest[participant]:
+        for participant_id in participants_and_sessions_manifest:
+            for session_id in participants_and_sessions_manifest[participant_id]:
                 for col, participants_and_sessions_true in {
                     doughnut.col_downloaded: participants_and_sessions_downloaded,
                     doughnut.col_organized: participants_and_sessions_organized,
                     doughnut.col_bidsified: participants_and_sessions_bidsified,
                 }.items():
                     status: pd.Series = doughnut.loc[
-                        (doughnut[doughnut.col_participant_id] == participant)
-                        & (doughnut[doughnut.col_session] == session),
+                        (doughnut[doughnut.col_participant_id] == participant_id)
+                        & (doughnut[doughnut.col_session] == session_id),
                         col,
                     ]
 
@@ -348,6 +348,6 @@ def check_doughnut(
                     status = status.iloc[0]
 
                     assert status == (
-                        participant in participants_and_sessions_true
-                        and session in participants_and_sessions_true[participant]
+                        participant_id in participants_and_sessions_true
+                        and session_id in participants_and_sessions_true[participant_id]
                     )

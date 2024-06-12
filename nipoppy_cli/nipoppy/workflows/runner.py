@@ -23,8 +23,8 @@ class PipelineRunner(BasePipelineWorkflow):
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
-        participant: str = None,
-        session: str = None,
+        participant_id: str = None,
+        session_id: str = None,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -36,8 +36,8 @@ class PipelineRunner(BasePipelineWorkflow):
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             fpath_layout=fpath_layout,
             logger=logger,
             dry_run=dry_run,
@@ -152,9 +152,9 @@ class PipelineRunner(BasePipelineWorkflow):
         return descriptor_str, invocation_str
 
     def get_participants_sessions_to_run(
-        self, participant: Optional[str], session: Optional[str]
+        self, participant_id: Optional[str], session_id: Optional[str]
     ):
-        """Generate a list of participants and sessions to run.
+        """Generate a list of participant and session IDs to run.
 
         Specifically, this list will include participants who have BIDS data but
         who have not previously successfully completed the pipeline (according)
@@ -167,32 +167,32 @@ class PipelineRunner(BasePipelineWorkflow):
                 bagel.get_completed_participants_sessions(
                     pipeline_name=self.pipeline_name,
                     pipeline_version=self.pipeline_version,
-                    participant=participant,
-                    session=session,
+                    participant_id=participant_id,
+                    session_id=session_id,
                 )
             )
         else:
             participants_sessions_completed = {}
 
         for participant_session in self.doughnut.get_bidsified_participants_sessions(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         ):
             if participant_session not in participants_sessions_completed:
                 yield participant_session
 
-    def run_single(self, participant: str, session: str):
+    def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
         # set up PyBIDS database
         self.set_up_bids_db(
             dpath_bids_db=self.dpath_pipeline_bids_db,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
 
         # get container command
         container_command = self.process_container_config(
-            participant_id=participant,
-            session_id=session,
+            participant_id=participant_id,
+            session_id=session_id,
             bind_paths=[
                 self.layout.dpath_bids,
                 self.dpath_pipeline_output,
@@ -203,7 +203,7 @@ class PipelineRunner(BasePipelineWorkflow):
 
         # run pipeline with Boutiques
         self.launch_boutiques_run(
-            participant, session, container_command=container_command
+            participant_id, session_id, container_command=container_command
         )
 
     def run_cleanup(self, **kwargs):

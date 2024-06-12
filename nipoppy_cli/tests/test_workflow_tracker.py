@@ -105,7 +105,7 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,participant,session,expected",
+    "doughnut_data,participant_id,session_id,expected",
     [
         (
             [
@@ -130,7 +130,7 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data, participant, session, expected, tmp_path: Path
+    doughnut_data, participant_id, session_id, expected, tmp_path: Path
 ):
     tracker = PipelineTracker(
         dpath_root=tmp_path,
@@ -156,16 +156,18 @@ def test_get_participants_sessions_to_run(
     assert [
         tuple(x)
         for x in tracker.get_participants_sessions_to_run(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         )
     ] == expected
 
 
 @pytest.mark.parametrize(
-    "participant,session,expected_status",
+    "participant_id,session_id,expected_status",
     [("01", "1", Bagel.status_success), ("02", "2", Bagel.status_fail)],
 )
-def test_run_single(participant, session, expected_status, tracker: PipelineTracker):
+def test_run_single(
+    participant_id, session_id, expected_status, tracker: PipelineTracker
+):
     for relative_path_to_write in [
         "01/ses-1/results.txt",
         "file.txt",
@@ -175,7 +177,7 @@ def test_run_single(participant, session, expected_status, tracker: PipelineTrac
         fpath.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
-    assert tracker.run_single(participant, session) == expected_status
+    assert tracker.run_single(participant_id, session_id) == expected_status
 
     assert (
         tracker.bagel.set_index([Bagel.col_participant_id, Bagel.col_session])

@@ -104,15 +104,15 @@ class DicomDirMap(BaseTabular):
         # else depends on participant_first or no
         else:
             data_dicom_dir_map = []
-            for participant, session in manifest.get_participants_sessions():
+            for participant_id, session_id in manifest.get_participants_sessions():
                 if participant_first is not False:
-                    participant_dicom_dir = f"{participant}/{session}"
+                    participant_dicom_dir = f"{participant_id}/{session_id}"
                 else:
-                    participant_dicom_dir = f"{session}/{participant}"
+                    participant_dicom_dir = f"{session_id}/{participant_id}"
                 data_dicom_dir_map.append(
                     {
-                        cls.col_participant_id: participant,
-                        cls.col_session: session,
+                        cls.col_participant_id: participant_id,
+                        cls.col_session: session_id,
                         cls.col_participant_dicom_dir: participant_dicom_dir,
                     }
                 )
@@ -121,14 +121,14 @@ class DicomDirMap(BaseTabular):
                 dicom_dir_map.validate()
             return dicom_dir_map
 
-    def get_dicom_dir(self, participant: str, session: str) -> str:
+    def get_dicom_dir(self, participant_id: str, session_id: str) -> str:
         """Return the participant's raw DICOM directory for a given session.
 
         Parameters
         ----------
-        participant : str
+        participant_id : str
             Participant ID, without the BIDS prefix
-        session : str
+        session_id : str
             Session, with the BIDS prefix
         """
-        return self.set_index(self.index_cols).loc[participant, session].item()
+        return self.set_index(self.index_cols).loc[participant_id, session_id].item()

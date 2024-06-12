@@ -109,28 +109,28 @@ class Bagel(BaseTabular):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         """
         Get participant-session pairs that have successfully completed a pipeline run.
 
         Can optionally filter within a specific participant and/or session.
         """
-        if participant is None:
-            participants = set(self[self.col_participant_id])
+        if participant_id is None:
+            participant_ids = set(self[self.col_participant_id])
         else:
-            participants = {participant}
-        if session is None:
-            session = set(self[self.col_session])
+            participant_ids = {participant_id}
+        if session_id is None:
+            session_ids = set(self[self.col_session])
         else:
-            session = {session}
+            session_ids = {session_id}
 
         bagel_subset = self.loc[
             (self[self.col_pipeline_name] == pipeline_name)
             & (self[self.col_pipeline_version] == pipeline_version)
-            & (self[self.col_participant_id].isin(participants))
-            & (self[self.col_session].isin(session))
+            & (self[self.col_participant_id].isin(participant_ids))
+            & (self[self.col_session].isin(session_ids))
             & (self[self.col_pipeline_complete] == self.status_success)
         ]
 

@@ -179,14 +179,14 @@ def test_run_regenerate(
     # to be overwritten
     doughnut_records = []
     for _, manifest_record in manifest.iterrows():
-        participant = manifest_record[Manifest.col_participant_id]
+        participant_id = manifest_record[Manifest.col_participant_id]
         doughnut_records.append(
             {
-                Doughnut.col_participant_id: participant,
+                Doughnut.col_participant_id: participant_id,
                 Doughnut.col_visit: manifest_record[Manifest.col_visit],
                 Doughnut.col_session: manifest_record[Manifest.col_session],
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
-                Doughnut.col_participant_dicom_dir: participant,
+                Doughnut.col_participant_dicom_dir: participant_id,
                 Doughnut.col_downloaded: True,
                 Doughnut.col_organized: True,
                 Doughnut.col_bidsified: True,

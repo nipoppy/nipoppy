@@ -92,19 +92,19 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     )
     config.save(runner.layout.fpath_config)
 
-    participant = "01"
-    session = "BL"
+    participant_id = "01"
+    session_id = "BL"
 
     fids.create_fake_bids_dataset(
         runner.layout.dpath_bids,
-        subjects=participant,
-        sessions=session,
+        subjects=participant_id,
+        sessions=session_id,
     )
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
     descriptor_str, invocation_str = runner.launch_boutiques_run(
-        participant, session, container_command=""
+        participant_id, session_id, container_command=""
     )
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
@@ -219,14 +219,14 @@ def test_get_participants_sessions_to_run(
     config: Config,
     tmp_path: Path,
 ):
-    participant = None
-    session = None
+    participant_id = None
+    session_id = None
     runner = PipelineRunner(
         dpath_root=tmp_path,
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
-        participant=participant,
-        session=session,
+        participant_id=participant_id,
+        session_id=session_id,
     )
     config.save(runner.layout.fpath_config)
     runner.doughnut = Doughnut().add_or_update_records(
@@ -259,6 +259,6 @@ def test_get_participants_sessions_to_run(
     assert [
         tuple(x)
         for x in runner.get_participants_sessions_to_run(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         )
     ] == expected

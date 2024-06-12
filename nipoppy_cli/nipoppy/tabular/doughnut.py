@@ -83,61 +83,61 @@ class Doughnut(Manifest):
             raise ValueError(f"Invalid status value: {value}. Must be a boolean")
         return value
 
-    def get_status(self, participant: str, session: str, col: str) -> bool:
+    def get_status(self, participant_id: str, session_id: str, col: str) -> bool:
         """Get one of the statuses for an existing record."""
         col = self._check_status_col(col)
-        return self.set_index(self.index_cols).loc[(participant, session), col]
+        return self.set_index(self.index_cols).loc[(participant_id, session_id), col]
 
     def set_status(
-        self, participant: str, session: str, col: str, status: bool
+        self, participant_id: str, session_id: str, col: str, status: bool
     ) -> Self:
         """Set one of the statuses for an existing record."""
         col = self._check_status_col(col)
         status = self._check_status_value(status)
         self.set_index(self.index_cols, inplace=True)
-        self.loc[(participant, session), col] = status
+        self.loc[(participant_id, session_id), col] = status
         return self.reset_index(inplace=True)
 
     def _get_participant_sessions_helper(
         self,
         status_col: str,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         """Get subset of participants/sessions based on a status column."""
         doughnut_subset: Doughnut = self.loc[self[status_col]]
         return doughnut_subset.get_participants_sessions(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         )
 
     def get_downloaded_participants_sessions(
         self,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         """Get participants and sessions with downloaded data."""
         return self._get_participant_sessions_helper(
-            self.col_downloaded, participant=participant, session=session
+            self.col_downloaded, participant_id=participant_id, session_id=session_id
         )
 
     def get_organized_participants_sessions(
         self,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         """Get participants and sessions with organized data."""
         return self._get_participant_sessions_helper(
-            self.col_organized, participant=participant, session=session
+            self.col_organized, participant_id=participant_id, session_id=session_id
         )
 
     def get_bidsified_participants_sessions(
         self,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         """Get participants and sessions with BIDS data."""
         return self._get_participant_sessions_helper(
-            self.col_bidsified, participant=participant, session=session
+            self.col_bidsified, participant_id=participant_id, session_id=session_id
         )
 
 
@@ -161,7 +161,7 @@ def generate_doughnut(
             status = False
         else:
             dpath = Path(dpath)
-            dpath_participant = dpath / dname_subdirectory
+            dpath_participant: Path = dpath / dname_subdirectory
             if dpath_participant.exists():
                 status = next(dpath_participant.iterdir(), None) is not None
             else:
@@ -179,17 +179,17 @@ def generate_doughnut(
 
     doughnut_records = []
     for _, manifest_record in manifest_imaging_only.iterrows():
-        participant = manifest_record[manifest.col_participant_id]
-        session = manifest_record[manifest.col_session]
+        participant_id = manifest_record[manifest.col_participant_id]
+        session_id = manifest_record[manifest.col_session]
 
         # get DICOM dir
         participant_dicom_dir = dicom_dir_map.get_dicom_dir(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         )
 
         # get BIDS IDs
-        bids_participant = participant_id_to_bids_participant(participant)
-        bids_session = session_id_to_bids_session(session)
+        bids_participant = participant_id_to_bids_participant(participant_id)
+        bids_session = session_id_to_bids_session(session_id)
 
         if empty:
             status_downloaded = False
@@ -211,9 +211,9 @@ def generate_doughnut(
 
         doughnut_records.append(
             {
-                Doughnut.col_participant_id: participant,
+                Doughnut.col_participant_id: participant_id,
                 Doughnut.col_visit: manifest_record[Manifest.col_visit],
-                Doughnut.col_session: session,
+                Doughnut.col_session: session_id,
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_dicom_dir,
                 Doughnut.col_downloaded: status_downloaded,

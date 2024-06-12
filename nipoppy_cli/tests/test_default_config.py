@@ -19,8 +19,8 @@ def single_subject_dataset(
     tmp_path: Path, mocker: pytest_mock.MockerFixture
 ) -> DatasetLayout:
     dataset_root = tmp_path / "my_dataset"
-    participant = "01"
-    session = "01"
+    participant_id = "01"
+    session_id = "01"
     container_command = "apptainer"
     substitutions = {
         "[[NIPOPPY_DPATH_DESCRIPTORS]]": str(DPATH_DESCRIPTORS),
@@ -32,7 +32,7 @@ def single_subject_dataset(
         "[[TEMPLATEFLOW_HOME]]": str(tmp_path / "templateflow"),
     }
 
-    participants_and_sessions = {participant: [session]}
+    participants_and_sessions = {participant_id: [session_id]}
 
     layout = DatasetLayout(dataset_root)
     create_empty_dataset(dataset_root)
@@ -57,7 +57,7 @@ def single_subject_dataset(
         return_value=container_command,
     )
 
-    return layout, participant, session
+    return layout, participant_id, session_id
 
 
 def get_fpaths_descriptors() -> list[str]:
@@ -78,7 +78,7 @@ def test_boutiques_descriptors(fpath_descriptor):
     ],
 )
 def test_pipeline_runner(pipeline_name, pipeline_version, single_subject_dataset):
-    layout, participant, session = single_subject_dataset
+    layout, participant_id, session_id = single_subject_dataset
     layout: DatasetLayout
     runner = PipelineRunner(
         dpath_root=layout.dpath_root,
@@ -89,7 +89,7 @@ def test_pipeline_runner(pipeline_name, pipeline_version, single_subject_dataset
 
     runner.pipeline_config.get_fpath_container().touch()
 
-    runner.run_single(participant=participant, session=session)
+    runner.run_single(participant_id=participant_id, session_id=session_id)
 
 
 @pytest.mark.parametrize(
@@ -104,7 +104,7 @@ def test_pipeline_runner(pipeline_name, pipeline_version, single_subject_dataset
 def test_bids_conversion_runner(
     pipeline_name, pipeline_version, pipeline_step, single_subject_dataset
 ):
-    layout, participant, session = single_subject_dataset
+    layout, participant_id, session_id = single_subject_dataset
     layout: DatasetLayout
     runner = BidsConversionRunner(
         dpath_root=layout.dpath_root,
@@ -117,4 +117,4 @@ def test_bids_conversion_runner(
     runner.pipeline_config.get_fpath_container().touch()
 
     print(runner.invocation)
-    runner.run_single(participant=participant, session=session)
+    runner.run_single(participant_id=participant_id, session_id=session_id)

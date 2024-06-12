@@ -69,7 +69,7 @@ def test_validate_sessions_visits(sessions, visits, is_valid):
 
 
 @pytest.mark.parametrize(
-    "data,session,expected_count",
+    "data,session_id,expected_count",
     [
         (
             (["01"], ["BL"], None, [[]]),
@@ -103,7 +103,7 @@ def test_validate_sessions_visits(sessions, visits, is_valid):
         ),
     ],
 )
-def test_get_imaging_subset(data, session, expected_count):
+def test_get_imaging_subset(data, session_id, expected_count):
     manifest = Manifest(
         {
             Manifest.col_participant_id: data[0],
@@ -112,13 +112,13 @@ def test_get_imaging_subset(data, session, expected_count):
             Manifest.col_datatype: data[3],
         }
     )
-    manifest_with_imaging_only = manifest.get_imaging_subset(session=session)
+    manifest_with_imaging_only = manifest.get_imaging_subset(session_id=session_id)
     assert isinstance(manifest_with_imaging_only, Manifest)
     assert len(manifest_with_imaging_only) == expected_count
 
 
 @pytest.mark.parametrize(
-    "participant,session,expected_count",
+    "participant_id,session_id,expected_count",
     [
         (None, None, 6),
         ("01", None, 3),
@@ -132,12 +132,12 @@ def test_get_imaging_subset(data, session, expected_count):
         ("03", "ses-BL", 1),
     ],
 )
-def get_participants_sessions(participant, session, expected_count):
+def get_participants_sessions(participant_id, session_id, expected_count):
     data = (
         {
             "participant_id": ["01", "01", "01", "02", "02", "03", "04"],
             "visit": ["BL", "M12", "M24", "BL", "M12", "BL", "SC"],
-            "session": [
+            "session_id": [
                 "ses-BL",
                 "ses-M12",
                 "ses-M24",
@@ -160,7 +160,7 @@ def get_participants_sessions(participant, session, expected_count):
     manifest = Manifest(data)
     count = 0
     for _ in manifest.get_participants_sessions(
-        participant=participant, session=session
+        participant_id=participant_id, session_id=session_id
     ):
         count += 1
     assert count == expected_count

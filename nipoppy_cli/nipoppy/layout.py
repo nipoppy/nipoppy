@@ -270,8 +270,8 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
@@ -280,8 +280,8 @@ class DatasetLayout(Base):
             / get_pipeline_tag(
                 pipeline_name,
                 pipeline_version,
-                participant=participant,
-                session=session,
+                participant_id=participant_id,
+                session_id=session_id,
             )
         )
 
@@ -303,12 +303,15 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> Path:
         """Return the path to a pipeline's BIDS database directory."""
         dname = get_pipeline_tag(
-            pipeline_name, pipeline_version, participant=participant, session=session
+            pipeline_name,
+            pipeline_version,
+            participant_id=participant_id,
+            session_id=session_id,
         )
         return self.dpath_bids_db / dname
 

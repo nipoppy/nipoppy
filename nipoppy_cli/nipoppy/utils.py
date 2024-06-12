@@ -175,18 +175,18 @@ def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
     pipeline_step: Optional[str] = None,
-    participant: Optional[str] = None,
-    session: Optional[str] = None,
+    participant_id: Optional[str] = None,
+    session_id: Optional[str] = None,
     sep="-",
 ):
     """Generate a tag for a pipeline."""
     components = [pipeline_name, pipeline_version]
     if pipeline_step is not None:
         components.append(pipeline_step)
-    if participant is not None:
-        components.append(participant)
-    if session is not None:
-        components.append(session)
+    if participant_id is not None:
+        components.append(participant_id)
+    if session_id is not None:
+        components.append(session_id)
     return sep.join(components)
 
 

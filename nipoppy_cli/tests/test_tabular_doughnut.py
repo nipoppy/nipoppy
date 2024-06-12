@@ -76,7 +76,7 @@ def test_check_status_value_invalid():
 
 
 @pytest.mark.parametrize(
-    "participant,session,col,expected_status",
+    "participant_id,session_id,col,expected_status",
     [
         ("01", "BL", Doughnut.col_downloaded, True),
         ("01", "BL", Doughnut.col_organized, True),
@@ -86,12 +86,12 @@ def test_check_status_value_invalid():
         ("02", "M12", Doughnut.col_bidsified, False),
     ],
 )
-def test_get_status(data, participant, session, col, expected_status):
-    assert Doughnut(data).get_status(participant, session, col) == expected_status
+def test_get_status(data, participant_id, session_id, col, expected_status):
+    assert Doughnut(data).get_status(participant_id, session_id, col) == expected_status
 
 
 @pytest.mark.parametrize(
-    "participant,session,col,status",
+    "participant_id,session_id,col,status",
     [
         ("01", "BL", Doughnut.col_downloaded, False),
         ("01", "BL", Doughnut.col_organized, False),
@@ -101,14 +101,21 @@ def test_get_status(data, participant, session, col, expected_status):
         ("02", "M12", Doughnut.col_bidsified, True),
     ],
 )
-def test_set_status(data, participant, session, col, status):
+def test_set_status(data, participant_id, session_id, col, status):
     doughnut = Doughnut(data)
-    doughnut.set_status(participant, session, col, status)
-    assert doughnut.get_status(participant, session, col) == status
+    doughnut.set_status(
+        participant_id=participant_id, session_id=session_id, col=col, status=status
+    )
+    assert (
+        doughnut.get_status(
+            participant_id=participant_id, session_id=session_id, col=col
+        )
+        == status
+    )
 
 
 @pytest.mark.parametrize(
-    "status_col,participant,session,expected_count",
+    "status_col,participant_id,session_id,expected_count",
     [
         ("downloaded", None, None, 3),
         ("organized", None, None, 2),
@@ -119,12 +126,12 @@ def test_set_status(data, participant, session, col, status):
     ],
 )
 def test_get_participant_sessions_helper(
-    data, status_col, participant, session, expected_count
+    data, status_col, participant_id, session_id, expected_count
 ):
     doughnut = Doughnut(data)
     count = 0
     for _ in doughnut._get_participant_sessions_helper(
-        status_col=status_col, participant=participant, session=session
+        status_col=status_col, participant_id=participant_id, session_id=session_id
     ):
         count += 1
     assert count == expected_count
