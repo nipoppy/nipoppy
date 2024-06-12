@@ -8,7 +8,11 @@ from typing import Optional
 import pydicom
 
 from nipoppy.tabular.doughnut import update_doughnut
-from nipoppy.utils import StrOrPathLike, check_session, participant_id_to_bids_id
+from nipoppy.utils import (
+    StrOrPathLike,
+    participant_id_to_bids_participant,
+    session_id_to_bids_session,
+)
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -89,8 +93,8 @@ class DicomReorgWorkflow(BaseWorkflow):
 
         dpath_reorganized: Path = (
             self.layout.dpath_sourcedata
-            / participant_id_to_bids_id(participant)
-            / check_session(session)
+            / participant_id_to_bids_participant(participant)
+            / session_id_to_bids_session(session)
         )
         self.mkdir(dpath_reorganized)
 

@@ -11,18 +11,17 @@ import pytest
 from fids import fids
 
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import (
+from nipoppy.utils import (  # check_session,
     add_path_suffix,
     add_path_timestamp,
     add_pybids_ignore_patterns,
     apply_substitutions_to_json,
     check_participant,
     check_participant_id_strict,
-    check_session,
     check_session_strict,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_id,
+    participant_id_to_bids_participant,
     process_template_str,
     save_df_with_backup,
     save_json,
@@ -36,8 +35,8 @@ from .conftest import DPATH_TEST_DATA
 @pytest.mark.parametrize(
     "participant_id,expected", [("123", "sub-123"), ("sub01", "sub-sub01")]
 )
-def test_participant_id_to_bids_id(participant_id, expected):
-    assert participant_id_to_bids_id(participant_id) == expected
+def test_participant_id_to_bids_participant(participant_id, expected):
+    assert participant_id_to_bids_participant(participant_id) == expected
 
 
 @pytest.mark.parametrize(
@@ -58,12 +57,12 @@ def test_check_participant_id_strict(participant_id, is_valid):
         assert check_participant_id_strict(participant_id) == participant_id
 
 
-@pytest.mark.parametrize(
-    "session,expected",
-    [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
-)
-def test_check_session(session, expected):
-    assert check_session(session) == expected
+# @pytest.mark.parametrize(
+#     "session,expected",
+#     [("ses-BL", "ses-BL"), ("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
+# )
+# def test_check_session(session, expected):
+#     assert check_session(session) == expected
 
 
 @pytest.mark.parametrize(

@@ -12,7 +12,11 @@ from typing_extensions import Self
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
-from nipoppy.utils import StrOrPathLike, check_session, participant_id_to_bids_id
+from nipoppy.utils import (
+    StrOrPathLike,
+    participant_id_to_bids_participant,
+    session_id_to_bids_session,
+)
 
 
 class DoughnutModel(ManifestModel):
@@ -183,9 +187,9 @@ def generate_doughnut(
             participant=participant, session=session
         )
 
-        # get DICOM and BIDS IDs
-        bids_id = participant_id_to_bids_id(participant)
-        bids_session = check_session(session)
+        # get BIDS IDs
+        bids_participant = participant_id_to_bids_participant(participant)
+        bids_session = session_id_to_bids_session(session)
 
         if empty:
             status_downloaded = False
@@ -197,10 +201,12 @@ def generate_doughnut(
                 dname_subdirectory=participant_dicom_dir,
             )
             status_organized = check_status(
-                dpath=dpath_organized, dname_subdirectory=Path(bids_id, bids_session)
+                dpath=dpath_organized,
+                dname_subdirectory=Path(bids_participant, bids_session),
             )
             status_bidsified = check_status(
-                dpath=dpath_bidsified, dname_subdirectory=Path(bids_id, bids_session)
+                dpath=dpath_bidsified,
+                dname_subdirectory=Path(bids_participant, bids_session),
             )
 
         doughnut_records.append(

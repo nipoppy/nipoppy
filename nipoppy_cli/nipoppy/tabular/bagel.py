@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import Field, field_validator, model_validator
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
-from nipoppy.utils import FIELD_DESCRIPTION_MAP, participant_id_to_bids_id
+from nipoppy.utils import FIELD_DESCRIPTION_MAP, participant_id_to_bids_participant
 
 STATUS_SUCCESS = "SUCCESS"
 STATUS_FAIL = "FAIL"
@@ -59,7 +59,7 @@ class BagelModel(BaseTabularModel):
     def check_bids_id(self):
         """Generate default value for optional BIDS ID field."""
         if self.bids_id is None:
-            self.bids_id = participant_id_to_bids_id(self.participant_id)
+            self.bids_id = participant_id_to_bids_participant(self.participant_id)
 
 
 class Bagel(BaseTabular):

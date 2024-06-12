@@ -43,7 +43,7 @@ FIELD_DESCRIPTION_MAP = {
 }
 
 
-def participant_id_to_bids_id(participant_id: str):
+def participant_id_to_bids_participant(participant_id: str):
     """Convert a participant ID to a BIDS-compatible participant ID."""
     bids_id = f"{BIDS_SUBJECT_PREFIX}{participant_id}"
     return bids_id
@@ -72,7 +72,7 @@ def check_participant_id_strict(participant_id: str):
     return participant_id
 
 
-def check_session(session: Optional[str]):
+def session_id_to_bids_session(session: Optional[str]):
     """Check/process a session string."""
     if session is None:
         return session
