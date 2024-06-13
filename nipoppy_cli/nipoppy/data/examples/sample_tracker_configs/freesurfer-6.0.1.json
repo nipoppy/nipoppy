@@ -1,0 +1,27 @@
+[
+    {
+        "NAME": "pipeline_complete",
+        "PATHS": [
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/mri/aparc+aseg.mgz",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/mri/aparc.a2009s+aseg.mgz",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/label/lh.aparc.annot",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/label/rh.aparc.annot",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/label/lh.aparc.a2009s.annot",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/label/rh.aparc.a2009s.annot",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/lh.curv",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/lh.area",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/lh.thickness",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/lh.sulc",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/lh.midthickness",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/rh.curv",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/rh.area",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/rh.thickness",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/rh.sulc",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/surf/rh.midthickness",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/stats/lh.aparc.stats",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/stats/rh.aparc.stats",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/stats/lh.aparc.a2009s.stats",
+            "[[NIPOPPY_SESSION]]/[[NIPOPPY_BIDS_ID]]/stats/rh.aparc.a2009s.stats"
+        ]
+    }
+]

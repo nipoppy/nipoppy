@@ -132,6 +132,8 @@ def test_bids_conversion_runner(
     [
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
+        ("freesurfer", "6.0.1"),
+        ("freesurfer", "7.3.2"),
         ("mriqc", "23.1.0"),
     ],
 )
