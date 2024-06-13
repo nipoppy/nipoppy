@@ -292,13 +292,13 @@ class BaseWorkflow(Base, ABC):
     def manifest(self) -> Manifest:
         """Load the manifest."""
         fpath_manifest = Path(self.layout.fpath_manifest)
-        expected_sessions = self.config.SESSIONS
-        expected_visits = self.config.VISITS
+        expected_session_ids = self.config.SESSION_IDS
+        expected_visit_ids = self.config.VISIT_IDS
         try:
             return Manifest.load(
                 fpath_manifest,
-                sessions=expected_sessions,
-                visits=expected_visits,
+                session_ids=expected_session_ids,
+                visit_ids=expected_visit_ids,
             )
         except FileNotFoundError:
             raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
@@ -318,7 +318,7 @@ class BaseWorkflow(Base, ABC):
             doughnut = generate_doughnut(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=self.layout.dpath_raw_dicom,
+                dpath_downloaded=self.layout.dpath_raw_imaging,
                 dpath_organized=self.layout.dpath_sourcedata,
                 dpath_bidsified=self.layout.dpath_bids,
                 empty=False,

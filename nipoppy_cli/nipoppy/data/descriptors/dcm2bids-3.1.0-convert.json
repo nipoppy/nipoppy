@@ -15,7 +15,7 @@
             "command-line-flag": "-d",
             "value-key": "[DICOM_DIR]",
             "default-value": [
-                "[[NIPOPPY_DPATH_SOURCEDATA]]/[[NIPOPPY_PARTICIPANT]]/[[NIPOPPY_SESSION]]"
+                "[[NIPOPPY_DPATH_SOURCEDATA]]/[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION]]"
             ]
         },
         {
@@ -26,7 +26,7 @@
             "optional": false,
             "command-line-flag": "-p",
             "value-key": "[PARTICIPANT]",
-            "default-value": "[[NIPOPPY_PARTICIPANT]]"
+            "default-value": "[[NIPOPPY_PARTICIPANT_ID]]"
         },
         {
             "name": "session",
@@ -36,7 +36,7 @@
             "optional": true,
             "command-line-flag": "-s",
             "value-key": "[SESSION]",
-            "default-value": "[[NIPOPPY_SESSION_SHORT]]"
+            "default-value": "[[NIPOPPY_SESSION_ID]]"
         },
         {
             "name": "config",

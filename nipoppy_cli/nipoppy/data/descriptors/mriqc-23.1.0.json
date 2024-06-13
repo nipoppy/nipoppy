@@ -82,7 +82,7 @@
             "list": true,
             "command-line-flag": "--participant-label",
             "default-value": [
-                "[[NIPOPPY_PARTICIPANT]]"
+                "[[NIPOPPY_PARTICIPANT_ID]]"
             ]
         },
         {
@@ -93,7 +93,7 @@
             "type": "String",
             "value-key": "[SESSION_ID]",
             "command-line-flag": "--session-id",
-            "default-value": "[[NIPOPPY_SESSION_SHORT]]"
+            "default-value": "[[NIPOPPY_SESSION_ID]]"
         },
         {
             "id": "run_id",
