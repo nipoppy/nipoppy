@@ -23,14 +23,14 @@ from nipoppy.utils import (
     BIDS_SUBJECT_PREFIX,
     StrOrPathLike,
     add_pybids_ignore_patterns,
-    check_participant,
-    check_session,
+    check_participant_id,
+    check_session_id,
     create_bids_db,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_id,
+    participant_id_to_bids_participant,
     process_template_str,
-    strip_session,
+    session_id_to_bids_session,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -45,8 +45,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
-        participant: str = None,
-        session: str = None,
+        participant_id: str = None,
+        session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
@@ -61,8 +61,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
-        self.participant = check_participant(participant)
-        self.session = check_session(session)
+        self.participant_id = check_participant_id(participant_id)
+        self.session_id = check_session_id(session_id)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -90,8 +90,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         return self.layout.get_dpath_pipeline_work(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
-            participant=self.participant,
-            session=self.session,
+            participant_id=self.participant_id,
+            session_id=self.session_id,
         )
 
     @cached_property
@@ -100,8 +100,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         return self.layout.get_dpath_bids_db(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
-            participant=self.participant,
-            session=self.session,
+            participant_id=self.participant_id,
+            session_id=self.session_id,
         )
 
     @cached_property
@@ -217,35 +217,35 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def process_template_json(
         self,
         template_json: dict,
-        participant: str,
-        session: str,
-        bids_id: Optional[str] = None,
-        session_short: Optional[str] = None,
+        participant_id: str,
+        session_id: str,
+        bids_participant: Optional[str] = None,
+        bids_session: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
-        if not (isinstance(participant, str) and isinstance(session, str)):
+        if not (isinstance(participant_id, str) and isinstance(session_id, str)):
             raise ValueError(
-                "participant and session must be strings"
-                f", got {participant} ({type(participant)})"
-                f" and {session} ({type(session)})"
+                "participant_id and session_id must be strings"
+                f", got {participant_id} ({type(participant_id)})"
+                f" and {session_id} ({type(session_id)})"
             )
 
-        if bids_id is None:
-            bids_id = participant_id_to_bids_id(participant)
-        if session_short is None:
-            session_short = strip_session(session)
+        if bids_participant is None:
+            bids_participant = participant_id_to_bids_participant(participant_id)
+        if bids_session is None:
+            bids_session = session_id_to_bids_session(session_id)
 
         if objs is None:
             objs = []
         objs.extend([self, self.layout])
 
-        kwargs["participant"] = participant
-        kwargs["session"] = session
-        kwargs["bids_id"] = bids_id
-        kwargs["session_short"] = session_short
+        kwargs["participant_id"] = participant_id
+        kwargs["session_id"] = session_id
+        kwargs["bids_participant"] = bids_participant
+        kwargs["bids_session"] = bids_session
 
         self.logger.debug("Available replacement strings: ")
         max_len = max(len(k) for k in kwargs)
@@ -264,21 +264,21 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def set_up_bids_db(
         self,
         dpath_bids_db: StrOrPathLike,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> bids.BIDSLayout:
         """Set up the BIDS database."""
         dpath_bids_db: Path = Path(dpath_bids_db)
 
-        if participant is not None:
+        if participant_id is not None:
             add_pybids_ignore_patterns(
                 current=self.pybids_ignore_patterns,
-                new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant}))",
+                new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant_id}))",
             )
-        if session is not None:
+        if session_id is not None:
             add_pybids_ignore_patterns(
                 current=self.pybids_ignore_patterns,
-                new=f".*?/{BIDS_SESSION_PREFIX}(?!{strip_session(session)})",
+                new=f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})",
             )
 
         self.logger.info(
@@ -340,16 +340,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def run_main(self, **kwargs):
         """Run the pipeline."""
-        for participant, session in self.get_participants_sessions_to_run(
-            self.participant, self.session
+        for participant_id, session_id in self.get_participants_sessions_to_run(
+            self.participant_id, self.session_id
         ):
-            self.logger.info(f"Running on participant {participant}, session {session}")
+            self.logger.info(
+                f"Running on participant {participant_id}, session {session_id}"
+            )
             try:
-                self.run_single(participant, session)
+                self.run_single(participant_id, session_id)
             except Exception as exception:
                 self.logger.error(
                     f"Error running {self.pipeline_name} {self.pipeline_version}"
-                    f" on participant {participant}, session {session}"
+                    f" on participant {participant_id}, session {session_id}"
                     f": {exception}"
                 )
 
@@ -361,7 +363,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     @abstractmethod
     def get_participants_sessions_to_run(
-        self, participant: Optional[str], session: Optional[str]
+        self, participant_id: Optional[str], session_id: Optional[str]
     ):
         """
         Return participant-session pairs to loop over with run_single().
@@ -370,7 +372,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """
 
     @abstractmethod
-    def run_single(self, participant: Optional[str], session: Optional[str]):
+    def run_single(self, participant_id: Optional[str], session_id: Optional[str]):
         """
         Run on a single participant/session.
 
@@ -394,8 +396,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             fname_stem = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
-                participant=self.participant,
-                session=self.session,
+                participant_id=self.participant_id,
+                session_id=self.session_id,
             )
         return super().generate_fpath_log(
             dnames_parent=dnames_parent, fname_stem=fname_stem
