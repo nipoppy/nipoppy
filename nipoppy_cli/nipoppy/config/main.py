@@ -24,7 +24,12 @@ class Config(SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
     DATASET_NAME: str = Field(description="Name of the dataset")
-    VISIT_IDS: list[str] = Field(description="List of visits available in the study")
+    VISIT_IDS: list[str] = Field(
+        description=(
+            "List of visits available in the study. A visit ID is an identifier "
+            "for a data collection event, not restricted to imaging data."
+        )
+    )
     SESSION_IDS: Optional[list[str]] = Field(
         default=None,  # will be a list after validation
         description=(
@@ -129,12 +134,12 @@ class Config(SchemaWithContainerConfig):
     @classmethod
     def check_input(cls, data: Any):
         """Validate the raw input."""
-        key_sessions = "SESSION_IDS"
-        key_visits = "VISIT_IDS"
+        key_session_ids = "SESSION_IDS"
+        key_visit_ids = "VISIT_IDS"
         if isinstance(data, dict):
-            # if sessions are not given, set to be the same as visits
-            if key_sessions not in data:
-                data[key_sessions] = data[key_visits]
+            # if session_ids is not given, set to be the same as visit_ids
+            if key_session_ids not in data:
+                data[key_session_ids] = data[key_visit_ids]
 
         return data
 

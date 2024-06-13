@@ -39,8 +39,7 @@ FIELD_DESCRIPTION_MAP = {
     "participant_id": "Participant identifier, without the BIDS prefix",
     "session_id": "Imaging session identifier, without the BIDS prefix",
     "bids_participant": "Participant identifier with BIDS prefix (e.g., sub-01)",
-    # only for bagel
-    "bids_session": "Participant identifier with BIDS prefix (e.g., sub-01)",
+    "bids_session": "Imaging session identifier with BIDS prefix (e.g., ses-01)",
     "visit_id": "Visit identifier",
 }
 

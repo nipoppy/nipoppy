@@ -88,6 +88,7 @@ class Bagel(BaseTabular):
     col_participant_id = "participant_id"
     col_bids_participant = "bids_participant"
     col_session_id = "session_id"
+    col_bids_session = "session"
     col_pipeline_name = "pipeline_name"
     col_pipeline_version = "pipeline_version"
     col_pipeline_complete = "pipeline_complete"
