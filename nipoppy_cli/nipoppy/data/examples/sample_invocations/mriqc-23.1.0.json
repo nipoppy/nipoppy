@@ -3,9 +3,9 @@
     "output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
     "analysis_level": "participant",
     "participant_label": [
-        "[[NIPOPPY_PARTICIPANT]]"
+        "[[NIPOPPY_PARTICIPANT_ID]]"
     ],
-    "session_id": "[[NIPOPPY_SESSION_SHORT]]",
+    "session_id": "[[NIPOPPY_SESSION_ID]]",
     "modalities": [
         "T1w",
         "T2w"

@@ -152,7 +152,7 @@ def test_bids_conversion_runner(
     ],
 )
 def test_tracker(pipeline_name, pipeline_version, single_subject_dataset):
-    layout, participant, session = single_subject_dataset
+    layout, participant_id, session_id = single_subject_dataset
     layout: DatasetLayout
     tracker = PipelineTracker(
         dpath_root=layout.dpath_root,
@@ -163,4 +163,4 @@ def test_tracker(pipeline_name, pipeline_version, single_subject_dataset):
     # make sure all template strings are replaced
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        tracker.run_single(participant=participant, session=session)
+        tracker.run_single(participant_id=participant_id, session_id=session_id)
