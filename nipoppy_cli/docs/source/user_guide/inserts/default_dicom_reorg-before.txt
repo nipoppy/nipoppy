@@ -1,7 +1,7 @@
 └── scratch
     └── raw_dicom
         └── 01                   # participant subdirectory
-            ├── ses-1            # session subdirectory
+            ├── 1                # session subdirectory
             │   ├── protocol1    # arbitrary DICOM subtree
             │   │   ├── 100.dcm
             │   │   ├── 101.dcm
@@ -10,7 +10,7 @@
             │       ├── 200.dcm
             │       ├── 201.dcm
             │       └── 202.dcm
-            └── ses-2
+            └── 2
                 ├── protocol3
                 │   ├── 100.dcm
                 │   ├── 101.dcm

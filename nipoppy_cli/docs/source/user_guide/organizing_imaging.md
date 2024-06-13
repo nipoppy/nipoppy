@@ -39,18 +39,18 @@ By default, Nipoppy expects "participant-first" organization, like the following
 ```{literalinclude} ./inserts/default_dicom_reorg-before.txt
 ```
 
-All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>`, creating a flat list of files, like this:
+All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` (note the addition of BIDS prefixes), creating a flat list of files, like this:
 ```{literalinclude} ./inserts/default_dicom_reorg-after.txt
 ```
 
 By default, the output files will be relative symbolic links ("symlinks") to avoid duplication of files.
 
-If `"DICOM_DIR_PARTICIPANT_FIRST"` is set to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`, then Nipoppy will instead expect session-level directories with nested participant-level directories (e.g., {{dpath_raw_imaging}}`/ses-1/01`).
+If `"DICOM_DIR_PARTICIPANT_FIRST"` is set to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`, then Nipoppy will instead expect session-level directories with nested participant-level directories (e.g., {{dpath_raw_imaging}}`/1/01` for the above example).
 
 (dicom-dir-map-example)=
 If the raw imaging data is not organized in any of these two structures, a custom comma-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_raw_imaging}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
 
-Here is an example file for a dataset that does not use the `ses-` prefix for sessions:
+Here is an example file for a dataset that already uses the `ses-` prefix for sessions:
 
 ```{csv-table}
 ---

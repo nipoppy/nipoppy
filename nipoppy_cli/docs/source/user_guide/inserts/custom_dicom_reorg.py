@@ -10,7 +10,7 @@ from nipoppy.workflows import DicomReorgWorkflow
 class CustomDicomReorgWorkflow(DicomReorgWorkflow):
     """Custom workflow class that overrides two methods from DicomReorgWorkflow."""
 
-    def get_fpaths_to_reorg(self, participant: str, session: str) -> list[Path]:
+    def get_fpaths_to_reorg(self, participant_id: str, session_id: str) -> list[Path]:
         """
         Get full file paths to reorganize for a single participant and session.
 
@@ -19,10 +19,10 @@ class CustomDicomReorgWorkflow(DicomReorgWorkflow):
         """
         # self.layout.dpath_raw_dicom will dynamically generate the path to the
         # dataset's (unorganized) raw imaging data
-        return [self.layout.dpath_raw_dicom / participant / f"{session}.tar.gz"]
+        return [self.layout.dpath_raw_imaging / participant_id / f"{session_id}.tar.gz"]
 
     def apply_fname_mapping(
-        self, fname_source: str, participant: str, session: str
+        self, fname_source: str, participant_id: str, session_id: str
     ) -> str:
         """
         Name the files differently in the sourcedata directory.
@@ -33,7 +33,7 @@ class CustomDicomReorgWorkflow(DicomReorgWorkflow):
         Note: this only controls the name of the file. Its parent directories will
         have fixed names that cannot be changed.
         """
-        return f"{participant}-{session}.tar.gz"
+        return f"{participant_id}-{session_id}.tar.gz"
 
 
 if __name__ == "__main__":
