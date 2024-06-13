@@ -9,6 +9,7 @@ import pytest
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
 from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
@@ -26,24 +27,24 @@ def test_is_derived_dicom(fpath, expected_result):
 
 
 @pytest.mark.parametrize(
-    "participant,session,fpaths,participant_first",
+    "participant_id,session_id,fpaths,participant_first",
     [
-        ("01", "ses-1", ["01/ses-1/file1.dcm", "01/ses-1/file2.dcm"], True),
+        ("01", "1", ["01/1/file1.dcm", "01/1/file2.dcm"], True),
         (
             "02",
-            "ses-2",
-            ["ses-2/02/001.dcm", "ses-2/02/002.dcm", "ses-2/02/003.dcm"],
+            "2",
+            ["2/02/001.dcm", "2/02/002.dcm", "2/02/003.dcm"],
             False,
         ),
     ],
 )
 def test_get_fpaths_to_reorg(
-    participant, session, fpaths, participant_first, tmp_path: Path
+    participant_id, session_id, fpaths, participant_first, tmp_path: Path
 ):
     dpath_root = tmp_path / "my_dataset"
 
     manifest = prepare_dataset(
-        participants_and_sessions_manifest={participant: [session]}
+        participants_and_sessions_manifest={participant_id: [session_id]}
     )
 
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
@@ -51,43 +52,45 @@ def test_get_fpaths_to_reorg(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=participant_first
     )
     for fpath in fpaths:
-        fpath_full: Path = workflow.layout.dpath_raw_dicom / fpath
+        fpath_full: Path = workflow.layout.dpath_raw_imaging / fpath
         fpath_full.parent.mkdir(parents=True, exist_ok=True)
         fpath_full.touch()
 
     assert len(
         workflow.get_fpaths_to_reorg(
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
         )
     ) == len(fpaths)
 
 
 def test_get_fpaths_to_reorg_error_not_found(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    participant = "XXX"
-    session = "ses-X"
+    participant_id = "XXX"
+    session_id = "X"
 
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
     manifest = prepare_dataset(
-        participants_and_sessions_manifest={participant: [session]}
+        participants_and_sessions_manifest={participant_id: [session_id]}
     )
     workflow.dicom_dir_map = DicomDirMap.load_or_generate(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
     )
 
     with pytest.raises(FileNotFoundError, match="Raw DICOM directory not found"):
-        workflow.get_fpaths_to_reorg("XXX", "ses-X")
+        workflow.get_fpaths_to_reorg("XXX", "X")
 
 
 @pytest.mark.parametrize(
     "mapping_func,expected",
     [
-        (lambda fname, participant, session: fname, "123456.dcm"),
-        (lambda fname, participant, session: "dicoms.tar.gz", "dicoms.tar.gz"),
+        (lambda fname, participant_id, session_id: fname, "123456.dcm"),
+        (lambda fname, participant_id, session_id: "dicoms.tar.gz", "dicoms.tar.gz"),
         (
-            lambda fname, participant, session: f"{participant}-{session}.tar.gz",
-            "01-ses-1.tar.gz",
+            lambda fname, participant_id, session_id: (
+                f"{participant_id}-{session_id}.tar.gz"
+            ),
+            "01-1.tar.gz",
         ),
     ],
 )
@@ -97,9 +100,9 @@ def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
     workflow.apply_fname_mapping = mapping_func
 
     fname = "123456.dcm"
-    participant = "01"
-    session = "ses-1"
-    assert workflow.apply_fname_mapping(fname, participant, session) == expected
+    participant_id = "01"
+    session_id = "1"
+    assert workflow.apply_fname_mapping(fname, participant_id, session_id) == expected
 
 
 @pytest.mark.parametrize(
@@ -116,21 +119,21 @@ def test_apply_fname_mapping_default(fname_source, expected, tmp_path: Path):
 
     assert (
         workflow.apply_fname_mapping(
-            fname_source=fname_source, participant="", session=""
+            fname_source=fname_source, participant_id="", session_id=""
         )
         == expected
     )
 
 
 def test_run_single_error_file_exists(tmp_path: Path):
-    participant = "01"
-    session = "ses-1"
+    participant_id = "01"
+    session_id = "1"
     dataset_name = "my_dataset"
 
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
 
     manifest = prepare_dataset(
-        participants_and_sessions_manifest={participant: [session]}
+        participants_and_sessions_manifest={participant_id: [session_id]}
     )
     workflow.dicom_dir_map = DicomDirMap.load_or_generate(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
@@ -139,36 +142,41 @@ def test_run_single_error_file_exists(tmp_path: Path):
     # create the same file in both the downloaded and organized directories
     fname = "test.dcm"
     for fpath in [
-        workflow.layout.dpath_raw_dicom / participant / session / fname,
-        workflow.layout.dpath_sourcedata / participant / session / fname,
+        workflow.layout.dpath_raw_imaging / participant_id / session_id / fname,
+        workflow.layout.dpath_sourcedata
+        / participant_id_to_bids_participant(participant_id)
+        / session_id_to_bids_session(session_id)
+        / fname,
     ]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
     with pytest.raises(FileExistsError, match="Cannot move file"):
-        workflow.run_single(participant, session)
+        workflow.run_single(participant_id, session_id)
 
 
 def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    participant = "01"
-    session = "ses-1"
+    participant_id = "01"
+    session_id = "1"
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
 
     manifest = prepare_dataset(
-        participants_and_sessions_manifest={participant: [session]}
+        participants_and_sessions_manifest={participant_id: [session_id]}
     )
     workflow.dicom_dir_map = DicomDirMap.load_or_generate(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
     )
 
     # use derived DICOM file
-    fpath_dicom = workflow.layout.dpath_raw_dicom / participant / session / "test.dcm"
+    fpath_dicom = (
+        workflow.layout.dpath_raw_imaging / participant_id / session_id / "test.dcm"
+    )
     fpath_dicom.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(DPATH_TEST_DATA / "dicom-derived.dcm", fpath_dicom)
 
     try:
-        workflow.run_single(participant, session)
+        workflow.run_single(participant_id, session_id)
     except Exception:
         pass
 
@@ -182,13 +190,13 @@ def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixtu
 
 
 def test_run_single_error_dicom_read(tmp_path: Path):
-    participant = "01"
-    session = "ses-1"
+    participant_id = "01"
+    session_id = "1"
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
 
     manifest = prepare_dataset(
-        participants_and_sessions_manifest={participant: [session]}
+        participants_and_sessions_manifest={participant_id: [session_id]}
     )
     workflow.dicom_dir_map = DicomDirMap.load_or_generate(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
@@ -196,12 +204,12 @@ def test_run_single_error_dicom_read(tmp_path: Path):
 
     # create an invalid DICOM file
     fname = "test.dcm"
-    fpath = workflow.layout.dpath_raw_dicom / participant / session / fname
+    fpath = workflow.layout.dpath_raw_imaging / participant_id / session_id / fname
     fpath.parent.mkdir(parents=True, exist_ok=True)
     fpath.touch()
 
     with pytest.raises(RuntimeError, match="Error checking DICOM file"):
-        workflow.run_single(participant, session)
+        workflow.run_single(participant_id, session_id)
 
 
 def test_copy_files_default(tmp_path: Path):
@@ -225,38 +233,38 @@ def test_check_dicoms_default(tmp_path: Path):
     [
         (
             {
-                "S01": ["ses-1", "ses-2", "ses-3"],
-                "S02": ["ses-1", "ses-2"],
-                "S03": ["ses-3"],
+                "S01": ["1", "2", "3"],
+                "S02": ["1", "2"],
+                "S03": ["3"],
             },
             {
-                "S03": ["ses-3"],
+                "S03": ["3"],
             },
             [
-                ("S01", "ses-1"),
-                ("S01", "ses-2"),
-                ("S01", "ses-3"),
-                ("S02", "ses-1"),
-                ("S02", "ses-2"),
+                ("S01", "1"),
+                ("S01", "2"),
+                ("S01", "3"),
+                ("S02", "1"),
+                ("S02", "2"),
             ],
         ),
         (
             {
-                "S01": ["ses-1", "ses-2", "ses-3"],
-                "S02": ["ses-1", "ses-2", "ses-3"],
-                "S03": ["ses-1", "ses-2", "ses-3"],
+                "S01": ["1", "2", "3"],
+                "S02": ["1", "2", "3"],
+                "S03": ["1", "2", "3"],
             },
             {
-                "S01": ["ses-1", "ses-3"],
+                "S01": ["1", "3"],
             },
             [
-                ("S01", "ses-2"),
-                ("S02", "ses-1"),
-                ("S02", "ses-2"),
-                ("S02", "ses-3"),
-                ("S03", "ses-1"),
-                ("S03", "ses-2"),
-                ("S03", "ses-3"),
+                ("S01", "2"),
+                ("S02", "1"),
+                ("S02", "2"),
+                ("S02", "3"),
+                ("S03", "1"),
+                ("S03", "2"),
+                ("S03", "3"),
             ],
         ),
     ],
@@ -268,9 +276,9 @@ def test_get_participants_sessions_to_run(
     tmp_path: Path,
 ):
     participants_and_sessions_manifest = {
-        "S01": ["ses-1", "ses-2", "ses-3"],
-        "S02": ["ses-1", "ses-2", "ses-3"],
-        "S03": ["ses-1", "ses-2", "ses-3"],
+        "S01": ["1", "2", "3"],
+        "S02": ["1", "2", "3"],
+        "S03": ["1", "2", "3"],
     }
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
@@ -280,13 +288,13 @@ def test_get_participants_sessions_to_run(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        dpath_downloaded=workflow.layout.dpath_raw_dicom,
+        dpath_downloaded=workflow.layout.dpath_raw_imaging,
         dpath_organized=workflow.layout.dpath_sourcedata,
     )
 
     config = get_config(
         dataset_name=dataset_name,
-        visits=list(manifest[Manifest.col_visit].unique()),
+        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
     )
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)
@@ -297,8 +305,8 @@ def test_get_participants_sessions_to_run(
 
 def test_run_setup(tmp_path: Path):
     dataset_name = "my_dataset"
-    participants_and_sessions1 = {"01": ["ses-1"]}
-    participants_and_sessions2 = {"01": ["ses-1", "ses-2"], "02": ["ses-1"]}
+    participants_and_sessions1 = {"01": ["1"]}
+    participants_and_sessions2 = {"01": ["1", "2"], "02": ["1"]}
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
 
     create_empty_dataset(workflow.layout.dpath_root)
@@ -310,7 +318,7 @@ def test_run_setup(tmp_path: Path):
 
     config = get_config(
         dataset_name=dataset_name,
-        visits=list(manifest1[Manifest.col_visit].unique()),
+        visit_ids=list(manifest1[Manifest.col_visit_id].unique()),
     )
     config.save(workflow.layout.fpath_config)
 
@@ -336,26 +344,26 @@ def test_run_setup(tmp_path: Path):
     [
         (
             {
-                "S01": ["ses-1", "ses-2", "ses-3"],
-                "S02": ["ses-1", "ses-2", "ses-3"],
-                "S03": ["ses-1", "ses-2", "ses-3"],
+                "S01": ["1", "2", "3"],
+                "S02": ["1", "2", "3"],
+                "S03": ["1", "2", "3"],
             },
             {
-                "S01": ["ses-1", "ses-2", "ses-3"],
-                "S02": ["ses-1", "ses-2"],
-                "S03": ["ses-3"],
+                "S01": ["1", "2", "3"],
+                "S02": ["1", "2"],
+                "S03": ["3"],
             },
         ),
         (
             {
-                "P01": ["ses-BL"],
-                "P02": ["ses-V01"],
-                "P03": ["ses-V03"],
+                "P01": ["BL"],
+                "P02": ["V01"],
+                "P03": ["V03"],
             },
             {
-                "P01": ["ses-BL"],
-                "P02": ["ses-BL", "ses-V01"],
-                "P03": ["ses-BL", "ses-V03"],
+                "P01": ["BL"],
+                "P02": ["BL", "V01"],
+                "P03": ["BL", "V03"],
             },
         ),
     ],
@@ -375,12 +383,12 @@ def test_run_main(
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
-        dpath_downloaded=workflow.layout.dpath_raw_dicom,
+        dpath_downloaded=workflow.layout.dpath_raw_imaging,
     )
 
     config = get_config(
         dataset_name=dataset_name,
-        visits=list(manifest[Manifest.col_visit].unique()),
+        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
     )
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)
@@ -388,15 +396,17 @@ def test_run_main(
 
     workflow.run_main()
 
-    for participant, sessions in participants_and_sessions_manifest.items():
-        for session in sessions:
+    for participant_id, session_ids in participants_and_sessions_manifest.items():
+        for session_id in session_ids:
             dpath_to_check: Path = (
-                workflow.layout.dpath_sourcedata / participant / session
+                workflow.layout.dpath_sourcedata
+                / participant_id_to_bids_participant(participant_id)
+                / session_id_to_bids_session(session_id)
             )
 
             if (
-                participant in participants_and_sessions_downloaded
-                and session in participants_and_sessions_downloaded[participant]
+                participant_id in participants_and_sessions_downloaded
+                and session_id in participants_and_sessions_downloaded[participant_id]
             ):
                 # check that directory exists
                 assert dpath_to_check.exists()
@@ -414,7 +424,9 @@ def test_run_main(
 
                 # check that the doughnut has been updated
                 assert workflow.doughnut.get_status(
-                    participant, session, workflow.doughnut.col_organized
+                    participant_id=participant_id,
+                    session_id=session_id,
+                    col=workflow.doughnut.col_in_sourcedata,
                 )
 
             else:
@@ -428,15 +440,13 @@ def test_run_main(
         Doughnut(
             data={
                 Doughnut.col_participant_id: ["01"],
-                Doughnut.col_visit: ["1"],
-                Doughnut.col_session: ["ses-1"],
+                Doughnut.col_visit_id: ["1"],
+                Doughnut.col_session_id: ["1"],
                 Doughnut.col_datatype: "['anat']",
-                Doughnut.col_bids_id: ["sub-01"],
-                Doughnut.col_dicom_id: ["01"],
                 Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_downloaded: [True],
-                Doughnut.col_organized: [True],
-                Doughnut.col_bidsified: [True],
+                Doughnut.col_in_raw_imaging: [True],
+                Doughnut.col_in_sourcedata: [True],
+                Doughnut.col_in_bids: [True],
             }
         ).validate(),
     ],
