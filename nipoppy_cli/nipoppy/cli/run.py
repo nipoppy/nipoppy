@@ -67,8 +67,8 @@ def cli(argv: Sequence[str] = None) -> None:
                 pipeline_name=args.pipeline,
                 pipeline_version=args.pipeline_version,
                 pipeline_step=args.pipeline_step,
-                participant=args.participant,
-                session=args.session,
+                participant_id=args.participant_id,
+                session_id=args.session_id,
                 simulate=args.simulate,
                 **workflow_kwargs,
             )
@@ -78,8 +78,8 @@ def cli(argv: Sequence[str] = None) -> None:
                 pipeline_name=args.pipeline,
                 pipeline_version=args.pipeline_version,
                 pipeline_step=args.pipeline_step,
-                participant=args.participant,
-                session=args.session,
+                participant_id=args.participant_id,
+                session_id=args.session_id,
                 simulate=args.simulate,
                 **workflow_kwargs,
             )
@@ -88,8 +88,8 @@ def cli(argv: Sequence[str] = None) -> None:
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
                 pipeline_version=args.pipeline_version,
-                participant=args.participant,
-                session=args.session,
+                participant_id=args.participant_id,
+                session_id=args.session_id,
                 **workflow_kwargs,
             )
         else:
