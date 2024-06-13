@@ -21,8 +21,8 @@ class BidsConversionRunner(PipelineRunner):
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
-        participant: str = None,
-        session: str = None,
+        participant_id: str = None,
+        session_id: str = None,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -33,8 +33,8 @@ class BidsConversionRunner(PipelineRunner):
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             simulate=simulate,
             fpath_layout=fpath_layout,
             logger=logger,
@@ -57,26 +57,26 @@ class BidsConversionRunner(PipelineRunner):
         )
 
     def get_participants_sessions_to_run(
-        self, participant: Optional[str], session: Optional[str]
+        self, participant_id: Optional[str], session_id: Optional[str]
     ):
         """Return participant-session pairs to run the pipeline on."""
         participants_sessions_bidsified = set(
             self.doughnut.get_bidsified_participants_sessions(
-                participant=participant, session=session
+                participant_id=participant_id, session_id=session_id
             )
         )
         for participant_session in self.doughnut.get_organized_participants_sessions(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         ):
             if participant_session not in participants_sessions_bidsified:
                 yield participant_session
 
-    def run_single(self, participant: str, session: str):
+    def run_single(self, participant_id: str, session_id: str):
         """Run BIDS conversion on a single participant/session."""
         # get container command
         container_command = self.process_container_config(
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             bind_paths=[
                 self.layout.dpath_sourcedata,
                 self.layout.dpath_bids,
@@ -84,14 +84,16 @@ class BidsConversionRunner(PipelineRunner):
         )
 
         # run pipeline with Boutiques
-        self.launch_boutiques_run(
-            participant, session, container_command=container_command
+        invocation_and_descriptor = self.launch_boutiques_run(
+            participant_id, session_id, container_command=container_command
         )
 
         # update status
         self.doughnut.set_status(
-            participant=participant,
-            session=session,
-            col=self.doughnut.col_bidsified,
+            participant_id=participant_id,
+            session_id=session_id,
+            col=self.doughnut.col_in_bids,
             status=True,
         )
+
+        return invocation_and_descriptor

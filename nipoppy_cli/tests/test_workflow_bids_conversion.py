@@ -43,62 +43,32 @@ def test_setup(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,participant,session,expected",
+    "doughnut_data,participant_id,session_id,expected",
     [
         (
             [
-                {
-                    Doughnut.col_participant_id: "S01",
-                    Doughnut.col_session: "ses-1",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
-                {
-                    Doughnut.col_participant_id: "S01",
-                    Doughnut.col_session: "ses-2",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: True,
-                },
-                {
-                    Doughnut.col_participant_id: "S02",
-                    Doughnut.col_session: "ses-3",
-                    Doughnut.col_organized: False,
-                    Doughnut.col_bidsified: False,
-                },
+                ["S01", "1", True, False],
+                ["S01", "2", True, True],
+                ["S02", "3", False, False],
             ],
             None,
             None,
-            [("S01", "ses-1")],
+            [("S01", "1")],
         ),
         (
             [
-                {
-                    Doughnut.col_participant_id: "P01",
-                    Doughnut.col_session: "ses-A",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
-                {
-                    Doughnut.col_participant_id: "P01",
-                    Doughnut.col_session: "ses-B",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
-                {
-                    Doughnut.col_participant_id: "P02",
-                    Doughnut.col_session: "ses-B",
-                    Doughnut.col_organized: True,
-                    Doughnut.col_bidsified: False,
-                },
+                ["P01", "A", True, False],
+                ["P01", "B", True, False],
+                ["P02", "B", True, False],
             ],
             "P01",
-            "ses-B",
-            [("P01", "ses-B")],
+            "B",
+            [("P01", "B")],
         ),
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data, participant, session, expected, tmp_path: Path
+    doughnut_data, participant_id, session_id, expected, tmp_path: Path
 ):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
@@ -109,13 +79,14 @@ def test_get_participants_sessions_to_run(
     workflow.doughnut = Doughnut().add_or_update_records(
         records=[
             {
-                **data,
-                Doughnut.col_visit: data[Doughnut.col_session],
+                Doughnut.col_participant_id: data[0],
+                Doughnut.col_session_id: data[1],
+                Doughnut.col_in_sourcedata: data[2],
+                Doughnut.col_in_bids: data[3],
+                Doughnut.col_visit_id: data[1],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_dicom_id: "",
-                Doughnut.col_bids_id: "",
-                Doughnut.col_downloaded: False,
+                Doughnut.col_in_raw_imaging: False,
             }
             for data in doughnut_data
         ]
@@ -123,6 +94,6 @@ def test_get_participants_sessions_to_run(
     assert [
         tuple(x)
         for x in workflow.get_participants_sessions_to_run(
-            participant=participant, session=session
+            participant_id=participant_id, session_id=session_id
         )
     ] == expected

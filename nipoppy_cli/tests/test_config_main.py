@@ -14,9 +14,9 @@ from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
 
-REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISITS", "PROC_PIPELINES"]
+REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISIT_IDS", "PROC_PIPELINES"]
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
-    "SESSIONS",
+    "SESSION_IDS",
     "SUBSTITUTIONS",
     "BIDS_PIPELINES",
     "CUSTOM",
@@ -30,8 +30,8 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
 def valid_config_data():
     return {
         "DATASET_NAME": "my_dataset",
-        "VISITS": ["1"],
-        "SESSIONS": ["ses-1"],
+        "VISIT_IDS": ["1"],
+        "SESSION_IDS": ["1"],
         "BIDS_PIPELINES": [
             {
                 "NAME": "bids_converter",
@@ -104,21 +104,21 @@ def test_check_no_duplicate_pipeline(
 
 
 @pytest.mark.parametrize(
-    "visits,expected_sessions",
+    "visit_ids,expected_session_ids",
     [
-        (["V01", "V02"], ["ses-V01", "ses-V02"]),
-        (["ses-1", "2"], ["ses-1", "ses-2"]),
+        (["V01", "V02"], ["V01", "V02"]),
+        (["1", "2"], ["1", "2"]),
     ],
 )
-def test_sessions_inferred(visits, expected_sessions):
+def test_sessions_inferred(visit_ids, expected_session_ids):
     data = {
         "DATASET_NAME": "my_dataset",
-        "VISITS": visits,
+        "VISIT_IDS": visit_ids,
         "BIDS_PIPELINES": [],
         "PROC_PIPELINES": [],
     }
     config = Config(**data)
-    assert config.SESSIONS == expected_sessions
+    assert config.SESSION_IDS == expected_session_ids
 
 
 @pytest.mark.parametrize(
