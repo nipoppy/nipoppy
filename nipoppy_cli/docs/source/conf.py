@@ -93,7 +93,7 @@ myst_substitutions = {
     "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
-    "dpath_raw_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_raw_dicom}`",
+    "dpath_raw_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}`",
     "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
