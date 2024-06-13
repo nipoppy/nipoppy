@@ -43,6 +43,39 @@ def test_setup(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
+    "doughnut",
+    [
+        Doughnut(),
+        Doughnut(
+            data={
+                Doughnut.col_participant_id: ["01"],
+                Doughnut.col_visit_id: ["1"],
+                Doughnut.col_session_id: ["1"],
+                Doughnut.col_datatype: "['anat']",
+                Doughnut.col_participant_dicom_dir: ["01"],
+                Doughnut.col_in_raw_imaging: [True],
+                Doughnut.col_in_sourcedata: [True],
+                Doughnut.col_in_bids: [True],
+            }
+        ).validate(),
+    ],
+)
+def test_cleanup(doughnut: Doughnut, tmp_path: Path):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="",
+        pipeline_version="",
+        pipeline_step="",
+    )
+    workflow.doughnut = doughnut
+
+    workflow.run_cleanup()
+
+    assert workflow.layout.fpath_doughnut.exists()
+    assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
+
+
+@pytest.mark.parametrize(
     "doughnut_data,participant_id,session_id,expected",
     [
         (
