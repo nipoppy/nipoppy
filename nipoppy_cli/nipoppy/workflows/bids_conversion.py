@@ -99,6 +99,11 @@ class BidsConversionRunner(PipelineRunner):
         return invocation_and_descriptor
 
     def run_cleanup(self, **kwargs):
-        """Write updated doughnut file."""
+        """
+        Clean up after main BIDS conversion part is run.
+
+        Specifically:
+        - Write updated doughnut file
+        """
         self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
         return super().run_cleanup(**kwargs)

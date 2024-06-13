@@ -177,6 +177,11 @@ class DicomReorgWorkflow(BaseWorkflow):
                 )
 
     def run_cleanup(self):
-        """Write the updated doughnut file."""
+        """
+        Clean up after main DICOM reorg part is run.
+
+        Specifically:
+        - Write updated doughnut file
+        """
         self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
         return super().run_cleanup()
