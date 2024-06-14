@@ -3,8 +3,9 @@
 Organizing imaging data following the {term}`Brain Imaging Data Structure <BIDS>` standard can greatly facilitate downstream processing and sharing of data. However, BIDS conversion can be a tricky process, especially for retrospective and/or messy datasets. Some manual work and trial-and-error process is usually needed to create an accurate configuration file to map the raw DICOMs (or NIfTIs) to valid BIDS paths.
 
 Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) are populated with descriptor files and default invocation files for the following BIDS converters:
-- [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/latest), a user-friendly DICOM converter that is configured with a {term}`JSON` file
+- [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/latest), a user-friendly DICOM (or NIfTI) converter that is configured with a {term}`JSON` file
 - [HeuDiConv](https://heudiconv.readthedocs.io/en/latest/), a flexible DICOM converter that is configured with a heuristic Python file
+- [BIDScoin](https://bidscoin.readthedocs.io/en/stable/), a user-friendly DICOM (or NIfTI) converter with a graphical user interface (GUI) for editing the configuration file
 
 ## Summary
 
@@ -42,16 +43,21 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 ## Configuring the BIDS conversion
 
 Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default global config splits BIDS conversion pipelines into the following steps:
-* [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
-    * Step `prepare`: run [`dcm2bids_helper`](https://unfmontreal.github.io/Dcm2Bids/3.1.1/tutorial/first-steps/#dcm2bids_helper-command), which will convert DICOM files to NIfTI files with JSON sidecars and store them in a temporary directory
-        * The JSON configuration file is expected to be created based on information in the sidecars
-    * Step `convert`: run the actual conversion using the configuration file
-* [`heudiconv`](https://heudiconv.readthedocs.io/en/latest/)
-    * Step `prepare`: extract information from DICOM headers that can be used to write/test the heuristic file
-    * Step `convert`: run the actual conversion
+- [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
+    - Step `prepare`: run [`dcm2bids_helper`](https://unfmontreal.github.io/Dcm2Bids/3.1.1/tutorial/first-steps/#dcm2bids_helper-command), which will convert DICOM files to NIfTI files with JSON sidecars and store them in a temporary directory
+        - The JSON configuration file is expected to be created based on information in the sidecars
+    - Step `convert`: run the actual conversion using the configuration file
+- [`heudiconv`](https://heudiconv.readthedocs.io/en/latest/)
+    - Step `prepare`: extract information from DICOM headers that can be used to write/test the heuristic file
+    - Step `convert`: run the actual conversion
+- [`bidscoin`](https://bidscoin.readthedocs.io/en/stable/)
+    - Step `prepare`: run the [`bidsmapper`](https://bidscoin.readthedocs.io/en/stable/workflow.html#step-1a-running-the-bidsmapper), which creates a mapping between input data and output BIDS filenames
+    - Step `edit`: run the [`bidseditor`](https://bidscoin.readthedocs.io/en/stable/workflow.html#step-1b-running-the-bidseditor), a graphical user interface (GUI) for checking/editing the `bidsmap` created in the previous step (note that by default the `bidseditor` is launched at the end of a `bidsmapper` run)
+    - Step `convert`: run the [`bidscoiner`](https://bidscoin.readthedocs.io/en/stable/workflow.html#step-2-running-the-bidscoiner), which will convert the data to BIDS using the `bidsmap`
+    - *Note*: By default, Nipoppy will run BIDScoin through a container, just like it does for the other BIDS converters. However, since BIDScoin has a GUI window, some additional commands may need to be executed before/after running `nipoppy bidsify`. See the [BIDScoin documentation](https://bidscoin.readthedocs.io/en/stable/installation.html#run-bidscoin-tools-in-the-container) for more information.
 
 ```{note}
-These step names `prepare` and `convert` are a Nipoppy convention based on the general BIDS conversion process. The BIDS conversion tools themselves do not use these names.
+These step names `prepare` and `convert` (and `edit`) are a Nipoppy convention based on the general BIDS conversion process. The BIDS conversion tools themselves do not use these names.
 ```
 
 ### Customizing BIDS pipeline invocations
