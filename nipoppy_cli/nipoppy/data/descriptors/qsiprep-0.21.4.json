@@ -628,7 +628,7 @@
             "name": "fmap_no_demean",
             "id": "fmap_no_demean",
             "description": "do not remove median (within mask) from fieldmap (default: True)",
-            "type": "String",
+            "type": "Flag",
             "optional": true,
             "default-value": true,
             "command-line-flag": "--fmap-no-demean",
