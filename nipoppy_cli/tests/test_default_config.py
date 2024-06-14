@@ -1,5 +1,6 @@
 """Test that all supported pipelines can run successfully in simulate mode."""
 
+import warnings
 from pathlib import Path
 
 import pytest
@@ -11,10 +12,11 @@ from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
+    DPATH_TRACKER_CONFIGS,
     FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
 )
-from nipoppy.workflows import BidsConversionRunner, PipelineRunner
+from nipoppy.workflows import BidsConversionRunner, PipelineRunner, PipelineTracker
 
 from .conftest import create_empty_dataset, prepare_dataset
 
@@ -28,6 +30,7 @@ def single_subject_dataset(
     session_id = "01"
     container_command = "apptainer"
     substitutions = {
+        "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]": str(DPATH_TRACKER_CONFIGS),
         "[[NIPOPPY_DPATH_DESCRIPTORS]]": str(DPATH_DESCRIPTORS),
         "[[NIPOPPY_DPATH_INVOCATIONS]]": str(DPATH_INVOCATIONS),
         "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
@@ -136,3 +139,28 @@ def test_bids_conversion_runner(
 
     assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("fmriprep", "20.2.7"),
+        ("fmriprep", "23.1.3"),
+        ("freesurfer", "6.0.1"),
+        ("freesurfer", "7.3.2"),
+        ("mriqc", "23.1.0"),
+    ],
+)
+def test_tracker(pipeline_name, pipeline_version, single_subject_dataset):
+    layout, participant_id, session_id = single_subject_dataset
+    layout: DatasetLayout
+    tracker = PipelineTracker(
+        dpath_root=layout.dpath_root,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+    )
+
+    # make sure all template strings are replaced
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tracker.run_single(participant_id=participant_id, session_id=session_id)
