@@ -3,7 +3,7 @@
     "description": "mriqc",
     "tool-version": "23.1.0",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [VERSION] [VERBOSE_COUNT] [SPECIES] [PARTICIPANT_LABEL] [SESSION_ID] [RUN_ID] [TASK_ID] [MODALITIES] [DSNAME] [BIDS_DATABASE_DIR] [BIDS_DATABASE_WIPE] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [DEBUG] [FLOAT32] [PDB] [WORK_DIR] [VERBOSE_REPORTS] [REPORTS_ONLY] [WRITE_GRAPH] [DRY_RUN] [RESOURCE_MONITOR] [USE_PLUGIN] [NO_SUB] [EMAIL] [WEBAPI_URL] [WEBAPI_PORT] [UPLOAD_STRICT] [NOTRACK] [ANTS_FLOAT] [ANTS_SETTINGS] [FFT_SPIKES_DETECTOR] [FD_THRES] [DEOBLIQUE] [DESPIKE] [START_IDX] [STOP_IDX]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] mriqc [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [VERSION] [VERBOSE_COUNT] [SPECIES] [PARTICIPANT_LABEL] [SESSION_ID] [RUN_ID] [TASK_ID] [MODALITIES] [DSNAME] [BIDS_DATABASE_DIR] [BIDS_DATABASE_WIPE] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [DEBUG] [FLOAT32] [PDB] [WORK_DIR] [VERBOSE_REPORTS] [REPORTS_ONLY] [WRITE_GRAPH] [DRY_RUN] [RESOURCE_MONITOR] [USE_PLUGIN] [NO_SUB] [EMAIL] [WEBAPI_URL] [WEBAPI_PORT] [UPLOAD_STRICT] [NOTRACK] [ANTS_FLOAT] [ANTS_SETTINGS] [FFT_SPIKES_DETECTOR] [FD_THRES] [DEOBLIQUE] [DESPIKE] [START_IDX] [STOP_IDX]",
     "inputs": [
         {
             "id": "bids_dir",
@@ -11,8 +11,7 @@
             "description": "The root folder of a BIDS valid dataset (sub-XXXXX folders should be found at the top level in this folder).",
             "optional": false,
             "type": "String",
-            "value-key": "[BIDS_DIR]",
-            "default-value": "[[NIPOPPY_DPATH_BIDS]]"
+            "value-key": "[BIDS_DIR]"
         },
         {
             "id": "output_dir",
@@ -20,8 +19,7 @@
             "description": "The directory where the output files should be stored. If you are running group level analysis this folder should be prepopulated with the results of the participant level analysis.",
             "optional": false,
             "type": "String",
-            "value-key": "[OUTPUT_DIR]",
-            "default-value": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
+            "value-key": "[OUTPUT_DIR]"
         },
         {
             "id": "analysis_level",
@@ -33,8 +31,7 @@
             "value-choices": [
                 "participant",
                 "group"
-            ],
-            "default-value": "participant"
+            ]
         },
         {
             "id": "version",
@@ -80,10 +77,7 @@
             "type": "String",
             "value-key": "[PARTICIPANT_LABEL]",
             "list": true,
-            "command-line-flag": "--participant-label",
-            "default-value": [
-                "[[NIPOPPY_PARTICIPANT_ID]]"
-            ]
+            "command-line-flag": "--participant-label"
         },
         {
             "id": "session_id",
@@ -92,8 +86,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[SESSION_ID]",
-            "command-line-flag": "--session-id",
-            "default-value": "[[NIPOPPY_SESSION_ID]]"
+            "command-line-flag": "--session-id"
         },
         {
             "id": "run_id",
@@ -151,8 +144,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[BIDS_DATABASE_DIR]",
-            "command-line-flag": "--bids-database-dir",
-            "default-value": "[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]"
+            "command-line-flag": "--bids-database-dir"
         },
         {
             "id": "bids_database_wipe",
@@ -225,8 +217,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[WORK_DIR]",
-            "command-line-flag": "-w",
-            "default-value": "[[NIPOPPY_DPATH_PIPELINE_WORK]]"
+            "command-line-flag": "-w"
         },
         {
             "id": "verbose_reports",
