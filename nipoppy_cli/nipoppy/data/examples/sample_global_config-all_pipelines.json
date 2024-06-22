@@ -74,6 +74,16 @@
                     }
                 }
             ]
+        },
+        {
+            "NAME": "dicm2nii",
+            "VERSION": "2023.03.16",
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]].json"
+                }
+            ]
         }
     ],
     "PROC_PIPELINES": [
