@@ -16,8 +16,6 @@ from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     StrOrPathLike,
     apply_substitutions_to_json,
-    check_session,
-    check_session_strict,
     load_json,
 )
 
@@ -26,8 +24,13 @@ class Config(SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
     DATASET_NAME: str = Field(description="Name of the dataset")
-    VISITS: list[str] = Field(description="List of visits available in the study")
-    SESSIONS: Optional[list[str]] = Field(
+    VISIT_IDS: list[str] = Field(
+        description=(
+            "List of visits available in the study. A visit ID is an identifier "
+            "for a data collection event, not restricted to imaging data."
+        )
+    )
+    SESSION_IDS: Optional[list[str]] = Field(
         default=None,  # will be a list after validation
         description=(
             "List of BIDS-compliant sessions available in the study"
@@ -42,7 +45,7 @@ class Config(SchemaWithContainerConfig):
             ", to be used in the DICOM reorg step. Note: this field and "
             "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified"
             f'. The CSV should have three columns: "{DicomDirMap.col_participant_id}"'
-            f' , "{DicomDirMap.col_session}"'
+            f' , "{DicomDirMap.col_session_id}"'
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),
     )
@@ -50,7 +53,7 @@ class Config(SchemaWithContainerConfig):
         default=None,
         description=(
             "Whether subdirectories under the raw dicom directory (default: "
-            f"{DEFAULT_LAYOUT_INFO.dpath_raw_dicom}) follow the pattern "
+            f"{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) follow the pattern "
             "<PARTICIPANT>/<SESSION> (default) or <SESSION>/<PARTICIPANT>. Note: "
             "this field and and DICOM_DIR_MAP_FILE cannot both be specified"
         ),
@@ -75,12 +78,6 @@ class Config(SchemaWithContainerConfig):
     )
 
     model_config = ConfigDict(extra="forbid")
-
-    def _check_sessions_have_prefix(self) -> Self:
-        """Check that sessions have the BIDS prefix."""
-        for session in self.SESSIONS:
-            check_session_strict(session)
-        return self
 
     def _check_dicom_dir_options(self) -> Self:
         """Check that only one DICOM directory mapping option is given."""
@@ -137,21 +134,18 @@ class Config(SchemaWithContainerConfig):
     @classmethod
     def check_input(cls, data: Any):
         """Validate the raw input."""
-        key_sessions = "SESSIONS"
-        key_visits = "VISITS"
+        key_session_ids = "SESSION_IDS"
+        key_visit_ids = "VISIT_IDS"
         if isinstance(data, dict):
-            # if sessions are not given, infer from visits
-            if key_sessions not in data:
-                data[key_sessions] = [
-                    check_session(visit) for visit in data[key_visits]
-                ]
+            # if session_ids is not given, set to be the same as visit_ids
+            if key_session_ids not in data:
+                data[key_session_ids] = data[key_visit_ids]
 
         return data
 
     @model_validator(mode="after")
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
-        self._check_sessions_have_prefix()
         self._check_dicom_dir_options()
         self._check_no_duplicate_pipeline()
         return self

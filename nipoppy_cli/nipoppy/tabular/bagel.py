@@ -5,7 +5,13 @@ from typing import Optional
 from pydantic import Field, field_validator, model_validator
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
-from nipoppy.utils import FIELD_DESCRIPTION_MAP, participant_id_to_bids_id
+from nipoppy.utils import (
+    FIELD_DESCRIPTION_MAP,
+    check_participant_id,
+    check_session_id,
+    participant_id_to_bids_participant,
+    session_id_to_bids_session,
+)
 
 STATUS_SUCCESS = "SUCCESS"
 STATUS_FAIL = "FAIL"
@@ -27,10 +33,16 @@ class BagelModel(BaseTabularModel):
         title="Participant ID",
         description=f"{FIELD_DESCRIPTION_MAP['participant_id']} (as in the manifest)",
     )
-    bids_id: Optional[str] = Field(
-        default=None, title="BIDS ID", description=FIELD_DESCRIPTION_MAP["bids_id"]
+    bids_participant: Optional[str] = Field(
+        default=None,
+        title="BIDS participant ID",
+        description=FIELD_DESCRIPTION_MAP["bids_participant"],
     )
-    session: str = Field(description=FIELD_DESCRIPTION_MAP["session"])
+    session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
+    # TODO rename to bids_session (or remove) after updating digest
+    session: Optional[str] = Field(
+        default=None, description=FIELD_DESCRIPTION_MAP["bids_session"]
+    )
     pipeline_name: str = Field(description="The name of the pipeline being tracked")
     pipeline_version: str = Field(
         description="The version of the pipeline being tracked"
@@ -56,10 +68,17 @@ class BagelModel(BaseTabularModel):
         return value
 
     @model_validator(mode="after")
-    def check_bids_id(self):
-        """Generate default value for optional BIDS ID field."""
-        if self.bids_id is None:
-            self.bids_id = participant_id_to_bids_id(self.participant_id)
+    def validate_after(self):
+        """Check fields."""
+        check_participant_id(self.participant_id, raise_error=True)
+        check_session_id(self.session_id, raise_error=True)
+
+        if self.bids_participant is None:
+            self.bids_participant = participant_id_to_bids_participant(
+                self.participant_id
+            )
+        if self.session is None:
+            self.session = session_id_to_bids_session(self.session_id)
 
 
 class Bagel(BaseTabular):
@@ -67,8 +86,9 @@ class Bagel(BaseTabular):
 
     # column names
     col_participant_id = "participant_id"
-    col_bids_id = "bids_id"
-    col_session = "session"
+    col_bids_participant = "bids_participant"
+    col_session_id = "session_id"
+    col_bids_session = "session"
     col_pipeline_name = "pipeline_name"
     col_pipeline_version = "pipeline_version"
     col_pipeline_complete = "pipeline_complete"
@@ -82,8 +102,8 @@ class Bagel(BaseTabular):
     # for sorting/comparing between bagels
     index_cols = [
         col_participant_id,
-        col_bids_id,
-        col_session,
+        col_bids_participant,
+        col_session_id,
         col_pipeline_name,
         col_pipeline_version,
     ]
@@ -91,7 +111,7 @@ class Bagel(BaseTabular):
     _metadata = BaseTabular._metadata + [
         "col_participant_id",
         "col_bids_id",
-        "col_session",
+        "col_session_id",
         "col_pipeline_name",
         "col_pipeline_version",
         "col_pipeline_complete",
@@ -109,31 +129,31 @@ class Bagel(BaseTabular):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant: Optional[str] = None,
-        session: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         """
         Get participant-session pairs that have successfully completed a pipeline run.
 
         Can optionally filter within a specific participant and/or session.
         """
-        if participant is None:
-            participants = set(self[self.col_participant_id])
+        if participant_id is None:
+            participant_ids = set(self[self.col_participant_id])
         else:
-            participants = {participant}
-        if session is None:
-            session = set(self[self.col_session])
+            participant_ids = {participant_id}
+        if session_id is None:
+            session_ids = set(self[self.col_session_id])
         else:
-            session = {session}
+            session_ids = {session_id}
 
         bagel_subset = self.loc[
             (self[self.col_pipeline_name] == pipeline_name)
             & (self[self.col_pipeline_version] == pipeline_version)
-            & (self[self.col_participant_id].isin(participants))
-            & (self[self.col_session].isin(session))
+            & (self[self.col_participant_id].isin(participant_ids))
+            & (self[self.col_session_id].isin(session_ids))
             & (self[self.col_pipeline_complete] == self.status_success)
         ]
 
-        yield from bagel_subset[[self.col_participant_id, self.col_session]].itertuples(
-            index=False
-        )
+        yield from bagel_subset[
+            [self.col_participant_id, self.col_session_id]
+        ].itertuples(index=False)
