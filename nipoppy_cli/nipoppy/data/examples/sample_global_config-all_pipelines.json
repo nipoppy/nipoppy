@@ -44,7 +44,8 @@
                             "--bind",
                             "[[HEUDICONV_HEURISTIC_FILE]]"
                         ]
-                    }
+                    },
+                    "UPDATE_DOUGHNUT": true
                 }
             ]
         },
@@ -70,7 +71,8 @@
                             "--bind",
                             "[[DCM2BIDS_CONFIG_FILE]]"
                         ]
-                    }
+                    },
+                    "UPDATE_DOUGHNUT": true
                 }
             ]
         }
