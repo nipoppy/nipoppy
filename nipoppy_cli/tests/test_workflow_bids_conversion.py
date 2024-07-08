@@ -75,6 +75,21 @@ def test_cleanup(doughnut: Doughnut, tmp_path: Path):
     assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
 
 
+def test_cleanup_simulate(tmp_path: Path):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="",
+        pipeline_version="",
+        pipeline_step="",
+        simulate=True,
+    )
+    workflow.doughnut = Doughnut()
+
+    workflow.run_cleanup()
+
+    assert not workflow.layout.fpath_doughnut.exists()
+
+
 @pytest.mark.parametrize(
     "doughnut_data,participant_id,session_id,expected",
     [

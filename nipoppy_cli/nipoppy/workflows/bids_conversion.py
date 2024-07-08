@@ -105,5 +105,6 @@ class BidsConversionRunner(PipelineRunner):
         Specifically:
         - Write updated doughnut file
         """
-        self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        if not self.simulate:
+            self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
         return super().run_cleanup(**kwargs)
