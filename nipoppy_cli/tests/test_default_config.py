@@ -134,7 +134,9 @@ def test_bids_conversion_runner(
         simulate=True,
     )
 
-    runner.pipeline_config.get_fpath_container().touch()
+    fpath_container = runner.pipeline_config.get_fpath_container()
+    if fpath_container is not None:
+        runner.pipeline_config.get_fpath_container().touch()
 
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id
