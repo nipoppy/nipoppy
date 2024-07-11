@@ -17,7 +17,7 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -105,7 +105,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
-    def pipeline_config(self) -> PipelineConfig:
+    def pipeline_config(self) -> ProcPipelineConfig:
         """Get the user config for the pipeline."""
         return self.config.get_pipeline_config(
             self.pipeline_name, self.pipeline_version

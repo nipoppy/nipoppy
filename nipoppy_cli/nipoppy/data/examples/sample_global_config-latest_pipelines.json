@@ -44,7 +44,8 @@
                             "--bind",
                             "[[HEUDICONV_HEURISTIC_FILE]]"
                         ]
-                    }
+                    },
+                    "UPDATE_DOUGHNUT": true
                 }
             ]
         },
@@ -59,18 +60,19 @@
                 {
                     "NAME": "prepare",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-prepare.json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-prepare.json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/dcm2bids_helper-[[NIPOPPY_PIPELINE_VERSION]].json"
                 },
                 {
                     "NAME": "convert",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-convert.json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-convert.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/dcm2bids-[[NIPOPPY_PIPELINE_VERSION]].json",
                     "CONTAINER_CONFIG": {
                         "ARGS": [
                             "--bind",
                             "[[DCM2BIDS_CONFIG_FILE]]"
                         ]
-                    }
+                    },
+                    "UPDATE_DOUGHNUT": true
                 }
             ]
         }
