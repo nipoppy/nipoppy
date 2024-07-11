@@ -116,6 +116,9 @@ def test_pipeline_runner(
         ("heudiconv", "0.12.2", "convert"),
         ("dcm2bids", "3.1.0", "prepare"),
         ("dcm2bids", "3.1.0", "convert"),
+        ("bidscoin", "4.3.2", "prepare"),
+        ("bidscoin", "4.3.2", "edit"),
+        ("bidscoin", "4.3.2", "convert"),
     ],
 )
 def test_bids_conversion_runner(
@@ -131,7 +134,9 @@ def test_bids_conversion_runner(
         simulate=True,
     )
 
-    runner.pipeline_config.get_fpath_container().touch()
+    fpath_container = runner.pipeline_config.get_fpath_container()
+    if fpath_container is not None:
+        runner.pipeline_config.get_fpath_container().touch()
 
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id
