@@ -10,8 +10,8 @@ import pytest
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.config.pipeline_step import PipelineStepConfig
+from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -168,7 +168,7 @@ def test_pipeline_version_optional():
 
 
 def test_pipeline_config(workflow: PipelineWorkflow):
-    assert isinstance(workflow.pipeline_config, PipelineConfig)
+    assert isinstance(workflow.pipeline_config, ProcPipelineConfig)
 
 
 def test_fpath_container(workflow: PipelineWorkflow):
@@ -243,10 +243,10 @@ def test_descriptor_substitutions(
 
     # set descriptor file and write descriptor content
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config = PipelineConfig(
+    workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[PipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
+        STEPS=[ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
     )
 
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
@@ -298,10 +298,10 @@ def test_invocation_substitutions(
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"
-    workflow.pipeline_config = PipelineConfig(
+    workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[PipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
+        STEPS=[ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
     )
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
