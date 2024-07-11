@@ -163,9 +163,16 @@ class Config(SchemaWithContainerConfig):
             (self.PROC_PIPELINES, ProcPipelineStepConfig),
         ]:
             for pipeline_config in pipeline_configs:
+                # type annotation to make IDE smarter
                 pipeline_config: BasePipelineConfig
                 steps = pipeline_config.STEPS
                 for i_step in range(len(steps)):
+                    # extract fields used to create (possibly incorrect) step object
+                    # and use them to create a new (correct) step object
+                    # (this is needed because BidsPipelineStepConfig and
+                    # ProcPipelineStepConfig share some fields, and the fields
+                    # that are different are optional, so the default Pydantic
+                    # parsing can create the wrong type of step object)
                     steps[i_step] = step_class(
                         **steps[i_step].model_dump(exclude_unset=True)
                     )
