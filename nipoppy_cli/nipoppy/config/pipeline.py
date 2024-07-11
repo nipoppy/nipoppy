@@ -33,11 +33,6 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         description="List of pipeline step configurations",
     )
 
-    @property
-    def _step_config_class(self) -> type[BasePipelineStepConfig]:
-        """Return the pipeline step configuration class."""
-        raise NotImplementedError("_step_config_class must be assigned in subclass")
-
     @model_validator(mode="after")
     def validate_after(self):
         """
