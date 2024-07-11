@@ -3,7 +3,7 @@
     "description": "bidsmapper (part of BIDScoin) to create/edit a YAML configuration file (bidsmap). See https://bidscoin.readthedocs.io/en/latest/workflow.html#step-1a-running-the-bidsmapper",
     "tool-version": "4.3.2+qt5",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] bidsmapper [SOURCEFOLDER] [BIDSFOLDER] [BIDSMAP] [TEMPLATE] [PLUGINS] [SUBPREFIX] [SESPREFIX] [UNZIP] [STORE] [AUTOMATED] [FORCE] [NO_UPDATE]",
+    "command-line": "bidsmapper [SOURCEFOLDER] [BIDSFOLDER] [BIDSMAP] [TEMPLATE] [PLUGINS] [SUBPREFIX] [SESPREFIX] [UNZIP] [STORE] [AUTOMATED] [FORCE] [NO_UPDATE]",
     "inputs": [
         {
             "name": "sourcefolder",

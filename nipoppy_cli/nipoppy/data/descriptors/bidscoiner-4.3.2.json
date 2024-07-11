@@ -3,7 +3,7 @@
     "description": "bidscoiner (part of BIDScoin) to run BIDS conversion based on a YAML configuration file (bidsmap). See https://bidscoin.readthedocs.io/en/latest/workflow.html#step-2-running-the-bidscoiner",
     "tool-version": "4.3.2+qt5",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] bidscoiner [SOURCEFOLDER] [BIDSFOLDER] [PARTICIPANT_LABEL] [BIDSMAP] [FORCE] [CLUSTER] [NATIVESPEC]",
+    "command-line": "bidscoiner [SOURCEFOLDER] [BIDSFOLDER] [PARTICIPANT_LABEL] [BIDSMAP] [FORCE] [CLUSTER] [NATIVESPEC]",
     "inputs": [
         {
             "name": "sourcefolder",

@@ -79,10 +79,6 @@
         {
             "NAME": "bidscoin",
             "VERSION": "4.3.2",
-            "CONTAINER_INFO": {
-                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[NIPOPPY_PIPELINE_NAME]]_[[NIPOPPY_PIPELINE_VERSION]].sif",
-                "URI": "docker://marcelzwiers/[[NIPOPPY_PIPELINE_NAME]]:[[NIPOPPY_PIPELINE_VERSION]]"
-            },
             "STEPS": [
                 {
                     "NAME": "prepare",
