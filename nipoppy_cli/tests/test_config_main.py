@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config
-from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
@@ -246,7 +246,7 @@ def test_get_pipeline_version_invalid_name(valid_config_data):
 def test_get_pipeline_config(pipeline, version, valid_config_data):
     assert isinstance(
         Config(**valid_config_data).get_pipeline_config(pipeline, version),
-        PipelineConfig,
+        BasePipelineConfig,
     )
 
 
@@ -347,7 +347,7 @@ def test_load_apply_substitutions(valid_config_data, tmp_path: Path):
     fpath = tmp_path / "config.json"
     Config(**valid_config_data).save(fpath)
     config_to_check = Config.load(fpath, apply_substitutions=True)
-    assert config_to_check.PROC_PIPELINES[0] == PipelineConfig(
+    assert config_to_check.PROC_PIPELINES[0] == ProcPipelineConfig(
         **{
             "NAME": "fmriprep",
             "VERSION": "23.1.3",
