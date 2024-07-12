@@ -9,10 +9,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from nipoppy.base import Base
 from nipoppy.utils import (
     FPATH_DEFAULT_LAYOUT,
-    StrOrPathLike,
     get_pipeline_tag,
     load_json,
 )
+from nipoppy.env import StrOrPathLike
 
 
 class PathInfo(BaseModel):

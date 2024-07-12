@@ -21,7 +21,8 @@ from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import StrOrPathLike, add_path_timestamp, process_template_str
+from nipoppy.utils import add_path_timestamp, process_template_str
+from nipoppy.env import StrOrPathLike
 
 LOG_SUFFIX = ".log"
 

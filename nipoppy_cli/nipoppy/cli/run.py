@@ -16,12 +16,6 @@ from nipoppy.cli.parser import (
     get_global_parser,
 )
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
-from nipoppy.workflows.bids_conversion import BidsConversionRunner
-from nipoppy.workflows.dataset_init import InitWorkflow
-from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
-from nipoppy.workflows.doughnut import DoughnutWorkflow
-from nipoppy.workflows.runner import PipelineRunner
-from nipoppy.workflows.tracker import PipelineTracker
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -44,11 +38,15 @@ def cli(argv: Sequence[str] = None) -> None:
         dpath_root = args.dataset_root
 
         if command == COMMAND_INIT:
+            from nipoppy.workflows.dataset_init import InitWorkflow
+
             workflow = InitWorkflow(
                 dpath_root=dpath_root,
                 **workflow_kwargs,
             )
         elif command == COMMAND_DOUGHNUT:
+            from nipoppy.workflows.doughnut import DoughnutWorkflow
+
             workflow = DoughnutWorkflow(
                 dpath_root=dpath_root,
                 empty=args.empty,
@@ -56,12 +54,16 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_DICOM_REORG:
+            from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
+
             workflow = DicomReorgWorkflow(
                 dpath_root=dpath_root,
                 copy_files=args.copy_files,
                 **workflow_kwargs,
             )
         elif command == COMMAND_BIDS_CONVERSION:
+            from nipoppy.workflows.bids_conversion import BidsConversionRunner
+
             workflow = BidsConversionRunner(
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
@@ -73,6 +75,8 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_RUN:
+            from nipoppy.workflows.runner import PipelineRunner
+
             workflow = PipelineRunner(
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
@@ -84,6 +88,8 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_TRACK:
+            from nipoppy.workflows.tracker import PipelineTracker
+
             workflow = PipelineTracker(
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,

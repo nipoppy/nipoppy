@@ -16,10 +16,10 @@ from nipoppy.config.main import Config
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    StrOrPathLike,
     participant_id_to_bids_participant,
     session_id_to_bids_session,
 )
+from nipoppy.env import StrOrPathLike
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.csv"

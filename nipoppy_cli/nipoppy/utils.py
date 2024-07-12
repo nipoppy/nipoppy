@@ -8,16 +8,12 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import List, Optional, Sequence, TypeVar
+from typing import List, Optional, Sequence
 
 import bids
 import pandas as pd
 
-StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
-
-# BIDS
-BIDS_SUBJECT_PREFIX = "sub-"
-BIDS_SESSION_PREFIX = "ses-"
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
 
 # user configs (pipeline configs, invocations, descriptors)
 TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
