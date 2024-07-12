@@ -498,6 +498,26 @@ def test_set_up_bids_db(
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
 
 
+def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Path):
+    dpath_bids_db = tmp_path / "bids_db"
+    participant_id = "01"
+    session_id = "1"
+
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+    )
+
+    pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
+
+    workflow.set_up_bids_db(
+        dpath_bids_db=dpath_bids_db,
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+
+    assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
+
+
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
     [("heudiconv", "0.12.2"), ("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
