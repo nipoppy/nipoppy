@@ -55,11 +55,11 @@ class PipelineWorkflow(BasePipelineWorkflow):
             participant_id=participant_id, session_id=session_id
         )
 
-    def run_single(self, subject: str, session_id: str):
+    def run_single(self, participant: str, session_id: str):
         """Run on a single participant_id/session_id."""
         self._n_runs += 1
-        self.logger.info(f"Running on {subject}/{session_id}")
-        if subject == "FAIL":
+        self.logger.info(f"Running on participant {participant}, session {session_id}")
+        if participant == "FAIL":
             self._n_errors += 1
             raise RuntimeError("FAIL")
 
