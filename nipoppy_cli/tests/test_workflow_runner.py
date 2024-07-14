@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from bids import BIDSLayout
 from fids import fids
 
 from nipoppy.config.main import Config
@@ -11,7 +12,7 @@ from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.workflows.runner import PipelineRunner
 
-from .conftest import create_empty_dataset, get_config
+from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 
 @pytest.fixture(scope="function")
@@ -262,3 +263,30 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
+
+
+def test_run_multiple(config: Config, tmp_path: Path):
+    participant_id = None
+    session_id = None
+    runner = PipelineRunner(
+        dpath_root=tmp_path,
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+    config.save(runner.layout.fpath_config)
+
+    participants_and_sessions = {"01": ["1"], "02": ["2"]}
+    create_empty_dataset(runner.layout.dpath_root)
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=runner.layout.dpath_bids,
+    )
+    manifest.save_with_backup(runner.layout.fpath_manifest)
+    runner.run_setup()
+    runner.run_main()
+
+    bids_layout = BIDSLayout(database_path=runner.dpath_pipeline_bids_db)
+    assert not len(bids_layout.get(extension=".nii.gz")) == 0

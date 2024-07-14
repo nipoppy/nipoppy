@@ -270,20 +270,22 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Set up the BIDS database."""
         dpath_bids_db: Path = Path(dpath_bids_db)
 
+        pybids_ignore_patterns = self.pybids_ignore_patterns.copy()
+
         if participant_id is not None:
             add_pybids_ignore_patterns(
-                current=self.pybids_ignore_patterns,
+                current=pybids_ignore_patterns,
                 new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant_id}))",
             )
         if session_id is not None:
             add_pybids_ignore_patterns(
-                current=self.pybids_ignore_patterns,
+                current=pybids_ignore_patterns,
                 new=f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})",
             )
 
         self.logger.info(
-            f"Building BIDSLayout with {len(self.pybids_ignore_patterns)} ignore "
-            f"patterns: {self.pybids_ignore_patterns}"
+            f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore "
+            f"patterns: {pybids_ignore_patterns}"
         )
 
         if dpath_bids_db.exists() and list(dpath_bids_db.iterdir()):
@@ -295,7 +297,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
             dpath_bids_db=dpath_bids_db,
-            ignore_patterns=self.pybids_ignore_patterns,
+            ignore_patterns=pybids_ignore_patterns,
             reset_database=True,
         )
 
