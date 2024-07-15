@@ -36,6 +36,7 @@ def test_model(data):
         Bagel.col_pipeline_version,
         Bagel.col_pipeline_complete,
         "session",
+        "pipeline_starttime",
     }
 
 
