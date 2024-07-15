@@ -357,12 +357,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     f": {exception}"
                 )
 
-    def run_cleanup(self, **kwargs):
-        """Run pipeline cleanup."""
-        if self.dpath_pipeline_work.exists():
-            self.rm(self.dpath_pipeline_work)
-        return super().run_cleanup(**kwargs)
-
     @abstractmethod
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
