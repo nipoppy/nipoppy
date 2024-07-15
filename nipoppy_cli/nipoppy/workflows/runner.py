@@ -208,6 +208,7 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def run_cleanup(self, **kwargs):
         """Run pipeline runner cleanup."""
-        if self.dpath_pipeline_bids_db.exists():
-            self.rm(self.dpath_pipeline_bids_db)
+        for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
+            if dpath.exists():
+                self.rm(dpath)
         return super().run_cleanup(**kwargs)

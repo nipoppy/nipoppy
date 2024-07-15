@@ -83,6 +83,23 @@ def test_run_setup(config: Config, tmp_path: Path):
     assert runner.dpath_pipeline_work.exists()
 
 
+def test_run_cleanup(tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    dpaths = [
+        runner.dpath_pipeline_bids_db,
+        runner.dpath_pipeline_work,
+    ]
+    for dpath in dpaths:
+        dpath.mkdir(parents=True)
+    runner.run_cleanup()
+    for dpath in dpaths:
+        assert not dpath.exists()
+
+
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     runner = PipelineRunner(
