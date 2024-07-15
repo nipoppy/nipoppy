@@ -52,7 +52,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        dpath_root : nipoppy.utils.StrOrPathLike
+        dpath_root : nipoppy.env.StrOrPathLike
             Path the the root directory of the dataset.
         name : str
             Name of the workflow, used for logging.

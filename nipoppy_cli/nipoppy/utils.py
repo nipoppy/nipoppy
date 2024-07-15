@@ -192,7 +192,7 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
 
     Parameters
     ----------
-    fpath : nipoppy.utils.StrOrPathLike
+    fpath : nipoppy.env.StrOrPathLike
         Path to the JSON file
     **kwargs :
         Keyword arguments to pass to json.load
@@ -218,7 +218,7 @@ def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     ----------
     obj : dict
         The JSON object
-    fpath : nipoppy.utils.StrOrPathLike
+    fpath : nipoppy.env.StrOrPathLike
         Path to the JSON file to write
     indent : int, optional
         Indentation level, by default 4
@@ -261,7 +261,7 @@ def save_df_with_backup(
     ----------
     df : pd.DataFrame
         The dataframe to save
-    fpath_symlink : nipoppy.utils.StrOrPathLike
+    fpath_symlink : nipoppy.env.StrOrPathLike
         The path to the symlink
     dname_backups : Optional[str], optional
         The directory where the timestamped backup file should be written

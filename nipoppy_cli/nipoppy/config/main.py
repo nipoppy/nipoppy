@@ -224,7 +224,7 @@ class Config(SchemaWithContainerConfig):
 
         Parameters
         ----------
-        fpath : nipoppy.utils.StrOrPathLike
+        fpath : nipoppy.env.StrOrPathLike
             Path to the JSON file to write
         """
         fpath: Path = Path(fpath)
