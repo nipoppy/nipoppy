@@ -38,6 +38,7 @@ def cli(argv: Sequence[str] = None) -> None:
         dpath_root = args.dataset_root
 
         if command == COMMAND_INIT:
+            # Lazy import to improve performance of cli.
             from nipoppy.workflows.dataset_init import InitWorkflow
 
             workflow = InitWorkflow(
@@ -45,6 +46,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_DOUGHNUT:
+            # Lazy import to improve performance of cli.
             from nipoppy.workflows.doughnut import DoughnutWorkflow
 
             workflow = DoughnutWorkflow(
@@ -54,6 +56,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_DICOM_REORG:
+            # Lazy import to improve performance of cli.
             from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
             workflow = DicomReorgWorkflow(
@@ -62,6 +65,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_BIDS_CONVERSION:
+            # Lazy import to improve performance of cli.
             from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
             workflow = BidsConversionRunner(
@@ -75,6 +79,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_RUN:
+            # Lazy import to improve performance of cli.
             from nipoppy.workflows.runner import PipelineRunner
 
             workflow = PipelineRunner(
@@ -88,6 +93,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_TRACK:
+            # Lazy import to improve performance of cli.
             from nipoppy.workflows.tracker import PipelineTracker
 
             workflow = PipelineTracker(
