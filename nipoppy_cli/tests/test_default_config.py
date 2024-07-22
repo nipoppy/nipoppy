@@ -175,6 +175,16 @@ def test_bids_conversion_runner(
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
 
 
+def test_bids_pipeline_configs():
+    config = Config.load(FPATH_SAMPLE_CONFIG_FULL)
+    for pipeline_config in config.BIDS_PIPELINES:
+        count = sum([step.UPDATE_DOUGHNUT for step in pipeline_config.STEPS])
+        assert count == 1, (
+            f"BIDS pipeline {pipeline_config.NAME} {pipeline_config.VERSION}"
+            f" should have exactly one step with UPDATE_DOUGHNUT=true (got {count})"
+        )
+
+
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
