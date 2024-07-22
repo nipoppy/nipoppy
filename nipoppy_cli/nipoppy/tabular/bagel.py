@@ -50,6 +50,10 @@ class BagelModel(BaseTabularModel):
     pipeline_complete: str = Field(
         description="The status of the pipeline run for this participant-visit pair"
     )
+    # this is needed for now for the dashboard for work, but should be removed
+    # if https://github.com/neurobagel/digest/issues/153 is addressed
+    # TODO discuss bagel schema
+    pipeline_starttime: str = Field(default="UNAVAILABLE")
 
     @field_validator("pipeline_complete")
     @classmethod
