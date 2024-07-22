@@ -17,7 +17,7 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.utils import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -110,7 +110,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
-    def pipeline_config(self) -> PipelineConfig:
+    def pipeline_config(self) -> ProcPipelineConfig:
         """Get the user config for the pipeline."""
         return self.config.get_pipeline_config(
             self.pipeline_name, self.pipeline_version
@@ -275,20 +275,22 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Set up the BIDS database."""
         dpath_bids_db: Path = Path(dpath_bids_db)
 
+        pybids_ignore_patterns = self.pybids_ignore_patterns.copy()
+
         if participant_id is not None:
             add_pybids_ignore_patterns(
-                current=self.pybids_ignore_patterns,
+                current=pybids_ignore_patterns,
                 new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant_id}))",
             )
         if session_id is not None:
             add_pybids_ignore_patterns(
-                current=self.pybids_ignore_patterns,
+                current=pybids_ignore_patterns,
                 new=f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})",
             )
 
         self.logger.info(
-            f"Building BIDSLayout with {len(self.pybids_ignore_patterns)} ignore "
-            f"patterns: {self.pybids_ignore_patterns}"
+            f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore "
+            f"patterns: {pybids_ignore_patterns}"
         )
 
         if dpath_bids_db.exists() and list(dpath_bids_db.iterdir()):
@@ -300,7 +302,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
             dpath_bids_db=dpath_bids_db,
-            ignore_patterns=self.pybids_ignore_patterns,
+            ignore_patterns=pybids_ignore_patterns,
             reset_database=True,
         )
 
@@ -364,10 +366,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 )
 
     def run_cleanup(self):
-        """Delete the working directory and log a summary message."""
-        if self.dpath_pipeline_work.exists():
-            self.rm(self.dpath_pipeline_work)
-
+        """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
                 "No participant-session pairs to run. Make sure there are no mistakes "
