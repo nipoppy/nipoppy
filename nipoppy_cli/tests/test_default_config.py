@@ -8,11 +8,13 @@ import pytest_mock
 from boutiques import bosh
 
 from nipoppy.config.main import Config
+from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
     DPATH_TRACKER_CONFIGS,
+    FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
 )
@@ -99,6 +101,44 @@ def get_mriqc_output_paths(
         f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_T1w.json",  # noqa E501
         f"sub-{participant_id}_ses-{session_id}_T1w.html",
     ]
+
+
+def test_sample_configs():
+    def get_pipelines(
+        pipeline_configs: list[BasePipelineConfig],
+    ) -> list[tuple[str, str]]:
+        return [(pipeline.NAME, pipeline.VERSION) for pipeline in pipeline_configs]
+
+    def get_latest_pipelines(pipelines) -> list[tuple[str, str]]:
+        pipelines_latest = []
+        tmp = set()  # pipeline names only
+        for pipeline in pipelines:
+            pipeline_name, _ = pipeline
+            if pipeline_name not in tmp:
+                tmp.add(pipeline_name)
+                pipelines_latest.append(pipeline)
+        return pipelines_latest
+
+    config_full = Config.load(FPATH_SAMPLE_CONFIG_FULL)
+    config_latest = Config.load(FPATH_SAMPLE_CONFIG)
+
+    bids_pipelines = get_pipelines(config_full.BIDS_PIPELINES)
+    proc_pipelines = get_pipelines(config_full.PROC_PIPELINES)
+    bids_pipelines_latest = get_latest_pipelines(bids_pipelines)
+    proc_pipelines_latest = get_latest_pipelines(proc_pipelines)
+
+    # check that config_latest is a subset of config_full
+    config_full.BIDS_PIPELINES = [
+        bids_pipeline
+        for bids_pipeline in config_full.BIDS_PIPELINES
+        if (bids_pipeline.NAME, bids_pipeline.VERSION) in bids_pipelines_latest
+    ]
+    config_full.PROC_PIPELINES = [
+        proc_pipeline
+        for proc_pipeline in config_full.PROC_PIPELINES
+        if (proc_pipeline.NAME, proc_pipeline.VERSION) in proc_pipelines_latest
+    ]
+    assert config_full == config_latest, "Sample config files are not in sync"
 
 
 @pytest.mark.parametrize("fpath_descriptor", get_fpaths_descriptors())
