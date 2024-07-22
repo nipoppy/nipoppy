@@ -72,6 +72,35 @@ def get_fpaths_descriptors() -> list[str]:
     return [str(fpath) for fpath in Path(DPATH_DESCRIPTORS).iterdir()]
 
 
+def get_fmriprep_output_paths(
+    participant_id, session_id, pipeline_version=None
+) -> list[str]:
+    fpaths = [
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_desc-preproc_T1w.json",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_desc-preproc_T1w.nii.gz",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_desc-brain_mask.json",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_desc-brain_mask.nii.gz",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_dseg.nii.gz",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_label-CSF_probseg.nii.gz",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_label-GM_probseg.nii.gz",  # noqa E501
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}*_label-WM_probseg.nii.gz",  # noqa E501
+    ]
+
+    if pipeline_version == "20.2.7":
+        fpaths = [f"fmriprep/{fpath}" for fpath in fpaths]
+
+    return fpaths
+
+
+def get_mriqc_output_paths(
+    participant_id, session_id, pipeline_version=None
+) -> list[str]:
+    return [
+        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_T1w.json",  # noqa E501
+        f"sub-{participant_id}_ses-{session_id}_T1w.html",
+    ]
+
+
 @pytest.mark.parametrize("fpath_descriptor", get_fpaths_descriptors())
 def test_boutiques_descriptors(fpath_descriptor):
     bosh(["validate", fpath_descriptor])
@@ -169,3 +198,46 @@ def test_tracker(pipeline_name, pipeline_version, single_subject_dataset):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         tracker.run_single(participant_id=participant_id, session_id=session_id)
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,fn_fpaths_generator",
+    [
+        ("fmriprep", "20.2.7", get_fmriprep_output_paths),
+        ("fmriprep", "23.1.3", get_fmriprep_output_paths),
+        ("mriqc", "23.1.0", get_mriqc_output_paths),
+    ],
+)
+def test_tracker_paths(
+    pipeline_name, pipeline_version, fn_fpaths_generator, single_subject_dataset
+):
+    layout, participant_id, session_id = single_subject_dataset
+    layout: DatasetLayout
+    tracker = PipelineTracker(
+        dpath_root=layout.dpath_root,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+    )
+
+    # create files
+    for fpath_relative in fn_fpaths_generator(
+        participant_id, session_id, pipeline_version
+    ):
+        fpath: Path = tracker.dpath_pipeline_output / fpath_relative
+        fpath.parent.mkdir(parents=True, exist_ok=True)
+        fpath.touch()
+
+    # run tracker
+    tracker.run_single(participant_id=participant_id, session_id=session_id)
+
+    # check status
+    assert (
+        tracker.bagel.loc[
+            (
+                (tracker.bagel[tracker.bagel.col_participant_id] == participant_id)
+                & (tracker.bagel[tracker.bagel.col_session_id] == session_id)
+            ),
+            tracker.bagel.col_pipeline_complete,
+        ].item()
+        == tracker.bagel.status_success
+    )
