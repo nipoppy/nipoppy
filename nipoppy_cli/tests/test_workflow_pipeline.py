@@ -55,11 +55,11 @@ class PipelineWorkflow(BasePipelineWorkflow):
             participant_id=participant_id, session_id=session_id
         )
 
-    def run_single(self, subject: str, session_id: str):
+    def run_single(self, participant: str, session_id: str):
         """Run on a single participant_id/session_id."""
         self._n_runs += 1
-        self.logger.info(f"Running on {subject}/{session_id}")
-        if subject == "FAIL":
+        self.logger.info(f"Running on participant {participant}, session {session_id}")
+        if participant == "FAIL":
             self._n_errors += 1
             raise RuntimeError("FAIL")
 
@@ -496,6 +496,26 @@ def test_set_up_bids_db(
     )
     assert dpath_bids_db.exists()
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
+
+
+def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Path):
+    dpath_bids_db = tmp_path / "bids_db"
+    participant_id = "01"
+    session_id = "1"
+
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+    )
+
+    pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
+
+    workflow.set_up_bids_db(
+        dpath_bids_db=dpath_bids_db,
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+
+    assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
 
 
 @pytest.mark.parametrize(

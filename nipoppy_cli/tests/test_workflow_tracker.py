@@ -232,3 +232,14 @@ def test_run_cleanup(tracker: PipelineTracker, bagel: Bagel):
 
     assert tracker.layout.fpath_imaging_bagel.exists()
     assert Bagel.load(tracker.layout.fpath_imaging_bagel).equals(bagel)
+
+
+def test_run_no_create_work_directory(tracker: PipelineTracker):
+    tracker.run()
+    assert not tracker.dpath_pipeline_work.exists()
+
+
+def test_run_no_rm_work_directory(tracker: PipelineTracker):
+    tracker.dpath_pipeline_work.mkdir(parents=True)
+    tracker.run()
+    assert tracker.dpath_pipeline_work.exists()
