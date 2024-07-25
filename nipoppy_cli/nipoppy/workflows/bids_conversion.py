@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.pipeline import BidsPipelineConfig
-from nipoppy.utils import StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 

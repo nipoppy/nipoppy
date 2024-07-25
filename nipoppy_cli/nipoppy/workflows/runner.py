@@ -10,7 +10,7 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.tabular.bagel import Bagel
-from nipoppy.utils import StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
