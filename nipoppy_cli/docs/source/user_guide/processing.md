@@ -74,7 +74,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 
 ### Using the command-line interface
 
-To process all participants and sessions in a dataset, run:
+To process all participants and sessions in a dataset (sequentially), run:
 ```console
 $ nipoppy run \
     --dataset-root <DATASET_ROOT> \
@@ -88,13 +88,13 @@ If there are multiple versions for the same pipeline in the global configuration
 Similarly, if `--pipeline-step` is not specified, the first step defined in the global configuration file will be used.
 ```
 
-The pipeline can also be run on a single participant and/or session at a time:
+The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
 $ nipoppy bidsify \
     --dataset-root <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
-    --participant <PARTICIPANT_ID> \
-    --session <SESSION_ID>
+    --participant-id <PARTICIPANT_ID> \
+    --session-id <SESSION_ID>
 ```
 
 ```{hint}

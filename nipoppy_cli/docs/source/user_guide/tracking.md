@@ -38,9 +38,11 @@ Here is example of tracker configuration file (default for MRIQC 23.1.0):
 ```{literalinclude} ../../../nipoppy/data/examples/sample_tracker_configs/mriqc-23.1.0.json
 ```
 
+Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
+
 ```{tip}
 - The paths are expected to be relative to the {{dpath_derivatives}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
-- "Glob" expressions (i.e., that include `*`) are allowed in paths.
+- "Glob" expressions (i.e., that include `*`) are allowed in paths. If at least one file matches the expression, then the file will be considered found for that expression.
 ```
 
 ```{note}
@@ -95,8 +97,8 @@ The tracker can also be run on a single participant and/or session at a time:
 $ nipoppy track \
     --dataset-root <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
-    --participant <PARTICIPANT_ID> \
-    --session <SESSION_ID>
+    --participant-id <PARTICIPANT_ID> \
+    --session-id <SESSION_ID>
 ```
 
 See the [CLI reference page](<project:../cli_reference/track.md>) for more information on additional optional arguments.
@@ -127,4 +129,4 @@ See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more in
 
 If some participants/sessions have failed processing or have not been run yet, they should be [run again](./processing.md).
 
-Once the entire dataset has been processed with a pipeline, [Nipoppy extractors](./extraction.md) can be used to obtain analysis-ready imaging-derived phenotypes (IDPs).
+Once the dataset has been processed with a pipeline, [Nipoppy extractors](./extraction.md) can be used to obtain analysis-ready imaging-derived phenotypes (IDPs).

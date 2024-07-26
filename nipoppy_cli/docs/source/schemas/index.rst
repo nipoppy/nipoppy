@@ -39,7 +39,7 @@ Manifest file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema used for each row in the manifest file:
+Here is the schema for the manifest file:
 
 .. jsonschema:: manifest.json
     :lift_title: False
@@ -52,7 +52,7 @@ Doughnut file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema used for each row in the doughnut file:
+Here is the schema for the doughnut file:
 
 .. jsonschema:: doughnut.json
     :lift_title: False
@@ -63,7 +63,7 @@ Bagel file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema used for each row in the bagel file:
+Here is the schema for the bagel file:
 
 .. jsonschema:: bagel.json
     :lift_title: False
@@ -76,7 +76,7 @@ DICOM directory mapping file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema used for each row in the DICOM directory mapping file:
+Here is the schema for the DICOM directory mapping file:
 
 .. jsonschema:: dicom_dir_map.json
     :lift_title: False

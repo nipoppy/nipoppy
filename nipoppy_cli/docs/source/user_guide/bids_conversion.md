@@ -1,11 +1,19 @@
 # Converting a dataset to BIDS
 
+```{tip}
+BIDS conversion with Nipoppy can be skipped if you already have BIDSified data.
+```
+
 Organizing imaging data following the {term}`Brain Imaging Data Structure <BIDS>` standard can greatly facilitate downstream processing and sharing of data. However, BIDS conversion can be a tricky process, especially for retrospective and/or messy datasets. Some manual work and trial-and-error process is usually needed to create an accurate configuration file to map the raw DICOMs (or NIfTIs) to valid BIDS paths.
 
-Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) are populated with descriptor files and default invocation files for the following BIDS converters:
+Currently, the default Nipoppy global configuration file (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) allows users to run any of the following BIDS converters:
 - [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/latest), a user-friendly DICOM (or NIfTI) converter that is configured with a {term}`JSON` file
 - [HeuDiConv](https://heudiconv.readthedocs.io/en/latest/), a flexible DICOM converter that is configured with a heuristic Python file
 - [BIDScoin](https://bidscoin.readthedocs.io/en/stable/), a user-friendly DICOM (or NIfTI) converter with a graphical user interface (GUI) for editing the configuration file
+
+```{note}
+Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other BIDS converters can be run by adding the appropriate Boutiques descriptor and invocation files default invocation files.
+```
 
 ## Summary
 
@@ -33,7 +41,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_sourcedata}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
+1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_sourcedata}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
     - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
@@ -42,7 +50,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run BIDS conversion 
 
 ## Configuring the BIDS conversion
 
-Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a configuration file. The default global config splits BIDS conversion pipelines into the following steps:
+Most BIDS conversion tools are designed to be run in steps, with some manual work expected between steps to create/edit a file that helps the converter map DICOM header information onto BIDS file names. The default global config splits BIDS conversion pipelines into the following steps:
 - [`dcm2bids`](https://unfmontreal.github.io/Dcm2Bids/latest)
     - Step `prepare`: run [`dcm2bids_helper`](https://unfmontreal.github.io/Dcm2Bids/3.1.1/tutorial/first-steps/#dcm2bids_helper-command), which will convert DICOM files to NIfTI files with JSON sidecars and store them in a temporary directory
         - The JSON configuration file is expected to be created based on information in the sidecars
@@ -90,8 +98,8 @@ $ nipoppy bidsify \
     --dataset-root <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME> \
-    --participant <PARTICIPANT_ID> \
-    --session <SESSION_ID>
+    --participant-id <PARTICIPANT_ID> \
+    --session-id <SESSION_ID>
 ```
 
 ```{hint}

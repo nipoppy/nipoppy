@@ -35,7 +35,7 @@ The [`nipoppy init`](#cli_reference/init) command copies examples of these files
 (customizing-config)=
 ### Customizing the global configuration file
 
-The global configuration file at {{fpath_config}} contains general information about a dataset (e.g. name, visit and session names) and configurations for running processing pipelines (e.g., pipeline version and runtime parameters).
+The global configuration file at {{fpath_config}} contains the high-level description of a dataset (e.g. name, visit and session names) and configurations for running the available pipelines (e.g., pipeline version and runtime parameters).
 
 The example global config file contains configurations for all BIDS conversion and image processing software that are supported out-of-the-box by Nipoppy. You should replace the placeholder strings/substrings (e.g. `<DATASET_NAME>`) by more appropriate values for your dataset. See dropdown below (lines that should be changed are highlighted).
 
@@ -103,4 +103,4 @@ The rest of this documentation is still work in progress. If the information you
 ![Nipoppy protocol](_static/img/nipoppy_protocol.jpg)
 ```
 
-Once the Nipoppy dataset is created, the next steps are typically to [populate it with raw data](user_guide/populating.md), [move and organize raw imaging data (typically DICOMs) into a regular structure](user_guide/organizing_imaging.md), then [convert the data to BIDS](user_guide/bids_conversion.md). However, depending on the type of raw data you have, your workflow might be a little different. See [here](user_guide/index.md) for all the available documentation in the User guide.
+Once the Nipoppy directory tree for a study is created, the next steps are typically to [populate it with raw data](user_guide/populating.md), [move and organize raw imaging data (typically DICOMs) into a regular structure](user_guide/organizing_imaging.md), then [convert the data to BIDS](user_guide/bids_conversion.md). However, depending on the type of raw data you have, your workflow might be a little different. See [here](user_guide/index.md) for all the available documentation in the User guide.

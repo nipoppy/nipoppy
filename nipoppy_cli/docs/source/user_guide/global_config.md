@@ -15,10 +15,10 @@ Fields containing general information about the dataset.
     **Required** -- The name of the dataset, for documentation purposes.
 
 `VISITS`
-    **Required** -- List of unique visit IDs in the manifest. The Nipoppy CLI will raise an error if the manifest contains visits that are not in this list.
+    **Required** -- List of unique {term}`visit IDs <Visit ID>` in the manifest. The Nipoppy CLI will raise an error if the manifest contains visits that are not in this list.
 
 `SESSIONS`
-    List of unique session IDs in the manifest. If not specified, this will be inferred to be the same as the {term}`visits`. The Nipoppy CLI will raise an error if the manifest contains sessions that are not in this list.
+    List of unique BIDS-compliant {term}`session IDs <Session ID>` (labels) in the manifest. If not specified, this will be inferred to be the same as the visits. The Nipoppy CLI will raise an error if the manifest contains sessions that are not in this list.
 ```
 
 ### Imaging data organization
@@ -39,12 +39,12 @@ Fields for configuring image processing pipelines and container runtimes.
 
 ```{glossary}
 `CONTAINER_CONFIG`
-    Configuration options for the container runtime. This is the root-level configuration, which will be inherited by any downstream container configurations unless they set the `INHERIT` to `false`.
+    Configuration options for the container runtime. This is the top-level configuration, which will be inherited by any downstream container configurations unless they set the `INHERIT` to `false`.
 
     The configuration options include the command to call the container executable, command-line arguments, and environment variables. See [here](<config-schema>) for the auto-generated schema.
 
 `PROC_PIPELINES`
-    **Required** -- A list of pipeline configurations for the pipelines to be run on the dataset. See the [auto-generated schemas](<config-schema>) for pipeline configurations and pipeline step configurations for more information.
+    **Required** -- A list of configurations for the pipelines to be run on the dataset. See the [auto-generated schemas](<config-schema>) for pipeline configurations and pipeline step configurations for more information.
 
     Each pipeline must be uniquely identifiable by its name-version combination. Each pipeline is typically associated with a container image file. A pipeline can have multiple steps, each with its own Boutiques descriptor and invocation files (which are still using the same container).
 
