@@ -46,7 +46,7 @@ html_static_path = ["_static"]
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
 html_theme_options = {
-    "source_repository": "https://github.com/neurodatascience/nipoppy",
+    "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
     "source_directory": "nipoppy_cli/docs/source",
 }

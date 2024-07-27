@@ -81,11 +81,11 @@ We are actively working on publishing the package on PyPI, but for now it can on
 (github-install-section)=
 ### From GitHub
 
-If you wish to use the latest (potentially unstable) version of the package, you can get it from the [GitHub repository](https://github.com/neurodatascience/nipoppy).
+If you wish to use the latest (potentially unstable) version of the package, you can get it from the [GitHub repository](https://github.com/nipoppy/nipoppy).
 
 Clone the repository in a directory of your choice:
 ```{code-block} console
-$ git clone https://github.com/neurodatascience/nipoppy.git
+$ git clone https://github.com/nipoppy/nipoppy.git
 ```
 
 Move into that directory and the `nipoppy_cli` subdirectory:
@@ -119,7 +119,7 @@ $ nipoppy -h
 
 ## Troubleshooting
 
-Please create a [GitHub issue](https://github.com/neurodatascience/nipoppy/issues/new) for any error not covered below.
+Please create a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new) for any error not covered below.
 
 ### Error when installing `pydantic-core`
 
