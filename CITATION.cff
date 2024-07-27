@@ -38,7 +38,7 @@ authors:
   - affiliation: "Big Data Infrastructures for Neuroinformatics lab, Concordia University, Montréal, Canada"
     family-names: Dugré
     given-names: Mathieu
-    orcid: 0000-0003-2828-6031
+    orcid: "https://orcid.org/0000-0003-2828-6031"
 
   - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
     family-names: Poline
