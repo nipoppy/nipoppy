@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import ReturnCode
+from nipoppy.env import LogColor, ReturnCode
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
@@ -497,9 +497,9 @@ def test_cleanup_doughnut(doughnut: Doughnut, tmp_path: Path):
     "n_success,n_total,expected_message",
     [
         (0, 0, "No participant-session pairs to reorganize"),
-        (0, 1, "[red]Reorganized files for"),
-        (1, 2, "[yellow]Reorganized files for"),
-        (2, 2, "[green]Successfully reorganized files for"),
+        (0, 1, f"[{LogColor.FAILURE}]Reorganized files for"),
+        (1, 2, f"[{LogColor.PARTIAL_SUCCESS}]Reorganized files for"),
+        (2, 2, f"[{LogColor.SUCCESS}]Successfully reorganized files for"),
     ],
 )
 def test_run_cleanup_message(

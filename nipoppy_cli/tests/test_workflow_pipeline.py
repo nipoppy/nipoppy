@@ -12,7 +12,7 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
@@ -594,9 +594,9 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     "n_success,n_total,expected_message",
     [
         (0, 0, "No participant-session pairs to run"),
-        (0, 1, "[red]Ran"),
-        (1, 2, "[yellow]Ran"),
-        (2, 2, "[green]Successfully ran"),
+        (1, 2, f"[{LogColor.PARTIAL_SUCCESS}]Ran"),
+        (0, 1, f"[{LogColor.FAILURE}]Ran"),
+        (2, 2, f"[{LogColor.SUCCESS}]Successfully ran"),
     ],
 )
 def test_run_cleanup(

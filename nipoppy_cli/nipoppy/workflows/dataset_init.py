@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
@@ -11,7 +12,6 @@ from nipoppy.utils import (
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
 )
-from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -95,7 +95,8 @@ class InitWorkflow(BaseWorkflow):
     def run_cleanup(self):
         """Log a success message."""
         self.logger.info(
-            f"[green]Successfully initialized a dataset at {self.dpath_root}![/]"
+            f"[{LogColor.SUCCESS}]Successfully initialized a dataset "
+            f"at {self.dpath_root}![/]"
         )
         return super().run_cleanup()
 
