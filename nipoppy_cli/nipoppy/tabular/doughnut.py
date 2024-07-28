@@ -13,10 +13,10 @@ from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
 from nipoppy.utils import (
-    StrOrPathLike,
     participant_id_to_bids_participant,
     session_id_to_bids_session,
 )
+from nipoppy.env import StrOrPathLike
 
 
 class DoughnutModel(ManifestModel):

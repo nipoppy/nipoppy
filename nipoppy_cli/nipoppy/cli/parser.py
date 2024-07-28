@@ -4,8 +4,7 @@ import logging
 from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
 
-from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+from nipoppy.env import BIDS_SUBJECT_PREFIX, BIDS_SESSION_PREFIX
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
@@ -202,6 +201,8 @@ def add_subparser_dicom_reorg(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for reorg command."""
+    from nipoppy.layout import DEFAULT_LAYOUT_INFO
+
     description = (
         "(Re)organize raw (DICOM) files, from the raw DICOM directory "
         f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to the organized "

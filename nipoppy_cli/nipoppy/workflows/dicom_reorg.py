@@ -9,10 +9,10 @@ import pydicom
 
 from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import (
-    StrOrPathLike,
     participant_id_to_bids_participant,
     session_id_to_bids_session,
 )
+from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 
