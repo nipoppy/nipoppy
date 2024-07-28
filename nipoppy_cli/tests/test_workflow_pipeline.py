@@ -12,7 +12,7 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
@@ -587,7 +587,7 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     workflow.run_main()
     assert workflow.n_total == 1
     assert workflow.n_success == 0
-    assert workflow.return_code == 1
+    assert workflow.return_code == ReturnCode.ERROR_RUN_SINGLE
 
 
 @pytest.mark.parametrize(

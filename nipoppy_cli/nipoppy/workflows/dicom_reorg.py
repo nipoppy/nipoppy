@@ -7,12 +7,9 @@ from typing import Optional
 
 import pydicom
 
+from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.tabular.doughnut import update_doughnut
-from nipoppy.utils import (
-    participant_id_to_bids_participant,
-    session_id_to_bids_session,
-)
-from nipoppy.env import StrOrPathLike
+from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -178,7 +175,7 @@ class DicomReorgWorkflow(BaseWorkflow):
                 self.run_single(participant_id, session_id)
                 self.n_success += 1
             except Exception as exception:
-                self.return_code = 1
+                self.return_code = ReturnCode.ERROR_RUN_SINGLE
                 self.logger.error(
                     "Error reorganizing DICOM files for participant "
                     f"{participant_id} session {session_id}: {exception}"

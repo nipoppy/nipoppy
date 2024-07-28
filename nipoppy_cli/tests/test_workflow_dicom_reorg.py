@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from nipoppy.env import ReturnCode
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
@@ -461,7 +462,7 @@ def test_run_main_error(tmp_path: Path):
     except Exception:
         pass
 
-    assert workflow.return_code == 1
+    assert workflow.return_code == ReturnCode.ERROR_RUN_SINGLE
 
 
 @pytest.mark.parametrize(
