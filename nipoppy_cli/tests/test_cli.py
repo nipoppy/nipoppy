@@ -24,7 +24,7 @@ def test_cli_invalid():
 def test_cli_init(tmp_path: Path):
     try:
         cli(["nipoppy", "init", "--dataset-root", str(tmp_path / "my_dataset")]) is None
-    except BaseException:
+    except SystemExit:
         pass
 
 

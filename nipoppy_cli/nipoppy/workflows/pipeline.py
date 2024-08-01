@@ -21,6 +21,7 @@ from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    LogColor,
     ReturnCode,
     StrOrPathLike,
 )
@@ -381,13 +382,13 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             prefix = "Ran"
             suffix = ""
             if self.n_success == 0:
-                color = "red"
+                color = LogColor.FAILURE
             elif self.n_success == self.n_total:
-                color = "green"
+                color = LogColor.SUCCESS
                 prefix = f"Successfully {prefix.lower()}"
                 suffix = "!"
             else:
-                color = "yellow"
+                color = LogColor.PARTIAL_SUCCESS
 
             self.logger.info(
                 (

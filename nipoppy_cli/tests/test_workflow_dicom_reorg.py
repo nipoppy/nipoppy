@@ -497,15 +497,27 @@ def test_cleanup_doughnut(doughnut: Doughnut, tmp_path: Path):
     "n_success,n_total,expected_message",
     [
         (0, 0, "No participant-session pairs to reorganize"),
-        (0, 1, f"[{LogColor.FAILURE}]Reorganized files for"),
-        (1, 2, f"[{LogColor.PARTIAL_SUCCESS}]Reorganized files for"),
-        (2, 2, f"[{LogColor.SUCCESS}]Successfully reorganized files for"),
+        (
+            0,
+            1,
+            f"[{LogColor.FAILURE}]Reorganized files for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+        (
+            1,
+            2,
+            f"[{LogColor.PARTIAL_SUCCESS}]Reorganized files for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+        (
+            2,
+            2,
+            f"[{LogColor.SUCCESS}]Successfully reorganized files for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
     ],
 )
 def test_run_cleanup_message(
     n_success,
     n_total,
-    expected_message,
+    expected_message: str,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -517,4 +529,4 @@ def test_run_cleanup_message(
     workflow.n_total = n_total
     workflow.run_cleanup()
 
-    assert expected_message in caplog.text
+    assert expected_message.format(n_success, n_total) in caplog.text

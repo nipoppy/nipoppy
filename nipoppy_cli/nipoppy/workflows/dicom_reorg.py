@@ -7,7 +7,7 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
 from nipoppy.workflows.base import BaseWorkflow
@@ -202,13 +202,13 @@ class DicomReorgWorkflow(BaseWorkflow):
             prefix = "Reorganized"
             suffix = ""
             if self.n_success == 0:
-                color = "red"
+                color = LogColor.FAILURE
             elif self.n_success == self.n_total:
-                color = "green"
+                color = LogColor.SUCCESS
                 prefix = f"Successfully {prefix.lower()}"
                 suffix = "!"
             else:
-                color = "yellow"
+                color = LogColor.PARTIAL_SUCCESS
 
             self.logger.info(
                 (
