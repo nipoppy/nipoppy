@@ -6,9 +6,9 @@ from typing import List, Optional
 from pydantic import TypeAdapter
 
 from nipoppy.config.tracker import TrackerConfig, check_tracker_configs
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import load_json
-from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 

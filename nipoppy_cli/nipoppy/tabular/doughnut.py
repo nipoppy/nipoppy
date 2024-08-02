@@ -9,14 +9,11 @@ from typing import Optional
 from pydantic import Field
 from typing_extensions import Self
 
+from nipoppy.env import StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
-from nipoppy.utils import (
-    participant_id_to_bids_participant,
-    session_id_to_bids_session,
-)
-from nipoppy.env import StrOrPathLike
+from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
 
 
 class DoughnutModel(ManifestModel):

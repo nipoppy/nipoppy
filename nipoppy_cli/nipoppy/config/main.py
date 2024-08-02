@@ -15,13 +15,10 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig, ProcPipelineStepConfig
+from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.utils import (
-    apply_substitutions_to_json,
-    load_json,
-)
-from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
+from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
 class Config(SchemaWithContainerConfig):
