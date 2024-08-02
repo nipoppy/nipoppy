@@ -1,4 +1,4 @@
-"""Variable Definitions"""
+"""Variable Definitions."""
 import os
 from typing import TypeVar
 

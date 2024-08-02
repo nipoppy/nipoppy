@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
-from nipoppy.env import StrOrPathLike
 
 from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 

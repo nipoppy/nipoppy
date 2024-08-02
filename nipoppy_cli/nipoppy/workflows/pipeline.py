@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Optional
 
 import bids
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -19,6 +18,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -30,7 +30,6 @@ from nipoppy.utils import (
     process_template_str,
     session_id_to_bids_session,
 )
-from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 

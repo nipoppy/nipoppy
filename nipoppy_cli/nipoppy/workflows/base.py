@@ -15,6 +15,7 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
+from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
@@ -22,7 +23,6 @@ from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import add_path_timestamp, process_template_str
-from nipoppy.env import StrOrPathLike
 
 LOG_SUFFIX = ".log"
 

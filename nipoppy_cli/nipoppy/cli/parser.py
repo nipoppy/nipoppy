@@ -4,7 +4,7 @@ import logging
 from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
 
-from nipoppy.env import BIDS_SUBJECT_PREFIX, BIDS_SESSION_PREFIX
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
