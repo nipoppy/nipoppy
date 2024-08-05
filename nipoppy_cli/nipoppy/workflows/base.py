@@ -15,13 +15,14 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
+from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import StrOrPathLike, add_path_timestamp, process_template_str
+from nipoppy.utils import add_path_timestamp, process_template_str
 
 LOG_SUFFIX = ".log"
 
@@ -51,7 +52,7 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        dpath_root : nipoppy.utils.StrOrPathLike
+        dpath_root : nipoppy.env.StrOrPathLike
             Path the the root directory of the dataset.
         name : str
             Name of the workflow, used for logging.

@@ -7,12 +7,8 @@ from typing import Any, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.utils import (
-    FPATH_DEFAULT_LAYOUT,
-    StrOrPathLike,
-    get_pipeline_tag,
-    load_json,
-)
+from nipoppy.env import StrOrPathLike
+from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
 class PathInfo(BaseModel):
@@ -144,9 +140,9 @@ class DatasetLayout(Base):
 
         Parameters
         ----------
-        dpath_root : nipoppy.utils.StrOrPathLike
+        dpath_root : nipoppy.env.StrOrPathLike
             Path to the root directory of the dataset.
-        fpath_config : Optional[nipoppy.utils.StrOrPathLike], optional
+        fpath_config : Optional[nipoppy.env.StrOrPathLike], optional
             Path to the layout config to use, by default None.
             If None, the default layout will be used.
 

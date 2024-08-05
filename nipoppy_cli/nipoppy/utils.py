@@ -8,16 +8,12 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import List, Optional, Sequence, TypeVar
+from typing import List, Optional, Sequence
 
 import bids
 import pandas as pd
 
-StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
-
-# BIDS
-BIDS_SUBJECT_PREFIX = "sub-"
-BIDS_SESSION_PREFIX = "ses-"
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
 
 # user configs (pipeline configs, invocations, descriptors)
 TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
@@ -30,6 +26,7 @@ FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
 DPATH_INVOCATIONS = DPATH_EXAMPLES / "sample_invocations"
 DPATH_TRACKER_CONFIGS = DPATH_EXAMPLES / "sample_tracker_configs"
+FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.csv"
 DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
@@ -196,7 +193,7 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
 
     Parameters
     ----------
-    fpath : nipoppy.utils.StrOrPathLike
+    fpath : nipoppy.env.StrOrPathLike
         Path to the JSON file
     **kwargs :
         Keyword arguments to pass to json.load
@@ -222,7 +219,7 @@ def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     ----------
     obj : dict
         The JSON object
-    fpath : nipoppy.utils.StrOrPathLike
+    fpath : nipoppy.env.StrOrPathLike
         Path to the JSON file to write
     indent : int, optional
         Indentation level, by default 4
@@ -265,7 +262,7 @@ def save_df_with_backup(
     ----------
     df : pd.DataFrame
         The dataframe to save
-    fpath_symlink : nipoppy.utils.StrOrPathLike
+    fpath_symlink : nipoppy.env.StrOrPathLike
         The path to the symlink
     dname_backups : Optional[str], optional
         The directory where the timestamped backup file should be written

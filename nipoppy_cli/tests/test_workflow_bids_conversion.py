@@ -18,12 +18,18 @@ def config() -> Config:
             {
                 "NAME": "heudiconv",
                 "VERSION": "0.12.2",
-                "STEPS": [{"NAME": "prepare"}, {"NAME": "convert"}],
+                "STEPS": [
+                    {"NAME": "prepare"},
+                    {"NAME": "convert", "UPDATE_DOUGHNUT": True},
+                ],
             },
             {
                 "NAME": "dcm2bids",
                 "VERSION": "3.1.0",
-                "STEPS": [{"NAME": "prepare"}, {"NAME": "convert"}],
+                "STEPS": [
+                    {"NAME": "prepare"},
+                    {"NAME": "convert", "UPDATE_DOUGHNUT": True},
+                ],
             },
         ]
     )
@@ -60,19 +66,53 @@ def test_setup(config: Config, tmp_path: Path):
         ).validate(),
     ],
 )
-def test_cleanup(doughnut: Doughnut, tmp_path: Path):
+def test_cleanup(doughnut: Doughnut, config: Config, tmp_path: Path):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
-        pipeline_name="",
-        pipeline_version="",
-        pipeline_step="",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="convert",
     )
     workflow.doughnut = doughnut
+    config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
 
     assert workflow.layout.fpath_doughnut.exists()
     assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
+
+
+def test_cleanup_simulate(tmp_path: Path, config: Config):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="convert",
+        simulate=True,
+    )
+    workflow.doughnut = Doughnut()
+    config.save(workflow.layout.fpath_config)
+
+    workflow.run_cleanup()
+
+    assert not workflow.layout.fpath_doughnut.exists()
+
+
+def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="prepare",
+    )
+    workflow.doughnut = Doughnut()
+    config.save(workflow.layout.fpath_config)
+
+    print(config.get_pipeline_config("heudiconv", "0.12.2"))
+
+    workflow.run_cleanup()
+
+    assert not workflow.layout.fpath_doughnut.exists()
 
 
 @pytest.mark.parametrize(

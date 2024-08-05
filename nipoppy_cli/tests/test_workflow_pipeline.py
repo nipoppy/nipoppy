@@ -10,9 +10,9 @@ import pytest
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.config.pipeline_step import PipelineStepConfig
-from nipoppy.utils import StrOrPathLike
+from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
@@ -55,11 +55,11 @@ class PipelineWorkflow(BasePipelineWorkflow):
             participant_id=participant_id, session_id=session_id
         )
 
-    def run_single(self, subject: str, session_id: str):
+    def run_single(self, participant: str, session_id: str):
         """Run on a single participant_id/session_id."""
         self._n_runs += 1
-        self.logger.info(f"Running on {subject}/{session_id}")
-        if subject == "FAIL":
+        self.logger.info(f"Running on participant {participant}, session {session_id}")
+        if participant == "FAIL":
             self._n_errors += 1
             raise RuntimeError("FAIL")
 
@@ -168,7 +168,7 @@ def test_pipeline_version_optional():
 
 
 def test_pipeline_config(workflow: PipelineWorkflow):
-    assert isinstance(workflow.pipeline_config, PipelineConfig)
+    assert isinstance(workflow.pipeline_config, ProcPipelineConfig)
 
 
 def test_fpath_container(workflow: PipelineWorkflow):
@@ -243,10 +243,10 @@ def test_descriptor_substitutions(
 
     # set descriptor file and write descriptor content
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config = PipelineConfig(
+    workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[PipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
+        STEPS=[ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
     )
 
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
@@ -298,10 +298,10 @@ def test_invocation_substitutions(
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"
-    workflow.pipeline_config = PipelineConfig(
+    workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[PipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
+        STEPS=[ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
     )
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
@@ -496,6 +496,26 @@ def test_set_up_bids_db(
     )
     assert dpath_bids_db.exists()
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
+
+
+def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Path):
+    dpath_bids_db = tmp_path / "bids_db"
+    participant_id = "01"
+    session_id = "1"
+
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+    )
+
+    pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
+
+    workflow.set_up_bids_db(
+        dpath_bids_db=dpath_bids_db,
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+
+    assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
 
 
 @pytest.mark.parametrize(
