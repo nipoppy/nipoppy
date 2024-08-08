@@ -10,8 +10,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from nipoppy.logger import get_logger
 from nipoppy.env import StrOrPathLike
+from nipoppy.logger import get_logger
 
 # Apptainer
 APPTAINER_BIND_FLAG = "--bind"
