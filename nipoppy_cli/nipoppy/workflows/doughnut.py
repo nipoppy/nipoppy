@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -73,3 +73,11 @@ class DoughnutWorkflow(BaseWorkflow):
 
         logger.info(f"New/updated doughnut shape: {doughnut.shape}")
         self.save_tabular_file(doughnut, fpath_doughnut)
+
+    def run_cleanup(self):
+        """Log a success message."""
+        self.logger.info(
+            f"[{LogColor.SUCCESS}]Successfully generated/updated the dataset's "
+            "doughnut file![/]"
+        )
+        return super().run_cleanup()
