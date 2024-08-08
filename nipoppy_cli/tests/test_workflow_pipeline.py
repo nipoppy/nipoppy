@@ -587,22 +587,34 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     workflow.run_main()
     assert workflow.n_total == 1
     assert workflow.n_success == 0
-    assert workflow.return_code == ReturnCode.ERROR_RUN_SINGLE
+    assert workflow.return_code == ReturnCode.PARTIAL_SUCCESS
 
 
 @pytest.mark.parametrize(
     "n_success,n_total,expected_message",
     [
         (0, 0, "No participant-session pairs to run"),
-        (1, 2, f"[{LogColor.PARTIAL_SUCCESS}]Ran"),
-        (0, 1, f"[{LogColor.FAILURE}]Ran"),
-        (2, 2, f"[{LogColor.SUCCESS}]Successfully ran"),
+        (
+            1,
+            2,
+            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+        (
+            0,
+            1,
+            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+        (
+            2,
+            2,
+            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
     ],
 )
 def test_run_cleanup(
     n_success,
     n_total,
-    expected_message,
+    expected_message: str,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -617,7 +629,7 @@ def test_run_cleanup(
 
     workflow.run_cleanup()
 
-    assert expected_message in caplog.text
+    assert expected_message.format(n_success, n_total) in caplog.text
 
 
 @pytest.mark.parametrize(

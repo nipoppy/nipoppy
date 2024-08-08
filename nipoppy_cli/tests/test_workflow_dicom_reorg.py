@@ -462,7 +462,7 @@ def test_run_main_error(tmp_path: Path):
     except Exception:
         pass
 
-    assert workflow.return_code == ReturnCode.ERROR_RUN_SINGLE
+    assert workflow.return_code == ReturnCode.PARTIAL_SUCCESS
 
 
 @pytest.mark.parametrize(

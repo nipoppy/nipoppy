@@ -362,7 +362,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 self.run_single(participant_id, session_id)
                 self.n_success += 1
             except Exception as exception:
-                self.return_code = ReturnCode.ERROR_RUN_SINGLE
+                self.return_code = ReturnCode.PARTIAL_SUCCESS
                 self.logger.error(
                     f"Error running {self.pipeline_name} {self.pipeline_version}"
                     f" on participant {participant_id}, session {session_id}"

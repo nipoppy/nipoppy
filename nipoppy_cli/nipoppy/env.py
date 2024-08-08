@@ -14,7 +14,7 @@ class ReturnCode:
     """Return codes used for the CLI commands."""
 
     SUCCESS = 0
-    ERROR_RUN_SINGLE = 1
+    PARTIAL_SUCCESS = 1
 
 
 class LogColor:
