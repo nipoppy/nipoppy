@@ -225,7 +225,7 @@
             "optional": false,
             "type": "String",
             "value-key": "[INPUT_DIR]",
-            "default-value": "[[NIPOPPY_DPATH_BIDS]]"
+            "default-value": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
         },
         {
             "id": "output_dir",
