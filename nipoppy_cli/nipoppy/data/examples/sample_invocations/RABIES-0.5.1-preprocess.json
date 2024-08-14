@@ -1,0 +1,7 @@
+{
+    "plugin": "MultiProc",
+    "local_threads": 4,
+    "anatomical_resampling": "0.3x0.3x0.3",
+    "anat_inho_cor": "method=SyN,otsu_thresh=2,multiotsu=true",
+    "force": true
+}

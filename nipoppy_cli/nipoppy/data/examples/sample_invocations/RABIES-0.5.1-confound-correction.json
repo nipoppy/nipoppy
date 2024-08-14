@@ -1,0 +1,8 @@
+{
+    "plugin": "MultiProc",
+    "local_threads": 4,
+    "frame_censoring":"FD_censoring=true,FD_threshold=0.05,DVARS_censoring=false,minimum_timepoint=80",
+    "smoothing_filter": 0.3,
+    "input_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/RABIES/0.5.1/output",
+    "force": true
+}
