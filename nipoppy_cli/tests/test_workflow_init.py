@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from nipoppy.utils import (
@@ -89,7 +90,10 @@ def test_config_attrs_error(attr):
 def test_run_bids_source(dpath_root: Path):
     workflow = InitWorkflow(
         dpath_root=dpath_root,
-        bids_source="https://github.com/OpenNeuroDatasets/ds000001.git",
+        bids_source="https://github.com/OpenNeuroDatasets/ds000006.git",
     )
     workflow.run()
     assert (dpath_root / "bids" / "dataset_description.json").exists()
+
+    df = pd.read_csv(dpath_root / "manifest.csv")
+    assert len(df) == 28

@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
+
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
@@ -58,7 +60,7 @@ class InitWorkflow(BaseWorkflow):
 
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
-                self.logger.warning(
+                self.logger.info(
                     f"Installing datalad BIDS raw dataset from {self.bids_source}."
                 )
                 from datalad import api
@@ -110,12 +112,64 @@ class InitWorkflow(BaseWorkflow):
             FPATH_SAMPLE_MANIFEST, self.layout.fpath_manifest, log_level=logging.DEBUG
         )
 
+        if self.bids_source is not None:
+            self._init_manifest_from_bids_dataset()
+
         # inform user to edit the sample files
         self.logger.warning(
             f"Sample config and manifest files copied to {self.layout.fpath_config}"
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
         )
+
+    def _init_manifest_from_bids_dataset(self):
+        """Assume a BIDS dataset with session level folders.
+
+        No validation BIDS validation of the datatypes is done.
+        """
+        df = {"participant_id": [], "visit_id": [], "session_id": [], "datatype": []}
+        participant_ids = sorted(
+            [
+                x.name
+                for x in (self.dpath_root / "bids").iterdir()
+                if x.is_dir() and x.name.startswith("sub-")
+            ]
+        )
+
+        self.logger.info("Creating a manifest.csv from the BIDS dataset content.")
+
+        for ppt in participant_ids:
+
+            session_ids = sorted(
+                [
+                    x.name
+                    for x in (self.dpath_root / "bids" / ppt).iterdir()
+                    if x.is_dir() and x.name.startswith("ses-")
+                ]
+            )
+            if not session_ids:
+                self.logger.warning(
+                    f"Skipping subject '{ppt}': could not find a session level folder."
+                )
+                continue
+
+            for ses in session_ids:
+                datatypes = sorted(
+                    [
+                        x.name
+                        for x in (self.dpath_root / "bids" / ppt / ses).iterdir()
+                        if x.is_dir()
+                    ]
+                )
+
+                df["participant_id"].append(ppt.replace("sub-", ""))
+                df["session_id"].append(ses.replace("ses-", ""))
+                df["datatype"].append("[" + "'" + "' ,'".join(datatypes) + "'" + "]")
+
+        df["visit_id"] = df["session_id"]
+
+        df = pd.DataFrame(df)
+        df.to_csv(self.dpath_root / "manifest.csv", index=False)
 
     def run_cleanup(self):
         """Log a success message."""
