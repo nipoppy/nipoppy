@@ -5,12 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from nipoppy.utils import (
-    DPATH_DESCRIPTORS,
-    DPATH_INVOCATIONS,
-    DPATH_LAYOUTS,
-    DPATH_TRACKER_CONFIGS,
-)
+from nipoppy.utils import DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 from .conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
@@ -22,6 +17,13 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 
 
 def test_run(dpath_root: Path):
+
+    def exist_or_none(o: object, s: str) -> bool:
+        # walrus operator ":=" does assignment inside the "if" statement
+        if attr := getattr(o, s, None):
+            return attr.exists()
+        return True
+
     workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
@@ -34,23 +36,19 @@ def test_run(dpath_root: Path):
     assert Path(dpath_root, FPATH_CONFIG).exists()
     assert Path(dpath_root, FPATH_MANIFEST).exists()
 
-    # check that descriptor files have been copied
-    for fpath in DPATH_DESCRIPTORS.iterdir():
-        assert Path(
-            dpath_root, ATTR_TO_DPATH_MAP["dpath_descriptors"], fpath.name
-        ).exists()
-
-    # check that sample invocation files have been copied
-    for fpath in DPATH_INVOCATIONS.iterdir():
-        assert Path(
-            dpath_root, ATTR_TO_DPATH_MAP["dpath_invocations"], fpath.name
-        ).exists()
-
-    # check that sample tracker config files have been copied
-    for fpath in DPATH_TRACKER_CONFIGS.iterdir():
-        assert Path(
-            dpath_root, ATTR_TO_DPATH_MAP["dpath_tracker_configs"], fpath.name
-        ).exists()
+    # check that pipeline config files have been copied
+    for pipeline_configs in (
+        workflow.config.BIDS_PIPELINES,
+        workflow.config.PROC_PIPELINES,
+    ):
+        for pipeline_config in pipeline_configs:
+            assert exist_or_none(pipeline_config, "TRACKER_CONFIG_FILE")
+            for pipeline_step_config in pipeline_config.STEPS:
+                assert exist_or_none(pipeline_step_config, "DESCRIPTOR_FILE")
+                assert exist_or_none(pipeline_step_config, "INVOCATION_FILE")
+                assert exist_or_none(
+                    pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE"
+                )
 
 
 def test_run_error(dpath_root: Path):
@@ -76,7 +74,7 @@ def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow.run_cleanup()
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
-
+    
 @pytest.mark.parametrize("attr", ["config", "manifest", "doughnut"])
 def test_config_attrs_error(attr):
     with pytest.raises(
@@ -104,3 +102,4 @@ def test_run_as_datalad_dataset_with_bids_source(dpath_root: Path):
 
     df = pd.read_csv(dpath_root / "manifest.csv")
     assert len(df) == 28
+
