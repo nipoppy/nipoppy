@@ -16,6 +16,13 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 
 
 def test_run(dpath_root: Path):
+
+    def exist_or_none(o: object, s: str) -> bool:
+        # walrus operator ":=" does assignment inside the "if" statement
+        if attr := getattr(o, s, None):
+            return attr.exists()
+        return True
+
     workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
@@ -34,23 +41,12 @@ def test_run(dpath_root: Path):
         workflow.config.PROC_PIPELINES,
     ):
         for pipeline_config in pipeline_configs:
-            assert (
-                getattr(pipeline_config, "TRACKER_CONFIG_FILE", None) is None
-                or pipeline_config.TRACKER_CONFIG_FILE.exists()
-            )
+            assert exist_or_none(pipeline_config, "TRACKER_CONFIG_FILE")
             for pipeline_step_config in pipeline_config.STEPS:
-                assert (
-                    getattr(pipeline_step_config, "DESCRIPTOR_FILE", None) is None
-                    or pipeline_step_config.DESCRIPTOR_FILE.exists()
-                )
-                assert (
-                    getattr(pipeline_step_config, "INVOCATION_FILE", None) is None
-                    or pipeline_step_config.INVOCATION_FILE.exists()
-                )
-                assert (
-                    getattr(pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE", None)
-                    is None
-                    or pipeline_step_config.PYBIDS_IGNORE_FILE.exists()
+                assert exist_or_none(pipeline_step_config, "DESCRIPTOR_FILE")
+                assert exist_or_none(pipeline_step_config, "INVOCATION_FILE")
+                assert exist_or_none(
+                    pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE"
                 )
 
 
