@@ -25,11 +25,10 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
 
 
 def add_arg_dataset_root(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --dataset-root argument to the parser."""
+    """Add a dataset_root argument to the parser."""
     parser.add_argument(
-        "--dataset-root",
+        "dataset_root",
         type=Path,
-        required=True,
         help="Path to the root of the dataset.",
     )
     return parser
