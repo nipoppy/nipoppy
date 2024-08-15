@@ -14,7 +14,7 @@ The Nipoppy tools are intended to be used on Linux operating system, and may not
 ## Setting up a Python environment
 
 ```{tip}
-If you do not already have Python set up on your system and/or wish to run Nipoppy locally, we recommend using {term}`conda`. However, {term}`venv` can be used by following the steps [here](https://docs.python.org/3/tutorial/venv.html#virtual-environments-and-packages).
+If you do not already have Python set up on your system and/or wish to run Nipoppy locally, we recommend using {term}`conda`. However, {term}`venv` can be used by following the steps [here](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments).
 ```
 
 ### {term}`conda` setup
