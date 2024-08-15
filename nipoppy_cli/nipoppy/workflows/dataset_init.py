@@ -99,12 +99,3 @@ class InitWorkflow(BaseWorkflow):
             f"at {self.dpath_root}![/]"
         )
         return super().run_cleanup()
-
-    @property
-    def config(self):
-        """Raise an error because the dataset/config file does not yet exist."""
-        raise RuntimeError(
-            "The config property (and any other that require loading the config)"
-            " is not available in this workflow since the dataset does not exist yet"
-            " (and so does not have an associated config file)"
-        )
