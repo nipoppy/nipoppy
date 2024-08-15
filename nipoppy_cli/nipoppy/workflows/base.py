@@ -22,7 +22,7 @@ from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import add_path_timestamp, process_template_str
+from nipoppy.utils import add_path_timestamp, is_datalad_installed, process_template_str
 
 LOG_SUFFIX = ".log"
 
@@ -63,6 +63,10 @@ class BaseWorkflow(Base, ABC):
         """
         if logger is None:
             logger = get_logger(name=name)
+
+        if is_datalad_installed:
+            logging.getLogger("datalad").setLevel(logging.WARNING)
+            logging.getLogger("datalad.gitrepo").setLevel(logging.ERROR)
 
         self.dpath_root = Path(dpath_root)
         self.name = name
