@@ -74,7 +74,7 @@ def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow.run_cleanup()
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
-    
+
 @pytest.mark.parametrize("attr", ["config", "manifest", "doughnut"])
 def test_config_attrs_error(attr):
     with pytest.raises(
@@ -102,4 +102,3 @@ def test_run_as_datalad_dataset_with_bids_source(dpath_root: Path):
 
     df = pd.read_csv(dpath_root / "manifest.csv")
     assert len(df) == 28
-
