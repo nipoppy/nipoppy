@@ -4,6 +4,9 @@ changelog:
       - pre-commit-ci
       - dependabot[bot]
   categories:
+    - title: Breaking Changes
+      labels:
+        - P.0 - Breaking change
     - title: Features
       labels:
         - T.1 - Enhancement
