@@ -26,6 +26,7 @@ class InitWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_root: Path,
+        use_dalatad=False,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -39,6 +40,7 @@ class InitWorkflow(BaseWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
+        self.use_dalatad = use_dalatad
         self.fname_readme = "README.md"
         self.bids_source = bids_source
 
@@ -55,6 +57,8 @@ class InitWorkflow(BaseWorkflow):
         if self.dpath_root.exists():
             raise FileExistsError("Dataset directory already exists")
 
+        self._init_as_datalad_dataset()
+
         # create directories
         for dpath in self.layout.dpaths:
 
@@ -65,7 +69,12 @@ class InitWorkflow(BaseWorkflow):
                 )
                 from datalad import api
 
+                dataset = None
+                if self.use_dalatad:
+                    dataset = self.dpath_root
+
                 api.install(
+                    dataset=dataset,
                     path=dpath,
                     source=self.bids_source,
                     result_renderer="disabled",
@@ -115,6 +124,13 @@ class InitWorkflow(BaseWorkflow):
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
 
+        if self.use_dalatad:
+            api.save(
+                dataset=self.dpath_root,
+                path=self.dpath_root / ".",
+                message="Nipoppy layout initialized.",
+            )
+
         # inform user to edit the sample files
         self.logger.warning(
             f"Sample config and manifest files copied to {self.layout.fpath_config}"
@@ -122,10 +138,18 @@ class InitWorkflow(BaseWorkflow):
             " to match your dataset"
         )
 
-    def _init_manifest_from_bids_dataset(self):
+    def _init_as_datalad_dataset(self) -> None:
+        if self.use_dalatad:
+            from datalad import api
+
+            api.create(path=self.dpath_root, result_renderer="disabled")
+            self._make_git_attributes()
+            self._make_git_ignore()
+
+    def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
 
-        No validation BIDS validation of the datatypes is done.
+        No BIDS validation is done.
         """
         df = {"participant_id": [], "visit_id": [], "session_id": [], "datatype": []}
         participant_ids = sorted(
@@ -170,6 +194,25 @@ class InitWorkflow(BaseWorkflow):
 
         df = pd.DataFrame(df)
         df.to_csv(self.dpath_root / "manifest.csv", index=False)
+
+    def _make_git_attributes(self) -> None:
+        CONTENT = [
+            "* annex.backend=MD5E",
+            "**/.git* annex.largefiles=nothing",
+            "*.csv annex.largefiles=nothing",
+            "*.tsv annex.largefiles=nothing",
+            "*.json annex.largefiles=nothing",
+            "**/README.md annex.largefiles=nothing",
+        ]
+        with open(self.dpath_root / ".gitattributes", "w") as f:
+            for line in CONTENT:
+                f.write(f"{line}\n")
+
+    def _make_git_ignore(self) -> None:
+        CONTENT = ["sourcedata", "scratch", "proc/pybids/bids_db"]
+        with open(self.dpath_root / ".gitignore", "w") as f:
+            for line in CONTENT:
+                f.write(f"{line}\n")
 
     def run_cleanup(self):
         """Log a success message."""

@@ -159,6 +159,16 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_use_datalad(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add argument to init a layout with a BIDS datalad dataset."""
+    parser.add_argument(
+        "--use-datalad",
+        action="store_true",
+        help=("Initialize the layout as datalad dataset."),
+    )
+    return parser
+
+
 def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
     """Add argument to init a layout with a BIDS datalad dataset."""
     parser.add_argument(
@@ -186,6 +196,7 @@ def add_subparser_init(
     parser = add_arg_dataset_root(parser)
 
     if is_datalad_installed:
+        parser = add_arg_use_datalad(parser)
         parser = add_arg_bids_source(parser)
 
     return parser

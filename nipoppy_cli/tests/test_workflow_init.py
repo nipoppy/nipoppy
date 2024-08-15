@@ -87,12 +87,19 @@ def test_config_attrs_error(attr):
 
 
 @pytest.mark.datalad
-def test_run_bids_source(dpath_root: Path):
+def test_run_as_datalad_dataset_with_bids_source(dpath_root: Path):
     workflow = InitWorkflow(
         dpath_root=dpath_root,
         bids_source="https://github.com/OpenNeuroDatasets/ds000006.git",
+        use_dalatad=True,
     )
     workflow.run()
+
+    assert (dpath_root / ".datalad").exists()
+    assert (dpath_root / ".gitmodules").exists()
+    assert (dpath_root / ".gitattributes").exists()
+    assert (dpath_root / ".gitignore").exists()
+
     assert (dpath_root / "bids" / "dataset_description.json").exists()
 
     df = pd.read_csv(dpath_root / "manifest.csv")
