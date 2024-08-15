@@ -360,3 +360,12 @@ def apply_substitutions_to_json(
     for key, value in substitutions.items():
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
+
+
+def is_datalad_installed() -> bool:
+    """Check if datalad is installed."""
+    try:
+        from datalad import api  # noqa
+    except ImportError:
+        return False
+    return True

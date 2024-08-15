@@ -24,6 +24,7 @@ class InitWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_root: Path,
+        bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
@@ -37,20 +38,44 @@ class InitWorkflow(BaseWorkflow):
             dry_run=dry_run,
         )
         self.fname_readme = "README.md"
+        self.bids_source = bids_source
 
     def run_main(self):
-        """Create dataset directory structure."""
+        """Create dataset directory structure.
+
+        Create directories and add a readme in each.
+        Copy boutiques descriptors and invocations.
+        Copy default config files.
+
+        If the BIDS source dataset is requested, it is installed with datalad.
+        """
         # dataset must not already exist
         if self.dpath_root.exists():
             raise FileExistsError("Dataset directory already exists")
 
         # create directories
         for dpath in self.layout.dpaths:
-            self.mkdir(dpath)
+
+            # If a bids_source is passed it means datalad is installed.
+            if self.bids_source is not None and dpath.stem == "bids":
+                self.logger.warning(
+                    f"Installing datalad BIDS raw dataset from {self.bids_source}."
+                )
+                from datalad import api
+
+                api.install(
+                    path=dpath,
+                    source=self.bids_source,
+                    result_renderer="disabled",
+                )
+            else:
+                self.mkdir(dpath)
 
         for dpath, description in self.layout.dpath_descriptions:
             fpath_readme = dpath / self.fname_readme
-            if description is not None and not self.dry_run:
+            if (description is not None and not self.dry_run) or (
+                self.bids_source is not None and dpath.stem == "bids"
+            ):
                 fpath_readme.write_text(f"{description}\n")
 
         # copy descriptor files

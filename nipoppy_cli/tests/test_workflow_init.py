@@ -83,3 +83,13 @@ def test_config_attrs_error(attr):
         match="The config property .* is not available*",
     ):
         getattr(InitWorkflow(dpath_root="my_dataset"), attr)
+
+
+@pytest.mark.datalad
+def test_run_bids_source(dpath_root: Path):
+    workflow = InitWorkflow(
+        dpath_root=dpath_root,
+        bids_source="https://github.com/OpenNeuroDatasets/ds000001.git",
+    )
+    workflow.run()
+    assert (dpath_root / "bids" / "dataset_description.json").exists()

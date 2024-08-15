@@ -253,3 +253,11 @@ def test_global_parser(args: list[str]):
         assert (
             exception.code == 0
         ), "Expect exit code of 0 if program exited while parsing."
+
+
+@pytest.mark.datalad
+def test_init_with_bids_source():
+    """Smoke test."""
+    parser = get_global_parser()
+    args = ["init", "--dataset-root", "my_dataset", "--bids-source", "/foo"]
+    parser.parse_args(args)

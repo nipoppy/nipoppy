@@ -37,6 +37,7 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
+datalad = ["datalad"]
 dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo>=2024.1.29",

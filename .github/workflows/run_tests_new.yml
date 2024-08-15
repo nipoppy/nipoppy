@@ -51,3 +51,48 @@ jobs:
         file: ./coverage.xml
         name: codecov-umbrella
         token: ${{ secrets.CODECOV_TOKEN }}
+
+  test_with_datalad:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    # only trigger on upstream repo
+    if: github.repository_owner == 'nipoppy' && github.event.repository.name == 'nipoppy'
+
+    steps:
+
+    - name: Install dependencies
+      run: |
+          sudo apt-get -y -qq update
+          sudo apt-get -y install git-annex
+          pip install datalad
+
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package
+      run: |
+        cd nipoppy_cli
+        pip install -U pip
+        pip install .[tests,datalad]
+
+    - name: Run tests mark as datalad
+      run: |
+        python -m pytest nipoppy_cli --cov=nipoppy_cli/nipoppy --cov-report=xml -m datalad
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        name: codecov-umbrella
+        flags: datalad
+        token: ${{ secrets.CODECOV_TOKEN }}
