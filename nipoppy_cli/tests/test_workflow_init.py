@@ -70,3 +70,9 @@ def test_custom_layout(dpath_root: Path):
     # check some of the paths from the old spec exist
     assert (dpath_root / "proc").exists()
     assert (dpath_root / "dicom").exists()
+
+
+def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    workflow = InitWorkflow(dpath_root=tmp_path)
+    workflow.run_cleanup()
+    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text

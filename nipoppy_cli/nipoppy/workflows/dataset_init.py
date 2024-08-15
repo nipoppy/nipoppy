@@ -4,13 +4,13 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
     DPATH_TRACKER_CONFIGS,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
-    StrOrPathLike,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -53,8 +53,6 @@ class InitWorkflow(BaseWorkflow):
             if description is not None and not self.dry_run:
                 fpath_readme.write_text(f"{description}\n")
 
-        self.logger.info(f"Created an empty dataset at {self.dpath_root}")
-
         # copy descriptor files
         for fpath_descriptor in DPATH_DESCRIPTORS.iterdir():
             self.copy(
@@ -93,3 +91,11 @@ class InitWorkflow(BaseWorkflow):
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
         )
+
+    def run_cleanup(self):
+        """Log a success message."""
+        self.logger.info(
+            f"[{LogColor.SUCCESS}]Successfully initialized a dataset "
+            f"at {self.dpath_root}![/]"
+        )
+        return super().run_cleanup()
