@@ -171,10 +171,10 @@ class InitWorkflow(BaseWorkflow):
 
         content["SUBSTITUTIONS"][
             "[[NIPOPPY_DPATH_CONTAINERS]]"
-        ] = "[[NIPOPPY_DPATH_CONTAINERS]]/proc/containers"
-        content["SUBSTITUTIONS"]["[[TEMPLATEFLOW_HOME]]"] = str(
-            self.dpath_root.absolute() / "code" / "templateflow"
-        )
+        ] = "[[NIPOPPY_DPATH_ROOT]]/proc/containers"
+        content["SUBSTITUTIONS"][
+            "[[TEMPLATEFLOW_HOME]]"
+        ] = "[[NIPOPPY_DPATH_ROOT]]/code/templateflow"
 
         for i, pipeline in enumerate(content["PROC_PIPELINES"]):
             if pipeline["NAME"] in ["mriqc", "fmriprep"]:

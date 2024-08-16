@@ -132,7 +132,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
 
-        elif not fpath_container.exists(follow_symlinks=True):
+        elif not fpath_container.exists():
 
             if not is_datalad_installed() or not self.is_datalad_dataset:
                 raise FileNotFoundError(
