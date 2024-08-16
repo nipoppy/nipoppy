@@ -140,25 +140,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     f" {self.pipeline_name} {self.pipeline_version}"
                 )
 
-            # try:
-            #     uri = self.pipeline_config.CONTAINER_INFO.URI
-            # except Exception:
-            #     uri = None
-            # if uri is not None:
-            #     from datalad_container import containers_add
-            #     adder = containers_add.ContainersAdd()
-            #     self.logger.info(
-            #         "Adding container image for "
-            #         f"{self.pipeline_name} {self.pipeline_version} "
-            #         f"at {self.dpath_root / fpath_container}")
-            #     adder(name=self.pipeline_name, url=uri, image=fpath_container)
-
-            #     if not fpath_container.exists():
-            #          raise RuntimeError(
-            #               f"Could not add image for pipeline"
-            #               f" {self.pipeline_name} {self.pipeline_version}"
-            #           )
-
         return fpath_container
 
     def _get_container_image(self):
