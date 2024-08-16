@@ -9,8 +9,8 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
-from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -206,9 +206,9 @@ class PipelineRunner(BasePipelineWorkflow):
             participant_id, session_id, container_command=container_command
         )
 
-    def run_cleanup(self, **kwargs):
+    def run_cleanup(self):
         """Run pipeline runner cleanup."""
         for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
             if dpath.exists():
                 self.rm(dpath)
-        return super().run_cleanup(**kwargs)
+        return super().run_cleanup()
