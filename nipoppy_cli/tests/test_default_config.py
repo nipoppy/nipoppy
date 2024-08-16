@@ -111,7 +111,7 @@ def test_sample_configs():
     ) -> list[tuple[str, str]]:
         return [(pipeline.NAME, pipeline.VERSION) for pipeline in pipeline_configs]
 
-    def get_latest_pipelines(pipelines) -> list[tuple[str, str]]:
+    def get_latest_pipelines(pipelines: list[tuple[str, str]]) -> list[tuple[str, str]]:
         pipelines_latest = defaultdict(lambda: "0")
         for pipeline_name, pipeline_version in pipelines:
             if Version(pipeline_version) > Version(pipelines_latest[pipeline_name]):
