@@ -80,3 +80,6 @@ addopts = "-ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
+markers = [
+    "datalad: marks tests to be run with datalad installed only (deselect with '-m \"not datalad\"')",
+]
