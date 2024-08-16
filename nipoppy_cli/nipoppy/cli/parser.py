@@ -1,7 +1,13 @@
 """Parsers for the CLI."""
 
 import logging
-from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
+from argparse import (
+    ArgumentError,
+    ArgumentParser,
+    HelpFormatter,
+    _ActionsContainer,
+    _SubParsersAction,
+)
 from pathlib import Path
 
 from nipoppy._version import __version__
@@ -141,15 +147,19 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
         try:
             return VERBOSITY_TO_LOG_LEVEL_MAP[verbosity]
         except KeyError:
-            parser.error(
-                f"Invalid verbosity level: {verbosity}."
-                f" Valid levels are {list(VERBOSITY_TO_LOG_LEVEL_MAP.keys())}."
+            raise ArgumentError(
+                None,
+                (
+                    f"Invalid verbosity level: {verbosity}. "
+                    f"Valid levels are: {', '.join(VERBOSITY_TO_LOG_LEVEL_MAP.keys())}."
+                ),
             )
 
     parser.add_argument(
         "--verbosity",
         type=_verbosity_to_log_level,
         default=DEFAULT_VERBOSITY,
+        metavar=f"{{{','.join(VERBOSITY_TO_LOG_LEVEL_MAP.keys())}}}",  # show choices
         help=(
             "Verbosity level, from 0 (least verbose) to 3 (most verbose)."
             f" Default: {DEFAULT_VERBOSITY}."
