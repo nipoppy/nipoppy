@@ -138,7 +138,7 @@ class InitWorkflow(BaseWorkflow):
             # and update path to default mriqc and fmriprep images
             api.install(
                 dataset=dataset,
-                path=self.dpath_root / "proc" / "containers" / "repronim",
+                path=self.layout.dpath_containers / "repronim",
                 source="///repronim/containers",
                 result_renderer="disabled",
             )
@@ -167,7 +167,7 @@ class InitWorkflow(BaseWorkflow):
 
     def _update_config(self) -> None:
         """Update global config to adapt it to using datalad."""
-        with open(self.dpath_root / "global_config.json", "r") as f:
+        with open(self.layout.fpath_config, "r") as f:
             content = json.load(f)
 
         content["SUBSTITUTIONS"][
@@ -190,7 +190,7 @@ class InitWorkflow(BaseWorkflow):
                     "nipy-[[NIPOPPY_PIPELINE_NAME]]--"
                     "[[NIPOPPY_PIPELINE_VERSION]].sing"
                 )
-        with open(self.dpath_root / "global_config.json", "w") as f:
+        with open(self.layout.fpath_config, "w") as f:
             json.dump(content, f, indent=4)
 
     def _init_manifest_from_bids_dataset(self) -> None:
@@ -202,7 +202,7 @@ class InitWorkflow(BaseWorkflow):
         participant_ids = sorted(
             [
                 x.name
-                for x in (self.dpath_root / "bids").iterdir()
+                for x in (self.layout.dpath_bids).iterdir()
                 if x.is_dir() and x.name.startswith("sub-")
             ]
         )
@@ -214,7 +214,7 @@ class InitWorkflow(BaseWorkflow):
             session_ids = sorted(
                 [
                     x.name
-                    for x in (self.dpath_root / "bids" / ppt).iterdir()
+                    for x in (self.layout.dpath_bids / ppt).iterdir()
                     if x.is_dir() and x.name.startswith("ses-")
                 ]
             )
@@ -228,7 +228,7 @@ class InitWorkflow(BaseWorkflow):
                 datatypes = sorted(
                     [
                         x.name
-                        for x in (self.dpath_root / "bids" / ppt / ses).iterdir()
+                        for x in (self.layout.dpath_bids / ppt / ses).iterdir()
                         if x.is_dir()
                     ]
                 )
@@ -240,7 +240,7 @@ class InitWorkflow(BaseWorkflow):
         df["visit_id"] = df["session_id"]
 
         df = pd.DataFrame(df)
-        df.to_csv(self.dpath_root / "manifest.csv", index=False)
+        df.to_csv(self.layout.fpath_manifest, index=False)
 
     def _make_git_attributes(self) -> None:
         CONTENT = [
