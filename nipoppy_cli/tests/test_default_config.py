@@ -1,11 +1,13 @@
 """Test that all supported pipelines can run successfully in simulate mode."""
 
 import warnings
+from collections import defaultdict
 from pathlib import Path
 
 import pytest
 import pytest_mock
 from boutiques import bosh
+from packaging.version import Version
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
@@ -110,14 +112,11 @@ def test_sample_configs():
         return [(pipeline.NAME, pipeline.VERSION) for pipeline in pipeline_configs]
 
     def get_latest_pipelines(pipelines) -> list[tuple[str, str]]:
-        pipelines_latest = []
-        tmp = set()  # pipeline names only
-        for pipeline in pipelines:
-            pipeline_name, _ = pipeline
-            if pipeline_name not in tmp:
-                tmp.add(pipeline_name)
-                pipelines_latest.append(pipeline)
-        return pipelines_latest
+        pipelines_latest = defaultdict(lambda: "0")
+        for pipeline_name, pipeline_version in pipelines:
+            if Version(pipeline_version) > Version(pipelines_latest[pipeline_name]):
+                pipelines_latest[pipeline_name] = pipeline_version
+        return list(pipelines_latest.items())
 
     config_full = Config.load(FPATH_SAMPLE_CONFIG_FULL)
     config_latest = Config.load(FPATH_SAMPLE_CONFIG)

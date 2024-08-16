@@ -21,6 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "boutiques",
+    "packaging",
     "pandas",
     "pybids",
     "pydantic",
