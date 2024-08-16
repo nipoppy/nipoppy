@@ -1,5 +1,6 @@
 """Workflow for init command."""
 
+import json
 import logging
 from pathlib import Path
 from typing import Optional
@@ -84,7 +85,7 @@ class InitWorkflow(BaseWorkflow):
 
         for dpath, description in self.layout.dpath_descriptions:
             fpath_readme = dpath / self.fname_readme
-            if (description is not None and not self.dry_run) or (
+            if (description is not None and not self.dry_run) and not (
                 self.bids_source is not None and dpath.stem == "bids"
             ):
                 fpath_readme.write_text(f"{description}\n")
@@ -125,6 +126,24 @@ class InitWorkflow(BaseWorkflow):
             self._init_manifest_from_bids_dataset()
 
         if self.use_dalatad:
+
+            api.install(
+                dataset=dataset,
+                path=self.dpath_root / "code" / "templateflow",
+                source="https://github.com/templateflow/templateflow.git",
+                result_renderer="disabled",
+            )
+
+            # install repronim containers for easy access to bids apps
+            # and update path to default mriqc and fmriprep images
+            api.install(
+                dataset=dataset,
+                path=self.dpath_root / "proc" / "containers" / "repronim",
+                source="///repronim/containers",
+                result_renderer="disabled",
+            )
+            self._update_config()
+
             api.save(
                 dataset=self.dpath_root,
                 path=self.dpath_root / ".",
@@ -145,6 +164,27 @@ class InitWorkflow(BaseWorkflow):
             api.create(path=self.dpath_root, result_renderer="disabled")
             self._make_git_attributes()
             self._make_git_ignore()
+
+    def _update_config(self) -> None:
+        with open(self.dpath_root / "global_config.json", "r") as f:
+            content = json.load(f)
+
+        content["SUBSTITUTIONS"][
+            "[[NIPOPPY_DPATH_CONTAINERS]]"
+        ] = "[[NIPOPPY_DPATH_CONTAINERS]]/proc/containers"
+        content["SUBSTITUTIONS"]["[[TEMPLATEFLOW_HOME]]"] = str(
+            self.dpath_root.absolute() / "code" / "templateflow"
+        )
+
+        for i, pipeline in enumerate(content["PROC_PIPELINES"]):
+            if pipeline["NAME"] in ["mriqc", "fmriprep"]:
+                content["PROC_PIPELINES"][i]["CONTAINER_INFO"]["FILE"] = (
+                    "[[NIPOPPY_DPATH_CONTAINERS]]/repronim/images/bids/"
+                    "bids-[[NIPOPPY_PIPELINE_NAME]]--"
+                    "[[NIPOPPY_PIPELINE_VERSION]].sing"
+                )
+        with open(self.dpath_root / "global_config.json", "w") as f:
+            json.dump(content, f, indent=4)
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.

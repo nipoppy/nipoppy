@@ -31,6 +31,7 @@ from nipoppy.utils import (
     check_session_id,
     create_bids_db,
     get_pipeline_tag,
+    is_datalad_installed,
     load_json,
     participant_id_to_bids_participant,
     process_template_str,
@@ -124,18 +125,62 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
         fpath_container = self.pipeline_config.get_fpath_container()
+
         if fpath_container is None:
             raise RuntimeError(
                 f"No container image file specified in config for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
 
-        elif not fpath_container.exists():
-            raise FileNotFoundError(
-                f"No container image file found at {fpath_container} for pipeline"
-                f" {self.pipeline_name} {self.pipeline_version}"
-            )
+        elif not fpath_container.exists(follow_symlinks=True):
+
+            if not is_datalad_installed() or not self.is_datalad_dataset:
+                raise FileNotFoundError(
+                    f"No container image file found at {fpath_container} for pipeline"
+                    f" {self.pipeline_name} {self.pipeline_version}"
+                )
+
+            # try:
+            #     uri = self.pipeline_config.CONTAINER_INFO.URI
+            # except Exception:
+            #     uri = None
+            # if uri is not None:
+            #     from datalad_container import containers_add
+            #     adder = containers_add.ContainersAdd()
+            #     self.logger.info(
+            #         "Adding container image for "
+            #         f"{self.pipeline_name} {self.pipeline_version} "
+            #         f"at {self.dpath_root / fpath_container}")
+            #     adder(name=self.pipeline_name, url=uri, image=fpath_container)
+
+            #     if not fpath_container.exists():
+            #          raise RuntimeError(
+            #               f"Could not add image for pipeline"
+            #               f" {self.pipeline_name} {self.pipeline_version}"
+            #           )
+
         return fpath_container
+
+    def _get_container_image(self):
+        if (
+            is_datalad_installed()
+            and self.is_datalad_dataset
+            and self.pipeline_name in ["mriqc", "fmriprep"]
+        ):
+            self.logger.info(
+                "Getting container image for "
+                f"{self.pipeline_name} {self.pipeline_version} "
+                f"at {self.fpath_container}"
+            )
+            from datalad import api
+
+            dl_dataset = api.Dataset(
+                self.dpath_root / "proc" / "containers" / "repronim"
+            )
+            path = (self.fpath_container).relative_to(
+                self.dpath_root.absolute() / "proc" / "containers" / "repronim"
+            )
+            dl_dataset.get(path=path, result_renderer="disabled")
 
     @cached_property
     def descriptor(self) -> dict:
@@ -343,6 +388,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+
+        self._get_container_image()
 
         for dpath in self.dpaths_to_check:
             self.check_dir(dpath)
