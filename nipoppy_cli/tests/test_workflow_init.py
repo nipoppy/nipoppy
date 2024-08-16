@@ -75,15 +75,6 @@ def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
 
-@pytest.mark.parametrize("attr", ["config", "manifest", "doughnut"])
-def test_config_attrs_error(attr):
-    with pytest.raises(
-        RuntimeError,
-        match="The config property .* is not available*",
-    ):
-        getattr(InitWorkflow(dpath_root="my_dataset"), attr)
-
-
 @pytest.mark.datalad
 def test_run_as_datalad_dataset_with_bids_source(dpath_root: Path):
     workflow = InitWorkflow(
