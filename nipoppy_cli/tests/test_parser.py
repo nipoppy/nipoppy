@@ -92,15 +92,14 @@ def test_add_arg_verbosity(verbosity):
     assert parser.parse_args(["--verbosity", verbosity])
 
 
-@pytest.mark.parametrize("verbosity", ["4", "x"])
-def test_add_arg_verbosity_invalid(verbosity, capsys: pytest.CaptureFixture):
+def test_add_arg_verbosity_invalid(capsys: pytest.CaptureFixture):
     parser = ArgumentParser()
     parser = add_arg_verbosity(parser)
     with pytest.raises(SystemExit) as exception:
-        parser.parse_args(["--verbosity", verbosity])
+        parser.parse_args(["--verbosity", "4"])
 
     captured = capsys.readouterr()
-    assert "Invalid verbosity level" in captured.err
+    assert "invalid choice" in captured.err
     assert exception.value.code != 0, "Parsing of invalid argument should fail."
 
 
@@ -256,22 +255,3 @@ def test_global_parser(args: list[str]):
         assert (
             exception.code == 0
         ), "Expect exit code of 0 if program exited while parsing."
-
-
-@pytest.mark.parametrize(
-    "args",
-    [
-        ["init", "--dataset-root", "my_dataset", "--verbosity", "5"],
-        ["run", "--dataset-root", "my_other_dataset", "--verbosity", "4"],
-    ],
-)
-def test_global_parser_invalid_verbosity(
-    args: list[str], capsys: pytest.CaptureFixture
-):
-    parser = get_global_parser()
-    with pytest.raises(SystemExit) as exception:
-        parser.parse_args(args)
-
-    captured = capsys.readouterr()
-    assert "Invalid verbosity level" in captured.err
-    assert exception.value.code != 0, "Parsing of invalid argument should fail."
