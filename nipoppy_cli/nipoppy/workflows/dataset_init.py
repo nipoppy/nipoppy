@@ -166,6 +166,7 @@ class InitWorkflow(BaseWorkflow):
             self._make_git_ignore()
 
     def _update_config(self) -> None:
+        """Update global config to adapt it to using datalad."""
         with open(self.dpath_root / "global_config.json", "r") as f:
             content = json.load(f)
 
@@ -181,6 +182,12 @@ class InitWorkflow(BaseWorkflow):
                 content["PROC_PIPELINES"][i]["CONTAINER_INFO"]["FILE"] = (
                     "[[NIPOPPY_DPATH_CONTAINERS]]/repronim/images/bids/"
                     "bids-[[NIPOPPY_PIPELINE_NAME]]--"
+                    "[[NIPOPPY_PIPELINE_VERSION]].sing"
+                )
+            elif pipeline["NAME"] == "heudiconv":
+                content["PROC_PIPELINES"][i]["CONTAINER_INFO"]["FILE"] = (
+                    "[[NIPOPPY_DPATH_CONTAINERS]]/repronim/images/nipy/"
+                    "nipy-[[NIPOPPY_PIPELINE_NAME]]--"
                     "[[NIPOPPY_PIPELINE_VERSION]].sing"
                 )
         with open(self.dpath_root / "global_config.json", "w") as f:
