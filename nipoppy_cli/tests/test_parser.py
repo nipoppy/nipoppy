@@ -92,12 +92,14 @@ def test_add_arg_verbosity(verbosity):
     assert parser.parse_args(["--verbosity", verbosity])
 
 
-@pytest.mark.parametrize("verbosity", ["4", "x"])
-def test_add_arg_verbosity_invalid(verbosity):
+def test_add_arg_verbosity_invalid(capsys: pytest.CaptureFixture):
     parser = ArgumentParser()
     parser = add_arg_verbosity(parser)
     with pytest.raises(SystemExit) as exception:
-        parser.parse_args(["verbosity", verbosity])
+        parser.parse_args(["--verbosity", "4"])
+
+    captured = capsys.readouterr()
+    assert "invalid choice" in captured.err
     assert exception.value.code != 0, "Parsing of invalid argument should fail."
 
 

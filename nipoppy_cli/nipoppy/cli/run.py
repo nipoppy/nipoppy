@@ -13,6 +13,7 @@ from nipoppy.cli.parser import (
     COMMAND_INIT,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
+    VERBOSITY_TO_LOG_LEVEL_MAP,
     get_global_parser,
 )
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
@@ -28,7 +29,7 @@ def cli(argv: Sequence[str] = None) -> None:
     # common arguments
     command = args.command
     fpath_layout = args.fpath_layout
-    logger = get_logger(name=command, level=args.verbosity)
+    logger = get_logger(name=command, level=VERBOSITY_TO_LOG_LEVEL_MAP[args.verbosity])
     dry_run = args.dry_run
 
     # to pass to all workflows
