@@ -188,6 +188,34 @@
                 }
             ],
             "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]].json"
+        },
+        {
+            "NAME": "RABIES",
+            "VERSION": "0.5.1",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[NIPOPPY_PIPELINE_NAME]]_[[NIPOPPY_PIPELINE_VERSION]].sif",
+                "URI": "docker://nipreps/[[NIPOPPY_PIPELINE_NAME]]:[[NIPOPPY_PIPELINE_VERSION]]"
+            },
+
+            "STEPS": [
+                {
+                    "NAME": "preprocess",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-preprocess.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-preprocess.json"
+                },
+                {
+                    "NAME": "confound-correction",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-confound-correction.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-confound-correction.json"
+                },
+                {
+                    "NAME": "analysis",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-analysis.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-analysis.json"
+                }
+            ],
+            
+            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]].json"
         }
     ],
     "CUSTOM": {}
