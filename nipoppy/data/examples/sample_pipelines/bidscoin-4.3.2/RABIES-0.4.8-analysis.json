@@ -3,17 +3,8 @@
     "description": "tool description",
     "tool-version": "v0.5.1",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [INCLUSION_IDS] [EXCLUSION_IDS] [PLUGIN] [LOCAL_THREADS] [SCALE_MIN_MEMORY] [MIN_PROC] [FIGURE_FORMAT] [VERBOSE] [FORCE] analysis [SCAN_LIST] [PRIOR_MAPS] [PRIOR_BOLD_IDX] [PRIOR_CONFOUND_IDX] [DATA_DIAGNOSIS] [OUTLIER_THRESHOLD]  [SEED_LIST] [SEED_PRIOR_LIST] [SEED_LIST] [FC_MATRIX] [ROI_TYPE] [FC_MATRIX] [ROI_CSV] [GROUP_ICA] [DR_ICA] [NPR_TEMPORAL_COMP] [NPR_SPATIAL_COMP] [NETWORK_WEIGHTING] [INPUT_DIR] [OUTPUT_DIR]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [INCLUSION_IDS] [EXCLUSION_IDS] [PLUGIN] [LOCAL_THREADS] [SCALE_MIN_MEMORY] [MIN_PROC] [FIGURE_FORMAT] [VERBOSE] [FORCE] analysis [PRIOR_MAPS] [PRIOR_BOLD_IDX] [PRIOR_CONFOUND_IDX] [DATA_DIAGNOSIS] [OUTLIER_THRESHOLD]  [SEED_LIST] [SEED_PRIOR_LIST] [SEED_LIST] [FC_MATRIX] [ROI_TYPE] [FC_MATRIX] [ROI_CSV] [GROUP_ICA] [DR_ICA] [NPR_TEMPORAL_COMP] [NPR_SPATIAL_COMP] [NETWORK_WEIGHTING] [INPUT_DIR] [OUTPUT_DIR]",
     "inputs": [
-        {
-            "id": "scan_list",
-            "name": "scan_list",
-            "description": "This option offers to run the analysis on a subset of the scans. The scans are selected by providing the full path to the corresponding EPI file in the input BIDS folder. The list of scan can be specified manually as a list of file name '--scan_list scan1.nii.gz scan2.nii.gz ...' or the files can be embedded into a .txt file with one filename per row. By default, 'all' will use all the scans previously processed.",
-            "optional": true,
-            "type": "String",
-            "value-key": "[SCAN_LIST]",
-            "command-line-flag": "--scan_list"
-        },
         {
             "id": "prior_maps",
             "name": "prior_maps",
