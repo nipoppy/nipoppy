@@ -4,8 +4,8 @@ import logging
 from argparse import ArgumentParser, HelpFormatter, _ActionsContainer, _SubParsersAction
 from pathlib import Path
 
-from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.utils import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+from nipoppy._version import __version__
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
@@ -123,22 +123,23 @@ def add_arg_help(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_version(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --version argument to the parser."""
+    parser.add_argument(
+        "--version",
+        action="version",
+        help="Show version number and exit.",
+        version=f"{__version__}",
+    )
+    return parser
+
+
 def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     """Add a --verbosity argument to the parser."""
-
-    def _verbosity_to_log_level(verbosity: str):
-        try:
-            return VERBOSITY_TO_LOG_LEVEL_MAP[verbosity]
-        except KeyError:
-            parser.error(
-                f"Invalid verbosity level: {verbosity}."
-                f" Valid levels are {list(VERBOSITY_TO_LOG_LEVEL_MAP.keys())}."
-            )
-
     parser.add_argument(
         "--verbosity",
-        type=_verbosity_to_log_level,
         default=DEFAULT_VERBOSITY,
+        choices=VERBOSITY_TO_LOG_LEVEL_MAP.keys(),
         help=(
             "Verbosity level, from 0 (least verbose) to 3 (most verbose)."
             f" Default: {DEFAULT_VERBOSITY}."
@@ -202,6 +203,8 @@ def add_subparser_dicom_reorg(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for reorg command."""
+    from nipoppy.layout import DEFAULT_LAYOUT_INFO
+
     description = (
         "(Re)organize raw (DICOM) files, from the raw DICOM directory "
         f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to the organized "
@@ -305,6 +308,7 @@ def get_global_parser(
         add_help=False,
     )
     add_arg_help(global_parser)
+    add_arg_version(global_parser)
 
     # subcommand parsers
     subparsers = global_parser.add_subparsers(

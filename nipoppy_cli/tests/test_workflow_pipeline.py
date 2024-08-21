@@ -10,9 +10,9 @@ import pytest
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.config.pipeline_step import PipelineStepConfig
-from nipoppy.utils import StrOrPathLike
+from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 from .conftest import datetime_fixture  # noqa F401
@@ -32,8 +32,6 @@ class PipelineWorkflow(BasePipelineWorkflow):
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
     ):
-        self._n_runs = 0
-        self._n_errors = 0
         super().__init__(
             dpath_root=dpath_root,
             name="test",
@@ -55,12 +53,10 @@ class PipelineWorkflow(BasePipelineWorkflow):
             participant_id=participant_id, session_id=session_id
         )
 
-    def run_single(self, subject: str, session_id: str):
+    def run_single(self, participant_id: str, session_id: str):
         """Run on a single participant_id/session_id."""
-        self._n_runs += 1
-        self.logger.info(f"Running on {subject}/{session_id}")
-        if subject == "FAIL":
-            self._n_errors += 1
+        self.logger.info(f"Running on {participant_id}, {session_id}")
+        if participant_id == "FAIL":
             raise RuntimeError("FAIL")
 
 
@@ -168,7 +164,7 @@ def test_pipeline_version_optional():
 
 
 def test_pipeline_config(workflow: PipelineWorkflow):
-    assert isinstance(workflow.pipeline_config, PipelineConfig)
+    assert isinstance(workflow.pipeline_config, ProcPipelineConfig)
 
 
 def test_fpath_container(workflow: PipelineWorkflow):
@@ -243,10 +239,10 @@ def test_descriptor_substitutions(
 
     # set descriptor file and write descriptor content
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config = PipelineConfig(
+    workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[PipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
+        STEPS=[ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
     )
 
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
@@ -298,10 +294,10 @@ def test_invocation_substitutions(
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"
-    workflow.pipeline_config = PipelineConfig(
+    workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[PipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
+        STEPS=[ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
     )
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
@@ -498,6 +494,26 @@ def test_set_up_bids_db(
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
 
 
+def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Path):
+    dpath_bids_db = tmp_path / "bids_db"
+    participant_id = "01"
+    session_id = "1"
+
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+    )
+
+    pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
+
+    workflow.set_up_bids_db(
+        dpath_bids_db=dpath_bids_db,
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+
+    assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
+
+
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
     [("heudiconv", "0.12.2"), ("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
@@ -553,7 +569,8 @@ def test_run_main(
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
-    assert workflow._n_runs == expected_count
+    assert workflow.n_total == expected_count
+    assert workflow.n_success == expected_count
 
 
 def test_run_main_catch_errors(workflow: PipelineWorkflow):
@@ -568,8 +585,51 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
-    assert workflow._n_runs == 1
-    assert workflow._n_errors == 1
+    assert workflow.n_total == 1
+    assert workflow.n_success == 0
+    assert workflow.return_code == ReturnCode.PARTIAL_SUCCESS
+
+
+@pytest.mark.parametrize(
+    "n_success,n_total,expected_message",
+    [
+        (0, 0, "No participant-session pairs to run"),
+        (
+            1,
+            2,
+            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+        (
+            0,
+            1,
+            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+        (
+            2,
+            2,
+            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+        ),
+    ],
+)
+def test_run_cleanup(
+    n_success,
+    n_total,
+    expected_message: str,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow = PipelineWorkflow(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="my_pipeline",
+        pipeline_version="1.0",
+    )
+
+    workflow.n_success = n_success
+    workflow.n_total = n_total
+
+    workflow.run_cleanup()
+
+    assert expected_message.format(n_success, n_total) in caplog.text
 
 
 @pytest.mark.parametrize(

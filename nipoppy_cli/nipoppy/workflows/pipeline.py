@@ -17,11 +17,15 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.pipeline import PipelineConfig
-from nipoppy.utils import (
+from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    LogColor,
+    ReturnCode,
     StrOrPathLike,
+)
+from nipoppy.utils import (
     add_pybids_ignore_patterns,
     check_participant_id,
     check_session_id,
@@ -64,6 +68,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
 
+        # the message logged in run_cleanup will depend on
+        # the final values for these attributes (updated in run_main)
+        self.n_success = 0
+        self.n_total = 0
+
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
@@ -105,7 +114,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
-    def pipeline_config(self) -> PipelineConfig:
+    def pipeline_config(self) -> ProcPipelineConfig:
         """Get the user config for the pipeline."""
         return self.config.get_pipeline_config(
             self.pipeline_name, self.pipeline_version
@@ -270,20 +279,22 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Set up the BIDS database."""
         dpath_bids_db: Path = Path(dpath_bids_db)
 
+        pybids_ignore_patterns = self.pybids_ignore_patterns.copy()
+
         if participant_id is not None:
             add_pybids_ignore_patterns(
-                current=self.pybids_ignore_patterns,
+                current=pybids_ignore_patterns,
                 new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant_id}))",
             )
         if session_id is not None:
             add_pybids_ignore_patterns(
-                current=self.pybids_ignore_patterns,
+                current=pybids_ignore_patterns,
                 new=f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})",
             )
 
         self.logger.info(
-            f"Building BIDSLayout with {len(self.pybids_ignore_patterns)} ignore "
-            f"patterns: {self.pybids_ignore_patterns}"
+            f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore "
+            f"patterns: {pybids_ignore_patterns}"
         )
 
         if dpath_bids_db.exists() and list(dpath_bids_db.iterdir()):
@@ -295,7 +306,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
             dpath_bids_db=dpath_bids_db,
-            ignore_patterns=self.pybids_ignore_patterns,
+            ignore_patterns=pybids_ignore_patterns,
             reset_database=True,
         )
 
@@ -327,9 +338,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
-    def run_setup(self, **kwargs):
+    def run_setup(self):
         """Run pipeline setup."""
-        to_return = super().run_setup(**kwargs)
+        to_return = super().run_setup()
 
         self.check_pipeline_version()
 
@@ -338,28 +349,55 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         return to_return
 
-    def run_main(self, **kwargs):
+    def run_main(self):
         """Run the pipeline."""
         for participant_id, session_id in self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         ):
+            self.n_total += 1
             self.logger.info(
-                f"Running on participant {participant_id}, session {session_id}"
+                f"Running for participant {participant_id}, session {session_id}"
             )
             try:
                 self.run_single(participant_id, session_id)
+                self.n_success += 1
             except Exception as exception:
+                self.return_code = ReturnCode.PARTIAL_SUCCESS
                 self.logger.error(
                     f"Error running {self.pipeline_name} {self.pipeline_version}"
                     f" on participant {participant_id}, session {session_id}"
                     f": {exception}"
                 )
 
-    def run_cleanup(self, **kwargs):
-        """Run pipeline cleanup."""
-        if self.dpath_pipeline_work.exists():
-            self.rm(self.dpath_pipeline_work)
-        return super().run_cleanup(**kwargs)
+    def run_cleanup(self):
+        """Log a summary message."""
+        if self.n_total == 0:
+            self.logger.warning(
+                "No participant-session pairs to run. Make sure there are no mistakes "
+                "in the input arguments, the dataset's manifest or config file, "
+                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
+            )
+        else:
+            # change the message depending on how successful the run was
+            prefix = "Ran"
+            suffix = ""
+            if self.n_success == 0:
+                color = LogColor.FAILURE
+            elif self.n_success == self.n_total:
+                color = LogColor.SUCCESS
+                prefix = f"Successfully {prefix.lower()}"
+                suffix = "!"
+            else:
+                color = LogColor.PARTIAL_SUCCESS
+
+            self.logger.info(
+                (
+                    f"[{color}]{prefix} for {self.n_success} out of "
+                    f"{self.n_total} participant-session pairs{suffix}[/]"
+                )
+            )
+
+        return super().run_cleanup()
 
     @abstractmethod
     def get_participants_sessions_to_run(

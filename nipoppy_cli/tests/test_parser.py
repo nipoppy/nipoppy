@@ -10,6 +10,7 @@ from nipoppy.cli.parser import (
     add_arg_pipeline_step,
     add_arg_simulate,
     add_arg_verbosity,
+    add_arg_version,
     add_args_participant_and_session,
     add_args_pipeline,
     add_subparser_bids_conversion,
@@ -27,6 +28,15 @@ def test_add_arg_dataset_root(dataset_root: str):
     parser = ArgumentParser()
     parser = add_arg_dataset_root(parser)
     assert parser.parse_args(["--dataset-root", dataset_root])
+
+
+def test_add_arg_version():
+    parser = ArgumentParser()
+    parser = add_arg_version(parser)
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        parser.parse_args(["--version"])
+        assert pytest_wrapped_e.type == SystemExit
+        assert pytest_wrapped_e.value.code == 0
 
 
 def test_add_arg_simulate():
@@ -82,12 +92,14 @@ def test_add_arg_verbosity(verbosity):
     assert parser.parse_args(["--verbosity", verbosity])
 
 
-@pytest.mark.parametrize("verbosity", ["4", "x"])
-def test_add_arg_verbosity_invalid(verbosity):
+def test_add_arg_verbosity_invalid(capsys: pytest.CaptureFixture):
     parser = ArgumentParser()
     parser = add_arg_verbosity(parser)
     with pytest.raises(SystemExit) as exception:
-        parser.parse_args(["verbosity", verbosity])
+        parser.parse_args(["--verbosity", "4"])
+
+    captured = capsys.readouterr()
+    assert "invalid choice" in captured.err
     assert exception.value.code != 0, "Parsing of invalid argument should fail."
 
 

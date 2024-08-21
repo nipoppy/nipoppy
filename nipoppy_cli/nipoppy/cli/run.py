@@ -13,15 +13,10 @@ from nipoppy.cli.parser import (
     COMMAND_INIT,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
+    VERBOSITY_TO_LOG_LEVEL_MAP,
     get_global_parser,
 )
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
-from nipoppy.workflows.bids_conversion import BidsConversionRunner
-from nipoppy.workflows.dataset_init import InitWorkflow
-from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
-from nipoppy.workflows.doughnut import DoughnutWorkflow
-from nipoppy.workflows.runner import PipelineRunner
-from nipoppy.workflows.tracker import PipelineTracker
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -34,7 +29,7 @@ def cli(argv: Sequence[str] = None) -> None:
     # common arguments
     command = args.command
     fpath_layout = args.fpath_layout
-    logger = get_logger(name=command, level=args.verbosity)
+    logger = get_logger(name=command, level=VERBOSITY_TO_LOG_LEVEL_MAP[args.verbosity])
     dry_run = args.dry_run
 
     # to pass to all workflows
@@ -44,11 +39,17 @@ def cli(argv: Sequence[str] = None) -> None:
         dpath_root = args.dataset_root
 
         if command == COMMAND_INIT:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.dataset_init import InitWorkflow
+
             workflow = InitWorkflow(
                 dpath_root=dpath_root,
                 **workflow_kwargs,
             )
         elif command == COMMAND_DOUGHNUT:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.doughnut import DoughnutWorkflow
+
             workflow = DoughnutWorkflow(
                 dpath_root=dpath_root,
                 empty=args.empty,
@@ -56,12 +57,19 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_DICOM_REORG:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
+
             workflow = DicomReorgWorkflow(
                 dpath_root=dpath_root,
                 copy_files=args.copy_files,
+                check_dicoms=args.check_dicoms,
                 **workflow_kwargs,
             )
         elif command == COMMAND_BIDS_CONVERSION:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.bids_conversion import BidsConversionRunner
+
             workflow = BidsConversionRunner(
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
@@ -73,6 +81,9 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_RUN:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.runner import PipelineRunner
+
             workflow = PipelineRunner(
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
@@ -84,6 +95,9 @@ def cli(argv: Sequence[str] = None) -> None:
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_TRACK:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.tracker import PipelineTracker
+
             workflow = PipelineTracker(
                 dpath_root=dpath_root,
                 pipeline_name=args.pipeline,
@@ -105,6 +119,9 @@ def cli(argv: Sequence[str] = None) -> None:
 
         # run the workflow
         workflow.run()
+
+        # exit with the workflow's return code
+        sys.exit(workflow.return_code)
 
     except Exception:
         logger.exception("Error when creating/running a workflow")

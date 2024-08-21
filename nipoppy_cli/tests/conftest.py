@@ -13,13 +13,10 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import (
-    StrOrPathLike,
-    participant_id_to_bids_participant,
-    session_id_to_bids_session,
-)
+from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.csv"
@@ -54,7 +51,7 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "scratch/raw_dicom/doughnut.csv",
+    "fpath_doughnut": "scratch/raw_imaging/doughnut.csv",
     "fpath_imaging_bagel": "derivatives/bagel.csv",
 }
 

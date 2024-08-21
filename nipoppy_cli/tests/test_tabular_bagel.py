@@ -27,7 +27,17 @@ from nipoppy.tabular.bagel import Bagel, BagelModel
     ],
 )
 def test_model(data):
-    BagelModel(**data)
+    bagel = BagelModel(**data)
+    assert set(bagel.model_fields.keys()) == {
+        Bagel.col_participant_id,
+        Bagel.col_bids_participant,
+        Bagel.col_session_id,
+        Bagel.col_pipeline_name,
+        Bagel.col_pipeline_version,
+        Bagel.col_pipeline_complete,
+        "session",
+        "pipeline_starttime",
+    }
 
 
 @pytest.mark.parametrize(
