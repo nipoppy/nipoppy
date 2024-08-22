@@ -1,7 +1,7 @@
 {
-    "plugin": "MultiProc",
-    "local_threads": 4,
-    "data_diagnosis": true,
+    "plugin": "Linear",
+    "local_threads": 24,
+    "data_diagnosis": false,
     "force": true,
     "input_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/RABIES/0.5.1/output",
     "output_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/RABIES/0.5.1/output"
