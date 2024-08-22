@@ -32,7 +32,7 @@ dependencies = [
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
 name = "nipoppy"
-readme = "../README.md"
+readme = "README.md"
 requires-python = ">=3.9"
 dynamic = ["version"]
 
