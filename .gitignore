@@ -38,8 +38,8 @@ env/
 .vscode/
 
 # docs
-nipoppy_cli/docs/build
-nipoppy_cli/docs/source/schemas/*.json
+docs/build
+docs/source/schemas/*.json
 
 # OSX
 .DS_STORE
