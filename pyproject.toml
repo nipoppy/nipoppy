@@ -73,9 +73,6 @@ version-file = "nipoppy/_version.py"
 
 [tool.hatch.version]
 source = "vcs"
-# The following line is there to tell hatchling where the .git folder is.
-# Can be removed when nipoppy_cli is moved "up" one folder.
-raw-options = { root = "../" }
 
 [tool.codespell]
 skip = '.git,.github,pyproject.toml'
