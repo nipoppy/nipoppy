@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+    if: github.repository == 'nipoppy/nipoppy'
     steps:
       - run: gh issue edit "$NUMBER" --add-label "$LABELS"
         env:
@@ -24,4 +25,3 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: github.repository == 'nipoppy/nipoppy'
