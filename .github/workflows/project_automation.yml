@@ -22,13 +22,14 @@ env:
   cancelled: Cancelled
 
 jobs:
-
-  issue_opened_or_reopened:
-    name: issue_opened_or_reopened
+  update_project_status:
+    name: update_project_status
     runs-on: ubuntu-latest
-    if: github.event_name == 'issues' && (github.event.action == 'opened' || github.event.action == 'reopened')
+    if: github.repository == 'nipoppy/nipoppy'
     steps:
+
       - name: Move issue to ${{ env.triage }}
+        if: github.event_name == 'issues' && (github.event.action == 'opened' || github.event.action == 'reopened')
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ secrets.PROJECT_PAT }}
@@ -37,12 +38,8 @@ jobs:
           resource_node_id: ${{ github.event.issue.node_id }}
           status_value: ${{ env.triage }} # Target status
 
-  issue_assigned:
-    name: issue_assigned
-    runs-on: ubuntu-latest
-    if: github.event_name == 'issues' && github.event.action == 'assigned'
-    steps:
       - name: Move issue to ${{ env.in_progress }}
+        if: github.event_name == 'issues' && github.event.action == 'assigned'
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ secrets.PROJECT_PAT }}
@@ -51,12 +48,8 @@ jobs:
           resource_node_id: ${{ github.event.issue.node_id }}
           status_value: ${{ env.in_progress }} # Target status
 
-  pr_converted_to_draft:
-    name: pr_converted_to_draft
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target' && github.event.action == 'converted_to_draft'
-    steps:
       - name: Move PR to ${{ env.in_progress }}
+        if: github.event_name == 'pull_request_target' && github.event.action == 'converted_to_draft'
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ secrets.PROJECT_PAT }}
@@ -66,12 +59,8 @@ jobs:
           status_value: ${{ env.in_progress }} # Target status
           move_related_issues: true
 
-  pr_pending_review:
-    name: pr_pending_review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && (github.event.action == 'ready_for_review' || github.event.action == 'review_requested')
-    steps:
       - name: Move PR to ${{ env.pending_review }}
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && (github.event.action == 'ready_for_review' || github.event.action == 'review_requested')
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ secrets.PROJECT_PAT }}
@@ -81,42 +70,30 @@ jobs:
           status_value: ${{ env.pending_review }} # Target status
           move_related_issues: true
 
-  pr_reviewed:
-    name: pr_reviewed
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review' && github.event.review.state != 'approved'
-    steps:
-      - name: Move PR to ${{ env.reviewed }}
-        uses: leonsteinhaeuser/project-beta-automations@v2.2.1
-        with:
-          gh_token: ${{ secrets.PROJECT_PAT }}
-          organization: ${{ env.organization }}
-          project_id: ${{ env.project_id }}
-          resource_node_id: ${{ github.event.pull_request.node_id }}
-          status_value: ${{ env.reviewed }} # Target status
-          move_related_issues: true
+      # - name: Move PR to ${{ env.reviewed }}
+      #   if: github.event_name == 'pull_request_review' && github.event.review.state != 'approved'
+      #   uses: leonsteinhaeuser/project-beta-automations@v2.2.1
+      #   with:
+      #     gh_token: ${{ secrets.PROJECT_PAT }}
+      #     organization: ${{ env.organization }}
+      #     project_id: ${{ env.project_id }}
+      #     resource_node_id: ${{ github.event.pull_request.node_id }}
+      #     status_value: ${{ env.reviewed }} # Target status
+      #     move_related_issues: true
 
-  pr_approved:
-    name: pr_approved
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
-    steps:
-      - name: Move PR to ${{ env.approved }}
-        uses: leonsteinhaeuser/project-beta-automations@v2.2.1
-        with:
-          gh_token: ${{ secrets.PROJECT_PAT }}
-          organization: ${{ env.organization }}
-          project_id: ${{ env.project_id }}
-          resource_node_id: ${{ github.event.pull_request.node_id }}
-          status_value: ${{ env.approved }} # Target status
-          move_related_issues: true
+      # - name: Move PR to ${{ env.approved }}
+      #   if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+      #   uses: leonsteinhaeuser/project-beta-automations@v2.2.1
+      #   with:
+      #     gh_token: ${{ secrets.PROJECT_PAT }}
+      #     organization: ${{ env.organization }}
+      #     project_id: ${{ env.project_id }}
+      #     resource_node_id: ${{ github.event.pull_request.node_id }}
+      #     status_value: ${{ env.approved }} # Target status
+      #     move_related_issues: true
 
-  pr_merged:
-    name: pr_merged
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true
-    steps:
       - name: Move PR to ${{ env.done }}
+        if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ secrets.PROJECT_PAT }}
@@ -126,12 +103,8 @@ jobs:
           status_value: ${{ env.done }} # Target status
           move_related_issues: true
 
-  pr_cancelled:
-    name: pr_cancelled
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == false
-    steps:
       - name: Move PR to ${{ env.cancelled }}
+        if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == false
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ secrets.PROJECT_PAT }}
