@@ -12,17 +12,7 @@ Fork the [repository](https://github.com/nipoppy/nipoppy) on GitHub, then clone 
 ```{code-block} console
 git clone https://github.com/nipoppy/nipoppy.git
 cd nipoppy
-pip install -e "nipoppy_cli/.[dev]"
-```
-
-Move into that directory and the `nipoppy_cli` subdirectory:
-
-```{code-block} console
-cd nipoppy/nipoppy_cli
-```
-
-```{note}
-The `nipoppy_cli` subdirectory contains the maintained version of the code. The legacy `nipoppy` directory is still available at the top level of the GitHub repository.
+pip install -e ".[dev]"
 ```
 
 Set up [`pre-commit`](https://pre-commit.com/) to apply automatic formatting/linting/etc. when making a new commit:

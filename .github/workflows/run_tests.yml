@@ -1,5 +1,5 @@
 ---
-name: test
+name: Run tests
 
 on:
   push:
@@ -18,6 +18,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
     # only trigger on upstream repo
     if: github.repository_owner == 'nipoppy' && github.event.repository.name == 'nipoppy'
 
@@ -29,27 +33,20 @@ jobs:
 
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-          sudo apt-get update
-          sudo apt-get install -y git-annex
-
-    - name: Install nipoppy
+    - name: Install package
       run: |
         pip install -U pip
         pip install .[tests]
 
-    - name: Install data
-      run: make -C tests data/ds004097
-
-    - name: Test
-      run: python -m pytest tests --cov-report=xml
+    - name: Run tests
+      run: |
+        python -m pytest --cov=nipoppy --cov-report=xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         name: codecov-umbrella
-        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
