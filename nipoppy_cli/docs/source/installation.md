@@ -35,6 +35,20 @@ Activate the environment, e.g. by running:
 $ conda activate nipoppy_env
 ```
 
+### {term}`venv` setup
+
+*Note: These instructions assume you have an appropriate Python version installed.*
+
+Create the Python virtual environment in a directory of your choice. Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
+
+```{code-block} console
+python3 -m venv nipoppy_env
+```
+
+```{note}
+If you have multiple versions of Python installed, you should specify which one to use (e.g. `python3.12` instead of `python3` in the previous command)
+```
+
 (pip-install-section)=
 ## Installing the `nipoppy` package
 
