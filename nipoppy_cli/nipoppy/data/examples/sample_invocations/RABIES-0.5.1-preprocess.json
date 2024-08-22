@@ -1,6 +1,6 @@
 {
     "plugin": "Linear",
-    "local_threads": 4,
+    "local_threads": 24,
     "anat_inho_cor": "method=SyN,otsu_thresh=2,multiotsu=false",
     "force": true
 }
