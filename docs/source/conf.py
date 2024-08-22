@@ -5,9 +5,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 from nipoppy._version import __version__
-
-# for substitutions
-from nipoppy.layout import DEFAULT_LAYOUT_INFO
+from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -60,7 +58,7 @@ html_static_path = ["_static"]
 html_theme_options = {
     "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
-    "source_directory": "nipoppy_cli/docs/source",
+    "source_directory": "docs/source",
 }
 
 # -- Intersphinx configuration ------------------------------------------------

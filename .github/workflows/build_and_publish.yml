@@ -18,12 +18,12 @@ jobs:
     - name: Install pypa/build
       run: python3 -m pip install build --user
     - name: Build a binary wheel and a source tarball
-      run: python3 -m build nipoppy_cli
+      run: python3 -m build .
     - name: Store the distribution packages
       uses: actions/upload-artifact@v4
       with:
         name: python-package-distributions
-        path: nipoppy_cli/dist/
+        path: dist/
 
   # publish-to-testpypi:
   #   name: Publish Python 🐍 distribution 📦 to TestPyPI

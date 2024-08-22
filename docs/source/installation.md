@@ -88,13 +88,9 @@ Clone the repository in a directory of your choice:
 $ git clone https://github.com/nipoppy/nipoppy.git
 ```
 
-Move into that directory and the `nipoppy_cli` subdirectory:
+Move into that directory:
 ```{code-block} console
-$ cd nipoppy/nipoppy_cli
-```
-
-```{note}
-The `nipoppy_cli` subdirectory contains the newer version of the code, which has been refactored into a CLI. Eventually, it will become the only maintained version of the code. For the moment, the soon-to-be legacy code is still at the top level of the GitHub repository.
+$ cd nipoppy
 ```
 
 Install from the local source code in editable mode:

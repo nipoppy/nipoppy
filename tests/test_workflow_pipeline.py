@@ -20,6 +20,8 @@ from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 
 class PipelineWorkflow(BasePipelineWorkflow):
+    """Dummy pipeline workflow for testing."""
+
     def __init__(
         self,
         dpath_root: StrOrPathLike,
