@@ -2,7 +2,6 @@
 ---
 relative-docs: docs/
 relative-images:
-end-before: See the [documentation website]
 ---
 ```
 

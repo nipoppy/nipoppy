@@ -14,7 +14,7 @@ The Nipoppy tools are intended to be used on Linux operating system, and may not
 ## Setting up a Python environment
 
 ```{tip}
-If you do not already have Python set up on your system and/or wish to run Nipoppy locally, we recommend using {term}`conda` instead of {term}`venv`.
+If you do not already have Python set up on your system and/or wish to run Nipoppy locally, we recommend using {term}`conda`. However, {term}`venv` can be used by following the steps [here](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments).
 ```
 
 ### {term}`conda` setup
@@ -23,7 +23,7 @@ Install `conda` (e.g. through Miniconda) following instructions from [here](http
 
 Create a new environment (if needed) with Python version of at least `3.9`. Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
 ```{code-block} console
-$ conda create --name nipoppy_env python=3.12
+$ conda create --name nipoppy_env python=3
 ```
 
 ```{tip}
@@ -40,70 +40,22 @@ $ conda activate nipoppy_env
 *Note: These instructions assume you have an appropriate Python version installed.*
 
 Create the Python virtual environment in a directory of your choice. Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
+
 ```{code-block} console
-$ python -m venv nipoppy_env
+python3 -m venv nipoppy_env
 ```
 
 ```{note}
-If you have multiple versions of Python installed, you should specify which one to use (e.g. `python3.12` instead of `python` in the previous command)
-```
-
-````{admonition} On Compute Canada/Digital Research Alliance of Canada systems
----
-class: dropdown
----
-If you are using one of the [Compute Canada/Digital Research Alliance of Canada](https://docs.alliancecan.ca/wiki/Technical_documentation) {term}`HPC` systems, you should instead use `virtualenv`:
-```{code-block} console
-$ virtualenv --no-download nipoppy_env
-```
-
-See the [Compute Canada wiki](https://docs.alliancecan.ca/wiki/Python#Creating_and_using_a_virtual_environment) for more information.
-````
-
-Activate the virtual environment, e.g. by running:
-```{code-block} console
-$ source nipoppy_env/bin/activate
+If you have multiple versions of Python installed, you should specify which one to use (e.g. `python3.12` instead of `python3` in the previous command)
 ```
 
 (pip-install-section)=
 ## Installing the `nipoppy` package
 
-### From {term}`PyPI`
-
-% TODO
-We are actively working on publishing the package on PyPI, but for now it can only be installed by cloning the GitHub repository (see next section). Come back later for updates!
-
-% The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal window, run:
-% ```{code-block} console
-% $ pip install nipoppy
-% ```
-
-(github-install-section)=
-### From GitHub
-
-If you wish to use the latest (potentially unstable) version of the package, you can get it from the [GitHub repository](https://github.com/nipoppy/nipoppy).
-
-Clone the repository in a directory of your choice:
+The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal window, run:
 ```{code-block} console
-$ git clone https://github.com/nipoppy/nipoppy.git
+$ pip install nipoppy
 ```
-
-Move into that directory:
-```{code-block} console
-$ cd nipoppy
-```
-
-Install from the local source code in editable mode:
-```{code-block} console
-$ pip install -e .
-```
-
-````{note}
-You can also install the package with `dev` dependencies (e.g., for running tests and building documentation):
-```{code-block} console
-$ pip install -e '.[dev]'
-```
-````
 
 ### Verifying the install
 
