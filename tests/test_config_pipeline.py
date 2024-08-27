@@ -184,17 +184,17 @@ def test_get_descriptor_file(valid_data, step_name, descriptor_file):
     assert pipeline_config.get_descriptor_file(step_name) == descriptor_file
 
 
-# @pytest.mark.parametrize(
-#     "step_name,pybids_ignore_file",
-#     [("step1", Path("patterns1.json")), ("step2", Path("patterns2.json"))],
-# )
-# def test_get_pybids_ignore(valid_data, step_name, pybids_ignore_file):
-#     pipeline_config = ProcPipelineConfig(
-#         **valid_data,
-#         STEPS=[
-#             ProcPipelineStepConfig(NAME="step1", PYBIDS_IGNORE_FILE="patterns1.json"),
-#             ProcPipelineStepConfig(NAME="step2", PYBIDS_IGNORE_FILE="patterns2.json"),
-#         ],
-#     )
+@pytest.mark.parametrize(
+    "step_name,pybids_ignore_file",
+    [("step1", Path("patterns1.json")), ("step2", Path("patterns2.json"))],
+)
+def test_get_pybids_ignore(valid_data, step_name, pybids_ignore_file):
+    pipeline_config = ProcPipelineConfig(
+        **valid_data,
+        STEPS=[
+            ProcPipelineStepConfig(NAME="step1", PYBIDS_IGNORE_FILE="patterns1.json"),
+            ProcPipelineStepConfig(NAME="step2", PYBIDS_IGNORE_FILE="patterns2.json"),
+        ],
+    )
 
-#     assert pipeline_config.get_pybids_ignore_file(step_name) == pybids_ignore_file
+    assert pipeline_config.get_pybids_ignore_file(step_name) == pybids_ignore_file
