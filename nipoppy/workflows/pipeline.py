@@ -47,6 +47,7 @@ def apply_analysis_level(
     """Filter participant-session pairs to run based on the analysis level."""
     if analysis_level == AnalysisLevelType.group:
         participants_session_updated = [(None, None)]
+
     elif analysis_level == AnalysisLevelType.participant:
         participants = []
         for participant, _ in participants_sessions:
@@ -55,14 +56,17 @@ def apply_analysis_level(
         participants_session_updated = [
             (participant, None) for participant in participants
         ]
+
     elif analysis_level == AnalysisLevelType.session:
         sessions = []
         for _, session in participants_sessions:
             if session not in sessions:
                 sessions.append(session)
         participants_session_updated = [(None, session) for session in sessions]
+
     else:
         participants_session_updated = participants_sessions
+
     return participants_session_updated
 
 
