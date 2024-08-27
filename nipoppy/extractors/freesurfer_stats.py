@@ -403,8 +403,8 @@ def run(
     )
 
 
-if __name__ == "__main__":
-
+def build_parser() -> argparse.ArgumentParser:
+    """Create the parser for the CLI."""
     parser = argparse.ArgumentParser(
         description=(
             "Get combined FreeSurfer stats using asegstats2table and aparcstats2table. "
@@ -505,7 +505,12 @@ if __name__ == "__main__":
             "original values."
         ),
     )
+    return parser
 
+
+if __name__ == "__main__":
+
+    parser = build_parser()
     args = parser.parse_args()
     run(
         input_dir_path=args.input_dir_path,
