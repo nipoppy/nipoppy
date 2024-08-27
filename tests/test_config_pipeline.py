@@ -194,6 +194,22 @@ def test_get_descriptor_file(valid_data, step_name, descriptor_file):
 
 
 @pytest.mark.parametrize(
+    "step_name,analysis_level",
+    [("step1", "participant_session"), ("step2", "group")],
+)
+def test_get_analysis_level(valid_data, step_name, analysis_level):
+    pipeline_config = BasePipelineConfig(
+        **valid_data,
+        STEPS=[
+            ProcPipelineStepConfig(NAME="step1", ANALYSIS_LEVEL="participant_session"),
+            ProcPipelineStepConfig(NAME="step2", ANALYSIS_LEVEL="group"),
+        ],
+    )
+
+    assert pipeline_config.get_analysis_level(step_name) == analysis_level
+
+
+@pytest.mark.parametrize(
     "step_name,pybids_ignore_file",
     [("step1", Path("patterns1.json")), ("step2", Path("patterns2.json"))],
 )

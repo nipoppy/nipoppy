@@ -15,16 +15,17 @@ from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
 
 
+class AnalysisLevelType(str, Enum):
+    """Pipeline step types."""
+
+    participant_session = "participant_session"
+    participant = "participant"
+    session = "session"
+    group = "group"
+
+
 class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
-
-    class AnalysisLevelType(str, Enum):
-        """Pipeline step types."""
-
-        participant_session = "participant_session"
-        participant = "participant"
-        session = "session"
-        group = "group"
 
     NAME: Optional[str] = Field(
         default=None,

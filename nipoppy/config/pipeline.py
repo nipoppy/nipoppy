@@ -123,6 +123,14 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         """
         return self.get_step_config(step_name).DESCRIPTOR_FILE
 
+    def get_analysis_level(self, step_name: Optional[str] = None) -> str:
+        """
+        Return the analysis level for the given step.
+
+        If step is None, return the analysis level for the first step.
+        """
+        return self.get_step_config(step_name).ANALYSIS_LEVEL
+
 
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""

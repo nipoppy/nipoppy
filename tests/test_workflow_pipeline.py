@@ -7,13 +7,14 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
+import pytest_mock
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
-from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
-from nipoppy.workflows.pipeline import BasePipelineWorkflow
+from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
 from .conftest import datetime_fixture  # noqa F401
 from .conftest import create_empty_dataset, get_config, prepare_dataset
@@ -105,6 +106,23 @@ def workflow(tmp_path: Path):
     )
     config.save(workflow.layout.fpath_config)
     return workflow
+
+
+@pytest.mark.parametrize(
+    "analysis_level,expected",
+    [
+        (
+            AnalysisLevelType.participant_session,
+            [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")],
+        ),
+        (AnalysisLevelType.participant, [("S01", None), ("S02", None)]),
+        (AnalysisLevelType.session, [(None, "BL"), (None, "FU")]),
+        (AnalysisLevelType.group, [(None, None)]),
+    ],
+)
+def test_apply_analysis_level(analysis_level, expected):
+    participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
+    assert apply_analysis_level(participants_sessions, analysis_level) == expected
 
 
 @pytest.mark.parametrize(
@@ -393,24 +411,6 @@ def test_process_template_json(return_str, tmp_path: Path):
         assert pattern not in processed
 
 
-@pytest.mark.parametrize("participant_id,session_id", [("123", None), (None, "1")])
-def test_process_template_json_error(participant_id, session_id, tmp_path: Path):
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
-    )
-
-    with pytest.raises(
-        ValueError, match="participant_id and session_id must be strings"
-    ):
-        workflow.process_template_json(
-            {},
-            participant_id=participant_id,
-            session_id=session_id,
-        )
-
-
 def test_boutiques_config(tmp_path: Path):
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
@@ -573,6 +573,20 @@ def test_run_main(
     workflow.run_main()
     assert workflow.n_total == expected_count
     assert workflow.n_success == expected_count
+
+
+def test_run_main_analysis_level(
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+):
+    mocked = mocker.patch("nipoppy.workflows.pipeline.apply_analysis_level")
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions
+    )
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    workflow.run_main()
+    assert mocked.call_count == 1
 
 
 def test_run_main_catch_errors(workflow: PipelineWorkflow):

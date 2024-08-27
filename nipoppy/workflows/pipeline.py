@@ -8,7 +8,7 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional, Tuple
 
 import bids
 from pydantic import ValidationError
@@ -18,6 +18,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -37,6 +38,32 @@ from nipoppy.utils import (
     session_id_to_bids_session,
 )
 from nipoppy.workflows.base import BaseWorkflow
+
+
+def apply_analysis_level(
+    participants_sessions: Iterable[str, str],
+    analysis_level: AnalysisLevelType,
+) -> Tuple[str, str]:
+    """Filter participant-session pairs to run based on the analysis level."""
+    if analysis_level == AnalysisLevelType.group:
+        participants_session_updated = [(None, None)]
+    elif analysis_level == AnalysisLevelType.participant:
+        participants = []
+        for participant, _ in participants_sessions:
+            if participant not in participants:
+                participants.append(participant)
+        participants_session_updated = [
+            (participant, None) for participant in participants
+        ]
+    elif analysis_level == AnalysisLevelType.session:
+        sessions = []
+        for _, session in participants_sessions:
+            if session not in sessions:
+                sessions.append(session)
+        participants_session_updated = [(None, session) for session in sessions]
+    else:
+        participants_session_updated = participants_sessions
+    return participants_session_updated
 
 
 class BasePipelineWorkflow(BaseWorkflow, ABC):
@@ -226,8 +253,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def process_template_json(
         self,
         template_json: dict,
-        participant_id: str,
-        session_id: str,
+        participant_id: Optional[str],
+        session_id: Optional[str],
         bids_participant: Optional[str] = None,
         bids_session: Optional[str] = None,
         objs: Optional[list] = None,
@@ -235,32 +262,28 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
-        if not (isinstance(participant_id, str) and isinstance(session_id, str)):
-            raise ValueError(
-                "participant_id and session_id must be strings"
-                f", got {participant_id} ({type(participant_id)})"
-                f" and {session_id} ({type(session_id)})"
-            )
+        if participant_id is not None:
+            if bids_participant is None:
+                bids_participant = participant_id_to_bids_participant(participant_id)
+            kwargs["participant_id"] = participant_id
+            kwargs["bids_participant"] = bids_participant
 
-        if bids_participant is None:
-            bids_participant = participant_id_to_bids_participant(participant_id)
-        if bids_session is None:
-            bids_session = session_id_to_bids_session(session_id)
+        if session_id is not None:
+            if bids_session is None:
+                bids_session = session_id_to_bids_session(session_id)
+            kwargs["session_id"] = session_id
+            kwargs["bids_session"] = bids_session
 
         if objs is None:
             objs = []
         objs.extend([self, self.layout])
 
-        kwargs["participant_id"] = participant_id
-        kwargs["session_id"] = session_id
-        kwargs["bids_participant"] = bids_participant
-        kwargs["bids_session"] = bids_session
-
-        self.logger.debug("Available replacement strings: ")
-        max_len = max(len(k) for k in kwargs)
-        for k, v in kwargs.items():
-            self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
-        self.logger.debug(f"\t+ all attributes in: {objs}")
+        if kwargs:
+            self.logger.debug("Available replacement strings: ")
+            max_len = max(len(k) for k in kwargs)
+            for k, v in kwargs.items():
+                self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
+            self.logger.debug(f"\t+ all attributes in: {objs}")
 
         template_json_str = process_template_str(
             json.dumps(template_json),
@@ -351,9 +374,22 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def run_main(self):
         """Run the pipeline."""
-        for participant_id, session_id in self.get_participants_sessions_to_run(
+        participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
-        ):
+        )
+
+        # trackers are at pipeline level, not pipeline step level
+        # but this will probably change in the future
+        try:
+            analysis_level = self.pipeline_config.get_analysis_level(self.pipeline_step)
+        except ValueError:
+            analysis_level = AnalysisLevelType.participant_session
+        participants_sessions = apply_analysis_level(
+            participants_sessions=participants_sessions,
+            analysis_level=analysis_level,
+        )
+
+        for participant_id, session_id in participants_sessions:
             self.n_total += 1
             self.logger.info(
                 f"Running for participant {participant_id}, session {session_id}"
