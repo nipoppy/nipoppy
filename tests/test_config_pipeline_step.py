@@ -14,6 +14,7 @@ FIELDS_STEP_BASE = [
     "DESCRIPTOR_FILE",
     "INVOCATION_FILE",
     "CONTAINER_CONFIG",
+    "ANALYSIS_LEVEL",
 ]
 
 FIELDS_STEP_PROC = FIELDS_STEP_BASE + ["PYBIDS_IGNORE_FILE"]
@@ -61,6 +62,18 @@ def test_field_base(step_class: type[BaseModel], fields, data_list):
 def test_no_extra_field(model_class):
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         model_class(not_a_field="a")
+
+
+@pytest.mark.parametrize(
+    "analysis_level", ["participant_session", "participant", "session", "group"]
+)
+def test_analysis_level(analysis_level):
+    assert BasePipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
+
+
+def test_analysis_level_invalid():
+    with pytest.raises(ValidationError):
+        BasePipelineStepConfig(ANALYSIS_LEVEL="invalid")
 
 
 @pytest.mark.parametrize("step_class", [ProcPipelineStepConfig, BidsPipelineStepConfig])
