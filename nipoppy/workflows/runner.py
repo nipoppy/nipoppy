@@ -214,36 +214,3 @@ class PipelineRunner(BasePipelineWorkflow):
             if not self.keep_workdir and dpath.exists():
                 self.rm(dpath)
         return super().run_cleanup()
-
-
-        # ncheck = self.n_success == self.n_total
-        # keep_working = True
-
-        # # if everything that's supposed to exist is counted
-        # if ncheck:
-
-        #     # for every output
-        #     for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
-
-        #         # if working files should be deleted
-        #         if keep_working:
-
-        #             # if the output exists
-        #             if dpath.exists():
-        #                 print("Removing working files at: {dpath}")
-        #                 self.rm(dpath)
-        #             else:
-        #                 print("Working files do not exist at: {dpath} ?")
-
-        #         # if working files should not be deleted
-        #         else:
-        #             if dpath.exists():
-        #                 print("Keeping working directory: {dpath}")
-        #             else:
-        #                 print("Working directory that should exist isn't found? {dpath}")
-
-        # # if something, somewhere went wrong
-        # else:
-        #     self.logger("N Successes do not match N Total. Keeping all working files.")
-
-        # return super().run_cleanup()
