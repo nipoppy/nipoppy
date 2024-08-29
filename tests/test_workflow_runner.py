@@ -98,7 +98,6 @@ def test_run_cleanup(tmp_path: Path, keep_workdir):
     for dpath in dpaths:
         dpath.mkdir(parents=True)
     runner.run_cleanup()
-    
     for dpath in dpaths:
         if keep_workdir:
             assert dpath.exists()

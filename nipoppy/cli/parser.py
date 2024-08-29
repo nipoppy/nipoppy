@@ -148,6 +148,17 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_keepworkdir(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --keep_workdir argument to the parser."""
+    parser.add_argument(
+        "--keep_workdir",
+        type=str,
+        required=False,
+        help="Keep pipeline working directory upon success (default: False)."
+    )
+    return parser
+
+
 def add_subparser_init(
     subparsers: _SubParsersAction,
     formatter_class: type[HelpFormatter] = HelpFormatter,
@@ -271,6 +282,7 @@ def add_subparser_pipeline_run(
     parser = add_args_pipeline(parser)
     parser = add_arg_pipeline_step(parser)
     parser = add_args_participant_and_session(parser)
+    parser = add_arg_keepworkdir(parser)
     parser = add_arg_simulate(parser)
     return parser
 
