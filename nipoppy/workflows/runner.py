@@ -25,6 +25,7 @@ class PipelineRunner(BasePipelineWorkflow):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        keep_workdir: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -43,6 +44,7 @@ class PipelineRunner(BasePipelineWorkflow):
             dry_run=dry_run,
         )
         self.simulate = simulate
+        self.keep_workdir = keep_workdir
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -209,6 +211,39 @@ class PipelineRunner(BasePipelineWorkflow):
     def run_cleanup(self):
         """Run pipeline runner cleanup."""
         for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
-            if dpath.exists():
+            if not self.keep_workdir and dpath.exists():
                 self.rm(dpath)
         return super().run_cleanup()
+
+
+        # ncheck = self.n_success == self.n_total
+        # keep_working = True
+
+        # # if everything that's supposed to exist is counted
+        # if ncheck:
+
+        #     # for every output
+        #     for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
+
+        #         # if working files should be deleted
+        #         if keep_working:
+
+        #             # if the output exists
+        #             if dpath.exists():
+        #                 print("Removing working files at: {dpath}")
+        #                 self.rm(dpath)
+        #             else:
+        #                 print("Working files do not exist at: {dpath} ?")
+
+        #         # if working files should not be deleted
+        #         else:
+        #             if dpath.exists():
+        #                 print("Keeping working directory: {dpath}")
+        #             else:
+        #                 print("Working directory that should exist isn't found? {dpath}")
+
+        # # if something, somewhere went wrong
+        # else:
+        #     self.logger("N Successes do not match N Total. Keeping all working files.")
+
+        # return super().run_cleanup()
