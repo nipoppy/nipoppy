@@ -93,7 +93,7 @@ def test_run_cleanup(tmp_path: Path, keep_workdir):
     )
     dpaths = [
         runner.dpath_pipeline_bids_db,
-        runner.dpath_pipeline_work,
+        runner.dpath_pipeline_work
     ]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
