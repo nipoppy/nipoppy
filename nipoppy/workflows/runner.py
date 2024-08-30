@@ -220,5 +220,7 @@ class PipelineRunner(BasePipelineWorkflow):
             else:
                 self.logger.info("Keeping working / intermediary files.")
         else:
-            self.logger.info("Some pipeline segments failed. Keeping working / intermediary files.")
+            self.logger.info(
+                "Some pipeline segments failed. Keeping working / intermediary files."
+            )
         return super().run_cleanup()
