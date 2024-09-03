@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Extractor for FreeSurfer aseg and aparc stats."""
+"""Extractor for FreeSurfer aseg/aparc stats and quality control metrics."""
 
 import argparse
 import os
