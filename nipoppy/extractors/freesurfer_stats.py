@@ -16,13 +16,32 @@ MODE_SINGLE = "single"
 MODE_MULTI = "multi"
 DEFAULT_MODE = MODE_SINGLE
 
+DEFAULT_EULER_SURF_PATHS = [
+    "surf/lh.white",
+    "surf/rh.white",
+    "surf/lh.pial",
+    "surf/rh.pial",
+]
+DEFAULT_CNR_VOL_PATHS = ["mri/norm.mgz"]
+DEFAULT_CNR_COLS = ["gray_white_cnr", "gray_csf_cnr"]
+ALL_CNR_COLS = [
+    "gray_white_cnr",
+    "gray_csf_cnr",
+    "white_mean",
+    "gray_mean",
+    "csf_mean",
+    "sqrt_white_var",
+    "sqrt_gray_var",
+    "sqrt_csf_var",
+]
+
 DEFAULT_SUB_COLNAME = "participant_id"
 DEFAULT_SES_COLNAME = "session_id"
 DEFAULT_SUB_PREFIX = "sub-"
 DEFAULT_SES_PREFIX = "ses-"
 
 
-def _load_fs_tsv(
+def _load_fs_stats_table(
     tsv_path: Union[str, os.PathLike],
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
@@ -50,7 +69,17 @@ def _load_fs_tsv(
     return df
 
 
-def _run_fs_command(
+def _run_subprocess(args, verbose=False, **kwargs) -> subprocess.CompletedProcess:
+    """Run a subprocess with optional verbosity."""
+    if verbose:
+        print(f"\nRunning command: {shlex.join(args)}")
+    else:
+        kwargs["stdout"] = subprocess.DEVNULL
+        kwargs["stderr"] = subprocess.DEVNULL
+    return subprocess.run(args, **kwargs)
+
+
+def _run_fs_stats2table_command(
     fs_command: str,
     fs_subjects_dir: Union[str, os.PathLike],
     subjects_list: list[str],
@@ -59,6 +88,7 @@ def _run_fs_command(
     fs_args: Optional[list[str]] = None,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Run a FreeSurfer {aparc,aseg}stats2table command and load the resulting TSV file.
 
@@ -80,6 +110,8 @@ def _run_fs_command(
         Passed to _load_fs_tsv.
     sub_prefix : str, optional
         Passed to _load_fs_tsv.
+    verbose : bool, optional
+        Passed to _run_subprocess.
 
     Returns
     -------
@@ -110,8 +142,7 @@ def _run_fs_command(
     env.update(env_vars)
 
     # run command with some feedback
-    print(f"\nRunning {fs_command}")
-    process = subprocess.run(args, env=env)
+    process = _run_subprocess(args, env=env, verbose=verbose)
     if process.returncode != 0:
         sys.exit(
             f"\nError running command: {shlex.join(args)} "
@@ -119,7 +150,9 @@ def _run_fs_command(
         )
 
     # return the output as a DataFrame
-    return _load_fs_tsv(tsv_path, sub_colname=sub_colname, sub_prefix=sub_prefix)
+    return _load_fs_stats_table(
+        tsv_path, sub_colname=sub_colname, sub_prefix=sub_prefix
+    )
 
 
 def _run_asegstats2table(
@@ -130,9 +163,10 @@ def _run_asegstats2table(
     optional_args: Optional[list[str]] = None,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Wrap _run_fs_command to run asegstats2table."""
-    return _run_fs_command(
+    return _run_fs_stats2table_command(
         container_command_and_args=container_command_and_args,
         fs_command="asegstats2table",
         fs_subjects_dir=fs_subjects_dir,
@@ -141,6 +175,7 @@ def _run_asegstats2table(
         fs_args=optional_args,
         sub_colname=sub_colname,
         sub_prefix=sub_prefix,
+        verbose=verbose,
     )
 
 
@@ -153,9 +188,10 @@ def _run_aparcstats2table(
     optional_args: Optional[list[str]] = None,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Wrap _run_fs_command to run aparcstats2table."""
-    return _run_fs_command(
+    return _run_fs_stats2table_command(
         container_command_and_args=container_command_and_args,
         fs_command="aparcstats2table",
         fs_subjects_dir=fs_subjects_dir,
@@ -164,16 +200,116 @@ def _run_aparcstats2table(
         fs_args=[f"--hemi={hemi}"] + optional_args,
         sub_colname=sub_colname,
         sub_prefix=sub_prefix,
+        verbose=verbose,
     )
 
 
-def run_single(
+def _run_mris_euler_number(
+    surf_path: Union[str, os.PathLike],
+    out_path: Union[str, os.PathLike],
+    container_command_and_args: Optional[list[str]] = None,
+    verbose: bool = False,
+) -> int:
+    """Return the number of holes computed by FreeSurfer's mris_euler_number.
+
+    Parameters
+    ----------
+    surf_path : Union[str, os.PathLike]
+        Input surface file.
+    out_path : Union[str, os.PathLike]
+        File to write the number of holes to.
+    container_command_and_args : Optional[list[str]], optional
+        Container command and arguments to prepend to actual FreeSurfer command.
+    verbose : bool, optional
+        Passed to _run_subprocess.
+
+    Returns
+    -------
+    int
+    """
+    container_command_and_args = container_command_and_args or []
+
+    # process args for subprocess
+    args = container_command_and_args + ["mris_euler_number", "-o", out_path, surf_path]
+    args = [str(arg) for arg in args]
+
+    # run command with some feedback
+    process = _run_subprocess(args, verbose=verbose)
+    if process.returncode != 0:
+        sys.exit(f"\nError running command: {shlex.join(args)}")
+
+    # return the number of holes
+    return int(Path(out_path).read_text().strip())
+
+
+def _run_mri_cnr(
+    surf_dir: Union[str, os.PathLike],
+    vol_paths: list[Union[str, os.PathLike]],
+    out_path: Union[str, os.PathLike],
+    container_command_and_args: Optional[list[str]] = None,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Return the (2*len(vol_paths), 8) CNR values from FreeSurfer's mri_cnr.
+
+    Parameters
+    ----------
+    surf_dir : Union[str, os.PathLike]
+        _description_
+    vol_paths : list[Union[str, os.PathLike]]
+        _description_
+    out_path : Union[str, os.PathLike]
+        _description_
+    container_command_and_args : Optional[list[str]], optional
+        Container command and arguments to prepend to actual FreeSurfer command.
+    verbose : bool, optional
+        Passed to _run_subprocess.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    container_command_and_args = container_command_and_args or []
+
+    # process args for subprocess
+    args = (
+        container_command_and_args + ["mri_cnr", "-l", out_path, surf_dir] + vol_paths
+    )
+    args = [str(arg) for arg in args]
+
+    # run command with some feedback
+    process = _run_subprocess(args, verbose=verbose)
+    if process.returncode != 0:
+        sys.exit(f"\nError running command: {shlex.join(args)}")
+
+    # return the 8 CNR values
+    index = []
+    for vol_path in vol_paths:
+        for hemi in ["lh", "rh"]:
+            index.append((Path(vol_path).name, hemi))
+
+    df = pd.read_csv(out_path, delim_whitespace=True, header=None, names=ALL_CNR_COLS)
+    df.index = index
+
+    return df
+
+
+def _get_subject_list(fs_subjects_dir: Union[str, os.PathLike]) -> list[str]:
+    """Get a list of subjects in a FreeSurfer subjects directory."""
+    return [
+        dpath.name
+        for dpath in Path(fs_subjects_dir).iterdir()
+        if dpath.name != "fsaverage" and dpath.is_dir()
+    ]
+
+
+def run_single_stats(
     subjects_dir_path: Union[str, os.PathLike],
     container_command_and_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
     aparc_optional_args: Optional[list[str]] = None,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Extract FreeSurfer aseg and aparc statistics for a single subjects directory.
 
@@ -194,18 +330,15 @@ def run_single(
         Passed to run_asegstats2table and _run_aparcstats2table.
     sub_prefix : str, optional
         Passed to run_asegstats2table and _run_aparcstats2table.
+    verbose : bool, optional
+        Passed to _run_subprocess.
 
     Returns
     -------
     pd.DataFrame
         DataFrame with subject index and FreeSurfer stats columns.
     """
-    # get all subjects except fsaverage
-    subjects = [
-        dpath.name
-        for dpath in Path(subjects_dir_path).iterdir()
-        if dpath.name != "fsaverage" and dpath.is_dir()
-    ]
+    subjects = _get_subject_list(subjects_dir_path)
 
     # create a temporary directory to store the stats files (will be deleted)
     # we do not need the individuals files after they are combined
@@ -219,6 +352,7 @@ def run_single(
             optional_args=aseg_optional_args,
             sub_colname=sub_colname,
             sub_prefix=sub_prefix,
+            verbose=verbose,
         )
 
         df_aparc_lh = _run_aparcstats2table(
@@ -230,6 +364,7 @@ def run_single(
             optional_args=aparc_optional_args,
             sub_colname=sub_colname,
             sub_prefix=sub_prefix,
+            verbose=verbose,
         )
 
         df_aparc_rh = _run_aparcstats2table(
@@ -241,6 +376,7 @@ def run_single(
             optional_args=aparc_optional_args,
             sub_colname=sub_colname,
             sub_prefix=sub_prefix,
+            verbose=verbose,
         )
 
     # combine the stats files and make sure there are no duplicate column names
@@ -252,17 +388,181 @@ def run_single(
     return df_stats
 
 
+def run_single_qc(
+    subjects_dir_path: Union[str, os.PathLike],
+    euler_surf_paths: list[Union[str, os.PathLike]] = DEFAULT_EULER_SURF_PATHS,
+    cnr_vol_paths: list[Union[str, os.PathLike]] = DEFAULT_CNR_VOL_PATHS,
+    cnr_cols: list[str] = DEFAULT_CNR_COLS,
+    container_command_and_args: Optional[list[str]] = None,
+    sub_colname: str = DEFAULT_SUB_COLNAME,
+    sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Extract FreeSurfer QC metrics for a single subjects directory.
+
+    This function calls _run_mris_euler_number and _run_mri_cnr for each subject
+    and concatenates the results into a single DataFrame.
+
+    Parameters
+    ----------
+    subjects_dir_path : Union[str, os.PathLike]
+        Path to the FreeSurfer subjects directory.
+    euler_surf_paths : list[Union[str, os.PathLike]], optional
+        Paths to the surface files to calculate the Euler number from, relative
+        to subjects_dir_path.
+    cnr_vol_paths : list[Union[str, os.PathLike]], optional
+        Paths to the volume files to calculate the contrast-to-noise ratio from,
+        relative to subjects_dir_path.
+    cnr_cols : list[str], optional
+        Names of the CNR measures to include in the QC metrics file for each volume.
+    container_command_and_args : Optional[list[str]], optional
+        Passed to _run_mris_euler_number and _run_mri_cnr.
+    sub_colname : str, optional
+        Column name to use for the subject ID in the final output file.
+    sub_prefix : str, optional
+        Prefix to strip from the subject IDs in the final output file.
+        Set as empty string to keep the original values.
+    verbose : bool, optional
+        Passed to _run_subprocess.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    subjects_dir_path = Path(subjects_dir_path)
+    euler_surf_paths: list[Path] = [Path(surf_path) for surf_path in euler_surf_paths]
+
+    data_for_df = []
+    subjects = _get_subject_list(subjects_dir_path)
+    with tempfile.TemporaryDirectory(dir=subjects_dir_path) as tmpdir:
+        for subject in subjects:
+            data_subject = {sub_colname: subject.removeprefix(sub_prefix)}
+
+            # get number of holes in surface files based on Euler number
+            for surf_path in euler_surf_paths:
+                out_path = Path(tmpdir) / f"{subject}_euler_{surf_path.name}.txt"
+                data_subject[f"n_holes-{surf_path.name.replace('.', '_')}"] = (
+                    _run_mris_euler_number(
+                        surf_path=subjects_dir_path / subject / surf_path,
+                        out_path=out_path,
+                        container_command_and_args=container_command_and_args,
+                        verbose=verbose,
+                    )
+                )
+
+            # get contrast-to-noise ratio (CNR) for each hemisphere
+            df_cnr = _run_mri_cnr(
+                surf_dir=subjects_dir_path / subject / "surf",
+                vol_paths=[
+                    subjects_dir_path / subject / vol_path for vol_path in cnr_vol_paths
+                ],
+                out_path=Path(tmpdir) / f"{subject}_cnr.tsv",
+                container_command_and_args=container_command_and_args,
+                verbose=verbose,
+            )
+            for col in cnr_cols:
+                for index in df_cnr.index:
+                    fname, hemi = index
+                    data_subject[f"{col}-{fname.replace('.', '_')}-{hemi}"] = (
+                        df_cnr.loc[[index], col].item()
+                    )
+
+            data_for_df.append(data_subject)
+
+    df_qc = pd.DataFrame(data_for_df).set_index(sub_colname)
+
+    return df_qc
+
+
+def run_single(
+    subjects_dir_path: Union[str, os.PathLike],
+    container_command_and_args: Optional[list[str]] = None,
+    aseg_optional_args: Optional[list[str]] = None,
+    aparc_optional_args: Optional[list[str]] = None,
+    with_qc: bool = False,
+    euler_surf_paths: list[Union[str, os.PathLike]] = DEFAULT_EULER_SURF_PATHS,
+    cnr_vol_paths: list[Union[str, os.PathLike]] = DEFAULT_CNR_VOL_PATHS,
+    cnr_cols: list[str] = DEFAULT_CNR_COLS,
+    sub_colname: str = DEFAULT_SUB_COLNAME,
+    sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
+) -> tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    """Extract FreeSurfer aseg/aparc statistics and QC metrics for a single session.
+
+    Parameters
+    ----------
+    subjects_dir_path : Union[str, os.PathLike]
+        Path to the FreeSurfer subjects directory.
+    container_command_and_args : Optional[list[str]], optional
+        Passed to run_single_stats and run_single_qc.
+    aseg_optional_args : Optional[list[str]], optional
+        Passed to run_single_stats.
+    aparc_optional_args : Optional[list[str]], optional
+        Passed to run_single_stats.
+    with_qc : bool, optional
+        Whether or not to include QC metrics.
+    euler_surf_paths : list[Union[str, os.PathLike]], optional
+        Passed to run_single_qc.
+    cnr_vol_paths : list[Union[str, os.PathLike]], optional
+        Passed to run_single_qc.
+    cnr_cols : list[str], optional
+        Passed to run_single_qc.
+    sub_colname : str, optional
+        Passed to run_single_stats and run_single_qc.
+    sub_prefix : str, optional
+        Passed to run_single_stats and run_single_qc.
+    verbose : bool, optional
+        Passed to run_single_stats and run_single_qc.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, Optional[pd.DataFrame]]
+        DataFrames with multi-level index (subject, session) and FreeSurfer stats
+        columns. Second "dataframe" is None if with_qc is False.
+    """
+    df_stats = run_single_stats(
+        subjects_dir_path=subjects_dir_path,
+        container_command_and_args=container_command_and_args,
+        aseg_optional_args=aseg_optional_args,
+        aparc_optional_args=aparc_optional_args,
+        sub_colname=sub_colname,
+        sub_prefix=sub_prefix,
+        verbose=verbose,
+    )
+
+    if with_qc:
+        df_qc = run_single_qc(
+            subjects_dir_path=subjects_dir_path,
+            euler_surf_paths=euler_surf_paths,
+            cnr_vol_paths=cnr_vol_paths,
+            cnr_cols=cnr_cols,
+            container_command_and_args=container_command_and_args,
+            sub_colname=sub_colname,
+            sub_prefix=sub_prefix,
+            verbose=verbose,
+        )
+    else:
+        df_qc = None
+
+    return df_stats, df_qc
+
+
 def run_multi(
     sessions_dir_path: Union[str, os.PathLike],
     container_command_and_args: Optional[list[str]] = None,
     aparc_optional_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
+    with_qc: bool = False,
+    euler_surf_paths: list[Union[str, os.PathLike]] = DEFAULT_EULER_SURF_PATHS,
+    cnr_vol_paths: list[Union[str, os.PathLike]] = DEFAULT_CNR_VOL_PATHS,
+    cnr_cols: list[str] = DEFAULT_CNR_COLS,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     ses_colname: str = DEFAULT_SES_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
     ses_prefix: str = DEFAULT_SES_PREFIX,
-) -> pd.DataFrame:
-    """Extract FreeSurfer aseg and aparc statistics for multiple sessions.
+    verbose: bool = False,
+) -> tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    """Extract FreeSurfer aseg/aparc statistics and QC metrics for multiple sessions.
 
     This function calls run_single for each session and concatenates the results
     with a session level in the index.
@@ -277,6 +577,14 @@ def run_multi(
         Passed to run_single.
     aseg_optional_args : Optional[list[str]], optional
         Passed to run_single.
+    with_qc : bool, optional
+        Whether or not to include QC metrics.
+    euler_surf_paths : list[Union[str, os.PathLike]], optional
+        Passed to run_single.
+    cnr_vol_paths : list[Union[str, os.PathLike]], optional
+        Passed to run_single.
+    cnr_cols : list[str], optional
+        Passed to run_single.
     sub_colname : str, optional
         Passed to run_single.
     ses_colname : str, optional
@@ -290,49 +598,74 @@ def run_multi(
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with multi-level index (subject, session)and FreeSurfer stats
-        columns.
+    tuple[pd.DataFrame, Optional[pd.DataFrame]]
+        DataFrames with multi-level index (subject, session) and FreeSurfer stats
+        columns. Second "dataframe" is None if with_qc is False.
     """
     sessions_dir_path = Path(sessions_dir_path)
 
     # get a dataframe for each session
-    session_df_map = {}
+    session_df_maps = None
     for dpath_session in sessions_dir_path.iterdir():
         if not dpath_session.is_dir():
             continue
-        session_df_map[dpath_session.name.removeprefix(ses_prefix)] = run_single(
+        dfs_single = run_single(
             subjects_dir_path=dpath_session,
             container_command_and_args=container_command_and_args,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
+            with_qc=with_qc,
+            euler_surf_paths=euler_surf_paths,
+            cnr_vol_paths=cnr_vol_paths,
+            cnr_cols=cnr_cols,
             sub_colname=sub_colname,
             sub_prefix=sub_prefix,
+            verbose=verbose,
         )
 
+        if session_df_maps is None:
+            session_df_maps = [{} for _ in dfs_single]
+        session_id = dpath_session.name.removeprefix(ses_prefix)
+        for session_df_map, df in zip(session_df_maps, dfs_single):
+            session_df_map[session_id] = df
+
     # combine the dataframes and update the index
-    df_stats = pd.concat(session_df_map, names=[ses_colname])
-    df_stats.index = df_stats.index.reorder_levels([sub_colname, ses_colname])
-    df_stats = df_stats.sort_index()
-    return df_stats
+    df_multi = []
+    for session_df_map in session_df_maps:
+        try:
+            df = pd.concat(session_df_map, names=[ses_colname])
+            df.index = df.index.reorder_levels([sub_colname, ses_colname])
+            df = df.sort_index()
+        except ValueError:
+            df = None
+        df_multi.append(df)
+    return tuple(df_multi)
 
 
 def run(
     input_dir_path: Union[str, os.PathLike],
-    output_file_path: Union[str, os.PathLike],
+    output_stats_file_path: Union[str, os.PathLike],
+    output_qc_file_path: Optional[Union[str, os.PathLike]] = None,
     mode: str = DEFAULT_MODE,
     container_command_and_args: Optional[list[str]] = None,
     aparc_optional_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
+    euler_surf_paths: list[Union[str, os.PathLike]] = DEFAULT_EULER_SURF_PATHS,
+    cnr_vol_paths: list[Union[str, os.PathLike]] = DEFAULT_CNR_VOL_PATHS,
+    cnr_cols: list[str] = DEFAULT_CNR_COLS,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     ses_colname: str = DEFAULT_SES_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
     ses_prefix: str = DEFAULT_SES_PREFIX,
+    verbose: bool = False,
 ):
-    """Extract FreeSurfer aseg and aparc statistics into a single file.
+    """Extract FreeSurfer aseg/aparc statistics into a single file.
 
-    This extractor uses FreeSurfer's asegstats2table and aparcstats2table, and so
-    requires FreeSurfer installation or a container with FreeSurfer available.
+    Optionally extract QC metrics into a separate file.
+
+    This extractor uses FreeSurfer commands (asegstats2table, aparcstats2table,
+    mris_euler_number, and mri_cnr), and so requires FreeSurfer installation or
+    a container with FreeSurfer available.
 
     Parameters
     ----------
@@ -340,8 +673,12 @@ def run(
         Path to input directory, which should be a FreeSurfer subjects directory if
         mode is "single" or a directory containing multiple FreeSurfer subjects
         directories if mode is "multi".
-    output_file_path : Union[str, os.PathLike]
-        Path to the output TSV file. The parent directory of this path must exist.
+    output_stats_file_path : Union[str, os.PathLike]
+        Path to the output TSV file for the stats file. The parent directory of
+        this path must exist.
+    output_qc_file_path : Optional[Union[str, os.PathLike]], optional
+        Path to the output TSV file for QC metrics. If this is not provided, only
+        the stats file will be created.
     mode : str
         See input_dir_path.
     container_command_and_args : Optional[list[str]], optional
@@ -357,6 +694,14 @@ def run(
         Optional arguments to pass to aparcstats2table, by default None
     aseg_optional_args : Optional[list[str]], optional
         Optional arguments to pass to asegstats2table, by default None
+    euler_surf_paths : list[Union[str, os.PathLike]], optional
+        Paths to surface files for which to calculate number of holes with
+        mris_euler_number.
+    cnr_vol_paths : list[Union[str, os.PathLike]], optional
+        Paths to volume files for which to calculate contrast-to-noise ratios
+        with mri_cnr.
+    cnr_cols : list[str], optional
+        Metrics to extract from mri_cnr outputs.
     sub_colname : str, optional
         Column name to use for the subject ID in the final output file.
     ses_colname : str, optional
@@ -368,39 +713,57 @@ def run(
         Prefix to strip from the session IDs in the final output file.
         Set as empty string to keep the original values.
     """
+    with_qc = output_qc_file_path is not None
+
     # single subjects directory (no sessions)
     if mode == MODE_SINGLE:
-        df_stats = run_single(
+        df_stats, df_qc = run_single(
             subjects_dir_path=input_dir_path,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
             container_command_and_args=container_command_and_args,
+            with_qc=with_qc,
+            euler_surf_paths=euler_surf_paths,
+            cnr_vol_paths=cnr_vol_paths,
+            cnr_cols=cnr_cols,
             sub_colname=sub_colname,
             sub_prefix=sub_prefix,
+            verbose=verbose,
         )
 
     # multiple subjects directories (assumed to be sessions)
     elif mode == MODE_MULTI:
-        df_stats = run_multi(
+        df_stats, df_qc = run_multi(
             sessions_dir_path=input_dir_path,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
             container_command_and_args=container_command_and_args,
+            with_qc=with_qc,
+            euler_surf_paths=euler_surf_paths,
+            cnr_vol_paths=cnr_vol_paths,
+            cnr_cols=cnr_cols,
             sub_colname=sub_colname,
             sub_prefix=sub_prefix,
             ses_colname=ses_colname,
             ses_prefix=ses_prefix,
+            verbose=verbose,
         )
 
     else:
         sys.exit(f"\nInvalid mode: {mode}. Must be one of: {MODE_SINGLE}, {MODE_MULTI}")
 
-    # save final file
-    df_stats.to_csv(output_file_path, sep="\t")
+    # save final file(s)
+    df_stats.to_csv(output_stats_file_path, sep="\t")
     print(
         "\nSaved aggregated stats file with shape "
-        f"{df_stats.shape} to {output_file_path}."
+        f"{df_stats.shape} to {output_stats_file_path}."
     )
+    if with_qc:
+        df_qc.to_csv(output_qc_file_path, sep="\t")
+        print(
+            "Saved aggregated QC metrics file with shape "
+            f"{df_qc.shape} to {output_qc_file_path}."
+        )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -426,7 +789,7 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "output_file_path",
+        "output_stats_file_path",
         type=Path,
         help="Path to the output TSV file.",
     )
@@ -468,6 +831,46 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional arguments to pass to aparcstats2table, as a single string.",
     )
     parser.add_argument(
+        "--qc",
+        dest="output_qc_file_path",
+        type=Path,
+        help=(
+            "Optional path to the output TSV file for QC metrics. "
+            "If this is not provided, only the stats file will be generated."
+        ),
+        required=False,
+    )
+    parser.add_argument(
+        "--euler-surf-paths",
+        nargs="+",
+        type=Path,
+        default=DEFAULT_EULER_SURF_PATHS,
+        help=(
+            "Paths to the surface files to calculate the Euler number from "
+            f"(default: {[str(path) for path in DEFAULT_EULER_SURF_PATHS]})."
+        ),
+    )
+    parser.add_argument(
+        "--cnr-vol-paths",
+        nargs="+",
+        type=Path,
+        default=DEFAULT_CNR_VOL_PATHS,
+        help=(
+            "Paths to the volume files to calculate the contrast-to-noise ratio from "
+            f"(default: {[str(path) for path in DEFAULT_CNR_VOL_PATHS]})."
+        ),
+    )
+    parser.add_argument(
+        "--cnr-measures",
+        nargs="+",
+        default=DEFAULT_CNR_COLS,
+        choices=ALL_CNR_COLS,
+        help=(
+            "Names of the CNR measures to include in the QC metrics file "
+            f"for each volume (default: {DEFAULT_CNR_COLS})."
+        ),
+    )
+    parser.add_argument(
         "--sub-colname",
         type=str,
         default=DEFAULT_SUB_COLNAME,
@@ -505,6 +908,11 @@ def build_parser() -> argparse.ArgumentParser:
             "original values."
         ),
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print more information during execution.",
+    )
     return parser
 
 
@@ -514,13 +922,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
     run(
         input_dir_path=args.input_dir_path,
-        output_file_path=args.output_file_path,
+        output_stats_file_path=args.output_stats_file_path,
+        output_qc_file_path=args.output_qc_file_path,
         mode=args.mode,
         container_command_and_args=shlex.split(args.container),
         aseg_optional_args=shlex.split(args.aseg_args),
         aparc_optional_args=shlex.split(args.aparc_args),
+        euler_surf_paths=args.euler_surf_paths,
+        cnr_vol_paths=args.cnr_vol_paths,
+        cnr_cols=args.cnr_measures,
         sub_colname=args.sub_colname,
         ses_colname=args.ses_colname,
         sub_prefix=args.sub_prefix,
         ses_prefix=args.ses_prefix,
+        verbose=args.verbose,
     )

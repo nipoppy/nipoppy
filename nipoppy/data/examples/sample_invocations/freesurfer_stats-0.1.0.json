@@ -1,7 +1,8 @@
 {
     "script_path": "[[NIPOPPY_DPATH_PROC]]/extractors/freesurfer_stats.py",
     "input_dir_path": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output",
-    "output_file_path": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/idps/freesurfer_stats.csv",
+    "output_stats_file_path": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/idps/freesurfer_stats.csv",
+    "output_qc_file_path": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/idps/freesurfer_qc.csv",
     "mode": "multi",
     "container": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]]"
 }

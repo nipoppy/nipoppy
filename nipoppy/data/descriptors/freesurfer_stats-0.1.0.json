@@ -1,9 +1,9 @@
 {
     "name": "freesurfer_stats",
-    "description": "FreeSurfer aseg/aparc stats extractor",
+    "description": "FreeSurfer aseg/aparc stats (and QC metrics) extractor",
     "tool-version": "0.1.0",
     "schema-version": "0.5",
-    "command-line": "[SCRIPT_PATH] [INPUT_DIR_PATH] [OUTPUT_FILE_PATH] [MODE] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX]",
+    "command-line": "[SCRIPT_PATH]  [INPUT_DIR_PATH] [OUTPUT_STATS_FILE_PATH] [MODE] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [OUTPUT_QC_FILE_PATH] [EULER_SURF_PATHS] [CNR_VOL_PATHS] [CNR_MEASURES] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX] [VERBOSE]",
     "inputs": [
         {
             "name": "script_path",
@@ -22,12 +22,12 @@
             "value-key": "[INPUT_DIR_PATH]"
         },
         {
-            "name": "output_file_path",
-            "id": "output_file_path",
+            "name": "output_stats_file_path",
+            "id": "output_stats_file_path",
             "description": "Path to the output TSV file.",
             "type": "String",
             "optional": false,
-            "value-key": "[OUTPUT_FILE_PATH]"
+            "value-key": "[OUTPUT_STATS_FILE_PATH]"
         },
         {
             "name": "mode",
@@ -71,6 +71,68 @@
             "value-key": "[APARC_ARGS]"
         },
         {
+            "name": "output_qc_file_path",
+            "id": "output_qc_file_path",
+            "description": "Optional path to the output TSV file for QC metrics. If this is not provided, only the stats file will be generated.",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "--qc",
+            "value-key": "[OUTPUT_QC_FILE_PATH]"
+        },
+        {
+            "name": "euler_surf_paths",
+            "id": "euler_surf_paths",
+            "description": "Paths to the surface files to calculate the Euler number from (default: ['surf/lh.white', 'surf/rh.white', 'surf/lh.pial', 'surf/rh.pial']).",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "surf/lh.white",
+                "surf/rh.white",
+                "surf/lh.pial",
+                "surf/rh.pial"
+            ],
+            "command-line-flag": "--euler-surf-paths",
+            "value-key": "[EULER_SURF_PATHS]"
+        },
+        {
+            "name": "cnr_vol_paths",
+            "id": "cnr_vol_paths",
+            "description": "Paths to the volume files to calculate the contrast-to-noise ratio from (default: ['mri/norm.mgz']).",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "mri/norm.mgz"
+            ],
+            "command-line-flag": "--cnr-vol-paths",
+            "value-key": "[CNR_VOL_PATHS]"
+        },
+        {
+            "name": "cnr_measures",
+            "id": "cnr_measures",
+            "description": "Names of the CNR measures to include in the QC metrics file for each volume (default: ['gray_white_cnr', 'gray_csf_cnr']).",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "gray_white_cnr",
+                "gray_csf_cnr"
+            ],
+            "command-line-flag": "--cnr-measures",
+            "value-key": "[CNR_MEASURES]",
+            "value-choices": [
+                "gray_white_cnr",
+                "gray_csf_cnr",
+                "white_mean",
+                "gray_mean",
+                "csf_mean",
+                "sqrt_white_var",
+                "sqrt_gray_var",
+                "sqrt_csf_var"
+            ]
+        },
+        {
             "name": "sub_colname",
             "id": "sub_colname",
             "description": "Column name to use for the subject ID in the final output file (default: \"participant_id\").",
@@ -109,6 +171,15 @@
             "default-value": "ses-",
             "command-line-flag": "--ses-prefix",
             "value-key": "[SES_PREFIX]"
+        },
+        {
+            "name": "verbose",
+            "id": "verbose",
+            "description": "Print more information during execution.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--verbose",
+            "value-key": "[VERBOSE]"
         }
     ],
     "tags": {},
