@@ -456,7 +456,7 @@ def run_single_qc(
                 vol_paths=[
                     subjects_dir_path / subject / vol_path for vol_path in cnr_vol_paths
                 ],
-                out_path=Path(tmpdir) / f"{subject}_cnr.tsv",
+                out_path=Path(tmpdir) / f"{subject}_cnr.txt",
                 container_command_and_args=container_command_and_args,
                 verbose=verbose,
             )
