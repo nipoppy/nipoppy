@@ -413,7 +413,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
-                "No participant-session pairs to run. Make sure there are no mistakes "
+                "No participants/sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, "
                 f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
             )
@@ -430,12 +430,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             else:
                 color = LogColor.PARTIAL_SUCCESS
 
-            self.logger.info(
-                (
-                    f"[{color}]{prefix} for {self.n_success} out of "
-                    f"{self.n_total} participant-session pairs{suffix}[/]"
+            if (
+                self.pipeline_config.get_analysis_level(self.pipeline_step)
+                == AnalysisLevelType.group
+            ):
+                message_body = "on the entire study"
+            else:
+                message_body = (
+                    f"for {self.n_success} out of "
+                    f"{self.n_total} participants/sessions"
                 )
-            )
+
+            self.logger.info(f"[{color}]{prefix} {message_body}{suffix}[/]")
 
         return super().run_cleanup()
 

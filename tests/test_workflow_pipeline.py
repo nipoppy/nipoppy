@@ -607,41 +607,63 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "n_success,n_total,expected_message",
+    "n_success,n_total,analysis_level,expected_message",
     [
-        (0, 0, "No participant-session pairs to run"),
+        (0, 0, "participant_session", "No participants/sessions to run"),
         (
             1,
             2,
-            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+            "participant_session",
+            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participants/sessions",  # noqa: E501
         ),
         (
             0,
             1,
-            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+            "participant_session",
+            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participants/sessions",  # noqa: E501
         ),
         (
             2,
             2,
-            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+            "participant_session",
+            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participants/sessions",  # noqa: E501
+        ),
+        (
+            1,
+            1,
+            "group",
+            f"[{LogColor.SUCCESS}]Successfully ran on the entire study",  # noqa: E501
         ),
     ],
 )
 def test_run_cleanup(
     n_success,
     n_total,
+    analysis_level,
     expected_message: str,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ):
+    pipeline_name = "my_pipeline"
+    pipeline_version = "1.0"
     workflow = PipelineWorkflow(
         dpath_root=tmp_path / "my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
     )
 
     workflow.n_success = n_success
     workflow.n_total = n_total
+
+    get_config(
+        proc_pipelines=[
+            ProcPipelineConfig(
+                NAME=pipeline_name,
+                VERSION=pipeline_version,
+                STEPS=[ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)],
+            )
+        ]
+    ).save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
 
