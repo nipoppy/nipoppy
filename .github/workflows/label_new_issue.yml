@@ -13,13 +13,6 @@ jobs:
       issues: write
     if: github.repository == 'nipoppy/nipoppy'
     steps:
-      - run: gh issue edit "$NUMBER" --add-label "$LABELS"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          NUMBER: ${{ github.event.issue.number }}
-          LABELS: C.1 - Software
-
       - name: Label the issue
         uses: gerrymanoim/pr-prefix-labeler@c8062327f6de59a9ae1c19f7f07cacd0b976b6fa # v3
         continue-on-error: true
