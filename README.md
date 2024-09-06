@@ -1,4 +1,4 @@
-<img alt="Nipoppy logo" src="https://raw.githubusercontent.com/michellewang/nipoppy/224/logo/logo/logo_with_name.svg" width=200px>
+# Nipoppy
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8084759.svg)](https://doi.org/10.5281/zenodo.8084759)
 [![PyPI - Version](https://img.shields.io/pypi/v/nipoppy)](https://pypi.org/project/nipoppy/)
