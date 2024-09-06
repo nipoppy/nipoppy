@@ -1,8 +1,4 @@
 ```{include} ../../README.md
----
-relative-docs: docs/
-relative-images:
----
 ```
 
 To get started, see the [Installation instructions](#installation) and/or the [Quickstart guide](#quickstart).
