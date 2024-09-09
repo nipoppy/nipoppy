@@ -315,6 +315,8 @@ def process_template_str(
     """Replace template strings with values from kwargs or objects."""
 
     def replace(json_str: str, to_replace: str, replacement):
+        if replacement is None:
+            warnings.warn(f"Replacing {to_replace} with None")
         if resolve_paths and isinstance(replacement, Path):
             replacement = replacement.resolve()
         return json_str.replace(to_replace, str(replacement))

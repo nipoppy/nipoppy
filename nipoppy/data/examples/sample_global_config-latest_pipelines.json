@@ -84,17 +84,20 @@
                 {
                     "NAME": "prepare",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/bidsmapper-[[PIPELINE_VERSION]].json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/bidsmapper-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "group"
                 },
                 {
                     "NAME": "edit",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/bidseditor-[[PIPELINE_VERSION]].json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/bidseditor-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "group"
                 },
                 {
                     "NAME": "convert",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]-[[STEP_NAME]].json",
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/bidscoiner-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "participant",
                     "UPDATE_DOUGHNUT": true
                 }
             ]
