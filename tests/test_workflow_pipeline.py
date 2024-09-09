@@ -609,24 +609,24 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
 @pytest.mark.parametrize(
     "n_success,n_total,analysis_level,expected_message",
     [
-        (0, 0, "participant_session", "No participants/sessions to run"),
+        (0, 0, "participant_session", "No participants or sessions to run"),
         (
             1,
             2,
             "participant_session",
-            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participants/sessions",  # noqa: E501
+            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participants or sessions",  # noqa: E501
         ),
         (
             0,
             1,
             "participant_session",
-            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participants/sessions",  # noqa: E501
+            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participants or sessions",  # noqa: E501
         ),
         (
             2,
             2,
             "participant_session",
-            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participants/sessions",  # noqa: E501
+            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participants or sessions",  # noqa: E501
         ),
         (
             1,

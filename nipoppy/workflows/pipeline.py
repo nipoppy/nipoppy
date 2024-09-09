@@ -46,28 +46,24 @@ def apply_analysis_level(
 ) -> Tuple[str, str]:
     """Filter participant-session pairs to run based on the analysis level."""
     if analysis_level == AnalysisLevelType.group:
-        participants_session_updated = [(None, None)]
+        return [(None, None)]
 
     elif analysis_level == AnalysisLevelType.participant:
         participants = []
         for participant, _ in participants_sessions:
             if participant not in participants:
                 participants.append(participant)
-        participants_session_updated = [
-            (participant, None) for participant in participants
-        ]
+        return [(participant, None) for participant in participants]
 
     elif analysis_level == AnalysisLevelType.session:
         sessions = []
         for _, session in participants_sessions:
             if session not in sessions:
                 sessions.append(session)
-        participants_session_updated = [(None, session) for session in sessions]
+        return [(None, session) for session in sessions]
 
     else:
-        participants_session_updated = participants_sessions
-
-    return participants_session_updated
+        return participants_sessions
 
 
 class BasePipelineWorkflow(BaseWorkflow, ABC):
@@ -413,7 +409,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
-                "No participants/sessions to run. Make sure there are no mistakes "
+                "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, "
                 f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
             )
@@ -438,7 +434,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             else:
                 message_body = (
                     f"for {self.n_success} out of "
-                    f"{self.n_total} participants/sessions"
+                    f"{self.n_total} participants or sessions"
                 )
 
             self.logger.info(f"[{color}]{prefix} {message_body}{suffix}[/]")
