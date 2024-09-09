@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
@@ -12,6 +13,15 @@ from pydantic_core import to_jsonable_python
 from nipoppy.config.container import SchemaWithContainerConfig
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
+
+
+class AnalysisLevelType(str, Enum):
+    """Pipeline step types."""
+
+    participant_session = "participant_session"
+    participant = "participant"
+    session = "session"
+    group = "group"
 
 
 class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
@@ -30,6 +40,17 @@ class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
     INVOCATION_FILE: Optional[Path] = Field(
         default=None,
         description=("Path to the JSON invocation file"),
+    )
+    ANALYSIS_LEVEL: AnalysisLevelType = Field(
+        default=AnalysisLevelType.participant_session,
+        description=(
+            "Analysis level of the pipeline step. This controls the granularity of "
+            "the loop over subjects and sessions. By default, pipeline runners will "
+            "loop over all subjects and sessions, but this field field can be set to "
+            f'"{AnalysisLevelType.participant}" to loop over subjects only, '
+            f'"{AnalysisLevelType.session}" to loop over sessions only, '
+            f"and {AnalysisLevelType.group} to only run the pipeline a single time."
+        ),
     )
 
     @model_validator(mode="before")
