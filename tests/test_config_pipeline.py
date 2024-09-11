@@ -21,8 +21,6 @@ FIELDS_PIPELINE_BASE = [
     "STEPS",
 ]
 
-FIELDS_PIPELINE_PROC = FIELDS_PIPELINE_BASE + ["TRACKER_CONFIG_FILE"]
-
 
 @pytest.fixture(scope="function")
 def valid_data() -> dict:
@@ -44,11 +42,6 @@ def valid_data() -> dict:
                 {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}},
                 {"STEPS": []},
             ],
-        ),
-        (
-            ProcPipelineConfig,
-            FIELDS_PIPELINE_PROC,
-            [{"TRACKER_CONFIG_FILE": "path/to/tracker/config/file"}],
         ),
     ],
 )
@@ -95,17 +88,19 @@ def test_substitutions():
     data = {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "TRACKER_CONFIG_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+        "DESCRIPTION": "[[PIPELINE_NAME]] version [[PIPELINE_VERSION]]",
         "STEPS": [
             {
                 "NAME": "step1",
                 "INVOCATION_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                "TRACKER_CONFIG_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
             }
         ],
     }
     pipeline_config = ProcPipelineConfig(**data)
-    assert str(pipeline_config.TRACKER_CONFIG_FILE) == "my_pipeline-1.0.0.json"
+    assert pipeline_config.DESCRIPTION == "my_pipeline version 1.0.0"
     assert str(pipeline_config.STEPS[0].INVOCATION_FILE) == "my_pipeline-1.0.0.json"
+    assert str(pipeline_config.STEPS[0].TRACKER_CONFIG_FILE) == "my_pipeline-1.0.0.json"
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])

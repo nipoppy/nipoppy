@@ -1,11 +1,9 @@
 """PipelineTracker workflow."""
 
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import TypeAdapter
-
-from nipoppy.config.tracker import TrackerConfig, check_tracker_configs
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import load_json
@@ -77,31 +75,22 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
         # load tracker configs from file
-        fpath_tracker_config = self.pipeline_config.TRACKER_CONFIG_FILE
+        fpath_tracker_config = self.pipeline_config.get_tracker_config_file(
+            self.pipeline_step
+        )
         if fpath_tracker_config is None:
             raise ValueError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
         # replace template strings
-        tracker_configs = self.process_template_json(
-            load_json(fpath_tracker_config),
-            participant_id=participant_id,
-            session_id=session_id,
-        )
-        # convert to list of TrackerConfig objects and validate
-        tracker_configs = TypeAdapter(List[TrackerConfig]).validate_python(
-            tracker_configs
-        )
-        tracker_configs = check_tracker_configs(tracker_configs)
-
-        if len(tracker_configs) > 1:
-            self.logger.warning(
-                f"{len(tracker_configs)} tracker configs found for"
-                f" pipeline {self.pipeline_name} {self.pipeline_version}"
-                ". Currently only one config is supported (will use the first one)"
+        tracker_config = TrackerConfig(
+            **self.process_template_json(
+                load_json(fpath_tracker_config),
+                participant_id=participant_id,
+                session_id=session_id,
             )
-        tracker_config = tracker_configs[0]
+        )
 
         # check status and update bagel
         status = self.check_status(tracker_config.PATHS)

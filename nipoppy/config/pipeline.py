@@ -149,17 +149,15 @@ class BidsPipelineConfig(BasePipelineConfig):
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
-    TRACKER_CONFIG_FILE: Optional[Path] = Field(
-        default=None,
-        description=(
-            "Path to the tracker configuration file associated with the pipeline"
-            ". This file must contain a list of tracker configurations"
-            ", each of which must be a dictionary with a NAME field (string)"
-            " and a PATHS field (non-empty list of strings)"
-        ),
-    )
-
     model_config = ConfigDict(extra="forbid")
+
+    def get_tracker_config_file(self, step_name: Optional[str] = None) -> Path | None:
+        """
+        Return the path to the tracker configuration file for the given step.
+
+        If step is None, return the file for the first step.
+        """
+        return self.get_step_config(step_name).TRACKER_CONFIG_FILE
 
     def get_pybids_ignore_file(self, step_name: Optional[str] = None) -> Path | None:
         """

@@ -40,7 +40,7 @@ class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
     )
     INVOCATION_FILE: Optional[Path] = Field(
         default=None,
-        description=("Path to the JSON invocation file"),
+        description="Path to the JSON invocation file",
     )
     ANALYSIS_LEVEL: AnalysisLevelType = Field(
         default=AnalysisLevelType.participant_session,
@@ -79,6 +79,12 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         description=(
             "Path to file containing a list of regex patterns (strings) to ignore "
             "when building the PyBIDS layout"
+        ),
+    )
+    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the tracker configuration file associated with the pipeline step"
         ),
     )
     model_config = ConfigDict(extra="forbid")
