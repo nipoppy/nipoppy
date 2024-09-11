@@ -11,6 +11,7 @@ from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
 
@@ -27,9 +28,9 @@ class AnalysisLevelType(str, Enum):
 class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
-    NAME: Optional[str] = Field(
-        default=None,
-        description="Step name, required if the pipeline has multiple steps",
+    NAME: str = Field(
+        default=DEFAULT_PIPELINE_STEP_NAME,
+        description="Step name. Required if the pipeline has multiple steps",
     )
     DESCRIPTOR_FILE: Optional[Path] = Field(
         default=None,

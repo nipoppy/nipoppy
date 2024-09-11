@@ -80,13 +80,6 @@ def test_fields_no_extra(pipeline_config_class, valid_data):
         pipeline_config_class(**valid_data, not_a_field="a")
 
 
-def test_step_names_error_none(valid_data):
-    with pytest.raises(
-        ValidationError, match="Found at least one step with undefined NAME field"
-    ):
-        BasePipelineConfig(**valid_data, STEPS=[{}, {}])
-
-
 def test_step_names_error_duplicate(valid_data):
     with pytest.raises(ValidationError, match="Found at least two steps with NAME"):
         BasePipelineConfig(

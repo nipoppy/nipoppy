@@ -9,6 +9,9 @@ StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
 
+# default config
+DEFAULT_PIPELINE_STEP_NAME = "default"
+
 
 class ReturnCode:
     """Return codes used for the CLI commands."""
