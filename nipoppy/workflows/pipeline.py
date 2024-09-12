@@ -18,7 +18,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import ProcPipelineConfig
-from nipoppy.config.pipeline_step import AnalysisLevelType
+from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -146,6 +146,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         return self.config.get_pipeline_config(
             self.pipeline_name, self.pipeline_version
         )
+
+    @cached_property
+    def pipeline_step_config(self) -> ProcPipelineStepConfig:
+        """Get the user config for the pipeline step."""
+        return self.pipeline_config.get_step_config(step_name=self.pipeline_step)
 
     @cached_property
     def fpath_container(self) -> Path:
@@ -361,11 +366,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def check_pipeline_step(self):
+        """Set the pipeline step name based on the config if it is not given."""
+        if self.pipeline_step is None:
+            self.pipeline_step = self.pipeline_step_config.NAME
+            self.logger.warning(
+                f"Pipeline step not specified, using step {self.pipeline_step}"
+            )
+
     def run_setup(self):
         """Run pipeline setup."""
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
             self.check_dir(dpath)

@@ -18,6 +18,7 @@ class PipelineTracker(BasePipelineWorkflow):
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -29,6 +30,7 @@ class PipelineTracker(BasePipelineWorkflow):
             name="track",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
@@ -100,7 +102,8 @@ class PipelineTracker(BasePipelineWorkflow):
                 Bagel.col_session_id: session_id,
                 Bagel.col_pipeline_name: self.pipeline_name,
                 Bagel.col_pipeline_version: self.pipeline_version,
-                Bagel.col_pipeline_complete: status,
+                Bagel.col_pipeline_step: self.pipeline_step,
+                Bagel.col_status: status,
             }
         )
         return status

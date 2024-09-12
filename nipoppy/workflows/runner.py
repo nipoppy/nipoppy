@@ -161,12 +161,14 @@ class PipelineRunner(BasePipelineWorkflow):
         to the bagel file.
         """
         self.check_pipeline_version()  # in case this is called outside of run()
+        self.check_pipeline_step()
         if self.layout.fpath_imaging_bagel.exists():
             bagel = Bagel.load(self.layout.fpath_imaging_bagel)
             participants_sessions_completed = set(
                 bagel.get_completed_participants_sessions(
                     pipeline_name=self.pipeline_name,
                     pipeline_version=self.pipeline_version,
+                    pipeline_step=self.pipeline_step,
                     participant_id=participant_id,
                     session_id=session_id,
                 )
