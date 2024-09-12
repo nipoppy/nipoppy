@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from nipoppy.config.main import Config
@@ -86,6 +87,25 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
     tracker.run_setup()
 
     assert tracker.bagel.equals(bagel)
+
+
+def test_run_setup_existing_bad_bagel(
+    tracker: PipelineTracker, caplog: pytest.LogCaptureFixture
+):
+    # bagel with wrong columns
+    bad_bagel = pd.DataFrame([{"col1": "val1"}])
+    bad_bagel.to_csv(tracker.layout.fpath_imaging_bagel, index=False)
+
+    tracker.run_setup()
+
+    assert any(
+        [
+            record.levelno == logging.WARNING
+            and "Failed to load existing bagel at " in record.message
+            for record in caplog.records
+        ]
+    )
+    assert tracker.bagel.empty
 
 
 @pytest.mark.parametrize(
