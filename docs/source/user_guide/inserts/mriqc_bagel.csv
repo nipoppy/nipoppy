@@ -1,2 +1,2 @@
-participant_id,bids_id,session,pipeline_name,pipeline_version,pipeline_complete
-001,sub-001,ses-1,mriqc,23.1.0,SUCCESS
+participant_id,bids_participant,session_id,pipeline_name,pipeline_version,pipeline_step,session,status,pipeline_starttime
+3000,sub-3000,BL,mriqc,23.1.0,default,ses-BL,SUCCESS,UNAVAILABLE
