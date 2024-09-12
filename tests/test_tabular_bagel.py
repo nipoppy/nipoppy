@@ -35,7 +35,7 @@ def test_model(data):
         Bagel.col_pipeline_name,
         Bagel.col_pipeline_version,
         Bagel.col_pipeline_complete,
-        "session",
+        Bagel.col_bids_session,
     }
 
 

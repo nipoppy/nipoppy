@@ -39,8 +39,7 @@ class BagelModel(BaseTabularModel):
         description=FIELD_DESCRIPTION_MAP["bids_participant"],
     )
     session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
-    # TODO rename to bids_session (or remove) after updating digest
-    session: Optional[str] = Field(
+    bids_session: Optional[str] = Field(
         default=None, description=FIELD_DESCRIPTION_MAP["bids_session"]
     )
     pipeline_name: str = Field(description="The name of the pipeline being tracked")
@@ -77,8 +76,8 @@ class BagelModel(BaseTabularModel):
             self.bids_participant = participant_id_to_bids_participant(
                 self.participant_id
             )
-        if self.session is None:
-            self.session = session_id_to_bids_session(self.session_id)
+        if self.bids_session is None:
+            self.bids_session = session_id_to_bids_session(self.session_id)
         return self
 
 
@@ -89,7 +88,7 @@ class Bagel(BaseTabular):
     col_participant_id = "participant_id"
     col_bids_participant = "bids_participant"
     col_session_id = "session_id"
-    col_bids_session = "session"
+    col_bids_session = "bids_session"
     col_pipeline_name = "pipeline_name"
     col_pipeline_version = "pipeline_version"
     col_pipeline_complete = "pipeline_complete"
@@ -111,8 +110,9 @@ class Bagel(BaseTabular):
 
     _metadata = BaseTabular._metadata + [
         "col_participant_id",
-        "col_bids_id",
+        "col_bids_participant",
         "col_session_id",
+        "col_bids_session",
         "col_pipeline_name",
         "col_pipeline_version",
         "col_pipeline_complete",
