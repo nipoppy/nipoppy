@@ -77,9 +77,7 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
         # load tracker configs from file
-        fpath_tracker_config = self.pipeline_config.get_tracker_config_file(
-            self.pipeline_step
-        )
+        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
         if fpath_tracker_config is None:
             raise ValueError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
