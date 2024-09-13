@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import nipoppy.logger  # for monkeypatching
 from nipoppy.logger import add_logfile, get_logger
 
 
@@ -43,6 +44,12 @@ def test_get_logger_level(level: int):
     # so we need to check the root logger to see if the level was set correctly
     logger = get_logger(level=level)
     assert logger.level == level
+
+
+def test_get_logger_no_propagate(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(nipoppy.logger, "IS_TESTING", False)
+    logger = get_logger()
+    assert not logger.propagate
 
 
 def test_add_logfile(tmp_path: Path):
