@@ -68,3 +68,16 @@ def test_add_logfile_mkdir(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     logger.info("Test")
     assert "Creating log directory" in caplog.text
     assert fpath_log.exists()
+
+
+def test_no_extra_logs(caplog: pytest.LogCaptureFixture):
+    caplog.clear()
+
+    logger = get_logger()
+    logger.propagate = True
+
+    # doing this should not log anything
+    import nipoppy.workflows  # noqa F401
+
+    logger.info("TEST")
+    assert len(caplog.records) == 1
