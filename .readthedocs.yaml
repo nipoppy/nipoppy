@@ -12,16 +12,16 @@ build:
     python: "3.11"
   jobs:
     pre_build:
-      - python nipoppy_cli/docs/scripts/pydantic_to_jsonschema.py
+      - python docs/scripts/pydantic_to_jsonschema.py
 
 python:
   install:
   - method: pip
-    path: nipoppy_cli
+    path: .
     extra_requirements:
     - doc
 
 # Build documentation with Sphinx
 sphinx:
-  configuration: nipoppy_cli/docs/source/conf.py
+  configuration: docs/source/conf.py
   fail_on_warning: true
