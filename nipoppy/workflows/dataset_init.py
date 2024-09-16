@@ -60,11 +60,13 @@ class InitWorkflow(BaseWorkflow):
         for dpath in self.layout.dpaths:
 
             # If a bids_source is passed it means datalad is installed.
+            print(self.bids_source)
+            print(dpath.stem)
             if self.bids_source is not None and dpath.stem == "bids":
                 self.logger.info(
                     f"Installing datalad BIDS raw dataset from {self.bids_source}."
                 )
-                copy_tree(self.bids_source, dpath)
+                copy_tree(self.bids_source, str(dpath))
 
             else:
                 self.mkdir(dpath)

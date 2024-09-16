@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from fids import fids
 
 from nipoppy.utils import DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
@@ -72,3 +73,28 @@ def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow = InitWorkflow(dpath_root=tmp_path)
     workflow.run_cleanup()
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
+
+
+def test_init_bids(tmp_path):
+    """Create dummy BIDS dataset to use during init.
+
+    Make sure all the files are there after init.
+    """
+    dpath_root = tmp_path / "nipoppy"
+    bids_to_copy = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_to_copy,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat"],
+    )
+    workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
+    workflow.run()
+
+    source_files = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
+    target_files = [
+        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
+    ]
+
+    for f in source_files:
+        assert f in target_files
