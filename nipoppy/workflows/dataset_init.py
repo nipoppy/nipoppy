@@ -1,6 +1,7 @@
 """Workflow for init command."""
 
 import logging
+from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Optional
 
@@ -63,18 +64,8 @@ class InitWorkflow(BaseWorkflow):
                 self.logger.info(
                     f"Installing datalad BIDS raw dataset from {self.bids_source}."
                 )
-                from datalad import api
+                copy_tree(self.bids_source, dpath)
 
-                dataset = None
-                if self.use_dalatad:
-                    dataset = self.dpath_root
-
-                api.install(
-                    dataset=dataset,
-                    path=dpath,
-                    source=self.bids_source,
-                    result_renderer="disabled",
-                )
             else:
                 self.mkdir(dpath)
 
