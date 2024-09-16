@@ -50,7 +50,7 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
-        If the BIDS source dataset is requested, it is installed with datalad.
+        If the BIDS source dataset is requested, it is copied.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
@@ -65,7 +65,6 @@ class InitWorkflow(BaseWorkflow):
                     f"Installing datalad BIDS raw dataset from {self.bids_source}."
                 )
                 copytree(self.bids_source, str(dpath))
-
             else:
                 self.mkdir(dpath)
 
