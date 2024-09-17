@@ -122,7 +122,12 @@ class InitWorkflow(BaseWorkflow):
 
         No BIDS validation is done.
         """
-        df = {"participant_id": [], "visit_id": [], "session_id": [], "datatype": []}
+        df = {
+            Manifest.col_participant_id: [],
+            Manifest.col_visit_id: [],
+            Manifest.col_session_id: [],
+            Manifest.col_datatype: [],
+        }
         participant_ids = sorted(
             [
                 x.name
@@ -131,7 +136,7 @@ class InitWorkflow(BaseWorkflow):
             ]
         )
 
-        self.logger.info("Creating a manifest.csv from the BIDS dataset content.")
+        self.logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for ppt in participant_ids:
 
@@ -157,14 +162,14 @@ class InitWorkflow(BaseWorkflow):
                     ]
                 )
 
-                df["participant_id"].append(ppt.replace("sub-", ""))
-                df["session_id"].append(ses.replace("ses-", ""))
-                df["datatype"].append("[" + "'" + "' ,'".join(datatypes) + "'" + "]")
+                df[Manifest.col_participant_id].append(check_participant_id(ppt))
+                df[Manifest.col_session_id].append(check_session_id(ses))
+                df[Manifest.col_datatype].append(datatypes)
 
-        df["visit_id"] = df["session_id"]
+        df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
-        df = pd.DataFrame(df)
-        df.to_csv(self.layout.fpath_manifest, index=False)
+        manifest = Manifest(df).validate()
+        self.save_tabular_file(manifest, workflow.layout.fpath_manifest)
 
     def run_cleanup(self):
         """Log a success message."""

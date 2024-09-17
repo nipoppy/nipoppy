@@ -154,7 +154,7 @@ def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
         "--bids-source",
         type=str,
         required=False,
-        help=("URL or path to a BIDS datalad dataset to initialize the layout with."),
+        help=("Path to a BIDS dataset to initialize the layout with."),
     )
     return parser
 
