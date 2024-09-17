@@ -5,15 +5,21 @@ from pathlib import Path
 from shutil import copytree
 from typing import Optional
 
-import pandas as pd
-
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    LogColor,
+    StrOrPathLike,
+)
+from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
     DPATH_TRACKER_CONFIGS,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
+    check_participant_id,
+    check_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -103,12 +109,18 @@ class InitWorkflow(BaseWorkflow):
         self.copy(
             FPATH_SAMPLE_CONFIG, self.layout.fpath_config, log_level=logging.DEBUG
         )
-        self.copy(
-            FPATH_SAMPLE_MANIFEST, self.layout.fpath_manifest, log_level=logging.DEBUG
-        )
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
+
+        if self.bids_source is not None:
+            self._init_manifest_from_bids_dataset()
+        else:
+            self.copy(
+                FPATH_SAMPLE_MANIFEST,
+                self.layout.fpath_manifest,
+                log_level=logging.DEBUG,
+            )
 
         # inform user to edit the sample files
         self.logger.warning(
@@ -132,7 +144,7 @@ class InitWorkflow(BaseWorkflow):
             [
                 x.name
                 for x in (self.layout.dpath_bids).iterdir()
-                if x.is_dir() and x.name.startswith("sub-")
+                if x.is_dir() and x.name.startswith(BIDS_SUBJECT_PREFIX)
             ]
         )
 
@@ -144,7 +156,7 @@ class InitWorkflow(BaseWorkflow):
                 [
                     x.name
                     for x in (self.layout.dpath_bids / ppt).iterdir()
-                    if x.is_dir() and x.name.startswith("ses-")
+                    if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
             if not session_ids:
@@ -169,7 +181,7 @@ class InitWorkflow(BaseWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
-        self.save_tabular_file(manifest, workflow.layout.fpath_manifest)
+        self.save_tabular_file(manifest, self.layout.fpath_manifest)
 
     def run_cleanup(self):
         """Log a success message."""
