@@ -248,6 +248,12 @@ class BaseWorkflow(Base, ABC):
         if not self.dry_run:
             shutil.copy2(src=path_source, dst=path_dest, **kwargs)
 
+    def copytree(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+        """Copy directory tree."""
+        self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
+        if not self.dry_run:
+            shutil.copytree(src=path_source, dst=path_dest, **kwargs)
+
     def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Create a symlink to another path."""
         self.logger.log(

@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from shutil import copytree
 from typing import Optional
 
 from nipoppy.env import (
@@ -67,10 +66,7 @@ class InitWorkflow(BaseWorkflow):
 
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
-                self.logger.info(
-                    f"Installing datalad BIDS raw dataset from {self.bids_source}."
-                )
-                copytree(self.bids_source, str(dpath))
+                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
             else:
                 self.mkdir(dpath)
 
@@ -112,9 +108,6 @@ class InitWorkflow(BaseWorkflow):
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
-
-        if self.bids_source is not None:
-            self._init_manifest_from_bids_dataset()
         else:
             self.copy(
                 FPATH_SAMPLE_MANIFEST,
@@ -134,6 +127,8 @@ class InitWorkflow(BaseWorkflow):
 
         No BIDS validation is done.
         """
+        if self.dry_run:
+            return None
         df = {
             Manifest.col_participant_id: [],
             Manifest.col_visit_id: [],

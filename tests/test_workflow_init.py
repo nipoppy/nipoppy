@@ -124,13 +124,11 @@ def test_init_bids_dry_run(tmp_path):
         datatypes=["anat", "func"],
     )
     workflow = InitWorkflow(
-        dpath_root=dpath_root, bids_source=bids_to_copy, dry_run=False
+        dpath_root=dpath_root, bids_source=bids_to_copy, dry_run=True
     )
     workflow.run()
 
-    target_files = [
-        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
-    ]
+    target_files = [x.relative_to(dpath_root) for x in dpath_root.glob("**/*")]
     assert len(target_files) == 0
 
 
