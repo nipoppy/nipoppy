@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional, Union
 
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
@@ -21,9 +21,6 @@ from nipoppy.utils import apply_substitutions_to_json
 class BasePipelineConfig(SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
-    # for validation
-    _step_class: Type[BasePipelineStepConfig] = BasePipelineStepConfig
-
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -33,7 +30,7 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
+    STEPS: list[Union[ProcPipelineStepConfig, BidsPipelineStepConfig]] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
@@ -63,18 +60,18 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
-        - Check that items in STEPS have the correct type.
         - If STEPS has more than one item, make sure that each step has a unique name.
         """
-        # make sure BIDS/processing pipelines are the right type
-        for i_step in range(len(self.STEPS)):
-            self.STEPS[i_step] = self._step_class(
-                **self.STEPS[i_step].model_dump(exclude_unset=True)
-            )
-
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:
+                if step.NAME is None:
+                    raise ValueError(
+                        "Found at least one step with undefined NAME field"
+                        f" for pipeline {self.NAME} {self.VERSION}"
+                        ". Pipeline steps must have names except "
+                        "if there is only one step"
+                    )
                 if step.NAME in step_names:
                     raise ValueError(
                         f'Found at least two steps with NAME "{step.NAME}"'
@@ -114,12 +111,10 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
-    _step_class = BidsPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
 
 
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
-    _step_class = ProcPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
