@@ -128,5 +128,15 @@ class BidsPipelineConfig(BasePipelineConfig):
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
+    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the tracker configuration file associated with the pipeline"
+            ". This file must contain a list of tracker configurations"
+            ", each of which must be a dictionary with a NAME field (string)"
+            " and a PATHS field (non-empty list of strings)"
+        ),
+    )
+
     _step_class = ProcPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
