@@ -172,7 +172,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        fpath_descriptor = self.pipeline_step_config.DESCRIPTOR_FILE
+        fpath_descriptor = self.pipeline_config.get_descriptor_file(
+            step_name=self.pipeline_step
+        )
         if fpath_descriptor is None:
             raise ValueError(
                 "No descriptor file specified for pipeline"
@@ -186,7 +188,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        fpath_invocation = self.pipeline_step_config.INVOCATION_FILE
+        fpath_invocation = self.pipeline_config.get_invocation_file(
+            step_name=self.pipeline_step
+        )
         if fpath_invocation is None:
             raise ValueError(
                 "No invocation file specified for pipeline"
@@ -205,7 +209,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        fpath_pybids_ignore = self.pipeline_step_config.PYBIDS_IGNORE_FILE
+        fpath_pybids_ignore = self.pipeline_config.get_pybids_ignore_file(
+            step_name=self.pipeline_step
+        )
 
         # no file specified
         if fpath_pybids_ignore is None:
@@ -386,9 +392,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.participant_id, self.session_id
         )
 
+        # trackers are at pipeline level, not pipeline step level
+        # but this will probably change in the future
+        try:
+            analysis_level = self.pipeline_config.get_analysis_level(self.pipeline_step)
+        except ValueError:
+            analysis_level = AnalysisLevelType.participant_session
         participants_sessions = apply_analysis_level(
             participants_sessions=participants_sessions,
-            analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
+            analysis_level=analysis_level,
         )
 
         for participant_id, session_id in participants_sessions:
@@ -428,7 +440,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             else:
                 color = LogColor.PARTIAL_SUCCESS
 
-            if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
+            if (
+                self.pipeline_config.get_analysis_level(self.pipeline_step)
+                == AnalysisLevelType.group
+            ):
                 message_body = "on the entire study"
             else:
                 message_body = (

@@ -107,14 +107,62 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
             f"Step {step_name} not found in pipeline {self.NAME} {self.VERSION}"
         )
 
+    def get_invocation_file(self, step_name: Optional[str] = None) -> Path | None:
+        """
+        Return the path to the invocation file for the given step.
+
+        Is step is None, return the invocation file for the first step.
+        """
+        return self.get_step_config(step_name).INVOCATION_FILE
+
+    def get_descriptor_file(self, step_name: Optional[str] = None) -> Path | None:
+        """
+        Return the path to the descriptor file for the given step.
+
+        If step is None, return the descriptor file for the first step.
+        """
+        return self.get_step_config(step_name).DESCRIPTOR_FILE
+
+    def get_analysis_level(self, step_name: Optional[str] = None) -> str:
+        """
+        Return the analysis level for the given step.
+
+        If step is None, return the analysis level for the first step.
+        """
+        return self.get_step_config(step_name).ANALYSIS_LEVEL
+
 
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
     model_config = ConfigDict(extra="forbid")
 
+    def get_update_doughnut(self, step_name: Optional[str] = None) -> Path | None:
+        """
+        Return the update doughnut flag for the given step.
+
+        If step is None, return the flag for the first step.
+        """
+        return self.get_step_config(step_name).UPDATE_DOUGHNUT
+
 
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
     model_config = ConfigDict(extra="forbid")
+
+    def get_tracker_config_file(self, step_name: Optional[str] = None) -> Path | None:
+        """
+        Return the path to the tracker configuration file for the given step.
+
+        If step is None, return the file for the first step.
+        """
+        return self.get_step_config(step_name).TRACKER_CONFIG_FILE
+
+    def get_pybids_ignore_file(self, step_name: Optional[str] = None) -> Path | None:
+        """
+        Return the list of regex patterns to ignore when building the PyBIDS layout.
+
+        If step is None, return the patterns for the first step.
+        """
+        return self.get_step_config(step_name).PYBIDS_IGNORE_FILE

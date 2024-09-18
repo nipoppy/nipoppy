@@ -234,7 +234,7 @@ def test_descriptor(
 
     # user-added pipelines with descriptor file
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_step_config.DESCRIPTOR_FILE = fpath_descriptor
+    workflow.pipeline_config.get_step_config().DESCRIPTOR_FILE = fpath_descriptor
     fpath_descriptor.write_text(json.dumps(descriptor))
     assert workflow.descriptor == descriptor
 
@@ -290,7 +290,7 @@ def test_invocation(
     fpath_invocation = tmp_path / "invocation.json"
     fpath_invocation.write_text(json.dumps(invocation))
 
-    workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation
+    workflow.pipeline_config.get_step_config().INVOCATION_FILE = fpath_invocation
     assert workflow.invocation == invocation
 
 
@@ -343,7 +343,7 @@ def test_pybids_ignore_patterns(
 
     fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
     fpath_patterns.write_text(json.dumps(patterns))
-    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
+    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = fpath_patterns
 
     assert workflow.pybids_ignore_patterns == [
         re.compile(pattern) for pattern in patterns
@@ -351,7 +351,7 @@ def test_pybids_ignore_patterns(
 
 
 def test_pybids_ignore_patterns_no_file(workflow: PipelineWorkflow):
-    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = None
+    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = None
     assert workflow.pybids_ignore_patterns == []
 
 
@@ -360,7 +360,7 @@ def test_pybids_ignore_patterns_invalid_format(
 ):
     fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
     fpath_patterns.write_text(json.dumps({"key": "value"}))
-    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
+    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = fpath_patterns
 
     with pytest.raises(ValueError, match="Expected a list of strings"):
         workflow.pybids_ignore_patterns
