@@ -22,8 +22,8 @@ class MincConversionRunner(PipelineRunner):
         dpath_root: Path | str,
         pipeline_name: str,
         pipeline_version: str,
-        participant: str = None,
-        session: str = None,
+        participant_id: str = None,
+        session_id: str = None,
         simulate: bool = False,
         data_types: list = [],
         fpath_layout: Optional[Path] = None,
@@ -34,8 +34,8 @@ class MincConversionRunner(PipelineRunner):
             dpath_root=dpath_root,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             simulate=simulate,
             fpath_layout=fpath_layout,
             logger=logger,
@@ -65,25 +65,25 @@ class MincConversionRunner(PipelineRunner):
         )
     
 
-    def get_participants_sessions_to_run(
-        self, participant: Optional[str], session: Optional[str]
+    def get_participants_session_ids_to_run(
+        self, participant_id: Optional[str], session_id: Optional[str]
     ):
-        """Return bidsified participant-session pairs to run the pipeline on."""
-        return self.doughnut.get_bidsified_participants_sessions(
-            participant=participant, session=session
+        """Return bidsified participant_id-session_id pairs to run the pipeline on."""
+        return self.doughnut.get_bidsified_participants_session_ids(
+            participant_id=participant_id, session_id=session_id
         )
 
     def get_files_to_mincify(
-        self, participant: str, session: str, data_types: list,
+        self, participant_id: str, session_id: str, data_types: list,
     ) -> list[Path]:
         """
-        Get single files to mincify for a single participant and session
+        Get single files to mincify for a single participant_id and session_id
         (since nii2mnc takes one file at a time).
 
         """
-        participant_dir = "sub-" + participant
+        participant_dir = "sub-" + participant_id
         # crawl through directory tree and get all file paths
-        in_dirs = [self.layout.dpath_bids / participant_dir / session / dtype for dtype in data_types]
+        in_dirs = [self.layout.dpath_bids / participant_dir / session_id / dtype for dtype in data_types]
 
         in_files = []
         out_files = []
@@ -176,17 +176,17 @@ class MincConversionRunner(PipelineRunner):
 
         return descriptor_str, invocation_str
 
-    def run_single(self, participant: str, session: str):
-        """Run MINC conversion on a single bidsified participant/session."""
+    def run_single(self, participant_id: str, session_id: str):
+        """Run MINC conversion on a single bidsified participant_id/session_id."""
         # Returns a list of tuples. First item in each tuple is an input .nii.gz file to be mincified, second item is an output .mnc file        
         fpaths = self.get_files_to_mincify(
-            participant, session, self.data_types
+            participant_id, session_id, self.data_types
         )
 
         # get container command
         container_command = self.process_container_config(
-            participant=participant,
-            session=session,
+            participant_id=participant_id,
+            session_id=session_id,
             bind_paths=[
                 self.layout.dpath_bids,
                 self.layout.dpath_minc
@@ -202,8 +202,8 @@ class MincConversionRunner(PipelineRunner):
 
             # update status
             self.doughnut.set_status(
-                participant=participant,
-                session=session,
+                participant_id=participant_id,
+                session_id=session_id,
                 col=self.doughnut.col_mincified,
                 status=True,
             )
@@ -211,7 +211,7 @@ class MincConversionRunner(PipelineRunner):
         except Exception as exception:
             self.logger.error(
                 "Error running nii2mnc"
-                f" for participant {participant} session {session}: {exception}"
+                f" for participant_id {participant_id} session_id {session_id}: {exception}"
             )
 
 

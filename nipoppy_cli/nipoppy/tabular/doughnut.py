@@ -233,7 +233,7 @@ def generate_doughnut(
                 Doughnut.col_participant_dicom_dir: participant_dicom_dir,
                 Doughnut.col_in_raw_imaging: status_downloaded,
                 Doughnut.col_in_sourcedata: status_organized,
-                Doughnut.col_in_bids: status_bidsified
+                Doughnut.col_in_bids: status_bidsified,
                 Doughnut.col_in_minc: status_mincified,
             }
         )
