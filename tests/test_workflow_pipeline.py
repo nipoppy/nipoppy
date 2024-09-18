@@ -534,6 +534,37 @@ def test_check_pipeline_version(
     assert f"using version {expected_version}" in caplog.text
 
 
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected_step",
+    [
+        ("heudiconv", "0.12.2", "prepare"),
+        ("fmriprep", "23.1.3", None),
+        ("my_pipeline", "1.0", None),
+    ],
+)
+def test_check_pipeline_step(
+    pipeline_name,
+    pipeline_version,
+    expected_step,
+    workflow: PipelineWorkflow,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = pipeline_version
+    workflow.check_pipeline_step()
+    assert workflow.pipeline_step == expected_step
+    assert f"using step {expected_step}" in caplog.text
+
+
+def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
+    workflow.pipeline_version = None
+    workflow.pipeline_step = None
+    create_empty_dataset(workflow.layout.dpath_root)
+    workflow.run_setup()
+    assert workflow.pipeline_version == "1.0"
+    assert workflow.pipeline_step is None
+
+
 @pytest.mark.parametrize("dry_run", [True, False])
 def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
     workflow = PipelineWorkflow(
@@ -543,6 +574,15 @@ def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
         dry_run=dry_run,
     )
     create_empty_dataset(workflow.layout.dpath_root)
+    get_config(
+        proc_pipelines=[
+            ProcPipelineConfig(
+                NAME=workflow.pipeline_name,
+                VERSION=workflow.pipeline_version,
+                STEPS=[ProcPipelineStepConfig()],
+            )
+        ]
+    ).save(workflow.layout.fpath_config)
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 

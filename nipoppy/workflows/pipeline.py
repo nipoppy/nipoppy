@@ -360,11 +360,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def check_pipeline_step(self):
+        """Set the pipeline step name based on the config if it is not given."""
+        if self.pipeline_step is None:
+            self.pipeline_step = self.pipeline_step_config.NAME
+            self.logger.warning(
+                f"Pipeline step not specified, using step {self.pipeline_step}"
+            )
+
     def run_setup(self):
         """Run pipeline setup."""
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
             self.check_dir(dpath)
