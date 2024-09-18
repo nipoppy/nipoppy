@@ -552,15 +552,6 @@ def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
         dry_run=dry_run,
     )
     create_empty_dataset(workflow.layout.dpath_root)
-    get_config(
-        proc_pipelines=[
-            ProcPipelineConfig(
-                NAME=workflow.pipeline_name,
-                VERSION=workflow.pipeline_version,
-                STEPS=[ProcPipelineStepConfig()],
-            )
-        ]
-    ).save(workflow.layout.fpath_config)
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 
