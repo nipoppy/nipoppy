@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import nipoppy.logger  # for monkeypatching
 from nipoppy.logger import add_logfile, get_logger
 
 
@@ -45,6 +46,12 @@ def test_get_logger_level(level: int):
     assert logger.level == level
 
 
+def test_get_logger_no_propagate(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(nipoppy.logger, "IS_TESTING", False)
+    logger = get_logger()
+    assert not logger.propagate
+
+
 def test_add_logfile(tmp_path: Path):
     logger = logging.getLogger("test_add_logfile")
     fpath_log = tmp_path / "test.log"
@@ -61,3 +68,16 @@ def test_add_logfile_mkdir(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     logger.info("Test")
     assert "Creating log directory" in caplog.text
     assert fpath_log.exists()
+
+
+def test_no_extra_logs(caplog: pytest.LogCaptureFixture):
+    caplog.clear()
+
+    logger = get_logger()
+    logger.propagate = True
+
+    # doing this should not log anything
+    import nipoppy.workflows  # noqa F401
+
+    logger.info("TEST")
+    assert len(caplog.records) == 1
