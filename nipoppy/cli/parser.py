@@ -277,8 +277,8 @@ def add_subparser_minc_conversion(
         type=str,
         required=True,
         help="BIDS data types to convert",
-        nargs='+',
-        choices=['anat', 'dwi', 'fmap', 'func']
+        nargs="+",
+        choices=["anat", "dwi", "fmap", "func"],
     )
     return parser
 

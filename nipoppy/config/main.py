@@ -100,7 +100,9 @@ class Config(SchemaWithContainerConfig):
     def _check_no_duplicate_pipeline(self) -> Self:
         """Check that BIDS_PIPELINES and PROC_PIPELINES do not have common pipelines."""
         pipeline_infos = set()
-        for pipeline_config in self.BIDS_PIPELINES + self.PROC_PIPELINES + self.MINC_PIPELINES:
+        for pipeline_config in (
+            self.BIDS_PIPELINES + self.PROC_PIPELINES + self.MINC_PIPELINES
+        ):
             pipeline_info = (pipeline_config.NAME, pipeline_config.VERSION)
             if pipeline_info in pipeline_infos:
                 raise ValueError(
@@ -195,7 +197,9 @@ class Config(SchemaWithContainerConfig):
         # assume there are no duplicates
         # technically BIDS_PIPELINES and PROC_PIPELINES can share a pipeline name
         # and have different versions, but this is unlikely (and probably a mistake)
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES + self.MINC_PIPELINES:
+        for pipeline_config in (
+            self.PROC_PIPELINES + self.BIDS_PIPELINES + self.MINC_PIPELINES
+        ):
             if pipeline_config.NAME == pipeline_name:
                 return pipeline_config.VERSION
 
@@ -208,7 +212,9 @@ class Config(SchemaWithContainerConfig):
     ) -> ProcPipelineConfig:
         """Get the config for a BIDS or processing pipeline."""
         # pooling them together since there should not be any duplicates
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES + self.MINC_PIPELINES:
+        for pipeline_config in (
+            self.PROC_PIPELINES + self.BIDS_PIPELINES + self.MINC_PIPELINES
+        ):
             if (
                 pipeline_config.NAME == pipeline_name
                 and pipeline_config.VERSION == pipeline_version

@@ -68,7 +68,7 @@ class Doughnut(Manifest):
         "col_in_raw_imaging",
         "col_in_sourcedata",
         "col_in_bids",
-        "col_in_minc"
+        "col_in_minc",
     ]
 
     @classmethod
