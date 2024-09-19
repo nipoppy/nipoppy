@@ -9,10 +9,12 @@ from typing import Optional
 
 from boutiques import bosh
 
-from nipoppy.config.pipeline import PipelineConfig
+from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.utils import get_pipeline_tag, process_template_str
 from nipoppy.workflows.runner import PipelineRunner
 
+# Example command:
+# nipoppy mincify --dataset-root /data/chamal/projects/danmat/pepp/data/imaging_data/raw/nipoppy/dep/ --pipeline nii2mnc --pipeline-version 1.9.18 --participant-id 5002 --session-id 1 --data-types anat
 
 class MincConversionRunner(PipelineRunner):
     """Convert data to MINC."""
@@ -46,9 +48,9 @@ class MincConversionRunner(PipelineRunner):
         self.dpaths_to_check = []  # do not create any pipeline-specific directory
 
     @cached_property
-    def pipeline_config(self) -> PipelineConfig:
+    def pipeline_config(self) -> BidsPipelineConfig:
         """Get the user config for the MINC conversion software."""
-        return self.config.get_minc_pipeline_config(
+        return self.config.get_pipeline_config(
             self.pipeline_name,
             self.pipeline_version
         )
@@ -82,8 +84,10 @@ class MincConversionRunner(PipelineRunner):
 
         """
         participant_dir = "sub-" + participant_id
+        session_dir = "ses-" + session_id
+
         # crawl through directory tree and get all file paths
-        in_dirs = [self.layout.dpath_bids / participant_dir / session_id / dtype for dtype in data_types]
+        in_dirs = [self.layout.dpath_bids / participant_dir / session_dir / dtype for dtype in data_types]
 
         in_files = []
         out_files = []
@@ -204,7 +208,7 @@ class MincConversionRunner(PipelineRunner):
             self.doughnut.set_status(
                 participant_id=participant_id,
                 session_id=session_id,
-                col=self.doughnut.col_mincified,
+                col=self.doughnut.col_in_minc,
                 status=True,
             )
         
@@ -214,6 +218,21 @@ class MincConversionRunner(PipelineRunner):
                 f" for participant_id {participant_id} session_id {session_id}: {exception}"
             )
 
+    def run_cleanup(self, **kwargs):
+        """
+        Clean up after main MINC conversion part is run.
+
+        Specifically:
+        - Write updated doughnut file
+        """
+        # To do - why does this break?
+        # update_doughnut = self.pipeline_config.get_update_doughnut(
+        #     step_name=self.pipeline_step
+        # )
+        # if update_doughnut and not self.simulate:
+        #     self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        return super().run_cleanup(**kwargs)
 
     def generate_fpath_log(
         self,

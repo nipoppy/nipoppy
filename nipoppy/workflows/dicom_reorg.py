@@ -161,6 +161,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dpath_downloaded=self.layout.dpath_raw_imaging,
             dpath_organized=self.layout.dpath_sourcedata,
             dpath_bidsified=self.layout.dpath_bids,
+            dpath_mincified=self.layout.dpath_minc,
             logger=self.logger,
         )
 

@@ -41,7 +41,7 @@ class DoughnutModel(ManifestModel):
     in_bids: bool = Field(
         title="BIDSified", description="Whether files have been converted to BIDS"
     )
-    mincified: bool = Field(
+    in_minc: bool = Field(
         title="MINCified", description="Whether files have been converted to MINC"
     )
 
@@ -215,10 +215,8 @@ def generate_doughnut(
                 dname_subdirectory=Path(bids_participant, bids_session),
             )
             status_mincified = check_status(
-                dpath_mincified,
-                bids_id,
-                session,
-                session_first=False,
+                dpath=dpath_mincified,
+                dname_subdirectory=Path(bids_participant, bids_session),
             )
 
         doughnut_records.append(
