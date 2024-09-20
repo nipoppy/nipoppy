@@ -150,7 +150,7 @@ autoapi_options = [
     "imported-members",
 ]
 autoapi_member_order = "groupwise"
-autoapi_own_page_level = "class"
+autoapi_own_page_level = "module"
 autoapi_template_dir = "_templates/autoapi"
 
 # ignore some auto doc related warnings
