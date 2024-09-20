@@ -171,6 +171,11 @@ nitpick_ignore = [
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------
+
+# PAT needs to be set as environment variable in Read the Docs project settings
+# fine-grained token permissions:
+#   - nipoppy/nipoppy repository
+#   - read access to code + metadata
 sphinx_github_changelog_token = os.environ.get("NIPOPPY_RELEASES_PAT")
 
 # -- Copybutton configuration -------------------------------------------------
