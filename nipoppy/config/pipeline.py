@@ -67,10 +67,8 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         - If STEPS has more than one item, make sure that each step has a unique name.
         """
         # make sure BIDS/processing pipelines are the right type
-        for i_step in range(len(self.STEPS)):
-            self.STEPS[i_step] = self._step_class(
-                **self.STEPS[i_step].model_dump(exclude_unset=True)
-            )
+        for i_step, step in enumerate(self.STEPS):
+            self.STEPS[i_step] = self._step_class(**step.model_dump(exclude_unset=True))
 
         if len(self.STEPS) > 1:
             step_names = []
