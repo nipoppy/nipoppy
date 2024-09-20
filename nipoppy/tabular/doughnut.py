@@ -41,6 +41,9 @@ class DoughnutModel(ManifestModel):
     in_bids: bool = Field(
         title="BIDSified", description="Whether files have been converted to BIDS"
     )
+    in_minc: bool = Field(
+        title="MINCified", description="Whether files have been converted to MINC"
+    )
 
 
 class Doughnut(Manifest):
@@ -51,8 +54,9 @@ class Doughnut(Manifest):
     col_in_raw_imaging = "in_raw_imaging"
     col_in_sourcedata = "in_sourcedata"
     col_in_bids = "in_bids"
+    col_in_minc = "in_minc"
 
-    status_cols = [col_in_raw_imaging, col_in_sourcedata, col_in_bids]
+    status_cols = [col_in_raw_imaging, col_in_sourcedata, col_in_bids, col_in_minc]
 
     # set the model
     model = DoughnutModel
@@ -64,6 +68,7 @@ class Doughnut(Manifest):
         "col_in_raw_imaging",
         "col_in_sourcedata",
         "col_in_bids",
+        "col_in_minc",
     ]
 
     @classmethod
@@ -146,6 +151,7 @@ def generate_doughnut(
     dpath_downloaded: Optional[StrOrPathLike] = None,
     dpath_organized: Optional[StrOrPathLike] = None,
     dpath_bidsified: Optional[StrOrPathLike] = None,
+    dpath_mincified: Optional[StrOrPathLike] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
 ) -> Doughnut:
@@ -194,6 +200,7 @@ def generate_doughnut(
             status_downloaded = False
             status_organized = False
             status_bidsified = False
+            status_mincified = False
         else:
             status_downloaded = check_status(
                 dpath=dpath_downloaded,
@@ -207,6 +214,10 @@ def generate_doughnut(
                 dpath=dpath_bidsified,
                 dname_subdirectory=Path(bids_participant, bids_session),
             )
+            status_mincified = check_status(
+                dpath=dpath_mincified,
+                dname_subdirectory=Path(bids_participant, bids_session),
+            )
 
         doughnut_records.append(
             {
@@ -218,6 +229,7 @@ def generate_doughnut(
                 Doughnut.col_in_raw_imaging: status_downloaded,
                 Doughnut.col_in_sourcedata: status_organized,
                 Doughnut.col_in_bids: status_bidsified,
+                Doughnut.col_in_minc: status_mincified,
             }
         )
 
@@ -233,6 +245,7 @@ def update_doughnut(
     dpath_downloaded: Optional[StrOrPathLike] = None,
     dpath_organized: Optional[StrOrPathLike] = None,
     dpath_bidsified: Optional[StrOrPathLike] = None,
+    dpath_mincified: Optional[StrOrPathLike] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
 ) -> Doughnut:
@@ -255,6 +268,7 @@ def update_doughnut(
             dpath_downloaded=dpath_downloaded,
             dpath_organized=dpath_organized,
             dpath_bidsified=dpath_bidsified,
+            dpath_mincified=dpath_mincified,
             empty=empty,
             logger=logger,
         )

@@ -11,6 +11,7 @@ from nipoppy.cli.parser import (
     COMMAND_DICOM_REORG,
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
+    COMMAND_MINC_CONVERSION,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
     PROGRAM_NAME,
@@ -82,6 +83,20 @@ def cli(argv: Sequence[str] = None) -> None:
                 participant_id=args.participant_id,
                 session_id=args.session_id,
                 simulate=args.simulate,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_MINC_CONVERSION:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.minc_conversion import MincConversionRunner
+
+            workflow = MincConversionRunner(
+                dpath_root=dpath_root,
+                pipeline_name=args.pipeline,
+                pipeline_version=args.pipeline_version,
+                participant_id=args.participant_id,
+                session_id=args.session_id,
+                simulate=args.simulate,
+                data_types=args.data_types,
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_RUN:

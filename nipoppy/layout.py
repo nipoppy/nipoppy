@@ -48,6 +48,7 @@ class LayoutConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
+    dpath_minc: DpathInfo = Field(description="Directory for raw imaging data in MINC")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
     )
@@ -168,6 +169,7 @@ class DatasetLayout(Base):
 
         # directories (for type hinting)
         self.dpath_bids: Path
+        self.dpath_minc: Path
         self.dpath_derivatives: Path
         self.dpath_sourcedata: Path
         self.dpath_downloads: Path
