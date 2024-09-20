@@ -144,13 +144,13 @@ autoapi_options = [
     "members",
     "undoc-members",
     # "private-members",
-    "show-inheritance",
+    # "show-inheritance",
     # "show-module-summary",
     # "special-members",
     "imported-members",
 ]
 autoapi_member_order = "groupwise"
-autoapi_own_page_level = "module"
+autoapi_own_page_level = "class"
 autoapi_template_dir = "_templates/autoapi"
 
 # ignore some auto doc related warnings
@@ -168,6 +168,11 @@ nitpick_ignore = [
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
+    ("py:obj", "BasePipelineConfig"),
+    ("py:obj", "BasePipelineStepConfig"),
+    ("py:obj", "ContainerConfig"),
+    ("py:obj", "PathInfo"),
+    ("py:obj", "FpathInfo"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------

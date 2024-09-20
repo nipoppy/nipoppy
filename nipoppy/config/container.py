@@ -116,7 +116,7 @@ class ContainerInfo(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class SchemaWithContainerConfig(BaseModel):
+class _SchemaWithContainerConfig(BaseModel):
     """To be inherited by configs that have a ContainerConfig sub-config."""
 
     CONTAINER_CONFIG: ContainerConfig = Field(

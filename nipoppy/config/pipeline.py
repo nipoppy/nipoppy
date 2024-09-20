@@ -9,7 +9,7 @@ from typing import Any, Optional, Union
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
-from nipoppy.config.container import ContainerInfo, SchemaWithContainerConfig
+from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
@@ -18,7 +18,7 @@ from nipoppy.config.pipeline_step import (
 from nipoppy.utils import apply_substitutions_to_json
 
 
-class BasePipelineConfig(SchemaWithContainerConfig, ABC):
+class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
     NAME: str = Field(description="Name of the pipeline")
