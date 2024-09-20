@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+import requests
+
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -70,12 +72,7 @@ class InitWorkflow(BaseWorkflow):
             else:
                 self.mkdir(dpath)
 
-        for dpath, description in self.layout.dpath_descriptions:
-            fpath_readme = dpath / self.fname_readme
-            if (description is not None and not self.dry_run) and not (
-                self.bids_source is not None and dpath.stem == "bids"
-            ):
-                fpath_readme.write_text(f"{description}\n")
+        self._write_readmes()
 
         # copy descriptor files
         for fpath_descriptor in DPATH_DESCRIPTORS.iterdir():
@@ -121,6 +118,27 @@ class InitWorkflow(BaseWorkflow):
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
         )
+
+    def _write_readmes(self) -> None:
+        if self.dry_run:
+            return None
+        for dpath, description in self.layout.dpath_descriptions:
+            fpath_readme = dpath / self.fname_readme
+            if description is None:
+                continue
+            if dpath.stem != "bids" or self.bids_source is None:
+                fpath_readme.write_text(f"{description}\n")
+            elif self.bids_source is not None and not fpath_readme.exists():
+                gh_org = "bids-standard"
+                gh_repo = "bids-starter-kit"
+                commit = "f2328c58238bdf2088bc587b0eb4198131d8ffe2"
+                path = "templates/README.MD"
+                url = (
+                    "https://raw.githubusercontent.com/"
+                    f"{gh_org}/{gh_repo}/{commit}/{path}"
+                )
+                response = requests.get(url)
+                fpath_readme.write_text(response.content.decode("utf-8"))
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.

@@ -112,6 +112,8 @@ def test_init_bids(tmp_path):
     for f in source_files:
         assert f in target_files
 
+    assert (dpath_root / "bids" / "README.md").exists()
+
 
 def test_init_bids_dry_run(tmp_path):
     """Copy no file when running in dry mode."""

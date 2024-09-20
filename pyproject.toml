@@ -25,6 +25,7 @@ dependencies = [
     "pybids",
     "pydantic",
     "pydicom",
+    'requests',
     "rich",
     "rich_argparse",
     "typing-extensions",
