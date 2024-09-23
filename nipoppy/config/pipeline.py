@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Type, Union
 
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
@@ -21,6 +21,9 @@ from nipoppy.utils import apply_substitutions_to_json
 class BasePipelineConfig(SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
+    # for validation
+    _step_class: Type[BasePipelineStepConfig] = BasePipelineStepConfig
+
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -30,7 +33,7 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    STEPS: list[Union[ProcPipelineStepConfig, BidsPipelineStepConfig]] = Field(
+    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
@@ -60,8 +63,13 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
+        - Check that items in STEPS have the correct type.
         - If STEPS has more than one item, make sure that each step has a unique name.
         """
+        # make sure BIDS/processing pipelines are the right type
+        for i_step, step in enumerate(self.STEPS):
+            self.STEPS[i_step] = self._step_class(**step.model_dump(exclude_unset=True))
+
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:
@@ -107,62 +115,26 @@ class BasePipelineConfig(SchemaWithContainerConfig, ABC):
             f"Step {step_name} not found in pipeline {self.NAME} {self.VERSION}"
         )
 
-    def get_invocation_file(self, step_name: Optional[str] = None) -> Path | None:
-        """
-        Return the path to the invocation file for the given step.
-
-        Is step is None, return the invocation file for the first step.
-        """
-        return self.get_step_config(step_name).INVOCATION_FILE
-
-    def get_descriptor_file(self, step_name: Optional[str] = None) -> Path | None:
-        """
-        Return the path to the descriptor file for the given step.
-
-        If step is None, return the descriptor file for the first step.
-        """
-        return self.get_step_config(step_name).DESCRIPTOR_FILE
-
-    def get_analysis_level(self, step_name: Optional[str] = None) -> str:
-        """
-        Return the analysis level for the given step.
-
-        If step is None, return the analysis level for the first step.
-        """
-        return self.get_step_config(step_name).ANALYSIS_LEVEL
-
 
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
+    _step_class = BidsPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
-
-    def get_update_doughnut(self, step_name: Optional[str] = None) -> Path | None:
-        """
-        Return the update doughnut flag for the given step.
-
-        If step is None, return the flag for the first step.
-        """
-        return self.get_step_config(step_name).UPDATE_DOUGHNUT
 
 
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
+    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the tracker configuration file associated with the pipeline"
+            ". This file must contain a list of tracker configurations"
+            ", each of which must be a dictionary with a NAME field (string)"
+            " and a PATHS field (non-empty list of strings)"
+        ),
+    )
+
+    _step_class = ProcPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
-
-    def get_tracker_config_file(self, step_name: Optional[str] = None) -> Path | None:
-        """
-        Return the path to the tracker configuration file for the given step.
-
-        If step is None, return the file for the first step.
-        """
-        return self.get_step_config(step_name).TRACKER_CONFIG_FILE
-
-    def get_pybids_ignore_file(self, step_name: Optional[str] = None) -> Path | None:
-        """
-        Return the list of regex patterns to ignore when building the PyBIDS layout.
-
-        If step is None, return the patterns for the first step.
-        """
-        return self.get_step_config(step_name).PYBIDS_IGNORE_FILE
