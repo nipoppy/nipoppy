@@ -89,6 +89,25 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
     )
     model_config = ConfigDict(extra="forbid")
 
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the pipeline step configuration after creation.
+
+        Specifically:
+        - Make sure that the tracker configuration file is not set if the analysis
+        level is not participant_session
+        """
+        if (
+            self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
+            and self.TRACKER_CONFIG_FILE is not None
+        ):
+            raise ValueError(
+                "TRACKER_CONFIG_FILE cannot be set if ANALYSIS_LEVEL is not "
+                f"{AnalysisLevelType.participant_session}"
+            )
+        return self
+
 
 class BidsPipelineStepConfig(BasePipelineStepConfig):
     """Schema for BIDS pipeline step configuration."""
