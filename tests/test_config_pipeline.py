@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
+from nipoppy.config.pipeline import (
+    BasePipelineConfig,
+    BidsPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 
 FIELDS_PIPELINE_BASE = [
@@ -16,8 +20,6 @@ FIELDS_PIPELINE_BASE = [
     "CONTAINER_CONFIG",
     "STEPS",
 ]
-
-FIELDS_PIPELINE_PROC = FIELDS_PIPELINE_BASE + ["TRACKER_CONFIG_FILE"]
 
 
 @pytest.fixture(scope="function")
@@ -41,16 +43,13 @@ def valid_data() -> dict:
                 {"STEPS": []},
             ],
         ),
-        (
-            ProcPipelineConfig,
-            FIELDS_PIPELINE_PROC,
-            [{"TRACKER_CONFIG_FILE": "path/to/tracker/config/file"}],
-        ),
     ],
 )
 def test_fields(pipeline_config_class, fields, valid_data, additional_data_list):
     for additional_data in additional_data_list:
-        pipeline_config = pipeline_config_class(**valid_data, **additional_data)
+        pipeline_config: BasePipelineConfig = pipeline_config_class(
+            **valid_data, **additional_data
+        )
         for field in fields:
             assert hasattr(pipeline_config, field)
 
@@ -63,24 +62,20 @@ def test_fields(pipeline_config_class, fields, valid_data, additional_data_list)
 )
 def test_fields_missing_required(data):
     with pytest.raises(ValidationError):
-        ProcPipelineConfig(**data)
+        BasePipelineConfig(**data)
 
 
-def test_fields_no_extra(valid_data):
+@pytest.mark.parametrize(
+    "pipeline_config_class", [ProcPipelineConfig, BidsPipelineConfig]
+)
+def test_fields_no_extra(pipeline_config_class, valid_data):
     with pytest.raises(ValidationError):
-        ProcPipelineConfig(**valid_data, not_a_field="a")
-
-
-def test_step_names_error_none(valid_data):
-    with pytest.raises(
-        ValidationError, match="Found at least one step with undefined NAME field"
-    ):
-        ProcPipelineConfig(**valid_data, STEPS=[{}, {}])
+        pipeline_config_class(**valid_data, not_a_field="a")
 
 
 def test_step_names_error_duplicate(valid_data):
     with pytest.raises(ValidationError, match="Found at least two steps with NAME"):
-        ProcPipelineConfig(
+        BasePipelineConfig(
             **valid_data,
             STEPS=[
                 {"NAME": "step1"},
@@ -93,7 +88,7 @@ def test_substitutions():
     data = {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "TRACKER_CONFIG_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+        "DESCRIPTION": "[[PIPELINE_NAME]] version [[PIPELINE_VERSION]]",
         "STEPS": [
             {
                 "NAME": "step1",
@@ -102,13 +97,13 @@ def test_substitutions():
         ],
     }
     pipeline_config = ProcPipelineConfig(**data)
-    assert str(pipeline_config.TRACKER_CONFIG_FILE) == "my_pipeline-1.0.0.json"
+    assert pipeline_config.DESCRIPTION == "my_pipeline version 1.0.0"
     assert str(pipeline_config.STEPS[0].INVOCATION_FILE) == "my_pipeline-1.0.0.json"
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
 def test_get_fpath_container(valid_data, container):
-    pipeline_config = ProcPipelineConfig(
+    pipeline_config = BasePipelineConfig(
         **valid_data, CONTAINER_INFO={"FILE": container}
     )
     assert pipeline_config.get_fpath_container() == Path(container)
@@ -123,7 +118,7 @@ def test_get_fpath_container(valid_data, container):
     ],
 )
 def test_get_step_config(valid_data, step_name, expected_name):
-    pipeling_config = ProcPipelineConfig(
+    pipeling_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
             ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
@@ -135,13 +130,13 @@ def test_get_step_config(valid_data, step_name, expected_name):
 
 
 def test_get_step_config_no_steps(valid_data):
-    pipeline_config = ProcPipelineConfig(**valid_data, STEPS=[])
+    pipeline_config = BasePipelineConfig(**valid_data, STEPS=[])
     with pytest.raises(ValueError, match="No steps specified for pipeline"):
         pipeline_config.get_step_config()
 
 
 def test_get_step_config_invalid(valid_data):
-    pipeline_config = ProcPipelineConfig(
+    pipeline_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
             ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
@@ -150,51 +145,3 @@ def test_get_step_config_invalid(valid_data):
     )
     with pytest.raises(ValueError, match="not found in pipeline"):
         pipeline_config.get_step_config("invalid_step")
-
-
-@pytest.mark.parametrize(
-    "step_name,invocation_file",
-    [("step1", Path("step1.json")), ("step2", Path("step2.json"))],
-)
-def test_get_invocation_file(valid_data, step_name, invocation_file):
-    pipeline_config = ProcPipelineConfig(
-        **valid_data,
-        STEPS=[
-            ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
-        ],
-    )
-
-    assert pipeline_config.get_invocation_file(step_name) == invocation_file
-
-
-@pytest.mark.parametrize(
-    "step_name,descriptor_file",
-    [("step1", Path("step1.json")), ("step2", Path("step2.json"))],
-)
-def test_get_descriptor_file(valid_data, step_name, descriptor_file):
-    pipeline_config = ProcPipelineConfig(
-        **valid_data,
-        STEPS=[
-            ProcPipelineStepConfig(NAME="step1", DESCRIPTOR_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", DESCRIPTOR_FILE="step2.json"),
-        ],
-    )
-
-    assert pipeline_config.get_descriptor_file(step_name) == descriptor_file
-
-
-# @pytest.mark.parametrize(
-#     "step_name,pybids_ignore_file",
-#     [("step1", Path("patterns1.json")), ("step2", Path("patterns2.json"))],
-# )
-# def test_get_pybids_ignore(valid_data, step_name, pybids_ignore_file):
-#     pipeline_config = ProcPipelineConfig(
-#         **valid_data,
-#         STEPS=[
-#             ProcPipelineStepConfig(NAME="step1", PYBIDS_IGNORE_FILE="patterns1.json"),
-#             ProcPipelineStepConfig(NAME="step2", PYBIDS_IGNORE_FILE="patterns2.json"),
-#         ],
-#     )
-
-#     assert pipeline_config.get_pybids_ignore_file(step_name) == pybids_ignore_file

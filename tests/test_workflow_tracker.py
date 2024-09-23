@@ -58,6 +58,7 @@ def tracker(tmp_path: Path):
                 "NAME": pipeline_name,
                 "VERSION": pipeline_version,
                 "TRACKER_CONFIG_FILE": fpath_tracker_config,
+                "STEPS": [{}],
             },
         ],
     )

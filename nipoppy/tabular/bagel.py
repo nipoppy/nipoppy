@@ -83,6 +83,7 @@ class BagelModel(BaseTabularModel):
             )
         if self.session is None:
             self.session = session_id_to_bids_session(self.session_id)
+        return self
 
 
 class Bagel(BaseTabular):
