@@ -159,6 +159,20 @@
                 }
             ],
             "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json"
+        },
+        {
+            "NAME": "halfpipe",
+            "VERSION": "1.2.2",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif"
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "group"
+                }
+            ]
         }
     ],
     "CUSTOM": {}
