@@ -80,6 +80,12 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
             "when building the PyBIDS layout"
         ),
     )
+    GENERATE_PYBIDS_DATABASE: Optional[bool] = Field(
+        default=True,
+        description=(
+            "Whether or not to generate a PyBIDS database as part of the pipeline step"
+        ),
+    )
     model_config = ConfigDict(extra="forbid")
 
 
