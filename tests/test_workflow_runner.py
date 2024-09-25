@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from bids import BIDSLayout
@@ -13,7 +14,6 @@ from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.workflows.runner import PipelineRunner
 
 from .conftest import create_empty_dataset, get_config, prepare_dataset
-from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function")
@@ -311,8 +311,8 @@ def test_run_multiple(config: Config, tmp_path: Path):
 
 
 def test_run_single_pybidsdb(mocker, tmp_path: Path):
-    participant_id=None
-    session_id=None
+    participant_id = None
+    session_id = None
     runner = PipelineRunner(
         dpath_root=tmp_path,
         pipeline_name="dummy_pipeline",
@@ -320,18 +320,16 @@ def test_run_single_pybidsdb(mocker, tmp_path: Path):
         participant_id=participant_id,
         session_id=session_id,
     )
-    # Mock the pipeline_config, and its method get_step_config and set_up_bids_db 
+    # Mock the pipeline_config, and its method get_step_config and set_up_bids_db
     runner.pipeline_config = MagicMock()
     runner.pipeline_config.get_step_config.return_value.GENERATE_PYBIDS_DATABASE = True
-    mocked_set_up_bids_db = mocker.patch.object(runner, 'set_up_bids_db')
+    mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
     # Mock other dependencies of run_single
-    mocker.patch.object(runner, 'process_container_config')
-    mocker.patch.object(runner, 'launch_boutiques_run')
+    mocker.patch.object(runner, "process_container_config")
+    mocker.patch.object(runner, "launch_boutiques_run")
     # Call the real run_single method
     runner.run_single(participant_id="01", session_id="1")
     # Assert set_up_bids_db was called once with the correct arguments
     mocked_set_up_bids_db.assert_called_once_with(
-        dpath_bids_db=runner.dpath_pipeline_bids_db,
-        participant_id="01",
-        session_id="1"
+        dpath_bids_db=runner.dpath_pipeline_bids_db, participant_id="01", session_id="1"
     )
