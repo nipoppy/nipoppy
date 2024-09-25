@@ -19,6 +19,7 @@ dependencies = [
     "pandas",
     "pybids",
     "pydantic",
+    'requests',
     "pydicom!=3.0.0",
     "rich",
     "rich_argparse",
