@@ -168,4 +168,3 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
     workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
     workflow.run()
     assert "could not find a session level folder" in caplog.text
-

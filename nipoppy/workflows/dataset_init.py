@@ -5,10 +5,6 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import pandas as pd
-
-from nipoppy.env import LogColor, StrOrPathLike
-
 import requests
 
 from nipoppy.env import (
@@ -18,7 +14,6 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
-
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
@@ -80,13 +75,14 @@ class InitWorkflow(BaseWorkflow):
 
             if dpath.stem != "bids" or self.bids_source is None:
                 self.mkdir(dpath)
-                continue 
-            
+                continue
+
             if not self.use_dalatad:
                 self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
                 continue
 
             from datalad import api
+
             self.logger.info(
                 f"Installing datalad BIDS raw dataset from {self.bids_source}."
             )
@@ -98,7 +94,7 @@ class InitWorkflow(BaseWorkflow):
                 path=dpath,
                 source=self.bids_source,
                 result_renderer="disabled",
-            )    
+            )
 
         self._write_readmes()
 
@@ -233,7 +229,6 @@ class InitWorkflow(BaseWorkflow):
                 response = requests.get(url)
                 fpath_readme.write_text(response.content.decode("utf-8"))
 
-
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
 
@@ -256,7 +251,6 @@ class InitWorkflow(BaseWorkflow):
         )
 
         self.logger.info("Creating a manifest file from the BIDS dataset content.")
-
 
         for ppt in participant_ids:
 
@@ -281,7 +275,7 @@ class InitWorkflow(BaseWorkflow):
                         if x.is_dir()
                     ]
                 )
-       
+
                 df[Manifest.col_participant_id].append(check_participant_id(ppt))
                 df[Manifest.col_session_id].append(check_session_id(ses))
                 df[Manifest.col_datatype].append(datatypes)
@@ -309,7 +303,6 @@ class InitWorkflow(BaseWorkflow):
         with open(self.dpath_root / ".gitignore", "w") as f:
             for line in CONTENT:
                 f.write(f"{line}\n")
-
 
     def run_cleanup(self):
         """Log a success message."""
