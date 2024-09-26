@@ -184,10 +184,9 @@ def add_subparser_init(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-
     if is_datalad_installed:
         parser = add_arg_use_datalad(parser)
-        parser = add_arg_bids_source(parser)
+    parser = add_arg_bids_source(parser)
 
     return parser
 

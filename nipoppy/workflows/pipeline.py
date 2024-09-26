@@ -18,7 +18,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import ProcPipelineConfig
-from nipoppy.config.pipeline_step import AnalysisLevelType
+from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -149,6 +149,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
+    def pipeline_step_config(self) -> ProcPipelineStepConfig:
+        """Get the user config for the pipeline step."""
+        return self.pipeline_config.get_step_config(step_name=self.pipeline_step)
+
+    @cached_property
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
         fpath_container = self.pipeline_config.get_fpath_container()
@@ -193,9 +198,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        fpath_descriptor = self.pipeline_config.get_descriptor_file(
-            step_name=self.pipeline_step
-        )
+        fpath_descriptor = self.pipeline_step_config.DESCRIPTOR_FILE
         if fpath_descriptor is None:
             raise ValueError(
                 "No descriptor file specified for pipeline"
@@ -209,9 +212,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        fpath_invocation = self.pipeline_config.get_invocation_file(
-            step_name=self.pipeline_step
-        )
+        fpath_invocation = self.pipeline_step_config.INVOCATION_FILE
         if fpath_invocation is None:
             raise ValueError(
                 "No invocation file specified for pipeline"
@@ -230,9 +231,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        fpath_pybids_ignore = self.pipeline_config.get_pybids_ignore_file(
-            step_name=self.pipeline_step
-        )
+        fpath_pybids_ignore = self.pipeline_step_config.PYBIDS_IGNORE_FILE
 
         # no file specified
         if fpath_pybids_ignore is None:
@@ -387,11 +386,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def check_pipeline_step(self):
+        """Set the pipeline step name based on the config if it is not given."""
+        if self.pipeline_step is None:
+            self.pipeline_step = self.pipeline_step_config.NAME
+            self.logger.warning(
+                f"Pipeline step not specified, using step {self.pipeline_step}"
+            )
+
     def run_setup(self):
         """Run pipeline setup."""
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self.check_pipeline_step()
 
         self._get_container_image()
 
@@ -406,15 +414,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.participant_id, self.session_id
         )
 
-        # trackers are at pipeline level, not pipeline step level
-        # but this will probably change in the future
-        try:
-            analysis_level = self.pipeline_config.get_analysis_level(self.pipeline_step)
-        except ValueError:
-            analysis_level = AnalysisLevelType.participant_session
         participants_sessions = apply_analysis_level(
             participants_sessions=participants_sessions,
-            analysis_level=analysis_level,
+            analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
         for participant_id, session_id in participants_sessions:
@@ -454,10 +456,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             else:
                 color = LogColor.PARTIAL_SUCCESS
 
-            if (
-                self.pipeline_config.get_analysis_level(self.pipeline_step)
-                == AnalysisLevelType.group
-            ):
+            if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
                 message_body = "on the entire study"
             else:
                 message_body = (

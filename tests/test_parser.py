@@ -240,6 +240,7 @@ def test_add_subparser_pipeline_track(args):
         ["-h"],
         ["init", "-h"],
         ["init", "--dataset-root", "my_dataset"],
+        ["init", "--dataset-root", "my_dataset", "--bids-source", "foo/bar"],
         ["doughnut", "--dataset-root", "my_dataset", "--regenerate"],
         ["reorg", "--dataset-root", "my_dataset", "--copy-files"],
         ["bidsify", "--dataset-root", "my_dataset", "--pipeline", "a_bids_pipeline"],

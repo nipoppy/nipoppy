@@ -8,12 +8,25 @@ from typing import Optional
 import pandas as pd
 
 from nipoppy.env import LogColor, StrOrPathLike
+
+import requests
+
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    LogColor,
+    StrOrPathLike,
+)
+from nipoppy.tabular.manifest import Manifest
+
 from nipoppy.utils import (
     DPATH_DESCRIPTORS,
     DPATH_INVOCATIONS,
     DPATH_TRACKER_CONFIGS,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
+    check_participant_id,
+    check_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -52,7 +65,9 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
-        If the BIDS source dataset is requested, it is installed with datalad.
+
+        If the BIDS source dataset is requested, it is copied.
+        If dataladd is used, it is installed with datalad.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
@@ -63,32 +78,29 @@ class InitWorkflow(BaseWorkflow):
         # create directories
         for dpath in self.layout.dpaths:
 
-            # If a bids_source is passed it means datalad is installed.
-            if self.bids_source is not None and dpath.stem == "bids":
-                self.logger.info(
-                    f"Installing datalad BIDS raw dataset from {self.bids_source}."
-                )
-                from datalad import api
-
-                dataset = None
-                if self.use_dalatad:
-                    dataset = self.dpath_root
-
-                api.install(
-                    dataset=dataset,
-                    path=dpath,
-                    source=self.bids_source,
-                    result_renderer="disabled",
-                )
-            else:
+            if dpath.stem != "bids" or self.bids_source is None:
                 self.mkdir(dpath)
+                continue 
+            
+            if not self.use_dalatad:
+                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                continue
 
-        for dpath, description in self.layout.dpath_descriptions:
-            fpath_readme = dpath / self.fname_readme
-            if (description is not None and not self.dry_run) and not (
-                self.bids_source is not None and dpath.stem == "bids"
-            ):
-                fpath_readme.write_text(f"{description}\n")
+            from datalad import api
+            self.logger.info(
+                f"Installing datalad BIDS raw dataset from {self.bids_source}."
+            )
+            dataset = None
+            dataset = self.dpath_root
+
+            api.install(
+                dataset=dataset,
+                path=dpath,
+                source=self.bids_source,
+                result_renderer="disabled",
+            )    
+
+        self._write_readmes()
 
         # copy descriptor files
         for fpath_descriptor in DPATH_DESCRIPTORS.iterdir():
@@ -118,9 +130,15 @@ class InitWorkflow(BaseWorkflow):
         self.copy(
             FPATH_SAMPLE_CONFIG, self.layout.fpath_config, log_level=logging.DEBUG
         )
-        self.copy(
-            FPATH_SAMPLE_MANIFEST, self.layout.fpath_manifest, log_level=logging.DEBUG
-        )
+
+        if self.bids_source is not None:
+            self._init_manifest_from_bids_dataset()
+        else:
+            self.copy(
+                FPATH_SAMPLE_MANIFEST,
+                self.layout.fpath_manifest,
+                log_level=logging.DEBUG,
+            )
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
@@ -158,12 +176,13 @@ class InitWorkflow(BaseWorkflow):
         )
 
     def _init_as_datalad_dataset(self) -> None:
-        if self.use_dalatad:
-            from datalad import api
+        if not self.use_dalatad:
+            return None
+        from datalad import api
 
-            api.create(path=self.dpath_root, result_renderer="disabled")
-            self._make_git_attributes()
-            self._make_git_ignore()
+        api.create(path=self.dpath_root, result_renderer="disabled")
+        self._make_git_attributes()
+        self._make_git_ignore()
 
     def _update_config(self) -> None:
         """Update global config to adapt it to using datalad."""
@@ -193,21 +212,51 @@ class InitWorkflow(BaseWorkflow):
         with open(self.layout.fpath_config, "w") as f:
             json.dump(content, f, indent=4)
 
+    def _write_readmes(self) -> None:
+        if self.dry_run:
+            return None
+        for dpath, description in self.layout.dpath_descriptions:
+            fpath_readme = dpath / self.fname_readme
+            if description is None:
+                continue
+            if dpath.stem != "bids" or self.bids_source is None:
+                fpath_readme.write_text(f"{description}\n")
+            elif self.bids_source is not None and not fpath_readme.exists():
+                gh_org = "bids-standard"
+                gh_repo = "bids-starter-kit"
+                commit = "f2328c58238bdf2088bc587b0eb4198131d8ffe2"
+                path = "templates/README.MD"
+                url = (
+                    "https://raw.githubusercontent.com/"
+                    f"{gh_org}/{gh_repo}/{commit}/{path}"
+                )
+                response = requests.get(url)
+                fpath_readme.write_text(response.content.decode("utf-8"))
+
+
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
 
         No BIDS validation is done.
         """
-        df = {"participant_id": [], "visit_id": [], "session_id": [], "datatype": []}
+        if self.dry_run:
+            return None
+        df = {
+            Manifest.col_participant_id: [],
+            Manifest.col_visit_id: [],
+            Manifest.col_session_id: [],
+            Manifest.col_datatype: [],
+        }
         participant_ids = sorted(
             [
                 x.name
                 for x in (self.layout.dpath_bids).iterdir()
-                if x.is_dir() and x.name.startswith("sub-")
+                if x.is_dir() and x.name.startswith(BIDS_SUBJECT_PREFIX)
             ]
         )
 
-        self.logger.info("Creating a manifest.csv from the BIDS dataset content.")
+        self.logger.info("Creating a manifest file from the BIDS dataset content.")
+
 
         for ppt in participant_ids:
 
@@ -215,7 +264,7 @@ class InitWorkflow(BaseWorkflow):
                 [
                     x.name
                     for x in (self.layout.dpath_bids / ppt).iterdir()
-                    if x.is_dir() and x.name.startswith("ses-")
+                    if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
             if not session_ids:
@@ -232,15 +281,15 @@ class InitWorkflow(BaseWorkflow):
                         if x.is_dir()
                     ]
                 )
+       
+                df[Manifest.col_participant_id].append(check_participant_id(ppt))
+                df[Manifest.col_session_id].append(check_session_id(ses))
+                df[Manifest.col_datatype].append(datatypes)
 
-                df["participant_id"].append(ppt.replace("sub-", ""))
-                df["session_id"].append(ses.replace("ses-", ""))
-                df["datatype"].append("[" + "'" + "' ,'".join(datatypes) + "'" + "]")
+        df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
-        df["visit_id"] = df["session_id"]
-
-        df = pd.DataFrame(df)
-        df.to_csv(self.layout.fpath_manifest, index=False)
+        manifest = Manifest(df).validate()
+        self.save_tabular_file(manifest, self.layout.fpath_manifest)
 
     def _make_git_attributes(self) -> None:
         CONTENT = [
@@ -260,6 +309,7 @@ class InitWorkflow(BaseWorkflow):
         with open(self.dpath_root / ".gitignore", "w") as f:
             for line in CONTENT:
                 f.write(f"{line}\n")
+
 
     def run_cleanup(self):
         """Log a success message."""
