@@ -148,6 +148,17 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add argument to init a layout with a BIDS datalad dataset."""
+    parser.add_argument(
+        "--bids-source",
+        type=str,
+        required=False,
+        help=("Path to a BIDS dataset to initialize the layout with."),
+    )
+    return parser
+
+
 def add_subparser_init(
     subparsers: _SubParsersAction,
     formatter_class: type[HelpFormatter] = HelpFormatter,
@@ -162,6 +173,9 @@ def add_subparser_init(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
+
+    parser = add_arg_bids_source(parser)
+
     return parser
 
 
