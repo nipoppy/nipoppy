@@ -62,8 +62,8 @@ To keep up with changes in the Nipoppy repository while you work and avoid merge
 All changes to the `main` branch of the code repository need to be done through GitHub [pull requests (PRs)](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
 
 Nipoppy PR reviews may use the following emoji signifiers:
-- :cook:: Ready to merge or approved without suggestions
-- :cherries:: Some optional/suggested changes that could be nice to have but are not required to merge
+- 🧑‍🍳: Ready to merge or approved without suggestions
+- 🍒: Some optional/suggested changes that could be nice to have but are not required to merge
 
 If (required) changes are requested, please re-request a review from the reviewer once the comments have been addressed.
 
