@@ -56,13 +56,23 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
+html_css_files = [
+    "theme.css",
+]
+
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
+
 html_theme_options = {
     "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
     "source_directory": "docs/source",
+    "sidebar_hide_name": True,
 }
+
+html_logo = "../../logo/logo_with_name.svg"
+html_favicon = "../../logo/logo_square.svg"
+html_title = "Nipoppy"
 
 # -- Intersphinx configuration ------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
