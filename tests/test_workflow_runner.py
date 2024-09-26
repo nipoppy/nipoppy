@@ -327,7 +327,9 @@ def test_run_single_pybidsdb(
     config.save(runner.layout.fpath_config)
 
     # Set GENERATE_PYBIDS_DATABASE
-    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = (
+        generate_pybids_database
+    )
 
     # Mock the set_up_bids_db method
     mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
