@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from nipoppy.config.container import (
     ContainerConfig,
     ContainerInfo,
-    SchemaWithContainerConfig,
+    _SchemaWithContainerConfig,
     add_bind_path_to_args,
     check_container_args,
     check_container_command,
@@ -140,7 +140,7 @@ def test_container_info_no_extra_fields():
 
 
 def test_schema_with_container_config():
-    class ClassWithContainerConfig(SchemaWithContainerConfig):
+    class ClassWithContainerConfig(_SchemaWithContainerConfig):
         pass
 
     assert isinstance(

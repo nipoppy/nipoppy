@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
-from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
 
@@ -24,7 +24,7 @@ class AnalysisLevelType(str, Enum):
     group = "group"
 
 
-class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
+class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
     NAME: Optional[str] = Field(
