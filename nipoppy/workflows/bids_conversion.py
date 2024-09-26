@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.pipeline import BidsPipelineConfig
+from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
@@ -50,11 +51,16 @@ class BidsConversionRunner(PipelineRunner):
 
     @cached_property
     def pipeline_config(self) -> BidsPipelineConfig:
-        """Get the user config for the BIDS conversion software."""
+        """Get the user config for the BIDS conversion pipeline."""
         return self.config.get_pipeline_config(
             self.pipeline_name,
             self.pipeline_version,
         )
+
+    @cached_property
+    def pipeline_step_config(self) -> BidsPipelineStepConfig:
+        """Get the config for the relevant step of the BIDS conversion pipeline."""
+        return super().pipeline_step_config
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -105,9 +111,7 @@ class BidsConversionRunner(PipelineRunner):
         Specifically:
         - Write updated doughnut file
         """
-        update_doughnut = self.pipeline_config.get_update_doughnut(
-            step_name=self.pipeline_step
-        )
+        update_doughnut = self.pipeline_step_config.UPDATE_DOUGHNUT
         if update_doughnut and not self.simulate:
             self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
         return super().run_cleanup(**kwargs)

@@ -13,6 +13,7 @@ from nipoppy.cli.parser import (
     COMMAND_INIT,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
+    PROGRAM_NAME,
     VERBOSITY_TO_LOG_LEVEL_MAP,
     get_global_parser,
 )
@@ -29,7 +30,10 @@ def cli(argv: Sequence[str] = None) -> None:
     # common arguments
     command = args.command
     fpath_layout = args.fpath_layout
-    logger = get_logger(name=command, level=VERBOSITY_TO_LOG_LEVEL_MAP[args.verbosity])
+    logger = get_logger(
+        name=f"{PROGRAM_NAME}.{command}",
+        level=VERBOSITY_TO_LOG_LEVEL_MAP[args.verbosity],
+    )
     dry_run = args.dry_run
 
     # to pass to all workflows
@@ -42,8 +46,11 @@ def cli(argv: Sequence[str] = None) -> None:
             # Lazy import to improve performance of cli.
             from nipoppy.workflows.dataset_init import InitWorkflow
 
+            bids_source = getattr(args, "bids_source", None)
+
             workflow = InitWorkflow(
                 dpath_root=dpath_root,
+                bids_source=bids_source,
                 **workflow_kwargs,
             )
         elif command == COMMAND_DOUGHNUT:
