@@ -8,20 +8,19 @@ from typing import Any, Optional
 from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
-from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
     ProcPipelineConfig,
 )
-from nipoppy.config.pipeline_step import BidsPipelineStepConfig, ProcPipelineStepConfig
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
-class Config(SchemaWithContainerConfig):
+class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
     DATASET_NAME: str = Field(description="Name of the dataset")
@@ -153,25 +152,6 @@ class Config(SchemaWithContainerConfig):
         self._check_dicom_dir_options()
         self._check_no_duplicate_pipeline()
 
-        # make sure BIDS/processing pipelines are the right type
-        for pipeline_configs, step_class in [
-            (self.BIDS_PIPELINES, BidsPipelineStepConfig),
-            (self.PROC_PIPELINES, ProcPipelineStepConfig),
-        ]:
-            for pipeline_config in pipeline_configs:
-                # type annotation to make IDE smarter
-                pipeline_config: BasePipelineConfig
-                steps = pipeline_config.STEPS
-                for i_step in range(len(steps)):
-                    # extract fields used to create (possibly incorrect) step object
-                    # and use them to create a new (correct) step object
-                    # (this is needed because BidsPipelineStepConfig and
-                    # ProcPipelineStepConfig share some fields, and the fields
-                    # that are different are optional, so the default Pydantic
-                    # parsing can create the wrong type of step object)
-                    steps[i_step] = step_class(
-                        **steps[i_step].model_dump(exclude_unset=True)
-                    )
         return self
 
     def get_pipeline_version(self, pipeline_name: str) -> str:
@@ -200,8 +180,8 @@ class Config(SchemaWithContainerConfig):
         self,
         pipeline_name: str,
         pipeline_version: str,
-    ) -> ProcPipelineConfig:
-        """Get the config for a BIDS or processing pipeline."""
+    ) -> BasePipelineConfig:
+        """Get the config for a pipeline."""
         # pooling them together since there should not be any duplicates
         for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
             if (

@@ -34,6 +34,7 @@ includehidden:
 titlesonly:
 caption: Other
 ---
+changelog
 contributing
 glossary
 ```
