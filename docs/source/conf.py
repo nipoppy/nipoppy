@@ -144,7 +144,7 @@ autoapi_options = [
     "members",
     "undoc-members",
     # "private-members",
-    "show-inheritance",
+    # "show-inheritance",
     # "show-module-summary",
     # "special-members",
     "imported-members",
@@ -168,6 +168,11 @@ nitpick_ignore = [
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
+    ("py:obj", "BasePipelineConfig"),
+    ("py:obj", "BasePipelineStepConfig"),
+    ("py:obj", "ContainerConfig"),
+    ("py:obj", "PathInfo"),
+    ("py:obj", "FpathInfo"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------
