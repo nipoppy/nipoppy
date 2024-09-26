@@ -136,9 +136,6 @@ class InitWorkflow(BaseWorkflow):
                 log_level=logging.DEBUG,
             )
 
-        if self.bids_source is not None:
-            self._init_manifest_from_bids_dataset()
-
         if self.use_dalatad:
 
             api.install(
