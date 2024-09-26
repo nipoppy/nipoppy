@@ -184,9 +184,7 @@ class PipelineRunner(BasePipelineWorkflow):
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
         # Access the GENERATE_PYBIDS_DATABASE field
-        generate_bids_db = self.pipeline_config.get_step_config(
-            self.pipeline_step
-        ).GENERATE_PYBIDS_DATABASE
+        generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
 
         # Conditionally set up PyBIDS database
         if generate_bids_db:
