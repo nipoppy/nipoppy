@@ -85,7 +85,7 @@ jobs:
 
     - name: Run tests mark as datalad
       run: |
-        python -m pytest nipoppy_cli --cov=nipoppy_cli/nipoppy --cov-report=xml -m datalad
+        python -m pytest nipoppy --cov=nipoppy --cov-report=xml -m datalad
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
