@@ -2,9 +2,9 @@
 
 import json
 from pathlib import Path
-import pytest_mock
 
 import pytest
+import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
