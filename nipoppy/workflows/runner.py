@@ -183,12 +183,16 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
-        # set up PyBIDS database
-        self.set_up_bids_db(
-            dpath_bids_db=self.dpath_pipeline_bids_db,
-            participant_id=participant_id,
-            session_id=session_id,
-        )
+        # Access the GENERATE_PYBIDS_DATABASE field
+        generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
+
+        # Conditionally set up PyBIDS database
+        if generate_bids_db:
+            self.set_up_bids_db(
+                dpath_bids_db=self.dpath_pipeline_bids_db,
+                participant_id=participant_id,
+                session_id=session_id,
+            )
 
         # get container command
         container_command = self.process_container_config(
