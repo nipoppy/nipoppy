@@ -80,7 +80,6 @@ jobs:
 
     - name: Install package
       run: |
-        cd nipoppy_cli
         pip install -U pip
         pip install .[tests,datalad]
 
