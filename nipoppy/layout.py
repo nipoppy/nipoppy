@@ -51,7 +51,7 @@ class LayoutConfig(BaseModel):
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
     )
-    dpath_sourcedata: DpathInfo = Field(
+    dpath_to_bidsify: DpathInfo = Field(
         description="Directory for raw imaging data that is not yet in BIDS"
     )
     dpath_downloads: DpathInfo = Field(description="Directory for downloaded data")
@@ -165,7 +165,7 @@ class DatasetLayout(Base):
         # directories (for type hinting)
         self.dpath_bids: Path
         self.dpath_derivatives: Path
-        self.dpath_sourcedata: Path
+        self.dpath_to_bidsify: Path
         self.dpath_downloads: Path
         self.dpath_proc: Path
         self.dpath_containers: Path

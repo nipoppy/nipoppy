@@ -6,7 +6,7 @@
     "dpath_derivatives": {
         "path": "derivatives"
     },
-    "dpath_sourcedata": {
+    "dpath_to_bidsify": {
         "path": "sourcedata"
     },
     "dpath_downloads": {

@@ -7,7 +7,7 @@
         "path": "derivatives",
         "description": "This directory contains the outputs of image processing pipelines. Outputs of different pipelines are stored in `<pipeline_name>-<pipeline_version>` subdirectories. Each subdirectory has two additional subdirectories for the actual output (under `output`) and temporary working directory (under `work`)."
     },
-    "dpath_sourcedata": {
+    "dpath_to_bidsify": {
         "path": "dicom",
         "description": "This directory contains the organized source data that is ready for BIDS conversion."
     },

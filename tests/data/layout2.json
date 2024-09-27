@@ -5,7 +5,7 @@
     "dpath_derivatives": {
         "path": "derivatives"
     },
-    "dpath_sourcedata": {
+    "dpath_to_bidsify": {
         "path": "dicom"
     },
     "dpath_downloads": {

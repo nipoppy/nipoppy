@@ -16,7 +16,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 | Directory | Content description |
 |---|---|
 | {{dpath_raw_imaging}} | **Input** -- {{content_dpath_raw_imaging}} |
-| {{dpath_sourcedata}} | **Output** -- {{content_dpath_sourcedata}} |
+| {{dpath_to_bidsify}} | **Output** -- {{content_dpath_to_bidsify}} |
 
 ### Commands
 
@@ -25,13 +25,13 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_raw_imaging}} but *do not have* data in {{dpath_sourcedata}} according to the {term}`doughnut file`
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_raw_imaging}} but *do not have* data in {{dpath_to_bidsify}} according to the {term}`doughnut file`
     - If the doughnut file does not exist, it will be automatically generated
     - If there is an existing doughnut file but it does not have all the rows in the manifest, new entries will be automatically added to the doughnut file
     - The doughnut file can also be completely regenerated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
-    1. Files from the {{dpath_raw_imaging}} directory will be "copied" (the default is to create symlinks) to the {{dpath_sourcedata}} directory into a flat list
-    2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_sourcedata}}
+    1. Files from the {{dpath_raw_imaging}} directory will be "copied" (the default is to create symlinks) to the {{dpath_to_bidsify}} directory into a flat list
+    2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_to_bidsify}}
 
 ## Configuring the reorganization
 
@@ -39,7 +39,7 @@ By default, Nipoppy expects "participant-first" organization, like the following
 ```{literalinclude} ./inserts/default_dicom_reorg-before.txt
 ```
 
-All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` (note the addition of BIDS prefixes), creating a flat list of files, like this:
+All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_to_bidsify}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` (note the addition of BIDS prefixes), creating a flat list of files, like this:
 ```{literalinclude} ./inserts/default_dicom_reorg-after.txt
 ```
 
@@ -116,7 +116,7 @@ In this case, using a DICOM directory mapping file as described above is not eno
 The {class}`nipoppy.workflows.DicomReorgWorkflow` class exposes two functions for finer control of input paths and output filenames:
 - {func}`nipoppy.workflows.DicomReorgWorkflow.get_fpaths_to_reorg` can be overridden to map a participant ID and session ID to a list of absolute filepaths to be reorganized
 - {func}`nipoppy.workflows.DicomReorgWorkflow.apply_fname_mapping` can be overridden to rename output files
-  - Note: output files will still be in the {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
+  - Note: output files will still be in the {{dpath_to_bidsify}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
 
 Here is an example of custom imaging data reorganization script:
 ```{literalinclude} ./inserts/custom_dicom_reorg.py

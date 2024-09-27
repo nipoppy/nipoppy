@@ -117,7 +117,7 @@ myst_substitutions = {
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
     "dpath_raw_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}`",
-    "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
+    "dpath_to_bidsify": f"`{DEFAULT_LAYOUT_INFO.dpath_to_bidsify}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
@@ -132,7 +132,7 @@ myst_substitutions = {
     "content_dpath_raw_imaging": (
         "Arbitrarily organized raw imaging data (DICOMs or NIfTIs)"
     ),
-    "content_dpath_sourcedata": (
+    "content_dpath_to_bidsify": (
         "Raw imaging data (DICOMs or NIfTIs) organized in a way "
         "that facilitates BIDS conversion"
     ),
