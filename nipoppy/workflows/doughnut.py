@@ -38,7 +38,7 @@ class DoughnutWorkflow(BaseWorkflow):
         fpath_doughnut = self.layout.fpath_doughnut
         dpath_downloaded = self.layout.dpath_raw_imaging
         dpath_organized = self.layout.dpath_sourcedata
-        dpath_bidsified = self.layout.dpath_imaging
+        dpath_bidsified = self.layout.dpath_bids
         empty = self.empty
         logger = self.logger
 

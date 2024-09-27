@@ -103,25 +103,22 @@ def test_create_bids_db(
 ):
     from nipoppy.utils import create_bids_db
 
-    dpath_imaging = tmp_path / "bids"
+    dpath_bids = tmp_path / "bids"
     if dpath_bids_db is not None:
         dpath_bids_db: Path = tmp_path / dpath_bids_db
 
     fids.create_fake_bids_dataset(
-        output_dir=dpath_imaging,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat"],
+        output_dir=dpath_bids, subjects=["01"], sessions=["1", "2"], datatypes=["anat"]
     )
     fids.create_fake_bids_dataset(
-        output_dir=dpath_imaging,
+        output_dir=dpath_bids,
         subjects=["02"],
         sessions=["1", "2", "3"],
         datatypes=["anat", "func"],
     )
 
     bids_layout = create_bids_db(
-        dpath_imaging=dpath_imaging,
+        dpath_bids=dpath_bids,
         dpath_bids_db=dpath_bids_db,
         ignore_patterns=ignore_patterns,
         resolve_paths=resolve_paths,

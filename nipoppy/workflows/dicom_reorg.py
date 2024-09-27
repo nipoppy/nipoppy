@@ -160,7 +160,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dicom_dir_map=self.dicom_dir_map,
             dpath_downloaded=self.layout.dpath_raw_imaging,
             dpath_organized=self.layout.dpath_sourcedata,
-            dpath_bidsified=self.layout.dpath_imaging,
+            dpath_bidsified=self.layout.dpath_bids,
             logger=self.logger,
         )
 

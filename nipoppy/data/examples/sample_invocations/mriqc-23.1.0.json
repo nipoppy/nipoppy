@@ -1,5 +1,5 @@
 {
-    "bids_dir": "[[NIPOPPY_DPATH_IMAGING]]",
+    "bids_dir": "[[NIPOPPY_DPATH_BIDS]]",
     "output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
     "analysis_level": "participant",
     "participant_label": [

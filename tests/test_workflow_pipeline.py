@@ -381,7 +381,7 @@ def test_process_template_json(return_str, tmp_path: Path):
         {
             "[[NIPOPPY_BIDS_PARTICIPANT]]": "[[NIPOPPY_PARTICIPANT_ID]]",
             "[[NIPOPPY_BIDS_SESSION]]": "[[NIPOPPY_SESSION_ID]]",
-            "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_IMAGING]]",
+            "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
         },
         participant_id="01",
@@ -404,7 +404,7 @@ def test_process_template_json(return_str, tmp_path: Path):
         "[[NIPOPPY_BIDS_SESSION]]",
         "[[NIPOPPY_SESSION_ID]]",
         "[[NIPOPPY_DPATH_PIPELINE]]",
-        "[[NIPOPPY_DPATH_IMAGING]]",
+        "[[NIPOPPY_DPATH_BIDS]]",
         "[[NIPOPPY_EXTRA1]]",
         "[[NIPOPPY_EXTRA2]]",
     ]:
@@ -476,13 +476,13 @@ def test_set_up_bids_db(
 ):
     dpath_bids_db = tmp_path / "bids_db"
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_imaging,
+        output_dir=workflow.layout.dpath_bids,
         subjects="01",
         sessions=["1", "2", "3"],
         datatypes=["anat"],
     )
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_imaging,
+        output_dir=workflow.layout.dpath_bids,
         subjects="02",
         sessions=["1", "2"],
         datatypes=["anat", "func"],
@@ -502,7 +502,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     session_id = "1"
 
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_imaging,
+        output_dir=workflow.layout.dpath_bids,
     )
 
     pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
@@ -607,7 +607,7 @@ def test_run_main(
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_imaging,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()
@@ -637,7 +637,7 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_imaging,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.run_main()

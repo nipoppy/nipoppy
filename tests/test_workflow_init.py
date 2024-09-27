@@ -106,14 +106,13 @@ def test_init_bids(tmp_path):
 
     source_files = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
     target_files = [
-        x.relative_to(workflow.layout.dpath_imaging)
-        for x in workflow.layout.dpath_imaging.glob("**/*")
+        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
     ]
 
     for f in source_files:
         assert f in target_files
 
-    assert (workflow.layout.dpath_imaging / "README.md").exists()
+    assert (dpath_root / "bids" / "README.md").exists()
 
 
 def test_init_bids_dry_run(tmp_path):

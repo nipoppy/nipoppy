@@ -126,7 +126,7 @@ def check_session_id(session_id: Optional[str], raise_error=False):
 
 
 def create_bids_db(
-    dpath_imaging: StrOrPathLike,
+    dpath_bids: StrOrPathLike,
     dpath_bids_db: Optional[StrOrPathLike] = None,
     validate=False,
     reset_database=True,
@@ -134,9 +134,9 @@ def create_bids_db(
     resolve_paths=True,
 ) -> bids.BIDSLayout:
     """Create a BIDSLayout using an indexer."""
-    dpath_imaging = Path(dpath_imaging)
+    dpath_bids = Path(dpath_bids)
     if resolve_paths:
-        dpath_imaging = dpath_imaging.resolve()
+        dpath_bids = dpath_bids.resolve()
 
     if dpath_bids_db is not None:
         dpath_bids_db = Path(dpath_bids_db)
@@ -146,7 +146,7 @@ def create_bids_db(
         ignore=ignore_patterns,
     )
     bids_layout = bids.BIDSLayout(
-        root=dpath_imaging,
+        root=dpath_bids,
         indexer=indexer,
         validate=validate,
         database_path=dpath_bids_db,

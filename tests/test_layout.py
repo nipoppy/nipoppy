@@ -108,7 +108,7 @@ def test_fpaths(dpath_root: Path):
     [
         [],
         ["sourcedata", "downloads"],
-        ["imaging", "derivatives"],
+        ["bids", "derivatives"],
         [
             "proc",
             "proc/containers",

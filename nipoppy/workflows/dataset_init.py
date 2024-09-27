@@ -67,10 +67,7 @@ class InitWorkflow(BaseWorkflow):
         for dpath in self.layout.dpaths:
 
             # If a bids_source is passed it means datalad is installed.
-            if (
-                self.bids_source is not None
-                and dpath.stem == self.layout.dpath_imaging.name
-            ):
+            if self.bids_source is not None and dpath.stem == "bids":
                 self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
             else:
                 self.mkdir(dpath)
@@ -129,7 +126,7 @@ class InitWorkflow(BaseWorkflow):
             fpath_readme = dpath / self.fname_readme
             if description is None:
                 continue
-            if dpath.stem != self.layout.dpath_imaging.name or self.bids_source is None:
+            if dpath.stem != "bids" or self.bids_source is None:
                 fpath_readme.write_text(f"{description}\n")
             elif self.bids_source is not None and not fpath_readme.exists():
                 gh_org = "bids-standard"
@@ -159,7 +156,7 @@ class InitWorkflow(BaseWorkflow):
         participant_ids = sorted(
             [
                 x.name
-                for x in (self.layout.dpath_imaging).iterdir()
+                for x in (self.layout.dpath_bids).iterdir()
                 if x.is_dir() and x.name.startswith(BIDS_SUBJECT_PREFIX)
             ]
         )
@@ -171,7 +168,7 @@ class InitWorkflow(BaseWorkflow):
             session_ids = sorted(
                 [
                     x.name
-                    for x in (self.layout.dpath_imaging / ppt).iterdir()
+                    for x in (self.layout.dpath_bids / ppt).iterdir()
                     if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
@@ -185,7 +182,7 @@ class InitWorkflow(BaseWorkflow):
                 datatypes = sorted(
                     [
                         x.name
-                        for x in (self.layout.dpath_imaging / ppt / ses).iterdir()
+                        for x in (self.layout.dpath_bids / ppt / ses).iterdir()
                         if x.is_dir()
                     ]
                 )
