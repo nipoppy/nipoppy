@@ -324,7 +324,7 @@ class BaseWorkflow(Base, ABC):
             doughnut = generate_doughnut(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=self.layout.dpath_raw_imaging,
+                dpath_downloaded=self.layout.dpath_to_reorg,
                 dpath_organized=self.layout.dpath_to_bidsify,
                 dpath_bidsified=self.layout.dpath_bids,
                 empty=False,

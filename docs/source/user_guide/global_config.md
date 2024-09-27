@@ -23,11 +23,11 @@ Fields containing general information about the dataset.
 
 ### Imaging data organization
 
-Fields for specifying the path to participant-session data directories in {{dpath_raw_imaging}}. Note that these two options are mutually exclusive (cannot both be specified).
+Fields for specifying the path to participant-session data directories in {{dpath_to_reorg}}. Note that these two options are mutually exclusive (cannot both be specified).
 
 ```{glossary}
 `DICOM_DIR_PARTICIPANT_FIRST`
-    Can be set to `false` to indicate that the data is organized in subdirectories following the {{dpath_raw_imaging}}`/<SESSION_ID>/<PARTICIPANT_ID>` pattern. Otherwise, setting to `true` is equivalent to the default (files in `{{dpath_raw_imaging}}/<PARTICIPANT_ID>/<SESSION_ID>` directories).
+    Can be set to `false` to indicate that the data is organized in subdirectories following the {{dpath_to_reorg}}`/<SESSION_ID>/<PARTICIPANT_ID>` pattern. Otherwise, setting to `true` is equivalent to the default (files in `{{dpath_to_reorg}}/<PARTICIPANT_ID>/<SESSION_ID>` directories).
 
 `DICOM_DIR_MAP_FILE`
     Explicit mapping file for more custom directory names. See {ref}`here <dicom-dir-map-example>` for an example and {ref}`here <dicom-dir-map-schema>` for the auto-generated schema.

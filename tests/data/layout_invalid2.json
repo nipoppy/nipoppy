@@ -35,7 +35,7 @@
     "dpath_scratch": {
         "path": "scratch"
     },
-    "dpath_raw_imaging": {
+    "dpath_to_reorg": {
         "path": "scratch/raw_imaging"
     },
     "dpath_logs": {

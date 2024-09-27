@@ -107,7 +107,7 @@ def test_fpaths(dpath_root: Path):
     "paths_to_delete",
     [
         [],
-        ["sourcedata", "downloads"],
+        ["sourcedata/imaging/to_bidsify", "downloads"],
         ["bids", "derivatives"],
         [
             "proc",
@@ -122,7 +122,6 @@ def test_fpaths(dpath_root: Path):
         ],
         [
             "scratch",
-            "scratch/raw_dicom",
             "logs",
         ],
         [
@@ -299,4 +298,4 @@ def test_get_dpath_bids_db(
 
 def test_doughnut_parent_directory(dpath_root: Path):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout.fpath_doughnut.parent == layout.dpath_raw_imaging
+    assert layout.fpath_doughnut.parent == layout.dpath_to_reorg

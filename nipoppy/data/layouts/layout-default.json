@@ -11,6 +11,10 @@
         "path": "sourcedata/imaging/to_bidsify",
         "description": "This directory is for the organized source data that is ready for BIDS conversion."
     },
+    "dpath_to_reorg": {
+        "path": "sourcedata/imaging/to_reorg",
+        "description": "This directory is for raw, arbitrarily organized imaging file dumps."
+    },
     "dpath_downloads": {
         "path": "downloads",
         "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
@@ -50,10 +54,6 @@
     "dpath_scratch": {
         "path": "scratch",
         "description": "This directory is for scratch data."
-    },
-    "dpath_raw_imaging": {
-        "path": "scratch/raw_imaging",
-        "description": "This directory is for raw, unorganized imaging file dumps."
     },
     "dpath_logs": {
         "path": "logs",

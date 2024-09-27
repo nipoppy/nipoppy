@@ -221,7 +221,7 @@ def add_subparser_dicom_reorg(
 
     description = (
         "(Re)organize raw (DICOM) files, from the "
-        f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to "
+        f"({DEFAULT_LAYOUT_INFO.dpath_to_reorg}) to "
         f"({DEFAULT_LAYOUT_INFO.dpath_to_bidsify})."
     )
     parser = subparsers.add_parser(
