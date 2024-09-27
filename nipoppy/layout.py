@@ -61,7 +61,6 @@ class LayoutConfig(BaseModel):
             " before running pipelines"
         )
     )
-    dpath_releases: DpathInfo = Field(description="Directory for data releases")
     dpath_containers: DpathInfo = Field(
         description="Directory for storing container images"
     )
@@ -93,9 +92,6 @@ class LayoutConfig(BaseModel):
     dpath_tabular: DpathInfo = Field(description="Directory for tabular data")
     dpath_assessments: DpathInfo = Field(
         description="Directory for tabular assessment data"
-    )
-    dpath_demographics: DpathInfo = Field(
-        description="Directory for tabular demographic data"
     )
 
     fpath_config: FpathInfo = Field(description="Path to the configuration file")
@@ -172,7 +168,6 @@ class DatasetLayout(Base):
         self.dpath_sourcedata: Path
         self.dpath_downloads: Path
         self.dpath_proc: Path
-        self.dpath_releases: Path
         self.dpath_containers: Path
         self.dpath_descriptors: Path
         self.dpath_invocations: Path
@@ -185,7 +180,6 @@ class DatasetLayout(Base):
         self.dpath_logs: Path
         self.dpath_tabular: Path
         self.dpath_assessments: Path
-        self.dpath_demographics: Path
 
         # files (for type hinting)
         self.fpath_config: Path

@@ -8,9 +8,6 @@
     "dpath_downloads": {
         "path": "downloads"
     },
-    "dpath_releases": {
-        "path": "releases"
-    },
     "dpath_proc": {
         "path": "code"
     },
@@ -49,9 +46,6 @@
     },
     "dpath_assessments": {
         "path": "tabular/assessments"
-    },
-    "dpath_demographics": {
-        "path": "tabular/demographics"
     },
     "fpath_config": {
         "path": "code/global_config.json"

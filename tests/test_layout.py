@@ -49,6 +49,7 @@ def test_init_default(dpath_root):
         None,
         FPATH_DEFAULT_LAYOUT,
         DPATH_LAYOUTS / "layout-0.1.0.json",
+        DPATH_LAYOUTS / "layout-0.2.x.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],
@@ -107,7 +108,7 @@ def test_fpaths(dpath_root: Path):
     [
         [],
         ["sourcedata", "downloads"],
-        ["bids", "derivatives"],
+        ["imaging", "derivatives"],
         [
             "proc",
             "proc/containers",
@@ -128,7 +129,6 @@ def test_fpaths(dpath_root: Path):
             "tabular",
             "manifest.csv",
             "tabular/assessments",
-            "tabular/demographics",
         ],
     ],
 )

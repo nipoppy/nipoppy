@@ -11,9 +11,6 @@
     "dpath_downloads": {
         "path": "downloads"
     },
-    "dpath_releases": {
-        "path": "releases"
-    },
     "dpath_proc": {
         "path": "proc"
     },
@@ -52,9 +49,6 @@
     },
     "dpath_assessments": {
         "path": "tabular/assessments"
-    },
-    "dpath_demographics": {
-        "path": "tabular/demographics"
     },
     "fpath_config": {
         "path": "proc/global_config.json"

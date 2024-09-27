@@ -28,7 +28,6 @@ ATTR_TO_DPATH_MAP = {
     "dpath_sourcedata": "sourcedata",
     "dpath_downloads": "downloads",
     "dpath_proc": "proc",
-    "dpath_releases": "releases",
     "dpath_containers": "proc/containers",
     "dpath_descriptors": "proc/descriptors",
     "dpath_invocations": "proc/invocations",
@@ -41,7 +40,6 @@ ATTR_TO_DPATH_MAP = {
     "dpath_logs": "scratch/logs",
     "dpath_tabular": "tabular",
     "dpath_assessments": "tabular/assessments",
-    "dpath_demographics": "tabular/demographics",
 }
 
 ATTR_TO_REQUIRED_FPATH_MAP = {

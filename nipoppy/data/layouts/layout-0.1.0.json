@@ -15,10 +15,6 @@
         "path": "downloads",
         "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
     },
-    "dpath_releases": {
-        "path": "releases",
-        "description": "This directory contains dataset releases (e.g., associated with specific publications)."
-    },
     "dpath_proc": {
         "path": "proc",
         "description": "This directory contains the Nipoppy configuration information and custom code."
@@ -70,10 +66,6 @@
     "dpath_assessments": {
         "path": "tabular/assessments",
         "description": "This directory contains assessments data."
-    },
-    "dpath_demographics": {
-        "path": "tabular/demographics",
-        "description": "This directory contains demographics data."
     },
     "fpath_config": {
         "path": "proc/global_configs.json",
