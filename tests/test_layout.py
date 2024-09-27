@@ -115,7 +115,6 @@ def test_fpaths(dpath_root: Path):
             "proc/descriptors",
             "proc/invocations",
             "proc/tracker_configs",
-            "proc/pybids",
             "proc/pybids/ignore_patterns",
         ],
         [

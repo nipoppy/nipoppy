@@ -35,15 +35,11 @@
         "path": "proc/tracker_configs",
         "description": "This directory is for storing tracker configurations for processing pipelines."
     },
-    "dpath_pybids": {
-        "path": "proc/pybids",
-        "description": "This directory contains PyBIDS-specific data/configurations."
-    },
     "dpath_pybids_db": {
         "path": "proc/pybids/bids_db",
         "description": "This directory is for PyBIDS databases generated/used during processing."
     },
-    "dpath_bids_ignore_patterns": {
+    "dpath_pybids_ignore_patterns": {
         "path": "proc/pybids/ignore_patterns",
         "description": "This directory is for storing ignore patterns to be used by PyBIDS during dataset indexing."
     },

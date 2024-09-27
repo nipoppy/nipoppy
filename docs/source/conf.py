@@ -124,7 +124,7 @@ myst_substitutions = {
     "dpath_invocations": f"`{DEFAULT_LAYOUT_INFO.dpath_invocations}`",
     "dpath_descriptors": f"`{DEFAULT_LAYOUT_INFO.dpath_descriptors}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
-    "dpath_bids_ignore_patterns": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_ignore_patterns}`",
+    "dpath_pybids_ignore_patterns": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_ignore_patterns}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
