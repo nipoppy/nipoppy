@@ -5,5 +5,5 @@
     "participant": "[[NIPOPPY_PARTICIPANT_ID]]",
     "session": "[[NIPOPPY_SESSION_ID]]",
     "config": "[[DCM2BIDS_CONFIG_FILE]]",
-    "output_dir": "[[NIPOPPY_DPATH_BIDS]]"
+    "output_dir": "[[NIPOPPY_DPATH_IMAGING]]"
 }

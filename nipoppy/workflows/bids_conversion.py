@@ -85,7 +85,7 @@ class BidsConversionRunner(PipelineRunner):
             session_id=session_id,
             bind_paths=[
                 self.layout.dpath_sourcedata,
-                self.layout.dpath_bids,
+                self.layout.dpath_imaging,
             ],
         )
 

@@ -324,9 +324,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Overwriting existing BIDS database directory: {dpath_bids_db}"
             )
 
-        self.logger.debug(f"Path to BIDS data: {self.layout.dpath_bids}")
+        self.logger.debug(f"Path to BIDS data: {self.layout.dpath_imaging}")
         bids_layout: bids.BIDSLayout = create_bids_db(
-            dpath_bids=self.layout.dpath_bids,
+            dpath_imaging=self.layout.dpath_imaging,
             dpath_bids_db=dpath_bids_db,
             ignore_patterns=pybids_ignore_patterns,
             reset_database=True,

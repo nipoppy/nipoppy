@@ -14,7 +14,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
-- Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_bids}} directory
+- Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_imaging}} directory
     - See <project:bids_conversion.md>
 
 ```{include} ./inserts/apptainer_stub.md
@@ -24,7 +24,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 
 | Directory | Content description |
 |---|---|
-| {{dpath_bids}} | **Input** -- {{content_dpath_bids}} |
+| {{dpath_imaging}} | **Input** -- {{content_dpath_imaging}} |
 | {{dpath_derivatives}} | **Output** -- {{content_dpath_derivatives}} |
 
 Within the {{dpath_derivatives}} directory, output files for a specific pipeline are organized like this:

@@ -1,6 +1,6 @@
 {
     "extra_field": {},
-    "dpath_bids": {
+    "dpath_imaging": {
         "path": "bids"
     },
     "dpath_derivatives": {

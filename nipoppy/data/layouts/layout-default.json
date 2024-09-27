@@ -1,6 +1,6 @@
 {
-    "dpath_bids": {
-        "path": "bids",
+    "dpath_imaging": {
+        "path": "imaging",
         "description": "This directory contains the raw dataset converted to the BIDS standard."
     },
     "dpath_derivatives": {

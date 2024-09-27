@@ -23,7 +23,7 @@ FPATH_MANIFEST = "manifest.csv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 
 ATTR_TO_DPATH_MAP = {
-    "dpath_bids": "bids",
+    "dpath_imaging": "imaging",
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
     "dpath_downloads": "downloads",

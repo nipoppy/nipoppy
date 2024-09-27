@@ -26,7 +26,7 @@ def config(tmp_path: Path):
         "tool-version": "1.0.0",
         "description": "A dummy pipeline for testing",
         "schema-version": "0.5",
-        "command-line": "echo [ARG1] [ARG2] [[NIPOPPY_DPATH_BIDS]]",
+        "command-line": "echo [ARG1] [ARG2] [[NIPOPPY_DPATH_IMAGING]]",
         "inputs": [
             {
                 "id": "arg1",
@@ -115,7 +115,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     session_id = "BL"
 
     fids.create_fake_bids_dataset(
-        runner.layout.dpath_bids,
+        runner.layout.dpath_imaging,
         subjects=participant_id,
         sessions=session_id,
     )
@@ -126,7 +126,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
         participant_id, session_id, container_command=""
     )
 
-    assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
+    assert "[[NIPOPPY_DPATH_IMAGING]]" not in descriptor_str
     assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
     assert "[[NIPOPPY_BIDS_SESSION]]" not in invocation_str
 
@@ -300,7 +300,7 @@ def test_run_multiple(config: Config, tmp_path: Path):
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.layout.dpath_bids,
+        dpath_bidsified=runner.layout.dpath_imaging,
     )
     manifest.save_with_backup(runner.layout.fpath_manifest)
     runner.run_setup()

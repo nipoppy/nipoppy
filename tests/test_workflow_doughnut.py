@@ -62,7 +62,7 @@ def test_run_main(
 
     dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_imaging"]
     dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
-    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
+    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_imaging"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
     fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
@@ -154,7 +154,7 @@ def test_run_main_regenerate(
 
     dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_imaging"]
     dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
-    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
+    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_imaging"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
     fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]

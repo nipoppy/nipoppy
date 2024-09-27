@@ -1,5 +1,5 @@
 {
-    "dpath_bids": {
+    "dpath_imaging": {
         "path": "bids",
         "description": "BIDS data"
     },
