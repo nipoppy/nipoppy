@@ -1,5 +1,6 @@
 """Workflow for init command."""
 
+import json
 import logging
 from pathlib import Path
 from typing import Optional
@@ -34,6 +35,7 @@ class InitWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_root: Path,
+        use_dalatad=False,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -47,6 +49,7 @@ class InitWorkflow(BaseWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
+        self.use_dalatad = use_dalatad
         self.fname_readme = "README.md"
         self.bids_source = bids_source
 
@@ -57,20 +60,41 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
+
         If the BIDS source dataset is requested, it is copied.
+        If dataladd is used, it is installed with datalad.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
             raise FileExistsError("Dataset directory already exists")
 
+        self._init_as_datalad_dataset()
+
         # create directories
         for dpath in self.layout.dpaths:
 
-            # If a bids_source is passed it means datalad is installed.
-            if self.bids_source is not None and dpath.stem == "bids":
-                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
-            else:
+            if dpath.stem != "bids" or self.bids_source is None:
                 self.mkdir(dpath)
+                continue
+
+            if not self.use_dalatad:
+                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                continue
+
+            from datalad import api
+
+            self.logger.info(
+                f"Installing datalad BIDS raw dataset from {self.bids_source}."
+            )
+            dataset = None
+            dataset = self.dpath_root
+
+            api.install(
+                dataset=dataset,
+                path=dpath,
+                source=self.bids_source,
+                result_renderer="disabled",
+            )
 
         self._write_readmes()
 
@@ -112,12 +136,74 @@ class InitWorkflow(BaseWorkflow):
                 log_level=logging.DEBUG,
             )
 
+        if self.use_dalatad:
+
+            api.install(
+                dataset=dataset,
+                path=self.dpath_root / "code" / "templateflow",
+                source="https://github.com/templateflow/templateflow.git",
+                result_renderer="disabled",
+            )
+
+            # install repronim containers for easy access to bids apps
+            # and update path to default mriqc and fmriprep images
+            api.install(
+                dataset=dataset,
+                path=self.layout.dpath_containers / "repronim",
+                source="///repronim/containers",
+                result_renderer="disabled",
+            )
+            self._update_config()
+
+            api.save(
+                dataset=self.dpath_root,
+                path=self.dpath_root / ".",
+                message="Nipoppy layout initialized.",
+            )
+
         # inform user to edit the sample files
         self.logger.warning(
             f"Sample config and manifest files copied to {self.layout.fpath_config}"
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
         )
+
+    def _init_as_datalad_dataset(self) -> None:
+        if not self.use_dalatad:
+            return None
+        from datalad import api
+
+        api.create(path=self.dpath_root, result_renderer="disabled")
+        self._make_git_attributes()
+        self._make_git_ignore()
+
+    def _update_config(self) -> None:
+        """Update global config to adapt it to using datalad."""
+        with open(self.layout.fpath_config, "r") as f:
+            content = json.load(f)
+
+        content["SUBSTITUTIONS"][
+            "[[NIPOPPY_DPATH_CONTAINERS]]"
+        ] = "[[NIPOPPY_DPATH_ROOT]]/proc/containers"
+        content["SUBSTITUTIONS"][
+            "[[TEMPLATEFLOW_HOME]]"
+        ] = "[[NIPOPPY_DPATH_ROOT]]/code/templateflow"
+
+        for i, pipeline in enumerate(content["PROC_PIPELINES"]):
+            if pipeline["NAME"] in ["mriqc", "fmriprep"]:
+                content["PROC_PIPELINES"][i]["CONTAINER_INFO"]["FILE"] = (
+                    "[[NIPOPPY_DPATH_CONTAINERS]]/repronim/images/bids/"
+                    "bids-[[NIPOPPY_PIPELINE_NAME]]--"
+                    "[[NIPOPPY_PIPELINE_VERSION]].sing"
+                )
+            elif pipeline["NAME"] == "heudiconv":
+                content["PROC_PIPELINES"][i]["CONTAINER_INFO"]["FILE"] = (
+                    "[[NIPOPPY_DPATH_CONTAINERS]]/repronim/images/nipy/"
+                    "nipy-[[NIPOPPY_PIPELINE_NAME]]--"
+                    "[[NIPOPPY_PIPELINE_VERSION]].sing"
+                )
+        with open(self.layout.fpath_config, "w") as f:
+            json.dump(content, f, indent=4)
 
     def _write_readmes(self) -> None:
         if self.dry_run:
@@ -195,6 +281,25 @@ class InitWorkflow(BaseWorkflow):
 
         manifest = Manifest(df).validate()
         self.save_tabular_file(manifest, self.layout.fpath_manifest)
+
+    def _make_git_attributes(self) -> None:
+        CONTENT = [
+            "* annex.backend=MD5E",
+            "**/.git* annex.largefiles=nothing",
+            "*.csv annex.largefiles=nothing",
+            "*.tsv annex.largefiles=nothing",
+            "*.json annex.largefiles=nothing",
+            "**/README.md annex.largefiles=nothing",
+        ]
+        with open(self.dpath_root / ".gitattributes", "w") as f:
+            for line in CONTENT:
+                f.write(f"{line}\n")
+
+    def _make_git_ignore(self) -> None:
+        CONTENT = ["sourcedata", "scratch", "proc/pybids/bids_db"]
+        with open(self.dpath_root / ".gitignore", "w") as f:
+            for line in CONTENT:
+                f.write(f"{line}\n")
 
     def run_cleanup(self):
         """Log a success message."""

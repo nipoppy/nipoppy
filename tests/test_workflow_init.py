@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from fids import fids
 
@@ -74,6 +75,26 @@ def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow = InitWorkflow(dpath_root=tmp_path)
     workflow.run_cleanup()
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
+
+
+@pytest.mark.datalad
+def test_run_as_datalad_dataset_with_bids_source(dpath_root: Path):
+    workflow = InitWorkflow(
+        dpath_root=dpath_root,
+        bids_source="https://github.com/OpenNeuroDatasets/ds000006.git",
+        use_dalatad=True,
+    )
+    workflow.run()
+
+    assert (dpath_root / ".datalad").exists()
+    assert (dpath_root / ".gitmodules").exists()
+    assert (dpath_root / ".gitattributes").exists()
+    assert (dpath_root / ".gitignore").exists()
+
+    assert (dpath_root / "bids" / "dataset_description.json").exists()
+
+    df = pd.read_csv(dpath_root / "manifest.csv")
+    assert len(df) == 28
 
 
 def test_init_bids(tmp_path):

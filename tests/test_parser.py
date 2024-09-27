@@ -256,3 +256,18 @@ def test_global_parser(args: list[str]):
         assert (
             exception.code == 0
         ), "Expect exit code of 0 if program exited while parsing."
+
+
+def test_init_with_bids_source():
+    """Smoke test to install BIDS dataset."""
+    parser = get_global_parser()
+    args = ["init", "--dataset-root", "my_dataset", "--bids-source", "/foo"]
+    parser.parse_args(args)
+
+
+@pytest.mark.datalad
+def test_init_with_datalad():
+    """Smoke test to initialize layout as datalad dataset."""
+    parser = get_global_parser()
+    args = ["init", "--dataset-root", "my_dataset", "--use-datalad"]
+    parser.parse_args(args)

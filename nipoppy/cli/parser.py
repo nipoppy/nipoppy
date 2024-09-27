@@ -6,6 +6,7 @@ from pathlib import Path
 
 from nipoppy._version import __version__
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+from nipoppy.utils import is_datalad_installed
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
@@ -148,13 +149,23 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_use_datalad(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add argument to init a layout with a BIDS datalad dataset."""
+    parser.add_argument(
+        "--use-datalad",
+        action="store_true",
+        help=("Initialize the layout as datalad dataset."),
+    )
+    return parser
+
+
 def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
     """Add argument to init a layout with a BIDS datalad dataset."""
     parser.add_argument(
         "--bids-source",
         type=str,
         required=False,
-        help=("Path to a BIDS dataset to initialize the layout with."),
+        help=("URL or path to a BIDS datalad dataset to initialize the layout with."),
     )
     return parser
 
@@ -173,7 +184,8 @@ def add_subparser_init(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-
+    if is_datalad_installed:
+        parser = add_arg_use_datalad(parser)
     parser = add_arg_bids_source(parser)
 
     return parser

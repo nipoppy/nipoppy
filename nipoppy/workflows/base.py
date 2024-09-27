@@ -22,7 +22,7 @@ from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import add_path_timestamp, process_template_str
+from nipoppy.utils import add_path_timestamp, is_datalad_installed, process_template_str
 
 LOG_SUFFIX = ".log"
 
@@ -65,6 +65,13 @@ class BaseWorkflow(Base, ABC):
         self.fpath_layout = fpath_layout
         self.logger = logger
         self.dry_run = dry_run
+
+        self.is_datalad_dataset = False
+        if is_datalad_installed:
+            logging.getLogger("datalad").setLevel(logging.WARNING)
+            logging.getLogger("datalad.gitrepo").setLevel(logging.ERROR)
+            if (self.dpath_root / ".datalad").exists():
+                self.is_datalad_dataset = True
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
