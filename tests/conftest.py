@@ -49,7 +49,7 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "scratch/raw_imaging/doughnut.csv",
+    "fpath_doughnut": "sourcedata/imaging/doughnut.csv",
     "fpath_imaging_bagel": "derivatives/bagel.csv",
 }
 
