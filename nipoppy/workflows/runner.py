@@ -189,7 +189,7 @@ class PipelineRunner(BasePipelineWorkflow):
         # Conditionally set up PyBIDS database
         if generate_bids_db:
             self.set_up_bids_db(
-                dpath_bids_db=self.dpath_pipeline_bids_db,
+                dpath_pybids_db=self.dpath_pipeline_bids_db,
                 participant_id=participant_id,
                 session_id=session_id,
             )

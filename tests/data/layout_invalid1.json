@@ -30,7 +30,7 @@
     "dpath_pybids": {
         "path": "code/pybids"
     },
-    "dpath_bids_db": {
+    "dpath_pybids_db": {
         "path": "code/pybids/bids_db"
     },
     "dpath_bids_ignore_patterns": {

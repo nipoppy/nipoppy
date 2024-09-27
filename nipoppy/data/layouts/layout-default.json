@@ -43,10 +43,6 @@
         "path": "proc/pybids",
         "description": "This directory is for PyBIDS-specific data/configurations."
     },
-    "dpath_bids_db": {
-        "path": "proc/pybids/bids_db",
-        "description": "This directory is for PyBIDS databases generated/used during processing."
-    },
     "dpath_bids_ignore_patterns": {
         "path": "proc/pybids/ignore_patterns",
         "description": "This directory is for storing ignore patterns to be used by PyBIDS during dataset indexing."
@@ -54,6 +50,10 @@
     "dpath_scratch": {
         "path": "scratch",
         "description": "This directory is for scratch data."
+    },
+    "dpath_pybids_db": {
+        "path": "scratch/pybids_db",
+        "description": "This directory is for PyBIDS databases generated/used during processing."
     },
     "dpath_logs": {
         "path": "logs",

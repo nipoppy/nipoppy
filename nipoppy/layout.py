@@ -76,11 +76,7 @@ class LayoutConfig(BaseModel):
     dpath_pybids: DpathInfo = Field(
         description="Directory for storing PyBIDS configurations/databases"
     )
-    dpath_bids_db: DpathInfo = Field(
-        description=(
-            "Directory for PyBIDS databases (should be a under ``dpath_pybids``)"
-        )
-    )
+    dpath_pybids_db: DpathInfo = Field(description=("Directory for PyBIDS databases"))
     dpath_bids_ignore_patterns: DpathInfo = Field(
         description="Directory for PyBIDS indexing configurations"
     )
@@ -173,7 +169,7 @@ class DatasetLayout(Base):
         self.dpath_invocations: Path
         self.dpath_tracker_configs: Path
         self.dpath_pybids: Path
-        self.dpath_bids_db: Path
+        self.dpath_pybids_db: Path
         self.dpath_bids_ignore_patterns: Path
         self.dpath_scratch: Path
         self.dpath_to_reorg: Path
@@ -289,7 +285,7 @@ class DatasetLayout(Base):
             / self.dname_pipeline_output
         )
 
-    def get_dpath_bids_db(
+    def get_dpath_pybids_db(
         self,
         pipeline_name: str,
         pipeline_version: str,
@@ -303,7 +299,7 @@ class DatasetLayout(Base):
             participant_id=participant_id,
             session_id=session_id,
         )
-        return self.dpath_bids_db / dname
+        return self.dpath_pybids_db / dname
 
 
 # for printing defaults in docs

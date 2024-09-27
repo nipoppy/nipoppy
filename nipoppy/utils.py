@@ -127,7 +127,7 @@ def check_session_id(session_id: Optional[str], raise_error=False):
 
 def create_bids_db(
     dpath_bids: StrOrPathLike,
-    dpath_bids_db: Optional[StrOrPathLike] = None,
+    dpath_pybids_db: Optional[StrOrPathLike] = None,
     validate=False,
     reset_database=True,
     ignore_patterns: Optional[list[str | re.Pattern] | str | re.Pattern] = None,
@@ -138,8 +138,8 @@ def create_bids_db(
     if resolve_paths:
         dpath_bids = dpath_bids.resolve()
 
-    if dpath_bids_db is not None:
-        dpath_bids_db = Path(dpath_bids_db)
+    if dpath_pybids_db is not None:
+        dpath_pybids_db = Path(dpath_pybids_db)
 
     indexer = bids.BIDSLayoutIndexer(
         validate=validate,
@@ -149,7 +149,7 @@ def create_bids_db(
         root=dpath_bids,
         indexer=indexer,
         validate=validate,
-        database_path=dpath_bids_db,
+        database_path=dpath_pybids_db,
         reset_database=reset_database,
     )
     return bids_layout

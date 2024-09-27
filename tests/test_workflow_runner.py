@@ -338,7 +338,7 @@ def test_run_single_pybidsdb(
     # Assert set_up_bids_db was called or not called as expected
     if generate_pybids_database:
         mocked_set_up_bids_db.assert_called_once_with(
-            dpath_bids_db=runner.dpath_pipeline_bids_db,
+            dpath_pybids_db=runner.dpath_pipeline_bids_db,
             participant_id=participant_id,
             session_id=session_id,
         )

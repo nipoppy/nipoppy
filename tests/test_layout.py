@@ -114,14 +114,13 @@ def test_fpaths(dpath_root: Path):
             "proc/containers",
             "proc/descriptors",
             "proc/invocations",
-            "proc/scripts",
-            "global_config.json",
+            "proc/tracker_configs",
             "proc/pybids",
-            "proc/pybids/bids_db",
             "proc/pybids/ignore_patterns",
         ],
         [
             "scratch",
+            "scratch/pybids_db",
             "logs",
         ],
         [
@@ -158,24 +157,8 @@ def test_dpath_descriptions():
     [
         ["sourcedata", "downloads"],
         ["bids", "derivatives"],
-        ["proc", "proc/global_config.json"],
-        [
-            "proc",
-            "proc/containers",
-            "proc/descriptors",
-            "proc/invocations",
-            "proc/scripts",
-            "proc/global_config.json",
-            "proc/pybids",
-            "proc/pybids/bids_db",
-            "proc/pybids/ignore_patterns",
-        ],
-        [
-            "tabular",
-            "tabular/manifest.csv",
-            "tabular/assessments",
-            "tabular/demographics",
-        ],
+        ["proc"],
+        ["tabular"],
     ],
 )
 def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
@@ -272,11 +255,23 @@ def test_get_dpath_pipeline_output(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant_id,session_id,expected",
     [
-        ("my_pipeline", "v1", None, None, "proc/pybids/bids_db/my_pipeline-v1"),
-        ("pipeline", "v2", "01", "1", "proc/pybids/bids_db/pipeline-v2-01-1"),
+        (
+            "my_pipeline",
+            "v1",
+            None,
+            None,
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "my_pipeline-v1",
+        ),
+        (
+            "pipeline",
+            "v2",
+            "01",
+            "1",
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "pipeline-v2-01-1",
+        ),
     ],
 )
-def test_get_dpath_bids_db(
+def test_get_dpath_pybids_db(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
@@ -286,7 +281,7 @@ def test_get_dpath_bids_db(
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
-        layout.get_dpath_bids_db(
+        layout.get_dpath_pybids_db(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             participant_id=participant_id,

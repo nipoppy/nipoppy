@@ -39,7 +39,7 @@
         "path": "proc/pybids",
         "description": "This directory contains PyBIDS-specific data/configurations."
     },
-    "dpath_bids_db": {
+    "dpath_pybids_db": {
         "path": "proc/pybids/bids_db",
         "description": "This directory is for PyBIDS databases generated/used during processing."
     },

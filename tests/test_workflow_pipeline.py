@@ -474,7 +474,7 @@ def test_set_up_bids_db(
     expected_count,
     tmp_path: Path,
 ):
-    dpath_bids_db = tmp_path / "bids_db"
+    dpath_pybids_db = tmp_path / "bids_db"
     fids.create_fake_bids_dataset(
         output_dir=workflow.layout.dpath_bids,
         subjects="01",
@@ -488,16 +488,16 @@ def test_set_up_bids_db(
         datatypes=["anat", "func"],
     )
     bids_layout = workflow.set_up_bids_db(
-        dpath_bids_db=dpath_bids_db,
+        dpath_pybids_db=dpath_pybids_db,
         participant_id=participant_id,
         session_id=session_id,
     )
-    assert dpath_bids_db.exists()
+    assert dpath_pybids_db.exists()
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
 
 
 def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Path):
-    dpath_bids_db = tmp_path / "bids_db"
+    dpath_pybids_db = tmp_path / "bids_db"
     participant_id = "01"
     session_id = "1"
 
@@ -508,7 +508,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
 
     workflow.set_up_bids_db(
-        dpath_bids_db=dpath_bids_db,
+        dpath_pybids_db=dpath_pybids_db,
         participant_id=participant_id,
         session_id=session_id,
     )
