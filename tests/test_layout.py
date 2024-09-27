@@ -107,7 +107,7 @@ def test_fpaths(dpath_root: Path):
     "paths_to_delete",
     [
         [],
-        ["sourcedata/imaging/to_bidsify", "downloads"],
+        ["sourcedata/imaging/to_bidsify", "sourcedata/imaging/downloads"],
         ["bids", "derivatives"],
         [
             "proc",

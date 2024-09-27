@@ -16,7 +16,7 @@
         "description": "This directory is for raw, arbitrarily organized imaging file dumps."
     },
     "dpath_downloads": {
-        "path": "downloads",
+        "path": "sourcedata/imaging/downloads",
         "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
     },
     "dpath_proc": {
