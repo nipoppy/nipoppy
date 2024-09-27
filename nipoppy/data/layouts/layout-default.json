@@ -56,7 +56,7 @@
         "description": "This directory is for raw, unorganized imaging file dumps."
     },
     "dpath_logs": {
-        "path": "scratch/logs",
+        "path": "logs",
         "description": "This directory contains log files."
     },
     "dpath_tabular": {

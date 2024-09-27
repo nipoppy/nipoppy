@@ -122,8 +122,8 @@ def test_fpaths(dpath_root: Path):
         ],
         [
             "scratch",
-            "scratch/logs",
             "scratch/raw_dicom",
+            "logs",
         ],
         [
             "tabular",

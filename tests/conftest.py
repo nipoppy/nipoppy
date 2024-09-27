@@ -37,7 +37,7 @@ ATTR_TO_DPATH_MAP = {
     "dpath_bids_ignore_patterns": "proc/pybids/ignore_patterns",
     "dpath_scratch": "scratch",
     "dpath_raw_imaging": "scratch/raw_imaging",
-    "dpath_logs": "scratch/logs",
+    "dpath_logs": "logs",
     "dpath_tabular": "tabular",
     "dpath_assessments": "tabular/assessments",
 }
