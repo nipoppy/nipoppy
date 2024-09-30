@@ -25,6 +25,8 @@ DPATH_TEST_DATA = Path(__file__).parent / "data"
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
     "dpath_derivatives": "derivatives",
+    "dpath_sourcedata": "sourcedata",
+    "dpath_src_tabular": "sourcedata/tabular",
     "dpath_to_bidsify": "sourcedata/imaging/to_bidsify",
     "dpath_to_reorg": "sourcedata/imaging/to_reorg",
     "dpath_downloads": "sourcedata/imaging/downloads",

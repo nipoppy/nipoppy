@@ -54,6 +54,18 @@ class LayoutConfig(BaseModel):
     dpath_to_bidsify: DpathInfo = Field(
         description="Directory for raw imaging data that is not yet in BIDS"
     )
+    dpath_sourcedata: DpathInfo = Field(
+        description="Directory for raw imaging and tabular data"
+    )
+    dpath_src_tabular: DpathInfo = Field(
+        description=(
+            "Directory for raw tabular data"
+            " (e.g., downloaded CSVs, Excel files, RedCAP reports)"
+        )
+    )
+    dpath_src_imaging: DpathInfo = Field(
+        description="Directory for non-BIDS imaging data files and archives"
+    )
     dpath_downloads: DpathInfo = Field(description="Directory for downloaded data")
     dpath_proc: DpathInfo = Field(
         description=(
@@ -158,6 +170,9 @@ class DatasetLayout(Base):
         # directories (for type hinting)
         self.dpath_bids: Path
         self.dpath_derivatives: Path
+        self.dpath_sourcedata: Path
+        self.dpath_src_tabular: Path
+        self.dpath_src_imaging: Path
         self.dpath_to_bidsify: Path
         self.dpath_downloads: Path
         self.dpath_proc: Path

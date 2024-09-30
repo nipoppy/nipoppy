@@ -5,6 +5,15 @@
     "dpath_to_bidsify": {
         "path": "sourcedata"
     },
+    "dpath_sourcedata": {
+        "path": "scratch"
+    },
+    "dpath_src_tabular": {
+        "path": "scratch/tabular"
+    },
+    "dpath_src_imaging": {
+        "path": "scratch/imaging"
+    },
     "dpath_downloads": {
         "path": "downloads"
     },
