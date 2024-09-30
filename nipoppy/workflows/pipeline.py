@@ -33,7 +33,7 @@ from nipoppy.utils import (
     create_bids_db,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_participant,
+    participant_id_to_bids_participant_id,
     process_template_str,
     session_id_to_bids_session,
 )
@@ -254,7 +254,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         template_json: dict,
         participant_id: Optional[str],
         session_id: Optional[str],
-        bids_participant: Optional[str] = None,
+        bids_participant_id: Optional[str] = None,
         bids_session: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
@@ -262,10 +262,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     ):
         """Replace template strings in a JSON object."""
         if participant_id is not None:
-            if bids_participant is None:
-                bids_participant = participant_id_to_bids_participant(participant_id)
+            if bids_participant_id is None:
+                bids_participant_id = participant_id_to_bids_participant_id(
+                    participant_id
+                )
             kwargs["participant_id"] = participant_id
-            kwargs["bids_participant"] = bids_participant
+            kwargs["bids_participant_id"] = bids_participant_id
 
         if session_id is not None:
             if bids_session is None:

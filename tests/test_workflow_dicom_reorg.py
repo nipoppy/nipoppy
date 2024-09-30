@@ -10,7 +10,10 @@ from nipoppy.env import LogColor, ReturnCode
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session,
+)
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
 from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
@@ -153,7 +156,7 @@ def test_run_single_error_file_exists(tmp_path: Path):
     for fpath in [
         workflow.layout.dpath_raw_imaging / participant_id / session_id / fname,
         workflow.layout.dpath_sourcedata
-        / participant_id_to_bids_participant(participant_id)
+        / participant_id_to_bids_participant_id(participant_id)
         / session_id_to_bids_session(session_id)
         / fname,
     ]:
@@ -397,7 +400,7 @@ def test_run_main(
         for session_id in session_ids:
             dpath_to_check: Path = (
                 workflow.layout.dpath_sourcedata
-                / participant_id_to_bids_participant(participant_id)
+                / participant_id_to_bids_participant_id(participant_id)
                 / session_id_to_bids_session(session_id)
             )
 
