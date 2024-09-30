@@ -11,7 +11,7 @@ from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -101,7 +101,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         dpath_reorganized: Path = (
             self.layout.dpath_sourcedata
             / participant_id_to_bids_participant_id(participant_id)
-            / session_id_to_bids_session(session_id)
+            / session_id_to_bids_session_id(session_id)
         )
         self.mkdir(dpath_reorganized)
 

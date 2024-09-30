@@ -35,7 +35,7 @@ from nipoppy.utils import (
     load_json,
     participant_id_to_bids_participant_id,
     process_template_str,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -255,7 +255,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         participant_id: Optional[str],
         session_id: Optional[str],
         bids_participant_id: Optional[str] = None,
-        bids_session: Optional[str] = None,
+        bids_session_id: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
         **kwargs,
@@ -270,10 +270,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             kwargs["bids_participant_id"] = bids_participant_id
 
         if session_id is not None:
-            if bids_session is None:
-                bids_session = session_id_to_bids_session(session_id)
+            if bids_session_id is None:
+                bids_session_id = session_id_to_bids_session_id(session_id)
             kwargs["session_id"] = session_id
-            kwargs["bids_session"] = bids_session
+            kwargs["bids_session_id"] = bids_session_id
 
         if objs is None:
             objs = []

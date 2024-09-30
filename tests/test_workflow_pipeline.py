@@ -380,7 +380,7 @@ def test_process_template_json(return_str, tmp_path: Path):
     processed = workflow.process_template_json(
         {
             "[[NIPOPPY_BIDS_PARTICIPANT_ID]]": "[[NIPOPPY_PARTICIPANT_ID]]",
-            "[[NIPOPPY_BIDS_SESSION]]": "[[NIPOPPY_SESSION_ID]]",
+            "[[NIPOPPY_BIDS_SESSION_ID]]": "[[NIPOPPY_SESSION_ID]]",
             "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
         },
@@ -401,7 +401,7 @@ def test_process_template_json(return_str, tmp_path: Path):
     for pattern in [
         "[[NIPOPPY_BIDS_PARTICIPANT_ID]]",
         "[[NIPOPPY_PARTICIPANT_ID]]",
-        "[[NIPOPPY_BIDS_SESSION]]",
+        "[[NIPOPPY_BIDS_SESSION_ID]]",
         "[[NIPOPPY_SESSION_ID]]",
         "[[NIPOPPY_DPATH_PIPELINE]]",
         "[[NIPOPPY_DPATH_BIDS]]",

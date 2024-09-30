@@ -12,7 +12,7 @@ from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 
@@ -157,7 +157,7 @@ def test_run_single_error_file_exists(tmp_path: Path):
         workflow.layout.dpath_raw_imaging / participant_id / session_id / fname,
         workflow.layout.dpath_sourcedata
         / participant_id_to_bids_participant_id(participant_id)
-        / session_id_to_bids_session(session_id)
+        / session_id_to_bids_session_id(session_id)
         / fname,
     ]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
@@ -401,7 +401,7 @@ def test_run_main(
             dpath_to_check: Path = (
                 workflow.layout.dpath_sourcedata
                 / participant_id_to_bids_participant_id(participant_id)
-                / session_id_to_bids_session(session_id)
+                / session_id_to_bids_session_id(session_id)
             )
 
             if (

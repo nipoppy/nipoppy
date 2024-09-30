@@ -101,7 +101,7 @@ template_strings_bids_runner = [
     "- `[[NIPOPPY_PARTICIPANT_ID]]`: the participant ID *without* the `sub-` prefix",
     "- `[[NIPOPPY_SESSION_ID]]`: the session ID *without* the `ses-` prefix",
     "- `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: the participant ID *with* the `sub-` prefix",
-    "- `[[NIPOPPY_BIDS_SESSION]]`: the session ID *with* the `ses-` prefix",
+    "- `[[NIPOPPY_BIDS_SESSION_ID]]`: the session ID *with* the `ses-` prefix",
     "- `[[NIPOPPY_<LAYOUT_PROPERTY>]]`, where `<LAYOUT_PROPERTY>` is a property in the Nipoppy {ref}`dataset layout configuration file <layout-schema>` (all uppercase): any path defined in the Nipoppy dataset layout",
     "```",
 ]

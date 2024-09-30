@@ -10,7 +10,7 @@ from nipoppy.utils import (
     check_participant_id,
     check_session_id,
     participant_id_to_bids_participant_id,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 
 STATUS_SUCCESS = "SUCCESS"
@@ -39,9 +39,9 @@ class BagelModel(BaseTabularModel):
         description=FIELD_DESCRIPTION_MAP["bids_participant_id"],
     )
     session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
-    # TODO rename to bids_session (or remove) after updating digest
+    # TODO rename to bids_session_id (or remove) after updating digest
     session: Optional[str] = Field(
-        default=None, description=FIELD_DESCRIPTION_MAP["bids_session"]
+        default=None, description=FIELD_DESCRIPTION_MAP["bids_session_id"]
     )
     pipeline_name: str = Field(description="The name of the pipeline being tracked")
     pipeline_version: str = Field(
@@ -82,7 +82,7 @@ class BagelModel(BaseTabularModel):
                 self.participant_id
             )
         if self.session is None:
-            self.session = session_id_to_bids_session(self.session_id)
+            self.session = session_id_to_bids_session_id(self.session_id)
         return self
 
 
@@ -93,7 +93,7 @@ class Bagel(BaseTabular):
     col_participant_id = "participant_id"
     col_bids_participant_id = "bids_participant_id"
     col_session_id = "session_id"
-    col_bids_session = "session"
+    col_bids_session_id = "session"
     col_pipeline_name = "pipeline_name"
     col_pipeline_version = "pipeline_version"
     col_pipeline_complete = "pipeline_complete"

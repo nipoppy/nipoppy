@@ -44,7 +44,7 @@ def tracker(tmp_path: Path):
         {
             "NAME": "pipeline_complete",
             "PATHS": [
-                "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION]]/results.txt",
+                "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
                 "file.txt",
             ],
         },

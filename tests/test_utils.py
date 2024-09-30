@@ -24,7 +24,7 @@ from nipoppy.utils import (
     process_template_str,
     save_df_with_backup,
     save_json,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 
 from .conftest import datetime_fixture  # noqa F401
@@ -42,8 +42,8 @@ def test_participant_id_to_bids_participant_id(participant_id, expected):
     "session,expected",
     [("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
 )
-def test_session_id_to_bids_session(session, expected):
-    assert session_id_to_bids_session(session) == expected
+def test_session_id_to_bids_session_id(session, expected):
+    assert session_id_to_bids_session_id(session) == expected
 
 
 @pytest.mark.parametrize(
