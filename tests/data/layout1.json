@@ -21,6 +21,9 @@
     "dpath_downloads": {
         "path": "downloads"
     },
+    "dpath_code": {
+        "path": "code"
+    },
     "dpath_proc": {
         "path": "proc"
     },

@@ -27,6 +27,10 @@
         "path": "downloads",
         "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
     },
+    "dpath_code": {
+        "path": "code",
+        "description": "This directory is for custom code."
+    },
     "dpath_proc": {
         "path": "proc",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
