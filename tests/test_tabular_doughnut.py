@@ -29,8 +29,8 @@ def data():
 @pytest.mark.parametrize(
     "fpath",
     [
-        DPATH_TEST_DATA / "doughnut1.csv",
-        DPATH_TEST_DATA / "doughnut2.csv",
+        DPATH_TEST_DATA / "doughnut1.tsv",
+        DPATH_TEST_DATA / "doughnut2.tsv",
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
@@ -41,10 +41,10 @@ def test_load(fpath, validate):
 @pytest.mark.parametrize(
     "fpath,is_valid",
     [
-        (DPATH_TEST_DATA / "doughnut1.csv", True),
-        (DPATH_TEST_DATA / "doughnut2.csv", True),
-        (DPATH_TEST_DATA / "doughnut_invalid1.csv", False),
-        (DPATH_TEST_DATA / "doughnut_invalid2.csv", False),
+        (DPATH_TEST_DATA / "doughnut1.tsv", True),
+        (DPATH_TEST_DATA / "doughnut2.tsv", True),
+        (DPATH_TEST_DATA / "doughnut_invalid1.tsv", False),
+        (DPATH_TEST_DATA / "doughnut_invalid2.tsv", False),
     ],
 )
 def test_validate(fpath, is_valid):

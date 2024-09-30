@@ -228,7 +228,7 @@ def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # no
 @pytest.mark.parametrize("dname_backups", [None, ".tests"])
 @pytest.mark.parametrize(
     "fname,dname_backups_processed",
-    [("test.csv", ".tests"), ("test2.csv", ".test2s")],
+    [("test.tsv", ".tests"), ("test2.tsv", ".test2s")],
 )
 def test_save_df_with_backup(
     fname: str,
@@ -249,8 +249,8 @@ def test_save_df_with_backup(
 
 
 def test_save_df_with_backup_broken_symlink(tmp_path: Path):
-    fpath_symlink = tmp_path / "test.csv"
-    fpath_symlink.symlink_to("non_existent_file.csv")
+    fpath_symlink = tmp_path / "test.tsv"
+    fpath_symlink.symlink_to("non_existent_file.tsv")
     df = pd.DataFrame()
 
     # should not raise an error
