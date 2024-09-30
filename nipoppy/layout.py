@@ -114,6 +114,9 @@ class LayoutConfig(BaseModel):
             "availability at the participant level)"
         )
     )
+    fpath_demographics: OptionalFpathInfo = Field(
+        description="Path to the study's demographics data file"
+    )
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -195,6 +198,7 @@ class DatasetLayout(Base):
         self.fpath_doughnut: Path
         self.fpath_manifest: Path
         self.fpath_imaging_bagel: Path
+        self.fpath_demographics: Path
 
         # directory names
         self.dname_pipeline_work = "work"

@@ -67,5 +67,8 @@
     },
     "fpath_imaging_bagel": {
         "path": "derivatives/bagel.csv"
+    },
+    "fpath_demographics": {
+        "path": "tabular/demographics.csv"
     }
 }

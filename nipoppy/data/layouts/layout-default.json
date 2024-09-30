@@ -94,5 +94,9 @@
     "fpath_imaging_bagel": {
         "path": "derivatives/bagel.csv",
         "description": "The imaging bagel file lists availability of derived imaging data and pipeline processing statuses."
+    },
+    "fpath_demographics": {
+        "path": "tabular/demographics.csv",
+        "description": "The demographics file contains demographic information for study participants."
     }
 }

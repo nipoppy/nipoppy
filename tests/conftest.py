@@ -53,6 +53,7 @@ ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
     "fpath_doughnut": "sourcedata/imaging/doughnut.csv",
     "fpath_imaging_bagel": "derivatives/bagel.csv",
+    "fpath_demographics": "tabular/demographics.csv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
