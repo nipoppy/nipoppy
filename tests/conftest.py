@@ -32,7 +32,7 @@ ATTR_TO_DPATH_MAP = {
     "dpath_downloads": "sourcedata/imaging/downloads",
     "dpath_code": "code",
     "dpath_proc": "proc",
-    "dpath_containers": "proc/containers",
+    "dpath_containers": "containers",
     "dpath_descriptors": "proc/descriptors",
     "dpath_invocations": "proc/invocations",
     "dpath_tracker_configs": "proc/tracker_configs",

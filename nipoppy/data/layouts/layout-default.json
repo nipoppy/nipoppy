@@ -35,13 +35,13 @@
         "path": "code",
         "description": "This directory is for custom code."
     },
+    "dpath_containers": {
+        "path": "containers",
+        "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
+    },
     "dpath_proc": {
         "path": "proc",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
-    },
-    "dpath_containers": {
-        "path": "proc/containers",
-        "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
     },
     "dpath_descriptors": {
         "path": "proc/descriptors",

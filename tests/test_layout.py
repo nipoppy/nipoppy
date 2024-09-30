@@ -111,7 +111,6 @@ def test_fpaths(dpath_root: Path):
         ["bids", "derivatives"],
         [
             "proc",
-            "proc/containers",
             "proc/descriptors",
             "proc/invocations",
             "proc/tracker_configs",
