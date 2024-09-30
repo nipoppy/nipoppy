@@ -279,6 +279,8 @@ def save_df_with_backup(
     """
     if "index" not in kwargs:
         kwargs["index"] = False
+    if "sep" not in kwargs:
+        kwargs["sep"] = "\t"
 
     fpath_symlink = Path(fpath_symlink)
 

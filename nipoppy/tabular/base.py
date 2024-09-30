@@ -91,6 +91,8 @@ class BaseTabular(pd.DataFrame, ABC):
                 "This function does not accept 'dtype' as a keyword argument"
                 ". Everything is read as a string and (optionally) validated later."
             )
+        if "sep" not in kwargs:
+            kwargs["sep"] = "\t"
         df = cls(pd.read_csv(fpath, dtype=str, **kwargs))
         if validate:
             df = df.validate()
