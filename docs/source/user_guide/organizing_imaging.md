@@ -54,8 +54,9 @@ Here is an example file for a dataset that already uses the `ses-` prefix for se
 
 ```{csv-table}
 ---
-file: ../../../nipoppy/data/examples/sample_dicom_dir_map.csv
+file: ../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
 header-rows: 1
+delim: tab
 ---
 ```
 
@@ -63,10 +64,9 @@ header-rows: 1
 ---
 class: dropdown
 ---
-```{literalinclude} ../../../nipoppy/data/examples/sample_dicom_dir_map.csv
+```{literalinclude} ../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
 ---
 linenos: True
-language: csv
 ---
 ```
 ````

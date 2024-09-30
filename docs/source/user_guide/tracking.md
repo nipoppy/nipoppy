@@ -63,8 +63,9 @@ class: no-copybutton
 Running the tracker with the above configuration will result in the imaging bagel file showing:
 ```{csv-table}
 ---
-file: ./inserts/mriqc_bagel.csv
+file: ./inserts/mriqc_bagel.tsv
 header-rows: 1
+delim: tab
 ---
 ```
 

@@ -68,8 +68,9 @@ There must be only **one row** per unique participant/visit combination.
 The example manifest looks like this:
 ```{csv-table}
 ---
-file: ../../nipoppy/data/examples/sample_manifest.csv
+file: ../../nipoppy/data/examples/sample_manifest.tsv
 header-rows: 1
+delim: tab
 ---
 ```
 
@@ -77,10 +78,9 @@ header-rows: 1
 ---
 class: dropdown
 ---
-```{literalinclude} ../../nipoppy/data/examples/sample_manifest.csv
+```{literalinclude} ../../nipoppy/data/examples/sample_manifest.tsv
 ---
 linenos: True
-language: csv
 ---
 ```
 ````
