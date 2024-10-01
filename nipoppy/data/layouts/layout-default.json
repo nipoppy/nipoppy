@@ -19,8 +19,8 @@
         "path": "releases",
         "description": "This directory is for dataset releases (e.g., associated with specific publications)."
     },
-    "dpath_proc": {
-        "path": "proc",
+    "dpath_pipelines": {
+        "path": "pipelines",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
     "dpath_containers": {

@@ -19,7 +19,7 @@
         "path": "releases",
         "description": "This directory contains dataset releases (e.g., associated with specific publications)."
     },
-    "dpath_proc": {
+    "dpath_pipelines": {
         "path": "proc",
         "description": "This directory contains the Nipoppy configuration information and custom code."
     },

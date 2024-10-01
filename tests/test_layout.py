@@ -109,11 +109,7 @@ def test_fpaths(dpath_root: Path):
         ["sourcedata", "downloads"],
         ["bids", "derivatives"],
         [
-            "proc",
-            "proc/containers",
-            "global_config.json",
-            "proc/pybids",
-            "proc/pybids/bids_db",
+            "pipelines",
         ],
         [
             "scratch",

@@ -14,7 +14,7 @@
     "dpath_releases": {
         "path": "releases"
     },
-    "dpath_proc": {
+    "dpath_pipelines": {
         "path": "proc"
     },
     "dpath_containers": {

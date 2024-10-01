@@ -55,10 +55,9 @@ class LayoutConfig(BaseModel):
         description="Directory for raw imaging data that is not yet in BIDS"
     )
     dpath_downloads: DpathInfo = Field(description="Directory for downloaded data")
-    dpath_proc: DpathInfo = Field(
+    dpath_pipelines: DpathInfo = Field(
         description=(
-            "Directory for configurations or other files needed when or generated"
-            " before running pipelines"
+            "Directory for configurations or other files needed to run pipelines"
         )
     )
     dpath_releases: DpathInfo = Field(description="Directory for data releases")
@@ -159,7 +158,7 @@ class DatasetLayout(Base):
         self.dpath_derivatives: Path
         self.dpath_sourcedata: Path
         self.dpath_downloads: Path
-        self.dpath_proc: Path
+        self.dpath_pipelines: Path
         self.dpath_releases: Path
         self.dpath_containers: Path
         self.dpath_pybids: Path

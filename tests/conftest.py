@@ -27,7 +27,7 @@ ATTR_TO_DPATH_MAP = {
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
     "dpath_downloads": "downloads",
-    "dpath_proc": "proc",
+    "dpath_pipelines": "pipelines",
     "dpath_releases": "releases",
     "dpath_containers": "proc/containers",
     "dpath_pybids": "proc/pybids",

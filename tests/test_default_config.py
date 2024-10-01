@@ -32,7 +32,7 @@ def single_subject_dataset(
     session_id = "01"
     container_command = "apptainer"
     substitutions = {
-        "[[NIPOPPY_DPATH_PROC]]": str(DPATH_SAMPLE_PIPELINES),
+        "[[NIPOPPY_DPATH_PIPELINES]]": str(DPATH_SAMPLE_PIPELINES),
         "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": str(tmp_path / "heuristic.py"),
         "[[DCM2BIDS_CONFIG_FILE]]": str(tmp_path / "dcm2bids_config.json"),

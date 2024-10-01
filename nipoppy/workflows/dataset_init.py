@@ -76,7 +76,7 @@ class InitWorkflow(BaseWorkflow):
         for dpath_pipeline in DPATH_SAMPLE_PIPELINES.iterdir():
             self.copytree(
                 dpath_pipeline,
-                self.layout.dpath_proc / dpath_pipeline.name,
+                self.layout.dpath_pipelines / dpath_pipeline.name,
                 log_level=logging.DEBUG,
             )
 
