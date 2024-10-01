@@ -2,13 +2,13 @@
 
 from pydantic import ConfigDict, Field
 
-from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.config.container import _SchemaWithContainerConfig
 
 BOUTIQUES_CUSTOM_KEY = "custom"  # as defined by Boutiques schema
 BOUTIQUES_CONFIG_KEY = "nipoppy"
 
 
-class BoutiquesConfig(SchemaWithContainerConfig):
+class BoutiquesConfig(_SchemaWithContainerConfig):
     """Schema for custom configuration within a Boutiques descriptor."""
 
     CONTAINER_SUBCOMMAND: str = Field(

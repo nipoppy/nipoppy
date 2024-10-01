@@ -1,4 +1,3 @@
-(installation-instructions)=
 # Installation
 
 Nipoppy is a Python package. We recommend installing it in a new or existing Python environment. The most common ways to create Python environments are through {term}`conda` and {term}`venv`.
@@ -11,6 +10,7 @@ If you already have an existing Python environment setup, you can go directly to
 
 The Nipoppy tools are intended to be used on Linux operating system, and may not work on other operating systems. All processing pipelines with built-in support in Nipoppy are assumed to use Apptainer (formerly Singularity), which [cannot run natively on Windows or macOS](https://apptainer.org/docs/admin/main/installation.html#installation-on-windows-or-mac). Support for the Docker container platform may eventually be added, though that is not a priority at the moment.
 
+(python-env-instructions)=
 ## Setting up a Python environment
 
 ```{tip}
@@ -59,7 +59,6 @@ $ pip install nipoppy
 
 ### Verifying the install
 
-% TODO replace with nipoppy --version once that is available
 Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
 ```{code-block} console
 $ nipoppy -h
@@ -67,7 +66,7 @@ $ nipoppy -h
 
 ## Troubleshooting
 
-Please create a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new) for any error not covered below.
+Please create a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new/choose) for any error not covered below.
 
 ### Error when installing `pydantic-core`
 

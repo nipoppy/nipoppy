@@ -8,7 +8,7 @@ from typing import Any, Optional
 from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
-from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
@@ -20,7 +20,7 @@ from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
-class Config(SchemaWithContainerConfig):
+class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
     DATASET_NAME: str = Field(description="Name of the dataset")

@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
-from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
 
@@ -24,7 +24,7 @@ class AnalysisLevelType(str, Enum):
     group = "group"
 
 
-class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
+class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
     NAME: Optional[str] = Field(
@@ -78,6 +78,13 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         description=(
             "Path to file containing a list of regex patterns (strings) to ignore "
             "when building the PyBIDS layout"
+        ),
+    )
+    GENERATE_PYBIDS_DATABASE: Optional[bool] = Field(
+        default=True,
+        description=(
+            "Whether or not to generate a PyBIDS database as part of the pipeline step"
+            " (default: true)"
         ),
     )
     model_config = ConfigDict(extra="forbid")
