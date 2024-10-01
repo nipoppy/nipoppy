@@ -46,8 +46,11 @@ def cli(argv: Sequence[str] = None) -> None:
             # Lazy import to improve performance of cli.
             from nipoppy.workflows.dataset_init import InitWorkflow
 
+            bids_source = getattr(args, "bids_source", None)
+
             workflow = InitWorkflow(
                 dpath_root=dpath_root,
+                bids_source=bids_source,
                 **workflow_kwargs,
             )
         elif command == COMMAND_DOUGHNUT:

@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
-from nipoppy.config.container import SchemaWithContainerConfig
+from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
@@ -25,7 +25,7 @@ class AnalysisLevelType(str, Enum):
     group = "group"
 
 
-class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
+class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
     NAME: str = Field(
@@ -74,6 +74,12 @@ class BasePipelineStepConfig(SchemaWithContainerConfig, ABC):
 class ProcPipelineStepConfig(BasePipelineStepConfig):
     """Schema for processing pipeline step configuration."""
 
+    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the tracker configuration file associated with the pipeline step"
+        ),
+    )
     PYBIDS_IGNORE_FILE: Optional[Path] = Field(
         default=None,
         description=(
@@ -81,10 +87,11 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
             "when building the PyBIDS layout"
         ),
     )
-    TRACKER_CONFIG_FILE: Optional[Path] = Field(
-        default=None,
+    GENERATE_PYBIDS_DATABASE: Optional[bool] = Field(
+        default=True,
         description=(
-            "Path to the tracker configuration file associated with the pipeline step"
+            "Whether or not to generate a PyBIDS database as part of the pipeline step"
+            " (default: true)"
         ),
     )
     model_config = ConfigDict(extra="forbid")
