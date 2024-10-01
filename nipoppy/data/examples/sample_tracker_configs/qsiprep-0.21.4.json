@@ -1,0 +1,11 @@
+[
+    {
+        "NAME": "pipeline_complete",
+        "PATHS": [
+            "[[NIPOPPY_BIDS_PARTICIPANT]]/[[NIPOPPY_BIDS_SESSION]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]_[[NIPOPPY_BIDS_SESSION]]*_desc-preproc_dwi.json",
+            "[[NIPOPPY_BIDS_PARTICIPANT]]/[[NIPOPPY_BIDS_SESSION]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]_[[NIPOPPY_BIDS_SESSION]]*_desc-preproc_dwi.nii.gz",
+            "[[NIPOPPY_BIDS_PARTICIPANT]]/[[NIPOPPY_BIDS_SESSION]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]_[[NIPOPPY_BIDS_SESSION]]*_desc-brain_mask.json",
+            "[[NIPOPPY_BIDS_PARTICIPANT]]/[[NIPOPPY_BIDS_SESSION]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]_[[NIPOPPY_BIDS_SESSION]]*_desc-brain_mask.nii.gz",
+        ]
+    }
+]

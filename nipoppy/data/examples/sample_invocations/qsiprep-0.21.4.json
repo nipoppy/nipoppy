@@ -12,5 +12,6 @@
 	"fs_license_file": "[[FREESURFER_LICENSE_FILE]]",
 	"omp_nthreads": 4,
 	"do_reconall": true,
-	"stop_on_first_crash": true
+        "stop_on_first_crash": true,
+        "dwi_only": true
 }
