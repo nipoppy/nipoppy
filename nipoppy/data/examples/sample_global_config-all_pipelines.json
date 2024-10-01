@@ -191,6 +191,32 @@
                 }
             ],
             "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json"
+        },
+        {
+            "NAME": "qsiprep",
+            "VERSION": "0.21.4",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+                "URI": "docker://pennbbl/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+            },
+            "CONTAINER_CONFIG": {
+                "ENV_VARS": {
+                    "TEMPLATEFLOW_HOME": "[[TEMPLATEFLOW_HOME]]"
+                },
+                "ARGS": [
+                    "--bind",
+                    "[[FREESURFER_LICENSE_FILE]]",
+                    "--bind",
+                    "[[TEMPLATEFLOW_HOME]]"
+                ]
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "participant"
+                }
+            ]
         }
     ],
     "CUSTOM": {}

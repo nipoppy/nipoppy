@@ -43,3 +43,5 @@ docs/source/schemas/*.json
 
 # OSX
 .DS_STORE
+
+*~
