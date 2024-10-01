@@ -196,8 +196,8 @@
             "NAME": "qsiprep",
             "VERSION": "0.21.4",
             "CONTAINER_INFO": {
-                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[NIPOPPY_PIPELINE_NAME]]_[[NIPOPPY_PIPELINE_VERSION]].sif",
-                "URI": "docker://pennbbl/[[NIPOPPY_PIPELINE_NAME]]:[[NIPOPPY_PIPELINE_VERSION]]"
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+                "URI": "docker://pennbbl/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
             },
             "CONTAINER_CONFIG": {
                 "ENV_VARS": {
@@ -213,7 +213,8 @@
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "participant"
                 }
             ]
         }
