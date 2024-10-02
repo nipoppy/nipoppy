@@ -8,9 +8,10 @@ from pydantic import ValidationError
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
+    ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
-from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.config.pipeline_step import BasePipelineStepConfig
 
 FIELDS_PIPELINE_BASE = [
     "NAME",
@@ -66,7 +67,8 @@ def test_fields_missing_required(data):
 
 
 @pytest.mark.parametrize(
-    "pipeline_config_class", [ProcPipelineConfig, BidsPipelineConfig]
+    "pipeline_config_class",
+    [ProcPipelineConfig, BidsPipelineConfig, ExtractionPipelineConfig],
 )
 def test_fields_no_extra(pipeline_config_class, valid_data):
     with pytest.raises(ValidationError):
@@ -96,7 +98,7 @@ def test_substitutions():
             }
         ],
     }
-    pipeline_config = ProcPipelineConfig(**data)
+    pipeline_config = BasePipelineConfig(**data)
     assert pipeline_config.DESCRIPTION == "my_pipeline version 1.0.0"
     assert str(pipeline_config.STEPS[0].INVOCATION_FILE) == "my_pipeline-1.0.0.json"
 
@@ -121,8 +123,8 @@ def test_get_step_config(valid_data, step_name, expected_name):
     pipeling_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
-            ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+            BasePipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
+            BasePipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
         ],
     )
 
@@ -139,8 +141,8 @@ def test_get_step_config_invalid(valid_data):
     pipeline_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
-            ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+            BasePipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
+            BasePipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
         ],
     )
     with pytest.raises(ValueError, match="not found in pipeline"):
