@@ -12,6 +12,7 @@ from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
+    ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
@@ -72,6 +73,9 @@ class Config(_SchemaWithContainerConfig):
     PROC_PIPELINES: list[ProcPipelineConfig] = Field(
         description="Configurations for processing pipelines"
     )
+    EXTRACTION_PIPELINES: list[ExtractionPipelineConfig] = Field(
+        default=[], description="Configurations for extraction pipelines"
+    )
     CUSTOM: dict = Field(
         default={},
         description="Free field that can be used for any purpose",
@@ -94,15 +98,17 @@ class Config(_SchemaWithContainerConfig):
         return self
 
     def _check_no_duplicate_pipeline(self) -> Self:
-        """Check that BIDS_PIPELINES and PROC_PIPELINES do not have common pipelines."""
+        """Check that pipelines do not have common names and versions."""
         pipeline_infos = set()
-        for pipeline_config in self.BIDS_PIPELINES + self.PROC_PIPELINES:
+        for pipeline_config in (
+            self.BIDS_PIPELINES + self.PROC_PIPELINES + self.EXTRACTION_PIPELINES
+        ):
             pipeline_info = (pipeline_config.NAME, pipeline_config.VERSION)
             if pipeline_info in pipeline_infos:
                 raise ValueError(
                     f"Found multiple configurations for pipeline {pipeline_info}"
                     "Make sure pipeline name and versions are unique across "
-                    f"BIDS_PIPELINES and PROC_PIPELINES."
+                    f"BIDS_PIPELINES, PROC_PIPELINES, and EXTRACTION_PIPELINES."
                 )
             pipeline_infos.add(pipeline_info)
 
@@ -127,6 +133,7 @@ class Config(_SchemaWithContainerConfig):
 
         _propagate(self.BIDS_PIPELINES)
         _propagate(self.PROC_PIPELINES)
+        _propagate(self.EXTRACTION_PIPELINES)
 
         return self
 
@@ -170,7 +177,9 @@ class Config(_SchemaWithContainerConfig):
         # assume there are no duplicates
         # technically BIDS_PIPELINES and PROC_PIPELINES can share a pipeline name
         # and have different versions, but this is unlikely (and probably a mistake)
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
+        for pipeline_config in (
+            self.PROC_PIPELINES + self.BIDS_PIPELINES + self.EXTRACTION_PIPELINES
+        ):
             if pipeline_config.NAME == pipeline_name:
                 return pipeline_config.VERSION
 
@@ -183,7 +192,9 @@ class Config(_SchemaWithContainerConfig):
     ) -> BasePipelineConfig:
         """Get the config for a pipeline."""
         # pooling them together since there should not be any duplicates
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
+        for pipeline_config in (
+            self.PROC_PIPELINES + self.BIDS_PIPELINES + self.EXTRACTION_PIPELINES
+        ):
             if (
                 pipeline_config.NAME == pipeline_name
                 and pipeline_config.VERSION == pipeline_version

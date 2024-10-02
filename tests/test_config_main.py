@@ -23,6 +23,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "EXTRACTION_PIPELINES",
 ]
 
 
@@ -58,6 +59,9 @@ def valid_config_data():
                 "STEPS": [{"INVOCATION_FILE": "path"}],
             },
         ],
+        "EXTRACTION_PIPELINES": [
+            {"NAME": "extractor1", "VERSION": "0.1.0"},
+        ],
     }
 
 
@@ -76,7 +80,7 @@ def test_no_extra_fields(valid_config_data):
 
 
 @pytest.mark.parametrize(
-    "proc_pipelines_data,bids_pipelines_data",
+    "proc_pipelines_data,bids_pipelines_data,extraction_pipelines_data",
     [
         (
             [
@@ -84,6 +88,7 @@ def test_no_extra_fields(valid_config_data):
                 {"NAME": "pipeline1", "VERSION": "v1"},
             ],
             [],
+            [],
         ),
         (
             [],
@@ -91,14 +96,29 @@ def test_no_extra_fields(valid_config_data):
                 {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
                 {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
             ],
+            [],
+        ),
+        (
+            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+            [],
+            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+        ),
+        (
+            [],
+            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
         ),
     ],
 )
 def test_check_no_duplicate_pipeline(
-    valid_config_data, proc_pipelines_data, bids_pipelines_data
+    valid_config_data,
+    proc_pipelines_data,
+    bids_pipelines_data,
+    extraction_pipelines_data,
 ):
     valid_config_data["PROC_PIPELINES"] = proc_pipelines_data
     valid_config_data["BIDS_PIPELINES"] = bids_pipelines_data
+    valid_config_data["EXTRACTION_PIPELINES"] = extraction_pipelines_data
     with pytest.raises(ValidationError, match="Found multiple configurations for"):
         Config(**valid_config_data)
 
@@ -114,7 +134,6 @@ def test_sessions_inferred(visit_ids, expected_session_ids):
     data = {
         "DATASET_NAME": "my_dataset",
         "VISIT_IDS": visit_ids,
-        "BIDS_PIPELINES": [],
         "PROC_PIPELINES": [],
     }
     config = Config(**data)
@@ -222,7 +241,12 @@ def test_propagate_container_config(
 
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
-    [("pipeline1", "v1"), ("pipeline2", "1.0"), ("bids_converter", "1.0")],
+    [
+        ("pipeline1", "v1"),
+        ("pipeline2", "1.0"),
+        ("bids_converter", "1.0"),
+        ("extractor1", "0.1.0"),
+    ],
 )
 def test_get_pipeline_version(valid_config_data, pipeline_name, expected_version):
     config = Config(**valid_config_data)
@@ -241,6 +265,7 @@ def test_get_pipeline_version_invalid_name(valid_config_data):
         ("pipeline2", "2.0"),
         ("bids_converter", "1.0"),
         ("bids_converter", "1.0"),
+        ("extractor1", "0.1.0"),
     ],
 )
 def test_get_pipeline_config(pipeline, version, valid_config_data):
