@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
@@ -307,3 +308,39 @@ def test_run_multiple(config: Config, tmp_path: Path):
 
     bids_layout = BIDSLayout(database_path=runner.dpath_pipeline_bids_db)
     assert not len(bids_layout.get(extension=".nii.gz")) == 0
+
+
+@pytest.mark.parametrize("generate_pybids_database", [True, False])
+def test_run_single_pybidsdb(
+    generate_pybids_database: bool,
+    config: Config,
+    mocker: pytest_mock.MockFixture,
+    tmp_path: Path,
+):
+    participant_id = "01"
+    session_id = "1"
+    runner = PipelineRunner(
+        dpath_root=tmp_path,
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    config.save(runner.layout.fpath_config)
+
+    # Set GENERATE_PYBIDS_DATABASE
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
+
+    # Mock the set_up_bids_db method
+    mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
+
+    # Call run_single
+    runner.run_single(participant_id=participant_id, session_id=session_id)
+
+    # Assert set_up_bids_db was called or not called as expected
+    if generate_pybids_database:
+        mocked_set_up_bids_db.assert_called_once_with(
+            dpath_bids_db=runner.dpath_pipeline_bids_db,
+            participant_id=participant_id,
+            session_id=session_id,
+        )
+    else:
+        mocked_set_up_bids_db.assert_not_called()
