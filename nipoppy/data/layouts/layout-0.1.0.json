@@ -63,6 +63,10 @@
         "path": "scratch",
         "description": "This directory is for scratch data."
     },
+    "dpath_work": {
+        "path": "scratch",
+        "description": null
+    },
     "dpath_to_reorg": {
         "path": "scratch/raw_dicom",
         "description": "This directory is for raw, unorganized DICOM dumps."

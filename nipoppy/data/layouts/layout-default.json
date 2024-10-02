@@ -67,6 +67,10 @@
         "path": "scratch/pybids_db",
         "description": "This directory is for PyBIDS databases generated/used during processing."
     },
+    "dpath_work": {
+        "path": "scratch/work",
+        "description": "This directory is for temporary/working files generated/used during processing."
+    },
     "dpath_logs": {
         "path": "logs",
         "description": "This directory contains log files."

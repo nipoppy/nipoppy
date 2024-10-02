@@ -119,6 +119,7 @@ def test_fpaths(dpath_root: Path):
         [
             "scratch",
             "scratch/pybids_db",
+            "scratch/work",
             "logs",
         ],
         [
@@ -193,21 +194,21 @@ def test_get_dpath_pipeline(
             "v1",
             None,
             None,
-            "derivatives/my_pipeline/v1/work/my_pipeline-v1",
+            "scratch/work/my_pipeline-v1/my_pipeline-v1",
         ),
         (
             "pipeline",
             "v2",
             "3000",
             None,
-            "derivatives/pipeline/v2/work/pipeline-v2-3000",
+            "scratch/work/pipeline-v2/pipeline-v2-3000",
         ),
         (
             "pipeline",
             "v2",
             "01",
             "1",
-            "derivatives/pipeline/v2/work/pipeline-v2-01-1",
+            "scratch/work/pipeline-v2/pipeline-v2-01-1",
         ),
     ],
 )
