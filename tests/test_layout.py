@@ -271,6 +271,25 @@ def test_get_dpath_pipeline_output(
 
 
 @pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected",
+    [
+        ("my_pipeline", "v1", "derivatives/my_pipeline/v1/idps"),
+        ("pipeline", "v2", "derivatives/pipeline/v2/idps"),
+    ],
+)
+def test_get_dpath_pipeline_idps(
+    dpath_root: Path, pipeline_name, pipeline_version, expected
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_idps(
+            pipeline_name=pipeline_name, pipeline_version=pipeline_version
+        )
+        == dpath_root / expected
+    )
+
+
+@pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant_id,session_id,expected",
     [
         ("my_pipeline", "v1", None, None, "proc/pybids/bids_db/my_pipeline-v1"),
