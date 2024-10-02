@@ -205,13 +205,16 @@
                 },
                 "ARGS": [
                     "--bind",
+                    "[[FREESURFER_LICENSE_FILE]]",
+                    "--bind",
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
             },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                    "ANALYSIS_LEVEL": "participant"
                 }
             ]
         }

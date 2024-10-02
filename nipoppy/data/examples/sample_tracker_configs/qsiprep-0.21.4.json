@@ -2,13 +2,13 @@
     {
         "NAME": "pipeline_complete",
         "PATHS": [
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.json",
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.nii.gz",
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.bval",
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.bvec",
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.b",
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-brain_mask.json",
-            "[[NIPOPPY_BIDS_SESSION]]/qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-brain_mask.nii.gz"
+            "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.json",
+	    "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.nii.gz",
+	    "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.bval",
+	    "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.bvec",
+	    "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-preproc_dwi.b",
+	    "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-brain_mask.json",
+	    "qsiprep/[[NIPOPPY_BIDS_PARTICIPANT]]/dwi/[[NIPOPPY_BIDS_PARTICIPANT]]*_desc-brain_mask.nii.gz"
         ]
     }
 ]
