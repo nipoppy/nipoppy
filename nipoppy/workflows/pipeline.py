@@ -163,11 +163,34 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
 
         elif not fpath_container.exists():
-            raise FileNotFoundError(
-                f"No container image file found at {fpath_container} for pipeline"
-                f" {self.pipeline_name} {self.pipeline_version}"
-            )
+            try:
+                self.logger.warning(
+                    f"No container image file found at {fpath_container} for pipeline"
+                    f" {self.pipeline_name} {self.pipeline_version}.\n"
+                )
+                self._get_container_image()
+            except:  # noqa: E722
+                raise FileNotFoundError(
+                    f"No container image file found at {fpath_container} for pipeline"
+                    f" {self.pipeline_name} {self.pipeline_version}"
+                )
         return fpath_container
+
+    def _get_container_image(self):
+        self.logger.info(
+            "Getting container image for "
+            f"{self.pipeline_name} {self.pipeline_version} "
+            f"at {self.fpath_container}"
+        )
+
+        command = (
+            f"{self.CONTAINER_CONFIG.COMMAND} build {self.fpath_container} "
+            f"{self.pipeline_config['URI']}"
+        )
+
+        run_output = self.run_command(command, check=True, shell=True)
+
+        return run_output
 
     @cached_property
     def descriptor(self) -> dict:
