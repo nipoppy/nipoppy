@@ -80,7 +80,7 @@ def test_no_extra_fields(valid_config_data):
 
 
 @pytest.mark.parametrize(
-    "proc_pipelines_data,bids_pipelines_data,extraction_pipelines_data",
+    "bids_pipelines_data,proc_pipelines_data,extraction_pipelines_data",
     [
         (
             [
@@ -99,13 +99,21 @@ def test_no_extra_fields(valid_config_data):
             [],
         ),
         (
-            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
             [],
-            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+            [],
+            [
+                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
+                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
+            ],
         ),
         (
-            [],
             [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+            [],
+        ),
+        (
+            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
+            [],
             [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
         ),
     ],
@@ -121,6 +129,15 @@ def test_check_no_duplicate_pipeline(
     valid_config_data["EXTRACTION_PIPELINES"] = extraction_pipelines_data
     with pytest.raises(ValidationError, match="Found multiple configurations for"):
         Config(**valid_config_data)
+
+
+def test_common_pipelines_allowed_for_proc_and_extraction(valid_config_data):
+    pipelines_data = [
+        {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}
+    ]
+    valid_config_data["PROC_PIPELINES"] = pipelines_data
+    valid_config_data["EXTRACTION_PIPELINES"] = pipelines_data
+    assert Config(**valid_config_data)
 
 
 @pytest.mark.parametrize(
