@@ -4,8 +4,6 @@ on:
     types: [opened, reopened, assigned]
   pull_request_target:
     types: [ready_for_review, review_requested, converted_to_draft, closed]
-  pull_request_review:
-    types: [submitted]
 
 # map fields with customized labels
 env:
