@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
@@ -184,63 +183,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             f"at {self.fpath_container}"
         )
 
-        if self.pipeline_name in ["mriqc", "fmriprep"]:
-            docker_hub_repo = "nipreps"
-        elif self.pipeline_name in ["dcm2bids"]:
-            docker_hub_repo = "nipreps"
-        elif self.pipeline_name in ["bidscoin"]:
-            docker_hub_repo = "nipreps"
-        elif self.pipeline_name in ["heudiconv"]:
-            docker_hub_repo = "nipreps"
-
         command = (
             f"{self.CONTAINER_CONFIG.COMMAND} build {self.fpath_container} "
-            f"docker://{docker_hub_repo}/{self.pipeline_name}:{self.pipeline_version}"
+            f"{self.pipeline_config["URI"]}"
         )
 
-        self.log_command(command)
-
-        def process_output(
-            output_source, output_str: str, log_prefix: str, log_level=logging.INFO
-        ):
-            """Consume lines from an IO stream and append them to a string."""
-            for line in output_source:
-                line = line.strip("\n")
-                self.logger.log(level=log_level, msg=f"{log_prefix} {line}")
-            return output_str
-
-        stdout_str = ""
-        stderr_str = ""
-        if not self.dry_run:
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-
-            while process.poll() is None:
-                stdout_str = process_output(
-                    process.stdout,
-                    stdout_str,
-                    self.log_prefix_run_stdout,
-                )
-
-                stderr_str = process_output(
-                    process.stderr,
-                    stderr_str,
-                    self.log_prefix_run_stderr,
-                    log_level=logging.ERROR,
-                )
-
-            if process.returncode != 0:
-                exception = subprocess.CalledProcessError(process.returncode, command)
-                raise exception
-
-            run_output = process
-
-        else:
-            run_output = command
+        run_output = self.run_command(command, check=True, shell=True)
 
         return run_output
 

@@ -299,7 +299,8 @@ def test_invocation_none(workflow: PipelineWorkflow):
         workflow.invocation
 
 
-def test_get_container(workflow: PipelineWorkflow):
+def test_get_container_dry_run(workflow):
+    workflow.dry_run = True
     workflow._get_container_image()
 
 
