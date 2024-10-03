@@ -1,12 +1,12 @@
 """Tests for the PipelineTracker class."""
 
 import json
-import logging
 from pathlib import Path
 
 import pytest
 
 from nipoppy.config.main import Config
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
@@ -17,21 +17,20 @@ from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 @pytest.fixture(scope="function")
 def tracker(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    pipeline_name = "test_pipeline"
-    pipeline_version = "0.1.0"
+
     participants_and_sessions = {
         "01": ["1", "2"],
         "02": ["1", "2"],
     }
 
     tracker = PipelineTracker(
-        dpath_root=dpath_root,
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="test_pipeline",
+        pipeline_version="0.1.0",
+        pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
     )
 
-    create_empty_dataset(dpath_root)
+    create_empty_dataset(tracker.dpath_root)
 
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
@@ -40,25 +39,27 @@ def tracker(tmp_path: Path):
     manifest.save_with_backup(tracker.layout.fpath_manifest)
 
     fpath_tracker_config = tmp_path / "tracker_config.json"
-    tracker_config = [
-        {
-            "NAME": "pipeline_complete",
-            "PATHS": [
-                "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
-                "file.txt",
-            ],
-        },
-    ]
+    tracker_config = {
+        "PATHS": [
+            "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
+            "file.txt",
+        ],
+    }
+
     fpath_tracker_config.write_text(json.dumps(tracker_config))
 
     config: Config = get_config(
         visit_ids=["1", "2"],
         proc_pipelines=[
             {
-                "NAME": pipeline_name,
-                "VERSION": pipeline_version,
-                "TRACKER_CONFIG_FILE": fpath_tracker_config,
-                "STEPS": [{}],
+                "NAME": tracker.pipeline_name,
+                "VERSION": tracker.pipeline_version,
+                "STEPS": [
+                    {
+                        "NAME": tracker.pipeline_step,
+                        "TRACKER_CONFIG_FILE": fpath_tracker_config,
+                    }
+                ],
             },
         ],
     )
@@ -79,7 +80,8 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
             Bagel.col_session_id: ["1"],
             Bagel.col_pipeline_name: ["some_pipeline"],
             Bagel.col_pipeline_version: ["some_version"],
-            Bagel.col_pipeline_complete: [Bagel.status_success],
+            Bagel.col_pipeline_step: ["some_step"],
+            Bagel.col_status: [Bagel.status_success],
         }
     ).validate()
     bagel.save_with_backup(tracker.layout.fpath_imaging_bagel)
@@ -182,32 +184,13 @@ def test_run_single(
 
     assert (
         tracker.bagel.set_index([Bagel.col_participant_id, Bagel.col_session_id])
-        .loc[:, Bagel.col_pipeline_complete]
+        .loc[:, Bagel.col_status]
         .item()
     ) == expected_status
 
 
-def test_run_single_multiple_configs(
-    tracker: PipelineTracker, caplog: pytest.LogCaptureFixture
-):
-    tracker_configs = [
-        {"NAME": "tracker1", "PATHS": ["path1"]},
-        {"NAME": "tracker2", "PATHS": ["path2"]},
-    ]
-    tracker.pipeline_config.TRACKER_CONFIG_FILE.write_text(json.dumps(tracker_configs))
-    tracker.run_single("01", "1")
-
-    assert any(
-        [
-            record.levelno == logging.WARNING
-            and "Currently only one config is supported" in record.message
-            for record in caplog.records
-        ]
-    )
-
-
 def test_run_single_no_config(tracker: PipelineTracker):
-    tracker.pipeline_config.TRACKER_CONFIG_FILE = None
+    tracker.pipeline_config.STEPS[0].TRACKER_CONFIG_FILE = None
     with pytest.raises(ValueError, match="No tracker config file specified for"):
         tracker.run_single("01", "1")
 
@@ -222,7 +205,8 @@ def test_run_single_no_config(tracker: PipelineTracker):
                 Bagel.col_session_id: ["1"],
                 Bagel.col_pipeline_name: ["some_pipeline"],
                 Bagel.col_pipeline_version: ["some_version"],
-                Bagel.col_pipeline_complete: [Bagel.status_success],
+                Bagel.col_pipeline_step: ["some_step"],
+                Bagel.col_status: [Bagel.status_success],
             }
         ).validate(),
     ],
