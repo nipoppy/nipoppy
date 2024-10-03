@@ -42,9 +42,8 @@ if __name__ == "__main__":
         description="Run the custom DICOM reorganization workflow."
     )
     parser.add_argument(
-        "--dataset-root",
+        "dataset-root",
         type=Path,
-        required=True,
         help="Root directory of Nipoppy dataset",
     )
     args = parser.parse_args()
