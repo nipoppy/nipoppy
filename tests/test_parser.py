@@ -7,7 +7,6 @@ import pytest
 from nipoppy.cli.parser import (
     add_arg_dataset_root,
     add_arg_dry_run,
-    add_arg_pipeline_step,
     add_arg_simulate,
     add_arg_verbosity,
     add_arg_version,
@@ -56,12 +55,6 @@ def test_add_args_pipeline(args):
     parser = ArgumentParser()
     parser = add_args_pipeline(parser)
     assert parser.parse_args(args)
-
-
-def test_add_arg_pipeline_step():
-    parser = ArgumentParser()
-    parser = add_arg_pipeline_step(parser)
-    assert parser.parse_args(["--pipeline-step", "step1"])
 
 
 @pytest.mark.parametrize(
@@ -218,6 +211,8 @@ def test_add_subparser_pipeline_run(args):
             "pipeline1",
             "--pipeline-version",
             "1.2.3",
+            "--pipeline-step",
+            "step1",
         ],
     ],
 )

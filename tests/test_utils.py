@@ -20,11 +20,11 @@ from nipoppy.utils import (
     check_session_id,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_participant,
+    participant_id_to_bids_participant_id,
     process_template_str,
     save_df_with_backup,
     save_json,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 
 from .conftest import datetime_fixture  # noqa F401
@@ -34,16 +34,16 @@ from .conftest import DPATH_TEST_DATA
 @pytest.mark.parametrize(
     "participant_id,expected", [("123", "sub-123"), ("sub01", "sub-sub01")]
 )
-def test_participant_id_to_bids_participant(participant_id, expected):
-    assert participant_id_to_bids_participant(participant_id) == expected
+def test_participant_id_to_bids_participant_id(participant_id, expected):
+    assert participant_id_to_bids_participant_id(participant_id) == expected
 
 
 @pytest.mark.parametrize(
     "session,expected",
     [("BL", "ses-BL"), ("M12", "ses-M12"), (None, None)],
 )
-def test_session_id_to_bids_session(session, expected):
-    assert session_id_to_bids_session(session) == expected
+def test_session_id_to_bids_session_id(session, expected):
+    assert session_id_to_bids_session_id(session) == expected
 
 
 @pytest.mark.parametrize(

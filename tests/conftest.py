@@ -16,7 +16,10 @@ from nipoppy.config.main import Config
 from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.csv"
@@ -165,10 +168,10 @@ def _fake_dicoms(  # noqa: C901
 
     for participant_id, participant_session_ids in participants_and_sessions.items():
         if with_prefixes:
-            participant_id = participant_id_to_bids_participant(participant_id)
+            participant_id = participant_id_to_bids_participant_id(participant_id)
         for session_id in participant_session_ids:
             if with_prefixes:
-                session_id = session_id_to_bids_session(session_id)
+                session_id = session_id_to_bids_session_id(session_id)
             if participant_first:
                 dpath_dicom_parent = dpath / participant_id / session_id
             else:
