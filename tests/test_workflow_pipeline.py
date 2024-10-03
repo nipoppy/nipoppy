@@ -518,7 +518,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
 
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
-    [("heudiconv", "0.12.2"), ("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
+    [("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
 )
 def test_check_pipeline_version(
     pipeline_name,

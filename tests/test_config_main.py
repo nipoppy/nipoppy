@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.config.container import ContainerConfig
-from nipoppy.config.main import Config
+from nipoppy.config.main import Config, get_pipeline_version
 from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
@@ -221,17 +221,36 @@ def test_propagate_container_config(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,expected_version",
-    [("pipeline1", "v1"), ("pipeline2", "1.0"), ("bids_converter", "1.0")],
+    "pipeline_name,pipelines_key,expected_version",
+    [
+        ("pipeline1", "PROC_PIPELINES", "v1"),
+        ("pipeline2", "PROC_PIPELINES", "1.0"),
+        ("bids_converter", "BIDS_PIPELINES", "1.0"),
+    ],
 )
-def test_get_pipeline_version(valid_config_data, pipeline_name, expected_version):
+def test_get_pipeline_version(
+    valid_config_data, pipeline_name, pipelines_key, expected_version
+):
     config = Config(**valid_config_data)
-    assert config.get_pipeline_version(pipeline_name) == expected_version
+    assert (
+        get_pipeline_version(pipeline_name, getattr(config, pipelines_key))
+        == expected_version
+    )
 
 
-def test_get_pipeline_version_invalid_name(valid_config_data):
+@pytest.mark.parametrize(
+    "pipeline_name,pipelines_key",
+    [
+        ("pipeline1", "BIDS_PIPELINES"),
+        ("not_a_pipeline", "PROC_PIPELINES"),
+    ],
+)
+def test_get_pipeline_version_invalid_name(
+    valid_config_data, pipeline_name, pipelines_key
+):
+    config = Config(**valid_config_data)
     with pytest.raises(ValueError, match="No config found for pipeline"):
-        Config(**valid_config_data).get_pipeline_version("not_a_pipeline")
+        get_pipeline_version(pipeline_name, getattr(config, pipelines_key))
 
 
 @pytest.mark.parametrize(
