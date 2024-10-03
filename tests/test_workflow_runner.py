@@ -46,7 +46,7 @@ def config(tmp_path: Path):
         "custom": {"nipoppy": {"CONTAINER_SUBCOMMAND": "exec"}},
     }
     invocation = {
-        "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION]]",
+        "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION_ID]]",
         "arg2": 10,
     }
 
@@ -128,7 +128,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
     assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
-    assert "[[NIPOPPY_BIDS_SESSION]]" not in invocation_str
+    assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
 
 
 def test_process_container_config_boutiques_subcommand(config: Config, tmp_path: Path):

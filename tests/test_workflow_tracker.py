@@ -41,7 +41,7 @@ def tracker(tmp_path: Path):
     fpath_tracker_config = tmp_path / "tracker_config.json"
     tracker_config = {
         "PATHS": [
-            "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION]]/results.txt",
+            "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
             "file.txt",
         ],
     }

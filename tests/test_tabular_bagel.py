@@ -11,7 +11,7 @@ from nipoppy.tabular.bagel import Bagel, BagelModel
     [
         {
             Bagel.col_participant_id: "1",
-            Bagel.col_bids_participant: "sub-1",
+            Bagel.col_bids_participant_id: "sub-1",
             Bagel.col_session_id: "01",
             Bagel.col_pipeline_name: "my_pipeline",
             Bagel.col_pipeline_version: "1.0",
@@ -32,7 +32,7 @@ def test_model(data):
     bagel = BagelModel(**data)
     assert set(bagel.model_fields.keys()) == {
         Bagel.col_participant_id,
-        Bagel.col_bids_participant,
+        Bagel.col_bids_participant_id,
         Bagel.col_session_id,
         Bagel.col_pipeline_name,
         Bagel.col_pipeline_version,
@@ -55,7 +55,7 @@ def test_model_bids_id(participant_id, expected_bids_id):
         pipeline_step="step1",
         status=Bagel.status_success,
     )
-    assert model.bids_participant == expected_bids_id
+    assert model.bids_participant_id == expected_bids_id
 
 
 @pytest.mark.parametrize(
