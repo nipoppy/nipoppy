@@ -185,7 +185,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         command = (
             f"{self.CONTAINER_CONFIG.COMMAND} build {self.fpath_container} "
-            f"{self.pipeline_config["URI"]}"
+            f"{self.pipeline_config['URI']}"
         )
 
         run_output = self.run_command(command, check=True, shell=True)
