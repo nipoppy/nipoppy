@@ -50,6 +50,29 @@ def get_pipeline_version(
     )
 
 
+def get_pipeline_config(
+    pipeline_name: str,
+    pipeline_version: str,
+    pipeline_configs: list[BasePipelineConfig],
+) -> BasePipelineConfig:
+    """Get the config for a pipeline."""
+    available_pipelines = []
+    for pipeline_config in pipeline_configs:
+        if (
+            pipeline_config.NAME == pipeline_name
+            and pipeline_config.VERSION == pipeline_version
+        ):
+            return pipeline_config
+        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
+
+    raise ValueError(
+        "No config found for pipeline with "
+        f"NAME={pipeline_name}, VERSION={pipeline_version}"
+        ". Available pipelines and versions: "
+        + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+    )
+
+
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
@@ -183,26 +206,6 @@ class Config(_SchemaWithContainerConfig):
         self._check_no_duplicate_pipeline()
 
         return self
-
-    def get_pipeline_config(
-        self,
-        pipeline_name: str,
-        pipeline_version: str,
-    ) -> BasePipelineConfig:
-        """Get the config for a pipeline."""
-        # pooling them together since there should not be any duplicates
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
-            if (
-                pipeline_config.NAME == pipeline_name
-                and pipeline_config.VERSION == pipeline_version
-            ):
-                return pipeline_config
-
-        raise ValueError(
-            "No config found for pipeline with "
-            f"NAME={pipeline_name}, "
-            f"VERSION={pipeline_version}"
-        )
 
     def save(self, fpath: StrOrPathLike, **kwargs):
         """Save the config to a JSON file.

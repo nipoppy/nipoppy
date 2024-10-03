@@ -17,7 +17,7 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.main import get_pipeline_version
+from nipoppy.config.main import get_pipeline_config, get_pipeline_version
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
@@ -148,8 +148,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def pipeline_config(self) -> ProcPipelineConfig:
         """Get the user config for the pipeline."""
-        return self.config.get_pipeline_config(
-            self.pipeline_name, self.pipeline_version
+        return get_pipeline_config(
+            self.pipeline_name, self.pipeline_version, self._pipeline_configs
         )
 
     @cached_property

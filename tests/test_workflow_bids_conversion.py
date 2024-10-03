@@ -108,8 +108,6 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
     workflow.doughnut = Doughnut()
     config.save(workflow.layout.fpath_config)
 
-    print(config.get_pipeline_config("heudiconv", "0.12.2"))
-
     workflow.run_cleanup()
 
     assert not workflow.layout.fpath_doughnut.exists()
