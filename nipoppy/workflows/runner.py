@@ -211,9 +211,7 @@ class PipelineRunner(BasePipelineWorkflow):
     def run_cleanup(self):
         """Run pipeline runner cleanup."""
         if self.n_success == self.n_total:
-            self.logger.info("All pipeline segments completed successfully.")
             if not self.keep_workdir:
-                self.logger.info("Removing working / intermediary files.")
                 for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
                     if dpath.exists():
                         self.rm(dpath)

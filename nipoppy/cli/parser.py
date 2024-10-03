@@ -149,12 +149,12 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
 
 
 def add_arg_keepworkdir(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --keep_workdir argument to the parser."""
+    """Add a --keep-workdir argument to the parser."""
     parser.add_argument(
-        "--keep_workdir",
+        "--keep-workdir",
         type=str,
         required=False,
-        help="Keep pipeline working directory upon success (default: False).",
+        help="Keep pipeline working directory upon success (default: working directory deleted unless a run failed)",
     )
     return parser
 

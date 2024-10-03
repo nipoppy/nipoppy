@@ -102,6 +102,26 @@ def test_run_cleanup(tmp_path: Path, keep_workdir):
             assert not dpath.exists()
 
 
+@pytest.mark.parametrize("failed_job", [1, 2])
+def test_run_failed_cleanup(tmp_path: Path, failed_job):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        keep_workdir=False,
+    )
+    runner.n_success = failed_job
+    runner.n_total = 2
+    dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
+    for dpath in dpaths:
+        dpath.mkdir(parents=True)
+    runner.run_cleanup()
+    if runner.n_success == runner.n_total:
+        assert not dpath.exists()
+    else:
+        assert dpath.exists()
+
+
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     runner = PipelineRunner(
