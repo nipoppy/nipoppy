@@ -29,7 +29,7 @@ def get_pipeline_version(
     ----------
     pipeline_name : str
         Name of the pipeline, as specified in the config
-    pipeline_configs : list[BasePipelineConfig]
+    pipeline_configs : list[nipoppy.config.pipeline.BasePipelineConfig]
         List of pipeline configurations
 
     Returns
