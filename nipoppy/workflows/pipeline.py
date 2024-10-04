@@ -8,7 +8,7 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional, Tuple
 
 import bids
 from pydantic import ValidationError
@@ -18,6 +18,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -37,6 +38,32 @@ from nipoppy.utils import (
     session_id_to_bids_session,
 )
 from nipoppy.workflows.base import BaseWorkflow
+
+
+def apply_analysis_level(
+    participants_sessions: Iterable[str, str],
+    analysis_level: AnalysisLevelType,
+) -> Tuple[str, str]:
+    """Filter participant-session pairs to run based on the analysis level."""
+    if analysis_level == AnalysisLevelType.group:
+        return [(None, None)]
+
+    elif analysis_level == AnalysisLevelType.participant:
+        participants = []
+        for participant, _ in participants_sessions:
+            if participant not in participants:
+                participants.append(participant)
+        return [(participant, None) for participant in participants]
+
+    elif analysis_level == AnalysisLevelType.session:
+        sessions = []
+        for _, session in participants_sessions:
+            if session not in sessions:
+                sessions.append(session)
+        return [(None, session) for session in sessions]
+
+    else:
+        return participants_sessions
 
 
 class BasePipelineWorkflow(BaseWorkflow, ABC):
@@ -121,6 +148,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
+    def pipeline_step_config(self) -> ProcPipelineStepConfig:
+        """Get the user config for the pipeline step."""
+        return self.pipeline_config.get_step_config(step_name=self.pipeline_step)
+
+    @cached_property
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
         fpath_container = self.pipeline_config.get_fpath_container()
@@ -140,9 +172,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        fpath_descriptor = self.pipeline_config.get_descriptor_file(
-            step_name=self.pipeline_step
-        )
+        fpath_descriptor = self.pipeline_step_config.DESCRIPTOR_FILE
         if fpath_descriptor is None:
             raise ValueError(
                 "No descriptor file specified for pipeline"
@@ -156,9 +186,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        fpath_invocation = self.pipeline_config.get_invocation_file(
-            step_name=self.pipeline_step
-        )
+        fpath_invocation = self.pipeline_step_config.INVOCATION_FILE
         if fpath_invocation is None:
             raise ValueError(
                 "No invocation file specified for pipeline"
@@ -177,9 +205,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        fpath_pybids_ignore = self.pipeline_config.get_pybids_ignore_file(
-            step_name=self.pipeline_step
-        )
+        fpath_pybids_ignore = self.pipeline_step_config.PYBIDS_IGNORE_FILE
 
         # no file specified
         if fpath_pybids_ignore is None:
@@ -226,8 +252,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def process_template_json(
         self,
         template_json: dict,
-        participant_id: str,
-        session_id: str,
+        participant_id: Optional[str],
+        session_id: Optional[str],
         bids_participant: Optional[str] = None,
         bids_session: Optional[str] = None,
         objs: Optional[list] = None,
@@ -235,32 +261,28 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
-        if not (isinstance(participant_id, str) and isinstance(session_id, str)):
-            raise ValueError(
-                "participant_id and session_id must be strings"
-                f", got {participant_id} ({type(participant_id)})"
-                f" and {session_id} ({type(session_id)})"
-            )
+        if participant_id is not None:
+            if bids_participant is None:
+                bids_participant = participant_id_to_bids_participant(participant_id)
+            kwargs["participant_id"] = participant_id
+            kwargs["bids_participant"] = bids_participant
 
-        if bids_participant is None:
-            bids_participant = participant_id_to_bids_participant(participant_id)
-        if bids_session is None:
-            bids_session = session_id_to_bids_session(session_id)
+        if session_id is not None:
+            if bids_session is None:
+                bids_session = session_id_to_bids_session(session_id)
+            kwargs["session_id"] = session_id
+            kwargs["bids_session"] = bids_session
 
         if objs is None:
             objs = []
         objs.extend([self, self.layout])
 
-        kwargs["participant_id"] = participant_id
-        kwargs["session_id"] = session_id
-        kwargs["bids_participant"] = bids_participant
-        kwargs["bids_session"] = bids_session
-
-        self.logger.debug("Available replacement strings: ")
-        max_len = max(len(k) for k in kwargs)
-        for k, v in kwargs.items():
-            self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
-        self.logger.debug(f"\t+ all attributes in: {objs}")
+        if kwargs:
+            self.logger.debug("Available replacement strings: ")
+            max_len = max(len(k) for k in kwargs)
+            for k, v in kwargs.items():
+                self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
+            self.logger.debug(f"\t+ all attributes in: {objs}")
 
         template_json_str = process_template_str(
             json.dumps(template_json),
@@ -338,11 +360,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def check_pipeline_step(self):
+        """Set the pipeline step name based on the config if it is not given."""
+        if self.pipeline_step is None:
+            self.pipeline_step = self.pipeline_step_config.NAME
+            self.logger.warning(
+                f"Pipeline step not specified, using step {self.pipeline_step}"
+            )
+
     def run_setup(self):
         """Run pipeline setup."""
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
             self.check_dir(dpath)
@@ -351,9 +382,16 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def run_main(self):
         """Run the pipeline."""
-        for participant_id, session_id in self.get_participants_sessions_to_run(
+        participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
-        ):
+        )
+
+        participants_sessions = apply_analysis_level(
+            participants_sessions=participants_sessions,
+            analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
+        )
+
+        for participant_id, session_id in participants_sessions:
             self.n_total += 1
             self.logger.info(
                 f"Running for participant {participant_id}, session {session_id}"
@@ -373,7 +411,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
-                "No participant-session pairs to run. Make sure there are no mistakes "
+                "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, "
                 f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
             )
@@ -390,12 +428,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             else:
                 color = LogColor.PARTIAL_SUCCESS
 
-            self.logger.info(
-                (
-                    f"[{color}]{prefix} for {self.n_success} out of "
-                    f"{self.n_total} participant-session pairs{suffix}[/]"
+            if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
+                message_body = "on the entire study"
+            else:
+                message_body = (
+                    f"for {self.n_success} out of "
+                    f"{self.n_total} participants or sessions"
                 )
-            )
+
+            self.logger.info(f"[{color}]{prefix} {message_body}{suffix}[/]")
 
         return super().run_cleanup()
 

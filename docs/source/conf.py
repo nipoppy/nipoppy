@@ -4,6 +4,8 @@ For the full list of built-in configuration values, see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
+import os
+
 from nipoppy._version import __version__
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 
@@ -32,6 +34,7 @@ extensions = [
     "myst_parser",
     "sphinxarg.ext",
     "sphinx_copybutton",
+    "sphinx_github_changelog",
     "sphinx-jsonschema",
     "sphinx_togglebutton",
     "sphinx.ext.autodoc.typehints",
@@ -53,13 +56,23 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
+html_css_files = [
+    "theme.css",
+]
+
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
+
 html_theme_options = {
     "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
     "source_directory": "docs/source",
+    "sidebar_hide_name": True,
 }
+
+html_logo = "../../logo/logo_with_name.svg"
+html_favicon = "../../logo/logo_square.svg"
+html_title = "Nipoppy"
 
 # -- Intersphinx configuration ------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
@@ -141,7 +154,7 @@ autoapi_options = [
     "members",
     "undoc-members",
     # "private-members",
-    "show-inheritance",
+    # "show-inheritance",
     # "show-module-summary",
     # "special-members",
     "imported-members",
@@ -165,7 +178,20 @@ nitpick_ignore = [
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
+    ("py:obj", "BasePipelineConfig"),
+    ("py:obj", "BasePipelineStepConfig"),
+    ("py:obj", "ContainerConfig"),
+    ("py:obj", "PathInfo"),
+    ("py:obj", "FpathInfo"),
 ]
+
+# -- Sphinx Github Changelog configuration ------------------------------------
+
+# PAT needs to be set as environment variable in Read the Docs project settings
+# fine-grained token permissions:
+#   - nipoppy/nipoppy repository
+#   - read access to code + metadata
+sphinx_github_changelog_token = os.environ.get("NIPOPPY_RELEASES_PAT")
 
 # -- Copybutton configuration -------------------------------------------------
 copybutton_exclude = ".linenos, .gp"

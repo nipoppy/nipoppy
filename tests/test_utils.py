@@ -293,6 +293,11 @@ def test_process_template_str(template_str, resolve_paths, objs, kwargs, expecte
     )
 
 
+def test_process_template_str_warning():
+    with pytest.warns(UserWarning, match="Replacing .* with None"):
+        assert process_template_str("[[NIPOPPY_KWARG1]]", kwarg1=None) == "None"
+
+
 @pytest.mark.parametrize("template_str", ["[[NIPOPPY_123]]", "[[NIPOPPY_-]]"])
 def test_process_template_str_error_identifier(template_str):
     with pytest.raises(ValueError, match="Invalid identifier name"):

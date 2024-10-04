@@ -8,7 +8,7 @@ from typing import Optional
 from rich.console import Console
 from rich.logging import RichHandler
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import IS_TESTING, StrOrPathLike
 
 DATE_FORMAT = "[%Y-%m-%d %X]"
 FORMAT_RICH = "%(message)s"
@@ -22,6 +22,11 @@ def get_logger(
     # create logger
     logger = logging.getLogger(name=name)
     logger.setLevel(level)
+
+    # propagate should be False to avoid duplicates from root logger
+    # except when testing because otherwise pytest does not capture the logs
+    if not IS_TESTING:
+        logger.propagate = False
 
     # partially instantiate RichHandler
     rich_handler = partial(
