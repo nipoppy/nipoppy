@@ -33,18 +33,18 @@ FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 FIELD_DESCRIPTION_MAP = {
     "participant_id": "Participant identifier, without the BIDS prefix",
     "session_id": "Imaging session identifier, without the BIDS prefix",
-    "bids_participant": "Participant identifier with BIDS prefix (e.g., sub-01)",
-    "bids_session": "Imaging session identifier with BIDS prefix (e.g., ses-01)",
+    "bids_participant_id": "Participant identifier with BIDS prefix (e.g., sub-01)",
+    "bids_session_id": "Imaging session identifier with BIDS prefix (e.g., ses-01)",
     "visit_id": "Visit identifier",
 }
 
 
-def participant_id_to_bids_participant(participant_id: str) -> str:
+def participant_id_to_bids_participant_id(participant_id: str) -> str:
     """Add the BIDS prefix to a participant ID."""
     return f"{BIDS_SUBJECT_PREFIX}{participant_id}"
 
 
-def session_id_to_bids_session(session_id: Optional[str]) -> str:
+def session_id_to_bids_session_id(session_id: Optional[str]) -> str:
     """
     Add the BIDS prefix to a session ID.
 
