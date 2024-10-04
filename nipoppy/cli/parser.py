@@ -154,7 +154,10 @@ def add_arg_keepworkdir(parser: _ActionsContainer) -> _ActionsContainer:
         "--keep-workdir",
         type=str,
         required=False,
-        help="Keep pipeline working directory upon success (default: working directory deleted unless a run failed)",
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
+        ),
     )
     return parser
 
