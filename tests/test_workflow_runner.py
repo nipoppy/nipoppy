@@ -103,16 +103,17 @@ def test_run_cleanup(tmp_path: Path, keep_workdir):
             assert not dpath.exists()
 
 
-@pytest.mark.parametrize("failed_job", [1, 2])
-def test_run_failed_cleanup(tmp_path: Path, failed_job):
+@pytest.mark.parametrize("n_success", [1, 2])
+def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
         keep_workdir=False,
     )
-    runner.n_success = failed_job
+    runner.n_success = n_success
     runner.n_total = 2
+    config.save(runner.layout.fpath_config)
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
