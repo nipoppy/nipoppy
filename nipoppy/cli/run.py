@@ -11,6 +11,7 @@ from nipoppy.cli.parser import (
     COMMAND_DICOM_REORG,
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
+    COMMAND_PIPELINE_EXTRACT,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
     PROGRAM_NAME,
@@ -111,6 +112,20 @@ def cli(argv: Sequence[str] = None) -> None:
                 pipeline_version=args.pipeline_version,
                 participant_id=args.participant_id,
                 session_id=args.session_id,
+                **workflow_kwargs,
+            )
+        elif command == COMMAND_PIPELINE_EXTRACT:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.extractor import ExtractionRunner
+
+            workflow = ExtractionRunner(
+                dpath_root=dpath_root,
+                pipeline_name=args.pipeline,
+                pipeline_version=args.pipeline_version,
+                pipeline_step=args.pipeline_step,
+                participant_id=args.participant_id,
+                session_id=args.session_id,
+                simulate=args.simulate,
                 **workflow_kwargs,
             )
         else:

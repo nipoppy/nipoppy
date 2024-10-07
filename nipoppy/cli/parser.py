@@ -14,6 +14,7 @@ COMMAND_DICOM_REORG = "reorg"
 COMMAND_BIDS_CONVERSION = "bidsify"
 COMMAND_PIPELINE_RUN = "run"
 COMMAND_PIPELINE_TRACK = "track"
+COMMAND_PIPELINE_EXTRACT = "extract"
 
 DEFAULT_VERBOSITY = "2"  # info
 VERBOSITY_TO_LOG_LEVEL_MAP = {
@@ -253,7 +254,7 @@ def add_subparser_bids_conversion(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
-    description = "Convert to BIDS."
+    description = "Run a BIDS conversion pipeline."
     parser = subparsers.add_parser(
         COMMAND_BIDS_CONVERSION,
         description=description,
@@ -273,7 +274,7 @@ def add_subparser_pipeline_run(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
-    description = "Run a pipeline."
+    description = "Run a processing pipeline."
     parser = subparsers.add_parser(
         COMMAND_PIPELINE_RUN,
         description=description,
@@ -307,6 +308,26 @@ def add_subparser_pipeline_track(
     return parser
 
 
+def add_subparser_pipeline_extract(
+    subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
+) -> ArgumentParser:
+    """Add subparser for extract command."""
+    description = "Run an extraction pipeline."
+    parser = subparsers.add_parser(
+        COMMAND_PIPELINE_EXTRACT,
+        description=description,
+        help=description,
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser = add_args_pipeline(parser)
+    parser = add_arg_pipeline_step(parser)
+    parser = add_args_participant_and_session(parser)
+    parser = add_arg_simulate(parser)
+    return parser
+
+
 def get_global_parser(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
@@ -336,6 +357,7 @@ def get_global_parser(
     add_subparser_bids_conversion(subparsers, formatter_class=formatter_class)
     add_subparser_pipeline_run(subparsers, formatter_class=formatter_class)
     add_subparser_pipeline_track(subparsers, formatter_class=formatter_class)
+    add_subparser_pipeline_extract(subparsers, formatter_class=formatter_class)
 
     # add common/global options to subcommand parsers
     for parser in list(subparsers.choices.values()):
