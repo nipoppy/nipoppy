@@ -4,6 +4,6 @@
     "converter": "none",
     "outdir": "[[NIPOPPY_DPATH_BIDS]]",
     "heuristic": "convertall",
-    "session": "[[NIPOPPY_BIDS_SESSION]]",
+    "session": "[[NIPOPPY_BIDS_SESSION_ID]]",
     "overwrite": true
 }

@@ -82,7 +82,7 @@ These step names `prepare` and `convert` (and `edit`) are a Nipoppy convention b
 To convert all participants and sessions in a dataset, run:
 ```console
 $ nipoppy bidsify \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME>
 ```
@@ -95,7 +95,7 @@ If `--pipeline-step` is not specified, the first step defined in the global conf
 The BIDS conversion can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy bidsify \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME> \
     --participant-id <PARTICIPANT_ID> \

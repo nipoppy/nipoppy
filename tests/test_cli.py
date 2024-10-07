@@ -23,7 +23,7 @@ def test_cli_invalid():
 
 def test_cli_init(tmp_path: Path):
     try:
-        cli(["nipoppy", "init", "--dataset-root", str(tmp_path / "my_dataset")]) is None
+        cli(["nipoppy", "init", str(tmp_path / "my_dataset")]) is None
     except SystemExit:
         pass
 
@@ -31,7 +31,7 @@ def test_cli_init(tmp_path: Path):
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
-        cli(["nipoppy", "doughnut", "--dataset-root", str(dpath_root)])
+        cli(["nipoppy", "doughnut", str(dpath_root)])
     except BaseException:
         pass
 
@@ -45,7 +45,7 @@ def test_cli_doughnut(tmp_path: Path):
 def test_cli_dicom_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
-        cli(["nipoppy", "reorg", "--dataset-root", str(dpath_root)])
+        cli(["nipoppy", "reorg", str(dpath_root)])
     except BaseException:
         pass
 
@@ -67,7 +67,6 @@ def test_cli_bids_conversion(tmp_path: Path):
             [
                 "nipoppy",
                 "bidsify",
-                "--dataset-root",
                 str(dpath_root),
                 "--pipeline",
                 "my_pipeline",
@@ -100,7 +99,6 @@ def test_cli_pipeline_run(tmp_path: Path):
             [
                 "nipoppy",
                 "run",
-                "--dataset-root",
                 str(dpath_root),
                 "--pipeline",
                 "my_pipeline",
@@ -131,7 +129,6 @@ def test_cli_pipeline_track(tmp_path: Path):
             [
                 "nipoppy",
                 "track",
-                "--dataset-root",
                 str(dpath_root),
                 "--pipeline",
                 "my_pipeline",

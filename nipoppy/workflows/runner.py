@@ -168,6 +168,7 @@ class PipelineRunner(BasePipelineWorkflow):
                 bagel.get_completed_participants_sessions(
                     pipeline_name=self.pipeline_name,
                     pipeline_version=self.pipeline_version,
+                    pipeline_step=self.pipeline_step,
                     participant_id=participant_id,
                     session_id=session_id,
                 )

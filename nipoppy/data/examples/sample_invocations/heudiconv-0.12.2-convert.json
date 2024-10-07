@@ -4,7 +4,7 @@
     "converter": "dcm2niix",
     "outdir": "[[NIPOPPY_DPATH_BIDS]]",
     "heuristic": "[[HEUDICONV_HEURISTIC_FILE]]",
-    "session": "[[NIPOPPY_BIDS_SESSION]]",
+    "session": "[[NIPOPPY_BIDS_SESSION_ID]]",
     "overwrite": true,
     "minmeta": true
 }
