@@ -34,7 +34,11 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
+    STEPS: list[
+        Union[
+            BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
+        ]
+    ] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
