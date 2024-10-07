@@ -318,6 +318,7 @@ def add_subparser_pipeline_track(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
+    parser = add_arg_pipeline_step(parser)
     parser = add_args_participant_and_session(parser)
     return parser
 

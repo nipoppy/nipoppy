@@ -225,6 +225,14 @@ def test_add_subparser_pipeline_run(args):
             "--pipeline-version",
             "1.2.3",
         ],
+        [
+            "--dataset-root",
+            "my_dataset",
+            "--pipeline",
+            "pipeline1",
+            "--pipeline-step",
+            "step1",
+        ],
     ],
 )
 def test_add_subparser_pipeline_track(args):
