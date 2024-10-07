@@ -1,11 +1,11 @@
 {
     "dpath_bids": {
         "path": "bids",
-        "description": "This directory contains the raw dataset converted to the BIDS standard."
+        "description": "This directory contains the imaging data converted to the BIDS standard."
     },
     "dpath_derivatives": {
         "path": "derivatives",
-        "description": "This directory contains the outputs of image processing pipelines. Outputs of different pipelines are stored in `<pipeline_name>/<pipeline_version>` subdirectories. Each subdirectory has two additional subdirectories: one for the actual output (under `output`) and one for temporary files created during processing (under `work`)."
+        "description": "This directory contains the outputs of image processing and extraction pipelines. Outputs of different pipelines are stored in `<pipeline_name>/<pipeline_version>` subdirectories."
     },
     "dpath_sourcedata": {
         "path": "scratch",

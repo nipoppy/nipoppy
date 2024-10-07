@@ -9,11 +9,11 @@
     },
     "dpath_sourcedata": {
         "path": "sourcedata",
-        "description": "This directory is for the raw, unorganized or arbitrarily organized source data (imaging and tabular)."
+        "description": "This directory is for unorganized or arbitrarily organized source data (imaging and tabular)."
     },
     "dpath_src_tabular": {
         "path": "sourcedata/tabular",
-        "description": "This directory is for the raw, unorganized or arbitrarily organized tabular data."
+        "description": "This directory is for unorganized or arbitrarily organized tabular data."
     },
     "dpath_src_imaging": {
         "path": "scratch",
@@ -29,7 +29,7 @@
     },
     "dpath_code": {
         "path": "code",
-        "description": "This directory is for custom code."
+        "description": "This directory is for custom code / scripts used for data wrangling and downstream analysis done on this dataset."
     },
     "dpath_proc": {
         "path": "proc",
@@ -64,12 +64,12 @@
         "description": "This directory is for scratch data."
     },
     "dpath_work": {
-        "path": "scratch",
+        "path": "scratch/work",
         "description": null
     },
     "dpath_pre_reorg": {
         "path": "scratch/raw_dicom",
-        "description": "This directory is for raw, unorganized DICOM dumps."
+        "description": "This directory is for unorganized DICOM dumps."
     },
     "dpath_logs": {
         "path": "scratch/logs",

@@ -25,6 +25,10 @@ Fields containing general information about the dataset.
 
 Fields for specifying the path to participant-session data directories in {{dpath_pre_reorg}}. Note that these two options are mutually exclusive (cannot both be specified).
 
+```{note}
+By default, BIDS prefixes (i.e., `sub-` and `ses-`) are not expected in {{dpath_pre_reorg}} subdirectory names, though this can be customized if needed (see {ref}`here <dicom-dir-map-schema>` for more information).
+```
+
 ```{glossary}
 `DICOM_DIR_PARTICIPANT_FIRST`
     Can be set to `false` to indicate that the data is organized in subdirectories following the {{dpath_pre_reorg}}`/<SESSION_ID>/<PARTICIPANT_ID>` pattern. Otherwise, setting to `true` is equivalent to the default (files in `{{dpath_pre_reorg}}/<PARTICIPANT_ID>/<SESSION_ID>` directories).

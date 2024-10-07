@@ -56,7 +56,7 @@ class LayoutConfig(BaseModel):
     )
     dpath_src_tabular: DpathInfo = Field(
         description=(
-            "Directory for raw tabular data"
+            "Directory for tabular data source files"
             " (e.g., downloaded CSVs, Excel files, RedCAP reports)"
         )
     )
@@ -65,10 +65,10 @@ class LayoutConfig(BaseModel):
     )
     dpath_downloads: DpathInfo = Field(description="Directory for downloaded data")
     dpath_pre_reorg: DpathInfo = Field(
-        description="Directory for raw, unorganized imaging files"
+        description="Directory for unorganized source imaging files"
     )
     dpath_post_reorg: DpathInfo = Field(
-        description="Directory for raw imaging data that is not yet in BIDS"
+        description="Directory for imaging data that is organized but not yet in BIDS"
     )
     dpath_code: DpathInfo = Field(description="Directory for code and scripts")
     dpath_proc: DpathInfo = Field(

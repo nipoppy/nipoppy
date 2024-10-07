@@ -54,7 +54,7 @@ class Config(_SchemaWithContainerConfig):
         description=(
             f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
             "follow the pattern <PARTICIPANT>/<SESSION> (default) or "
-            "<SESSION>/<PARTICIPANT>. Note: this field and and DICOM_DIR_MAP_FILE "
+            "<SESSION>/<PARTICIPANT>. Note: this field and DICOM_DIR_MAP_FILE "
             "cannot both be specified"
         ),
     )
