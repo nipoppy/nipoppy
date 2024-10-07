@@ -91,7 +91,7 @@ myst_heading_anchors = 5
 
 template_strings_bids_runner = [
     "",
-    "The default pipeline invocation files in {{dpath_invocations}} can be modified by changing existing values or adding new key-value pairs.",
+    "The default pipeline invocation files (in {{dpath_pipelines}}`/<PIPELINE_NAME>-<PIPELINE_VERSION>`) can be modified by changing existing values or adding new key-value pairs.",
     "",
     "```{tip}",
     "Run the pipeline on a single participant and session with the `--simulate` flag to check/debug custom invocation files.",
@@ -120,11 +120,9 @@ myst_substitutions = {
     "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
+    "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
     "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
-    "dpath_invocations": f"`{DEFAULT_LAYOUT_INFO.dpath_invocations}`",
-    "dpath_descriptors": f"`{DEFAULT_LAYOUT_INFO.dpath_descriptors}`",
     "dpath_bids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_db}`",
-    "dpath_bids_ignore_patterns": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_ignore_patterns}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
