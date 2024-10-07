@@ -36,16 +36,6 @@ def add_arg_dataset_root(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
-def add_arg_simulate(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --simulate argument to the parser."""
-    parser.add_argument(
-        "--simulate",
-        action="store_true",
-        help="Simulate the pipeline run without executing the generated command-line.",
-    )
-    return parser
-
-
 def add_args_participant_and_session(parser: _ActionsContainer) -> _ActionsContainer:
     """Add --participant-id and --session-id arguments to the parser."""
     parser.add_argument(
@@ -75,11 +65,6 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
         required=False,
         help="Pipeline version, as specified in the config file.",
     )
-    return parser
-
-
-def add_arg_pipeline_step(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --pipeline-step argument to the parser."""
     parser.add_argument(
         "--pipeline-step",
         type=str,
@@ -149,13 +134,14 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
-def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add argument to init a layout with a BIDS datalad dataset."""
+def add_args_runner(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add arguments for a runner."""
+    parser = add_args_pipeline(parser)
+    parser = add_args_participant_and_session(parser)
     parser.add_argument(
-        "--bids-source",
-        type=str,
-        required=False,
-        help=("Path to a BIDS dataset to initialize the layout with."),
+        "--simulate",
+        action="store_true",
+        help="Simulate the pipeline run without executing the generated command-line.",
     )
     return parser
 
@@ -174,8 +160,12 @@ def add_subparser_init(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-
-    parser = add_arg_bids_source(parser)
+    parser.add_argument(
+        "--bids-source",
+        type=str,
+        required=False,
+        help="Path to a BIDS dataset to initialize the layout with.",
+    )
 
     return parser
 
@@ -213,7 +203,7 @@ def add_subparser_doughnut(
     return parser
 
 
-def add_subparser_dicom_reorg(
+def add_subparser_reorg(
     subparsers: _SubParsersAction,
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
@@ -250,7 +240,7 @@ def add_subparser_dicom_reorg(
     return parser
 
 
-def add_subparser_bids_conversion(
+def add_subparser_bidsify(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
@@ -263,14 +253,11 @@ def add_subparser_bids_conversion(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-    parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
-    parser = add_args_participant_and_session(parser)
-    parser = add_arg_simulate(parser)
+    parser = add_args_runner(parser)
     return parser
 
 
-def add_subparser_pipeline_run(
+def add_subparser_run(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
@@ -283,14 +270,12 @@ def add_subparser_pipeline_run(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-    parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
-    parser = add_args_participant_and_session(parser)
-    parser = add_arg_simulate(parser)
+    parser = add_args_runner(parser)
+
     return parser
 
 
-def add_subparser_pipeline_track(
+def add_subparser_track(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for track command."""
@@ -308,7 +293,7 @@ def add_subparser_pipeline_track(
     return parser
 
 
-def add_subparser_pipeline_extract(
+def add_subparser_extract(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for extract command."""
@@ -321,10 +306,8 @@ def add_subparser_pipeline_extract(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-    parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
-    parser = add_args_participant_and_session(parser)
-    parser = add_arg_simulate(parser)
+    parser = add_args_runner(parser)
+
     return parser
 
 
@@ -353,11 +336,11 @@ def get_global_parser(
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
-    add_subparser_dicom_reorg(subparsers, formatter_class=formatter_class)
-    add_subparser_bids_conversion(subparsers, formatter_class=formatter_class)
-    add_subparser_pipeline_run(subparsers, formatter_class=formatter_class)
-    add_subparser_pipeline_track(subparsers, formatter_class=formatter_class)
-    add_subparser_pipeline_extract(subparsers, formatter_class=formatter_class)
+    add_subparser_reorg(subparsers, formatter_class=formatter_class)
+    add_subparser_bidsify(subparsers, formatter_class=formatter_class)
+    add_subparser_run(subparsers, formatter_class=formatter_class)
+    add_subparser_track(subparsers, formatter_class=formatter_class)
+    add_subparser_extract(subparsers, formatter_class=formatter_class)
 
     # add common/global options to subcommand parsers
     for parser in list(subparsers.choices.values()):
