@@ -19,7 +19,7 @@
         "path": "scratch",
         "description": null
     },
-    "dpath_to_bidsify": {
+    "dpath_post_reorg": {
         "path": "dicom",
         "description": "This directory contains the organized source data that is ready for BIDS conversion."
     },

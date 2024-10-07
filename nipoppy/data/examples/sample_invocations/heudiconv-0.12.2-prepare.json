@@ -1,5 +1,5 @@
 {
-    "dicom_dir_template": "[[NIPOPPY_DPATH_TO_BIDSIFY]]/sub-{subject}/{session}/*",
+    "dicom_dir_template": "[[NIPOPPY_DPATH_POST_REORG]]/sub-{subject}/{session}/*",
     "subjs": "[[NIPOPPY_PARTICIPANT_ID]]",
     "converter": "none",
     "outdir": "[[NIPOPPY_DPATH_BIDS]]",

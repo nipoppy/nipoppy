@@ -325,7 +325,7 @@ class BaseWorkflow(Base, ABC):
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.layout.dpath_pre_reorg,
-                dpath_organized=self.layout.dpath_to_bidsify,
+                dpath_organized=self.layout.dpath_post_reorg,
                 dpath_bidsified=self.layout.dpath_bids,
                 empty=False,
                 logger=self.logger,

@@ -152,7 +152,7 @@ def test_run_single_error_file_exists(tmp_path: Path):
     fname = "test.dcm"
     for fpath in [
         workflow.layout.dpath_pre_reorg / participant_id / session_id / fname,
-        workflow.layout.dpath_to_bidsify
+        workflow.layout.dpath_post_reorg
         / participant_id_to_bids_participant(participant_id)
         / session_id_to_bids_session(session_id)
         / fname,
@@ -286,7 +286,7 @@ def test_get_participants_sessions_to_run(
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         dpath_downloaded=workflow.layout.dpath_pre_reorg,
-        dpath_organized=workflow.layout.dpath_to_bidsify,
+        dpath_organized=workflow.layout.dpath_post_reorg,
     )
 
     config = get_config(
@@ -396,7 +396,7 @@ def test_run_main(
     for participant_id, session_ids in participants_and_sessions_manifest.items():
         for session_id in session_ids:
             dpath_to_check: Path = (
-                workflow.layout.dpath_to_bidsify
+                workflow.layout.dpath_post_reorg
                 / participant_id_to_bids_participant(participant_id)
                 / session_id_to_bids_session(session_id)
             )

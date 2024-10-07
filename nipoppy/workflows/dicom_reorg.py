@@ -96,7 +96,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         fpaths_to_reorg = self.get_fpaths_to_reorg(participant_id, session_id)
 
         dpath_reorganized: Path = (
-            self.layout.dpath_to_bidsify
+            self.layout.dpath_post_reorg
             / participant_id_to_bids_participant(participant_id)
             / session_id_to_bids_session(session_id)
         )
@@ -159,7 +159,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             manifest=self.manifest,
             dicom_dir_map=self.dicom_dir_map,
             dpath_downloaded=self.layout.dpath_pre_reorg,
-            dpath_organized=self.layout.dpath_to_bidsify,
+            dpath_organized=self.layout.dpath_post_reorg,
             dpath_bidsified=self.layout.dpath_bids,
             logger=self.logger,
         )

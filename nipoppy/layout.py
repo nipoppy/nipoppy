@@ -67,7 +67,7 @@ class LayoutConfig(BaseModel):
     dpath_pre_reorg: DpathInfo = Field(
         description="Directory for raw, unorganized imaging files"
     )
-    dpath_to_bidsify: DpathInfo = Field(
+    dpath_post_reorg: DpathInfo = Field(
         description="Directory for raw imaging data that is not yet in BIDS"
     )
     dpath_code: DpathInfo = Field(description="Directory for code and scripts")
@@ -184,7 +184,7 @@ class DatasetLayout(Base):
         self.dpath_src_imaging: Path
         self.dpath_downloads: Path
         self.dpath_pre_reorg: Path
-        self.dpath_to_bidsify: Path
+        self.dpath_post_reorg: Path
         self.dpath_code: Path
         self.dpath_proc: Path
         self.dpath_containers: Path

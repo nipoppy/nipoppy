@@ -84,7 +84,7 @@ class BidsConversionRunner(PipelineRunner):
             participant_id=participant_id,
             session_id=session_id,
             bind_paths=[
-                self.layout.dpath_to_bidsify,
+                self.layout.dpath_post_reorg,
                 self.layout.dpath_bids,
             ],
         )

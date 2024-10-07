@@ -1,5 +1,5 @@
 {
-    "sourcefolder": "[[NIPOPPY_DPATH_TO_BIDSIFY]]",
+    "sourcefolder": "[[NIPOPPY_DPATH_POST_REORG]]",
     "bidsfolder": "[[NIPOPPY_DPATH_BIDS]]",
     "participant_label": [
         "[[NIPOPPY_PARTICIPANT_ID]]"

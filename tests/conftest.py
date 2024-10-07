@@ -27,7 +27,7 @@ ATTR_TO_DPATH_MAP = {
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
     "dpath_src_tabular": "sourcedata/tabular",
-    "dpath_to_bidsify": "sourcedata/imaging/to_bidsify",
+    "dpath_post_reorg": "sourcedata/imaging/post_reorg",
     "dpath_pre_reorg": "sourcedata/imaging/pre_reorg",
     "dpath_downloads": "sourcedata/imaging/downloads",
     "dpath_code": "code",

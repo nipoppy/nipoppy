@@ -14,7 +14,7 @@
     "dpath_src_imaging": {
         "path": "scratch/imaging"
     },
-    "dpath_to_bidsify": {
+    "dpath_post_reorg": {
         "path": "dicom"
     },
     "dpath_downloads": {
