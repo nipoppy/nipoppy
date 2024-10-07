@@ -24,26 +24,14 @@
     "dpath_code": {
         "path": "code"
     },
-    "dpath_proc": {
+    "dpath_pipelines": {
         "path": "proc"
     },
     "dpath_containers": {
         "path": "proc/containers"
     },
-    "dpath_descriptors": {
-        "path": "proc/descriptors"
-    },
-    "dpath_invocations": {
-        "path": "proc/invocations"
-    },
-    "dpath_tracker_configs": {
-        "path": "proc/tracker_configs"
-    },
     "dpath_pybids_db": {
         "path": "proc/pybids/bids_db"
-    },
-    "dpath_pybids_ignore_patterns": {
-        "path": "proc/pybids/ignore_patterns"
     },
     "dpath_scratch": {
         "path": "scratch"

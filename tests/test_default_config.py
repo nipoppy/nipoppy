@@ -14,9 +14,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
-    DPATH_DESCRIPTORS,
-    DPATH_INVOCATIONS,
-    DPATH_TRACKER_CONFIGS,
+    DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
@@ -35,9 +33,7 @@ def single_subject_dataset(
     session_id = "01"
     container_command = "apptainer"
     substitutions = {
-        "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]": str(DPATH_TRACKER_CONFIGS),
-        "[[NIPOPPY_DPATH_DESCRIPTORS]]": str(DPATH_DESCRIPTORS),
-        "[[NIPOPPY_DPATH_INVOCATIONS]]": str(DPATH_INVOCATIONS),
+        "[[NIPOPPY_DPATH_PIPELINES]]": str(DPATH_SAMPLE_PIPELINES),
         "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": str(tmp_path / "heuristic.py"),
         "[[DCM2BIDS_CONFIG_FILE]]": str(tmp_path / "dcm2bids_config.json"),
@@ -74,7 +70,9 @@ def single_subject_dataset(
 
 
 def get_fpaths_descriptors() -> list[str]:
-    return [str(fpath) for fpath in Path(DPATH_DESCRIPTORS).iterdir()]
+    return [
+        str(fpath) for fpath in Path(DPATH_SAMPLE_PIPELINES).glob("*/descriptor*.json")
+    ]
 
 
 def get_fmriprep_output_paths(

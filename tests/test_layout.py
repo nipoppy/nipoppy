@@ -110,11 +110,7 @@ def test_fpaths(dpath_root: Path):
         ["sourcedata/imaging/post_reorg", "sourcedata/imaging/downloads"],
         ["bids", "derivatives"],
         [
-            "proc",
-            "proc/descriptors",
-            "proc/invocations",
-            "proc/tracker_configs",
-            "proc/pybids/ignore_patterns",
+            "pipelines",
         ],
         [
             "scratch",
@@ -156,7 +152,7 @@ def test_dpath_descriptions():
     [
         ["sourcedata", "downloads"],
         ["bids", "derivatives"],
-        ["proc"],
+        ["pipelines"],
         ["tabular"],
     ],
 )

@@ -31,7 +31,7 @@
         "path": "code",
         "description": "This directory is for custom code / scripts used for data wrangling and downstream analysis done on this dataset."
     },
-    "dpath_proc": {
+    "dpath_pipelines": {
         "path": "proc",
         "description": "This directory contains the Nipoppy configuration information and custom code."
     },
@@ -39,25 +39,9 @@
         "path": "proc/containers",
         "description": "This directory contains the container image files for the processing pipelines."
     },
-    "dpath_descriptors": {
-        "path": "proc/descriptors",
-        "description": "This directory is for storing Boutiques descriptors for user-added pipelines."
-    },
-    "dpath_invocations": {
-        "path": "proc/invocations",
-        "description": "This directory is for storing Boutiques invocations for processing pipelines."
-    },
-    "dpath_tracker_configs": {
-        "path": "proc/tracker_configs",
-        "description": "This directory is for storing tracker configurations for processing pipelines."
-    },
     "dpath_pybids_db": {
         "path": "proc/pybids/bids_db",
         "description": "This directory is for PyBIDS databases generated/used during processing."
-    },
-    "dpath_pybids_ignore_patterns": {
-        "path": "proc/pybids/ignore_patterns",
-        "description": "This directory is for storing ignore patterns to be used by PyBIDS during dataset indexing."
     },
     "dpath_scratch": {
         "path": "scratch",

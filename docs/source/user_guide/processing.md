@@ -54,9 +54,11 @@ Just like with BIDS converters, pipeline and pipeline step configurations are se
 
 There are several files in pipeline step configurations that can be further modified to customize pipeline runs:
 - `INVOCATION_FILE`: a {term}`JSON` file containing key-value pairs specifying runtime parameters. The keys correspond to entries in the pipeline's descriptor file.
-    - Invocation files are in the {{dpath_invocations}} directory, while descriptor files are in the {{dpath_descriptors}}
 - `PYBIDS_IGNORE_FILE`: a {term}`JSON` file containing a list of file names or patterns to ignore when building the [PyBIDS](https://bids-standard.github.io/pybids/) database
-    - These files should be in the {{dpath_pybids_ignore_patterns}} directory
+
+```{note}
+By default, pipeline files are stored in {{dpath_pipelines}}`/<PIPELINE_NAME>-<PIPELINE_VERSION>`.
+```
 
 ```{warning}
 Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points to the {term}`Boutiques` descriptor of a pipeline. Although descriptor files can be modified, it is not needed and we recommend that less advanced users keep the default.

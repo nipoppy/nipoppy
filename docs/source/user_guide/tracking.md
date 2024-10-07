@@ -35,7 +35,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 The global configuration file should include paths to tracker configuration files, which are {term}`JSON` files containing lists of dictionaries.
 
 Here is example of tracker configuration file (default for MRIQC 23.1.0):
-```{literalinclude} ../../../nipoppy/data/examples/sample_tracker_configs/mriqc-23.1.0.json
+```{literalinclude} ../../../nipoppy/data/examples/sample_pipelines/mriqc-23.1.0/tracker_config.json
 ```
 
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.

@@ -71,26 +71,13 @@ class LayoutConfig(BaseModel):
         description="Directory for imaging data that is organized but not yet in BIDS"
     )
     dpath_code: DpathInfo = Field(description="Directory for code and scripts")
-    dpath_proc: DpathInfo = Field(
+    dpath_pipelines: DpathInfo = Field(
         description=(
-            "Directory for configurations or other files needed when or generated"
-            " before running pipelines"
+            "Directory for configurations or other files needed to run pipelines"
         )
     )
     dpath_containers: DpathInfo = Field(
         description="Directory for storing container images"
-    )
-    dpath_descriptors: DpathInfo = Field(
-        description="Directory for storing Boutiques descriptors for pipelines"
-    )
-    dpath_invocations: DpathInfo = Field(
-        description="Directory for storing Boutiques invocations for pipelines"
-    )
-    dpath_tracker_configs: DpathInfo = Field(
-        description="Directory for storing tracker configurations"
-    )
-    dpath_pybids_ignore_patterns: DpathInfo = Field(
-        description="Directory for PyBIDS indexing configurations"
     )
     dpath_scratch: DpathInfo = Field(description="Directory for temporary files")
     dpath_pybids_db: DpathInfo = Field(description=("Directory for PyBIDS databases"))
@@ -186,12 +173,8 @@ class DatasetLayout(Base):
         self.dpath_pre_reorg: Path
         self.dpath_post_reorg: Path
         self.dpath_code: Path
-        self.dpath_proc: Path
+        self.dpath_pipelines: Path
         self.dpath_containers: Path
-        self.dpath_descriptors: Path
-        self.dpath_invocations: Path
-        self.dpath_tracker_configs: Path
-        self.dpath_pybids_ignore_patterns: Path
         self.dpath_scratch: Path
         self.dpath_work: Path
         self.dpath_pybids_db: Path
