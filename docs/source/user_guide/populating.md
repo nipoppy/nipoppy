@@ -21,7 +21,7 @@ Depending on the study you are working with, there might not be any data to put 
 | Directory | Content description |
 |---|---|
 | {{dpath_downloads}} | Data archives, web downloads, etc. (imaging and non-imaging data) |
-| {{dpath_to_reorg}} | {{content_dpath_to_reorg}} |
+| {{dpath_pre_reorg}} | {{content_dpath_pre_reorg}} |
 
 ## Data archives and web downloads
 
@@ -35,12 +35,12 @@ If you have imaging data that does not need to be uncompressed/extracted (for ex
 
 ## Raw imaging data
 
-The {{dpath_to_reorg}} directory is for storing **raw imaging data as they are, before any organization/processing is done**. It is okay (and expected) for the data in this directory to be messy or to follow an arbitrary organization (e.g., many subfolder levels).
+The {{dpath_pre_reorg}} directory is for storing **raw imaging data as they are, before any organization/processing is done**. It is okay (and expected) for the data in this directory to be messy or to follow an arbitrary organization (e.g., many subfolder levels).
 
 Data in this directory will typically consists of [DICOM](https://en.wikipedia.org/wiki/DICOM) files from scanners, though some analyses might start with files in the [NIfTI](https://en.wikipedia.org/wiki/Neuroimaging_Informatics_Technology_Initiative) format instead (e.g., if DICOM-to-NIfTI conversion has already been done and the original DICOMs are not available anymore).
 
 ```{attention}
-If both DICOMs and NIfTIs are available, we recommend starting over with the DICOMs since they contain more information than NIfTIs for BIDS conversion. If that is not feasible, then {{dpath_to_reorg}} should contain the NIfTIs, and the raw DICOMs can be archived and stored somewhere else (e.g., {{dpath_downloads}}).
+If both DICOMs and NIfTIs are available, we recommend starting over with the DICOMs since they contain more information than NIfTIs for BIDS conversion. If that is not feasible, then {{dpath_pre_reorg}} should contain the NIfTIs, and the raw DICOMs can be archived and stored somewhere else (e.g., {{dpath_downloads}}).
 ```
 
 ## Next steps

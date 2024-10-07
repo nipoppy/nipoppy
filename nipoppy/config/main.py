@@ -52,7 +52,7 @@ class Config(_SchemaWithContainerConfig):
     DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
         default=None,
         description=(
-            f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_to_reorg}) "
+            f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
             "follow the pattern <PARTICIPANT>/<SESSION> (default) or "
             "<SESSION>/<PARTICIPANT>. Note: this field and and DICOM_DIR_MAP_FILE "
             "cannot both be specified"

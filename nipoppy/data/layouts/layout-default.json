@@ -23,8 +23,8 @@
         "path": "sourcedata/imaging/downloads",
         "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
     },
-    "dpath_to_reorg": {
-        "path": "sourcedata/imaging/to_reorg",
+    "dpath_pre_reorg": {
+        "path": "sourcedata/imaging/pre_reorg",
         "description": "This directory is for raw, arbitrarily organized imaging file dumps."
     },
     "dpath_to_bidsify": {

@@ -50,7 +50,7 @@
     "dpath_work": {
         "path": "scratch"
     },
-    "dpath_to_reorg": {
+    "dpath_pre_reorg": {
         "path": "scratch/raw_imaging"
     },
     "dpath_logs": {

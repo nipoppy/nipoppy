@@ -30,7 +30,7 @@ class DicomDirMapModel(BaseTabularModel):
         title="Participant's raw DICOM directory",
         description=(
             "Path to the participant's raw DICOM directory, relative to "
-            f" {DEFAULT_LAYOUT_INFO.dpath_to_reorg}"
+            f" {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}"
         ),
     )
 
