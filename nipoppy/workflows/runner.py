@@ -10,7 +10,6 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.env import StrOrPathLike
-from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -160,20 +159,14 @@ class PipelineRunner(BasePipelineWorkflow):
         who have not previously successfully completed the pipeline (according)
         to the bagel file.
         """
-        self.check_pipeline_version()  # in case this is called outside of run()
-        self.check_pipeline_step()
-        if self.layout.fpath_imaging_bagel.exists():
-            bagel = Bagel.load(self.layout.fpath_imaging_bagel)
-            participants_sessions_completed = set(
-                bagel.get_completed_participants_sessions(
-                    pipeline_name=self.pipeline_name,
-                    pipeline_version=self.pipeline_version,
-                    participant_id=participant_id,
-                    session_id=session_id,
-                )
+        participants_sessions_completed = set(
+            self.bagel.get_completed_participants_sessions(
+                pipeline_name=self.pipeline_name,
+                pipeline_version=self.pipeline_version,
+                participant_id=participant_id,
+                session_id=session_id,
             )
-        else:
-            participants_sessions_completed = {}
+        )
 
         for participant_session in self.doughnut.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id

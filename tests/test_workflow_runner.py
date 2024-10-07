@@ -211,22 +211,6 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
             "1.0.0",
             [("01", "1"), ("01", "3")],
         ),
-        (
-            [
-                ["01", "1", True],
-                ["01", "2", True],
-                ["01", "3", True],
-            ],
-            [
-                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", Bagel.status_success],
-            ],
-            "dummy_pipeline",
-            None,
-            [("01", "1"), ("01", "3")],
-        ),
     ],
 )
 def test_get_participants_sessions_to_run(
