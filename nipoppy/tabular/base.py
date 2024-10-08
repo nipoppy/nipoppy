@@ -91,9 +91,23 @@ class BaseTabular(pd.DataFrame, ABC):
                 "This function does not accept 'dtype' as a keyword argument"
                 ". Everything is read as a string and (optionally) validated later."
             )
-        if "sep" not in kwargs:
-            kwargs["sep"] = "\t"
-        df = cls(pd.read_csv(fpath, dtype=str, **kwargs))
+        if "sep" in kwargs or "delimiter" in kwargs or "delim_whitespace" in kwargs:
+            raise ValueError(
+                "This function does not accept 'sep', 'delimiter', or "
+                "'delim_whitespace' as keyword arguments. "
+                "The separator used is always a tab."
+            )
+
+        df = cls(pd.read_csv(fpath, dtype=str, sep="\t", **kwargs))
+
+        # heuristic to check if file is a CSV
+        # because otherwise there would be obscure Pydantic validation errors
+        if df.shape[1] == 1 and len(df.columns[0].split(",")) > 1:
+            raise ValueError(
+                f"It looks like the file at {fpath} might be a CSV instead of a TSV"
+                " -- make sure the columns are separated by tabs, not commas"
+            )
+
         if validate:
             df = df.validate()
         return df

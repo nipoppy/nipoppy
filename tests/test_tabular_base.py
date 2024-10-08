@@ -54,10 +54,28 @@ def test_load(fpath, tabular_class: BaseTabular):
     assert isinstance(tabular_class.load(fpath, validate=False), tabular_class)
 
 
-@pytest.mark.parametrize("dtype", [str, int])
-def test_load_error(dtype):
-    with pytest.raises(ValueError):
-        Tabular.load(DPATH_TEST_DATA / "manifest1.tsv", dtype=dtype)
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"dtype": str},
+        {"dtype": int},
+        {"sep": ","},
+        {"delimiter": "\t"},
+        {"delim_whitespace": True},
+    ],
+)
+def test_load_error(kwargs):
+    fpath_tabular = DPATH_TEST_DATA / "manifest1.tsv"
+    with pytest.raises(ValueError, match="This function does not accept"):
+        Tabular.load(fpath_tabular, **kwargs)
+
+
+def test_load_error_csv(tmp_path: Path):
+    fpath_tsv = DPATH_TEST_DATA / "manifest1.tsv"
+    fpath_csv = tmp_path / fpath_tsv.with_suffix(".csv").name
+    pd.read_csv(fpath_tsv, sep="\t").to_csv(fpath_csv, index=False)
+    with pytest.raises(ValueError, match="It looks like the file at .* is a CSV"):
+        Tabular.load(fpath_csv)
 
 
 @pytest.mark.parametrize(
