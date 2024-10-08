@@ -55,24 +55,14 @@ class LayoutConfig(BaseModel):
         description="Directory for raw imaging data that is not yet in BIDS"
     )
     dpath_downloads: DpathInfo = Field(description="Directory for downloaded data")
-    dpath_proc: DpathInfo = Field(
+    dpath_pipelines: DpathInfo = Field(
         description=(
-            "Directory for configurations or other files needed when or generated"
-            " before running pipelines"
+            "Directory for configurations or other files needed to run pipelines"
         )
     )
     dpath_releases: DpathInfo = Field(description="Directory for data releases")
     dpath_containers: DpathInfo = Field(
         description="Directory for storing container images"
-    )
-    dpath_descriptors: DpathInfo = Field(
-        description="Directory for storing Boutiques descriptors for pipelines"
-    )
-    dpath_invocations: DpathInfo = Field(
-        description="Directory for storing Boutiques invocations for pipelines"
-    )
-    dpath_tracker_configs: DpathInfo = Field(
-        description="Directory for storing tracker configurations"
     )
     dpath_pybids: DpathInfo = Field(
         description="Directory for storing PyBIDS configurations/databases"
@@ -81,9 +71,6 @@ class LayoutConfig(BaseModel):
         description=(
             "Directory for PyBIDS databases (should be a under ``dpath_pybids``)"
         )
-    )
-    dpath_bids_ignore_patterns: DpathInfo = Field(
-        description="Directory for PyBIDS indexing configurations"
     )
     dpath_scratch: DpathInfo = Field(description="Directory for temporary files")
     dpath_raw_imaging: DpathInfo = Field(
@@ -171,15 +158,11 @@ class DatasetLayout(Base):
         self.dpath_derivatives: Path
         self.dpath_sourcedata: Path
         self.dpath_downloads: Path
-        self.dpath_proc: Path
+        self.dpath_pipelines: Path
         self.dpath_releases: Path
         self.dpath_containers: Path
-        self.dpath_descriptors: Path
-        self.dpath_invocations: Path
-        self.dpath_tracker_configs: Path
         self.dpath_pybids: Path
         self.dpath_bids_db: Path
-        self.dpath_bids_ignore_patterns: Path
         self.dpath_scratch: Path
         self.dpath_raw_imaging: Path
         self.dpath_logs: Path

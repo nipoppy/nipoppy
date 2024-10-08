@@ -19,25 +19,13 @@
         "path": "releases",
         "description": "This directory is for dataset releases (e.g., associated with specific publications)."
     },
-    "dpath_proc": {
-        "path": "proc",
+    "dpath_pipelines": {
+        "path": "pipelines",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
     "dpath_containers": {
         "path": "proc/containers",
         "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
-    },
-    "dpath_descriptors": {
-        "path": "proc/descriptors",
-        "description": "This directory is for storing Boutiques descriptors for user-added pipelines"
-    },
-    "dpath_invocations": {
-        "path": "proc/invocations",
-        "description": "This directory is for storing Boutiques invocations for processing pipelines."
-    },
-    "dpath_tracker_configs": {
-        "path": "proc/tracker_configs",
-        "description": "This directory is for storing tracker configurations for processing pipelines."
     },
     "dpath_pybids": {
         "path": "proc/pybids",
@@ -46,10 +34,6 @@
     "dpath_bids_db": {
         "path": "proc/pybids/bids_db",
         "description": "This directory is for PyBIDS databases generated/used during processing."
-    },
-    "dpath_bids_ignore_patterns": {
-        "path": "proc/pybids/ignore_patterns",
-        "description": "This directory is for storing ignore patterns to be used by PyBIDS during dataset indexing."
     },
     "dpath_scratch": {
         "path": "scratch",

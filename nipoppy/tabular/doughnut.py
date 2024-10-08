@@ -13,7 +13,10 @@ from nipoppy.env import StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
 
 
 class DoughnutModel(ManifestModel):
@@ -187,8 +190,8 @@ def generate_doughnut(
         )
 
         # get BIDS IDs
-        bids_participant = participant_id_to_bids_participant(participant_id)
-        bids_session = session_id_to_bids_session(session_id)
+        bids_participant_id = participant_id_to_bids_participant_id(participant_id)
+        bids_session_id = session_id_to_bids_session_id(session_id)
 
         if empty:
             status_downloaded = False
@@ -201,11 +204,11 @@ def generate_doughnut(
             )
             status_organized = check_status(
                 dpath=dpath_organized,
-                dname_subdirectory=Path(bids_participant, bids_session),
+                dname_subdirectory=Path(bids_participant_id, bids_session_id),
             )
             status_bidsified = check_status(
                 dpath=dpath_bidsified,
-                dname_subdirectory=Path(bids_participant, bids_session),
+                dname_subdirectory=Path(bids_participant_id, bids_session_id),
             )
 
         doughnut_records.append(

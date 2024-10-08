@@ -15,29 +15,17 @@
     "dpath_releases": {
         "path": "releases"
     },
-    "dpath_proc": {
+    "dpath_pipelines": {
         "path": "proc"
     },
     "dpath_containers": {
         "path": "proc/containers"
-    },
-    "dpath_descriptors": {
-        "path": "proc/descriptors"
-    },
-    "dpath_invocations": {
-        "path": "proc/invocations"
-    },
-    "dpath_tracker_configs": {
-        "path": "code/tracker_configs"
     },
     "dpath_pybids": {
         "path": "proc/pybids"
     },
     "dpath_bids_db": {
         "path": "proc/pybids/bids_db"
-    },
-    "dpath_bids_ignore_patterns": {
-        "path": "proc/pybids/ignore_patterns"
     },
     "dpath_scratch": {
         "path": "scratch"

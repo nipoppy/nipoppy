@@ -1,6 +1,6 @@
 # Tracking pipeline processing status
 
-Nipoppy trackers search for expected file paths or patterns in pipeline output files. They are specific to pipelines and versions, and can be configured to include custom paths for various levels of granularity.
+Nipoppy trackers search for expected file paths or patterns in pipeline output files. They are specific to pipeline steps, and can be configured to include custom paths.
 
 ## Summary
 
@@ -35,7 +35,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 The global configuration file should include paths to tracker configuration files, which are {term}`JSON` files containing lists of dictionaries.
 
 Here is example of tracker configuration file (default for MRIQC 23.1.0):
-```{literalinclude} ../../../nipoppy/data/examples/sample_tracker_configs/mriqc-23.1.0.json
+```{literalinclude} ../../../nipoppy/data/examples/sample_pipelines/mriqc-23.1.0/tracker_config.json
 ```
 
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
@@ -47,10 +47,6 @@ Importantly, pipeline completion status is **not** inferred from exit codes as t
 
 ```{note}
 The template strings `[[NIPOPPY_<ATTRIBUTE_NAME>]]` work the same way as the ones in the [global configuration file](<global-config-template-strings>) and the [pipeline invocation files](<invocation-template-strings>) -- they are replaced at runtime by appropriate values.
-```
-
-```{attention}
-Currently, only the tracker configuration with `pipeline_complete` in the `NAME` field will be used, but we are planning to extend trackers to allow multiple statuses per pipeline. Stay tuned!
 ```
 
 Given a dataset with the following content in {{dpath_derivatives}}:
@@ -84,19 +80,19 @@ The `pipeline_complete` column can have the following values:
 To track all available participants and sessions, run:
 ```console
 $ nipoppy track \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
 
 ```{note}
-If there are multiple versions for the same pipeline in the global configuration file, use `--pipeline-version` to specify the desired version. By default, the first version listed for the pipeline will be used.
+If there are multiple versions or steps for the same pipeline in the global configuration file, use `--pipeline-version` and `--pipeline-step` to specify the desired version and step respectively. By default, the first version and step listed for the pipeline will be used.
 ```
 
 The tracker can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy track \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>

@@ -21,13 +21,11 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 # paths
 DPATH_DATA = Path(__file__).parent / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
+DPATH_SAMPLE_PIPELINES = DPATH_EXAMPLES / "sample_pipelines"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.json"
 FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
-DPATH_INVOCATIONS = DPATH_EXAMPLES / "sample_invocations"
-DPATH_TRACKER_CONFIGS = DPATH_EXAMPLES / "sample_tracker_configs"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
-DPATH_DESCRIPTORS = DPATH_DATA / "descriptors"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 
@@ -35,18 +33,18 @@ FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 FIELD_DESCRIPTION_MAP = {
     "participant_id": "Participant identifier, without the BIDS prefix",
     "session_id": "Imaging session identifier, without the BIDS prefix",
-    "bids_participant": "Participant identifier with BIDS prefix (e.g., sub-01)",
-    "bids_session": "Imaging session identifier with BIDS prefix (e.g., ses-01)",
+    "bids_participant_id": "Participant identifier with BIDS prefix (e.g., sub-01)",
+    "bids_session_id": "Imaging session identifier with BIDS prefix (e.g., ses-01)",
     "visit_id": "Visit identifier",
 }
 
 
-def participant_id_to_bids_participant(participant_id: str) -> str:
+def participant_id_to_bids_participant_id(participant_id: str) -> str:
     """Add the BIDS prefix to a participant ID."""
     return f"{BIDS_SUBJECT_PREFIX}{participant_id}"
 
 
-def session_id_to_bids_session(session_id: Optional[str]) -> str:
+def session_id_to_bids_session_id(session_id: Optional[str]) -> str:
     """
     Add the BIDS prefix to a session ID.
 

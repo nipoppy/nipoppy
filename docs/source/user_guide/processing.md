@@ -54,9 +54,11 @@ Just like with BIDS converters, pipeline and pipeline step configurations are se
 
 There are several files in pipeline step configurations that can be further modified to customize pipeline runs:
 - `INVOCATION_FILE`: a {term}`JSON` file containing key-value pairs specifying runtime parameters. The keys correspond to entries in the pipeline's descriptor file.
-    - Invocation files are in the {{dpath_invocations}} directory, while descriptor files are in the {{dpath_descriptors}}
 - `PYBIDS_IGNORE_FILE`: a {term}`JSON` file containing a list of file names or patterns to ignore when building the [PyBIDS](https://bids-standard.github.io/pybids/) database
-    - These files should be in the {{dpath_bids_ignore_patterns}} directory
+
+```{note}
+By default, pipeline files are stored in {{dpath_pipelines}}`/<PIPELINE_NAME>-<PIPELINE_VERSION>`.
+```
 
 ```{warning}
 Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points to the {term}`Boutiques` descriptor of a pipeline. Although descriptor files can be modified, it is not needed and we recommend that less advanced users keep the default.
@@ -77,7 +79,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 To process all participants and sessions in a dataset (sequentially), run:
 ```console
 $ nipoppy run \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -91,7 +93,7 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
 $ nipoppy bidsify \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
