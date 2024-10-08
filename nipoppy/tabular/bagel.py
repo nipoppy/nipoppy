@@ -39,7 +39,7 @@ class BagelModel(BaseTabularModel):
         description=FIELD_DESCRIPTION_MAP["bids_participant_id"],
     )
     session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
-    bids_session: Optional[str] = Field(
+    bids_session_id: Optional[str] = Field(
         default=None, description=FIELD_DESCRIPTION_MAP["bids_session_id"]
     )
     pipeline_name: str = Field(description="The name of the pipeline being tracked")
@@ -79,8 +79,8 @@ class BagelModel(BaseTabularModel):
             self.bids_participant_id = participant_id_to_bids_participant_id(
                 self.participant_id
             )
-        if self.bids_session is None:
-            self.bids_session = session_id_to_bids_session_id(self.session_id)
+        if self.bids_session_id is None:
+            self.bids_session_id = session_id_to_bids_session_id(self.session_id)
         return self
 
 
@@ -91,7 +91,7 @@ class Bagel(BaseTabular):
     col_participant_id = "participant_id"
     col_bids_participant_id = "bids_participant_id"
     col_session_id = "session_id"
-    col_bids_session_id = "bids_session"
+    col_bids_session_id = "bids_session_id"
     col_pipeline_name = "pipeline_name"
     col_pipeline_version = "pipeline_version"
     col_pipeline_step = "pipeline_step"
