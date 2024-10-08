@@ -1,9 +1,12 @@
 """Tests for the pipeline step configuration class."""
 
+from contextlib import nullcontext
+
 import pytest
 from pydantic import BaseModel, ValidationError
 
 from nipoppy.config.pipeline_step import (
+    AnalysisLevelType,
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
     ProcPipelineStepConfig,
@@ -17,7 +20,11 @@ FIELDS_STEP_BASE = [
     "ANALYSIS_LEVEL",
 ]
 
-FIELDS_STEP_PROC = FIELDS_STEP_BASE + ["PYBIDS_IGNORE_FILE"]
+FIELDS_STEP_PROC = FIELDS_STEP_BASE + [
+    "PYBIDS_IGNORE_FILE",
+    "TRACKER_CONFIG_FILE",
+    "GENERATE_PYBIDS_DATABASE",
+]
 FIELDS_STEP_BIDS = FIELDS_STEP_BASE + ["UPDATE_DOUGHNUT"]
 
 
@@ -83,3 +90,30 @@ def test_substitutions(step_class):
         DESCRIPTOR_FILE="[[STEP_NAME]].json",
     )
     assert str(step_config.DESCRIPTOR_FILE) == "step_name.json"
+
+
+@pytest.mark.parametrize(
+    "analysis_level,expect_error",
+    [
+        (AnalysisLevelType.participant_session, False),
+        (AnalysisLevelType.participant, True),
+        (AnalysisLevelType.session, True),
+        (AnalysisLevelType.group, True),
+    ],
+)
+def test_tracker_config_analysis_level(analysis_level, expect_error):
+    with (
+        pytest.raises(
+            ValidationError,
+            match=(
+                "cannot be set if ANALYSIS_LEVEL is not "
+                f"{AnalysisLevelType.participant_session}"
+            ),
+        )
+        if expect_error
+        else nullcontext()
+    ):
+        ProcPipelineStepConfig(
+            TRACKER_CONFIG_FILE="tracker_config.json",
+            ANALYSIS_LEVEL=analysis_level,
+        )

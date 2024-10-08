@@ -16,7 +16,10 @@ from nipoppy.config.main import Config
 from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.csv"
@@ -27,15 +30,11 @@ ATTR_TO_DPATH_MAP = {
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
     "dpath_downloads": "downloads",
-    "dpath_proc": "proc",
+    "dpath_pipelines": "pipelines",
     "dpath_releases": "releases",
     "dpath_containers": "proc/containers",
-    "dpath_descriptors": "proc/descriptors",
-    "dpath_invocations": "proc/invocations",
-    "dpath_tracker_configs": "proc/tracker_configs",
     "dpath_pybids": "proc/pybids",
     "dpath_bids_db": "proc/pybids/bids_db",
-    "dpath_bids_ignore_patterns": "proc/pybids/ignore_patterns",
     "dpath_scratch": "scratch",
     "dpath_raw_imaging": "scratch/raw_imaging",
     "dpath_logs": "scratch/logs",
@@ -165,10 +164,10 @@ def _fake_dicoms(  # noqa: C901
 
     for participant_id, participant_session_ids in participants_and_sessions.items():
         if with_prefixes:
-            participant_id = participant_id_to_bids_participant(participant_id)
+            participant_id = participant_id_to_bids_participant_id(participant_id)
         for session_id in participant_session_ids:
             if with_prefixes:
-                session_id = session_id_to_bids_session(session_id)
+                session_id = session_id_to_bids_session_id(session_id)
             if participant_first:
                 dpath_dicom_parent = dpath / participant_id / session_id
             else:

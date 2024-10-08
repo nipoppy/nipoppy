@@ -18,7 +18,7 @@ from nipoppy.config.boutiques import (
     get_boutiques_config_from_descriptor,
 )
 from nipoppy.config.pipeline import ProcPipelineConfig
-from nipoppy.config.pipeline_step import AnalysisLevelType
+from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -33,9 +33,9 @@ from nipoppy.utils import (
     create_bids_db,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_participant,
+    participant_id_to_bids_participant_id,
     process_template_str,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -148,6 +148,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
+    def pipeline_step_config(self) -> ProcPipelineStepConfig:
+        """Get the user config for the pipeline step."""
+        return self.pipeline_config.get_step_config(step_name=self.pipeline_step)
+
+    @cached_property
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
         fpath_container = self.pipeline_config.get_fpath_container()
@@ -167,9 +172,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        fpath_descriptor = self.pipeline_config.get_descriptor_file(
-            step_name=self.pipeline_step
-        )
+        fpath_descriptor = self.pipeline_step_config.DESCRIPTOR_FILE
         if fpath_descriptor is None:
             raise ValueError(
                 "No descriptor file specified for pipeline"
@@ -183,9 +186,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        fpath_invocation = self.pipeline_config.get_invocation_file(
-            step_name=self.pipeline_step
-        )
+        fpath_invocation = self.pipeline_step_config.INVOCATION_FILE
         if fpath_invocation is None:
             raise ValueError(
                 "No invocation file specified for pipeline"
@@ -204,9 +205,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        fpath_pybids_ignore = self.pipeline_config.get_pybids_ignore_file(
-            step_name=self.pipeline_step
-        )
+        fpath_pybids_ignore = self.pipeline_step_config.PYBIDS_IGNORE_FILE
 
         # no file specified
         if fpath_pybids_ignore is None:
@@ -255,24 +254,26 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         template_json: dict,
         participant_id: Optional[str],
         session_id: Optional[str],
-        bids_participant: Optional[str] = None,
-        bids_session: Optional[str] = None,
+        bids_participant_id: Optional[str] = None,
+        bids_session_id: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
         if participant_id is not None:
-            if bids_participant is None:
-                bids_participant = participant_id_to_bids_participant(participant_id)
+            if bids_participant_id is None:
+                bids_participant_id = participant_id_to_bids_participant_id(
+                    participant_id
+                )
             kwargs["participant_id"] = participant_id
-            kwargs["bids_participant"] = bids_participant
+            kwargs["bids_participant_id"] = bids_participant_id
 
         if session_id is not None:
-            if bids_session is None:
-                bids_session = session_id_to_bids_session(session_id)
+            if bids_session_id is None:
+                bids_session_id = session_id_to_bids_session_id(session_id)
             kwargs["session_id"] = session_id
-            kwargs["bids_session"] = bids_session
+            kwargs["bids_session_id"] = bids_session_id
 
         if objs is None:
             objs = []
@@ -361,11 +362,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def check_pipeline_step(self):
+        """Set the pipeline step name based on the config if it is not given."""
+        if self.pipeline_step is None:
+            self.pipeline_step = self.pipeline_step_config.NAME
+            self.logger.warning(
+                f"Pipeline step not specified, using step {self.pipeline_step}"
+            )
+
     def run_setup(self):
         """Run pipeline setup."""
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
             self.check_dir(dpath)
@@ -378,15 +388,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.participant_id, self.session_id
         )
 
-        # trackers are at pipeline level, not pipeline step level
-        # but this will probably change in the future
-        try:
-            analysis_level = self.pipeline_config.get_analysis_level(self.pipeline_step)
-        except ValueError:
-            analysis_level = AnalysisLevelType.participant_session
         participants_sessions = apply_analysis_level(
             participants_sessions=participants_sessions,
-            analysis_level=analysis_level,
+            analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
         for participant_id, session_id in participants_sessions:
@@ -426,10 +430,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             else:
                 color = LogColor.PARTIAL_SUCCESS
 
-            if (
-                self.pipeline_config.get_analysis_level(self.pipeline_step)
-                == AnalysisLevelType.group
-            ):
+            if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
                 message_body = "on the entire study"
             else:
                 message_body = (

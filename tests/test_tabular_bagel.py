@@ -11,18 +11,20 @@ from nipoppy.tabular.bagel import Bagel, BagelModel
     [
         {
             Bagel.col_participant_id: "1",
-            Bagel.col_bids_participant: "sub-1",
+            Bagel.col_bids_participant_id: "sub-1",
             Bagel.col_session_id: "01",
             Bagel.col_pipeline_name: "my_pipeline",
             Bagel.col_pipeline_version: "1.0",
-            Bagel.col_pipeline_complete: Bagel.status_success,
+            Bagel.col_pipeline_step: "a_step",
+            Bagel.col_status: Bagel.status_success,
         },
         {
             Bagel.col_participant_id: "2",
             Bagel.col_session_id: "02",
             Bagel.col_pipeline_name: "my_other_pipeline",
             Bagel.col_pipeline_version: "2.0",
-            Bagel.col_pipeline_complete: Bagel.status_fail,
+            Bagel.col_pipeline_step: "another_step",
+            Bagel.col_status: Bagel.status_fail,
         },
     ],
 )
@@ -30,12 +32,13 @@ def test_model(data):
     bagel = BagelModel(**data)
     assert set(bagel.model_fields.keys()) == {
         Bagel.col_participant_id,
-        Bagel.col_bids_participant,
+        Bagel.col_bids_participant_id,
         Bagel.col_session_id,
         Bagel.col_pipeline_name,
         Bagel.col_pipeline_version,
-        Bagel.col_pipeline_complete,
-        Bagel.col_bids_session,
+        Bagel.col_pipeline_step,
+        Bagel.col_status,
+        Bagel.col_bids_session_id,
     }
 
 
@@ -48,9 +51,10 @@ def test_model_bids_id(participant_id, expected_bids_id):
         session_id="01",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
-        pipeline_complete=Bagel.status_success,
+        pipeline_step="step1",
+        status=Bagel.status_success,
     )
-    assert model.bids_participant == expected_bids_id
+    assert model.bids_participant_id == expected_bids_id
 
 
 @pytest.mark.parametrize(
@@ -68,9 +72,10 @@ def test_model_status(status):
         session_id="01",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
-        pipeline_complete=status,
+        pipeline_step="step1",
+        status=status,
     )
-    assert model.pipeline_complete == status
+    assert model.status == status
 
 
 def test_model_status_invalid():
@@ -80,7 +85,8 @@ def test_model_status_invalid():
             session_id="01",
             pipeline_name="my_pipeline",
             pipeline_version="1.0",
-            pipeline_complete="BAD_STATUS",
+            pipeline_step="step1",
+            status="BAD_STATUS",
         )
 
 
@@ -95,7 +101,8 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
             ],
             [
@@ -104,7 +111,8 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
             ],
         ),
@@ -115,7 +123,8 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_fail,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_fail,
                 },
             ],
             [
@@ -124,7 +133,8 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
             ],
             [
@@ -133,7 +143,8 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
             ],
         ),
@@ -144,14 +155,16 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_fail,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_fail,
                 },
                 {
                     Bagel.col_participant_id: "01",
                     Bagel.col_session_id: "2",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_unavailable,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_unavailable,
                 },
             ],
             [
@@ -160,14 +173,16 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "2",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
                 {
                     Bagel.col_participant_id: "01",
                     Bagel.col_session_id: "3",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
             ],
             [
@@ -176,21 +191,24 @@ def test_model_status_invalid():
                     Bagel.col_session_id: "1",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_fail,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_fail,
                 },
                 {
                     Bagel.col_participant_id: "01",
                     Bagel.col_session_id: "2",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
                 {
                     Bagel.col_participant_id: "01",
                     Bagel.col_session_id: "3",
                     Bagel.col_pipeline_name: "my_pipeline",
                     Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_complete: Bagel.status_success,
+                    Bagel.col_pipeline_step: "step1",
+                    Bagel.col_status: Bagel.status_success,
                 },
             ],
         ),
@@ -204,47 +222,50 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
 
 
 @pytest.mark.parametrize(
-    "data,pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "data,pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected",  # noqa E501
     [
         (
             [
-                ["01", "1", "pipeline1", "1.0", Bagel.status_success],
-                ["02", "1", "pipeline1", "1.0", Bagel.status_fail],
-                ["03", "1", "pipeline1", "1.0", Bagel.status_incomplete],
-                ["04", "1", "pipeline1", "1.0", Bagel.status_unavailable],
+                ["01", "1", "pipeline1", "1.0", "step1", Bagel.status_success],
+                ["02", "1", "pipeline1", "1.0", "step1", Bagel.status_fail],
+                ["03", "1", "pipeline1", "1.0", "step1", Bagel.status_incomplete],
+                ["04", "1", "pipeline1", "1.0", "step1", Bagel.status_unavailable],
             ],
             "pipeline1",
             "1.0",
+            "step1",
             None,
             None,
             [("01", "1")],
         ),
         (
             [
-                ["S01", "BL", "pipeline1", "1.0", Bagel.status_success],
-                ["S01", "BL", "pipeline1", "2.0", Bagel.status_success],
-                ["S01", "BL", "pipeline2", "1.0", Bagel.status_success],
-                ["S01", "BL", "pipeline2", "2.0", Bagel.status_success],
+                ["S01", "BL", "pipeline1", "1.0", "step1", Bagel.status_success],
+                ["S01", "BL", "pipeline1", "2.0", "step1", Bagel.status_success],
+                ["S01", "BL", "pipeline2", "1.0", "step1", Bagel.status_success],
+                ["S01", "BL", "pipeline2", "2.0", "step1", Bagel.status_success],
             ],
             "pipeline2",
             "2.0",
+            "step1",
             None,
             None,
             [("S01", "BL")],
         ),
         (
             [
-                ["S01", "BL", "pipeline1", "1.0", Bagel.status_success],
-                ["S01", "BL", "pipeline1", "2.0", Bagel.status_success],
-                ["S01", "BL", "pipeline2", "1.0", Bagel.status_success],
-                ["S01", "M12", "pipeline2", "2.0", Bagel.status_success],
-                ["S02", "BL", "pipeline1", "1.0", Bagel.status_success],
-                ["S02", "BL", "pipeline1", "2.0", Bagel.status_success],
-                ["S02", "BL", "pipeline2", "2.0", Bagel.status_success],
-                ["S02", "M12", "pipeline2", "2.0", Bagel.status_success],
+                ["S01", "BL", "pipeline1", "1.0", "step1", Bagel.status_success],
+                ["S01", "BL", "pipeline1", "2.0", "step1", Bagel.status_success],
+                ["S01", "BL", "pipeline2", "1.0", "step1", Bagel.status_success],
+                ["S01", "M12", "pipeline2", "2.0", "step1", Bagel.status_success],
+                ["S02", "BL", "pipeline1", "1.0", "step1", Bagel.status_success],
+                ["S02", "BL", "pipeline1", "2.0", "step1", Bagel.status_success],
+                ["S02", "BL", "pipeline2", "2.0", "step1", Bagel.status_success],
+                ["S02", "M12", "pipeline2", "2.0", "step1", Bagel.status_success],
             ],
             "pipeline2",
             "2.0",
+            "step1",
             "S02",
             "M12",
             [("S02", "M12")],
@@ -252,7 +273,13 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
     ],
 )
 def test_get_completed_participants_sessions(
-    data, pipeline_name, pipeline_version, participant_id, session_id, expected
+    data,
+    pipeline_name,
+    pipeline_version,
+    pipeline_step,
+    participant_id,
+    session_id,
+    expected,
 ):
     bagel = Bagel(
         data,
@@ -261,7 +288,8 @@ def test_get_completed_participants_sessions(
             Bagel.col_session_id,
             Bagel.col_pipeline_name,
             Bagel.col_pipeline_version,
-            Bagel.col_pipeline_complete,
+            Bagel.col_pipeline_step,
+            Bagel.col_status,
         ],
     ).validate()
 
@@ -270,6 +298,7 @@ def test_get_completed_participants_sessions(
         for x in bagel.get_completed_participants_sessions(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )

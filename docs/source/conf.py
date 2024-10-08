@@ -4,6 +4,8 @@ For the full list of built-in configuration values, see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
+import os
+
 from nipoppy._version import __version__
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 
@@ -32,6 +34,7 @@ extensions = [
     "myst_parser",
     "sphinxarg.ext",
     "sphinx_copybutton",
+    "sphinx_github_changelog",
     "sphinx-jsonschema",
     "sphinx_togglebutton",
     "sphinx.ext.autodoc.typehints",
@@ -53,13 +56,23 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
+html_css_files = [
+    "theme.css",
+]
+
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
+
 html_theme_options = {
     "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
     "source_directory": "docs/source",
+    "sidebar_hide_name": True,
 }
+
+html_logo = "../../logo/logo_with_name.svg"
+html_favicon = "../../logo/logo_square.svg"
+html_title = "Nipoppy"
 
 # -- Intersphinx configuration ------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
@@ -78,7 +91,7 @@ myst_heading_anchors = 5
 
 template_strings_bids_runner = [
     "",
-    "The default pipeline invocation files in {{dpath_invocations}} can be modified by changing existing values or adding new key-value pairs.",
+    "The default pipeline invocation files (in {{dpath_pipelines}}`/<PIPELINE_NAME>-<PIPELINE_VERSION>`) can be modified by changing existing values or adding new key-value pairs.",
     "",
     "```{tip}",
     "Run the pipeline on a single participant and session with the `--simulate` flag to check/debug custom invocation files.",
@@ -87,8 +100,8 @@ template_strings_bids_runner = [
     "To account for invocations needing to be different for different participants and sessions (amongst other things), Nipoppy invocations are actually templates that need to be slightly processed at runtime to replace template strings by actual values. Recognized template strings include:",
     "- `[[NIPOPPY_PARTICIPANT_ID]]`: the participant ID *without* the `sub-` prefix",
     "- `[[NIPOPPY_SESSION_ID]]`: the session ID *without* the `ses-` prefix",
-    "- `[[NIPOPPY_BIDS_PARTICIPANT]]`: the participant ID *with* the `sub-` prefix",
-    "- `[[NIPOPPY_BIDS_SESSION]]`: the session ID *with* the `ses-` prefix",
+    "- `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: the participant ID *with* the `sub-` prefix",
+    "- `[[NIPOPPY_BIDS_SESSION_ID]]`: the session ID *with* the `ses-` prefix",
     "- `[[NIPOPPY_<LAYOUT_PROPERTY>]]`, where `<LAYOUT_PROPERTY>` is a property in the Nipoppy {ref}`dataset layout configuration file <layout-schema>` (all uppercase): any path defined in the Nipoppy dataset layout",
     "```",
 ]
@@ -107,11 +120,9 @@ myst_substitutions = {
     "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
+    "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
     "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
-    "dpath_invocations": f"`{DEFAULT_LAYOUT_INFO.dpath_invocations}`",
-    "dpath_descriptors": f"`{DEFAULT_LAYOUT_INFO.dpath_descriptors}`",
     "dpath_bids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_db}`",
-    "dpath_bids_ignore_patterns": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_ignore_patterns}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
@@ -141,7 +152,7 @@ autoapi_options = [
     "members",
     "undoc-members",
     # "private-members",
-    "show-inheritance",
+    # "show-inheritance",
     # "show-module-summary",
     # "special-members",
     "imported-members",
@@ -165,7 +176,20 @@ nitpick_ignore = [
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
+    ("py:obj", "BasePipelineConfig"),
+    ("py:obj", "BasePipelineStepConfig"),
+    ("py:obj", "ContainerConfig"),
+    ("py:obj", "PathInfo"),
+    ("py:obj", "FpathInfo"),
 ]
+
+# -- Sphinx Github Changelog configuration ------------------------------------
+
+# PAT needs to be set as environment variable in Read the Docs project settings
+# fine-grained token permissions:
+#   - nipoppy/nipoppy repository
+#   - read access to code + metadata
+sphinx_github_changelog_token = os.environ.get("NIPOPPY_RELEASES_PAT")
 
 # -- Copybutton configuration -------------------------------------------------
 copybutton_exclude = ".linenos, .gp"

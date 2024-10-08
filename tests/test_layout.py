@@ -109,15 +109,7 @@ def test_fpaths(dpath_root: Path):
         ["sourcedata", "downloads"],
         ["bids", "derivatives"],
         [
-            "proc",
-            "proc/containers",
-            "proc/descriptors",
-            "proc/invocations",
-            "proc/scripts",
-            "global_config.json",
-            "proc/pybids",
-            "proc/pybids/bids_db",
-            "proc/pybids/ignore_patterns",
+            "pipelines",
         ],
         [
             "scratch",
@@ -163,13 +155,10 @@ def test_dpath_descriptions():
         [
             "proc",
             "proc/containers",
-            "proc/descriptors",
-            "proc/invocations",
             "proc/scripts",
             "proc/global_config.json",
             "proc/pybids",
             "proc/pybids/bids_db",
-            "proc/pybids/ignore_patterns",
         ],
         [
             "tabular",

@@ -17,7 +17,7 @@
     ],
     "regressors_all_comps": true,
     "fs_license_file": "[[FREESURFER_LICENSE_FILE]]",
-    "fs_subjects_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/6.0.1/output/[[NIPOPPY_BIDS_SESSION]]",
+    "fs_subjects_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/6.0.1/output/[[NIPOPPY_BIDS_SESSION_ID]]",
     "work_dir": "[[NIPOPPY_DPATH_PIPELINE_WORK]]",
     "write_graph": true,
     "notrack": true

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
@@ -45,7 +46,7 @@ def config(tmp_path: Path):
         "custom": {"nipoppy": {"CONTAINER_SUBCOMMAND": "exec"}},
     }
     invocation = {
-        "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION]]",
+        "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION_ID]]",
         "arg2": 10,
     }
 
@@ -127,7 +128,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
     assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
-    assert "[[NIPOPPY_BIDS_SESSION]]" not in invocation_str
+    assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
 
 
 def test_process_container_config_boutiques_subcommand(config: Config, tmp_path: Path):
@@ -155,7 +156,7 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,bagel_data,pipeline_name,pipeline_version,expected",
+    "doughnut_data,bagel_data,pipeline_name,pipeline_version,pipeline_step,expected",
     [
         (
             [
@@ -166,6 +167,7 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
             None,
             "dummy_pipeline",
             "1.0.0",
+            "step1",
             [("01", "2"), ("01", "3")],
         ),
         (
@@ -177,6 +179,7 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
             [],
             "dummy_pipeline",
             "1.0.0",
+            "step1",
             [("01", "2"), ("01", "3")],
         ),
         (
@@ -186,12 +189,13 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_success],
+                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
             ],
             "dummy_pipeline",
             "1.0.0",
+            "step1",
             [],
         ),
         (
@@ -201,13 +205,14 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", Bagel.status_success],
+                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
+                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
+                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
             ],
             "dummy_pipeline",
             "1.0.0",
+            "step1",
             [("01", "1"), ("01", "3")],
         ),
         (
@@ -217,13 +222,34 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", Bagel.status_success],
+                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
+                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
+                ["01", "1", "dummy_pipeline", "1.0.0", "step2", Bagel.status_success],
+                ["01", "2", "dummy_pipeline", "1.0.0", "step2", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", "step2", Bagel.status_fail],
+                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
+            ],
+            "dummy_pipeline",
+            "1.0.0",
+            "step2",
+            [("01", "3")],
+        ),
+        (
+            [
+                ["01", "1", True],
+                ["01", "2", True],
+                ["01", "3", True],
+            ],
+            [
+                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
+                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
+                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
             ],
             "dummy_pipeline",
             None,
+            "step1",
             [("01", "1"), ("01", "3")],
         ),
     ],
@@ -233,6 +259,7 @@ def test_get_participants_sessions_to_run(
     bagel_data,
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     expected,
     config: Config,
     tmp_path: Path,
@@ -243,6 +270,7 @@ def test_get_participants_sessions_to_run(
         dpath_root=tmp_path,
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
+        pipeline_step=pipeline_step,
         participant_id=participant_id,
         session_id=session_id,
     )
@@ -270,7 +298,8 @@ def test_get_participants_sessions_to_run(
                 Bagel.col_session_id,
                 Bagel.col_pipeline_name,
                 Bagel.col_pipeline_version,
-                Bagel.col_pipeline_complete,
+                Bagel.col_pipeline_step,
+                Bagel.col_status,
             ],
         ).validate().save_with_backup(runner.layout.fpath_imaging_bagel)
 
@@ -307,3 +336,39 @@ def test_run_multiple(config: Config, tmp_path: Path):
 
     bids_layout = BIDSLayout(database_path=runner.dpath_pipeline_bids_db)
     assert not len(bids_layout.get(extension=".nii.gz")) == 0
+
+
+@pytest.mark.parametrize("generate_pybids_database", [True, False])
+def test_run_single_pybidsdb(
+    generate_pybids_database: bool,
+    config: Config,
+    mocker: pytest_mock.MockFixture,
+    tmp_path: Path,
+):
+    participant_id = "01"
+    session_id = "1"
+    runner = PipelineRunner(
+        dpath_root=tmp_path,
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    config.save(runner.layout.fpath_config)
+
+    # Set GENERATE_PYBIDS_DATABASE
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
+
+    # Mock the set_up_bids_db method
+    mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
+
+    # Call run_single
+    runner.run_single(participant_id=participant_id, session_id=session_id)
+
+    # Assert set_up_bids_db was called or not called as expected
+    if generate_pybids_database:
+        mocked_set_up_bids_db.assert_called_once_with(
+            dpath_bids_db=runner.dpath_pipeline_bids_db,
+            participant_id=participant_id,
+            session_id=session_id,
+        )
+    else:
+        mocked_set_up_bids_db.assert_not_called()

@@ -13,7 +13,7 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, LogColor, ReturnCode, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
 from .conftest import datetime_fixture  # noqa F401
@@ -234,7 +234,7 @@ def test_descriptor(
 
     # user-added pipelines with descriptor file
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config.get_step_config().DESCRIPTOR_FILE = fpath_descriptor
+    workflow.pipeline_step_config.DESCRIPTOR_FILE = fpath_descriptor
     fpath_descriptor.write_text(json.dumps(descriptor))
     assert workflow.descriptor == descriptor
 
@@ -290,7 +290,7 @@ def test_invocation(
     fpath_invocation = tmp_path / "invocation.json"
     fpath_invocation.write_text(json.dumps(invocation))
 
-    workflow.pipeline_config.get_step_config().INVOCATION_FILE = fpath_invocation
+    workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation
     assert workflow.invocation == invocation
 
 
@@ -343,7 +343,7 @@ def test_pybids_ignore_patterns(
 
     fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
     fpath_patterns.write_text(json.dumps(patterns))
-    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = fpath_patterns
+    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
 
     assert workflow.pybids_ignore_patterns == [
         re.compile(pattern) for pattern in patterns
@@ -351,7 +351,7 @@ def test_pybids_ignore_patterns(
 
 
 def test_pybids_ignore_patterns_no_file(workflow: PipelineWorkflow):
-    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = None
+    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = None
     assert workflow.pybids_ignore_patterns == []
 
 
@@ -360,7 +360,7 @@ def test_pybids_ignore_patterns_invalid_format(
 ):
     fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
     fpath_patterns.write_text(json.dumps({"key": "value"}))
-    workflow.pipeline_config.get_step_config().PYBIDS_IGNORE_FILE = fpath_patterns
+    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
 
     with pytest.raises(ValueError, match="Expected a list of strings"):
         workflow.pybids_ignore_patterns
@@ -379,8 +379,8 @@ def test_process_template_json(return_str, tmp_path: Path):
 
     processed = workflow.process_template_json(
         {
-            "[[NIPOPPY_BIDS_PARTICIPANT]]": "[[NIPOPPY_PARTICIPANT_ID]]",
-            "[[NIPOPPY_BIDS_SESSION]]": "[[NIPOPPY_SESSION_ID]]",
+            "[[NIPOPPY_BIDS_PARTICIPANT_ID]]": "[[NIPOPPY_PARTICIPANT_ID]]",
+            "[[NIPOPPY_BIDS_SESSION_ID]]": "[[NIPOPPY_SESSION_ID]]",
             "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
         },
@@ -399,9 +399,9 @@ def test_process_template_json(return_str, tmp_path: Path):
 
     # check that everything was replaced
     for pattern in [
-        "[[NIPOPPY_BIDS_PARTICIPANT]]",
+        "[[NIPOPPY_BIDS_PARTICIPANT_ID]]",
         "[[NIPOPPY_PARTICIPANT_ID]]",
-        "[[NIPOPPY_BIDS_SESSION]]",
+        "[[NIPOPPY_BIDS_SESSION_ID]]",
         "[[NIPOPPY_SESSION_ID]]",
         "[[NIPOPPY_DPATH_PIPELINE]]",
         "[[NIPOPPY_DPATH_BIDS]]",
@@ -534,6 +534,38 @@ def test_check_pipeline_version(
     assert f"using version {expected_version}" in caplog.text
 
 
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected_step",
+    [
+        ("heudiconv", "0.12.2", "prepare"),
+        ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME),
+        ("my_pipeline", "1.0", DEFAULT_PIPELINE_STEP_NAME),
+    ],
+)
+def test_check_pipeline_step(
+    pipeline_name,
+    pipeline_version,
+    expected_step,
+    workflow: PipelineWorkflow,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = pipeline_version
+    workflow.pipeline_step = None
+    workflow.check_pipeline_step()
+    assert workflow.pipeline_step == expected_step
+    assert f"using step {expected_step}" in caplog.text
+
+
+def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
+    workflow.pipeline_version = None
+    workflow.pipeline_step = None
+    create_empty_dataset(workflow.layout.dpath_root)
+    workflow.run_setup()
+    assert workflow.pipeline_version == "1.0"
+    assert workflow.pipeline_step == DEFAULT_PIPELINE_STEP_NAME
+
+
 @pytest.mark.parametrize("dry_run", [True, False])
 def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
     workflow = PipelineWorkflow(
@@ -543,6 +575,15 @@ def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
         dry_run=dry_run,
     )
     create_empty_dataset(workflow.layout.dpath_root)
+    get_config(
+        proc_pipelines=[
+            ProcPipelineConfig(
+                NAME=workflow.pipeline_name,
+                VERSION=workflow.pipeline_version,
+                STEPS=[ProcPipelineStepConfig()],
+            )
+        ]
+    ).save(workflow.layout.fpath_config)
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 
