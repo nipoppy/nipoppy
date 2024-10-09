@@ -59,8 +59,8 @@ def test_setup(config: Config, tmp_path: Path):
                 Doughnut.col_session_id: ["1"],
                 Doughnut.col_datatype: "['anat']",
                 Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_raw_imaging: [True],
-                Doughnut.col_in_sourcedata: [True],
+                Doughnut.col_in_pre_reorg: [True],
+                Doughnut.col_in_post_reorg: [True],
                 Doughnut.col_in_bids: [True],
             }
         ).validate(),
@@ -154,12 +154,12 @@ def test_get_participants_sessions_to_run(
             {
                 Doughnut.col_participant_id: data[0],
                 Doughnut.col_session_id: data[1],
-                Doughnut.col_in_sourcedata: data[2],
+                Doughnut.col_in_post_reorg: data[2],
                 Doughnut.col_in_bids: data[3],
                 Doughnut.col_visit_id: data[1],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_raw_imaging: False,
+                Doughnut.col_in_pre_reorg: False,
             }
             for data in doughnut_data
         ]

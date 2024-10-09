@@ -284,8 +284,8 @@ def test_get_participants_sessions_to_run(
                 Doughnut.col_in_bids: data[2],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_raw_imaging: False,
-                Doughnut.col_in_sourcedata: False,
+                Doughnut.col_in_pre_reorg: False,
+                Doughnut.col_in_post_reorg: False,
             }
             for data in doughnut_data
         ]

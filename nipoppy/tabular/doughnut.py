@@ -37,8 +37,8 @@ class DoughnutModel(ManifestModel):
             "relative to the raw data directory"
         ),
     )
-    in_raw_imaging: bool = Field(description="Whether files are available on disk")
-    in_sourcedata: bool = Field(
+    in_pre_reorg: bool = Field(description="Whether files are available on disk")
+    in_post_reorg: bool = Field(
         description="Whether files have been organized in the sourcedata directory"
     )
     in_bids: bool = Field(
@@ -51,11 +51,11 @@ class Doughnut(Manifest):
 
     # column names
     col_participant_dicom_dir = "participant_dicom_dir"
-    col_in_raw_imaging = "in_raw_imaging"
-    col_in_sourcedata = "in_sourcedata"
+    col_in_pre_reorg = "in_pre_reorg"
+    col_in_post_reorg = "in_post_reorg"
     col_in_bids = "in_bids"
 
-    status_cols = [col_in_raw_imaging, col_in_sourcedata, col_in_bids]
+    status_cols = [col_in_pre_reorg, col_in_post_reorg, col_in_bids]
 
     # set the model
     model = DoughnutModel
@@ -64,8 +64,8 @@ class Doughnut(Manifest):
 
     _metadata = Manifest._metadata + [
         "col_participant_dicom_dir",
-        "col_in_raw_imaging",
-        "col_in_sourcedata",
+        "col_in_pre_reorg",
+        "col_in_post_reorg",
         "col_in_bids",
     ]
 
@@ -117,7 +117,7 @@ class Doughnut(Manifest):
     ):
         """Get participants and sessions with downloaded data."""
         return self._get_participant_sessions_helper(
-            self.col_in_raw_imaging,
+            self.col_in_pre_reorg,
             participant_id=participant_id,
             session_id=session_id,
         )
@@ -129,7 +129,7 @@ class Doughnut(Manifest):
     ):
         """Get participants and sessions with organized data."""
         return self._get_participant_sessions_helper(
-            self.col_in_sourcedata, participant_id=participant_id, session_id=session_id
+            self.col_in_post_reorg, participant_id=participant_id, session_id=session_id
         )
 
     def get_bidsified_participants_sessions(
@@ -218,8 +218,8 @@ def generate_doughnut(
                 Doughnut.col_session_id: session_id,
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_dicom_dir,
-                Doughnut.col_in_raw_imaging: status_downloaded,
-                Doughnut.col_in_sourcedata: status_organized,
+                Doughnut.col_in_pre_reorg: status_downloaded,
+                Doughnut.col_in_post_reorg: status_organized,
                 Doughnut.col_in_bids: status_bidsified,
             }
         )
