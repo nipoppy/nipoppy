@@ -73,14 +73,6 @@ def workflow(tmp_path: Path):
     # write config
     config = get_config(
         visit_ids=["1"],
-        bids_pipelines=[
-            # built-in pipelines
-            {
-                "NAME": "heudiconv",
-                "VERSION": "0.12.2",
-                "STEPS": [{"NAME": "prepare"}, {"NAME": "convert"}],
-            }
-        ],
         proc_pipelines=[
             # built-in pipelines
             {
@@ -217,7 +209,6 @@ def test_fpath_container_not_found(workflow: PipelineWorkflow):
     "pipeline_name,pipeline_version,pipeline_step,descriptor",
     [
         ("fmriprep", "23.1.3", None, {}),
-        ("heudiconv", "0.12.2", "prepare", {"key1": "value1"}),
         ("my_pipeline", "1.0", None, {"key2": "value2"}),
     ],
 )
@@ -519,7 +510,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
 
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
-    [("heudiconv", "0.12.2"), ("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
+    [("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
 )
 def test_check_pipeline_version(
     pipeline_name,
@@ -538,7 +529,6 @@ def test_check_pipeline_version(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,expected_step",
     [
-        ("heudiconv", "0.12.2", "prepare"),
         ("fmriprep", "23.1.3", None),
         ("my_pipeline", "1.0", None),
     ],

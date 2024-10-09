@@ -84,21 +84,44 @@ def test_run_setup(config: Config, tmp_path: Path):
     assert runner.dpath_pipeline_work.exists()
 
 
-def test_run_cleanup(tmp_path: Path):
+@pytest.mark.parametrize("keep_workdir", [True, False])
+def test_run_cleanup(tmp_path: Path, keep_workdir):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
+        keep_workdir=keep_workdir,
     )
-    dpaths = [
-        runner.dpath_pipeline_bids_db,
-        runner.dpath_pipeline_work,
-    ]
+    dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
     runner.run_cleanup()
     for dpath in dpaths:
+        if keep_workdir:
+            assert dpath.exists()
+        else:
+            assert not dpath.exists()
+
+
+@pytest.mark.parametrize("n_success", [1, 2])
+def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        keep_workdir=False,
+    )
+    runner.n_success = n_success
+    runner.n_total = 2
+    config.save(runner.layout.fpath_config)
+    dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
+    for dpath in dpaths:
+        dpath.mkdir(parents=True)
+    runner.run_cleanup()
+    if runner.n_success == runner.n_total:
         assert not dpath.exists()
+    else:
+        assert dpath.exists()
 
 
 @pytest.mark.parametrize("simulate", [True, False])

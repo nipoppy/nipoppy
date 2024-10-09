@@ -271,6 +271,15 @@ def add_subparser_run(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_args_runner(parser)
+    parser.add_argument(
+        "--keep-workdir",
+        type=str,
+        required=False,
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
+        ),
+    )
 
     return parser
 

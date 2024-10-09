@@ -99,6 +99,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 pipeline_step=args.pipeline_step,
                 participant_id=args.participant_id,
                 session_id=args.session_id,
+                keep_workdir=args.keep_workdir,
                 simulate=args.simulate,
                 **workflow_kwargs,
             )
