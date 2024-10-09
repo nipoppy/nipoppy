@@ -48,14 +48,15 @@ By default, the output files will be relative symbolic links ("symlinks") to avo
 If `"DICOM_DIR_PARTICIPANT_FIRST"` is set to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`, then Nipoppy will instead expect session-level directories with nested participant-level directories (e.g., {{dpath_pre_reorg}}`/1/01` for the above example).
 
 (dicom-dir-map-example)=
-If the raw imaging data are not organized in any of these two structures, a custom comma-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_pre_reorg}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
+If the raw imaging data are not organized in any of these two structures, a custom tab-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_pre_reorg}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
 
 Here is an example file for a dataset that already uses the `ses-` prefix for sessions:
 
 ```{csv-table}
 ---
-file: ../../../nipoppy/data/examples/sample_dicom_dir_map.csv
+file: ../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
 header-rows: 1
+delim: tab
 ---
 ```
 
@@ -63,10 +64,9 @@ header-rows: 1
 ---
 class: dropdown
 ---
-```{literalinclude} ../../../nipoppy/data/examples/sample_dicom_dir_map.csv
+```{literalinclude} ../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
 ---
 linenos: True
-language: csv
 ---
 ```
 ````

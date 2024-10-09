@@ -1,0 +1,2 @@
+participant_id	bids_participant	session_id	pipeline_name	pipeline_version	pipeline_step	session	status	pipeline_starttime
+3000	sub-3000	BL	mriqc	23.1.0	default	ses-BL	SUCCESS	UNAVAILABLE

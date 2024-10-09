@@ -24,8 +24,8 @@ DPATH_EXAMPLES = DPATH_DATA / "examples"
 DPATH_SAMPLE_PIPELINES = DPATH_EXAMPLES / "sample_pipelines"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.json"
 FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
-FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.csv"
-FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.csv"
+FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
+FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 
@@ -277,6 +277,8 @@ def save_df_with_backup(
     """
     if "index" not in kwargs:
         kwargs["index"] = False
+    if "sep" not in kwargs:
+        kwargs["sep"] = "\t"
 
     fpath_symlink = Path(fpath_symlink)
 
