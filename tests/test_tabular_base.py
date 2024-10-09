@@ -74,7 +74,7 @@ def test_load_error_csv(tmp_path: Path):
     fpath_tsv = DPATH_TEST_DATA / "manifest1.tsv"
     fpath_csv = tmp_path / fpath_tsv.with_suffix(".csv").name
     pd.read_csv(fpath_tsv, sep="\t").to_csv(fpath_csv, index=False)
-    with pytest.raises(ValueError, match="It looks like the file at .* is a CSV"):
+    with pytest.raises(ValueError, match="It looks like the file at .* might be a CSV"):
         Tabular.load(fpath_csv)
 
 
