@@ -17,6 +17,7 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
+from nipoppy.config.main import get_pipeline_config, get_pipeline_version
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
@@ -141,10 +142,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
+    def _pipeline_configs(self) -> list[ProcPipelineConfig]:
+        return self.config.PROC_PIPELINES
+
+    @cached_property
     def pipeline_config(self) -> ProcPipelineConfig:
         """Get the user config for the pipeline."""
-        return self.config.get_pipeline_config(
-            self.pipeline_name, self.pipeline_version
+        return get_pipeline_config(
+            self.pipeline_name, self.pipeline_version, self._pipeline_configs
         )
 
     @cached_property
@@ -353,8 +358,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def check_pipeline_version(self):
         """Set the pipeline version based on the config if it is not given."""
         if self.pipeline_version is None:
-            self.pipeline_version = self.config.get_pipeline_version(
-                pipeline_name=self.pipeline_name
+            self.pipeline_version = get_pipeline_version(
+                pipeline_name=self.pipeline_name,
+                pipeline_configs=self._pipeline_configs,
             )
             self.logger.warning(
                 f"Pipeline version not specified, using version {self.pipeline_version}"
