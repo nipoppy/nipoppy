@@ -52,7 +52,7 @@ class LayoutConfig(BaseModel):
         description="Directory for imaging derivatives"
     )
     dpath_sourcedata: DpathInfo = Field(
-        description="Directory for raw imaging and tabular data"
+        description="Directory for source imaging and tabular data"
     )
     dpath_src_tabular: DpathInfo = Field(
         description=(

@@ -25,7 +25,7 @@
     },
     "dpath_pre_reorg": {
         "path": "sourcedata/imaging/pre_reorg",
-        "description": "This directory is for raw, arbitrarily organized imaging file dumps."
+        "description": "This directory is for arbitrarily organized source imaging files."
     },
     "dpath_post_reorg": {
         "path": "sourcedata/imaging/post_reorg",
