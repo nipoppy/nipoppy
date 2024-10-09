@@ -62,7 +62,7 @@ class DicomReorgWorkflow(BaseWorkflow):
     ) -> list[Path]:
         """Get file paths to reorganize for a single participant and session."""
         dpath_downloaded = (
-            self.layout.dpath_raw_imaging
+            self.layout.dpath_pre_reorg
             / self.dicom_dir_map.get_dicom_dir(
                 participant_id=participant_id, session_id=session_id
             )
@@ -99,7 +99,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         fpaths_to_reorg = self.get_fpaths_to_reorg(participant_id, session_id)
 
         dpath_reorganized: Path = (
-            self.layout.dpath_sourcedata
+            self.layout.dpath_post_reorg
             / participant_id_to_bids_participant_id(participant_id)
             / session_id_to_bids_session_id(session_id)
         )
@@ -161,8 +161,8 @@ class DicomReorgWorkflow(BaseWorkflow):
             doughnut=self.doughnut,
             manifest=self.manifest,
             dicom_dir_map=self.dicom_dir_map,
-            dpath_downloaded=self.layout.dpath_raw_imaging,
-            dpath_organized=self.layout.dpath_sourcedata,
+            dpath_downloaded=self.layout.dpath_pre_reorg,
+            dpath_organized=self.layout.dpath_post_reorg,
             dpath_bidsified=self.layout.dpath_bids,
             logger=self.logger,
         )

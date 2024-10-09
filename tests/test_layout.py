@@ -49,6 +49,7 @@ def test_init_default(dpath_root):
         None,
         FPATH_DEFAULT_LAYOUT,
         DPATH_LAYOUTS / "layout-0.1.0.json",
+        DPATH_LAYOUTS / "layout-0.2.x.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],
@@ -106,21 +107,21 @@ def test_fpaths(dpath_root: Path):
     "paths_to_delete",
     [
         [],
-        ["sourcedata", "downloads"],
+        ["sourcedata/imaging/post_reorg", "sourcedata/imaging/downloads"],
         ["bids", "derivatives"],
         [
             "pipelines",
         ],
         [
             "scratch",
-            "scratch/logs",
-            "scratch/raw_dicom",
+            "scratch/pybids_db",
+            "scratch/work",
+            "logs",
         ],
         [
             "tabular",
             "manifest.tsv",
             "tabular/assessments",
-            "tabular/demographics",
         ],
     ],
 )
@@ -151,21 +152,8 @@ def test_dpath_descriptions():
     [
         ["sourcedata", "downloads"],
         ["bids", "derivatives"],
-        ["proc", "proc/global_config.json"],
-        [
-            "proc",
-            "proc/containers",
-            "proc/scripts",
-            "proc/global_config.json",
-            "proc/pybids",
-            "proc/pybids/bids_db",
-        ],
-        [
-            "tabular",
-            "tabular/manifest.tsv",
-            "tabular/assessments",
-            "tabular/demographics",
-        ],
+        ["pipelines"],
+        ["tabular"],
     ],
 )
 def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
@@ -202,21 +190,21 @@ def test_get_dpath_pipeline(
             "v1",
             None,
             None,
-            "derivatives/my_pipeline/v1/work/my_pipeline-v1",
+            "scratch/work/my_pipeline-v1/my_pipeline-v1",
         ),
         (
             "pipeline",
             "v2",
             "3000",
             None,
-            "derivatives/pipeline/v2/work/pipeline-v2-3000",
+            "scratch/work/pipeline-v2/pipeline-v2-3000",
         ),
         (
             "pipeline",
             "v2",
             "01",
             "1",
-            "derivatives/pipeline/v2/work/pipeline-v2-01-1",
+            "scratch/work/pipeline-v2/pipeline-v2-01-1",
         ),
     ],
 )
@@ -262,11 +250,23 @@ def test_get_dpath_pipeline_output(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant_id,session_id,expected",
     [
-        ("my_pipeline", "v1", None, None, "proc/pybids/bids_db/my_pipeline-v1"),
-        ("pipeline", "v2", "01", "1", "proc/pybids/bids_db/pipeline-v2-01-1"),
+        (
+            "my_pipeline",
+            "v1",
+            None,
+            None,
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "my_pipeline-v1",
+        ),
+        (
+            "pipeline",
+            "v2",
+            "01",
+            "1",
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "pipeline-v2-01-1",
+        ),
     ],
 )
-def test_get_dpath_bids_db(
+def test_get_dpath_pybids_db(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
@@ -276,7 +276,7 @@ def test_get_dpath_bids_db(
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
-        layout.get_dpath_bids_db(
+        layout.get_dpath_pybids_db(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             participant_id=participant_id,
@@ -288,4 +288,4 @@ def test_get_dpath_bids_db(
 
 def test_doughnut_parent_directory(dpath_root: Path):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout.fpath_doughnut.parent == layout.dpath_raw_imaging
+    assert layout.fpath_doughnut.parent == layout.dpath_root / "sourcedata" / "imaging"

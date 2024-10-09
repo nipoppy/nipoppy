@@ -29,18 +29,19 @@ ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
-    "dpath_downloads": "downloads",
+    "dpath_src_tabular": "sourcedata/tabular",
+    "dpath_post_reorg": "sourcedata/imaging/post_reorg",
+    "dpath_pre_reorg": "sourcedata/imaging/pre_reorg",
+    "dpath_downloads": "sourcedata/imaging/downloads",
+    "dpath_code": "code",
     "dpath_pipelines": "pipelines",
-    "dpath_releases": "releases",
-    "dpath_containers": "proc/containers",
-    "dpath_pybids": "proc/pybids",
-    "dpath_bids_db": "proc/pybids/bids_db",
+    "dpath_containers": "containers",
     "dpath_scratch": "scratch",
-    "dpath_raw_imaging": "scratch/raw_imaging",
-    "dpath_logs": "scratch/logs",
+    "dpath_pybids_db": "scratch/pybids_db",
+    "dpath_work": "scratch/work",
+    "dpath_logs": "logs",
     "dpath_tabular": "tabular",
     "dpath_assessments": "tabular/assessments",
-    "dpath_demographics": "tabular/demographics",
 }
 
 ATTR_TO_REQUIRED_FPATH_MAP = {
@@ -50,8 +51,9 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "scratch/raw_imaging/doughnut.tsv",
+    "fpath_doughnut": "sourcedata/imaging/doughnut.tsv",
     "fpath_imaging_bagel": "derivatives/bagel.tsv",
+    "fpath_demographics": "tabular/demographics.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)

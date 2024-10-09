@@ -87,7 +87,7 @@ def test_check_session_id(session_id, raise_error, is_valid, expected):
 
 
 @pytest.mark.parametrize(
-    "dpath_bids_db,ignore_patterns,expected_count",
+    "dpath_pybids_db,ignore_patterns,expected_count",
     [
         (None, None, 13),
         ("bids_db", [re.compile("^(?!/sub-(02))")], 9),
@@ -99,13 +99,13 @@ def test_check_session_id(session_id, raise_error, is_valid, expected):
 )
 @pytest.mark.parametrize("resolve_paths", [True, False])
 def test_create_bids_db(
-    dpath_bids_db, ignore_patterns, expected_count, resolve_paths, tmp_path: Path
+    dpath_pybids_db, ignore_patterns, expected_count, resolve_paths, tmp_path: Path
 ):
     from nipoppy.utils import create_bids_db
 
     dpath_bids = tmp_path / "bids"
-    if dpath_bids_db is not None:
-        dpath_bids_db: Path = tmp_path / dpath_bids_db
+    if dpath_pybids_db is not None:
+        dpath_pybids_db: Path = tmp_path / dpath_pybids_db
 
     fids.create_fake_bids_dataset(
         output_dir=dpath_bids, subjects=["01"], sessions=["1", "2"], datatypes=["anat"]
@@ -119,13 +119,13 @@ def test_create_bids_db(
 
     bids_layout = create_bids_db(
         dpath_bids=dpath_bids,
-        dpath_bids_db=dpath_bids_db,
+        dpath_pybids_db=dpath_pybids_db,
         ignore_patterns=ignore_patterns,
         resolve_paths=resolve_paths,
     )
     assert len(bids_layout.get(extension="nii.gz")) == expected_count
-    if dpath_bids_db is not None:
-        assert dpath_bids_db.exists()
+    if dpath_pybids_db is not None:
+        assert dpath_pybids_db.exists()
 
 
 @pytest.mark.parametrize(

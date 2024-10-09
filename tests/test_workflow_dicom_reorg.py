@@ -64,7 +64,7 @@ def test_get_fpaths_to_reorg(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=participant_first
     )
     for fpath in fpaths:
-        fpath_full: Path = workflow.layout.dpath_raw_imaging / fpath
+        fpath_full: Path = workflow.layout.dpath_pre_reorg / fpath
         fpath_full.parent.mkdir(parents=True, exist_ok=True)
         fpath_full.touch()
 
@@ -154,8 +154,8 @@ def test_run_single_error_file_exists(tmp_path: Path):
     # create the same file in both the downloaded and organized directories
     fname = "test.dcm"
     for fpath in [
-        workflow.layout.dpath_raw_imaging / participant_id / session_id / fname,
-        workflow.layout.dpath_sourcedata
+        workflow.layout.dpath_pre_reorg / participant_id / session_id / fname,
+        workflow.layout.dpath_post_reorg
         / participant_id_to_bids_participant_id(participant_id)
         / session_id_to_bids_session_id(session_id)
         / fname,
@@ -182,7 +182,7 @@ def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixtu
 
     # use derived DICOM file
     fpath_dicom = (
-        workflow.layout.dpath_raw_imaging / participant_id / session_id / "test.dcm"
+        workflow.layout.dpath_pre_reorg / participant_id / session_id / "test.dcm"
     )
     fpath_dicom.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(DPATH_TEST_DATA / "dicom-derived.dcm", fpath_dicom)
@@ -216,7 +216,7 @@ def test_run_single_error_dicom_read(tmp_path: Path):
 
     # create an invalid DICOM file
     fname = "test.dcm"
-    fpath = workflow.layout.dpath_raw_imaging / participant_id / session_id / fname
+    fpath = workflow.layout.dpath_pre_reorg / participant_id / session_id / fname
     fpath.parent.mkdir(parents=True, exist_ok=True)
     fpath.touch()
 
@@ -288,8 +288,8 @@ def test_get_participants_sessions_to_run(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        dpath_downloaded=workflow.layout.dpath_raw_imaging,
-        dpath_organized=workflow.layout.dpath_sourcedata,
+        dpath_downloaded=workflow.layout.dpath_pre_reorg,
+        dpath_organized=workflow.layout.dpath_post_reorg,
     )
 
     config = get_config(
@@ -383,7 +383,7 @@ def test_run_main(
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
-        dpath_downloaded=workflow.layout.dpath_raw_imaging,
+        dpath_downloaded=workflow.layout.dpath_pre_reorg,
     )
 
     config = get_config(
@@ -399,7 +399,7 @@ def test_run_main(
     for participant_id, session_ids in participants_and_sessions_manifest.items():
         for session_id in session_ids:
             dpath_to_check: Path = (
-                workflow.layout.dpath_sourcedata
+                workflow.layout.dpath_post_reorg
                 / participant_id_to_bids_participant_id(participant_id)
                 / session_id_to_bids_session_id(session_id)
             )
