@@ -80,7 +80,7 @@
         "description": "The manifest file lists all expected study participants and visits."
     },
     "fpath_imaging_bagel": {
-        "path": "derivatives/bagel.tsv",
+        "path": "derivatives/imaging_bagel.tsv",
         "description": "The imaging bagel file lists availability of derived imaging data and pipeline processing statuses."
     },
     "fpath_demographics": {
