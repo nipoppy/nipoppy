@@ -41,10 +41,10 @@ class Config(_SchemaWithContainerConfig):
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
-            "Path to a CSV file mapping participant IDs to DICOM directories"
+            "Path to a TSV file mapping participant IDs to DICOM directories"
             ", to be used in the DICOM reorg step. Note: this field and "
-            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified"
-            f'. The CSV should have three columns: "{DicomDirMap.col_participant_id}"'
+            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified. The "
+            f'TSV file should have three columns: "{DicomDirMap.col_participant_id}"'
             f' , "{DicomDirMap.col_session_id}"'
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),

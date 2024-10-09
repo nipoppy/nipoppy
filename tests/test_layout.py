@@ -118,7 +118,7 @@ def test_fpaths(dpath_root: Path):
         ],
         [
             "tabular",
-            "manifest.csv",
+            "manifest.tsv",
             "tabular/assessments",
             "tabular/demographics",
         ],
@@ -162,7 +162,7 @@ def test_dpath_descriptions():
         ],
         [
             "tabular",
-            "tabular/manifest.csv",
+            "tabular/manifest.tsv",
             "tabular/assessments",
             "tabular/demographics",
         ],

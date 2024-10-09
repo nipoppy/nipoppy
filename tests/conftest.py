@@ -22,7 +22,7 @@ from nipoppy.utils import (
 )
 
 FPATH_CONFIG = "global_config.json"
-FPATH_MANIFEST = "manifest.csv"
+FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 
 ATTR_TO_DPATH_MAP = {
@@ -50,8 +50,8 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "scratch/raw_imaging/doughnut.csv",
-    "fpath_imaging_bagel": "derivatives/bagel.csv",
+    "fpath_doughnut": "scratch/raw_imaging/doughnut.tsv",
+    "fpath_imaging_bagel": "derivatives/bagel.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)

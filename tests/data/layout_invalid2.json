@@ -45,12 +45,12 @@
         "path": "code/global_config.json"
     },
     "fpath_doughnut": {
-        "path": "scratch/raw_dicom/doughnut.csv"
+        "path": "scratch/raw_dicom/doughnut.tsv"
     },
     "fpath_manifest": {
-        "path": "tabular/manifest.csv"
+        "path": "tabular/manifest.tsv"
     },
     "fpath_imaging_bagel": {
-        "path": "derivatives/bagel.csv"
+        "path": "derivatives/bagel.tsv"
     }
 }
