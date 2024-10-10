@@ -124,10 +124,8 @@ class BaseWorkflow(Base, ABC):
         subprocess.Popen or str
         """
 
-        def process_output(
-            output_source, output_str: str, log_prefix: str, log_level=logging.INFO
-        ):
-            """Consume lines from an IO stream and append them to a string."""
+        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+            """Consume lines from an IO stream and log them."""
             for line in output_source:
                 line = line.strip("\n")
                 # using extra={"markup": False} in case the output contains substrings
@@ -137,7 +135,6 @@ class BaseWorkflow(Base, ABC):
                     msg=f"{log_prefix} {line}",
                     extra={"markup": False},
                 )
-            return output_str
 
         # build command string
         if not isinstance(command_or_args, str):
@@ -153,8 +150,6 @@ class BaseWorkflow(Base, ABC):
 
         self.log_command(command)
 
-        stdout_str = ""
-        stderr_str = ""
         if not self.dry_run:
             process = subprocess.Popen(
                 command_or_args,
@@ -165,15 +160,13 @@ class BaseWorkflow(Base, ABC):
             )
 
             while process.poll() is None:
-                stdout_str = process_output(
+                process_output(
                     process.stdout,
-                    stdout_str,
                     self.log_prefix_run_stdout,
                 )
 
-                stderr_str = process_output(
+                process_output(
                     process.stderr,
-                    stderr_str,
                     self.log_prefix_run_stderr,
                     log_level=logging.ERROR,
                 )
