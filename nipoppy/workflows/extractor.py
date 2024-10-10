@@ -41,7 +41,7 @@ class ExtractionRunner(PipelineRunner):
             logger=logger,
             dry_run=dry_run,
         )
-        self.name = "extraction"
+        self.name = "nipoppy_extract"
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
