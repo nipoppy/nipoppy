@@ -13,9 +13,9 @@ from .conftest import DPATH_TEST_DATA
 @pytest.mark.parametrize(
     "fpath",
     [
-        DPATH_TEST_DATA / "manifest1.csv",
-        DPATH_TEST_DATA / "manifest2.csv",
-        DPATH_TEST_DATA / "manifest3.csv",
+        DPATH_TEST_DATA / "manifest1.tsv",
+        DPATH_TEST_DATA / "manifest2.tsv",
+        DPATH_TEST_DATA / "manifest3.tsv",
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
@@ -24,8 +24,8 @@ def test_load(fpath, validate):
 
 
 def test_load_keep_extra_cols():
-    fpath = DPATH_TEST_DATA / "manifest3.csv"
-    expected_cols = pd.read_csv(fpath).columns
+    fpath = DPATH_TEST_DATA / "manifest3.tsv"
+    expected_cols = pd.read_csv(fpath, sep="\t").columns
     manifest = Manifest.load(fpath)
     assert set(manifest.columns) == set(expected_cols)
     assert isinstance(manifest.validate(), Manifest)
@@ -34,12 +34,12 @@ def test_load_keep_extra_cols():
 @pytest.mark.parametrize(
     "fpath,is_valid",
     [
-        (DPATH_TEST_DATA / "manifest1.csv", True),
-        (DPATH_TEST_DATA / "manifest2.csv", True),
-        (DPATH_TEST_DATA / "manifest_invalid1.csv", False),
-        (DPATH_TEST_DATA / "manifest_invalid2.csv", False),
-        (DPATH_TEST_DATA / "manifest_invalid3.csv", False),
-        (DPATH_TEST_DATA / "manifest_invalid4.csv", False),
+        (DPATH_TEST_DATA / "manifest1.tsv", True),
+        (DPATH_TEST_DATA / "manifest2.tsv", True),
+        (DPATH_TEST_DATA / "manifest_invalid1.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid2.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid3.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid4.tsv", False),
     ],
 )
 def test_validate(fpath, is_valid):
@@ -59,7 +59,7 @@ def test_validate(fpath, is_valid):
 )
 def test_validate_sessions_visits(session_ids, visit_ids, is_valid):
     manifest = Manifest.load(
-        DPATH_TEST_DATA / "manifest1.csv",
+        DPATH_TEST_DATA / "manifest1.tsv",
         session_ids=session_ids,
         visit_ids=visit_ids,
         validate=False,

@@ -215,9 +215,9 @@ def add_subparser_dicom_reorg(
     from nipoppy.layout import DEFAULT_LAYOUT_INFO
 
     description = (
-        "(Re)organize raw (DICOM) files, from the raw DICOM directory "
-        f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to the organized "
-        f"sourcedata directory ({DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
+        "(Re)organize raw (DICOM) files, from the "
+        f"({DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) to "
+        f"({DEFAULT_LAYOUT_INFO.dpath_post_reorg})."
     )
     parser = subparsers.add_parser(
         COMMAND_DICOM_REORG,

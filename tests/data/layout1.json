@@ -9,11 +9,20 @@
     "dpath_sourcedata": {
         "path": "sourcedata"
     },
+    "dpath_src_tabular": {
+        "path": "sourcedata/tabular"
+    },
+    "dpath_src_imaging": {
+        "path": "sourcedata/imaging"
+    },
+    "dpath_post_reorg": {
+        "path": "sourcedata/imaging/after_reorg"
+    },
     "dpath_downloads": {
         "path": "downloads"
     },
-    "dpath_releases": {
-        "path": "releases"
+    "dpath_code": {
+        "path": "code"
     },
     "dpath_pipelines": {
         "path": "proc"
@@ -21,16 +30,16 @@
     "dpath_containers": {
         "path": "proc/containers"
     },
-    "dpath_pybids": {
-        "path": "proc/pybids"
-    },
-    "dpath_bids_db": {
+    "dpath_pybids_db": {
         "path": "proc/pybids/bids_db"
     },
     "dpath_scratch": {
         "path": "scratch"
     },
-    "dpath_raw_imaging": {
+    "dpath_work": {
+        "path": "scratch"
+    },
+    "dpath_pre_reorg": {
         "path": "scratch/raw_imaging"
     },
     "dpath_logs": {
@@ -42,19 +51,19 @@
     "dpath_assessments": {
         "path": "tabular/assessments"
     },
-    "dpath_demographics": {
-        "path": "tabular/demographics"
-    },
     "fpath_config": {
         "path": "proc/global_config.json"
     },
     "fpath_doughnut": {
-        "path": "scratch/raw_dicom/doughnut.csv"
+        "path": "scratch/raw_dicom/doughnut.tsv"
     },
     "fpath_manifest": {
-        "path": "tabular/manifest.csv"
+        "path": "tabular/manifest.tsv"
     },
     "fpath_imaging_bagel": {
-        "path": "derivatives/bagel.csv"
+        "path": "derivatives/bagel.tsv"
+    },
+    "fpath_demographics": {
+        "path": "tabular/demographics.tsv"
     }
 }

@@ -43,10 +43,10 @@ def test_empty_has_columns():
 @pytest.mark.parametrize(
     "fpath",
     [
-        DPATH_TEST_DATA / "manifest1.csv",
-        DPATH_TEST_DATA / "manifest2.csv",
-        DPATH_TEST_DATA / "manifest_invalid1.csv",
-        DPATH_TEST_DATA / "manifest_invalid2.csv",
+        DPATH_TEST_DATA / "manifest1.tsv",
+        DPATH_TEST_DATA / "manifest2.tsv",
+        DPATH_TEST_DATA / "manifest_invalid1.tsv",
+        DPATH_TEST_DATA / "manifest_invalid2.tsv",
     ],
 )
 @pytest.mark.parametrize("tabular_class", [Tabular, TabularWithModel])
@@ -54,10 +54,28 @@ def test_load(fpath, tabular_class: BaseTabular):
     assert isinstance(tabular_class.load(fpath, validate=False), tabular_class)
 
 
-@pytest.mark.parametrize("dtype", [str, int])
-def test_load_error(dtype):
-    with pytest.raises(ValueError):
-        Tabular.load(DPATH_TEST_DATA / "manifest1.csv", dtype=dtype)
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"dtype": str},
+        {"dtype": int},
+        {"sep": ","},
+        {"delimiter": "\t"},
+        {"delim_whitespace": True},
+    ],
+)
+def test_load_error(kwargs):
+    fpath_tabular = DPATH_TEST_DATA / "manifest1.tsv"
+    with pytest.raises(ValueError, match="This function does not accept"):
+        Tabular.load(fpath_tabular, **kwargs)
+
+
+def test_load_error_csv(tmp_path: Path):
+    fpath_tsv = DPATH_TEST_DATA / "manifest1.tsv"
+    fpath_csv = tmp_path / fpath_tsv.with_suffix(".csv").name
+    pd.read_csv(fpath_tsv, sep="\t").to_csv(fpath_csv, index=False)
+    with pytest.raises(ValueError, match="It looks like the file at .* might be a CSV"):
+        Tabular.load(fpath_csv)
 
 
 @pytest.mark.parametrize(
@@ -185,7 +203,7 @@ def test_concatenate_error(data1: list[dict], data2: list[dict]):
 @pytest.mark.parametrize("dname_backups", [None, ".tests"])
 @pytest.mark.parametrize(
     "fname,dname_backups_processed",
-    [("test.csv", ".tests"), ("test2.csv", ".test2s")],
+    [("test.tsv", ".tests"), ("test2.tsv", ".test2s")],
 )
 def test_save_with_backup(
     fname: str,
@@ -218,7 +236,7 @@ def test_save_with_backup(
     ],
 )
 def test_save_with_backup_no_change(data1, data2, tmp_path: Path):
-    fpath_symlink = tmp_path / "test.csv"
+    fpath_symlink = tmp_path / "test.tsv"
     tabular1 = TabularWithModelNoList(data1)
     fpath_backup1 = tabular1.save_with_backup(fpath_symlink)
     assert fpath_backup1 is not None
@@ -229,10 +247,10 @@ def test_save_with_backup_no_change(data1, data2, tmp_path: Path):
 
 @pytest.mark.parametrize("bad_data", [{}, [{"b": 1}]])
 def test_save_with_backup_invalid_existing(bad_data, tmp_path: Path):
-    fpath_symlink = tmp_path / "test.csv"
+    fpath_symlink = tmp_path / "test.tsv"
 
     # not a valid TabularWithModel
-    pd.DataFrame(bad_data).to_csv(fpath_symlink, index=False)
+    pd.DataFrame(bad_data).to_csv(fpath_symlink, index=False, sep="\t")
 
     tabular = TabularWithModel([{"a": "A", "b": 1}])
     assert tabular.save_with_backup(fpath_symlink) is not None

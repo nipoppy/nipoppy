@@ -8,15 +8,15 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
-- Raw imaging data in {{dpath_raw_imaging}}
+- Raw imaging data in {{dpath_pre_reorg}}
     - See <project:populating.md>
 
 ### Data directories
 
 | Directory | Content description |
 |---|---|
-| {{dpath_raw_imaging}} | **Input** -- {{content_dpath_raw_imaging}} |
-| {{dpath_sourcedata}} | **Output** -- {{content_dpath_sourcedata}} |
+| {{dpath_pre_reorg}} | **Input** -- {{content_dpath_pre_reorg}} |
+| {{dpath_post_reorg}} | **Output** -- {{content_dpath_post_reorg}} |
 
 ### Commands
 
@@ -25,13 +25,13 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_raw_imaging}} but *do not have* data in {{dpath_sourcedata}} according to the {term}`doughnut file`
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_pre_reorg}} but *do not have* data in {{dpath_post_reorg}} according to the {term}`doughnut file`
     - If the doughnut file does not exist, it will be automatically generated
     - If there is an existing doughnut file but it does not have all the rows in the manifest, new entries will be automatically added to the doughnut file
     - The doughnut file can also be completely regenerated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
-    1. Files from the {{dpath_raw_imaging}} directory will be "copied" (the default is to create symlinks) to the {{dpath_sourcedata}} directory into a flat list
-    2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_sourcedata}}
+    1. Files from the {{dpath_pre_reorg}} directory will be "copied" (the default is to create symlinks) to the {{dpath_post_reorg}} directory into a flat list
+    2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_post_reorg}}
 
 ## Configuring the reorganization
 
@@ -39,23 +39,24 @@ By default, Nipoppy expects "participant-first" organization, like the following
 ```{literalinclude} ./inserts/default_dicom_reorg-before.txt
 ```
 
-All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` (note the addition of BIDS prefixes), creating a flat list of files, like this:
+All files in participant-session subdirectories (and sub-subdirectories, if applicable) will be reorganized under {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` (note the addition of BIDS prefixes), creating a flat list of files, like this:
 ```{literalinclude} ./inserts/default_dicom_reorg-after.txt
 ```
 
 By default, the output files will be relative symbolic links ("symlinks") to avoid duplication of files.
 
-If `"DICOM_DIR_PARTICIPANT_FIRST"` is set to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`, then Nipoppy will instead expect session-level directories with nested participant-level directories (e.g., {{dpath_raw_imaging}}`/1/01` for the above example).
+If `"DICOM_DIR_PARTICIPANT_FIRST"` is set to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`, then Nipoppy will instead expect session-level directories with nested participant-level directories (e.g., {{dpath_pre_reorg}}`/1/01` for the above example).
 
 (dicom-dir-map-example)=
-If the raw imaging data is not organized in any of these two structures, a custom comma-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_raw_imaging}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
+If the raw imaging data are not organized in any of these two structures, a custom tab-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_pre_reorg}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
 
 Here is an example file for a dataset that already uses the `ses-` prefix for sessions:
 
 ```{csv-table}
 ---
-file: ../../../nipoppy/data/examples/sample_dicom_dir_map.csv
+file: ../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
 header-rows: 1
+delim: tab
 ---
 ```
 
@@ -63,10 +64,9 @@ header-rows: 1
 ---
 class: dropdown
 ---
-```{literalinclude} ../../../nipoppy/data/examples/sample_dicom_dir_map.csv
+```{literalinclude} ../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
 ---
 linenos: True
-language: csv
 ---
 ```
 ````
@@ -116,7 +116,7 @@ In this case, using a DICOM directory mapping file as described above is not eno
 The {class}`nipoppy.workflows.DicomReorgWorkflow` class exposes two functions for finer control of input paths and output filenames:
 - {func}`nipoppy.workflows.DicomReorgWorkflow.get_fpaths_to_reorg` can be overridden to map a participant ID and session ID to a list of absolute filepaths to be reorganized
 - {func}`nipoppy.workflows.DicomReorgWorkflow.apply_fname_mapping` can be overridden to rename output files
-  - Note: output files will still be in the {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
+  - Note: output files will still be in the {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
 
 Here is an example of custom imaging data reorganization script:
 ```{literalinclude} ./inserts/custom_dicom_reorg.py

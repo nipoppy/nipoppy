@@ -9,42 +9,54 @@
     },
     "dpath_sourcedata": {
         "path": "sourcedata",
-        "description": "This directory is for the organized source data that is ready for BIDS conversion."
+        "description": "This directory is for the unorganized or arbitrarily organized source data (imaging and tabular)."
+    },
+    "dpath_src_tabular": {
+        "path": "sourcedata/tabular",
+        "description": "This directory is for the unorganized or arbitrarily organized tabular data."
+    },
+    "dpath_src_imaging": {
+        "path": "sourcedata/imaging",
+        "description": "This directory is for the unorganized or arbitrarily organized imaging data (files and archives)."
     },
     "dpath_downloads": {
-        "path": "downloads",
+        "path": "sourcedata/imaging/downloads",
         "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
     },
-    "dpath_releases": {
-        "path": "releases",
-        "description": "This directory is for dataset releases (e.g., associated with specific publications)."
+    "dpath_pre_reorg": {
+        "path": "sourcedata/imaging/pre_reorg",
+        "description": "This directory is for arbitrarily organized source imaging files."
+    },
+    "dpath_post_reorg": {
+        "path": "sourcedata/imaging/post_reorg",
+        "description": "This directory is for the organized source data that is ready for BIDS conversion."
+    },
+    "dpath_code": {
+        "path": "code",
+        "description": "This directory is for custom code."
+    },
+    "dpath_containers": {
+        "path": "containers",
+        "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
     },
     "dpath_pipelines": {
         "path": "pipelines",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
-    "dpath_containers": {
-        "path": "proc/containers",
-        "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
-    },
-    "dpath_pybids": {
-        "path": "proc/pybids",
-        "description": "This directory is for PyBIDS-specific data/configurations."
-    },
-    "dpath_bids_db": {
-        "path": "proc/pybids/bids_db",
-        "description": "This directory is for PyBIDS databases generated/used during processing."
-    },
     "dpath_scratch": {
         "path": "scratch",
-        "description": "This directory is for scratch data."
+        "description": "This directory is for temporary/working files."
     },
-    "dpath_raw_imaging": {
-        "path": "scratch/raw_imaging",
-        "description": "This directory is for raw, unorganized imaging file dumps."
+    "dpath_pybids_db": {
+        "path": "scratch/pybids_db",
+        "description": "This directory is for PyBIDS databases generated/used during processing."
+    },
+    "dpath_work": {
+        "path": "scratch/work",
+        "description": "This directory is for temporary/working files generated/used during processing."
     },
     "dpath_logs": {
-        "path": "scratch/logs",
+        "path": "logs",
         "description": "This directory contains log files."
     },
     "dpath_tabular": {
@@ -55,24 +67,24 @@
         "path": "tabular/assessments",
         "description": "This directory is for assessments data."
     },
-    "dpath_demographics": {
-        "path": "tabular/demographics",
-        "description": "This directory is for demographics data."
-    },
     "fpath_config": {
         "path": "global_config.json",
         "description": "The configuration file for a dataset is where all data processing is configured."
     },
     "fpath_doughnut": {
-        "path": "scratch/raw_imaging/doughnut.csv",
+        "path": "sourcedata/imaging/doughnut.tsv",
         "description": "The doughnut file is generated/updated internally and is used to keep track of the raw data organization and BIDS conversion process."
     },
     "fpath_manifest": {
-        "path": "manifest.csv",
+        "path": "manifest.tsv",
         "description": "The manifest file lists all expected study participants and visits."
     },
     "fpath_imaging_bagel": {
-        "path": "derivatives/bagel.csv",
+        "path": "derivatives/imaging_bagel.tsv",
         "description": "The imaging bagel file lists availability of derived imaging data and pipeline processing statuses."
+    },
+    "fpath_demographics": {
+        "path": "tabular/demographics.tsv",
+        "description": "The demographics file contains demographic information for study participants."
     }
 }

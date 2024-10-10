@@ -284,8 +284,8 @@ def test_get_participants_sessions_to_run(
                 Doughnut.col_in_bids: data[2],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_raw_imaging: False,
-                Doughnut.col_in_sourcedata: False,
+                Doughnut.col_in_pre_reorg: False,
+                Doughnut.col_in_post_reorg: False,
             }
             for data in doughnut_data
         ]
@@ -366,7 +366,7 @@ def test_run_single_pybidsdb(
     # Assert set_up_bids_db was called or not called as expected
     if generate_pybids_database:
         mocked_set_up_bids_db.assert_called_once_with(
-            dpath_bids_db=runner.dpath_pipeline_bids_db,
+            dpath_pybids_db=runner.dpath_pipeline_bids_db,
             participant_id=participant_id,
             session_id=session_id,
         )

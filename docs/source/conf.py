@@ -116,21 +116,21 @@ myst_substitutions = {
     "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
-    "dpath_raw_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}`",
-    "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
+    "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
+    "dpath_post_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_post_reorg}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
     "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
-    "dpath_bids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_bids_db}`",
+    "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
     "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
-    "content_dpath_raw_imaging": (
+    "content_dpath_pre_reorg": (
         "Arbitrarily organized raw imaging data (DICOMs or NIfTIs)"
     ),
-    "content_dpath_sourcedata": (
+    "content_dpath_post_reorg": (
         "Raw imaging data (DICOMs or NIfTIs) organized in a way "
         "that facilitates BIDS conversion"
     ),
