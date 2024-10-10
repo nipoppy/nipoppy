@@ -426,7 +426,7 @@ def test_run_main(
                 assert workflow.doughnut.get_status(
                     participant_id=participant_id,
                     session_id=session_id,
-                    col=workflow.doughnut.col_in_sourcedata,
+                    col=workflow.doughnut.col_in_post_reorg,
                 )
 
             else:
@@ -458,7 +458,7 @@ def test_run_main_error(tmp_path: Path):
     config.save(workflow.layout.fpath_config)
 
     # will cause the workflow to fail because the directories cannot be found
-    workflow.doughnut[workflow.doughnut.col_in_raw_imaging] = True
+    workflow.doughnut[workflow.doughnut.col_in_pre_reorg] = True
 
     try:
         workflow.run_main()
@@ -479,8 +479,8 @@ def test_run_main_error(tmp_path: Path):
                 Doughnut.col_session_id: ["1"],
                 Doughnut.col_datatype: "['anat']",
                 Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_raw_imaging: [True],
-                Doughnut.col_in_sourcedata: [True],
+                Doughnut.col_in_pre_reorg: [True],
+                Doughnut.col_in_post_reorg: [True],
                 Doughnut.col_in_bids: [True],
             }
         ).validate(),
