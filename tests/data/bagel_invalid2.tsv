@@ -1,0 +1,9 @@
+participant_id	bids_participant_id	session_id	bids_session_id	pipeline_name	pipeline_version	status
+001	sub-001	A	ses-A	pipeline1	0.1.0	FAIL
+001	sub-001	A	ses-A	pipeline1	0.1.0	INCOMPLETE
+001	sub-001	A	ses-A	pipeline1	0.2.0	SUCCESS
+001	sub-001	A	ses-A	pipeline2	1.0.0	SUCCESS
+001	sub-001	B	ses-B	pipeline2	1.0.0	UNAVAILABLE
+002	sub-002	A	ses-A	pipeline1	0.2.0	SUCCESS
+002	sub-002	A	ses-A	pipeline2	1.0.0	SUCCESS
+002	sub-002	B	ses-B	pipeline2	1.0.0	SUCCESS
