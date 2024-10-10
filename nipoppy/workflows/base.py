@@ -90,7 +90,7 @@ class BaseWorkflow(Base, ABC):
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
-        self.logger.info(f"{self.log_prefix_run} {command}")
+        self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
         self,
@@ -128,7 +128,11 @@ class BaseWorkflow(Base, ABC):
             """Consume lines from an IO stream and append them to a string."""
             for line in output_source:
                 line = line.strip("\n")
-                self.logger.log(level=log_level, msg=f"{log_prefix} {line}")
+                self.logger.log(
+                    level=log_level,
+                    msg=f"{log_prefix} {line}",
+                    extra={"markup": False},
+                )
             return output_str
 
         # build command string
