@@ -37,18 +37,15 @@ class PipelineTracker(BasePipelineWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
-        self.bagel: Bagel = Bagel()  # may get overwritten
 
     def run_setup(self):
         """Load/initialize the bagel file."""
         if self.layout.fpath_imaging_bagel.exists():
-            self.bagel = Bagel.load(self.layout.fpath_imaging_bagel)
             self.logger.info(
                 f"Found existing bagel with shape {self.bagel.shape}"
                 f" at {self.layout.fpath_imaging_bagel}"
             )
         else:
-            self.bagel = Bagel()
             self.logger.info("Initialized empty bagel")
         return super().run_setup()
 
