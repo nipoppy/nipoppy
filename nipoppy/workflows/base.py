@@ -90,6 +90,8 @@ class BaseWorkflow(Base, ABC):
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
+        # using extra={"markup": False} in case the command contains substrings
+        # that would be interpreted as closing tags by the RichHandler
         self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
@@ -128,6 +130,8 @@ class BaseWorkflow(Base, ABC):
             """Consume lines from an IO stream and append them to a string."""
             for line in output_source:
                 line = line.strip("\n")
+                # using extra={"markup": False} in case the output contains substrings
+                # that would be interpreted as closing tags by the RichHandler
                 self.logger.log(
                     level=log_level,
                     msg=f"{log_prefix} {line}",
