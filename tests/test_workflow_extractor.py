@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.config.main import Config
+from nipoppy.config.pipeline import ExtractionPipelineConfig
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
 from nipoppy.workflows.extractor import ExtractionRunner
@@ -19,6 +20,16 @@ def config() -> Config:
             {
                 "NAME": "freesurfer",
                 "VERSION": "7.3.2",
+                "STEPS": [{}],
+            },
+            {
+                "NAME": "freesurfer",
+                "VERSION": "6.0.1",
+                "STEPS": [{}],
+            },
+            {
+                "NAME": "fmriprep",
+                "VERSION": "23.1.3",
                 "STEPS": [{}],
             },
         ]
@@ -97,3 +108,28 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,expected_version",
+    [
+        ("freesurfer", "7.3.2"),
+        ("fmriprep", "23.1.3"),
+    ],
+)
+def test_check_pipeline_version(
+    pipeline_name, expected_version, config: Config, tmp_path: Path
+):
+    workflow = ExtractionRunner(
+        dpath_root=tmp_path,
+        pipeline_name=pipeline_name,
+        pipeline_version=None,
+    )
+    config.save(workflow.layout.fpath_config)
+    workflow.check_pipeline_version()
+    assert workflow.pipeline_version == expected_version
+
+
+def test_pipeline_config(extractor: ExtractionRunner, config: Config):
+    config.save(extractor.layout.fpath_config)
+    assert isinstance(extractor.pipeline_config, ExtractionPipelineConfig)
