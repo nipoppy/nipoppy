@@ -1,16 +1,19 @@
-└── sourcedata
-    └── sub-01
-        ├── ses-1
-        │   ├── 100.dcm  # flat list of DICOM files
-        │   ├── 101.dcm
-        │   ├── 102.dcm
-        │   ├── 200.dcm
-        │   ├── 201.dcm
-        │   └── 202.dcm
-        └── ses-2
-            ├── 100.dcm
-            ├── 101.dcm
-            ├── 102.dcm
-            ├── 200.dcm
-            ├── 201.dcm
-            └── 202.dcm
+<DATASET_ROOT>
+└── sourcedata/
+    └── imaging/
+        └── post_reorg/
+            └── sub-01/
+                ├── ses-1/
+                │   ├── 100.dcm  # flat list of DICOM files
+                │   ├── 101.dcm
+                │   ├── 102.dcm
+                │   ├── 200.dcm
+                │   ├── 201.dcm
+                │   └── 202.dcm
+                └── ses-2/
+                    ├── 300.dcm
+                    ├── 301.dcm
+                    ├── 302.dcm
+                    ├── 400.dcm
+                    ├── 401.dcm
+                    └── 402.dcm
