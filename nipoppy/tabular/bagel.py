@@ -1,6 +1,6 @@
 """Class for bagel tracker files."""
 
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import Field, field_validator, model_validator
 
@@ -33,15 +33,12 @@ class BagelModel(BaseTabularModel):
         title="Participant ID",
         description=f"{FIELD_DESCRIPTION_MAP['participant_id']} (as in the manifest)",
     )
-    bids_participant_id: Optional[str] = Field(
-        default=None,
+    bids_participant_id: str = Field(
         title="BIDS participant ID",
         description=FIELD_DESCRIPTION_MAP["bids_participant_id"],
     )
     session_id: str = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
-    bids_session_id: Optional[str] = Field(
-        default=None, description=FIELD_DESCRIPTION_MAP["bids_session_id"]
-    )
+    bids_session_id: str = Field(description=FIELD_DESCRIPTION_MAP["bids_session_id"])
     pipeline_name: str = Field(description="The name of the pipeline being tracked")
     pipeline_version: str = Field(
         description="The version of the pipeline being tracked"
@@ -69,18 +66,29 @@ class BagelModel(BaseTabularModel):
             )
         return value
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_before(cls, data: Any):
+        """Set default values for BIDS participant and session IDs."""
+        if isinstance(data, dict):
+            if Bagel.col_bids_participant_id not in data:
+                data[Bagel.col_bids_participant_id] = (
+                    participant_id_to_bids_participant_id(
+                        data[Bagel.col_participant_id]
+                    )
+                )
+            if Bagel.col_bids_session_id not in data:
+                data[Bagel.col_bids_session_id] = session_id_to_bids_session_id(
+                    data[Bagel.col_session_id]
+                )
+
+        return data
+
     @model_validator(mode="after")
     def validate_after(self):
         """Check fields."""
         check_participant_id(self.participant_id, raise_error=True)
         check_session_id(self.session_id, raise_error=True)
-
-        if self.bids_participant_id is None:
-            self.bids_participant_id = participant_id_to_bids_participant_id(
-                self.participant_id
-            )
-        if self.bids_session_id is None:
-            self.bids_session_id = session_id_to_bids_session_id(self.session_id)
         return self
 
 
