@@ -77,6 +77,7 @@ def get_config(
     visit_ids=None,
     bids_pipelines=None,
     proc_pipelines=None,
+    extraction_pipelines=None,
     container_config=None,
 ):
     """Create a valid Config object with all required parameters."""
@@ -89,6 +90,8 @@ def get_config(
         bids_pipelines = []
     if proc_pipelines is None:
         proc_pipelines = []
+    if extraction_pipelines is None:
+        extraction_pipelines = []
     if container_config is None:
         container_config = {}
 
@@ -98,6 +101,7 @@ def get_config(
         SESSION_IDS=session_ids,
         BIDS_PIPELINES=bids_pipelines,
         PROC_PIPELINES=proc_pipelines,
+        EXTRACTION_PIPELINES=extraction_pipelines,
         CONTAINER_CONFIG=container_config,
     )
 

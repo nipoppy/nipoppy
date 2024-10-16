@@ -101,3 +101,9 @@ class BidsPipelineStepConfig(BasePipelineStepConfig):
         ),
     )
     model_config = ConfigDict(extra="forbid")
+
+
+class ExtractionPipelineStepConfig(BasePipelineStepConfig):
+    """Schema for extraction pipeline step configuration."""
+
+    model_config = ConfigDict(extra="forbid")

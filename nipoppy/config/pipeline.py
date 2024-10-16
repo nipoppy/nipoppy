@@ -13,6 +13,7 @@ from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
+    ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
 from nipoppy.utils import apply_substitutions_to_json
@@ -33,7 +34,11 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
+    STEPS: list[
+        Union[
+            BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
+        ]
+    ] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
@@ -137,4 +142,11 @@ class ProcPipelineConfig(BasePipelineConfig):
     )
 
     _step_class = ProcPipelineStepConfig
+    model_config = ConfigDict(extra="forbid")
+
+
+class ExtractionPipelineConfig(BasePipelineConfig):
+    """Schema for extraction pipeline configuration."""
+
+    _step_class = ExtractionPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
