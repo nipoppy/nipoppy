@@ -124,10 +124,10 @@ def assess_FC(time_series, labels, metric_list=['correlation']):
 	## sparse inverse covariance 
 	if 'precision' in metric_list:
 		try:
-				from sklearn.covariance import GraphicalLassoCV
+			from sklearn.covariance import GraphicalLassoCV
 		except ImportError:
-		# for Scitkit-Learn < v0.20.0
-				from sklearn.covariance import GraphLassoCV as GraphicalLassoCV
+			# for Scitkit-Learn < v0.20.0
+			from sklearn.covariance import GraphLassoCV as GraphicalLassoCV
 
 		estimator = GraphicalLassoCV()
 		estimator.fit(time_series)
