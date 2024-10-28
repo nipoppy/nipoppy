@@ -1,16 +1,13 @@
 import argparse
+import sys
 from copy import deepcopy
 from pathlib import Path
-import sys
-
 
 # try importing bids and if it fails, give instructions to install bids
 try:
     from bids.layout import parse_file_entities
 except ImportError:
-    sys.exit(
-        "pybids not found. Please install pybids by running: pip install pybids"
-    )
+    sys.exit("pybids not found. Please install pybids by running: pip install pybids")
 
 
 # try importing nilearn and if it fails, give instructions to install nilearn
@@ -19,8 +16,9 @@ try:
     from nilearn.interfaces.fmriprep import load_confounds
     from nilearn.maskers import NiftiLabelsMasker
 except ImportError:
-    sys.exit("nilearn not found."
-             " Please install nilearn by running: pip install nilearn")
+    sys.exit(
+        "nilearn not found." " Please install nilearn by running: pip install nilearn"
+    )
 
 
 # try importing numpy and if it fails, give instructions to install numpy
@@ -69,7 +67,7 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
     # Load Atlas
     # schaefer
     if "schaefer" in brain_atlas:
-        n_rois = int(brain_atlas.removeprefix('schaefer_'))
+        n_rois = int(brain_atlas.removeprefix("schaefer_"))
         parc = datasets.fetch_atlas_schaefer_2018(n_rois=n_rois)
         atlas_filename = parc.maps
         labels = parc.labels
@@ -190,8 +188,8 @@ def run(
 
     file_entities = parse_file_entities(func_file)
     participant_id = f"sub-{file_entities.get('subject')}"
-    session_id = file_entities.get('session')
-    extension = file_entities.get('extension')
+    session_id = file_entities.get("session")
+    extension = file_entities.get("extension")
 
     print(f"Running FC assessment for participant: {participant_id}...")
     print("-" * 50)
@@ -263,10 +261,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
     parser.add_argument(
-        "--func_file",
-        type=str,
-        required=True,
-        help="path to the BOLD nifti file"
+        "--func_file", type=str, required=True, help="path to the BOLD nifti file"
     )
     # example: --brain_atlas_list "schaefer_100" "schaefer_200"
     parser.add_argument(
@@ -283,7 +278,7 @@ if __name__ == "__main__":
             "schaefer_1000",
             "DKT",
         ],
-        nargs='+',  # at least one atlas required
+        nargs="+",  # at least one atlas required
         default=[
             "schaefer_100",
             "schaefer_200",
@@ -297,7 +292,7 @@ if __name__ == "__main__":
         help=(
             "list of brain atlases to use for FC assessment."
             " Default is all schaefer resolutions"
-            ),
+        ),
     )
     parser.add_argument(
         "--confound_strategy",
@@ -308,7 +303,7 @@ if __name__ == "__main__":
             "no_motion_no_gsr",
         ],
         default="no_motion",
-        help="confound strategy for FC assessment. Default is no_motion"
+        help="confound strategy for FC assessment. Default is no_motion",
     )
     parser.add_argument(
         "--metric_list",
@@ -317,7 +312,7 @@ if __name__ == "__main__":
             "correlation",
             "precision",
         ],
-        nargs='+',  # at least one atlas required
+        nargs="+",  # at least one atlas required
         default=["correlation"],
         help="list of metrics to use for FC assessment. Default is correlation",
     )
