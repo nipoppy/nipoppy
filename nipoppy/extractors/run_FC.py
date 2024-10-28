@@ -1,12 +1,12 @@
 import argparse
-from copy import deepcopy
 import json
+from copy import deepcopy
 
 # try importing nilearn and if it fails, give instructions to install nilearn
 try:
-	from nilearn.maskers import NiftiLabelsMasker
-	from nilearn.interfaces.fmriprep import load_confounds
 	from nilearn import datasets
+	from nilearn.interfaces.fmriprep import load_confounds
+	from nilearn.maskers import NiftiLabelsMasker
 except ImportError:
 	print("nilearn not found. Please install nilearn by running: pip install nilearn")
 	exit()
@@ -25,8 +25,8 @@ warnings.simplefilter('ignore')
 
 
 def extract_timeseries(func_file, brain_atlas, confound_strategy):
-	""" 
-	Extract timeseries from a given functional file using a given brain atlas 
+	"""
+	Extract timeseries from a given functional file using a given brain atlas
 	func_file:
 		path to the nifti file containing the functional data
 		This path should be in the fmriprep output directory
@@ -35,7 +35,7 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
 		'none': no confound regression
 		'no_motion': confound regression with no motion parameters
 		'no_motion_no_gsr': confound regression with no motion parameters and no global signal regression
-		if confound_strategy is no_motion or no_motion_no_gsr, the associated confound files should be 
+		if confound_strategy is no_motion or no_motion_no_gsr, the associated confound files should be
 			in the same directory as func_file
 	brain_atlas:
 		for now only supports:
@@ -50,7 +50,7 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
 		parc = datasets.fetch_atlas_schaefer_2018(n_rois=n_rois)
 		atlas_filename = parc.maps
 		labels = parc.labels
-		# The list of labels does not contain ‘Background’ by default. 
+		# The list of labels does not contain ‘Background’ by default.
 		# To have proper indexing, you should either manually add ‘Background’ to the list of labels:
 		# Prepend background label
 		labels = np.insert(labels, 0, 'Background')
@@ -121,7 +121,7 @@ def assess_FC(time_series, labels, metric_list=['correlation']):
 		correlation_matrix = correlation_measure.fit_transform([time_series])[0]
 		FC['correlation'] = deepcopy(correlation_matrix)
 
-	## sparse inverse covariance 
+	## sparse inverse covariance
 	if 'precision' in metric_list:
 		try:
 			from sklearn.covariance import GraphicalLassoCV
@@ -226,7 +226,7 @@ def run_FC(
 			### assess FC
 			FC = assess_FC(time_series, labels, metric_list=metric_list)
 
-			## save output 
+			## save output
 			if session_id is None:
 				folder = f"{output_dir}/FC/output/{participant_id}/"
 			else:
@@ -256,12 +256,12 @@ def run_FC(
 
 	print("-"*75)
 	print("")
-    
+
 
 if __name__ == '__main__':
 	# argparse
 	HELPTEXT = """
-	Script to run FC assessment 
+	Script to run FC assessment
 	"""
 
 	parser = argparse.ArgumentParser(description=HELPTEXT)
