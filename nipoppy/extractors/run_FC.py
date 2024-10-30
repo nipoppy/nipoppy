@@ -71,9 +71,9 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
             confound files should be in the same directory as func_file
     brain_atlas:
         for now only supports:
-        'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400',
-        'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000'
-        'DKT'
+            'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400',
+            'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000',
+            'DKT'
         if brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file
     """
     # Load Atlas
