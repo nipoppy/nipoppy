@@ -21,8 +21,6 @@ FIELDS_PIPELINE_BASE = [
     "STEPS",
 ]
 
-FIELDS_PIPELINE_PROC = FIELDS_PIPELINE_BASE + ["TRACKER_CONFIG_FILE"]
-
 
 @pytest.fixture(scope="function")
 def valid_data() -> dict:
@@ -44,11 +42,6 @@ def valid_data() -> dict:
                 {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}},
                 {"STEPS": []},
             ],
-        ),
-        (
-            ProcPipelineConfig,
-            FIELDS_PIPELINE_PROC,
-            [{"TRACKER_CONFIG_FILE": "path/to/tracker/config/file"}],
         ),
     ],
 )
@@ -80,13 +73,6 @@ def test_fields_no_extra(pipeline_config_class, valid_data):
         pipeline_config_class(**valid_data, not_a_field="a")
 
 
-def test_step_names_error_none(valid_data):
-    with pytest.raises(
-        ValidationError, match="Found at least one step with undefined NAME field"
-    ):
-        BasePipelineConfig(**valid_data, STEPS=[{}, {}])
-
-
 def test_step_names_error_duplicate(valid_data):
     with pytest.raises(ValidationError, match="Found at least two steps with NAME"):
         BasePipelineConfig(
@@ -102,7 +88,7 @@ def test_substitutions():
     data = {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "TRACKER_CONFIG_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+        "DESCRIPTION": "[[PIPELINE_NAME]] version [[PIPELINE_VERSION]]",
         "STEPS": [
             {
                 "NAME": "step1",
@@ -111,7 +97,7 @@ def test_substitutions():
         ],
     }
     pipeline_config = ProcPipelineConfig(**data)
-    assert str(pipeline_config.TRACKER_CONFIG_FILE) == "my_pipeline-1.0.0.json"
+    assert pipeline_config.DESCRIPTION == "my_pipeline version 1.0.0"
     assert str(pipeline_config.STEPS[0].INVOCATION_FILE) == "my_pipeline-1.0.0.json"
 
 
@@ -159,67 +145,3 @@ def test_get_step_config_invalid(valid_data):
     )
     with pytest.raises(ValueError, match="not found in pipeline"):
         pipeline_config.get_step_config("invalid_step")
-
-
-@pytest.mark.parametrize(
-    "step_name,invocation_file",
-    [("step1", Path("step1.json")), ("step2", Path("step2.json"))],
-)
-def test_get_invocation_file(valid_data, step_name, invocation_file):
-    pipeline_config = BasePipelineConfig(
-        **valid_data,
-        STEPS=[
-            ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
-        ],
-    )
-
-    assert pipeline_config.get_invocation_file(step_name) == invocation_file
-
-
-@pytest.mark.parametrize(
-    "step_name,descriptor_file",
-    [("step1", Path("step1.json")), ("step2", Path("step2.json"))],
-)
-def test_get_descriptor_file(valid_data, step_name, descriptor_file):
-    pipeline_config = BasePipelineConfig(
-        **valid_data,
-        STEPS=[
-            ProcPipelineStepConfig(NAME="step1", DESCRIPTOR_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", DESCRIPTOR_FILE="step2.json"),
-        ],
-    )
-
-    assert pipeline_config.get_descriptor_file(step_name) == descriptor_file
-
-
-@pytest.mark.parametrize(
-    "step_name,analysis_level",
-    [("step1", "participant_session"), ("step2", "group")],
-)
-def test_get_analysis_level(valid_data, step_name, analysis_level):
-    pipeline_config = BasePipelineConfig(
-        **valid_data,
-        STEPS=[
-            ProcPipelineStepConfig(NAME="step1", ANALYSIS_LEVEL="participant_session"),
-            ProcPipelineStepConfig(NAME="step2", ANALYSIS_LEVEL="group"),
-        ],
-    )
-
-    assert pipeline_config.get_analysis_level(step_name) == analysis_level
-
-
-@pytest.mark.parametrize(
-    "step_name,pybids_ignore_file",
-    [("step1", Path("patterns1.json")), ("step2", Path("patterns2.json"))],
-)
-def test_get_pybids_ignore(valid_data, step_name, pybids_ignore_file):
-    pipeline_config = ProcPipelineConfig(
-        **valid_data,
-        STEPS=[
-            ProcPipelineStepConfig(NAME="step1", PYBIDS_IGNORE_FILE="patterns1.json"),
-            ProcPipelineStepConfig(NAME="step2", PYBIDS_IGNORE_FILE="patterns2.json"),
-        ],
-    )
-
-    assert pipeline_config.get_pybids_ignore_file(step_name) == pybids_ignore_file

@@ -36,10 +36,6 @@ class BaseWorkflow(Base, ABC):
     log_prefix_run_stderr = "[RUN STDERR]"
     validate_layout = True
 
-    # hack to avoid errors when loading/processing the default config
-    pipeline_name = "[[NIPOPPY_PIPELINE_NAME]]"
-    pipeline_version = "[[NIPOPPY_PIPELINE_VERSION]]"
-
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -94,7 +90,9 @@ class BaseWorkflow(Base, ABC):
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
-        self.logger.info(f"{self.log_prefix_run} {command}")
+        # using extra={"markup": False} in case the command contains substrings
+        # that would be interpreted as closing tags by the RichHandler
+        self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
         self,
@@ -126,14 +124,17 @@ class BaseWorkflow(Base, ABC):
         subprocess.Popen or str
         """
 
-        def process_output(
-            output_source, output_str: str, log_prefix: str, log_level=logging.INFO
-        ):
-            """Consume lines from an IO stream and append them to a string."""
+        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+            """Consume lines from an IO stream and log them."""
             for line in output_source:
                 line = line.strip("\n")
-                self.logger.log(level=log_level, msg=f"{log_prefix} {line}")
-            return output_str
+                # using extra={"markup": False} in case the output contains substrings
+                # that would be interpreted as closing tags by the RichHandler
+                self.logger.log(
+                    level=log_level,
+                    msg=f"{log_prefix} {line}",
+                    extra={"markup": False},
+                )
 
         # build command string
         if not isinstance(command_or_args, str):
@@ -149,8 +150,6 @@ class BaseWorkflow(Base, ABC):
 
         self.log_command(command)
 
-        stdout_str = ""
-        stderr_str = ""
         if not self.dry_run:
             process = subprocess.Popen(
                 command_or_args,
@@ -161,15 +160,13 @@ class BaseWorkflow(Base, ABC):
             )
 
             while process.poll() is None:
-                stdout_str = process_output(
+                process_output(
                     process.stdout,
-                    stdout_str,
                     self.log_prefix_run_stdout,
                 )
 
-                stderr_str = process_output(
+                process_output(
                     process.stderr,
-                    stderr_str,
                     self.log_prefix_run_stderr,
                     log_level=logging.ERROR,
                 )
@@ -247,6 +244,12 @@ class BaseWorkflow(Base, ABC):
         self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
         if not self.dry_run:
             shutil.copy2(src=path_source, dst=path_dest, **kwargs)
+
+    def copytree(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+        """Copy directory tree."""
+        self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
+        if not self.dry_run:
+            shutil.copytree(src=path_source, dst=path_dest, **kwargs)
 
     def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Create a symlink to another path."""

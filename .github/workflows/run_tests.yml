@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     # only trigger on upstream repo
     if: github.repository_owner == 'nipoppy' && github.event.repository.name == 'nipoppy'
@@ -34,6 +34,7 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
 
     - name: Install package
       run: |
