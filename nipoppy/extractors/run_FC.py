@@ -50,7 +50,6 @@ import warnings
 warnings.simplefilter("ignore")
 
 
-
 def extract_timeseries(func_file, brain_atlas, confound_strategy):
     """
     Extract timeseries from a given functional file using a given brain atlas.
