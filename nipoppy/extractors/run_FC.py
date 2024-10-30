@@ -27,9 +27,7 @@ try:
     from nilearn.interfaces.fmriprep import load_confounds
     from nilearn.maskers import NiftiLabelsMasker
 except ImportError:
-    sys.exit(
-        "Please install nilearn by running: pip install nilearn"
-    )
+    sys.exit("Please install nilearn by running: pip install nilearn")
 
 
 # try importing numpy and if it fails, give instructions to install numpy
@@ -51,27 +49,42 @@ warnings.simplefilter("ignore")
 
 
 def extract_timeseries(func_file, brain_atlas, confound_strategy):
-    """
-    Extract timeseries from a given functional file using a given brain atlas.
+    """Extract timeseries from a given functional file using a given brain atlas.
 
-    func_file:
+    Parameters
+    ----------
+    func_file : str
         path to the nifti file containing the functional data.
         This path should be in the fmriprep output directory.
         The functional data is assumed to be preprocessed by fmriprep and
         transformed to MNI space.
-    confound_strategy:
-        'none': no confound regression.
-        'no_motion': confound regression with no motion parameters.
-        'no_motion_no_gsr': confound regression with no motion parameters and
-            no global signal regression.
-            If confound_strategy is no_motion or no_motion_no_gsr, the associated
-            confound files should be in the same directory as func_file.
-    brain_atlas:
+    brain_atlas : str
         For now only supports:
             'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400',
             'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000',
             'DKT'.
         If brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file.
+    confound_strategy : str
+        'none': no confound regression.
+        'no_motion': confound regression with no motion parameters.
+        'no_motion_no_gsr': confound regression with no motion parameters and
+            no global signal regression. If confound_strategy is no_motion or
+            no_motion_no_gsr, the associated confound files should be in the same
+            directory as func_file.
+
+    Returns
+    -------
+    time_series: numpy array
+        extracted time series from the functional file.
+    labels: list
+        list of labels for the brain atlas.
+
+    Raises
+    ------
+    ValueError
+        if brain_atlas is not recognized.
+    ValueError
+        if confound_strategy is not recognized.
     """
     # Load Atlas
     # schaefer
