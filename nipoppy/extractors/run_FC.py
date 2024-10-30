@@ -43,14 +43,14 @@ try:
     from sklearn.covariance import GraphicalLassoCV
 except ImportError:
     sys.exit(
-        "scikit-learn not found. Please install scikit-learn by running: "
-        "pip install scikit-learn"
+        "Please install scikit-learn by running: pip install scikit-learn"
     )
 
 import os
 import warnings
 
 warnings.simplefilter("ignore")
+
 
 
 def extract_timeseries(func_file, brain_atlas, confound_strategy):
