@@ -196,7 +196,7 @@ class DatasetLayout(Base):
         # directory names
         self.dname_pipeline_work = "work"
         self.dname_pipeline_output = "output"
-        self.dname_pipeline_idps = "idps"
+        self.dname_pipeline_idp = "idp"
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
@@ -307,7 +307,7 @@ class DatasetLayout(Base):
         """
         return (
             self.get_dpath_pipeline(pipeline_name, pipeline_version)
-            / self.dname_pipeline_idps
+            / self.dname_pipeline_idp
         )
 
     def get_dpath_bids_db(
