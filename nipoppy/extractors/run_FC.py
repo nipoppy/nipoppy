@@ -5,7 +5,7 @@ The script is used to run functional connectivity (FC) assessment.
 
 The script uses Nilearn to apply FC assessment
 on a single functional nifti file.
-The script extracts time series from the functional 
+The script extracts time series from the functional
 file using a given list of brain atlases.
 """
 
@@ -43,8 +43,8 @@ try:
     from sklearn.covariance import GraphicalLassoCV
 except ImportError:
     sys.exit(
-        "scikit-learn not found."
-        " Please install scikit-learn by running: pip install scikit-learn"
+        "scikit-learn not found. Please install scikit-learn by running: "
+        "pip install scikit-learn"
     )
 
 import os
