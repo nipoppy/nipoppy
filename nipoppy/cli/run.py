@@ -11,6 +11,7 @@ from nipoppy.cli.parser import (
     COMMAND_DICOM_REORG,
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
+    COMMAND_STATUS, 
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
     PROGRAM_NAME,
@@ -53,6 +54,19 @@ def cli(argv: Sequence[str] = None) -> None:
                 bids_source=bids_source,
                 **workflow_kwargs,
             )
+
+        elif command == COMMAND_STATUS:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.dataset_status import StatusWorkflow
+
+            save_status_to_disk = getattr(args, "save", None)
+
+            workflow = StatusWorkflow(
+                dpath_root=dpath_root,
+                save_status_to_disk=save_status_to_disk,
+                **workflow_kwargs,
+            )
+
         elif command == COMMAND_DOUGHNUT:
             # Lazy import to improve performance of cli.
             from nipoppy.workflows.doughnut import DoughnutWorkflow
