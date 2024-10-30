@@ -1,9 +1,13 @@
 """Tests for the bagel."""
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
 from nipoppy.tabular.bagel import Bagel, BagelModel
+
+from .conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(
@@ -38,8 +42,7 @@ def test_model(data):
         Bagel.col_pipeline_version,
         Bagel.col_pipeline_step,
         Bagel.col_status,
-        "session",
-        "pipeline_starttime",
+        Bagel.col_bids_session_id,
     }
 
 
@@ -304,3 +307,34 @@ def test_get_completed_participants_sessions(
             session_id=session_id,
         )
     ] == expected
+
+
+@pytest.mark.parametrize(
+    "fpath",
+    [
+        DPATH_TEST_DATA / "bagel1.tsv",
+        DPATH_TEST_DATA / "bagel2.tsv",
+        Path(__file__).parent
+        / ".."
+        / "docs"
+        / "source"
+        / "user_guide"
+        / "inserts"
+        / "mriqc_bagel.tsv",
+    ],
+)
+def test_load(fpath):
+    bagel = Bagel.load(fpath)
+    assert isinstance(bagel, Bagel)
+
+
+@pytest.mark.parametrize(
+    "fname",
+    [
+        "bagel_invalid1.tsv",
+        "bagel_invalid2.tsv",
+    ],
+)
+def test_load_invalid(fname):
+    with pytest.raises(ValueError):
+        Bagel.load(DPATH_TEST_DATA / fname)
