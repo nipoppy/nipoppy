@@ -67,7 +67,7 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
     confound_strategy : str
         'none': no confound regression.
         'no_motion': confound regression with no motion parameters.
-        'no_motion_no_gsr': confound regression with no motion parameters and 
+        'no_motion_no_gsr': confound regression with no motion parameters and
         no global signal regression. If confound_strategy is no_motion or
         no_motion_no_gsr, the associated confound files should be in the same
         directory as func_file.
