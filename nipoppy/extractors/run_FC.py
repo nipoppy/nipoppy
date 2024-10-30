@@ -27,9 +27,7 @@ try:
     from nilearn.interfaces.fmriprep import load_confounds
     from nilearn.maskers import NiftiLabelsMasker
 except ImportError:
-    sys.exit(
-        "Please install nilearn by running: pip install nilearn"
-    )
+    sys.exit("Please install nilearn by running: pip install nilearn")
 
 
 # try importing numpy and if it fails, give instructions to install numpy
