@@ -1,10 +1,10 @@
 # coding=utf-8
 
 """
-This script is used to run functional connectivity (FC) assessment 
+This script is used to run functional connectivity (FC) assessment
 using Nilearn on a single functional nifti file.
 
-The script extracts time series from the functional 
+The script extracts time series from the functional
 file using a given list of brain atlases.
 """
 
