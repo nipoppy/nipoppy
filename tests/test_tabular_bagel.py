@@ -324,7 +324,8 @@ def test_get_completed_participants_sessions(
     ],
 )
 def test_load(fpath):
-    assert isinstance(Bagel.load(fpath), Bagel)
+    bagel = Bagel.load(fpath)
+    assert isinstance(bagel, Bagel)
 
 
 @pytest.mark.parametrize(
