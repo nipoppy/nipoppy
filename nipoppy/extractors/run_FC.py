@@ -1,3 +1,13 @@
+# coding=utf-8
+
+"""
+This script is used to run functional connectivity (FC) assessment 
+using Nilearn on a single functional nifti file.
+
+The script extracts time series from the functional 
+file using a given list of brain atlases.
+"""
+
 import argparse
 import sys
 from copy import deepcopy
@@ -44,7 +54,8 @@ warnings.simplefilter("ignore")
 
 def extract_timeseries(func_file, brain_atlas, confound_strategy):
     """
-    Extract timeseries from a given functional file using a given brain atlas
+    Extract timeseries from a given functional file using a given brain atlas.
+
     func_file:
         path to the nifti file containing the functional data
         This path should be in the fmriprep output directory
@@ -124,7 +135,8 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
 
 def assess_FC(time_series, labels, metric_list=["correlation"]):
     """
-    Assess functional connectivity using Nilearn
+    Assess functional connectivity using Nilearn.
+
     metric_list:
         'correlation'
         'precision'
@@ -174,8 +186,7 @@ def run(
     dkt_file: str,
     output_dir: str,
 ):
-    """Assess functional connectivity using Nilearn"""
-
+    """Assess functional connectivity using Nilearn."""
     # func_file has a form of
     # f"{fmriprep_dir}/{participant_id}/ses-{session_id}/func/
     # {participant_id}_ses-{session_id}_{task}_{run}_{space}_desc-preproc_bold.nii.gz"
