@@ -60,17 +60,17 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
         transformed to MNI space.
     brain_atlas : str
         For now only supports:
-            'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400',
-            'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000',
-            'DKT'.
+        'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400',
+        'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000',
+        'DKT'.
         If brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file.
     confound_strategy : str
         'none': no confound regression.
         'no_motion': confound regression with no motion parameters.
-        'no_motion_no_gsr': confound regression with no motion parameters and
-            no global signal regression. If confound_strategy is no_motion or
-            no_motion_no_gsr, the associated confound files should be in the same
-            directory as func_file.
+        'no_motion_no_gsr': confound regression with no motion parameters and 
+        no global signal regression. If confound_strategy is no_motion or
+        no_motion_no_gsr, the associated confound files should be in the same
+        directory as func_file.
 
     Returns
     -------
