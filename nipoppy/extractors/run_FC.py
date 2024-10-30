@@ -42,15 +42,12 @@ except ImportError:
 try:
     from sklearn.covariance import GraphicalLassoCV
 except ImportError:
-    sys.exit(
-        "Please install scikit-learn by running: pip install scikit-learn"
-    )
+    sys.exit("Please install scikit-learn by running: pip install scikit-learn")
 
 import os
 import warnings
 
 warnings.simplefilter("ignore")
-
 
 
 def extract_timeseries(func_file, brain_atlas, confound_strategy):
