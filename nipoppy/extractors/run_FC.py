@@ -1,9 +1,10 @@
 # coding=utf-8
 
 """
-This script is used to run functional connectivity (FC) assessment 
-using Nilearn on a single functional nifti file.
+The script is used to run functional connectivity (FC) assessment.
 
+The script uses Nilearn to apply FC assessment
+on a single functional nifti file.
 The script extracts time series from the functional 
 file using a given list of brain atlases.
 """
@@ -39,7 +40,7 @@ except ImportError:
 
 # try importing sklearn and if it fails, give instructions to install sklearn
 try:
-    import sklearn
+    from sklearn.covariance import GraphicalLassoCV
 except ImportError:
     sys.exit(
         "scikit-learn not found."
@@ -159,11 +160,6 @@ def assess_FC(time_series, labels, metric_list=["correlation"]):
 
     # sparse inverse covariance
     if "precision" in metric_list:
-        try:
-            from sklearn.covariance import GraphicalLassoCV
-        except ImportError:
-            # for Scitkit-Learn < v0.20.0
-            from sklearn.covariance import GraphLassoCV as GraphicalLassoCV
 
         estimator = GraphicalLassoCV()
         estimator.fit(time_series)
