@@ -28,7 +28,7 @@ try:
     from nilearn.maskers import NiftiLabelsMasker
 except ImportError:
     sys.exit(
-        "nilearn not found." " Please install nilearn by running: pip install nilearn"
+        "Please install nilearn by running: pip install nilearn"
     )
 
 
@@ -36,15 +36,13 @@ except ImportError:
 try:
     import numpy as np
 except ImportError:
-    sys.exit("numpy not found. Please install numpy by running: pip install numpy")
+    sys.exit("Please install numpy by running: pip install numpy")
 
 # try importing sklearn and if it fails, give instructions to install sklearn
 try:
     from sklearn.covariance import GraphicalLassoCV
 except ImportError:
-    sys.exit(
-        "Please install scikit-learn by running: pip install scikit-learn"
-    )
+    sys.exit("Please install scikit-learn by running: pip install scikit-learn")
 
 import os
 import warnings
@@ -58,23 +56,23 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
     Extract timeseries from a given functional file using a given brain atlas.
 
     func_file:
-        path to the nifti file containing the functional data
-        This path should be in the fmriprep output directory
+        path to the nifti file containing the functional data.
+        This path should be in the fmriprep output directory.
         The functional data is assumed to be preprocessed by fmriprep and
-        transformed to MNI space
+        transformed to MNI space.
     confound_strategy:
-        'none': no confound regression
-        'no_motion': confound regression with no motion parameters
+        'none': no confound regression.
+        'no_motion': confound regression with no motion parameters.
         'no_motion_no_gsr': confound regression with no motion parameters and
-            no global signal regression
-            if confound_strategy is no_motion or no_motion_no_gsr, the associated
-            confound files should be in the same directory as func_file
+            no global signal regression.
+            If confound_strategy is no_motion or no_motion_no_gsr, the associated
+            confound files should be in the same directory as func_file.
     brain_atlas:
-        for now only supports:
+        For now only supports:
             'schaefer_100', 'schaefer_200', 'schaefer_300', 'schaefer_400',
             'schaefer_500', 'schaefer_600', 'schaefer_800', 'schaefer_1000',
-            'DKT'
-        if brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file
+            'DKT'.
+        If brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file.
     """
     # Load Atlas
     # schaefer
@@ -139,8 +137,8 @@ def assess_FC(time_series, labels, metric_list=["correlation"]):
     Assess functional connectivity using Nilearn.
 
     metric_list:
-        'correlation'
-        'precision'
+        'correlation'.
+        'precision'.
     """
     # output dictionary
     FC = {}
