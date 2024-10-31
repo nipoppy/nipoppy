@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional
 
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
