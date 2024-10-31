@@ -143,6 +143,20 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
+def add_arg_keepworkdir(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --keep-workdir argument to the parser."""
+    parser.add_argument(
+        "--keep-workdir",
+        type=str,
+        required=False,
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
+        ),
+    )
+    return parser
+
+
 def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
     """Add argument to init a layout with a BIDS datalad dataset."""
     parser.add_argument(
@@ -278,6 +292,7 @@ def add_subparser_pipeline_run(
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
     parser = add_args_participant_and_session(parser)
+    parser = add_arg_keepworkdir(parser)
     parser = add_arg_simulate(parser)
     return parser
 
