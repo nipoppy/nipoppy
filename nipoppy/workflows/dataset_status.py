@@ -3,6 +3,7 @@
 import logging
 from pathlib import Path
 from typing import Optional
+from rich import box
 from rich.console import Console
 from rich.table import Table
 import pandas as pd
@@ -53,12 +54,20 @@ class StatusWorkflow(BaseWorkflow):
         self.check_doughnut()
         self.check_bagel()
 
-        # self.logger.info(self.status_df)
+        self.logger.info(self.status_df)
+
+        self.df_to_table()
+
+        # TODO 
+        # save the status to a file (probably needs a schema)
+        # check if previous status file exists
+        # if so, compare the two and report the differences
+
 
     def check_manifest(self):
         """Check the manifest file."""
         
-        nipoppy_artifact = "manifest"
+        nipoppy_checkpoint = "in_manifest"
 
         manifest = Manifest.load(self.layout.fpath_manifest).validate()
 
@@ -76,25 +85,26 @@ class StatusWorkflow(BaseWorkflow):
         session_ids = imaging_manifest[manifest.col_session_id].unique()
 
         self.logger.info(f"Number of participants (imaging and non-imaging): {len(participant_ids)}")
-        self.logger.info(f"Available visits (n={len(visit_ids)}): {visit_ids}")
+        self.logger.info(f"Available  visits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}")
         self.logger.info(f"Number of participants with imaging data: {len(imaging_participant_ids)}")
-        self.logger.info(f"Number of sessions (n={len(session_ids)}): {session_ids}")
+        self.logger.info(f"Number of imaging sessions (n={len(session_ids)}): {session_ids}")
 
-        manifest_status_df = imaging_manifest.groupby(
-            [imaging_manifest.col_session_id]
-            ).size().reset_index(name='counts')        
+        manifest_status_df = imaging_manifest.groupby([imaging_manifest.col_session_id]).count()[
+            [imaging_manifest.col_participant_id]
+            ]
+        manifest_status_df.columns = [nipoppy_checkpoint]
 
-        manifest_status_df["nipoppy_artefact"]  = nipoppy_artifact
-
-        self.logger.info(manifest_status_df)
-
-        self.status_df = pd.concat([self.status_df, manifest_status_df])
+        self.status_df = pd.concat([self.status_df, manifest_status_df], axis=1)
 
 
     def check_doughnut(self):
         """Check the doughnut file (if exists)."""
-        # TODO
-        nipoppy_artifact = "doughnut"
+        nipoppy_checkpoint = "doughnut"
+
+        if not self.layout.fpath_doughnut.exists():
+            self.logger.info(f"No doughnut file found at {self.layout.fpath_doughnut}.")
+            return
+        
         doughnut = Doughnut.load(self.layout.fpath_doughnut)
 
         # Get the number of participants in the doughnut
@@ -104,25 +114,40 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.info(f"Number of participants in doughnut: {len(participant_ids)}")
         self.logger.info(f"Available visits (n={len(sesion_ids)}): {sesion_ids}")
 
-        doughnut_status_df = doughnut.groupby(
-            [
-                doughnut.col_session_id, 
-                doughnut.col_in_raw_imaging, 
-                doughnut.col_in_sourcedata, 
-                doughnut.col_in_bids
-                ]
-            ).size().reset_index(name='counts')
+        doughnut_status_df = doughnut.groupby([doughnut.col_session_id]).sum()[
+            [doughnut.col_in_pre_reorg, doughnut.col_in_post_reorg, doughnut.col_in_bids]
+        ]
+            
+        self.status_df = pd.concat([self.status_df, doughnut_status_df], axis=1)
         
-        doughnut_status_df["nipoppy_artefact"]  = nipoppy_artifact
-
-        self.logger.info(doughnut_status_df)
-        
-        self.status_df = pd.concat([self.status_df, doughnut_status_df])
-        
-
     def check_bagel(self):
         # TODO
         pass
+
+
+    def df_to_table(self):
+        """Convert a pandas.DataFrame obj into a rich.Table obj.
+        """
+        console = Console()
+    
+        # Initiate a Table instance
+        title = "Participant counts per nipoppy checkpoint"
+        table = Table(show_header=True, header_style="bold magenta", title=title)
+        df = self.status_df.reset_index()
+        
+        for column in df.columns:
+            table.add_column(str(column))
+
+        for value_list in df.values.tolist():
+            row = []
+            row += [str(x) for x in value_list]
+            table.add_row(*row)
+
+        # Update the style
+        table.row_styles = ["none", "dim"]
+        table.box = box.SIMPLE_HEAD
+        console.print(table)
+
 
     def run_cleanup(self):
         """Log a success message."""

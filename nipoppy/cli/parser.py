@@ -201,6 +201,7 @@ def add_subparser_status(
         formatter_class=formatter_class,
         add_help=False,
     )
+    
     parser = add_arg_dataset_root(parser)
 
     parser.add_argument(
