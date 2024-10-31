@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.config.main import Config
+from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
@@ -33,6 +34,45 @@ def config() -> Config:
             },
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,expected_version",
+    [
+        ("heudiconv", "0.12.2"),
+        ("dcm2bids", "3.1.0"),
+    ],
+)
+def test_check_pipeline_version(
+    pipeline_name, expected_version, config: Config, tmp_path: Path
+):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path,
+        pipeline_name=pipeline_name,
+        pipeline_version=None,
+    )
+    config.save(workflow.layout.fpath_config)
+    workflow.check_pipeline_version()
+    assert workflow.pipeline_version == expected_version
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("heudiconv", "0.12.2"),
+        ("dcm2bids", "3.1.0"),
+    ],
+)
+def test_pipeline_config(
+    pipeline_name, pipeline_version, config: Config, tmp_path: Path
+):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+    )
+    config.save(workflow.layout.fpath_config)
+    assert isinstance(workflow.pipeline_config, BidsPipelineConfig)
 
 
 def test_setup(config: Config, tmp_path: Path):
@@ -107,8 +147,6 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
     )
     workflow.doughnut = Doughnut()
     config.save(workflow.layout.fpath_config)
-
-    print(config.get_pipeline_config("heudiconv", "0.12.2"))
 
     workflow.run_cleanup()
 
