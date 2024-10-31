@@ -34,9 +34,9 @@ from nipoppy.utils import (
     create_bids_db,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_participant,
+    participant_id_to_bids_participant_id,
     process_template_str,
-    session_id_to_bids_session,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -134,7 +134,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def dpath_pipeline_bids_db(self) -> Path:
         """Return the path to the pipeline's BIDS database directory."""
-        return self.layout.get_dpath_bids_db(
+        return self.layout.get_dpath_pybids_db(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             participant_id=self.participant_id,
@@ -259,24 +259,26 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         template_json: dict,
         participant_id: Optional[str],
         session_id: Optional[str],
-        bids_participant: Optional[str] = None,
-        bids_session: Optional[str] = None,
+        bids_participant_id: Optional[str] = None,
+        bids_session_id: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
         if participant_id is not None:
-            if bids_participant is None:
-                bids_participant = participant_id_to_bids_participant(participant_id)
+            if bids_participant_id is None:
+                bids_participant_id = participant_id_to_bids_participant_id(
+                    participant_id
+                )
             kwargs["participant_id"] = participant_id
-            kwargs["bids_participant"] = bids_participant
+            kwargs["bids_participant_id"] = bids_participant_id
 
         if session_id is not None:
-            if bids_session is None:
-                bids_session = session_id_to_bids_session(session_id)
+            if bids_session_id is None:
+                bids_session_id = session_id_to_bids_session_id(session_id)
             kwargs["session_id"] = session_id
-            kwargs["bids_session"] = bids_session
+            kwargs["bids_session_id"] = bids_session_id
 
         if objs is None:
             objs = []
@@ -299,12 +301,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def set_up_bids_db(
         self,
-        dpath_bids_db: StrOrPathLike,
+        dpath_pybids_db: StrOrPathLike,
         participant_id: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> bids.BIDSLayout:
         """Set up the BIDS database."""
-        dpath_bids_db: Path = Path(dpath_bids_db)
+        dpath_pybids_db: Path = Path(dpath_pybids_db)
 
         pybids_ignore_patterns = self.pybids_ignore_patterns.copy()
 
@@ -324,15 +326,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             f"patterns: {pybids_ignore_patterns}"
         )
 
-        if dpath_bids_db.exists() and list(dpath_bids_db.iterdir()):
+        if dpath_pybids_db.exists() and list(dpath_pybids_db.iterdir()):
             self.logger.warning(
-                f"Overwriting existing BIDS database directory: {dpath_bids_db}"
+                f"Overwriting existing BIDS database directory: {dpath_pybids_db}"
             )
 
         self.logger.debug(f"Path to BIDS data: {self.layout.dpath_bids}")
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
-            dpath_bids_db=dpath_bids_db,
+            dpath_pybids_db=dpath_pybids_db,
             ignore_patterns=pybids_ignore_patterns,
             reset_database=True,
         )

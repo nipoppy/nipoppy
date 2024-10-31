@@ -25,8 +25,10 @@ Below is the schema used for the global configuration :term:`JSON` file.
 Tracker configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The tracker configuration file specified in the `ProcPipelineConfig`_ should be a :term:`JSON` file that contains **a list** of tracker configurations.
-The schema for each individual tracker configuration is shown below.
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Here is the schema for a tracker configuration file:
 
 .. jsonschema:: tracker.json
     :lift_title: False

@@ -1,0 +1,24 @@
+{
+    "PATHS": [
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/mri/aparc+aseg.mgz",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/mri/aparc.a2009s+aseg.mgz",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/label/lh.aparc.annot",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/label/rh.aparc.annot",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/label/lh.aparc.a2009s.annot",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/label/rh.aparc.a2009s.annot",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/lh.curv",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/lh.area",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/lh.thickness",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/lh.sulc",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/lh.midthickness",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/rh.curv",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/rh.area",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/rh.thickness",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/rh.sulc",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/surf/rh.midthickness",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/lh.aparc.stats",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/rh.aparc.stats",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/lh.aparc.a2009s.stats",
+        "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/rh.aparc.a2009s.stats"
+    ]
+}

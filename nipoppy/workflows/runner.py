@@ -170,6 +170,7 @@ class PipelineRunner(BasePipelineWorkflow):
                 bagel.get_completed_participants_sessions(
                     pipeline_name=self.pipeline_name,
                     pipeline_version=self.pipeline_version,
+                    pipeline_step=self.pipeline_step,
                     participant_id=participant_id,
                     session_id=session_id,
                 )
@@ -191,7 +192,7 @@ class PipelineRunner(BasePipelineWorkflow):
         # Conditionally set up PyBIDS database
         if generate_bids_db:
             self.set_up_bids_db(
-                dpath_bids_db=self.dpath_pipeline_bids_db,
+                dpath_pybids_db=self.dpath_pipeline_bids_db,
                 participant_id=participant_id,
                 session_id=session_id,
             )
