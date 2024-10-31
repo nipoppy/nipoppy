@@ -1,4 +1,0 @@
-participant_id,session_id,participant_dicom_dir
-01,BL,all_BL_files_are_together
-01,M12,all_M12_files_are_together
-02,BL,all_BL_files_are_together
