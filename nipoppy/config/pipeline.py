@@ -22,8 +22,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
     # for validation
-    _step_class: Type[BasePipelineStepConfig] = BasePipelineStepConfig
-
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -33,10 +31,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
-        default=[],
-        description="List of pipeline step configurations",
-    )
+    STEPS: list[BidsPipelineStepConfig, ProcPipelineStepConfig]  # Needed for validation
 
     @model_validator(mode="before")
     @classmethod
@@ -63,13 +58,8 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
-        - Check that items in STEPS have the correct type.
         - If STEPS has more than one item, make sure that each step has a unique name.
         """
-        # make sure BIDS/processing pipelines are the right type
-        for i_step, step in enumerate(self.STEPS):
-            self.STEPS[i_step] = self._step_class(**step.model_dump(exclude_unset=True))
-
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:
@@ -119,8 +109,11 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
-    _step_class = BidsPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
+    STEPS: list[BidsPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
 
 
 class ProcPipelineConfig(BasePipelineConfig):
@@ -136,5 +129,8 @@ class ProcPipelineConfig(BasePipelineConfig):
         ),
     )
 
-    _step_class = ProcPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
+    STEPS: list[ProcPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
