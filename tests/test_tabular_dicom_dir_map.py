@@ -13,8 +13,8 @@ from .conftest import DPATH_TEST_DATA
     "fpath",
     [
         FPATH_SAMPLE_DICOM_DIR_MAP,
-        DPATH_TEST_DATA / "dicom_dir_map1.csv",
-        DPATH_TEST_DATA / "dicom_dir_map2.csv",
+        DPATH_TEST_DATA / "dicom_dir_map1.tsv",
+        DPATH_TEST_DATA / "dicom_dir_map2.tsv",
     ],
 )
 def test_load(fpath):
@@ -24,10 +24,10 @@ def test_load(fpath):
 @pytest.mark.parametrize(
     "fname",
     [
-        "dicom_dir_map_invalid1.csv",
-        "dicom_dir_map_invalid2.csv",
-        "dicom_dir_map_invalid3.csv",
-        "dicom_dir_map_invalid4.csv",
+        "dicom_dir_map_invalid1.tsv",
+        "dicom_dir_map_invalid2.tsv",
+        "dicom_dir_map_invalid3.tsv",
+        "dicom_dir_map_invalid4.tsv",
     ],
 )
 def test_load_invalid(fname):
@@ -38,8 +38,8 @@ def test_load_invalid(fname):
 @pytest.mark.parametrize(
     "fpath_dicom_dir_map",
     [
-        DPATH_TEST_DATA / "dicom_dir_map1.csv",
-        str(DPATH_TEST_DATA / "dicom_dir_map1.csv"),
+        DPATH_TEST_DATA / "dicom_dir_map1.tsv",
+        str(DPATH_TEST_DATA / "dicom_dir_map1.tsv"),
     ],
 )
 def test_load_or_generate_load(fpath_dicom_dir_map):

@@ -77,6 +77,8 @@ class BaseTabular(pd.DataFrame, ABC):
     index_cols = None
     _metadata = []
 
+    sep = "\t"
+
     @property
     @abstractmethod
     def model(self) -> type[BaseTabularModel]:
@@ -91,7 +93,23 @@ class BaseTabular(pd.DataFrame, ABC):
                 "This function does not accept 'dtype' as a keyword argument"
                 ". Everything is read as a string and (optionally) validated later."
             )
-        df = cls(pd.read_csv(fpath, dtype=str, **kwargs))
+        if "sep" in kwargs or "delimiter" in kwargs or "delim_whitespace" in kwargs:
+            raise ValueError(
+                "This function does not accept 'sep', 'delimiter', or "
+                "'delim_whitespace' as keyword arguments. "
+                f"The separator used is always '{cls.sep}'."
+            )
+
+        df = cls(pd.read_csv(fpath, dtype=str, sep=cls.sep, **kwargs))
+
+        # heuristic to check if file is a CSV
+        # because otherwise there would be obscure Pydantic validation errors
+        if df.shape[1] == 1 and len(df.columns[0].split(",")) > 1:
+            raise ValueError(
+                f"It looks like the file at {fpath} might be a CSV instead of a TSV"
+                " -- make sure the columns are separated by tabs, not commas"
+            )
+
         if validate:
             df = df.validate()
         return df
@@ -218,6 +236,7 @@ class BaseTabular(pd.DataFrame, ABC):
             dname_backups=dname_backups,
             use_relative_path=use_relative_path,
             dry_run=dry_run,
+            sep=self.sep,
         )
 
     def equals(self, other: object) -> Self:
