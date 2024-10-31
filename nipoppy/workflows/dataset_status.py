@@ -6,6 +6,7 @@ from typing import Optional
 from rich import box
 from rich.console import Console
 from rich.table import Table
+import numpy as np
 import pandas as pd
 
 from nipoppy.env import (
@@ -16,6 +17,7 @@ from nipoppy.env import (
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.bagel import Bagel, STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -109,10 +111,10 @@ class StatusWorkflow(BaseWorkflow):
 
         # Get the number of participants in the doughnut
         participant_ids = doughnut[doughnut.col_participant_id].unique()
-        sesion_ids = doughnut[doughnut.col_session_id].unique()
+        session_ids = doughnut[doughnut.col_session_id].unique()
 
         self.logger.info(f"Number of participants in doughnut: {len(participant_ids)}")
-        self.logger.info(f"Available visits (n={len(sesion_ids)}): {sesion_ids}")
+        self.logger.info(f"Available visits (n={len(session_ids)}): {session_ids}")
 
         doughnut_status_df = doughnut.groupby([doughnut.col_session_id]).sum()[
             [doughnut.col_in_pre_reorg, doughnut.col_in_post_reorg, doughnut.col_in_bids]
@@ -121,8 +123,45 @@ class StatusWorkflow(BaseWorkflow):
         self.status_df = pd.concat([self.status_df, doughnut_status_df], axis=1)
         
     def check_bagel(self):
-        # TODO
-        pass
+        """Check the imaging bagel file (if exists).
+        """
+        nipoppy_checkpoint = "imaging_bagel"
+
+        if not self.layout.fpath_imaging_bagel.exists():
+            self.logger.info(f"No bagel file found at {self.layout.fpath_imaging_bagel}.")
+            return
+        
+        bagel = Bagel.load(self.layout.fpath_imaging_bagel)
+        self.logger.info(f"imaging bagel: {bagel}")
+
+        # Get the number of participants in the doughnut
+        participant_ids = bagel[bagel.col_participant_id].unique()
+        session_ids = bagel[bagel.col_session_id].unique()
+        pipelines = bagel[bagel.col_pipeline_name].unique()
+
+        self.logger.info(f"Number of participants in bagel: {len(participant_ids)}")
+        self.logger.info(f"Available visits (n={len(session_ids)}): {session_ids}")
+        self.logger.info(f"Available pipelines (n={len(pipelines)}): {pipelines}")
+
+        bagel["pipeline"] = bagel[bagel.col_pipeline_name] + \
+            "_" + bagel[bagel.col_pipeline_version] + \
+            "_" + bagel[bagel.col_pipeline_step]
+        
+        bagel_pipeline_df = bagel[[bagel.col_participant_id, bagel.col_session_id, "pipeline", bagel.col_status]]
+        bagel_pipeline_df = bagel_pipeline_df[bagel_pipeline_df[bagel.col_status] == STATUS_SUCCESS]
+
+        self.logger.info(f"bagel_pipeline_df: {bagel_pipeline_df}")
+
+        bagel_pipeline_df = bagel_pipeline_df.pivot(index=[bagel.col_participant_id, bagel.col_session_id], columns="pipeline", values=bagel.col_status)
+        
+        self.logger.info(f"pivoted bagel_pipeline_df: {bagel_pipeline_df}")
+
+        bagel_status_df = bagel_pipeline_df.groupby([bagel.col_session_id]).count()
+
+        self.logger.info(f"bagel_status_df: {bagel_status_df}")
+
+        # TODO fix dtype for counts
+        self.status_df = pd.concat([self.status_df, bagel_status_df], axis=1)
 
 
     def df_to_table(self):
@@ -131,9 +170,10 @@ class StatusWorkflow(BaseWorkflow):
         console = Console()
     
         # Initiate a Table instance
-        title = "Participant counts per nipoppy checkpoint"
+        title = "Participant counts at each nipoppy checkpoint"
         table = Table(show_header=True, header_style="bold magenta", title=title)
         df = self.status_df.reset_index()
+        df = df.fillna(0)
         
         for column in df.columns:
             table.add_column(str(column))
