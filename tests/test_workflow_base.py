@@ -79,6 +79,17 @@ def test_log_command(
     assert command in record.message
 
 
+def test_log_command_no_markup(
+    workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture
+):
+    # message with closing tag
+    message = "[/]"
+
+    # this should not raise a rich markup error
+    workflow.run_command(["echo", message])
+    assert message in caplog.text
+
+
 def test_run_command(workflow: BaseWorkflow, tmp_path: Path):
     fpath = tmp_path / "test.txt"
     process = workflow.run_command(["touch", fpath])
@@ -104,6 +115,19 @@ def test_run_command_dry_run(workflow: BaseWorkflow, tmp_path: Path):
 def test_run_command_check(workflow: BaseWorkflow):
     with pytest.raises(subprocess.CalledProcessError):
         workflow.run_command(["which", "probably_fake_command"], check=True)
+
+
+def test_run_command_no_markup(
+    workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture, tmp_path: Path
+):
+    # text with closing tag
+    text = "[/]"
+
+    # this should not raise a rich markup error
+    fpath_txt = tmp_path / "test.txt"
+    fpath_txt.write_text(text)
+    workflow.run_command(["cat", fpath_txt])
+    assert text in caplog.text
 
 
 def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):

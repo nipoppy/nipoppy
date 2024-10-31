@@ -90,7 +90,9 @@ class BaseWorkflow(Base, ABC):
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
-        self.logger.info(f"{self.log_prefix_run} {command}")
+        # using extra={"markup": False} in case the command contains substrings
+        # that would be interpreted as closing tags by the RichHandler
+        self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
         self,
@@ -122,14 +124,17 @@ class BaseWorkflow(Base, ABC):
         subprocess.Popen or str
         """
 
-        def process_output(
-            output_source, output_str: str, log_prefix: str, log_level=logging.INFO
-        ):
-            """Consume lines from an IO stream and append them to a string."""
+        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+            """Consume lines from an IO stream and log them."""
             for line in output_source:
                 line = line.strip("\n")
-                self.logger.log(level=log_level, msg=f"{log_prefix} {line}")
-            return output_str
+                # using extra={"markup": False} in case the output contains substrings
+                # that would be interpreted as closing tags by the RichHandler
+                self.logger.log(
+                    level=log_level,
+                    msg=f"{log_prefix} {line}",
+                    extra={"markup": False},
+                )
 
         # build command string
         if not isinstance(command_or_args, str):
@@ -145,8 +150,6 @@ class BaseWorkflow(Base, ABC):
 
         self.log_command(command)
 
-        stdout_str = ""
-        stderr_str = ""
         if not self.dry_run:
             process = subprocess.Popen(
                 command_or_args,
@@ -157,15 +160,13 @@ class BaseWorkflow(Base, ABC):
             )
 
             while process.poll() is None:
-                stdout_str = process_output(
+                process_output(
                     process.stdout,
-                    stdout_str,
                     self.log_prefix_run_stdout,
                 )
 
-                stderr_str = process_output(
+                process_output(
                     process.stderr,
-                    stderr_str,
                     self.log_prefix_run_stderr,
                     log_level=logging.ERROR,
                 )
