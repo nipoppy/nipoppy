@@ -31,7 +31,6 @@ class StatusWorkflow(BaseWorkflow):
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
         save_status_to_disk: bool = False,
-        status_df: pd.DataFrame = None,
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -42,7 +41,7 @@ class StatusWorkflow(BaseWorkflow):
             dry_run=dry_run,
         )
         self.fname_readme = "README.md"
-        self.save_status_to_disk = save_status_to_disk
+        self.save_status_to_disk = save_status_to_disk # TODO maybe
         self.status_df = pd.DataFrame()
 
     def run_main(self):
@@ -56,7 +55,7 @@ class StatusWorkflow(BaseWorkflow):
         self.check_doughnut()
         self.check_bagel()
 
-        self.logger.info(self.status_df)
+        self.logger.debug(self.status_df)
 
         self.df_to_table()
 
@@ -68,8 +67,8 @@ class StatusWorkflow(BaseWorkflow):
 
     def check_manifest(self):
         """Check the manifest file."""
-        
         nipoppy_checkpoint = "in_manifest"
+        self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
 
         manifest = Manifest.load(self.layout.fpath_manifest).validate()
 
@@ -96,12 +95,15 @@ class StatusWorkflow(BaseWorkflow):
             ]
         manifest_status_df.columns = [nipoppy_checkpoint]
 
+        self.logger.debug(f"bagel_status_df: {manifest_status_df}")
         self.status_df = pd.concat([self.status_df, manifest_status_df], axis=1)
 
 
     def check_doughnut(self):
         """Check the doughnut file (if exists)."""
-        nipoppy_checkpoint = "doughnut"
+        nipoppy_checkpoint = "in_doughnut"
+
+        self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
 
         if not self.layout.fpath_doughnut.exists():
             self.logger.info(f"No doughnut file found at {self.layout.fpath_doughnut}.")
@@ -120,19 +122,21 @@ class StatusWorkflow(BaseWorkflow):
             [doughnut.col_in_pre_reorg, doughnut.col_in_post_reorg, doughnut.col_in_bids]
         ]
             
+        self.logger.debug(f"doughnut_status_df: {doughnut_status_df}")
         self.status_df = pd.concat([self.status_df, doughnut_status_df], axis=1)
         
     def check_bagel(self):
         """Check the imaging bagel file (if exists).
         """
-        nipoppy_checkpoint = "imaging_bagel"
+        nipoppy_checkpoint = "in_imaging_bagel"
+
+        self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
 
         if not self.layout.fpath_imaging_bagel.exists():
             self.logger.info(f"No bagel file found at {self.layout.fpath_imaging_bagel}.")
             return
         
         bagel = Bagel.load(self.layout.fpath_imaging_bagel)
-        self.logger.info(f"imaging bagel: {bagel}")
 
         # Get the number of participants in the doughnut
         participant_ids = bagel[bagel.col_participant_id].unique()
@@ -150,17 +154,15 @@ class StatusWorkflow(BaseWorkflow):
         bagel_pipeline_df = bagel[[bagel.col_participant_id, bagel.col_session_id, "pipeline", bagel.col_status]]
         bagel_pipeline_df = bagel_pipeline_df[bagel_pipeline_df[bagel.col_status] == STATUS_SUCCESS]
 
-        self.logger.info(f"bagel_pipeline_df: {bagel_pipeline_df}")
-
-        bagel_pipeline_df = bagel_pipeline_df.pivot(index=[bagel.col_participant_id, bagel.col_session_id], columns="pipeline", values=bagel.col_status)
+        bagel_pipeline_df = bagel_pipeline_df.pivot(
+            index=[bagel.col_participant_id, bagel.col_session_id], 
+            columns="pipeline", values=bagel.col_status
+            )
         
-        self.logger.info(f"pivoted bagel_pipeline_df: {bagel_pipeline_df}")
-
         bagel_status_df = bagel_pipeline_df.groupby([bagel.col_session_id]).count()
 
-        self.logger.info(f"bagel_status_df: {bagel_status_df}")
+        self.logger.debug(f"bagel_status_df: {bagel_status_df}")
 
-        # TODO fix dtype for counts
         self.status_df = pd.concat([self.status_df, bagel_status_df], axis=1)
 
 
@@ -171,9 +173,9 @@ class StatusWorkflow(BaseWorkflow):
     
         # Initiate a Table instance
         title = "Participant counts at each nipoppy checkpoint"
-        table = Table(show_header=True, header_style="bold magenta", title=title)
-        df = self.status_df.reset_index()
-        df = df.fillna(0)
+        table = Table(show_header=True, header_style="bold red", title=title)
+        df = self.status_df.copy()
+        df = df.fillna(0).astype(int).reset_index()
         
         for column in df.columns:
             table.add_column(str(column))
