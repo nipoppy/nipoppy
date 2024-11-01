@@ -95,10 +95,10 @@ class Config(_SchemaWithContainerConfig):
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
-            "Path to a CSV file mapping participant IDs to DICOM directories"
+            "Path to a TSV file mapping participant IDs to DICOM directories"
             ", to be used in the DICOM reorg step. Note: this field and "
-            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified"
-            f'. The CSV should have three columns: "{DicomDirMap.col_participant_id}"'
+            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified. The "
+            f'TSV file should have three columns: "{DicomDirMap.col_participant_id}"'
             f' , "{DicomDirMap.col_session_id}"'
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),
@@ -106,10 +106,10 @@ class Config(_SchemaWithContainerConfig):
     DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
         default=None,
         description=(
-            "Whether subdirectories under the raw dicom directory (default: "
-            f"{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) follow the pattern "
-            "<PARTICIPANT>/<SESSION> (default) or <SESSION>/<PARTICIPANT>. Note: "
-            "this field and and DICOM_DIR_MAP_FILE cannot both be specified"
+            f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
+            "follow the pattern <PARTICIPANT>/<SESSION> (default) or "
+            "<SESSION>/<PARTICIPANT>. Note: this field and DICOM_DIR_MAP_FILE "
+            "cannot both be specified"
         ),
     )
     SUBSTITUTIONS: dict[str, str] = Field(

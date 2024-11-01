@@ -94,13 +94,16 @@ def test_substitutions():
         "STEPS": [
             {
                 "NAME": "step1",
-                "INVOCATION_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                "INVOCATION_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",  # noqa: E501
             }
         ],
     }
     pipeline_config = BasePipelineConfig(**data)
     assert pipeline_config.DESCRIPTION == "my_pipeline version 1.0.0"
-    assert str(pipeline_config.STEPS[0].INVOCATION_FILE) == "my_pipeline-1.0.0.json"
+    assert (
+        str(pipeline_config.STEPS[0].INVOCATION_FILE)
+        == "my_pipeline-1.0.0/invocation.json"
+    )
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])

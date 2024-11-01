@@ -60,8 +60,8 @@ def test_run_main(
 ):
     dpath_root = tmp_path / "my_dataset"
 
-    dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_imaging"]
-    dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
+    dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_pre_reorg"]
+    dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_post_reorg"]
     dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
@@ -152,8 +152,8 @@ def test_run_main_regenerate(
     dpath_root = tmp_path / "my_dataset"
     create_empty_dataset(dpath_root)
 
-    dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_raw_imaging"]
-    dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_sourcedata"]
+    dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_pre_reorg"]
+    dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_post_reorg"]
     dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
@@ -187,8 +187,8 @@ def test_run_main_regenerate(
                 Doughnut.col_session_id: manifest_record[Manifest.col_session_id],
                 Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
                 Doughnut.col_participant_dicom_dir: participant_id,
-                Doughnut.col_in_raw_imaging: True,
-                Doughnut.col_in_sourcedata: True,
+                Doughnut.col_in_pre_reorg: True,
+                Doughnut.col_in_post_reorg: True,
                 Doughnut.col_in_bids: True,
             }
         )

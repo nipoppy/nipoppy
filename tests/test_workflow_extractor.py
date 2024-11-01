@@ -7,7 +7,10 @@ import pytest
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ExtractionPipelineConfig
 from nipoppy.tabular.bagel import Bagel
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
 from nipoppy.workflows.extractor import ExtractionRunner
 
 from .conftest import create_empty_dataset, get_config
@@ -42,6 +45,7 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="freesurfer",
         pipeline_version="7.3.2",
+        pipeline_step="step1",
     )
 
 
@@ -93,11 +97,14 @@ def test_get_participants_sessions_to_run(
             {
                 Bagel.col_participant_id: data[0],
                 Bagel.col_session_id: data[1],
-                Bagel.col_bids_participant: participant_id_to_bids_participant(data[0]),
-                Bagel.col_bids_session: session_id_to_bids_session(data[1]),
+                Bagel.col_bids_participant_id: participant_id_to_bids_participant_id(
+                    data[0]
+                ),
+                Bagel.col_bids_session_id: session_id_to_bids_session_id(data[1]),
                 Bagel.col_pipeline_name: extractor.pipeline_name,
                 Bagel.col_pipeline_version: extractor.pipeline_version,
-                Bagel.col_pipeline_complete: data[2],
+                Bagel.col_pipeline_step: extractor.pipeline_step,
+                Bagel.col_status: data[2],
             }
             for data in bagel_data
         ]

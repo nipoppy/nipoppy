@@ -1,11 +1,9 @@
 """PipelineTracker workflow."""
 
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import TypeAdapter
-
-from nipoppy.config.tracker import TrackerConfig, check_tracker_configs
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import load_json
@@ -20,6 +18,7 @@ class PipelineTracker(BasePipelineWorkflow):
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -31,6 +30,7 @@ class PipelineTracker(BasePipelineWorkflow):
             name="track",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
@@ -41,11 +41,22 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_setup(self):
         """Load/initialize the bagel file."""
         if self.layout.fpath_imaging_bagel.exists():
-            self.logger.info(
-                f"Found existing bagel with shape {self.bagel.shape}"
-                f" at {self.layout.fpath_imaging_bagel}"
-            )
+            try:
+                self.bagel = Bagel.load(self.layout.fpath_imaging_bagel)
+                self.logger.info(
+                    f"Found existing bagel with shape {self.bagel.shape}"
+                    f" at {self.layout.fpath_imaging_bagel}"
+                )
+            except ValueError as exception:
+                if "Error when validating the bagel" in str(exception):
+                    self.logger.warning(
+                        "Failed to load existing bagel at "
+                        f"{self.layout.fpath_imaging_bagel}. Generating a new bagel."
+                        f"\nOriginal error:\n{exception}"
+                    )
+                    self.bagel = Bagel()
         else:
+            self.bagel = Bagel()
             self.logger.info("Initialized empty bagel")
         return super().run_setup()
 
@@ -74,31 +85,20 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
         # load tracker configs from file
-        fpath_tracker_config = self.pipeline_config.TRACKER_CONFIG_FILE
+        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
         if fpath_tracker_config is None:
             raise ValueError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
         # replace template strings
-        tracker_configs = self.process_template_json(
-            load_json(fpath_tracker_config),
-            participant_id=participant_id,
-            session_id=session_id,
-        )
-        # convert to list of TrackerConfig objects and validate
-        tracker_configs = TypeAdapter(List[TrackerConfig]).validate_python(
-            tracker_configs
-        )
-        tracker_configs = check_tracker_configs(tracker_configs)
-
-        if len(tracker_configs) > 1:
-            self.logger.warning(
-                f"{len(tracker_configs)} tracker configs found for"
-                f" pipeline {self.pipeline_name} {self.pipeline_version}"
-                ". Currently only one config is supported (will use the first one)"
+        tracker_config = TrackerConfig(
+            **self.process_template_json(
+                load_json(fpath_tracker_config),
+                participant_id=participant_id,
+                session_id=session_id,
             )
-        tracker_config = tracker_configs[0]
+        )
 
         # check status and update bagel
         status = self.check_status(tracker_config.PATHS)
@@ -108,7 +108,8 @@ class PipelineTracker(BasePipelineWorkflow):
                 Bagel.col_session_id: session_id,
                 Bagel.col_pipeline_name: self.pipeline_name,
                 Bagel.col_pipeline_version: self.pipeline_version,
-                Bagel.col_pipeline_complete: status,
+                Bagel.col_pipeline_step: self.pipeline_step,
+                Bagel.col_status: status,
             }
         )
         return status
