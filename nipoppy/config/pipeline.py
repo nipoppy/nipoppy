@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
@@ -32,7 +32,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         description="Information about the container image file",
     )
     # Needed for validation
-    STEPS: list[BidsPipelineStepConfig | ProcPipelineStepConfig] = Field(
+    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
