@@ -9,7 +9,7 @@ from typing import Optional
 from pydantic import Field
 from typing_extensions import Self
 
-from nipoppy.env import StrOrPathLike, FAKE_SESSION
+from nipoppy.env import FAKE_SESSION, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
