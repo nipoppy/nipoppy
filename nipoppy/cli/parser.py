@@ -188,6 +188,7 @@ def add_subparser_init(
 
     return parser
 
+
 def add_subparser_status(
     subparsers: _SubParsersAction,
     formatter_class: type[HelpFormatter] = HelpFormatter,
@@ -201,18 +202,17 @@ def add_subparser_status(
         formatter_class=formatter_class,
         add_help=False,
     )
-    
+
     parser = add_arg_dataset_root(parser)
 
     parser.add_argument(
         "--save_status_to_disk",
         action="store_true",
-        help=(
-            "Save the status to disk. This will overwrite the existing status file."
-        ),
+        help=("Save the status to disk. This will overwrite the existing status file."),
     )
 
     return parser
+
 
 def add_subparser_doughnut(
     subparsers: _SubParsersAction,
