@@ -9,6 +9,7 @@ StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
+FAKE_SESSION = "ses-IsFake"
 
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"

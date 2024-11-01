@@ -9,6 +9,7 @@ import requests
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    FAKE_SESSION,
     LogColor,
     StrOrPathLike,
 )
@@ -154,20 +155,37 @@ class InitWorkflow(BaseWorkflow):
                     if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
-            if not session_ids:
-                self.logger.warning(
-                    f"Skipping subject '{ppt}': could not find a session level folder."
-                )
-                continue
+            if len(session_ids) == 0:
+                # if there are no session folders
+                # we will add a fake session for this participant
+                session_ids = [FAKE_SESSION]
 
             for ses in session_ids:
-                datatypes = sorted(
-                    [
-                        x.name
-                        for x in (self.layout.dpath_bids / ppt / ses).iterdir()
-                        if x.is_dir()
-                    ]
-                )
+                if ses == FAKE_SESSION:
+                    # if the session is fake, we don't expect BIDS data
+                    # to have session dir in the path
+                    datatypes = sorted(
+                        [
+                            x.name
+                            for x in (self.layout.dpath_bids / ppt).iterdir()
+                            if x.is_dir()
+                        ]
+                    )
+                else:
+                    datatypes = sorted(
+                        [
+                            x.name
+                            for x in (self.layout.dpath_bids / ppt / ses).iterdir()
+                            if x.is_dir()
+                        ]
+                    )
+
+                # if there are no datatypes, raise warning and skip
+                if len(datatypes) == 0:
+                    self.logger.warning(
+                        f"Participant {ppt}, session {ses} has no datatypes. Skipping."
+                    )
+                    continue
 
                 df[Manifest.col_participant_id].append(check_participant_id(ppt))
                 df[Manifest.col_session_id].append(check_session_id(ses))
