@@ -6,7 +6,7 @@ from abc import ABC
 from pathlib import Path
 from typing import Any, Optional, Type, Union
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
@@ -16,7 +16,21 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.utils import apply_substitutions_to_json
+
+
+class PipelineInfo(BaseModel):
+    """Schema for pipeline information."""
+
+    NAME: str = Field(description="Name of the pipeline")
+    VERSION: str = Field(description="Version of the pipeline")
+    STEP: str = Field(
+        description="Name of the pipeline step",
+        default=DEFAULT_PIPELINE_STEP_NAME,
+    )
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
@@ -148,5 +162,27 @@ class ProcPipelineConfig(BasePipelineConfig):
 class ExtractionPipelineConfig(BasePipelineConfig):
     """Schema for extraction pipeline configuration."""
 
+    PROC_DEPENDENCIES: list[PipelineInfo] = Field(
+        description=(
+            "List of processing pipeline(s) (including step names) that need to"
+            " be run before this extraction pipeline can be run"
+        )
+    )
+
     _step_class = ExtractionPipelineStepConfig
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the config instantiation after instantiation.
+
+        Specifically:
+        - Make sure that PROC_DEPENDENCIES is not empty
+        """
+        if len(self.PROC_DEPENDENCIES) == 0:
+            raise ValueError(
+                "PROC_DEPENDENCIES is an empty list for extraction pipeline "
+                f"{self.NAME} {self.VERSION}. Must have at least one dependency"
+            )
+        return self
