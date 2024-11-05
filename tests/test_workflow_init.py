@@ -154,7 +154,7 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
     workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
     workflow.run()
     assert (
-        f"Could not find session-level folder(s) for participant sub-01, using {FAKE_SESSION_ID} in the manifest"
+        f"Could not find session-level folder(s) for participant sub-01, using session {FAKE_SESSION_ID} in the manifest"
         in caplog.text
     )
 

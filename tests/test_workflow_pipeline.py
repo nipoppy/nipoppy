@@ -521,7 +521,9 @@ def test_set_up_bids_db_no_session(
 ):
     """Create a fake BIDS dataset with no session-level folders.
 
-    Check that the ignore pattern is not added to the BIDS layout.
+    Make sure:
+    - Check that the ignore pattern is not added to the BIDS layout.
+    - Check if files are found in the BIDS layout not ignored.
     """
     dpath_pybids_db = tmp_path / "bids_db"
     participant_id = "01"
@@ -530,16 +532,17 @@ def test_set_up_bids_db_no_session(
     fids.create_fake_bids_dataset(
         output_dir=workflow.layout.dpath_bids,
         subjects=participant_id,
-        sessions=session_id,
+        sessions=None,
     )
 
-    workflow.set_up_bids_db(
+    bids_layout = workflow.set_up_bids_db(
         dpath_pybids_db=dpath_pybids_db,
         participant_id=participant_id,
         session_id=session_id,
     )
 
     assert not (f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})" in caplog.text)
+    assert len(bids_layout.get(extension=".nii.gz")) > 0
 
 
 @pytest.mark.parametrize(
