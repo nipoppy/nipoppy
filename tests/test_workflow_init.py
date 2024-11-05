@@ -137,7 +137,7 @@ def test_init_bids_dry_run(tmp_path):
 
 def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture):
     """Create dummy BIDS dataset with no session to use during init.
-    
+
     Make sure:
     - raise a warning if subject has no session.
     - manifest is created with the right content
@@ -153,7 +153,10 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
     )
     workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
     workflow.run()
-    assert f"Could not find session-level folder(s) for participant sub-01, using {FAKE_SESSION_ID} in the manifest" in caplog.text
+    assert (
+        f"Could not find session-level folder(s) for participant sub-01, using {FAKE_SESSION_ID} in the manifest"
+        in caplog.text
+    )
 
     assert isinstance(workflow.manifest, Manifest)
 

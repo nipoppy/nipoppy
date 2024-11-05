@@ -13,7 +13,14 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, LogColor, ReturnCode, StrOrPathLike, FAKE_SESSION_ID, BIDS_SESSION_PREFIX
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    DEFAULT_PIPELINE_STEP_NAME,
+    FAKE_SESSION_ID,
+    LogColor,
+    ReturnCode,
+    StrOrPathLike,
+)
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
 from .conftest import datetime_fixture  # noqa F401

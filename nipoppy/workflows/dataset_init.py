@@ -170,7 +170,9 @@ class InitWorkflow(BaseWorkflow):
                     datatypes = sorted(
                         [
                             x.name
-                            for x in (self.layout.dpath_bids / bids_participant_id).iterdir()
+                            for x in (
+                                self.layout.dpath_bids / bids_participant_id
+                            ).iterdir()
                             if x.is_dir()
                         ]
                     )
@@ -178,7 +180,11 @@ class InitWorkflow(BaseWorkflow):
                     datatypes = sorted(
                         [
                             x.name
-                            for x in (self.layout.dpath_bids / bids_participant_id / bids_session_id).iterdir()
+                            for x in (
+                                self.layout.dpath_bids
+                                / bids_participant_id
+                                / bids_session_id
+                            ).iterdir()
                             if x.is_dir()
                         ]
                     )
@@ -190,7 +196,9 @@ class InitWorkflow(BaseWorkflow):
                     )
                     continue
 
-                df[Manifest.col_participant_id].append(check_participant_id(bids_participant_id))
+                df[Manifest.col_participant_id].append(
+                    check_participant_id(bids_participant_id)
+                )
                 df[Manifest.col_session_id].append(check_session_id(bids_session_id))
                 df[Manifest.col_datatype].append(datatypes)
 
