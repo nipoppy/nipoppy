@@ -20,7 +20,7 @@ from nipoppy.utils import (
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
     check_session_id,
-    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -161,12 +161,18 @@ class InitWorkflow(BaseWorkflow):
                 # we will add a fake session for this participant
                 self.logger.warning(
                     "Could not find session-level folder(s) for participant "
-                    f"{bids_participant_id}, using session {FAKE_SESSION_ID} in the manifest"
+                    f"{bids_participant_id}, using session {FAKE_SESSION_ID} "
+                    "in the manifest"
                 )
-                bids_session_ids = [f"{participant_id_to_bids_participant_id(FAKE_SESSION_ID)}"]
+                bids_session_ids = [
+                    f"{session_id_to_bids_session_id(FAKE_SESSION_ID)}"
+                ]
 
             for bids_session_id in bids_session_ids:
-                if bids_session_id == f"{participant_id_to_bids_participant_id(FAKE_SESSION_ID)}":
+                if (
+                    bids_session_id
+                    == f"{session_id_to_bids_session_id(FAKE_SESSION_ID)}"
+                ):
                     # if the session is fake, we don't expect BIDS data
                     # to have session dir in the path
                     datatypes = sorted(
