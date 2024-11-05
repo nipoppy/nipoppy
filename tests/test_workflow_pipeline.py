@@ -13,7 +13,7 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, LogColor, ReturnCode, StrOrPathLike, FAKE_SESSION_ID, BIDS_SESSION_PREFIX
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
 from .conftest import datetime_fixture  # noqa F401
@@ -505,6 +505,34 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     )
 
     assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
+
+
+def test_set_up_bids_db_no_session(
+    workflow: PipelineWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Create a fake BIDS dataset with no session-level folders.
+
+    Check that the ignore pattern is not added to the BIDS layout.
+    """
+    dpath_pybids_db = tmp_path / "bids_db"
+    participant_id = "01"
+    session_id = FAKE_SESSION_ID
+
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+        subjects=participant_id,
+        sessions=session_id,
+    )
+
+    workflow.set_up_bids_db(
+        dpath_pybids_db=dpath_pybids_db,
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+
+    assert not (f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})" in caplog.text)
 
 
 @pytest.mark.parametrize(
