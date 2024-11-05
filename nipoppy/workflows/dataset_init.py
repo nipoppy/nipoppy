@@ -164,9 +164,7 @@ class InitWorkflow(BaseWorkflow):
                     f"{bids_participant_id}, using session {FAKE_SESSION_ID} "
                     "in the manifest"
                 )
-                bids_session_ids = [
-                    f"{session_id_to_bids_session_id(FAKE_SESSION_ID)}"
-                ]
+                bids_session_ids = [f"{session_id_to_bids_session_id(FAKE_SESSION_ID)}"]
 
             for bids_session_id in bids_session_ids:
                 if (
