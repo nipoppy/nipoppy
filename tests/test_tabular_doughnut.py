@@ -4,12 +4,10 @@ from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
-from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
-from nipoppy.workflows.dataset_init import InitWorkflow
 
 from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 
