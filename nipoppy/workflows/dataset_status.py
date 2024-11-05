@@ -1,21 +1,15 @@
-"""Workflow for init command."""
+"""Workflow for status command."""
 
 import logging
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from nipoppy.env import (
-    BIDS_SESSION_PREFIX,
-    BIDS_SUBJECT_PREFIX,
-    LogColor,
-    StrOrPathLike,
-)
+from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.tabular.bagel import STATUS_SUCCESS, Bagel
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
@@ -36,17 +30,17 @@ class StatusWorkflow(BaseWorkflow):
         """Initialize the workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            name="init",
+            name="status",
             fpath_layout=fpath_layout,
             logger=logger,
             dry_run=dry_run,
         )
-        self.fname_readme = "README.md"
         self.save_status_to_disk = save_status_to_disk  # TODO maybe
         self.status_df = pd.DataFrame()
 
     def run_main(self):
-        """Check the status of the dataset and report
+        """Check the status of the dataset and report.
+
         1) Number of participants in manifest per BIDS datatype,
         2) Doughnut information if available,
         3) Bagel information if available
@@ -91,7 +85,8 @@ class StatusWorkflow(BaseWorkflow):
             f"Number of participants (imaging and non-imaging): {len(participant_ids)}"
         )
         self.logger.info(
-            f"Available  visits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
+            f"Available  visits (imaging and non-imaging) (n={len(visit_ids)}): "
+            f"{visit_ids}"
         )
         self.logger.info(
             f"Number of participants with imaging data: {len(imaging_participant_ids)}"
@@ -219,7 +214,7 @@ class StatusWorkflow(BaseWorkflow):
     def run_cleanup(self):
         """Log a success message."""
         self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully reported the current status of a dataset "
-            f"at {self.dpath_root}![/]"
+            f"[{LogColor.SUCCESS}]Successfully reported the current "
+            f"status of a dataset at {self.dpath_root}![/]"
         )
         return super().run_cleanup()
