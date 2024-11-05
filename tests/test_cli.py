@@ -174,7 +174,7 @@ def test_cli_extract(tmp_path: Path):
         len(
             list(
                 (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "nipoppy_extract/my_pipeline-1.0/*.log"
+                    "extract/my_pipeline-1.0/*.log"
                 )
             )
         )
