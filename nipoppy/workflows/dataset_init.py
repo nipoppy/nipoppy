@@ -159,8 +159,8 @@ class InitWorkflow(BaseWorkflow):
                 # if there are no session folders
                 # we will add a fake session for this participant
                 self.logger.warning(
-                    f"Could not find session-level folder(s) for "
-                    f"participant {bids_participant_id}, using {FAKE_SESSION_ID} in the manifest"
+                    f"Could not find session-level folder(s) for participant "
+                    f"{bids_participant_id}, using {FAKE_SESSION_ID} in the manifest"
                 )
                 bids_session_ids = [f"{BIDS_SESSION_PREFIX}{FAKE_SESSION_ID}"]
 
