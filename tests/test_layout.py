@@ -259,7 +259,7 @@ def test_get_dpath_pipeline_idps(
 ):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert (
-        layout.get_dpath_pipeline_idps(
+        layout.get_dpath_pipeline_idp(
             pipeline_name=pipeline_name, pipeline_version=pipeline_version
         )
         == dpath_root / expected

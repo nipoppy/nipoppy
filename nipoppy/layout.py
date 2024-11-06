@@ -291,9 +291,7 @@ class DatasetLayout(Base):
             / self.dname_pipeline_output
         )
 
-    def get_dpath_pipeline_idps(
-        self, pipeline_name: str, pipeline_version: str
-    ) -> Path:
+    def get_dpath_pipeline_idp(self, pipeline_name: str, pipeline_version: str) -> Path:
         """
         Return the path to a pipeline's IDPs directory.
 

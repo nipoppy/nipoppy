@@ -134,7 +134,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def dpath_pipeline_idps(self) -> Path:
         """Return the path to the pipeline's IDPs directory."""
-        return self.layout.get_dpath_pipeline_idps(
+        return self.layout.get_dpath_pipeline_idp(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
         )
