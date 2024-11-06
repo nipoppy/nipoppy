@@ -8,14 +8,14 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
-- Processed imaging data the {{dpath_derivatives}} directory
+- Processed imaging data the {{dpath_pipeline_output}} directory
     - See <project:processing.md> for expected subdirectory structure
 
 ### Data directories and files
 
 | Directory or file | Content description |
 |---|---|
-| {{dpath_derivatives}} | **Input** -- {{content_dpath_derivatives}} |
+| {{dpath_pipeline_output}} | **Input** -- {{content_dpath_pipeline_output}} |
 | {{fpath_imaging_bagel}} | **Output** -- Tabular file containing processing status for each participant/session and pipeline |
 
 ### Commands
@@ -41,7 +41,7 @@ Here is example of tracker configuration file (default for MRIQC 23.1.0):
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
 
 ```{tip}
-- The paths are expected to be relative to the {{dpath_derivatives}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
+- The paths are expected to be relative to the {{dpath_pipeline_output}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
 - "Glob" expressions (i.e., that include `*`) are allowed in paths. If at least one file matches the expression, then the file will be considered found for that expression.
 ```
 
@@ -49,7 +49,7 @@ Importantly, pipeline completion status is **not** inferred from exit codes as t
 The template strings `[[NIPOPPY_<ATTRIBUTE_NAME>]]` work the same way as the ones in the [global configuration file](<global-config-template-strings>) and the [pipeline invocation files](<invocation-template-strings>) -- they are replaced at runtime by appropriate values.
 ```
 
-Given a dataset with the following content in {{dpath_derivatives}}:
+Given a dataset with the following content in {{dpath_pipeline_output}}:
 ```{literalinclude} ./inserts/mriqc_outputs.txt
 ---
 class: no-copybutton

@@ -8,6 +8,11 @@ Doughnut file
 
     See {ref}`here <doughnut-schema>` for more information about the columns in the file.
 
+Imaging bagel file
+    A tabular file at {{fpath_imaging_bagel}} that indicates the completion status of processing pipelines of interest at the participant-session level. The bagel file is created by the [`nipoppy track`](./cli_reference/track.md) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/cli/).
+
+    See {ref}`here <imaging-bagel-schema>` for more information about the columns in the file.
+
 Session ID
     A BIDS-compliant session identifier, without the `"ses-"` prefix.
 
