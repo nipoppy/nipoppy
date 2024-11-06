@@ -3,6 +3,7 @@
 from contextlib import nullcontext
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from nipoppy.env import StrOrPathLike
@@ -113,6 +114,15 @@ def test_set_status(data, participant_id, session_id, col, status):
         )
         == status
     )
+
+
+def test_set_status_index_reset(data):
+    doughnut = Doughnut(data)
+    with pytest.raises(ValueError):
+        doughnut.set_status("01", "BL", "bad_col", True)
+
+    assert set(doughnut.columns) == set(Doughnut().columns)
+    assert isinstance(doughnut.index, pd.RangeIndex)
 
 
 @pytest.mark.parametrize(
