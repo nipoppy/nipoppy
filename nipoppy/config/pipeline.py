@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
@@ -37,8 +37,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
     # for validation
-    _step_class: Type[BasePipelineStepConfig] = BasePipelineStepConfig
-
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -48,6 +46,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
+    # Needed for validation
     STEPS: list[
         Union[
             BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
@@ -82,13 +81,8 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
-        - Check that items in STEPS have the correct type.
         - If STEPS has more than one item, make sure that each step has a unique name.
         """
-        # make sure BIDS/processing pipelines are the right type
-        for i_step, step in enumerate(self.STEPS):
-            self.STEPS[i_step] = self._step_class(**step.model_dump(exclude_unset=True))
-
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:
@@ -138,7 +132,10 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
-    _step_class = BidsPipelineStepConfig
+    STEPS: list[BidsPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
     model_config = ConfigDict(extra="forbid")
 
 
@@ -154,8 +151,10 @@ class ProcPipelineConfig(BasePipelineConfig):
             " and a PATHS field (non-empty list of strings)"
         ),
     )
-
-    _step_class = ProcPipelineStepConfig
+    STEPS: list[ProcPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
     model_config = ConfigDict(extra="forbid")
 
 
@@ -168,8 +167,10 @@ class ExtractionPipelineConfig(BasePipelineConfig):
             " be run before this extraction pipeline can be run"
         )
     )
-
-    _step_class = ExtractionPipelineStepConfig
+    STEPS: list[ExtractionPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
