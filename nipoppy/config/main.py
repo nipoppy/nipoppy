@@ -150,30 +150,6 @@ class Config(_SchemaWithContainerConfig):
 
         return self
 
-    def _check_no_duplicate_pipeline(self) -> Self:
-        """Check that pipelines do not have common names and versions."""
-
-        def _check_pipelines(pipelines_key1, pipelines_key2):
-            pipeline_configs: list[BasePipelineConfig] = getattr(
-                self, pipelines_key1
-            ) + getattr(self, pipelines_key2)
-
-            pipeline_infos = set()
-            for pipeline_config in pipeline_configs:
-                pipeline_info = (pipeline_config.NAME, pipeline_config.VERSION)
-                if pipeline_info in pipeline_infos:
-                    raise ValueError(
-                        f"Found multiple configurations for pipeline {pipeline_info}"
-                        "Make sure pipeline name and versions are unique across "
-                        f"{pipelines_key1} and {pipelines_key2}."
-                    )
-                pipeline_infos.add(pipeline_info)
-
-        _check_pipelines("BIDS_PIPELINES", "PROC_PIPELINES")
-        _check_pipelines("BIDS_PIPELINES", "EXTRACTION_PIPELINES")
-
-        return self
-
     def propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""
 
@@ -217,7 +193,6 @@ class Config(_SchemaWithContainerConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_dicom_dir_options()
-        self._check_no_duplicate_pipeline()
 
         return self
 

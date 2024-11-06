@@ -60,7 +60,11 @@ def valid_config_data():
             },
         ],
         "EXTRACTION_PIPELINES": [
-            {"NAME": "extractor1", "VERSION": "0.1.0"},
+            {
+                "NAME": "extractor1",
+                "VERSION": "0.1.0",
+                "PROC_DEPENDENCIES": [{"NAME": "pipeline1", "VERSION": "v1"}],
+            },
         ],
     }
 
@@ -77,67 +81,6 @@ def test_fields(valid_config_data: dict):
 def test_no_extra_fields(valid_config_data):
     with pytest.raises(ValidationError):
         Config(**valid_config_data, NOT_A_FIELD="x")
-
-
-@pytest.mark.parametrize(
-    "bids_pipelines_data,proc_pipelines_data,extraction_pipelines_data",
-    [
-        (
-            [
-                {"NAME": "pipeline1", "VERSION": "v1"},
-                {"NAME": "pipeline1", "VERSION": "v1"},
-            ],
-            [],
-            [],
-        ),
-        (
-            [],
-            [
-                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
-                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
-            ],
-            [],
-        ),
-        (
-            [],
-            [],
-            [
-                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
-                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
-            ],
-        ),
-        (
-            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
-            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
-            [],
-        ),
-        (
-            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
-            [],
-            [{"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}],
-        ),
-    ],
-)
-def test_check_no_duplicate_pipeline(
-    valid_config_data,
-    proc_pipelines_data,
-    bids_pipelines_data,
-    extraction_pipelines_data,
-):
-    valid_config_data["PROC_PIPELINES"] = proc_pipelines_data
-    valid_config_data["BIDS_PIPELINES"] = bids_pipelines_data
-    valid_config_data["EXTRACTION_PIPELINES"] = extraction_pipelines_data
-    with pytest.raises(ValidationError, match="Found multiple configurations for"):
-        Config(**valid_config_data)
-
-
-def test_common_pipelines_allowed_for_proc_and_extraction(valid_config_data):
-    pipelines_data = [
-        {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]}
-    ]
-    valid_config_data["PROC_PIPELINES"] = pipelines_data
-    valid_config_data["EXTRACTION_PIPELINES"] = pipelines_data
-    assert Config(**valid_config_data)
 
 
 @pytest.mark.parametrize(

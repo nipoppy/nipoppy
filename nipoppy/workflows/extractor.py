@@ -98,6 +98,8 @@ class ExtractionRunner(PipelineRunner):
                     pipeline_name=pipeline_info.NAME,
                     pipeline_version=pipeline_info.VERSION,
                     pipeline_step=pipeline_info.STEP,
+                    participant_id=participant_id,
+                    session_id=session_id,
                 )
             )
             if participants_sessions is None:
@@ -105,7 +107,7 @@ class ExtractionRunner(PipelineRunner):
             else:
                 participants_sessions = participants_sessions & to_update
 
-        for participant_session in participants_sessions:
+        for participant_session in sorted(list(participants_sessions)):
             yield participant_session
 
     def run_single(self, participant_id: str, session_id: str):

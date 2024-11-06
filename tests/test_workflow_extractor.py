@@ -115,6 +115,16 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
         ),
         (
             [
+                ["S01", "1", "freesurfer", "7.3.2", Bagel.status_success],
+            ],
+            "fs_extractor",
+            "7.3.2",
+            "S02",  # S02 is not in bagel
+            "1",
+            [],
+        ),
+        (
+            [
                 ["P01", "A", "freesurfer", "6.0.1", Bagel.status_success],
                 ["P01", "B", "freesurfer", "6.0.1", Bagel.status_fail],
                 ["P02", "B", "freesurfer", "6.0.1", Bagel.status_success],
@@ -124,7 +134,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
             ],
             "fs_fmriprep_extractor",
             "6.0.1+20.0.7",
-            "P01",
+            "P02",
             "B",
             [("P02", "B")],
         ),
