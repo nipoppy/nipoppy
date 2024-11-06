@@ -1,8 +1,9 @@
-"""Tests for BidsConversionWorkflow."""
+"""Tests for ExtractionWorkflow."""
 
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ExtractionPipelineConfig
@@ -180,6 +181,23 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
+
+
+def test_run_single(
+    extractor: ExtractionRunner,
+    mocker: pytest_mock.MockerFixture,
+):
+
+    mocked_process_container_config = mocker.patch(
+        "nipoppy.workflows.runner.PipelineRunner.process_container_config"
+    )
+    mocked_launch_boutiques_container = mocker.patch(
+        "nipoppy.workflows.runner.PipelineRunner.launch_boutiques_run"
+    )
+
+    extractor.run_single("S01", "BL")
+    assert mocked_process_container_config.call_count == 1
+    assert mocked_launch_boutiques_container.call_count == 1
 
 
 def test_check_pipeline_version(config: Config, tmp_path: Path):
