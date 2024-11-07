@@ -133,7 +133,7 @@ def cli(argv: Sequence[str] = None) -> None:
             raise ValueError(f"Unsupported command: {command}")
 
         # cannot log to file in init since the dataset doesn't exist yet
-        if command != COMMAND_INIT:
+        if command not in [COMMAND_INIT, COMMAND_STATUS]:
             add_logfile(logger, workflow.generate_fpath_log())
 
         # capture warnings

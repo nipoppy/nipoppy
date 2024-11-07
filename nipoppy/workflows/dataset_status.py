@@ -10,9 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from nipoppy.env import LogColor, StrOrPathLike
-from nipoppy.tabular.bagel import STATUS_SUCCESS, Bagel
-from nipoppy.tabular.doughnut import Doughnut
-from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.bagel import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -25,6 +23,7 @@ class StatusWorkflow(BaseWorkflow):
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
+        # TODO (maybe)
         save_status_to_disk: bool = False,
     ):
         """Initialize the workflow."""
@@ -35,8 +34,10 @@ class StatusWorkflow(BaseWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
-        self.save_status_to_disk = save_status_to_disk  # TODO maybe
-        self.status_df = pd.DataFrame()
+        self.col_pipeline = "pipeline"
+
+        # TODO (maybe)
+        self.save_status_to_disk = save_status_to_disk
 
     def run_main(self):
         """Check the status of the dataset and report.
@@ -46,25 +47,30 @@ class StatusWorkflow(BaseWorkflow):
         3) Bagel information if available
         """
         self.logger.info("Checking the status of the dataset.")
-        self.check_manifest()
-        self.check_doughnut()
-        self.check_bagel()
 
-        self.logger.debug(self.status_df)
+        status_df = pd.DataFrame()
 
-        self.df_to_table()
+        status_df = self._check_manifest(status_df)
+        status_df = self._check_doughnut(status_df)
+        status_df = self._check_bagel(status_df)
 
-        # TODO
+        self.logger.debug(status_df)
+
+        self._df_to_table(status_df)
+
+        # TODO (maybe)
         # save the status to a file (probably needs a schema)
         # check if previous status file exists
         # if so, compare the two and report the differences
 
-    def check_manifest(self):
+        return status_df
+
+    def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
         self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
 
-        manifest = Manifest.load(self.layout.fpath_manifest).validate()
+        manifest = self.manifest
 
         # Get the number of participants in the manifest
         participant_ids = manifest[manifest.col_participant_id].unique()
@@ -100,20 +106,23 @@ class StatusWorkflow(BaseWorkflow):
         ).count()[[imaging_manifest.col_participant_id]]
         manifest_status_df.columns = [nipoppy_checkpoint]
 
-        self.logger.debug(f"bagel_status_df: {manifest_status_df}")
-        self.status_df = pd.concat([self.status_df, manifest_status_df], axis=1)
+        self.logger.debug(f"bagel_status_df:\n{manifest_status_df}")
+        status_df = pd.concat([status_df, manifest_status_df], axis=1)
+        return status_df
 
-    def check_doughnut(self):
+    def _check_doughnut(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the doughnut file (if exists)."""
         nipoppy_checkpoint = "in_doughnut"
 
         self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
 
-        if not self.layout.fpath_doughnut.exists():
-            self.logger.info(f"No doughnut file found at {self.layout.fpath_doughnut}.")
+        try:
+            doughnut = self.doughnut
+        except FileNotFoundError:
+            self.logger.warning(
+                f"No doughnut file found at {self.layout.fpath_doughnut}."
+            )
             return
-
-        doughnut = Doughnut.load(self.layout.fpath_doughnut)
 
         # Get the number of participants in the doughnut
         participant_ids = doughnut[doughnut.col_participant_id].unique()
@@ -131,23 +140,24 @@ class StatusWorkflow(BaseWorkflow):
         ]
 
         self.logger.debug(f"doughnut_status_df: {doughnut_status_df}")
-        self.status_df = pd.concat([self.status_df, doughnut_status_df], axis=1)
+        status_df = pd.concat([status_df, doughnut_status_df], axis=1)
+        return status_df
 
-    def check_bagel(self):
+    def _check_bagel(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the imaging bagel file (if exists)."""
         nipoppy_checkpoint = "in_imaging_bagel"
 
         self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
 
-        if not self.layout.fpath_imaging_bagel.exists():
-            self.logger.info(
+        try:
+            bagel = self.bagel
+        except FileNotFoundError:
+            self.logger.warning(
                 f"No bagel file found at {self.layout.fpath_imaging_bagel}."
             )
             return
 
-        bagel = Bagel.load(self.layout.fpath_imaging_bagel)
-
-        # Get the number of participants in the doughnut
+        # Get the number of participants in the bagel
         participant_ids = bagel[bagel.col_participant_id].unique()
         session_ids = bagel[bagel.col_session_id].unique()
         pipelines = bagel[bagel.col_pipeline_name].unique()
@@ -156,11 +166,12 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.info(f"Available visits (n={len(session_ids)}): {session_ids}")
         self.logger.info(f"Available pipelines (n={len(pipelines)}): {pipelines}")
 
-        bagel["pipeline"] = (
+        bagel[self.col_pipeline] = (
             bagel[bagel.col_pipeline_name]
-            + "_"
+            + "\n"
+            + ""
             + bagel[bagel.col_pipeline_version]
-            + "_"
+            + "\n"
             + bagel[bagel.col_pipeline_step]
         )
 
@@ -168,7 +179,7 @@ class StatusWorkflow(BaseWorkflow):
             [
                 bagel.col_participant_id,
                 bagel.col_session_id,
-                "pipeline",
+                self.col_pipeline,
                 bagel.col_status,
             ]
         ]
@@ -178,7 +189,7 @@ class StatusWorkflow(BaseWorkflow):
 
         bagel_pipeline_df = bagel_pipeline_df.pivot(
             index=[bagel.col_participant_id, bagel.col_session_id],
-            columns="pipeline",
+            columns=self.col_pipeline,
             values=bagel.col_status,
         )
 
@@ -186,29 +197,108 @@ class StatusWorkflow(BaseWorkflow):
 
         self.logger.debug(f"bagel_status_df: {bagel_status_df}")
 
-        self.status_df = pd.concat([self.status_df, bagel_status_df], axis=1)
+        status_df = pd.concat([status_df, bagel_status_df], axis=1)
+        return status_df
 
-    def df_to_table(self):
+    def _df_to_table(self, status_df: pd.DataFrame):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
+        df = status_df.copy()
+        df = df.fillna(0).astype(int).reset_index()
+
+        # generate positive reinforcement emojis
+        crossed_fingers_emoji = "🤞"
+        rocket_emoji = "🚀"
+        sad_cat_emoji = "😿"
+        doughnut_emoji = "🍩"
+        bagel_emoji = "🥯"
+        # party_popper_emoji = "🎉"
+        sparkles = "✨"
+        confetti_emoji = "🎊"
+
+        # emoji legend
+        legend_dict = {
+            sad_cat_emoji: "No available data are curated or processed",
+            doughnut_emoji: "Data curation has started",
+            sparkles: "BIDSification is complete",
+            bagel_emoji: "Data processing has started",
+            rocket_emoji: "At least 1 pipeline processing is complete",
+            confetti_emoji: "All data are curated and processed",
+        }
+
+        doughnut_cols = ["in_pre_reorg", "in_post_reorg", "in_bids"]
+        bagel_cols = [col for col in df.columns if "\n" in col]
+        non_session_cols = ["in_manifest"] + doughnut_cols + bagel_cols
+        for row_obj in df.iterrows():
+            row = row_obj[1]
+
+            row_stickers = []
+            if (
+                (row["in_manifest"] > 0)
+                & (row[doughnut_cols] == 0).all()
+                & (row[bagel_cols] == 0).all()
+            ):
+                row_stickers.append(sad_cat_emoji)
+            if (row[doughnut_cols] > 0).all():
+                row_stickers.append(doughnut_emoji)
+            if row["in_bids"] == row["in_manifest"]:
+                row_stickers.append(sparkles)
+            if (row[bagel_cols] > 0).all():
+                row_stickers.append(bagel_emoji)
+            if (row[bagel_cols] == row["in_manifest"]).any():
+                row_stickers.append(rocket_emoji)
+            if (row[non_session_cols] > 0).all():
+                row_vals = row[non_session_cols].values
+                all_equal = all([x == row_vals[0] for x in row_vals])
+                if all_equal:
+                    row_stickers.append(confetti_emoji)
+
+            df.loc[row_obj[0], "milestones"] = " ".join(row_stickers)
+
         console = Console()
 
         # Initiate a Table instance
-        title = "Participant counts at each nipoppy checkpoint"
-        table = Table(show_header=True, header_style="bold red", title=title)
-        df = self.status_df.copy()
-        df = df.fillna(0).astype(int).reset_index()
+        title = (
+            "Participant counts by session at each Nipoppy checkpoint"
+            + f" {sparkles} {crossed_fingers_emoji}"
+        )  # + f"\n{legend_dict}"
 
-        for column in df.columns:
-            table.add_column(str(column))
+        column_colors = [
+            "cyan",
+            "magenta",
+            "yellow",
+            "green",
+            "deep_sky_blue3",
+            "deep_pink2",
+            "rosy_brown",
+        ]
+
+        table = Table(title=title, collapse_padding=False)
+
+        # check if number of colors match the number of columns
+        n_colors = len(column_colors)
+        n_columns = len(df.columns)
+        if n_colors < n_columns:  # cycle through the colors
+            column_colors = (
+                column_colors * (n_columns // n_colors + 1)
+                + column_colors[: n_columns % n_colors]
+            )
+
+        for column, col_color in zip(df.columns, column_colors):
+            table.add_column(
+                str(column),
+                style=col_color,
+                header_style=col_color,
+                justify="center",
+                vertical="top",  # vertical alignment doesn't work :(
+            )
 
         for value_list in df.values.tolist():
-            row = []
-            row += [str(x) for x in value_list]
+            row = [str(x) for x in value_list]
             table.add_row(*row)
 
-        # Update the style
-        table.row_styles = ["none", "dim"]
-        table.box = box.SIMPLE_HEAD
+        # Update the style of the table
+        table.box = box.MINIMAL_DOUBLE_HEAD  # SIMPLE_HEAD
+        table.caption = "Legend: " + f"{legend_dict}"
         console.print(table)
 
     def run_cleanup(self):
