@@ -100,5 +100,5 @@ def test_run(dpath_root: Path):
     assert status_df["in_bids"].sum() == 2
 
     # check bagel status
-    assert status_df["dcm2bids_1.0.0_convert"].sum() == 2
-    assert status_df["fmriprep_2.0.0_default"].sum() == 1
+    assert status_df["dcm2bids\n1.0.0\nconvert"].sum() == 2
+    assert status_df["fmriprep\n2.0.0\ndefault"].sum() == 1
