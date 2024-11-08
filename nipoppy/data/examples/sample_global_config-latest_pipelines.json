@@ -181,8 +181,7 @@
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
-                    "ANALYSIS_LEVEL": "participant"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json"
                 }
             ]
         }

@@ -1,6 +1,6 @@
 {
 	"bids_dir": "[[NIPOPPY_DPATH_BIDS]]",
-	"output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
+	"output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/[[NIPOPPY_BIDS_SESSION_ID]]",
 	"analysis_level": "participant",
 	"participant_label": [
 		"[[NIPOPPY_PARTICIPANT_ID]]"
@@ -11,7 +11,7 @@
 	"skip_bids_validation": true,
 	"fs_license_file": "[[FREESURFER_LICENSE_FILE]]",
 	"omp_nthreads": 4,
-	"do_reconall": true,
+	"do_reconall": false,
 	"stop_on_first_crash": true,
 	"dwi_only": true,
 	"anat_modality": "none"
