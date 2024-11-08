@@ -4,8 +4,6 @@ on:
     types: [opened, reopened, assigned]
   pull_request_target:
     types: [ready_for_review, review_requested, converted_to_draft, closed]
-  pull_request_review:
-    types: [submitted]
 
 # map fields with customized labels
 env:
@@ -68,29 +66,6 @@ jobs:
           project_id: ${{ env.project_id }}
           resource_node_id: ${{ github.event.pull_request.node_id }}
           status_value: ${{ env.pending_review }} # Target status
-          move_related_issues: true
-
-      # - name: Move PR to ${{ env.reviewed }}
-      #   if: github.event_name == 'pull_request_review' && github.event.review.state != 'approved'
-      #   uses: leonsteinhaeuser/project-beta-automations@v2.2.1
-      #   with:
-      #     gh_token: ${{ secrets.PROJECT_PAT }}
-      #     organization: ${{ env.organization }}
-      #     project_id: ${{ env.project_id }}
-      #     resource_node_id: ${{ github.event.pull_request.node_id }}
-      #     status_value: ${{ env.reviewed }} # Target status
-      #     move_related_issues: true
-
-      # - name: Move PR to ${{ env.approved }}
-      #   if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
-      #   uses: leonsteinhaeuser/project-beta-automations@v2.2.1
-      #   with:
-      #     gh_token: ${{ secrets.PROJECT_PAT }}
-      #     organization: ${{ env.organization }}
-      #     project_id: ${{ env.project_id }}
-      #     resource_node_id: ${{ github.event.pull_request.node_id }}
-      #     status_value: ${{ env.approved }} # Target status
-      #     move_related_issues: true
 
       - name: Move PR to ${{ env.done }}
         if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true
