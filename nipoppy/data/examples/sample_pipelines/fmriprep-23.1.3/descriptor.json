@@ -3,7 +3,7 @@
     "description": "fmriprep",
     "tool-version": "23.1.3",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [TASK_ID] [ECHO_IDX] [BIDS_FILTERS] [ANAT_DERIVATIVES] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [LOW_MEM] [USE_PLUGIN] [SLOPPY] [ANAT_ONLY] [BOILERPLATE_ONLY] [REPORTS_ONLY] [IGNORE] [OUTPUT_SPACES] [LONGITUDINAL] [BOLD2T1W_INIT] [BOLD2T1W_DOF] [USE_BBR] [SLICE_TIME_REF] [DUMMY_SCANS] [_RANDOM_SEED] [ME_T2S_FIT_METHOD] [OUTPUT_LAYOUT] [ME_OUTPUT_ECHOS] [MEDIAL_SURFACE_NAN] [PROJECT_GOODVOXELS] [MD_ONLY_BOILERPLATE] [CIFTI_OUTPUT] [USE_AROMA] [AROMA_MELODIC_DIM] [AROMA_ERR_ON_WARN] [REGRESSORS_ALL_COMPS] [REGRESSORS_FD_TH] [REGRESSORS_DVARS_TH] [SKULL_STRIP_TEMPLATE] [SKULL_STRIP_FIXED_SEED] [SKULL_STRIP_T1W] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [FS_LICENSE_FILE] [FS_SUBJECTS_DIR] [HIRES] [SKIP_RECONALL] [TRACK_CARBON] [COUNTRY_CODE] [VERSION] [VERBOSE_COUNT] [WORK_DIR] [CLEAN_WORKDIR] [RESOURCE_MONITOR] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [TASK_ID] [ECHO_IDX] [BIDS_FILTERS] [ANAT_DERIVATIVES] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEM] [LOW_MEM] [USE_PLUGIN] [SLOPPY] [ANAT_ONLY] [BOILERPLATE_ONLY] [REPORTS_ONLY] [IGNORE] [OUTPUT_SPACES] [LONGITUDINAL] [BOLD2T1W_INIT] [BOLD2T1W_DOF] [FORCE_BBR] [FORCE_NO_BBR] [SLICE_TIME_REF] [DUMMY_SCANS] [_RANDOM_SEED] [ME_T2S_FIT_METHOD] [OUTPUT_LAYOUT] [ME_OUTPUT_ECHOS] [MEDIAL_SURFACE_NAN] [PROJECT_GOODVOXELS] [MD_ONLY_BOILERPLATE] [CIFTI_OUTPUT] [USE_AROMA] [AROMA_MELODIC_DIM] [AROMA_ERR_ON_WARN] [RETURN_ALL_COMPONENTS] [REGRESSORS_FD_TH] [REGRESSORS_DVARS_TH] [SKULL_STRIP_TEMPLATE] [SKULL_STRIP_FIXED_SEED] [SKULL_STRIP_T1W] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [FS_LICENSE_FILE] [FS_SUBJECTS_DIR] [NO_SUBMM_RECON] [FS_NO_RECONALL] [TRACK_CARBON] [COUNTRY_CODE] [VERSION] [VERBOSE_COUNT] [WORK_DIR] [CLEAN_WORKDIR] [RESOURCE_MONITOR] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG]",
     "inputs": [
         {
             "id": "bids_dir",
@@ -72,7 +72,7 @@
         {
             "id": "bids_filters",
             "name": "bids_filters",
-            "description": "A JSON file describing custom BIDS input filters using PyBIDS. For further details, please check out https://fmriprep.readthedocs.io/en/0/faq.html#how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep",
+            "description": "A JSON file describing custom BIDS input filters using PyBIDS. For further details, please check out https://fmriprep.readthedocs.io/en/23.1.3/faq.html#how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep",
             "optional": true,
             "type": "String",
             "value-key": "[BIDS_FILTERS]",
@@ -115,12 +115,12 @@
             "command-line-flag": "--omp-nthreads"
         },
         {
-            "id": "memory_gb",
-            "name": "memory_gb",
+            "id": "mem",
+            "name": "mem",
             "description": "Upper bound memory limit for fMRIPrep processes",
             "optional": true,
             "type": "String",
-            "value-key": "[MEMORY_GB]",
+            "value-key": "[MEM]",
             "command-line-flag": "--mem"
         },
         {
@@ -197,12 +197,12 @@
         {
             "id": "output_spaces",
             "name": "output_spaces",
-            "description": "Standard and non-standard spaces to resample anatomical and functional images to. Standard spaces may be specified by the form ``<SPACE>[:cohort-<label>][:res-<resolution>][...]``, where ``<SPACE>`` is a keyword designating a spatial reference, and may be followed by optional, colon-separated parameters. Non-standard spaces imply specific orientations and sampling grids. Important to note, the ``res-*`` modifier does not define the resolution used for the spatial normalization. To generate no BOLD outputs, use this option without specifying any spatial references. For further details, please check out https://fmriprep.readthedocs.io/en/0/spaces.html",
+            "description": "Standard and non-standard spaces to resample anatomical and functional images to. Standard spaces may be specified by the form ``<SPACE>[:cohort-<label>][:res-<resolution>][...]``, where ``<SPACE>`` is a keyword designating a spatial reference, and may be followed by optional, colon-separated parameters. Non-standard spaces imply specific orientations and sampling grids. Important to note, the ``res-*`` modifier does not define the resolution used for the spatial normalization. To generate no BOLD outputs, use this option without specifying any spatial references. For further details, please check out https://fmriprep.readthedocs.io/en/23.1.3/spaces.html",
             "optional": true,
-            "list": true,
             "type": "String",
             "value-key": "[OUTPUT_SPACES]",
-            "command-line-flag": "--output-spaces"
+            "command-line-flag": "--output-spaces",
+            "list": true
         },
         {
             "id": "longitudinal",
@@ -243,13 +243,22 @@
             "command-line-flag": "--bold2t1w-dof"
         },
         {
-            "id": "use_bbr",
-            "name": "use_bbr",
+            "id": "force_bbr",
+            "name": "force_bbr",
             "description": "Always use boundary-based registration (no goodness-of-fit checks)",
             "optional": true,
             "type": "Flag",
-            "value-key": "[USE_BBR]",
+            "value-key": "[FORCE_BBR]",
             "command-line-flag": "--force-bbr"
+        },
+        {
+            "id": "force_no_bbr",
+            "name": "force_no_bbr",
+            "description": "Do not use boundary-based registration (no goodness-of-fit checks)",
+            "type": "Flag",
+            "command-line-flag": "--force-no-bbr",
+            "optional": true,
+            "value-key": "[FORCE_NO_BBR]"
         },
         {
             "id": "slice_time_ref",
@@ -383,12 +392,12 @@
             "command-line-flag": "--error-on-aroma-warnings"
         },
         {
-            "id": "regressors_all_comps",
-            "name": "regressors_all_comps",
+            "id": "return_all_components",
+            "name": "return_all_components",
             "description": "Include all components estimated in CompCor decomposition in the confounds file instead of only the components sufficient to explain 50 percent of BOLD variance in each CompCor mask",
             "optional": true,
             "type": "Flag",
-            "value-key": "[REGRESSORS_ALL_COMPS]",
+            "value-key": "[RETURN_ALL_COMPONENTS]",
             "command-line-flag": "--return-all-components"
         },
         {
@@ -504,21 +513,21 @@
             "command-line-flag": "--fs-subjects-dir"
         },
         {
-            "id": "hires",
-            "name": "hires",
+            "id": "no_submm_recon",
+            "name": "no_submm_recon",
             "description": "Disable sub-millimeter (hires) reconstruction",
             "optional": true,
             "type": "Flag",
-            "value-key": "[HIRES]",
+            "value-key": "[NO_SUBMM_RECON]",
             "command-line-flag": "--no-submm-recon"
         },
         {
-            "id": "skip_reconall",
-            "name": "skip_reconall",
+            "id": "fs_no_reconall",
+            "name": "fs_no_reconall",
             "description": "Disable FreeSurfer surface preprocessing.",
             "optional": true,
             "type": "Flag",
-            "value-key": "[SKIP_RECONALL]",
+            "value-key": "[FS_NO_RECONALL]",
             "command-line-flag": "--fs-no-reconall"
         },
         {
@@ -556,7 +565,6 @@
             "optional": true,
             "type": "String",
             "value-key": "[VERBOSE_COUNT]",
-            "command-line-flag": "-v",
             "value-choices": [
                 "-v",
                 "-vv",
@@ -645,24 +653,8 @@
     ],
     "tags": {},
     "suggested-resources": {
-        "cpu-cores": 8,
-        "ram": 8,
-        "walltime-estimate": 480
-    },
-    "custom": {
-        "nipoppy": {
-            "CONTAINER_CONFIG": {
-                "ARGS": [
-                    "--bind",
-                    "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION_ID]]"
-                ]
-            }
-        },
-        "nipoppy_old": {
-            "paths_to_tar": [
-                "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/sub-[[NIPOPPY_PARTICIPANT_ID]]/ses-[[NIPOPPY_BIDS_SESSION_ID]]",
-                "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION_ID]]/sub-[[NIPOPPY_PARTICIPANT_ID]]"
-            ]
-        }
+        "cpu-cores": 1,
+        "ram": 1,
+        "walltime-estimate": 60
     }
 }

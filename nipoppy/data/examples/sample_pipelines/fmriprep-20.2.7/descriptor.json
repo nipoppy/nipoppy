@@ -3,7 +3,7 @@
     "description": "fmriprep",
     "tool-version": "20.2.7",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [VERSION] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [TASK_ID] [ECHO_IDX] [BIDS_FILTERS] [ANAT_DERIVATIVES] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [LOW_MEM] [USE_PLUGIN] [ANAT_ONLY] [BOILERPLATE_ONLY] [MD_ONLY_BOILERPLATE] [AROMA_ERR_ON_WARN] [VERBOSE_COUNT] [IGNORE] [LONGITUDINAL] [OUTPUT_SPACES] [BOLD2T1W_INIT] [BOLD2T1W_DOF] [USE_BBR] [MEDIAL_SURFACE_NAN] [SLICE_TIME_REF] [DUMMY_SCANS] [_RANDOM_SEED] [USE_AROMA] [AROMA_MELODIC_DIM] [REGRESSORS_ALL_COMPS] [REGRESSORS_FD_TH] [REGRESSORS_DVARS_TH] [SKULL_STRIP_TEMPLATE] [SKULL_STRIP_FIXED_SEED] [SKULL_STRIP_T1W] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [FS_LICENSE_FILE] [FS_SUBJECTS_DIR] [HIRES] [CIFTI_OUTPUT] [SKIP_RECONALL] [OUTPUT_LAYOUT] [WORK_DIR] [CLEAN_WORKDIR] [RESOURCE_MONITOR] [REPORTS_ONLY] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG] [SLOPPY]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [VERSION] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [TASK_ID] [ECHO_IDX] [BIDS_FILTERS] [ANAT_DERIVATIVES] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEM] [LOW_MEM] [USE_PLUGIN] [ANAT_ONLY] [BOILERPLATE_ONLY] [MD_ONLY_BOILERPLATE] [AROMA_ERR_ON_WARN] [VERBOSE_COUNT] [IGNORE] [LONGITUDINAL] [OUTPUT_SPACES] [BOLD2T1W_INIT] [BOLD2T1W_DOF] [FORCE_BBR] [FORCE_NO_BBR] [MEDIAL_SURFACE_NAN] [SLICE_TIME_REF] [DUMMY_SCANS] [_RANDOM_SEED] [USE_AROMA] [AROMA_MELODIC_DIM] [RETURN_ALL_COMPONENTS] [REGRESSORS_FD_TH] [REGRESSORS_DVARS_TH] [SKULL_STRIP_TEMPLATE] [SKULL_STRIP_FIXED_SEED] [SKULL_STRIP_T1W] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [FS_LICENSE_FILE] [FS_SUBJECTS_DIR] [NO_SUBMM_RECON] [CIFTI_OUTPUT] [FS_NO_RECONALL] [OUTPUT_LAYOUT] [WORK_DIR] [CLEAN_WORKDIR] [RESOURCE_MONITOR] [REPORTS_ONLY] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG] [SLOPPY]",
     "inputs": [
         {
             "id": "bids_dir",
@@ -124,12 +124,12 @@
             "command-line-flag": "--omp-nthreads"
         },
         {
-            "id": "memory_gb",
-            "name": "memory_gb",
+            "id": "mem",
+            "name": "mem",
             "description": "upper bound memory limit for fMRIPrep processes",
             "optional": true,
             "type": "String",
-            "value-key": "[MEMORY_GB]",
+            "value-key": "[MEM]",
             "command-line-flag": "--mem"
         },
         {
@@ -230,10 +230,10 @@
             "name": "output_spaces",
             "description": "Standard and non-standard spaces to resample anatomical and functional images to. Standard spaces may be specified by the form ``<SPACE>[:cohort-<label>][:res-<resolution>][...]``, where ``<SPACE>`` is a keyword designating a spatial reference, and may be followed by optional, colon-separated parameters. Non-standard spaces imply specific orientations and sampling grids. Important to note, the ``res-*`` modifier does not define the resolution used for the spatial normalization. To generate no BOLD outputs, use this option without specifying any spatial references. For further details, please check out https://fmriprep.readthedocs.io/en/20.2.7/spaces.html",
             "optional": true,
-            "list": true,
             "type": "String",
             "value-key": "[OUTPUT_SPACES]",
-            "command-line-flag": "--output-spaces"
+            "command-line-flag": "--output-spaces",
+            "list": true
         },
         {
             "id": "bold2t1w_init",
@@ -265,13 +265,22 @@
             "command-line-flag": "--bold2t1w-dof"
         },
         {
-            "id": "use_bbr",
-            "name": "use_bbr",
+            "id": "force_bbr",
+            "name": "force_bbr",
             "description": "Always use boundary-based registration (no goodness-of-fit checks)",
             "optional": true,
             "type": "Flag",
-            "value-key": "[USE_BBR]",
+            "value-key": "[FORCE_BBR]",
             "command-line-flag": "--force-bbr"
+        },
+        {
+            "id": "force_no_bbr",
+            "name": "force_no_bbr",
+            "description": "Do not use boundary-based registration (no goodness-of-fit checks)",
+            "type": "Flag",
+            "command-line-flag": "--force-no-bbr",
+            "optional": true,
+            "value-key": "[FORCE_NO_BBR]"
         },
         {
             "id": "medial_surface_nan",
@@ -329,12 +338,12 @@
             "command-line-flag": "--aroma-melodic-dimensionality"
         },
         {
-            "id": "regressors_all_comps",
-            "name": "regressors_all_comps",
+            "id": "return_all_components",
+            "name": "return_all_components",
             "description": "Include all components estimated in CompCor decomposition in the confounds file instead of only the components sufficient to explain 50 percent of BOLD variance in each CompCor mask",
             "optional": true,
             "type": "Flag",
-            "value-key": "[REGRESSORS_ALL_COMPS]",
+            "value-key": "[RETURN_ALL_COMPONENTS]",
             "command-line-flag": "--return-all-components"
         },
         {
@@ -446,12 +455,12 @@
             "command-line-flag": "--fs-subjects-dir"
         },
         {
-            "id": "hires",
-            "name": "hires",
+            "id": "no_submm_recon",
+            "name": "no_submm_recon",
             "description": "disable sub-millimeter (hires) reconstruction",
             "optional": true,
             "type": "Flag",
-            "value-key": "[HIRES]",
+            "value-key": "[NO_SUBMM_RECON]",
             "command-line-flag": "--no-submm-recon"
         },
         {
@@ -468,12 +477,12 @@
             "command-line-flag": "--cifti-output"
         },
         {
-            "id": "skip_reconall",
-            "name": "skip_reconall",
-            "description": "Disable FreeSurfer surface preprocessing.",
+            "id": "fs_no_reconall",
+            "name": "fs_no_reconall",
+            "description": "disable FreeSurfer surface preprocessing.",
             "optional": true,
             "type": "Flag",
-            "value-key": "[SKIP_RECONALL]",
+            "value-key": "[FS_NO_RECONALL]",
             "command-line-flag": "--fs-no-reconall"
         },
         {
@@ -588,24 +597,8 @@
     ],
     "tags": {},
     "suggested-resources": {
-        "cpu-cores": 8,
-        "ram": 8,
-        "walltime-estimate": 480
-    },
-    "custom": {
-        "nipoppy": {
-            "CONTAINER_CONFIG": {
-                "ARGS": [
-                    "--bind",
-                    "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/6.0.1/output/[[NIPOPPY_BIDS_SESSION_ID]]"
-                ]
-            }
-        },
-        "nipoppy_old": {
-            "paths_to_tar": [
-                "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/fmriprep/sub-[[NIPOPPY_PARTICIPANT_ID]]/ses-[[NIPOPPY_BIDS_SESSION_ID]]",
-                "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/6.0.1/output/[[NIPOPPY_BIDS_SESSION_ID]]/sub-[[NIPOPPY_PARTICIPANT_ID]]"
-            ]
-        }
+        "cpu-cores": 1,
+        "ram": 1,
+        "walltime-estimate": 60
     }
 }
