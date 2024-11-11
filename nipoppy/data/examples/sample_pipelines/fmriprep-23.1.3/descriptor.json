@@ -656,5 +656,15 @@
         "cpu-cores": 1,
         "ram": 1,
         "walltime-estimate": 60
+    },
+    "custom": {
+        "nipoppy": {
+            "CONTAINER_CONFIG": {
+                "ARGS": [
+                    "--bind",
+                    "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION_ID]]"
+                ]
+            }
+        }
     }
 }
