@@ -25,11 +25,10 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
 
 
 def add_arg_dataset_root(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --dataset-root argument to the parser."""
+    """Add a dataset-root argument to the parser."""
     parser.add_argument(
-        "--dataset-root",
+        "dataset_root",
         type=Path,
-        required=True,
         help="Path to the root of the dataset.",
     )
     return parser
@@ -74,17 +73,13 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
         required=False,
         help="Pipeline version, as specified in the config file.",
     )
-    return parser
-
-
-def add_arg_pipeline_step(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --pipeline-step argument to the parser."""
     parser.add_argument(
         "--pipeline-step",
         type=str,
         required=False,
         help="Pipeline step, as specified in the config file (default: first step).",
     )
+
     return parser
 
 
@@ -143,6 +138,20 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
         help=(
             "Verbosity level, from 0 (least verbose) to 3 (most verbose)."
             f" Default: {DEFAULT_VERBOSITY}."
+        ),
+    )
+    return parser
+
+
+def add_arg_keepworkdir(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add a --keep-workdir argument to the parser."""
+    parser.add_argument(
+        "--keep-workdir",
+        type=str,
+        required=False,
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
         ),
     )
     return parser
@@ -220,9 +229,9 @@ def add_subparser_dicom_reorg(
     from nipoppy.layout import DEFAULT_LAYOUT_INFO
 
     description = (
-        "(Re)organize raw (DICOM) files, from the raw DICOM directory "
-        f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to the organized "
-        f"sourcedata directory ({DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
+        "(Re)organize raw (DICOM) files, from the "
+        f"({DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) to "
+        f"({DEFAULT_LAYOUT_INFO.dpath_post_reorg})."
     )
     parser = subparsers.add_parser(
         COMMAND_DICOM_REORG,
@@ -263,7 +272,6 @@ def add_subparser_bids_conversion(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
     parser = add_args_participant_and_session(parser)
     parser = add_arg_simulate(parser)
     return parser
@@ -283,8 +291,8 @@ def add_subparser_pipeline_run(
     )
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
     parser = add_args_participant_and_session(parser)
+    parser = add_arg_keepworkdir(parser)
     parser = add_arg_simulate(parser)
     return parser
 

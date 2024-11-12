@@ -19,7 +19,7 @@ class CustomDicomReorgWorkflow(DicomReorgWorkflow):
         """
         # self.layout.dpath_raw_dicom will dynamically generate the path to the
         # dataset's (unorganized) raw imaging data
-        return [self.layout.dpath_raw_imaging / participant_id / f"{session_id}.tar.gz"]
+        return [self.layout.dpath_pre_reorg / participant_id / f"{session_id}.tar.gz"]
 
     def apply_fname_mapping(
         self, fname_source: str, participant_id: str, session_id: str
@@ -42,9 +42,8 @@ if __name__ == "__main__":
         description="Run the custom DICOM reorganization workflow."
     )
     parser.add_argument(
-        "--dataset-root",
+        "dataset_root",
         type=Path,
-        required=True,
         help="Root directory of Nipoppy dataset",
     )
     args = parser.parse_args()

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 
@@ -20,8 +20,8 @@ def data():
         Doughnut.col_session_id: ["BL", "M12", "BL", "M12"],
         Doughnut.col_datatype: ["anat", "anat", "anat", "anat"],
         Doughnut.col_participant_dicom_dir: ["01", "01", "02", "02"],
-        Doughnut.col_in_raw_imaging: [True, True, True, False],
-        Doughnut.col_in_sourcedata: [True, False, True, False],
+        Doughnut.col_in_pre_reorg: [True, True, True, False],
+        Doughnut.col_in_post_reorg: [True, False, True, False],
         Doughnut.col_in_bids: [True, False, False, False],
     }
 
@@ -29,8 +29,8 @@ def data():
 @pytest.mark.parametrize(
     "fpath",
     [
-        DPATH_TEST_DATA / "doughnut1.csv",
-        DPATH_TEST_DATA / "doughnut2.csv",
+        DPATH_TEST_DATA / "doughnut1.tsv",
+        DPATH_TEST_DATA / "doughnut2.tsv",
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
@@ -41,10 +41,10 @@ def test_load(fpath, validate):
 @pytest.mark.parametrize(
     "fpath,is_valid",
     [
-        (DPATH_TEST_DATA / "doughnut1.csv", True),
-        (DPATH_TEST_DATA / "doughnut2.csv", True),
-        (DPATH_TEST_DATA / "doughnut_invalid1.csv", False),
-        (DPATH_TEST_DATA / "doughnut_invalid2.csv", False),
+        (DPATH_TEST_DATA / "doughnut1.tsv", True),
+        (DPATH_TEST_DATA / "doughnut2.tsv", True),
+        (DPATH_TEST_DATA / "doughnut_invalid1.tsv", False),
+        (DPATH_TEST_DATA / "doughnut_invalid2.tsv", False),
     ],
 )
 def test_validate(fpath, is_valid):
@@ -55,7 +55,7 @@ def test_validate(fpath, is_valid):
 
 @pytest.mark.parametrize(
     "col",
-    [Doughnut.col_in_raw_imaging, Doughnut.col_in_sourcedata, Doughnut.col_in_bids],
+    [Doughnut.col_in_pre_reorg, Doughnut.col_in_post_reorg, Doughnut.col_in_bids],
 )
 def test_check_status_col(col):
     assert Doughnut._check_status_col(col) == col
@@ -79,11 +79,11 @@ def test_check_status_value_invalid():
 @pytest.mark.parametrize(
     "participant_id,session_id,col,expected_status",
     [
-        ("01", "BL", Doughnut.col_in_raw_imaging, True),
-        ("01", "BL", Doughnut.col_in_sourcedata, True),
+        ("01", "BL", Doughnut.col_in_pre_reorg, True),
+        ("01", "BL", Doughnut.col_in_post_reorg, True),
         ("01", "BL", Doughnut.col_in_bids, True),
-        ("02", "M12", Doughnut.col_in_raw_imaging, False),
-        ("02", "M12", Doughnut.col_in_sourcedata, False),
+        ("02", "M12", Doughnut.col_in_pre_reorg, False),
+        ("02", "M12", Doughnut.col_in_post_reorg, False),
         ("02", "M12", Doughnut.col_in_bids, False),
     ],
 )
@@ -94,11 +94,11 @@ def test_get_status(data, participant_id, session_id, col, expected_status):
 @pytest.mark.parametrize(
     "participant_id,session_id,col,status",
     [
-        ("01", "BL", Doughnut.col_in_raw_imaging, False),
-        ("01", "BL", Doughnut.col_in_sourcedata, False),
+        ("01", "BL", Doughnut.col_in_pre_reorg, False),
+        ("01", "BL", Doughnut.col_in_post_reorg, False),
         ("01", "BL", Doughnut.col_in_bids, False),
-        ("02", "M12", Doughnut.col_in_raw_imaging, True),
-        ("02", "M12", Doughnut.col_in_sourcedata, True),
+        ("02", "M12", Doughnut.col_in_pre_reorg, True),
+        ("02", "M12", Doughnut.col_in_post_reorg, True),
         ("02", "M12", Doughnut.col_in_bids, True),
     ],
 )
@@ -118,11 +118,11 @@ def test_set_status(data, participant_id, session_id, col, status):
 @pytest.mark.parametrize(
     "status_col,participant_id,session_id,expected_count",
     [
-        (Doughnut.col_in_raw_imaging, None, None, 3),
-        (Doughnut.col_in_sourcedata, None, None, 2),
+        (Doughnut.col_in_pre_reorg, None, None, 3),
+        (Doughnut.col_in_post_reorg, None, None, 2),
         (Doughnut.col_in_bids, None, None, 1),
-        (Doughnut.col_in_raw_imaging, "01", None, 2),
-        (Doughnut.col_in_sourcedata, None, "M12", 0),
+        (Doughnut.col_in_pre_reorg, "01", None, 2),
+        (Doughnut.col_in_post_reorg, None, "M12", 0),
         (Doughnut.col_in_bids, "01", "BL", 1),
     ],
 )
@@ -292,6 +292,50 @@ def test_generate_missing_paths(tmp_path: Path):
         empty=False,
     )
 
-    assert doughnut[Doughnut.col_in_raw_imaging].all()
-    assert (~doughnut[Doughnut.col_in_sourcedata]).all()
+    assert doughnut[Doughnut.col_in_pre_reorg].all()
+    assert (~doughnut[Doughnut.col_in_post_reorg]).all()
+    assert doughnut[Doughnut.col_in_bids].all()
+
+
+def test_doughnut_generation_no_session(
+    tmp_path: Path,
+):
+    """Test doughnut generation when there are no session folders.
+
+    Check that the subjects are included and bids valid in the doughnut.
+    """
+    participants_and_sessions_manifest = {
+        "01": [FAKE_SESSION_ID],
+        "02": [FAKE_SESSION_ID],
+    }
+    participants_and_sessions_bidsified = {
+        "01": [None],
+        "02": [None],
+    }
+
+    dpath_root = tmp_path / "my_dataset"
+    dpath_bidsified = dpath_root / "bids"
+
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions_manifest,
+        participants_and_sessions_downloaded=None,
+        participants_and_sessions_organized=None,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
+        dpath_downloaded=None,
+        dpath_organized=None,
+        dpath_bidsified=dpath_bidsified,
+    )
+
+    doughnut = generate_doughnut(
+        manifest=manifest,
+        dicom_dir_map=DicomDirMap.load_or_generate(
+            manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
+        ),
+        dpath_downloaded=None,
+        dpath_organized=None,
+        dpath_bidsified=dpath_bidsified,
+        empty=False,
+    )
+
+    assert doughnut[Doughnut.col_participant_id].to_list() == ["01", "02"]
     assert doughnut[Doughnut.col_in_bids].all()

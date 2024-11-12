@@ -50,12 +50,13 @@ class BidsConversionRunner(PipelineRunner):
         return []
 
     @cached_property
+    def _pipeline_configs(self) -> list[BidsPipelineConfig]:
+        return self.config.BIDS_PIPELINES
+
+    @cached_property
     def pipeline_config(self) -> BidsPipelineConfig:
         """Get the user config for the BIDS conversion pipeline."""
-        return self.config.get_pipeline_config(
-            self.pipeline_name,
-            self.pipeline_version,
-        )
+        return super().pipeline_config
 
     @cached_property
     def pipeline_step_config(self) -> BidsPipelineStepConfig:
@@ -84,7 +85,7 @@ class BidsConversionRunner(PipelineRunner):
             participant_id=participant_id,
             session_id=session_id,
             bind_paths=[
-                self.layout.dpath_sourcedata,
+                self.layout.dpath_post_reorg,
                 self.layout.dpath_bids,
             ],
         )

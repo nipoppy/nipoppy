@@ -13,7 +13,14 @@ from fids import fids
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    DEFAULT_PIPELINE_STEP_NAME,
+    FAKE_SESSION_ID,
+    LogColor,
+    ReturnCode,
+    StrOrPathLike,
+)
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
 from .conftest import datetime_fixture  # noqa F401
@@ -73,14 +80,6 @@ def workflow(tmp_path: Path):
     # write config
     config = get_config(
         visit_ids=["1"],
-        bids_pipelines=[
-            # built-in pipelines
-            {
-                "NAME": "heudiconv",
-                "VERSION": "0.12.2",
-                "STEPS": [{"NAME": "prepare"}, {"NAME": "convert"}],
-            }
-        ],
         proc_pipelines=[
             # built-in pipelines
             {
@@ -216,7 +215,6 @@ def test_fpath_container_not_found(workflow: PipelineWorkflow):
     "pipeline_name,pipeline_version,pipeline_step,descriptor",
     [
         ("fmriprep", "23.1.3", None, {}),
-        ("heudiconv", "0.12.2", "prepare", {"key1": "value1"}),
         ("my_pipeline", "1.0", None, {"key2": "value2"}),
     ],
 )
@@ -384,8 +382,8 @@ def test_process_template_json(return_str, tmp_path: Path):
 
     processed = workflow.process_template_json(
         {
-            "[[NIPOPPY_BIDS_PARTICIPANT]]": "[[NIPOPPY_PARTICIPANT_ID]]",
-            "[[NIPOPPY_BIDS_SESSION]]": "[[NIPOPPY_SESSION_ID]]",
+            "[[NIPOPPY_BIDS_PARTICIPANT_ID]]": "[[NIPOPPY_PARTICIPANT_ID]]",
+            "[[NIPOPPY_BIDS_SESSION_ID]]": "[[NIPOPPY_SESSION_ID]]",
             "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
         },
@@ -404,9 +402,9 @@ def test_process_template_json(return_str, tmp_path: Path):
 
     # check that everything was replaced
     for pattern in [
-        "[[NIPOPPY_BIDS_PARTICIPANT]]",
+        "[[NIPOPPY_BIDS_PARTICIPANT_ID]]",
         "[[NIPOPPY_PARTICIPANT_ID]]",
-        "[[NIPOPPY_BIDS_SESSION]]",
+        "[[NIPOPPY_BIDS_SESSION_ID]]",
         "[[NIPOPPY_SESSION_ID]]",
         "[[NIPOPPY_DPATH_PIPELINE]]",
         "[[NIPOPPY_DPATH_BIDS]]",
@@ -479,7 +477,7 @@ def test_set_up_bids_db(
     expected_count,
     tmp_path: Path,
 ):
-    dpath_bids_db = tmp_path / "bids_db"
+    dpath_pybids_db = tmp_path / "bids_db"
     fids.create_fake_bids_dataset(
         output_dir=workflow.layout.dpath_bids,
         subjects="01",
@@ -493,16 +491,16 @@ def test_set_up_bids_db(
         datatypes=["anat", "func"],
     )
     bids_layout = workflow.set_up_bids_db(
-        dpath_bids_db=dpath_bids_db,
+        dpath_pybids_db=dpath_pybids_db,
         participant_id=participant_id,
         session_id=session_id,
     )
-    assert dpath_bids_db.exists()
+    assert dpath_pybids_db.exists()
     assert len(bids_layout.get(extension=".nii.gz")) == expected_count
 
 
 def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Path):
-    dpath_bids_db = tmp_path / "bids_db"
+    dpath_pybids_db = tmp_path / "bids_db"
     participant_id = "01"
     session_id = "1"
 
@@ -513,7 +511,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
 
     workflow.set_up_bids_db(
-        dpath_bids_db=dpath_bids_db,
+        dpath_pybids_db=dpath_pybids_db,
         participant_id=participant_id,
         session_id=session_id,
     )
@@ -521,9 +519,40 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
 
 
+def test_set_up_bids_db_no_session(
+    workflow: PipelineWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Create a fake BIDS dataset with no session-level folders.
+
+    Make sure:
+    - Check that the ignore pattern is not added to the BIDS layout.
+    - Check if files are found in the BIDS layout not ignored.
+    """
+    dpath_pybids_db = tmp_path / "bids_db"
+    participant_id = "01"
+    session_id = FAKE_SESSION_ID
+
+    fids.create_fake_bids_dataset(
+        output_dir=workflow.layout.dpath_bids,
+        subjects=participant_id,
+        sessions=None,
+    )
+
+    bids_layout = workflow.set_up_bids_db(
+        dpath_pybids_db=dpath_pybids_db,
+        participant_id=participant_id,
+        session_id=session_id,
+    )
+
+    assert not (f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})" in caplog.text)
+    assert len(bids_layout.get(extension=".nii.gz")) > 0
+
+
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
-    [("heudiconv", "0.12.2"), ("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
+    [("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
 )
 def test_check_pipeline_version(
     pipeline_name,
@@ -542,9 +571,8 @@ def test_check_pipeline_version(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,expected_step",
     [
-        ("heudiconv", "0.12.2", "prepare"),
-        ("fmriprep", "23.1.3", None),
-        ("my_pipeline", "1.0", None),
+        ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME),
+        ("my_pipeline", "1.0", DEFAULT_PIPELINE_STEP_NAME),
     ],
 )
 def test_check_pipeline_step(
@@ -556,6 +584,7 @@ def test_check_pipeline_step(
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
+    workflow.pipeline_step = None
     workflow.check_pipeline_step()
     assert workflow.pipeline_step == expected_step
     assert f"using step {expected_step}" in caplog.text
@@ -567,7 +596,7 @@ def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
     create_empty_dataset(workflow.layout.dpath_root)
     workflow.run_setup()
     assert workflow.pipeline_version == "1.0"
-    assert workflow.pipeline_step is None
+    assert workflow.pipeline_step == DEFAULT_PIPELINE_STEP_NAME
 
 
 @pytest.mark.parametrize("dry_run", [True, False])
