@@ -194,7 +194,7 @@ def add_subparser_status(
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
     """Add subparser for status command."""
-    description = "Shows current status of the dataset."
+    description = "Show current status of the dataset."
     parser = subparsers.add_parser(
         COMMAND_STATUS,
         description=description,
@@ -205,11 +205,13 @@ def add_subparser_status(
 
     parser = add_arg_dataset_root(parser)
 
-    parser.add_argument(
-        "--save_status_to_disk",
-        action="store_true",
-        help=("Save the status to disk. This will overwrite the existing status file."),
-    )
+    # TODO in future release
+    # parser.add_argument(
+    #     "--save-status-to-disk",
+    #     action="store_true",
+    #     help=("Save the status to disk."
+    #           " This will overwrite the existing status file."),
+    # )
 
     return parser
 

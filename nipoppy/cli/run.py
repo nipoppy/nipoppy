@@ -59,11 +59,12 @@ def cli(argv: Sequence[str] = None) -> None:
             # Lazy import to improve performance of cli.
             from nipoppy.workflows.dataset_status import StatusWorkflow
 
-            save_status_to_disk = getattr(args, "save", None)
+            # TODO in future release
+            # save_status_to_disk = getattr(args, "save", None)
 
             workflow = StatusWorkflow(
                 dpath_root=dpath_root,
-                save_status_to_disk=save_status_to_disk,
+                # save_status_to_disk=save_status_to_disk,
                 **workflow_kwargs,
             )
 

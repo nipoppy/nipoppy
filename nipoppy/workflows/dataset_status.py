@@ -23,8 +23,8 @@ class StatusWorkflow(BaseWorkflow):
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
-        # TODO (maybe)
-        save_status_to_disk: bool = False,
+        # TODO in future release
+        # save_status_to_disk: bool = False,
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -36,8 +36,8 @@ class StatusWorkflow(BaseWorkflow):
         )
         self.col_pipeline = "pipeline"
 
-        # TODO (maybe)
-        self.save_status_to_disk = save_status_to_disk
+        # TODO in future release
+        # self.save_status_to_disk = save_status_to_disk
 
     def run_main(self):
         """Check the status of the dataset and report.
@@ -47,6 +47,10 @@ class StatusWorkflow(BaseWorkflow):
         3) Bagel information if available
         """
         self.logger.info("Checking the status of the dataset.")
+
+        # load global_config to get the dataset name
+        dataset_name = self.config.DATASET_NAME
+        self.logger.info(f"Dataset name: {dataset_name}")
 
         status_df = pd.DataFrame()
 
@@ -58,7 +62,7 @@ class StatusWorkflow(BaseWorkflow):
 
         self._df_to_table(status_df)
 
-        # TODO (maybe)
+        # TODO in future release
         # save the status to a file (probably needs a schema)
         # check if previous status file exists
         # if so, compare the two and report the differences
@@ -68,7 +72,7 @@ class StatusWorkflow(BaseWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
+        self.logger.info(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
 
         manifest = self.manifest
 
@@ -88,17 +92,19 @@ class StatusWorkflow(BaseWorkflow):
         session_ids = imaging_manifest[manifest.col_session_id].unique()
 
         self.logger.info(
-            f"Number of participants (imaging and non-imaging): {len(participant_ids)}"
+            f"\tNumber of participants (imaging and non-imaging): "
+            f"{len(participant_ids)}"
         )
         self.logger.info(
-            f"Available  visits (imaging and non-imaging) (n={len(visit_ids)}): "
+            f"\tAvailable  visits (imaging and non-imaging) (n={len(visit_ids)}): "
             f"{visit_ids}"
         )
         self.logger.info(
-            f"Number of participants with imaging data: {len(imaging_participant_ids)}"
+            f"\tNumber of participants with imaging data: "
+            f"{len(imaging_participant_ids)}"
         )
         self.logger.info(
-            f"Number of imaging sessions (n={len(session_ids)}): {session_ids}"
+            f"\tNumber of imaging sessions (n={len(session_ids)}): " f"{session_ids}"
         )
 
         manifest_status_df = imaging_manifest.groupby(
@@ -114,7 +120,7 @@ class StatusWorkflow(BaseWorkflow):
         """Check the doughnut file (if exists)."""
         nipoppy_checkpoint = "in_doughnut"
 
-        self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
+        self.logger.info(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
 
         try:
             doughnut = self.doughnut
@@ -128,8 +134,10 @@ class StatusWorkflow(BaseWorkflow):
         participant_ids = doughnut[doughnut.col_participant_id].unique()
         session_ids = doughnut[doughnut.col_session_id].unique()
 
-        self.logger.info(f"Number of participants in doughnut: {len(participant_ids)}")
-        self.logger.info(f"Available visits (n={len(session_ids)}): {session_ids}")
+        self.logger.info(
+            f"\tNumber of participants in doughnut: {len(participant_ids)}"
+        )
+        self.logger.info(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
 
         doughnut_status_df = doughnut.groupby([doughnut.col_session_id]).sum()[
             [
@@ -147,7 +155,7 @@ class StatusWorkflow(BaseWorkflow):
         """Check the imaging bagel file (if exists)."""
         nipoppy_checkpoint = "in_imaging_bagel"
 
-        self.logger.info(f"***Status at nipoppy_checkpoint: {nipoppy_checkpoint}***")
+        self.logger.info(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
 
         try:
             bagel = self.bagel
@@ -162,9 +170,9 @@ class StatusWorkflow(BaseWorkflow):
         session_ids = bagel[bagel.col_session_id].unique()
         pipelines = bagel[bagel.col_pipeline_name].unique()
 
-        self.logger.info(f"Number of participants in bagel: {len(participant_ids)}")
-        self.logger.info(f"Available visits (n={len(session_ids)}): {session_ids}")
-        self.logger.info(f"Available pipelines (n={len(pipelines)}): {pipelines}")
+        self.logger.info(f"\tNumber of participants in bagel: {len(participant_ids)}")
+        self.logger.info(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
+        self.logger.info(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
         bagel[self.col_pipeline] = (
             bagel[bagel.col_pipeline_name]
@@ -218,11 +226,12 @@ class StatusWorkflow(BaseWorkflow):
         # emoji legend
         legend_dict = {
             sad_cat_emoji: "No available data are curated or processed",
-            doughnut_emoji: "Data curation has started",
-            sparkles: "BIDSification is complete",
-            bagel_emoji: "Data processing has started",
-            rocket_emoji: "At least 1 pipeline processing is complete",
-            confetti_emoji: "All data are curated and processed",
+            doughnut_emoji: "Data curation has started. Doughnut is made!",
+            sparkles: "BIDSification is complete! Tidiness sparks joy!",
+            bagel_emoji: "Data processing has started. Bagels are baking!",
+            rocket_emoji: "At least 1 pipeline processing is complete. "
+            "Successful launch!",
+            confetti_emoji: "All data are curated and processed. " "Time to celebrate!",
         }
 
         doughnut_cols = ["in_pre_reorg", "in_post_reorg", "in_bids"]
@@ -259,7 +268,7 @@ class StatusWorkflow(BaseWorkflow):
         # Initiate a Table instance
         title = (
             "Participant counts by session at each Nipoppy checkpoint"
-            + f" {sparkles} {crossed_fingers_emoji}"
+            + f" {crossed_fingers_emoji} {crossed_fingers_emoji}"
         )  # + f"\n{legend_dict}"
 
         column_colors = [
