@@ -3,7 +3,7 @@
     "description": "qsiprep",
     "tool-version": "0.23.0",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [BIDS_FILTERS] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEMORY_GB] [LOW_MEM] [USE_PLUGIN] [SLOPPY] [ANAT_ONLY] [DWI_ONLY] [BOILERPLATE_ONLY] [REPORTS_ONLY] [IGNORE] [INFANT] [LONGITUDINAL] [SKIP_ANAT_BASED_SPATIAL_NORMALIZATION] [ANAT_MODALITY] [B0_THRESHOLD] [DWI_DENOISE_WINDOW] [DENOISE_METHOD] [UNRINGING_METHOD] [DWI_NO_BIASCORR] [B1_BIASCORRECT_STAGE] [NO_B0_HARMONIZATION] [DENOISE_AFTER_COMBINING] [SEPARATE_ALL_DWIS] [DISTORTION_GROUP_MERGE] [ANATOMICAL_TEMPLATE] [OUTPUT_RESOLUTION] [B0_TO_T1W_TRANSFORM] [INTRAMODAL_TEMPLATE_ITERS] [INTRAMODAL_TEMPLATE_TRANSFORM] [FS_LICENSE_FILE] [B0_MOTION_CORR_TO] [HMC_TRANSFORM] [HMC_MODEL] [EDDY_CONFIG] [SHORELINE_ITERS] [PEPOLAR_METHOD] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [VERSION] [VERBOSE_COUNT] [WORK_DIR] [RESOURCE_MONITOR] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [BIDS_FILTER_FILE] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEM] [LOW_MEM] [USE_PLUGIN] [SLOPPY] [ANAT_ONLY] [DWI_ONLY] [BOILERPLATE_ONLY] [REPORTS_ONLY] [IGNORE] [INFANT] [LONGITUDINAL] [SKIP_ANAT_BASED_SPATIAL_NORMALIZATION] [ANAT_MODALITY] [B0_THRESHOLD] [DWI_DENOISE_WINDOW] [DENOISE_METHOD] [UNRINGING_METHOD] [DWI_NO_BIASCORR] [B1_BIASCORRECT_STAGE] [NO_B0_HARMONIZATION] [DENOISE_AFTER_COMBINING] [SEPARATE_ALL_DWIS] [DISTORTION_GROUP_MERGE] [ANATOMICAL_TEMPLATE] [OUTPUT_RESOLUTION] [B0_TO_T1W_TRANSFORM] [INTRAMODAL_TEMPLATE_ITERS] [INTRAMODAL_TEMPLATE_TRANSFORM] [FS_LICENSE_FILE] [B0_MOTION_CORR_TO] [HMC_TRANSFORM] [HMC_MODEL] [EDDY_CONFIG] [SHORELINE_ITERS] [PEPOLAR_METHOD] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [VERSION] [VERBOSE_COUNT] [WORK_DIR] [RESOURCE_MONITOR] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG]",
     "inputs": [
         {
             "name": "bids_dir",
@@ -52,13 +52,13 @@
             "value-key": "[PARTICIPANT_LABEL]"
         },
         {
-            "name": "bids_filters",
-            "id": "bids_filters",
+            "name": "bids_filter_file",
+            "id": "bids_filter_file",
             "description": "A JSON file describing custom BIDS input filters using PyBIDS. For further details, please check out https://fmriprep.readthedocs.io/en/0.23.0/faq.html#how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep",
             "type": "String",
             "optional": true,
             "command-line-flag": "--bids-filter-file",
-            "value-key": "[BIDS_FILTERS]"
+            "value-key": "[BIDS_FILTER_FILE]"
         },
         {
             "name": "bids_database_dir",
@@ -88,13 +88,13 @@
             "value-key": "[OMP_NTHREADS]"
         },
         {
-            "name": "memory_gb",
-            "id": "memory_gb",
+            "name": "mem",
+            "id": "mem",
             "description": "Upper bound memory limit for QSIPrep processes",
             "type": "String",
             "optional": true,
             "command-line-flag": "--mem",
-            "value-key": "[MEMORY_GB]"
+            "value-key": "[MEM]"
         },
         {
             "name": "low_mem",
@@ -496,7 +496,6 @@
             "description": "Do not remove median (within mask) from fieldmap",
             "type": "Flag",
             "optional": true,
-            "default-value": true,
             "command-line-flag": "--fmap-no-demean",
             "value-key": "[FMAP_NO_DEMEAN]"
         },
@@ -526,7 +525,7 @@
             "name": "version",
             "id": "version",
             "description": "show program's version number and exit",
-            "type": "String",
+            "type": "Flag",
             "optional": true,
             "command-line-flag": "--version",
             "value-key": "[VERSION]"
@@ -537,8 +536,12 @@
             "description": "Increases log verbosity for each occurrence, debug level is -vvv",
             "type": "String",
             "optional": true,
-            "command-line-flag": "-v",
-            "value-key": "[VERBOSE_COUNT]"
+            "value-key": "[VERBOSE_COUNT]",
+            "value-choices": [
+                "-v",
+                "-vv",
+                "-vvv"
+            ]
         },
         {
             "name": "work_dir",
