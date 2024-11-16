@@ -30,6 +30,7 @@ class PipelineRunner(BasePipelineWorkflow):
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
+        hpc: Optional[str] = None,
     ):
         super().__init__(
             dpath_root=dpath_root,

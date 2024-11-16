@@ -6,7 +6,7 @@ from abc import ABC
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
@@ -119,6 +119,10 @@ class BidsPipelineConfig(BasePipelineConfig):
         description="List of pipeline step configurations",
     )
 
+class HpcConfig(BaseModel):
+    """TODO"""
+    model_config = ConfigDict(extra="allow")
+
 
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
@@ -130,6 +134,14 @@ class ProcPipelineConfig(BasePipelineConfig):
             ". This file must contain a list of tracker configurations"
             ", each of which must be a dictionary with a NAME field (string)"
             " and a PATHS field (non-empty list of strings)"
+        ),
+    )
+
+    HPC_CONFIG: Optional[HpcConfig] = Field(
+        default=None,
+        description=(
+            "Configuration dictionary for High-Performance Computing (HPC) settings, "
+            "with keys as configuration names and values of any type."
         ),
     )
 
