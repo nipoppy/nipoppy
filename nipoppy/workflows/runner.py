@@ -43,6 +43,7 @@ class PipelineRunner(BasePipelineWorkflow):
             fpath_layout=fpath_layout,
             logger=logger,
             dry_run=dry_run,
+            hpc=hpc,
         )
         self.simulate = simulate
         self.keep_workdir = keep_workdir
