@@ -72,6 +72,7 @@ def get_pipeline_config(
         + ", ".join(f"{name} {version}" for name, version in available_pipelines)
     )
 
+
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
@@ -81,9 +82,9 @@ class Config(_SchemaWithContainerConfig):
             "Optional string for HPC (High-Performance Computing) preamble "
             "instructions. Can include job scheduler directives or any necessary "
             "commands to set up the HPC environment prior to running pipelines."
-        )
+        ),
     )
-    
+
     DATASET_NAME: str = Field(description="Name of the dataset")
     VISIT_IDS: list[str] = Field(
         description=(
@@ -118,7 +119,7 @@ class Config(_SchemaWithContainerConfig):
     )
     SUBSTITUTIONS: dict[str, str] = Field(
         default={},
-        description="Top-level mapping for replacing placeholder expressions."
+        description="Top-level mapping for replacing placeholder expressions.",
     )
     BIDS_PIPELINES: list[BidsPipelineConfig] = Field(
         default=[], description="Configurations for BIDS conversion, if applicable"

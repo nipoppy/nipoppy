@@ -294,7 +294,9 @@ def add_subparser_pipeline_run(
     parser = add_args_participant_and_session(parser)
     parser = add_arg_keepworkdir(parser)
     parser = add_arg_simulate(parser)
-    parser.add_argument('--hpc', type=str, default=None, help='Toggle HPC mode (Slurm and SGE HPCs).')
+    parser.add_argument(
+        "--hpc", type=str, default=None, help="Toggle HPC mode (Slurm and SGE HPCs)."
+    )
     return parser
 
 

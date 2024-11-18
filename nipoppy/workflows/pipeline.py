@@ -8,10 +8,12 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
+import shlex
 from typing import Iterable, Optional, Tuple
 
 import bids
 from pydantic import ValidationError
+from pysqa import QueueAdapter
 
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
@@ -39,7 +41,6 @@ from nipoppy.utils import (
     session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
-from pysqa import QueueAdapter
 
 
 def apply_analysis_level(
@@ -391,7 +392,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         return to_return
 
-
     def run_main(self):
         """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
@@ -433,25 +433,31 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # Generate the list of nipoppy commands as a single string for a shell array
         job_array_commands = []
         for participant_id, session_id in participants_sessions:
-            command = (
-                f"nipoppy run {self.dpath_root} "  # Positional argument at the beginning
-                f"--pipeline {self.pipeline_name} "
-                f"--pipeline-version {self.pipeline_version} "
-                f"--pipeline-step {self.pipeline_step} "
-                f"--participant-id {participant_id} "
-                f"--session-id {session_id}"
-            )
-            job_array_commands.append(command)
-
+            command = [
+                "nipoppy", "run", str(self.dpath_root),
+                "--pipeline", self.pipeline_name,
+                "--pipeline-version", self.pipeline_version,
+                "--pipeline-step", self.pipeline_step,
+                "--participant-id", participant_id,
+                "--session-id", session_id
+            ]
+            job_array_commands.append(shlex.join(command))
         # Join the commands into a single string
-        job_array_commands_str = " ".join([f"'{cmd}'" for cmd in job_array_commands])
+
+        job_array_commands_str = " ".join([f'"{cmd}"' for cmd in job_array_commands])
         module_load = self.config.HPC_PREAMBLE
 
         # Build the single command to submit as an array job
         if self.hpc == "slurm":
-            command = f"bash -c '{module_load} commands=({job_array_commands_str}); eval ${{commands[$SLURM_ARRAY_TASK_ID]}}'"
+            command = (
+                f"bash -c '{module_load}; commands=({job_array_commands_str}); "
+                f"eval \"${{commands[$SLURM_ARRAY_TASK_ID]}}\"'"
+            )
         elif self.hpc == "sge":
-            command = f"bash -c '{module_load} commands=({job_array_commands_str}); eval ${{commands[$SGE_TASK_ID]}}'"
+            command = (
+                f"bash -c '{module_load}; commands=({job_array_commands_str}); "
+                f"eval \"${{commands[$SGE_TASK_ID]}}\"'"
+            )
         else:
             raise ValueError("Unsupported HPC type specified. Please use 'slurm' or 'sge'.")
 
@@ -461,9 +467,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         queue_id = qa.submit_job(command=command,
                                  num_tasks=num_jobs,
                                  queue=self.hpc,
-                                 working_directory=self.dpath_root, 
-                                 **self.pipeline_config.HPC_CONFIG)
+                                 working_directory=str(self.dpath_root), # I'm not sure what this should be! Maybe /Logs? Or just no logging since no-HPC already has logs?
+                                 **(self.pipeline_config.HPC_CONFIG.model_dump() if self.pipeline_config.HPC_CONFIG else {}),)
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
+
 
     def run_cleanup(self):
         """Log a summary message."""

@@ -119,9 +119,11 @@ class BidsPipelineConfig(BasePipelineConfig):
         description="List of pipeline step configurations",
     )
 
+
 class HpcConfig(BaseModel):
-    """TODO"""
+    """Schema for High-Performance Computing (HPC) configuration."""
     model_config = ConfigDict(extra="allow")
+    
 
 
 class ProcPipelineConfig(BasePipelineConfig):
