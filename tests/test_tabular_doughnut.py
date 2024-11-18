@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 
@@ -294,4 +294,48 @@ def test_generate_missing_paths(tmp_path: Path):
 
     assert doughnut[Doughnut.col_in_pre_reorg].all()
     assert (~doughnut[Doughnut.col_in_post_reorg]).all()
+    assert doughnut[Doughnut.col_in_bids].all()
+
+
+def test_doughnut_generation_no_session(
+    tmp_path: Path,
+):
+    """Test doughnut generation when there are no session folders.
+
+    Check that the subjects are included and bids valid in the doughnut.
+    """
+    participants_and_sessions_manifest = {
+        "01": [FAKE_SESSION_ID],
+        "02": [FAKE_SESSION_ID],
+    }
+    participants_and_sessions_bidsified = {
+        "01": [None],
+        "02": [None],
+    }
+
+    dpath_root = tmp_path / "my_dataset"
+    dpath_bidsified = dpath_root / "bids"
+
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions_manifest,
+        participants_and_sessions_downloaded=None,
+        participants_and_sessions_organized=None,
+        participants_and_sessions_bidsified=participants_and_sessions_bidsified,
+        dpath_downloaded=None,
+        dpath_organized=None,
+        dpath_bidsified=dpath_bidsified,
+    )
+
+    doughnut = generate_doughnut(
+        manifest=manifest,
+        dicom_dir_map=DicomDirMap.load_or_generate(
+            manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
+        ),
+        dpath_downloaded=None,
+        dpath_organized=None,
+        dpath_bidsified=dpath_bidsified,
+        empty=False,
+    )
+
+    assert doughnut[Doughnut.col_participant_id].to_list() == ["01", "02"]
     assert doughnut[Doughnut.col_in_bids].all()
