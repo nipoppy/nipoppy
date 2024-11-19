@@ -1,6 +1,7 @@
 """Tests for PipelineRunner."""
 
 import json
+import subprocess
 import tarfile
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from bids import BIDSLayout
 from fids import fids
 
 from nipoppy.config.main import Config
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.workflows.runner import PipelineRunner
@@ -69,7 +71,7 @@ def config(tmp_path: Path):
                 ],
             },
         ],
-    )
+    ).propagate_container_config()
 
 
 def test_run_setup(config: Config, tmp_path: Path):
@@ -79,7 +81,7 @@ def test_run_setup(config: Config, tmp_path: Path):
         pipeline_version="1.0.0",
     )
     create_empty_dataset(runner.dpath_root)
-    config.save(runner.layout.fpath_config)
+    runner.config = config
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
     assert runner.dpath_pipeline_work.exists()
@@ -114,7 +116,7 @@ def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
     )
     runner.n_success = n_success
     runner.n_total = 2
-    config.save(runner.layout.fpath_config)
+    runner.config = config
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
@@ -133,7 +135,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
         pipeline_version="1.0.0",
         simulate=simulate,
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     participant_id = "01"
     session_id = "BL"
@@ -163,7 +165,7 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
         pipeline_version="1.0.0",
     )
 
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     participant_id = "01"
     session_id = "BL"
@@ -356,7 +358,7 @@ def test_get_participants_sessions_to_run(
         participant_id=participant_id,
         session_id=session_id,
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
     runner.doughnut = Doughnut().add_or_update_records(
         records=[
             {
@@ -403,7 +405,7 @@ def test_run_multiple(config: Config, tmp_path: Path):
         participant_id=participant_id,
         session_id=session_id,
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     participants_and_sessions = {"01": ["1"], "02": ["2"]}
     create_empty_dataset(runner.layout.dpath_root)
@@ -421,7 +423,7 @@ def test_run_multiple(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize("generate_pybids_database", [True, False])
-def test_run_single_pybidsdb(
+def test_run_single_pybids_db(
     generate_pybids_database: bool,
     config: Config,
     mocker: pytest_mock.MockFixture,
@@ -434,7 +436,7 @@ def test_run_single_pybidsdb(
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     # Set GENERATE_PYBIDS_DATABASE
     runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
@@ -454,3 +456,51 @@ def test_run_single_pybidsdb(
         )
     else:
         mocked_set_up_bids_db.assert_not_called()
+
+
+@pytest.mark.parametrize("tar", [True, False])
+@pytest.mark.parametrize("boutiques_success", [True, False])
+def test_run_single_tar(
+    config: Config,
+    tar: bool,
+    boutiques_success: bool,
+    mocker: pytest_mock.MockFixture,
+    tmp_path: Path,
+):
+    runner = PipelineRunner(
+        dpath_root=tmp_path,
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=tar,
+    )
+    runner.config = config
+
+    # mock the parts of run_single that are not relevant for this test
+    mocker.patch(
+        "nipoppy.config.container.check_container_command", return_value="apptainer"
+    )
+    mocker.patch.object(runner, "set_up_bids_db")
+
+    # mock the Boutiques run outcome
+    popen = subprocess.Popen(["echo", "hello"])
+    if boutiques_success:
+        popen.returncode = 0
+    else:
+        popen.returncode = 1
+    mocker.patch.object(
+        runner, "launch_boutiques_run", return_value=((None, None), popen)
+    )
+
+    # mock tar_directory method (will check if/how this is called)
+    mocked_tar_directory = mocker.patch.object(runner, "tar_directory")
+
+    dpath_to_tar = tmp_path / "my_data"
+    runner.tracker_config = TrackerConfig(
+        PATHS=[dpath_to_tar], PARTICIPANT_SESSION_DIR=dpath_to_tar
+    )
+    runner.run_single(participant_id="01", session_id="1")
+
+    if tar and boutiques_success:
+        mocked_tar_directory.assert_called_once_with(dpath_to_tar)
+    else:
+        mocked_tar_directory.assert_not_called()
