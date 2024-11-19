@@ -9,7 +9,7 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -152,6 +152,23 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         return descriptor_str, invocation_str
+
+    def tar_directory(self, dpath: Path) -> Path:
+        """Tar a directory and delete it."""
+        if not dpath.exists():
+            raise RuntimeError(f"Not tarring {dpath} since it does not exist")
+        if not dpath.is_dir():
+            raise RuntimeError(f"Not tarring {dpath} since it is not a directory")
+
+        tar_flags = "-cvf"
+        fpath_tarred = dpath.with_suffix(EXT_TAR)
+
+        self.run_command(
+            f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}"
+        )
+        self.rm(dpath)
+
+        return fpath_tarred
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]

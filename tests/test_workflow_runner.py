@@ -1,6 +1,7 @@
 """Tests for PipelineRunner."""
 
 import json
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -176,6 +177,64 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
         )
         == "echo exec"
     )
+
+
+def test_tar_directory(tmp_path: Path):
+    # create dummy files to tar
+    dpath_to_tar = tmp_path / "my_data"
+    fpaths_to_tar = [
+        dpath_to_tar / "dir1" / "file1.txt",
+        dpath_to_tar / "file2.txt",
+    ]
+    for fpath in fpaths_to_tar:
+        fpath.parent.mkdir(parents=True, exist_ok=True)
+        fpath.touch()
+
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    fpath_tarred = runner.tar_directory(dpath_to_tar)
+
+    assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
+    assert fpath_tarred.exists()
+    assert fpath_tarred.is_file()
+
+    with tarfile.open(fpath_tarred, "r") as tar:
+        tarred_files = [tarred for tarred in tar.getmembers() if tarred.isfile()]
+        assert len(tarred_files) == len(fpaths_to_tar)
+        for member in tarred_files:
+            assert tmp_path / member.name in fpaths_to_tar
+
+    assert not dpath_to_tar.exists()
+
+
+def test_tar_directory_warning_not_found(tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    with pytest.raises(RuntimeError, match="Not tarring .* since it does not exist"):
+        runner.tar_directory(tmp_path / "invalid_path")
+
+
+def test_tar_directory_warning_not_dir(tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    fpath_to_tar = tmp_path / "file.txt"
+    fpath_to_tar.touch()
+
+    with pytest.raises(
+        RuntimeError, match="Not tarring .* since it is not a directory"
+    ):
+        runner.tar_directory(fpath_to_tar)
 
 
 @pytest.mark.parametrize(
