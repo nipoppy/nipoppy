@@ -74,7 +74,7 @@ def config(tmp_path: Path):
     ).propagate_container_config()
 
 
-def test_run_setup(config: Config, tmp_path: Path):
+def test_run_setup(config: Config, tmp_path: Path, mocker: pytest_mock.MockFixture):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
@@ -82,9 +82,11 @@ def test_run_setup(config: Config, tmp_path: Path):
     )
     create_empty_dataset(runner.dpath_root)
     runner.config = config
+    mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
     assert runner.dpath_pipeline_work.exists()
+    mocked_check_tar_conditions.assert_called_once()
 
 
 @pytest.mark.parametrize("keep_workdir", [True, False])
@@ -179,6 +181,51 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
         )
         == "echo exec"
     )
+
+
+def test_check_tar_conditions_no_tracker_config(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=True,
+    )
+    runner.config = config
+    runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
+    with pytest.raises(
+        RuntimeError, match="Tarring requested but is no tracker config file"
+    ):
+        runner._check_tar_conditions()
+
+
+def test_check_tar_conditions_no_dir(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=True,
+    )
+    runner.config = config
+    runner.pipeline_step_config.TRACKER_CONFIG_FILE = tmp_path  # not used
+    runner.tracker_config = TrackerConfig(
+        PATHS=[tmp_path], PARTICIPANT_SESSION_DIR=None
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="Tarring requested but no participant-session directory specified",
+    ):
+        runner._check_tar_conditions()
+
+
+def test_check_tar_conditions_no_tar(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=False,
+    )
+    runner.config = config
+    runner._check_tar_conditions()
 
 
 def test_tar_directory(tmp_path: Path):

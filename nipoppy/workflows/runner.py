@@ -156,6 +156,30 @@ class PipelineRunner(BasePipelineWorkflow):
 
         return (descriptor_str, invocation_str), out
 
+    def _check_tar_conditions(self):
+        """
+        Make sure that conditions for tarring are met if tarring is requested.
+
+        Specifically, check that dpath to tar is specified in the tracker config
+        """
+        if not self.tar:
+            return
+
+        if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
+            raise RuntimeError(
+                "Tarring requested but is no tracker config file. "
+                "The TRACKER_CONFIG_FILE field needs to be specified in the "
+                "pipeline step config, and the PARTICIPANT_SESSION_DIR field "
+                "in that file must be specified"
+            )
+        if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
+            raise RuntimeError(
+                "Tarring requested but no participant-session directory specified. "
+                "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
+                "in the tracker config file at "
+                f"{self.pipeline_step_config.TRACKER_CONFIG_FILE}"
+            )
+
     def tar_directory(self, dpath: Path) -> Path:
         """Tar a directory and delete it."""
         if not dpath.exists():
@@ -203,6 +227,12 @@ class PipelineRunner(BasePipelineWorkflow):
         ):
             if participant_session not in participants_sessions_completed:
                 yield participant_session
+
+    def run_setup(self):
+        """Run pipeline runner setup."""
+        to_return = super().run_setup()
+        self._check_tar_conditions()
+        return to_return
 
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
