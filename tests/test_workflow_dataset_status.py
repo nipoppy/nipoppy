@@ -91,9 +91,8 @@ def test_run(dpath_root: Path):
     workflow.bagel = Bagel.from_dict(bagel_dict)
 
     status_df = workflow.run_main()
-    # status_df = status_df.fillna(0).astype(int).reset_index()
+    status_df = status_df.fillna(0).reset_index()
 
-    print(status_df)
     # check manifest status
     assert set(status_df[Manifest.col_session_id].unique()) == set(["BL", "M12"])
     assert status_df[Manifest.col_session_id].nunique() == 2
@@ -109,9 +108,16 @@ def test_run(dpath_root: Path):
     assert status_df["fmriprep\n2.0.0\ndefault"].sum() == 1
 
     # check emoji status
-    test_stickers = ["📋", "🍩", "🧹", "🥯", "🚀"]
-    test_rewards = " ".join(test_stickers)
-    calculated_rewards = status_df[status_df[Manifest.col_session_id] == "BL"][
-        "rewards"
-    ].values.astype(str)
-    assert calculated_rewards == test_rewards
+    test_stickers = {
+        "init": ["📋"],
+        "curation": ["🍩", "🧹"],
+        "processing": ["🥯", "🚀"],
+    }
+
+    for stage, stickers in test_stickers.items():
+        test_rewards = " ".join(stickers)
+        calculated_rewards = status_df[status_df[Manifest.col_session_id] == "BL"][
+            f"{stage}\nrewards"
+        ].values.astype(str)
+
+        assert calculated_rewards == test_rewards

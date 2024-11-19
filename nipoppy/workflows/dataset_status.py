@@ -13,6 +13,43 @@ from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.tabular.bagel import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
+# generate positive reinforcement emojis
+clipboard_emoji = "📋"
+sad_cat_emoji = "😿"
+broom_emoji = "🧹"
+doughnut_emoji = "🍩"
+sparkles_emoji = "✨"
+rocket_emoji = "🚀"
+bagel_emoji = "🥯"
+party_popper_emoji = "🎉"
+confetti_emoji = "🎊"
+
+# based on quantity
+medium_throughput = 100
+high_throughput = 1000
+sushi_emoji = "🍣"  # 100 subjects in BIDS
+shaved_ice_emoji = "🍧"  # 100 subjects processed
+bento_box_emoji = "🍱"  # 1000 subjects in BIDS
+mate_emoji = "🧉"  # 1000 subjects processed
+
+# TODO secret rewards based on update time and date
+# night_owl_emoji = "🦉"
+# slow_sloth_emoji = "🦥"
+# quick_tiger_emoji = "🐅"
+
+# emoji legend
+legend_dict = {
+    clipboard_emoji: "Manifest entries available!",
+    sad_cat_emoji: "No available data are curated or processed",
+    broom_emoji: "Data clean-up (i.e. BIDSification) has started!",
+    doughnut_emoji: "Curation in progress... Doughnut is made!",
+    sparkles_emoji: "BIDSification is complete! Tidiness sparks joy!",
+    rocket_emoji: "Data processing has launched successfully!",
+    bagel_emoji: "Data processing in progress... Bagels are baking!",
+    party_popper_emoji: "At least 1 pipeline processing is complete!",
+    confetti_emoji: "All data are curated and processed. Time to celebrate!",
+}
+
 
 class StatusWorkflow(BaseWorkflow):
     """Workflow for status command."""
@@ -49,15 +86,52 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.info("Checking the status of the dataset.")
 
         # load global_config to get the dataset name
-        # dataset_name = self.config.DATASET_NAME
-        # self.logger.info(f"Dataset name: {dataset_name}")
+        dataset_name = self.config.DATASET_NAME
+        expected_sessions = self.config.SESSION_IDS
+        expected_visits = self.config.VISIT_IDS
+
+        self.logger.info(f"Dataset name: {dataset_name}")
+        self.logger.info(f"\tExpected sessions: {expected_sessions}")
+        self.logger.info(f"\tExpected visits: {expected_visits}")
 
         status_df = pd.DataFrame()
-
         status_df = self._check_manifest(status_df)
-        status_df = self._check_doughnut(status_df)
-        status_df = self._check_bagel(status_df)
-        status_df, legend_dict = self._add_rewards(status_df)
+        status_df, doughnut_cols = self._check_doughnut(status_df)
+        status_df, bagel_cols = self._check_bagel(status_df)
+
+        # define the status columns and rewards columns
+        status_col_dict = {
+            "manifest": "in_manifest",
+            "doughnut": doughnut_cols,
+            "bids": "in_bids",  # also part of doughnut cols
+            "bagel": bagel_cols,
+        }
+
+        reward_col_dict = {
+            "manifest": "init\nrewards",
+            "doughnut": "curation\nrewards",
+            "bagel": "processing\nrewards",
+        }
+
+        status_df = self._add_manifest_rewards(
+            status_df, status_col_dict, reward_col_dict["manifest"]
+        )
+        status_df = self._add_doughnut_rewards(
+            status_df, status_col_dict, reward_col_dict["doughnut"]
+        )
+        status_df = self._add_bagel_rewards(
+            status_df, status_col_dict, reward_col_dict["bagel"]
+        )
+
+        # reorder the columns
+        status_df = status_df[
+            [status_col_dict["manifest"]]
+            + [reward_col_dict["manifest"]]
+            + doughnut_cols
+            + [reward_col_dict["doughnut"]]
+            + bagel_cols
+            + [reward_col_dict["bagel"]]
+        ]
 
         self.logger.debug(status_df)
 
@@ -73,7 +147,7 @@ class StatusWorkflow(BaseWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        self.logger.info(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
+        self.logger.info("Manifest status")
 
         manifest = self.manifest
 
@@ -97,15 +171,14 @@ class StatusWorkflow(BaseWorkflow):
             f"{len(participant_ids)}"
         )
         self.logger.info(
-            f"\tAvailable  visits (imaging and non-imaging) (n={len(visit_ids)}): "
-            f"{visit_ids}"
+            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): " f"{visit_ids}"
         )
         self.logger.info(
             f"\tNumber of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
         )
         self.logger.info(
-            f"\tNumber of imaging sessions (n={len(session_ids)}): " f"{session_ids}"
+            f"\tImaging sessions (n={len(session_ids)}): " f"{session_ids}"
         )
 
         manifest_status_df = imaging_manifest.groupby(
@@ -121,64 +194,50 @@ class StatusWorkflow(BaseWorkflow):
         """Check the doughnut file (if exists)."""
         nipoppy_checkpoint = "in_doughnut"
 
-        self.logger.info(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-
-        try:
-            doughnut = self.doughnut
-        except FileNotFoundError:
-            self.logger.warning(
-                f"No doughnut file found at {self.layout.fpath_doughnut}."
-            )
-            return
+        self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
+        doughnut = self.doughnut
+        doughnut_cols = [
+            doughnut.col_in_pre_reorg,
+            doughnut.col_in_post_reorg,
+            doughnut.col_in_bids,
+        ]
 
         # Get the number of participants in the doughnut
         participant_ids = doughnut[doughnut.col_participant_id].unique()
         session_ids = doughnut[doughnut.col_session_id].unique()
 
-        self.logger.info(
+        self.logger.debug(
             f"\tNumber of participants in doughnut: {len(participant_ids)}"
         )
-        self.logger.info(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
+        self.logger.debug(f"\tAvailable sessions (n={len(session_ids)}): {session_ids}")
 
         doughnut_status_df = doughnut.groupby([doughnut.col_session_id]).sum()[
-            [
-                doughnut.col_in_pre_reorg,
-                doughnut.col_in_post_reorg,
-                doughnut.col_in_bids,
-            ]
+            doughnut_cols
         ]
 
         self.logger.debug(f"doughnut_status_df: {doughnut_status_df}")
         status_df = pd.concat([status_df, doughnut_status_df], axis=1)
-        return status_df
+        return status_df, doughnut_cols
 
     def _check_bagel(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the imaging bagel file (if exists)."""
         nipoppy_checkpoint = "in_imaging_bagel"
 
-        self.logger.info(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-
-        try:
-            bagel = self.bagel
-        except FileNotFoundError:
-            self.logger.warning(
-                f"No bagel file found at {self.layout.fpath_imaging_bagel}."
-            )
-            return
+        self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
+        bagel = self.bagel
 
         # Get the number of participants in the bagel
         participant_ids = bagel[bagel.col_participant_id].unique()
         session_ids = bagel[bagel.col_session_id].unique()
         pipelines = bagel[bagel.col_pipeline_name].unique()
 
-        self.logger.info(f"\tNumber of participants in bagel: {len(participant_ids)}")
-        self.logger.info(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
-        self.logger.info(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
+        self.logger.debug(f"\tNumber of participants in bagel: {len(participant_ids)}")
+        self.logger.debug(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
+        self.logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
         bagel[self.col_pipeline] = (
             bagel[bagel.col_pipeline_name]
             + "\n"
-            + ""
             + bagel[bagel.col_pipeline_version]
             + "\n"
             + bagel[bagel.col_pipeline_step]
@@ -207,103 +266,117 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.debug(f"bagel_status_df: {bagel_status_df}")
 
         status_df = pd.concat([status_df, bagel_status_df], axis=1)
-        return status_df
 
-    def _add_rewards(self, status_df: pd.DataFrame) -> pd.DataFrame:
-        """Add rewards column to the status DataFrame."""
-        status_df = status_df.fillna(0).astype(int).reset_index()
-        status_df = status_df.sort_values(by=self.manifest.col_session_id)
+        bagel_cols = list(status_df.columns[status_df.columns.str.contains("\n")])
+        return status_df, bagel_cols
 
-        # generate positive reinforcement emojis
-        clipboard = "📋"
+    def _add_manifest_rewards(
+        self, status_df: pd.DataFrame, status_col_dict: dict, reward_col_name: str
+    ) -> pd.DataFrame:
+        """Add manifest rewards column to the status DataFrame."""
+        manifest_col = status_col_dict["manifest"]
+        doughnut_cols = status_col_dict["doughnut"]
+        bagel_cols = status_col_dict["bagel"]
 
-        sad_cat_emoji = "😿"
-        broom_emoji = "🧹"
-        doughnut_emoji = "🍩"
-        sparkles_emoji = "✨"
-        rocket_emoji = "🚀"
-        bagel_emoji = "🥯"
-        party_popper_emoji = "🎉"
-        confetti_emoji = "🎊"
+        status_count_cols = [manifest_col] + doughnut_cols + bagel_cols
+        status_df[status_count_cols] = (
+            status_df[status_count_cols].fillna(0).astype(int)
+        )
 
-        # based on quantity
-        high_throughput = 100
-        bento_box_emoji = "🍱"  # 100 subjects in BIDS
-        mate_emoji = "🧉"  # 100 subjects processed
-
-        # secret rewards based on quantity
-        # shaved_ice_emoji = "🍧"
-        # sushi_emoji = "🍣"
-
-        # secret rewards based on update time and date
-        # night_owl_emoji = "🦉"
-        # slow_sloth_emoji = "🦥"
-        # quick_tiger_emoji = "🐅"
-
-        # emoji legend
-        legend_dict = {
-            sad_cat_emoji: "No available data are curated or processed",
-            broom_emoji: "Data clean-up (i.e. BIDSification) has started!",
-            doughnut_emoji: "Curation in progress... Doughnut is made!",
-            sparkles_emoji: "BIDSification is complete! Tidiness sparks joy!",
-            rocket_emoji: "Data processing has launched successfully!",
-            bagel_emoji: "Data processing in progress... Bagels are baking!",
-            party_popper_emoji: "At least 1 pipeline processing is complete!",
-            confetti_emoji: "All data are curated and processed. Time to celebrate!",
-        }
-
-        doughnut_cols = ["in_pre_reorg", "in_post_reorg", "in_bids"]
-        bagel_cols = [col for col in status_df.columns if "\n" in col]
-        non_session_cols = ["in_manifest"] + doughnut_cols + bagel_cols
         for row_obj in status_df.iterrows():
             row = row_obj[1]
-
-            row_stickers = []
-            if row["in_manifest"] > 0:
+            reward_emojis = []
+            if row[manifest_col] > 0:
                 if (row[doughnut_cols] == 0).all() & (row[bagel_cols] == 0).all():
-                    row_stickers.append(sad_cat_emoji)
+                    reward_emojis.append(sad_cat_emoji)
                 else:
-                    row_stickers.append(clipboard)
+                    reward_emojis.append(clipboard_emoji)
 
-            # curation tasks
+            status_df.loc[row_obj[0], reward_col_name] = " ".join(reward_emojis)
+
+        return status_df
+
+    def _add_doughnut_rewards(
+        self, status_df: pd.DataFrame, status_col_dict: dict, reward_col_name: str
+    ) -> pd.DataFrame:
+        """Add doughnut rewards column to the status DataFrame."""
+        manifest_col = status_col_dict["manifest"]
+        doughnut_cols = status_col_dict["doughnut"]
+        bids_col = status_col_dict["bids"]
+        bagel_cols = status_col_dict["bagel"]
+
+        status_count_cols = [manifest_col] + doughnut_cols + bagel_cols
+        status_df[status_count_cols] = (
+            status_df[status_count_cols].fillna(0).astype(int)
+        )
+
+        for row_obj in status_df.iterrows():
+            row = row_obj[1]
+            reward_emojis = []
             if (row[doughnut_cols] > 0).all():
-                row_stickers.append(doughnut_emoji)
-            if row["in_bids"] == row["in_manifest"]:
-                row_stickers.append(sparkles_emoji)
-            elif (row["in_bids"] > 0) & (row["in_bids"] < row["in_manifest"]):
-                row_stickers.append(broom_emoji)
+                reward_emojis.append(doughnut_emoji)
+            if row[bids_col] == row[manifest_col]:
+                reward_emojis.append(sparkles_emoji)
+            elif (row[bids_col] > 0) & (row[bids_col] < row[manifest_col]):
+                reward_emojis.append(broom_emoji)
 
-            if row["in_bids"] > high_throughput:  # hard to test
-                row_stickers.append(bento_box_emoji)
+            if row[bids_col] > high_throughput:  # hard to test
+                reward_emojis.append(bento_box_emoji)
+            elif row[bids_col] > medium_throughput:
+                reward_emojis.append(sushi_emoji)
 
-            # processing tasks
+            status_df.loc[row_obj[0], reward_col_name] = " ".join(reward_emojis)
+
+        return status_df
+
+    def _add_bagel_rewards(
+        self, status_df: pd.DataFrame, status_col_dict: dict, reward_col_name: str
+    ) -> pd.DataFrame:
+        """Add begal rewards column to the status DataFrame."""
+        manifest_col = status_col_dict["manifest"]
+        doughnut_cols = status_col_dict["doughnut"]
+        bagel_cols = status_col_dict["bagel"]
+
+        status_count_cols = [manifest_col] + doughnut_cols + bagel_cols
+        status_df[status_count_cols] = (
+            status_df[status_count_cols].fillna(0).astype(int)
+        )
+
+        for row_obj in status_df.iterrows():
+            row = row_obj[1]
+            reward_emojis = []
+
             if (row[bagel_cols] > 0).all():
-                row_stickers.append(bagel_emoji)
+                reward_emojis.append(bagel_emoji)
 
             # check if processing is complete for all participants and pipelines
-            if (row[non_session_cols] > 0).all():
-                row_vals = row[non_session_cols].values
+            if (row[status_count_cols] > 0).all():
+                row_vals = row[status_count_cols].values
                 all_equal = all([x == row_vals[0] for x in row_vals])
                 if all_equal:
-                    row_stickers.append(confetti_emoji)
+                    reward_emojis.append(confetti_emoji)
 
             # Cannot nest this in prior if statement because
             # some pipeline count might be zero
-            if (not all_equal) & (row[bagel_cols] == row["in_manifest"]).any():
-                row_stickers.append(party_popper_emoji)
-            elif (row[bagel_cols] > 0).any():
-                row_stickers.append(rocket_emoji)
+            if (not all_equal) & (row[bagel_cols] == row[manifest_col]).any():
+                reward_emojis.append(party_popper_emoji)
+            elif (not all_equal) & (row[bagel_cols] > 0).any():
+                reward_emojis.append(rocket_emoji)
 
             if (row[bagel_cols] > high_throughput).any():  # hard to test
-                row_stickers.append(mate_emoji)
+                reward_emojis.append(mate_emoji)
+            elif (row[bagel_cols] > medium_throughput).any():
+                reward_emojis.append(shaved_ice_emoji)
 
-            status_df.loc[row_obj[0], "rewards"] = " ".join(row_stickers)
+            status_df.loc[row_obj[0], reward_col_name] = " ".join(reward_emojis)
 
-        return status_df, legend_dict
+        return status_df
 
     def _df_to_table(self, status_df: pd.DataFrame, legend_dict: dict):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
-        df = status_df.copy()
+        df = status_df.copy().reset_index()
+        df = df.sort_values(by=self.manifest.col_session_id)
+
         console = Console()
 
         crossed_fingers_emoji = "🤞"
