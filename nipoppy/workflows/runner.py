@@ -10,6 +10,7 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -270,7 +271,14 @@ class PipelineRunner(BasePipelineWorkflow):
             and subprocess_result.returncode == 0
             and self.tar
         ):
-            self.tar_directory(self.tracker_config.PARTICIPANT_SESSION_DIR)
+            dpath_to_tar = TrackerConfig(
+                **self.process_template_json(
+                    self.tracker_config.model_dump(mode="json"),
+                    participant_id=participant_id,
+                    session_id=session_id,
+                )
+            ).PARTICIPANT_SESSION_DIR
+            self.tar_directory(dpath_to_tar)
 
         return invocation_and_descriptor, subprocess_result
 

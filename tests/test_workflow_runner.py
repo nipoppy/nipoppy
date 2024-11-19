@@ -541,13 +541,19 @@ def test_run_single_tar(
     # mock tar_directory method (will check if/how this is called)
     mocked_tar_directory = mocker.patch.object(runner, "tar_directory")
 
-    dpath_to_tar = tmp_path / "my_data"
+    participant_id = "01"
+    session_id = "1"
     runner.tracker_config = TrackerConfig(
-        PATHS=[dpath_to_tar], PARTICIPANT_SESSION_DIR=dpath_to_tar
+        PATHS=[tmp_path],  # not used
+        PARTICIPANT_SESSION_DIR=(
+            tmp_path / "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
+        ),
     )
-    runner.run_single(participant_id="01", session_id="1")
+    runner.run_single(participant_id=participant_id, session_id=session_id)
 
     if tar and boutiques_success:
-        mocked_tar_directory.assert_called_once_with(dpath_to_tar)
+        mocked_tar_directory.assert_called_once_with(
+            tmp_path / f"{participant_id}_ses-{session_id}"
+        )
     else:
         mocked_tar_directory.assert_not_called()
