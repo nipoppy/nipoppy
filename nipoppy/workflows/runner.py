@@ -1,7 +1,6 @@
 """PipelineRunner workflow."""
 
 import logging
-import subprocess
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
@@ -146,16 +145,17 @@ class PipelineRunner(BasePipelineWorkflow):
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
         # run as a subprocess so that stdout/error are captured in the log
+        # by default this will raise an exception if the command fails
         if self.simulate:
-            out = self.run_command(
+            self.run_command(
                 ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
             )
         else:
-            out = self.run_command(
+            self.run_command(
                 ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
             )
 
-        return (descriptor_str, invocation_str), out
+        return descriptor_str, invocation_str
 
     def _check_tar_conditions(self):
         """
@@ -261,16 +261,11 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         # run pipeline with Boutiques
-        invocation_and_descriptor, subprocess_result = self.launch_boutiques_run(
+        to_return = self.launch_boutiques_run(
             participant_id, session_id, container_command=container_command
         )
 
-        if (
-            (not self.simulate)
-            and isinstance(subprocess_result, subprocess.Popen)
-            and subprocess_result.returncode == 0
-            and self.tar
-        ):
+        if self.tar and not self.simulate:
             dpath_to_tar = TrackerConfig(
                 **self.process_template_json(
                     self.tracker_config.model_dump(mode="json"),
@@ -280,7 +275,7 @@ class PipelineRunner(BasePipelineWorkflow):
             ).PARTICIPANT_SESSION_DIR
             self.tar_directory(dpath_to_tar)
 
-        return invocation_and_descriptor, subprocess_result
+        return to_return
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""

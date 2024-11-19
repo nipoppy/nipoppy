@@ -1,7 +1,6 @@
 """Tests for PipelineRunner."""
 
 import json
-import subprocess
 import tarfile
 from pathlib import Path
 
@@ -150,7 +149,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
-    (descriptor_str, invocation_str), _ = runner.launch_boutiques_run(
+    descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id, container_command=""
     )
 
@@ -529,13 +528,11 @@ def test_run_single_tar(
     mocker.patch.object(runner, "set_up_bids_db")
 
     # mock the Boutiques run outcome
-    popen = subprocess.Popen(["echo", "hello"])
-    if boutiques_success:
-        popen.returncode = 0
-    else:
-        popen.returncode = 1
+    exception_message = "launch_boutiques_run failed"
     mocker.patch.object(
-        runner, "launch_boutiques_run", return_value=((None, None), popen)
+        runner,
+        "launch_boutiques_run",
+        side_effect=RuntimeError(exception_message) if not boutiques_success else None,
     )
 
     # mock tar_directory method (will check if/how this is called)
@@ -549,7 +546,11 @@ def test_run_single_tar(
             tmp_path / "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
         ),
     )
-    runner.run_single(participant_id=participant_id, session_id=session_id)
+    try:
+        runner.run_single(participant_id=participant_id, session_id=session_id)
+    except RuntimeError as exception:
+        if str(exception) != exception_message:
+            raise exception
 
     if tar and boutiques_success:
         mocked_tar_directory.assert_called_once_with(
