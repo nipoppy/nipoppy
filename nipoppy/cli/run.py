@@ -100,6 +100,7 @@ def cli(argv: Sequence[str] = None) -> None:
                 session_id=args.session_id,
                 keep_workdir=args.keep_workdir,
                 simulate=args.simulate,
+                tar=args.tar,
                 **workflow_kwargs,
             )
         elif command == COMMAND_PIPELINE_TRACK:
