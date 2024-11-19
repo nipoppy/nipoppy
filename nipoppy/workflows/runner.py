@@ -1,6 +1,7 @@
 """PipelineRunner workflow."""
 
 import logging
+import subprocess
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
@@ -26,6 +27,7 @@ class PipelineRunner(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         keep_workdir: bool = False,
+        tar: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -43,8 +45,9 @@ class PipelineRunner(BasePipelineWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
-        self.simulate = simulate
         self.keep_workdir = keep_workdir
+        self.tar = tar
+        self.simulate = simulate
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -143,15 +146,15 @@ class PipelineRunner(BasePipelineWorkflow):
 
         # run as a subprocess so that stdout/error are captured in the log
         if self.simulate:
-            self.run_command(
+            out = self.run_command(
                 ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
             )
         else:
-            self.run_command(
+            out = self.run_command(
                 ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
             )
 
-        return descriptor_str, invocation_str
+        return (descriptor_str, invocation_str), out
 
     def tar_directory(self, dpath: Path) -> Path:
         """Tar a directory and delete it."""
@@ -227,9 +230,19 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         # run pipeline with Boutiques
-        return self.launch_boutiques_run(
+        invocation_and_descriptor, subprocess_result = self.launch_boutiques_run(
             participant_id, session_id, container_command=container_command
         )
+
+        if (
+            (not self.simulate)
+            and isinstance(subprocess_result, subprocess.Popen)
+            and subprocess_result.returncode == 0
+            and self.tar
+        ):
+            self.tar_directory(self.tracker_config.PARTICIPANT_SESSION_DIR)
+
+        return invocation_and_descriptor, subprocess_result
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""

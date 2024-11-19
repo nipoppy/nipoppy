@@ -146,7 +146,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
-    descriptor_str, invocation_str = runner.launch_boutiques_run(
+    (descriptor_str, invocation_str), _ = runner.launch_boutiques_run(
         participant_id, session_id, container_command=""
     )
 
