@@ -63,11 +63,25 @@ html_css_files = [
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
 
+html_css_files = [
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/fontawesome.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/solid.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/brands.min.css",
+]
+
 html_theme_options = {
     "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
     "source_directory": "docs/source",
     "sidebar_hide_name": True,
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/nipoppy/nipoppy",
+            "html": "",
+            "class": "fa-brands fa-solid fa-github fa-2x",
+        },
+    ],
 }
 
 html_logo = "../../logo/logo_with_name.svg"
