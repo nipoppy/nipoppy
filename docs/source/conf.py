@@ -81,6 +81,12 @@ html_theme_options = {
             "html": "",
             "class": "fa-brands fa-solid fa-github fa-2x",
         },
+        {
+            "name": "Discord",
+            "url": "https://discord.gg/dQGYADCCMB",
+            "html": "",
+            "class": "fa-brands fa-solid fa-discord fa-2x",
+        },
     ],
 }
 
