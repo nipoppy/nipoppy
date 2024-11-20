@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -464,11 +465,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         print(f"Generated command:\n{command}")
         # Submit the job with the total number of commands as the array size
         num_jobs = len(job_array_commands)
+        logs_hpc_path = os.path.join(str(self.dpath_root), "logs", "hpc")
+        os.makedirs(logs_hpc_path, exist_ok=True)
+
         queue_id = qa.submit_job(command=command,
                                  num_tasks=num_jobs,
                                  queue=self.hpc,
-                                 working_directory=str(self.dpath_root), # I'm not sure what this should be! Maybe /Logs? Or just no logging since no-HPC already has logs?
-                                 **(self.pipeline_config.HPC_CONFIG.model_dump() if self.pipeline_config.HPC_CONFIG else {}),)
+                                 working_directory = logs_hpc_path,
+                                 **(self.pipeline_config.HPC_CONFIG.model_dump()),)
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
 
 
