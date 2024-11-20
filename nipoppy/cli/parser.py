@@ -205,14 +205,6 @@ def add_subparser_status(
 
     parser = add_arg_dataset_root(parser)
 
-    # TODO in future release
-    # parser.add_argument(
-    #     "--save-status-to-disk",
-    #     action="store_true",
-    #     help=("Save the status to disk."
-    #           " This will overwrite the existing status file."),
-    # )
-
     return parser
 
 

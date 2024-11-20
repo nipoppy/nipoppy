@@ -14,7 +14,7 @@ per-file-ignores =
 	tests/test_workflow_*.py: D100, D103, E127, E131, E501
     docs/source/conf.py: E501
 docstring-convention = numpy
-max_complexity = 15
+max_complexity = 12
 max_function_length = 150
 max-line-length = 88
 extend-ignore = D105, E203, E704
