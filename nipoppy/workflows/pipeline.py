@@ -6,10 +6,10 @@ import json
 import logging
 import os
 import re
+import shlex
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-import shlex
 from typing import Iterable, Optional, Tuple
 
 import bids
@@ -435,12 +435,19 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         job_array_commands = []
         for participant_id, session_id in participants_sessions:
             command = [
-                "nipoppy", "run", str(self.dpath_root),
-                "--pipeline", self.pipeline_name,
-                "--pipeline-version", self.pipeline_version,
-                "--pipeline-step", self.pipeline_step,
-                "--participant-id", participant_id,
-                "--session-id", session_id
+                "nipoppy",
+                "run",
+                str(self.dpath_root),
+                "--pipeline",
+                self.pipeline_name,
+                "--pipeline-version",
+                self.pipeline_version,
+                "--pipeline-step",
+                self.pipeline_step,
+                "--participant-id",
+                participant_id,
+                "--session-id",
+                session_id,
             ]
             job_array_commands.append(shlex.join(command))
         # Join the commands into a single string
@@ -452,29 +459,29 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if self.hpc == "slurm":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
-                f"eval \"${{commands[$SLURM_ARRAY_TASK_ID]}}\"'"
+                f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
             )
         elif self.hpc == "sge":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
-                f"eval \"${{commands[$SGE_TASK_ID]}}\"'"
+                f'eval "${{commands[$SGE_TASK_ID]}}"\''
             )
         else:
-            raise ValueError("Unsupported HPC type specified. Please use 'slurm' or 'sge'.")
+            raise ValueError(
+                "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
+            )
 
         print(f"Generated command:\n{command}")
         # Submit the job with the total number of commands as the array size
         num_jobs = len(job_array_commands)
-        logs_hpc_path = os.path.join(str(self.dpath_root), "logs", "hpc")
-        os.makedirs(logs_hpc_path, exist_ok=True)
 
-        queue_id = qa.submit_job(command=command,
-                                 num_tasks=num_jobs,
-                                 queue=self.hpc,
-                                 working_directory = logs_hpc_path,
-                                 **(self.pipeline_config.HPC_CONFIG.model_dump()),)
+        queue_id = qa.submit_job(
+            command=command,
+            num_tasks=num_jobs,
+            queue=self.hpc,
+            **(self.pipeline_config.HPC_CONFIG.model_dump()),
+        )
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
-
 
     def run_cleanup(self):
         """Log a summary message."""

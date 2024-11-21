@@ -3,14 +3,12 @@
 import json
 import logging
 import re
-import json
 from pathlib import Path
 from typing import Optional
 
 import pytest
 import pytest_mock
 from fids import fids
-
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.pipeline import ProcPipelineConfig
@@ -744,31 +742,33 @@ def test_generate_fpath_log(
     )
 
 
-
-
-
-
 def test_submit_hpc_job_command_generation(mocker):
     # Set up mock configurations and mocks
     hpc_config_dict = {
         "account_name": "testname",
         "cores": 69,
         "memory_max": 42,
-        "run_time_max": 666
+        "run_time_max": 666,
     }
     mock_hpc_config = mocker.MagicMock()
     mock_hpc_config.model_dump.return_value = hpc_config_dict
     mock_pipeline_config = mocker.MagicMock()
     mock_pipeline_config.HPC_CONFIG = mock_hpc_config
-    mocker.patch.object(PipelineWorkflow, 'pipeline_config', mock_pipeline_config)
-    
-    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job") 
+    mocker.patch.object(PipelineWorkflow, "pipeline_config", mock_pipeline_config)
+
+    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
     mocker.patch("pysqa.QueueAdapter.__init__", lambda x, directory: None)
-    mocker.patch.object(PipelineWorkflow, 'config', mocker.MagicMock(HPC_PREAMBLE='module load some_module'))
+    mocker.patch.object(
+        PipelineWorkflow,
+        "config",
+        mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
+    )
     mocker.patch("os.makedirs", mocker.MagicMock())
 
     participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
-    pipeline_workflow = PipelineWorkflow("/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="slurm")
+    pipeline_workflow = PipelineWorkflow(
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="slurm"
+    )
 
     # Call the function we're testing
     pipeline_workflow.submit_hpc_job(participants_sessions)
@@ -780,18 +780,17 @@ def test_submit_hpc_job_command_generation(mocker):
     command = submit_job_args["command"]
     assert "module load some_module" in command
     for participant_id, session_id in participants_sessions:
-        assert f"nipoppy run /path/to/root --pipeline test_pipeline --pipeline-version 1.0.0 --pipeline-step step1 --participant-id {participant_id} --session-id {session_id}" in command
+        assert (
+            f"nipoppy run /path/to/root --pipeline test_pipeline --pipeline-version 1.0.0 --pipeline-step step1 --participant-id {participant_id} --session-id {session_id}"
+            in command
+        )
     assert "$SLURM_ARRAY_TASK_ID" in command
-
-    # Verify the working directory was correctly set
-    expected_working_directory = "/path/to/root/logs/hpc"
-    assert submit_job_args["working_directory"] == expected_working_directory, \
-        f"Expected working_directory to be '{expected_working_directory}', but got: {submit_job_args['working_directory']}"
 
     # Verify the correct number of tasks
     num_tasks = len(participants_sessions)
-    assert submit_job_args["num_tasks"] == num_tasks, \
-        f"Expected num_tasks to be {num_tasks}, but got: {submit_job_args['num_tasks']}"
+    assert (
+        submit_job_args["num_tasks"] == num_tasks
+    ), f"Expected num_tasks to be {num_tasks}, but got: {submit_job_args['num_tasks']}"
 
 
 def test_submit_hpc_job_single_participant(mocker):
@@ -800,21 +799,26 @@ def test_submit_hpc_job_single_participant(mocker):
         "account_name": "testname",
         "cores": 69,
         "memory_max": 42,
-        "run_time_max": 666
+        "run_time_max": 666,
     }
     mock_hpc_config = mocker.MagicMock()
     mock_hpc_config.model_dump.return_value = hpc_config_dict
     mock_pipeline_config = mocker.MagicMock()
     mock_pipeline_config.HPC_CONFIG = mock_hpc_config
-    mocker.patch.object(PipelineWorkflow, 'pipeline_config', mock_pipeline_config)
-    
-    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job") 
+    mocker.patch.object(PipelineWorkflow, "pipeline_config", mock_pipeline_config)
+
+    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
     mocker.patch("pysqa.QueueAdapter.__init__", lambda x, directory: None)
-    mocker.patch.object(PipelineWorkflow, 'config', mocker.MagicMock(HPC_PREAMBLE='module load some_module'))
-    mocker.patch("os.makedirs", mocker.MagicMock())
+    mocker.patch.object(
+        PipelineWorkflow,
+        "config",
+        mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
+    )
 
     participants_sessions = [("participant1", "session1")]
-    pipeline_workflow = PipelineWorkflow("/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="slurm")
+    pipeline_workflow = PipelineWorkflow(
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="slurm"
+    )
     pipeline_workflow.submit_hpc_job(participants_sessions)
 
     # Assert that submit_job was called once
@@ -824,5 +828,7 @@ def test_submit_hpc_job_single_participant(mocker):
 def test_submit_hpc_job_unsupported_hpc_type(mocker):
     # Test for unsupported hpc type
     with pytest.raises(ValueError):
-        pipeline_workflow = PipelineWorkflow("/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type")
+        pipeline_workflow = PipelineWorkflow(
+            "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
+        )
         pipeline_workflow.submit_hpc_job([("participant1", "session1")])
