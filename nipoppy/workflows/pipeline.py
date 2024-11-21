@@ -425,6 +425,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
+    def update_queue_type(self, dpath_root):
+        file_path = f"{dpath_root}/code/hpc_templates/queue.yaml"
+        try:
+            with open(file_path, 'r') as file:
+                data = yaml.safe_load(file)
+            data['queue_type'] = self.hpc
+            with open(file_path, 'w') as file:
+                yaml.safe_dump(data, file, default_flow_style=False)
+            print(f"'queue_type' updated to {self.hpc} in {file_path}")
+        except Exception as e:
+            print(f"Error: {e}")
+
     def submit_hpc_job(self, participants_sessions):
         """Submits jobs to an HPC cluster for processing."""
         self.logger.info("Running in HPC mode.")
@@ -469,10 +481,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
         else:
             raise ValueError(
-                "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
+                "Unsupported HPC type specified. Please use 'SLURM' or 'SGE'."
             )
 
-        update_queue_type(self.dpath_root)
+        self.update_queue_type(self.dpath_root)
 
         print(f"Generated command:\n{command}")
         # Submit the job with the total number of commands as the array size
@@ -485,18 +497,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             **(self.pipeline_config.HPC_CONFIG.model_dump()),
         )
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
-
-    def update_queue_type(dpath_root):
-        file_path = f"{dpath_root}/code/hpc_templates/queue.yaml"
-        try:
-            with open(file_path, 'r') as file:
-                data = yaml.safe_load(file)
-            data['queue_type'] = 'self.hpc'
-            with open(file_path, 'w') as file:
-                yaml.safe_dump(data, file, default_flow_style=False)
-            print(f"'queue_type' updated to 'self.hpc' in {file_path}")
-        except Exception as e:
-            print(f"Error: {e}")
 
     def run_cleanup(self):
         """Log a summary message."""
