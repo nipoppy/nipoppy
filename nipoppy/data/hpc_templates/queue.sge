@@ -1,4 +1,4 @@
 queue_type: SGE
 queue_primary: sge
 queues:
-  sge: {cores_max: 100, cores_min: 1, run_time_max: 259200, script: slurm.sh}
+  sge: {cores_max: 100, cores_min: 1, run_time_max: 259200, script: sge.sh}
