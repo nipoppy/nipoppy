@@ -423,9 +423,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
-    def rename_to_yaml(self, dpath_root, suffix):
-        old_file = f"{dpath_root}/code/hpc_templates/queue.{suffix}"
-        new_file = f"{dpath_root}/code/hpc_templates/queue.yaml"
+    def rename_to_yaml(self, hpc_templates_path):
+        old_file = str(hpc_templates_path) + "/" + str(self.hpc)
+        new_file = str(hpc_templates_path) + "/queue.yaml"
         try:
             os.rename(old_file, new_file)
             print(f"Renamed {old_file} to {new_file}")
@@ -441,7 +441,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.logger.info("Running in HPC mode.")
 
         hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates")
-        rename_to_yaml(self, self.dpath_root, self.hpc)
+        self.rename_to_yaml(hpc_templates_path)
         qa = QueueAdapter(directory=str(hpc_templates_path))
 
         # Generate the list of nipoppy commands as a single string for a shell array
@@ -483,8 +483,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             raise ValueError(
                 "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
             )
-
-        self.update_queue_type(self.dpath_root)
 
         print(f"Generated command:\n{command}")
         # Submit the job with the total number of commands as the array size
