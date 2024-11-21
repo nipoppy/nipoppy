@@ -1,6 +1,5 @@
 """DICOM file organization."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -36,7 +35,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         copy_files: bool = False,
         check_dicoms: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""
@@ -44,7 +43,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="dicom_reorg",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
         self.copy_files = copy_files
@@ -157,6 +156,7 @@ class DicomReorgWorkflow(BaseWorkflow):
 
     def run_setup(self):
         """Update the doughnut in case it is not up-to-date."""
+        super().run_setup()
         self.doughnut = update_doughnut(
             doughnut=self.doughnut,
             manifest=self.manifest,

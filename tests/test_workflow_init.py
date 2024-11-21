@@ -18,7 +18,6 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 
 
 def test_run(dpath_root: Path):
-
     def exist_or_none(o: object, s: str) -> bool:
         # walrus operator ":=" does assignment inside the "if" statement
         if attr := getattr(o, s, None):
@@ -50,13 +49,6 @@ def test_run(dpath_root: Path):
                 assert exist_or_none(
                     pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE"
                 )
-
-
-def test_run_error(dpath_root: Path):
-    dpath_root.mkdir(parents=True)
-    workflow = InitWorkflow(dpath_root=dpath_root)
-    with pytest.raises(FileExistsError, match="Dataset directory already exists"):
-        workflow.run()
 
 
 def test_custom_layout(dpath_root: Path):
@@ -130,8 +122,10 @@ def test_init_bids_dry_run(tmp_path):
     )
     workflow.run()
 
-    target_files = [x.relative_to(dpath_root) for x in dpath_root.glob("**/*")]
-    assert len(target_files) == 0
+    dir_content = list(dpath_root.iterdir())
+    assert len(dir_content) == 1
+    assert dir_content[0].is_dir()
+    assert dir_content[0].name == "logs"
 
 
 def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture):

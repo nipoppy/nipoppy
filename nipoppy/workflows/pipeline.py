@@ -80,21 +80,22 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run=False,
     ):
-        super().__init__(
-            dpath_root=dpath_root,
-            name=name,
-            fpath_layout=fpath_layout,
-            logger=logger,
-            dry_run=dry_run,
-        )
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+
+        super().__init__(
+            dpath_root=dpath_root,
+            name=name,
+            fpath_layout=fpath_layout,
+            verbose=verbose,
+            dry_run=dry_run,
+        )
 
         # the message logged in run_cleanup will depend on
         # the final values for these attributes (updated in run_main)

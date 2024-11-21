@@ -16,13 +16,13 @@ classifiers = [
 ]
 dependencies = [
     "boutiques",
+    "click",
     "pandas",
     "pybids",
     "pydantic",
     'requests',
     "pydicom!=3.0.0",
     "rich",
-    "rich_argparse",
     "typing-extensions",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
@@ -56,7 +56,7 @@ test = [
 tests = ["nipoppy[test]"] # alias in case of typo
 
 [project.scripts]
-nipoppy = "nipoppy.cli.run:cli"
+nipoppy = "nipoppy.cli:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]

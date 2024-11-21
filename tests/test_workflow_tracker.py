@@ -19,7 +19,6 @@ from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 @pytest.fixture(scope="function")
 def tracker(tmp_path: Path):
-
     participants_and_sessions = {
         "01": ["1", "2"],
         "02": ["1", "2"],

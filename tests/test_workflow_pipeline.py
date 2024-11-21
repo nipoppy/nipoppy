@@ -1,7 +1,6 @@
 """Tests for BasePipelineWorkflow."""
 
 import json
-import logging
 import re
 from pathlib import Path
 from typing import Optional
@@ -32,7 +31,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -44,7 +43,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

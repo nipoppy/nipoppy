@@ -1,6 +1,5 @@
 """PipelineTracker workflow."""
 
-import logging
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
@@ -22,7 +21,7 @@ class PipelineTracker(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -34,13 +33,14 @@ class PipelineTracker(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
         self.bagel: Bagel = Bagel()  # may get overwritten
 
     def run_setup(self):
         """Load/initialize the bagel file."""
+        rv = super().run_setup()
         if self.layout.fpath_imaging_bagel.exists():
             try:
                 self.bagel = Bagel.load(self.layout.fpath_imaging_bagel)
@@ -59,7 +59,7 @@ class PipelineTracker(BasePipelineWorkflow):
         else:
             self.bagel = Bagel()
             self.logger.info("Initialized empty bagel")
-        return super().run_setup()
+        return rv
 
     def check_status(self, relative_paths: StrOrPathLike):
         """Check the processing status based on a list of expected paths."""

@@ -1,6 +1,5 @@
 """Workflow for init command."""
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -18,7 +17,7 @@ class DoughnutWorkflow(BaseWorkflow):
         empty: bool = False,
         regenerate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -26,7 +25,7 @@ class DoughnutWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="doughnut",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

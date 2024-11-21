@@ -34,7 +34,7 @@ class InitWorkflow(BaseWorkflow):
         dpath_root: Path,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -42,7 +42,7 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
         self.fname_readme = "README.md"
@@ -59,7 +59,14 @@ class InitWorkflow(BaseWorkflow):
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            raise FileExistsError("Dataset directory already exists")
+            # Allow a log dir to exist
+            dir_content = list(self.dpath_root.iterdir())
+            if not (
+                len(dir_content) == 1
+                and dir_content[0].is_dir()
+                and Path(self.layout.dpath_logs).is_relative_to(dir_content[0])
+            ):
+                raise FileExistsError("Dataset directory already exists")
 
         # create directories
         for dpath in self.layout.dpaths:
