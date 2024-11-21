@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
+import yaml
 
 import bids
 from pydantic import ValidationError
@@ -456,12 +457,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         module_load = self.config.HPC_PREAMBLE
 
         # Build the single command to submit as an array job
-        if self.hpc == "slurm":
+        if self.hpc == "SLURM":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
                 f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
             )
-        elif self.hpc == "sge":
+        elif self.hpc == "SGE":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
                 f'eval "${{commands[$SGE_TASK_ID]}}"\''
@@ -470,6 +471,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             raise ValueError(
                 "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
             )
+
+        update_queue_type(self.dpath_root)
 
         print(f"Generated command:\n{command}")
         # Submit the job with the total number of commands as the array size
@@ -482,6 +485,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             **(self.pipeline_config.HPC_CONFIG.model_dump()),
         )
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
+
+    def update_queue_type(dpath_root):
+        file_path = f"{dpath_root}/code/hpc_templates/queue.yaml"
+        try:
+            with open(file_path, 'r') as file:
+                data = yaml.safe_load(file)
+            data['queue_type'] = 'self.hpc'
+            with open(file_path, 'w') as file:
+                yaml.safe_dump(data, file, default_flow_style=False)
+            print(f"'queue_type' updated to 'self.hpc' in {file_path}")
+        except Exception as e:
+            print(f"Error: {e}")
 
     def run_cleanup(self):
         """Log a summary message."""
