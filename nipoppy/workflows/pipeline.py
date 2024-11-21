@@ -11,8 +11,6 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
-import yaml
-
 import bids
 from pydantic import ValidationError
 from pysqa import QueueAdapter
@@ -425,23 +423,25 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
-    def update_queue_type(self, dpath_root):
-        file_path = f"{dpath_root}/code/hpc_templates/queue.yaml"
+    def rename_to_yaml(self, dpath_root, suffix):
+        old_file = f"{dpath_root}/code/hpc_templates/queue.{suffix}"
+        new_file = f"{dpath_root}/code/hpc_templates/queue.yaml"
         try:
-            with open(file_path, 'r') as file:
-                data = yaml.safe_load(file)
-            data['queue_type'] = self.hpc
-            with open(file_path, 'w') as file:
-                yaml.safe_dump(data, file, default_flow_style=False)
-            print(f"'queue_type' updated to {self.hpc} in {file_path}")
+            os.rename(old_file, new_file)
+            print(f"Renamed {old_file} to {new_file}")
+        except FileNotFoundError:
+            print(f"Error: {old_file} not found.")
+        except PermissionError:
+            print(f"Error: Insufficient permissions to rename {old_file}.")
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Unexpected error: {e}")
 
     def submit_hpc_job(self, participants_sessions):
         """Submits jobs to an HPC cluster for processing."""
         self.logger.info("Running in HPC mode.")
 
         hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates")
+        rename_to_yaml(self, self.dpath_root, self.hpc)
         qa = QueueAdapter(directory=str(hpc_templates_path))
 
         # Generate the list of nipoppy commands as a single string for a shell array
@@ -469,19 +469,19 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         module_load = self.config.HPC_PREAMBLE
 
         # Build the single command to submit as an array job
-        if self.hpc == "SLURM":
+        if self.hpc == "slurm":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
                 f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
             )
-        elif self.hpc == "SGE":
+        elif self.hpc == "sge":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
                 f'eval "${{commands[$SGE_TASK_ID]}}"\''
             )
         else:
             raise ValueError(
-                "Unsupported HPC type specified. Please use 'SLURM' or 'SGE'."
+                "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
             )
 
         self.update_queue_type(self.dpath_root)

@@ -1,5 +1,0 @@
-queue_type: SLURM
-queue_primary: SLURM
-queues:
-  SLURM: {cores_max: 100, cores_min: 1, run_time_max: 259200, script: slurm.sh}
-  SGE: {cores_max: 100, cores_min: 1, run_time_max: 259200, script: sge.sh}
