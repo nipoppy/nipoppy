@@ -424,9 +424,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     )
 
     def rename_to_yaml(self, hpc_templates_path):
-        """Renames queue files to yaml for HPC submission."""
+        """Renames queue files to yaml for HPC submission if the target file doesn't already exist."""
         old_file = str(hpc_templates_path) + "/queue." + str(self.hpc)
         new_file = str(hpc_templates_path) + "/queue.yaml"
+        
+        if os.path.exists(new_file):
+            print(f"Error: {new_file} already exists. Rename aborted.")
+            return
+
         try:
             os.rename(old_file, new_file)
             print(f"Renamed {old_file} to {new_file}")
