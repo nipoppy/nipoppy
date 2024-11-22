@@ -13,8 +13,10 @@
 {%- if account %}
 #$ -q {{account}}
 {%- endif %}
-#$ -o time.out
-#$ -e error.out
+#$ -t 1-{{num_tasks}}   # Specifies the array job range
+#$ -tc 100              # Limits the maximum number of tasks running at the same time
+#$ -o time_$TASK_ID.out # Separate output file for each task
+#$ -e error_$TASK_ID.out # Separate error file for each task
 
 {{command}}
 
