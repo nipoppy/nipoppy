@@ -2,7 +2,7 @@
 #$ -N {{job_name}}
 #$ -wd {{working_directory}}
 {%- if cores %}
-#$ -pe impi_hy* {{cores}}
+#$ -pe {{cores}}
 {%- endif %}
 {%- if memory_max %}
 #$ -l h_vmem={{memory_max}}

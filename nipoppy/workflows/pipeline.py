@@ -423,31 +423,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
-    def rename_to_yaml(self, hpc_templates_path):
-        """Renames queue files to yaml for HPC submission if the target file doesn't already exist."""
-        old_file = str(hpc_templates_path) + "/queue." + str(self.hpc)
-        new_file = str(hpc_templates_path) + "/queue.yaml"
-        
-        if os.path.exists(new_file):
-            print(f"Error: {new_file} already exists. Rename aborted.")
-            return
-
-        try:
-            os.rename(old_file, new_file)
-            print(f"Renamed {old_file} to {new_file}")
-        except FileNotFoundError:
-            print(f"Error: {old_file} not found.")
-        except PermissionError:
-            print(f"Error: Insufficient permissions to rename {old_file}.")
-        except Exception as e:
-            print(f"Unexpected error: {e}")
 
     def submit_hpc_job(self, participants_sessions):
         """Submits jobs to a HPC cluster for processing."""
         self.logger.info("Running in HPC mode.")
 
-        hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates")
-        self.rename_to_yaml(hpc_templates_path) # Rename the file queue.{hpc} to queue.yaml
+        hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates/{self.hpc}")
         qa = QueueAdapter(directory=str(hpc_templates_path))
 
         # Generate the list of nipoppy commands as a single string for a shell array
