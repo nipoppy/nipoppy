@@ -474,13 +474,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # Submit the job with the total number of commands as the array size
         num_jobs = len(job_array_commands)
 
-        queue_id = qa.submit_job(
-            job_name=f"nipoppy_{self.pipeline_name}_{self.pipeline_version}_{self.pipeline_step}",
-            command=command,
-            num_tasks=num_jobs,
-            queue=self.hpc,
-            **(self.pipeline_config.HPC_CONFIG.model_dump()),
-        )
+        try:
+            queue_id = qa.submit_job(
+                job_name=f"nipoppy_{self.pipeline_name}_{self.pipeline_version}_{self.pipeline_step}",
+                command=command,
+                num_tasks=num_jobs,
+                queue=self.hpc,
+                **(self.pipeline_config.HPC_CONFIG.model_dump()),
+            )
+        except NotImplementedError as e:
+            self.logger.info(f"pysqa has not implemented returning the array job ID for SGE yet! Details: {e}")
+        except Exception as e:
+            self.logger.info(f"Unexpected error occurred while submitting the job: {e}")
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
 
     def run_cleanup(self):
