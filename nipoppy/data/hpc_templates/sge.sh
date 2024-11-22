@@ -10,8 +10,8 @@
 {%- if run_time_max %}
 #$ -l h_rt={{ '%02d:%02d:%02d' % (run_time_max // 60, run_time_max % 60, 0) }}
 {%- endif %}
-{%- if queue %}
-#$ -q {{queue}}
+{%- if account %}
+#$ -q {{account}}
 {%- endif %}
 #$ -o time.out
 #$ -e error.out
