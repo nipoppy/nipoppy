@@ -7,6 +7,7 @@ from typing import TypeVar
 StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 PROGRAM_NAME = "nipoppy"
+DEFAULT_VERBOSITY = "2"  # info
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
