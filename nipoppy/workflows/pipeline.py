@@ -475,6 +475,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         num_jobs = len(job_array_commands)
 
         queue_id = qa.submit_job(
+            job_name=f"nipoppy_{self.pipeline_name}_{self.pipeline_version}_{self.pipeline_step}",
             command=command,
             num_tasks=num_jobs,
             queue=self.hpc,
