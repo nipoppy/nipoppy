@@ -1,11 +1,8 @@
 #!/bin/bash
 #$ -N {{job_name}}
-#$ -wd {{working_directory}}
-{%- if cores %}
-#$ -pe {{cores}}
-{%- endif %}
+#$ -cwd 
 {%- if memory_max %}
-#$ -l h_vmem={{memory_max}}
+#$ -l h_vmem={{memory_max}}G
 {%- endif %}
 {%- if run_time_max %}
 #$ -l h_rt={{ '%02d:%02d:%02d' % (run_time_max // 60, run_time_max % 60, 0) }}
@@ -13,8 +10,8 @@
 {%- if account %}
 #$ -q {{account}}
 {%- endif %}
-#$ -o time.out
-#$ -e error.out
+#$ -t 1-{{num_tasks}}   # Specifies the array job range
+#$ -tc 100              # Limits the maximum number of tasks running at the same time to 100
 
 {{command}}
 

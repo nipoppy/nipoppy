@@ -464,7 +464,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         elif self.hpc == "sge":
             command = (
                 f"bash -c '{module_load}; commands=({job_array_commands_str}); "
-                f'eval "${{commands[$SGE_TASK_ID]}}"\''
+                f'eval "${{commands[$((SGE_TASK_ID-1))]}}"\''
             )
         else:
             raise ValueError(
