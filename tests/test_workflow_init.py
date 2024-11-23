@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from fids import fids
 
+from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
@@ -135,7 +136,13 @@ def test_init_bids_dry_run(tmp_path):
 
 
 def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture):
-    """Raise a warning if subject has no session."""
+    """Create dummy BIDS dataset with no session to use during init.
+
+    Make sure:
+    - raise a warning if subject has no session.
+    - manifest is created with the right content
+    - all the files are there after init.
+    """
     dpath_root = tmp_path / "nipoppy"
     bids_to_copy = tmp_path / "bids"
     fids.create_fake_bids_dataset(
@@ -146,4 +153,16 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
     )
     workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
     workflow.run()
-    assert "could not find a session level folder" in caplog.text
+    assert (
+        f"Could not find session-level folder(s) for participant sub-01, using session {FAKE_SESSION_ID} in the manifest"
+        in caplog.text
+    )
+
+    assert isinstance(workflow.manifest, Manifest)
+
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == [FAKE_SESSION_ID]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+    ]
