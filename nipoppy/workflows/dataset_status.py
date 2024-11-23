@@ -346,10 +346,10 @@ class StatusWorkflow(BaseWorkflow):
                 reward_emojis.append(broom_emoji)
 
             # Additional rewards based on quantity
-            if row[bids_col] > high_throughput:
-                reward_emojis.append(bento_box_emoji)
-            elif row[bids_col] > medium_throughput:
-                reward_emojis.append(sushi_emoji)
+            # if row[bids_col] > high_throughput:
+            #     reward_emojis.append(bento_box_emoji)
+            # elif row[bids_col] > medium_throughput:
+            #     reward_emojis.append(sushi_emoji)
 
             status_df.loc[row_obj[0], reward_col_name] = " ".join(reward_emojis)
 
@@ -379,6 +379,7 @@ class StatusWorkflow(BaseWorkflow):
 
             # confetti_emoji if processing is complete for all
             # participants and pipelines
+            all_equal = False
             if (row[status_count_cols] > 0).all():
                 row_vals = row[status_count_cols].values
                 all_equal = all([x == row_vals[0] for x in row_vals])
@@ -395,10 +396,10 @@ class StatusWorkflow(BaseWorkflow):
                 reward_emojis.append(rocket_emoji)
 
             # Additional rewards based on quantity
-            if (row[bagel_cols] > high_throughput).any():
-                reward_emojis.append(mate_emoji)
-            elif (row[bagel_cols] > medium_throughput).any():
-                reward_emojis.append(shaved_ice_emoji)
+            # if (row[bagel_cols] > high_throughput).any():
+            #     reward_emojis.append(mate_emoji)
+            # elif (row[bagel_cols] > medium_throughput).any():
+            #     reward_emojis.append(shaved_ice_emoji)
 
             status_df.loc[row_obj[0], reward_col_name] = " ".join(reward_emojis)
 

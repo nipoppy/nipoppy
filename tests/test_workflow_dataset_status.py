@@ -19,6 +19,31 @@ def dpath_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
+clipboard_emoji = "📋"
+sad_cat_emoji = "😿"
+broom_emoji = "🧹"
+doughnut_emoji = "🍩"
+sparkles_emoji = "✨"
+rocket_emoji = "🚀"
+bagel_emoji = "🥯"
+party_popper_emoji = "🎉"
+confetti_emoji = "🎊"
+
+# based on quantity
+medium_throughput = 100
+sushi_emoji = "🍣"  # 100 subjects in BIDS
+shaved_ice_emoji = "🍧"  # 100 subjects processed
+
+# other emojis
+surprise_box_emoji = "🎁"
+high_throughput = 1000
+bento_box_emoji = "🍱"  # 1000 subjects in BIDS
+mate_emoji = "🧉"  # 1000 subjects processed
+night_owl_emoji = "🦉"
+slow_sloth_emoji = "🦥"
+quick_tiger_emoji = "🐅"
+
+
 def make_manifest(
     n_participants=10, session_ids=("BL", "M12"), randomize_counts=False
 ) -> Manifest:
@@ -206,6 +231,103 @@ def make_bagel(
     return bagel, session_participant_counts_df
 
 
+def make_status_df(
+    n_participants,
+    session_ids=("BL", "M12", "M24"),
+    pipeline_configs=(
+        ("dcm2bids", "1.0.0", "prepare"),
+        ("dcm2bids", "1.0.0", "convert"),
+        ("fmriprep", "1.0.0", "default"),
+    ),
+    emojis={
+        "M12": {
+            "init\nrewards": [clipboard_emoji],
+            "curation\nrewards": [doughnut_emoji, broom_emoji],
+            "processing\nrewards": [bagel_emoji, party_popper_emoji],
+        },
+        "M24": {
+            "init\nrewards": [sad_cat_emoji],
+            "curation\nrewards": [],
+            "processing\nrewards": [],
+        },
+    },
+) -> pd.DataFrame:
+
+    doughnut_cols = ["in_pre_reorg", "in_post_reorg", "in_bids"]
+    bagel_cols = [
+        f"{config[0]}\n{config[1]}\n{config[2]}" for config in pipeline_configs
+    ]
+    status_df = pd.DataFrame(
+        columns=["session_id", "in_manifest"] + doughnut_cols + bagel_cols
+    )
+    status_df["session_id"] = list(session_ids)
+
+    # set BL session as complete
+    status_df.loc[
+        status_df["session_id"] == "BL", ["in_manifest"] + doughnut_cols + bagel_cols
+    ] = n_participants
+
+    # generate participants per session based on expected emoji rewards
+    for session_id in session_ids[1:]:
+        # initialize all doughnut and bagel status columns to 0 to avoid NaNs
+        status_df.loc[status_df["session_id"] == session_id, "in_manifest"] = (
+            n_participants
+        )
+        status_df.loc[
+            status_df["session_id"] == session_id, doughnut_cols + bagel_cols
+        ] = 0
+        session_emojis = emojis[session_id]
+
+        if sad_cat_emoji in session_emojis["init\nrewards"]:
+            continue
+
+        if clipboard_emoji in session_emojis["init\nrewards"]:
+            if sparkles_emoji in session_emojis["curation\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, "in_pre_reorg"] = (
+                    n_participants
+                )
+                status_df.loc[
+                    status_df["session_id"] == session_id, "in_post_reorg"
+                ] = n_participants
+                status_df.loc[status_df["session_id"] == session_id, "in_bids"] = (
+                    n_participants
+                )
+
+            elif doughnut_emoji in session_emojis["curation\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, "in_pre_reorg"] = (
+                    n_participants
+                )
+                status_df.loc[
+                    status_df["session_id"] == session_id, "in_post_reorg"
+                ] = 1
+                status_df.loc[status_df["session_id"] == session_id, "in_bids"] = 1
+
+            elif broom_emoji in session_emojis["curation\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, "in_pre_reorg"] = 1
+                status_df.loc[
+                    status_df["session_id"] == session_id, "in_post_reorg"
+                ] = 1
+                status_df.loc[status_df["session_id"] == session_id, "in_bids"] = 0
+
+            if bagel_emoji in session_emojis["processing\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, bagel_cols] = 1
+
+            if confetti_emoji in session_emojis["processing\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, bagel_cols] = (
+                    n_participants
+                )
+
+            elif party_popper_emoji in session_emojis["processing\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, bagel_cols[-1]] = (
+                    n_participants
+                )
+
+            elif rocket_emoji in session_emojis["processing\nrewards"]:
+                status_df.loc[status_df["session_id"] == session_id, bagel_cols[-1]] = 1
+
+    return status_df
+
+
 @pytest.mark.parametrize(
     "n_participants,session_ids,randomize_counts",
     [
@@ -342,111 +464,108 @@ def test_bagel(
     assert status_df["bagel_counts"].equals(status_df["participant_count"])
 
 
-# def test_add_bagel_rewards(dpath_root: Path):
+@pytest.mark.parametrize(
+    "n_participants,session_ids,pipeline_configs,emojis",
+    [
+        (
+            10,
+            ["BL", "M12", "M24"],
+            (
+                ("dcm2bids", "1.0.0", "prepare"),
+                ("dcm2bids", "1.0.0", "convert"),
+                ("fmriprep", "1.0.0", "default"),
+            ),
+            {
+                "M12": {
+                    "init\nrewards": [clipboard_emoji],
+                    "curation\nrewards": [doughnut_emoji, broom_emoji],
+                    "processing\nrewards": [bagel_emoji, party_popper_emoji],
+                },
+                "M24": {
+                    "init\nrewards": [sad_cat_emoji],
+                    "curation\nrewards": [],
+                    "processing\nrewards": [],
+                },
+            },
+        ),
+        (
+            150,
+            ["BL", "M06", "M12", "M24"],
+            (
+                ("dcm2bids", "1.0.0", "prepare"),
+                ("dcm2bids", "1.0.0", "convert"),
+                ("fmriprep", "1.0.0", "default"),
+            ),
+            {
+                "M06": {
+                    "init\nrewards": [clipboard_emoji],
+                    "curation\nrewards": [doughnut_emoji, broom_emoji],
+                    "processing\nrewards": [bagel_emoji, party_popper_emoji],
+                },
+                "M12": {
+                    "init\nrewards": [clipboard_emoji],
+                    "curation\nrewards": [broom_emoji],
+                    "processing\nrewards": [rocket_emoji],
+                },
+                "M24": {
+                    "init\nrewards": [sad_cat_emoji],
+                    "curation\nrewards": [],
+                    "processing\nrewards": [],
+                },
+            },
+        ),
+    ],
+)
+def test_rewards(
+    dpath_root: Path,
+    n_participants: int,
+    session_ids: list,
+    pipeline_configs: tuple,
+    emojis: dict,
+):
 
+    workflow = StatusWorkflow(dpath_root=dpath_root)
 
-# def test_run(dpath_root: Path):
+    status_df = make_status_df(n_participants, session_ids, pipeline_configs, emojis)
 
+    doughnut_cols = ["in_pre_reorg", "in_post_reorg", "in_bids"]
+    bagel_cols = [
+        f"{config[0]}\n{config[1]}\n{config[2]}" for config in pipeline_configs
+    ]
 
-#     workflow = StatusWorkflow(dpath_root=dpath_root)
+    # define the status columns and rewards columns
+    status_col_dict = {
+        "manifest": "in_manifest",
+        "doughnut": doughnut_cols,
+        "bids": "in_bids",  # also part of doughnut cols
+        "bagel": bagel_cols,
+    }
+    reward_col_dict = {
+        "manifest": "init\nrewards",
+        "doughnut": "curation\nrewards",
+        "bagel": "processing\nrewards",
+    }
 
-#     workflow.config = get_config(dataset_name="my_dataset")
+    status_df = workflow._add_manifest_rewards(
+        status_df, status_col_dict, reward_col_dict["manifest"]
+    )
+    status_df = workflow._add_doughnut_rewards(
+        status_df, status_col_dict, reward_col_dict["doughnut"]
+    )
+    status_df = workflow._add_bagel_rewards(
+        status_df, status_col_dict, reward_col_dict["bagel"]
+    )
 
-#     manifest_dict = {
-#         Manifest.col_participant_id: ["01", "02", "03", "01", "02"],
-#         Manifest.col_session_id: ["BL", "BL", "BL", "M12", "M12"],
-#         Manifest.col_visit_id: ["BL", "BL", "BL", "M12", "M12"],
-#         Manifest.col_datatype: [
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#         ],
-#     }
+    assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
 
-#     doughnut_dict = {
-#         Doughnut.col_participant_id: ["01", "02", "03", "01"],
-#         Doughnut.col_session_id: ["BL", "BL", "BL", "M12"],
-#         Doughnut.col_visit_id: ["BL", "BL", "BL", "M12"],
-#         Doughnut.col_datatype: [
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#             ["anat", "dwi"],
-#         ],
-#         Doughnut.col_participant_dicom_dir: [
-#             "/path/to/dicom",
-#             "/path/to/dicom",
-#             "/path/to/dicom",
-#             "/path/to/dicom",
-#         ],
-#         Doughnut.col_in_pre_reorg: [True, True, True, True],
-#         Doughnut.col_in_post_reorg: [True, True, True, False],
-#         Doughnut.col_in_bids: [True, True, False, False],
-#     }
-
-#     bagel_dict = {
-#         Bagel.col_participant_id: ["01", "02", "01", "02", "01"],
-#         Bagel.col_bids_participant_id: [
-#             "sub-01",
-#             "sub-02",
-#             "sub-01",
-#             "sub-02",
-#             "sub-01",
-#         ],
-#         Bagel.col_session_id: ["BL", "BL", "BL", "BL", "M12"],
-#         Bagel.col_bids_session_id: ["ses-BL", "ses-BL", "ses-BL", "ses-BL", "ses-M12"],
-#         Bagel.col_pipeline_name: [
-#             "dcm2bids",
-#             "dcm2bids",
-#             "fmriprep",
-#             "fmriprep",
-#             "dcm2bids",
-#         ],
-#         Bagel.col_pipeline_version: ["1.0.0", "1.0.0", "2.0.0", "2.0.0", "1.0.0"],
-#         Bagel.col_pipeline_step: [
-#             "convert",
-#             "convert",
-#             "default",
-#             "default",
-#             "convert",
-#         ],
-#         Bagel.col_status: ["SUCCESS", "SUCCESS", "SUCCESS", "INCOMPLETE", "FAIL"],
-#     }
-
-#     workflow.manifest = Manifest.from_dict(manifest_dict)
-#     workflow.doughnut = Doughnut.from_dict(doughnut_dict)
-#     workflow.bagel = Bagel.from_dict(bagel_dict)
-
-#     status_df = workflow.run_main()
-#     status_df = status_df.fillna(0).reset_index()
-
-#     # check manifest status
-#     assert set(status_df[Manifest.col_session_id].unique()) == set(["BL", "M12"])
-#     assert status_df[Manifest.col_session_id].nunique() == 2
-#     assert status_df["in_manifest"].sum() == 5
-
-#     # check doughnut status
-#     assert status_df["in_pre_reorg"].sum() == 4
-#     assert status_df["in_post_reorg"].sum() == 3
-#     assert status_df["in_bids"].sum() == 2
-
-#     # check bagel status
-#     assert status_df["dcm2bids\n1.0.0\nconvert"].sum() == 2
-#     assert status_df["fmriprep\n2.0.0\ndefault"].sum() == 1
-
-#     # check emoji status
-#     test_stickers = {
-#         "init": ["📋"],
-#         "curation": ["🍩", "🧹"],
-#         "processing": ["🥯", "🚀"],
-#     }
-
-#     for stage, stickers in test_stickers.items():
-#         test_rewards = " ".join(stickers)
-#         calculated_rewards = status_df[status_df[Manifest.col_session_id] == "BL"][
-#             f"{stage}\nrewards"
-#         ].values.astype(str)
-
-#         assert calculated_rewards == test_rewards
+    # add BL emojis to the emojis dict
+    emojis["BL"] = {
+        "init\nrewards": [clipboard_emoji],
+        "curation\nrewards": [doughnut_emoji, sparkles_emoji],
+        "processing\nrewards": [bagel_emoji, confetti_emoji],
+    }
+    for session_id in session_ids:
+        session_df = status_df[status_df["session_id"] == session_id]
+        for reward_col in reward_col_dict.values():
+            awarded_emojis = session_df[reward_col].values[0].split()
+            assert set(awarded_emojis) == set(emojis[session_id][reward_col])
