@@ -742,7 +742,11 @@ def test_generate_fpath_log(
     )
 
 
-def test_submit_hpc_job_command_generation(mocker):
+@pytest.mark.parametrize("hpc_type, array_task_id_placeholder", [
+    ("slurm", "$SLURM_ARRAY_TASK_ID"),
+    ("sge", "$((SGE_TASK_ID-1))"),
+])
+def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_placeholder):
     # Set up mock configurations and mocks
     hpc_config_dict = {
         "account_name": "testname",
@@ -763,11 +767,11 @@ def test_submit_hpc_job_command_generation(mocker):
         "config",
         mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
     )
-    mocker.patch("os.makedirs", mocker.MagicMock())
+    #mocker.patch("os.makedirs", mocker.MagicMock())
 
     participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
     pipeline_workflow = PipelineWorkflow(
-        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="slurm"
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc=hpc_type
     )
 
     # Call the function we're testing
@@ -784,7 +788,7 @@ def test_submit_hpc_job_command_generation(mocker):
             f"nipoppy run /path/to/root --pipeline test_pipeline --pipeline-version 1.0.0 --pipeline-step step1 --participant-id {participant_id} --session-id {session_id}"
             in command
         )
-    assert "$SLURM_ARRAY_TASK_ID" in command
+    assert array_task_id_placeholder in command
 
     # Verify the correct number of tasks
     num_tasks = len(participants_sessions)
@@ -793,7 +797,8 @@ def test_submit_hpc_job_command_generation(mocker):
     ), f"Expected num_tasks to be {num_tasks}, but got: {submit_job_args['num_tasks']}"
 
 
-def test_submit_hpc_job_single_participant(mocker):
+@pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
+def test_submit_hpc_job_single_participant(mocker, hpc_type):
     # Set up mock configurations and mocks
     hpc_config_dict = {
         "account_name": "testname",
@@ -817,7 +822,7 @@ def test_submit_hpc_job_single_participant(mocker):
 
     participants_sessions = [("participant1", "session1")]
     pipeline_workflow = PipelineWorkflow(
-        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="slurm"
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc=hpc_type
     )
     pipeline_workflow.submit_hpc_job(participants_sessions)
 
@@ -832,3 +837,4 @@ def test_submit_hpc_job_unsupported_hpc_type(mocker):
             "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
         )
         pipeline_workflow.submit_hpc_job([("participant1", "session1")])
+
