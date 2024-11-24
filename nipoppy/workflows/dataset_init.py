@@ -191,7 +191,7 @@ class InitWorkflow(BaseWorkflow):
         return super().run_cleanup()
 
     def _copy_hpc_templates(self) -> None:
-        """Copy Jinja template files for HPC to dataset's code/hpc_templates directory."""
+        """Copy Jinja template for HPC to dataset's code/hpc_templates directory."""
         hpc_templates_source = (
             Path(__file__).resolve().parent.parent / "data" / "hpc_templates"
         )
