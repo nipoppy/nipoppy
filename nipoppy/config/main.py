@@ -16,7 +16,6 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
