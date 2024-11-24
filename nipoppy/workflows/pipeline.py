@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import shlex
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
+
 import bids
 from pydantic import ValidationError
 from pysqa import QueueAdapter
@@ -423,9 +423,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
-
     def submit_hpc_job(self, participants_sessions):
-        """Submits jobs to a HPC cluster for processing."""
+        """Submit jobs to a HPC cluster for processing."""
         self.logger.info("Running in HPC mode.")
 
         hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates/{self.hpc}")
@@ -476,14 +475,20 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         try:
             queue_id = qa.submit_job(
-                job_name=f"nipoppy_{self.pipeline_name}_{self.pipeline_version}_{self.pipeline_step}",
+                job_name=(
+                    f"nipoppy_{self.pipeline_name}_"
+                    f"{self.pipeline_version}_{self.pipeline_step}"
+                ),
                 command=command,
                 num_tasks=num_jobs,
                 queue=self.hpc,
-                **(self.pipeline_config.HPC_CONFIG.model_dump()),
+                **self.pipeline_config.HPC_CONFIG.model_dump(),
             )
         except NotImplementedError as e:
-            self.logger.info(f"pysqa has not implemented returning the array job ID for SGE yet! Details: {e}")
+            self.logger.info(
+                f"pysqa has not implemented returning the array job ID for SGE yet! "
+                f"Details: {e}"
+            )
             queue_id = None
         except Exception as e:
             self.logger.info(f"Unexpected error occurred while submitting the job: {e}")

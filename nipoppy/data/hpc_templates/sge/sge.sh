@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -N {{job_name}}
-#$ -cwd 
+#$ -cwd
 {%- if memory_max %}
 #$ -l h_vmem={{memory_max}}G
 {%- endif %}
@@ -14,4 +14,3 @@
 #$ -tc 100              # Limits the maximum number of tasks running at the same time to 100
 
 {{command}}
-

@@ -742,10 +742,13 @@ def test_generate_fpath_log(
     )
 
 
-@pytest.mark.parametrize("hpc_type, array_task_id_placeholder", [
-    ("slurm", "$SLURM_ARRAY_TASK_ID"),
-    ("sge", "$((SGE_TASK_ID-1))"),
-])
+@pytest.mark.parametrize(
+    "hpc_type, array_task_id_placeholder",
+    [
+        ("slurm", "$SLURM_ARRAY_TASK_ID"),
+        ("sge", "$((SGE_TASK_ID-1))"),
+    ],
+)
 def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_placeholder):
     # Set up mock configurations and mocks
     hpc_config_dict = {
@@ -767,7 +770,7 @@ def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_place
         "config",
         mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
     )
-    #mocker.patch("os.makedirs", mocker.MagicMock())
+    # mocker.patch("os.makedirs", mocker.MagicMock())
 
     participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
     pipeline_workflow = PipelineWorkflow(
@@ -837,4 +840,3 @@ def test_submit_hpc_job_unsupported_hpc_type(mocker):
             "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
         )
         pipeline_workflow.submit_hpc_job([("participant1", "session1")])
-

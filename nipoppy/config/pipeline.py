@@ -122,8 +122,8 @@ class BidsPipelineConfig(BasePipelineConfig):
 
 class HpcConfig(BaseModel):
     """Schema for High-Performance Computing (HPC) configuration."""
+
     model_config = ConfigDict(extra="allow")
-    
 
 
 class ProcPipelineConfig(BasePipelineConfig):
