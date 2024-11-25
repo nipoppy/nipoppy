@@ -132,7 +132,7 @@ class Config(_SchemaWithContainerConfig):
     )
 
     # Allow extra fields if necessary
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     def _check_dicom_dir_options(self) -> Self:
         """Check that only one DICOM directory mapping option is given."""
