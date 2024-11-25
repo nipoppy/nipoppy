@@ -23,6 +23,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "HPC_PREAMBLE",
 ]
 
 
@@ -32,6 +33,7 @@ def valid_config_data():
         "DATASET_NAME": "my_dataset",
         "VISIT_IDS": ["1"],
         "SESSION_IDS": ["1"],
+        "HPC_PREAMBLE": "module load preamble",
         "BIDS_PIPELINES": [
             {
                 "NAME": "bids_converter",
