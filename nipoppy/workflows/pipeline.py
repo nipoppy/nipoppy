@@ -25,6 +25,7 @@ from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConf
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
     StrOrPathLike,
@@ -319,7 +320,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 current=pybids_ignore_patterns,
                 new=f"^(?!/{BIDS_SUBJECT_PREFIX}({participant_id}))",
             )
-        if session_id is not None:
+        if (session_id is not None) and (session_id != FAKE_SESSION_ID):
             add_pybids_ignore_patterns(
                 current=pybids_ignore_patterns,
                 new=f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})",

@@ -106,6 +106,32 @@
     "PROC_PIPELINES": [
         {
             "NAME": "fmriprep",
+            "VERSION": "24.1.1",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+                "URI": "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+            },
+            "CONTAINER_CONFIG": {
+                "ENV_VARS": {
+                    "TEMPLATEFLOW_HOME": "[[TEMPLATEFLOW_HOME]]"
+                },
+                "ARGS": [
+                    "--bind",
+                    "[[FREESURFER_LICENSE_FILE]]",
+                    "--bind",
+                    "[[TEMPLATEFLOW_HOME]]"
+                ]
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                }
+            ]
+        },
+        {
+            "NAME": "fmriprep",
             "VERSION": "23.1.3",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
@@ -171,7 +197,7 @@
         {
             "NAME": "freesurfer",
             "VERSION": "7.3.2",
-            "DESCRIPTION": "Freesurfer version associated with fMRIPrep 23.1.3",
+            "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 23.0.0 and later",
             "HPC_CONFIG": {
                 "account_name": "<HPC_ACCOUNT_NAME>",
                 "cores": "<NUM_CORES>",
@@ -187,7 +213,7 @@
         {
             "NAME": "freesurfer",
             "VERSION": "6.0.1",
-            "DESCRIPTION": "Freesurfer version associated with fMRIPrep 20.2.7",
+            "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 0.7.0 to 22.x.x",
             "HPC_CONFIG": {
                 "account_name": "<HPC_ACCOUNT_NAME>",
                 "cores": "<NUM_CORES>",
