@@ -122,6 +122,12 @@
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
             },
+            "HPC_CONFIG": {
+                "account_name": "<HPC_ACCOUNT_NAME>",
+                "cores": "<NUM_CORES>",
+                "memory_max": "<MAX_MEMORY_IN_GB>",
+                "run_time_max": "<MAX_RUNTIME_IN_MINUTES>"
+            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
