@@ -297,9 +297,9 @@ def add_subparser_pipeline_run(
     parser.add_argument(
         "--hpc",
         type=str,
-        choices=['slurm', 'sge'],  # Add valid choices for HPC modes
+        choices=['slurm', 'sge'],
         default=None,
-        help="Toggle HPC mode. Valid choices are 'slurm' and 'sge'."
+        help="Submit HPC jobs instead of running the pipeline directly."
     )
     return parser
 
