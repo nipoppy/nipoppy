@@ -24,7 +24,7 @@ dependencies = [
     "rich",
     "rich_argparse",
     "typing-extensions",
-    "pysqa",
+    "pysqa[sge]",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
