@@ -78,9 +78,10 @@ class Config(_SchemaWithContainerConfig):
     HPC_PREAMBLE: Optional[str] = Field(
         default=None,
         description=(
-            "Optional string for HPC (High-Performance Computing) preamble "
-            "instructions. Can include job scheduler directives or any necessary "
-            "commands to set up the HPC environment prior to running pipelines."
+            "Optional string for HPC setup, including job scheduler directives "
+            "or environment initialization. Examples: loading modules (e.g., "
+            "Apptainer/Singularity), activating a Python environment with "
+            "Nipoppy installed, and setting up job-specific variables."
         ),
     )
 

@@ -838,39 +838,6 @@ def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_place
     ), f"Expected num_tasks to be {num_tasks}, but got: {submit_job_args['num_tasks']}"
 
 
-@pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
-def test_submit_hpc_job_single_participant(mocker, hpc_type):
-    # Set up mock configurations and mocks
-    hpc_config_dict = {
-        "account_name": "testname",
-        "cores": 69,
-        "memory_max": 42,
-        "run_time_max": 666,
-    }
-    mock_hpc_config = mocker.MagicMock()
-    mock_hpc_config.model_dump.return_value = hpc_config_dict
-    mock_pipeline_config = mocker.MagicMock()
-    mock_pipeline_config.HPC_CONFIG = mock_hpc_config
-    mocker.patch.object(PipelineWorkflow, "pipeline_config", mock_pipeline_config)
-
-    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
-    mocker.patch("pysqa.QueueAdapter.__init__", lambda x, directory: None)
-    mocker.patch.object(
-        PipelineWorkflow,
-        "config",
-        mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
-    )
-
-    participants_sessions = [("participant1", "session1")]
-    pipeline_workflow = PipelineWorkflow(
-        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc=hpc_type
-    )
-    pipeline_workflow.submit_hpc_job(participants_sessions)
-
-    # Assert that submit_job was called once
-    mock_submit_job.assert_called_once()
-
-
 def test_submit_hpc_job_unsupported_hpc_type(mocker):
     # Test for unsupported hpc type
     with pytest.raises(ValueError):

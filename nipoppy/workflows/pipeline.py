@@ -488,12 +488,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         except NotImplementedError as e:
             self.logger.info(
                 f"pysqa has not implemented returning the array job ID for SGE yet! "
-                f"Details: {e}"
             )
             queue_id = None
         except Exception as e:
             self.logger.info(f"Unexpected error occurred while submitting the job: {e}")
-        self.logger.info(f"Submitted array job with queue ID {queue_id}")
+        if queue_id is not None:
+            self.logger.info(f"Submitted array job with queue ID {queue_id}")
 
     def run_cleanup(self):
         """Log a summary message."""
