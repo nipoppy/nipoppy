@@ -492,7 +492,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
             queue_id = None
         except Exception as e:
-            self.logger.error(f"Unexpected error occurred while submitting the job: {e}")
+            self.logger.error(
+                f"Unexpected error occurred while submitting the job: {e}"
+            )
             raise e
         self.logger.info(f"Submitted array job with queue ID {queue_id}")
 
