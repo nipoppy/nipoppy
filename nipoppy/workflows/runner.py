@@ -65,7 +65,7 @@ class PipelineRunner(BasePipelineWorkflow):
             bind_paths = []
 
         # get and process container config
-        container_config = self.pipeline_config.get_container_config()
+        container_config = self.pipeline_step_config.get_container_config()
         container_config = ContainerConfig(
             **self.process_template_json(
                 container_config.model_dump(),
