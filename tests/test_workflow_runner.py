@@ -169,7 +169,9 @@ def test_process_container_config(config: Config, tmp_path: Path):
 
     result = runner.process_container_config(participant_id="01", session_id="BL")
 
-    # check that the container subcommand from the Boutiques container config is used
+    # check that the subcommand 'exec' from the Boutiques container config is used
+    # note: the container command in the config is "echo" because otherwise the
+    # check for the container command fails if Singularity/Apptainer is not on the PATH
     assert result.startswith("echo exec")
 
     # check that the right container config was used
