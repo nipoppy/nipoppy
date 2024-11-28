@@ -32,7 +32,7 @@ release = __version__
 extensions = [
     "autoapi.extension",
     "myst_parser",
-    "sphinxarg.ext",
+    "sphinx_click.ext",
     "sphinx_copybutton",
     "sphinx_github_changelog",
     "sphinx-jsonschema",
@@ -85,7 +85,7 @@ intersphinx_mapping = {
 
 # -- MyST configuration -------------------------------------------------------
 
-myst_enable_extensions = ["fieldlist", "substitution"]
+myst_enable_extensions = ["fieldlist", "substitution", "colon_fence"]
 
 myst_heading_anchors = 5
 
@@ -147,7 +147,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "*/cli/*"]
+autoapi_ignore = ["*_version*", "**/cli.py"]
 autoapi_options = [
     "members",
     "undoc-members",

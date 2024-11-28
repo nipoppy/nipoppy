@@ -80,7 +80,7 @@ The `pipeline_complete` column can have the following values:
 To track all available participants and sessions, run:
 ```console
 $ nipoppy track \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -92,7 +92,7 @@ If there are multiple versions or steps for the same pipeline in the global conf
 The tracker can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy track \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>

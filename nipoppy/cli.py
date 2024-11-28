@@ -39,7 +39,7 @@ def global_options(func):
         count=True,
         default=DEFAULT_VERBOSITY,
         help="Verbosity level, Verbosity level, from 0 (least verbose) "
-        "to 3 (most verbose). Default: {DEFAULT_VERBOSITY}.",
+        f"to 3 (most verbose). Default: {DEFAULT_VERBOSITY}.",
     )(func)
     return func
 
