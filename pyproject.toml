@@ -37,7 +37,7 @@ dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
     "sphinx",
-    "spinhx-click",
+    "sphinx-click",
     "sphinx-autoapi",
     "sphinx-copybutton",
     "sphinx-github-changelog",
