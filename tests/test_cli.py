@@ -39,7 +39,7 @@ def test_cli_doughnut(tmp_path: Path):
     with runner.isolated_filesystem(temp_dir=tmp_path) as td:
         dpath_root = Path(td, "my_dataset")
         runner.invoke(cli, [dpath_root.as_posix(), "init"])
-        runner.invoke(
+        result = runner.invoke(
             cli,
             ["doughnut", "--dataset", str(dpath_root)],
         )
@@ -55,11 +55,12 @@ def test_cli_doughnut(tmp_path: Path):
             )
             == 1
         )
+        assert result.exit_code == 0
 
 
 def test_cli_dicom_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)])
+    result = runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)])
 
     # check that a logfile was created
     assert (
@@ -70,6 +71,7 @@ def test_cli_dicom_reorg(tmp_path: Path):
         )
         == 1
     )
+    assert result.exit_code == 0
 
 
 def test_cli_bids_conversion(tmp_path: Path):
@@ -101,11 +103,12 @@ def test_cli_bids_conversion(tmp_path: Path):
         )
         == 1
     )
+    assert result.exit_code == 0
 
 
 def test_cli_pipeline_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    runner.invoke(
+    result = runner.invoke(
         cli,
         [
             "run",
@@ -129,11 +132,12 @@ def test_cli_pipeline_run(tmp_path: Path):
         )
         == 1
     )
+    assert result.exit_code == 0
 
 
 def test_cli_pipeline_track(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    runner.invoke(
+    result = runner.invoke(
         cli,
         [
             "track",
@@ -157,3 +161,4 @@ def test_cli_pipeline_track(tmp_path: Path):
         )
         == 1
     )
+    assert result.exit_code == 0
