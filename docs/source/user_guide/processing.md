@@ -1,6 +1,6 @@
 # Running processing pipelines
 
-Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run image processing pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) are populated with descriptor files and default invocation files for the following processing pipelines:
+Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run image processing pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.rst>)) are populated with descriptor files and default invocation files for the following processing pipelines:
 - [fMRIPrep](https://fmriprep.org/en/stable/), a pipeline for preprocessing anatomical and functional MRI data.
 - [MRIQC](https://mriqc.readthedocs.io/en/latest/index.html), a pipeline for automated quality control (QC) metric extraction
 
@@ -36,13 +36,13 @@ class: no-copybutton
 
 ### Commands
 
-- Command-line interface: [`nipoppy run`](<project:../cli_reference/run.md>)
+- Command-line interface: [`nipoppy run`](<project:../cli_reference/run.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineRunner`
 
 ### Workflow
 
 1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according the the imaging derivatives bagel file
-    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
+    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.rst)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
     2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}
@@ -103,7 +103,7 @@ $ nipoppy bidsify \
 The `--simulate` argument will make Nipoppy print out the command to be executed with Boutiques (instead of actually executing it). It can be useful for checking runtime parameters or debugging the invocation file.
 ```
 
-See the [CLI reference page](<project:../cli_reference/run.md>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../cli_reference/run.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/run`
@@ -125,7 +125,7 @@ workflow = PipelineRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/run.md>)).
+See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/run.rst>)).
 
 ## Next steps
 
