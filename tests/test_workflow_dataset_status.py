@@ -11,7 +11,7 @@ from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.dataset_status import StatusWorkflow
 
-# from .conftest import get_config
+from .conftest import get_config
 
 
 @pytest.fixture()
@@ -28,20 +28,6 @@ rocket_emoji = "🚀"
 bagel_emoji = "🥯"
 party_popper_emoji = "🎉"
 confetti_emoji = "🎊"
-
-# based on quantity
-medium_throughput = 100
-sushi_emoji = "🍣"  # 100 subjects in BIDS
-shaved_ice_emoji = "🍧"  # 100 subjects processed
-
-# other emojis
-surprise_box_emoji = "🎁"
-high_throughput = 1000
-bento_box_emoji = "🍱"  # 1000 subjects in BIDS
-mate_emoji = "🧉"  # 1000 subjects processed
-night_owl_emoji = "🦉"
-slow_sloth_emoji = "🦥"
-quick_tiger_emoji = "🐅"
 
 
 def make_manifest(
@@ -103,14 +89,15 @@ def make_doughnut(
     randomize_counts=False,
 ) -> Doughnut:
     # reuse manifest generation
-    doughnut, session_participant_counts_df = make_manifest(
+    manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
     )
 
-    participant_ids = doughnut["participant_id"].unique()
+    participant_ids = manifest["participant_id"].unique()
 
     # add pre_reorg, post_reorg, and bids status columns
     # always keep the first session as complete
+    doughnut = manifest.copy()
     doughnut[
         [Doughnut.col_in_pre_reorg, Doughnut.col_in_post_reorg, Doughnut.col_in_bids]
     ] = False  # sets dtype to bool and avoids pandas warnings
@@ -124,6 +111,7 @@ def make_doughnut(
         doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_bids
     ] = True
 
+    # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
     participant_counts = [
         (len(participant_ids), len(participant_ids), len(participant_ids))
     ]
@@ -175,16 +163,16 @@ def make_bagel(
     randomize_counts=False,
 ) -> Bagel:
 
-    bagel, session_participant_counts_df = make_manifest(
+    manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
     )
 
-    participant_ids = bagel["participant_id"].unique()
+    participant_ids = manifest["participant_id"].unique()
     n_configs = len(pipeline_configs)
     # add pipeline columns
     _df_list = []
     for config in pipeline_configs:
-        _df = bagel.copy()
+        _df = manifest.copy()
         _df[
             [
                 Bagel.col_pipeline_name,
@@ -223,6 +211,8 @@ def make_bagel(
             n_session_participants - n_success_pipeline
         )
 
+    # participant_count column contains an int which is the sum of successful
+    # rows across all processing pipelines for a given session
     session_participant_counts_df = pd.DataFrame(
         data=zip(session_ids, participant_counts),
         columns=["session_id", "participant_count"],
@@ -264,7 +254,8 @@ def make_status_df(
 
     # set BL session as complete
     status_df.loc[
-        status_df["session_id"] == "BL", ["in_manifest"] + doughnut_cols + bagel_cols
+        status_df["session_id"] == session_ids[0],
+        ["in_manifest"] + doughnut_cols + bagel_cols,
     ] = n_participants
 
     # generate participants per session based on expected emoji rewards
@@ -462,3 +453,16 @@ def test_bagel(
     # check manifest status
     assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
     assert status_df["bagel_counts"].equals(status_df["participant_count"])
+
+
+def test_run(
+    dpath_root: Path,
+):
+    workflow = StatusWorkflow(dpath_root=dpath_root)
+    workflow.config = get_config()
+    workflow.manifest = make_manifest(n_participants=10)[0]
+    workflow.doughnut = make_doughnut(n_participants=10)[0]
+    workflow.bagel = make_bagel(n_participants=10)[0]
+    status_df = workflow.run_main()
+
+    assert status_df is not None

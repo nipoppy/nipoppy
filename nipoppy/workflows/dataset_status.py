@@ -49,8 +49,8 @@ class StatusWorkflow(BaseWorkflow):
         expected_visits = self.config.VISIT_IDS
 
         self.logger.info(f"Dataset name: {dataset_name}")
-        self.logger.info(f"\tExpected sessions: {expected_sessions}")
-        self.logger.info(f"\tExpected visits: {expected_visits}")
+        self.logger.info(f"\tExpected sessions: {sorted(expected_sessions)}")
+        self.logger.info(f"\tExpected visits: {sorted(expected_visits)}")
 
         status_df = pd.DataFrame()
         status_df = self._check_manifest(status_df)
@@ -88,7 +88,7 @@ class StatusWorkflow(BaseWorkflow):
         participant_ids = manifest[manifest.col_participant_id].unique()
 
         # Get the number of sessions in the manifest
-        visit_ids = manifest[manifest.col_visit_id].unique()
+        visit_ids = sorted(manifest[manifest.col_visit_id].unique())
 
         # filter participants with imaging data
         imaging_manifest = manifest.get_imaging_subset()
@@ -97,22 +97,20 @@ class StatusWorkflow(BaseWorkflow):
         ].unique()
 
         # Get the number of imaging sessions in the manifest
-        session_ids = imaging_manifest[manifest.col_session_id].unique()
+        session_ids = sorted(imaging_manifest[manifest.col_session_id].unique())
 
         self.logger.info(
             f"\tNumber of participants (imaging and non-imaging): "
             f"{len(participant_ids)}"
         )
         self.logger.info(
-            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): " f"{visit_ids}"
+            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}):{visit_ids}"
         )
         self.logger.info(
             f"\tNumber of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
         )
-        self.logger.info(
-            f"\tImaging sessions (n={len(session_ids)}): " f"{session_ids}"
-        )
+        self.logger.info(f"\tImaging sessions (n={len(session_ids)}):{session_ids}")
 
         manifest_status_df = imaging_manifest.groupby(
             [imaging_manifest.col_session_id]
@@ -224,9 +222,9 @@ class StatusWorkflow(BaseWorkflow):
             "magenta",
             "yellow",
             "green",
-            "deep_sky_blue3",
-            "deep_pink2",
-            "rosy_brown",
+            # "deep_sky_blue3",
+            # "deep_pink2",
+            # "rosy_brown",
         ]
 
         # Initiate a Table instance
@@ -234,16 +232,9 @@ class StatusWorkflow(BaseWorkflow):
 
         table = Table(title=title, collapse_padding=False)
 
-        # check if number of colors match the number of columns
         n_colors = len(column_colors)
-        n_columns = len(df.columns)
-        if n_colors < n_columns:  # cycle through the colors
-            column_colors = (
-                column_colors * (n_columns // n_colors + 1)
-                + column_colors[: n_columns % n_colors]
-            )
-
-        for column, col_color in zip(df.columns, column_colors):
+        for i_col, column in enumerate(df.columns):
+            col_color = column_colors[i_col % n_colors]
             table.add_column(
                 str(column),
                 style=col_color,
