@@ -34,8 +34,9 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according the the {term}`imaging derivatives bagel file <imaging bagel file>`
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according to the {term}`imaging bagel file`
     - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
+    - The imaging bagel file can be updated with [`nipoppy track`](../cli_reference/track.md)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
     2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}

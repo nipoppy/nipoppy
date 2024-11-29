@@ -373,11 +373,10 @@ class BaseWorkflow(Base, ABC):
     def dicom_dir_map(self) -> DicomDirMap:
         """Get the DICOM directory mapping."""
         fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
-        if fpath_dicom_dir_map is not None:
-            if not Path(fpath_dicom_dir_map).exists():
-                raise FileNotFoundError(
-                    "DICOM directory map file not found" f": {fpath_dicom_dir_map}"
-                )
+        if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
+            raise FileNotFoundError(
+                "DICOM directory map file not found" f": {fpath_dicom_dir_map}"
+            )
 
         return DicomDirMap.load_or_generate(
             manifest=self.manifest,

@@ -1,13 +1,9 @@
 # Extracting IDPs from pipeline derivatives
 
-Extraction pipelines pick up where processing pipelines left off: they transform preprocessing outputs into analysis-ready files containing imaging-derived phenotypes (IDPs; e.g., feature tables, connectivity matrices).
+Extraction pipelines ingest a subset of processing pipeline outputs into analysis-ready participant- and/or group-level imaging-derived phenotypes (IDPs) useful for particular downstream analysis (e.g., feature tables, connectivity matrices).
 
 Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run extraction pipelines.
 
-<!--
-By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) are populated with descriptor files and default invocation files for the following processing pipelines:
-- TODO
--->
 
 ## Summary
 
@@ -17,11 +13,8 @@ By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../c
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Processed imaging data in {{dpath_pipeline_output}} for the relevant processing pipeline(s) that the extractor depends on
     - See <project:processing.md>
-
-<!--
-```{include} ./inserts/apptainer_stub.md
-```
--->
+- An {term}`imaging bagel file` with completion statuses for the processing pipeline(s) associated with the extraction pipeline.
+    - This is obtained by running `nipoppy track` (see <project:tracking.md>)
 
 ### Data directories
 
@@ -39,6 +32,7 @@ By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../c
 
 1. Nipoppy will check the {term}`imaging bagel file` and loop over all participants/sessions that have completed processing for all the pipelines listed in the `PROC_DEPENDENCIES` field.
     - See <project:tracking.md> for more information on how to generate the bagel file
+    - Note: an extraction pipeline may be associated with more than one processing pipeline, and the same processing pipeline can have more than one downstream extraction pipeline
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
@@ -55,7 +49,7 @@ By default, pipeline files are stored in {{dpath_pipelines}}`/<PIPELINE_NAME>-<P
 ```
 
 ```{warning}
-Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points to the {term}`Boutiques` descriptor of a pipeline. Although descriptor files can be modified, it is not needed and we recommend that less advanced users keep the default.
+Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points to the {term}`Boutiques` descriptor of a pipeline. Although descriptor files can be modified, in most cases it is not needed and we recommend that less advanced users keep the default.
 ```
 
 ### Customizing pipeline invocations

@@ -42,7 +42,7 @@ def config() -> Config:
             },
             {
                 "NAME": "fs_fmriprep_extractor",
-                "VERSION": "6.0.1+20.0.7",
+                "VERSION": "1.0.0",
                 "PROC_DEPENDENCIES": [
                     {
                         "NAME": "freesurfer",
@@ -134,7 +134,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
                 ["P02", "B", "fmriprep", "20.0.7", Bagel.status_success],
             ],
             "fs_fmriprep_extractor",
-            "6.0.1+20.0.7",
+            "1.0.0",
             "P02",
             "B",
             [("P02", "B")],

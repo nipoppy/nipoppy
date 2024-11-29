@@ -163,8 +163,8 @@ class ExtractionPipelineConfig(BasePipelineConfig):
 
     PROC_DEPENDENCIES: list[PipelineInfo] = Field(
         description=(
-            "List of processing pipeline(s) (including step names) that need to"
-            " be run before this extraction pipeline can be run"
+            "List of processing pipeline(s) (including step names) whose output "
+            "the extraction pipeline depends on"
         )
     )
     STEPS: list[ExtractionPipelineStepConfig] = Field(

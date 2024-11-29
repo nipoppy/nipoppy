@@ -51,16 +51,20 @@ class ExtractionRunner(PipelineRunner):
 
     @cached_property
     def _pipeline_configs(self) -> list[ExtractionPipelineConfig]:
+        # list of possible pipeline configurations
+        # will be searched for the correct one
         return self.config.EXTRACTION_PIPELINES
 
+    # for type annotation only
     @cached_property
     def pipeline_config(self) -> ExtractionPipelineConfig:
-        """Get the user config for the BIDS conversion pipeline."""
+        """Get the user config for the extraction pipeline."""
         return super().pipeline_config
 
+    # for type annotation only
     @cached_property
     def pipeline_step_config(self) -> ExtractionPipelineStepConfig:
-        """Get the config for the relevant step of the BIDS conversion pipeline."""
+        """Get the config for the relevant step of the extraction pipeline."""
         return super().pipeline_step_config
 
     @cached_property
@@ -91,13 +95,15 @@ class ExtractionRunner(PipelineRunner):
         self, participant_id: Optional[str], session_id: Optional[str]
     ):
         """Return participant-session pairs to run the pipeline on."""
+        # get the intersection of participants/sessions that have completed
+        # all the processing pipelines that the extraction pipeline depends on
         participants_sessions = None
-        for pipeline_info in self.pipeline_config.PROC_DEPENDENCIES:
+        for proc_pipeline_info in self.pipeline_config.PROC_DEPENDENCIES:
             to_update = set(
                 self.bagel.get_completed_participants_sessions(
-                    pipeline_name=pipeline_info.NAME,
-                    pipeline_version=pipeline_info.VERSION,
-                    pipeline_step=pipeline_info.STEP,
+                    pipeline_name=proc_pipeline_info.NAME,
+                    pipeline_version=proc_pipeline_info.VERSION,
+                    pipeline_step=proc_pipeline_info.STEP,
                     participant_id=participant_id,
                     session_id=session_id,
                 )

@@ -164,7 +164,10 @@ def add_subparser_init(
         "--bids-source",
         type=str,
         required=False,
-        help="Path to a BIDS dataset to initialize the layout with.",
+        help=(
+            "Path to an existing BIDS dataset to initialize the new Nipoppy dataset "
+            "with. Note: this will automatically create an appropriate manifest file."
+        ),
     )
 
     return parser
