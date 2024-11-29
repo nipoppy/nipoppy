@@ -9,7 +9,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.bagel import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -41,8 +41,6 @@ class StatusWorkflow(BaseWorkflow):
         2) Doughnut information if available,
         3) Bagel information if available
         """
-        self.logger.info("Checking the status of the dataset.")
-
         # load global_config to get the dataset name
         dataset_name = self.config.DATASET_NAME
         expected_sessions = self.config.SESSION_IDS
@@ -57,6 +55,8 @@ class StatusWorkflow(BaseWorkflow):
         status_df, doughnut_cols = self._check_doughnut(status_df)
         status_df, bagel_cols = self._check_bagel(status_df)
 
+        status_df = status_df.fillna(0).astype(int)
+
         # define the status columns and rewards columns
         status_col_dict = {
             "manifest": "in_manifest",
@@ -69,7 +69,6 @@ class StatusWorkflow(BaseWorkflow):
         status_df = status_df[
             [status_col_dict["manifest"]] + doughnut_cols + bagel_cols
         ]
-        status_df = status_df.fillna(0).astype(int)
 
         self.logger.debug(status_df)
 
@@ -219,16 +218,16 @@ class StatusWorkflow(BaseWorkflow):
 
         # Define the colors for the columns
         column_colors = {
-            "session_id": "grey37",
+            "session_id": None,
             "in_manifest": "chartreuse4",
             "in_pre_reorg": "cyan",
             "in_post_reorg": "cornflower_blue",
             "in_bids": "medium_purple3",
             "in_imaging_bagel": [
-                "light_salmon3",
-                "hot_pink3",
+                "orchid",
                 "deep_pink4",
-                "dark_red",
+                "hot_pink3",
+                "dark_orange",
             ],
         }
 
@@ -238,14 +237,19 @@ class StatusWorkflow(BaseWorkflow):
         table = Table(title=title, collapse_padding=False)
 
         bagel_cols = status_col_dict["bagel"]
+        n_non_proc_cols = 0
         for i_col, column in enumerate(df.columns):
             if column not in (bagel_cols):
                 col_color = column_colors[column]
+                n_non_proc_cols += 1
             else:
                 proc_colors = column_colors["in_imaging_bagel"]
-                col_color = proc_colors[i_col % len(proc_colors)]
+                col_color = proc_colors[(i_col - n_non_proc_cols) % len(proc_colors)]
+
+            column_header = column
+
             table.add_column(
-                str(column),
+                str(column_header),
                 style=col_color,
                 header_style=col_color,
                 justify="center",
@@ -259,11 +263,3 @@ class StatusWorkflow(BaseWorkflow):
         # Update the style of the table
         table.box = box.MINIMAL_DOUBLE_HEAD  # SIMPLE_HEAD
         console.print(table)
-
-    def run_cleanup(self):
-        """Log a success message."""
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully reported the current "
-            f"status of a dataset at {self.dpath_root}![/]"
-        )
-        return super().run_cleanup()

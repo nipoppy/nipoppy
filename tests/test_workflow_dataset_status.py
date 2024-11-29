@@ -19,17 +19,6 @@ def dpath_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
-clipboard_emoji = "📋"
-sad_cat_emoji = "😿"
-broom_emoji = "🧹"
-doughnut_emoji = "🍩"
-sparkles_emoji = "✨"
-rocket_emoji = "🚀"
-bagel_emoji = "🥯"
-party_popper_emoji = "🎉"
-confetti_emoji = "🎊"
-
-
 def make_manifest(
     n_participants=10, session_ids=("BL", "M12"), randomize_counts=False
 ) -> Manifest:
@@ -219,104 +208,6 @@ def make_bagel(
     )
 
     return bagel, session_participant_counts_df
-
-
-def make_status_df(
-    n_participants,
-    session_ids=("BL", "M12", "M24"),
-    pipeline_configs=(
-        ("dcm2bids", "1.0.0", "prepare"),
-        ("dcm2bids", "1.0.0", "convert"),
-        ("fmriprep", "1.0.0", "default"),
-    ),
-    emojis={
-        "M12": {
-            "init\nrewards": [clipboard_emoji],
-            "curation\nrewards": [doughnut_emoji, broom_emoji],
-            "processing\nrewards": [bagel_emoji, party_popper_emoji],
-        },
-        "M24": {
-            "init\nrewards": [sad_cat_emoji],
-            "curation\nrewards": [],
-            "processing\nrewards": [],
-        },
-    },
-) -> pd.DataFrame:
-
-    doughnut_cols = ["in_pre_reorg", "in_post_reorg", "in_bids"]
-    bagel_cols = [
-        f"{config[0]}\n{config[1]}\n{config[2]}" for config in pipeline_configs
-    ]
-    status_df = pd.DataFrame(
-        columns=["session_id", "in_manifest"] + doughnut_cols + bagel_cols
-    )
-    status_df["session_id"] = list(session_ids)
-
-    # set BL session as complete
-    status_df.loc[
-        status_df["session_id"] == session_ids[0],
-        ["in_manifest"] + doughnut_cols + bagel_cols,
-    ] = n_participants
-
-    # generate participants per session based on expected emoji rewards
-    for session_id in session_ids[1:]:
-        # initialize all doughnut and bagel status columns to 0 to avoid NaNs
-        status_df.loc[status_df["session_id"] == session_id, "in_manifest"] = (
-            n_participants
-        )
-        status_df.loc[
-            status_df["session_id"] == session_id, doughnut_cols + bagel_cols
-        ] = 0
-        session_emojis = emojis[session_id]
-
-        if sad_cat_emoji in session_emojis["init\nrewards"]:
-            continue
-
-        if clipboard_emoji in session_emojis["init\nrewards"]:
-            if sparkles_emoji in session_emojis["curation\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, "in_pre_reorg"] = (
-                    n_participants
-                )
-                status_df.loc[
-                    status_df["session_id"] == session_id, "in_post_reorg"
-                ] = n_participants
-                status_df.loc[status_df["session_id"] == session_id, "in_bids"] = (
-                    n_participants
-                )
-
-            elif doughnut_emoji in session_emojis["curation\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, "in_pre_reorg"] = (
-                    n_participants
-                )
-                status_df.loc[
-                    status_df["session_id"] == session_id, "in_post_reorg"
-                ] = 1
-                status_df.loc[status_df["session_id"] == session_id, "in_bids"] = 1
-
-            elif broom_emoji in session_emojis["curation\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, "in_pre_reorg"] = 1
-                status_df.loc[
-                    status_df["session_id"] == session_id, "in_post_reorg"
-                ] = 1
-                status_df.loc[status_df["session_id"] == session_id, "in_bids"] = 0
-
-            if bagel_emoji in session_emojis["processing\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, bagel_cols] = 1
-
-            if confetti_emoji in session_emojis["processing\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, bagel_cols] = (
-                    n_participants
-                )
-
-            elif party_popper_emoji in session_emojis["processing\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, bagel_cols[-1]] = (
-                    n_participants
-                )
-
-            elif rocket_emoji in session_emojis["processing\nrewards"]:
-                status_df.loc[status_df["session_id"] == session_id, bagel_cols[-1]] = 1
-
-    return status_df
 
 
 @pytest.mark.parametrize(
