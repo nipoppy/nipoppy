@@ -70,27 +70,35 @@ def test_cli_doughnut(tmp_path: Path):
         )
 
         # Dataset was not initialized properly
-        assert excinfo.value.startswith("Dataset does not follow expected directory structure:")
+        assert excinfo.value.startswith(
+            "Dataset does not follow expected directory structure:"
+        )
         assert result.exit_code == 1
 
 
 def test_cli_dicom_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     with pytest.raises(RuntimeError) as excinfo:
-        result = runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)], catch_exceptions=False)
+        result = runner.invoke(
+            cli, ["reorg", "--dataset", str(dpath_root)], catch_exceptions=False
+        )
 
         # check that a logfile was created
         assert (
             len(
                 list(
-                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob("dicom_reorg/*.log")
+                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                        "dicom_reorg/*.log"
+                    )
                 )
             )
             == 1
         )
 
         # Dataset was not initialized properly
-        assert excinfo.value.startswith("Dataset does not follow expected directory structure:")
+        assert excinfo.value.startswith(
+            "Dataset does not follow expected directory structure:"
+        )
         assert result.exit_code == 1
 
 
@@ -126,7 +134,9 @@ def test_cli_bids_conversion(tmp_path: Path):
         )
 
         # Dataset was not initialized properly
-        assert excinfo.value.startswith("Dataset does not follow expected directory structure:")
+        assert excinfo.value.startswith(
+            "Dataset does not follow expected directory structure:"
+        )
         assert result.exit_code == 1
 
 
@@ -160,7 +170,9 @@ def test_cli_pipeline_run(tmp_path: Path):
         )
 
         # Dataset was not initialized properly
-        assert excinfo.value.startswith("Dataset does not follow expected directory structure:")
+        assert excinfo.value.startswith(
+            "Dataset does not follow expected directory structure:"
+        )
         assert result.exit_code == 1
 
 
@@ -194,5 +206,7 @@ def test_cli_pipeline_track(tmp_path: Path):
         )
 
         # Dataset was not initialized properly
-        assert excinfo.value.startswith("Dataset does not follow expected directory structure:")
+        assert excinfo.value.startswith(
+            "Dataset does not follow expected directory structure:"
+        )
         assert result.exit_code == 1
