@@ -73,7 +73,7 @@ class StatusWorkflow(BaseWorkflow):
 
         self.logger.debug(status_df)
 
-        self._df_to_table(status_df)
+        self._df_to_table(status_df, status_col_dict)
 
         return status_df
 
@@ -210,31 +210,40 @@ class StatusWorkflow(BaseWorkflow):
         bagel_cols = list(status_df.columns[status_df.columns.str.contains("\n")])
         return status_df, bagel_cols
 
-    def _df_to_table(self, status_df: pd.DataFrame):
+    def _df_to_table(self, status_df: pd.DataFrame, status_col_dict: dict):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
         df = status_df.copy().reset_index()
         df = df.sort_values(by=self.manifest.col_session_id)
 
         console = Console()
 
-        column_colors = [
-            "cyan",
-            "magenta",
-            "yellow",
-            "green",
-            # "deep_sky_blue3",
-            # "deep_pink2",
-            # "rosy_brown",
-        ]
+        # Define the colors for the columns
+        column_colors = {
+            "session_id": "grey37",
+            "in_manifest": "chartreuse4",
+            "in_pre_reorg": "cyan",
+            "in_post_reorg": "cornflower_blue",
+            "in_bids": "medium_purple3",
+            "in_imaging_bagel": [
+                "light_salmon3",
+                "hot_pink3",
+                "deep_pink4",
+                "dark_red",
+            ],
+        }
 
         # Initiate a Table instance
         title = "Participant counts by session at each Nipoppy checkpoint"
 
         table = Table(title=title, collapse_padding=False)
 
-        n_colors = len(column_colors)
+        bagel_cols = status_col_dict["bagel"]
         for i_col, column in enumerate(df.columns):
-            col_color = column_colors[i_col % n_colors]
+            if column not in (bagel_cols):
+                col_color = column_colors[column]
+            else:
+                proc_colors = column_colors["in_imaging_bagel"]
+                col_color = proc_colors[i_col % len(proc_colors)]
             table.add_column(
                 str(column),
                 style=col_color,

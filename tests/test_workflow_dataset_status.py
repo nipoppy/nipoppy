@@ -461,8 +461,8 @@ def test_run(
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
-    workflow.doughnut = make_doughnut(n_participants=10)[0]
-    workflow.bagel = make_bagel(n_participants=10)[0]
+    workflow.doughnut = pd.DataFrame()  # Checks for empty doughnut
+    workflow.bagel = pd.DataFrame()  # Checks for empty bagel
     status_df = workflow.run_main()
 
     assert status_df is not None
