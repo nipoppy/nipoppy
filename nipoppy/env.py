@@ -12,6 +12,7 @@ DEFAULT_VERBOSITY = "2"  # info
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
+FAKE_SESSION_ID = "unnamed"
 
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"

@@ -9,6 +9,7 @@ import requests
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    FAKE_SESSION_ID,
     LogColor,
     StrOrPathLike,
 )
@@ -19,6 +20,7 @@ from nipoppy.utils import (
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
     check_session_id,
+    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -142,7 +144,7 @@ class InitWorkflow(BaseWorkflow):
             Manifest.col_session_id: [],
             Manifest.col_datatype: [],
         }
-        participant_ids = sorted(
+        bids_participant_ids = sorted(
             [
                 x.name
                 for x in (self.layout.dpath_bids).iterdir()
@@ -152,32 +154,58 @@ class InitWorkflow(BaseWorkflow):
 
         self.logger.info("Creating a manifest file from the BIDS dataset content.")
 
-        for ppt in participant_ids:
+        for bids_participant_id in bids_participant_ids:
 
-            session_ids = sorted(
+            bids_session_ids = sorted(
                 [
                     x.name
-                    for x in (self.layout.dpath_bids / ppt).iterdir()
+                    for x in (self.layout.dpath_bids / bids_participant_id).iterdir()
                     if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
-            if not session_ids:
+            if len(bids_session_ids) == 0:
+                # if there are no session folders
+                # we will add a fake session for this participant
                 self.logger.warning(
-                    f"Skipping subject '{ppt}': could not find a session level folder."
+                    "Could not find session-level folder(s) for participant "
+                    f"{bids_participant_id}, using session {FAKE_SESSION_ID} "
+                    "in the manifest"
                 )
-                continue
+                bids_session_ids = [f"{session_id_to_bids_session_id(FAKE_SESSION_ID)}"]
 
-            for ses in session_ids:
-                datatypes = sorted(
-                    [
-                        x.name
-                        for x in (self.layout.dpath_bids / ppt / ses).iterdir()
-                        if x.is_dir()
-                    ]
+            for bids_session_id in bids_session_ids:
+                if (
+                    bids_session_id
+                    == f"{session_id_to_bids_session_id(FAKE_SESSION_ID)}"
+                ):
+                    # if the session is fake, we don't expect BIDS data
+                    # to have session dir in the path
+                    datatypes = sorted(
+                        [
+                            x.name
+                            for x in (
+                                self.layout.dpath_bids / bids_participant_id
+                            ).iterdir()
+                            if x.is_dir()
+                        ]
+                    )
+                else:
+                    datatypes = sorted(
+                        [
+                            x.name
+                            for x in (
+                                self.layout.dpath_bids
+                                / bids_participant_id
+                                / bids_session_id
+                            ).iterdir()
+                            if x.is_dir()
+                        ]
+                    )
+
+                df[Manifest.col_participant_id].append(
+                    check_participant_id(bids_participant_id)
                 )
-
-                df[Manifest.col_participant_id].append(check_participant_id(ppt))
-                df[Manifest.col_session_id].append(check_session_id(ses))
+                df[Manifest.col_session_id].append(check_session_id(bids_session_id))
                 df[Manifest.col_datatype].append(datatypes)
 
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
