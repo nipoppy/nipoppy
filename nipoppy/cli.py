@@ -207,7 +207,3 @@ def track(**params):
     workflow = PipelineTracker(**params)
     workflow.run()
     sys.exit(workflow.return_code)
-
-
-if __name__ == "__main__":
-    cli()

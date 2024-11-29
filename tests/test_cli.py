@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
 from nipoppy.cli import cli
 
@@ -34,6 +34,7 @@ def test_cli_init(tmp_path: Path):
         ["init", "--dataset", str(tmp_path / "my_dataset")],
     )
     assert result.exit_code == 0
+
 
 def test_cli_init_dir_exists(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
