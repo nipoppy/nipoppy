@@ -8,4 +8,3 @@
 
 .. click:: nipoppy.cli:doughnut
    :prog: nipoppy
-
