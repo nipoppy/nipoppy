@@ -15,7 +15,7 @@
 	"work_dir": "[[NIPOPPY_DPATH_PIPELINE_WORK]]",
 	"skip_bids_validation": true,
 	"fs_license_file": "[[FREESURFER_LICENSE_FILE]]",
-	"stop_on_first_crash": false,
+	"stop_on_first_crash": true,
 	"notrack": true,
 	"nprocs": 8,
 	"mem": "8G"
