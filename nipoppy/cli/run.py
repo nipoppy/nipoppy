@@ -13,6 +13,7 @@ from nipoppy.cli.parser import (
     COMMAND_INIT,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
+    COMMAND_STATUS,
     PROGRAM_NAME,
     VERBOSITY_TO_LOG_LEVEL_MAP,
     get_global_parser,
@@ -53,6 +54,20 @@ def cli(argv: Sequence[str] = None) -> None:
                 bids_source=bids_source,
                 **workflow_kwargs,
             )
+
+        elif command == COMMAND_STATUS:
+            # Lazy import to improve performance of cli.
+            from nipoppy.workflows.dataset_status import StatusWorkflow
+
+            # TODO in future release
+            # save_status_to_disk = getattr(args, "save", None)
+
+            workflow = StatusWorkflow(
+                dpath_root=dpath_root,
+                # save_status_to_disk=save_status_to_disk,
+                **workflow_kwargs,
+            )
+
         elif command == COMMAND_DOUGHNUT:
             # Lazy import to improve performance of cli.
             from nipoppy.workflows.doughnut import DoughnutWorkflow
@@ -119,7 +134,7 @@ def cli(argv: Sequence[str] = None) -> None:
             raise ValueError(f"Unsupported command: {command}")
 
         # cannot log to file in init since the dataset doesn't exist yet
-        if command != COMMAND_INIT:
+        if command not in [COMMAND_INIT, COMMAND_STATUS]:
             add_logfile(logger, workflow.generate_fpath_log())
 
         # capture warnings
