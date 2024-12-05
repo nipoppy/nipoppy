@@ -17,7 +17,7 @@ classifiers = [
 dependencies = [
     "boutiques",
     "pandas",
-    "pybids",
+    "pybids!=0.18.0",
     "pydantic",
     'requests',
     "pydicom!=3.0.0",
