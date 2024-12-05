@@ -16,7 +16,6 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
@@ -76,6 +75,16 @@ def get_pipeline_config(
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
+    HPC_PREAMBLE: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional string for HPC setup, including job scheduler directives "
+            "or environment initialization. Examples: loading modules (e.g., "
+            "Apptainer/Singularity), activating a Python environment with "
+            "Nipoppy installed, and setting up job-specific variables."
+        ),
+    )
+
     DATASET_NAME: str = Field(description="Name of the dataset")
     VISIT_IDS: list[str] = Field(
         description=(
@@ -84,7 +93,7 @@ class Config(_SchemaWithContainerConfig):
         )
     )
     SESSION_IDS: Optional[list[str]] = Field(
-        default=None,  # will be a list after validation
+        default=None,
         description=(
             "List of BIDS-compliant sessions available in the study"
             f', prefixed with "{BIDS_SESSION_PREFIX}"'
@@ -96,16 +105,13 @@ class Config(_SchemaWithContainerConfig):
         description=(
             "Path to a TSV file mapping participant IDs to DICOM directories"
             ", to be used in the DICOM reorg step. Note: this field and "
-            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified. The "
-            f'TSV file should have three columns: "{DicomDirMap.col_participant_id}"'
-            f' , "{DicomDirMap.col_session_id}"'
-            f', and "{DicomDirMap.col_participant_dicom_dir}"'
+            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified."
         ),
     )
     DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
         default=None,
         description=(
-            f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
+            f"Whether subdirectories under {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
             "follow the pattern <PARTICIPANT>/<SESSION> (default) or "
             "<SESSION>/<PARTICIPANT>. Note: this field and DICOM_DIR_MAP_FILE "
             "cannot both be specified"
@@ -113,11 +119,7 @@ class Config(_SchemaWithContainerConfig):
     )
     SUBSTITUTIONS: dict[str, str] = Field(
         default={},
-        description=(
-            "Top-level mapping for replacing placeholder expressions in the rest "
-            "of the config file. Note: the replacement only happens if the config "
-            "is loaded from a file with :func:`nipoppy.config.main.Config.load`"
-        ),
+        description="Top-level mapping for replacing placeholder expressions.",
     )
     BIDS_PIPELINES: list[BidsPipelineConfig] = Field(
         default=[], description="Configurations for BIDS conversion, if applicable"
@@ -130,6 +132,7 @@ class Config(_SchemaWithContainerConfig):
         description="Free field that can be used for any purpose",
     )
 
+    # Allow extra fields if necessary
     model_config = ConfigDict(extra="forbid")
 
     def _check_dicom_dir_options(self) -> Self:
