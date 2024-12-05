@@ -103,13 +103,13 @@ class StatusWorkflow(BaseWorkflow):
             f"{len(participant_ids)}"
         )
         self.logger.info(
-            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}):{visit_ids}"
+            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
         )
         self.logger.info(
             f"\tNumber of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
         )
-        self.logger.info(f"\tImaging sessions (n={len(session_ids)}):{session_ids}")
+        self.logger.info(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
 
         manifest_status_df = imaging_manifest.groupby(
             [imaging_manifest.col_session_id]
@@ -162,7 +162,10 @@ class StatusWorkflow(BaseWorkflow):
         bagel = self.bagel
 
         if bagel.empty:
-            self.logger.warning("No imaging bagel file found.")
+            self.logger.warning(
+                "No imaging bagel file found. Run 'nipoppy track' to"
+                " generate an imaging bagel file"
+            )
             return status_df, []
 
         # Get the number of participants in the bagel

@@ -346,14 +346,13 @@ def test_bagel(
     assert status_df["bagel_counts"].equals(status_df["participant_count"])
 
 
-def test_run(
-    dpath_root: Path,
-):
+@pytest.mark.parametrize("bagel", [pd.DataFrame(), make_bagel()[0]])
+def test_run(dpath_root: Path, bagel: pd.DataFrame):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
     workflow.doughnut = pd.DataFrame()  # Checks for empty doughnut
-    workflow.bagel = pd.DataFrame()  # Checks for empty bagel
+    workflow.bagel = bagel
     status_df = workflow.run_main()
 
     assert status_df is not None
