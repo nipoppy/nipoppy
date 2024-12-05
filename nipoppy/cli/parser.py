@@ -9,6 +9,7 @@ from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
+COMMAND_STATUS = "status"
 COMMAND_DOUGHNUT = "doughnut"
 COMMAND_DICOM_REORG = "reorg"
 COMMAND_BIDS_CONVERSION = "bidsify"
@@ -54,6 +55,7 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
     """Add pipeline-related arguments to the parser."""
     parser.add_argument(
         "--pipeline",
+        dest="pipeline_name",
         type=str,
         required=True,
         help="Pipeline name, as specified in the config file.",
@@ -169,6 +171,25 @@ def add_subparser_init(
             "with. Note: this will automatically create an appropriate manifest file."
         ),
     )
+
+    return parser
+
+
+def add_subparser_status(
+    subparsers: _SubParsersAction,
+    formatter_class: type[HelpFormatter] = HelpFormatter,
+) -> ArgumentParser:
+    """Add subparser for status command."""
+    description = "Show current status of the dataset."
+    parser = subparsers.add_parser(
+        COMMAND_STATUS,
+        description=description,
+        help=description,
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+
+    parser = add_arg_dataset_root(parser)
 
     return parser
 
@@ -347,6 +368,7 @@ def get_global_parser(
         required=True,
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
+    add_subparser_status(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
     add_subparser_reorg(subparsers, formatter_class=formatter_class)
     add_subparser_bidsify(subparsers, formatter_class=formatter_class)

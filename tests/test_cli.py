@@ -28,6 +28,13 @@ def test_cli_init(tmp_path: Path):
         pass
 
 
+def test_cli_status(tmp_path: Path):
+    try:
+        cli(["nipoppy", "status", str(tmp_path / "my_dataset")]) is None
+    except SystemExit:
+        pass
+
+
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:

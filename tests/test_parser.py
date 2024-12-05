@@ -17,6 +17,7 @@ from nipoppy.cli.parser import (
     add_subparser_init,
     add_subparser_reorg,
     add_subparser_run,
+    add_subparser_status,
     add_subparser_track,
     get_global_parser,
 )
@@ -96,6 +97,13 @@ def test_add_subparser_init():
     subparsers = parser.add_subparsers()
     add_subparser_init(subparsers)
     assert parser.parse_args(["init", "my_dataset"])
+
+
+def test_add_subparser_status():
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_status(subparsers)
+    assert parser.parse_args(["status", "my_dataset"])
 
 
 @pytest.mark.parametrize(
