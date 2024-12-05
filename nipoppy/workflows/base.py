@@ -15,9 +15,9 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
-from nipoppy.logger import get_logger
+from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
@@ -41,7 +41,7 @@ class BaseWorkflow(Base, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run=False,
     ):
         """Initialize the workflow instance.
@@ -57,19 +57,28 @@ class BaseWorkflow(Base, ABC):
         dry_run : bool, optional
             If True, print commands without executing them, by default False
         """
-        if logger is None:
-            logger = get_logger(name=name)
-
-        self.dpath_root = Path(dpath_root)
         self.name = name
+        self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
-        self.logger = logger
+        self.verbose = verbose
         self.dry_run = dry_run
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
+
+        # Setup logging
+        VERBOSITY_TO_LOG_LEVEL_MAP = {
+            0: logging.ERROR,
+            1: logging.WARNING,
+            2: logging.INFO,
+            3: logging.DEBUG,
+        }
+        self.logger = get_logger(
+            name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
+            level=VERBOSITY_TO_LOG_LEVEL_MAP[verbose],
+        )
 
     def generate_fpath_log(
         self,
@@ -192,6 +201,10 @@ class BaseWorkflow(Base, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
+        add_logfile(self.logger, self.generate_fpath_log())
+        logging.captureWarnings(True)
+        capture_warnings(self.logger)
+
         self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.info(self)
         if self.dry_run:

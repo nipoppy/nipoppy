@@ -95,7 +95,7 @@ def test_run_cleanup(tmp_path: Path, keep_workdir):
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
-    runner.run_cleanup()
+        runner.run_cleanup()
     for dpath in dpaths:
         if keep_workdir:
             assert dpath.exists()
@@ -117,7 +117,7 @@ def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
-    runner.run_cleanup()
+        runner.run_cleanup()
     if runner.n_success == runner.n_total:
         assert not dpath.exists()
     else:

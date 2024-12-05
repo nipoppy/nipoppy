@@ -1,6 +1,5 @@
 """PipelineRunner workflow."""
 
-import logging
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
@@ -28,9 +27,11 @@ class PipelineRunner(BasePipelineWorkflow):
         keep_workdir: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = 2,
         dry_run: bool = False,
     ):
+        self.simulate = simulate
+        self.keep_workdir = keep_workdir
         super().__init__(
             dpath_root=dpath_root,
             name="run",
@@ -40,11 +41,9 @@ class PipelineRunner(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
-        self.simulate = simulate
-        self.keep_workdir = keep_workdir
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
