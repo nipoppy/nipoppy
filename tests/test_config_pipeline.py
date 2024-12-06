@@ -93,12 +93,27 @@ def test_step_names_error_duplicate(valid_data):
         )
 
 
-def test_extractor_pipeline_error_dependencies():
+def test_error_no_dependencies():
     with pytest.raises(ValidationError, match="PROC_DEPENDENCIES is an empty list"):
         ExtractionPipelineConfig(
             NAME="my_pipeline",
             VERSION="1.0.0",
             PROC_DEPENDENCIES=[],
+        )
+
+
+def test_warning_if_duplicate_dependencies():
+    with pytest.warns(
+        UserWarning,
+        match="PROC_DEPENDENCIES contains duplicate entries for extraction pipeline",
+    ):
+        ExtractionPipelineConfig(
+            NAME="my_pipeline",
+            VERSION="1.0.0",
+            PROC_DEPENDENCIES=[
+                PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
+                PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
+            ],
         )
 
 

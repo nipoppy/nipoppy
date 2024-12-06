@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -31,6 +32,10 @@ class PipelineInfo(BaseModel):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    def __hash__(self):
+        """Return a hash based on the pipeline's name, version and step."""
+        return hash((self.NAME, self.VERSION, self.STEP))
 
 
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
@@ -185,5 +190,10 @@ class ExtractionPipelineConfig(BasePipelineConfig):
             raise ValueError(
                 "PROC_DEPENDENCIES is an empty list for extraction pipeline "
                 f"{self.NAME} {self.VERSION}. Must have at least one dependency"
+            )
+        if len(set(self.PROC_DEPENDENCIES)) != len(self.PROC_DEPENDENCIES):
+            warnings.warn(
+                "PROC_DEPENDENCIES contains duplicate entries for extraction pipeline "
+                f"{self.NAME} {self.VERSION}"
             )
         return self
