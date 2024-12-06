@@ -1,6 +1,10 @@
 # Extracting IDPs from pipeline derivatives
 
-Extraction pipelines ingest a subset of processing pipeline outputs into analysis-ready participant- and/or group-level imaging-derived phenotypes (IDPs) useful for particular downstream analysis (e.g., feature tables, connectivity matrices).
+Extraction pipelines ingest a subset of processing pipeline outputs into analysis-ready participant- and/or group-level imaging-derived phenotypes (IDPs) useful for particular downstream analysis (e.g., cortical thickness/subcortical volume tables, connectivity matrices).
+
+A processing pipeline can have many downstream extraction pipelines (e.g. volumetric vs vertex-wise or surface measure extractors). Typically, an extractor will depend only on a single processing pipeline, but Nipoppy can support multiple processing pipeline dependencies as well (e.g., in the case of network extractors utilizing both diffusion and functional outputs).
+
+<!-- Another difference between extractor pipelines and processing pipelines is that extractor pipelines are generally tailored for specific downstream analyses, while processing pipelines are more general-purpose. In terms of implementation, extraction pipelines are less likely to be containerized (though we highly encourage it), or they might reuse the container that generated the processed output instead of their own container. -->
 
 Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run extraction pipelines.
 
@@ -34,7 +38,7 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
     - See <project:tracking.md> for more information on how to generate the bagel file
     - Note: an extraction pipeline may be associated with more than one processing pipeline, and the same processing pipeline can have more than one downstream extraction pipeline
 2. For each participant-session pair:
-    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
+    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
 
 ## Configuring extraction pipelines

@@ -27,7 +27,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 1. Nipoppy will loop over all participants/sessions that have BIDS data according to the {term}`doughnut file`
 2. For each participant-session pair:
-    1. Paths in the pipeline's tracker configuration will be processed such that template strings related to the participant/session are replaced by the appropriate values
+    1. Paths in the pipeline's tracker configuration will be processed such that template strings related to the participant/session (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. Each path in the list is checked, then a status is assigned, and the bagel file is updated accordingly
 
 ## Configuring a pipeline tracker
