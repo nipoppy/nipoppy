@@ -9,7 +9,8 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
-from nipoppy.env import StrOrPathLike
+from nipoppy.config.tracker import TrackerConfig
+from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -26,6 +27,7 @@ class PipelineRunner(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         keep_workdir: bool = False,
+        tar: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -43,8 +45,9 @@ class PipelineRunner(BasePipelineWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
-        self.simulate = simulate
         self.keep_workdir = keep_workdir
+        self.tar = tar
+        self.simulate = simulate
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -142,6 +145,7 @@ class PipelineRunner(BasePipelineWorkflow):
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
         # run as a subprocess so that stdout/error are captured in the log
+        # by default this will raise an exception if the command fails
         if self.simulate:
             self.run_command(
                 ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
@@ -152,6 +156,47 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         return descriptor_str, invocation_str
+
+    def _check_tar_conditions(self):
+        """
+        Make sure that conditions for tarring are met if tarring is requested.
+
+        Specifically, check that dpath to tar is specified in the tracker config
+        """
+        if not self.tar:
+            return
+
+        if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
+            raise RuntimeError(
+                "Tarring requested but is no tracker config file. "
+                "The TRACKER_CONFIG_FILE field needs to be specified in the "
+                "pipeline step config, and the PARTICIPANT_SESSION_DIR field "
+                "in that file must be specified"
+            )
+        if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
+            raise RuntimeError(
+                "Tarring requested but no participant-session directory specified. "
+                "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
+                "in the tracker config file at "
+                f"{self.pipeline_step_config.TRACKER_CONFIG_FILE}"
+            )
+
+    def tar_directory(self, dpath: Path) -> Path:
+        """Tar a directory and delete it."""
+        if not dpath.exists():
+            raise RuntimeError(f"Not tarring {dpath} since it does not exist")
+        if not dpath.is_dir():
+            raise RuntimeError(f"Not tarring {dpath} since it is not a directory")
+
+        tar_flags = "-cvf"
+        fpath_tarred = dpath.with_suffix(EXT_TAR)
+
+        self.run_command(
+            f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}"
+        )
+        self.rm(dpath)
+
+        return fpath_tarred
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -184,6 +229,12 @@ class PipelineRunner(BasePipelineWorkflow):
             if participant_session not in participants_sessions_completed:
                 yield participant_session
 
+    def run_setup(self):
+        """Run pipeline runner setup."""
+        to_return = super().run_setup()
+        self._check_tar_conditions()
+        return to_return
+
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
         # Access the GENERATE_PYBIDS_DATABASE field
@@ -210,9 +261,21 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         # run pipeline with Boutiques
-        return self.launch_boutiques_run(
+        to_return = self.launch_boutiques_run(
             participant_id, session_id, container_command=container_command
         )
+
+        if self.tar and not self.simulate:
+            dpath_to_tar = TrackerConfig(
+                **self.process_template_json(
+                    self.tracker_config.model_dump(mode="json"),
+                    participant_id=participant_id,
+                    session_id=session_id,
+                )
+            ).PARTICIPANT_SESSION_DIR
+            self.tar_directory(dpath_to_tar)
+
+        return to_return
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""
