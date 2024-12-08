@@ -11,6 +11,7 @@ from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.utils import apply_substitutions_to_json
 
@@ -27,9 +28,9 @@ class AnalysisLevelType(str, Enum):
 class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
-    NAME: Optional[str] = Field(
-        default=None,
-        description="Step name, required if the pipeline has multiple steps",
+    NAME: str = Field(
+        default=DEFAULT_PIPELINE_STEP_NAME,
+        description="Step name. Required if the pipeline has multiple steps",
     )
     DESCRIPTOR_FILE: Optional[Path] = Field(
         default=None,
@@ -39,7 +40,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     )
     INVOCATION_FILE: Optional[Path] = Field(
         default=None,
-        description=("Path to the JSON invocation file"),
+        description="Path to the JSON invocation file",
     )
     ANALYSIS_LEVEL: AnalysisLevelType = Field(
         default=AnalysisLevelType.participant_session,
@@ -73,6 +74,12 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
 class ProcPipelineStepConfig(BasePipelineStepConfig):
     """Schema for processing pipeline step configuration."""
 
+    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to the tracker configuration file associated with the pipeline step"
+        ),
+    )
     PYBIDS_IGNORE_FILE: Optional[Path] = Field(
         default=None,
         description=(
@@ -89,6 +96,25 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
     )
     model_config = ConfigDict(extra="forbid")
 
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the pipeline step configuration after creation.
+
+        Specifically:
+        - Make sure that the tracker configuration file is not set if the analysis
+        level is not participant_session
+        """
+        if (
+            self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
+            and self.TRACKER_CONFIG_FILE is not None
+        ):
+            raise ValueError(
+                "TRACKER_CONFIG_FILE cannot be set if ANALYSIS_LEVEL is not "
+                f"{AnalysisLevelType.participant_session}"
+            )
+        return self
+
 
 class BidsPipelineStepConfig(BasePipelineStepConfig):
     """Schema for BIDS pipeline step configuration."""
@@ -100,4 +126,10 @@ class BidsPipelineStepConfig(BasePipelineStepConfig):
             "in the doughnut file should be updated"
         ),
     )
+    model_config = ConfigDict(extra="forbid")
+
+
+class ExtractionPipelineStepConfig(BasePipelineStepConfig):
+    """Schema for extraction pipeline step configuration."""
+
     model_config = ConfigDict(extra="forbid")

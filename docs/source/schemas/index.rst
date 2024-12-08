@@ -25,8 +25,10 @@ Below is the schema used for the global configuration :term:`JSON` file.
 Tracker configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The tracker configuration file specified in the `ProcPipelineConfig`_ should be a :term:`JSON` file that contains **a list** of tracker configurations.
-The schema for each individual tracker configuration is shown below.
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Here is the schema for a tracker configuration file:
 
 .. jsonschema:: tracker.json
     :lift_title: False
@@ -57,13 +59,15 @@ Here is the schema for the doughnut file:
 .. jsonschema:: doughnut.json
     :lift_title: False
 
-Bagel file
-----------
+.. _imaging-bagel-schema:
+
+Imaging bagel file
+------------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the bagel file:
+Here is the schema for the imaging bagel file:
 
 .. jsonschema:: bagel.json
     :lift_title: False

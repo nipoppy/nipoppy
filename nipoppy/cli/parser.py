@@ -9,11 +9,13 @@ from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 
 PROGRAM_NAME = "nipoppy"
 COMMAND_INIT = "init"
+COMMAND_STATUS = "status"
 COMMAND_DOUGHNUT = "doughnut"
 COMMAND_DICOM_REORG = "reorg"
 COMMAND_BIDS_CONVERSION = "bidsify"
 COMMAND_PIPELINE_RUN = "run"
 COMMAND_PIPELINE_TRACK = "track"
+COMMAND_PIPELINE_EXTRACT = "extract"
 
 DEFAULT_VERBOSITY = "2"  # info
 VERBOSITY_TO_LOG_LEVEL_MAP = {
@@ -25,22 +27,11 @@ VERBOSITY_TO_LOG_LEVEL_MAP = {
 
 
 def add_arg_dataset_root(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --dataset-root argument to the parser."""
+    """Add a dataset-root argument to the parser."""
     parser.add_argument(
-        "--dataset-root",
+        "dataset_root",
         type=Path,
-        required=True,
         help="Path to the root of the dataset.",
-    )
-    return parser
-
-
-def add_arg_simulate(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --simulate argument to the parser."""
-    parser.add_argument(
-        "--simulate",
-        action="store_true",
-        help="Simulate the pipeline run without executing the generated command-line.",
     )
     return parser
 
@@ -64,6 +55,7 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
     """Add pipeline-related arguments to the parser."""
     parser.add_argument(
         "--pipeline",
+        dest="pipeline_name",
         type=str,
         required=True,
         help="Pipeline name, as specified in the config file.",
@@ -74,17 +66,13 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
         required=False,
         help="Pipeline version, as specified in the config file.",
     )
-    return parser
-
-
-def add_arg_pipeline_step(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add a --pipeline-step argument to the parser."""
     parser.add_argument(
         "--pipeline-step",
         type=str,
         required=False,
         help="Pipeline step, as specified in the config file (default: first step).",
     )
+
     return parser
 
 
@@ -148,13 +136,14 @@ def add_arg_verbosity(parser: _ActionsContainer) -> _ActionsContainer:
     return parser
 
 
-def add_arg_bids_source(parser: _ActionsContainer) -> _ActionsContainer:
-    """Add argument to init a layout with a BIDS datalad dataset."""
+def add_args_runner(parser: _ActionsContainer) -> _ActionsContainer:
+    """Add arguments for a runner."""
+    parser = add_args_pipeline(parser)
+    parser = add_args_participant_and_session(parser)
     parser.add_argument(
-        "--bids-source",
-        type=str,
-        required=False,
-        help=("Path to a BIDS dataset to initialize the layout with."),
+        "--simulate",
+        action="store_true",
+        help="Simulate the pipeline run without executing the generated command-line.",
     )
     return parser
 
@@ -173,8 +162,34 @@ def add_subparser_init(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
+    parser.add_argument(
+        "--bids-source",
+        type=str,
+        required=False,
+        help=(
+            "Path to an existing BIDS dataset to initialize the new Nipoppy dataset "
+            "with. Note: this will automatically create an appropriate manifest file."
+        ),
+    )
 
-    parser = add_arg_bids_source(parser)
+    return parser
+
+
+def add_subparser_status(
+    subparsers: _SubParsersAction,
+    formatter_class: type[HelpFormatter] = HelpFormatter,
+) -> ArgumentParser:
+    """Add subparser for status command."""
+    description = "Show current status of the dataset."
+    parser = subparsers.add_parser(
+        COMMAND_STATUS,
+        description=description,
+        help=description,
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+
+    parser = add_arg_dataset_root(parser)
 
     return parser
 
@@ -212,7 +227,7 @@ def add_subparser_doughnut(
     return parser
 
 
-def add_subparser_dicom_reorg(
+def add_subparser_reorg(
     subparsers: _SubParsersAction,
     formatter_class: type[HelpFormatter] = HelpFormatter,
 ) -> ArgumentParser:
@@ -220,9 +235,9 @@ def add_subparser_dicom_reorg(
     from nipoppy.layout import DEFAULT_LAYOUT_INFO
 
     description = (
-        "(Re)organize raw (DICOM) files, from the raw DICOM directory "
-        f"({DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) to the organized "
-        f"sourcedata directory ({DEFAULT_LAYOUT_INFO.dpath_sourcedata})."
+        "(Re)organize raw (DICOM) files, from the "
+        f"({DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) to "
+        f"({DEFAULT_LAYOUT_INFO.dpath_post_reorg})."
     )
     parser = subparsers.add_parser(
         COMMAND_DICOM_REORG,
@@ -249,11 +264,11 @@ def add_subparser_dicom_reorg(
     return parser
 
 
-def add_subparser_bids_conversion(
+def add_subparser_bidsify(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
-    description = "Convert to BIDS."
+    description = "Run a BIDS conversion pipeline."
     parser = subparsers.add_parser(
         COMMAND_BIDS_CONVERSION,
         description=description,
@@ -262,18 +277,15 @@ def add_subparser_bids_conversion(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-    parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
-    parser = add_args_participant_and_session(parser)
-    parser = add_arg_simulate(parser)
+    parser = add_args_runner(parser)
     return parser
 
 
-def add_subparser_pipeline_run(
+def add_subparser_run(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for run command."""
-    description = "Run a pipeline."
+    description = "Run a processing pipeline."
     parser = subparsers.add_parser(
         COMMAND_PIPELINE_RUN,
         description=description,
@@ -282,14 +294,21 @@ def add_subparser_pipeline_run(
         add_help=False,
     )
     parser = add_arg_dataset_root(parser)
-    parser = add_args_pipeline(parser)
-    parser = add_arg_pipeline_step(parser)
-    parser = add_args_participant_and_session(parser)
-    parser = add_arg_simulate(parser)
+    parser = add_args_runner(parser)
+    parser.add_argument(
+        "--keep-workdir",
+        type=str,
+        required=False,
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
+        ),
+    )
+
     return parser
 
 
-def add_subparser_pipeline_track(
+def add_subparser_track(
     subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
 ) -> ArgumentParser:
     """Add subparser for track command."""
@@ -304,6 +323,24 @@ def add_subparser_pipeline_track(
     parser = add_arg_dataset_root(parser)
     parser = add_args_pipeline(parser)
     parser = add_args_participant_and_session(parser)
+    return parser
+
+
+def add_subparser_extract(
+    subparsers: _SubParsersAction, formatter_class: type[HelpFormatter] = HelpFormatter
+) -> ArgumentParser:
+    """Add subparser for extract command."""
+    description = "Run an extraction pipeline."
+    parser = subparsers.add_parser(
+        COMMAND_PIPELINE_EXTRACT,
+        description=description,
+        help=description,
+        formatter_class=formatter_class,
+        add_help=False,
+    )
+    parser = add_arg_dataset_root(parser)
+    parser = add_args_runner(parser)
+
     return parser
 
 
@@ -331,11 +368,13 @@ def get_global_parser(
         required=True,
     )
     add_subparser_init(subparsers, formatter_class=formatter_class)
+    add_subparser_status(subparsers, formatter_class=formatter_class)
     add_subparser_doughnut(subparsers, formatter_class=formatter_class)
-    add_subparser_dicom_reorg(subparsers, formatter_class=formatter_class)
-    add_subparser_bids_conversion(subparsers, formatter_class=formatter_class)
-    add_subparser_pipeline_run(subparsers, formatter_class=formatter_class)
-    add_subparser_pipeline_track(subparsers, formatter_class=formatter_class)
+    add_subparser_reorg(subparsers, formatter_class=formatter_class)
+    add_subparser_bidsify(subparsers, formatter_class=formatter_class)
+    add_subparser_run(subparsers, formatter_class=formatter_class)
+    add_subparser_track(subparsers, formatter_class=formatter_class)
+    add_subparser_extract(subparsers, formatter_class=formatter_class)
 
     # add common/global options to subcommand parsers
     for parser in list(subparsers.choices.values()):

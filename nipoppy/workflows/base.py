@@ -18,6 +18,7 @@ from nipoppy.config.main import Config
 from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
@@ -90,7 +91,9 @@ class BaseWorkflow(Base, ABC):
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
-        self.logger.info(f"{self.log_prefix_run} {command}")
+        # using extra={"markup": False} in case the command contains substrings
+        # that would be interpreted as closing tags by the RichHandler
+        self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
         self,
@@ -122,14 +125,17 @@ class BaseWorkflow(Base, ABC):
         subprocess.Popen or str
         """
 
-        def process_output(
-            output_source, output_str: str, log_prefix: str, log_level=logging.INFO
-        ):
-            """Consume lines from an IO stream and append them to a string."""
+        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+            """Consume lines from an IO stream and log them."""
             for line in output_source:
                 line = line.strip("\n")
-                self.logger.log(level=log_level, msg=f"{log_prefix} {line}")
-            return output_str
+                # using extra={"markup": False} in case the output contains substrings
+                # that would be interpreted as closing tags by the RichHandler
+                self.logger.log(
+                    level=log_level,
+                    msg=f"{log_prefix} {line}",
+                    extra={"markup": False},
+                )
 
         # build command string
         if not isinstance(command_or_args, str):
@@ -145,8 +151,6 @@ class BaseWorkflow(Base, ABC):
 
         self.log_command(command)
 
-        stdout_str = ""
-        stderr_str = ""
         if not self.dry_run:
             process = subprocess.Popen(
                 command_or_args,
@@ -157,15 +161,13 @@ class BaseWorkflow(Base, ABC):
             )
 
             while process.poll() is None:
-                stdout_str = process_output(
+                process_output(
                     process.stdout,
-                    stdout_str,
                     self.log_prefix_run_stdout,
                 )
 
-                stderr_str = process_output(
+                process_output(
                     process.stderr,
-                    stderr_str,
                     self.log_prefix_run_stderr,
                     log_level=logging.ERROR,
                 )
@@ -269,7 +271,11 @@ class BaseWorkflow(Base, ABC):
 
     @cached_property
     def config(self) -> Config:
-        """Load the configuration."""
+        """
+        Load the configuration.
+
+        Raise error if not found.
+        """
         fpath_config = self.layout.fpath_config
         try:
             # load and apply user-defined substitutions
@@ -296,7 +302,11 @@ class BaseWorkflow(Base, ABC):
 
     @cached_property
     def manifest(self) -> Manifest:
-        """Load the manifest."""
+        """
+        Load the manifest.
+
+        Raise error if not found.
+        """
         fpath_manifest = Path(self.layout.fpath_manifest)
         expected_session_ids = self.config.SESSION_IDS
         expected_visit_ids = self.config.VISIT_IDS
@@ -311,7 +321,11 @@ class BaseWorkflow(Base, ABC):
 
     @cached_property
     def doughnut(self) -> Doughnut:
-        """Load the doughnut."""
+        """
+        Load the doughnut if it exists.
+
+        Otherwise, generate a new one.
+        """
         logger = self.logger
         fpath_doughnut = Path(self.layout.fpath_doughnut)
         try:
@@ -324,8 +338,8 @@ class BaseWorkflow(Base, ABC):
             doughnut = generate_doughnut(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=self.layout.dpath_raw_imaging,
-                dpath_organized=self.layout.dpath_sourcedata,
+                dpath_downloaded=self.layout.dpath_pre_reorg,
+                dpath_organized=self.layout.dpath_post_reorg,
                 dpath_bidsified=self.layout.dpath_bids,
                 empty=False,
                 logger=self.logger,
@@ -344,16 +358,25 @@ class BaseWorkflow(Base, ABC):
             return doughnut
 
     @cached_property
+    def bagel(self) -> Bagel:
+        """
+        Load the bagel it it exists.
+
+        Otherwise, return an empty bagel.
+        """
+        try:
+            return Bagel.load(self.layout.fpath_imaging_bagel)
+        except FileNotFoundError:
+            return Bagel()
+
+    @cached_property
     def dicom_dir_map(self) -> DicomDirMap:
         """Get the DICOM directory mapping."""
         fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
-        if fpath_dicom_dir_map is not None:
-            fpath_dicom_dir_map = Path(fpath_dicom_dir_map)
-            if not fpath_dicom_dir_map.exists():
-                raise FileNotFoundError(
-                    "DICOM directory map file not found"
-                    f": {self.config.DICOM_DIR_MAP_FILE}"
-                )
+        if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
+            raise FileNotFoundError(
+                "DICOM directory map file not found" f": {fpath_dicom_dir_map}"
+            )
 
         return DicomDirMap.load_or_generate(
             manifest=self.manifest,

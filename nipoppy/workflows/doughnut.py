@@ -36,8 +36,8 @@ class DoughnutWorkflow(BaseWorkflow):
     def run_main(self):
         """Generate/update the dataset's doughnut file."""
         fpath_doughnut = self.layout.fpath_doughnut
-        dpath_downloaded = self.layout.dpath_raw_imaging
-        dpath_organized = self.layout.dpath_sourcedata
+        dpath_downloaded = self.layout.dpath_pre_reorg
+        dpath_organized = self.layout.dpath_post_reorg
         dpath_bidsified = self.layout.dpath_bids
         empty = self.empty
         logger = self.logger

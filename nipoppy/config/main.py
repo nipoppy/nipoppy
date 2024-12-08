@@ -12,12 +12,66 @@ from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
+    ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
+
+
+def get_pipeline_version(
+    pipeline_name: str, pipeline_configs: list[BasePipelineConfig]
+) -> str:
+    """Get the first version associated with a pipeline.
+
+    Parameters
+    ----------
+    pipeline_name : str
+        Name of the pipeline, as specified in the config
+    pipeline_configs : list[nipoppy.config.pipeline.BasePipelineConfig]
+        List of pipeline configurations
+
+    Returns
+    -------
+    str
+        The pipeline version
+    """
+    available_pipelines = []
+    for pipeline_config in pipeline_configs:
+        if pipeline_config.NAME == pipeline_name:
+            return pipeline_config.VERSION
+        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
+
+    raise ValueError(
+        f"No config found for pipeline with NAME={pipeline_name}"
+        ". Available pipelines: "
+        + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+    )
+
+
+def get_pipeline_config(
+    pipeline_name: str,
+    pipeline_version: str,
+    pipeline_configs: list[BasePipelineConfig],
+) -> BasePipelineConfig:
+    """Get the config for a pipeline."""
+    available_pipelines = []
+    for pipeline_config in pipeline_configs:
+        if (
+            pipeline_config.NAME == pipeline_name
+            and pipeline_config.VERSION == pipeline_version
+        ):
+            return pipeline_config
+        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
+
+    raise ValueError(
+        "No config found for pipeline with "
+        f"NAME={pipeline_name}, VERSION={pipeline_version}"
+        ". Available pipelines and versions: "
+        + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+    )
 
 
 class Config(_SchemaWithContainerConfig):
@@ -41,10 +95,10 @@ class Config(_SchemaWithContainerConfig):
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
-            "Path to a CSV file mapping participant IDs to DICOM directories"
+            "Path to a TSV file mapping participant IDs to DICOM directories"
             ", to be used in the DICOM reorg step. Note: this field and "
-            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified"
-            f'. The CSV should have three columns: "{DicomDirMap.col_participant_id}"'
+            "DICOM_DIR_PARTICIPANT_FIRST cannot both be specified. The "
+            f'TSV file should have three columns: "{DicomDirMap.col_participant_id}"'
             f' , "{DicomDirMap.col_session_id}"'
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),
@@ -52,10 +106,10 @@ class Config(_SchemaWithContainerConfig):
     DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
         default=None,
         description=(
-            "Whether subdirectories under the raw dicom directory (default: "
-            f"{DEFAULT_LAYOUT_INFO.dpath_raw_imaging}) follow the pattern "
-            "<PARTICIPANT>/<SESSION> (default) or <SESSION>/<PARTICIPANT>. Note: "
-            "this field and and DICOM_DIR_MAP_FILE cannot both be specified"
+            f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
+            "follow the pattern <PARTICIPANT>/<SESSION> (default) or "
+            "<SESSION>/<PARTICIPANT>. Note: this field and DICOM_DIR_MAP_FILE "
+            "cannot both be specified"
         ),
     )
     SUBSTITUTIONS: dict[str, str] = Field(
@@ -71,6 +125,9 @@ class Config(_SchemaWithContainerConfig):
     )
     PROC_PIPELINES: list[ProcPipelineConfig] = Field(
         description="Configurations for processing pipelines"
+    )
+    EXTRACTION_PIPELINES: list[ExtractionPipelineConfig] = Field(
+        default=[], description="Configurations for extraction pipelines"
     )
     CUSTOM: dict = Field(
         default={},
@@ -93,21 +150,6 @@ class Config(_SchemaWithContainerConfig):
 
         return self
 
-    def _check_no_duplicate_pipeline(self) -> Self:
-        """Check that BIDS_PIPELINES and PROC_PIPELINES do not have common pipelines."""
-        pipeline_infos = set()
-        for pipeline_config in self.BIDS_PIPELINES + self.PROC_PIPELINES:
-            pipeline_info = (pipeline_config.NAME, pipeline_config.VERSION)
-            if pipeline_info in pipeline_infos:
-                raise ValueError(
-                    f"Found multiple configurations for pipeline {pipeline_info}"
-                    "Make sure pipeline name and versions are unique across "
-                    f"BIDS_PIPELINES and PROC_PIPELINES."
-                )
-            pipeline_infos.add(pipeline_info)
-
-        return self
-
     def propagate_container_config(self) -> Self:
         """Propagate the container config to all pipelines."""
 
@@ -127,6 +169,7 @@ class Config(_SchemaWithContainerConfig):
 
         _propagate(self.BIDS_PIPELINES)
         _propagate(self.PROC_PIPELINES)
+        _propagate(self.EXTRACTION_PIPELINES)
 
         return self
 
@@ -150,51 +193,8 @@ class Config(_SchemaWithContainerConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_dicom_dir_options()
-        self._check_no_duplicate_pipeline()
 
         return self
-
-    def get_pipeline_version(self, pipeline_name: str) -> str:
-        """Get the first version associated with a pipeline.
-
-        Parameters
-        ----------
-        pipeline_name : str
-            Name of the pipeline, as specified in the config
-
-        Returns
-        -------
-        str
-            The pipeline version
-        """
-        # assume there are no duplicates
-        # technically BIDS_PIPELINES and PROC_PIPELINES can share a pipeline name
-        # and have different versions, but this is unlikely (and probably a mistake)
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
-            if pipeline_config.NAME == pipeline_name:
-                return pipeline_config.VERSION
-
-        raise ValueError(f"No config found for pipeline with NAME={pipeline_name}")
-
-    def get_pipeline_config(
-        self,
-        pipeline_name: str,
-        pipeline_version: str,
-    ) -> BasePipelineConfig:
-        """Get the config for a pipeline."""
-        # pooling them together since there should not be any duplicates
-        for pipeline_config in self.PROC_PIPELINES + self.BIDS_PIPELINES:
-            if (
-                pipeline_config.NAME == pipeline_name
-                and pipeline_config.VERSION == pipeline_version
-            ):
-                return pipeline_config
-
-        raise ValueError(
-            "No config found for pipeline with "
-            f"NAME={pipeline_name}, "
-            f"VERSION={pipeline_version}"
-        )
 
     def save(self, fpath: StrOrPathLike, **kwargs):
         """Save the config to a JSON file.

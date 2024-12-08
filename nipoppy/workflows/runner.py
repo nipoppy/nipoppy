@@ -10,7 +10,6 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.env import StrOrPathLike
-from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -25,6 +24,7 @@ class PipelineRunner(BasePipelineWorkflow):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        keep_workdir: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
@@ -43,6 +43,7 @@ class PipelineRunner(BasePipelineWorkflow):
             dry_run=dry_run,
         )
         self.simulate = simulate
+        self.keep_workdir = keep_workdir
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -160,20 +161,15 @@ class PipelineRunner(BasePipelineWorkflow):
         who have not previously successfully completed the pipeline (according)
         to the bagel file.
         """
-        self.check_pipeline_version()  # in case this is called outside of run()
-        self.check_pipeline_step()
-        if self.layout.fpath_imaging_bagel.exists():
-            bagel = Bagel.load(self.layout.fpath_imaging_bagel)
-            participants_sessions_completed = set(
-                bagel.get_completed_participants_sessions(
-                    pipeline_name=self.pipeline_name,
-                    pipeline_version=self.pipeline_version,
-                    participant_id=participant_id,
-                    session_id=session_id,
-                )
+        participants_sessions_completed = set(
+            self.bagel.get_completed_participants_sessions(
+                pipeline_name=self.pipeline_name,
+                pipeline_version=self.pipeline_version,
+                pipeline_step=self.pipeline_step,
+                participant_id=participant_id,
+                session_id=session_id,
             )
-        else:
-            participants_sessions_completed = {}
+        )
 
         for participant_session in self.doughnut.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
@@ -189,7 +185,7 @@ class PipelineRunner(BasePipelineWorkflow):
         # Conditionally set up PyBIDS database
         if generate_bids_db:
             self.set_up_bids_db(
-                dpath_bids_db=self.dpath_pipeline_bids_db,
+                dpath_pybids_db=self.dpath_pipeline_bids_db,
                 participant_id=participant_id,
                 session_id=session_id,
             )
@@ -213,7 +209,15 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""
-        for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
-            if dpath.exists():
-                self.rm(dpath)
+        if self.n_success == self.n_total:
+            if not self.keep_workdir:
+                for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
+                    if dpath.exists():
+                        self.rm(dpath)
+            else:
+                self.logger.info("Keeping working / intermediary files.")
+        else:
+            self.logger.info(
+                "Some pipeline segments failed. Keeping working / intermediary files."
+            )
         return super().run_cleanup()

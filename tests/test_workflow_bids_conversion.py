@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.config.main import Config
+from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
@@ -35,6 +36,58 @@ def config() -> Config:
     )
 
 
+@pytest.mark.parametrize(
+    "pipeline_name,expected_version",
+    [
+        ("heudiconv", "0.12.2"),
+        ("dcm2bids", "3.1.0"),
+    ],
+)
+def test_check_pipeline_version(
+    pipeline_name, expected_version, config: Config, tmp_path: Path
+):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path,
+        pipeline_name=pipeline_name,
+        pipeline_version=None,
+    )
+    config.save(workflow.layout.fpath_config)
+    workflow.check_pipeline_version()
+    assert workflow.pipeline_version == expected_version
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("heudiconv", "0.12.2"),
+        ("dcm2bids", "3.1.0"),
+    ],
+)
+def test_pipeline_config(
+    pipeline_name, pipeline_version, config: Config, tmp_path: Path
+):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+    )
+    config.save(workflow.layout.fpath_config)
+    assert isinstance(workflow.pipeline_config, BidsPipelineConfig)
+
+
+def test_dpath_pipeline_error(tmp_path: Path):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="prepare",
+    )
+    with pytest.raises(
+        RuntimeError, match='"dpath_pipeline" attribute is not available for '
+    ):
+        workflow.dpath_pipeline
+
+
 def test_setup(config: Config, tmp_path: Path):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
@@ -44,8 +97,12 @@ def test_setup(config: Config, tmp_path: Path):
     )
     create_empty_dataset(workflow.dpath_root)
     config.save(workflow.layout.fpath_config)
+
+    # check that no file/directory is created during setup
+    files_before = set(workflow.dpath_root.rglob("*"))
     workflow.run_setup()
-    assert not workflow.dpath_pipeline.exists()
+    files_after = set(workflow.dpath_root.rglob("*"))
+    assert files_before == files_after
 
 
 @pytest.mark.parametrize(
@@ -59,8 +116,8 @@ def test_setup(config: Config, tmp_path: Path):
                 Doughnut.col_session_id: ["1"],
                 Doughnut.col_datatype: "['anat']",
                 Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_raw_imaging: [True],
-                Doughnut.col_in_sourcedata: [True],
+                Doughnut.col_in_pre_reorg: [True],
+                Doughnut.col_in_post_reorg: [True],
                 Doughnut.col_in_bids: [True],
             }
         ).validate(),
@@ -108,8 +165,6 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
     workflow.doughnut = Doughnut()
     config.save(workflow.layout.fpath_config)
 
-    print(config.get_pipeline_config("heudiconv", "0.12.2"))
-
     workflow.run_cleanup()
 
     assert not workflow.layout.fpath_doughnut.exists()
@@ -154,12 +209,12 @@ def test_get_participants_sessions_to_run(
             {
                 Doughnut.col_participant_id: data[0],
                 Doughnut.col_session_id: data[1],
-                Doughnut.col_in_sourcedata: data[2],
+                Doughnut.col_in_post_reorg: data[2],
                 Doughnut.col_in_bids: data[3],
                 Doughnut.col_visit_id: data[1],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_raw_imaging: False,
+                Doughnut.col_in_pre_reorg: False,
             }
             for data in doughnut_data
         ]

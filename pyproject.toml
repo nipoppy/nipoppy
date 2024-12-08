@@ -17,7 +17,7 @@ classifiers = [
 dependencies = [
     "boutiques",
     "pandas",
-    "pybids",
+    "pybids!=0.18.0",
     "pydantic",
     'requests',
     "pydicom!=3.0.0",
@@ -36,7 +36,6 @@ dynamic = ["version"]
 dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
-    "pygments-csv-lexer",
     "sphinx",
     "sphinx-argparse!=0.5.0",
     "sphinx-autoapi",
