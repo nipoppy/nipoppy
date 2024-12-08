@@ -149,6 +149,7 @@ def test_init(args):
     assert hasattr(workflow, "session_id")
     assert isinstance(workflow.dpath_pipeline, Path)
     assert isinstance(workflow.dpath_pipeline_output, Path)
+    assert isinstance(workflow.dpath_pipeline_idps, Path)
     assert isinstance(workflow.dpath_pipeline_work, Path)
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 

@@ -23,6 +23,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "EXTRACTION_PIPELINES",
 ]
 
 
@@ -58,6 +59,13 @@ def valid_config_data():
                 "STEPS": [{"INVOCATION_FILE": "path"}],
             },
         ],
+        "EXTRACTION_PIPELINES": [
+            {
+                "NAME": "extractor1",
+                "VERSION": "0.1.0",
+                "PROC_DEPENDENCIES": [{"NAME": "pipeline1", "VERSION": "v1"}],
+            },
+        ],
     }
 
 
@@ -76,34 +84,6 @@ def test_no_extra_fields(valid_config_data):
 
 
 @pytest.mark.parametrize(
-    "proc_pipelines_data,bids_pipelines_data",
-    [
-        (
-            [
-                {"NAME": "pipeline1", "VERSION": "v1"},
-                {"NAME": "pipeline1", "VERSION": "v1"},
-            ],
-            [],
-        ),
-        (
-            [],
-            [
-                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
-                {"NAME": "pipeline1", "VERSION": "v1", "STEPS": [{"NAME": "step1"}]},
-            ],
-        ),
-    ],
-)
-def test_check_no_duplicate_pipeline(
-    valid_config_data, proc_pipelines_data, bids_pipelines_data
-):
-    valid_config_data["PROC_PIPELINES"] = proc_pipelines_data
-    valid_config_data["BIDS_PIPELINES"] = bids_pipelines_data
-    with pytest.raises(ValidationError, match="Found multiple configurations for"):
-        Config(**valid_config_data)
-
-
-@pytest.mark.parametrize(
     "visit_ids,expected_session_ids",
     [
         (["V01", "V02"], ["V01", "V02"]),
@@ -114,7 +94,6 @@ def test_sessions_inferred(visit_ids, expected_session_ids):
     data = {
         "DATASET_NAME": "my_dataset",
         "VISIT_IDS": visit_ids,
-        "BIDS_PIPELINES": [],
         "PROC_PIPELINES": [],
     }
     config = Config(**data)
@@ -227,6 +206,7 @@ def test_propagate_container_config(
         ("pipeline1", "PROC_PIPELINES", "v1"),
         ("pipeline2", "PROC_PIPELINES", "1.0"),
         ("bids_converter", "BIDS_PIPELINES", "1.0"),
+        ("extractor1", "EXTRACTION_PIPELINES", "0.1.0"),
     ],
 )
 def test_get_pipeline_version(
@@ -260,6 +240,7 @@ def test_get_pipeline_version_invalid_name(
         ("pipeline1", "v1", "PROC_PIPELINES"),
         ("pipeline2", "2.0", "PROC_PIPELINES"),
         ("bids_converter", "1.0", "BIDS_PIPELINES"),
+        ("extractor1", "0.1.0", "EXTRACTION_PIPELINES"),
     ],
 )
 def test_get_pipeline_config(pipeline, version, pipeline_field, valid_config_data):

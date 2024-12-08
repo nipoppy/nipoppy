@@ -133,6 +133,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
+    def dpath_pipeline_idps(self) -> Path:
+        """Return the path to the pipeline's IDPs directory."""
+        return self.layout.get_dpath_pipeline_idp(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+        )
+
+    @cached_property
     def dpath_pipeline_bids_db(self) -> Path:
         """Return the path to the pipeline's BIDS database directory."""
         return self.layout.get_dpath_pybids_db(

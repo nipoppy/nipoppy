@@ -271,7 +271,11 @@ class BaseWorkflow(Base, ABC):
 
     @cached_property
     def config(self) -> Config:
-        """Load the configuration."""
+        """
+        Load the configuration.
+
+        Raise error if not found.
+        """
         fpath_config = self.layout.fpath_config
         try:
             # load and apply user-defined substitutions
@@ -298,7 +302,11 @@ class BaseWorkflow(Base, ABC):
 
     @cached_property
     def manifest(self) -> Manifest:
-        """Load the manifest."""
+        """
+        Load the manifest.
+
+        Raise error if not found.
+        """
         fpath_manifest = Path(self.layout.fpath_manifest)
         expected_session_ids = self.config.SESSION_IDS
         expected_visit_ids = self.config.VISIT_IDS
@@ -313,7 +321,11 @@ class BaseWorkflow(Base, ABC):
 
     @cached_property
     def doughnut(self) -> Doughnut:
-        """Load the doughnut."""
+        """
+        Load the doughnut if it exists.
+
+        Otherwise, generate a new one.
+        """
         logger = self.logger
         fpath_doughnut = Path(self.layout.fpath_doughnut)
         try:
@@ -361,13 +373,10 @@ class BaseWorkflow(Base, ABC):
     def dicom_dir_map(self) -> DicomDirMap:
         """Get the DICOM directory mapping."""
         fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
-        if fpath_dicom_dir_map is not None:
-            fpath_dicom_dir_map = Path(fpath_dicom_dir_map)
-            if not fpath_dicom_dir_map.exists():
-                raise FileNotFoundError(
-                    "DICOM directory map file not found"
-                    f": {self.config.DICOM_DIR_MAP_FILE}"
-                )
+        if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
+            raise FileNotFoundError(
+                "DICOM directory map file not found" f": {fpath_dicom_dir_map}"
+            )
 
         return DicomDirMap.load_or_generate(
             manifest=self.manifest,
