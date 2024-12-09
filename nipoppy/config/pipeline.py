@@ -143,7 +143,9 @@ class ProcPipelineConfig(BasePipelineConfig):
         default=None,
         description=(
             "Configuration dictionary for High-Performance Computing (HPC) settings, "
-            "with keys as configuration names and values of any type."
+            "with keys as configuration names and values of any type. "
+            "The keys are passed to a Jinja template (in  "
+            "dataset_root/code/hpc_templates) for the requested queue (SGE/Slurm)"
         ),
     )
 
