@@ -405,7 +405,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
         if self.hpc:
-            self.submit_hpc_job(participants_sessions)
+            self._submit_hpc_job(participants_sessions)
         else:
             # Default behavior
             for participant_id, session_id in participants_sessions:
@@ -424,7 +424,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
-    def submit_hpc_job(self, participants_sessions):
+    def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
         self.logger.info("Running in HPC mode.")
 
@@ -475,16 +475,17 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         num_jobs = len(job_array_commands)
 
         try:
-            queue_id = qa.submit_job(
-                job_name=(
-                    f"nipoppy_{self.pipeline_name}_"
-                    f"{self.pipeline_version}_{self.pipeline_step}"
-                ),
-                command=command,
-                num_tasks=num_jobs,
-                queue=self.hpc,
-                **self.pipeline_config.HPC_CONFIG.model_dump(),
-            )
+            if not self.dry_run:
+                queue_id = qa.submit_job(
+                    job_name=(
+                        f"nipoppy_{self.pipeline_name}_"
+                        f"{self.pipeline_version}_{self.pipeline_step}"
+                    ),
+                    command=command,
+                    num_tasks=num_jobs,
+                    queue=self.hpc,
+                    **self.pipeline_config.HPC_CONFIG.model_dump(),
+                )
         except NotImplementedError as e:
             self.logger.info(
                 f"pysqa has not implemented returning the array job ID for SGE yet! "
