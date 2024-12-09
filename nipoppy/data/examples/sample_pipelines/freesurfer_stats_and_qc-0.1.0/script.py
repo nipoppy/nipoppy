@@ -234,7 +234,7 @@ def _run_mris_euler_number(
     args = [str(arg) for arg in args]
 
     # run command with some feedback
-    process = _run_subprocess(args, verbose=verbose)
+    process = _run_subprocess(args, verbose=verbose, check=True)
     if process.returncode != 0:
         sys.exit(f"\nError running command: {shlex.join(args)}")
 
@@ -277,7 +277,7 @@ def _run_mri_cnr(
     args = [str(arg) for arg in args]
 
     # run command with some feedback
-    process = _run_subprocess(args, verbose=verbose)
+    process = _run_subprocess(args, verbose=verbose, check=True)
     if process.returncode != 0:
         sys.exit(f"\nError running command: {shlex.join(args)}")
 
@@ -441,25 +441,34 @@ def run_single_qc(
             # get number of holes in surface files based on Euler number
             for surf_path in euler_surf_paths:
                 out_path = Path(tmpdir) / f"{subject}_euler_{surf_path.name}.txt"
-                data_subject[f"n_holes-{surf_path.name.replace('.', '_')}"] = (
-                    _run_mris_euler_number(
-                        surf_path=subjects_dir_path / subject / surf_path,
-                        out_path=out_path,
-                        container_command_and_args=container_command_and_args,
-                        verbose=verbose,
+                try:
+                    data_subject[f"n_holes-{surf_path.name.replace('.', '_')}"] = (
+                        _run_mris_euler_number(
+                            surf_path=subjects_dir_path / subject / surf_path,
+                            out_path=out_path,
+                            container_command_and_args=container_command_and_args,
+                            verbose=verbose,
+                        )
                     )
-                )
+                except subprocess.CalledProcessError:
+                    print(f"Error calculating Euler number for {surf_path.name}.")
 
             # get contrast-to-noise ratio (CNR) for each hemisphere
-            df_cnr = _run_mri_cnr(
-                surf_dir=subjects_dir_path / subject / "surf",
-                vol_paths=[
-                    subjects_dir_path / subject / vol_path for vol_path in cnr_vol_paths
-                ],
-                out_path=Path(tmpdir) / f"{subject}_cnr.txt",
-                container_command_and_args=container_command_and_args,
-                verbose=verbose,
-            )
+            try:
+                df_cnr = _run_mri_cnr(
+                    surf_dir=subjects_dir_path / subject / "surf",
+                    vol_paths=[
+                        subjects_dir_path / subject / vol_path
+                        for vol_path in cnr_vol_paths
+                    ],
+                    out_path=Path(tmpdir) / f"{subject}_cnr.txt",
+                    container_command_and_args=container_command_and_args,
+                    verbose=verbose,
+                )
+            except subprocess.CalledProcessError:
+                print(f"Error calculating CNR for {subject}.")
+                continue
+
             for col in cnr_cols:
                 for index in df_cnr.index:
                     fname, hemi = index
