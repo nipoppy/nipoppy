@@ -488,11 +488,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 )
         except NotImplementedError as e:
             self.logger.info(
-<<<<<<< HEAD
-                f"Couldn't retrieve array job ID for SGE. Please check the queue for the job."
-=======
-                "pysqa has not implemented returning the array job ID for SGE yet! "
->>>>>>> 4e9b08233d3d014384e1229b794e09dc8ec2af8e
+                f"Failed to retrieve SGE array job ID. Please check the queue for the job ID."
             )
             queue_id = None
         except Exception as e:
