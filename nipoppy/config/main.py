@@ -132,7 +132,6 @@ class Config(_SchemaWithContainerConfig):
         description="Free field that can be used for any purpose",
     )
 
-    # Allow extra fields if necessary
     model_config = ConfigDict(extra="forbid")
 
     def _check_dicom_dir_options(self) -> Self:
