@@ -47,7 +47,7 @@ class ExtractionRunner(PipelineRunner):
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
-        return [self.dpath_pipeline_idps]
+        return [self.dpath_pipeline_idp]
 
     @cached_property
     def _pipeline_configs(self) -> list[ExtractionPipelineConfig]:
@@ -87,6 +87,22 @@ class ExtractionRunner(PipelineRunner):
     def dpath_pipeline(self) -> Path:
         """Get the path to the derivatives directory associated with the extractor."""
         return self.layout.get_dpath_pipeline(
+            pipeline_name=self.proc_pipeline_info.NAME,
+            pipeline_version=self.proc_pipeline_info.VERSION,
+        )
+
+    @cached_property
+    def dpath_pipeline_output(self) -> Path:
+        """Return the path to the pipeline's output directory."""
+        return self.layout.get_dpath_pipeline_output(
+            pipeline_name=self.proc_pipeline_info.NAME,
+            pipeline_version=self.proc_pipeline_info.VERSION,
+        )
+
+    @cached_property
+    def dpath_pipeline_idp(self) -> Path:
+        """Return the path to the pipeline's IDP directory."""
+        return self.layout.get_dpath_pipeline_idp(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )

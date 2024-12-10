@@ -69,13 +69,26 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
     )
 
 
+@pytest.mark.parametrize(
+    "attribute,expected",
+    [
+        ("dpath_pipeline", "derivatives/freesurfer/7.3.2"),
+        ("dpath_pipeline_output", "derivatives/freesurfer/7.3.2/output"),
+        ("dpath_pipeline_idp", "derivatives/freesurfer/7.3.2/idp"),
+    ],
+)
+def test_paths(extractor: ExtractionRunner, config: Config, attribute, expected):
+    extractor.config = config
+    assert getattr(extractor, attribute) == extractor.dpath_root / expected
+
+
 def test_setup(extractor: ExtractionRunner, config: Config):
     create_empty_dataset(extractor.dpath_root)
     config.save(extractor.layout.fpath_config)
 
-    assert not extractor.dpath_pipeline_idps.exists()
+    assert not extractor.dpath_pipeline_idp.exists()
     extractor.run_setup()
-    assert extractor.dpath_pipeline_idps.exists()
+    assert extractor.dpath_pipeline_idp.exists()
 
 
 def test_dpath_pipeline(extractor: ExtractionRunner, config: Config):
