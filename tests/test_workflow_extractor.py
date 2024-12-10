@@ -199,7 +199,9 @@ def test_get_participants_sessions_to_run(
 def test_run_single(
     extractor: ExtractionRunner,
     mocker: pytest_mock.MockerFixture,
+    config: Config,
 ):
+    extractor.config = config
 
     mocked_process_container_config = mocker.patch(
         "nipoppy.workflows.runner.PipelineRunner.process_container_config"
@@ -210,6 +212,11 @@ def test_run_single(
 
     extractor.run_single("S01", "BL")
     assert mocked_process_container_config.call_count == 1
+    mocked_process_container_config.assert_called_once_with(
+        participant_id="S01",
+        session_id="BL",
+        bind_paths=[extractor.dpath_pipeline_idp, extractor.dpath_pipeline_output],
+    )
     assert mocked_launch_boutiques_container.call_count == 1
 
 
