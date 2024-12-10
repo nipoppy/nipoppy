@@ -529,6 +529,8 @@ def run_single(
         DataFrames with multi-level index (subject, session) and FreeSurfer stats
         columns. Second "dataframe" is None if with_qc is False.
     """
+    subjects_dir_path = Path(subjects_dir_path).resolve()
+
     df_stats = run_single_stats(
         subjects_dir_path=subjects_dir_path,
         container_command_and_args=container_command_and_args,
