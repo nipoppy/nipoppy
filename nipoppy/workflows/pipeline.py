@@ -453,17 +453,17 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # Join the commands into a single string
 
         job_array_commands_str = " ".join([f'"{cmd}"' for cmd in job_array_commands])
-        module_load = self.config.HPC_PREAMBLE
+        preamble = self.config.HPC_PREAMBLE
 
         # Build the single command to submit as an array job
         if self.hpc == "slurm":
             command = (
-                f"bash -c '{module_load}; commands=({job_array_commands_str}); "
+                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
                 f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
             )
         elif self.hpc == "sge":
             command = (
-                f"bash -c '{module_load}; commands=({job_array_commands_str}); "
+                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
                 f'eval "${{commands[$((SGE_TASK_ID-1))]}}"\''
             )
         else:
@@ -488,7 +488,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 )
         except NotImplementedError as e:
             self.logger.info(
-                f"pysqa has not implemented returning the array job ID for SGE yet! "
+                f"Couldn't retrieve array job ID for SGE. Please check the queue for the job."
             )
             queue_id = None
         except Exception as e:

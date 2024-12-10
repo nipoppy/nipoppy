@@ -204,12 +204,6 @@
             "NAME": "freesurfer",
             "VERSION": "7.3.2",
             "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 23.0.0 and later",
-            "HPC_CONFIG": {
-                "account_name": "<HPC_ACCOUNT_NAME>",
-                "cores": "<NUM_CORES>",
-                "memory_max": "<MAX_MEMORY_IN_GB>",
-                "run_time_max": "<MAX_RUNTIME_IN_MINUTES>"
-            },
             "STEPS": [
                 {
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
@@ -220,12 +214,6 @@
             "NAME": "freesurfer",
             "VERSION": "6.0.1",
             "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 0.7.0 to 22.x.x",
-            "HPC_CONFIG": {
-                "account_name": "<HPC_ACCOUNT_NAME>",
-                "cores": "<NUM_CORES>",
-                "memory_max": "<MAX_MEMORY_IN_GB>",
-                "run_time_max": "<MAX_RUNTIME_IN_MINUTES>"
-            },
             "STEPS": [
                 {
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
