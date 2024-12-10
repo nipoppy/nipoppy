@@ -69,13 +69,26 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
     )
 
 
+@pytest.mark.parametrize(
+    "attribute,expected",
+    [
+        ("dpath_pipeline", "derivatives/freesurfer/7.3.2"),
+        ("dpath_pipeline_output", "derivatives/freesurfer/7.3.2/output"),
+        ("dpath_pipeline_idp", "derivatives/freesurfer/7.3.2/idp"),
+    ],
+)
+def test_paths(extractor: ExtractionRunner, config: Config, attribute, expected):
+    extractor.config = config
+    assert getattr(extractor, attribute) == extractor.dpath_root / expected
+
+
 def test_setup(extractor: ExtractionRunner, config: Config):
     create_empty_dataset(extractor.dpath_root)
     config.save(extractor.layout.fpath_config)
 
-    assert not extractor.dpath_pipeline_idps.exists()
+    assert not extractor.dpath_pipeline_idp.exists()
     extractor.run_setup()
-    assert extractor.dpath_pipeline_idps.exists()
+    assert extractor.dpath_pipeline_idp.exists()
 
 
 def test_dpath_pipeline(extractor: ExtractionRunner, config: Config):
@@ -186,7 +199,9 @@ def test_get_participants_sessions_to_run(
 def test_run_single(
     extractor: ExtractionRunner,
     mocker: pytest_mock.MockerFixture,
+    config: Config,
 ):
+    extractor.config = config
 
     mocked_process_container_config = mocker.patch(
         "nipoppy.workflows.runner.PipelineRunner.process_container_config"
@@ -197,6 +212,11 @@ def test_run_single(
 
     extractor.run_single("S01", "BL")
     assert mocked_process_container_config.call_count == 1
+    mocked_process_container_config.assert_called_once_with(
+        participant_id="S01",
+        session_id="BL",
+        bind_paths=[extractor.dpath_pipeline_idp, extractor.dpath_pipeline_output],
+    )
     assert mocked_launch_boutiques_container.call_count == 1
 
 

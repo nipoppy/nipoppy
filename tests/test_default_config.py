@@ -19,7 +19,12 @@ from nipoppy.utils import (
     FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
 )
-from nipoppy.workflows import BidsConversionRunner, PipelineRunner, PipelineTracker
+from nipoppy.workflows import (
+    BidsConversionRunner,
+    ExtractionRunner,
+    PipelineRunner,
+    PipelineTracker,
+)
 
 from .conftest import create_empty_dataset, prepare_dataset
 
@@ -300,3 +305,33 @@ def test_tracker_paths(
         ].item()
         == tracker.bagel.status_success
     )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("freesurfer_stats_and_qc", "0.1.0"),
+    ],
+)
+def test_extractor(
+    pipeline_name,
+    pipeline_version,
+    single_subject_dataset,
+):
+    layout, participant_id, session_id = single_subject_dataset
+    layout: DatasetLayout
+    runner = ExtractionRunner(
+        dpath_root=layout.dpath_root,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+        simulate=True,
+    )
+
+    runner.pipeline_config.get_fpath_container().touch()
+
+    invocation_str, descriptor_str = runner.run_single(
+        participant_id=participant_id, session_id=session_id
+    )
+
+    assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
+    assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
