@@ -47,7 +47,7 @@ class ExtractionRunner(PipelineRunner):
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
-        return [self.dpath_pipeline_idps]
+        return [self.dpath_pipeline_idp]
 
     @cached_property
     def _pipeline_configs(self) -> list[ExtractionPipelineConfig]:
@@ -91,6 +91,22 @@ class ExtractionRunner(PipelineRunner):
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
 
+    @cached_property
+    def dpath_pipeline_output(self) -> Path:
+        """Return the path to the pipeline's output directory."""
+        return self.layout.get_dpath_pipeline_output(
+            pipeline_name=self.proc_pipeline_info.NAME,
+            pipeline_version=self.proc_pipeline_info.VERSION,
+        )
+
+    @cached_property
+    def dpath_pipeline_idp(self) -> Path:
+        """Return the path to the pipeline's IDP directory."""
+        return self.layout.get_dpath_pipeline_idp(
+            pipeline_name=self.proc_pipeline_info.NAME,
+            pipeline_version=self.proc_pipeline_info.VERSION,
+        )
+
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
     ):
@@ -123,8 +139,8 @@ class ExtractionRunner(PipelineRunner):
             participant_id=participant_id,
             session_id=session_id,
             bind_paths=[
-                self.layout.dpath_sourcedata,
-                self.layout.dpath_bids,
+                self.dpath_pipeline_idp,
+                self.dpath_pipeline_output,
             ],
         )
 
