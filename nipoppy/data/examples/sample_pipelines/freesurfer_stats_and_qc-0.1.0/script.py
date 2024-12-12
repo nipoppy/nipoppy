@@ -660,6 +660,9 @@ def run_multi(
         for session_df_map, df in zip(session_df_maps, dfs_single):
             session_df_map[session_id] = df
 
+    if session_df_maps is None:
+        sys.exit(f"No session directories found in {sessions_dir_path}.")
+
     # combine the dataframes and update the index
     df_multi = []
     for session_df_map in session_df_maps:

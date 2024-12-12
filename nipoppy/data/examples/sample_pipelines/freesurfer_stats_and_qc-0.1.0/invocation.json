@@ -1,7 +1,7 @@
 {
     "script_path": "[[NIPOPPY_DPATH_PIPELINES]]/freesurfer_stats_and_qc-0.1.0/script.py",
     "input_dir_path": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
-    "output_stats_file_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/freesurfer_stats-thickness.tsv",
+    "output_stats_file_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/freesurfer_stats-thickness-DKT.tsv",
     "output_qc_file_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/freesurfer_qc.tsv",
     "mode": "multi",
     "container": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]]",
