@@ -379,10 +379,30 @@ def run_single_stats(
             verbose=verbose,
         )
 
+        # FreeSurfer 6 has duplicate columns between files
+        for col in ["BrainSegVolNotVent", "eTIV"]:
+            first = None
+            for df_to_concat in [df_aseg, df_aparc_lh, df_aparc_rh]:
+                if col in df_to_concat:
+                    if first is None:
+                        first = df_to_concat[col]
+                    else:
+                        common_participants = list(
+                            set(first.index).intersection(set(df_to_concat.index))
+                        )
+                        if first.loc[common_participants].equals(
+                            df_to_concat.loc[common_participants, col]
+                        ):
+                            df_to_concat.drop(col, axis="columns", inplace=True)
+                            print(f"Dropped duplicate column {col} from aparc file.")
+
     # combine the stats files and make sure there are no duplicate column names
     df_stats = pd.concat([df_aseg, df_aparc_lh, df_aparc_rh], axis="columns")
     if len(set(df_stats.columns)) != len(df_stats.columns):
-        sys.exit("Duplicate column names in the stats files.")
+        sys.exit(
+            "Duplicate column names in the stats files: "
+            f"{df_stats.columns[df_stats.columns.duplicated()]}"
+        )
     df_stats = df_stats.sort_index()
 
     return df_stats
