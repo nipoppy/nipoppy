@@ -481,6 +481,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f"nipoppy_{self.pipeline_name}_"
                         f"{self.pipeline_version}_{self.pipeline_step}"
                     ),
+                    dataset_root=self.dpath_root,
                     command=command,
                     num_tasks=num_jobs,
                     queue=self.hpc,
