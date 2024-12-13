@@ -816,7 +816,7 @@ def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_place
     )
 
     # Call the function we're testing
-    pipeline_workflow.submit_hpc_job(participants_sessions)
+    pipeline_workflow._submit_hpc_job(participants_sessions)
 
     # Extract the arguments passed to submit_job
     submit_job_args = mock_submit_job.call_args[1]
@@ -840,8 +840,27 @@ def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_place
 
 def test_submit_hpc_job_unsupported_hpc_type(mocker):
     # Test for unsupported hpc type
+    pipeline_workflow = PipelineWorkflow(
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
+    )
     with pytest.raises(ValueError):
-        pipeline_workflow = PipelineWorkflow(
-            "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
-        )
-        pipeline_workflow.submit_hpc_job([("participant1", "session1")])
+        pipeline_workflow._submit_hpc_job([("participant1", "session1")])
+
+
+def test_run_main_hpc_mode(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflow):
+    # Mock the _submit_hpc_job method
+    mocked_submit_hpc_job = mocker.patch.object(workflow, '_submit_hpc_job')
+
+    # Set the hpc attribute to "exists" to simulate that the HPC is available
+    workflow.hpc = "exists"
+
+    # Create a test manifest
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
+    manifest = prepare_dataset(participants_and_sessions_manifest=participants_and_sessions)
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+
+    # Call the run_main method
+    workflow.run_main()
+
+    # Assert that the _submit_hpc_job method was called
+    mocked_submit_hpc_job.assert_called_once()

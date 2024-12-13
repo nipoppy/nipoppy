@@ -26,4 +26,4 @@ mkdir -p {{ dataset_root }}/logs/hpc
 # Change to the desired working directory
 cd {{ dataset_root }}/logs/hpc
 
-{{ command }}                                     # The command to run
+{{ command }}
