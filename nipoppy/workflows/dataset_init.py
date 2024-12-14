@@ -18,6 +18,7 @@ from nipoppy.utils import (
     DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
+    DPATH_HPC_TEMPLATES,
     check_participant_id,
     check_session_id,
     session_id_to_bids_session_id,
@@ -218,12 +219,10 @@ class InitWorkflow(BaseWorkflow):
         )
         return super().run_cleanup()
 
-    def _copy_hpc_templates(self) -> None:
-        """Copy Jinja template for HPC to dataset's code/hpc_templates directory."""
-        hpc_templates_source = (
-            Path(__file__).resolve().parent.parent / "data" / "hpc_templates"
-        )
-        hpc_templates_target = self.dpath_root / "code" / "hpc_templates"
-        self.copytree(
-            hpc_templates_source, hpc_templates_target, log_level=logging.DEBUG
-        )
+def _copy_hpc_templates(self) -> None:
+    """Copy Jinja template for HPC to dataset's code/hpc_templates directory."""
+    hpc_templates_source = DPATH_HPC_TEMPLATES
+    hpc_templates_target = self.dpath_root / "code" / "hpc_templates"
+    self.copytree(
+        hpc_templates_source, hpc_templates_target, log_level=logging.DEBUG
+    )
