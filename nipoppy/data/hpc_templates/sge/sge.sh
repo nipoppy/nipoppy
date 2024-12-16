@@ -20,9 +20,6 @@
 #$ -tc 100                                      # Default concurrency limit
 {%- endif %}
 
-# Ensure the logs directory exists
-mkdir -p {{ dataset_root }}/logs/hpc
-
 # Change to the desired working directory
 cd {{ dataset_root }}/logs/hpc
 
