@@ -20,7 +20,5 @@
 #$ -tc 100                                      # Default concurrency limit
 {%- endif %}
 
-# Change to the desired working directory
-cd {{ dataset_root }}/logs/hpc
 
 {{ command }}

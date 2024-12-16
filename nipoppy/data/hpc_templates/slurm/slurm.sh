@@ -21,7 +21,4 @@
 #SBATCH --array=0-{{ num_tasks }}%100                      # Default to 100 concurrent tasks
 {%- endif %}
 
-# Change to the desired working directory
-cd {{ dataset_root }}/logs/hpc
-
 {{ command }}
