@@ -2,8 +2,8 @@
 #$ -N {{ job_name }}                            # Job name
 #$ -cwd                                         # Start job in the current directory
 # Output logs to the specified dataset root
-#$ -o {{ dataset_root }}/logs/hpc/$JOB_NAME_$JOB_ID.$SGE_TASK_ID.out    # Standard output
-#$ -e {{ dataset_root }}/logs/hpc/$JOB_NAME_$JOB_ID.$SGE_TASK_ID.err    # Standard error
+#$ -o {{ dataset_root }}/logs/hpc/$JOB_NAME_$JOB_ID.out    # Standard output
+#$ -e {{ dataset_root }}/logs/hpc/$JOB_NAME_$JOB_ID.err    # Standard error
 {%- if memory_max %}
 #$ -l h_vmem={{ memory_max }}G                  # Max memory in GB
 {%- endif %}
