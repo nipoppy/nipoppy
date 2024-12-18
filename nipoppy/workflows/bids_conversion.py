@@ -103,12 +103,13 @@ class BidsConversionRunner(PipelineRunner):
         )
 
         # update status
-        self.doughnut.set_status(
-            participant_id=participant_id,
-            session_id=session_id,
-            col=self.doughnut.col_in_bids,
-            status=True,
-        )
+        if self.pipeline_step_config.UPDATE_DOUGHNUT:
+            self.doughnut.set_status(
+                participant_id=participant_id,
+                session_id=session_id,
+                col=self.doughnut.col_in_bids,
+                status=True,
+            )
 
         return invocation_and_descriptor
 
@@ -119,7 +120,6 @@ class BidsConversionRunner(PipelineRunner):
         Specifically:
         - Write updated doughnut file
         """
-        update_doughnut = self.pipeline_step_config.UPDATE_DOUGHNUT
-        if update_doughnut and not self.simulate:
+        if self.pipeline_step_config.UPDATE_DOUGHNUT and not self.simulate:
             self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
         return super().run_cleanup(**kwargs)

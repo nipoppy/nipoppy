@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from pytest_mock import MockerFixture
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BidsPipelineConfig
@@ -103,6 +104,38 @@ def test_setup(config: Config, tmp_path: Path):
     workflow.run_setup()
     files_after = set(workflow.dpath_root.rglob("*"))
     assert files_before == files_after
+
+
+@pytest.mark.parametrize("update_doughnut", [True, False])
+def test_run_single(
+    update_doughnut, config: Config, tmp_path: Path, mocker: MockerFixture
+):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="prepare",
+    )
+    config.save(workflow.layout.fpath_config)
+    workflow.doughnut = Doughnut()
+    workflow.pipeline_step_config.UPDATE_DOUGHNUT = update_doughnut
+
+    mocked_process_container_config = mocker.patch.object(
+        workflow, "process_container_config"
+    )
+    mocked_launch_boutiques_run = mocker.patch.object(workflow, "launch_boutiques_run")
+
+    mocked_doughnut_set_status = mocker.patch.object(workflow.doughnut, "set_status")
+
+    workflow.run_single("01", "1")
+
+    mocked_process_container_config.assert_called_once()
+    mocked_launch_boutiques_run.assert_called_once()
+
+    if update_doughnut:
+        mocked_doughnut_set_status.assert_called_once()
+    else:
+        mocked_doughnut_set_status.assert_not_called()
 
 
 @pytest.mark.parametrize(
