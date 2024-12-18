@@ -128,3 +128,34 @@ def test_tracker_config_analysis_level(analysis_level, expect_error):
             TRACKER_CONFIG_FILE="tracker_config.json",
             ANALYSIS_LEVEL=analysis_level,
         )
+
+
+@pytest.mark.parametrize(
+    "update_doughnut,analysis_level,expect_error",
+    [
+        (True, AnalysisLevelType.participant_session, False),
+        (True, AnalysisLevelType.participant, True),
+        (True, AnalysisLevelType.session, True),
+        (True, AnalysisLevelType.group, True),
+        (False, AnalysisLevelType.participant_session, False),
+        (False, AnalysisLevelType.participant, False),
+        (False, AnalysisLevelType.session, False),
+        (False, AnalysisLevelType.group, False),
+    ],
+)
+def test_update_doughnut_analysis_level(update_doughnut, analysis_level, expect_error):
+    with (
+        pytest.raises(
+            ValidationError,
+            match=(
+                "cannot be True if ANALYSIS_LEVEL is not "
+                f"{AnalysisLevelType.participant_session}"
+            ),
+        )
+        if expect_error
+        else nullcontext()
+    ):
+        BidsPipelineStepConfig(
+            UPDATE_DOUGHNUT=update_doughnut,
+            ANALYSIS_LEVEL=analysis_level,
+        )
