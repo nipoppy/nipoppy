@@ -7,17 +7,18 @@ import pytest
 from nipoppy.cli.parser import (
     add_arg_dataset_root,
     add_arg_dry_run,
-    add_arg_simulate,
     add_arg_verbosity,
     add_arg_version,
     add_args_participant_and_session,
     add_args_pipeline,
-    add_subparser_bids_conversion,
-    add_subparser_dicom_reorg,
+    add_subparser_bidsify,
     add_subparser_doughnut,
+    add_subparser_extract,
     add_subparser_init,
-    add_subparser_pipeline_run,
-    add_subparser_pipeline_track,
+    add_subparser_reorg,
+    add_subparser_run,
+    add_subparser_status,
+    add_subparser_track,
     get_global_parser,
 )
 
@@ -38,17 +39,12 @@ def test_add_arg_version():
         assert pytest_wrapped_e.value.code == 0
 
 
-def test_add_arg_simulate():
-    parser = ArgumentParser()
-    parser = add_arg_simulate(parser)
-    assert parser.parse_args(["--simulate"])
-
-
 @pytest.mark.parametrize(
     "args",
     [
         ["--pipeline", "my_pipeline"],
         ["--pipeline", "my_other_pipeline", "--pipeline-version", "1.0.0"],
+        ["--pipeline", "my_other_pipeline", "--pipeline-step", "step1"],
     ],
 )
 def test_add_args_pipeline(args):
@@ -103,6 +99,13 @@ def test_add_subparser_init():
     assert parser.parse_args(["init", "my_dataset"])
 
 
+def test_add_subparser_status():
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_status(subparsers)
+    assert parser.parse_args(["status", "my_dataset"])
+
+
 @pytest.mark.parametrize(
     "args",
     [
@@ -127,10 +130,10 @@ def test_add_subparser_doughnut(args):
         ["my_dataset", "--check-dicoms"],
     ],
 )
-def test_add_subparser_dicom_reorg(args):
+def test_add_subparser_reorg(args):
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
-    add_subparser_dicom_reorg(subparsers)
+    add_subparser_reorg(subparsers)
     assert parser.parse_args(["reorg"] + args)
 
 
@@ -148,10 +151,10 @@ def test_add_subparser_dicom_reorg(args):
         ],
     ],
 )
-def test_add_subparser_bids_conversion(args):
+def test_add_subparser_bidsify(args):
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
-    add_subparser_bids_conversion(subparsers)
+    add_subparser_bidsify(subparsers)
     assert parser.parse_args(["bidsify"] + args)
 
 
@@ -195,10 +198,10 @@ def test_add_subparser_bids_conversion(args):
         ],
     ],
 )
-def test_add_subparser_pipeline_run(args):
+def test_add_subparser_run(args):
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
-    add_subparser_pipeline_run(subparsers)
+    add_subparser_run(subparsers)
     assert parser.parse_args(["run"] + args)
 
 
@@ -217,11 +220,32 @@ def test_add_subparser_pipeline_run(args):
         ],
     ],
 )
-def test_add_subparser_pipeline_track(args):
+def test_add_subparser_track(args):
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
-    add_subparser_pipeline_track(subparsers)
+    add_subparser_track(subparsers)
     assert parser.parse_args(["track"] + args)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["my_dataset", "--pipeline", "pipeline1"],
+        ["my_dataset", "--pipeline", "pipeline1", "--simulate"],
+        [
+            "my_dataset",
+            "--pipeline",
+            "pipeline1",
+            "--pipeline-step",
+            "step1",
+        ],
+    ],
+)
+def test_add_subparser_extract(args):
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers()
+    add_subparser_extract(subparsers)
+    assert parser.parse_args(["extract"] + args)
 
 
 @pytest.mark.parametrize(
@@ -236,6 +260,12 @@ def test_add_subparser_pipeline_track(args):
         ["bidsify", "my_dataset", "--pipeline", "a_bids_pipeline"],
         ["run", "my_dataset", "--pipeline", "a_pipeline"],
         ["track", "my_dataset", "--pipeline", "another_pipeline"],
+        [
+            "extract",
+            "my_dataset",
+            "--pipeline",
+            "extraction_pipeline",
+        ],
     ],
 )
 def test_global_parser(args: list[str]):
