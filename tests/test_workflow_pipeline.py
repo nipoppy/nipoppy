@@ -808,7 +808,7 @@ def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_place
         "config",
         mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
     )
-    # mocker.patch("os.makedirs", mocker.MagicMock())
+    mocker.patch("os.makedirs", mocker.MagicMock())
 
     participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
     pipeline_workflow = PipelineWorkflow(
@@ -840,6 +840,7 @@ def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_place
 
 def test_submit_hpc_job_unsupported_hpc_type(mocker):
     # Test for unsupported hpc type
+    mocker.patch("os.makedirs", mocker.MagicMock())
     pipeline_workflow = PipelineWorkflow(
         "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
     )
@@ -849,6 +850,7 @@ def test_submit_hpc_job_unsupported_hpc_type(mocker):
 
 def test_run_main_hpc_mode(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflow):
     # Mock the _submit_hpc_job method
+    mocker.patch("os.makedirs", mocker.MagicMock())
     mocked_submit_hpc_job = mocker.patch.object(workflow, '_submit_hpc_job')
 
     # Set the hpc attribute to "exists" to simulate that the HPC is available
