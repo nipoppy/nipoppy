@@ -9,7 +9,7 @@ from typing import Optional
 from pydantic import Field
 from typing_extensions import Self
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
@@ -209,9 +209,15 @@ def generate_doughnut(
                 dpath=dpath_organized,
                 dname_subdirectory=Path(bids_participant_id, bids_session_id),
             )
+            if session_id == FAKE_SESSION_ID:
+                # if the session is fake, we don't expect BIDS data
+                # to have bids_session_id in the path
+                dname_subdirectory = Path(bids_participant_id)
+            else:
+                dname_subdirectory = Path(bids_participant_id, bids_session_id)
             status_bidsified = check_status(
                 dpath=dpath_bidsified,
-                dname_subdirectory=Path(bids_participant_id, bids_session_id),
+                dname_subdirectory=dname_subdirectory,
             )
 
         doughnut_records.append(

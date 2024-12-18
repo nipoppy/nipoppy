@@ -19,7 +19,12 @@ from nipoppy.utils import (
     FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
 )
-from nipoppy.workflows import BidsConversionRunner, PipelineRunner, PipelineTracker
+from nipoppy.workflows import (
+    BidsConversionRunner,
+    ExtractionRunner,
+    PipelineRunner,
+    PipelineTracker,
+)
 
 from .conftest import create_empty_dataset, prepare_dataset
 
@@ -149,6 +154,7 @@ def test_boutiques_descriptors(fpath_descriptor):
     [
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
+        ("fmriprep", "24.1.1"),
         ("mriqc", "23.1.0"),
     ],
 )
@@ -228,6 +234,7 @@ def test_bids_pipeline_configs():
     [
         ("fmriprep", "20.2.7", DEFAULT_PIPELINE_STEP_NAME),
         ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME),
+        ("fmriprep", "24.1.1", DEFAULT_PIPELINE_STEP_NAME),
         ("freesurfer", "6.0.1", DEFAULT_PIPELINE_STEP_NAME),
         ("freesurfer", "7.3.2", DEFAULT_PIPELINE_STEP_NAME),
         ("mriqc", "23.1.0", DEFAULT_PIPELINE_STEP_NAME),
@@ -256,6 +263,7 @@ def test_tracker(
     [
         ("fmriprep", "20.2.7", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
         ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
+        ("fmriprep", "24.1.1", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
         ("mriqc", "23.1.0", DEFAULT_PIPELINE_STEP_NAME, get_mriqc_output_paths),
     ],
 )
@@ -297,3 +305,33 @@ def test_tracker_paths(
         ].item()
         == tracker.bagel.status_success
     )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("freesurfer_stats_and_qc", "0.1.0"),
+    ],
+)
+def test_extractor(
+    pipeline_name,
+    pipeline_version,
+    single_subject_dataset,
+):
+    layout, participant_id, session_id = single_subject_dataset
+    layout: DatasetLayout
+    runner = ExtractionRunner(
+        dpath_root=layout.dpath_root,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+        simulate=True,
+    )
+
+    runner.pipeline_config.get_fpath_container().touch()
+
+    invocation_str, descriptor_str = runner.run_single(
+        participant_id=participant_id, session_id=session_id
+    )
+
+    assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
+    assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
