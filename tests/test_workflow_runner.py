@@ -250,10 +250,10 @@ def test_tar_directory(tmp_path: Path):
     assert fpath_tarred.is_file()
 
     with tarfile.open(fpath_tarred, "r") as tar:
-        tarred_files = [tarred for tarred in tar.getmembers() if tarred.isfile()]
-        assert len(tarred_files) == len(fpaths_to_tar)
-        for member in tarred_files:
-            assert tmp_path / member.name in fpaths_to_tar
+        tarred_files = {
+            tmp_path / tarred.name for tarred in tar.getmembers() if tarred.isfile()
+        }
+    assert tarred_files == set(fpaths_to_tar)
 
     assert not dpath_to_tar.exists()
 
@@ -515,7 +515,7 @@ def test_run_single_tar(
     mocker.patch.object(
         runner,
         "launch_boutiques_run",
-        side_effect=RuntimeError(exception_message) if not boutiques_success else None,
+        side_effect=None if boutiques_success else RuntimeError(exception_message),
     )
 
     # mock tar_directory method (will check if/how this is called)

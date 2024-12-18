@@ -3,6 +3,7 @@
 import logging
 from functools import cached_property
 from pathlib import Path
+from tarfile import is_tarfile
 from typing import Optional
 
 from boutiques import bosh
@@ -168,9 +169,9 @@ class PipelineRunner(BasePipelineWorkflow):
         if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
             raise RuntimeError(
                 "Tarring requested but is no tracker config file. "
-                "The TRACKER_CONFIG_FILE field needs to be specified in the "
-                "pipeline step config, and the PARTICIPANT_SESSION_DIR field "
-                "in that file must be specified"
+                "Specify the TRACKER_CONFIG_FILE field for the pipeline step in "
+                "the global config file, then make sure the PARTICIPANT_SESSION_DIR "
+                "field is specified in the TRACKER_CONFIG_FILE file."
             )
         if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
             raise RuntimeError(
@@ -193,7 +194,13 @@ class PipelineRunner(BasePipelineWorkflow):
         self.run_command(
             f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}"
         )
-        self.rm(dpath)
+
+        # make sure that the tarfile was created successfully before removing
+        # original directory
+        if fpath_tarred.exists() and is_tarfile(fpath_tarred):
+            self.rm(dpath)
+        else:
+            self.logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
 
         return fpath_tarred
 
