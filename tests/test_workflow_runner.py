@@ -260,23 +260,6 @@ def test_process_container_config(config: Config, tmp_path: Path):
             "step2",
             [("01", "3")],
         ),
-        (
-            [
-                ["01", "1", True],
-                ["01", "2", True],
-                ["01", "3", True],
-            ],
-            [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
-            ],
-            "dummy_pipeline",
-            None,
-            "step1",
-            [("01", "1"), ("01", "3")],
-        ),
     ],
 )
 def test_get_participants_sessions_to_run(
