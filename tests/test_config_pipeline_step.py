@@ -1,6 +1,7 @@
 """Tests for the pipeline step configuration class."""
 
 from contextlib import nullcontext
+from typing import Type
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -9,6 +10,7 @@ from nipoppy.config.pipeline_step import (
     AnalysisLevelType,
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
+    ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
 
@@ -26,6 +28,7 @@ FIELDS_STEP_PROC = FIELDS_STEP_BASE + [
     "GENERATE_PYBIDS_DATABASE",
 ]
 FIELDS_STEP_BIDS = FIELDS_STEP_BASE + ["UPDATE_DOUGHNUT"]
+FIELDS_STEP_EXTRACTION = FIELDS_STEP_BASE
 
 
 @pytest.mark.parametrize(
@@ -51,6 +54,11 @@ FIELDS_STEP_BIDS = FIELDS_STEP_BASE + ["UPDATE_DOUGHNUT"]
             FIELDS_STEP_PROC,
             [{"PYBIDS_IGNORE_FILE": "PATH_TO_PYBIDS_IGNORE_FILE"}],
         ),
+        (
+            ExtractionPipelineStepConfig,
+            FIELDS_STEP_EXTRACTION,
+            [],
+        ),
     ],
 )
 def test_field_base(step_class: type[BaseModel], fields, data_list):
@@ -64,7 +72,7 @@ def test_field_base(step_class: type[BaseModel], fields, data_list):
 
 @pytest.mark.parametrize(
     "model_class",
-    [ProcPipelineStepConfig, BidsPipelineStepConfig],
+    [ProcPipelineStepConfig, BidsPipelineStepConfig, ExtractionPipelineStepConfig],
 )
 def test_no_extra_field(model_class):
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
@@ -83,8 +91,11 @@ def test_analysis_level_invalid():
         BasePipelineStepConfig(ANALYSIS_LEVEL="invalid")
 
 
-@pytest.mark.parametrize("step_class", [ProcPipelineStepConfig, BidsPipelineStepConfig])
-def test_substitutions(step_class):
+@pytest.mark.parametrize(
+    "step_class",
+    [ProcPipelineStepConfig, BidsPipelineStepConfig, ExtractionPipelineStepConfig],
+)
+def test_substitutions(step_class: Type[BasePipelineStepConfig]):
     step_config = step_class(
         NAME="step_name",
         DESCRIPTOR_FILE="[[STEP_NAME]].json",
