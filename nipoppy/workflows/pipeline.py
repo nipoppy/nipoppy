@@ -491,9 +491,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     queue=self.hpc,
                     **self.pipeline_config.HPC_CONFIG.model_dump(),
                 )
-        except NotImplementedError as e:
+        except NotImplementedError:
             self.logger.info(
-                f"Failed to retrieve SGE array job ID. Please check the queue for the job ID."
+                "Failed to retrieve SGE array job ID. "
+                "Please check the queue for the job ID."
             )
             queue_id = None
         except Exception as e:
