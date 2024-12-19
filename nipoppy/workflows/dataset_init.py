@@ -15,6 +15,7 @@ from nipoppy.env import (
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
+    DPATH_HPC_TEMPLATES,
     DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
@@ -56,6 +57,7 @@ class InitWorkflow(BaseWorkflow):
         Create directories and add a readme in each.
         Copy boutiques descriptors and invocations.
         Copy default config files.
+        Copy Jinja templates for HPC.
 
         If the BIDS source dataset is requested, it is copied.
         """
@@ -95,6 +97,9 @@ class InitWorkflow(BaseWorkflow):
                 self.layout.fpath_manifest,
                 log_level=logging.DEBUG,
             )
+
+        # copy HPC Jinja template files
+        self._copy_hpc_templates()
 
         # inform user to edit the sample files
         self.logger.warning(
@@ -213,3 +218,11 @@ class InitWorkflow(BaseWorkflow):
             f"at {self.dpath_root}![/]"
         )
         return super().run_cleanup()
+
+    def _copy_hpc_templates(self) -> None:
+        """Copy Jinja template for HPC to dataset's code/hpc_templates directory."""
+        hpc_templates_source = DPATH_HPC_TEMPLATES
+        hpc_templates_target = self.dpath_root / "code" / "hpc_templates"
+        self.copytree(
+            hpc_templates_source, hpc_templates_target, log_level=logging.DEBUG
+        )
