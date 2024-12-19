@@ -13,6 +13,7 @@ reorg.md
 bidsify.md
 run.md
 track.md
+extract.md
 ```
 
 ```{argparse}

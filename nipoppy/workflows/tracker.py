@@ -37,7 +37,6 @@ class PipelineTracker(BasePipelineWorkflow):
             logger=logger,
             dry_run=dry_run,
         )
-        self.bagel: Bagel = Bagel()  # may get overwritten
 
     def run_setup(self):
         """Load/initialize the bagel file."""

@@ -191,6 +191,7 @@ class DatasetLayout(Base):
 
         # directory names
         self.dname_pipeline_output = "output"
+        self.dname_pipeline_idp = "idp"
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
@@ -288,6 +289,18 @@ class DatasetLayout(Base):
         return (
             self.get_dpath_pipeline(pipeline_name, pipeline_version)
             / self.dname_pipeline_output
+        )
+
+    def get_dpath_pipeline_idp(self, pipeline_name: str, pipeline_version: str) -> Path:
+        """
+        Return the path to a pipeline's IDPs directory.
+
+        Note: This path is the same given a pipeline name and version
+        (i.e. does not depend on participant or session).
+        """
+        return (
+            self.get_dpath_pipeline(pipeline_name, pipeline_version)
+            / self.dname_pipeline_idp
         )
 
     def get_dpath_pybids_db(

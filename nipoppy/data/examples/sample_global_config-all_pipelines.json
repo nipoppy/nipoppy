@@ -253,5 +253,37 @@
             ]
         }
     ],
+    "EXTRACTION_PIPELINES": [
+        {
+            "NAME": "freesurfer_stats_and_qc",
+            "VERSION": "0.1.0",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/freesurfer_7.3.2.sif",
+                "URI": "docker://freesurfer/freesurfer:7.3.2"
+            },
+            "CONTAINER_CONFIG": {
+                "ENV_VARS": {
+                    "FS_LICENSE": "[[FREESURFER_LICENSE_FILE]]"
+                },
+                "ARGS": [
+                    "--bind",
+                    "[[FREESURFER_LICENSE_FILE]]"
+                ]
+            },
+            "PROC_DEPENDENCIES": [
+                {
+                    "NAME": "freesurfer",
+                    "VERSION": "7.3.2"
+                }
+            ],
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+                    "ANALYSIS_LEVEL": "group"
+                }
+            ]
+        }
+    ],
     "CUSTOM": {}
 }
