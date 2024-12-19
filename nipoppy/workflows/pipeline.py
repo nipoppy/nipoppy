@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 import logging
+import os
 import re
 import shlex
 from abc import ABC, abstractmethod
@@ -432,7 +432,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates/{self.hpc}")
         hpc_logs_path = Path(f"{self.dpath_root}/logs/hpc")
         os.makedirs(hpc_logs_path, exist_ok=True)
-        
+
         qa = QueueAdapter(directory=str(hpc_templates_path))
 
         # Generate the list of nipoppy commands as a single string for a shell array

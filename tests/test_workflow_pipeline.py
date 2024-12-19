@@ -851,14 +851,16 @@ def test_submit_hpc_job_unsupported_hpc_type(mocker):
 def test_run_main_hpc_mode(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflow):
     # Mock the _submit_hpc_job method
     mocker.patch("os.makedirs", mocker.MagicMock())
-    mocked_submit_hpc_job = mocker.patch.object(workflow, '_submit_hpc_job')
+    mocked_submit_hpc_job = mocker.patch.object(workflow, "_submit_hpc_job")
 
     # Set the hpc attribute to "exists" to simulate that the HPC is available
     workflow.hpc = "exists"
 
     # Create a test manifest
     participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(participants_and_sessions_manifest=participants_and_sessions)
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions
+    )
     manifest.save_with_backup(workflow.layout.fpath_manifest)
 
     # Call the run_main method

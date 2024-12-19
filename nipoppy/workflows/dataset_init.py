@@ -15,10 +15,10 @@ from nipoppy.env import (
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
+    DPATH_HPC_TEMPLATES,
     DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
-    DPATH_HPC_TEMPLATES,
     check_participant_id,
     check_session_id,
     session_id_to_bids_session_id,

@@ -167,7 +167,7 @@ class ProcPipelineConfig(BasePipelineConfig):
         default=[],
         description="List of pipeline step configurations",
     )
-      
+
     HPC_CONFIG: Optional[HpcConfig] = Field(
         default=None,
         description=(
@@ -177,7 +177,7 @@ class ProcPipelineConfig(BasePipelineConfig):
             "dataset_root/code/hpc_templates) for the requested queue (SGE/Slurm)"
         ),
     )
-      
+
     model_config = ConfigDict(extra="forbid")
 
 
