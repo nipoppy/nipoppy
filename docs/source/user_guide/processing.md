@@ -25,14 +25,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 | Directory | Content description |
 |---|---|
 | {{dpath_bids}} | **Input** -- {{content_dpath_bids}} |
-| {{dpath_derivatives}} | **Output** -- {{content_dpath_derivatives}} |
-
-Within the {{dpath_derivatives}} directory, output files for a specific pipeline are organized like this:
-```{literalinclude} ./inserts/pipeline_derivatives.txt
----
-class: no-copybutton
----
-```
+| {{dpath_pipeline_output}} | **Output** -- {{content_dpath_pipeline_output}} |
 
 ### Commands
 
@@ -41,10 +34,11 @@ class: no-copybutton
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according the the imaging derivatives bagel file
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according to the {term}`imaging bagel file`
     - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
+    - The imaging bagel file can be updated with [`nipoppy track`](../cli_reference/track.md)
 2. For each participant-session pair:
-    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
+    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}
     3. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
 
@@ -92,7 +86,7 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 
 The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
-$ nipoppy bidsify \
+$ nipoppy run \
     <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \

@@ -204,3 +204,8 @@ def test_dicom_dir_map_not_found(workflow: BaseWorkflow):
     workflow.config.DICOM_DIR_MAP_FILE = "fake_path"
     with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
         workflow.dicom_dir_map
+
+
+def test_bagel_empty_if_not_found(workflow: BaseWorkflow):
+    assert not workflow.layout.fpath_imaging_bagel.exists()
+    assert len(workflow.bagel) == 0

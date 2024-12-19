@@ -12,6 +12,7 @@ from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
+    ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
@@ -135,6 +136,9 @@ class Config(_SchemaWithContainerConfig):
     PROC_PIPELINES: list[ProcPipelineConfig] = Field(
         description="Configurations for processing pipelines"
     )
+    EXTRACTION_PIPELINES: list[ExtractionPipelineConfig] = Field(
+        default=[], description="Configurations for extraction pipelines"
+    )
     CUSTOM: dict = Field(
         default={},
         description="Free field that can be used for any purpose",
@@ -153,21 +157,6 @@ class Config(_SchemaWithContainerConfig):
                 f". Got DICOM_DIR_MAP_FILE={self.DICOM_DIR_MAP_FILE} and "
                 f"DICOM_DIR_PARTICIPANT_FIRST={self.DICOM_DIR_PARTICIPANT_FIRST}"
             )
-
-        return self
-
-    def _check_no_duplicate_pipeline(self) -> Self:
-        """Check that BIDS_PIPELINES and PROC_PIPELINES do not have common pipelines."""
-        pipeline_infos = set()
-        for pipeline_config in self.BIDS_PIPELINES + self.PROC_PIPELINES:
-            pipeline_info = (pipeline_config.NAME, pipeline_config.VERSION)
-            if pipeline_info in pipeline_infos:
-                raise ValueError(
-                    f"Found multiple configurations for pipeline {pipeline_info}"
-                    "Make sure pipeline name and versions are unique across "
-                    f"BIDS_PIPELINES and PROC_PIPELINES."
-                )
-            pipeline_infos.add(pipeline_info)
 
         return self
 
@@ -190,6 +179,7 @@ class Config(_SchemaWithContainerConfig):
 
         _propagate(self.BIDS_PIPELINES)
         _propagate(self.PROC_PIPELINES)
+        _propagate(self.EXTRACTION_PIPELINES)
 
         return self
 
@@ -213,7 +203,6 @@ class Config(_SchemaWithContainerConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_dicom_dir_options()
-        self._check_no_duplicate_pipeline()
 
         return self
 

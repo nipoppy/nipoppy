@@ -1,5 +1,6 @@
 """Command-line interface."""
 
+import importlib
 import logging
 import sys
 from typing import Sequence
@@ -11,13 +12,29 @@ from nipoppy.cli.parser import (
     COMMAND_DICOM_REORG,
     COMMAND_DOUGHNUT,
     COMMAND_INIT,
+    COMMAND_PIPELINE_EXTRACT,
     COMMAND_PIPELINE_RUN,
     COMMAND_PIPELINE_TRACK,
+    COMMAND_STATUS,
     PROGRAM_NAME,
     VERBOSITY_TO_LOG_LEVEL_MAP,
     get_global_parser,
 )
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
+
+COMMAND_TO_WORKFLOW_MAP = {
+    COMMAND_INIT: ("nipoppy.workflows.dataset_init", "InitWorkflow"),
+    COMMAND_STATUS: ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
+    COMMAND_DOUGHNUT: ("nipoppy.workflows.doughnut", "DoughnutWorkflow"),
+    COMMAND_DICOM_REORG: ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
+    COMMAND_BIDS_CONVERSION: (
+        "nipoppy.workflows.bids_conversion",
+        "BidsConversionRunner",
+    ),
+    COMMAND_PIPELINE_RUN: ("nipoppy.workflows.runner", "PipelineRunner"),
+    COMMAND_PIPELINE_TRACK: ("nipoppy.workflows.tracker", "PipelineTracker"),
+    COMMAND_PIPELINE_EXTRACT: ("nipoppy.workflows.extractor", "ExtractionRunner"),
+}
 
 
 def cli(argv: Sequence[str] = None) -> None:
@@ -25,102 +42,32 @@ def cli(argv: Sequence[str] = None) -> None:
     if argv is None:
         argv = sys.argv
     parser = get_global_parser(formatter_class=RichHelpFormatter)
-    args = parser.parse_args(argv[1:])
+    parsed_args = vars(parser.parse_args(argv[1:]))
 
-    # common arguments
-    command = args.command
-    fpath_layout = args.fpath_layout
+    # create logger
+    command = parsed_args.pop("command")
     logger = get_logger(
         name=f"{PROGRAM_NAME}.{command}",
-        level=VERBOSITY_TO_LOG_LEVEL_MAP[args.verbosity],
+        level=VERBOSITY_TO_LOG_LEVEL_MAP[parsed_args.pop("verbosity")],
     )
-    dry_run = args.dry_run
 
-    # to pass to all workflows
-    workflow_kwargs = dict(fpath_layout=fpath_layout, logger=logger, dry_run=dry_run)
+    dpath_root = parsed_args.pop("dataset_root")
 
     try:
-        dpath_root = args.dataset_root
-
-        if command == COMMAND_INIT:
-            # Lazy import to improve performance of cli.
-            from nipoppy.workflows.dataset_init import InitWorkflow
-
-            bids_source = getattr(args, "bids_source", None)
-
-            workflow = InitWorkflow(
-                dpath_root=dpath_root,
-                bids_source=bids_source,
-                **workflow_kwargs,
-            )
-        elif command == COMMAND_DOUGHNUT:
-            # Lazy import to improve performance of cli.
-            from nipoppy.workflows.doughnut import DoughnutWorkflow
-
-            workflow = DoughnutWorkflow(
-                dpath_root=dpath_root,
-                empty=args.empty,
-                regenerate=args.regenerate,
-                **workflow_kwargs,
-            )
-        elif command == COMMAND_DICOM_REORG:
-            # Lazy import to improve performance of cli.
-            from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
-
-            workflow = DicomReorgWorkflow(
-                dpath_root=dpath_root,
-                copy_files=args.copy_files,
-                check_dicoms=args.check_dicoms,
-                **workflow_kwargs,
-            )
-        elif command == COMMAND_BIDS_CONVERSION:
-            # Lazy import to improve performance of cli.
-            from nipoppy.workflows.bids_conversion import BidsConversionRunner
-
-            workflow = BidsConversionRunner(
-                dpath_root=dpath_root,
-                pipeline_name=args.pipeline,
-                pipeline_version=args.pipeline_version,
-                pipeline_step=args.pipeline_step,
-                participant_id=args.participant_id,
-                session_id=args.session_id,
-                simulate=args.simulate,
-                **workflow_kwargs,
-            )
-        elif command == COMMAND_PIPELINE_RUN:
-            # Lazy import to improve performance of cli.
-            from nipoppy.workflows.runner import PipelineRunner
-
-            workflow = PipelineRunner(
-                dpath_root=dpath_root,
-                pipeline_name=args.pipeline,
-                pipeline_version=args.pipeline_version,
-                pipeline_step=args.pipeline_step,
-                participant_id=args.participant_id,
-                session_id=args.session_id,
-                keep_workdir=args.keep_workdir,
-                simulate=args.simulate,
-                hpc=args.hpc,
-                **workflow_kwargs,
-            )
-        elif command == COMMAND_PIPELINE_TRACK:
-            # Lazy import to improve performance of cli.
-            from nipoppy.workflows.tracker import PipelineTracker
-
-            workflow = PipelineTracker(
-                dpath_root=dpath_root,
-                pipeline_name=args.pipeline,
-                pipeline_version=args.pipeline_version,
-                pipeline_step=args.pipeline_step,
-                participant_id=args.participant_id,
-                session_id=args.session_id,
-                **workflow_kwargs,
-            )
-        else:
+        try:
+            module, workflow_class = COMMAND_TO_WORKFLOW_MAP[command]
+        except KeyError:
             raise ValueError(f"Unsupported command: {command}")
 
+        # create the workflow dynamically
+        workflow = getattr(importlib.import_module(module), workflow_class)(
+            dpath_root=dpath_root,
+            logger=logger,
+            **parsed_args,
+        )
+
         # cannot log to file in init since the dataset doesn't exist yet
-        if command != COMMAND_INIT:
+        if command not in [COMMAND_INIT, COMMAND_STATUS]:
             add_logfile(logger, workflow.generate_fpath_log())
 
         # capture warnings

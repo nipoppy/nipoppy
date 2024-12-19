@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -13,9 +14,28 @@ from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
+    ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.utils import apply_substitutions_to_json
+
+
+class PipelineInfo(BaseModel):
+    """Schema for pipeline information."""
+
+    NAME: str = Field(description="Name of the pipeline")
+    VERSION: str = Field(description="Version of the pipeline")
+    STEP: str = Field(
+        description="Name of the pipeline step",
+        default=DEFAULT_PIPELINE_STEP_NAME,
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+    def __hash__(self):
+        """Return a hash based on the pipeline's name, version and step."""
+        return hash((self.NAME, self.VERSION, self.STEP))
 
 
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
@@ -32,7 +52,11 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         description="Information about the container image file",
     )
     # Needed for validation
-    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
+    STEPS: list[
+        Union[
+            BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
+        ]
+    ] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
@@ -113,11 +137,11 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
-    model_config = ConfigDict(extra="forbid")
     STEPS: list[BidsPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
+    model_config = ConfigDict(extra="forbid")
 
 
 class HpcConfig(BaseModel):
@@ -139,6 +163,11 @@ class ProcPipelineConfig(BasePipelineConfig):
         ),
     )
 
+    STEPS: list[ProcPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
+      
     HPC_CONFIG: Optional[HpcConfig] = Field(
         default=None,
         description=(
@@ -148,9 +177,41 @@ class ProcPipelineConfig(BasePipelineConfig):
             "dataset_root/code/hpc_templates) for the requested queue (SGE/Slurm)"
         ),
     )
-
+      
     model_config = ConfigDict(extra="forbid")
-    STEPS: list[ProcPipelineStepConfig] = Field(
+
+
+class ExtractionPipelineConfig(BasePipelineConfig):
+    """Schema for extraction pipeline configuration."""
+
+    PROC_DEPENDENCIES: list[PipelineInfo] = Field(
+        description=(
+            "List of processing pipeline(s) (including step names) whose output "
+            "the extraction pipeline depends on"
+        )
+    )
+    STEPS: list[ExtractionPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the config instantiation after instantiation.
+
+        Specifically:
+        - Make sure that PROC_DEPENDENCIES is not empty
+        """
+        if len(self.PROC_DEPENDENCIES) == 0:
+            raise ValueError(
+                "PROC_DEPENDENCIES is an empty list for extraction pipeline "
+                f"{self.NAME} {self.VERSION}. Must have at least one dependency"
+            )
+        if len(set(self.PROC_DEPENDENCIES)) != len(self.PROC_DEPENDENCIES):
+            warnings.warn(
+                "PROC_DEPENDENCIES contains duplicate entries for extraction pipeline "
+                f"{self.NAME} {self.VERSION}"
+            )
+        return self
