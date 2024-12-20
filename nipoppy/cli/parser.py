@@ -304,7 +304,13 @@ def add_subparser_run(
             "(default: working directory deleted unless a run failed)"
         ),
     )
-
+    parser.add_argument(
+        "--hpc",
+        type=str,
+        choices=["slurm", "sge"],
+        default=None,
+        help="Submit HPC jobs instead of running the pipeline directly.",
+    )
     return parser
 
 
