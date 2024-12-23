@@ -258,6 +258,32 @@ def test_tar_directory(tmp_path: Path):
     assert not dpath_to_tar.exists()
 
 
+def test_tar_directory_failure(
+    tmp_path: Path, mocker: pytest_mock.MockFixture, caplog: pytest.LogCaptureFixture
+):
+    dpath_to_tar = tmp_path / "my_data"
+    fpath_to_tar = dpath_to_tar / "file.txt"
+    fpath_to_tar.parent.mkdir(parents=True)
+    fpath_to_tar.touch()
+
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    mocked_is_tarfile = mocker.patch(
+        "nipoppy.workflows.runner.is_tarfile", return_value=False
+    )
+
+    fpath_tarred = runner.tar_directory(dpath_to_tar)
+
+    assert fpath_tarred.exists()
+    mocked_is_tarfile.assert_called_once()
+
+    assert f"Failed to tar {dpath_to_tar}" in caplog.text
+
+
 def test_tar_directory_warning_not_found(tmp_path: Path):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
