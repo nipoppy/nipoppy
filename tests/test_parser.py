@@ -162,6 +162,7 @@ def test_add_subparser_bidsify(args):
     "args",
     [
         ["my_dataset", "--pipeline", "pipeline1"],
+        ["my_dataset", "--pipeline", "pipeline1", "--tar"],
         ["my_dataset", "--pipeline", "pipeline1", "--simulate"],
         [
             "my_dataset",
