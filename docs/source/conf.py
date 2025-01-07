@@ -57,9 +57,11 @@ html_theme = "furo"
 html_static_path = ["_static"]
 
 if (
-    "GITHUB_ACTION" in os.environ
-    and os.environ.get("GITHUB_REPOSITORY", "").lower() == "nipoppy/nipoppy"
-    and os.environ.get("GITHUB_REF") == "refs/heads/main"
+    "READTHEDOCS" in os.environ
+    and os.environ.get("READTHEDOCS_CANONICAL_URL").startswith(
+        "https://nipoppy.readthedocs.io"
+    )
+    and os.environ.get("READTHEDOCS_VERSION_TYPE") != "external"  # exclude PR builds
 ):
     html_js_files = [
         (
