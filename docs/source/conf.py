@@ -56,12 +56,17 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
-html_js_files = [
-    (
-        "https://plausible.neurobagel.org/js/script.js",
-        {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
-    ),
-]
+if (
+    "GITHUB_ACTION" in os.environ
+    and os.environ.get("GITHUB_REPOSITORY", "").lower() == "nipoppy/nipoppy"
+    and os.environ.get("GITHUB_REF") == "refs/heads/main"
+):
+    html_js_files = [
+        (
+            "https://plausible.neurobagel.org/js/script.js",
+            {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
+        ),
+    ]
 
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
