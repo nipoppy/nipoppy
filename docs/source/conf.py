@@ -56,8 +56,11 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
-html_css_files = [
-    "theme.css",
+html_js_files = [
+    (
+        "https://plausible.neurobagel.org/js/script.js",
+        {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
+    ),
 ]
 
 # -- Furo configuration ------------------------------------------------------
