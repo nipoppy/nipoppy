@@ -6,6 +6,7 @@ from nipoppy.config.tracker import TrackerConfig
 
 FIELDS_STEP = [
     "PATHS",
+    "PARTICIPANT_SESSION_DIR",
 ]
 
 
