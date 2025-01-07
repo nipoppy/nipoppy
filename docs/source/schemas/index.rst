@@ -59,13 +59,15 @@ Here is the schema for the doughnut file:
 .. jsonschema:: doughnut.json
     :lift_title: False
 
-Bagel file
-----------
+.. _imaging-bagel-schema:
+
+Imaging bagel file
+------------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the bagel file:
+Here is the schema for the imaging bagel file:
 
 .. jsonschema:: bagel.json
     :lift_title: False

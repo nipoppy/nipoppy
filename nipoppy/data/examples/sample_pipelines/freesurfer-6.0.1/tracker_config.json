@@ -20,5 +20,6 @@
         "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/rh.aparc.stats",
         "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/lh.aparc.a2009s.stats",
         "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/stats/rh.aparc.a2009s.stats"
-    ]
+    ],
+    "PARTICIPANT_SESSION_DIR": "[[NIPOPPY_BIDS_SESSION_ID]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]"
 }

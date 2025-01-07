@@ -28,6 +28,13 @@ def test_cli_init(tmp_path: Path):
         pass
 
 
+def test_cli_status(tmp_path: Path):
+    try:
+        cli(["nipoppy", "status", str(tmp_path / "my_dataset")]) is None
+    except SystemExit:
+        pass
+
+
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
@@ -42,7 +49,7 @@ def test_cli_doughnut(tmp_path: Path):
     )
 
 
-def test_cli_dicom_reorg(tmp_path: Path):
+def test_cli_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
         cli(["nipoppy", "reorg", str(dpath_root)])
@@ -60,7 +67,7 @@ def test_cli_dicom_reorg(tmp_path: Path):
     )
 
 
-def test_cli_bids_conversion(tmp_path: Path):
+def test_cli_bidsify(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
         cli(
@@ -92,7 +99,7 @@ def test_cli_bids_conversion(tmp_path: Path):
     )
 
 
-def test_cli_pipeline_run(tmp_path: Path):
+def test_cli_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
         cli(
@@ -122,7 +129,7 @@ def test_cli_pipeline_run(tmp_path: Path):
     )
 
 
-def test_cli_pipeline_track(tmp_path: Path):
+def test_cli_track(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     try:
         cli(
@@ -145,6 +152,36 @@ def test_cli_pipeline_track(tmp_path: Path):
             list(
                 (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
                     "track/my_pipeline-1.0/*.log"
+                )
+            )
+        )
+        == 1
+    )
+
+
+def test_cli_extract(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    try:
+        cli(
+            [
+                "nipoppy",
+                "extract",
+                str(dpath_root),
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+            ]
+        )
+    except BaseException:
+        pass
+
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "extract/my_pipeline-1.0/*.log"
                 )
             )
         )

@@ -63,11 +63,31 @@ html_css_files = [
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
 
+html_css_files = [
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/fontawesome.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/solid.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/brands.min.css",
+]
+
 html_theme_options = {
     "source_repository": "https://github.com/nipoppy/nipoppy",
     "source_branch": "main",
     "source_directory": "docs/source",
     "sidebar_hide_name": True,
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/nipoppy/nipoppy",
+            "html": "",
+            "class": "fa-brands fa-solid fa-github fa-2x",
+        },
+        {
+            "name": "Discord",
+            "url": "https://discord.gg/dQGYADCCMB",
+            "html": "",
+            "class": "fa-brands fa-solid fa-discord fa-2x",
+        },
+    ],
 }
 
 html_logo = "../../logo/logo_with_name.svg"
@@ -121,7 +141,8 @@ myst_substitutions = {
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
-    "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
+    "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
+    "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
@@ -137,7 +158,12 @@ myst_substitutions = {
     "content_dpath_bids": (
         "Raw imaging data (NIfTIs) organized according to the BIDS standard"
     ),
-    "content_dpath_derivatives": ("Derivative files produced by processing pipelines"),
+    "content_dpath_pipeline_output": (
+        "Derivative files produced by processing pipelines"
+    ),
+    "content_dpath_pipeline_idp": (
+        "Imaging-derived phenotypes (IDPs) produced by extraction pipelines"
+    ),
     "template_strings_bids_runner": "\n".join(template_strings_bids_runner),
     "template_strings_proc_runner": "\n".join(template_strings_proc_runner),
 }
