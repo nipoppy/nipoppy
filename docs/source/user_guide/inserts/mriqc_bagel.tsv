@@ -1,0 +1,2 @@
+participant_id	bids_participant_id	session_id	bids_session_id	pipeline_name	pipeline_version	pipeline_step	status
+3000	sub-3000	BL	ses-BL	mriqc	23.1.0	default	SUCCESS

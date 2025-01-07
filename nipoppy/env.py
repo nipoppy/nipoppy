@@ -9,8 +9,16 @@ StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
+FAKE_SESSION_ID = "unnamed"
 
+# default config
+DEFAULT_PIPELINE_STEP_NAME = "default"
+
+# True when running tests
 IS_TESTING = "pytest" in sys.modules
+
+# file extensions
+EXT_TAR = ".tar"
 
 
 class ReturnCode:

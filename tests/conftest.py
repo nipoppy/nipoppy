@@ -16,32 +16,32 @@ from nipoppy.config.main import Config
 from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
 
 FPATH_CONFIG = "global_config.json"
-FPATH_MANIFEST = "manifest.csv"
+FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
-    "dpath_downloads": "downloads",
-    "dpath_proc": "proc",
-    "dpath_releases": "releases",
-    "dpath_containers": "proc/containers",
-    "dpath_descriptors": "proc/descriptors",
-    "dpath_invocations": "proc/invocations",
-    "dpath_tracker_configs": "proc/tracker_configs",
-    "dpath_pybids": "proc/pybids",
-    "dpath_bids_db": "proc/pybids/bids_db",
-    "dpath_bids_ignore_patterns": "proc/pybids/ignore_patterns",
+    "dpath_src_tabular": "sourcedata/tabular",
+    "dpath_post_reorg": "sourcedata/imaging/post_reorg",
+    "dpath_pre_reorg": "sourcedata/imaging/pre_reorg",
+    "dpath_downloads": "sourcedata/imaging/downloads",
+    "dpath_code": "code",
+    "dpath_pipelines": "pipelines",
+    "dpath_containers": "containers",
     "dpath_scratch": "scratch",
-    "dpath_raw_imaging": "scratch/raw_imaging",
-    "dpath_logs": "scratch/logs",
+    "dpath_pybids_db": "scratch/pybids_db",
+    "dpath_work": "scratch/work",
+    "dpath_logs": "logs",
     "dpath_tabular": "tabular",
     "dpath_assessments": "tabular/assessments",
-    "dpath_demographics": "tabular/demographics",
 }
 
 ATTR_TO_REQUIRED_FPATH_MAP = {
@@ -51,8 +51,9 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "scratch/raw_imaging/doughnut.csv",
-    "fpath_imaging_bagel": "derivatives/bagel.csv",
+    "fpath_doughnut": "sourcedata/imaging/doughnut.tsv",
+    "fpath_imaging_bagel": "derivatives/bagel.tsv",
+    "fpath_demographics": "tabular/demographics.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
@@ -77,6 +78,7 @@ def get_config(
     visit_ids=None,
     bids_pipelines=None,
     proc_pipelines=None,
+    extraction_pipelines=None,
     container_config=None,
 ):
     """Create a valid Config object with all required parameters."""
@@ -89,6 +91,8 @@ def get_config(
         bids_pipelines = []
     if proc_pipelines is None:
         proc_pipelines = []
+    if extraction_pipelines is None:
+        extraction_pipelines = []
     if container_config is None:
         container_config = {}
 
@@ -98,6 +102,7 @@ def get_config(
         SESSION_IDS=session_ids,
         BIDS_PIPELINES=bids_pipelines,
         PROC_PIPELINES=proc_pipelines,
+        EXTRACTION_PIPELINES=extraction_pipelines,
         CONTAINER_CONFIG=container_config,
     )
 
@@ -165,10 +170,10 @@ def _fake_dicoms(  # noqa: C901
 
     for participant_id, participant_session_ids in participants_and_sessions.items():
         if with_prefixes:
-            participant_id = participant_id_to_bids_participant(participant_id)
+            participant_id = participant_id_to_bids_participant_id(participant_id)
         for session_id in participant_session_ids:
             if with_prefixes:
-                session_id = session_id_to_bids_session(session_id)
+                session_id = session_id_to_bids_session_id(session_id)
             if participant_first:
                 dpath_dicom_parent = dpath / participant_id / session_id
             else:
@@ -322,8 +327,8 @@ def check_doughnut(
     """Check that a doughnut has the corrected statuses."""
     if empty:
         for col in [
-            doughnut.col_in_raw_imaging,
-            doughnut.col_in_sourcedata,
+            doughnut.col_in_pre_reorg,
+            doughnut.col_in_post_reorg,
             doughnut.col_in_bids,
         ]:
             assert (~doughnut[col]).all()
@@ -331,8 +336,8 @@ def check_doughnut(
         for participant_id in participants_and_sessions_manifest:
             for session_id in participants_and_sessions_manifest[participant_id]:
                 for col, participants_and_sessions_true in {
-                    doughnut.col_in_raw_imaging: participants_and_sessions_downloaded,
-                    doughnut.col_in_sourcedata: participants_and_sessions_organized,
+                    doughnut.col_in_pre_reorg: participants_and_sessions_downloaded,
+                    doughnut.col_in_post_reorg: participants_and_sessions_organized,
                     doughnut.col_in_bids: participants_and_sessions_bidsified,
                 }.items():
                     status: pd.Series = doughnut.loc[

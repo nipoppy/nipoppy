@@ -11,16 +11,20 @@ from packaging.version import Version
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
-    DPATH_DESCRIPTORS,
-    DPATH_INVOCATIONS,
-    DPATH_TRACKER_CONFIGS,
+    DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
 )
-from nipoppy.workflows import BidsConversionRunner, PipelineRunner, PipelineTracker
+from nipoppy.workflows import (
+    BidsConversionRunner,
+    ExtractionRunner,
+    PipelineRunner,
+    PipelineTracker,
+)
 
 from .conftest import create_empty_dataset, prepare_dataset
 
@@ -34,9 +38,7 @@ def single_subject_dataset(
     session_id = "01"
     container_command = "apptainer"
     substitutions = {
-        "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]": str(DPATH_TRACKER_CONFIGS),
-        "[[NIPOPPY_DPATH_DESCRIPTORS]]": str(DPATH_DESCRIPTORS),
-        "[[NIPOPPY_DPATH_INVOCATIONS]]": str(DPATH_INVOCATIONS),
+        "[[NIPOPPY_DPATH_PIPELINES]]": str(DPATH_SAMPLE_PIPELINES),
         "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": str(tmp_path / "heuristic.py"),
         "[[DCM2BIDS_CONFIG_FILE]]": str(tmp_path / "dcm2bids_config.json"),
@@ -73,7 +75,9 @@ def single_subject_dataset(
 
 
 def get_fpaths_descriptors() -> list[str]:
-    return [str(fpath) for fpath in Path(DPATH_DESCRIPTORS).iterdir()]
+    return [
+        str(fpath) for fpath in Path(DPATH_SAMPLE_PIPELINES).glob("*/descriptor*.json")
+    ]
 
 
 def get_fmriprep_output_paths(
@@ -150,6 +154,7 @@ def test_boutiques_descriptors(fpath_descriptor):
     [
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
+        ("fmriprep", "24.1.1"),
         ("mriqc", "23.1.0"),
     ],
 )
@@ -225,22 +230,26 @@ def test_bids_pipeline_configs():
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version",
+    "pipeline_name,pipeline_version,pipeline_step",
     [
-        ("fmriprep", "20.2.7"),
-        ("fmriprep", "23.1.3"),
-        ("freesurfer", "6.0.1"),
-        ("freesurfer", "7.3.2"),
-        ("mriqc", "23.1.0"),
+        ("fmriprep", "20.2.7", DEFAULT_PIPELINE_STEP_NAME),
+        ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME),
+        ("fmriprep", "24.1.1", DEFAULT_PIPELINE_STEP_NAME),
+        ("freesurfer", "6.0.1", DEFAULT_PIPELINE_STEP_NAME),
+        ("freesurfer", "7.3.2", DEFAULT_PIPELINE_STEP_NAME),
+        ("mriqc", "23.1.0", DEFAULT_PIPELINE_STEP_NAME),
     ],
 )
-def test_tracker(pipeline_name, pipeline_version, single_subject_dataset):
+def test_tracker(
+    pipeline_name, pipeline_version, pipeline_step, single_subject_dataset
+):
     layout, participant_id, session_id = single_subject_dataset
     layout: DatasetLayout
     tracker = PipelineTracker(
         dpath_root=layout.dpath_root,
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
+        pipeline_step=pipeline_step,
     )
 
     # make sure all template strings are replaced
@@ -250,15 +259,20 @@ def test_tracker(pipeline_name, pipeline_version, single_subject_dataset):
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,fn_fpaths_generator",
+    "pipeline_name,pipeline_version,pipeline_step,fn_fpaths_generator",
     [
-        ("fmriprep", "20.2.7", get_fmriprep_output_paths),
-        ("fmriprep", "23.1.3", get_fmriprep_output_paths),
-        ("mriqc", "23.1.0", get_mriqc_output_paths),
+        ("fmriprep", "20.2.7", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
+        ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
+        ("fmriprep", "24.1.1", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
+        ("mriqc", "23.1.0", DEFAULT_PIPELINE_STEP_NAME, get_mriqc_output_paths),
     ],
 )
 def test_tracker_paths(
-    pipeline_name, pipeline_version, fn_fpaths_generator, single_subject_dataset
+    pipeline_name,
+    pipeline_version,
+    pipeline_step,
+    fn_fpaths_generator,
+    single_subject_dataset,
 ):
     layout, participant_id, session_id = single_subject_dataset
     layout: DatasetLayout
@@ -266,6 +280,7 @@ def test_tracker_paths(
         dpath_root=layout.dpath_root,
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
+        pipeline_step=pipeline_step,
     )
 
     # create files
@@ -286,7 +301,37 @@ def test_tracker_paths(
                 (tracker.bagel[tracker.bagel.col_participant_id] == participant_id)
                 & (tracker.bagel[tracker.bagel.col_session_id] == session_id)
             ),
-            tracker.bagel.col_pipeline_complete,
+            tracker.bagel.col_status,
         ].item()
         == tracker.bagel.status_success
     )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version",
+    [
+        ("freesurfer_stats_and_qc", "0.1.0"),
+    ],
+)
+def test_extractor(
+    pipeline_name,
+    pipeline_version,
+    single_subject_dataset,
+):
+    layout, participant_id, session_id = single_subject_dataset
+    layout: DatasetLayout
+    runner = ExtractionRunner(
+        dpath_root=layout.dpath_root,
+        pipeline_name=pipeline_name,
+        pipeline_version=pipeline_version,
+        simulate=True,
+    )
+
+    runner.pipeline_config.get_fpath_container().touch()
+
+    invocation_str, descriptor_str = runner.run_single(
+        participant_id=participant_id, session_id=session_id
+    )
+
+    assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
+    assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None

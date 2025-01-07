@@ -75,6 +75,19 @@ def test_pipeline_config(
     assert isinstance(workflow.pipeline_config, BidsPipelineConfig)
 
 
+def test_dpath_pipeline_error(tmp_path: Path):
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="prepare",
+    )
+    with pytest.raises(
+        RuntimeError, match='"dpath_pipeline" attribute is not available for '
+    ):
+        workflow.dpath_pipeline
+
+
 def test_setup(config: Config, tmp_path: Path):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
@@ -84,8 +97,12 @@ def test_setup(config: Config, tmp_path: Path):
     )
     create_empty_dataset(workflow.dpath_root)
     config.save(workflow.layout.fpath_config)
+
+    # check that no file/directory is created during setup
+    files_before = set(workflow.dpath_root.rglob("*"))
     workflow.run_setup()
-    assert not workflow.dpath_pipeline.exists()
+    files_after = set(workflow.dpath_root.rglob("*"))
+    assert files_before == files_after
 
 
 @pytest.mark.parametrize(
@@ -99,8 +116,8 @@ def test_setup(config: Config, tmp_path: Path):
                 Doughnut.col_session_id: ["1"],
                 Doughnut.col_datatype: "['anat']",
                 Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_raw_imaging: [True],
-                Doughnut.col_in_sourcedata: [True],
+                Doughnut.col_in_pre_reorg: [True],
+                Doughnut.col_in_post_reorg: [True],
                 Doughnut.col_in_bids: [True],
             }
         ).validate(),
@@ -192,12 +209,12 @@ def test_get_participants_sessions_to_run(
             {
                 Doughnut.col_participant_id: data[0],
                 Doughnut.col_session_id: data[1],
-                Doughnut.col_in_sourcedata: data[2],
+                Doughnut.col_in_post_reorg: data[2],
                 Doughnut.col_in_bids: data[3],
                 Doughnut.col_visit_id: data[1],
                 Doughnut.col_datatype: None,
                 Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_raw_imaging: False,
+                Doughnut.col_in_pre_reorg: False,
             }
             for data in doughnut_data
         ]

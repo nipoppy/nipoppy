@@ -3,16 +3,18 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BidsPipelineConfig,
+    ExtractionPipelineConfig,
+    PipelineInfo,
     ProcPipelineConfig,
 )
-from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.config.pipeline_step import BasePipelineStepConfig
 
-FIELDS_PIPELINE_BASE = [
+FIELDS_BASE_PIPELINE = [
     "NAME",
     "VERSION",
     "DESCRIPTION",
@@ -20,6 +22,10 @@ FIELDS_PIPELINE_BASE = [
     "CONTAINER_CONFIG",
     "STEPS",
 ]
+FIELDS_BIDS_PIPELINE = FIELDS_BASE_PIPELINE
+FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE + ["TRACKER_CONFIG_FILE"]
+FIELDS_EXTRACTION_PIPELINE = FIELDS_BASE_PIPELINE + ["PROC_DEPENDENCIES"]
+FIELDS_PIPELINE_INFO = ["NAME", "VERSION", "STEP"]
 
 
 @pytest.fixture(scope="function")
@@ -31,46 +37,49 @@ def valid_data() -> dict:
 
 
 @pytest.mark.parametrize(
-    "pipeline_config_class,fields,additional_data_list",
+    "model_class,fields",
     [
-        (
-            BasePipelineConfig,
-            FIELDS_PIPELINE_BASE,
-            [
-                {},
-                {"DESCRIPTION": "My pipeline"},
-                {"CONTAINER_CONFIG": {"ARGS": ["--cleanenv"]}},
-                {"STEPS": []},
-            ],
-        ),
+        (BasePipelineConfig, FIELDS_BASE_PIPELINE),
+        (BidsPipelineConfig, FIELDS_BIDS_PIPELINE),
+        (ProcPipelineConfig, FIELDS_PROC_PIPELINE),
+        (PipelineInfo, FIELDS_PIPELINE_INFO),
     ],
 )
-def test_fields(pipeline_config_class, fields, valid_data, additional_data_list):
-    for additional_data in additional_data_list:
-        pipeline_config: BasePipelineConfig = pipeline_config_class(
-            **valid_data, **additional_data
-        )
-        for field in fields:
-            assert hasattr(pipeline_config, field)
+def test_fields(model_class, fields, valid_data):
+    config: BaseModel = model_class(**valid_data)
+    for field in fields:
+        assert hasattr(config, field)
 
-    assert len(set(pipeline_config.model_fields.keys())) == len(fields)
+    assert len(set(config.model_fields.keys())) == len(fields)
 
 
+def test_fields_extraction_pipeline(valid_data):
+    config = ExtractionPipelineConfig(
+        **valid_data,
+        PROC_DEPENDENCIES=[valid_data],
+    )
+    for field in FIELDS_EXTRACTION_PIPELINE:
+        assert hasattr(config, field)
+    assert len(set(config.model_fields.keys())) == len(FIELDS_EXTRACTION_PIPELINE)
+
+
+@pytest.mark.parametrize("model_class", [BasePipelineConfig, PipelineInfo])
 @pytest.mark.parametrize(
     "data",
     [{}, {"NAME": "my_pipeline"}, {"VERSION": "1.0.0"}],
 )
-def test_fields_missing_required(data):
+def test_fields_missing_required(model_class, data):
     with pytest.raises(ValidationError):
-        BasePipelineConfig(**data)
+        model_class(**data)
 
 
 @pytest.mark.parametrize(
-    "pipeline_config_class", [ProcPipelineConfig, BidsPipelineConfig]
+    "model_class",
+    [ProcPipelineConfig, BidsPipelineConfig, ExtractionPipelineConfig, PipelineInfo],
 )
-def test_fields_no_extra(pipeline_config_class, valid_data):
+def test_fields_no_extra(model_class, valid_data):
     with pytest.raises(ValidationError):
-        pipeline_config_class(**valid_data, not_a_field="a")
+        model_class(**valid_data, not_a_field="a")
 
 
 def test_step_names_error_duplicate(valid_data):
@@ -84,6 +93,30 @@ def test_step_names_error_duplicate(valid_data):
         )
 
 
+def test_error_no_dependencies():
+    with pytest.raises(ValidationError, match="PROC_DEPENDENCIES is an empty list"):
+        ExtractionPipelineConfig(
+            NAME="my_pipeline",
+            VERSION="1.0.0",
+            PROC_DEPENDENCIES=[],
+        )
+
+
+def test_warning_if_duplicate_dependencies():
+    with pytest.warns(
+        UserWarning,
+        match="PROC_DEPENDENCIES contains duplicate entries for extraction pipeline",
+    ):
+        ExtractionPipelineConfig(
+            NAME="my_pipeline",
+            VERSION="1.0.0",
+            PROC_DEPENDENCIES=[
+                PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
+                PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
+            ],
+        )
+
+
 def test_substitutions():
     data = {
         "NAME": "my_pipeline",
@@ -92,13 +125,16 @@ def test_substitutions():
         "STEPS": [
             {
                 "NAME": "step1",
-                "INVOCATION_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]].json",
+                "INVOCATION_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",  # noqa: E501
             }
         ],
     }
-    pipeline_config = ProcPipelineConfig(**data)
+    pipeline_config = BasePipelineConfig(**data)
     assert pipeline_config.DESCRIPTION == "my_pipeline version 1.0.0"
-    assert str(pipeline_config.STEPS[0].INVOCATION_FILE) == "my_pipeline-1.0.0.json"
+    assert (
+        str(pipeline_config.STEPS[0].INVOCATION_FILE)
+        == "my_pipeline-1.0.0/invocation.json"
+    )
 
 
 @pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
@@ -111,18 +147,14 @@ def test_get_fpath_container(valid_data, container):
 
 @pytest.mark.parametrize(
     "step_name,expected_name",
-    [
-        ("step1", "step1"),
-        ("step2", "step2"),
-        (None, "step1"),
-    ],
+    [("step1", "step1"), ("step2", "step2"), (None, "step1")],
 )
 def test_get_step_config(valid_data, step_name, expected_name):
     pipeling_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
-            ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+            BasePipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
+            BasePipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
         ],
     )
 
@@ -139,8 +171,8 @@ def test_get_step_config_invalid(valid_data):
     pipeline_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
-            ProcPipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            ProcPipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+            BasePipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
+            BasePipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
         ],
     )
     with pytest.raises(ValueError, match="not found in pipeline"):

@@ -2,28 +2,46 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional, Union
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
+    ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.utils import apply_substitutions_to_json
+
+
+class PipelineInfo(BaseModel):
+    """Schema for pipeline information."""
+
+    NAME: str = Field(description="Name of the pipeline")
+    VERSION: str = Field(description="Version of the pipeline")
+    STEP: str = Field(
+        description="Name of the pipeline step",
+        default=DEFAULT_PIPELINE_STEP_NAME,
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+    def __hash__(self):
+        """Return a hash based on the pipeline's name, version and step."""
+        return hash((self.NAME, self.VERSION, self.STEP))
 
 
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
     # for validation
-    _step_class: Type[BasePipelineStepConfig] = BasePipelineStepConfig
-
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -33,7 +51,12 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    STEPS: list[Union[BidsPipelineStepConfig, ProcPipelineStepConfig]] = Field(
+    # Needed for validation
+    STEPS: list[
+        Union[
+            BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
+        ]
+    ] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
@@ -63,13 +86,8 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
-        - Check that items in STEPS have the correct type.
         - If STEPS has more than one item, make sure that each step has a unique name.
         """
-        # make sure BIDS/processing pipelines are the right type
-        for i_step, step in enumerate(self.STEPS):
-            self.STEPS[i_step] = self._step_class(**step.model_dump(exclude_unset=True))
-
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:
@@ -119,7 +137,10 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
-    _step_class = BidsPipelineStepConfig
+    STEPS: list[BidsPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
     model_config = ConfigDict(extra="forbid")
 
 
@@ -135,6 +156,44 @@ class ProcPipelineConfig(BasePipelineConfig):
             " and a PATHS field (non-empty list of strings)"
         ),
     )
-
-    _step_class = ProcPipelineStepConfig
+    STEPS: list[ProcPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
     model_config = ConfigDict(extra="forbid")
+
+
+class ExtractionPipelineConfig(BasePipelineConfig):
+    """Schema for extraction pipeline configuration."""
+
+    PROC_DEPENDENCIES: list[PipelineInfo] = Field(
+        description=(
+            "List of processing pipeline(s) (including step names) whose output "
+            "the extraction pipeline depends on"
+        )
+    )
+    STEPS: list[ExtractionPipelineStepConfig] = Field(
+        default=[],
+        description="List of pipeline step configurations",
+    )
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the config instantiation after instantiation.
+
+        Specifically:
+        - Make sure that PROC_DEPENDENCIES is not empty
+        """
+        if len(self.PROC_DEPENDENCIES) == 0:
+            raise ValueError(
+                "PROC_DEPENDENCIES is an empty list for extraction pipeline "
+                f"{self.NAME} {self.VERSION}. Must have at least one dependency"
+            )
+        if len(set(self.PROC_DEPENDENCIES)) != len(self.PROC_DEPENDENCIES):
+            warnings.warn(
+                "PROC_DEPENDENCIES contains duplicate entries for extraction pipeline "
+                f"{self.NAME} {self.VERSION}"
+            )
+        return self

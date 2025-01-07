@@ -44,6 +44,13 @@ class BidsConversionRunner(PipelineRunner):
         self.name = "bids_conversion"
 
     @cached_property
+    def dpath_pipeline(self):
+        """Not available."""
+        raise RuntimeError(
+            f'"dpath_pipeline" attribute is not available for {type(self)}'
+        )
+
+    @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
         # no pipeline-specific directories for BIDS conversion
@@ -85,7 +92,7 @@ class BidsConversionRunner(PipelineRunner):
             participant_id=participant_id,
             session_id=session_id,
             bind_paths=[
-                self.layout.dpath_sourcedata,
+                self.layout.dpath_post_reorg,
                 self.layout.dpath_bids,
             ],
         )

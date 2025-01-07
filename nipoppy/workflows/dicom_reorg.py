@@ -9,7 +9,10 @@ import pydicom
 
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.tabular.doughnut import update_doughnut
-from nipoppy.utils import participant_id_to_bids_participant, session_id_to_bids_session
+from nipoppy.utils import (
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -59,7 +62,7 @@ class DicomReorgWorkflow(BaseWorkflow):
     ) -> list[Path]:
         """Get file paths to reorganize for a single participant and session."""
         dpath_downloaded = (
-            self.layout.dpath_raw_imaging
+            self.layout.dpath_pre_reorg
             / self.dicom_dir_map.get_dicom_dir(
                 participant_id=participant_id, session_id=session_id
             )
@@ -96,9 +99,9 @@ class DicomReorgWorkflow(BaseWorkflow):
         fpaths_to_reorg = self.get_fpaths_to_reorg(participant_id, session_id)
 
         dpath_reorganized: Path = (
-            self.layout.dpath_sourcedata
-            / participant_id_to_bids_participant(participant_id)
-            / session_id_to_bids_session(session_id)
+            self.layout.dpath_post_reorg
+            / participant_id_to_bids_participant_id(participant_id)
+            / session_id_to_bids_session_id(session_id)
         )
         self.mkdir(dpath_reorganized)
 
@@ -139,7 +142,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         self.doughnut.set_status(
             participant_id=participant_id,
             session_id=session_id,
-            col=self.doughnut.col_in_sourcedata,
+            col=self.doughnut.col_in_post_reorg,
             status=True,
         )
 
@@ -158,8 +161,8 @@ class DicomReorgWorkflow(BaseWorkflow):
             doughnut=self.doughnut,
             manifest=self.manifest,
             dicom_dir_map=self.dicom_dir_map,
-            dpath_downloaded=self.layout.dpath_raw_imaging,
-            dpath_organized=self.layout.dpath_sourcedata,
+            dpath_downloaded=self.layout.dpath_pre_reorg,
+            dpath_organized=self.layout.dpath_post_reorg,
             dpath_bidsified=self.layout.dpath_bids,
             logger=self.logger,
         )

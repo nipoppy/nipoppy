@@ -25,14 +25,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 | Directory | Content description |
 |---|---|
 | {{dpath_bids}} | **Input** -- {{content_dpath_bids}} |
-| {{dpath_derivatives}} | **Output** -- {{content_dpath_derivatives}} |
-
-Within the {{dpath_derivatives}} directory, output files for a specific pipeline are organized like this:
-```{literalinclude} ./inserts/pipeline_derivatives.txt
----
-class: no-copybutton
----
-```
+| {{dpath_pipeline_output}} | **Output** -- {{content_dpath_pipeline_output}} |
 
 ### Commands
 
@@ -41,11 +34,12 @@ class: no-copybutton
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according the the imaging derivatives bagel file
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according to the {term}`imaging bagel file`
     - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
+    - The imaging bagel file can be updated with [`nipoppy track`](../cli_reference/track.md)
 2. For each participant-session pair:
-    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
-    2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_bids_db}}
+    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
+    2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}
     3. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
 
 ## Configuring processing pipelines
@@ -54,9 +48,11 @@ Just like with BIDS converters, pipeline and pipeline step configurations are se
 
 There are several files in pipeline step configurations that can be further modified to customize pipeline runs:
 - `INVOCATION_FILE`: a {term}`JSON` file containing key-value pairs specifying runtime parameters. The keys correspond to entries in the pipeline's descriptor file.
-    - Invocation files are in the {{dpath_invocations}} directory, while descriptor files are in the {{dpath_descriptors}}
 - `PYBIDS_IGNORE_FILE`: a {term}`JSON` file containing a list of file names or patterns to ignore when building the [PyBIDS](https://bids-standard.github.io/pybids/) database
-    - These files should be in the {{dpath_bids_ignore_patterns}} directory
+
+```{note}
+By default, pipeline files are stored in {{dpath_pipelines}}`/<PIPELINE_NAME>-<PIPELINE_VERSION>`.
+```
 
 ```{warning}
 Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points to the {term}`Boutiques` descriptor of a pipeline. Although descriptor files can be modified, it is not needed and we recommend that less advanced users keep the default.
@@ -77,7 +73,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 To process all participants and sessions in a dataset (sequentially), run:
 ```console
 $ nipoppy run \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -90,8 +86,8 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 
 The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
-$ nipoppy bidsify \
-    --dataset-root <DATASET_ROOT> \
+$ nipoppy run \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>

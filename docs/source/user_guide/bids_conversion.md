@@ -21,7 +21,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
-- Organized (but not BIDS) imaging data in {{dpath_sourcedata}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
+- Organized (but not BIDS) imaging data in {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
     - See <project:organizing_imaging.md>
 
 ```{include} ./inserts/apptainer_stub.md
@@ -31,7 +31,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 
 | Directory | Content description |
 |---|---|
-| {{dpath_sourcedata}} | **Input** -- {{content_dpath_sourcedata}} |
+| {{dpath_post_reorg}} | **Input** -- {{content_dpath_post_reorg}} |
 | {{dpath_bids}} | **Output** -- {{content_dpath_bids}} |
 
 ### Commands
@@ -41,10 +41,10 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 
 ### Workflow
 
-1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_sourcedata}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
+1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_post_reorg}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
     - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
 2. For each participant-session pair:
-    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths are replaced by the appropriate values
+    1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
     3. The doughnut file is updated to indicate that this participant-session pair now has BIDS data
 
@@ -82,7 +82,7 @@ These step names `prepare` and `convert` (and `edit`) are a Nipoppy convention b
 To convert all participants and sessions in a dataset, run:
 ```console
 $ nipoppy bidsify \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME>
 ```
@@ -95,7 +95,7 @@ If `--pipeline-step` is not specified, the first step defined in the global conf
 The BIDS conversion can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy bidsify \
-    --dataset-root <DATASET_ROOT> \
+    <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME> \
     --participant-id <PARTICIPANT_ID> \
