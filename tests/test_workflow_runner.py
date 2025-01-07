@@ -1,6 +1,7 @@
 """Tests for PipelineRunner."""
 
 import json
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from bids import BIDSLayout
 from fids import fids
 
 from nipoppy.config.main import Config
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.workflows.runner import PipelineRunner
@@ -73,20 +75,22 @@ def config(tmp_path: Path):
                 ],
             },
         ],
-    )
+    ).propagate_container_config()
 
 
-def test_run_setup(config: Config, tmp_path: Path):
+def test_run_setup(config: Config, tmp_path: Path, mocker: pytest_mock.MockFixture):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
     create_empty_dataset(runner.dpath_root)
-    config.save(runner.layout.fpath_config)
+    runner.config = config
+    mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
     assert runner.dpath_pipeline_work.exists()
+    mocked_check_tar_conditions.assert_called_once()
 
 
 @pytest.mark.parametrize("keep_workdir", [True, False])
@@ -118,7 +122,7 @@ def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
     )
     runner.n_success = n_success
     runner.n_total = 2
-    config.save(runner.layout.fpath_config)
+    runner.config = config
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
@@ -137,7 +141,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
         pipeline_version="1.0.0",
         simulate=simulate,
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     participant_id = "01"
     session_id = "BL"
@@ -165,7 +169,8 @@ def test_process_container_config(config: Config, tmp_path: Path):
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
-    config.save(runner.layout.fpath_config)
+
+    runner.config = config
 
     result = runner.process_container_config(participant_id="01", session_id="BL")
 
@@ -178,6 +183,135 @@ def test_process_container_config(config: Config, tmp_path: Path):
     assert "--flag1" in result
     assert "--flag2" in result
     assert "--flag3" in result
+
+
+def test_check_tar_conditions_no_tracker_config(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=True,
+    )
+    runner.config = config
+    runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
+    with pytest.raises(
+        RuntimeError, match="Tarring requested but is no tracker config file"
+    ):
+        runner._check_tar_conditions()
+
+
+def test_check_tar_conditions_no_dir(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=True,
+    )
+    runner.config = config
+    runner.pipeline_step_config.TRACKER_CONFIG_FILE = tmp_path  # not used
+    runner.tracker_config = TrackerConfig(
+        PATHS=[tmp_path], PARTICIPANT_SESSION_DIR=None
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="Tarring requested but no participant-session directory specified",
+    ):
+        runner._check_tar_conditions()
+
+
+def test_check_tar_conditions_no_tar(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=False,
+    )
+    runner.config = config
+    runner._check_tar_conditions()
+
+
+def test_tar_directory(tmp_path: Path):
+    # create dummy files to tar
+    dpath_to_tar = tmp_path / "my_data"
+    fpaths_to_tar = [
+        dpath_to_tar / "dir1" / "file1.txt",
+        dpath_to_tar / "file2.txt",
+    ]
+    for fpath in fpaths_to_tar:
+        fpath.parent.mkdir(parents=True, exist_ok=True)
+        fpath.touch()
+
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    fpath_tarred = runner.tar_directory(dpath_to_tar)
+
+    assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
+    assert fpath_tarred.exists()
+    assert fpath_tarred.is_file()
+
+    with tarfile.open(fpath_tarred, "r") as tar:
+        tarred_files = {
+            tmp_path / tarred.name for tarred in tar.getmembers() if tarred.isfile()
+        }
+    assert tarred_files == set(fpaths_to_tar)
+
+    assert not dpath_to_tar.exists()
+
+
+def test_tar_directory_failure(
+    tmp_path: Path, mocker: pytest_mock.MockFixture, caplog: pytest.LogCaptureFixture
+):
+    dpath_to_tar = tmp_path / "my_data"
+    fpath_to_tar = dpath_to_tar / "file.txt"
+    fpath_to_tar.parent.mkdir(parents=True)
+    fpath_to_tar.touch()
+
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    mocked_is_tarfile = mocker.patch(
+        "nipoppy.workflows.runner.is_tarfile", return_value=False
+    )
+
+    fpath_tarred = runner.tar_directory(dpath_to_tar)
+
+    assert fpath_tarred.exists()
+    mocked_is_tarfile.assert_called_once()
+
+    assert f"Failed to tar {dpath_to_tar}" in caplog.text
+
+
+def test_tar_directory_warning_not_found(tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    with pytest.raises(RuntimeError, match="Not tarring .* since it does not exist"):
+        runner.tar_directory(tmp_path / "invalid_path")
+
+
+def test_tar_directory_warning_not_dir(tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    fpath_to_tar = tmp_path / "file.txt"
+    fpath_to_tar.touch()
+
+    with pytest.raises(
+        RuntimeError, match="Not tarring .* since it is not a directory"
+    ):
+        runner.tar_directory(fpath_to_tar)
 
 
 @pytest.mark.parametrize(
@@ -282,7 +416,7 @@ def test_get_participants_sessions_to_run(
         participant_id=participant_id,
         session_id=session_id,
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
     runner.doughnut = Doughnut().add_or_update_records(
         records=[
             {
@@ -329,7 +463,7 @@ def test_run_multiple(config: Config, tmp_path: Path):
         participant_id=participant_id,
         session_id=session_id,
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     participants_and_sessions = {"01": ["1"], "02": ["2"]}
     create_empty_dataset(runner.layout.dpath_root)
@@ -347,7 +481,7 @@ def test_run_multiple(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize("generate_pybids_database", [True, False])
-def test_run_single_pybidsdb(
+def test_run_single_pybids_db(
     generate_pybids_database: bool,
     config: Config,
     mocker: pytest_mock.MockFixture,
@@ -360,7 +494,7 @@ def test_run_single_pybidsdb(
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
-    config.save(runner.layout.fpath_config)
+    runner.config = config
 
     # Set GENERATE_PYBIDS_DATABASE
     runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
@@ -380,3 +514,59 @@ def test_run_single_pybidsdb(
         )
     else:
         mocked_set_up_bids_db.assert_not_called()
+
+
+@pytest.mark.parametrize("tar", [True, False])
+@pytest.mark.parametrize("boutiques_success", [True, False])
+def test_run_single_tar(
+    config: Config,
+    tar: bool,
+    boutiques_success: bool,
+    mocker: pytest_mock.MockFixture,
+    tmp_path: Path,
+):
+    runner = PipelineRunner(
+        dpath_root=tmp_path,
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        tar=tar,
+    )
+    runner.config = config
+
+    # mock the parts of run_single that are not relevant for this test
+    mocker.patch(
+        "nipoppy.config.container.check_container_command", return_value="apptainer"
+    )
+    mocker.patch.object(runner, "set_up_bids_db")
+
+    # mock the Boutiques run outcome
+    exception_message = "launch_boutiques_run failed"
+    mocker.patch.object(
+        runner,
+        "launch_boutiques_run",
+        side_effect=None if boutiques_success else RuntimeError(exception_message),
+    )
+
+    # mock tar_directory method (will check if/how this is called)
+    mocked_tar_directory = mocker.patch.object(runner, "tar_directory")
+
+    participant_id = "01"
+    session_id = "1"
+    runner.tracker_config = TrackerConfig(
+        PATHS=[tmp_path],  # not used
+        PARTICIPANT_SESSION_DIR=(
+            tmp_path / "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
+        ),
+    )
+    try:
+        runner.run_single(participant_id=participant_id, session_id=session_id)
+    except RuntimeError as exception:
+        if str(exception) != exception_message:
+            raise exception
+
+    if tar and boutiques_success:
+        mocked_tar_directory.assert_called_once_with(
+            tmp_path / f"{participant_id}_ses-{session_id}"
+        )
+    else:
+        mocked_tar_directory.assert_not_called()
