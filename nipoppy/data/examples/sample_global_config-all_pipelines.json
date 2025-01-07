@@ -98,7 +98,7 @@
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-bidscoiner.json",
                     "ANALYSIS_LEVEL": "participant",
-                    "UPDATE_DOUGHNUT": true
+                    "UPDATE_DOUGHNUT": false
                 }
             ]
         }
