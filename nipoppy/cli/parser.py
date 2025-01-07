@@ -64,7 +64,10 @@ def add_args_pipeline(parser: _ActionsContainer) -> _ActionsContainer:
         "--pipeline-version",
         type=str,
         required=False,
-        help="Pipeline version, as specified in the config file.",
+        help=(
+            "Pipeline version, as specified in the config file "
+            "(default: first version)."
+        ),
     )
     parser.add_argument(
         "--pipeline-step",
@@ -301,10 +304,18 @@ def add_subparser_run(
         required=False,
         help=(
             "Keep pipeline working directory upon success "
-            "(default: working directory deleted unless a run failed)"
+            "(default: working directory deleted unless a run failed)."
         ),
     )
-
+    parser.add_argument(
+        "--tar",
+        action="store_true",
+        help=(
+            "Archive participant-session-level results into a tarball upon "
+            "successful completion. The path to be archived should be specified "
+            "in the tracker configuration file."
+        ),
+    )
     return parser
 
 
