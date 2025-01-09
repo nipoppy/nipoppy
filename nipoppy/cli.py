@@ -9,15 +9,23 @@ from nipoppy._version import __version__
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, DEFAULT_VERBOSITY
 
 
-def global_options(func):
-    """Define global options for the CLI."""
-    func = click.option(
+def dataset_option(func):
+    """Define dataset options for the CLI.
+
+    It is seperated from global_options to allow for a different ordering when printing
+    the `--help`.
+    """
+    return click.option(
         "--dataset",
         "dpath_root",
         type=click.Path(),
         default=Path().cwd(),
         help=f"Path to the root of the dataset (default: {Path().cwd()}).",
     )(func)
+
+
+def global_options(func):
+    """Define global options for the CLI."""
     func = click.option(
         "--dry-run",
         "-n",
@@ -89,12 +97,13 @@ def cli():
 
 
 @cli.command()
-@global_options
+@dataset_option
 @click.option(
     "--bids-source",
     type=click.Path(exists=True),
     help=("Path to a BIDS dataset to initialize the layout with."),
 )
+@global_options
 def init(**params):
     """Command: nipoppy init."""
     from nipoppy.workflows.dataset_init import InitWorkflow
@@ -105,7 +114,7 @@ def init(**params):
 
 
 @cli.command()
-@global_options
+@dataset_option
 @click.option(
     "--empty",
     is_flag=True,
@@ -124,6 +133,7 @@ def init(**params):
         " (default: only append rows for new records)"
     ),
 )
+@global_options
 def doughnut(**params):
     """Command: nipoppy doughnut."""
     from nipoppy.workflows.doughnut import DoughnutWorkflow
@@ -134,7 +144,7 @@ def doughnut(**params):
 
 
 @cli.command()
-@global_options
+@dataset_option
 @click.option(
     "--copy-files",
     is_flag=True,
@@ -149,6 +159,7 @@ def doughnut(**params):
         "converters). The paths to the derived DICOMs will be written to the log."
     ),
 )
+@global_options
 def reorg(**params):
     """Command: nipoppy reorg."""
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
@@ -159,13 +170,14 @@ def reorg(**params):
 
 
 @cli.command()
-@global_options
-@pipeline_options
+@dataset_option
 @click.option(
     "--simulate",
     is_flag=True,
     help="Simulate the pipeline run without executing the generated command-line.",
 )
+@pipeline_options
+@global_options
 def bidsify(**params):
     """Command: nipoppy bidsify."""
     from nipoppy.workflows.bids_conversion import BidsConversionRunner
@@ -179,8 +191,7 @@ cli.add_command(bidsify, name="convert")  # Alias
 
 
 @cli.command()
-@global_options
-@pipeline_options
+@dataset_option
 @click.option(
     "--keep-workdir",
     is_flag=True,
@@ -194,6 +205,8 @@ cli.add_command(bidsify, name="convert")  # Alias
     is_flag=True,
     help="Simulate the pipeline run without executing the generated command-line.",
 )
+@pipeline_options
+@global_options
 def run(**params):
     """Command: nipoppy run."""
     from nipoppy.workflows.runner import PipelineRunner
@@ -204,8 +217,9 @@ def run(**params):
 
 
 @cli.command()
-@global_options
+@dataset_option
 @pipeline_options
+@global_options
 def track(**params):
     """Command: nipoppy track."""
     from nipoppy.workflows.tracker import PipelineTracker
