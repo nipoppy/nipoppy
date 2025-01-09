@@ -7,4 +7,4 @@
    Logfiles for this command can be found in ``{{dpath_logs}}/doughnut``.
 
 .. click:: nipoppy.cli:doughnut
-   :prog: nipoppy
+   :prog: nipoppy doughnut
