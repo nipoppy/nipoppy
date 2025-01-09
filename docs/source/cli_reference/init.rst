@@ -1,4 +1,4 @@
-`nipoppy init`
+``nipoppy init``
 ================
 
 .. note::
