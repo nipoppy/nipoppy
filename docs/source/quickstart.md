@@ -14,7 +14,7 @@ $ nipoppy init --dataset <PATH_TO_DATASET_ROOT>
 ```
 
 ```{warning}
-Initializing a non-empty directory will result in an error.
+Initializing an existing directory will result in an error.
 ```
 
 The newly created directory tree follows the Nipoppy specification. Other Nipoppy commands expect all these directories to exist -- they will throw an error if that is not the case.
