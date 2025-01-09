@@ -1,18 +1,27 @@
 """Nipoppy CLI."""
 
+import logging
 import sys
 from pathlib import Path
 
 import rich_click as click
+from rich.logging import RichHandler
 
 from nipoppy._version import __version__
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, DEFAULT_VERBOSITY
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+
+logging.basicConfig(
+    level="NOTSET",
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True, tracebacks_suppress=[click])],
+)
 
 
 def dataset_option(func):
     """Define dataset options for the CLI.
 
-    It is seperated from global_options to allow for a different ordering when printing
+    It is separated from global_options to allow for a different ordering when printing
     the `--help`.
     """
     return click.option(
@@ -160,10 +169,11 @@ def doughnut(**params):
 )
 @global_options
 def reorg(**params):
-    """(Re)organize raw (DICOM) files
+    """(Re)organize raw (DICOM) files.
 
     From the ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``"""
+    ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``
+    """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
     workflow = DicomReorgWorkflow(**params)

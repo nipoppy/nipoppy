@@ -8,7 +8,7 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
-from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 

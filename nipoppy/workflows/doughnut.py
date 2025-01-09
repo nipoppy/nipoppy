@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import LogColor, StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, LogColor, StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 from nipoppy.workflows.base import BaseWorkflow
 

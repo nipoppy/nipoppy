@@ -15,7 +15,7 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular

@@ -123,6 +123,7 @@ def test_init_bids_dry_run(tmp_path):
     )
     workflow.run()
 
+    # Only the logs directory should be created
     dir_content = list(dpath_root.iterdir())
     assert len(dir_content) == 1
     assert dir_content[0].is_dir()

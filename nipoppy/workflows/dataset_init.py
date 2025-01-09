@@ -9,10 +9,10 @@ import requests
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     StrOrPathLike,
-    DEFAULT_VERBOSITY,
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (

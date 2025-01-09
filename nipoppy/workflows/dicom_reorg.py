@@ -6,7 +6,7 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, LogColor, ReturnCode, StrOrPathLike
 from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,

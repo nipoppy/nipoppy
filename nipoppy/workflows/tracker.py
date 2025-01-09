@@ -3,7 +3,7 @@
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import load_json
 from nipoppy.workflows.pipeline import BasePipelineWorkflow

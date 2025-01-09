@@ -23,11 +23,11 @@ from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConf
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
     StrOrPathLike,
-    DEFAULT_VERBOSITY,
 )
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
