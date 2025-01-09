@@ -7,4 +7,4 @@
    Logfiles for this command can be found in ``{{dpath_logs}}/dicom_reorg``.
 
 .. click:: nipoppy.cli:reorg
-   :prog: nipoppy
+   :prog: nipoppy reorg
