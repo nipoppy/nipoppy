@@ -1,5 +1,5 @@
-`nipoppy run`
-================
+``nipoppy run``
+===============
 
 .. note::
    This command calls the :py:class:`nipoppy.workflows.runner.PipelineRunner` class from the Python :term:`API` internally.
