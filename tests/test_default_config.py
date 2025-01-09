@@ -310,7 +310,7 @@ def test_tracker_paths(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("freesurfer_stats_and_qc", "0.1.0"),
+        ("freesurfer_stats_and_qc", "0.1.1"),
     ],
 )
 def test_extractor(
