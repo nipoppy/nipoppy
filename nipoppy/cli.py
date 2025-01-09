@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-import click
+import rich_click as click
 
 from nipoppy._version import __version__
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, DEFAULT_VERBOSITY
@@ -75,10 +75,16 @@ def pipeline_options(func):
     return func
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    epilog=(
+        "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
+        "Or visit the documentation at https://nipoppy.readthedocs.io"
+    ),
+)
 @click.version_option(version=__version__)
 def cli():
-    """Nipoppy base CLI."""
+    """Organize and process neuroimaging-clinical datasets."""
     pass
 
 
