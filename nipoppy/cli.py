@@ -18,7 +18,9 @@ def dataset_option(func):
     return click.option(
         "--dataset",
         "dpath_root",
-        type=click.Path(),
+        type=click.Path(
+            exist=False, file_okay=False, path_type=Path, resolve_path=True
+        ),
         default=Path().cwd(),
         help=f"Path to the root of the dataset (default: {Path().cwd()}).",
     )(func)
@@ -41,7 +43,7 @@ def global_options(func):
     func = click.option(
         "--layout",
         "fpath_layout",
-        type=click.Path(exists=True),
+        type=click.Path(exists=True, path_type=Path, resolve_path=True),
         help=(
             "Path to a custom layout specification file,"
             " to be used instead of the default layout."
@@ -76,6 +78,7 @@ def pipeline_options(func):
         "--pipeline",
         "pipeline_name",
         type=str,
+        required=True,
         help="Pipeline name, as specified in the config file.",
     )(func)
     return func
@@ -98,12 +101,12 @@ def cli():
 @dataset_option
 @click.option(
     "--bids-source",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
     help=("Path to a BIDS dataset to initialize the layout with."),
 )
 @global_options
 def init(**params):
-    """Command: nipoppy init."""
+    """Initialize a new dataset."""
     from nipoppy.workflows.dataset_init import InitWorkflow
 
     workflow = InitWorkflow(**params)
@@ -133,7 +136,7 @@ def init(**params):
 )
 @global_options
 def doughnut(**params):
-    """Command: nipoppy doughnut."""
+    """Create or update a dataset's doughnut file."""
     from nipoppy.workflows.doughnut import DoughnutWorkflow
 
     workflow = DoughnutWorkflow(**params)
@@ -159,7 +162,10 @@ def doughnut(**params):
 )
 @global_options
 def reorg(**params):
-    """Command: nipoppy reorg."""
+    """(Re)organize raw (DICOM) files
+
+    From the ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``"""
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
     workflow = DicomReorgWorkflow(**params)
@@ -177,15 +183,12 @@ def reorg(**params):
 )
 @global_options
 def bidsify(**params):
-    """Command: nipoppy bidsify."""
+    """Run a BIDS conversion pipeline."""
     from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
     workflow = BidsConversionRunner(**params)
     workflow.run()
     sys.exit(workflow.return_code)
-
-
-cli.add_command(bidsify, name="convert")  # Alias
 
 
 @cli.command()
@@ -206,7 +209,7 @@ cli.add_command(bidsify, name="convert")  # Alias
 )
 @global_options
 def run(**params):
-    """Command: nipoppy run."""
+    """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
 
     workflow = PipelineRunner(**params)
@@ -219,7 +222,7 @@ def run(**params):
 @pipeline_options
 @global_options
 def track(**params):
-    """Command: nipoppy track."""
+    """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
 
     workflow = PipelineTracker(**params)

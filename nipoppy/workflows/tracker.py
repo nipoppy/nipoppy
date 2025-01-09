@@ -3,7 +3,7 @@
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import load_json
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -21,7 +21,7 @@ class PipelineTracker(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = 2,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         super().__init__(

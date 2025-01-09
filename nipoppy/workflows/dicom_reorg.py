@@ -6,7 +6,7 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import LogColor, ReturnCode, StrOrPathLike, DEFAULT_VERBOSITY
 from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -35,7 +35,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         copy_files: bool = False,
         check_dicoms: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = 2,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""

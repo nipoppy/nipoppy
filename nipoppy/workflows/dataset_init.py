@@ -12,6 +12,7 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     LogColor,
     StrOrPathLike,
+    DEFAULT_VERBOSITY,
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
@@ -36,7 +37,7 @@ class InitWorkflow(BaseWorkflow):
         dpath_root: Path,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = 2,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""

@@ -15,7 +15,7 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike, DEFAULT_VERBOSITY
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular
@@ -41,7 +41,7 @@ class BaseWorkflow(Base, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = 2,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run=False,
     ):
         """Initialize the workflow instance.
@@ -69,7 +69,7 @@ class BaseWorkflow(Base, ABC):
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
 
         # Setup logging
-        VERBOSITY_TO_LOG_LEVEL_MAP = {
+        verbosity_to_log_level_map = {
             0: logging.ERROR,
             1: logging.WARNING,
             2: logging.INFO,
@@ -77,7 +77,7 @@ class BaseWorkflow(Base, ABC):
         }
         self.logger = get_logger(
             name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
-            level=VERBOSITY_TO_LOG_LEVEL_MAP[verbose],
+            level=verbosity_to_log_level_map[verbose],
         )
 
     def generate_fpath_log(

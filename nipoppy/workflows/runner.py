@@ -8,7 +8,7 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -27,7 +27,7 @@ class PipelineRunner(BasePipelineWorkflow):
         keep_workdir: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = 2,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         self.simulate = simulate

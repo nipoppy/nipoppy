@@ -27,6 +27,7 @@ from nipoppy.env import (
     LogColor,
     ReturnCode,
     StrOrPathLike,
+    DEFAULT_VERBOSITY,
 )
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
@@ -81,7 +82,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = 2,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run=False,
     ):
         self.pipeline_name = pipeline_name
