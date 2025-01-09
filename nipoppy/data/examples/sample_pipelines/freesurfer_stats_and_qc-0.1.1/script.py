@@ -16,6 +16,10 @@ MODE_SINGLE = "single"
 MODE_MULTI = "multi"
 DEFAULT_MODE = MODE_SINGLE
 
+DEFAULT_ASEG_MEASURE = "volume"
+DEFAULT_APARC_PARCELLATION = "DKTatlas"
+DEFAULT_APARC_MEASURE = "thickness"
+
 DEFAULT_EULER_SURF_PATHS = [
     "surf/lh.white",
     "surf/rh.white",
@@ -679,6 +683,9 @@ def run_multi(
 def run(
     input_dir_path: Union[str, os.PathLike],
     output_stats_file_path: Union[str, os.PathLike],
+    aseg_measure: str = DEFAULT_ASEG_MEASURE,
+    aparc_parcellation: str = DEFAULT_APARC_PARCELLATION,
+    aparc_measure: str = DEFAULT_APARC_MEASURE,
     output_qc_file_path: Optional[Union[str, os.PathLike]] = None,
     mode: str = DEFAULT_MODE,
     container_command_and_args: Optional[list[str]] = None,
@@ -710,6 +717,12 @@ def run(
     output_stats_file_path : Union[str, os.PathLike]
         Path to the output TSV file for the stats file. The parent directory of
         this path must exist.
+    aseg_measure : str, optional
+        Measure to use for aparcstats2table.
+    aparc_parcellation : str, optional
+        Parcellation to use for asegstats2table (minus "aparc." prefix).
+    aparc_measure : str, optional
+        Measure to use for asegstats2table, by default "thickness".
     output_qc_file_path : Optional[Union[str, os.PathLike]], optional
         Path to the output TSV file for QC metrics. If this is not provided, only
         the stats file will be created.
@@ -748,6 +761,13 @@ def run(
         Set as empty string to keep the original values.
     """
     with_qc = output_qc_file_path is not None
+
+    aseg_optional_args += ["--meas", aseg_measure]
+
+    aparc_optional_args += [
+        f"--parc=aparc.{aparc_parcellation}",
+        f"--measure={aparc_measure}",
+    ]
 
     # single subjects directory (no sessions)
     if mode == MODE_SINGLE:
@@ -835,6 +855,29 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Whether to process a single FreeSurfer subjects directory or multiple "
             f"directories (default: {DEFAULT_MODE})."
+        ),
+    )
+    parser.add_argument(
+        "--aseg-measure",
+        type=str,
+        default=DEFAULT_ASEG_MEASURE,
+        help=(f"Measure to use for asegstats2table. Default: {DEFAULT_ASEG_MEASURE}."),
+    )
+    parser.add_argument(
+        "--aparc-parcellation",
+        type=str,
+        default=DEFAULT_APARC_PARCELLATION,
+        help=(
+            "Parcellation to use for aparcstats2table (minus 'aparc.' prefix)."
+            f" Default: {DEFAULT_APARC_PARCELLATION}."
+        ),
+    )
+    parser.add_argument(
+        "--aparc-measure",
+        type=str,
+        default=DEFAULT_APARC_MEASURE,
+        help=(
+            "Measure to use for aparcstats2table. Default: " f"{DEFAULT_APARC_MEASURE}."
         ),
     )
     parser.add_argument(
@@ -959,6 +1002,9 @@ if __name__ == "__main__":
         output_stats_file_path=args.output_stats_file_path,
         output_qc_file_path=args.output_qc_file_path,
         mode=args.mode,
+        aseg_measure=args.aseg_measure,
+        aparc_parcellation=args.aparc_parcellation,
+        aparc_measure=args.aparc_measure,
         container_command_and_args=shlex.split(args.container),
         aseg_optional_args=shlex.split(args.aseg_args),
         aparc_optional_args=shlex.split(args.aparc_args),
