@@ -45,9 +45,7 @@ def global_options(func):
         "--verbose",
         "-v",
         count=True,
-        default=DEFAULT_VERBOSITY,
-        help="Verbosity level, Verbosity level, from 0 (least verbose) "
-        f"to 3 (most verbose). Default: {DEFAULT_VERBOSITY}.",
+        help="Increases log verbosity for each occurrence, debug level is -vvv",
     )(func)
     return func
 
