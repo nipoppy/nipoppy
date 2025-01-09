@@ -16,7 +16,7 @@ def global_options(func):
         "dpath_root",
         type=click.Path(),
         default=Path().cwd(),
-        help="Path to the root of the dataset.",
+        help=f"Path to the root of the dataset (default: {Path().cwd()}).",
     )(func)
     func = click.option(
         "--dry-run",
