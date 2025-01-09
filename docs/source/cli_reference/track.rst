@@ -7,4 +7,4 @@
    Logfiles for this command can be found in ``{{dpath_logs}}/track``.
 
 .. click:: nipoppy.cli:track
-   :prog: nipoppy
+   :prog: nipoppy track
