@@ -7,4 +7,4 @@
    Logfiles for this command can be found in ``{{dpath_logs}}/bids_conversion``.
 
 .. click:: nipoppy.cli:bidsify
-   :prog: nipoppy
+   :prog: nipoppy bidsify
