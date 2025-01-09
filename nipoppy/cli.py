@@ -18,9 +18,7 @@ def dataset_option(func):
     return click.option(
         "--dataset",
         "dpath_root",
-        type=click.Path(
-            exist=False, file_okay=False, path_type=Path, resolve_path=True
-        ),
+        type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         default=Path().cwd(),
         help=f"Path to the root of the dataset (default: {Path().cwd()}).",
     )(func)
