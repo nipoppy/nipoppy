@@ -27,6 +27,12 @@ def dataset_option(func):
 def global_options(func):
     """Define global options for the CLI."""
     func = click.option(
+        "--verbose",
+        "-v",
+        count=True,
+        help="Increases log verbosity for each occurrence, debug level is -vvv",
+    )(func)
+    func = click.option(
         "--dry-run",
         "-n",
         is_flag=True,
@@ -41,32 +47,15 @@ def global_options(func):
             " to be used instead of the default layout."
         ),
     )(func)
-    func = click.option(
-        "--verbose",
-        "-v",
-        count=True,
-        help="Increases log verbosity for each occurrence, debug level is -vvv",
-    )(func)
     return func
 
 
 def pipeline_options(func):
     """Define pipeline options for the CLI."""
     func = click.option(
-        "--pipeline",
-        "pipeline_name",
+        "--session-id",
         type=str,
-        help="Pipeline name, as specified in the config file.",
-    )(func)
-    func = click.option(
-        "--pipeline-version",
-        type=str,
-        help="Pipeline version, as specified in the config file.",
-    )(func)
-    func = click.option(
-        "--pipeline-step",
-        type=str,
-        help="Pipeline step, as specified in the config file (default: first step).",
+        help=f"Session ID (with or without the {BIDS_SESSION_PREFIX} prefix).",
     )(func)
     func = click.option(
         "--participant-id",
@@ -74,9 +63,20 @@ def pipeline_options(func):
         help=f"Participant ID (with or without the {BIDS_SUBJECT_PREFIX} prefix).",
     )(func)
     func = click.option(
-        "--session-id",
+        "--pipeline-step",
         type=str,
-        help=f"Session ID (with or without the {BIDS_SESSION_PREFIX} prefix).",
+        help="Pipeline step, as specified in the config file (default: first step).",
+    )(func)
+    func = click.option(
+        "--pipeline-version",
+        type=str,
+        help="Pipeline version, as specified in the config file.",
+    )(func)
+    func = click.option(
+        "--pipeline",
+        "pipeline_name",
+        type=str,
+        help="Pipeline name, as specified in the config file.",
     )(func)
     return func
 
@@ -169,12 +169,12 @@ def reorg(**params):
 
 @cli.command()
 @dataset_option
+@pipeline_options
 @click.option(
     "--simulate",
     is_flag=True,
     help="Simulate the pipeline run without executing the generated command-line.",
 )
-@pipeline_options
 @global_options
 def bidsify(**params):
     """Command: nipoppy bidsify."""
@@ -190,6 +190,7 @@ cli.add_command(bidsify, name="convert")  # Alias
 
 @cli.command()
 @dataset_option
+@pipeline_options
 @click.option(
     "--keep-workdir",
     is_flag=True,
@@ -203,7 +204,6 @@ cli.add_command(bidsify, name="convert")  # Alias
     is_flag=True,
     help="Simulate the pipeline run without executing the generated command-line.",
 )
-@pipeline_options
 @global_options
 def run(**params):
     """Command: nipoppy run."""
