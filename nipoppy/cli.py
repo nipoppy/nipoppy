@@ -99,7 +99,7 @@ def cli():
 @click.option(
     "--bids-source",
     type=click.Path(exists=True),
-    help=("Path to a BIDS dataset to initialize the layout with."),
+    help="Path to a BIDS dataset to initialize the layout with.",
 )
 @global_options
 def init(**params):
