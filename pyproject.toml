@@ -23,6 +23,7 @@ dependencies = [
     'requests',
     "pydicom!=3.0.0",
     "rich",
+    "rich-click",
     "typing-extensions",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
