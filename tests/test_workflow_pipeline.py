@@ -652,9 +652,11 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize("write_list", ["list.tsv", "to_run.tsv"])
+@pytest.mark.parametrize("dry_run", [True, False])
 def test_run_main_write_list(
     workflow: PipelineWorkflow,
     write_list: str,
+    dry_run: bool,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -663,6 +665,7 @@ def test_run_main_write_list(
     workflow.participant_id = "01"
     workflow.session_id = "1"
     workflow.write_list = write_list
+    workflow.dry_run = dry_run
 
     participants_and_sessions = {workflow.participant_id: [workflow.session_id]}
     manifest = prepare_dataset(
@@ -673,8 +676,11 @@ def test_run_main_write_list(
     workflow.manifest = manifest
     workflow.run_main()
 
-    assert write_list.exists()
-    assert write_list.read_text().strip() == "01\t1"
+    if not dry_run:
+        assert write_list.exists()
+        assert write_list.read_text().strip() == "01\t1"
+    else:
+        assert not write_list.exists()
     assert f"Wrote participant-session list to {write_list}" in caplog.text
 
 

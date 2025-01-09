@@ -417,9 +417,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         # TODO mutually exclusive with HPC option
         if self.write_list is not None:
-            pd.DataFrame(participants_sessions).to_csv(
-                self.write_list, header=False, index=False, sep="\t"
-            )
+            if not self.dry_run:
+                pd.DataFrame(participants_sessions).to_csv(
+                    self.write_list, header=False, index=False, sep="\t"
+                )
             self.logger.info(f"Wrote participant-session list to {self.write_list}")
         else:
             for participant_id, session_id in participants_sessions:
