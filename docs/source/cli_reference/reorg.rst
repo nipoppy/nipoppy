@@ -1,5 +1,5 @@
-`nipoppy reorg`
-================
+``nipoppy reorg``
+=================
 
 .. note::
    This command calls the :py:class:`nipoppy.workflows.dicom_reorg.DicomReorgWorkflow` class from the Python :term:`API` internally.
