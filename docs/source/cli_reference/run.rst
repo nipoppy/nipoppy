@@ -7,4 +7,4 @@
    Logfiles for this command can be found in ``{{dpath_logs}}/run``.
 
 .. click:: nipoppy.cli:run
-   :prog: nipoppy
+   :prog: nipoppy run
