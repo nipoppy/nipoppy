@@ -1,11 +1,14 @@
 {
     "script_path": "[[NIPOPPY_DPATH_PIPELINES]]/freesurfer_stats_and_qc-0.1.1/script.py",
     "input_dir_path": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
-    "output_stats_file_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/freesurfer_stats-thickness-DKT.tsv",
-    "output_qc_file_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/freesurfer_qc.tsv",
+    "output_dir_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]",
     "mode": "multi",
+    "with_qc": false,
+    "aseg_measure": "volume",
+    "aparc_parcellation": "DKTatlas",
+    "aparc_measure": "thickness",
     "container": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]]",
     "aseg_args": " --skip",
-    "aparc_args": " --skip --meas=thickness",
+    "aparc_args": " --skip",
     "verbose": false
 }

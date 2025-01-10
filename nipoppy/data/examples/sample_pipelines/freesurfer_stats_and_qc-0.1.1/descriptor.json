@@ -3,7 +3,7 @@
     "description": "FreeSurfer aseg/aparc stats (and QC metrics) extractor",
     "tool-version": "0.1.1",
     "schema-version": "0.5",
-    "command-line": "[SCRIPT_PATH] [INPUT_DIR_PATH] [OUTPUT_STATS_FILE_PATH] [MODE] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [OUTPUT_QC_FILE_PATH] [EULER_SURF_PATHS] [CNR_VOL_PATHS] [CNR_MEASURES] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX] [VERBOSE]",
+    "command-line": "[SCRIPT_PATH] [INPUT_DIR_PATH] [OUTPUT_DIR_PATH] [MODE] [WITH_QC] [ASEG_MEASURE] [APARC_PARCELLATION] [APARC_MEASURE] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [EULER_SURF_PATHS] [CNR_VOL_PATHS] [CNR_MEASURES] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX] [VERBOSE]",
     "inputs": [
         {
             "name": "script_path",
@@ -22,12 +22,12 @@
             "value-key": "[INPUT_DIR_PATH]"
         },
         {
-            "name": "output_stats_file_path",
-            "id": "output_stats_file_path",
-            "description": "Path to the output TSV file.",
+            "name": "output_dir_path",
+            "id": "output_dir_path",
+            "description": "Path to the output directory.",
             "type": "String",
             "optional": false,
-            "value-key": "[OUTPUT_STATS_FILE_PATH]"
+            "value-key": "[OUTPUT_DIR_PATH]"
         },
         {
             "name": "mode",
@@ -44,6 +44,45 @@
             ]
         },
         {
+            "name": "with_qc",
+            "id": "with_qc",
+            "description": "Whether to compute QC metrics and save them to a separate file.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--with-qc",
+            "value-key": "[WITH_QC]"
+        },
+        {
+            "name": "aseg_measure",
+            "id": "aseg_measure",
+            "description": "Measure to use for asegstats2table. Default: volume.",
+            "type": "String",
+            "optional": true,
+            "default-value": "volume",
+            "command-line-flag": "--aseg-measure",
+            "value-key": "[ASEG_MEASURE]"
+        },
+        {
+            "name": "aparc_parcellation",
+            "id": "aparc_parcellation",
+            "description": "Parcellation to use for aparcstats2table (minus 'aparc.' prefix). Default: DKTatlas.",
+            "type": "String",
+            "optional": true,
+            "default-value": "DKTatlas",
+            "command-line-flag": "--aparc-parcellation",
+            "value-key": "[APARC_PARCELLATION]"
+        },
+        {
+            "name": "aparc_measure",
+            "id": "aparc_measure",
+            "description": "Measure to use for aparcstats2table. Default: thickness.",
+            "type": "String",
+            "optional": true,
+            "default-value": "thickness",
+            "command-line-flag": "--aparc-measure",
+            "value-key": "[APARC_MEASURE]"
+        },
+        {
             "name": "container",
             "id": "container",
             "description": "Container command and arguments (including image file), as a single string. This needs to contain everything needed to be able to run the FreeSurfer commands, for example \"apptainer exec --bind <INPUT_DIR_PATH> <IMAGE_FILE_PATH>\". Does not need to be specified if running on a system with FreeSurfer installed. IMPORTANT: only the Singularity/Apptainer container engine is explicitly supported because it allows for forwarding environment variables; this script might work with Docker containers but likely only with --mode single.",
@@ -55,7 +94,7 @@
         {
             "name": "aseg_args",
             "id": "aseg_args",
-            "description": "Optional arguments to pass to asegstats2table, as a single string.",
+            "description": "Optional arguments to pass to asegstats2table, as a single string. Should not include --meas argument.",
             "type": "String",
             "optional": true,
             "command-line-flag": "--aseg-args",
@@ -64,20 +103,11 @@
         {
             "name": "aparc_args",
             "id": "aparc_args",
-            "description": "Optional arguments to pass to aparcstats2table, as a single string.",
+            "description": "Optional arguments to pass to aparcstats2table, as a single string. Should not include --measure or --parc arguments.",
             "type": "String",
             "optional": true,
             "command-line-flag": "--aparc-args",
             "value-key": "[APARC_ARGS]"
-        },
-        {
-            "name": "output_qc_file_path",
-            "id": "output_qc_file_path",
-            "description": "Optional path to the output TSV file for QC metrics. If this is not provided, only the stats file will be generated.",
-            "type": "String",
-            "optional": true,
-            "command-line-flag": "--qc",
-            "value-key": "[OUTPUT_QC_FILE_PATH]"
         },
         {
             "name": "euler_surf_paths",
