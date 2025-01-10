@@ -1,10 +1,12 @@
 """PipelineTracker workflow."""
 
 import logging
+import tarfile
+from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -59,16 +61,53 @@ class PipelineTracker(BasePipelineWorkflow):
             self.logger.info("Initialized empty bagel")
         return super().run_setup()
 
-    def check_status(self, relative_paths: StrOrPathLike):
+    def check_status(
+        self,
+        relative_paths: StrOrPathLike,
+        relative_dpath_tarred: Optional[StrOrPathLike] = None,
+    ):
         """Check the processing status based on a list of expected paths."""
+        # collect list of paths in tarball if it exists
+        paths_tarred = []
+        if relative_dpath_tarred is not None:
+            fpath_tarball = (
+                self.dpath_pipeline_output / f"{relative_dpath_tarred}{EXT_TAR}"
+            )
+            if fpath_tarball.exists():
+                with tarfile.open(fpath_tarball) as tarball:
+                    paths_tarred = tarball.getnames()
+
         for relative_path in relative_paths:
+            relative_path = Path(relative_path)
             self.logger.debug(
                 f"Checking path {self.dpath_pipeline_output / relative_path}"
             )
 
-            matches = list(self.dpath_pipeline_output.glob(str(relative_path)))
-            self.logger.debug(f"Matches: {matches}")
-            if not matches:
+            matches_glob = list(self.dpath_pipeline_output.glob(str(relative_path)))
+            self.logger.debug(f"Matches: {matches_glob}")
+
+            # also check tarball paths if applicable/needed
+            if (not matches_glob) and (relative_dpath_tarred is not None):
+                # NOTE
+                # The behaviour of Path.match() is not exactly the same as glob
+                # but it should be good enough for now. What we really need is
+                # Path.full_match(), but that was only introduced in Python 3.13
+                matches_tarred = [
+                    path_tarred
+                    for path_tarred in paths_tarred
+                    if Path(path_tarred).match(
+                        str(
+                            Path(relative_path).relative_to(
+                                Path(relative_dpath_tarred).parent
+                            )
+                        ),
+                    )
+                ]
+                self.logger.debug(f"Matches in tarball: {matches_tarred}")
+            else:
+                matches_tarred = []
+
+            if not (matches_glob or matches_tarred):
                 return Bagel.status_fail
 
         return Bagel.status_success
@@ -93,7 +132,9 @@ class PipelineTracker(BasePipelineWorkflow):
         )
 
         # check status and update bagel
-        status = self.check_status(tracker_config.PATHS)
+        status = self.check_status(
+            tracker_config.PATHS, tracker_config.PARTICIPANT_SESSION_DIR
+        )
         self.bagel = self.bagel.add_or_update_records(
             {
                 Bagel.col_participant_id: participant_id,
