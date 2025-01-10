@@ -682,12 +682,12 @@ def run_multi(
 
 def run(
     input_dir_path: Union[str, os.PathLike],
-    output_stats_file_path: Union[str, os.PathLike],
+    output_dir_path: Union[str, os.PathLike],
+    mode: str = DEFAULT_MODE,
+    with_qc: bool = False,
     aseg_measure: str = DEFAULT_ASEG_MEASURE,
     aparc_parcellation: str = DEFAULT_APARC_PARCELLATION,
     aparc_measure: str = DEFAULT_APARC_MEASURE,
-    output_qc_file_path: Optional[Union[str, os.PathLike]] = None,
-    mode: str = DEFAULT_MODE,
     container_command_and_args: Optional[list[str]] = None,
     aparc_optional_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
@@ -714,18 +714,17 @@ def run(
         Path to input directory, which should be a FreeSurfer subjects directory if
         mode is "single" or a directory containing multiple FreeSurfer subjects
         directories if mode is "multi".
-    output_stats_file_path : Union[str, os.PathLike]
-        Path to the output TSV file for the stats file. The parent directory of
-        this path must exist.
+    output_dir_path : Union[str, os.PathLike]
+        Path to the directory where output files will be created. Any existing file
+        may be overwritten.
     aseg_measure : str, optional
         Measure to use for aparcstats2table.
     aparc_parcellation : str, optional
         Parcellation to use for asegstats2table (minus "aparc." prefix).
     aparc_measure : str, optional
         Measure to use for asegstats2table, by default "thickness".
-    output_qc_file_path : Optional[Union[str, os.PathLike]], optional
-        Path to the output TSV file for QC metrics. If this is not provided, only
-        the stats file will be created.
+    with_qc : bool, optional
+        Whether or not to compute QC metrics.
     mode : str
         See input_dir_path.
     container_command_and_args : Optional[list[str]], optional
@@ -750,18 +749,16 @@ def run(
     cnr_cols : list[str], optional
         Metrics to extract from mri_cnr outputs.
     sub_colname : str, optional
-        Column name to use for the subject ID in the final output file.
+        Column name to use for the subject ID in the final output files.
     ses_colname : str, optional
-        Column name to use for the session ID in the final output file.
+        Column name to use for the session ID in the final output files.
     sub_prefix : str, optional
-        Prefix to strip from the subject IDs in the final output file.
+        Prefix to strip from the subject IDs in the final output files.
         Set as empty string to keep the original values.
     ses_prefix : str, optional
-        Prefix to strip from the session IDs in the final output file.
+        Prefix to strip from the session IDs in the final output files.
         Set as empty string to keep the original values.
     """
-    with_qc = output_qc_file_path is not None
-
     aseg_optional_args += ["--meas", aseg_measure]
 
     aparc_optional_args += [
@@ -806,17 +803,23 @@ def run(
     else:
         sys.exit(f"\nInvalid mode: {mode}. Must be one of: {MODE_SINGLE}, {MODE_MULTI}")
 
+    # output directory
+    output_dir_path = Path(output_dir_path)
+    output_dir_path.mkdir(parents=True, exist_ok=True)
+
+    # auto-generate output file names
+    fpath_stats = output_dir_path / "stats.tsv"
+    fpath_qc = output_dir_path / "qc.tsv"
+
     # save final file(s)
-    df_stats.to_csv(output_stats_file_path, sep="\t")
+    df_stats.to_csv(fpath_stats, sep="\t")
     print(
-        "\nSaved aggregated stats file with shape "
-        f"{df_stats.shape} to {output_stats_file_path}."
+        f"\nSaved aggregated stats file with shape {df_stats.shape} to {fpath_stats}."
     )
     if with_qc:
-        df_qc.to_csv(output_qc_file_path, sep="\t")
+        df_qc.to_csv(fpath_qc, sep="\t")
         print(
-            "Saved aggregated QC metrics file with shape "
-            f"{df_qc.shape} to {output_qc_file_path}."
+            f"Saved aggregated QC metrics file with shape {df_qc.shape} to {fpath_qc}."
         )
 
 
@@ -843,9 +846,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "output_stats_file_path",
+        "output_dir_path",
         type=Path,
-        help="Path to the output TSV file.",
+        help="Path to the output directory.",
     )
     parser.add_argument(
         "--mode",
@@ -856,6 +859,12 @@ def build_parser() -> argparse.ArgumentParser:
             "Whether to process a single FreeSurfer subjects directory or multiple "
             f"directories (default: {DEFAULT_MODE})."
         ),
+    )
+    parser.add_argument(
+        "--with-qc",
+        action="store_true",
+        default=False,
+        help="Whether to compute QC metrics and save them to a separate file.",
     )
     parser.add_argument(
         "--aseg-measure",
@@ -906,16 +915,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         default="",
         help="Optional arguments to pass to aparcstats2table, as a single string.",
-    )
-    parser.add_argument(
-        "--qc",
-        dest="output_qc_file_path",
-        type=Path,
-        help=(
-            "Optional path to the output TSV file for QC metrics. "
-            "If this is not provided, only the stats file will be generated."
-        ),
-        required=False,
     )
     parser.add_argument(
         "--euler-surf-paths",
@@ -999,12 +998,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     run(
         input_dir_path=args.input_dir_path,
-        output_stats_file_path=args.output_stats_file_path,
-        output_qc_file_path=args.output_qc_file_path,
+        output_dir_path=args.output_dir_path,
         mode=args.mode,
         aseg_measure=args.aseg_measure,
         aparc_parcellation=args.aparc_parcellation,
         aparc_measure=args.aparc_measure,
+        with_qc=args.with_qc,
         container_command_and_args=shlex.split(args.container),
         aseg_optional_args=shlex.split(args.aseg_args),
         aparc_optional_args=shlex.split(args.aparc_args),
