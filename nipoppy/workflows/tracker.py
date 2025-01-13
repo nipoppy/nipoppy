@@ -135,6 +135,7 @@ class PipelineTracker(BasePipelineWorkflow):
         status = self.check_status(
             tracker_config.PATHS, tracker_config.PARTICIPANT_SESSION_DIR
         )
+        self.logger.debug(f"Status: {status}")
         self.bagel = self.bagel.add_or_update_records(
             {
                 Bagel.col_participant_id: participant_id,
