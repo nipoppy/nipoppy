@@ -56,9 +56,19 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
-html_css_files = [
-    "theme.css",
-]
+if (
+    "READTHEDOCS" in os.environ
+    and os.environ.get("READTHEDOCS_CANONICAL_URL").startswith(
+        "https://nipoppy.readthedocs.io"
+    )
+    and os.environ.get("READTHEDOCS_VERSION_TYPE") != "external"  # exclude PR builds
+):
+    html_js_files = [
+        (
+            "https://plausible.neurobagel.org/js/script.js",
+            {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
+        ),
+    ]
 
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
