@@ -166,7 +166,7 @@
         },
         {
             "NAME": "qsiprep",
-            "VERSION": "0.24.0",
+            "VERSION": "0.23.0",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://pennbbl/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"

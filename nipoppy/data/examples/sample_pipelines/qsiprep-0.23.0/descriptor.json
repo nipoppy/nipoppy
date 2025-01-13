@@ -1,9 +1,9 @@
 {
     "name": "qsiprep",
     "description": "qsiprep",
-    "tool-version": "0.24.0",
+    "tool-version": "0.23.0",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [SESSION_ID] [BIDS_FILTER_FILE] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEM] [LOW_MEM] [USE_PLUGIN] [SLOPPY] [ANAT_ONLY] [DWI_ONLY] [BOILERPLATE_ONLY] [REPORTS_ONLY] [IGNORE] [INFANT] [LONGITUDINAL] [SUBJECT_ANATOMICAL_REFERENCE] [SKIP_ANAT_BASED_SPATIAL_NORMALIZATION] [ANAT_MODALITY] [B0_THRESHOLD] [DWI_DENOISE_WINDOW] [DENOISE_METHOD] [UNRINGING_METHOD] [DWI_NO_BIASCORR] [B1_BIASCORRECT_STAGE] [NO_B0_HARMONIZATION] [DENOISE_AFTER_COMBINING] [SEPARATE_ALL_DWIS] [DISTORTION_GROUP_MERGE] [ANATOMICAL_TEMPLATE] [OUTPUT_RESOLUTION] [B0_TO_T1W_TRANSFORM] [INTRAMODAL_TEMPLATE_ITERS] [INTRAMODAL_TEMPLATE_TRANSFORM] [FS_LICENSE_FILE] [B0_MOTION_CORR_TO] [HMC_TRANSFORM] [HMC_MODEL] [EDDY_CONFIG] [SHORELINE_ITERS] [PEPOLAR_METHOD] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [VERSION] [VERBOSE_COUNT] [WORK_DIR] [RESOURCE_MONITOR] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [BIDS_DIR] [OUTPUT_DIR] [ANALYSIS_LEVEL] [SKIP_BIDS_VALIDATION] [PARTICIPANT_LABEL] [BIDS_FILTER_FILE] [BIDS_DATABASE_DIR] [NPROCS] [OMP_NTHREADS] [MEM] [LOW_MEM] [USE_PLUGIN] [SLOPPY] [ANAT_ONLY] [DWI_ONLY] [BOILERPLATE_ONLY] [REPORTS_ONLY] [IGNORE] [INFANT] [LONGITUDINAL] [SKIP_ANAT_BASED_SPATIAL_NORMALIZATION] [ANAT_MODALITY] [B0_THRESHOLD] [DWI_DENOISE_WINDOW] [DENOISE_METHOD] [UNRINGING_METHOD] [DWI_NO_BIASCORR] [B1_BIASCORRECT_STAGE] [NO_B0_HARMONIZATION] [DENOISE_AFTER_COMBINING] [SEPARATE_ALL_DWIS] [DISTORTION_GROUP_MERGE] [ANATOMICAL_TEMPLATE] [OUTPUT_RESOLUTION] [B0_TO_T1W_TRANSFORM] [INTRAMODAL_TEMPLATE_ITERS] [INTRAMODAL_TEMPLATE_TRANSFORM] [FS_LICENSE_FILE] [B0_MOTION_CORR_TO] [HMC_TRANSFORM] [HMC_MODEL] [EDDY_CONFIG] [SHORELINE_ITERS] [PEPOLAR_METHOD] [FMAP_BSPLINE] [FMAP_NO_DEMEAN] [USE_SYN_SDC] [FORCE_SYN] [VERSION] [VERBOSE_COUNT] [WORK_DIR] [RESOURCE_MONITOR] [CONFIG_FILE] [WRITE_GRAPH] [STOP_ON_FIRST_CRASH] [NOTRACK] [DEBUG]",
     "inputs": [
         {
             "name": "bids_dir",
@@ -38,7 +38,7 @@
             "description": "Assume the input dataset is BIDS compliant and skip the validation",
             "type": "Flag",
             "optional": true,
-            "command-line-flag": "--skip-bids-validation",
+            "command-line-flag": "--skip_bids_validation",
             "value-key": "[SKIP_BIDS_VALIDATION]"
         },
         {
@@ -52,19 +52,9 @@
             "value-key": "[PARTICIPANT_LABEL]"
         },
         {
-            "name": "session_id",
-            "id": "session_id",
-            "description": "A space delimited list of session identifiers or a single identifier (the ses- prefix can be removed)",
-            "type": "String",
-            "list": true,
-            "optional": true,
-            "command-line-flag": "--session-id",
-            "value-key": "[SESSION_ID]"
-        },
-        {
             "name": "bids_filter_file",
             "id": "bids_filter_file",
-            "description": "A JSON file describing custom BIDS input filters using PyBIDS. For further details, please check out https://fmriprep.readthedocs.io/en/0.24.0/faq.html#how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep",
+            "description": "A JSON file describing custom BIDS input filters using PyBIDS. For further details, please check out https://fmriprep.readthedocs.io/en/0.23.0/faq.html#how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep",
             "type": "String",
             "optional": true,
             "command-line-flag": "--bids-filter-file",
@@ -183,14 +173,13 @@
                 "sbref",
                 "t2w",
                 "flair",
-                "fmap-jacobian",
-                "phase"
+                "fmap-jacobian"
             ]
         },
         {
             "name": "infant",
             "id": "infant",
-            "description": "Configure pipelines to process infant brains. If using this parameter, the anatomical-template will be changed to MNIInfant. The appropriate MNIInfant cohort will be selected based on the participant's age.",
+            "description": "configure pipelines to process infant brains",
             "type": "Flag",
             "optional": true,
             "command-line-flag": "--infant",
@@ -204,21 +193,6 @@
             "optional": true,
             "command-line-flag": "--longitudinal",
             "value-key": "[LONGITUDINAL]"
-        },
-        {
-            "name": "subject_anatomical_reference",
-            "id": "subject_anatomical_reference",
-            "description": "How to define subject-specific anatomical space. sessionwise will produce one anatomical space per session. The others combine anatomical data across sessions to define one anatomical space per subject.",
-            "type": "String",
-            "optional": true,
-            "default-value": "first-alphabetically",
-            "command-line-flag": "--subject-anatomical-reference",
-            "value-key": "[SUBJECT_ANATOMICAL_REFERENCE]",
-            "value-choices": [
-                "first-alphabetically",
-                "unbiased",
-                "sessionwise"
-            ]
         },
         {
             "name": "skip_anat_based_spatial_normalization",
@@ -261,7 +235,7 @@
             "type": "String",
             "optional": true,
             "default-value": "auto",
-            "command-line-flag": "--dwi-denoise-window",
+            "command-line-flag": "--dwi_denoise_window",
             "value-key": "[DWI_DENOISE_WINDOW]"
         },
         {
@@ -341,7 +315,7 @@
             "description": "don't attempt to combine dwis from multiple runs. Each will be processed separately.",
             "type": "Flag",
             "optional": true,
-            "command-line-flag": "--separate-all-dwis",
+            "command-line-flag": "--separate_all_dwis",
             "value-key": "[SEPARATE_ALL_DWIS]"
         },
         {
@@ -464,7 +438,7 @@
             "type": "String",
             "optional": true,
             "default-value": "eddy",
-            "command-line-flag": "--hmc-model",
+            "command-line-flag": "--hmc_model",
             "value-key": "[HMC_MODEL]",
             "value-choices": [
                 "none",
@@ -489,7 +463,7 @@
             "type": "Number",
             "optional": true,
             "default-value": 2,
-            "command-line-flag": "--shoreline-iters",
+            "command-line-flag": "--shoreline_iters",
             "value-key": "[SHORELINE_ITERS]"
         },
         {

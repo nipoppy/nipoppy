@@ -112,19 +112,45 @@ def get_mriqc_output_paths(
 def get_qsiprep_output_paths(
     participant_id, session_id, pipeline_version=None
 ) -> list[str]:
-    return [
-        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-brain_mask.nii.gz",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_T1w.nii.gz",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_T1w.json",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_from-ACPC_to-MNI152NLin2009cAsym_mode-image_xfm.h5",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_from-MNI152NLin2009cAsym_to-ACPC_mode-image_xfm.h5",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-brain_mask.nii.gz",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.nii.gz",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.json",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.b",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.bval",  # noqa E501
-        f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.bvec",  # noqa E501
-    ]
+    if pipeline_version == "0.23.0":
+        fpaths = [
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_desc-preproc_T1w.json",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_desc-preproc_T1w.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_desc-brain_mask.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_from-T1wNative_to-T1wACPC_mode-image_xfm.mat",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_desc-aseg_dseg.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_from-T1wACPC_to-T1wNative_mode-image_xfm.mat",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/anat/sub-{participant_id}_dseg.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-preproc_dwi.b",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_confounds.tsv",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-brain_mask.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_desc-SliceQC_dwi.json",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_dwiref.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_desc-ImageQC_dwi.csv",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-preproc_dwi.b_table.txt",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-preproc_dwi.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-preproc_dwi.bvec",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-eddy_cnr.nii.gz",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-T1w_desc-preproc_dwi.bval",  # noqa E501
+            f"ses-{session_id}/sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_from-orig_to-T1w_mode-image_xfm.txt",  # noqa E501
+        ]
+    elif pipeline_version == "0.24.0":
+        fpaths = [
+            f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-brain_mask.nii.gz",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_T1w.nii.gz",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_T1w.json",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_from-ACPC_to-MNI152NLin2009cAsym_mode-image_xfm.h5",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/anat/sub-{participant_id}_ses-{session_id}_from-MNI152NLin2009cAsym_to-ACPC_mode-image_xfm.h5",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-brain_mask.nii.gz",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.nii.gz",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.json",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.b",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.bval",  # noqa E501
+            f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.bvec",  # noqa E501
+        ]
+    return fpaths
 
 
 def test_sample_configs():
@@ -174,7 +200,7 @@ def test_boutiques_descriptors(fpath_descriptor):
         ("fmriprep", "23.1.3"),
         ("fmriprep", "24.1.1"),
         ("mriqc", "23.1.0"),
-        ("qsiprep", "0.24.0"),
+        ("qsiprep", "0.23.0"),
     ],
 )
 def test_pipeline_runner(
@@ -257,7 +283,7 @@ def test_bids_pipeline_configs():
         ("freesurfer", "6.0.1", DEFAULT_PIPELINE_STEP_NAME),
         ("freesurfer", "7.3.2", DEFAULT_PIPELINE_STEP_NAME),
         ("mriqc", "23.1.0", DEFAULT_PIPELINE_STEP_NAME),
-        ("qsiprep", "0.24.0", DEFAULT_PIPELINE_STEP_NAME),
+        ("qsiprep", "0.23.0", DEFAULT_PIPELINE_STEP_NAME),
     ],
 )
 def test_tracker(
@@ -285,7 +311,7 @@ def test_tracker(
         ("fmriprep", "23.1.3", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
         ("fmriprep", "24.1.1", DEFAULT_PIPELINE_STEP_NAME, get_fmriprep_output_paths),
         ("mriqc", "23.1.0", DEFAULT_PIPELINE_STEP_NAME, get_mriqc_output_paths),
-        ("qsiprep", "0.24.0", DEFAULT_PIPELINE_STEP_NAME, get_qsiprep_output_paths),
+        ("qsiprep", "0.23.0", DEFAULT_PIPELINE_STEP_NAME, get_qsiprep_output_paths),
     ],
 )
 def test_tracker_paths(
