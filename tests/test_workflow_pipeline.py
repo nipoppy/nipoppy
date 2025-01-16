@@ -15,11 +15,11 @@ from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConf
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     DEFAULT_PIPELINE_STEP_NAME,
+    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
     StrOrPathLike,
-    DEFAULT_VERBOSITY
 )
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
