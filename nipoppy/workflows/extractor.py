@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
@@ -10,7 +9,7 @@ from typing import Optional
 from nipoppy.config.main import get_pipeline_config
 from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -27,11 +26,12 @@ class ExtractionRunner(PipelineRunner):
         session_id: str = None,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         super().__init__(
             dpath_root=dpath_root,
+            name="extract",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
@@ -39,10 +39,9 @@ class ExtractionRunner(PipelineRunner):
             session_id=session_id,
             simulate=simulate,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
-        self.name = "extract"
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:

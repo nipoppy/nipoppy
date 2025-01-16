@@ -30,6 +30,7 @@ class BidsConversionRunner(PipelineRunner):
     ):
         super().__init__(
             dpath_root=dpath_root,
+            name="bids_conversion",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
@@ -40,7 +41,6 @@ class BidsConversionRunner(PipelineRunner):
             verbose=verbose,
             dry_run=dry_run,
         )
-        self.name = "bids_conversion"
 
     @cached_property
     def dpath_pipeline(self):

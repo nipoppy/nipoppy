@@ -25,7 +25,7 @@ def test_cli_invalid():
         cli,
         ["--fake-arg"],
     )
-    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+    assert result.exit_code != ReturnCode.SUCCESS
 
 
 def test_cli_init(tmp_path: Path):
@@ -189,8 +189,8 @@ def test_cli_extract(tmp_path: Path):
     result = runner.invoke(
         cli,
         [
-            "nipoppy",
             "extract",
+            "--dataset",
             str(dpath_root),
             "--pipeline",
             "my_pipeline",

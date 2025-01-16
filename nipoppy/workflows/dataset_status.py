@@ -9,7 +9,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
 from nipoppy.tabular.bagel import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -21,7 +21,7 @@ class StatusWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -29,7 +29,7 @@ class StatusWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="status",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
         self.col_pipeline = "pipeline"

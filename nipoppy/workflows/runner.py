@@ -20,6 +20,7 @@ class PipelineRunner(BasePipelineWorkflow):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
+        name: str,
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
@@ -34,9 +35,10 @@ class PipelineRunner(BasePipelineWorkflow):
     ):
         self.simulate = simulate
         self.keep_workdir = keep_workdir
+        self.tar = tar
         super().__init__(
             dpath_root=dpath_root,
-            name="run",
+            name=name,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
@@ -46,9 +48,6 @@ class PipelineRunner(BasePipelineWorkflow):
             verbose=verbose,
             dry_run=dry_run,
         )
-        self.keep_workdir = keep_workdir
-        self.tar = tar
-        self.simulate = simulate
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
