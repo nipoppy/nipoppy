@@ -163,6 +163,64 @@
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
                 }
             ]
+        },
+        {
+            "NAME": "qsiprep",
+            "VERSION": "0.23.0",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+                "URI": "docker://pennbbl/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+            },
+            "CONTAINER_CONFIG": {
+                "ENV_VARS": {
+                    "TEMPLATEFLOW_HOME": "[[TEMPLATEFLOW_HOME]]"
+                },
+                "ARGS": [
+                    "--bind",
+                    "[[FREESURFER_LICENSE_FILE]]",
+                    "--bind",
+                    "[[TEMPLATEFLOW_HOME]]"
+                ]
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                }
+            ]
+        }
+    ],
+    "EXTRACTION_PIPELINES": [
+        {
+            "NAME": "freesurfer_stats_and_qc",
+            "VERSION": "0.1.0",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/freesurfer_7.3.2.sif",
+                "URI": "docker://freesurfer/freesurfer:7.3.2"
+            },
+            "CONTAINER_CONFIG": {
+                "ENV_VARS": {
+                    "FS_LICENSE": "[[FREESURFER_LICENSE_FILE]]"
+                },
+                "ARGS": [
+                    "--bind",
+                    "[[FREESURFER_LICENSE_FILE]]"
+                ]
+            },
+            "PROC_DEPENDENCIES": [
+                {
+                    "NAME": "freesurfer",
+                    "VERSION": "7.3.2"
+                }
+            ],
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+                    "ANALYSIS_LEVEL": "group"
+                }
+            ]
         }
     ],
     "CUSTOM": {}

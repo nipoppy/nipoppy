@@ -20,6 +20,7 @@ from nipoppy.config.boutiques import (
 from nipoppy.config.main import get_pipeline_config, get_pipeline_version
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -204,6 +205,17 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         invocation = load_json(fpath_invocation)
         invocation = self.config.apply_substitutions_to_json(invocation)
         return invocation
+
+    @cached_property
+    def tracker_config(self) -> TrackerConfig:
+        """Load the pipeline step's tracker configuration."""
+        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
+        if fpath_tracker_config is None:
+            raise ValueError(
+                f"No tracker config file specified for pipeline {self.pipeline_name}"
+                f" {self.pipeline_version}"
+            )
+        return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
     def pybids_ignore_patterns(self) -> list[str]:

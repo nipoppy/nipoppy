@@ -20,6 +20,9 @@ DEFAULT_PIPELINE_STEP_NAME = "default"
 # True when running tests
 IS_TESTING = "pytest" in sys.modules
 
+# file extensions
+EXT_TAR = ".tar"
+
 
 class ReturnCode:
     """Return codes used for the CLI commands."""

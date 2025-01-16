@@ -12,6 +12,7 @@ Command-line interface
    bidsify.rst
    run.rst
    track.rst
+   extract.rst
 
 .. click:: nipoppy.cli:cli
    :prog: nipoppy

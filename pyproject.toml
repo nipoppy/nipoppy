@@ -18,7 +18,7 @@ dependencies = [
     "boutiques",
     "click",
     "pandas",
-    "pybids",
+    "pybids!=0.18.0",
     "pydantic",
     "pydicom!=3.0.0",
     "rich",

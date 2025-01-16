@@ -235,3 +235,20 @@ def track(**params):
 
     with handle_exception(PipelineTracker(**params)) as workflow:
         workflow.run()
+
+
+@cli.command()
+@dataset_option
+@pipeline_options
+@click.option(
+    "--simulate",
+    is_flag=True,
+    help="Simulate the pipeline run without executing the generated command-line.",
+)
+@global_options
+def extract(**params):
+    """Add subparser for extract command."""
+    from nipoppy.workflows.extractor import ExtractionRunner
+
+    with handle_exception(ExtractionRunner(**params)) as workflow:
+        workflow.run()

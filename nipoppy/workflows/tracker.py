@@ -5,7 +5,6 @@ from typing import Optional
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import DEFAULT_VERBOSITY, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
-from nipoppy.utils import load_json
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -36,7 +35,6 @@ class PipelineTracker(BasePipelineWorkflow):
             verbose=verbose,
             dry_run=dry_run,
         )
-        self.bagel: Bagel = Bagel()  # may get overwritten
 
     def run_setup(self):
         """Load/initialize the bagel file."""
@@ -85,17 +83,10 @@ class PipelineTracker(BasePipelineWorkflow):
 
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
-        # load tracker configs from file
-        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
-        if fpath_tracker_config is None:
-            raise ValueError(
-                f"No tracker config file specified for pipeline {self.pipeline_name}"
-                f" {self.pipeline_version}"
-            )
-        # replace template strings
+        # replace template strings in the tracker config
         tracker_config = TrackerConfig(
             **self.process_template_json(
-                load_json(fpath_tracker_config),
+                self.tracker_config.model_dump(mode="json"),
                 participant_id=participant_id,
                 session_id=session_id,
             )

@@ -56,9 +56,19 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
-html_css_files = [
-    "theme.css",
-]
+if (
+    "READTHEDOCS" in os.environ
+    and os.environ.get("READTHEDOCS_CANONICAL_URL").startswith(
+        "https://nipoppy.readthedocs.io"
+    )
+    and os.environ.get("READTHEDOCS_VERSION_TYPE") != "external"  # exclude PR builds
+):
+    html_js_files = [
+        (
+            "https://plausible.neurobagel.org/js/script.js",
+            {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
+        ),
+    ]
 
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
@@ -141,7 +151,8 @@ myst_substitutions = {
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
-    "dpath_derivatives": f"`{DEFAULT_LAYOUT_INFO.dpath_derivatives}`",
+    "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
+    "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
     "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
@@ -157,7 +168,12 @@ myst_substitutions = {
     "content_dpath_bids": (
         "Raw imaging data (NIfTIs) organized according to the BIDS standard"
     ),
-    "content_dpath_derivatives": ("Derivative files produced by processing pipelines"),
+    "content_dpath_pipeline_output": (
+        "Derivative files produced by processing pipelines"
+    ),
+    "content_dpath_pipeline_idp": (
+        "Imaging-derived phenotypes (IDPs) produced by extraction pipelines"
+    ),
     "template_strings_bids_runner": "\n".join(template_strings_bids_runner),
     "template_strings_proc_runner": "\n".join(template_strings_proc_runner),
 }

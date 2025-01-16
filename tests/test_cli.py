@@ -48,6 +48,13 @@ def test_cli_init_dir_exists(tmp_path: Path):
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
+def test_cli_status(tmp_path: Path):
+    try:
+        cli(["nipoppy", "status", str(tmp_path / "my_dataset")]) is None
+    except SystemExit:
+        pass
+
+
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(cli, ["doughnut", "--dataset", str(dpath_root)])
@@ -58,10 +65,11 @@ def test_cli_doughnut(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
-def test_cli_dicom_reorg(tmp_path: Path):
+def test_cli_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)])
 
@@ -75,10 +83,11 @@ def test_cli_dicom_reorg(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
-def test_cli_bids_conversion(tmp_path: Path):
+def test_cli_bidsify(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(
         cli,
@@ -108,10 +117,11 @@ def test_cli_bids_conversion(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
-def test_cli_pipeline_run(tmp_path: Path):
+def test_cli_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(
         cli,
@@ -139,10 +149,11 @@ def test_cli_pipeline_run(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
-def test_cli_pipeline_track(tmp_path: Path):
+def test_cli_track(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(
         cli,
@@ -169,4 +180,36 @@ def test_cli_pipeline_track(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
+
+def test_cli_extract(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    result = runner.invoke(
+        cli,
+        [
+            "nipoppy",
+            "extract",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+        ],
+    )
+
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "extract/my_pipeline-1.0/*.log"
+                )
+            )
+        )
+        == 1
+    )
+
+    # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
