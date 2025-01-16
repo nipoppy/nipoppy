@@ -25,7 +25,8 @@ class ReturnCode:
     """Return codes used for the CLI commands."""
 
     SUCCESS = 0
-    PARTIAL_SUCCESS = 1
+    UNKOWN_FAILURE = 1
+    PARTIAL_SUCCESS = 64
 
 
 class LogColor:

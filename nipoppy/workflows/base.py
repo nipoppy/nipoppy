@@ -213,12 +213,7 @@ class BaseWorkflow(Base, ABC):
         if self.dry_run:
             self.logger.info("Doing a dry run")
         if self.validate_layout:
-            try:
-                self.layout.validate()
-            except FileNotFoundError as exception:
-                raise RuntimeError(
-                    f"Dataset does not follow expected directory structure: {exception}"
-                )
+            self.layout.validate()
 
     @abstractmethod
     def run_main(self):

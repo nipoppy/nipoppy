@@ -1,21 +1,26 @@
 """Nipoppy CLI."""
 
-import logging
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 import rich_click as click
-from rich.logging import RichHandler
 
 from nipoppy._version import __version__
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, ReturnCode
 
-logging.basicConfig(
-    level="NOTSET",
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True, tracebacks_suppress=[click])],
-)
+
+@contextmanager
+def handle_exception(workflow):
+    """Handle exceptions raised during workflow execution."""
+    try:
+        yield workflow
+    except Exception:
+        workflow.logger.exception("Error while running nipoppy")
+        if workflow.return_code == ReturnCode.SUCCESS:
+            workflow.return_code = ReturnCode.UNKOWN_FAILURE
+    finally:
+        sys.exit(workflow.return_code)
 
 
 def dataset_option(func):
@@ -116,9 +121,8 @@ def init(**params):
     """Initialize a new dataset."""
     from nipoppy.workflows.dataset_init import InitWorkflow
 
-    workflow = InitWorkflow(**params)
-    workflow.run()
-    sys.exit(workflow.return_code)
+    with handle_exception(InitWorkflow(**params)) as workflow:
+        workflow.run()
 
 
 @cli.command()
@@ -146,9 +150,8 @@ def doughnut(**params):
     """Create or update a dataset's doughnut file."""
     from nipoppy.workflows.doughnut import DoughnutWorkflow
 
-    workflow = DoughnutWorkflow(**params)
-    workflow.run()
-    sys.exit(workflow.return_code)
+    with handle_exception(DoughnutWorkflow(**params)) as workflow:
+        workflow.run()
 
 
 @cli.command()
@@ -176,9 +179,8 @@ def reorg(**params):
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
-    workflow = DicomReorgWorkflow(**params)
-    workflow.run()
-    sys.exit(workflow.return_code)
+    with handle_exception(DicomReorgWorkflow(**params)) as workflow:
+        workflow.run()
 
 
 @cli.command()
@@ -194,9 +196,8 @@ def bidsify(**params):
     """Run a BIDS conversion pipeline."""
     from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
-    workflow = BidsConversionRunner(**params)
-    workflow.run()
-    sys.exit(workflow.return_code)
+    with handle_exception(BidsConversionRunner(**params)) as workflow:
+        workflow.run()
 
 
 @cli.command()
@@ -220,9 +221,8 @@ def run(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
 
-    workflow = PipelineRunner(**params)
-    workflow.run()
-    sys.exit(workflow.return_code)
+    with handle_exception(PipelineRunner(**params)) as workflow:
+        workflow.run()
 
 
 @cli.command()
@@ -233,6 +233,5 @@ def track(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
 
-    workflow = PipelineTracker(**params)
-    workflow.run()
-    sys.exit(workflow.return_code)
+    with handle_exception(PipelineTracker(**params)) as workflow:
+        workflow.run()

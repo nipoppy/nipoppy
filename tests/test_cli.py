@@ -1,12 +1,11 @@
 """Tests for the CLI."""
 
 from pathlib import Path
-from unittest import mock
 
-import pytest
 from click.testing import CliRunner
 
 from nipoppy.cli import cli
+from nipoppy.env import ReturnCode
 
 from .conftest import ATTR_TO_DPATH_MAP
 
@@ -34,185 +33,140 @@ def test_cli_init(tmp_path: Path):
         cli,
         ["init", "--dataset", str(tmp_path / "my_dataset")],
     )
-    assert result.exit_code == 0
+    assert result.exit_code == ReturnCode.SUCCESS
 
 
 def test_cli_init_dir_exists(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     dpath_root.joinpath("dir_exists").mkdir(parents=True, exist_ok=True)
 
-    with pytest.raises(FileExistsError):
-        runner.invoke(
-            cli,
-            ["init", "--dataset", str(dpath_root)],
-            catch_exceptions=False,
-        )
+    result = runner.invoke(
+        cli,
+        ["init", "--dataset", str(dpath_root)],
+    )
+
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    with pytest.raises(RuntimeError) as excinfo, mock.patch("sys.exit") as mock_exit:
-        result = runner.invoke(
-            cli,
-            ["doughnut", "--dataset", str(dpath_root)],
-            catch_exceptions=False,
-        )
-        mock_exit.assert_called_once_with(1)
+    result = runner.invoke(cli, ["doughnut", "--dataset", str(dpath_root)])
 
-        # check that a logfile was created
-        assert (
-            len(
-                list(
-                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                        "doughnut/*.log"
-                    )
-                )
-            )
-            == 1
-        )
+    # check that a logfile was created
+    assert (
+        len(list((dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob("doughnut/*.log")))
+        == 1
+    )
 
-        # Dataset was not initialized properly
-        assert excinfo.value.startswtih(
-            "Dataset does not follow expected directory structure:"
-        )
-        assert result.exit_code == 1
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_dicom_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    with pytest.raises(RuntimeError) as excinfo, mock.patch("sys.exit") as mock_exit:
-        result = runner.invoke(
-            cli, ["reorg", "--dataset", str(dpath_root)], catch_exceptions=False
-        )
-        mock_exit.assert_called_once_with(1)
+    result = runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)])
 
-        # check that a logfile was created
-        assert (
-            len(
-                list(
-                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                        "dicom_reorg/*.log"
-                    )
-                )
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob("dicom_reorg/*.log")
             )
-            == 1
         )
+        == 1
+    )
 
-        # Dataset was not initialized properly
-        assert excinfo.value.startswith(
-            "Dataset does not follow expected directory structure:"
-        )
-        assert result.exit_code == 1
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_bids_conversion(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    with pytest.raises(RuntimeError) as excinfo, mock.patch("sys.exit") as mock_exit:
-        result = runner.invoke(
-            cli,
-            [
-                "bidsify",
-                "--dataset",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-                "--pipeline-step",
-                "step1",
-            ],
-            catch_exceptions=False,
-        )
-        mock_exit.assert_called_once_with(1)
+    result = runner.invoke(
+        cli,
+        [
+            "bidsify",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+            "--pipeline-step",
+            "step1",
+        ],
+        catch_exceptions=False,
+    )
 
-        # check that a logfile was created
-        assert (
-            len(
-                list(
-                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                        "bids_conversion/my_pipeline-1.0/*.log"
-                    )
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "bids_conversion/my_pipeline-1.0/*.log"
                 )
             )
-            == 1
         )
+        == 1
+    )
 
-        # Dataset was not initialized properly
-        assert excinfo.value.startswith(
-            "Dataset does not follow expected directory structure:"
-        )
-        assert result.exit_code == 1
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_pipeline_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    with pytest.raises(RuntimeError) as excinfo, mock.patch("sys.exit") as mock_exit:
-        result = runner.invoke(
-            cli,
-            [
-                "run",
-                "--dataset",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-            ],
-            catch_exceptions=False,
-        )
-        mock_exit.assert_called_once_with(1)
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+        ],
+        catch_exceptions=False,
+    )
 
-        # check that a logfile was created
-        assert (
-            len(
-                list(
-                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                        "run/my_pipeline-1.0/*.log"
-                    )
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "run/my_pipeline-1.0/*.log"
                 )
             )
-            == 1
         )
+        == 1
+    )
 
-        # Dataset was not initialized properly
-        assert excinfo.value.startswith(
-            "Dataset does not follow expected directory structure:"
-        )
-        assert result.exit_code == 1
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_pipeline_track(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    with pytest.raises(RuntimeError) as excinfo, mock.patch("sys.exit") as mock_exit:
-        result = runner.invoke(
-            cli,
-            [
-                "track",
-                "--dataset",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-            ],
-            catch_exceptions=False,
-        )
-        mock_exit.assert_called_once_with(1)
+    result = runner.invoke(
+        cli,
+        [
+            "track",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+        ],
+    )
 
-        # check that a logfile was created
-        assert (
-            len(
-                list(
-                    (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                        "track/my_pipeline-1.0/*.log"
-                    )
+    # check that a logfile was created
+    assert (
+        len(
+            list(
+                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
+                    "track/my_pipeline-1.0/*.log"
                 )
             )
-            == 1
         )
+        == 1
+    )
 
-        # Dataset was not initialized properly
-        assert excinfo.value.startswith(
-            "Dataset does not follow expected directory structure:"
-        )
-        assert result.exit_code == 1
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
