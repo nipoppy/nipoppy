@@ -20,8 +20,8 @@ class PipelineRunner(BasePipelineWorkflow):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
-        name: str,
         pipeline_name: str,
+        name: str = "run",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
