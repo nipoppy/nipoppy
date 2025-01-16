@@ -1,7 +1,6 @@
 """Tests for BasePipelineWorkflow."""
 
 import json
-import logging
 import re
 from pathlib import Path
 from typing import Optional
@@ -16,6 +15,7 @@ from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConf
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     DEFAULT_PIPELINE_STEP_NAME,
+    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
@@ -39,7 +39,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -51,7 +51,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
 

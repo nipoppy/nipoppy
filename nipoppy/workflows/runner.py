@@ -1,6 +1,5 @@
 """PipelineRunner workflow."""
 
-import logging
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
@@ -11,7 +10,7 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, StrOrPathLike
+from nipoppy.env import DEFAULT_VERBOSITY, EXT_TAR, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -22,6 +21,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
+        name: str = "run",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
@@ -30,24 +30,24 @@ class PipelineRunner(BasePipelineWorkflow):
         tar: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
+        self.simulate = simulate
+        self.keep_workdir = keep_workdir
+        self.tar = tar
         super().__init__(
             dpath_root=dpath_root,
-            name="run",
+            name=name,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
-        self.keep_workdir = keep_workdir
-        self.tar = tar
-        self.simulate = simulate
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:

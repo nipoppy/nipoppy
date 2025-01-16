@@ -9,6 +9,7 @@ import requests
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
+    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     StrOrPathLike,
@@ -36,7 +37,7 @@ class InitWorkflow(BaseWorkflow):
         dpath_root: Path,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -44,8 +45,9 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbosity=verbosity,
             dry_run=dry_run,
+            _skip_logging=True,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
@@ -61,11 +63,19 @@ class InitWorkflow(BaseWorkflow):
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            raise FileExistsError("Dataset directory already exists")
+            # Allow a log dir to exist
+            # dir_content = list(self.dpath_root.iterdir())
+            # if not (
+            #     len(dir_content) == 1
+            #     and dir_content[0].is_dir()
+            #     and Path(self.layout.dpath_logs).is_relative_to(dir_content[0])
+            # ):
+            raise FileExistsError(
+                f"Dataset directory already exists: {self.dpath_root}"
+            )
 
         # create directories
         for dpath in self.layout.dpaths:
-
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
@@ -148,7 +158,6 @@ class InitWorkflow(BaseWorkflow):
         self.logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for bids_participant_id in bids_participant_ids:
-
             bids_session_ids = sorted(
                 [
                     x.name

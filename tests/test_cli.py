@@ -2,30 +2,38 @@
 
 from pathlib import Path
 
-import pytest
+from click.testing import CliRunner
 
-from nipoppy.cli.run import cli
+from nipoppy.cli import cli
+from nipoppy.env import ReturnCode
 
 from .conftest import ATTR_TO_DPATH_MAP
 
+runner = CliRunner()
+
 
 def test_cli():
-    with pytest.raises(SystemExit) as exception:
-        cli(["nipoppy", "-h"])
-    assert exception.value.code == 0
+    result = runner.invoke(
+        cli,
+        ["-h"],
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
 
 
 def test_cli_invalid():
-    with pytest.raises(SystemExit) as exception:
-        cli(["nipoppy", "--fake-arg"])
-    assert exception.value.code != 0
+    result = runner.invoke(
+        cli,
+        ["--fake-arg"],
+    )
+    assert result.exit_code != ReturnCode.SUCCESS
 
 
 def test_cli_init(tmp_path: Path):
-    try:
-        cli(["nipoppy", "init", str(tmp_path / "my_dataset")]) is None
-    except SystemExit:
-        pass
+    result = runner.invoke(
+        cli,
+        ["init", "--dataset", str(tmp_path / "my_dataset")],
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
 
 
 def test_cli_status(tmp_path: Path):
@@ -37,10 +45,7 @@ def test_cli_status(tmp_path: Path):
 
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    try:
-        cli(["nipoppy", "doughnut", str(dpath_root)])
-    except BaseException:
-        pass
+    result = runner.invoke(cli, ["doughnut", "--dataset", str(dpath_root)])
 
     # check that a logfile was created
     assert (
@@ -48,13 +53,13 @@ def test_cli_doughnut(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
 
 def test_cli_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    try:
-        cli(["nipoppy", "reorg", str(dpath_root)])
-    except BaseException:
-        pass
+    result = runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)])
 
     # check that a logfile was created
     assert (
@@ -66,25 +71,27 @@ def test_cli_reorg(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
 
 def test_cli_bidsify(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    try:
-        cli(
-            [
-                "nipoppy",
-                "bidsify",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-                "--pipeline-step",
-                "step1",
-            ]
-        )
-    except BaseException:
-        pass
+    result = runner.invoke(
+        cli,
+        [
+            "bidsify",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+            "--pipeline-step",
+            "step1",
+        ],
+        catch_exceptions=False,
+    )
 
     # check that a logfile was created
     assert (
@@ -98,23 +105,25 @@ def test_cli_bidsify(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
 
 def test_cli_run(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    try:
-        cli(
-            [
-                "nipoppy",
-                "run",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-            ]
-        )
-    except BaseException:
-        pass
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+        ],
+        catch_exceptions=False,
+    )
 
     # check that a logfile was created
     assert (
@@ -128,23 +137,24 @@ def test_cli_run(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
 
 def test_cli_track(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    try:
-        cli(
-            [
-                "nipoppy",
-                "track",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-            ]
-        )
-    except BaseException:
-        pass
+    result = runner.invoke(
+        cli,
+        [
+            "track",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+        ],
+    )
 
     # check that a logfile was created
     assert (
@@ -158,23 +168,24 @@ def test_cli_track(tmp_path: Path):
         == 1
     )
 
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
 
 def test_cli_extract(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    try:
-        cli(
-            [
-                "nipoppy",
-                "extract",
-                str(dpath_root),
-                "--pipeline",
-                "my_pipeline",
-                "--pipeline-version",
-                "1.0",
-            ]
-        )
-    except BaseException:
-        pass
+    result = runner.invoke(
+        cli,
+        [
+            "extract",
+            "--dataset",
+            str(dpath_root),
+            "--pipeline",
+            "my_pipeline",
+            "--pipeline-version",
+            "1.0",
+        ],
+    )
 
     # check that a logfile was created
     assert (
@@ -187,3 +198,6 @@ def test_cli_extract(tmp_path: Path):
         )
         == 1
     )
+
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE

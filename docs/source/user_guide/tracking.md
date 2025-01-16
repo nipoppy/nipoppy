@@ -20,7 +20,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 ### Commands
 
-- Command-line interface: [`nipoppy track`](<project:../cli_reference/track.md>)
+- Command-line interface: [`nipoppy track`](<project:../cli_reference/track.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineTracker`
 
 ### Workflow
@@ -41,7 +41,7 @@ Here is example of tracker configuration file (default for MRIQC 23.1.0):
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
 
 ```{tip}
-- The paths are expected to be relative to the {{dpath_pipeline_output}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
+- The paths are expected to be relative to the {{dpath_pipeline_output}} directory.
 - "Glob" expressions (i.e., that include `*`) are allowed in paths. If at least one file matches the expression, then the file will be considered found for that expression.
 ```
 
@@ -80,7 +80,7 @@ The `pipeline_complete` column can have the following values:
 To track all available participants and sessions, run:
 ```console
 $ nipoppy track \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -92,13 +92,13 @@ If there are multiple versions or steps for the same pipeline in the global conf
 The tracker can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy track \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
 ```
 
-See the [CLI reference page](<project:../cli_reference/track.md>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../cli_reference/track.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/track`
@@ -120,7 +120,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.md>)).
+See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.rst>)).
 
 ## Next steps
 

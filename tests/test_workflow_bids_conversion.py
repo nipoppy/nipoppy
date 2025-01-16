@@ -102,7 +102,8 @@ def test_setup(config: Config, tmp_path: Path):
     files_before = set(workflow.dpath_root.rglob("*"))
     workflow.run_setup()
     files_after = set(workflow.dpath_root.rglob("*"))
-    assert files_before == files_after
+    log_files = set(workflow.dpath_root.joinpath("logs").rglob("*"))
+    assert files_before == (files_after - log_files)
 
 
 @pytest.mark.parametrize(

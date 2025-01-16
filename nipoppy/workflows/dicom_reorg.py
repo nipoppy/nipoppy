@@ -1,13 +1,12 @@
 """DICOM file organization."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Optional
 
 import pydicom
 
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import DEFAULT_VERBOSITY, LogColor, ReturnCode, StrOrPathLike
 from nipoppy.tabular.doughnut import update_doughnut
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -36,7 +35,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         copy_files: bool = False,
         check_dicoms: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""
@@ -44,7 +43,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="dicom_reorg",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
         self.copy_files = copy_files
@@ -157,6 +156,7 @@ class DicomReorgWorkflow(BaseWorkflow):
 
     def run_setup(self):
         """Update the doughnut in case it is not up-to-date."""
+        super().run_setup()
         self.doughnut = update_doughnut(
             doughnut=self.doughnut,
             manifest=self.manifest,
