@@ -41,6 +41,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
+        hpc: Optional[str] = None,
     ):
         super().__init__(
             dpath_root=dpath_root,
@@ -53,6 +54,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
             fpath_layout=fpath_layout,
             logger=logger,
             dry_run=dry_run,
+            hpc=hpc,
         )
 
     def get_participants_sessions_to_run(
@@ -776,3 +778,93 @@ def test_generate_fpath_log(
     assert (
         fpath_log == workflow.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
     )
+
+
+@pytest.mark.parametrize(
+    "hpc_type, array_task_id_placeholder",
+    [
+        ("slurm", "$SLURM_ARRAY_TASK_ID"),
+        ("sge", "$((SGE_TASK_ID-1))"),
+    ],
+)
+def test_submit_hpc_job_command_generation(mocker, hpc_type, array_task_id_placeholder):
+    # Set up mock configurations and mocks
+    hpc_config_dict = {
+        "account_name": "testname",
+        "cores": 69,
+        "memory_max": 42,
+        "run_time_max": 666,
+    }
+    mock_hpc_config = mocker.MagicMock()
+    mock_hpc_config.model_dump.return_value = hpc_config_dict
+    mock_pipeline_config = mocker.MagicMock()
+    mock_pipeline_config.HPC_CONFIG = mock_hpc_config
+    mocker.patch.object(PipelineWorkflow, "pipeline_config", mock_pipeline_config)
+
+    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
+    mocker.patch("pysqa.QueueAdapter.__init__", lambda x, directory: None)
+    mocker.patch.object(
+        PipelineWorkflow,
+        "config",
+        mocker.MagicMock(HPC_PREAMBLE="module load some_module"),
+    )
+    mocker.patch("os.makedirs", mocker.MagicMock())
+
+    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+    pipeline_workflow = PipelineWorkflow(
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc=hpc_type
+    )
+
+    # Call the function we're testing
+    pipeline_workflow._submit_hpc_job(participants_sessions)
+
+    # Extract the arguments passed to submit_job
+    submit_job_args = mock_submit_job.call_args[1]
+
+    # Verify correct command generation
+    command = submit_job_args["command"]
+    assert "module load some_module" in command
+    for participant_id, session_id in participants_sessions:
+        assert (
+            f"nipoppy run /path/to/root --pipeline test_pipeline --pipeline-version 1.0.0 --pipeline-step step1 --participant-id {participant_id} --session-id {session_id}"
+            in command
+        )
+    assert array_task_id_placeholder in command
+
+    # Verify the correct number of tasks
+    num_tasks = len(participants_sessions)
+    assert (
+        submit_job_args["num_tasks"] == num_tasks
+    ), f"Expected num_tasks to be {num_tasks}, but got: {submit_job_args['num_tasks']}"
+
+
+def test_submit_hpc_job_unsupported_hpc_type(mocker):
+    # Test for unsupported hpc type
+    mocker.patch("os.makedirs", mocker.MagicMock())
+    pipeline_workflow = PipelineWorkflow(
+        "/path/to/root", "test_pipeline", "1.0.0", "step1", hpc="unsupported_type"
+    )
+    with pytest.raises(ValueError):
+        pipeline_workflow._submit_hpc_job([("participant1", "session1")])
+
+
+def test_run_main_hpc_mode(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflow):
+    # Mock the _submit_hpc_job method
+    mocker.patch("os.makedirs", mocker.MagicMock())
+    mocked_submit_hpc_job = mocker.patch.object(workflow, "_submit_hpc_job")
+
+    # Set the hpc attribute to "exists" to simulate that the HPC is available
+    workflow.hpc = "exists"
+
+    # Create a test manifest
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions
+    )
+    manifest.save_with_backup(workflow.layout.fpath_manifest)
+
+    # Call the run_main method
+    workflow.run_main()
+
+    # Assert that the _submit_hpc_job method was called
+    mocked_submit_hpc_job.assert_called_once()

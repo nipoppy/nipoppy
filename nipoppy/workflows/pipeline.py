@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import shlex
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
@@ -12,6 +14,7 @@ from typing import Iterable, Optional, Tuple
 
 import bids
 from pydantic import ValidationError
+from pysqa import QueueAdapter
 
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
@@ -84,6 +87,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run=False,
+        hpc: Optional[str] = None,
     ):
         super().__init__(
             dpath_root=dpath_root,
@@ -97,6 +101,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.hpc = hpc
 
         # the message logged in run_cleanup will depend on
         # the final values for these attributes (updated in run_main)
@@ -412,21 +417,105 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        for participant_id, session_id in participants_sessions:
-            self.n_total += 1
-            self.logger.info(
-                f"Running for participant {participant_id}, session {session_id}"
-            )
-            try:
-                self.run_single(participant_id, session_id)
-                self.n_success += 1
-            except Exception as exception:
-                self.return_code = ReturnCode.PARTIAL_SUCCESS
-                self.logger.error(
-                    f"Error running {self.pipeline_name} {self.pipeline_version}"
-                    f" on participant {participant_id}, session {session_id}"
-                    f": {exception}"
+        if self.hpc:
+            self._submit_hpc_job(participants_sessions)
+        else:
+            # Default behavior
+            for participant_id, session_id in participants_sessions:
+                self.n_total += 1
+                self.logger.info(
+                    f"Running for participant {participant_id}, session {session_id}"
                 )
+                try:
+                    self.run_single(participant_id, session_id)
+                    self.n_success += 1
+                except Exception as exception:
+                    self.return_code = ReturnCode.PARTIAL_SUCCESS
+                    self.logger.error(
+                        f"Error running {self.pipeline_name} {self.pipeline_version}"
+                        f" on participant {participant_id}, session {session_id}"
+                        f": {exception}"
+                    )
+
+    def _submit_hpc_job(self, participants_sessions):
+        """Submit jobs to a HPC cluster for processing."""
+        self.logger.info("Running in HPC mode.")
+
+        hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates/{self.hpc}")
+        hpc_logs_path = Path(f"{self.dpath_root}/logs/hpc")
+        os.makedirs(hpc_logs_path, exist_ok=True)
+
+        qa = QueueAdapter(directory=str(hpc_templates_path))
+
+        # Generate the list of nipoppy commands as a single string for a shell array
+        job_array_commands = []
+        for participant_id, session_id in participants_sessions:
+            command = [
+                "nipoppy",
+                "run",
+                str(self.dpath_root),
+                "--pipeline",
+                self.pipeline_name,
+                "--pipeline-version",
+                self.pipeline_version,
+                "--pipeline-step",
+                self.pipeline_step,
+                "--participant-id",
+                participant_id,
+                "--session-id",
+                session_id,
+            ]
+            job_array_commands.append(shlex.join(command))
+        # Join the commands into a single string
+
+        job_array_commands_str = " ".join([f'"{cmd}"' for cmd in job_array_commands])
+        preamble = self.config.HPC_PREAMBLE
+
+        # Build the single command to submit as an array job
+        if self.hpc == "slurm":
+            command = (
+                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
+                f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
+            )
+        elif self.hpc == "sge":
+            command = (
+                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
+                f'eval "${{commands[$((SGE_TASK_ID-1))]}}"\''
+            )
+        else:
+            raise ValueError(
+                "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
+            )
+
+        # Submit the job with the total number of commands as the array size
+        num_jobs = len(job_array_commands)
+
+        try:
+            if not self.dry_run:
+                queue_id = qa.submit_job(
+                    job_name=(
+                        f"nipoppy_{self.pipeline_name}_"
+                        f"{self.pipeline_version}_{self.pipeline_step}"
+                    ),
+                    dataset_root=self.dpath_root,
+                    command=command,
+                    num_tasks=num_jobs,
+                    queue=self.hpc,
+                    **self.pipeline_config.HPC_CONFIG.model_dump(),
+                )
+        except NotImplementedError:
+            self.logger.info(
+                "Failed to retrieve SGE array job ID. "
+                "Please check the queue for the job ID."
+            )
+            queue_id = None
+        except Exception as e:
+            self.logger.error(
+                f"Unexpected error occurred while submitting the job: {e}"
+            )
+            raise e
+        if queue_id is not None:
+            self.logger.info(f"Submitted array job with queue ID {queue_id}")
 
     def run_cleanup(self):
         """Log a summary message."""
