@@ -24,7 +24,7 @@ except ImportError:
 # try importing nilearn and if it fails, give instructions to install nilearn
 try:
     from nilearn import datasets
-    from nilearn.interfaces.fmriprep import load_confounds
+    from nilearn.interfaces.fmriprep import load_confounds, load_confounds_strategy
     from nilearn.maskers import NiftiLabelsMasker
 except ImportError:
     sys.exit("Please install nilearn by running: pip install nilearn")
@@ -65,10 +65,15 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
         'DKT'.
         If brain_atlas is not 'schaefer', then it is assumed to be dkt_atlas file.
     confound_strategy : str
-        'none': no confound regression.
-        'no_motion': confound regression with no motion parameters.
-        'no_motion_no_gsr': confound regression with no motion parameters and
-        no global signal regression. If confound_strategy is no_motion or
+        'none': no confounds are used
+        'no_motion': motion parameters are used
+        'no_motion_no_gsr': motion parameters are used
+                            and global signal regression
+                            is applied.
+        'simple': nilearn's simple preprocessing with
+                            full motion and basic wm_csf
+                            and high_pass 
+        If confound_strategy is simple, no_motion, or
         no_motion_no_gsr, the associated confound files should be in the same
         directory as func_file.
 
@@ -133,6 +138,13 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
         )
         time_series = masker.fit_transform(
             func_file, confounds=confounds, sample_mask=sample_mask
+        )
+    elif confound_strategy == "simple":
+        confounds_simple, sample_mask = load_confounds_strategy(
+            func_file, denoise_strategy="simple"
+        )
+        time_series = masker.fit_transform(
+            func_file, confounds=confounds_simple, sample_mask=sample_mask
         )
     else:
         raise ValueError("confound_strategy not recognized")
@@ -278,7 +290,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
     parser.add_argument(
-        "--func_file", type=str, required=True, help="path to the BOLD nifti file"
+        "--func_file", type=str, required=True, help="Path to the BOLD nifti file."
     )
     # example: --brain_atlas_list "schaefer_100" "schaefer_200"
     parser.add_argument(
@@ -307,8 +319,8 @@ if __name__ == "__main__":
             "schaefer_1000",
         ],
         help=(
-            "list of brain atlases to use for FC assessment."
-            " Default is all schaefer resolutions"
+            "List of brain atlases to use for FC assessment."
+            " Default is all schaefer resolutions."
         ),
     )
     parser.add_argument(
@@ -318,9 +330,10 @@ if __name__ == "__main__":
             "none",
             "no_motion",
             "no_motion_no_gsr",
+            "simple",
         ],
-        default="no_motion",
-        help="confound strategy for FC assessment. Default is no_motion",
+        default="simple",
+        help="Confound strategy for FC assessment. Default is simple.",
     )
     parser.add_argument(
         "--metric_list",
@@ -331,16 +344,16 @@ if __name__ == "__main__":
         ],
         nargs="+",  # at least one atlas required
         default=["correlation"],
-        help="list of metrics to use for FC assessment. Default is correlation",
+        help="List of metrics to use for FC assessment. Default is correlation.",
     )
     parser.add_argument(
-        "--dkt_file", type=str, default=None, help="path to the DKT atlas file"
+        "--dkt_file", type=str, default=None, help="Path to the DKT atlas file."
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         required=True,
-        help="output directory to save FC results",
+        help="Path to output directory to save FC results.",
     )
 
     args = parser.parse_args()
