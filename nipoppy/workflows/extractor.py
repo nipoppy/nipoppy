@@ -9,7 +9,7 @@ from typing import Optional
 from nipoppy.config.main import get_pipeline_config
 from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
-from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 

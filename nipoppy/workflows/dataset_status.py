@@ -9,7 +9,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from nipoppy.env import StrOrPathLike, DEFAULT_VERBOSITY
+from nipoppy.env import DEFAULT_VERBOSITY, StrOrPathLike
 from nipoppy.tabular.bagel import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
