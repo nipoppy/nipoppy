@@ -24,7 +24,7 @@ dependencies = [
     "rich",
     "rich-click",
     "typing-extensions",
-    'requests',
+    "requests",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }

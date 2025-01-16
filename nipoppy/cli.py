@@ -252,8 +252,19 @@ def track(**params):
 @runners_options
 @global_options
 def extract(**params):
-    """Add subparser for extract command."""
+    """Extract imaging-derived phenotypes (IDPs) from processed data."""
     from nipoppy.workflows.extractor import ExtractionRunner
 
     with handle_exception(ExtractionRunner(**params)) as workflow:
+        workflow.run()
+
+
+@cli.command()
+@dataset_option
+@global_options
+def status(**params):
+    """Workflow for status command."""
+    from nipoppy.workflows.dataset_status import StatusWorkflow
+
+    with handle_exception(StatusWorkflow(**params)) as workflow:
         workflow.run()

@@ -14,7 +14,7 @@ from nipoppy.workflows.runner import PipelineRunner
 
 
 class ExtractionRunner(PipelineRunner):
-    """Convert data to BIDS."""
+    """Extract imaging-derived phenotypes (IDPs) from processed data."""
 
     def __init__(
         self,

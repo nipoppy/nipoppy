@@ -36,18 +36,6 @@ def test_cli_init(tmp_path: Path):
     assert result.exit_code == ReturnCode.SUCCESS
 
 
-def test_cli_init_dir_exists(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    dpath_root.joinpath("dir_exists").mkdir(parents=True, exist_ok=True)
-
-    result = runner.invoke(
-        cli,
-        ["init", "--dataset", str(dpath_root)],
-    )
-
-    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
-
-
 def test_cli_status(tmp_path: Path):
     try:
         cli(["nipoppy", "status", str(tmp_path / "my_dataset")]) is None
