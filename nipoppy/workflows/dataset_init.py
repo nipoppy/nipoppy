@@ -37,7 +37,7 @@ class InitWorkflow(BaseWorkflow):
         dpath_root: Path,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -45,9 +45,9 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
-            skip_logging=True,
+            _skip_logging=True,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source

@@ -42,9 +42,9 @@ class BaseWorkflow(Base, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
-        skip_logging: bool = False,
+        _skip_logging: bool = False,
     ):
         """Initialize the workflow instance.
 
@@ -62,9 +62,9 @@ class BaseWorkflow(Base, ABC):
         self.name = name
         self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
-        self.verbose = verbose
+        self.verbosity = verbosity
         self.dry_run = dry_run
-        self.skip_logging = skip_logging
+        self._skip_logging = _skip_logging
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
@@ -80,7 +80,7 @@ class BaseWorkflow(Base, ABC):
         }
         self.logger = get_logger(
             name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
-            level=verbosity_to_log_level_map[verbose],
+            level=verbosity_to_log_level_map[verbosity],
         )
 
     def generate_fpath_log(
@@ -204,7 +204,7 @@ class BaseWorkflow(Base, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        if not self.skip_logging:
+        if not self._skip_logging:
             add_logfile(self.logger, self.generate_fpath_log())
         logging.captureWarnings(True)
         capture_warnings(self.logger)

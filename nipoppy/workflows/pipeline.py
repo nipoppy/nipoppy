@@ -83,7 +83,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run=False,
     ):
         self.pipeline_name = pipeline_name
@@ -96,7 +96,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             dpath_root=dpath_root,
             name=name,
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
 

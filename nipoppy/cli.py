@@ -41,7 +41,7 @@ def dataset_option(func):
 def global_options(func):
     """Define global options for the CLI."""
     func = click.option(
-        "--verbose",
+        "--verbosity",
         "-v",
         count=True,
         help="Increases log verbosity for each occurrence, debug level is -vvv",
@@ -93,6 +93,17 @@ def pipeline_options(func):
         required=True,
         help="Pipeline name, as specified in the config file.",
     )(func)
+    return func
+
+
+def runners_options(func):
+    """Define options for the pipeline runner commands."""
+    func = click.option(
+        "--simulate",
+        is_flag=True,
+        help="Simulate the pipeline run without executing the generated command-line.",
+    )(func)
+    func = pipeline_options(func)
     return func
 
 
@@ -174,7 +185,7 @@ def doughnut(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From the ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
+    From ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
     ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
@@ -185,12 +196,7 @@ def reorg(**params):
 
 @cli.command()
 @dataset_option
-@pipeline_options
-@click.option(
-    "--simulate",
-    is_flag=True,
-    help="Simulate the pipeline run without executing the generated command-line.",
-)
+@runners_options
 @global_options
 def bidsify(**params):
     """Run a BIDS conversion pipeline."""
@@ -202,7 +208,7 @@ def bidsify(**params):
 
 @cli.command()
 @dataset_option
-@pipeline_options
+@runners_options
 @click.option(
     "--keep-workdir",
     is_flag=True,
@@ -212,9 +218,13 @@ def bidsify(**params):
     ),
 )
 @click.option(
-    "--simulate",
+    "--tar",
     is_flag=True,
-    help="Simulate the pipeline run without executing the generated command-line.",
+    help=(
+        "Archive participant-session-level results into a tarball upon "
+        "successful completion. The path to be archived should be specified "
+        "in the tracker configuration file."
+    ),
 )
 @global_options
 def run(**params):
@@ -239,12 +249,7 @@ def track(**params):
 
 @cli.command()
 @dataset_option
-@pipeline_options
-@click.option(
-    "--simulate",
-    is_flag=True,
-    help="Simulate the pipeline run without executing the generated command-line.",
-)
+@runners_options
 @global_options
 def extract(**params):
     """Add subparser for extract command."""

@@ -20,7 +20,7 @@ class StatusWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -28,8 +28,9 @@ class StatusWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="status",
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
+            _skip_logging=True,
         )
         self.col_pipeline = "pipeline"
 

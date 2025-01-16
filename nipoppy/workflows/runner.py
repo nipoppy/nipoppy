@@ -30,7 +30,7 @@ class PipelineRunner(BasePipelineWorkflow):
         tar: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         self.simulate = simulate
@@ -45,7 +45,7 @@ class PipelineRunner(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
 

@@ -41,7 +41,7 @@ Here is example of tracker configuration file (default for MRIQC 23.1.0):
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
 
 ```{tip}
-- The paths are expected to be relative to the {{dpath_pipeline_output}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
+- The paths are expected to be relative to the {{dpath_pipeline_output}} directory.
 - "Glob" expressions (i.e., that include `*`) are allowed in paths. If at least one file matches the expression, then the file will be considered found for that expression.
 ```
 

@@ -17,7 +17,7 @@ class DoughnutWorkflow(BaseWorkflow):
         empty: bool = False,
         regenerate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -25,7 +25,7 @@ class DoughnutWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="doughnut",
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
 

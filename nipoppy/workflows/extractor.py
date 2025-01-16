@@ -26,7 +26,7 @@ class ExtractionRunner(PipelineRunner):
         session_id: str = None,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -39,7 +39,7 @@ class ExtractionRunner(PipelineRunner):
             session_id=session_id,
             simulate=simulate,
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
 

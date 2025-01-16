@@ -20,7 +20,7 @@ class PipelineTracker(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -32,7 +32,7 @@ class PipelineTracker(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
 

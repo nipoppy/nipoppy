@@ -35,7 +35,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         copy_files: bool = False,
         check_dicoms: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: int = DEFAULT_VERBOSITY,
+        verbosity: int = DEFAULT_VERBOSITY,
         dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""
@@ -43,7 +43,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="dicom_reorg",
             fpath_layout=fpath_layout,
-            verbose=verbose,
+            verbosity=verbosity,
             dry_run=dry_run,
         )
         self.copy_files = copy_files
