@@ -17,7 +17,7 @@ def test_cli():
         cli,
         ["-h"],
     )
-    assert result.exit_code == 0
+    assert result.exit_code == ReturnCode.SUCCESS
 
 
 def test_cli_invalid():
@@ -25,7 +25,7 @@ def test_cli_invalid():
         cli,
         ["--fake-arg"],
     )
-    assert result.exit_code != 0
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_init(tmp_path: Path):
