@@ -123,6 +123,7 @@
             "id": "bids_options",
             "description": "Flag for output into BIDS structure. Can also take BIDS-specific options, e.g., --bids notop. The only currently supported options is \"notop\", which skips creation of top-level BIDS files. This is useful when running in batch mode to prevent possible race conditions.",
             "type": "String",
+            "list": true,
             "optional": true,
             "command-line-flag": "-b",
             "value-key": "[BIDS_OPTIONS]",
