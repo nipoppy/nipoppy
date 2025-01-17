@@ -8,13 +8,17 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import pandas as pd
 
 MODE_SINGLE = "single"
 MODE_MULTI = "multi"
 DEFAULT_MODE = MODE_SINGLE
+
+DEFAULT_ASEG_MEASURE = "volume"
+DEFAULT_APARC_PARCELLATION = "DKTatlas"
+DEFAULT_APARC_MEASURE = "thickness"
 
 DEFAULT_EULER_SURF_PATHS = [
     "surf/lh.white",
@@ -310,7 +314,7 @@ def run_single_stats(
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
     verbose: bool = False,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Extract FreeSurfer aseg and aparc statistics for a single subjects directory.
 
     This function calls _run_asegstats2table and _run_aparcstats2table (twice,
@@ -335,8 +339,8 @@ def run_single_stats(
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with subject index and FreeSurfer stats columns.
+    Tuple[pd.DataFrame, pd.DataFrame]
+        Dataframes for aseg and aparc stats, with subject index.
     """
     subjects = _get_subject_list(subjects_dir_path)
 
@@ -396,16 +400,18 @@ def run_single_stats(
                             df_to_concat.drop(col, axis="columns", inplace=True)
                             print(f"Dropped duplicate column {col} from aparc file.")
 
-    # combine the stats files and make sure there are no duplicate column names
-    df_stats = pd.concat([df_aseg, df_aparc_lh, df_aparc_rh], axis="columns")
-    if len(set(df_stats.columns)) != len(df_stats.columns):
+    # combine the aparc stats files and make sure there are no duplicate column names
+    df_aparc = pd.concat([df_aparc_lh, df_aparc_rh], axis="columns")
+    if len(set(df_aparc.columns)) != len(df_aparc.columns):
         sys.exit(
             "Duplicate column names in the stats files: "
-            f"{df_stats.columns[df_stats.columns.duplicated()]}"
+            f"{df_aparc.columns[df_aparc.columns.duplicated()]}"
         )
-    df_stats = df_stats.sort_index()
 
-    return df_stats
+    # sort and return
+    df_aseg = df_aseg.sort_index()
+    df_aparc = df_aparc.sort_index()
+    return df_aseg, df_aparc
 
 
 def run_single_qc(
@@ -551,7 +557,7 @@ def run_single(
     """
     subjects_dir_path = Path(subjects_dir_path).resolve()
 
-    df_stats = run_single_stats(
+    df_aseg, df_aparc = run_single_stats(
         subjects_dir_path=subjects_dir_path,
         container_command_and_args=container_command_and_args,
         aseg_optional_args=aseg_optional_args,
@@ -575,7 +581,7 @@ def run_single(
     else:
         df_qc = None
 
-    return df_stats, df_qc
+    return df_aseg, df_aparc, df_qc
 
 
 def run_multi(
@@ -629,9 +635,10 @@ def run_multi(
 
     Returns
     -------
-    tuple[pd.DataFrame, Optional[pd.DataFrame]]
-        DataFrames with multi-level index (subject, session) and FreeSurfer stats
-        columns. Second "dataframe" is None if with_qc is False.
+    tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]
+        Dataframes with multi-level index (subject, session) and FreeSurfer stats
+        columns. First dataframe is for aseg and second is for aparc. Third
+        "dataframe" is None if with_qc is False.
     """
     sessions_dir_path = Path(sessions_dir_path)
 
@@ -678,9 +685,12 @@ def run_multi(
 
 def run(
     input_dir_path: Union[str, os.PathLike],
-    output_stats_file_path: Union[str, os.PathLike],
-    output_qc_file_path: Optional[Union[str, os.PathLike]] = None,
+    output_dir_path: Union[str, os.PathLike],
     mode: str = DEFAULT_MODE,
+    with_qc: bool = False,
+    aseg_measure: str = DEFAULT_ASEG_MEASURE,
+    aparc_parcellation: str = DEFAULT_APARC_PARCELLATION,
+    aparc_measure: str = DEFAULT_APARC_MEASURE,
     container_command_and_args: Optional[list[str]] = None,
     aparc_optional_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
@@ -707,12 +717,17 @@ def run(
         Path to input directory, which should be a FreeSurfer subjects directory if
         mode is "single" or a directory containing multiple FreeSurfer subjects
         directories if mode is "multi".
-    output_stats_file_path : Union[str, os.PathLike]
-        Path to the output TSV file for the stats file. The parent directory of
-        this path must exist.
-    output_qc_file_path : Optional[Union[str, os.PathLike]], optional
-        Path to the output TSV file for QC metrics. If this is not provided, only
-        the stats file will be created.
+    output_dir_path : Union[str, os.PathLike]
+        Path to the directory where output files will be created. Any existing file
+        may be overwritten.
+    aseg_measure : str, optional
+        Measure to use for aparcstats2table.
+    aparc_parcellation : str, optional
+        Parcellation to use for asegstats2table (minus "aparc." prefix).
+    aparc_measure : str, optional
+        Measure to use for asegstats2table, by default "thickness".
+    with_qc : bool, optional
+        Whether or not to compute QC metrics.
     mode : str
         See input_dir_path.
     container_command_and_args : Optional[list[str]], optional
@@ -725,9 +740,11 @@ def run(
         allows for forwarding environment variables; this function might work with
         Docker containers but likely only with --mode "single".
     aparc_optional_args : Optional[list[str]], optional
-        Optional arguments to pass to aparcstats2table, by default None
+        Optional arguments to pass to aparcstats2table, by default None. Should
+        not include --measure or --parc arguments.
     aseg_optional_args : Optional[list[str]], optional
-        Optional arguments to pass to asegstats2table, by default None
+        Optional arguments to pass to asegstats2table, by default None. Should
+        not include --meas argument.
     euler_surf_paths : list[Union[str, os.PathLike]], optional
         Paths to surface files for which to calculate number of holes with
         mris_euler_number.
@@ -737,21 +754,26 @@ def run(
     cnr_cols : list[str], optional
         Metrics to extract from mri_cnr outputs.
     sub_colname : str, optional
-        Column name to use for the subject ID in the final output file.
+        Column name to use for the subject ID in the final output files.
     ses_colname : str, optional
-        Column name to use for the session ID in the final output file.
+        Column name to use for the session ID in the final output files.
     sub_prefix : str, optional
-        Prefix to strip from the subject IDs in the final output file.
+        Prefix to strip from the subject IDs in the final output files.
         Set as empty string to keep the original values.
     ses_prefix : str, optional
-        Prefix to strip from the session IDs in the final output file.
+        Prefix to strip from the session IDs in the final output files.
         Set as empty string to keep the original values.
     """
-    with_qc = output_qc_file_path is not None
+    aseg_optional_args += ["--meas", aseg_measure]
+
+    aparc_optional_args += [
+        f"--parc=aparc.{aparc_parcellation}",
+        f"--measure={aparc_measure}",
+    ]
 
     # single subjects directory (no sessions)
     if mode == MODE_SINGLE:
-        df_stats, df_qc = run_single(
+        df_aseg, df_aparc, df_qc = run_single(
             subjects_dir_path=input_dir_path,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
@@ -767,7 +789,7 @@ def run(
 
     # multiple subjects directories (assumed to be sessions)
     elif mode == MODE_MULTI:
-        df_stats, df_qc = run_multi(
+        df_aseg, df_aparc, df_qc = run_multi(
             sessions_dir_path=input_dir_path,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
@@ -786,17 +808,30 @@ def run(
     else:
         sys.exit(f"\nInvalid mode: {mode}. Must be one of: {MODE_SINGLE}, {MODE_MULTI}")
 
-    # save final file(s)
-    df_stats.to_csv(output_stats_file_path, sep="\t")
+    # output directory
+    output_dir_path = Path(output_dir_path)
+    output_dir_path.mkdir(parents=True, exist_ok=True)
+
+    # auto-generate output file names
+    fpath_aseg = output_dir_path / f"aseg-{aseg_measure}.tsv"
+    fpath_aparc = output_dir_path / f"aparc-{aparc_parcellation}-{aparc_measure}.tsv"
+    fpath_qc = output_dir_path / "qc.tsv"
+
+    # save final files
+    df_aseg.to_csv(fpath_aseg, sep="\t")
     print(
-        "\nSaved aggregated stats file with shape "
-        f"{df_stats.shape} to {output_stats_file_path}."
+        "\nSaved aggregated aseg stats file with shape "
+        f"{df_aseg.shape} to {fpath_aseg}."
+    )
+    df_aparc.to_csv(fpath_aparc, sep="\t")
+    print(
+        "Saved aggregated aparc stats file with shape "
+        f"{df_aparc.shape} to {fpath_aparc}."
     )
     if with_qc:
-        df_qc.to_csv(output_qc_file_path, sep="\t")
+        df_qc.to_csv(fpath_qc, sep="\t")
         print(
-            "Saved aggregated QC metrics file with shape "
-            f"{df_qc.shape} to {output_qc_file_path}."
+            f"Saved aggregated QC metrics file with shape {df_qc.shape} to {fpath_qc}."
         )
 
 
@@ -823,9 +858,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "output_stats_file_path",
+        "output_dir_path",
         type=Path,
-        help="Path to the output TSV file.",
+        help="Path to the output directory.",
     )
     parser.add_argument(
         "--mode",
@@ -835,6 +870,35 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Whether to process a single FreeSurfer subjects directory or multiple "
             f"directories (default: {DEFAULT_MODE})."
+        ),
+    )
+    parser.add_argument(
+        "--with-qc",
+        action="store_true",
+        default=False,
+        help="Whether to compute QC metrics and save them to a separate file.",
+    )
+    parser.add_argument(
+        "--aseg-measure",
+        type=str,
+        default=DEFAULT_ASEG_MEASURE,
+        help=(f"Measure to use for asegstats2table. Default: {DEFAULT_ASEG_MEASURE}."),
+    )
+    parser.add_argument(
+        "--aparc-parcellation",
+        type=str,
+        default=DEFAULT_APARC_PARCELLATION,
+        help=(
+            "Parcellation to use for aparcstats2table (minus 'aparc.' prefix)."
+            f" Default: {DEFAULT_APARC_PARCELLATION}."
+        ),
+    )
+    parser.add_argument(
+        "--aparc-measure",
+        type=str,
+        default=DEFAULT_APARC_MEASURE,
+        help=(
+            "Measure to use for aparcstats2table. Default: " f"{DEFAULT_APARC_MEASURE}."
         ),
     )
     parser.add_argument(
@@ -856,23 +920,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--aseg-args",
         type=str,
         default="",
-        help="Optional arguments to pass to asegstats2table, as a single string.",
+        help=(
+            "Optional arguments to pass to asegstats2table, as a single string."
+            " Should not include --meas argument."
+        ),
     )
     parser.add_argument(
         "--aparc-args",
         type=str,
         default="",
-        help="Optional arguments to pass to aparcstats2table, as a single string.",
-    )
-    parser.add_argument(
-        "--qc",
-        dest="output_qc_file_path",
-        type=Path,
         help=(
-            "Optional path to the output TSV file for QC metrics. "
-            "If this is not provided, only the stats file will be generated."
+            "Optional arguments to pass to aparcstats2table, as a single string."
+            " Should not include --measure or --parc arguments."
         ),
-        required=False,
     )
     parser.add_argument(
         "--euler-surf-paths",
@@ -956,9 +1016,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     run(
         input_dir_path=args.input_dir_path,
-        output_stats_file_path=args.output_stats_file_path,
-        output_qc_file_path=args.output_qc_file_path,
+        output_dir_path=args.output_dir_path,
         mode=args.mode,
+        aseg_measure=args.aseg_measure,
+        aparc_parcellation=args.aparc_parcellation,
+        aparc_measure=args.aparc_measure,
+        with_qc=args.with_qc,
         container_command_and_args=shlex.split(args.container),
         aseg_optional_args=shlex.split(args.aseg_args),
         aparc_optional_args=shlex.split(args.aparc_args),
