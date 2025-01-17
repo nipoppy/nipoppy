@@ -58,15 +58,20 @@ def config(tmp_path: Path):
 
     return get_config(
         visit_ids=["BL", "V04"],
-        container_config={"COMMAND": "echo"},  # dummy command
+        container_config={
+            "COMMAND": "echo",  # dummy command
+            "ARGS": ["--flag1"],
+        },
         proc_pipelines=[
             {
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
+                "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
                 "STEPS": [
                     {
                         "DESCRIPTOR_FILE": fpath_descriptor,
                         "INVOCATION_FILE": fpath_invocation,
+                        "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
                     }
                 ],
             },
@@ -159,8 +164,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
 
 
-def test_process_container_config_boutiques_subcommand(config: Config, tmp_path: Path):
-    # check that the container subcommand from the Boutiques container config is used
+def test_process_container_config(config: Config, tmp_path: Path):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
@@ -169,18 +173,17 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
 
     runner.config = config
 
-    participant_id = "01"
-    session_id = "BL"
+    result = runner.process_container_config(participant_id="01", session_id="BL")
 
-    # the container command in the config is "echo"
-    # because otherwise the check for the container command fails
-    # if Singularity/Apptainer is not on the PATH
-    assert (
-        runner.process_container_config(
-            participant_id=participant_id, session_id=session_id
-        )
-        == "echo exec"
-    )
+    # check that the subcommand 'exec' from the Boutiques container config is used
+    # note: the container command in the config is "echo" because otherwise the
+    # check for the container command fails if Singularity/Apptainer is not on the PATH
+    assert result.startswith("echo exec")
+
+    # check that the right container config was used
+    assert "--flag1" in result
+    assert "--flag2" in result
+    assert "--flag3" in result
 
 
 def test_check_tar_conditions_no_tracker_config(config: Config, tmp_path: Path):
