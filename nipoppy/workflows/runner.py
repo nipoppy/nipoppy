@@ -233,6 +233,17 @@ class PipelineRunner(BasePipelineWorkflow):
         """Run pipeline runner setup."""
         to_return = super().run_setup()
         self._check_tar_conditions()
+
+        # fail early if container file is specified but not found
+        # otherwise, the exception will be caught in the run_main loop
+        # and the program will not actually exit
+        try:
+            self.fpath_container
+        except FileNotFoundError as exception:
+            raise exception
+        except Exception:
+            pass
+
         return to_return
 
     def run_single(self, participant_id: str, session_id: str):
@@ -266,14 +277,16 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         if self.tar and not self.simulate:
-            dpath_to_tar = TrackerConfig(
+            tracker_config = TrackerConfig(
                 **self.process_template_json(
                     self.tracker_config.model_dump(mode="json"),
                     participant_id=participant_id,
                     session_id=session_id,
                 )
-            ).PARTICIPANT_SESSION_DIR
-            self.tar_directory(dpath_to_tar)
+            )
+            self.tar_directory(
+                self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
+            )
 
         return to_return
 
