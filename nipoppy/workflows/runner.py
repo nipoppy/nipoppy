@@ -233,6 +233,17 @@ class PipelineRunner(BasePipelineWorkflow):
         """Run pipeline runner setup."""
         to_return = super().run_setup()
         self._check_tar_conditions()
+
+        # fail early if container file is specified but not found
+        # otherwise, the exception will be caught in the run_main loop
+        # and the program will not actually exit
+        try:
+            self.fpath_container
+        except FileNotFoundError as exception:
+            raise exception
+        except Exception:
+            pass
+
         return to_return
 
     def run_single(self, participant_id: str, session_id: str):

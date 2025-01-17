@@ -13,6 +13,7 @@ from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.runner import PipelineRunner
 
 from .conftest import create_empty_dataset, get_config, prepare_dataset
@@ -567,3 +568,18 @@ def test_run_single_tar(
         )
     else:
         mocked_tar_directory.assert_not_called()
+
+
+def test_run_missing_container_raises_error(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    config.save(runner.layout.fpath_config)
+    create_empty_dataset(runner.dpath_root)
+    runner.manifest = Manifest()
+
+    runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
+    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+        runner.run()
