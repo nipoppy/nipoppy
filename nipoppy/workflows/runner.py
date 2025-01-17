@@ -277,14 +277,16 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         if self.tar and not self.simulate:
-            dpath_to_tar = TrackerConfig(
+            tracker_config = TrackerConfig(
                 **self.process_template_json(
                     self.tracker_config.model_dump(mode="json"),
                     participant_id=participant_id,
                     session_id=session_id,
                 )
-            ).PARTICIPANT_SESSION_DIR
-            self.tar_directory(dpath_to_tar)
+            )
+            self.tar_directory(
+                self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
+            )
 
         return to_return
 

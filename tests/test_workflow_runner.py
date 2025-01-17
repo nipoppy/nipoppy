@@ -553,7 +553,7 @@ def test_run_single_tar(
     runner.tracker_config = TrackerConfig(
         PATHS=[tmp_path],  # not used
         PARTICIPANT_SESSION_DIR=(
-            tmp_path / "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
+            "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
         ),
     )
     try:
@@ -564,7 +564,7 @@ def test_run_single_tar(
 
     if tar and boutiques_success:
         mocked_tar_directory.assert_called_once_with(
-            tmp_path / f"{participant_id}_ses-{session_id}"
+            runner.dpath_pipeline_output / f"{participant_id}_ses-{session_id}"
         )
     else:
         mocked_tar_directory.assert_not_called()
