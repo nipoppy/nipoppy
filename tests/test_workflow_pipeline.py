@@ -741,6 +741,17 @@ def test_run_cleanup(
     assert expected_message.format(n_success, n_total) in caplog.text
 
 
+def test_run_cleanup_hpc(workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture):
+    workflow.hpc = "slurm"
+
+    workflow.n_success = 0
+    workflow.n_total = 0
+    workflow.run_cleanup()
+
+    assert "No participants or sessions to run." not in caplog.text
+    assert "[green]Submitted HPC job(s)" in caplog.text
+
+
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,participant_id,session_id,expected_stem",
     [

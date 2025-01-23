@@ -520,11 +520,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def run_cleanup(self):
         """Log a summary message."""
         if self.n_total == 0:
-            self.logger.warning(
-                "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, "
-                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
-            )
+            if self.hpc is None:
+                self.logger.warning(
+                    "No participants or sessions to run. Make sure there are no "
+                    "mistakes in the input arguments, the dataset's manifest or config "
+                    "file, and/or check the doughnut file at "
+                    f"{self.layout.fpath_doughnut}"
+                )
+            else:
+                self.logger.info(f"[{LogColor.SUCCESS}]Submitted HPC job(s)[/]")
         else:
             # change the message depending on how successful the run was
             prefix = "Ran"
