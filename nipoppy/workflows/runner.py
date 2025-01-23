@@ -10,7 +10,7 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import DEFAULT_VERBOSITY, EXT_TAR, StrOrPathLike
+from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -30,7 +30,7 @@ class PipelineRunner(BasePipelineWorkflow):
         tar: bool = False,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         self.simulate = simulate
@@ -45,7 +45,7 @@ class PipelineRunner(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            verbosity=verbosity,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

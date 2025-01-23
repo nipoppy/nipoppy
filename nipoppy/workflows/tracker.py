@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import DEFAULT_VERBOSITY, EXT_TAR, StrOrPathLike
+from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -22,7 +22,7 @@ class PipelineTracker(BasePipelineWorkflow):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -34,7 +34,7 @@ class PipelineTracker(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
             fpath_layout=fpath_layout,
-            verbosity=verbosity,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import DEFAULT_VERBOSITY, LogColor, StrOrPathLike
+from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -17,7 +17,7 @@ class DoughnutWorkflow(BaseWorkflow):
         empty: bool = False,
         regenerate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -25,7 +25,7 @@ class DoughnutWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="doughnut",
             fpath_layout=fpath_layout,
-            verbosity=verbosity,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

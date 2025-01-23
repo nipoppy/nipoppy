@@ -24,7 +24,6 @@ from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
-    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
@@ -83,7 +82,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         participant_id: str = None,
         session_id: str = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run=False,
     ):
         self.pipeline_name = pipeline_name
@@ -96,7 +95,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             dpath_root=dpath_root,
             name=name,
             fpath_layout=fpath_layout,
-            verbosity=verbosity,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

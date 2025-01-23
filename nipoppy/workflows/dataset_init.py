@@ -9,7 +9,6 @@ import requests
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
-    DEFAULT_VERBOSITY,
     FAKE_SESSION_ID,
     LogColor,
     StrOrPathLike,
@@ -37,7 +36,7 @@ class InitWorkflow(BaseWorkflow):
         dpath_root: Path,
         bids_source=None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -45,7 +44,7 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            verbosity=verbosity,
+            verbose=verbose,
             dry_run=dry_run,
             _skip_logging=True,
         )

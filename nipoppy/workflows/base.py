@@ -15,7 +15,7 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import DEFAULT_VERBOSITY, PROGRAM_NAME, ReturnCode, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.bagel import Bagel
@@ -42,7 +42,7 @@ class BaseWorkflow(Base, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run: bool = False,
         _skip_logging: bool = False,
     ):
@@ -62,7 +62,7 @@ class BaseWorkflow(Base, ABC):
         self.name = name
         self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
-        self.verbosity = verbosity
+        self.verbose = verbose
         self.dry_run = dry_run
         self._skip_logging = _skip_logging
 
@@ -72,15 +72,10 @@ class BaseWorkflow(Base, ABC):
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
 
         # Setup logging
-        verbosity_to_log_level_map = {
-            0: logging.ERROR,
-            1: logging.WARNING,
-            2: logging.INFO,
-            3: logging.DEBUG,
-        }
+        log_level = logging.DEBUG if verbose else logging.INFO
         self.logger = get_logger(
             name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
-            level=verbosity_to_log_level_map[verbosity],
+            level=log_level,
         )
 
     def generate_fpath_log(

@@ -8,7 +8,7 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
-from nipoppy.env import DEFAULT_VERBOSITY, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -25,7 +25,7 @@ class BidsConversionRunner(PipelineRunner):
         session_id: str = None,
         simulate: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        verbosity: int = DEFAULT_VERBOSITY,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         super().__init__(
@@ -38,7 +38,7 @@ class BidsConversionRunner(PipelineRunner):
             session_id=session_id,
             simulate=simulate,
             fpath_layout=fpath_layout,
-            verbosity=verbosity,
+            verbose=verbose,
             dry_run=dry_run,
         )
 

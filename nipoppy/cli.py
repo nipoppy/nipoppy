@@ -8,7 +8,18 @@ from pathlib import Path
 import rich_click as click
 
 from nipoppy._version import __version__
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, ReturnCode
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    ReturnCode,
+    PROGRAM_NAME,
+)
+from nipoppy.logger import get_logger
+
+
+logger = get_logger(
+    name=f"{PROGRAM_NAME}.{__name__}",
+)
 
 
 @contextmanager
@@ -55,13 +66,11 @@ def dep_params(**params):
     _dep_dpath_root = params.pop("dataset_argument")
 
     if _dep_dpath_root:
-        warnings.warn(
+        logger.warning(
             (
                 "The dataset argument is deprecated."
                 "Use the --dataset option in the future."
             ),
-            DeprecationWarning,
-            stacklevel=2,
         )
     params["dpath_root"] = _dep_dpath_root or params.get("dpath_root")
 
@@ -71,10 +80,9 @@ def dep_params(**params):
 def global_options(func):
     """Define global options for the CLI."""
     func = click.option(
-        "--verbosity",
+        "--verbose",
         "-v",
-        count=True,
-        help="Increases log verbosity for each occurrence, debug level is -vvv",
+        help="Verbose mode (Show DEBUG messages).",
     )(func)
     func = click.option(
         "--dry-run",
