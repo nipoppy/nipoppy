@@ -1,7 +1,6 @@
 """Nipoppy CLI."""
 
 import sys
-import warnings
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -11,11 +10,10 @@ from nipoppy._version import __version__
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
-    ReturnCode,
     PROGRAM_NAME,
+    ReturnCode,
 )
 from nipoppy.logger import get_logger
-
 
 logger = get_logger(
     name=f"{PROGRAM_NAME}.{__name__}",
