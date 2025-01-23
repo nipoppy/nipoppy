@@ -441,8 +441,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
-        self.logger.info("Running in HPC mode.")
-
         hpc_templates_path = self.layout.dpath_hpc_templates
         hpc_logs_path = self.layout.dpath_logs / self.dname_logs_hpc
         os.makedirs(hpc_logs_path, exist_ok=True)

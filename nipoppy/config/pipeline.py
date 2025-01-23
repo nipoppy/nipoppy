@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
@@ -142,12 +143,6 @@ class BidsPipelineConfig(BasePipelineConfig):
         description="List of pipeline step configurations",
     )
     model_config = ConfigDict(extra="forbid")
-
-
-class HpcConfig(BaseModel):
-    """Schema for High-Performance Computing (HPC) configuration."""
-
-    model_config = ConfigDict(extra="allow")
 
 
 class ProcPipelineConfig(BasePipelineConfig):
