@@ -63,13 +63,6 @@ class InitWorkflow(BaseWorkflow):
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            # Allow a log dir to exist
-            # dir_content = list(self.dpath_root.iterdir())
-            # if not (
-            #     len(dir_content) == 1
-            #     and dir_content[0].is_dir()
-            #     and Path(self.layout.dpath_logs).is_relative_to(dir_content[0])
-            # ):
             raise FileExistsError(
                 f"Dataset directory already exists: {self.dpath_root}"
             )

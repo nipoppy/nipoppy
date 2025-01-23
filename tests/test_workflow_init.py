@@ -52,6 +52,13 @@ def test_run(dpath_root: Path):
                 )
 
 
+def test_run_error(dpath_root: Path):
+    dpath_root.mkdir(parents=True)
+    workflow = InitWorkflow(dpath_root=dpath_root)
+    with pytest.raises(FileExistsError, match="Dataset directory already exists"):
+        workflow.run()
+
+
 def test_custom_layout(dpath_root: Path):
     workflow = InitWorkflow(
         dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-0.1.0.json"

@@ -37,10 +37,16 @@ def test_cli_init(tmp_path: Path):
 
 
 def test_cli_status(tmp_path: Path):
-    try:
-        cli(["nipoppy", "status", str(tmp_path / "my_dataset")]) is None
-    except SystemExit:
-        pass
+    result = runner.invoke(
+        cli,
+        ["status", "--dataset", str(tmp_path / "my_dataset")],
+    )
+
+    # No log file is created, since the status command does not create logs.
+    pass
+
+    # Expects missing path, since init command is not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
 def test_cli_doughnut(tmp_path: Path):
