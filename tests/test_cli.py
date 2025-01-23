@@ -28,18 +28,29 @@ def test_cli_invalid():
     assert result.exit_code != ReturnCode.SUCCESS
 
 
-def test_cli_init(tmp_path: Path):
+def test_dep_params(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(
         cli,
-        ["init", "--dataset", str(tmp_path / "my_dataset")],
+        ["init", dpath_root],
+    )
+    assert result.exit_code != ReturnCode.SUCCESS
+
+
+def test_cli_init(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    result = runner.invoke(
+        cli,
+        ["init", "--dataset", dpath_root],
     )
     assert result.exit_code == ReturnCode.SUCCESS
 
 
 def test_cli_status(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(
         cli,
-        ["status", "--dataset", str(tmp_path / "my_dataset")],
+        ["status", "--dataset", dpath_root],
     )
 
     # No log file is created, since the status command does not create logs.

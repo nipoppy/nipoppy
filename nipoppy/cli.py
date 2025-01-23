@@ -1,6 +1,7 @@
 """Nipoppy CLI."""
 
 import sys
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -29,13 +30,42 @@ def dataset_option(func):
     It is separated from global_options to allow for a different ordering when printing
     the `--help`.
     """
+    # The dataset argument is deprecated, but we keep it for backward compatibility.
+    func = click.argument(
+        "dataset_argument",
+        required=False,
+        type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
+        is_eager=True,
+    )(func)
     return click.option(
         "--dataset",
         "dpath_root",
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
+        required=False,
         default=Path().cwd(),
         help=f"Path to the root of the dataset (default: {Path().cwd()}).",
     )(func)
+
+
+def dep_params(**params):
+    """Verify either the dataset option or argument is provided, but not both.
+
+    Raise and exit if both are provided or none are provided.
+    """
+    _dep_dpath_root = params.pop("dataset_argument")
+
+    if _dep_dpath_root:
+        warnings.warn(
+            (
+                "The dataset argument is deprecated."
+                "Use the --dataset option in the future."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    params["dpath_root"] = _dep_dpath_root or params.get("dpath_root")
+
+    return params
 
 
 def global_options(func):
@@ -132,6 +162,7 @@ def init(**params):
     """Initialize a new dataset."""
     from nipoppy.workflows.dataset_init import InitWorkflow
 
+    params = dep_params(**params)
     with handle_exception(InitWorkflow(**params)) as workflow:
         workflow.run()
 
@@ -161,6 +192,7 @@ def doughnut(**params):
     """Create or update a dataset's doughnut file."""
     from nipoppy.workflows.doughnut import DoughnutWorkflow
 
+    params = dep_params(**params)
     with handle_exception(DoughnutWorkflow(**params)) as workflow:
         workflow.run()
 
@@ -190,6 +222,7 @@ def reorg(**params):
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
+    params = dep_params(**params)
     with handle_exception(DicomReorgWorkflow(**params)) as workflow:
         workflow.run()
 
@@ -202,6 +235,7 @@ def bidsify(**params):
     """Run a BIDS conversion pipeline."""
     from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
+    params = dep_params(**params)
     with handle_exception(BidsConversionRunner(**params)) as workflow:
         workflow.run()
 
@@ -231,6 +265,7 @@ def run(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
 
+    params = dep_params(**params)
     with handle_exception(PipelineRunner(**params)) as workflow:
         workflow.run()
 
@@ -243,6 +278,7 @@ def track(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
 
+    params = dep_params(**params)
     with handle_exception(PipelineTracker(**params)) as workflow:
         workflow.run()
 
@@ -255,6 +291,7 @@ def extract(**params):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
     from nipoppy.workflows.extractor import ExtractionRunner
 
+    params = dep_params(**params)
     with handle_exception(ExtractionRunner(**params)) as workflow:
         workflow.run()
 
@@ -266,5 +303,6 @@ def status(**params):
     """Workflow for status command."""
     from nipoppy.workflows.dataset_status import StatusWorkflow
 
+    params = dep_params(**params)
     with handle_exception(StatusWorkflow(**params)) as workflow:
         workflow.run()
