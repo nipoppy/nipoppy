@@ -144,6 +144,12 @@ class BidsPipelineConfig(BasePipelineConfig):
     model_config = ConfigDict(extra="forbid")
 
 
+class HpcConfig(BaseModel):
+    """Schema for High-Performance Computing (HPC) configuration."""
+
+    model_config = ConfigDict(extra="allow")
+
+
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
@@ -156,10 +162,22 @@ class ProcPipelineConfig(BasePipelineConfig):
             " and a PATHS field (non-empty list of strings)"
         ),
     )
+
     STEPS: list[ProcPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
+
+    HPC_CONFIG: Optional[HpcConfig] = Field(
+        default=None,
+        description=(
+            "Configuration dictionary for High-Performance Computing (HPC) settings, "
+            "with keys as configuration names and values of any type. "
+            "The keys are passed to a Jinja template (in  "
+            "dataset_root/code/hpc_templates) for the requested queue (SGE/Slurm)"
+        ),
+    )
+
     model_config = ConfigDict(extra="forbid")
 
 

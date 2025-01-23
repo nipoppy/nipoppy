@@ -122,6 +122,12 @@
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
             },
+            "HPC_CONFIG": {
+                "account_name": "<HPC_ACCOUNT_NAME>",
+                "cores": "8",
+                "memory_max": "64",
+                "run_time_max": "1440"
+            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
@@ -148,6 +154,12 @@
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
             },
+            "HPC_CONFIG": {
+                "account_name": "<HPC_ACCOUNT_NAME>",
+                "cores": "8",
+                "memory_max": "64",
+                "run_time_max": "1440"
+            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
@@ -173,6 +185,12 @@
                     "--bind",
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
+            },
+            "HPC_CONFIG": {
+                "account_name": "<HPC_ACCOUNT_NAME>",
+                "cores": "8",
+                "memory_max": "64",
+                "run_time_max": "1440"
             },
             "STEPS": [
                 {
@@ -217,6 +235,12 @@
                     "--bind",
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
+            },
+            "HPC_CONFIG": {
+                "account_name": "<HPC_ACCOUNT_NAME>",
+                "cores": "2",
+                "memory_max": "32",
+                "run_time_max": "120"
             },
             "STEPS": [
                 {

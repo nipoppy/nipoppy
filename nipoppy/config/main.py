@@ -77,6 +77,16 @@ def get_pipeline_config(
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
+    HPC_PREAMBLE: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional string for HPC setup, including job scheduler directives "
+            "or environment initialization. Examples: loading modules (e.g., "
+            "Apptainer/Singularity), activating a Python environment with "
+            "Nipoppy installed, and setting up job-specific variables."
+        ),
+    )
+
     DATASET_NAME: str = Field(description="Name of the dataset")
     VISIT_IDS: list[str] = Field(
         description=(

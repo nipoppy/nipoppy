@@ -28,6 +28,8 @@ FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
+DPATH_HPC_TEMPLATES = DPATH_DATA / "hpc_templates"
+
 
 # descriptions for common fields in the Pydantic models
 FIELD_DESCRIPTION_MAP = {

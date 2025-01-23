@@ -299,6 +299,13 @@ def add_subparser_run(
     parser = add_arg_dataset_root(parser)
     parser = add_args_runner(parser)
     parser.add_argument(
+        "--hpc",
+        type=str,
+        choices=["slurm", "sge"],
+        default=None,
+        help="Submit HPC jobs instead of running the pipeline directly.",
+    )
+    parser.add_argument(
         "--keep-workdir",
         type=str,
         required=False,
