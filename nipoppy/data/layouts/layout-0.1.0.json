@@ -31,6 +31,10 @@
         "path": "code",
         "description": "This directory is for custom code / scripts used for data wrangling and downstream analysis done on this dataset."
     },
+    "dpath_hpc_templates": {
+        "path": "code/hpc_templates",
+        "description": "This directory is for HPC job submission templates."
+    },
     "dpath_pipelines": {
         "path": "proc",
         "description": "This directory contains the Nipoppy configuration information and custom code."

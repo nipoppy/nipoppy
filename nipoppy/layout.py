@@ -71,6 +71,9 @@ class LayoutConfig(BaseModel):
         description="Directory for imaging data that is organized but not yet in BIDS"
     )
     dpath_code: DpathInfo = Field(description="Directory for code and scripts")
+    dpath_hpc_templates: DpathInfo = Field(
+        description="Directory for HPC job submission template files"
+    )
     dpath_pipelines: DpathInfo = Field(
         description=(
             "Directory for configurations or other files needed to run pipelines"
@@ -173,6 +176,7 @@ class DatasetLayout(Base):
         self.dpath_pre_reorg: Path
         self.dpath_post_reorg: Path
         self.dpath_code: Path
+        self.dpath_hpc_templates: Path
         self.dpath_pipelines: Path
         self.dpath_containers: Path
         self.dpath_scratch: Path

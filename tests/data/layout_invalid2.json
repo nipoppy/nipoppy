@@ -20,6 +20,9 @@
     "dpath_code": {
         "path": "code"
     },
+    "dpath_hpc_templates": {
+        "path": "code/hpc_templates"
+    },
     "dpath_pipelines": {
         "path": "code"
     },

@@ -221,8 +221,9 @@ class InitWorkflow(BaseWorkflow):
 
     def _copy_hpc_templates(self) -> None:
         """Copy Jinja template for HPC to dataset's code/hpc_templates directory."""
-        hpc_templates_source = DPATH_HPC_TEMPLATES
-        hpc_templates_target = self.dpath_root / "code" / "hpc_templates"
         self.copytree(
-            hpc_templates_source, hpc_templates_target, log_level=logging.DEBUG
+            DPATH_HPC_TEMPLATES,
+            self.layout.dpath_hpc_templates,
+            dirs_exist_ok=True,
+            log_level=logging.DEBUG,
         )

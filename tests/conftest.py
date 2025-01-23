@@ -34,6 +34,7 @@ ATTR_TO_DPATH_MAP = {
     "dpath_pre_reorg": "sourcedata/imaging/pre_reorg",
     "dpath_downloads": "sourcedata/imaging/downloads",
     "dpath_code": "code",
+    "dpath_hpc_templates": "code/hpc_templates",
     "dpath_pipelines": "pipelines",
     "dpath_containers": "containers",
     "dpath_scratch": "scratch",

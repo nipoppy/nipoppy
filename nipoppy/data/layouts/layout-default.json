@@ -35,6 +35,10 @@
         "path": "code",
         "description": "This directory is for custom code."
     },
+    "dpath_hpc_templates": {
+        "path": "code/hpc_templates",
+        "description": "This directory is for HPC job submission templates."
+    },
     "dpath_containers": {
         "path": "containers",
         "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
