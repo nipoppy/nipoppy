@@ -445,7 +445,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
         dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
 
-        qa = QueueAdapter(directory=str(self.layout.dpath_hpc_templates))
+        # make sure HPC directory exists
+        dpath_hpc_configs = self.layout.dpath_hpc
+        if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
+            raise FileNotFoundError(
+                "The HPC directory with appropriate content needs to exist at "
+                f"{self.layout.dpath_hpc} if HPC job submission is requested"
+            )
+
+        qa = QueueAdapter(directory=str(self.layout.dpath_hpc))
         qa.switch_cluster(self.hpc)
 
         if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
@@ -516,11 +524,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             raise RuntimeError(
                 "Error occurred while submitting the HPC job:"
                 f"\n{fpath_hpc_error.read_text()}"
-                "\nThe generated job script can be found at "
+                "\nThe job script can be found at "
                 f"{dpath_work / self.fname_job_script}."
-                "\nYou may need to modify the pipeline's HPC configuration in the "
-                "config file and/or the template job script in "
-                f"{self.layout.dpath_hpc_templates}."
+                "\nThis file is auto-generated. To modify it, you will need to "
+                "modify the pipeline's HPC configuration in the config file and/or "
+                f"the template job script in {self.layout.dpath_hpc}."
             )
 
         if queue_id is not None:
