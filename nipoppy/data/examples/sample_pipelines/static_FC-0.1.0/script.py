@@ -218,7 +218,7 @@ def run(
     file_entities = parse_file_entities(func_file)
     participant_id = f"sub-{file_entities.get('subject')}"
     session_id = file_entities.get("session")
-    extension = file_entities.get("extension") # .nii.gz
+    extension = file_entities.get("extension")  # .nii.gz
 
     print(f"Running FC assessment for: {func_file_name}...")
     print("-" * 50)
@@ -267,15 +267,9 @@ def run(
                 f"_atlas-{brain_atlas_name}_FC.npy"
             )
             np.save(f"{folder}/{out_file_name}", FC)
-        print(
-            "Successfully completed FC assessment for: "
-            f"{func_file_name}"
-        )
+        print("Successfully completed FC assessment for: " f"{func_file_name}")
     except Exception as e:
-        print(
-            f"FC assessment for {func_file_name} "
-            f"failed with exceptions: {e}"
-        )
+        print(f"FC assessment for {func_file_name} " f"failed with exceptions: {e}")
 
     print("-" * 75)
     print("")
@@ -290,7 +284,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
     parser.add_argument(
-        "--func_input", type=str, required=True, help="Path to the BOLD nifti files directory or a single nifti file."
+        "--func_input",
+        type=str,
+        required=True,
+        help="Path to the BOLD nifti files directory or a single nifti file.",
     )
     # example: --brain_atlas_list "schaefer_100" "schaefer_200"
     parser.add_argument(
