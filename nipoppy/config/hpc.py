@@ -37,6 +37,6 @@ class HpcConfig(BaseModel):
         for key, value in self.model_dump().items():
             if key in self._reserved_keys:
                 raise ValueError(f"Reserved key {key} found in HPC configuration")
-            if not isinstance(value, str):
+            if (value is not None) and not isinstance(value, str):
                 setattr(self, key, str(value))
         return self

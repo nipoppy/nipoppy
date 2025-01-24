@@ -20,6 +20,11 @@ def test_str_values(data):
         assert isinstance(value, str), f"Value should be string, got {type(value)}"
 
 
+def test_none_value():
+    config = HpcConfig(field1=None)
+    assert getattr(config, "field1") is None
+
+
 @pytest.mark.parametrize(
     "data",
     [
