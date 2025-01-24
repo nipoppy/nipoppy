@@ -103,6 +103,15 @@ def test_sessions_inferred(visit_ids, expected_session_ids):
 
 
 @pytest.mark.parametrize(
+    "hpc_preamble", ["module load preamble", ["module load preamble"]]
+)
+def test_hpc_preamble_list(hpc_preamble, valid_config_data):
+    valid_config_data["HPC_PREAMBLE"] = hpc_preamble
+    config = Config(**valid_config_data)
+    assert config.HPC_PREAMBLE == ["module load preamble"]
+
+
+@pytest.mark.parametrize(
     "dicom_dir_map_file,dicom_dir_participant_first,is_valid",
     [
         (None, None, True),

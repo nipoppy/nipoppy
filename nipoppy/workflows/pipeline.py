@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import shlex
 from abc import ABC, abstractmethod
@@ -75,7 +74,9 @@ def apply_analysis_level(
 class BasePipelineWorkflow(BaseWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
 
-    dname_logs_hpc = "hpc"
+    dname_hpc_logs = "hpc"
+    fname_hpc_error = "pysqa.err"
+    fname_job_script = "run_queue.sh"
 
     def __init__(
         self,
@@ -441,15 +442,22 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
-        hpc_templates_path = self.layout.dpath_hpc_templates
-        hpc_logs_path = self.layout.dpath_logs / self.dname_logs_hpc
-        os.makedirs(hpc_logs_path, exist_ok=True)
+        dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
+        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
 
-        qa = QueueAdapter(directory=str(hpc_templates_path))
+        qa = QueueAdapter(directory=str(self.layout.dpath_hpc_templates))
+        qa.switch_cluster(self.hpc)
+
+        if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
+            self.logger.warning("No HPC configuration found in pipeline config")
+            job_args = {}
+        else:
+            job_args = hpc_config.model_dump()
 
         # Generate the list of nipoppy commands as a single string for a shell array
         job_array_commands = []
         for participant_id, session_id in participants_sessions:
+            # TODO make this more generalized
             command = [
                 "nipoppy",
                 "run",
@@ -467,55 +475,56 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             ]
             job_array_commands.append(shlex.join(command))
 
-        # Join the commands into a single string
-        job_array_commands_str = " ".join([f'"{cmd}"' for cmd in job_array_commands])
-        preamble = self.config.HPC_PREAMBLE
+        job_name = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            participant_id=self.participant_id,
+            session_id=self.session_id,
+        )
+        dpath_work = self.dpath_pipeline_work
 
-        # Build the single command to submit as an array job
-        if self.hpc == "slurm":
-            command = (
-                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
-                f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
-            )
-        elif self.hpc == "sge":
-            command = (
-                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
-                f'eval "${{commands[$((SGE_TASK_ID-1))]}}"\''
-            )
-        else:
-            raise ValueError(
-                "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
-            )
-
-        # Submit the job with the total number of commands as the array size
-        num_jobs = len(job_array_commands)
+        # this is the file that will be created by PySQA
+        # if the job submission command fails
+        # first we delete it to make sure it is not already there
+        fpath_hpc_error = dpath_work / self.fname_hpc_error
+        fpath_hpc_error.unlink(missing_ok=True)
 
         try:
             if not self.dry_run:
                 queue_id = qa.submit_job(
-                    job_name=(
-                        f"nipoppy_{self.pipeline_name}_"
-                        f"{self.pipeline_version}_{self.pipeline_step}"
-                    ),
-                    dataset_root=self.dpath_root,
-                    command=command,
-                    num_tasks=num_jobs,
                     queue=self.hpc,
-                    **self.pipeline_config.HPC_CONFIG.model_dump(),
+                    working_directory=str(dpath_work),
+                    command="",  # not used in default template but cannot be None
+                    NIPOPPY_HPC=self.hpc,
+                    NIPOPPY_JOB_NAME=job_name,
+                    NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
+                    NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
+                    NIPOPPY_COMMANDS=job_array_commands,
+                    **job_args,
                 )
+
         except NotImplementedError:
-            self.logger.info(
-                "Failed to retrieve SGE array job ID. "
+            self.logger.warning(
+                "Failed to retrieve array job ID. "
                 "Please check the queue for the job ID."
             )
             queue_id = None
-        except Exception as e:
-            self.logger.error(
-                f"Unexpected error occurred while submitting the job: {e}"
+
+        # raise error if an error file was created
+        if fpath_hpc_error.exists():
+            raise RuntimeError(
+                "Error occurred while submitting the HPC job:"
+                f"\n{fpath_hpc_error.read_text()}"
+                "\nThe generated job script can be found at "
+                f"{dpath_work / self.fname_job_script}."
+                "\nYou may need to modify the pipeline's HPC configuration in the "
+                "config file and/or the template job script in "
+                f"{self.layout.dpath_hpc_templates}."
             )
-            raise e
+
         if queue_id is not None:
-            self.logger.info(f"Submitted array job with queue ID {queue_id}")
+            self.logger.info(f"Submitted job array with ID {queue_id}")
 
     def run_cleanup(self):
         """Log a summary message."""
