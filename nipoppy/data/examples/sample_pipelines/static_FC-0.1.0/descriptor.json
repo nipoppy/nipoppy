@@ -99,7 +99,6 @@
             "description": "Path to the DKT atlas file.",
             "type": "String",
             "optional": true,
-            "default-value": null,
             "command-line-flag": "--dkt_file",
             "value-key": "[DKT_FILE_PATH]"
         },
