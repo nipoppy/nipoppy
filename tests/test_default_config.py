@@ -358,6 +358,7 @@ def test_tracker_paths(
     "pipeline_name,pipeline_version",
     [
         ("freesurfer_stats_and_qc", "0.1.0"),
+        ("static_FC", "0.1.0"),
     ],
 )
 def test_extractor(
