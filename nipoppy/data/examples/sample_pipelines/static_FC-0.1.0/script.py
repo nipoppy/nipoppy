@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--func_input",
-        type=str,
+        type=Path,
         required=True,
         help="Path to the BOLD nifti files directory or a single nifti file.",
     )
@@ -370,12 +370,8 @@ if __name__ == "__main__":
     output_dir = args.output_dir
 
     # check if the func_input is a directory or a single nifti file
-    if os.path.isdir(func_input):
-        func_files = [
-            os.path.join(func_input, f)
-            for f in os.listdir(func_input)
-            if f.endswith(f"_space-{space}_desc-preproc_bold.nii.gz")
-        ]
+    if func_input.is_dir():
+        func_files = list(func_input.glob(f"*_space-{space}_desc-preproc_bold.nii.gz"))
         print(f"Found {len(func_files)} functional files in the directory.")
     else:
         func_files = [func_input]
@@ -383,7 +379,7 @@ if __name__ == "__main__":
     # run the analysis
     for func_file in func_files:
         run(
-            func_file,
+            str(func_file),
             brain_atlas_list,
             confound_strategy,
             metric_list,

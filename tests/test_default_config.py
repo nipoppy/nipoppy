@@ -375,7 +375,8 @@ def test_extractor(
         simulate=True,
     )
 
-    runner.pipeline_config.get_fpath_container().touch()
+    if (fpath_container := runner.pipeline_config.get_fpath_container()) is not None:
+        fpath_container.touch()
 
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id
