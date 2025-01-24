@@ -28,10 +28,11 @@ def test_none_value():
 @pytest.mark.parametrize(
     "data",
     [
-        {"job_name": "abc"},
-        {"dataset_root": "123"},
-        {"command": "echo hello"},
         {"queue": "slurm"},
+        {"working_directory": "path"},
+        {"command": "echo hello"},
+        {"NIPOPPY_HPC": "sge"},
+        {"NIPOPPY_TEST": "test"},
     ],
 )
 def test_reserved_keywords_error(data):
