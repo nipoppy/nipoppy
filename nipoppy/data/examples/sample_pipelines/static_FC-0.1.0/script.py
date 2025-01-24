@@ -218,9 +218,9 @@ def run(
     file_entities = parse_file_entities(func_file)
     participant_id = f"sub-{file_entities.get('subject')}"
     session_id = file_entities.get("session")
-    extension = file_entities.get("extension")
+    extension = file_entities.get("extension") # .nii.gz
 
-    print(f"Running FC assessment for participant: {participant_id}...")
+    print(f"Running FC assessment for: {func_file_name}...")
     print("-" * 50)
 
     # check if the func file exists
@@ -254,9 +254,9 @@ def run(
 
             # save output
             if session_id is None:
-                folder = f"{output_dir}/FC/output/{participant_id}/"
+                folder = f"{output_dir}/static_FC/{participant_id}/"
             else:
-                folder = f"{output_dir}/FC/output/{participant_id}/ses-{session_id}/"
+                folder = f"{output_dir}/static_FC/{participant_id}/ses-{session_id}/"
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
@@ -267,13 +267,13 @@ def run(
                 f"_atlas-{brain_atlas_name}_FC.npy"
             )
             np.save(f"{folder}/{out_file_name}", FC)
-            print(
-                "Successfully completed FC assessment for participant: "
-                f"{participant_id}"
-            )
+        print(
+            "Successfully completed FC assessment for: "
+            f"{func_file_name}"
+        )
     except Exception as e:
-        sys.exit(
-            f"FC assessment for participant {participant_id} "
+        print(
+            f"FC assessment for {func_file_name} "
             f"failed with exceptions: {e}"
         )
 
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=HELPTEXT)
 
     parser.add_argument(
-        "--func_file", type=str, required=True, help="Path to the BOLD nifti file."
+        "--func_input", type=str, required=True, help="Path to the BOLD nifti files directory or a single nifti file."
     )
     # example: --brain_atlas_list "schaefer_100" "schaefer_200"
     parser.add_argument(
@@ -350,6 +350,12 @@ if __name__ == "__main__":
         "--dkt_file", type=str, default=None, help="Path to the DKT atlas file."
     )
     parser.add_argument(
+        "--space",
+        type=str,
+        default="MNI152NLin2009cAsym_res-2",
+        help="Space of the functional data. Default is MNI152NLin2009cAsym_res-2.",
+    )
+    parser.add_argument(
         "--output_dir",
         type=str,
         required=True,
@@ -358,19 +364,32 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    func_file = args.func_file
+    func_input = args.func_input
     brain_atlas_list = args.brain_atlas_list
     confound_strategy = args.confound_strategy
     metric_list = args.metric_list
     dkt_file = args.dkt_file
+    space = args.space
     output_dir = args.output_dir
 
+    # check if the func_input is a directory or a single nifti file
+    if os.path.isdir(func_input):
+        func_files = [
+            os.path.join(func_input, f)
+            for f in os.listdir(func_input)
+            if f.endswith(f"_space-{space}_desc-preproc_bold.nii.gz")
+        ]
+        print(f"Found {len(func_files)} functional files in the directory.")
+    else:
+        func_files = [func_input]
+
     # run the analysis
-    run(
-        func_file,
-        brain_atlas_list,
-        confound_strategy,
-        metric_list,
-        dkt_file,
-        output_dir,
-    )
+    for func_file in func_files:
+        run(
+            func_file,
+            brain_atlas_list,
+            confound_strategy,
+            metric_list,
+            dkt_file,
+            output_dir,
+        )

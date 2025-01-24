@@ -225,11 +225,6 @@
         {
             "NAME": "static_FC",
             "VERSION": "0.1.0",
-            "CONTAINER_INFO": {},
-            "CONTAINER_CONFIG": {
-                "ENV_VARS": {},
-                "ARGS": []
-            },
             "PROC_DEPENDENCIES": [
                 {
                     "NAME": "fmriprep",

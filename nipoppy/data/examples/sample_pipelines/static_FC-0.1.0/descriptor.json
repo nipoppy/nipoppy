@@ -2,8 +2,8 @@
     "name": "static_FC",
     "description": "Functional Connectivity (FC) extractor",
     "tool-version": "0.1.0",
-    "schema-version": "0.1",
-    "command-line": "[SCRIPT_PATH] [FUNC_FILE_PATH] [OUTPUT_FC_PATH] [BRAIN_ATLASES_LIST] [CONFOUND_STRATEGY] [FC_METRICS_LIST] [DKT_FILE_PATH]",
+    "schema-version": "0.5",
+    "command-line": "[SCRIPT_PATH] [FUNC_INPUT_PATH] [OUTPUT_FC_PATH] [BRAIN_ATLASES_LIST] [CONFOUND_STRATEGY] [FC_METRICS_LIST] [DKT_FILE_PATH] [SPACE]",
     "inputs": [
         {
             "name": "script_path",
@@ -14,13 +14,13 @@
             "value-key": "[SCRIPT_PATH]"
         },
         {
-            "name": "path_to_nifti_file",
-            "id": "path_to_nifti_file",
-            "description": "Path to the BOLD nifti file.",
+            "name": "path_to_func_input",
+            "id": "path_to_func_input",
+            "description": "Path to the BOLD nifti files directory or a single nifti file.",
             "type": "String",
             "optional": false,
-            "command-line-flag": "--func_file",
-            "value-key": "[FUNC_FILE_PATH]"
+            "command-line-flag": "--func_input",
+            "value-key": "[FUNC_INPUT_PATH]"
         },
         {
             "name": "path_to_output_directory",
@@ -102,6 +102,16 @@
             "default-value": null,
             "command-line-flag": "--dkt_file",
             "value-key": "[DKT_FILE_PATH]"
+        },
+        {
+            "name": "space",
+            "id": "space",
+            "description": "Space of the input nifti file.",
+            "type": "String",
+            "optional": true,
+            "default-value": "MNI152NLin2009cAsym_res-2",
+            "command-line-flag": "--space",
+            "value-key": "[SPACE]"
         }
     ],
     "tags": {},
