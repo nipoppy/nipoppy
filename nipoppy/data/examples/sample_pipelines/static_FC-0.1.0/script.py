@@ -72,7 +72,7 @@ def extract_timeseries(func_file, brain_atlas, confound_strategy):
                             is applied.
         'simple': nilearn's simple preprocessing with
                             full motion and basic wm_csf
-                            and high_pass 
+                            and high_pass
         If confound_strategy is simple, no_motion, or
         no_motion_no_gsr, the associated confound files should be in the same
         directory as func_file.
