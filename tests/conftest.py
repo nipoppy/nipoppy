@@ -25,7 +25,7 @@ FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 
-ATTR_TO_DPATH_MAP = {
+ATTR_TO_REQUIRED_DPATH_MAP = {
     "dpath_bids": "bids",
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
@@ -34,7 +34,6 @@ ATTR_TO_DPATH_MAP = {
     "dpath_pre_reorg": "sourcedata/imaging/pre_reorg",
     "dpath_downloads": "sourcedata/imaging/downloads",
     "dpath_code": "code",
-    "dpath_hpc_templates": "code/hpc_templates",
     "dpath_pipelines": "pipelines",
     "dpath_containers": "containers",
     "dpath_scratch": "scratch",
@@ -43,6 +42,11 @@ ATTR_TO_DPATH_MAP = {
     "dpath_logs": "logs",
     "dpath_tabular": "tabular",
     "dpath_assessments": "tabular/assessments",
+}
+
+ATTR_TO_DPATH_MAP = {
+    **ATTR_TO_REQUIRED_DPATH_MAP,
+    "dpath_hpc": "code/hpc",
 }
 
 ATTR_TO_REQUIRED_FPATH_MAP = {
@@ -110,7 +114,7 @@ def get_config(
 
 def create_empty_dataset(dpath_root: Path):
     """Create an empty dataset with all required directory and files."""
-    for dpath in ATTR_TO_DPATH_MAP.values():
+    for dpath in ATTR_TO_REQUIRED_DPATH_MAP.values():
         (dpath_root / dpath).mkdir(parents=True, exist_ok=True)
     for fpath in ATTR_TO_REQUIRED_FPATH_MAP.values():
         (dpath_root / fpath).touch()

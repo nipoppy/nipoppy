@@ -15,7 +15,7 @@ from nipoppy.env import (
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    DPATH_HPC_TEMPLATES,
+    DPATH_HPC,
     DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
@@ -66,7 +66,7 @@ class InitWorkflow(BaseWorkflow):
             raise FileExistsError("Dataset directory already exists")
 
         # create directories
-        for dpath in self.layout.dpaths:
+        for dpath in self.layout.get_paths(directory=True, include_optional=True):
 
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
@@ -98,8 +98,13 @@ class InitWorkflow(BaseWorkflow):
                 log_level=logging.DEBUG,
             )
 
-        # copy HPC Jinja template files
-        self._copy_hpc_templates()
+        # copy HPC files
+        self.copytree(
+            DPATH_HPC,
+            self.layout.dpath_hpc,
+            dirs_exist_ok=True,
+            log_level=logging.DEBUG,
+        )
 
         # inform user to edit the sample files
         self.logger.warning(
@@ -218,12 +223,3 @@ class InitWorkflow(BaseWorkflow):
             f"at {self.dpath_root}![/]"
         )
         return super().run_cleanup()
-
-    def _copy_hpc_templates(self) -> None:
-        """Copy Jinja template for HPC to dataset's code/hpc_templates directory."""
-        self.copytree(
-            DPATH_HPC_TEMPLATES,
-            self.layout.dpath_hpc_templates,
-            dirs_exist_ok=True,
-            log_level=logging.DEBUG,
-        )

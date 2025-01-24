@@ -31,9 +31,9 @@
         "path": "code",
         "description": "This directory is for custom code."
     },
-    "dpath_hpc_templates": {
-        "path": "code/hpc_templates",
-        "description": "This directory is for HPC job submission templates."
+    "dpath_hpc": {
+        "path": "code/hpc",
+        "description": "This directory is for HPC job submission templates. It can be deleted if HPC job submission is not needed."
     },
     "dpath_pipelines": {
         "path": "proc",

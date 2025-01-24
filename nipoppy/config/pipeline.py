@@ -19,6 +19,7 @@ from nipoppy.config.pipeline_step import (
     ProcPipelineStepConfig,
 )
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -166,10 +167,14 @@ class ProcPipelineConfig(BasePipelineConfig):
     HPC_CONFIG: Optional[HpcConfig] = Field(
         default=None,
         description=(
-            "Configuration dictionary for High-Performance Computing (HPC) settings, "
-            "with keys as configuration names and values of any type. "
-            "The keys are passed to a Jinja template (in  "
-            "dataset_root/code/hpc_templates) for the requested queue (SGE/Slurm)"
+            "Key-value pairs are passed to the Jinja template at "
+            f"{DEFAULT_LAYOUT_INFO.dpath_hpc}."
+            "\n\nAny key can be used except for the following:"
+            '    - "queue"'
+            '    - "working_directory"'
+            '    - "command"'
+            '    - Anything that starts with "NIPOPPY_" (reserved for internal use)'
+            "\n\nValues are converted to strings except if they are None."
         ),
     )
 
