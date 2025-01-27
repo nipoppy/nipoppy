@@ -13,6 +13,7 @@ from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.runner import PipelineRunner
 
 from .conftest import create_empty_dataset, get_config, prepare_dataset
@@ -57,15 +58,20 @@ def config(tmp_path: Path):
 
     return get_config(
         visit_ids=["BL", "V04"],
-        container_config={"COMMAND": "echo"},  # dummy command
+        container_config={
+            "COMMAND": "echo",  # dummy command
+            "ARGS": ["--flag1"],
+        },
         proc_pipelines=[
             {
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
+                "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
                 "STEPS": [
                     {
                         "DESCRIPTOR_FILE": fpath_descriptor,
                         "INVOCATION_FILE": fpath_invocation,
+                        "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
                     }
                 ],
             },
@@ -158,8 +164,7 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
 
 
-def test_process_container_config_boutiques_subcommand(config: Config, tmp_path: Path):
-    # check that the container subcommand from the Boutiques container config is used
+def test_process_container_config(config: Config, tmp_path: Path):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
@@ -168,18 +173,17 @@ def test_process_container_config_boutiques_subcommand(config: Config, tmp_path:
 
     runner.config = config
 
-    participant_id = "01"
-    session_id = "BL"
+    result = runner.process_container_config(participant_id="01", session_id="BL")
 
-    # the container command in the config is "echo"
-    # because otherwise the check for the container command fails
-    # if Singularity/Apptainer is not on the PATH
-    assert (
-        runner.process_container_config(
-            participant_id=participant_id, session_id=session_id
-        )
-        == "echo exec"
-    )
+    # check that the subcommand 'exec' from the Boutiques container config is used
+    # note: the container command in the config is "echo" because otherwise the
+    # check for the container command fails if Singularity/Apptainer is not on the PATH
+    assert result.startswith("echo exec")
+
+    # check that the right container config was used
+    assert "--flag1" in result
+    assert "--flag2" in result
+    assert "--flag3" in result
 
 
 def test_check_tar_conditions_no_tracker_config(config: Config, tmp_path: Path):
@@ -552,7 +556,7 @@ def test_run_single_tar(
     runner.tracker_config = TrackerConfig(
         PATHS=[tmp_path],  # not used
         PARTICIPANT_SESSION_DIR=(
-            tmp_path / "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
+            "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
         ),
     )
     try:
@@ -563,7 +567,22 @@ def test_run_single_tar(
 
     if tar and boutiques_success:
         mocked_tar_directory.assert_called_once_with(
-            tmp_path / f"{participant_id}_ses-{session_id}"
+            runner.dpath_pipeline_output / f"{participant_id}_ses-{session_id}"
         )
     else:
         mocked_tar_directory.assert_not_called()
+
+
+def test_run_missing_container_raises_error(config: Config, tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+    config.save(runner.layout.fpath_config)
+    create_empty_dataset(runner.dpath_root)
+    runner.manifest = Manifest()
+
+    runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
+    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+        runner.run()
