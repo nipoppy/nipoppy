@@ -23,6 +23,7 @@
             "--cleanenv"
         ]
     },
+    "HPC_PREAMBLE": [],
     "BIDS_PIPELINES": [
         {
             "NAME": "heudiconv",
