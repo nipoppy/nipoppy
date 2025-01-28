@@ -53,11 +53,6 @@
 {% if MEMORY %}
 #$ -l h_vmem={{ MEMORY }}
 {%- endif -%}
-{#-
-{% if CORES %}
-#$ -pe all.pe {{ CORES }}
-{%- endif -%}
-#}
 {% if ACCOUNT %}
 #$ -q {{ ACCOUNT }}
 {%- endif %}
