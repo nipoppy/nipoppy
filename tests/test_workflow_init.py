@@ -160,6 +160,27 @@ def test_init_bids_move_mode(tmp_path):
     assert (dpath_root / "bids" / "README.md").exists()
 
 
+def test_init_bids_invalid_mode(tmp_path):
+    """Create dummy BIDS dataset and pass an invalid mode.
+
+    Make sure:
+    - An error is raised when an invalid mode is used.
+    """
+    dpath_root = tmp_path / "nipoppy"
+    bids_to_copy = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_to_copy,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+
+    # mode is invalid, should raise an error
+    with pytest.raises(ValueError, match="Invalid mode: something"):
+        workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy, mode="something")
+        workflow.run()
+
+
 def test_init_bids_dry_run(tmp_path):
     """Copy no file when running in dry mode."""
     dpath_root = tmp_path / "nipoppy"
