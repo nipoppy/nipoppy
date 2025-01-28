@@ -131,10 +131,14 @@ def test_init_bids_move_mode(tmp_path):
         sessions=["1", "2"],
         datatypes=["anat", "func"],
     )
-    
-    source_files_before_init = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
 
-    workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy, mode="move")
+    source_files_before_init = [
+        x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
+    ]
+
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, bids_source=bids_to_copy, mode="move"
+    )
     workflow.run()
 
     assert isinstance(workflow.manifest, Manifest)
@@ -147,7 +151,9 @@ def test_init_bids_move_mode(tmp_path):
         ["anat", "func"],
     ]
 
-    source_files_after_init = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
+    source_files_after_init = [
+        x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
+    ]
     target_files = [
         x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
     ]
