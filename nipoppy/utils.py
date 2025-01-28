@@ -29,6 +29,7 @@ FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 DPATH_HPC = DPATH_DATA / "hpc"
+FPATH_HPC_TEMPLATE = DPATH_HPC / "job_script_template.sh"
 
 
 # descriptions for common fields in the Pydantic models

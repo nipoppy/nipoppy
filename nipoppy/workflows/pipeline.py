@@ -442,9 +442,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
-        dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
-        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
-
         # make sure HPC directory exists
         dpath_hpc_configs = self.layout.dpath_hpc
         if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
@@ -453,19 +450,27 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"{self.layout.dpath_hpc} if HPC job submission is requested"
             )
 
-        qa = QueueAdapter(directory=str(self.layout.dpath_hpc))
-        qa.switch_cluster(self.hpc)
-
+        # get HPC configuration values to be passed to Jinja template
         if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
             self.logger.warning("No HPC configuration found in pipeline config")
             job_args = {}
         else:
             job_args = hpc_config.model_dump()
 
+        qa = QueueAdapter(directory=str(self.layout.dpath_hpc))
+
+        try:
+            qa.switch_cluster(self.hpc)
+        except KeyError:
+            raise ValueError(
+                f"Invalid HPC cluster type: {self.hpc}"
+                f". Available clusters are: {qa.list_clusters()}"
+            )
+
         # Generate the list of nipoppy commands as a single string for a shell array
         job_array_commands = []
         for participant_id, session_id in participants_sessions:
-            # TODO make this more generalized
+            # TODO this needs to include other args (e.g. --tar)
             command = [
                 "nipoppy",
                 "run",
@@ -498,6 +503,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         fpath_hpc_error = dpath_work / self.fname_hpc_error
         fpath_hpc_error.unlink(missing_ok=True)
 
+        # create the HPC logs directory
+        dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
+        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
+
+        queue_id = None
         try:
             if not self.dry_run:
                 queue_id = qa.submit_job(
@@ -512,12 +522,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     **job_args,
                 )
 
+        # TODO check this
         except NotImplementedError:
             self.logger.warning(
                 "Failed to retrieve array job ID. "
                 "Please check the queue for the job ID."
             )
-            queue_id = None
 
         # raise error if an error file was created
         if fpath_hpc_error.exists():
@@ -533,6 +543,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
         if queue_id is not None:
             self.logger.info(f"Submitted job array with ID {queue_id}")
+        else:
+            self.logger.info("Submitted job array")
 
     def run_cleanup(self):
         """Log a summary message."""
