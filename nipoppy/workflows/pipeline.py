@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import bids
+from jinja2 import Environment, meta
 from pydantic import ValidationError
 from pysqa import QueueAdapter
 
@@ -32,6 +33,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.utils import (
+    FPATH_HPC_TEMPLATE,
     add_pybids_ignore_patterns,
     check_participant_id,
     check_session_id,
@@ -440,6 +442,33 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
+    def _check_hpc_config(self) -> dict:
+        """
+        Get HPC configuration values to be passed to Jinja template.
+
+        Logs warning if there if the HPC config does not exist (or is empty) or if it
+        contains variables that are not defined in the template job script.
+        """
+        if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
+            job_args = {}
+        else:
+            job_args = hpc_config.model_dump()
+
+        if len(job_args) == 0:
+            self.logger.warning("No HPC configuration found in pipeline config")
+
+        template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
+        template_vars = meta.find_undeclared_variables(template_ast)
+        missing_vars = set(job_args.keys()) - template_vars
+        if len(missing_vars) > 0:
+            self.logger.warning(
+                "Found variables in the HPC config that are not used in the template "
+                f"job script: {missing_vars}. Update the config or modify the template "
+                f"at {FPATH_HPC_TEMPLATE}."
+            )
+
+        return job_args
+
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
         # make sure HPC directory exists
@@ -449,13 +478,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 "The HPC directory with appropriate content needs to exist at "
                 f"{self.layout.dpath_hpc} if HPC job submission is requested"
             )
-
-        # get HPC configuration values to be passed to Jinja template
-        if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
-            self.logger.warning("No HPC configuration found in pipeline config")
-            job_args = {}
-        else:
-            job_args = hpc_config.model_dump()
 
         qa = QueueAdapter(directory=str(self.layout.dpath_hpc))
 
@@ -506,6 +528,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # create the HPC logs directory
         dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
         dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
+
+        # user-defined args
+        job_args = self._check_hpc_config()
 
         queue_id = None
         try:

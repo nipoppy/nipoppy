@@ -819,14 +819,22 @@ def test_submit_hpc_no_dir(workflow: PipelineWorkflow):
         workflow._submit_hpc_job([])
 
 
-def test_submit_hpc_job_empty_config(
+@pytest.mark.parametrize(
+    "hpc_config_data", [{"CORES": "8", "MEMORY": "32G"}, {"ACCOUNT": "my_account"}]
+)
+def test_check_hpc_config(hpc_config_data, workflow: PipelineWorkflow):
+    workflow.pipeline_config.HPC_CONFIG = HpcConfig(**hpc_config_data)
+    assert workflow._check_hpc_config() == hpc_config_data
+
+
+@pytest.mark.parametrize("hpc_config", [HpcConfig(), None])
+def test_check_hpc_config_empty(
+    hpc_config,
     workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
-    set_up_hpc_for_testing(workflow, mocker)
-    workflow.pipeline_config.HPC_CONFIG = None
-    workflow._submit_hpc_job([])
+    workflow.pipeline_config.HPC_CONFIG = hpc_config
+    workflow._check_hpc_config()
     assert (
         sum(
             [
@@ -838,6 +846,26 @@ def test_submit_hpc_job_empty_config(
             ]
         )
         == 1
+    )
+
+
+def test_check_hpc_config_unused_vars(
+    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
+):
+    workflow.pipeline_config.HPC_CONFIG = HpcConfig(CORES="8", RANDOM_VAR="value")
+    workflow._check_hpc_config()
+    assert sum(
+        [
+            (
+                (
+                    "Found variables in the HPC config that are not used"
+                    in record.message
+                )
+                and ("RANDOM_VAR" in record.message)
+                and record.levelname == "WARNING"
+            )
+            for record in caplog.records
+        ]
     )
 
 
