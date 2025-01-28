@@ -169,12 +169,6 @@ class ProcPipelineConfig(BasePipelineConfig):
         description=(
             "Key-value pairs are passed to the Jinja template at "
             f"{DEFAULT_LAYOUT_INFO.dpath_hpc}."
-            "\n\nAny key can be used except for the following:"
-            '    - "queue"'
-            '    - "working_directory"'
-            '    - "command"'
-            '    - Anything that starts with "NIPOPPY_" (reserved for internal use)'
-            "\n\nValues are converted to strings except if they are None."
         ),
     )
 

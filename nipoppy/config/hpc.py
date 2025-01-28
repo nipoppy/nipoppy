@@ -7,7 +7,7 @@ from typing_extensions import Self
 
 
 class HpcConfig(BaseModel):
-    """
+    r"""
     Schema for High-Performance Computing (HPC) system configuration.
 
     Key-value pairs are passed to a Jinja template for the requested HPC job queue.
@@ -16,7 +16,7 @@ class HpcConfig(BaseModel):
         - "queue"
         - "working_directory"
         - "command"
-        - Anything that starts with "NIPOPPY_" (reserved for internal use)
+        - Anything that starts with "NIPOPPY\_" (reserved for internal use)
 
     Values are converted to strings except if they are None.
     """
