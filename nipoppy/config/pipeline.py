@@ -167,7 +167,7 @@ class ProcPipelineConfig(BasePipelineConfig):
     HPC_CONFIG: Optional[HpcConfig] = Field(
         default=None,
         description=(
-            "Key-value pairs are passed to the Jinja template at "
+            "Key-value pairs to be passed to the Jinja template at "
             f"{DEFAULT_LAYOUT_INFO.dpath_hpc}."
         ),
     )
