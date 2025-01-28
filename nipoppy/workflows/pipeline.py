@@ -509,6 +509,11 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 session_id,
             ]
             job_array_commands.append(shlex.join(command))
+            self.n_total += 1  # for logging in run_cleanup()
+
+        # skip if there are no jobs to submit
+        if len(job_array_commands) == 0:
+            return
 
         job_name = get_pipeline_tag(
             pipeline_name=self.pipeline_name,
@@ -546,13 +551,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     NIPOPPY_COMMANDS=job_array_commands,
                     **job_args,
                 )
-
-        # TODO check this
-        except NotImplementedError:
-            self.logger.warning(
-                "Failed to retrieve array job ID. "
-                "Please check the queue for the job ID."
-            )
+        except NotImplementedError as exception:
+            # currently the SGE adapter errors out with NotImplementedError because the
+            # SGE wrapper does not implement the get_job_id_from_output method
+            # this should be fixed in the next version of PySQA (0.2.4?)
+            if self.hpc != "sge":
+                raise exception
 
         # raise error if an error file was created
         if fpath_hpc_error.exists():
@@ -567,22 +571,28 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
 
         if queue_id is not None:
-            self.logger.info(f"Submitted job array with ID {queue_id}")
-        else:
-            self.logger.info("Submitted job array")
+            self.logger.info(f"HPC job ID: {queue_id}")
+
+        # for logging in run_cleanup()
+        self.n_success += len(job_array_commands)
 
     def run_cleanup(self):
         """Log a summary message."""
         if self.n_total == 0:
-            if self.hpc is None:
-                self.logger.warning(
-                    "No participants or sessions to run. Make sure there are no "
-                    "mistakes in the input arguments, the dataset's manifest or config "
-                    "file, and/or check the doughnut file at "
-                    f"{self.layout.fpath_doughnut}"
-                )
+            self.logger.warning(
+                "No participants or sessions to run. Make sure there are no "
+                "mistakes in the input arguments, the dataset's manifest or config "
+                "file, and/or check the doughnut file at "
+                f"{self.layout.fpath_doughnut}"
+            )
+        elif self.hpc is not None:
+            if self.n_success == 0:
+                self.logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
             else:
-                self.logger.info(f"[{LogColor.SUCCESS}]Submitted HPC job(s)[/]")
+                self.logger.info(
+                    f"[{LogColor.SUCCESS}]Successfully submitted {self.n_success} "
+                    "HPC job(s)[/]"
+                )
         else:
             # change the message depending on how successful the run was
             prefix = "Ran"
