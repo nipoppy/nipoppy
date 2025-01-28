@@ -24,6 +24,9 @@
     "dpath_code": {
         "path": "code"
     },
+    "dpath_hpc": {
+        "path": "code/hpc"
+    },
     "dpath_pipelines": {
         "path": "proc"
     },

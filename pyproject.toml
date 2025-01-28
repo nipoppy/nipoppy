@@ -16,10 +16,11 @@ classifiers = [
 ]
 dependencies = [
     "boutiques",
+    "jinja2",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
-    'requests',
+    "requests",
     "pydicom!=3.0.0",
     "rich",
     "rich_argparse",

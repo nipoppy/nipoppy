@@ -77,13 +77,13 @@ def get_pipeline_config(
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
-    HPC_PREAMBLE: Optional[str] = Field(
-        default=None,
+    HPC_PREAMBLE: list[str] = Field(
+        default=[],
         description=(
-            "Optional string for HPC setup, including job scheduler directives "
-            "or environment initialization. Examples: loading modules (e.g., "
-            "Apptainer/Singularity), activating a Python environment with "
-            "Nipoppy installed, and setting up job-specific variables."
+            "Optional string (or list of strings) for HPC setup, including job "
+            "scheduler directives or environment initialization. Examples: loading "
+            "modules (e.g., Apptainer/Singularity), activating a Python environment "
+            "with Nipoppy installed, and setting up job-specific variables."
         ),
     )
 
@@ -191,12 +191,16 @@ class Config(_SchemaWithContainerConfig):
 
         Specifically:
         - If session_ids is not given, set to be the same as visit_ids
+        - Convert HPC_PREAMBLE to list of strings if needed
         """
         key_session_ids = "SESSION_IDS"
         key_visit_ids = "VISIT_IDS"
+        key_hpc_preamble = "HPC_PREAMBLE"
         if isinstance(data, dict):
             if key_session_ids not in data:
                 data[key_session_ids] = data[key_visit_ids]
+            if isinstance(data.get(key_hpc_preamble), str):
+                data[key_hpc_preamble] = [data[key_hpc_preamble]]
         return data
 
     @model_validator(mode="after")

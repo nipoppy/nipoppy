@@ -301,9 +301,13 @@ def add_subparser_run(
     parser.add_argument(
         "--hpc",
         type=str,
-        choices=["slurm", "sge"],
-        default=None,
-        help="Submit HPC jobs instead of running the pipeline directly.",
+        required=False,
+        help=(
+            "Submit HPC jobs instead of running the pipeline directly. "
+            "The value should be the HPC cluster type. Currently, "
+            "'slurm' and 'sge' have built-in support, but it is possible to add "
+            "other cluster types supported by PySQA (https://pysqa.readthedocs.io/)."
+        ),
     )
     parser.add_argument(
         "--keep-workdir",
