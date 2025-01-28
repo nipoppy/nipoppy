@@ -7,7 +7,7 @@ from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import DPATH_LAYOUTS
+from nipoppy.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 from .conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
@@ -51,6 +51,10 @@ def test_run(dpath_root: Path):
                 assert exist_or_none(
                     pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE"
                 )
+
+    # check that HPC config files have been copied
+    for fname in DPATH_HPC.glob("*"):
+        assert (workflow.layout.dpath_hpc / fname).exists()
 
 
 def test_run_error(dpath_root: Path):
