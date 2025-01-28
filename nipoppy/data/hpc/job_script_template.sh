@@ -39,6 +39,28 @@
 {%- elif NIPOPPY_HPC == 'sge' %}
 {% set NIPOPPY_ARRAY_VAR = 'SGE_TASK_ID' %}
 # ===== SGE configs =====
+#$ -cwd
+#$ -N {{ NIPOPPY_JOB_NAME }}
+#$ -o {{ NIPOPPY_DPATH_LOGS }}/$JOB_NAME_$JOB_ID_$TASK_ID.out
+#$ -j y
+#$ -t 1-{{ NIPOPPY_COMMANDS | length }}
+{% if ARRAY_CONCURRENCY_LIMIT -%}
+#$ -tc {{ ARRAY_CONCURRENCY_LIMIT }}
+{%- endif -%}
+{% if TIME %}
+#$ -l h_rt={{ TIME }}
+{%- endif -%}
+{% if MEMORY %}
+#$ -l h_vmem={{ MEMORY }}
+{%- endif -%}
+{#-
+{% if CORES %}
+#$ -pe all.pe {{ CORES }}
+{%- endif -%}
+#}
+{% if ACCOUNT %}
+#$ -q {{ ACCOUNT }}
+{%- endif %}
 {% endif %}
 
 {% if NIPOPPY_HPC_PREAMBLE_STRINGS -%}
