@@ -183,7 +183,9 @@ def test_init_bids_invalid_mode(tmp_path):
 
     # mode is invalid, should raise an error
     with pytest.raises(ValueError, match="Invalid mode: something"):
-        workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy, mode="something")
+        workflow = InitWorkflow(
+            dpath_root=dpath_root, bids_source=bids_to_copy, mode="something"
+        )
         workflow.run()
 
 
