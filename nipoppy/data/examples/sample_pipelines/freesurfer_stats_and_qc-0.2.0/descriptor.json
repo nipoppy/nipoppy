@@ -3,7 +3,7 @@
     "description": "FreeSurfer aseg/aparc stats (and QC metrics) extractor",
     "tool-version": "0.2.0",
     "schema-version": "0.5",
-    "command-line": "[SCRIPT_PATH] [INPUT_DIR_PATH] [OUTPUT_DIR_PATH] [MODE] [WITH_QC] [ASEG_MEASURE] [APARC_PARCELLATION] [APARC_MEASURE] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [EULER_SURF_PATHS] [CNR_VOL_PATHS] [CNR_MEASURES] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX] [VERBOSE]",
+    "command-line": "[SCRIPT_PATH] [INPUT_DIR_PATH] [OUTPUT_DIR_PATH] [MODE] [WITH_QC] [ASEG_MEASURES] [APARC_PARCELLATIONS] [APARC_MEASURES] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [EULER_SURF_PATHS] [CNR_VOL_PATHS] [CNR_MEASURES] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX] [VERBOSE]",
     "inputs": [
         {
             "name": "script_path",
@@ -53,34 +53,47 @@
             "value-key": "[WITH_QC]"
         },
         {
-            "name": "aseg_measure",
-            "id": "aseg_measure",
-            "description": "Measure to use for asegstats2table. Default: volume.",
+            "name": "aseg_measures",
+            "id": "aseg_measures",
+            "description": "List of measures to use for asegstats2table. Default: ['volume'].",
             "type": "String",
+            "list": true,
             "optional": true,
-            "default-value": "volume",
-            "command-line-flag": "--aseg-measure",
-            "value-key": "[ASEG_MEASURE]"
+            "default-value": [
+                "volume"
+            ],
+            "command-line-flag": "--aseg-measures",
+            "value-key": "[ASEG_MEASURES]"
         },
         {
-            "name": "aparc_parcellation",
-            "id": "aparc_parcellation",
-            "description": "Parcellation to use for aparcstats2table (minus 'aparc.' prefix). Default: DKTatlas.",
+            "name": "aparc_parcellations",
+            "id": "aparc_parcellations",
+            "description": "List of parcellations to use for aparcstats2table (minus 'aparc.' prefix). Default: ['aparc', 'aparc.a2009s', 'aparc.DKTatlas'].",
             "type": "String",
+            "list": true,
             "optional": true,
-            "default-value": "DKTatlas",
-            "command-line-flag": "--aparc-parcellation",
-            "value-key": "[APARC_PARCELLATION]"
+            "default-value": [
+                "aparc",
+                "aparc.a2009s",
+                "aparc.DKTatlas"
+            ],
+            "command-line-flag": "--aparc-parcellations",
+            "value-key": "[APARC_PARCELLATIONS]"
         },
         {
-            "name": "aparc_measure",
-            "id": "aparc_measure",
-            "description": "Measure to use for aparcstats2table. Default: thickness.",
+            "name": "aparc_measures",
+            "id": "aparc_measures",
+            "description": "List of measure to use for aparcstats2table. Default: ['thickness', 'area', 'meancurv'].",
             "type": "String",
+            "list": true,
             "optional": true,
-            "default-value": "thickness",
-            "command-line-flag": "--aparc-measure",
-            "value-key": "[APARC_MEASURE]"
+            "default-value": [
+                "thickness",
+                "area",
+                "meancurv"
+            ],
+            "command-line-flag": "--aparc-measures",
+            "value-key": "[APARC_MEASURES]"
         },
         {
             "name": "container",
