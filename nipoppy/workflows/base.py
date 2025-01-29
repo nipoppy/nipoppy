@@ -263,7 +263,11 @@ class BaseWorkflow(Base, ABC):
             self.mkdir(path_dest, log_level=log_level, **kwargs_mkdir)
             file_names = os.listdir(path_source)
             for file_name in file_names:
-                shutil.move(src=os.path.join(path_source, file_name), dst=path_dest, **kwargs_move)
+                shutil.move(
+                    src=os.path.join(path_source, file_name),
+                    dst=path_dest,
+                    **kwargs_move,
+                )
 
     def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Create a symlink to another path."""
