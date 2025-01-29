@@ -253,7 +253,12 @@ class BaseWorkflow(Base, ABC):
             shutil.copytree(src=path_source, dst=path_dest, **kwargs)
 
     def movetree(
-        self, path_source, path_dest, kwargs_mkdir=None, kwargs_move=None, log_level=logging.INFO
+        self,
+        path_source,
+        path_dest,
+        kwargs_mkdir=None,
+        kwargs_move=None,
+        log_level=logging.INFO,
     ):
         """Move directory tree."""
         kwargs_mkdir = kwargs_mkdir or {}
