@@ -255,7 +255,7 @@
     ],
     "EXTRACTION_PIPELINES": [
         {
-            "NAME": "freesurfer_stats_and_qc",
+            "NAME": "fs_stats",
             "VERSION": "0.2.0",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/freesurfer_7.3.2.sif",

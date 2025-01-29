@@ -1,5 +1,5 @@
 {
-    "name": "freesurfer_stats_and_qc",
+    "name": "fs_stats",
     "description": "FreeSurfer aseg/aparc stats (and QC metrics) extractor",
     "tool-version": "0.2.0",
     "schema-version": "0.5",
