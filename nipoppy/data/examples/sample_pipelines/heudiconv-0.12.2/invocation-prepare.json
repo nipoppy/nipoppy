@@ -1,9 +1,9 @@
 {
-    "dicom_dir_template": "[[NIPOPPY_DPATH_POST_REORG]]/sub-{subject}/{session}/*",
+    "dicom_dir_template": "[[NIPOPPY_DPATH_POST_REORG]]/sub-{subject}/[[NIPOPPY_BIDS_SESSION_ID]]/*",
     "subjs": "[[NIPOPPY_PARTICIPANT_ID]]",
     "converter": "none",
     "outdir": "[[NIPOPPY_DPATH_BIDS]]",
     "heuristic": "convertall",
-    "session": "[[NIPOPPY_BIDS_SESSION_ID]]",
+    "session": "[[NIPOPPY_SESSION_ID]]",
     "overwrite": true
 }

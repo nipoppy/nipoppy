@@ -91,7 +91,7 @@ def global_options(func):
     func = click.option(
         "--layout",
         "fpath_layout",
-        type=click.Path(exists=True, path_type=Path, resolve_path=True),
+        type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
         help=(
             "Path to a custom layout specification file,"
             " to be used instead of the default layout."
@@ -138,6 +138,15 @@ def runners_options(func):
         "--simulate",
         is_flag=True,
         help="Simulate the pipeline run without executing the generated command-line.",
+    )(func)
+    func = click.option(
+        "--write-list",
+        type=click.Path(path_type=Path, resolve_path=True, dir_okay=False),
+        help=(
+            "Path to a participant-session TSV file to be written. If this is "
+            "provided, the pipeline will not be run: instead, a list of "
+            "participant and session IDs will be written to this file."
+        ),
     )(func)
     func = pipeline_options(func)
     return func

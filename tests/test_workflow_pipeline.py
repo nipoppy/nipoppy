@@ -18,7 +18,6 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
-    StrOrPathLike,
 )
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
@@ -29,30 +28,8 @@ from .conftest import create_empty_dataset, get_config, prepare_dataset
 class PipelineWorkflow(BasePipelineWorkflow):
     """Dummy pipeline workflow for testing."""
 
-    def __init__(
-        self,
-        dpath_root: StrOrPathLike,
-        pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
-        participant_id: str = None,
-        session_id: str = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: bool = False,
-        dry_run: bool = False,
-    ):
-        super().__init__(
-            dpath_root=dpath_root,
-            name="test",
-            pipeline_name=pipeline_name,
-            pipeline_version=pipeline_version,
-            pipeline_step=pipeline_step,
-            participant_id=participant_id,
-            session_id=session_id,
-            fpath_layout=fpath_layout,
-            verbose=verbose,
-            dry_run=dry_run,
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, name="test", **kwargs)
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -672,6 +649,39 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     assert workflow.n_total == 1
     assert workflow.n_success == 0
     assert workflow.return_code == ReturnCode.PARTIAL_SUCCESS
+
+
+@pytest.mark.parametrize("write_list", ["list.tsv", "to_run.tsv"])
+@pytest.mark.parametrize("dry_run", [True, False])
+def test_run_main_write_list(
+    workflow: PipelineWorkflow,
+    write_list: str,
+    dry_run: bool,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    write_list = tmp_path / write_list
+
+    workflow.participant_id = "01"
+    workflow.session_id = "1"
+    workflow.write_list = write_list
+    workflow.dry_run = dry_run
+
+    participants_and_sessions = {workflow.participant_id: [workflow.session_id]}
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=workflow.layout.dpath_bids,
+    )
+    workflow.manifest = manifest
+    workflow.run_main()
+
+    if not dry_run:
+        assert write_list.exists()
+        assert write_list.read_text().strip() == "01\t1"
+    else:
+        assert not write_list.exists()
+    assert f"Wrote participant-session list to {write_list}" in caplog.text
 
 
 @pytest.mark.parametrize(

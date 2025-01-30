@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import bids
+import pandas as pd
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -81,6 +82,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run=False,
@@ -90,6 +92,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.write_list = write_list
 
         super().__init__(
             dpath_root=dpath_root,
@@ -413,21 +416,29 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        for participant_id, session_id in participants_sessions:
-            self.n_total += 1
-            self.logger.info(
-                f"Running for participant {participant_id}, session {session_id}"
-            )
-            try:
-                self.run_single(participant_id, session_id)
-                self.n_success += 1
-            except Exception as exception:
-                self.return_code = ReturnCode.PARTIAL_SUCCESS
-                self.logger.error(
-                    f"Error running {self.pipeline_name} {self.pipeline_version}"
-                    f" on participant {participant_id}, session {session_id}"
-                    f": {exception}"
+        # TODO mutually exclusive with HPC option
+        if self.write_list is not None:
+            if not self.dry_run:
+                pd.DataFrame(participants_sessions).to_csv(
+                    self.write_list, header=False, index=False, sep="\t"
                 )
+            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+        else:
+            for participant_id, session_id in participants_sessions:
+                self.n_total += 1
+                self.logger.info(
+                    f"Running for participant {participant_id}, session {session_id}"
+                )
+                try:
+                    self.run_single(participant_id, session_id)
+                    self.n_success += 1
+                except Exception as exception:
+                    self.return_code = ReturnCode.PARTIAL_SUCCESS
+                    self.logger.error(
+                        f"Error running {self.pipeline_name} {self.pipeline_version}"
+                        f" on participant {participant_id}, session {session_id}"
+                        f": {exception}"
+                    )
 
     def run_cleanup(self):
         """Log a summary message."""
