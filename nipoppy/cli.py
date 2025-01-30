@@ -156,7 +156,10 @@ def runners_options(func):
 
 
 class OrderedGroup(click.RichGroup):
+    """Group that lists commands in the order they were added."""
+
     def list_commands(self, ctx):
+        """List commands in the order they were added."""
         return list(self.commands.keys())
 
 
