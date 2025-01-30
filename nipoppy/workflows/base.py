@@ -252,6 +252,28 @@ class BaseWorkflow(Base, ABC):
         if not self.dry_run:
             shutil.copytree(src=path_source, dst=path_dest, **kwargs)
 
+    def movetree(
+        self,
+        path_source,
+        path_dest,
+        kwargs_mkdir=None,
+        kwargs_move=None,
+        log_level=logging.INFO,
+    ):
+        """Move directory tree."""
+        kwargs_mkdir = kwargs_mkdir or {}
+        kwargs_move = kwargs_move or {}
+        self.logger.log(level=log_level, msg=f"Moving {path_source} to {path_dest}")
+        if not self.dry_run:
+            self.mkdir(path_dest, log_level=log_level, **kwargs_mkdir)
+            file_names = os.listdir(path_source)
+            for file_name in file_names:
+                shutil.move(
+                    src=os.path.join(path_source, file_name),
+                    dst=path_dest,
+                    **kwargs_move,
+                )
+
     def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Create a symlink to another path."""
         self.logger.log(
