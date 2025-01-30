@@ -178,9 +178,10 @@ def add_subparser_init(
         "--mode",
         type=str,
         required=False,
-        choices=("copy", "move"),
+        choices=("copy", "move", "symlink"),
         help=(
-            "If using a BIDS source, specify whether to copy or move the files "
+            "If using a BIDS source, specify whether to copy, move, "
+            "or symlink the files "
             "(default: copy)."
         ),
     )

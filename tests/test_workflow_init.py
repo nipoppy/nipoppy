@@ -166,6 +166,61 @@ def test_init_bids_move_mode(tmp_path):
     assert (dpath_root / "bids" / "README.md").exists()
 
 
+def test_init_bids_symlink_mode(tmp_path):
+    """Create dummy BIDS dataset to use during init and use move symlink.
+
+    Make sure:
+    - manifest is created with the right content
+    - all the files are linked after init to the source.
+    """
+    dpath_root = tmp_path / "nipoppy"
+    bids_to_link = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_to_link,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+
+    source_files_before_init = [
+        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+    ]
+
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, bids_source=bids_to_link, mode="symlink"
+    )
+    workflow.run()
+
+    assert isinstance(workflow.manifest, Manifest)
+
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+        ["anat", "func"],
+    ]
+
+    source_files_after_init = [
+        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+    ]
+    target_files = [
+        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
+    ]
+
+    for f in source_files_before_init:
+        assert f in target_files
+
+    for f in source_files_after_init:
+        assert f in target_files
+
+    assert (dpath_root / "bids").is_symlink()
+    # only the directory is linked, not the files within
+
+    assert len(source_files_after_init) == 25
+    assert (dpath_root / "bids" / "README.md").exists()
+
+
 def test_init_bids_invalid_mode(tmp_path):
     """Create dummy BIDS dataset and pass an invalid mode.
 

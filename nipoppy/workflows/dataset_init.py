@@ -74,6 +74,11 @@ class InitWorkflow(BaseWorkflow):
                     self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
                 elif self.mode == "move":
                     self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "symlink":
+                    self.mkdir(self.dpath_root)
+                    self.create_symlink(
+                        self.bids_source, str(dpath), log_level=logging.DEBUG
+                    )
                 else:
                     raise ValueError(f"Invalid mode: {self.mode}")
             else:
