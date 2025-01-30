@@ -1,0 +1,19 @@
+{
+    "script_path": "[[NIPOPPY_DPATH_PIPELINES]]/static_FC-0.1.0/script.py",
+    "path_to_func_input": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/[[NIPOPPY_BIDS_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/func",
+    "path_to_output_directory": "[[NIPOPPY_DPATH_PIPELINE_IDP]]",
+    "list_of_brain_atlases": [
+        "schaefer_100",
+        "schaefer_200",
+        "schaefer_300",
+        "schaefer_400",
+        "schaefer_500",
+        "schaefer_600",
+        "schaefer_800",
+        "schaefer_1000"
+    ],
+    "confound_strategy": "simple",
+    "list_of_FC_metrics": ["correlation"],
+    "path_to_dkt_file": "SPECIFY_IF_USING_DKT_ATLAS",
+    "space": "MNI152NLin2009cAsym_res-2"
+}
