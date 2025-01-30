@@ -891,10 +891,11 @@ def run(
         Docker containers but likely only with --mode "single".
     aparc_optional_args : Optional[list[str]], optional
         Optional arguments to pass to aparcstats2table, by default None. Should
-        not include --measure or --parc arguments.
+        not include --subjects, --tablefile (or -t), --hemo, --measure or --parc
+        arguments.
     aseg_optional_args : Optional[list[str]], optional
         Optional arguments to pass to asegstats2table, by default None. Should
-        not include --meas argument.
+        not include --subjects, --tablefile or --meas argument.
     euler_surf_paths : list[Union[str, os.PathLike]], optional
         Paths to surface files for which to calculate number of holes with
         mris_euler_number.
@@ -1088,7 +1089,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help=(
             "Optional arguments to pass to asegstats2table, as a single string."
-            " Should not include --meas argument."
+            " Should not include --subjects, --tablefile or --meas arguments."
         ),
     )
     parser.add_argument(
@@ -1097,7 +1098,8 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help=(
             "Optional arguments to pass to aparcstats2table, as a single string."
-            " Should not include --measure or --parc arguments."
+            " Should not include --subjects, --tablefile (or -t), --hemi, --measure or "
+            "--parc arguments."
         ),
     )
     parser.add_argument(

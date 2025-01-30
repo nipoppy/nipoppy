@@ -107,7 +107,7 @@
         {
             "name": "aseg_args",
             "id": "aseg_args",
-            "description": "Optional arguments to pass to asegstats2table, as a single string. Should not include --meas argument.",
+            "description": "Optional arguments to pass to asegstats2table, as a single string. Should not include --subjects, --tablefile or --meas arguments.",
             "type": "String",
             "optional": true,
             "command-line-flag": "--aseg-args",
@@ -116,7 +116,7 @@
         {
             "name": "aparc_args",
             "id": "aparc_args",
-            "description": "Optional arguments to pass to aparcstats2table, as a single string. Should not include --measure or --parc arguments.",
+            "description": "Optional arguments to pass to aparcstats2table, as a single string. Should not include --subjects, --tablefile (or -t), --hemi, --measure or --parc arguments.",
             "type": "String",
             "optional": true,
             "command-line-flag": "--aparc-args",
