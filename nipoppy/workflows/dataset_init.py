@@ -35,7 +35,7 @@ class InitWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         bids_source=None,
-        mode="copy",
+        mode="symlink",
         fpath_layout: Optional[StrOrPathLike] = None,
         logger: Optional[logging.Logger] = None,
         dry_run: bool = False,
@@ -59,7 +59,7 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
-        If the BIDS source dataset is requested, it is copied.
+        If the BIDS source dataset is requested, it is symlinked.
         """
         # dataset must not already exist
         if self.dpath_root.exists():

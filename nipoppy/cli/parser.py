@@ -179,10 +179,11 @@ def add_subparser_init(
         type=str,
         required=False,
         choices=("copy", "move", "symlink"),
+        default="symlink",
         help=(
             "If using a BIDS source, specify whether to copy, move, "
             "or symlink the files "
-            "(default: copy)."
+            "(default: symlink)."
         ),
     )
 
