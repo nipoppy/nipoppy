@@ -35,6 +35,7 @@ class InitWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         bids_source=None,
+        mode="copy",
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -50,6 +51,7 @@ class InitWorkflow(BaseWorkflow):
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
+        self.mode = mode
 
     def run_main(self):
         """Create dataset directory structure.
@@ -70,7 +72,12 @@ class InitWorkflow(BaseWorkflow):
         for dpath in self.layout.dpaths:
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
-                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                if self.mode == "copy":
+                    self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "move":
+                    self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                else:
+                    raise ValueError(f"Invalid mode: {self.mode}")
             else:
                 self.mkdir(dpath)
 

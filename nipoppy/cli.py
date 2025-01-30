@@ -163,6 +163,14 @@ def cli():
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
     help=("Path to a BIDS dataset to initialize the layout with."),
 )
+@click.option(
+    "--mode",
+    type=click.Choice(["copy", "move"]),
+    help=(
+        "If using a BIDS source, specify whether to copy or move the files"
+        " (default: copy)."
+    ),
+)
 @global_options
 def init(**params):
     """Initialize a new dataset."""

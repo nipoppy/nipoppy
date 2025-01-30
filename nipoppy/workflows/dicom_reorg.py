@@ -81,16 +81,16 @@ class DicomReorgWorkflow(BaseWorkflow):
         return fpaths
 
     def apply_fname_mapping(
-        self, fname_source: str, participant_id: str, session_id: str
+        self, fpath_source: StrOrPathLike, participant_id: str, session_id: str
     ) -> str:
         """
-        Apply a mapping to the file name.
+        Apply a mapping from the original (full) file path to destination file name.
 
         This method does not change the file name by default, but it can be overridden
         if the file names need to be changed during reorganization (e.g. for easier
         BIDS conversion).
         """
-        return fname_source
+        return Path(fpath_source).name
 
     def run_single(self, participant_id: str, session_id: str):
         """Reorganize downloaded DICOM files for a single participant and session."""
@@ -118,9 +118,14 @@ class DicomReorgWorkflow(BaseWorkflow):
                         f"Error checking DICOM file {fpath_source}: {exception}"
                     )
 
-            fpath_dest = dpath_reorganized / self.apply_fname_mapping(
-                fpath_source.name, participant_id=participant_id, session_id=session_id
-            )
+            # the destination path is under dpath_reorganized
+            # resolve the path to avoid issues with symlinks
+            fpath_dest = (
+                dpath_reorganized
+                / self.apply_fname_mapping(
+                    fpath_source, participant_id=participant_id, session_id=session_id
+                )
+            ).resolve()
 
             # do not overwrite existing files
             if fpath_dest.exists():
@@ -130,12 +135,17 @@ class DicomReorgWorkflow(BaseWorkflow):
                 )
 
             # either create symlinks or copy original files
-            if not self.dry_run:
-                if self.copy_files:
-                    self.copy(fpath_source, fpath_dest)
-                else:
-                    fpath_source = os.path.relpath(fpath_source, fpath_dest.parent)
-                    self.create_symlink(path_source=fpath_source, path_dest=fpath_dest)
+            if self.copy_files:
+                self.copy(fpath_source, fpath_dest, log_level=logging.DEBUG)
+            else:
+                fpath_source = os.path.relpath(
+                    fpath_source.resolve(), fpath_dest.parent
+                )
+                self.create_symlink(
+                    path_source=fpath_source,
+                    path_dest=fpath_dest,
+                    log_level=logging.DEBUG,
+                )
 
         # update doughnut entry
         self.doughnut.set_status(
