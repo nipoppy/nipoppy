@@ -3,18 +3,24 @@
 
 import argparse
 import os
+import re
 import shlex
 import subprocess
 import sys
 import tempfile
+from collections import defaultdict
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import pandas as pd
 
 MODE_SINGLE = "single"
 MODE_MULTI = "multi"
 DEFAULT_MODE = MODE_SINGLE
+
+DEFAULT_ASEG_MEASURES = ["volume"]
+DEFAULT_APARC_PARCELLATIONS = ["aparc", "aparc.a2009s", "aparc.DKTatlas"]
+DEFAULT_APARC_MEASURES = ["thickness", "area", "meancurv"]
 
 DEFAULT_EULER_SURF_PATHS = [
     "surf/lh.white",
@@ -39,6 +45,26 @@ DEFAULT_SUB_COLNAME = "participant_id"
 DEFAULT_SES_COLNAME = "session_id"
 DEFAULT_SUB_PREFIX = "sub-"
 DEFAULT_SES_PREFIX = "ses-"
+
+RE_FS_VERSION = re.compile("[\d]\.[\d].[\d]")  # noqa W605
+FNAME_FS_VERSION = "build-stamp.txt"
+
+
+def _get_fs_version(dpath, fname_version=FNAME_FS_VERSION, re_version=RE_FS_VERSION):
+    """
+    Search for a version file and extract FreeSurfer version from it.
+
+    This assumes dpath only contains results from a single FreeSurfer version.
+    Returns None if no version file file is found or if the version could not be
+    extracted.
+    """
+    fs_version = None
+    for fpath in Path(dpath).rglob(fname_version):
+        if fpath.is_file():
+            if match := re_version.search(fpath.read_text()):
+                fs_version = match.group()
+                break
+    return fs_version
 
 
 def _load_fs_stats_table(
@@ -287,7 +313,7 @@ def _run_mri_cnr(
         for hemi in ["lh", "rh"]:
             index.append((Path(vol_path).name, hemi))
 
-    df = pd.read_csv(out_path, delim_whitespace=True, header=None, names=ALL_CNR_COLS)
+    df = pd.read_csv(out_path, sep="\s+", header=None, names=ALL_CNR_COLS)  # noqa W605
     df.index = index
 
     return df
@@ -302,15 +328,15 @@ def _get_subject_list(fs_subjects_dir: Union[str, os.PathLike]) -> list[str]:
     ]
 
 
-def run_single_stats(
+def run_single_aseg(
     subjects_dir_path: Union[str, os.PathLike],
     container_command_and_args: Optional[list[str]] = None,
-    aseg_optional_args: Optional[list[str]] = None,
-    aparc_optional_args: Optional[list[str]] = None,
+    measures: list[str] = DEFAULT_ASEG_MEASURES,
+    optional_args: Optional[list[str]] = None,
     sub_colname: str = DEFAULT_SUB_COLNAME,
     sub_prefix: str = DEFAULT_SUB_PREFIX,
     verbose: bool = False,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Extract FreeSurfer aseg and aparc statistics for a single subjects directory.
 
     This function calls _run_asegstats2table and _run_aparcstats2table (twice,
@@ -321,91 +347,176 @@ def run_single_stats(
     subjects_dir_path : Union[str, os.PathLike]
         Path to the FreeSurfer subjects directory.
     container_command_and_args : Optional[list[str]], optional
-        Passed to _run_asegstats2table and _run_aparcstats2table.
-    aseg_optional_args : Optional[list[str]], optional
         Passed to _run_asegstats2table.
-    aparc_optional_args : Optional[list[str]], optional
-        Passed to _run_aparcstats2table.
+    measures: list[str], optional
+        List of measures to use for asegstats2table.
+    optional_args : Optional[list[str]], optional
+        Passed to _run_asegstats2table.
     sub_colname : str, optional
-        Passed to run_asegstats2table and _run_aparcstats2table.
+        Passed to run_asegstats2table.
     sub_prefix : str, optional
-        Passed to run_asegstats2table and _run_aparcstats2table.
+        Passed to run_asegstats2table.
     verbose : bool, optional
         Passed to _run_subprocess.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with subject index and FreeSurfer stats columns.
+    dict[str, pd.DataFrame]
+        Keys are measure names.
+        Values are dataframes for aseg stats, with subject index.
     """
     subjects = _get_subject_list(subjects_dir_path)
+    dfs_aseg = {}
 
     # create a temporary directory to store the stats files (will be deleted)
     # we do not need the individuals files after they are combined
     with tempfile.TemporaryDirectory(dir=subjects_dir_path) as tmpdir:
         tmpdir = Path(tmpdir)
-        df_aseg = _run_asegstats2table(
-            fs_subjects_dir=subjects_dir_path,
-            subjects_list=subjects,
-            tsv_path=tmpdir / "aseg_stats.tsv",
-            container_command_and_args=container_command_and_args,
-            optional_args=aseg_optional_args,
-            sub_colname=sub_colname,
-            sub_prefix=sub_prefix,
-            verbose=verbose,
-        )
 
-        df_aparc_lh = _run_aparcstats2table(
-            fs_subjects_dir=subjects_dir_path,
-            subjects_list=subjects,
-            tsv_path=tmpdir / "aparc_stats_lh.tsv",
-            hemi="lh",
-            container_command_and_args=container_command_and_args,
-            optional_args=aparc_optional_args,
-            sub_colname=sub_colname,
-            sub_prefix=sub_prefix,
-            verbose=verbose,
-        )
+        for measure in measures:
 
-        df_aparc_rh = _run_aparcstats2table(
-            fs_subjects_dir=subjects_dir_path,
-            subjects_list=subjects,
-            tsv_path=tmpdir / "aparc_stats_rh.tsv",
-            hemi="rh",
-            container_command_and_args=container_command_and_args,
-            optional_args=aparc_optional_args,
-            sub_colname=sub_colname,
-            sub_prefix=sub_prefix,
-            verbose=verbose,
-        )
+            print(f'Getting aseg stats for measure "{measure}"')
 
-        # FreeSurfer 6 has duplicate columns between files
-        for col in ["BrainSegVolNotVent", "eTIV"]:
-            first = None
-            for df_to_concat in [df_aseg, df_aparc_lh, df_aparc_rh]:
-                if col in df_to_concat:
-                    if first is None:
-                        first = df_to_concat[col]
-                    else:
-                        common_participants = list(
-                            set(first.index).intersection(set(df_to_concat.index))
-                        )
-                        if first.loc[common_participants].equals(
-                            df_to_concat.loc[common_participants, col]
-                        ):
-                            df_to_concat.drop(col, axis="columns", inplace=True)
-                            print(f"Dropped duplicate column {col} from aparc file.")
+            optional_args_all = optional_args + ["--meas", measure]
 
-    # combine the stats files and make sure there are no duplicate column names
-    df_stats = pd.concat([df_aseg, df_aparc_lh, df_aparc_rh], axis="columns")
-    if len(set(df_stats.columns)) != len(df_stats.columns):
-        sys.exit(
-            "Duplicate column names in the stats files: "
-            f"{df_stats.columns[df_stats.columns.duplicated()]}"
-        )
-    df_stats = df_stats.sort_index()
+            df_aseg = _run_asegstats2table(
+                fs_subjects_dir=subjects_dir_path,
+                subjects_list=subjects,
+                tsv_path=tmpdir / f"aseg_stats-{measure}.tsv",
+                container_command_and_args=container_command_and_args,
+                optional_args=optional_args_all,
+                sub_colname=sub_colname,
+                sub_prefix=sub_prefix,
+                verbose=verbose,
+            )
 
-    return df_stats
+            dfs_aseg[measure] = df_aseg.sort_index()
+
+    return dfs_aseg
+
+
+def run_single_aparc(
+    subjects_dir_path: Union[str, os.PathLike],
+    container_command_and_args: Optional[list[str]] = None,
+    parcellations: list[str] = DEFAULT_APARC_PARCELLATIONS,
+    measures: list[str] = DEFAULT_APARC_MEASURES,
+    optional_args: Optional[list[str]] = None,
+    sub_colname: str = DEFAULT_SUB_COLNAME,
+    sub_prefix: str = DEFAULT_SUB_PREFIX,
+    verbose: bool = False,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Extract FreeSurfer aseg and aparc statistics for a single subjects directory.
+
+    This function calls _run_aparcstats2table (twice, once for each hemisphere) and
+    concatenates the results into a single DataFrame.
+
+    Parameters
+    ----------
+    subjects_dir_path : Union[str, os.PathLike]
+        Path to the FreeSurfer subjects directory.
+    container_command_and_args : Optional[list[str]], optional
+        Passed _run_aparcstats2table.
+    parcellations : list[str], optional
+        List of parcellations to use for _run_aparcstats2table.
+    measures: list[str], optional
+        List of measures to use for _run_aparcstats2table.
+    optional_args : Optional[list[str]], optional
+        Passed to _run_aparcstats2table.
+    sub_colname : str, optional
+        Passed to _run_aparcstats2table.
+    sub_prefix : str, optional
+        Passed to _run_aparcstats2table.
+    verbose : bool, optional
+        Passed to _run_subprocess.
+
+    Returns
+    -------
+    dict[Tuple[str, str], pd.DataFrame]
+        Keys are tuples of parcellation and measure names.
+        Values are dataframes for aparc stats, with subject index.
+    """
+    subjects = _get_subject_list(subjects_dir_path)
+    dfs_aparc = {}
+
+    # create a temporary directory to store the stats files (will be deleted)
+    # we do not need the individuals files after they are combined
+    with tempfile.TemporaryDirectory(dir=subjects_dir_path) as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        # get one df per parcellation and measure combination
+        for parcellation in parcellations:
+            for measure in measures:
+
+                print(
+                    "Getting aparc stats for "
+                    f'parcellation "{parcellation}" and measure "{measure}"'
+                )
+
+                optional_args_all = optional_args + [
+                    f"--parc={parcellation}",
+                    f"--measure={measure}",
+                ]
+
+                df_aparc_lh = _run_aparcstats2table(
+                    fs_subjects_dir=subjects_dir_path,
+                    subjects_list=subjects,
+                    tsv_path=tmpdir / f"aparc_stats_lh-{parcellation}-{measure}.tsv",
+                    hemi="lh",
+                    container_command_and_args=container_command_and_args,
+                    optional_args=optional_args_all,
+                    sub_colname=sub_colname,
+                    sub_prefix=sub_prefix,
+                    verbose=verbose,
+                )
+
+                df_aparc_rh = _run_aparcstats2table(
+                    fs_subjects_dir=subjects_dir_path,
+                    subjects_list=subjects,
+                    tsv_path=tmpdir / f"aparc_stats_rh-{parcellation}-{measure}.tsv",
+                    hemi="rh",
+                    container_command_and_args=container_command_and_args,
+                    optional_args=optional_args_all,
+                    sub_colname=sub_colname,
+                    sub_prefix=sub_prefix,
+                    verbose=verbose,
+                )
+
+                # FreeSurfer 6 has duplicate columns between files
+                for col in ["BrainSegVolNotVent", "eTIV"]:
+                    first = None
+                    for df_to_concat in [df_aparc_lh, df_aparc_rh]:
+                        if col in df_to_concat:
+                            if first is None:
+                                first = df_to_concat[col]
+                            else:
+                                common_participants = list(
+                                    set(first.index).intersection(
+                                        set(df_to_concat.index)
+                                    )
+                                )
+                                if first.loc[common_participants].equals(
+                                    df_to_concat.loc[common_participants, col]
+                                ):
+                                    df_to_concat.drop(col, axis="columns", inplace=True)
+                                    print(
+                                        f"\tDropped duplicate column {col}"
+                                        " from aparc file."
+                                    )
+
+                # combine the aparc stats files
+                # and make sure there are no duplicate column names
+                df_aparc = pd.concat([df_aparc_lh, df_aparc_rh], axis="columns")
+                if len(set(df_aparc.columns)) != len(df_aparc.columns):
+                    sys.exit(
+                        "Duplicate column names in the stats files: "
+                        f"{df_aparc.columns[df_aparc.columns.duplicated()]}"
+                    )
+
+                # sort and return
+                df_aparc = df_aparc.sort_index()
+                dfs_aparc[(parcellation, measure)] = df_aparc
+
+    return dfs_aparc
 
 
 def run_single_qc(
@@ -452,6 +563,8 @@ def run_single_qc(
     subjects_dir_path = Path(subjects_dir_path)
     euler_surf_paths: list[Path] = [Path(surf_path) for surf_path in euler_surf_paths]
 
+    print("Getting QC metrics")
+
     data_for_df = []
     subjects = _get_subject_list(subjects_dir_path)
     with tempfile.TemporaryDirectory(dir=subjects_dir_path) as tmpdir:
@@ -471,7 +584,7 @@ def run_single_qc(
                         )
                     )
                 except subprocess.CalledProcessError:
-                    print(f"Error calculating Euler number for {surf_path.name}.")
+                    print(f"\tError calculating Euler number for {surf_path.name}.")
 
             # get contrast-to-noise ratio (CNR) for each hemisphere
             try:
@@ -486,7 +599,7 @@ def run_single_qc(
                     verbose=verbose,
                 )
             except subprocess.CalledProcessError:
-                print(f"Error calculating CNR for {subject}.")
+                print(f"\tError calculating CNR for {subject}.")
                 continue
 
             for col in cnr_cols:
@@ -506,6 +619,9 @@ def run_single_qc(
 def run_single(
     subjects_dir_path: Union[str, os.PathLike],
     container_command_and_args: Optional[list[str]] = None,
+    aseg_measures: list[str] = DEFAULT_ASEG_MEASURES,
+    aparc_parcellations: list[str] = DEFAULT_APARC_PARCELLATIONS,
+    aparc_measures: list[str] = DEFAULT_APARC_MEASURES,
     aseg_optional_args: Optional[list[str]] = None,
     aparc_optional_args: Optional[list[str]] = None,
     with_qc: bool = False,
@@ -524,6 +640,12 @@ def run_single(
         Path to the FreeSurfer subjects directory.
     container_command_and_args : Optional[list[str]], optional
         Passed to run_single_stats and run_single_qc.
+    aseg_measures : list[str]
+        List of measures to use for aparcstats2table.
+    aparc_parcellations : list[str]
+        List of parcellations to use for asegstats2table.
+    aparc_measures : list[str]
+        List of measures to use for asegstats2table.
     aseg_optional_args : Optional[list[str]], optional
         Passed to run_single_stats.
     aparc_optional_args : Optional[list[str]], optional
@@ -551,11 +673,22 @@ def run_single(
     """
     subjects_dir_path = Path(subjects_dir_path).resolve()
 
-    df_stats = run_single_stats(
+    dfs_aseg = run_single_aseg(
         subjects_dir_path=subjects_dir_path,
         container_command_and_args=container_command_and_args,
-        aseg_optional_args=aseg_optional_args,
-        aparc_optional_args=aparc_optional_args,
+        measures=aseg_measures,
+        optional_args=aseg_optional_args,
+        sub_colname=sub_colname,
+        sub_prefix=sub_prefix,
+        verbose=verbose,
+    )
+
+    dfs_aparc = run_single_aparc(
+        subjects_dir_path=subjects_dir_path,
+        container_command_and_args=container_command_and_args,
+        parcellations=aparc_parcellations,
+        measures=aparc_measures,
+        optional_args=aparc_optional_args,
         sub_colname=sub_colname,
         sub_prefix=sub_prefix,
         verbose=verbose,
@@ -575,12 +708,15 @@ def run_single(
     else:
         df_qc = None
 
-    return df_stats, df_qc
+    return dfs_aseg, dfs_aparc, df_qc
 
 
 def run_multi(
     sessions_dir_path: Union[str, os.PathLike],
     container_command_and_args: Optional[list[str]] = None,
+    aseg_measures: list[str] = DEFAULT_ASEG_MEASURES,
+    aparc_parcellations: list[str] = DEFAULT_APARC_PARCELLATIONS,
+    aparc_measures: list[str] = DEFAULT_APARC_MEASURES,
     aparc_optional_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
     with_qc: bool = False,
@@ -602,6 +738,12 @@ def run_multi(
     ----------
     sessions_dir_path : Union[str, os.PathLike]
         Path containing multiple FreeSurfer subjects directories, one for each session.
+    aseg_measures : list[str]
+        List of measures to use for aparcstats2table.
+    aparc_parcellations : list[str]
+        List of parcellations to use for asegstats2table.
+    aparc_measures : list[str]
+        List of measures to use for asegstats2table.
     container_command_and_args : Optional[list[str]], optional
         Passed to run_single.
     aparc_optional_args : Optional[list[str]], optional
@@ -629,20 +771,32 @@ def run_multi(
 
     Returns
     -------
-    tuple[pd.DataFrame, Optional[pd.DataFrame]]
-        DataFrames with multi-level index (subject, session) and FreeSurfer stats
-        columns. Second "dataframe" is None if with_qc is False.
+    tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame]]
+        Dataframes with multi-level index (subject, session) and FreeSurfer stats
+        columns. First dataframe is for aseg and second is for aparc. Third
+        "dataframe" is None if with_qc is False.
     """
     sessions_dir_path = Path(sessions_dir_path)
 
     # get a dataframe for each session
-    session_df_maps = None
-    for dpath_session in sessions_dir_path.iterdir():
+    session_df_map_aseg = defaultdict(dict)  # {key: {session_id: df}}
+    session_df_map_aparc = defaultdict(dict)  # {key: {session_id: df}}
+    session_df_map_qc = {}  # {session_id: df}
+    n_sessions = 0
+    for dpath_session in sorted(sessions_dir_path.iterdir()):
         if not dpath_session.is_dir():
             continue
-        dfs_single = run_single(
+
+        n_sessions += 1
+        session_id = dpath_session.name.removeprefix(ses_prefix)
+        print(f"===== {session_id} =====")
+
+        dfs_aseg, dfs_aparc, df_qc = run_single(
             subjects_dir_path=dpath_session,
             container_command_and_args=container_command_and_args,
+            aseg_measures=aseg_measures,
+            aparc_parcellations=aparc_parcellations,
+            aparc_measures=aparc_measures,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
             with_qc=with_qc,
@@ -654,34 +808,40 @@ def run_multi(
             verbose=verbose,
         )
 
-        if session_df_maps is None:
-            session_df_maps = [{} for _ in dfs_single]
-        session_id = dpath_session.name.removeprefix(ses_prefix)
-        for session_df_map, df in zip(session_df_maps, dfs_single):
-            session_df_map[session_id] = df
+        for key, df in dfs_aseg.items():
+            session_df_map_aseg[key][session_id] = df
+        for key, df in dfs_aparc.items():
+            session_df_map_aparc[key][session_id] = df
+        session_df_map_qc[session_id] = df_qc
 
-    if session_df_maps is None:
+    if n_sessions == 0:
         sys.exit(f"No session directories found in {sessions_dir_path}.")
 
-    # combine the dataframes and update the index
-    df_multi = []
-    for session_df_map in session_df_maps:
-        try:
-            df = pd.concat(session_df_map, names=[ses_colname])
-            df.index = df.index.reorder_levels([sub_colname, ses_colname])
-            df = df.sort_index()
-        except ValueError:
-            df = None
-        df_multi.append(df)
-    return tuple(df_multi)
+    dfs_aseg_multi = {
+        key: pd.concat(df_map, names=[ses_colname])
+        for key, df_map in session_df_map_aseg.items()
+    }
+    dfs_aparc_multi = {
+        key: pd.concat(df_map, names=[ses_colname])
+        for key, df_map in session_df_map_aparc.items()
+    }
+    if with_qc:
+        df_qc_multi = pd.concat(session_df_map_qc, names=[ses_colname])
+    else:
+        df_qc_multi = None
+
+    return dfs_aseg_multi, dfs_aparc_multi, df_qc_multi
 
 
 def run(
     input_dir_path: Union[str, os.PathLike],
-    output_stats_file_path: Union[str, os.PathLike],
-    output_qc_file_path: Optional[Union[str, os.PathLike]] = None,
+    output_dir_path: Union[str, os.PathLike],
     mode: str = DEFAULT_MODE,
+    with_qc: bool = False,
     container_command_and_args: Optional[list[str]] = None,
+    aseg_measures: list[str] = DEFAULT_ASEG_MEASURES,
+    aparc_parcellations: list[str] = DEFAULT_APARC_PARCELLATIONS,
+    aparc_measures: list[str] = DEFAULT_APARC_MEASURES,
     aparc_optional_args: Optional[list[str]] = None,
     aseg_optional_args: Optional[list[str]] = None,
     euler_surf_paths: list[Union[str, os.PathLike]] = DEFAULT_EULER_SURF_PATHS,
@@ -707,12 +867,17 @@ def run(
         Path to input directory, which should be a FreeSurfer subjects directory if
         mode is "single" or a directory containing multiple FreeSurfer subjects
         directories if mode is "multi".
-    output_stats_file_path : Union[str, os.PathLike]
-        Path to the output TSV file for the stats file. The parent directory of
-        this path must exist.
-    output_qc_file_path : Optional[Union[str, os.PathLike]], optional
-        Path to the output TSV file for QC metrics. If this is not provided, only
-        the stats file will be created.
+    output_dir_path : Union[str, os.PathLike]
+        Path to the directory where output files will be created. Any existing file
+        may be overwritten.
+    aseg_measures : list[str]
+        List of measures to use for aparcstats2table.
+    aparc_parcellations : list[str]
+        List of parcellations to use for asegstats2table.
+    aparc_measures : list[str]
+        List of measures to use for asegstats2table.
+    with_qc : bool, optional
+        Whether or not to compute QC metrics.
     mode : str
         See input_dir_path.
     container_command_and_args : Optional[list[str]], optional
@@ -725,9 +890,12 @@ def run(
         allows for forwarding environment variables; this function might work with
         Docker containers but likely only with --mode "single".
     aparc_optional_args : Optional[list[str]], optional
-        Optional arguments to pass to aparcstats2table, by default None
+        Optional arguments to pass to aparcstats2table, by default None. Should
+        not include --subjects, --tablefile (or -t), --hemo, --measure or --parc
+        arguments.
     aseg_optional_args : Optional[list[str]], optional
-        Optional arguments to pass to asegstats2table, by default None
+        Optional arguments to pass to asegstats2table, by default None. Should
+        not include --subjects, --tablefile or --meas argument.
     euler_surf_paths : list[Union[str, os.PathLike]], optional
         Paths to surface files for which to calculate number of holes with
         mris_euler_number.
@@ -737,22 +905,23 @@ def run(
     cnr_cols : list[str], optional
         Metrics to extract from mri_cnr outputs.
     sub_colname : str, optional
-        Column name to use for the subject ID in the final output file.
+        Column name to use for the subject ID in the final output files.
     ses_colname : str, optional
-        Column name to use for the session ID in the final output file.
+        Column name to use for the session ID in the final output files.
     sub_prefix : str, optional
-        Prefix to strip from the subject IDs in the final output file.
+        Prefix to strip from the subject IDs in the final output files.
         Set as empty string to keep the original values.
     ses_prefix : str, optional
-        Prefix to strip from the session IDs in the final output file.
+        Prefix to strip from the session IDs in the final output files.
         Set as empty string to keep the original values.
     """
-    with_qc = output_qc_file_path is not None
-
     # single subjects directory (no sessions)
     if mode == MODE_SINGLE:
-        df_stats, df_qc = run_single(
+        dfs_aseg, dfs_aparc, df_qc = run_single(
             subjects_dir_path=input_dir_path,
+            aseg_measures=aseg_measures,
+            aparc_parcellations=aparc_parcellations,
+            aparc_measures=aparc_measures,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
             container_command_and_args=container_command_and_args,
@@ -767,8 +936,11 @@ def run(
 
     # multiple subjects directories (assumed to be sessions)
     elif mode == MODE_MULTI:
-        df_stats, df_qc = run_multi(
+        dfs_aseg, dfs_aparc, df_qc = run_multi(
             sessions_dir_path=input_dir_path,
+            aseg_measures=aseg_measures,
+            aparc_parcellations=aparc_parcellations,
+            aparc_measures=aparc_measures,
             aseg_optional_args=aseg_optional_args,
             aparc_optional_args=aparc_optional_args,
             container_command_and_args=container_command_and_args,
@@ -786,17 +958,40 @@ def run(
     else:
         sys.exit(f"\nInvalid mode: {mode}. Must be one of: {MODE_SINGLE}, {MODE_MULTI}")
 
-    # save final file(s)
-    df_stats.to_csv(output_stats_file_path, sep="\t")
-    print(
-        "\nSaved aggregated stats file with shape "
-        f"{df_stats.shape} to {output_stats_file_path}."
+    # output directory
+    output_dir_path = Path(output_dir_path)
+    output_dir_path.mkdir(parents=True, exist_ok=True)
+
+    # get FreeSurfer version number, to prepend to output file names
+    fs_version = _get_fs_version(
+        input_dir_path, fname_version=FNAME_FS_VERSION, re_version=RE_FS_VERSION
     )
-    if with_qc:
-        df_qc.to_csv(output_qc_file_path, sep="\t")
+    if fs_version is not None:
+        prefix = f"fs{fs_version}-"
+    else:
+        prefix = ""
+
+    for measure, df_aseg in dfs_aseg.items():
+        fpath_aseg = output_dir_path / f"{prefix}aseg-{measure}.tsv"
+        df_aseg.to_csv(fpath_aseg, sep="\t")
         print(
-            "Saved aggregated QC metrics file with shape "
-            f"{df_qc.shape} to {output_qc_file_path}."
+            "\nSaved aggregated aseg stats file with shape "
+            f"{df_aseg.shape} to {fpath_aseg}."
+        )
+
+    for (parcellation, measure), df_aparc in dfs_aparc.items():
+        fpath_aparc = output_dir_path / f"{prefix}{parcellation}-{measure}.tsv"
+        df_aparc.to_csv(fpath_aparc, sep="\t")
+        print(
+            "Saved aggregated aparc stats file with shape "
+            f"{df_aparc.shape} to {fpath_aparc}."
+        )
+
+    if with_qc:
+        fpath_qc = output_dir_path / f"{prefix}qc.tsv"
+        df_qc.to_csv(fpath_qc, sep="\t")
+        print(
+            f"Saved aggregated QC metrics file with shape {df_qc.shape} to {fpath_qc}."
         )
 
 
@@ -823,9 +1018,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "output_stats_file_path",
+        "output_dir_path",
         type=Path,
-        help="Path to the output TSV file.",
+        help="Path to the output directory.",
     )
     parser.add_argument(
         "--mode",
@@ -835,6 +1030,42 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Whether to process a single FreeSurfer subjects directory or multiple "
             f"directories (default: {DEFAULT_MODE})."
+        ),
+    )
+    parser.add_argument(
+        "--with-qc",
+        action="store_true",
+        default=False,
+        help="Whether to compute QC metrics and save them to a separate file.",
+    )
+    parser.add_argument(
+        "--aseg-measures",
+        type=str,
+        nargs="+",
+        default=DEFAULT_ASEG_MEASURES,
+        help=(
+            "List of measures to use for asegstats2table."
+            f" Default: {DEFAULT_ASEG_MEASURES}."
+        ),
+    )
+    parser.add_argument(
+        "--aparc-parcellations",
+        type=str,
+        nargs="+",
+        default=DEFAULT_APARC_PARCELLATIONS,
+        help=(
+            "List of parcellations to use for aparcstats2table (minus 'aparc.' prefix)."
+            f" Default: {DEFAULT_APARC_PARCELLATIONS}."
+        ),
+    )
+    parser.add_argument(
+        "--aparc-measures",
+        type=str,
+        nargs="+",
+        default=DEFAULT_APARC_MEASURES,
+        help=(
+            "List of measure to use for aparcstats2table. Default: "
+            f"{DEFAULT_APARC_MEASURES}."
         ),
     )
     parser.add_argument(
@@ -856,23 +1087,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--aseg-args",
         type=str,
         default="",
-        help="Optional arguments to pass to asegstats2table, as a single string.",
+        help=(
+            "Optional arguments to pass to asegstats2table, as a single string."
+            " Should not include --subjects, --tablefile or --meas arguments."
+        ),
     )
     parser.add_argument(
         "--aparc-args",
         type=str,
         default="",
-        help="Optional arguments to pass to aparcstats2table, as a single string.",
-    )
-    parser.add_argument(
-        "--qc",
-        dest="output_qc_file_path",
-        type=Path,
         help=(
-            "Optional path to the output TSV file for QC metrics. "
-            "If this is not provided, only the stats file will be generated."
+            "Optional arguments to pass to aparcstats2table, as a single string."
+            " Should not include --subjects, --tablefile (or -t), --hemi, --measure or "
+            "--parc arguments."
         ),
-        required=False,
     )
     parser.add_argument(
         "--euler-surf-paths",
@@ -956,9 +1184,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     run(
         input_dir_path=args.input_dir_path,
-        output_stats_file_path=args.output_stats_file_path,
-        output_qc_file_path=args.output_qc_file_path,
+        output_dir_path=args.output_dir_path,
         mode=args.mode,
+        aseg_measures=args.aseg_measures,
+        aparc_parcellations=args.aparc_parcellations,
+        aparc_measures=args.aparc_measures,
+        with_qc=args.with_qc,
         container_command_and_args=shlex.split(args.container),
         aseg_optional_args=shlex.split(args.aseg_args),
         aparc_optional_args=shlex.split(args.aparc_args),
