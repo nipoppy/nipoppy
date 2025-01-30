@@ -52,7 +52,10 @@ def dataset_option(func):
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path().cwd(),
-        help=f"Path to the root of the dataset (default: {Path().cwd()}).",
+        help=(
+            "Path to the root of the dataset (default is current working directory:"
+            f" {Path().cwd()})."
+        ),
     )(func)
 
 
@@ -152,7 +155,13 @@ def runners_options(func):
     return func
 
 
+class OrderedGroup(click.RichGroup):
+    def list_commands(self, ctx):
+        return list(self.commands.keys())
+
+
 @click.group(
+    cls=OrderedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
     epilog=(
         "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
