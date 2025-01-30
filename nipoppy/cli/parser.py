@@ -174,6 +174,16 @@ def add_subparser_init(
             "with. Note: this will automatically create an appropriate manifest file."
         ),
     )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        required=False,
+        choices=("copy", "move"),
+        help=(
+            "If using a BIDS source, specify whether to copy or move the files "
+            "(default: copy)."
+        ),
+    )
 
     return parser
 

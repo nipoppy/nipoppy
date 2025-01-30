@@ -82,7 +82,7 @@ def test_init_bids(tmp_path):
 
     Make sure:
     - manifest is created with the right content
-    - all the files are there after init.
+    - all the files are there after init (by default the copy mode is used).
     """
     dpath_root = tmp_path / "nipoppy"
     bids_to_copy = tmp_path / "bids"
@@ -114,6 +114,79 @@ def test_init_bids(tmp_path):
         assert f in target_files
 
     assert (dpath_root / "bids" / "README.md").exists()
+
+
+def test_init_bids_move_mode(tmp_path):
+    """Create dummy BIDS dataset to use during init and use move mode.
+
+    Make sure:
+    - manifest is created with the right content
+    - all the files are moved after init and the source is empty.
+    """
+    dpath_root = tmp_path / "nipoppy"
+    bids_to_copy = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_to_copy,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+
+    source_files_before_init = [
+        x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
+    ]
+
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, bids_source=bids_to_copy, mode="move"
+    )
+    workflow.run()
+
+    assert isinstance(workflow.manifest, Manifest)
+
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+        ["anat", "func"],
+    ]
+
+    source_files_after_init = [
+        x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
+    ]
+    target_files = [
+        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
+    ]
+
+    for f in source_files_before_init:
+        assert f in target_files
+
+    assert len(source_files_after_init) == 0
+
+    assert (dpath_root / "bids" / "README.md").exists()
+
+
+def test_init_bids_invalid_mode(tmp_path):
+    """Create dummy BIDS dataset and pass an invalid mode.
+
+    Make sure:
+    - An error is raised when an invalid mode is used.
+    """
+    dpath_root = tmp_path / "nipoppy"
+    bids_to_copy = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_to_copy,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+
+    # mode is invalid, should raise an error
+    with pytest.raises(ValueError, match="Invalid mode: something"):
+        workflow = InitWorkflow(
+            dpath_root=dpath_root, bids_source=bids_to_copy, mode="something"
+        )
+        workflow.run()
 
 
 def test_init_bids_dry_run(tmp_path):
