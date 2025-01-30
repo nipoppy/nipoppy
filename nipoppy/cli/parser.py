@@ -182,8 +182,7 @@ def add_subparser_init(
         default="symlink",
         help=(
             "If using a BIDS source, specify whether to copy, move, "
-            "or symlink the files "
-            "(default: symlink)."
+            "or symlink the files (default: symlink)."
         ),
     )
 
