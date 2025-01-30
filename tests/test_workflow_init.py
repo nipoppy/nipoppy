@@ -210,7 +210,7 @@ def test_init_bids_symlink_mode(tmp_path):
 
     assert (dpath_root / "bids").is_symlink()
     # only the directory is linked, not the files within
-    
+
     assert (dpath_root / "bids").readlink() == bids_to_link
 
     assert len(source_files_after_init) == 25
