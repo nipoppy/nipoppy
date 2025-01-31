@@ -35,7 +35,7 @@ class InitWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         bids_source=None,
-        mode="copy",
+        mode="symlink",
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -60,7 +60,7 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
-        If the BIDS source dataset is requested, it is copied.
+        If the BIDS source dataset is requested, it is symlinked.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
@@ -76,6 +76,11 @@ class InitWorkflow(BaseWorkflow):
                     self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
                 elif self.mode == "move":
                     self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "symlink":
+                    self.mkdir(self.dpath_root)
+                    self.create_symlink(
+                        self.bids_source, str(dpath), log_level=logging.DEBUG
+                    )
                 else:
                     raise ValueError(f"Invalid mode: {self.mode}")
             else:

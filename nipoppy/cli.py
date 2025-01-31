@@ -52,9 +52,9 @@ def dataset_option(func):
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path().cwd(),
+        show_default=True,
         help=(
-            "Path to the root of the dataset (default is current working directory:"
-            f" {Path().cwd()})."
+            "Path to the root of the dataset (default is current working directory)."
         ),
     )(func)
 
@@ -186,10 +186,11 @@ def cli():
 )
 @click.option(
     "--mode",
-    type=click.Choice(["copy", "move"]),
+    type=click.Choice(["copy", "move", "symlink"]),
+    default="symlink",
+    show_default=True,
     help=(
-        "If using a BIDS source, specify whether to copy or move the files"
-        " (default: copy)."
+        "If using a BIDS source, specify whether to copy, move, or symlink the files."
     ),
 )
 @global_options
