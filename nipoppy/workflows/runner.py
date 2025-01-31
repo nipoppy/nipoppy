@@ -1,6 +1,5 @@
 """PipelineRunner workflow."""
 
-import logging
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
@@ -22,6 +21,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
+        name: str = "run",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
@@ -31,12 +31,15 @@ class PipelineRunner(BasePipelineWorkflow):
         simulate: bool = False,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
+        self.simulate = simulate
+        self.keep_workdir = keep_workdir
+        self.tar = tar
         super().__init__(
             dpath_root=dpath_root,
-            name="run",
+            name=name,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
@@ -44,12 +47,9 @@ class PipelineRunner(BasePipelineWorkflow):
             session_id=session_id,
             write_list=write_list,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
-        self.keep_workdir = keep_workdir
-        self.tar = tar
-        self.simulate = simulate
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:

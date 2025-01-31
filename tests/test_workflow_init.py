@@ -19,7 +19,6 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 
 
 def test_run(dpath_root: Path):
-
     def exist_or_none(o: object, s: str) -> bool:
         # walrus operator ":=" does assignment inside the "if" statement
         if attr := getattr(o, s, None):
@@ -255,8 +254,7 @@ def test_init_bids_dry_run(tmp_path):
     )
     workflow.run()
 
-    target_files = [x.relative_to(dpath_root) for x in dpath_root.glob("**/*")]
-    assert len(target_files) == 0
+    assert not dpath_root.exists()
 
 
 def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture):

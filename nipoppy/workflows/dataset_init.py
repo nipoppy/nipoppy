@@ -37,7 +37,7 @@ class InitWorkflow(BaseWorkflow):
         bids_source=None,
         mode="symlink",
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -45,8 +45,9 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
+            _skip_logging=True,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
@@ -63,11 +64,12 @@ class InitWorkflow(BaseWorkflow):
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            raise FileExistsError("Dataset directory already exists")
+            raise FileExistsError(
+                f"Dataset directory already exists: {self.dpath_root}"
+            )
 
         # create directories
         for dpath in self.layout.dpaths:
-
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 if self.mode == "copy":
@@ -160,7 +162,6 @@ class InitWorkflow(BaseWorkflow):
         self.logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for bids_participant_id in bids_participant_ids:
-
             bids_session_ids = sorted(
                 [
                     x.name
