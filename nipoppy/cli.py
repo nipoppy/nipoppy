@@ -83,6 +83,7 @@ def global_options(func):
     func = click.option(
         "--verbose",
         "-v",
+        is_flag=True,
         help="Verbose mode (Show DEBUG messages).",
     )(func)
     func = click.option(
