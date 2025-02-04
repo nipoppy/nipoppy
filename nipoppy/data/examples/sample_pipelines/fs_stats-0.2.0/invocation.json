@@ -1,7 +1,7 @@
 {
     "script_path": "[[NIPOPPY_DPATH_PIPELINES]]/fs_stats-0.2.0/script.py",
-    "input_dir_path": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]/fs_stats-0.2.0",
-    "output_dir_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]",
+    "input_dir_path": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
+    "output_dir_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/fs_stats-0.2.0",
     "mode": "multi",
     "with_qc": false,
     "aseg_measures": [
