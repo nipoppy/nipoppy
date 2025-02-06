@@ -305,6 +305,31 @@ def test_get_dpath_pybids_db(
     )
 
 
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,expected",
+    [
+        (
+            "my_pipeline",
+            "v1",
+            Path(ATTR_TO_DPATH_MAP["dpath_pipelines"], "my_pipeline-v1"),
+        ),
+        (
+            "other_pipeline",
+            "2.0.0",
+            Path(ATTR_TO_DPATH_MAP["dpath_pipelines"], "other_pipeline-2.0.0"),
+        ),
+    ],
+)
+def test_get_fpath_pipeline_config(
+    pipeline_name, pipeline_version, expected, dpath_root: Path
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_config(pipeline_name, pipeline_version)
+        == dpath_root / expected
+    )
+
+
 def test_doughnut_parent_directory(dpath_root: Path):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert layout.fpath_doughnut.parent == layout.dpath_root / "sourcedata" / "imaging"

@@ -128,6 +128,13 @@ class LayoutConfig(BaseModel):
 class DatasetLayout(Base):
     """File/directory structure for a specific dataset."""
 
+    # directory names
+    dname_pipeline_output = "output"
+    dname_pipeline_idp = "idp"
+
+    # file names
+    fname_pipeline_config = "config.json"
+
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -188,10 +195,6 @@ class DatasetLayout(Base):
         self.fpath_manifest: Path
         self.fpath_imaging_bagel: Path
         self.fpath_demographics: Path
-
-        # directory names
-        self.dname_pipeline_output = "output"
-        self.dname_pipeline_idp = "idp"
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
@@ -256,7 +259,7 @@ class DatasetLayout(Base):
         return True
 
     def get_dpath_pipeline(self, pipeline_name: str, pipeline_version: str) -> Path:
-        """Return the path to a pipeline's directory."""
+        """Return the path to a pipeline's derivatives directory."""
         return self.dpath_derivatives / pipeline_name / pipeline_version
 
     def get_dpath_pipeline_work(
@@ -319,6 +322,14 @@ class DatasetLayout(Base):
             session_id=session_id,
         )
         return self.dpath_pybids_db / dname
+
+    def get_dpath_pipeline_config(
+        self, pipeline_name: str, pipeline_version: str
+    ) -> Path:
+        """Return the path to a pipeline's configuration directory."""
+        return self.dpath_pipelines / get_pipeline_tag(
+            pipeline_name=pipeline_name, pipeline_version=pipeline_version
+        )
 
 
 # for printing defaults in docs
