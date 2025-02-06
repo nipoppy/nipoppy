@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import bids
+import pandas as pd
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -20,6 +21,7 @@ from nipoppy.config.boutiques import (
 from nipoppy.config.main import get_pipeline_config, get_pipeline_version
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -80,22 +82,25 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run=False,
     ):
-        super().__init__(
-            dpath_root=dpath_root,
-            name=name,
-            fpath_layout=fpath_layout,
-            logger=logger,
-            dry_run=dry_run,
-        )
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.write_list = write_list
+
+        super().__init__(
+            dpath_root=dpath_root,
+            name=name,
+            fpath_layout=fpath_layout,
+            verbose=verbose,
+            dry_run=dry_run,
+        )
 
         # the message logged in run_cleanup will depend on
         # the final values for these attributes (updated in run_main)
@@ -202,6 +207,17 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         invocation = load_json(fpath_invocation)
         invocation = self.config.apply_substitutions_to_json(invocation)
         return invocation
+
+    @cached_property
+    def tracker_config(self) -> TrackerConfig:
+        """Load the pipeline step's tracker configuration."""
+        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
+        if fpath_tracker_config is None:
+            raise ValueError(
+                f"No tracker config file specified for pipeline {self.pipeline_name}"
+                f" {self.pipeline_version}"
+            )
+        return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
     def pybids_ignore_patterns(self) -> list[str]:
@@ -400,21 +416,29 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        for participant_id, session_id in participants_sessions:
-            self.n_total += 1
-            self.logger.info(
-                f"Running for participant {participant_id}, session {session_id}"
-            )
-            try:
-                self.run_single(participant_id, session_id)
-                self.n_success += 1
-            except Exception as exception:
-                self.return_code = ReturnCode.PARTIAL_SUCCESS
-                self.logger.error(
-                    f"Error running {self.pipeline_name} {self.pipeline_version}"
-                    f" on participant {participant_id}, session {session_id}"
-                    f": {exception}"
+        # TODO mutually exclusive with HPC option
+        if self.write_list is not None:
+            if not self.dry_run:
+                pd.DataFrame(participants_sessions).to_csv(
+                    self.write_list, header=False, index=False, sep="\t"
                 )
+            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+        else:
+            for participant_id, session_id in participants_sessions:
+                self.n_total += 1
+                self.logger.info(
+                    f"Running for participant {participant_id}, session {session_id}"
+                )
+                try:
+                    self.run_single(participant_id, session_id)
+                    self.n_success += 1
+                except Exception as exception:
+                    self.return_code = ReturnCode.PARTIAL_SUCCESS
+                    self.logger.error(
+                        f"Error running {self.pipeline_name} {self.pipeline_version}"
+                        f" on participant {participant_id}, session {session_id}"
+                        f": {exception}"
+                    )
 
     def run_cleanup(self):
         """Log a summary message."""

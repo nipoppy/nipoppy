@@ -12,6 +12,7 @@ from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
 
 from .conftest import create_empty_dataset, get_config, prepare_dataset
@@ -19,7 +20,6 @@ from .conftest import create_empty_dataset, get_config, prepare_dataset
 
 @pytest.fixture(scope="function")
 def tracker(tmp_path: Path):
-
     participants_and_sessions = {
         "01": ["1", "2"],
         "02": ["1", "2"],
@@ -46,6 +46,7 @@ def tracker(tmp_path: Path):
             "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
             "file.txt",
         ],
+        "PARTICIPANT_SESSION_DIR": "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]",
     }
 
     fpath_tracker_config.write_text(json.dumps(tracker_config))
@@ -115,17 +116,62 @@ def test_run_setup_existing_bad_bagel(
 @pytest.mark.parametrize(
     "relative_paths,expected_status",
     [
-        (["01_ses-1.txt", "file.txt"], Bagel.status_success),
-        (["01_ses-1.txt", "file.txt", "missing.txt"], Bagel.status_fail),
+        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt"], Bagel.status_success),
+        (["**/*.txt"], Bagel.status_success),
+        (["*file.txt"], Bagel.status_fail),
+        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"], Bagel.status_fail),
     ],
 )
 def test_check_status(tracker: PipelineTracker, relative_paths, expected_status):
-    for relative_path_to_write in ["01_ses-1.txt", "file.txt"]:
+    for relative_path_to_write in ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"]:
         fpath = tracker.dpath_pipeline_output / relative_path_to_write
-        fpath.mkdir(parents=True, exist_ok=True)
+        fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
     assert tracker.check_status(relative_paths) == expected_status
+
+
+@pytest.mark.parametrize(
+    "relative_paths,relative_dpath_to_tar,expected_status",
+    [
+        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt"], "dirA", Bagel.status_success),
+        (["dirA/*.txt", "dirA/dirB/file.txt"], "dirA", Bagel.status_success),
+        (["**/*.txt"], "dirA", Bagel.status_success),
+        # # FAILING, see note in check_status
+        # (["*file.txt"], "dirA", Bagel.status_fail),
+        (
+            ["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"],
+            "dirA",
+            Bagel.status_fail,
+        ),
+        (
+            ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"],
+            "dirA/dirB",
+            Bagel.status_success,
+        ),
+    ],
+)
+def test_check_status_with_tarball(
+    tracker: PipelineTracker,
+    relative_paths: list[str],
+    relative_dpath_to_tar: str,
+    expected_status,
+):
+    for relative_path_to_write in ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"]:
+        fpath = tracker.dpath_pipeline_output / relative_path_to_write
+        fpath.parent.mkdir(parents=True, exist_ok=True)
+        fpath.touch()
+
+    # use PipelineRunner to tar the directory
+    dpath_to_tar = tracker.dpath_pipeline_output / relative_dpath_to_tar
+    PipelineRunner(
+        tracker.dpath_root, tracker.pipeline_name, tracker.pipeline_version
+    ).tar_directory(dpath_to_tar)
+
+    assert not dpath_to_tar.exists()
+    assert (
+        tracker.check_status(relative_paths, relative_dpath_to_tar) == expected_status
+    )
 
 
 @pytest.mark.parametrize(
@@ -198,9 +244,16 @@ def test_run_single(
         "02/ses-1/results.txt",
     ]:
         fpath = tracker.dpath_pipeline_output / relative_path_to_write
-        fpath.mkdir(parents=True, exist_ok=True)
+        fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
+    for relative_dpath_to_tar in ["01/ses-1", "02/ses-1"]:
+        dpath_to_tar = tracker.dpath_pipeline_output / relative_dpath_to_tar
+        PipelineRunner(
+            tracker.dpath_root, tracker.pipeline_name, tracker.pipeline_version
+        ).tar_directory(dpath_to_tar)
+
+    assert not dpath_to_tar.exists()
     assert tracker.run_single(participant_id, session_id) == expected_status
 
     assert (
