@@ -173,32 +173,36 @@ def make_bagel(
 
     bagel = Bagel(pd.concat(_df_list))
 
-    # add pipeline status columns
-    # always keep the first session as complete for all pipelines
-    bagel[[Bagel.col_status]] = "INCOMPLETE"
-    bagel.loc[bagel[Manifest.col_session_id] == session_ids[0], Bagel.col_status] = (
-        "SUCCESS"
-    )
-
     # repeated participants for each pipeline config
     participant_counts = [n_configs * len(participant_ids)]
 
-    # add the rest of the sessions
-    for session_id in session_ids[1:]:
-        n_session_participants = (
-            n_configs
-            * session_participant_counts_df[
-                session_participant_counts_df[Manifest.col_session_id] == session_id
-            ]["participant_count"].values[0]
-        )
-        n_success_pipeline = int(n_session_participants * n_success_percent / 100)
-        participant_counts.append(n_success_pipeline)
+    # add pipeline status columns
+    # always keep the first session as complete for all pipelines
+    # except when testing 0% success
+    if n_success_percent == 0:
+        bagel[Bagel.col_status] = "FAIL"
+    else:
+        bagel[[Bagel.col_status]] = "INCOMPLETE"
+        bagel.loc[
+            bagel[Manifest.col_session_id] == session_ids[0], Bagel.col_status
+        ] = "SUCCESS"
 
-        bagel.loc[bagel[Manifest.col_session_id] == session_id, Bagel.col_status] = [
-            "SUCCESS"
-        ] * n_success_pipeline + ["INCOMPLETE"] * (
-            n_session_participants - n_success_pipeline
-        )
+        # add the rest of the sessions
+        for session_id in session_ids[1:]:
+            n_session_participants = (
+                n_configs
+                * session_participant_counts_df[
+                    session_participant_counts_df[Manifest.col_session_id] == session_id
+                ]["participant_count"].values[0]
+            )
+            n_success_pipeline = int(n_session_participants * n_success_percent / 100)
+            participant_counts.append(n_success_pipeline)
+
+            bagel.loc[
+                bagel[Manifest.col_session_id] == session_id, Bagel.col_status
+            ] = ["SUCCESS"] * n_success_pipeline + ["INCOMPLETE"] * (
+                n_session_participants - n_success_pipeline
+            )
 
     # participant_count column contains an int which is the sum of successful
     # rows across all processing pipelines for a given session
@@ -287,6 +291,17 @@ def test_doughnut(
     [
         (
             10,
+            ["BL", "M06"],
+            0,
+            (
+                ("dcm2bids", "1.0.0", "prepare"),
+                ("dcm2bids", "1.0.0", "convert"),
+                ("fmriprep", "1.0.0", "default"),
+            ),
+            False,
+        ),
+        (
+            10,
             ["BL", "M06", "M12", "M24"],
             50,
             (
@@ -330,20 +345,24 @@ def test_bagel(
     status_df = pd.DataFrame()
     status_df, bagel_cols = workflow._check_bagel(status_df)
 
-    # pipeline_status_cols = [f"{config[0]}\n{config[1]}\n{config[2]}" for config in pipeline_configs]
-    status_df = pd.merge(
-        status_df, session_participant_counts_df, on="session_id", how="left"
-    )
+    if n_success_percent == 0:
+        assert status_df.empty
 
-    # Sum up the bagel counts for all pipeline configs
-    status_df["bagel_counts"] = 0
-    for config in pipeline_configs:
-        pipeline_status_col = f"{config[0]}\n{config[1]}\n{config[2]}"
-        status_df["bagel_counts"] += status_df[pipeline_status_col]
+    else:
+        # pipeline_status_cols = [f"{config[0]}\n{config[1]}\n{config[2]}" for config in pipeline_configs]
+        status_df = pd.merge(
+            status_df, session_participant_counts_df, on="session_id", how="left"
+        )
 
-    # check manifest status
-    assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
-    assert status_df["bagel_counts"].equals(status_df["participant_count"])
+        # Sum up the bagel counts for all pipeline configs
+        status_df["bagel_counts"] = 0
+        for config in pipeline_configs:
+            pipeline_status_col = f"{config[0]}\n{config[1]}\n{config[2]}"
+            status_df["bagel_counts"] += status_df[pipeline_status_col]
+
+        # check manifest status
+        assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
+        assert status_df["bagel_counts"].equals(status_df["participant_count"])
 
 
 @pytest.mark.parametrize("bagel", [pd.DataFrame(), make_bagel()[0]])

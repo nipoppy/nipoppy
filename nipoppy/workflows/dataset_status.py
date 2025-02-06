@@ -177,6 +177,19 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.debug(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
         self.logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
+        # Check if at least successful run exists
+        if bagel[bagel[bagel.col_status] == STATUS_SUCCESS].empty:
+            self.logger.warning(
+                "The imaging bagel file exists but no successful run found in"
+                f" the imaging bagel file for pipeline(s): {pipelines}."
+                " If you have run a pipeline followed by 'nipoppy track', it is"
+                " likely that your pipeline output does not meet the criteria in the"
+                " '<pipeline>/tracker_config.json' file."
+                " Please check the tracker configuration and re-run 'nipoppy track'"
+                " to generate the imaging bagel file with at least one successful run."
+            )
+            return status_df, []
+
         bagel[self.col_pipeline] = (
             bagel[bagel.col_pipeline_name]
             + "\n"
