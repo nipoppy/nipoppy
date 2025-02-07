@@ -64,9 +64,18 @@ class InitWorkflow(BaseWorkflow):
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            raise FileExistsError(
-                f"Dataset directory already exists: {self.dpath_root}"
-            )
+            try:
+                filenames = [
+                    f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
+                ]
+
+            except NotADirectoryError:
+                raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
+
+            if len(filenames) > 0:
+                raise FileExistsError(
+                    f"Dataset directory is non-empty: {self.dpath_root}"
+                )
 
         # create directories
         for dpath in self.layout.dpaths:
