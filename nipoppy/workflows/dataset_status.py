@@ -1,6 +1,5 @@
 """Workflow for status command."""
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -21,7 +20,7 @@ class StatusWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -29,8 +28,9 @@ class StatusWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="status",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
+            _skip_logging=True,
         )
         self.col_pipeline = "pipeline"
 

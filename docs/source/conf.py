@@ -32,7 +32,7 @@ release = __version__
 extensions = [
     "autoapi.extension",
     "myst_parser",
-    "sphinxarg.ext",
+    "sphinx_click.ext",
     "sphinx_copybutton",
     "sphinx_github_changelog",
     "sphinx-jsonschema",
@@ -56,9 +56,19 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
-html_css_files = [
-    "theme.css",
-]
+if (
+    "READTHEDOCS" in os.environ
+    and os.environ.get("READTHEDOCS_CANONICAL_URL").startswith(
+        "https://nipoppy.readthedocs.io"
+    )
+    and os.environ.get("READTHEDOCS_VERSION_TYPE") != "external"  # exclude PR builds
+):
+    html_js_files = [
+        (
+            "https://plausible.neurobagel.org/js/script.js",
+            {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
+        ),
+    ]
 
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
@@ -105,7 +115,7 @@ intersphinx_mapping = {
 
 # -- MyST configuration -------------------------------------------------------
 
-myst_enable_extensions = ["fieldlist", "substitution"]
+myst_enable_extensions = ["fieldlist", "substitution", "colon_fence"]
 
 myst_heading_anchors = 5
 
@@ -173,7 +183,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "*/cli/*"]
+autoapi_ignore = ["*_version*", "**/cli.py"]
 autoapi_options = [
     "members",
     "undoc-members",
