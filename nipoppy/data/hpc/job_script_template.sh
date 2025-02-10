@@ -11,8 +11,7 @@
 # can also be defined in the HPC_CONFIG for further customization.
 
 # Lines surrounded by {#- and -#} are Jinja comments and will not be included
-# in the final job script. Lines surrounded by {%- and -%} are Jinja statements
-# and are used to control the logic of the template rendering.
+# in the final job script.
 #}
 
 {#-
