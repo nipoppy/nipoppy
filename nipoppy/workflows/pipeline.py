@@ -446,8 +446,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         """
         Get HPC configuration values to be passed to Jinja template.
 
-        Logs warning if there if the HPC config does not exist (or is empty) or if it
-        contains variables that are not defined in the template job script.
+        This function logs a warning if the HPC config does not exist (or is empty) or
+        if it contains variables that are not defined in the template job script.
         """
         if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
             job_args = {}
