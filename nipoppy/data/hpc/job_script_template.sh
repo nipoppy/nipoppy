@@ -9,8 +9,22 @@
 # Nipoppy and cannot be changed. Other (optional) variables can be defined in a
 # pipeline's HPC_CONFIG field in the global config file. Additional variables
 # can also be defined in the HPC_CONFIG for further customization.
+
+# Lines surrounded by {#- and -#} are Jinja comments and will not be included
+# in the final job script. Lines surrounded by {%- and -%} are Jinja statements
+# and are used to control the logic of the template rendering.
 #}
 
+{#-
+# ----------------------------
+# JOB SCHEDULER CONFIGURATIONS
+# ----------------------------
+# Below sections are for the Slurm and SGE job schedulers respectively.
+# Depending on the value of the --hpc argument, only one of these will be used.
+# Existing lines should not be modified unless you know what you are doing.
+# New lines can be added to hardcode extra settings that are to be constant for
+# every HPC job (no matter which pipeline).
+#}
 {%- if NIPOPPY_HPC == 'slurm' %}
 {% set NIPOPPY_ARRAY_VAR = 'SLURM_ARRAY_TASK_ID' %}
 # ===== Slurm configs =====
@@ -58,6 +72,12 @@
 {%- endif %}
 {% endif %}
 
+{#-
+# -------------------
+# START OF JOB SCRIPT
+# -------------------
+# Below lines should not be modified unless you know what you are doing.
+#}
 {% if NIPOPPY_HPC_PREAMBLE_STRINGS -%}
 # HPC_PREAMBLE from global config file
 {% for NIPOPPY_HPC_PREAMBLE_STRING in NIPOPPY_HPC_PREAMBLE_STRINGS -%}
