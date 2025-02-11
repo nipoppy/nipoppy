@@ -442,6 +442,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
+    def _generate_cli_command_for_hpc(
+        self, participant_id=None, session_id=None
+    ) -> list[str]:
+        """
+        Generate the CLI command to be run on the HPC cluster for a participant/session.
+        """
+        return NotImplementedError("This method should be implemented in a subclass")
+
     def _check_hpc_config(self) -> dict:
         """
         Get HPC configuration values to be passed to Jinja template.
@@ -492,22 +500,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # Generate the list of nipoppy commands as a single string for a shell array
         job_array_commands = []
         for participant_id, session_id in participants_sessions:
-            # TODO this needs to include other args (e.g. --tar)
-            command = [
-                "nipoppy",
-                "run",
-                str(self.dpath_root),
-                "--pipeline",
-                self.pipeline_name,
-                "--pipeline-version",
-                self.pipeline_version,
-                "--pipeline-step",
-                self.pipeline_step,
-                "--participant-id",
-                participant_id,
-                "--session-id",
-                session_id,
-            ]
+            command = self._generate_cli_command_for_hpc(
+                participant_id=participant_id, session_id=session_id
+            )
             job_array_commands.append(shlex.join(command))
             self.n_total += 1  # for logging in run_cleanup()
 

@@ -231,6 +231,41 @@ class PipelineRunner(BasePipelineWorkflow):
             if participant_session not in participants_sessions_completed:
                 yield participant_session
 
+    def _generate_cli_command_for_hpc(
+        self, participant_id=None, session_id=None
+    ) -> list[str]:
+        """
+        Generate the CLI command to be run on the HPC cluster for a participant/session.
+
+        Skip the --hpc and the --dry-run flags.
+        """
+        command = [
+            "nipoppy",  # TODO use nipoppy.env.PROGRAM_NAME
+            "run",
+            "--dataset",
+            self.dpath_root,
+            "--pipeline",
+            self.pipeline_name,
+        ]
+        if self.pipeline_version is not None:
+            command.extend(["--pipeline-version", self.pipeline_version])
+        if self.pipeline_step is not None:
+            command.extend(["--pipeline-step", self.pipeline_step])
+        if participant_id is not None:
+            command.extend(["--participant-id", participant_id])
+        if session_id is not None:
+            command.extend(["--session-id", session_id])
+        if self.simulate:
+            command.append("--simulate")
+        if self.keep_workdir:
+            command.append("--keep-workdir")
+        if self.tar:
+            command.append("--tar")
+        if self.fpath_layout:
+            command.extend(["--layout", self.fpath_layout])
+        if self.verbose:
+            command.append("--verbose")
+
     def run_setup(self):
         """Run pipeline runner setup."""
         to_return = super().run_setup()
