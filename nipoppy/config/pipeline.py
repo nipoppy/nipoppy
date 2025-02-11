@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
@@ -18,6 +19,7 @@ from nipoppy.config.pipeline_step import (
     ProcPipelineStepConfig,
 )
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -144,12 +146,6 @@ class BidsPipelineConfig(BasePipelineConfig):
     model_config = ConfigDict(extra="forbid")
 
 
-class HpcConfig(BaseModel):
-    """Schema for High-Performance Computing (HPC) configuration."""
-
-    model_config = ConfigDict(extra="allow")
-
-
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
@@ -171,10 +167,8 @@ class ProcPipelineConfig(BasePipelineConfig):
     HPC_CONFIG: Optional[HpcConfig] = Field(
         default=None,
         description=(
-            "Configuration dictionary for High-Performance Computing (HPC) settings, "
-            "with keys as configuration names and values of any type. "
-            "The keys are passed to a Jinja template (in  "
-            "dataset_root/code/hpc_templates) for the requested queue (SGE/Slurm)"
+            "Key-value pairs to be passed to the Jinja template at "
+            f"{DEFAULT_LAYOUT_INFO.dpath_hpc}."
         ),
     )
 

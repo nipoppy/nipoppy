@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import shlex
 from abc import ABC, abstractmethod
@@ -13,6 +12,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import bids
+from jinja2 import Environment, meta
 from pydantic import ValidationError
 from pysqa import QueueAdapter
 
@@ -33,6 +33,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.utils import (
+    FPATH_HPC_TEMPLATE,
     add_pybids_ignore_patterns,
     check_participant_id,
     check_session_id,
@@ -74,6 +75,10 @@ def apply_analysis_level(
 
 class BasePipelineWorkflow(BaseWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
+
+    dname_hpc_logs = "hpc"
+    fname_hpc_error = "pysqa.err"
+    fname_job_script = "run_queue.sh"
 
     def __init__(
         self,
@@ -437,19 +442,57 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                         f": {exception}"
                     )
 
+    def _check_hpc_config(self) -> dict:
+        """
+        Get HPC configuration values to be passed to Jinja template.
+
+        This function logs a warning if the HPC config does not exist (or is empty) or
+        if it contains variables that are not defined in the template job script.
+        """
+        if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
+            job_args = {}
+        else:
+            job_args = hpc_config.model_dump()
+
+        if len(job_args) == 0:
+            self.logger.warning("No HPC configuration found in pipeline config")
+
+        template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
+        template_vars = meta.find_undeclared_variables(template_ast)
+        missing_vars = set(job_args.keys()) - template_vars
+        if len(missing_vars) > 0:
+            self.logger.warning(
+                "Found variables in the HPC config that are not used in the template "
+                f"job script: {missing_vars}. Update the config or modify the template "
+                f"at {FPATH_HPC_TEMPLATE}."
+            )
+
+        return job_args
+
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
-        self.logger.info("Running in HPC mode.")
+        # make sure HPC directory exists
+        dpath_hpc_configs = self.layout.dpath_hpc
+        if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
+            raise FileNotFoundError(
+                "The HPC directory with appropriate content needs to exist at "
+                f"{self.layout.dpath_hpc} if HPC job submission is requested"
+            )
 
-        hpc_templates_path = Path(f"{self.dpath_root}/code/hpc_templates/{self.hpc}")
-        hpc_logs_path = Path(f"{self.dpath_root}/logs/hpc")
-        os.makedirs(hpc_logs_path, exist_ok=True)
+        qa = QueueAdapter(directory=str(self.layout.dpath_hpc))
 
-        qa = QueueAdapter(directory=str(hpc_templates_path))
+        try:
+            qa.switch_cluster(self.hpc)
+        except KeyError:
+            raise ValueError(
+                f"Invalid HPC cluster type: {self.hpc}"
+                f". Available clusters are: {qa.list_clusters()}"
+            )
 
         # Generate the list of nipoppy commands as a single string for a shell array
         job_array_commands = []
         for participant_id, session_id in participants_sessions:
+            # TODO this needs to include other args (e.g. --tar)
             command = [
                 "nipoppy",
                 "run",
@@ -466,65 +509,90 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 session_id,
             ]
             job_array_commands.append(shlex.join(command))
-        # Join the commands into a single string
+            self.n_total += 1  # for logging in run_cleanup()
 
-        job_array_commands_str = " ".join([f'"{cmd}"' for cmd in job_array_commands])
-        preamble = self.config.HPC_PREAMBLE
+        # skip if there are no jobs to submit
+        if len(job_array_commands) == 0:
+            return
 
-        # Build the single command to submit as an array job
-        if self.hpc == "slurm":
-            command = (
-                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
-                f'eval "${{commands[$SLURM_ARRAY_TASK_ID]}}"\''
-            )
-        elif self.hpc == "sge":
-            command = (
-                f"bash -c '{preamble}; commands=({job_array_commands_str}); "
-                f'eval "${{commands[$((SGE_TASK_ID-1))]}}"\''
-            )
-        else:
-            raise ValueError(
-                "Unsupported HPC type specified. Please use 'slurm' or 'sge'."
-            )
+        job_name = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            participant_id=self.participant_id,
+            session_id=self.session_id,
+        )
+        dpath_work = self.dpath_pipeline_work
 
-        # Submit the job with the total number of commands as the array size
-        num_jobs = len(job_array_commands)
+        # this is the file that will be created by PySQA
+        # if the job submission command fails
+        # first we delete it to make sure it is not already there
+        fpath_hpc_error = dpath_work / self.fname_hpc_error
+        fpath_hpc_error.unlink(missing_ok=True)
 
+        # create the HPC logs directory
+        dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
+        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
+
+        # user-defined args
+        job_args = self._check_hpc_config()
+
+        queue_id = None
         try:
             if not self.dry_run:
                 queue_id = qa.submit_job(
-                    job_name=(
-                        f"nipoppy_{self.pipeline_name}_"
-                        f"{self.pipeline_version}_{self.pipeline_step}"
-                    ),
-                    dataset_root=self.dpath_root,
-                    command=command,
-                    num_tasks=num_jobs,
                     queue=self.hpc,
-                    **self.pipeline_config.HPC_CONFIG.model_dump(),
+                    working_directory=str(dpath_work),
+                    command="",  # not used in default template but cannot be None
+                    NIPOPPY_HPC=self.hpc,
+                    NIPOPPY_JOB_NAME=job_name,
+                    NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
+                    NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
+                    NIPOPPY_COMMANDS=job_array_commands,
+                    **job_args,
                 )
-        except NotImplementedError:
-            self.logger.info(
-                "Failed to retrieve SGE array job ID. "
-                "Please check the queue for the job ID."
+        except NotImplementedError as exception:
+            # currently the SGE adapter errors out with NotImplementedError because the
+            # SGE wrapper does not implement the get_job_id_from_output method
+            # this should be fixed in the next version of PySQA (0.2.4?)
+            if self.hpc != "sge":
+                raise exception
+
+        # raise error if an error file was created
+        if fpath_hpc_error.exists():
+            raise RuntimeError(
+                "Error occurred while submitting the HPC job:"
+                f"\n{fpath_hpc_error.read_text()}"
+                "\nThe job script can be found at "
+                f"{dpath_work / self.fname_job_script}."
+                "\nThis file is auto-generated. To modify it, you will need to "
+                "modify the pipeline's HPC configuration in the config file and/or "
+                f"the template job script in {self.layout.dpath_hpc}."
             )
-            queue_id = None
-        except Exception as e:
-            self.logger.error(
-                f"Unexpected error occurred while submitting the job: {e}"
-            )
-            raise e
+
         if queue_id is not None:
-            self.logger.info(f"Submitted array job with queue ID {queue_id}")
+            self.logger.info(f"HPC job ID: {queue_id}")
+
+        # for logging in run_cleanup()
+        self.n_success += len(job_array_commands)
 
     def run_cleanup(self):
         """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
-                "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, "
-                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
+                "No participants or sessions to run. Make sure there are no "
+                "mistakes in the input arguments, the dataset's manifest or config "
+                "file, and/or check the doughnut file at "
+                f"{self.layout.fpath_doughnut}"
             )
+        elif self.hpc is not None:
+            if self.n_success == 0:
+                self.logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
+            else:
+                self.logger.info(
+                    f"[{LogColor.SUCCESS}]Successfully submitted {self.n_success} "
+                    "HPC job(s)[/]"
+                )
         else:
             # change the message depending on how successful the run was
             prefix = "Ran"
