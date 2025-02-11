@@ -1,31 +1,32 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatch-vcs", "hatchling"]
 
 [project]
 authors = [{ name = "Nipoppy developpers" }]
 classifiers = [
-    "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved",
-    "Programming Language :: Python",
-    "Topic :: Software Development",
-    "Topic :: Scientific/Engineering",
     "Operating System :: POSIX",
     "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
 ]
 dependencies = [
     "boutiques",
+    "click",
     "jinja2",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
-    "requests",
     "pydicom!=3.0.0",
-    "rich",
-    "rich_argparse",
-    "typing-extensions",
     "pysqa[sge]",
+    "requests",
+    "rich",
+    "rich-click",
+    "typing-extensions",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
@@ -38,27 +39,27 @@ dynamic = ["version"]
 dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
+    "mdit-py-plugins",
+    "myst-parser",
     "sphinx",
-    "sphinx-argparse!=0.5.0",
     "sphinx-autoapi",
+    "sphinx-click",
     "sphinx-copybutton",
     "sphinx-github-changelog",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
-    "mdit-py-plugins",
-    "myst-parser",
 ]
 test = [
+    "fids>=0.1.0",
     "packaging",
-    "pytest>=6.0.0",
     "pytest-cov",
     "pytest-mock",
-    "fids>=0.1.0",
+    "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
 
 [project.scripts]
-nipoppy = "nipoppy.cli.run:cli"
+nipoppy = "nipoppy.cli:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
