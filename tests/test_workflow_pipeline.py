@@ -49,6 +49,9 @@ class PipelineWorkflow(BasePipelineWorkflow):
         if participant_id == "FAIL":
             raise RuntimeError("FAIL")
 
+    def _generate_cli_command_for_hpc(self, participant_id=None, session_id=None):
+        return ["echo", f"{participant_id}, {session_id}"]
+
 
 @pytest.fixture(scope="function")
 def workflow(tmp_path: Path):
@@ -967,14 +970,7 @@ def test_submit_hpc_job_pysqa_call(
     command_list = submit_job_args["NIPOPPY_COMMANDS"]
     assert len(command_list) == len(participants_sessions)
     for participant_id, session_id in participants_sessions:
-        assert (
-            f"nipoppy run {workflow.dpath_root}"
-            f" --pipeline {workflow.pipeline_name}"
-            f" --pipeline-version {workflow.pipeline_version}"
-            f" --pipeline-step {workflow.pipeline_step}"
-            f" --participant-id {participant_id}"
-            f" --session-id {session_id}"
-        ) in command_list
+        assert (f"echo '{participant_id}, {session_id}'") in command_list
 
     for key, value in hpc_config.items():
         assert submit_job_args.get(key) == value

@@ -98,12 +98,10 @@ def test_setup(config: Config, tmp_path: Path):
     create_empty_dataset(workflow.dpath_root)
     config.save(workflow.layout.fpath_config)
 
-    # check that no file/directory is created during setup
-    files_before = set(workflow.dpath_root.rglob("*"))
+    # check that the working directory is created
+    assert not workflow.dpath_pipeline_work.exists()
     workflow.run_setup()
-    files_after = set(workflow.dpath_root.rglob("*"))
-    log_files = set(workflow.dpath_root.joinpath("logs").rglob("*"))
-    assert files_before == (files_after - log_files)
+    assert workflow.dpath_pipeline_work.exists()
 
 
 @pytest.mark.parametrize(
