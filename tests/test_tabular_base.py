@@ -6,6 +6,7 @@ from typing import Optional
 
 import pandas as pd
 import pytest
+from pydantic import ValidationError
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 
@@ -30,6 +31,7 @@ class TabularWithModelNoList(BaseTabular):
     class _Model(BaseTabularModel):
         a: str
         b: int = 0
+        c: str = "s"
 
     model: BaseTabularModel = _Model
     index_cols = ["b"]
@@ -38,6 +40,15 @@ class TabularWithModelNoList(BaseTabular):
 def test_empty_has_columns():
     tabular = TabularWithModel()
     assert set(tabular.columns) == set(TabularWithModel.model.model_fields.keys())
+
+
+def test_sort_index_does_not_change_columns():
+    tabular = TabularWithModel()
+    tabular = tabular.set_index(tabular.index_cols)
+    tabular = tabular.sort_index()
+
+    # make sure the index columns have not been re-added to the columns
+    assert len(set(tabular.index_cols) & set(tabular.columns)) == 0
 
 
 @pytest.mark.parametrize(
@@ -166,6 +177,55 @@ def test_get_diff_invalid_cols():
 
 
 @pytest.mark.parametrize(
+    "original,index_cols,to_add,expected",
+    [
+        [
+            [{"a": "A", "b": 1}],
+            ["b"],
+            [{"a": "A", "b": 1}],
+            [{"a": "A", "b": 1}],
+        ],
+        [
+            [{"a": "A", "b": 1}],
+            ["b"],
+            [{"a": "A", "b": 0}],
+            [{"a": "A", "b": 1}, {"a": "A", "b": 0}],
+        ],
+        [
+            [{"a": "A", "b": 1, "c": "4"}],
+            ["a", "b"],
+            [{"a": "A", "b": 1, "c": "4"}],
+            [{"a": "A", "b": 1, "c": "4"}],
+        ],
+        [
+            [{"a": "A", "b": 1, "c": "3"}],
+            ["a", "b"],
+            [{"a": "A", "b": 0, "c": "4"}],
+            [{"a": "A", "b": 1, "c": "3"}, {"a": "A", "b": 0, "c": "4"}],
+        ],
+    ],
+)
+def test_add_or_update_records(original, index_cols, to_add, expected):
+    tabular = TabularWithModelNoList(original)
+    tabular.index_cols = index_cols
+    tabular = tabular.add_or_update_records(to_add)
+    assert tabular.to_dict(orient="records") == expected
+
+
+def test_add_or_update_records_index_reset():
+    data = [{"a": "A", "b": 1, "c": "s"}]
+    tabular = TabularWithModelNoList(data)
+
+    # expect error since added data is invalid
+    with pytest.raises(ValidationError):
+        tabular.add_or_update_records([{"a": "A", "b": "invalid", "c": "s"}])
+
+    # check that index has been reset
+    assert set(tabular.columns) == {"a", "b", "c"}
+    assert isinstance(tabular.index, pd.RangeIndex)
+
+
+@pytest.mark.parametrize(
     "data1,data2",
     [
         ([], [{"a": "A", "b": "1"}]),
@@ -228,10 +288,10 @@ def test_save_with_backup(
 @pytest.mark.parametrize(
     "data1,data2",
     [
-        ([{"a": "A", "b": 1}], [{"a": "A", "b": 1}]),
+        ([{"a": "A", "b": 1, "c": "s"}], [{"a": "A", "b": 1, "c": "s"}]),
         (
-            [{"a": "a", "b": 1}, {"a": "a", "b": 2}],
-            [{"a": "a", "b": 2}, {"a": "a", "b": 1}],
+            [{"a": "a", "b": 1, "c": "s"}, {"a": "a", "b": 2, "c": "s"}],
+            [{"a": "a", "b": 2, "c": "s"}, {"a": "a", "b": 1, "c": "s"}],
         ),
     ],
 )

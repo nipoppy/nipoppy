@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import bids
+import pandas as pd
 from jinja2 import Environment, meta
 from pydantic import ValidationError
 from pysqa import QueueAdapter
@@ -89,24 +90,27 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
-        dry_run=False,
         hpc: Optional[str] = None,
+        write_list: Optional[StrOrPathLike] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
+        verbose: bool = False,
+        dry_run=False,
     ):
-        super().__init__(
-            dpath_root=dpath_root,
-            name=name,
-            fpath_layout=fpath_layout,
-            logger=logger,
-            dry_run=dry_run,
-        )
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
         self.hpc = hpc
+        self.write_list = write_list
+
+        super().__init__(
+            dpath_root=dpath_root,
+            name=name,
+            fpath_layout=fpath_layout,
+            verbose=verbose,
+            dry_run=dry_run,
+        )
 
         # the message logged in run_cleanup will depend on
         # the final values for these attributes (updated in run_main)
@@ -422,10 +426,16 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        if self.hpc:
+        # TODO mutually exclusive with HPC option
+        if self.write_list is not None:
+            if not self.dry_run:
+                pd.DataFrame(participants_sessions).to_csv(
+                    self.write_list, header=False, index=False, sep="\t"
+                )
+            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+        elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
-            # Default behavior
             for participant_id, session_id in participants_sessions:
                 self.n_total += 1
                 self.logger.info(
