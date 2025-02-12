@@ -455,9 +455,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def _generate_cli_command_for_hpc(
         self, participant_id=None, session_id=None
     ) -> list[str]:
-        """
-        Generate the CLI command to be run on the HPC cluster for a participant/session.
-        """
+        """Generate the CLI command to be run on the HPC cluster."""
         return NotImplementedError("This method should be implemented in a subclass")
 
     def _check_hpc_config(self) -> dict:
