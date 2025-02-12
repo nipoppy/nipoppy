@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BidsPipelineConfig
@@ -224,3 +225,79 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
+
+
+@pytest.mark.parametrize(
+    "init_params,participant_id,session_id,expected_command",
+    [
+        (
+            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "bidsify",
+                "--dataset",
+                "/path/to/root",
+                "--pipeline",
+                "my_pipeline",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+            ],
+        ),
+        (
+            {
+                "dpath_root": "/path/to/other/root",
+                "pipeline_name": "other_pipeline",
+                "pipeline_version": "1.0.0",
+                "pipeline_step": "step1",
+                "participant_id": "should_not_be_used",  # should be skipped
+                "session_id": "should_not_be_used",  # should be skipped
+                "simulate": True,  # should be skipped
+                "keep_workdir": True,
+                "hpc": "slurm",  # should be skipped
+                "write_list": "/path/to/list",  # should be skipped
+                "fpath_layout": "/path/to/layout",
+                "dry_run": True,  # should be skipped
+                "verbose": True,
+            },
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "bidsify",
+                "--dataset",
+                "/path/to/other/root",
+                "--pipeline",
+                "other_pipeline",
+                "--pipeline-version",
+                "1.0.0",
+                "--pipeline-step",
+                "step1",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+                "--keep-workdir",
+                "--layout",
+                "/path/to/layout",
+                "--verbose",
+            ],
+        ),
+    ],
+)
+def test_generate_cli_command_for_hpc(
+    init_params,
+    participant_id,
+    session_id,
+    expected_command,
+    mocker: pytest_mock.MockFixture,
+):
+    mocker.patch("nipoppy.workflows.base.DatasetLayout")
+    runner = BidsConversionRunner(**init_params)
+    assert (
+        runner._generate_cli_command_for_hpc(participant_id, session_id)
+        == expected_command
+    )
