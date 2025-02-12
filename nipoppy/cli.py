@@ -163,6 +163,14 @@ def runners_options(func):
         ),
     )(func)
     func = click.option(
+        "--keep-workdir",
+        is_flag=True,
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
+        ),
+    )(func)
+    func = click.option(
         "--simulate",
         is_flag=True,
         help="Simulate the pipeline run without executing the generated command-line.",
@@ -295,14 +303,6 @@ def bidsify(**params):
 @cli.command()
 @dataset_option
 @runners_options
-@click.option(
-    "--keep-workdir",
-    is_flag=True,
-    help=(
-        "Keep pipeline working directory upon success "
-        "(default: working directory deleted unless a run failed)"
-    ),
-)
 @click.option(
     "--tar",
     is_flag=True,

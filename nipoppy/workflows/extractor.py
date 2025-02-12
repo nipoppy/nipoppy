@@ -25,6 +25,7 @@ class ExtractionRunner(PipelineRunner):
         participant_id: str = None,
         session_id: str = None,
         simulate: bool = False,
+        keep_workdir: bool = False,
         hpc: Optional[str] = None,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -40,6 +41,7 @@ class ExtractionRunner(PipelineRunner):
             participant_id=participant_id,
             session_id=session_id,
             simulate=simulate,
+            keep_workdir=keep_workdir,
             hpc=hpc,
             write_list=write_list,
             fpath_layout=fpath_layout,
@@ -50,7 +52,7 @@ class ExtractionRunner(PipelineRunner):
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
-        return [self.dpath_pipeline_idp]
+        return [self.dpath_pipeline_work, self.dpath_pipeline_idp]
 
     @cached_property
     def _pipeline_configs(self) -> list[ExtractionPipelineConfig]:
@@ -134,6 +136,8 @@ class ExtractionRunner(PipelineRunner):
             command.extend(["--participant-id", participant_id])
         if session_id is not None:
             command.extend(["--session-id", session_id])
+        if self.keep_workdir:
+            command.append("--keep-workdir")
         if self.fpath_layout:
             command.extend(["--layout", self.fpath_layout])
         if self.verbose:
