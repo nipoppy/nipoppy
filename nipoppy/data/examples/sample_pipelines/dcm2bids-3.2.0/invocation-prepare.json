@@ -2,5 +2,6 @@
     "dicom_dir": [
         "[[NIPOPPY_DPATH_POST_REORG]]"
     ],
-    "output_dir": "[[NIPOPPY_DPATH_SCRATCH]]/dcm2bids_helper"
+    "output_dir": "[[NIPOPPY_DPATH_SCRATCH]]/dcm2bids_helper",
+    "force": false
 }
