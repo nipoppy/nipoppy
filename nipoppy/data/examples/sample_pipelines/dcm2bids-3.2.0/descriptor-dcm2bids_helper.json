@@ -68,6 +68,7 @@
     },
     "custom": {
         "nipoppy": {
+            "CONTAINER_SUBCOMMAND": "exec",
             "CONTAINER_CONFIG": {
                 "ARGS": [
                     "--bind",
