@@ -49,9 +49,6 @@ class PipelineWorkflow(BasePipelineWorkflow):
         if participant_id == "FAIL":
             raise RuntimeError("FAIL")
 
-    def _generate_cli_command_for_hpc(self, participant_id=None, session_id=None):
-        return ["echo", f"{participant_id}, {session_id}"]
-
 
 @pytest.fixture(scope="function")
 def workflow(tmp_path: Path):
@@ -102,6 +99,17 @@ def set_up_hpc_for_testing(workflow: PipelineWorkflow, mocker: pytest_mock.MockF
 
     # mock PySQA job submission function
     mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
+
+    mocker.patch.object(
+        workflow,
+        "_generate_cli_command_for_hpc",
+        side_effect=(
+            lambda participant_id, session_id: [
+                "echo",
+                f"{participant_id}, {session_id}",
+            ]
+        ),
+    )
 
     return mock_submit_job
 
@@ -1063,3 +1071,10 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflo
         ("01", "3"),
         ("02", "1"),
     ]
+
+
+def test_generate_cli_command_for_hpc(workflow: PipelineWorkflow):
+    with pytest.raises(
+        NotImplementedError, match="This method should be implemented in a subclass"
+    ):
+        workflow._generate_cli_command_for_hpc()
