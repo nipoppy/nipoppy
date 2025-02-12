@@ -10,8 +10,8 @@
 # pipeline's HPC_CONFIG field in the global config file. Additional variables
 # can also be defined in the HPC_CONFIG for further customization.
 
-# Lines surrounded by {#- and -#} are Jinja comments and will not be included
-# in the final job script.
+# Lines surrounded by { # and # } (without spaces) are Jinja comments and will
+# not be included in the final job script.
 #}
 
 {#-

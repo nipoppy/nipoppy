@@ -100,6 +100,17 @@ def set_up_hpc_for_testing(workflow: PipelineWorkflow, mocker: pytest_mock.MockF
     # mock PySQA job submission function
     mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
 
+    mocker.patch.object(
+        workflow,
+        "_generate_cli_command_for_hpc",
+        side_effect=(
+            lambda participant_id, session_id: [
+                "echo",
+                f"{participant_id}, {session_id}",
+            ]
+        ),
+    )
+
     return mock_submit_job
 
 
@@ -967,14 +978,7 @@ def test_submit_hpc_job_pysqa_call(
     command_list = submit_job_args["NIPOPPY_COMMANDS"]
     assert len(command_list) == len(participants_sessions)
     for participant_id, session_id in participants_sessions:
-        assert (
-            f"nipoppy run {workflow.dpath_root}"
-            f" --pipeline {workflow.pipeline_name}"
-            f" --pipeline-version {workflow.pipeline_version}"
-            f" --pipeline-step {workflow.pipeline_step}"
-            f" --participant-id {participant_id}"
-            f" --session-id {session_id}"
-        ) in command_list
+        assert (f"echo '{participant_id}, {session_id}'") in command_list
 
     for key, value in hpc_config.items():
         assert submit_job_args.get(key) == value
@@ -1067,3 +1071,10 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflo
         ("01", "3"),
         ("02", "1"),
     ]
+
+
+def test_generate_cli_command_for_hpc(workflow: PipelineWorkflow):
+    with pytest.raises(
+        NotImplementedError, match="This method should be implemented in a subclass"
+    ):
+        workflow._generate_cli_command_for_hpc()
