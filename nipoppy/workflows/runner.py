@@ -10,7 +10,7 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, StrOrPathLike
+from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -242,7 +242,7 @@ class PipelineRunner(BasePipelineWorkflow):
         Skip the --hpc and the --dry-run flags.
         """
         command = [
-            "nipoppy",  # TODO use nipoppy.env.PROGRAM_NAME
+            PROGRAM_NAME,
             "run",
             "--dataset",
             self.dpath_root,
@@ -267,6 +267,7 @@ class PipelineRunner(BasePipelineWorkflow):
             command.extend(["--layout", self.fpath_layout])
         if self.verbose:
             command.append("--verbose")
+        return [str(component) for component in command]
 
     def run_setup(self):
         """Run pipeline runner setup."""
