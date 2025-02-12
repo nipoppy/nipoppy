@@ -239,7 +239,7 @@ class PipelineRunner(BasePipelineWorkflow):
         """
         Generate the CLI command to be run on the HPC cluster for a participant/session.
 
-        Skip the --hpc and the --dry-run flags.
+        Skip the --simulate, --hpc, --write-list and --dry-run options.
         """
         command = [
             PROGRAM_NAME,
@@ -257,8 +257,6 @@ class PipelineRunner(BasePipelineWorkflow):
             command.extend(["--participant-id", participant_id])
         if session_id is not None:
             command.extend(["--session-id", session_id])
-        if self.simulate:
-            command.append("--simulate")
         if self.keep_workdir:
             command.append("--keep-workdir")
         if self.tar:

@@ -119,12 +119,18 @@ def pipeline_options(func):
     func = click.option(
         "--pipeline-step",
         type=str,
-        help="Pipeline step, as specified in the config file (default: first step).",
+        help=(
+            "Pipeline step, as specified in the config file"
+            " (default: first step in list)."
+        ),
     )(func)
     func = click.option(
         "--pipeline-version",
         type=str,
-        help="Pipeline version, as specified in the config file.",
+        help=(
+            "Pipeline version, as specified in the config file"
+            " (default: first version in list)."
+        ),
     )(func)
     func = click.option(
         "--pipeline",
@@ -139,11 +145,6 @@ def pipeline_options(func):
 def runners_options(func):
     """Define options for the pipeline runner commands."""
     func = click.option(
-        "--simulate",
-        is_flag=True,
-        help="Simulate the pipeline run without executing the generated command-line.",
-    )(func)
-    func = click.option(
         "--write-list",
         type=click.Path(path_type=Path, resolve_path=True, dir_okay=False),
         help=(
@@ -151,6 +152,20 @@ def runners_options(func):
             "provided, the pipeline will not be run: instead, a list of "
             "participant and session IDs will be written to this file."
         ),
+    )(func)
+    func = click.option(
+        "--hpc",
+        help=(
+            "Submit HPC jobs instead of running the pipeline directly. "
+            "The value should be the HPC cluster type. Currently, "
+            "'slurm' and 'sge' have built-in support, but it is possible to add "
+            "other cluster types supported by PySQA (https://pysqa.readthedocs.io/)."
+        ),
+    )(func)
+    func = click.option(
+        "--simulate",
+        is_flag=True,
+        help="Simulate the pipeline run without executing the generated command-line.",
     )(func)
     func = pipeline_options(func)
     return func
@@ -280,15 +295,6 @@ def bidsify(**params):
 @cli.command()
 @dataset_option
 @runners_options
-@click.option(
-    "--hpc",
-    help=(
-        "Submit HPC jobs instead of running the pipeline directly. "
-        "The value should be the HPC cluster type. Currently, "
-        "'slurm' and 'sge' have built-in support, but it is possible to add "
-        "other cluster types supported by PySQA (https://pysqa.readthedocs.io/)."
-    ),
-)
 @click.option(
     "--keep-workdir",
     is_flag=True,

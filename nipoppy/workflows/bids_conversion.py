@@ -8,7 +8,7 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -24,6 +24,7 @@ class BidsConversionRunner(PipelineRunner):
         participant_id: str = None,
         session_id: str = None,
         simulate: bool = False,
+        hpc: Optional[str] = None,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
@@ -38,6 +39,7 @@ class BidsConversionRunner(PipelineRunner):
             participant_id=participant_id,
             session_id=session_id,
             simulate=simulate,
+            hpc=hpc,
             write_list=write_list,
             fpath_layout=fpath_layout,
             verbose=verbose,
@@ -70,6 +72,36 @@ class BidsConversionRunner(PipelineRunner):
     def pipeline_step_config(self) -> BidsPipelineStepConfig:
         """Get the config for the relevant step of the BIDS conversion pipeline."""
         return super().pipeline_step_config
+
+    def _generate_cli_command_for_hpc(
+        self, participant_id=None, session_id=None
+    ) -> list[str]:
+        """
+        Generate the CLI command to be run on the HPC cluster for a participant/session.
+
+        Skip the --simulate, --hpc, --write-list and --dry-run options.
+        """
+        command = [
+            PROGRAM_NAME,
+            "bidsify",
+            "--dataset",
+            self.dpath_root,
+            "--pipeline",
+            self.pipeline_name,
+        ]
+        if self.pipeline_version is not None:
+            command.extend(["--pipeline-version", self.pipeline_version])
+        if self.pipeline_step is not None:
+            command.extend(["--pipeline-step", self.pipeline_step])
+        if participant_id is not None:
+            command.extend(["--participant-id", participant_id])
+        if session_id is not None:
+            command.extend(["--session-id", session_id])
+        if self.fpath_layout:
+            command.extend(["--layout", self.fpath_layout])
+        if self.verbose:
+            command.append("--verbose")
+        return [str(component) for component in command]
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]

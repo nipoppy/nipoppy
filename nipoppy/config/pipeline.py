@@ -63,6 +63,14 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         description="List of pipeline step configurations",
     )
 
+    HPC_CONFIG: Optional[HpcConfig] = Field(
+        default=None,
+        description=(
+            "Key-value pairs to be passed to the Jinja template inside the "
+            f"{DEFAULT_LAYOUT_INFO.dpath_hpc} directory."
+        ),
+    )
+
     @model_validator(mode="before")
     @classmethod
     def validate_before(cls, data: Any) -> Any:
@@ -162,14 +170,6 @@ class ProcPipelineConfig(BasePipelineConfig):
     STEPS: list[ProcPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
-    )
-
-    HPC_CONFIG: Optional[HpcConfig] = Field(
-        default=None,
-        description=(
-            "Key-value pairs to be passed to the Jinja template at "
-            f"{DEFAULT_LAYOUT_INFO.dpath_hpc}."
-        ),
     )
 
     model_config = ConfigDict(extra="forbid")
