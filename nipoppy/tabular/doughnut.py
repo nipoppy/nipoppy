@@ -95,8 +95,11 @@ class Doughnut(Manifest):
         col = self._check_status_col(col)
         status = self._check_status_value(status)
         self.set_index(self.index_cols, inplace=True)
-        self.loc[(participant_id, session_id), col] = status
-        return self.reset_index(inplace=True)
+        try:
+            self.loc[(participant_id, session_id), col] = status
+        finally:
+            self.reset_index(inplace=True)
+        return self
 
     def _get_participant_sessions_helper(
         self,

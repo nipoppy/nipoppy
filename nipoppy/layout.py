@@ -253,6 +253,7 @@ class DatasetLayout(Base):
         missing_paths = self._find_missing_paths()
         if len(missing_paths) != 0:
             raise FileNotFoundError(
+                "Dataset does not follow expected directory structure. "
                 f"Missing {len(missing_paths)} paths"
                 f": {[str(path) for path in missing_paths]}"
             )

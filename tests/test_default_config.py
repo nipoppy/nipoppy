@@ -357,7 +357,8 @@ def test_tracker_paths(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("freesurfer_stats_and_qc", "0.1.0"),
+        ("fs_stats", "0.2.0"),
+        ("static_FC", "0.1.0"),
     ],
 )
 def test_extractor(
@@ -374,7 +375,8 @@ def test_extractor(
         simulate=True,
     )
 
-    runner.pipeline_config.get_fpath_container().touch()
+    if (fpath_container := runner.pipeline_config.get_fpath_container()) is not None:
+        fpath_container.touch()
 
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id

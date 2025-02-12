@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
@@ -25,23 +24,25 @@ class BidsConversionRunner(PipelineRunner):
         participant_id: str = None,
         session_id: str = None,
         simulate: bool = False,
+        write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         super().__init__(
             dpath_root=dpath_root,
+            name="bids_conversion",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
             simulate=simulate,
+            write_list=write_list,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
-        self.name = "bids_conversion"
 
     @cached_property
     def dpath_pipeline(self):
