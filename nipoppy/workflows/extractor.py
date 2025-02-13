@@ -84,8 +84,8 @@ class ExtractionRunner(PipelineRunner):
         self._get_pipeline_config(
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
-            dpath_pipelines=self.layout.get_dpath_catalog_proc(),
             pipeline_class=ProcPipelineConfig,
+            dpath_pipelines=self.layout.get_dpath_catalog_proc(),
         ).get_step_config(step_name=proc_pipeline_info.STEP)
 
         return proc_pipeline_info

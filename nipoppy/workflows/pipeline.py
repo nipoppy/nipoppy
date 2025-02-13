@@ -335,7 +335,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             dpath_pipelines = self._dpath_pipeline_configs
 
         available_pipelines = []
-        for fpath_config in self._dpath_pipeline_configs.glob(
+        for fpath_config in dpath_pipelines.glob(
             f"*/{self.layout.fname_pipeline_config}"
         ):
             # load the candidate config without substitutions
