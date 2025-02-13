@@ -349,7 +349,6 @@ def test_bagel(
         assert status_df.empty
 
     else:
-        # pipeline_status_cols = [f"{config[0]}\n{config[1]}\n{config[2]}" for config in pipeline_configs]
         status_df = pd.merge(
             status_df, session_participant_counts_df, on="session_id", how="left"
         )
