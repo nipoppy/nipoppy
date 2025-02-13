@@ -16,36 +16,6 @@ from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
-def get_pipeline_version(
-    pipeline_name: str, pipeline_configs: list[BasePipelineConfig]
-) -> str:
-    """Get the first version associated with a pipeline.
-
-    Parameters
-    ----------
-    pipeline_name : str
-        Name of the pipeline, as specified in the config
-    pipeline_configs : list[nipoppy.config.pipeline.BasePipelineConfig]
-        List of pipeline configurations
-
-    Returns
-    -------
-    str
-        The pipeline version
-    """
-    available_pipelines = []
-    for pipeline_config in pipeline_configs:
-        if pipeline_config.NAME == pipeline_name:
-            return pipeline_config.VERSION
-        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
-
-    raise ValueError(
-        f"No config found for pipeline with NAME={pipeline_name}"
-        ". Available pipelines: "
-        + ", ".join(f"{name} {version}" for name, version in available_pipelines)
-    )
-
-
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 

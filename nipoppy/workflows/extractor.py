@@ -54,12 +54,16 @@ class ExtractionRunner(PipelineRunner):
         return [self.dpath_pipeline_idp]
 
     @cached_property
+    def _dpath_pipeline_configs(self) -> Path:
+        """Path to the directory containing the appropriate pipeline bundles."""
+        return self.layout.get_dpath_catalog_extraction()
+
+    @cached_property
     def pipeline_config(self) -> ExtractionPipelineConfig:
         """Get the user config object for the extraction pipeline."""
         return self._get_pipeline_config(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
-            dpath_pipelines=self.layout.get_dpath_catalog_extraction(),
             pipeline_class=ExtractionPipelineConfig,
         )
 
