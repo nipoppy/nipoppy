@@ -198,7 +198,8 @@ def test_check_tar_conditions_no_tar(runner: PipelineRunner):
     runner._check_tar_conditions()
 
 
-def test_tar_directory(tmp_path: Path):
+@pytest.mark.parametrize("dpath_type", [Path, str])
+def test_tar_directory(tmp_path: Path, dpath_type):
     # create dummy files to tar
     dpath_to_tar = tmp_path / "my_data"
     fpaths_to_tar = [
@@ -214,7 +215,7 @@ def test_tar_directory(tmp_path: Path):
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
-    fpath_tarred = runner.tar_directory(dpath_to_tar)
+    fpath_tarred = runner.tar_directory(dpath_type(dpath_to_tar))
 
     assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
     assert fpath_tarred.exists()

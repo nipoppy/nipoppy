@@ -106,6 +106,32 @@ def test_substitutions(step_class: Type[BasePipelineStepConfig]):
 
 
 @pytest.mark.parametrize(
+    "descriptor_file,invocation_file,expect_error",
+    [
+        (None, None, False),
+        ("descriptor.json", "invocation.json", False),
+        ("descriptor.json", None, True),
+        (None, "invocation.json", True),
+    ],
+)
+def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_error):
+    with (
+        pytest.raises(
+            ValidationError,
+            match=(
+                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined "
+                "or both be None, "
+            ),
+        )
+        if expect_error
+        else nullcontext()
+    ):
+        ProcPipelineStepConfig(
+            DESCRIPTOR_FILE=descriptor_file, INVOCATION_FILE=invocation_file
+        )
+
+
+@pytest.mark.parametrize(
     "analysis_level,expect_error",
     [
         (AnalysisLevelType.participant_session, False),

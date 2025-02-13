@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import ExtractionPipelineConfig
+from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.utils import (
@@ -22,7 +22,7 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
     extractor = ExtractionRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="fs_extractor",
-        pipeline_version="7.3.2",
+        pipeline_version="2.0.0",
         pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
     )
     extractor.config = get_config()
@@ -33,13 +33,16 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
             {
                 "NAME": "freesurfer",
                 "VERSION": "7.3.2",
-                "STEPS": [{}],
+                "STEPS": [
+                    # field unique to ProcPipelineStepConfig
+                    {"TRACKER_CONFIG_FILE": "tracker_config.json"}
+                ],
             },
         ],
         extraction_pipelines=[
             {
                 "NAME": "fs_extractor",
-                "VERSION": "7.3.2",
+                "VERSION": "2.0.0",
                 "PROC_DEPENDENCIES": [
                     {
                         "NAME": "freesurfer",
@@ -95,7 +98,15 @@ def test_dpath_pipeline(extractor: ExtractionRunner):
 
 def test_proc_pipeline_info(extractor: ExtractionRunner):
     extractor.pipeline_name = "fs_extractor"
-    extractor.pipeline_version = "6.0.1"
+    extractor.pipeline_version = "2.0.0"  # valid
+    # this also checks that proc_pipeline_info calls _get_pipeline_config with the
+    # correct pipeline_class
+    assert isinstance(extractor.proc_pipeline_info, PipelineInfo)
+
+
+def test_proc_pipeline_info_error(extractor: ExtractionRunner):
+    extractor.pipeline_name = "fs_extractor"
+    extractor.pipeline_version = "1.0.0"  # invalid
     with pytest.raises(ValueError, match="No config found for pipeline with"):
         extractor.proc_pipeline_info
 
@@ -112,7 +123,7 @@ def test_proc_pipeline_info(extractor: ExtractionRunner):
                 ["S02", "2", "freesurfer", "7.3.2", Bagel.status_success],
             ],
             "fs_extractor",
-            "7.3.2",
+            "2.0.0",
             None,
             None,
             [("S01", "1"), ("S02", "2")],
@@ -122,7 +133,7 @@ def test_proc_pipeline_info(extractor: ExtractionRunner):
                 ["S01", "1", "freesurfer", "7.3.2", Bagel.status_success],
             ],
             "fs_extractor",
-            "7.3.2",
+            "2.0.0",
             "S02",  # S02 is not in bagel
             "1",
             [],
@@ -208,7 +219,7 @@ def test_check_pipeline_version(extractor: ExtractionRunner):
     extractor.pipeline_version = None
 
     extractor.check_pipeline_version()
-    assert extractor.pipeline_version == "7.3.2"
+    assert extractor.pipeline_version == "2.0.0"
 
 
 def test_pipeline_config(extractor: ExtractionRunner):

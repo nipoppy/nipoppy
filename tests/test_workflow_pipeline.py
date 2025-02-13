@@ -10,7 +10,11 @@ import pytest_mock
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline import (
+    BidsPipelineConfig,
+    ExtractionPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -19,7 +23,11 @@ from nipoppy.env import (
     LogColor,
     ReturnCode,
 )
-from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
+from nipoppy.workflows.pipeline import (
+    BasePipelineWorkflow,
+    apply_analysis_level,
+    get_pipeline_version,
+)
 
 from .conftest import datetime_fixture  # noqa F401
 from .conftest import (
@@ -66,6 +74,18 @@ def workflow(tmp_path: Path):
 
     create_pipeline_config_files(
         workflow.layout.dpath_pipelines,
+        bids_pipelines=[
+            {
+                "NAME": "bids_converter",
+                "VERSION": "1.0",
+                "CONTAINER_INFO": {"FILE": "path"},
+                "STEPS": [{"NAME": "step1"}, {"NAME": "step2"}],
+            },
+            {
+                "NAME": "bids_converter",
+                "VERSION": "0.1",
+            },
+        ],
         proc_pipelines=[
             {
                 "NAME": "fmriprep",
@@ -84,6 +104,13 @@ def workflow(tmp_path: Path):
                 "NAME": "my_pipeline",
                 "VERSION": "2.0",
                 "STEPS": [{}],
+            },
+        ],
+        extraction_pipelines=[
+            {
+                "NAME": "extractor1",
+                "VERSION": "0.1.0",
+                "PROC_DEPENDENCIES": [{"NAME": "pipeline1", "VERSION": "v1"}],
             },
         ],
     )
@@ -105,6 +132,34 @@ def workflow(tmp_path: Path):
 def test_apply_analysis_level(analysis_level, expected):
     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
     assert apply_analysis_level(participants_sessions, analysis_level) == expected
+
+
+@pytest.mark.parametrize(
+    "dname_pipelines,pipeline_name,expected_version",
+    [
+        ("proc", "fmriprep", "23.1.3"),
+        ("proc", "my_pipeline", "2.0"),
+        ("bids", "bids_converter", "1.0"),
+        ("extraction", "extractor1", "0.1.0"),
+    ],
+)
+def test_get_pipeline_version(
+    dname_pipelines: str,
+    pipeline_name: str,
+    expected_version: str,
+    workflow: BasePipelineWorkflow,
+):
+    assert (
+        get_pipeline_version(
+            pipeline_name, workflow.layout.dpath_pipelines / dname_pipelines
+        )
+        == expected_version
+    )
+
+
+def test_get_pipeline_version_invalid_name(tmp_path: Path):
+    with pytest.raises(ValueError, match="No config found for pipeline"):
+        get_pipeline_version("pipeline1", tmp_path)
 
 
 @pytest.mark.parametrize(
@@ -350,6 +405,58 @@ def test_pybids_ignore_patterns_invalid_format(
         workflow.pybids_ignore_patterns
 
 
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
+    [
+        ("fmriprep", "23.1.3", "proc", ProcPipelineConfig),
+        ("my_pipeline", "2.0", "proc", ProcPipelineConfig),
+        ("bids_converter", "1.0", "bids", BidsPipelineConfig),
+        ("extractor1", "0.1.0", "extraction", ExtractionPipelineConfig),
+    ],
+)
+def test_get_pipeline_config(
+    pipeline_name,
+    pipeline_version,
+    dname_pipelines,
+    pipeline_class,
+    workflow: PipelineWorkflow,
+):
+    assert isinstance(
+        workflow._get_pipeline_config(
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_class=pipeline_class,
+            dpath_pipelines=workflow.layout.dpath_pipelines / dname_pipelines,
+        ),
+        pipeline_class,
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
+    [
+        ("not_a_pipeline", "23.1.3", "proc", ProcPipelineConfig),
+        ("my_pipeline", "not_a_version", "proc", ProcPipelineConfig),
+        ("bids_converter", "2.0", "bids", BidsPipelineConfig),
+        ("bids_converter", "1.0", "extraction", ExtractionPipelineConfig),
+    ],
+)
+def test_get_pipeline_config_missing(
+    pipeline_name,
+    pipeline_version,
+    dname_pipelines,
+    pipeline_class,
+    workflow: PipelineWorkflow,
+):
+    with pytest.raises(ValueError, match="No config found for pipeline"):
+        workflow._get_pipeline_config(
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_class=pipeline_class,
+            dpath_pipelines=workflow.layout.dpath_pipelines / dname_pipelines,
+        )
+
+
 @pytest.mark.parametrize("return_str", [True, False])
 def test_process_template_json(return_str, tmp_path: Path):
     workflow = PipelineWorkflow(
@@ -541,9 +648,8 @@ def test_check_pipeline_version(
     workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
-    # initialize with version=None
     workflow.pipeline_name = pipeline_name
-    workflow.pipeline_version = None
+    workflow.pipeline_version = None  # should be inferred
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
     assert f"using version {expected_version}" in caplog.text
