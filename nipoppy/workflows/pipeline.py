@@ -81,7 +81,7 @@ def get_pipeline_version(
     ----------
     pipeline_name : str
         Name of the pipeline, as specified in the config
-    dpath_pipelines : StrOrPathLike
+    dpath_pipelines : nipoppy.env.StrOrPathLike
         Path to directory containing pipeline bundle subdirectories
 
     Returns

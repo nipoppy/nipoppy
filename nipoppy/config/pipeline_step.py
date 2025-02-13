@@ -104,7 +104,7 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         Specifically:
         - DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be None
         - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
-          "participant_session"
+        "participant_session"
         """
         if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
             self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
