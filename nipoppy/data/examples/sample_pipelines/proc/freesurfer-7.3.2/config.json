@@ -1,0 +1,10 @@
+{
+    "NAME": "freesurfer",
+    "VERSION": "7.3.2",
+    "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 23.0.0 and later",
+    "STEPS": [
+        {
+            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+        }
+    ]
+}
