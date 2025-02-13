@@ -14,55 +14,6 @@
         "V01",
         "V02"
     ],
-    "BIDS_PIPELINES": [
-        {
-            "NAME": "heudiconv",
-            "VERSION": "0.11.6",
-            "CONTAINER_INFO": {
-                "FILE": "heudiconv_0.11.6.sif",
-                "URI": "docker://nipy/heudiconv:0.11.6"
-            },
-            "STEPS": [
-                {
-                    "NAME": "stage1",
-                    "INVOCATION_FILE": "some/path"
-                }
-            ]
-        }
-    ],
-    "PROC_PIPELINES": [
-        {
-            "NAME": "mriqc",
-            "VERSION": "23.1.0",
-            "CONTAINER_INFO": {
-                "FILE": "mriqc_23.1.0.sif",
-                "URI": "docker://nipreps/mriqc:23.1.0"
-            },
-            "STEPS": [
-                {
-                    "INVOCATION_FILE": "some/path"
-                }
-            ]
-        },
-        {
-            "NAME": "fmriprep",
-            "VERSION": "20.2.7",
-            "CONTAINER_INFO": {
-                "FILE": "fmriprep_20.2.7.sif",
-                "URI": "docker://nipreps/fmriprep:20.2.7"
-            },
-            "STEPS": [
-                {
-                    "INVOCATION_FILE": "some/path"
-                }
-            ]
-        },
-        {
-            "NAME": "freesurfer",
-            "VERSION": "6.0.1",
-            "DESCRIPTION": "FreeSurfer version associated with fMRIPrep 20.2.7"
-        }
-    ],
     "CUSTOM": {
         "some_key": "this can be anything"
     }
