@@ -8,22 +8,20 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.config.container import ContainerConfig
-from nipoppy.config.main import Config, get_pipeline_config, get_pipeline_version
-from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
+from nipoppy.config.main import Config
+from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
 
-REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISIT_IDS", "PROC_PIPELINES"]
+REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISIT_IDS"]
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "SESSION_IDS",
     "SUBSTITUTIONS",
-    "BIDS_PIPELINES",
     "CUSTOM",
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
-    "EXTRACTION_PIPELINES",
 ]
 
 
@@ -33,39 +31,6 @@ def valid_config_data():
         "DATASET_NAME": "my_dataset",
         "VISIT_IDS": ["1"],
         "SESSION_IDS": ["1"],
-        "BIDS_PIPELINES": [
-            {
-                "NAME": "bids_converter",
-                "VERSION": "1.0",
-                "CONTAINER_INFO": {"FILE": "path"},
-                "STEPS": [{"NAME": "step1"}, {"NAME": "step2"}],
-            },
-            {
-                "NAME": "bids_converter",
-                "VERSION": "older_version",
-            },
-        ],
-        "PROC_PIPELINES": [
-            {"NAME": "pipeline1", "VERSION": "v1"},
-            {
-                "NAME": "pipeline1",
-                "VERSION": "v2",
-                "CONTAINER_INFO": {"FILE": "other_path"},
-            },
-            {"NAME": "pipeline2", "VERSION": "1.0", "CONTAINER_INFO": {"URI": "uri"}},
-            {
-                "NAME": "pipeline2",
-                "VERSION": "2.0",
-                "STEPS": [{"INVOCATION_FILE": "path"}],
-            },
-        ],
-        "EXTRACTION_PIPELINES": [
-            {
-                "NAME": "extractor1",
-                "VERSION": "0.1.0",
-                "PROC_DEPENDENCIES": [{"NAME": "pipeline1", "VERSION": "v1"}],
-            },
-        ],
     }
 
 
@@ -94,7 +59,6 @@ def test_sessions_inferred(visit_ids, expected_session_ids):
     data = {
         "DATASET_NAME": "my_dataset",
         "VISIT_IDS": visit_ids,
-        "PROC_PIPELINES": [],
     }
     config = Config(**data)
     assert config.SESSION_IDS == expected_session_ids
@@ -164,14 +128,12 @@ def test_check_dicom_dir_options(
         ),
     ],
 )
-@pytest.mark.parametrize("pipeline_field", ["PROC_PIPELINES", "BIDS_PIPELINES"])
 def test_propagate_container_config(
     valid_config_data,
     data_root,
     data_pipeline,
     data_step,
     data_expected,
-    pipeline_field,
 ):
     pipeline_name = "pipeline1"
     pipeline_version = "1.0"
@@ -179,93 +141,19 @@ def test_propagate_container_config(
     data = valid_config_data
     container_config_key = "CONTAINER_CONFIG"
     data[container_config_key] = data_root
-    data[pipeline_field] = [
-        {
+    pipeline_config = BasePipelineConfig(
+        **{
             "NAME": pipeline_name,
             "VERSION": pipeline_version,
             container_config_key: data_pipeline,
             "STEPS": [{"NAME": step_name, container_config_key: data_step}],
         }
-    ]
-
-    config = Config(**data).propagate_container_config()
-    container_config = (
-        get_pipeline_config(
-            pipeline_name, pipeline_version, getattr(config, pipeline_field)
-        )
-        .get_step_config(step_name)
-        .get_container_config()
     )
+
+    Config(**data).propagate_container_config_to_pipeline(pipeline_config)
+    container_config = pipeline_config.get_step_config(step_name).get_container_config()
 
     assert container_config == ContainerConfig(**data_expected)
-
-
-@pytest.mark.parametrize(
-    "pipeline_name,pipeline_field,expected_version",
-    [
-        ("pipeline1", "PROC_PIPELINES", "v1"),
-        ("pipeline2", "PROC_PIPELINES", "1.0"),
-        ("bids_converter", "BIDS_PIPELINES", "1.0"),
-        ("extractor1", "EXTRACTION_PIPELINES", "0.1.0"),
-    ],
-)
-def test_get_pipeline_version(
-    valid_config_data, pipeline_name, pipeline_field, expected_version
-):
-    config = Config(**valid_config_data)
-    assert (
-        get_pipeline_version(pipeline_name, getattr(config, pipeline_field))
-        == expected_version
-    )
-
-
-@pytest.mark.parametrize(
-    "pipeline_name,pipeline_field",
-    [
-        ("pipeline1", "BIDS_PIPELINES"),
-        ("not_a_pipeline", "PROC_PIPELINES"),
-    ],
-)
-def test_get_pipeline_version_invalid_name(
-    valid_config_data, pipeline_name, pipeline_field
-):
-    config = Config(**valid_config_data)
-    with pytest.raises(ValueError, match="No config found for pipeline"):
-        get_pipeline_version(pipeline_name, getattr(config, pipeline_field))
-
-
-@pytest.mark.parametrize(
-    "pipeline,version,pipeline_field",
-    [
-        ("pipeline1", "v1", "PROC_PIPELINES"),
-        ("pipeline2", "2.0", "PROC_PIPELINES"),
-        ("bids_converter", "1.0", "BIDS_PIPELINES"),
-        ("extractor1", "0.1.0", "EXTRACTION_PIPELINES"),
-    ],
-)
-def test_get_pipeline_config(pipeline, version, pipeline_field, valid_config_data):
-    config = Config(**valid_config_data)
-    assert isinstance(
-        get_pipeline_config(pipeline, version, getattr(config, pipeline_field)),
-        BasePipelineConfig,
-    )
-
-
-@pytest.mark.parametrize(
-    "pipeline,version,pipeline_field",
-    [
-        ("not_a_pipeline", "v1", "PROC_PIPELINES"),
-        ("pipeline2", "not_a_version", "PROC_PIPELINES"),
-        ("pipeline2", "2.0", "BIDS_PIPELINES"),
-        ("bids_converter", "1.0", "PROC_PIPELINES"),
-    ],
-)
-def test_get_pipeline_config_missing(
-    pipeline, version, pipeline_field, valid_config_data
-):
-    config = Config(**valid_config_data)
-    with pytest.raises(ValueError):
-        get_pipeline_config(pipeline, version, getattr(config, pipeline_field))
 
 
 def test_save(tmp_path: Path, valid_config_data):
@@ -317,7 +205,7 @@ def test_load(path):
     "path",
     [
         DPATH_TEST_DATA / "config_invalid1.json",  # missing required
-        DPATH_TEST_DATA / "config_invalid2.json",  # invalid sessions
+        DPATH_TEST_DATA / "config_invalid2.json",  # has PROC_PIPELINES (old)
     ],
 )
 def test_load_invalid(path):
@@ -336,50 +224,10 @@ def test_load_apply_substitutions(valid_config_data, tmp_path: Path):
         pattern_to_replace2: replacement_value2,
     }
     valid_config_data["SUBSTITUTIONS"] = substitutions
-    valid_config_data["PROC_PIPELINES"] = [
-        {
-            "NAME": "fmriprep",
-            "VERSION": "23.1.3",
-            "STEPS": [
-                {
-                    "INVOCATION_FILE": "path/to/invocation.json",
-                    "CONTAINER_CONFIG": {
-                        "ARGS": [
-                            "--bind",
-                            pattern_to_replace1,
-                            "--bind",
-                            pattern_to_replace2,
-                        ],
-                        "ENV_VARS": {"TEMPLATEFLOW_HOME": pattern_to_replace2},
-                    },
-                },
-            ],
-        },
-    ]
 
     fpath = tmp_path / "config.json"
     Config(**valid_config_data).save(fpath)
     config_to_check = Config.load(fpath, apply_substitutions=True)
-    assert config_to_check.PROC_PIPELINES[0] == ProcPipelineConfig(
-        **{
-            "NAME": "fmriprep",
-            "VERSION": "23.1.3",
-            "STEPS": [
-                {
-                    "INVOCATION_FILE": "path/to/invocation.json",
-                    "CONTAINER_CONFIG": {
-                        "ARGS": [
-                            "--bind",
-                            replacement_value1,
-                            "--bind",
-                            replacement_value2,
-                        ],
-                        "ENV_VARS": {"TEMPLATEFLOW_HOME": replacement_value2},
-                    },
-                },
-            ],
-        },
-    )
 
     # also check that the SUBSTITUTIONS field remains the same
     assert config_to_check.SUBSTITUTIONS == substitutions
@@ -396,26 +244,6 @@ def test_load_no_substitutions(
     valid_config_data, tmp_path: Path, apply_substitutions, substitutions
 ):
     valid_config_data["SUBSTITUTIONS"] = substitutions
-    valid_config_data["PROC_PIPELINES"] = [
-        {
-            "NAME": "fmriprep",
-            "VERSION": "23.1.3",
-            "STEPS": [
-                {
-                    "INVOCATION_FILE": "path/to/invocation.json",
-                    "CONTAINER_CONFIG": {
-                        "ARGS": [
-                            "--bind",
-                            "[[PATTERN1]]",
-                            "--bind",
-                            "[[PATERN2]]",
-                        ],
-                        "ENV_VARS": {"TEMPLATEFLOW_HOME": "[[PATTERN2]]"},
-                    },
-                },
-            ],
-        },
-    ]
 
     fpath = tmp_path / "config.json"
     config_expected = Config(**valid_config_data)

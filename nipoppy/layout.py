@@ -128,9 +128,14 @@ class LayoutConfig(BaseModel):
 class DatasetLayout(Base):
     """File/directory structure for a specific dataset."""
 
-    # directory names
+    # pipeline derivative subdirectories
     dname_pipeline_output = "output"
     dname_pipeline_idp = "idp"
+
+    # pipeline catalog subdirectories
+    dname_catalog_bids = "bids"
+    dname_catalog_proc = "proc"
+    dname_catalog_extraction = "extraction"
 
     # file names
     fname_pipeline_config = "config.json"
@@ -323,13 +328,17 @@ class DatasetLayout(Base):
         )
         return self.dpath_pybids_db / dname
 
-    def get_dpath_pipeline_config(
-        self, pipeline_name: str, pipeline_version: str
-    ) -> Path:
-        """Return the path to a pipeline's configuration directory."""
-        return self.dpath_pipelines / get_pipeline_tag(
-            pipeline_name=pipeline_name, pipeline_version=pipeline_version
-        )
+    def get_dpath_catalog_bids(self) -> Path:
+        """Return the path to the BIDS pipeline catalog directory."""
+        return self.dpath_pipelines / self.dname_catalog_bids
+
+    def get_dpath_catalog_proc(self) -> Path:
+        """Return the path to the processing pipeline catalog directory."""
+        return self.dpath_pipelines / self.dname_catalog_proc
+
+    def get_dpath_catalog_extraction(self) -> Path:
+        """Return the path to the extraction pipeline catalog directory."""
+        return self.dpath_pipelines / self.dname_catalog_extraction
 
 
 # for printing defaults in docs

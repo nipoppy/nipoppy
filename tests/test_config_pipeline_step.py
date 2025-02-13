@@ -98,9 +98,11 @@ def test_analysis_level_invalid():
 def test_substitutions(step_class: Type[BasePipelineStepConfig]):
     step_config = step_class(
         NAME="step_name",
-        DESCRIPTOR_FILE="[[STEP_NAME]].json",
+        DESCRIPTOR_FILE="descriptor-[[STEP_NAME]].json",
+        INVOCATION_FILE="invocation-[[STEP_NAME]].json",
     )
-    assert str(step_config.DESCRIPTOR_FILE) == "step_name.json"
+    assert str(step_config.DESCRIPTOR_FILE) == "descriptor-step_name.json"
+    assert str(step_config.INVOCATION_FILE) == "invocation-step_name.json"
 
 
 @pytest.mark.parametrize(

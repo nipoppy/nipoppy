@@ -8,7 +8,7 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, Type
 
 import bids
 import pandas as pd
@@ -18,8 +18,8 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.main import get_pipeline_config, get_pipeline_version
-from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.main import get_pipeline_version
+from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
@@ -148,14 +148,13 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
-    def _pipeline_configs(self) -> list[ProcPipelineConfig]:
-        return self.config.PROC_PIPELINES
-
-    @cached_property
     def pipeline_config(self) -> ProcPipelineConfig:
-        """Get the user config for the pipeline."""
-        return get_pipeline_config(
-            self.pipeline_name, self.pipeline_version, self._pipeline_configs
+        """Get the user config object for the processing pipeline."""
+        return self._get_pipeline_config(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            dpath_pipelines=self.layout.get_dpath_catalog_proc(),
+            pipeline_class=ProcPipelineConfig,
         )
 
     @cached_property
@@ -271,11 +270,50 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
         return boutiques_config
 
+    def _get_pipeline_config(
+        self,
+        pipeline_name: str,
+        pipeline_version: str,
+        dpath_pipelines: StrOrPathLike,
+        pipeline_class: Type[BasePipelineConfig],
+    ) -> BasePipelineConfig:
+        """Get the config for a pipeline."""
+        available_pipelines = []
+        for fpath_config in Path(dpath_pipelines).glob(
+            f"*/{self.layout.fname_pipeline_config}"
+        ):
+            # load the candidate config without substitutions
+            pipeline_config_candidate = pipeline_class(**load_json(fpath_config))
+            if (
+                pipeline_config_candidate.NAME == pipeline_name
+                and pipeline_config_candidate.VERSION == pipeline_version
+            ):
+                # once there is a match we apply the substitutions
+                pipeline_config_json = self.config.apply_substitutions_to_json(
+                    self.process_template_json(
+                        pipeline_config_candidate.model_dump(mode="json"),
+                        objs=[self, self.layout],
+                    ),
+                )
+                return self.config.propagate_container_config_to_pipeline(
+                    pipeline_class(**pipeline_config_json)
+                )
+            available_pipelines.append(
+                (pipeline_config_candidate.NAME, pipeline_config_candidate.VERSION)
+            )
+
+        raise ValueError(
+            "No config found for pipeline with "
+            f"NAME={pipeline_name}, VERSION={pipeline_version} in {dpath_pipelines}"
+            ". Available pipelines and versions: "
+            + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+        )
+
     def process_template_json(
         self,
         template_json: dict,
-        participant_id: Optional[str],
-        session_id: Optional[str],
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
         bids_participant_id: Optional[str] = None,
         bids_session_id: Optional[str] = None,
         objs: Optional[list] = None,

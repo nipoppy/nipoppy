@@ -324,8 +324,6 @@ class BaseWorkflow(Base, ABC):
             )
         )
 
-        config.propagate_container_config()
-
         return config
 
     @cached_property

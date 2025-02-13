@@ -102,9 +102,17 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         Validate the pipeline step configuration after creation.
 
         Specifically:
-        - Make sure that the tracker configuration file is not set if the analysis
-        level is not participant_session
+        - DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be None
+        - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
+          "participant_session"
         """
+        if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
+            self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
+        ):
+            raise ValueError(
+                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
+                f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
+            )
         if (
             self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
             and self.TRACKER_CONFIG_FILE is not None
