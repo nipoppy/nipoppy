@@ -7,7 +7,6 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from nipoppy.config.main import Config
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.doughnut import Doughnut
@@ -15,7 +14,12 @@ from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
 
-from .conftest import create_empty_dataset, get_config, prepare_dataset
+from .conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+    prepare_dataset,
+)
 
 
 @pytest.fixture(scope="function")
@@ -51,8 +55,12 @@ def tracker(tmp_path: Path):
 
     fpath_tracker_config.write_text(json.dumps(tracker_config))
 
-    config: Config = get_config(
+    tracker.config = get_config(
         visit_ids=["1", "2"],
+    )
+
+    create_pipeline_config_files(
+        tracker.layout.dpath_pipelines,
         proc_pipelines=[
             {
                 "NAME": tracker.pipeline_name,
@@ -60,13 +68,12 @@ def tracker(tmp_path: Path):
                 "STEPS": [
                     {
                         "NAME": tracker.pipeline_step,
-                        "TRACKER_CONFIG_FILE": fpath_tracker_config,
+                        "TRACKER_CONFIG_FILE": str(fpath_tracker_config),
                     }
                 ],
             },
         ],
     )
-    config.save(tracker.layout.fpath_config)
 
     return tracker
 
