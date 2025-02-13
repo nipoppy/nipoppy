@@ -22,7 +22,12 @@ from nipoppy.env import (
 from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
 
 from .conftest import datetime_fixture  # noqa F401
-from .conftest import create_empty_dataset, get_config, prepare_dataset
+from .conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+    prepare_dataset,
+)
 
 
 class PipelineWorkflow(BasePipelineWorkflow):
@@ -54,16 +59,19 @@ def workflow(tmp_path: Path):
         pipeline_version="1.0",
     )
     # write config
-    config = get_config(
-        visit_ids=["1"],
+    config = get_config(visit_ids=["1"])
+    config.save(workflow.layout.fpath_config)
+
+    create_empty_dataset(workflow.layout.dpath_root)
+
+    create_pipeline_config_files(
+        workflow.layout.dpath_pipelines,
         proc_pipelines=[
-            # built-in pipelines
             {
                 "NAME": "fmriprep",
                 "VERSION": "23.1.3",
                 "STEPS": [{}],
             },
-            # user-added pipeline
             {
                 "NAME": "my_pipeline",
                 "VERSION": "1.0",
@@ -79,7 +87,6 @@ def workflow(tmp_path: Path):
             },
         ],
     )
-    config.save(workflow.layout.fpath_config)
     return workflow
 
 
@@ -206,7 +213,6 @@ def test_descriptor(
     workflow.pipeline_version = pipeline_version
     workflow.pipeline_step = pipeline_step
 
-    # user-added pipelines with descriptor file
     fpath_descriptor = tmp_path / "custom_pipeline.json"
     workflow.pipeline_step_config.DESCRIPTOR_FILE = fpath_descriptor
     fpath_descriptor.write_text(json.dumps(descriptor))
@@ -236,7 +242,9 @@ def test_descriptor_substitutions(
     workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
+        STEPS=[
+            ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor, INVOCATION_FILE="")
+        ],
     )
 
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
@@ -291,7 +299,9 @@ def test_invocation_substitutions(
     workflow.pipeline_config = ProcPipelineConfig(
         NAME=workflow.pipeline_name,
         VERSION=workflow.pipeline_version,
-        STEPS=[ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
+        STEPS=[
+            ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation, DESCRIPTOR_FILE="")
+        ],
     )
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
@@ -523,7 +533,7 @@ def test_set_up_bids_db_no_session(
 
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
-    [("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
+    [("fmriprep", "23.1.3"), ("my_pipeline", "2.0")],
 )
 def test_check_pipeline_version(
     pipeline_name,
@@ -566,28 +576,13 @@ def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
     workflow.pipeline_step = None
     create_empty_dataset(workflow.layout.dpath_root)
     workflow.run_setup()
-    assert workflow.pipeline_version == "1.0"
+    assert workflow.pipeline_version == "2.0"
     assert workflow.pipeline_step == DEFAULT_PIPELINE_STEP_NAME
 
 
 @pytest.mark.parametrize("dry_run", [True, False])
-def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
-        dry_run=dry_run,
-    )
-    create_empty_dataset(workflow.layout.dpath_root)
-    get_config(
-        proc_pipelines=[
-            ProcPipelineConfig(
-                NAME=workflow.pipeline_name,
-                VERSION=workflow.pipeline_version,
-                STEPS=[ProcPipelineStepConfig()],
-            )
-        ]
-    ).save(workflow.layout.fpath_config)
+def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool):
+    workflow.dry_run = dry_run
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 
@@ -719,30 +714,19 @@ def test_run_cleanup(
     n_total,
     analysis_level,
     expected_message: str,
-    tmp_path: Path,
+    workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
     pipeline_name = "my_pipeline"
     pipeline_version = "1.0"
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
-    )
-
     workflow.n_success = n_success
     workflow.n_total = n_total
 
-    get_config(
-        proc_pipelines=[
-            ProcPipelineConfig(
-                NAME=pipeline_name,
-                VERSION=pipeline_version,
-                STEPS=[ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)],
-            )
-        ]
-    ).save(workflow.layout.fpath_config)
-
+    workflow.pipeline_config = ProcPipelineConfig(
+        NAME=pipeline_name,
+        VERSION=pipeline_version,
+        STEPS=[ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)],
+    )
     workflow.run_cleanup()
 
     assert expected_message.format(n_success, n_total) in caplog.text
@@ -763,7 +747,7 @@ def test_run_cleanup(
             None,
             "sub1",
             None,
-            "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
+            "test/my_pipeline-2.0/my_pipeline-2.0-sub1",
         ),
         ("fmriprep", None, None, "1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
     ],
