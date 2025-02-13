@@ -164,6 +164,53 @@ class OrderedGroup(click.RichGroup):
         return list(self.commands.keys())
 
 
+click.rich_click.OPTION_GROUPS = {
+    "nipoppy *": [
+        {
+            "name": "Global options",
+            "options": [
+                "--dataset",
+                "--layout",
+                "--dry-run",
+                "--verbose",
+                "--help",
+            ],
+        },
+        {
+            "name": "Command specific options",
+            "options": [
+                "--bids-source",
+                "--mode",
+                "--empty",
+                "--regenerate",
+                "--force",
+                "--copy-files",
+                "--check-dicoms",
+                "--keep-workdir",
+                "--tar",
+            ],
+        },
+        {
+            "name": " Pipeline options",
+            "options": [
+                "--pipeline",
+                "--pipeline-version",
+                "--pipeline-step",
+                "--participant-id",
+                "--session-id",
+            ],
+        },
+        {
+            "name": "Runner options",
+            "options": [
+                "--write-list",
+                "--simulate",
+            ],
+        },
+    ]
+}
+
+
 @click.group(
     cls=OrderedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
