@@ -34,8 +34,8 @@
             "value-key": "[NEST]"
         },
         {
-            "name": "overwrite",
-            "id": "overwrite",
+            "name": "force",
+            "id": "force",
             "description": "Force command to overwrite existing output files.",
             "type": "Flag",
             "optional": true,
