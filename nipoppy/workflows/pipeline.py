@@ -12,6 +12,7 @@ from typing import Iterable, Optional, Tuple
 
 import bids
 import pandas as pd
+from joblib import Parallel, delayed
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -30,6 +31,7 @@ from nipoppy.env import (
     ReturnCode,
     StrOrPathLike,
 )
+from nipoppy.logger import add_logfile, get_logger
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -82,6 +84,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        n_jobs: int = 1,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
@@ -92,6 +95,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.n_jobs = n_jobs
         self.write_list = write_list
 
         super().__init__(
@@ -407,6 +411,54 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def run_main(self):
         """Run the pipeline."""
+
+        def _run_single_wrapper(participant_id, session_id, log_level):
+            """
+            Run a single participant/session and handle exceptions.
+
+            This is a helper function for parallelization with joblib. Returns 1 if
+            the run was successful, 0 otherwise.
+            """
+            # set participant_id and session_id
+            self.participant_id = participant_id
+            self.session_id = session_id
+
+            # need to reinitialize the logger if we are running in parallel
+            if len(self.logger.handlers) == 0:
+                self.logger = get_logger(name=self.logger.name, level=log_level)
+                if not self._skip_logging:
+                    add_logfile(self.logger, self.generate_fpath_log())
+
+            # log this for all handlers
+            self.logger.info(
+                f"Running for participant {participant_id}, session {session_id}"
+            )
+
+            # TODO discuss
+            # If running in parallel, we might have concurrent log output, which will
+            # be very difficult to make sense of. So we could silence the console
+            # streams and only log to (a different) file. But this will create many
+            # files and in some cases (trackers) this might not be desirable.
+            # Possibly we could have a _split_logs flag for the different workflows
+            if self.n_jobs != 1 and self.n_jobs is not None:
+                self.logger.handlers = [
+                    handler
+                    for handler in self.logger.handlers
+                    if isinstance(handler, logging.FileHandler)
+                ]
+
+            try:
+                self.run_single(participant_id, session_id)
+                return 1  # success
+            except Exception as exception:
+                self.return_code = ReturnCode.PARTIAL_SUCCESS
+                self.logger.error(
+                    f"Error running {self.pipeline_name} {self.pipeline_version}"
+                    f" on participant {participant_id}, session {session_id}"
+                    f": {exception}"
+                )
+            return 0  # failure
+
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
@@ -424,21 +476,15 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 )
             self.logger.info(f"Wrote participant-session list to {self.write_list}")
         else:
-            for participant_id, session_id in participants_sessions:
-                self.n_total += 1
-                self.logger.info(
-                    f"Running for participant {participant_id}, session {session_id}"
+            success_counts = Parallel(n_jobs=self.n_jobs)(
+                delayed(_run_single_wrapper)(
+                    participant_id, session_id, self.logger.level
                 )
-                try:
-                    self.run_single(participant_id, session_id)
-                    self.n_success += 1
-                except Exception as exception:
-                    self.return_code = ReturnCode.PARTIAL_SUCCESS
-                    self.logger.error(
-                        f"Error running {self.pipeline_name} {self.pipeline_version}"
-                        f" on participant {participant_id}, session {session_id}"
-                        f": {exception}"
-                    )
+                for participant_id, session_id in participants_sessions
+            )
+            self.logger.debug(f"{success_counts=}")
+            self.n_success += sum(success_counts)
+            self.n_total += len(success_counts)
 
     def run_cleanup(self):
         """Log a summary message."""
