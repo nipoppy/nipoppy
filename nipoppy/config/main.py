@@ -9,69 +9,11 @@ from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
-from nipoppy.config.pipeline import (
-    BasePipelineConfig,
-    BidsPipelineConfig,
-    ExtractionPipelineConfig,
-    ProcPipelineConfig,
-)
+from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
-
-
-def get_pipeline_version(
-    pipeline_name: str, pipeline_configs: list[BasePipelineConfig]
-) -> str:
-    """Get the first version associated with a pipeline.
-
-    Parameters
-    ----------
-    pipeline_name : str
-        Name of the pipeline, as specified in the config
-    pipeline_configs : list[nipoppy.config.pipeline.BasePipelineConfig]
-        List of pipeline configurations
-
-    Returns
-    -------
-    str
-        The pipeline version
-    """
-    available_pipelines = []
-    for pipeline_config in pipeline_configs:
-        if pipeline_config.NAME == pipeline_name:
-            return pipeline_config.VERSION
-        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
-
-    raise ValueError(
-        f"No config found for pipeline with NAME={pipeline_name}"
-        ". Available pipelines: "
-        + ", ".join(f"{name} {version}" for name, version in available_pipelines)
-    )
-
-
-def get_pipeline_config(
-    pipeline_name: str,
-    pipeline_version: str,
-    pipeline_configs: list[BasePipelineConfig],
-) -> BasePipelineConfig:
-    """Get the config for a pipeline."""
-    available_pipelines = []
-    for pipeline_config in pipeline_configs:
-        if (
-            pipeline_config.NAME == pipeline_name
-            and pipeline_config.VERSION == pipeline_version
-        ):
-            return pipeline_config
-        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
-
-    raise ValueError(
-        "No config found for pipeline with "
-        f"NAME={pipeline_name}, VERSION={pipeline_version}"
-        ". Available pipelines and versions: "
-        + ", ".join(f"{name} {version}" for name, version in available_pipelines)
-    )
 
 
 class Config(_SchemaWithContainerConfig):
@@ -120,15 +62,6 @@ class Config(_SchemaWithContainerConfig):
             "is loaded from a file with :func:`nipoppy.config.main.Config.load`"
         ),
     )
-    BIDS_PIPELINES: list[BidsPipelineConfig] = Field(
-        default=[], description="Configurations for BIDS conversion, if applicable"
-    )
-    PROC_PIPELINES: list[ProcPipelineConfig] = Field(
-        description="Configurations for processing pipelines"
-    )
-    EXTRACTION_PIPELINES: list[ExtractionPipelineConfig] = Field(
-        default=[], description="Configurations for extraction pipelines"
-    )
     CUSTOM: dict = Field(
         default={},
         description="Free field that can be used for any purpose",
@@ -150,28 +83,22 @@ class Config(_SchemaWithContainerConfig):
 
         return self
 
-    def propagate_container_config(self) -> Self:
-        """Propagate the container config to all pipelines."""
-
-        def _propagate(pipeline_configs: list[BasePipelineConfig]):
-            for pipeline_config in pipeline_configs:
-                pipeline_container_config = pipeline_config.get_container_config()
-                if pipeline_container_config.INHERIT:
-                    pipeline_container_config.merge(
-                        self.CONTAINER_CONFIG, overwrite_command=True
-                    )
-                for pipeline_step in pipeline_config.STEPS:
-                    step_container_config = pipeline_step.get_container_config()
-                    if step_container_config.INHERIT:
-                        step_container_config.merge(
-                            pipeline_container_config, overwrite_command=True
-                        )
-
-        _propagate(self.BIDS_PIPELINES)
-        _propagate(self.PROC_PIPELINES)
-        _propagate(self.EXTRACTION_PIPELINES)
-
-        return self
+    def propagate_container_config_to_pipeline(
+        self, pipeline_config: BasePipelineConfig
+    ) -> BasePipelineConfig:
+        """Propagate the global container config to a pipeline config."""
+        pipeline_container_config = pipeline_config.get_container_config()
+        if pipeline_container_config.INHERIT:
+            pipeline_container_config.merge(
+                self.CONTAINER_CONFIG, overwrite_command=True
+            )
+        for pipeline_step in pipeline_config.STEPS:
+            step_container_config = pipeline_step.get_container_config()
+            if step_container_config.INHERIT:
+                step_container_config.merge(
+                    pipeline_container_config, overwrite_command=True
+                )
+        return pipeline_config
 
     @model_validator(mode="before")
     @classmethod
