@@ -52,7 +52,7 @@
         },
         {
             "NAME": "dcm2bids",
-            "VERSION": "3.1.0",
+            "VERSION": "3.2.0",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://unfmontreal/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"

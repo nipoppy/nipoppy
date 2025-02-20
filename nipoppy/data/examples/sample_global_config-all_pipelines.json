@@ -52,6 +52,34 @@
         },
         {
             "NAME": "dcm2bids",
+            "VERSION": "3.2.0",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+                "URI": "docker://unfmontreal/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+            },
+            "STEPS": [
+                {
+                    "NAME": "prepare",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-dcm2bids_helper.json",
+                    "ANALYSIS_LEVEL": "group"
+                },
+                {
+                    "NAME": "convert",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-dcm2bids.json",
+                    "CONTAINER_CONFIG": {
+                        "ARGS": [
+                            "--bind",
+                            "[[DCM2BIDS_CONFIG_FILE]]"
+                        ]
+                    },
+                    "UPDATE_DOUGHNUT": true
+                }
+            ]
+        },
+        {
+            "NAME": "dcm2bids",
             "VERSION": "3.1.0",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",

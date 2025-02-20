@@ -1,7 +1,7 @@
 {
     "name": "dcm2bids_helper",
     "description": "dcm2bids_helper",
-    "tool-version": "3.1.0",
+    "tool-version": "3.2.0",
     "schema-version": "0.5",
     "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] dcm2bids_helper [DICOM_DIR] [OUTPUT_DIR] [NEST] [FORCE] [LOG_LEVEL]",
     "inputs": [
@@ -68,6 +68,7 @@
     },
     "custom": {
         "nipoppy": {
+            "CONTAINER_SUBCOMMAND": "exec",
             "CONTAINER_CONFIG": {
                 "ARGS": [
                     "--bind",
