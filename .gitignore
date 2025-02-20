@@ -31,7 +31,7 @@ workflow/dicom_org/dicom_dir_func.py
 .coverage
 htmlcov
 
-
+.env
 env/
 
 # VS Code
