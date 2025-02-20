@@ -22,7 +22,6 @@ dependencies = [
     "pybids!=0.18.0",
     "pydantic",
     "pydicom!=3.0.0",
-    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
