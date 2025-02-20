@@ -17,14 +17,15 @@ classifiers = [
 dependencies = [
     "boutiques",
     "click",
+    "httpx",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
     "pydicom!=3.0.0",
+    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
-    "requests",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
