@@ -251,8 +251,8 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def run_single(self, participant_id: str | None, session_id: str | None):
         """Run pipeline on a single participant/session."""
-        # generate paths
-        # include current participant_id/session_id (not self.participant/self.session)
+        # generate paths for temporary/work directories
+        # use current participant_id/session_id (not self.participant/self.session)
         dpath_pipeline_bids_db = self.layout.get_dpath_pybids_db(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
@@ -265,6 +265,8 @@ class PipelineRunner(BasePipelineWorkflow):
             participant_id=participant_id,
             session_id=session_id,
         )
+        for dpath in (dpaths_tmp := (dpath_pipeline_bids_db, dpath_pipeline_work)):
+            self.check_dir(dpath)  # TODO test this
 
         # Conditionally set up PyBIDS database
         if self.pipeline_step_config.GENERATE_PYBIDS_DATABASE:
@@ -287,12 +289,16 @@ class PipelineRunner(BasePipelineWorkflow):
         )
 
         # run pipeline with Boutiques
-        to_return = self.launch_boutiques_run(
-            participant_id, session_id, container_command=container_command
+        descriptor_and_invocation = self.launch_boutiques_run(
+            participant_id,
+            session_id,
+            container_command=container_command,
+            dpath_pipeline_work=dpath_pipeline_work,
+            dpath_pipeline_bids_db=dpath_pipeline_bids_db,
         )
 
         if not self.keep_workdir:
-            for dpath in [dpath_pipeline_bids_db, dpath_pipeline_work]:
+            for dpath in dpaths_tmp:
                 if dpath.exists():
                     self.rm(dpath)
         else:
@@ -310,4 +316,4 @@ class PipelineRunner(BasePipelineWorkflow):
                 self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
             )
 
-        return to_return
+        return descriptor_and_invocation, dpaths_tmp

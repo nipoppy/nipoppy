@@ -44,6 +44,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         self.logger.info(f"Running on {participant_id}, {session_id}")
         if participant_id == "FAIL":
             raise RuntimeError("FAIL")
+        return "SUCCESS"  # cannot return None
 
 
 @pytest.fixture(scope="function")
@@ -125,8 +126,6 @@ def test_init(args):
     assert hasattr(workflow, "session_id")
     assert isinstance(workflow.dpath_pipeline, Path)
     assert isinstance(workflow.dpath_pipeline_output, Path)
-    assert isinstance(workflow.dpath_pipeline_work, Path)
-    assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
 @pytest.mark.parametrize(
@@ -681,6 +680,18 @@ def test_run_main_write_list(
         assert write_list.read_text().strip() == "01\t1"
     else:
         assert not write_list.exists()
+
+
+@pytest.mark.parametrize("write_list", ["list.tsv", "to_run.tsv"])
+def test_run_cleanup_write_list(
+    workflow: PipelineWorkflow,
+    write_list: str,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    write_list = tmp_path / write_list
+    workflow.write_list = write_list
+    workflow.run_cleanup()
     assert f"Wrote participant-session list to {write_list}" in caplog.text
 
 

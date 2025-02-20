@@ -90,48 +90,53 @@ def test_run_setup(config: Config, tmp_path: Path, mocker: pytest_mock.MockFixtu
     mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
-    assert runner.dpath_pipeline_work.exists()
     mocked_check_tar_conditions.assert_called_once()
 
 
+def test_run_single_tmp_dirs_created(
+    tmp_path: Path, config: Config, mocker: pytest_mock.MockFixture
+):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        keep_workdir=True,
+    )
+    runner.config = config
+
+    # mock methods that are not relevant for this test
+    mocker.patch.object(runner, "set_up_bids_db")
+    mocker.patch.object(runner, "process_container_config")
+    mocker.patch.object(runner, "launch_boutiques_run")
+
+    _, dpaths = runner.run_single(participant_id="01", session_id="BL")
+    for dpath in dpaths:
+        assert dpath.exists()
+
+
 @pytest.mark.parametrize("keep_workdir", [True, False])
-def test_run_cleanup(tmp_path: Path, keep_workdir):
+def test_run_single_tmp_dirs_removed(
+    tmp_path: Path, keep_workdir, config: Config, mocker: pytest_mock.MockFixture
+):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
         keep_workdir=keep_workdir,
     )
-    dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
-    for dpath in dpaths:
-        dpath.mkdir(parents=True)
-    runner.run_cleanup()
+    runner.config = config
+
+    # mock methods that are not relevant for this test
+    mocker.patch.object(runner, "set_up_bids_db")
+    mocker.patch.object(runner, "process_container_config")
+    mocker.patch.object(runner, "launch_boutiques_run")
+
+    _, dpaths = runner.run_single(participant_id="01", session_id="BL")
     for dpath in dpaths:
         if keep_workdir:
             assert dpath.exists()
         else:
             assert not dpath.exists()
-
-
-@pytest.mark.parametrize("n_success", [1, 2])
-def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        keep_workdir=False,
-    )
-    runner.n_success = n_success
-    runner.n_total = 2
-    runner.config = config
-    dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
-    for dpath in dpaths:
-        dpath.mkdir(parents=True)
-    runner.run_cleanup()
-    if runner.n_success == runner.n_total:
-        assert not dpath.exists()
-    else:
-        assert dpath.exists()
 
 
 @pytest.mark.parametrize("simulate", [True, False])
@@ -154,7 +159,6 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     )
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
-    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
     descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id, container_command=""
     )
@@ -463,6 +467,7 @@ def test_run_multiple(config: Config, tmp_path: Path):
         pipeline_version="1.0.0",
         participant_id=participant_id,
         session_id=session_id,
+        keep_workdir=True,
     )
     runner.config = config
 
@@ -477,8 +482,16 @@ def test_run_multiple(config: Config, tmp_path: Path):
     runner.run_setup()
     runner.run_main()
 
-    bids_layout = BIDSLayout(database_path=runner.dpath_pipeline_bids_db)
-    assert not len(bids_layout.get(extension=".nii.gz")) == 0
+    for participant_id in participants_and_sessions:
+        for session_id in participants_and_sessions[participant_id]:
+            dpath_pipeline_bids_db = runner.layout.get_dpath_pybids_db(
+                pipeline_name=runner.pipeline_name,
+                pipeline_version=runner.pipeline_version,
+                participant_id=participant_id,
+                session_id=session_id,
+            )
+            bids_layout = BIDSLayout(database_path=dpath_pipeline_bids_db)
+            assert not len(bids_layout.get(extension=".nii.gz")) == 0
 
 
 @pytest.mark.parametrize("generate_pybids_database", [True, False])
@@ -504,12 +517,14 @@ def test_run_single_pybids_db(
     mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
 
     # Call run_single
-    runner.run_single(participant_id=participant_id, session_id=session_id)
+    _, (dpath_pipeline_bids_db, _) = runner.run_single(
+        participant_id=participant_id, session_id=session_id
+    )
 
     # Assert set_up_bids_db was called or not called as expected
     if generate_pybids_database:
         mocked_set_up_bids_db.assert_called_once_with(
-            dpath_pybids_db=runner.dpath_pipeline_bids_db,
+            dpath_pybids_db=dpath_pipeline_bids_db,
             participant_id=participant_id,
             session_id=session_id,
         )

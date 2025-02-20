@@ -289,6 +289,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.logger.debug("Available replacement strings: ")
             max_len = max(len(k) for k in kwargs)
             for k, v in kwargs.items():
+                if isinstance(v, Path):
+                    v = str(v.resolve())
                 self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
             self.logger.debug(f"\t+ all attributes in: {objs}")
 
@@ -392,7 +394,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def run_main(self):
         """Run the pipeline."""
 
-        def _run_single_wrapper(participant_id, session_id, log_level) -> Any:
+        def _run_single_wrapper(
+            participant_id, session_id, log_level
+        ) -> Tuple[int, Any]:
             """
             Run a single participant/session and handle exceptions.
 
@@ -430,7 +434,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 ]
 
             try:
-                return self.run_single(participant_id, session_id)  # success
+                # success
+                return 1, self.run_single(participant_id, session_id)
             except Exception as exception:
                 # log error for all handlers
                 self.logger.handlers = all_handlers
@@ -440,11 +445,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     f": {exception}"
                 )
 
-            # the runners return the final JSON descriptor/invocation used
-            # and the tracker returns the participant/session status
-            # so it should be okay to return None in the wrapper upon failure
-            # though this is not really robust
-            return None
+            # failure
+            return 0, None
 
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
@@ -462,14 +464,16 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                     self.write_list, header=False, index=False, sep="\t"
                 )
         else:
-            run_results = Parallel(n_jobs=self.n_jobs)(
+            parallel_results = Parallel(n_jobs=self.n_jobs)(
                 delayed(_run_single_wrapper)(
                     participant_id, session_id, self.logger.level
                 )
                 for participant_id, session_id in participants_sessions
             )
-
-            success_counts = [1 for result in run_results if result is not None]
+            if len(parallel_results) == 0:
+                success_counts = []
+            else:
+                success_counts, _ = zip(*parallel_results)
             self.logger.debug(f"{success_counts=}")
             self.n_success += sum(success_counts)
             self.n_total += len(success_counts)
