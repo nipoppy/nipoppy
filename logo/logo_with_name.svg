@@ -7,9 +7,32 @@
    viewBox="0 0 800 225"
    version="1.1"
    id="svg1"
+   sodipodi:docname="logo_with_name.svg"
+   inkscape:version="1.3.1 (91b66b0, 2023-11-16)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.46216559"
+     inkscape:cx="758.38619"
+     inkscape:cy="374.32471"
+     inkscape:window-width="1440"
+     inkscape:window-height="847"
+     inkscape:window-x="230"
+     inkscape:window-y="1109"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g42-2" />
   <defs
      id="defs1">
     <linearGradient
@@ -160,14 +183,14 @@
              id="path3-6-2-1-8"
              style="fill:url(#linearGradient55);fill-opacity:1;stroke-width:1.00025;stroke-dasharray:none"
              transform="matrix(-0.43620214,-0.35661204,0.35661204,-0.43620214,53.527738,69.320869)" />
+          <path
+             fill="#35185a"
+             d="M 89.222,32.368 C 86.132,30.025 86.673,43.011 69.618,45.006 61.795,45.921 55.161,44.501 49.552,42.617 55.689,38.576 59.744,31.635 59.744,23.739 59.744,11.259 49.628,1.141 37.147,1.141 26.253,1.141 17.166,8.848 15.028,19.105 6.902,17.397 0.32,15.875 0.32,22.847 c 0,6.481 9.652,12.936 19.916,16.83 C 9.551,44.448 2.099,55.16 2.099,67.618 c 0,16.895 13.79,28.836 30.593,30.592 23.859,2.494 52.163,-1.592 62.851,-23.055 7.645,-15.351 4.211,-34.805 -6.321,-42.787"
+             data-fill-palette-color="accent"
+             id="path3-6-6-5-9-5"
+             style="fill:url(#linearGradient47);fill-opacity:1"
+             transform="matrix(0.35661202,-0.43620213,0.43620213,0.35661202,20.548032,52.667558)" />
         </g>
-        <path
-           fill="#35185a"
-           d="M 89.222,32.368 C 86.132,30.025 86.673,43.011 69.618,45.006 61.795,45.921 55.161,44.501 49.552,42.617 55.689,38.576 59.744,31.635 59.744,23.739 59.744,11.259 49.628,1.141 37.147,1.141 26.253,1.141 17.166,8.848 15.028,19.105 6.902,17.397 0.32,15.875 0.32,22.847 c 0,6.481 9.652,12.936 19.916,16.83 C 9.551,44.448 2.099,55.16 2.099,67.618 c 0,16.895 13.79,28.836 30.593,30.592 23.859,2.494 52.163,-1.592 62.851,-23.055 7.645,-15.351 4.211,-34.805 -6.321,-42.787"
-           data-fill-palette-color="accent"
-           id="path3-6-6-5-9-5"
-           style="fill:url(#linearGradient47);fill-opacity:1"
-           transform="matrix(0.24693956,-0.30205253,0.30205253,0.24693956,28.180099,50.157056)" />
         <circle
            style="fill:#ffb81c;fill-opacity:1;stroke:#443710;stroke-width:0;stroke-linecap:round;paint-order:fill markers stroke"
            id="path5"
