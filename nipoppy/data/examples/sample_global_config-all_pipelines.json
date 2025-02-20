@@ -89,7 +89,8 @@
                 {
                     "NAME": "prepare",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-dcm2bids_helper.json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-dcm2bids_helper.json",
+                    "ANALYSIS_LEVEL": "group"
                 },
                 {
                     "NAME": "convert",
