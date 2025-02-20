@@ -4,7 +4,6 @@ import hashlib
 from pathlib import Path
 
 import httpx
-from tqdm import tqdm
 
 
 class InvalidChecksumError(Exception):
@@ -54,7 +53,7 @@ class ZenodoAPI:
         files = {
             entry["key"]: entry["checksum"][4:] for entry in response.json()["entries"]
         }
-        for filename, checksum in tqdm(files.items()):
+        for filename, checksum in files.items():
             response = httpx.get(
                 f"{self.api_endpoint}/records/{zenodo_id}/files/{filename}/content",  # noqa E501
                 headers=self.headers,
