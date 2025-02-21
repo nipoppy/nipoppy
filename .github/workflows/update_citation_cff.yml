@@ -1,0 +1,45 @@
+---
+name: Update CITATION.cff
+
+on:
+  release:
+    types: [published]
+
+env:
+  REPOSITORY: nipoppy/nipoppy
+
+jobs:
+
+  update_and_validate:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    # TODO might not be needed
+    - name: Generate a token
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
+        private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
+
+    - name: Get latest release version
+      id: get-release
+      uses: pozetroninc/github-action-get-latest-release@v0.8.0
+      with:
+        repository: ${{ env.REPOSITORY}}
+        excludes: prerelease, draft
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update CITATION.cff and open pull request
+      uses: fjogeleit/yaml-update-action@v0.16.0
+      with:
+        valueFile: CITATION.cff
+        propertyPath: version
+        value: ${{ steps.get-release.outputs.release }}
+        branch: ci/citation-cff
+        targetBranch: main
+        createPR: true
+        title: "[MAINT] Update `CITATION.cff` file to version ${{ steps.get-release.outputs.release }}"
+        message: PR opened automatically by [yaml-update-action](https://github.com/fjogeleit/yaml-update-action) GitHub action.
