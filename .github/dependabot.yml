@@ -9,6 +9,6 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-      labels:
-        - "T.2 - Maintenance"
-        - "bot"
+    labels:
+      - "T.2 - Maintenance"
+      - "bot"
