@@ -17,6 +17,7 @@ classifiers = [
 dependencies = [
     "boutiques",
     "click",
+    "joblib",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",

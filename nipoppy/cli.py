@@ -107,6 +107,13 @@ def global_options(func):
 def pipeline_options(func):
     """Define pipeline options for the CLI."""
     func = click.option(
+        "--n-jobs",
+        type=int,
+        default=1,
+        show_default=True,
+        help="Number of jobs to run in parallel.",
+    )(func)
+    func = click.option(
         "--session-id",
         type=str,
         help=f"Session ID (with or without the {BIDS_SESSION_PREFIX} prefix).",

@@ -137,7 +137,7 @@ template_strings_bids_runner = [
 ]
 template_strings_proc_runner = template_strings_bids_runner[:-1] + [
     f"- `[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]`: the output directory for this pipeline, i.e. `{DEFAULT_LAYOUT_INFO.dpath_derivatives}/<PIPELINE_NAME>/<PIPELINE_VERSION>/output`",
-    f"- `[[NIPOPPY_DPATH_PIPELINE_WORK]]`: the working directory for this pipeline run, which will be a subdirectory of `{DEFAULT_LAYOUT_INFO.dpath_derivatives}/<PIPELINE_NAME>/<PIPELINE_VERSION>/work`",
+    f"- `[[NIPOPPY_DPATH_PIPELINE_WORK]]`: the working directory for this pipeline run, which will be a subdirectory of `{DEFAULT_LAYOUT_INFO.dpath_work}`",
     "- `[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]`: the [PyBIDS](https://bids-standard.github.io/pybids/) database for the participant and session",
     "```",
 ]

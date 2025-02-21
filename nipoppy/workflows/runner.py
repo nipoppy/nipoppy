@@ -1,5 +1,7 @@
 """PipelineRunner workflow."""
 
+from __future__ import annotations
+
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
@@ -29,6 +31,7 @@ class PipelineRunner(BasePipelineWorkflow):
         keep_workdir: bool = False,
         tar: bool = False,
         simulate: bool = False,
+        n_jobs: int = 1,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
@@ -45,6 +48,7 @@ class PipelineRunner(BasePipelineWorkflow):
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
+            n_jobs=n_jobs,
             write_list=write_list,
             fpath_layout=fpath_layout,
             verbose=verbose,
@@ -56,7 +60,6 @@ class PipelineRunner(BasePipelineWorkflow):
         """Directory paths to create if needed during the setup phase."""
         return super().dpaths_to_check + [
             self.dpath_pipeline_output,
-            self.dpath_pipeline_work,
         ]
 
     def process_container_config(
@@ -248,15 +251,29 @@ class PipelineRunner(BasePipelineWorkflow):
 
         return to_return
 
-    def run_single(self, participant_id: str, session_id: str):
+    def run_single(self, participant_id: str | None, session_id: str | None):
         """Run pipeline on a single participant/session."""
-        # Access the GENERATE_PYBIDS_DATABASE field
-        generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
+        # generate paths for temporary/work directories
+        # use current participant_id/session_id (not self.participant/self.session)
+        dpath_pipeline_bids_db = self.layout.get_dpath_pybids_db(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            participant_id=participant_id,
+            session_id=session_id,
+        )
+        dpath_pipeline_work = self.layout.get_dpath_pipeline_work(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            participant_id=participant_id,
+            session_id=session_id,
+        )
+        for dpath in (dpaths_tmp := (dpath_pipeline_bids_db, dpath_pipeline_work)):
+            self.check_dir(dpath)  # TODO test this
 
         # Conditionally set up PyBIDS database
-        if generate_bids_db:
+        if self.pipeline_step_config.GENERATE_PYBIDS_DATABASE:
             self.set_up_bids_db(
-                dpath_pybids_db=self.dpath_pipeline_bids_db,
+                dpath_pybids_db=dpath_pipeline_bids_db,
                 participant_id=participant_id,
                 session_id=session_id,
             )
@@ -268,15 +285,26 @@ class PipelineRunner(BasePipelineWorkflow):
             bind_paths=[
                 self.layout.dpath_bids,
                 self.dpath_pipeline_output,
-                self.dpath_pipeline_work,
-                self.dpath_pipeline_bids_db,
+                dpath_pipeline_work,
+                dpath_pipeline_bids_db,
             ],
         )
 
         # run pipeline with Boutiques
-        to_return = self.launch_boutiques_run(
-            participant_id, session_id, container_command=container_command
+        descriptor_and_invocation = self.launch_boutiques_run(
+            participant_id,
+            session_id,
+            container_command=container_command,
+            dpath_pipeline_work=dpath_pipeline_work,
+            dpath_pipeline_bids_db=dpath_pipeline_bids_db,
         )
+
+        if not self.keep_workdir:
+            for dpath in dpaths_tmp:
+                if dpath.exists():
+                    self.rm(dpath)
+        else:
+            self.logger.info("Keeping working/intermediary files.")
 
         if self.tar and not self.simulate:
             tracker_config = TrackerConfig(
@@ -290,19 +318,4 @@ class PipelineRunner(BasePipelineWorkflow):
                 self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
             )
 
-        return to_return
-
-    def run_cleanup(self):
-        """Run pipeline runner cleanup."""
-        if self.n_success == self.n_total:
-            if not self.keep_workdir:
-                for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
-                    if dpath.exists():
-                        self.rm(dpath)
-            else:
-                self.logger.info("Keeping working / intermediary files.")
-        else:
-            self.logger.info(
-                "Some pipeline segments failed. Keeping working / intermediary files."
-            )
-        return super().run_cleanup()
+        return descriptor_and_invocation, dpaths_tmp

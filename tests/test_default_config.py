@@ -219,7 +219,7 @@ def test_pipeline_runner(
 
     runner.pipeline_config.get_fpath_container().touch()
 
-    invocation_str, descriptor_str = runner.run_single(
+    (invocation_str, descriptor_str), _ = runner.run_single(
         participant_id=participant_id, session_id=session_id
     )
 

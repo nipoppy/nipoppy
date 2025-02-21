@@ -8,10 +8,11 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Any, Iterable, Optional, Tuple
 
 import bids
 import pandas as pd
+from joblib import Parallel, delayed
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -30,6 +31,7 @@ from nipoppy.env import (
     ReturnCode,
     StrOrPathLike,
 )
+from nipoppy.logger import add_logfile, get_logger
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -82,6 +84,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        n_jobs: int = 1,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
@@ -92,6 +95,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.n_jobs = n_jobs
         self.write_list = write_list
 
         super().__init__(
@@ -125,26 +129,6 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         return self.layout.get_dpath_pipeline_output(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
-        )
-
-    @cached_property
-    def dpath_pipeline_work(self) -> Path:
-        """Return the path to the pipeline's working directory."""
-        return self.layout.get_dpath_pipeline_work(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            participant_id=self.participant_id,
-            session_id=self.session_id,
-        )
-
-    @cached_property
-    def dpath_pipeline_bids_db(self) -> Path:
-        """Return the path to the pipeline's BIDS database directory."""
-        return self.layout.get_dpath_pybids_db(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            participant_id=self.participant_id,
-            session_id=self.session_id,
         )
 
     @cached_property
@@ -305,6 +289,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.logger.debug("Available replacement strings: ")
             max_len = max(len(k) for k in kwargs)
             for k, v in kwargs.items():
+                if isinstance(v, Path):
+                    v = str(v.resolve())
                 self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
             self.logger.debug(f"\t+ all attributes in: {objs}")
 
@@ -407,6 +393,61 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     def run_main(self):
         """Run the pipeline."""
+
+        def _run_single_wrapper(
+            participant_id, session_id, log_level
+        ) -> Tuple[int, Any]:
+            """
+            Run a single participant/session and handle exceptions.
+
+            This is a helper function for parallelization with joblib.
+            Returns the output of run_single() if the run was successful,
+            None otherwise.
+            """
+            # set participant_id and session_id
+            self.participant_id = participant_id
+            self.session_id = session_id
+
+            # need to reinitialize the logger if we are running in parallel
+            if len(self.logger.handlers) == 0:
+                self.logger = get_logger(name=self.logger.name, level=log_level)
+                if not self._skip_logging:
+                    add_logfile(self.logger, self.generate_fpath_log())
+            all_handlers = self.logger.handlers
+
+            # log this for all handlers
+            self.logger.info(
+                f"Running for participant {participant_id}, session {session_id}"
+            )
+
+            # TODO discuss
+            # If running in parallel, we might have concurrent log output, which will
+            # be very difficult to make sense of. So we could silence the console
+            # streams and only log to (a different) file. But this will create many
+            # files and in some cases (trackers) this might not be desirable.
+            # Possibly we could have a _split_logs flag for the different workflows
+            if not (self.n_jobs == 1 or self.n_jobs is None):
+                self.logger.handlers = [
+                    handler
+                    for handler in self.logger.handlers
+                    if isinstance(handler, logging.FileHandler)
+                ]
+
+            try:
+                # success
+                return 1, self.run_single(participant_id, session_id)
+            except Exception as exception:
+                # log error for all handlers
+                self.logger.handlers = all_handlers
+                self.logger.error(
+                    f"Error running {self.pipeline_name} {self.pipeline_version}"
+                    f" on participant {participant_id}, session {session_id}"
+                    f": {exception}"
+                )
+
+            # failure
+            return 0, None
+
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
@@ -422,27 +463,33 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 pd.DataFrame(participants_sessions).to_csv(
                     self.write_list, header=False, index=False, sep="\t"
                 )
-            self.logger.info(f"Wrote participant-session list to {self.write_list}")
         else:
-            for participant_id, session_id in participants_sessions:
-                self.n_total += 1
-                self.logger.info(
-                    f"Running for participant {participant_id}, session {session_id}"
+            parallel_results = Parallel(n_jobs=self.n_jobs)(
+                delayed(_run_single_wrapper)(
+                    participant_id, session_id, self.logger.level
                 )
-                try:
-                    self.run_single(participant_id, session_id)
-                    self.n_success += 1
-                except Exception as exception:
-                    self.return_code = ReturnCode.PARTIAL_SUCCESS
-                    self.logger.error(
-                        f"Error running {self.pipeline_name} {self.pipeline_version}"
-                        f" on participant {participant_id}, session {session_id}"
-                        f": {exception}"
-                    )
+                for participant_id, session_id in participants_sessions
+            )
+            if len(parallel_results) == 0:
+                success_counts = []
+            else:
+                success_counts, _ = zip(*parallel_results)
+            self.logger.debug(f"{success_counts=}")
+            self.n_success += sum(success_counts)
+            self.n_total += len(success_counts)
+
+            # update return code if needed
+            if (self.n_success != self.n_total) and (self.n_total != 0):
+                self.return_code = ReturnCode.PARTIAL_SUCCESS
 
     def run_cleanup(self):
         """Log a summary message."""
-        if self.n_total == 0:
+        if self.write_list:
+            self.logger.info(
+                f"[{LogColor.SUCCESS}]Wrote participant-session list to "
+                f"{self.write_list}[/]"
+            )
+        elif self.n_total == 0:
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, "
