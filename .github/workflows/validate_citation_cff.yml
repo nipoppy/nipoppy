@@ -1,5 +1,5 @@
 ---
-name: validate citation.cff
+name: Validate CITATION.cff
 
 on:
   push:
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
 
-  validate_cff:
+  validate:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
