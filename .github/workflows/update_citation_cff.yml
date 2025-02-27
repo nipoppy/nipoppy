@@ -8,7 +8,7 @@ on:
 jobs:
 
   update_version_and_open_pr:
-    if: '!github.event.release.prerelease'
+    if: ! github.event.release.prerelease
     runs-on: ubuntu-latest
 
     steps:
@@ -45,5 +45,5 @@ jobs:
         masterBranchName: main
         title: "[MAINT] Update version in `CITATION.cff` file"
         description: PR opened automatically by [yaml-update-action](https://github.com/fjogeleit/yaml-update-action) GitHub action.
-        labels: "T.2 - Maintenance, bot"
+        labels: "T.2 - Maintenance, bot, skip-tests"
         token: ${{ steps.generate-token.outputs.token }}

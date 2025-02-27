@@ -22,8 +22,8 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
-    # only trigger on upstream repo
-    if: github.repository_owner == 'nipoppy' && github.event.repository.name == 'nipoppy'
+    # only trigger on upstream repo and do not run for PRs with 'skip-tests' label
+    if: github.repository == 'nipoppy/nipoppy' && ! (github.event_name == 'pull_request' && contains(github.event.pull_request.labels, 'skip-tests'))
 
     steps:
 
