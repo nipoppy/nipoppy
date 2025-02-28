@@ -5,6 +5,7 @@ from functools import partial
 from pathlib import Path
 from typing import Optional
 
+import rich_click as click
 from rich.console import Console
 from rich.logging import RichHandler
 
@@ -34,6 +35,7 @@ def get_logger(
         show_time=False,
         markup=True,
         rich_tracebacks=True,
+        tracebacks_suppress=[click],
     )
 
     # stream WARNING and above to stderr with rich formatting

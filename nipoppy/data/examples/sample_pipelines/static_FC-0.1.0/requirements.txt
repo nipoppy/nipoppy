@@ -1,0 +1,4 @@
+nilearn>=0.11.1
+pybids>=0.17.2
+numpy>=2.1.3
+scikit-learn>=1.6.1

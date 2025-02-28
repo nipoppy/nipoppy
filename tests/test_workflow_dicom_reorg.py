@@ -118,20 +118,20 @@ def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "fname_source,expected",
+    "fpath_source,expected",
     [
         ("123456.dcm", "123456.dcm"),
-        (Path("123456.dcm"), Path("123456.dcm")),
-        ("dicoms.tar.gz", "dicoms.tar.gz"),
+        (Path("dirA", "123456.dcm"), "123456.dcm"),
+        ("123/dicoms.tar.gz", "dicoms.tar.gz"),
     ],
 )
-def test_apply_fname_mapping_default(fname_source, expected, tmp_path: Path):
+def test_apply_fname_mapping_default(fpath_source, expected, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
 
     assert (
         workflow.apply_fname_mapping(
-            fname_source=fname_source, participant_id="", session_id=""
+            fpath_source=fpath_source, participant_id="", session_id=""
         )
         == expected
     )

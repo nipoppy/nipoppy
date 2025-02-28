@@ -1,5 +1,5 @@
 ---
-name: validate citation.cff
+name: Validate CITATION.cff
 
 on:
   push:
@@ -13,10 +13,10 @@ concurrency:
 
 jobs:
 
-  validate_cff:
+  validate:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Check whether the citation metadata from CITATION.cff is valid
       uses: citation-file-format/cffconvert-github-action@2.0.0
       with:

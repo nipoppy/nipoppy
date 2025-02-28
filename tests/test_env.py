@@ -5,7 +5,8 @@ from nipoppy.env import LogColor, ReturnCode
 
 def test_return_code():
     assert ReturnCode.SUCCESS == 0
-    assert ReturnCode.PARTIAL_SUCCESS == 1
+    assert ReturnCode.UNKOWN_FAILURE == 1
+    assert ReturnCode.PARTIAL_SUCCESS == 64
 
 
 def test_color():

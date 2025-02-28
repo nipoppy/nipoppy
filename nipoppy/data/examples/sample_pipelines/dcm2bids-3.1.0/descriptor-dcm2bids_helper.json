@@ -3,7 +3,7 @@
     "description": "dcm2bids_helper",
     "tool-version": "3.1.0",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] dcm2bids_helper [DICOM_DIR] [OUTPUT_DIR] [NEST] [OVERWRITE] [LOG_LEVEL]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] dcm2bids_helper [DICOM_DIR] [OUTPUT_DIR] [NEST] [FORCE] [LOG_LEVEL]",
     "inputs": [
         {
             "name": "dicom_dir",
@@ -34,13 +34,13 @@
             "value-key": "[NEST]"
         },
         {
-            "name": "overwrite",
-            "id": "overwrite",
+            "name": "force",
+            "id": "force",
             "description": "Force command to overwrite existing output files.",
             "type": "Flag",
             "optional": true,
             "command-line-flag": "--force",
-            "value-key": "[OVERWRITE]"
+            "value-key": "[FORCE]"
         },
         {
             "name": "log_level",

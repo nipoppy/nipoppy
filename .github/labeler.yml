@@ -1,0 +1,7 @@
+"T.0 - Bug": "(\\[BUG\\]|\\[FIX\\])"
+"T.1 - Enhancement": "\\[ENH\\]"
+"T.2 - Maintenance": "(\\[MAINT\\]|\\[MNT\\]|\\[STY\\]|\\[TYP\\])"
+"T.3 - Documentation": "\\[DOC\\]"
+"T.4 - Testing": "\\[TST\\]"
+"T.5 - Deprecation": "\\[DEP\\]"
+"T.6 - Release": "\\[REL\\]"
