@@ -1,4 +1,4 @@
-## Starting with BIDS data
+# Starting with BIDS data
 
 If the imaging data has already been converted to BIDS, we can use the `--bids-source` option to add it directly to the Nipoppy dataset:
 
