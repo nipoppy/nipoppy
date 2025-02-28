@@ -25,7 +25,7 @@ linenos: True
 ## Columns in the manifest file
 
 ```{attention}
-There must be only **one row** per unique participant/visit combination.
+There must be only **one row** per unique `participant_id`/`visit_id` combination.
 ```
 
 ### `participant_id`
@@ -35,6 +35,8 @@ A unique identifier for a participant in the study. Must be present in every row
 - **Cannot** have the `sub-` prefix
 - Example valid values: `001`, `Control2`
 - Example invalid values: `sub-003`, `Control_4`
+
+<!-- TODO `recruitment_id` -->
 
 ### `visit_id`
 
@@ -60,6 +62,7 @@ Common {term}`MRI` datatypes include:
 - `anat`: anatomical MRI
 - `dwi`: diffusion MRI
 - `func`: functional MRI
+- `fmap`: field maps
 
 The full list of valid datatypes is listed in the [BIDS schema](https://github.com/bids-standard/bids-specification/blob/master/src/schema/objects/datatypes.yaml).
 
