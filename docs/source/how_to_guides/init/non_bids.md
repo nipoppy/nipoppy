@@ -1,6 +1,8 @@
 # Starting with non-BIDS data
 
-If the study's imaging data consists of DICOM files or NIfTI files that are not yet in BIDS, you will first need to create an empty Nipoppy dataset:
+This guide shows how to initialize a new Nipoppy dataset for a study with source imaging data that consists of DICOM files or non-{term}`BIDS` NIfTI files.
+
+The first step is to create an empty Nipoppy dataset using the [`nipoppy init`](../../cli_reference/init.rst) command:
 
 ```console
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET>
