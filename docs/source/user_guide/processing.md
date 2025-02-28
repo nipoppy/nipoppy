@@ -5,7 +5,7 @@ Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques 
 - [MRIQC](https://mriqc.readthedocs.io/en/latest/index.html), a pipeline for automated quality control (QC) metric extraction
 
 ```{note}
-Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.io/about/), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating a Boutiques descriptor file and modifying the global configuration file accordingly.
+Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/tools/bids-apps.html), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating a Boutiques descriptor file and modifying the global configuration file accordingly.
 ```
 
 ## Summary
