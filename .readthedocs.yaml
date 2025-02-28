@@ -13,6 +13,8 @@ build:
   jobs:
     pre_build:
       - python docs/scripts/pydantic_to_jsonschema.py
+      # check for broken external links
+      # https://docs.readthedocs.com/platform/stable/build-customization.html#perform-a-check-for-broken-links
       - python -m sphinx -b linkcheck -D linkcheck_timeout=1 docs/source/ $READTHEDOCS_OUTPUT/linkcheck
 
 python:
