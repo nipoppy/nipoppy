@@ -12,7 +12,7 @@ This will add the existing BIDS data to the {{dpath_bids}} directory and automat
 If your study has additional visits that were not present in the BIDS data (e.g., non-imaging visits), you should manually add them to the manifest.
 ```
 
-### BIDS data without sessions
+## BIDS data without sessions
 
 If your BIDS data does not have session-level directories or `ses-` entities in filenames, we recommend redoing the BIDSification so that it has them.
 
