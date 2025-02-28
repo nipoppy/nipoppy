@@ -3,8 +3,8 @@
 This guide shows how to initialize a new Nipoppy dataset.
 
 We cover two possible starting scenarios:
-1. [Imaging data **is not** in BIDS](#starting-with-non-bids-data)
-2. [Imaging data **is** in BIDS](#starting-with-bids-data)
+1. [Source imaging data **is not** in {term}`BIDS`](#starting-with-non-bids-data)
+2. [Source imaging data **is** in {term}`BIDS`](#starting-with-bids-data)
 
 In both cases, the command to create the dataset is [`nipoppy init`](../cli_reference/init).
 
@@ -16,7 +16,7 @@ If the study's imaging data consists of DICOM files or NIfTI files that are not 
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET>
 ```
 
-This will create the directory tree and copy an example manifest and an example global configuration file into it.
+This will create the directory tree and copy an [example manifest](https://github.com/nipoppy/nipoppy/blob/main/nipoppy/data/examples/sample_manifest.tsv) and an [example global configuration file](https://github.com/nipoppy/nipoppy/blob/main/nipoppy/data/examples/sample_global_config-latest_pipelines.json) into it.
 
 <!-- TODO add guide for generating manifest -->
 ```{attention}
@@ -35,21 +35,21 @@ If the imaging data has already been converted to BIDS, we can use the `--bids-s
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET> --bids-source <PATH_TO_EXISTING_BIDS_DATA>
 ```
 
-This will add the existing BIDS data to the {{dpath_bids}} directory and automatically generate a manifest file based on the participant IDs, session IDs and datatypes available in the BIDS data.
+This will add the existing BIDS data to the {{dpath_bids}} directory and automatically generate a manifest file based on the participant IDs, session IDs and datatypes available in the BIDS data (based on directory names, not on any `participants.tsv` or `*_sessions.tsv` files).
 
 ```{attention}
 If your study has additional visits that were not present in the BIDS data (e.g., non-imaging visits), you should manually add them to the manifest.
 ```
 
-### BIDS data without session-level directories
+### BIDS data without sessions
 
-If your BIDS data does not have session-level directories, we recommend redoing the BIDSification so that it has session-level directories.
+If your BIDS data does not have session-level directories or `ses-` entities in filenames, we recommend redoing the BIDSification so that it has them.
 
 :::{admonition} Why should I have sessions even if my data is cross-sectional?
 :class: hint
 We believe that having explicitly labelled sessions constitutes best practices:
 1. It allows for more consistent organization across cross-sectional and longitudinal datasets
-2. It will facilitate the addition of new sessions if the study ever became longitudinal
+2. It will facilitate the addition of new sessions if follow-up data collection is carried out or if the study design becomes longitudinal
 3. It may help link data between non-imaging and imaging visits
 :::
 
