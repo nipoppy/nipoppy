@@ -32,3 +32,9 @@ docs/source/schemas/*.json
 # IDE/text editors
 .vscode/
 *~
+
+# Python virtual environment
+env/
+venv/
+.venv/
+nipoppy_env/
