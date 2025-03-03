@@ -1,4 +1,4 @@
-# Starting with non-BIDS data
+# Initializing a new dataset starting with non-BIDS data
 
 This guide shows how to initialize a new Nipoppy dataset for a study with source imaging data that consists of DICOM files or non-{term}`BIDS` NIfTI files.
 

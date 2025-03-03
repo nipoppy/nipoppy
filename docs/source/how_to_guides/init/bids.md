@@ -1,4 +1,4 @@
-# Starting with BIDS data
+# Initializing a new dataset starting with BIDS data
 
 This guide shows how to initialize a new Nipoppy dataset for a study with {term}`BIDS` imaging data already available.
 
