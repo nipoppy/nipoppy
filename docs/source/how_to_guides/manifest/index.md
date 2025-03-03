@@ -1,4 +1,4 @@
-# Writing the manifest file
+# Creating the manifest file
 
 This guide shows how to create a dataset's manifest file, which is a list of participants and visits available in the study.
 
@@ -102,13 +102,16 @@ These can be tabular files (CSVs, TSVs, Excel sheets, etc.) and/or imaging data 
 The script can be rerun whenever the source files are modified to automatically update the manifest, reducing future manual work and keeping a record of what was done.
 
 Below are some examples from common cases we have encountered.
+Note that the example use Python scripts, but other programming languages like R can also be used to generate the manifest.
 
 ::::{grid} 1 2 3 3
-:::{grid-item-card}  [Example 2](example2)
+:::{grid-item-card} Example 1
+Creating a manifest from another tabular file for a cross-sectional study
+:::
+:::{grid-item-card} [Example 2](example2)
 Creating a manifest from another tabular file for a longitudinal study with imaging and non-imaging visits
 :::
+:::{grid-item-card}  Example 3
+Creating a manifest from data directories on disk for a study with different imaging datatypes
+:::
 ::::
-
-### Example 1: Creating a manifest from another tabular file (cross-sectional study)
-
-### Example 3: Creating a manifest from data directories on disk (different imaging datatypes)
