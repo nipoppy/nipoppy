@@ -2,7 +2,7 @@
 
 This guide shows how to initialize a new Nipoppy dataset for a study with source imaging data that consists of DICOM files or non-{term}`BIDS` NIfTI files.
 
-The first step is to create an empty Nipoppy dataset using the [`nipoppy init`](../../cli_reference/init.rst) command:
+The first step is to create an empty Nipoppy dataset using the [`nipoppy init`](../../cli_reference/init) command:
 
 ```console
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET>
@@ -17,4 +17,4 @@ It is extremely unlikely that the example manifest accurately represents your da
 The default [global configuration file](../../user_guide/global_config.md) also has dataset-specific fields that you will need to replace.
 ```
 
-Then the raw imaging data should be added to {{dpath_pre_reorg}} and reorganized with `nipoppy reorg` to prepare it for BIDS conversion. See [this guide](../../user_guide/organizing_imaging.md) for more information.
+Then the raw imaging data should be added (symlinked/copied/moved) to {{dpath_pre_reorg}} and reorganized with [`nipoppy reorg`](../../cli_reference/reorg) to prepare it for BIDS conversion. See [this guide](../../user_guide/organizing_imaging.md) for more information.

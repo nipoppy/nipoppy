@@ -2,7 +2,7 @@
 
 This guide shows how to initialize a new Nipoppy dataset for a study with {term}`BIDS` imaging data already available.
 
-We can use the [`nipoppy init`](../../cli_reference/init.rst) command with the `--bids-source` option to directly add the BIDS directory to the Nipoppy dataset:
+We can use the [`nipoppy init`](../../cli_reference/init) command with the `--bids-source` option to directly add the BIDS directory to the Nipoppy dataset:
 
 ```console
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET> --bids-source <PATH_TO_EXISTING_BIDS_DATA>
