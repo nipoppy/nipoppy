@@ -20,10 +20,6 @@ Visit ID
     An identifier for a data collection event, not restricted to imaging data.
 ```
 
-### Session IDs vs visit IDs
-
-Nipoppy uses the term "session ID" for imaging data, following the convention established by BIDS. The term "visit ID", on the other hand, is used to refer to any data collection event (not necessarily imaging-related), and is more common in clinical contexts. In most cases, `session_id` and `visit_id` will be identical (or `session_id`s will be a subset of `visit_id`s). However, having two descriptors becomes particularly useful when imaging and non-imaging assessments do not use the same naming conventions.
-
 ## Neuroimaging/software terms
 
 ```{glossary}

@@ -17,20 +17,13 @@ user_guide/index
 
 ```{toctree}
 ---
-titlesonly:
-caption: How-to guides
----
-how_to_guides/manifest
-```
-
-```{toctree}
----
 hidden:
 includehidden:
 titlesonly:
 caption: How-to guides
 ---
 how_to_guides/init/index
+how_to_guides/manifest/index
 ```
 
 ```{toctree}
