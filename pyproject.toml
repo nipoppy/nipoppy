@@ -46,6 +46,7 @@ doc = [
     "sphinx-github-changelog",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
+    "sphinx_design"
 ]
 test = [
     "fids>=0.1.0",

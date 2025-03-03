@@ -28,6 +28,16 @@ how_to_guides/manifest
 hidden:
 includehidden:
 titlesonly:
+caption: How-to guides
+---
+how_to_guides/init/index
+```
+
+```{toctree}
+---
+hidden:
+includehidden:
+titlesonly:
 caption: Reference
 ---
 cli_reference/index
