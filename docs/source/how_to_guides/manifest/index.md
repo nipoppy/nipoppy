@@ -109,7 +109,7 @@ Note that the example use Python scripts, but other programming languages like R
 Creating a manifest from another tabular file for a cross-sectional study
 :::
 :::{grid-item-card} [Example 2](./example2)
-Creating a manifest from another tabular file for a longitudinal study with imaging and non-imaging visits
+Creating a manifest from a wide-form tabular file for a longitudinal study with imaging and non-imaging visits
 :::
 :::{grid-item-card}  Example 3
 Creating a manifest from data directories on disk for a study with different imaging datatypes
