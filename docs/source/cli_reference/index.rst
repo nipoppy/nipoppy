@@ -7,6 +7,7 @@ Command-line interface
    :titlesonly:
 
    init.rst
+   status.rst
    doughnut.rst
    reorg.rst
    bidsify.rst
