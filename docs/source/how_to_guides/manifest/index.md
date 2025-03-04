@@ -105,10 +105,10 @@ Below are some examples from common cases we have encountered.
 Note that the example use Python scripts, but other programming languages like R can also be used to generate the manifest.
 
 ::::{grid} 1 2 3 3
-:::{grid-item-card} Example 1
+:::{grid-item-card} [Example 1](./example1)
 Creating a manifest from another tabular file for a cross-sectional study
 :::
-:::{grid-item-card} [Example 2](example2)
+:::{grid-item-card} [Example 2](./example2)
 Creating a manifest from another tabular file for a longitudinal study with imaging and non-imaging visits
 :::
 :::{grid-item-card}  Example 3
