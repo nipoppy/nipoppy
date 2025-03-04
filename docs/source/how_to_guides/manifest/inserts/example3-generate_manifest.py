@@ -14,11 +14,16 @@ if __name__ == "__main__":
     data_for_manifest = []
     for path_participant in sorted(path_data.iterdir()):
         for path_participant_visit in sorted(path_participant.iterdir()):
+
+            # participant_id and visit_id are the names of the directories
             participant_id = path_participant.name
             visit_id = path_participant_visit.name
-            session_id = visit_id
-            datatype = []
 
+            # use the visit_id as session_id
+            session_id = visit_id
+
+            # check which datatypes are present
+            datatype = []
             if (path_participant_visit / "T1w").exists():
                 datatype.append("anat")
             if (path_participant_visit / "diffusion").exists():
