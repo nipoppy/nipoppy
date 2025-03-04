@@ -12,5 +12,6 @@ updates:
     labels:
       - "T.2 - Maintenance"
       - "bot"
+      - "skip-tests"
     commit-message:
       prefix: "[MAINT] "
