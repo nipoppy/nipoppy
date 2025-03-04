@@ -106,12 +106,12 @@ Note that the example use Python scripts, but other programming languages like R
 
 ::::{grid} 1 2 3 3
 :::{grid-item-card} [Example 1](./example1)
-Creating a manifest from another tabular file for a cross-sectional study
+Creating a manifest from another tabular file for a cross-sectional study with different imaging datatypes
 :::
 :::{grid-item-card} [Example 2](./example2)
 Creating a manifest from a wide-form tabular file for a longitudinal study with imaging and non-imaging visits
 :::
-:::{grid-item-card}  Example 3
+:::{grid-item-card}  [Example 3](./example3)
 Creating a manifest from data directories on disk for a study with different imaging datatypes
 :::
 ::::

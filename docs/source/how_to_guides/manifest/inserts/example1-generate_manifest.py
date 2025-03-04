@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""An example script to generate a manifest file from another tabular file."""
+"""Manifest-generation script for Example 1."""
 
 from pathlib import Path
 

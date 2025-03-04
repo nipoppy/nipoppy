@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""An example script to generate a manifest file from a demographics file."""
+"""Manifest-generation script for Example 2."""
 
 from pathlib import Path
 

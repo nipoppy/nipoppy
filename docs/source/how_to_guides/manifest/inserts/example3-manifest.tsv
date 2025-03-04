@@ -1,0 +1,5 @@
+participant_id	visit_id	session_id	datatype
+MRI001	BL	BL	['anat', 'dwi']
+MRI001	M12	M12	['anat']
+MRI002	BL	BL	['anat', 'dwi']
+MRI002	M12	M12	['anat', 'dwi']
