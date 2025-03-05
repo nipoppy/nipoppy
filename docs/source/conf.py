@@ -31,6 +31,7 @@ release = __version__
 
 extensions = [
     "autoapi.extension",
+    "hoverxref.extension",
     "myst_parser",
     "sphinx_click.ext",
     "sphinx_copybutton",
@@ -233,6 +234,11 @@ jsonschema_options = {
     "auto_reference": True,
     "auto_target": True,
 }
+
+# -- Hoverxref configuration ---------------------------------------------------
+hoverxref_roles = [
+    "term",
+]
 
 # # TODO
 # def linkcode_resolve(domain, info):
