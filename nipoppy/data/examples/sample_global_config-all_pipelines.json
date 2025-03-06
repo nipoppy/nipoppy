@@ -134,6 +134,31 @@
     ],
     "PROC_PIPELINES": [
         {
+            "NAME": "bids-validator",
+            "VERSION": "2.0.3",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/deno_2.2.3.sif",
+                "URI": "docker://denoland/deno:2.2.3"
+            },
+            "CONTAINER_CONFIG": {
+                "ENV_VARS": {
+                    "DENO_DIR": "[[NIPOPPY_DPATH_SCRATCH]]/deno"
+                },
+                "ARGS": [
+                    "--bind",
+                    "[[NIPOPPY_DPATH_SCRATCH]]/deno"
+                ]
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
+                }
+            ]
+        },
+        {
             "NAME": "fmriprep",
             "VERSION": "24.1.1",
             "CONTAINER_INFO": {
