@@ -31,8 +31,5 @@ def test_download_record_files(tmp_path: Path, zenodo_id: str):
 
     assert len(list(tmp_path.iterdir())) == 2
 
-    with tmp_path.joinpath("zenodo-test.txt").open() as f:
-        assert f.read() == "test 123"
-
-    with tmp_path.joinpath("test2.txt").open() as f:
-        assert f.read() == "test2"
+    assert tmp_path.joinpath("zenodo-test.txt").read_text() == "test 123"
+    assert tmp_path.joinpath("test2.txt").read_text() == "test2"
