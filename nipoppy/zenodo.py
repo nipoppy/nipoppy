@@ -51,7 +51,7 @@ class ZenodoAPI:
 
         # Exclude "md5:" prefix
         files = {
-            entry["key"]: entry["checksum"][4:] for entry in response.json()["entries"]
+            entry["key"]: entry["checksum"].removeprefix("md5:") for entry in response.json()["entries"]
         }
         for filename, checksum in files.items():
             response = httpx.get(
