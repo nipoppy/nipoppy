@@ -1,6 +1,5 @@
 """Test for Zenodo API."""
 
-import os
 from pathlib import Path
 
 import pytest
@@ -21,12 +20,12 @@ def zenodo_id():
     return "170588"
 
 
-def test_download_record_files(tmp_path: Path, zenodo_id: str):
+@pytest.mark.parametrize("zenodo_id_prefix", ["", "zenodo."])
+def test_download_record_files(tmp_path: Path, zenodo_id: str, zenodo_id_prefix: str):
     """Test for downloading a pipeline from Zenodo."""
-    zenodo = ZenodoAPI(
-        api_endpoint=API_ENDPOINT, access_token=os.environ["ZENODO_TOKEN"]
-    )
+    zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
 
+    zenodo_id = zenodo_id_prefix + zenodo_id
     zenodo.download_record_files(zenodo_id, tmp_path)
 
     assert len(list(tmp_path.iterdir())) == 2
