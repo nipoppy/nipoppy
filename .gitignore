@@ -25,6 +25,7 @@ htmlcov
 # docs
 docs/build
 docs/source/schemas/*.json
+docs/source/autoapi
 
 # OSX
 .DS_STORE

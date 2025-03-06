@@ -23,6 +23,7 @@ titlesonly:
 caption: How-to guides
 ---
 how_to_guides/init/index
+how_to_guides/manifest/index
 ```
 
 ```{toctree}
