@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.zenodo import ZenodoAPI
+from nipoppy.zenodo import ZenodoAPI, ZenodoAPIError
 
 API_ENDPOINT = "https://sandbox.zenodo.org/api"
 
@@ -32,3 +32,11 @@ def test_download_record_files(tmp_path: Path, zenodo_id: str, zenodo_id_prefix:
 
     assert tmp_path.joinpath("zenodo-test.txt").read_text() == "test 123"
     assert tmp_path.joinpath("test2.txt").read_text() == "test2"
+
+
+def test_download_invalid_record(tmp_path: Path):
+    """Test for downloading an invalid pipeline from Zenodo."""
+    zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
+
+    with pytest.raises(ZenodoAPIError):
+        zenodo.download_record_files("invalid_record_id", tmp_path)
