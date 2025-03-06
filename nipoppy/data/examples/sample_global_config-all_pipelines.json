@@ -32,6 +32,13 @@
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://nipy/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
             },
+            "HPC_CONFIG": {
+                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+                "TIME": "1:00:00",
+                "CORES": "1",
+                "MEMORY": "4G",
+                "ARRAY_CONCURRENCY_LIMIT": ""
+            },
             "STEPS": [
                 {
                     "NAME": "prepare",
@@ -59,6 +66,13 @@
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://unfmontreal/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
             },
+            "HPC_CONFIG": {
+                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+                "TIME": "1:00:00",
+                "CORES": "1",
+                "MEMORY": "4G",
+                "ARRAY_CONCURRENCY_LIMIT": ""
+            },
             "STEPS": [
                 {
                     "NAME": "prepare",
@@ -82,6 +96,13 @@
         {
             "NAME": "bidscoin",
             "VERSION": "4.3.2",
+            "HPC_CONFIG": {
+                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+                "TIME": "1:00:00",
+                "CORES": "1",
+                "MEMORY": "4G",
+                "ARRAY_CONCURRENCY_LIMIT": ""
+            },
             "STEPS": [
                 {
                     "NAME": "prepare",
@@ -313,6 +334,13 @@
                     "VERSION": "7.3.2"
                 }
             ],
+            "HPC_CONFIG": {
+                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+                "TIME": "1:00:00",
+                "CORES": "1",
+                "MEMORY": "4G",
+                "ARRAY_CONCURRENCY_LIMIT": ""
+            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
@@ -330,6 +358,13 @@
                     "VERSION": "23.1.3"
                 }
             ],
+            "HPC_CONFIG": {
+                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+                "TIME": "2:00:00",
+                "CORES": "1",
+                "MEMORY": "12G",
+                "ARRAY_CONCURRENCY_LIMIT": ""
+            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
