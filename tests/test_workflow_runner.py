@@ -135,7 +135,7 @@ def test_run_failed_cleanup(runner: PipelineRunner, n_success):
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(simulate, runner: PipelineRunner):
-    runner.simulate = (simulate,)
+    runner.simulate = simulate
 
     participant_id = "01"
     session_id = "BL"
