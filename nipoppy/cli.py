@@ -183,7 +183,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--mode",
                 "--empty",
                 "--regenerate",
-                "--force",
                 "--copy-files",
                 "--check-dicoms",
                 "--keep-workdir",
