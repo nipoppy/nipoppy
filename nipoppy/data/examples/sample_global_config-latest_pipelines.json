@@ -113,12 +113,9 @@
                 "URI": "docker://denoland/deno:2.2.3"
             },
             "CONTAINER_CONFIG": {
-                "ENV_VARS": {
-                    "DENO_DIR": "[[NIPOPPY_DPATH_SCRATCH]]/deno"
-                },
                 "ARGS": [
                     "--bind",
-                    "[[NIPOPPY_DPATH_SCRATCH]]/deno"
+                    "[[NIPOPPY_DPATH_SCRATCH]]/deno:/deno-dir"
                 ]
             },
             "STEPS": [
