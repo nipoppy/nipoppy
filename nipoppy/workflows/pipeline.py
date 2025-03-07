@@ -541,25 +541,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         job_args = self._check_hpc_config()
 
         queue_id = None
-        try:
-            if not self.dry_run:
-                queue_id = qa.submit_job(
-                    queue=self.hpc,
-                    working_directory=str(dpath_work),
-                    command="",  # not used in default template but cannot be None
-                    NIPOPPY_HPC=self.hpc,
-                    NIPOPPY_JOB_NAME=job_name,
-                    NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
-                    NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
-                    NIPOPPY_COMMANDS=job_array_commands,
-                    **job_args,
-                )
-        except NotImplementedError as exception:
-            # currently the SGE adapter errors out with NotImplementedError because the
-            # SGE wrapper does not implement the get_job_id_from_output method
-            # this should be fixed in the next version of PySQA (0.2.4?)
-            if self.hpc != "sge":
-                raise exception
+        if not self.dry_run:
+            queue_id = qa.submit_job(
+                queue=self.hpc,
+                working_directory=str(dpath_work),
+                command="",  # not used in default template but cannot be None
+                NIPOPPY_HPC=self.hpc,
+                NIPOPPY_JOB_NAME=job_name,
+                NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
+                NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
+                NIPOPPY_COMMANDS=job_array_commands,
+                **job_args,
+            )
 
         # raise error if an error file was created
         if fpath_hpc_error.exists():
