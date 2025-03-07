@@ -328,6 +328,26 @@
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json"
                 }
             ]
+        },
+        {
+            "NAME": "fwDTI",
+            "VERSION": "0.1.0",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/nipoppy-dmri-freewater_[[PIPELINE_VERSION]].sif",
+                "URI": "docker://bcmcpher/nipoppy-dmri-freewater:[[PIPELINE_VERSION]]"
+            },
+            "PROC_DEPENDENCIES": [
+                {
+                    "NAME": "qsiprep",
+                    "VERSION": "0.23.0"
+                }
+            ],
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json"
+                }
+            ]
         }
     ],
     "CUSTOM": {}
