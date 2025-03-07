@@ -540,9 +540,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         # user-defined args
         job_args = self._check_hpc_config()
 
-        queue_id = None
+        job_id = None
         if not self.dry_run:
-            queue_id = qa.submit_job(
+            job_id = qa.submit_job(
                 queue=self.hpc,
                 working_directory=str(dpath_work),
                 command="",  # not used in default template but cannot be None
@@ -566,8 +566,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"the template job script in {self.layout.dpath_hpc}."
             )
 
-        if queue_id is not None:
-            self.logger.info(f"HPC job ID: {queue_id}")
+        if job_id is not None:
+            self.logger.info(f"HPC job ID: {job_id}")
 
         # for logging in run_cleanup()
         self.n_success += len(job_array_commands)

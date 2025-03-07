@@ -1024,19 +1024,19 @@ def test_submit_hpc_job_pysqa_error(
         workflow._submit_hpc_job([("P1", "1")])
 
 
-@pytest.mark.parametrize("queue_id", ["12345", None])
-def test_submit_hpc_job_queue_id(
+@pytest.mark.parametrize("job_id", ["12345", None])
+def test_submit_hpc_job_job_id(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
-    queue_id,
+    job_id,
 ):
     mocked = set_up_hpc_for_testing(workflow, mocker)
-    mocked.return_value = queue_id
+    mocked.return_value = job_id
 
     workflow._submit_hpc_job([("P1", "1")])
-    if queue_id is not None:
-        assert f"HPC job ID: {queue_id}" in caplog.text
+    if job_id is not None:
+        assert f"HPC job ID: {job_id}" in caplog.text
     else:
         assert "HPC job ID" not in caplog.text
 
