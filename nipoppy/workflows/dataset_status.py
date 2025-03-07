@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from nipoppy.env import StrOrPathLike
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.bagel import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -176,6 +177,20 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.debug(f"\tNumber of participants in bagel: {len(participant_ids)}")
         self.logger.debug(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
         self.logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
+
+        # Check if at least successful run exists
+        if bagel[bagel[bagel.col_status] == STATUS_SUCCESS].empty:
+            self.logger.warning(
+                "The imaging bagel file exists, but no successful run was found in"
+                f" the imaging bagel file for pipeline(s): {pipelines}."
+                " If you have run a pipeline followed by 'nipoppy track', it is"
+                " likely that your pipeline output does not meet the criteria in the"
+                f" '{DEFAULT_LAYOUT_INFO.dpath_pipelines}/<PIPELINE_NAME>-"
+                "<PIPELINE_VERSION>/tracker_config.json' file."
+                " Please check the tracker configuration and re-run 'nipoppy track'"
+                " to generate an imaging bagel file with at least one successful run."
+            )
+            return status_df, []
 
         bagel[self.col_pipeline] = (
             bagel[bagel.col_pipeline_name]

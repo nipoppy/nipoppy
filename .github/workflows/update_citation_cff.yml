@@ -1,0 +1,49 @@
+---
+name: Update CITATION.cff
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  update_version_and_open_pr:
+    if: '!github.event.release.prerelease'
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Generate a token
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
+        private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
+
+    - name: Get latest release version
+      id: get-release
+      uses: pozetroninc/github-action-get-latest-release@v0.8.0
+      with:
+        repository: ${{ github.repository }}
+        excludes: prerelease, draft
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update CITATION.cff and open pull request
+      # Note: this removes blank lines from the CITATION.cff file
+      uses: fjogeleit/yaml-update-action@v0.16.0
+      with:
+        valueFile: CITATION.cff
+        propertyPath: version
+        value: ${{ steps.get-release.outputs.release }}
+        commitChange: true
+        message: "Update version to ${{ steps.get-release.outputs.release }}"
+        createPR: true
+        branch: ci/citation-cff
+        targetBranch: main
+        masterBranchName: main
+        title: "[MAINT] Update version in `CITATION.cff` file"
+        description: PR opened automatically by [yaml-update-action](https://github.com/fjogeleit/yaml-update-action) GitHub action.
+        labels: "T.2 - Maintenance, bot"
+        token: ${{ steps.generate-token.outputs.token }}
