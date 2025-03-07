@@ -82,7 +82,7 @@ class ZenodoAPI:
             if content_md5 != checksum:
                 raise InvalidChecksumError(
                     "Checksum mismatch: "
-                    f"{filename} has invalid checksum ({content_md5})"
+                    f"{filename} has invalid checksum {content_md5}, expected {checksum}"
                 )
 
             with output_dir.joinpath(filename).open("wb") as f:
