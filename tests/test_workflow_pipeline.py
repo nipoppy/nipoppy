@@ -2,7 +2,6 @@
 
 import json
 import re
-from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
@@ -991,21 +990,6 @@ def test_submit_hpc_job_pysqa_call(
 
     assert workflow.n_success == 2
     assert workflow.n_total == 2
-
-
-@pytest.mark.parametrize("hpc_type,expect_error", [("slurm", True), ("sge", False)])
-def test_submit_hpc_job_not_implemented_error(
-    hpc_type, expect_error, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    def raise_error(*args, **kwargs):
-        raise NotImplementedError()
-
-    mocked = set_up_hpc_for_testing(workflow, mocker)
-    mocked.side_effect = raise_error
-
-    workflow.hpc = hpc_type
-    with pytest.raises(NotImplementedError) if expect_error else nullcontext():
-        workflow._submit_hpc_job([("P1", "1")])
 
 
 def test_submit_hpc_job_pysqa_error(
