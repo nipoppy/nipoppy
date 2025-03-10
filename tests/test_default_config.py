@@ -201,6 +201,7 @@ def test_boutiques_descriptors(fpath_descriptor):
         ("fmriprep", "24.1.1"),
         ("mriqc", "23.1.0"),
         ("qsiprep", "0.23.0"),
+        ("rabies", "0.5.1")
     ],
 )
 def test_pipeline_runner(
@@ -239,6 +240,9 @@ def test_pipeline_runner(
         ("bidscoin", "4.3.2", "prepare"),
         ("bidscoin", "4.3.2", "edit"),
         ("bidscoin", "4.3.2", "convert"),
+        ("rabies","0.5.1","preprocess"),
+        ("rabies","0.5.1","confound-correction"),
+        ("rabies","0.5.1","analysis")
     ],
 )
 def test_bids_conversion_runner(
