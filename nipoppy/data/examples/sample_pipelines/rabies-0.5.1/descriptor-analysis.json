@@ -3,17 +3,16 @@
     "description": "tool description",
     "tool-version": "v0.5.1",
     "schema-version": "0.5",
-    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] analysis  [SCAN_LIST] [PRIOR_MAPS] [PRIOR_BOLD_IDX] [PRIOR_CONFOUND_IDX] [DATA_DIAGNOSIS] [OUTLIER_THRESHOLD]  [SEED_LIST] [SEED_PRIOR_LIST] [SEED_LIST] [FC_MATRIX] [ROI_TYPE] [FC_MATRIX] [ROI_CSV] [GROUP_ICA] [DR_ICA] [NPR_TEMPORAL_COMP] [NPR_SPATIAL_COMP] [NETWORK_WEIGHTING] [INPUT_DIR] [OUTPUT_DIR] [INCLUSION_IDS] [EXCLUSION_IDS] [PLUGIN] [LOCAL_THREADS] [SCALE_MIN_MEMORY] [MIN_PROC] [FIGURE_FORMAT] [VERBOSE] [FORCE]",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [INCLUSION_IDS] [EXCLUSION_IDS] [PLUGIN] [LOCAL_THREADS] [SCALE_MIN_MEMORY] [MIN_PROC] [FIGURE_FORMAT] [VERBOSE] [FORCE] analysis [SCAN_LIST] [PRIOR_MAPS] [PRIOR_BOLD_IDX] [PRIOR_CONFOUND_IDX] [DATA_DIAGNOSIS] [OUTLIER_THRESHOLD]  [SEED_LIST] [SEED_PRIOR_LIST] [SEED_LIST] [FC_MATRIX] [ROI_TYPE] [FC_MATRIX] [ROI_CSV] [GROUP_ICA] [DR_ICA] [NPR_TEMPORAL_COMP] [NPR_SPATIAL_COMP] [NETWORK_WEIGHTING] [INPUT_DIR] [OUTPUT_DIR]",
     "inputs": [
         {
             "id": "scan_list",
             "name": "scan_list",
-            "description": "This option offers to run the analysis on a subset of the scans. The scans are selected by providing the full path to the corresponding EPI file in the input BIDS folder. The list of scan can be specified manually as a list of file name '--scan_list scan1.nii.gz scan2.nii.gz ...' or the files can be embedded into a .txt file with one filename per row. By default, 'all' will use all the scans previously processed.",
+            "description": "This option offers to run the analysis on a subset of the scans. The scans are selected by providing the full path to the corresponding EPI file in the input BIDS folder. The list of scan can be specified manually as a list of file name '--scan_list scan1.nii.gz scan2.nii.gz ...' or the files can be imbedded into a .txt file with one filename per row. By default, 'all' will use all the scans previously processed.",
             "optional": true,
             "type": "String",
             "value-key": "[SCAN_LIST]",
-            "command-line-flag": "--scan_list",
-            "default-value": "['all']"
+            "command-line-flag": "--scan_list"
         },
         {
             "id": "prior_maps",
@@ -22,8 +21,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[PRIOR_MAPS]",
-            "command-line-flag": "--prior_maps",
-            "default-value": "/home/rabies/.local/share/rabies/melodic_IC.nii.gz"
+            "command-line-flag": "--prior_maps"
         },
         {
             "id": "prior_bold_idx",
@@ -32,8 +30,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[PRIOR_BOLD_IDX]",
-            "command-line-flag": "--prior_bold_idx",
-            "default-value": "[5, 12, 19]"
+            "command-line-flag": "--prior_bold_idx"
         },
         {
             "id": "prior_confound_idx",
@@ -42,18 +39,16 @@
             "optional": true,
             "type": "String",
             "value-key": "[PRIOR_CONFOUND_IDX]",
-            "command-line-flag": "--prior_confound_idx",
-            "default-value": "[0, 1, 2, 6, 7, 8, 9, 10, 11, 13, 14, 21, 22, 24, 26, 28, 29]"
+            "command-line-flag": "--prior_confound_idx"
         },
         {
             "id": "data_diagnosis",
             "name": "data_diagnosis",
             "description": "This option carries out the spatiotemporal diagnosis as described in Desrosiers-Gregoire et al. The diagnosis generates key temporal and spatial features both at the scan level and the group level, allowing the identification of sources of confounds and data quality issues. We recommend using this data diagnosis workflow, more detailed in the publication, to improve the control for data quality issues and prevent the corruptions of analysis outputs.",
             "optional": true,
-            "type": "String",
+            "type": "Flag",
             "value-key": "[DATA_DIAGNOSIS]",
-            "command-line-flag": "--data_diagnosis",
-            "default-value": "False"
+            "command-line-flag": "--data_diagnosis"
         },
         {
             "id": "outlier_threshold",
@@ -62,8 +57,7 @@
             "optional": true,
             "type": "Number",
             "value-key": "[OUTLIER_THRESHOLD]",
-            "command-line-flag": "--outlier_threshold",
-            "default-value": "3.5"
+            "command-line-flag": "--outlier_threshold"
         },
         {
             "id": "seed_list",
@@ -72,8 +66,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[SEED_LIST]",
-            "command-line-flag": "--seed_list",
-            "default-value": "[]"
+            "command-line-flag": "--seed_list"
         },
         {
             "id": "seed_prior_list",
@@ -82,18 +75,16 @@
             "optional": true,
             "type": "String",
             "value-key": "[SEED_PRIOR_LIST]",
-            "command-line-flag": "--seed_prior_list",
-            "default-value": "[]"
+            "command-line-flag": "--seed_prior_list"
         },
         {
             "id": "FC_matrix",
             "name": "FC_matrix",
             "description": "Compute whole-brain connectivity matrices using Pearson's r between ROI timeseries.",
             "optional": true,
-            "type": "String",
+            "type": "Flag",
             "value-key": "[FC_MATRIX]",
-            "command-line-flag": "--FC_matrix",
-            "default-value": "False"
+            "command-line-flag": "--FC_matrix"
         },
         {
             "id": "ROI_type",
@@ -102,8 +93,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[ROI_TYPE]",
-            "command-line-flag": "--ROI_type",
-            "default-value": "parcellated"
+            "command-line-flag": "--ROI_type"
         },
         {
             "id": "ROI_csv",
@@ -112,8 +102,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[ROI_CSV]",
-            "command-line-flag": "--ROI_csv",
-            "default-value": "/home/rabies/.local/share/rabies/DSURQE_40micron_labels.nii.gz"
+            "command-line-flag": "--ROI_csv"
         },
         {
             "id": "group_ica",
@@ -122,18 +111,16 @@
             "optional": true,
             "type": "String",
             "value-key": "[GROUP_ICA]",
-            "command-line-flag": "--group_ica",
-            "default-value": "apply=false,dim=0,random_seed=1"
+            "command-line-flag": "--group_ica"
         },
         {
             "id": "DR_ICA",
             "name": "DR_ICA",
             "description": "Conduct dual regression on each subject timeseries, using the priors from --prior_maps. The linear coefficients from both the first and second regressions will be provided as outputs. Requires that confound correction was conducted on commonspace outputs.",
             "optional": true,
-            "type": "String",
+            "type": "Flag",
             "value-key": "[DR_ICA]",
-            "command-line-flag": "--DR_ICA",
-            "default-value": "False"
+            "command-line-flag": "--DR_ICA"
         },
         {
             "id": "NPR_temporal_comp",
@@ -142,8 +129,7 @@
             "optional": true,
             "type": "Number",
             "value-key": "[NPR_TEMPORAL_COMP]",
-            "command-line-flag": "--NPR_temporal_comp",
-            "default-value": "-1"
+            "command-line-flag": "--NPR_temporal_comp"
         },
         {
             "id": "NPR_spatial_comp",
@@ -152,8 +138,7 @@
             "optional": true,
             "type": "Number",
             "value-key": "[NPR_SPATIAL_COMP]",
-            "command-line-flag": "--NPR_spatial_comp",
-            "default-value": "-1"
+            "command-line-flag": "--NPR_spatial_comp"
         },
         {
             "id": "network_weighting",
@@ -162,8 +147,7 @@
             "optional": true,
             "type": "String",
             "value-key": "[NETWORK_WEIGHTING]",
-            "command-line-flag": "--network_weighting",
-            "default-value": "absolute"
+            "command-line-flag": "--network_weighting"
         },
         {
             "id": "input_dir",
@@ -191,8 +175,7 @@
             "type": "String",
             "list": true,
             "command-line-flag": "--inclusion_ids",
-            "value-key": "[INCLUSION_IDS]",
-            "default-value": "['all']"
+            "value-key": "[INCLUSION_IDS]"
         },
         {
             "id": "exclusion_ids",
@@ -202,8 +185,7 @@
             "type": "String",
             "list": true,
             "command-line-flag": "--exclusion_ids",
-            "value-key": "[EXCLUSION_IDS]",
-            "default-value": "['none']"
+            "value-key": "[EXCLUSION_IDS]"
         },
         {
             "id": "plugin",
@@ -212,8 +194,7 @@
             "optional": true,
             "type": "String",
             "command-line-flag": "-p",
-            "value-key": "[PLUGIN]",
-            "default-value": "linear"
+            "value-key": "[PLUGIN]"
         },
         {
             "id": "local_threads",
@@ -222,8 +203,7 @@
             "optional": true,
             "type": "Number",
             "command-line-flag": "--local_threads",
-            "value-key": "[LOCAL_THREADS]",
-            "default-value": 24
+            "value-key": "[LOCAL_THREADS]"
         },
         {
             "id": "scale_min_memory",
@@ -232,8 +212,7 @@
             "optional": true,
             "type": "Number",
             "command-line-flag": "--scale_min_memory",
-            "value-key": "[SCALE_MIN_MEMORY]",
-            "default-value": 1.0
+            "value-key": "[SCALE_MIN_MEMORY]"
         },
         {
             "id": "min_proc",
@@ -242,8 +221,7 @@
             "optional": true,
             "type": "Number",
             "command-line-flag": "--min_proc",
-            "value-key": "[MIN_PROC]",
-            "default-value": 1
+            "value-key": "[MIN_PROC]"
         },
         {
             "id": "figure_format",
@@ -252,8 +230,7 @@
             "optional": true,
             "type": "String",
             "command-line-flag": "--figure_format",
-            "value-key": "[FIGURE_FORMAT]",
-            "default-value": "png"
+            "value-key": "[FIGURE_FORMAT]"
         },
         {
             "id": "verbose",
@@ -262,18 +239,16 @@
             "optional": true,
             "type": "Number",
             "command-line-flag": "--figure_format",
-            "value-key": "[VERBOSE]",
-            "default-value": 1
+            "value-key": "[VERBOSE]"
         },
         {
             "id": "force",
             "name": "force",
             "description": "The pipeline will not stop if previous outputs are encountered. Previous outputs will be overwritten.",
             "optional": true,
-            "type": "String",
+            "type": "Flag",
             "command-line-flag": "--force",
-            "value-key": "[FORCE]",
-            "default-value": "false"
+            "value-key": "[FORCE]"
         }
     ],
     "tags": {},
@@ -287,106 +262,5 @@
             "code": 1,
             "description": "Crashed"
         }
-    ],
-    "invocation-schema": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "RABIES.invocationSchema",
-        "description": "Invocation schema for rabies.",
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-            "scan_list": {
-                "type": "string"
-            },
-            "prior_maps": {
-                "type": "string"
-            },
-            "prior_bold_idx": {
-                "type": "string"
-            },
-            "prior_confound_idx": {
-                "type": "string"
-            },
-            "data_diagnosis": {
-                "type": "string"
-            },
-            "outlier_threshold": {
-                "type": "string"
-            },
-            "seed_list": {
-                "type": "string"
-            },
-            "seed_prior_list": {
-                "type": "string"
-            },
-            "FC_matrix": {
-                "type": "string"
-            },
-            "ROI_type": {
-                "type": "string"
-            },
-            "ROI_csv": {
-                "type": "string"
-            },
-            "group_ica": {
-                "type": "string"
-            },
-            "DR_ICA": {
-                "type": "string"
-            },
-            "NPR_temporal_comp": {
-                "type": "string"
-            },
-            "NPR_spatial_comp": {
-                "type": "string"
-            },
-            "network_weighting": {
-                "type": "string"
-            },
-            "input_dir": {
-                "type": "string"
-            },
-            "output_dir": {
-                "type": "string"
-            },
-            "inclusion_ids": {
-                "type": "array",
-                "items": {
-                    "type": "string"
-                }
-            },
-            "exclusion_ids": {
-                "type": "array",
-                "items": {
-                    "type": "string"
-                }
-            },
-            "plugin": {
-                "type": "string"
-            },
-            "local_threads": {
-                "type": "number"
-            },
-            "scale_min_memory": {
-                "type": "number"
-            },
-            "min_proc": {
-                "type": "number"
-            },
-            "figure_format": {
-                "type": "string"
-            },
-            "verbose": {
-                "type": "number"
-            },
-            "force": {
-                "type": "string"
-            }
-        },
-        "required": [
-            "input_dir",
-            "output_dir"
-        ],
-        "dependencies": {}
-    }
+    ]
 }
