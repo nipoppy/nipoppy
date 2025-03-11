@@ -1,6 +1,6 @@
 {
     "name": "RABIES",
-    "description": "tool description",
+    "description": "This step is done following processing, it is a range of strategies to correct fMRI confounds (e.g. motion) can then be conducted within RABIES: linear detrending, confound regression (with several options for nuisance regressors), frequency filtering (highpass, lowpass, bandpass), frame censoring (or scrubbing), ICA-AROMA, and spatial smoothing",
     "tool-version": "v0.5.1",
     "schema-version": "0.5",
     "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [INCLUSION_IDS] [EXCLUSION_IDS] [PLUGIN] [LOCAL_THREADS] [SCALE_MIN_MEMORY] [MIN_PROC] [FIGURE_FORMAT] [VERBOSE] [FORCE] confound_correction [NATIVESPACE_ANALYSIS] [IMAGE_SCALING] [DETRENDING_ORDER] [CONF_LIST] [FRAME_CENSORING] [TR] [HIGHPASS] [LOWPASS] [EDGE_CUTOFF] [SMOOTHING_FILTER] [MATCH_NUMBER_TIMEPOINTS] [ICA_AROMA] [READ_DATASINK] [TIMESERIES_INTERVAL] [INPUT_DIR] [OUTPUT_DIR]",

@@ -1,6 +1,6 @@
 {
     "name": "RABIES",
-    "description": "tool description",
+    "description": "The preprocessing workflow regroups essential fMRI preprocessing steps prior to analysis. It includes a robust registration workflow with automatically-adapting parameters allowing to succesfully process diverse acquisition types (i.e. rodent species, scan field strength, coil type, …), and can conduct the following preprocessing steps: head motion correction, susceptibility distortion correction, resampling to native or common space, brain parcellation, slice timing correction (optional), despiking (optional) and visual assessment of registration for quality control",
     "tool-version": "v0.5.1",
     "schema-version": "0.5",
     "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [INCLUSION_IDS] [EXCLUSION_IDS] [PLUGIN] [LOCAL_THREADS] [SCALE_MIN_MEMORY] [MIN_PROC] [FIGURE_FORMAT] [VERBOSE] [FORCE] preprocess [BIDS_FILTER] [BOLD_ONLY] [ANAT_AUTOBOX] [BOLD_AUTOBOX] [OBLIQUE2CARD] [APPLY_DESPIKING] [HMC_OPTION] [ISOTROPIC_HMC] [VOXELWISE_MOTION] [APPLY_SLICE_MC] [DETECT_DUMMY] [DATA_TYPE]  [ANAT_INHO_COR] [ANAT_ROBUST_INHO_COR] [BOLD_INHO_COR] [BOLD_ROBUST_INHO_COR] [COMMONSPACE_REG] [BOLD2ANAT_COREG] [NATIVESPACE_RESAMPLING] [COMMONSPACE_RESAMPLING] [ANATOMICAL_RESAMPLING] [APPLY_STC] [TR] [TPATTERN] [STC_AXIS] [ANAT_TEMPLATE] [BRAIN_MASK] [WM_MASK] [CSF_MASK] [VASCULAR_MASK] [LABELS] [BIDS_DIR] [OUTPUT_DIR]",
