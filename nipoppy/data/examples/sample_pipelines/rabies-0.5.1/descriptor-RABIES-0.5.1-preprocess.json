@@ -373,7 +373,7 @@
             "type": "Number",
             "command-line-flag": "--local_threads",
             "value-key": "[LOCAL_THREADS]",
-            "default-value": "24"
+            "default-value": 24
         },
         {
             "id": "scale_min_memory",
@@ -383,7 +383,7 @@
             "type": "Number",
             "command-line-flag": "--scale_min_memory",
             "value-key": "[SCALE_MIN_MEMORY]",
-            "default-value": "1.0"
+            "default-value": 1.0
         },
         {
             "id": "min_proc",
@@ -393,7 +393,7 @@
             "type": "Number",
             "command-line-flag": "--min_proc",
             "value-key": "[MIN_PROC]",
-            "default-value": "1"
+            "default-value": 1
         },
         {
             "id": "figure_format",
@@ -413,7 +413,7 @@
             "type": "Number",
             "command-line-flag": "--figure_format",
             "value-key": "[VERBOSE]",
-            "default-value": "1"
+            "default-value": 1
         },
         {
             "id": "force",

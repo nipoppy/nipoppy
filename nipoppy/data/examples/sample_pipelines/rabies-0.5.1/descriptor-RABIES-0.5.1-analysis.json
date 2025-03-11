@@ -8,7 +8,7 @@
         {
             "id": "scan_list",
             "name": "scan_list",
-            "description": "This option offers to run the analysis on a subset of the scans. The scans are selected by providing the full path to the corresponding EPI file in the input BIDS folder. The list of scan can be specified manually as a list of file name '--scan_list scan1.nii.gz scan2.nii.gz ...' or the files can be imbedded into a .txt file with one filename per row. By default, 'all' will use all the scans previously processed.",
+            "description": "This option offers to run the analysis on a subset of the scans. The scans are selected by providing the full path to the corresponding EPI file in the input BIDS folder. The list of scan can be specified manually as a list of file name '--scan_list scan1.nii.gz scan2.nii.gz ...' or the files can be embedded into a .txt file with one filename per row. By default, 'all' will use all the scans previously processed.",
             "optional": true,
             "type": "String",
             "value-key": "[SCAN_LIST]",
@@ -223,7 +223,7 @@
             "type": "Number",
             "command-line-flag": "--local_threads",
             "value-key": "[LOCAL_THREADS]",
-            "default-value": "24"
+            "default-value": 24
         },
         {
             "id": "scale_min_memory",
@@ -233,7 +233,7 @@
             "type": "Number",
             "command-line-flag": "--scale_min_memory",
             "value-key": "[SCALE_MIN_MEMORY]",
-            "default-value": "1.0"
+            "default-value": 1.0
         },
         {
             "id": "min_proc",
@@ -243,7 +243,7 @@
             "type": "Number",
             "command-line-flag": "--min_proc",
             "value-key": "[MIN_PROC]",
-            "default-value": "1"
+            "default-value": 1
         },
         {
             "id": "figure_format",
@@ -263,7 +263,7 @@
             "type": "Number",
             "command-line-flag": "--figure_format",
             "value-key": "[VERBOSE]",
-            "default-value": "1"
+            "default-value": 1
         },
         {
             "id": "force",
