@@ -282,32 +282,32 @@
             ]
         },
         {
-            "NAME": "RABIES",
+            "NAME": "rabies",
             "VERSION": "0.5.1",
             "CONTAINER_INFO": {
-                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[NIPOPPY_PIPELINE_NAME]]_[[NIPOPPY_PIPELINE_VERSION]].sif",
-                "URI": "docker://nipreps/[[NIPOPPY_PIPELINE_NAME]]:[[NIPOPPY_PIPELINE_VERSION]]"
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/rabies.sif",
+                "URI": "docker://ghcr.io/cobralab/rabies:latest"
             },
-
+            "CONTAINER_CONFIG": {
+            },
             "STEPS": [
                 {
                     "NAME": "preprocess",
-                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-preprocess.json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-preprocess.json"
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
                 },
                 {
                     "NAME": "confound-correction",
-                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-confound-correction.json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-confound-correction.json"
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
                 },
                 {
                     "NAME": "analysis",
-                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_INVOCATIONS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-analysis.json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_DESCRIPTORS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]-analysis.json"
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
                 }
             ],
-
-            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_TRACKER_CONFIGS]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]].json"
+            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
         }
     ],
     "EXTRACTION_PIPELINES": [
