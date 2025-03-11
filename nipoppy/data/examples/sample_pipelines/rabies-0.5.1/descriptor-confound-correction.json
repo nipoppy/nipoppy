@@ -224,8 +224,7 @@
             "description": "The directory where the output files from the preprocess command should be stored. If you are running group level analysis this folder should be prepopulated with the results of the participant level analysis.",
             "optional": false,
             "type": "String",
-            "value-key": "[INPUT_DIR]",
-            "default-value": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
+            "value-key": "[INPUT_DIR]"
         },
         {
             "id": "output_dir",
@@ -233,8 +232,7 @@
             "description": "The directory where the output files should be stored after confound correction. If you are running group level analysis this folder should be prepopulated with the results of the participant level analysis.",
             "optional": false,
             "type": "String",
-            "value-key": "[OUTPUT_DIR]",
-            "default-value": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
+            "value-key": "[OUTPUT_DIR]"
         }
     ],
     "tags": {},
