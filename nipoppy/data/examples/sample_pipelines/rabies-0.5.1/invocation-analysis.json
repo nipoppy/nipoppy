@@ -3,6 +3,6 @@
     "local_threads": 24,
     "data_diagnosis": false,
     "force": true,
-    "input_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/RABIES/0.5.1/output",
-    "output_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/RABIES/0.5.1/output"
+    "input_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/rabies/0.5.1/output",
+    "output_dir": "[[NIPOPPY_DPATH_DERIVATIVES]]/rabies/0.5.1/output"
 }
