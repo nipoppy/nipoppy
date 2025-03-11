@@ -183,7 +183,13 @@ def test_fpath_container_not_specified(workflow: PipelineWorkflow):
 
 
 def test_fpath_container_not_found(workflow: PipelineWorkflow):
-    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+    error_message = (
+        "No container image file found at"
+        ".*"
+        f"apptainer pull {workflow.pipeline_config.CONTAINER_INFO.URI}"
+        f" {workflow.pipeline_config.CONTAINER_INFO.FILE}"
+    )
+    with pytest.raises(FileNotFoundError, match=error_message):
         workflow.fpath_container
 
 
