@@ -97,6 +97,10 @@
             "optional": true,
             "type": "String",
             "value-key": "[ROI_TYPE]",
+            "value-choices": [
+                "parcellated",
+                "voxelwise"
+            ],
             "command-line-flag": "--ROI_type"
         },
         {
@@ -150,6 +154,10 @@
             "description": "Whether to derive absolute or relative (variance-normalized) network maps, representing respectively network amplitude + shape or network shape only. This option applies to both dual regression (DR) and Neural Prior Recovery (NPR) analyses.",
             "optional": true,
             "type": "String",
+            "value-choices": [
+                "absolute",
+                "relative"
+            ],
             "value-key": "[NETWORK_WEIGHTING]",
             "command-line-flag": "--network_weighting"
         },
