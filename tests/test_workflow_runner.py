@@ -1,6 +1,7 @@
 """Tests for PipelineRunner."""
 
 import json
+import subprocess
 import tarfile
 from pathlib import Path
 
@@ -170,6 +171,45 @@ def test_launch_boutiques_run(
 
     assert mocked_run_command.call_count == 1
     assert mocked_run_command.call_args[1].get("quiet") is True
+
+
+@pytest.mark.parametrize("simulate", [True, False])
+def test_launch_boutiques_run_error(
+    simulate, config: Config, mocker: pytest_mock.MockFixture, tmp_path: Path
+):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+        simulate=simulate,
+    )
+    runner.config = config
+
+    participant_id = "01"
+    session_id = "BL"
+
+    fids.create_fake_bids_dataset(
+        runner.layout.dpath_bids,
+        subjects=participant_id,
+        sessions=session_id,
+    )
+
+    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
+    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
+
+    mocker.patch.object(
+        runner,
+        "run_command",
+        side_effect=subprocess.CalledProcessError(1, "run_command failed"),
+    )
+
+    if simulate:
+        expected_message = "Pipeline simulation failed"
+    else:
+        expected_message = "Pipeline did not complete successfully"
+
+    with pytest.raises(RuntimeError, match=expected_message):
+        runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
 def test_process_container_config(config: Config, tmp_path: Path):

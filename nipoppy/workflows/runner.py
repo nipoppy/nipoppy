@@ -1,5 +1,6 @@
 """PipelineRunner workflow."""
 
+import subprocess
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
@@ -150,16 +151,33 @@ class PipelineRunner(BasePipelineWorkflow):
         # by default, this will raise an exception if the command fails
         if self.simulate:
             self.logger.info("Simulating pipeline command")
-            self.run_command(
-                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
-                quiet=True,
-            )
+            try:
+                self.run_command(
+                    ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
+                    quiet=True,
+                )
+            except subprocess.CalledProcessError as exception:
+                raise RuntimeError(
+                    f"Pipeline simulation failed ({exception.returncode}=)"
+                )
         else:
             self.logger.info("Running pipeline command")
-            self.run_command(
-                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str],
-                quiet=True,
-            )
+            try:
+                self.run_command(
+                    [
+                        "bosh",
+                        "exec",
+                        "launch",
+                        "--stream",
+                        descriptor_str,
+                        invocation_str,
+                    ],
+                    quiet=True,
+                )
+            except subprocess.CalledProcessError as exception:
+                raise RuntimeError(
+                    f"Pipeline did not complete successfully ({exception.returncode}=)"
+                )
 
         return descriptor_str, invocation_str
 
