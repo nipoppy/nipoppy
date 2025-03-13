@@ -135,7 +135,9 @@ def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
 
 
 @pytest.mark.parametrize("simulate", [True, False])
-def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
+def test_launch_boutiques_run(
+    simulate, config: Config, mocker: pytest_mock.MockFixture, tmp_path: Path
+):
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
@@ -155,6 +157,9 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
+
+    mocked_run_command = mocker.patch.object(runner, "run_command")
+
     descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id, container_command=""
     )
@@ -162,6 +167,9 @@ def test_launch_boutiques_run(simulate, config: Config, tmp_path: Path):
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
     assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
     assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
+
+    assert mocked_run_command.call_count == 1
+    assert mocked_run_command.call_args[1].get("quiet") is True
 
 
 def test_process_container_config(config: Config, tmp_path: Path):

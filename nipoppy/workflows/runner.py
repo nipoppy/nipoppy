@@ -147,14 +147,18 @@ class PipelineRunner(BasePipelineWorkflow):
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
         # run as a subprocess so that stdout/error are captured in the log
-        # by default this will raise an exception if the command fails
+        # by default, this will raise an exception if the command fails
         if self.simulate:
+            self.logger.info("Simulating pipeline command")
             self.run_command(
-                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
+                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
+                quiet=True,
             )
         else:
+            self.logger.info("Running pipeline command")
             self.run_command(
-                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
+                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str],
+                quiet=True,
             )
 
         return descriptor_str, invocation_str
