@@ -30,6 +30,10 @@
             "optional": true,
             "type": "String",
             "value-key": "[DETRENDING_ORDER]",
+            "value-choices": [
+                "linear",
+                "quadratic"
+            ],
             "command-line-flag": "--detrending_order"
         },
         {
