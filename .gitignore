@@ -45,3 +45,12 @@ docs/source/schemas/*.json
 .DS_STORE
 
 *~
+
+# Python virtual environment
+env/
+venv/
+.venv/
+nipoppy_env/
+
+# Env var file
+.env
