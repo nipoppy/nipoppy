@@ -302,6 +302,34 @@
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
                 }
             ]
+        },
+        {
+            "NAME": "rabies",
+            "VERSION": "0.5.1",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/rabies.sif",
+                "URI": "docker://ghcr.io/cobralab/rabies:latest"
+            },
+            "CONTAINER_CONFIG": {
+            },
+            "STEPS": [
+                {
+                    "NAME": "preprocess",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
+                },
+                {
+                    "NAME": "confound-correction",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
+                },
+                {
+                    "NAME": "analysis",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
+                }
+            ],
+            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
         }
     ],
     "EXTRACTION_PIPELINES": [
