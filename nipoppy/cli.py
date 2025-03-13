@@ -13,6 +13,7 @@ from nipoppy.env import (
     PROGRAM_NAME,
     ReturnCode,
 )
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 
 logger = get_logger(
@@ -343,3 +344,54 @@ def status(**params):
     params = dep_params(**params)
     with handle_exception(StatusWorkflow(**params)) as workflow:
         workflow.run()
+
+
+@cli.group(cls=OrderedGroup)
+def pipeline():
+    """Local pipeline management."""
+    pass
+
+
+def zenodo_options(func):
+    """Define global options for the CLI."""
+    func = click.option(
+        "--zenodo-token",
+        envvar="ZENODO_TOKEN",
+        type=str,
+        required=False,
+        help="Zenodo access token.",
+    )(func)
+    func = click.option(
+        "--zenodo-api",
+        envvar="ZENODO_API",
+        default="https://sandbox.zenodo.org/api",
+        type=str,
+        required=False,
+        help="Zenodo access token.",
+    )(func)
+    return func
+
+
+@pipeline.command("add")
+@click.argument(
+    "zenodo_id",
+    type=str,
+)
+@dataset_option
+@zenodo_options
+def pipeline_add(**params):
+    """Add a new pipeline to the configuration."""
+    from nipoppy.zenodo import ZenodoAPI
+
+    zenodo = ZenodoAPI(
+        api_endpoint=params.get("zenodo_api"),
+        access_token=params.get("zenodo_token"),
+    )
+
+    layout = DatasetLayout(dpath_root=params.get("dpath_root"))
+
+    zenodo_id = params.pop("zenodo_id")
+    download_dir = "zenodo." + zenodo_id.removeprefix("zenodo.")
+    zenodo.download_record_files(
+        zenodo_id, layout.dpath_pipelines.joinpath(download_dir)
+    )
