@@ -204,9 +204,9 @@ def test_launch_boutiques_run_error(
     )
 
     if simulate:
-        expected_message = "Pipeline simulation failed"
+        expected_message = "Pipeline simulation failed (return code: 1)"
     else:
-        expected_message = "Pipeline did not complete successfully"
+        expected_message = "Pipeline did not complete successfully (return code: 1)"
 
     with pytest.raises(RuntimeError, match=expected_message):
         runner.launch_boutiques_run(participant_id, session_id, container_command="")

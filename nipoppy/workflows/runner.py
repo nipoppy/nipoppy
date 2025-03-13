@@ -158,7 +158,8 @@ class PipelineRunner(BasePipelineWorkflow):
                 )
             except subprocess.CalledProcessError as exception:
                 raise RuntimeError(
-                    f"Pipeline simulation failed ({exception.returncode}=)"
+                    "Pipeline simulation failed"
+                    f" (return code: {exception.returncode})"
                 )
         else:
             self.logger.info("Running pipeline command")
@@ -176,7 +177,9 @@ class PipelineRunner(BasePipelineWorkflow):
                 )
             except subprocess.CalledProcessError as exception:
                 raise RuntimeError(
-                    f"Pipeline did not complete successfully ({exception.returncode}=)"
+                    "Pipeline did not complete successfully"
+                    f" (return code: {exception.returncode})"
+                    ". Hint: make sure the shell command above is correct."
                 )
 
         return descriptor_str, invocation_str
