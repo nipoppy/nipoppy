@@ -1,23 +1,23 @@
 """Test that all supported pipelines can run successfully in simulate mode."""
 
 import warnings
-from collections import defaultdict
 from pathlib import Path
+from shutil import copytree
+from typing import Type
 
 import pytest
 import pytest_mock
 from boutiques import bosh
-from packaging.version import Version
 
 from nipoppy.config.main import Config
-from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.config.pipeline import BasePipelineConfig, BidsPipelineConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
-    FPATH_SAMPLE_CONFIG_FULL,
     TEMPLATE_REPLACE_PATTERN,
+    load_json,
 )
 from nipoppy.workflows import (
     BidsConversionRunner,
@@ -50,6 +50,8 @@ def single_subject_dataset(
 
     layout = DatasetLayout(dataset_root)
     create_empty_dataset(dataset_root)
+    copytree(DPATH_SAMPLE_PIPELINES, layout.dpath_pipelines, dirs_exist_ok=True)
+
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
@@ -57,7 +59,7 @@ def single_subject_dataset(
     )
     manifest.save_with_backup(layout.fpath_manifest)
 
-    config = Config.load(FPATH_SAMPLE_CONFIG_FULL, apply_substitutions=False)
+    config = Config.load(FPATH_SAMPLE_CONFIG, apply_substitutions=False)
     config.SUBSTITUTIONS = substitutions
     config.save(layout.fpath_config)
 
@@ -74,9 +76,23 @@ def single_subject_dataset(
     return layout, participant_id, session_id
 
 
+@pytest.fixture()
+def bids_pipeline_configs() -> list[BidsPipelineConfig]:
+    return get_pipeline_configs(
+        DPATH_SAMPLE_PIPELINES / DatasetLayout.dname_catalog_bids, BasePipelineConfig
+    )
+
+
+def get_pipeline_configs(dpath: Path, pipeline_config_class: Type[BasePipelineConfig]):
+    return [
+        pipeline_config_class(**load_json(fpath_config))
+        for fpath_config in dpath.glob(f"*/{DatasetLayout.fname_pipeline_config}")
+    ]
+
+
 def get_fpaths_descriptors() -> list[str]:
     return [
-        str(fpath) for fpath in Path(DPATH_SAMPLE_PIPELINES).glob("*/descriptor*.json")
+        str(fpath) for fpath in Path(DPATH_SAMPLE_PIPELINES).glob("**/descriptor*.json")
     ]
 
 
@@ -151,41 +167,6 @@ def get_qsiprep_output_paths(
             f"sub-{participant_id}/ses-{session_id}/dwi/sub-{participant_id}_ses-{session_id}_space-ACPC_desc-preproc_dwi.bvec",  # noqa E501
         ]
     return fpaths
-
-
-def test_sample_configs():
-    def get_pipelines(
-        pipeline_configs: list[BasePipelineConfig],
-    ) -> list[tuple[str, str]]:
-        return [(pipeline.NAME, pipeline.VERSION) for pipeline in pipeline_configs]
-
-    def get_latest_pipelines(pipelines: list[tuple[str, str]]) -> list[tuple[str, str]]:
-        pipelines_latest = defaultdict(lambda: "0")
-        for pipeline_name, pipeline_version in pipelines:
-            if Version(pipeline_version) > Version(pipelines_latest[pipeline_name]):
-                pipelines_latest[pipeline_name] = pipeline_version
-        return list(pipelines_latest.items())
-
-    config_full = Config.load(FPATH_SAMPLE_CONFIG_FULL)
-    config_latest = Config.load(FPATH_SAMPLE_CONFIG)
-
-    bids_pipelines = get_pipelines(config_full.BIDS_PIPELINES)
-    proc_pipelines = get_pipelines(config_full.PROC_PIPELINES)
-    bids_pipelines_latest = get_latest_pipelines(bids_pipelines)
-    proc_pipelines_latest = get_latest_pipelines(proc_pipelines)
-
-    # check that config_latest is a subset of config_full
-    config_full.BIDS_PIPELINES = [
-        bids_pipeline
-        for bids_pipeline in config_full.BIDS_PIPELINES
-        if (bids_pipeline.NAME, bids_pipeline.VERSION) in bids_pipelines_latest
-    ]
-    config_full.PROC_PIPELINES = [
-        proc_pipeline
-        for proc_pipeline in config_full.PROC_PIPELINES
-        if (proc_pipeline.NAME, proc_pipeline.VERSION) in proc_pipelines_latest
-    ]
-    assert config_full == config_latest, "Sample config files are not in sync"
 
 
 @pytest.mark.parametrize("fpath_descriptor", get_fpaths_descriptors())
@@ -266,9 +247,8 @@ def test_bids_conversion_runner(
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
 
 
-def test_bids_pipeline_configs():
-    config = Config.load(FPATH_SAMPLE_CONFIG_FULL)
-    for pipeline_config in config.BIDS_PIPELINES:
+def test_bids_pipeline_configs(bids_pipeline_configs: list[BidsPipelineConfig]):
+    for pipeline_config in bids_pipeline_configs:
         count = sum([step.UPDATE_DOUGHNUT for step in pipeline_config.STEPS])
         assert count == 1, (
             f"BIDS pipeline {pipeline_config.NAME} {pipeline_config.VERSION}"

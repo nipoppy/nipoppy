@@ -98,9 +98,37 @@ def test_analysis_level_invalid():
 def test_substitutions(step_class: Type[BasePipelineStepConfig]):
     step_config = step_class(
         NAME="step_name",
-        DESCRIPTOR_FILE="[[STEP_NAME]].json",
+        DESCRIPTOR_FILE="descriptor-[[STEP_NAME]].json",
+        INVOCATION_FILE="invocation-[[STEP_NAME]].json",
     )
-    assert str(step_config.DESCRIPTOR_FILE) == "step_name.json"
+    assert str(step_config.DESCRIPTOR_FILE) == "descriptor-step_name.json"
+    assert str(step_config.INVOCATION_FILE) == "invocation-step_name.json"
+
+
+@pytest.mark.parametrize(
+    "descriptor_file,invocation_file,expect_error",
+    [
+        (None, None, False),
+        ("descriptor.json", "invocation.json", False),
+        ("descriptor.json", None, True),
+        (None, "invocation.json", True),
+    ],
+)
+def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_error):
+    with (
+        pytest.raises(
+            ValidationError,
+            match=(
+                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined "
+                "or both be None, "
+            ),
+        )
+        if expect_error
+        else nullcontext()
+    ):
+        ProcPipelineStepConfig(
+            DESCRIPTOR_FILE=descriptor_file, INVOCATION_FILE=invocation_file
+        )
 
 
 @pytest.mark.parametrize(
