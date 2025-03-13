@@ -1,6 +1,7 @@
 """Tests for PipelineRunner."""
 
 import json
+import re
 import subprocess
 import tarfile
 from pathlib import Path
@@ -208,7 +209,7 @@ def test_launch_boutiques_run_error(
     else:
         expected_message = "Pipeline did not complete successfully (return code: 1)"
 
-    with pytest.raises(RuntimeError, match=expected_message):
+    with pytest.raises(RuntimeError, match=re.escape(expected_message)):
         runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
