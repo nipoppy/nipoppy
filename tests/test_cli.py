@@ -243,3 +243,23 @@ def test_cli_pipeline_add(tmp_path: Path, mocker: pytest_mock.MockerFixture):
 
     # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.SUCCESS
+
+
+def test_cli_pipeline_upload(mocker: pytest_mock.MockerFixture):
+    mocked_pipeline_download = mocker.patch("nipoppy.zenodo.ZenodoAPI.upload_pipeline")
+
+    result = runner.invoke(
+        cli,
+        [
+            "pipeline",
+            "upload",
+            "tests/data/zenodo.zip",
+            "--zenodo-id",
+            "zenodo.123456",
+        ],
+    )
+
+    mocked_pipeline_download.assert_called_once()
+
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.SUCCESS

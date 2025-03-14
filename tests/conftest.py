@@ -69,6 +69,7 @@ def datetime_fixture(
     """
     mocked_datetime = mocker.patch("nipoppy.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
+    mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
 
 

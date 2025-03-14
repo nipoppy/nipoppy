@@ -364,7 +364,7 @@ def zenodo_options(func):
     func = click.option(
         "--zenodo-api",
         envvar="ZENODO_API",
-        default="https://sandbox.zenodo.org/api",
+        default="https://zenodo.org/api",
         type=str,
         required=False,
         help="Zenodo access token.",
@@ -380,7 +380,7 @@ def zenodo_options(func):
 @dataset_option
 @zenodo_options
 def pipeline_add(**params):
-    """Add a new pipeline to the configuration."""
+    """Add a new pipeline."""
     from nipoppy.zenodo import ZenodoAPI
 
     zenodo = ZenodoAPI(
@@ -393,5 +393,32 @@ def pipeline_add(**params):
     zenodo_id = params.pop("zenodo_id")
     download_dir = "zenodo." + zenodo_id.removeprefix("zenodo.")
     zenodo.download_record_files(
-        zenodo_id, layout.dpath_pipelines.joinpath(download_dir)
+        zenodo_id, output_dir=layout.dpath_pipelines.joinpath(download_dir)
+    )
+
+
+@pipeline.command("upload")
+@click.argument(
+    "input_dir",
+    type=str,
+)
+@click.option(
+    "--zenodo-id",
+    type=str,
+    required=False,
+    help="To updated the pipeline, provide the Zenodo ID.",
+)
+@zenodo_options
+def pipeline_upload(**params):
+    """Add a new pipeline."""
+    from nipoppy.zenodo import ZenodoAPI
+
+    zenodo = ZenodoAPI(
+        api_endpoint=params.get("zenodo_api"),
+        access_token=params.get("zenodo_token"),
+    )
+
+    zenodo.upload_pipeline(
+        input_dir=Path(params.pop("input_dir")),
+        zenodo_id=params.pop("zenodo_id"),
     )

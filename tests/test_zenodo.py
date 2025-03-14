@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.zenodo import ZenodoAPI, ZenodoAPIError
+from .conftest import DPATH_TEST_DATA, datetime_fixture
 
 API_ENDPOINT = "https://sandbox.zenodo.org/api"
 
@@ -16,6 +17,8 @@ def zenodo_id():
     The Sandbox can be reset at any time, so the Zenodo ID may change.
     If the test fails verify the Zenodo record at:
     https://sandbox.zenodo.org/records/170588
+
+    The test file is located at: nipoppy/tests/data/zenodo.zip
     """
     return "170588"
 
@@ -38,5 +41,48 @@ def test_download_invalid_record(tmp_path: Path):
     """Test for downloading an invalid pipeline from Zenodo."""
     zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
 
-    with pytest.raises(ZenodoAPIError):
-        zenodo.download_record_files("invalid_record_id", tmp_path)
+    zenodo_id = "invalid_record_id"
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=(
+            f"Failed to get files for zenodo.{zenodo_id}: "
+            "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
+        ),
+    ):
+        zenodo.download_record_files(zenodo_id, tmp_path)
+
+
+def test_create_new_version():
+    pass
+
+
+def test_create_draft():
+    pass
+
+
+def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):
+    expected = {
+        "metadata": {
+            "title": "Upload test",
+            "description": "This is a test upload",
+            "creators": [
+                {
+                    "person_or_org": {
+                        "given_name": "Nipoppy",
+                        "family_name": "Test",
+                        "type": "personal",
+                    }
+                }
+            ],
+            "publication_date": "2024-04-04",
+            "publisher": "Nipoppy",
+            "resource_type": {"id": "software"},
+            "keywords": ["Nipoppy"],
+        }
+    }
+
+    zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
+    assert expected == zenodo._get_pipeline_metadata(
+        DPATH_TEST_DATA / "pipeline_example" / "fmriprep-24.1.1"
+    )
