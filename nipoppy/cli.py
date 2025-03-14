@@ -167,7 +167,7 @@ class OrderedGroup(click.RichGroup):
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
         {
-            "name": "Command-specific options",
+            "name": "Command-specific",
             "options": [
                 "--dataset",
                 "--pipeline",
@@ -183,21 +183,21 @@ click.rich_click.OPTION_GROUPS = {
             ],
         },
         {
-            "name": "Filtering options",
+            "name": "Filtering",
             "options": [
                 "--participant-id",
                 "--session-id",
             ],
         },
         {
-            "name": "Parallelization options",
+            "name": "Parallelization",
             "options": [
                 "--hpc",
                 "--write-list",
             ],
         },
         {
-            "name": "Troubleshooting options",
+            "name": "Troubleshooting",
             "options": [
                 "--verbose",
                 "--dry-run",
@@ -206,7 +206,7 @@ click.rich_click.OPTION_GROUPS = {
             ],
         },
         {
-            "name": "Miscellaneous options",
+            "name": "Miscellaneous",
             "options": [
                 "--layout",
                 "--help",
