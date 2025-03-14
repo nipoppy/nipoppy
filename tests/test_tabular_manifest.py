@@ -40,6 +40,8 @@ def test_load_keep_extra_cols():
         (DPATH_TEST_DATA / "manifest_invalid2.tsv", False),
         (DPATH_TEST_DATA / "manifest_invalid3.tsv", False),
         (DPATH_TEST_DATA / "manifest_invalid4.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid5.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid6.tsv", False),
     ],
 )
 def test_validate(fpath, is_valid):

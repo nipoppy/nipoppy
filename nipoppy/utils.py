@@ -81,7 +81,7 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
     if participant_id.startswith(BIDS_SUBJECT_PREFIX):
         if raise_error:
             raise ValueError(
-                f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
+                f'Invalid participant ID: should not start with "{BIDS_SUBJECT_PREFIX}"'
                 f", got {participant_id}"
             )
         else:
@@ -115,7 +115,7 @@ def check_session_id(session_id: Optional[str], raise_error=False):
     if session_id.startswith(BIDS_SESSION_PREFIX):
         if raise_error:
             raise ValueError(
-                f'Session ID should not start with "{BIDS_SESSION_PREFIX}"'
+                f'Invalid session ID: should not start with "{BIDS_SESSION_PREFIX}"'
                 f", got {session_id}"
             )
         else:
