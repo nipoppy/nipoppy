@@ -167,43 +167,49 @@ class OrderedGroup(click.RichGroup):
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
         {
-            "name": "Global options",
+            "name": "Command-specific options",
             "options": [
                 "--dataset",
-                "--layout",
-                "--dry-run",
-                "--verbose",
-                "--help",
-            ],
-        },
-        {
-            "name": "Command specific options",
-            "options": [
+                "--pipeline",
+                "--pipeline-version",
+                "--pipeline-step",
                 "--bids-source",
                 "--mode",
                 "--empty",
                 "--regenerate",
                 "--copy-files",
                 "--check-dicoms",
-                "--keep-workdir",
                 "--tar",
             ],
         },
         {
-            "name": " Pipeline options",
+            "name": "Filtering options",
             "options": [
-                "--pipeline",
-                "--pipeline-version",
-                "--pipeline-step",
                 "--participant-id",
                 "--session-id",
             ],
         },
         {
-            "name": "Runner options",
+            "name": "Parallelization options",
             "options": [
+                "--hpc",
                 "--write-list",
+            ],
+        },
+        {
+            "name": "Troubleshooting options",
+            "options": [
+                "--verbose",
+                "--dry-run",
                 "--simulate",
+                "--keep-workdir",
+            ],
+        },
+        {
+            "name": "Miscellaneous options",
+            "options": [
+                "--layout",
+                "--help",
             ],
         },
     ]
