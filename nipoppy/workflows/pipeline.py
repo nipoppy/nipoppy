@@ -180,7 +180,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
             if self.pipeline_config.CONTAINER_INFO.URI is not None:
                 error_message += (
-                    ". This file can be downloaded by running the following command:"
+                    ". This file can be downloaded to the appropriate path by running "
+                    "the following command:"
                     f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
                     f"{self.pipeline_config.CONTAINER_INFO.FILE} "
                     f"{self.pipeline_config.CONTAINER_INFO.URI}"
