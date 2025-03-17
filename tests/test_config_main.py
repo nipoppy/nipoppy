@@ -14,6 +14,8 @@ from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
 
+FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
+
 REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISIT_IDS"]
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "SESSION_IDS",
@@ -22,6 +24,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "PIPELINE_VARIABLES",
 ]
 
 
@@ -46,6 +49,15 @@ def test_fields(valid_config_data: dict):
 def test_no_extra_fields(valid_config_data):
     with pytest.raises(ValidationError):
         Config(**valid_config_data, NOT_A_FIELD="x")
+
+
+def test_pipeline_variables(valid_config_data: dict):
+    config = Config(
+        **{k: v for (k, v) in valid_config_data.items() if k in REQUIRED_FIELDS_CONFIG}
+    )
+    pipeline_vars = config.PIPELINE_VARIABLES
+    for field in FIELDS_PIPELINE_VARIABLES:
+        assert hasattr(pipeline_vars, field)
 
 
 @pytest.mark.parametrize(

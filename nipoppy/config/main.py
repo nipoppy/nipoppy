@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
@@ -14,6 +15,35 @@ from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
+
+
+class PipelineVariables(BaseModel):
+    """Schema for pipeline variables in main config."""
+
+    BIDSIFICATION: dict[str, dict[str, dict[str, str]]] = Field(
+        default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
+        description=(
+            "Variables for the BIDSification pipelines. This should be a nested "
+            "dictionary with these levels: "
+            "pipeline name -> pipeline version -> variable name -> variable value"
+        ),
+    )
+    PROCESSING: dict[str, dict[str, dict[str, str]]] = Field(
+        default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
+        description=(
+            "Variables for the processing pipelines. This should be a nested "
+            "dictionary with these levels: "
+            "pipeline name -> pipeline version -> variable name -> variable value"
+        ),
+    )
+    EXTRACTION: dict[str, dict[str, dict[str, str]]] = Field(
+        default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
+        description=(
+            "Variables for the extraction pipelines. This should be a nested "
+            "dictionary with these levels: "
+            "pipeline name -> pipeline version -> variable name -> variable value"
+        ),
+    )
 
 
 class Config(_SchemaWithContainerConfig):
@@ -60,6 +90,13 @@ class Config(_SchemaWithContainerConfig):
             "Top-level mapping for replacing placeholder expressions in the rest "
             "of the config file. Note: the replacement only happens if the config "
             "is loaded from a file with :func:`nipoppy.config.main.Config.load`"
+        ),
+    )
+    PIPELINE_VARIABLES: PipelineVariables = Field(
+        default=PipelineVariables(),
+        description=(
+            "Pipeline-specific variables. Typically these are paths to external "
+            "resources needed by a pipeline that need to be provided by the user"
         ),
     )
     CUSTOM: dict = Field(
