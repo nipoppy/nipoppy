@@ -192,7 +192,8 @@ def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
     )
     if container_uri is not None:
         error_message += (
-            ". This file can be downloaded by running the following command:\n\n"
+            ". This file can be downloaded to the appropriate path by running the "
+            "following command:\n\n"
             f"apptainer pull {workflow.pipeline_config.CONTAINER_INFO.FILE}"
             f" {workflow.pipeline_config.CONTAINER_INFO.URI}"
         )
