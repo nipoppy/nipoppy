@@ -294,13 +294,9 @@ def test_descriptor_substitutions(
 
     # set descriptor file and write descriptor content
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=workflow.pipeline_name,
-        VERSION=workflow.pipeline_version,
-        STEPS=[
-            ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor, INVOCATION_FILE="")
-        ],
-    )
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor, INVOCATION_FILE="")
+    ]
 
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
@@ -351,13 +347,10 @@ def test_invocation_substitutions(
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=workflow.pipeline_name,
-        VERSION=workflow.pipeline_version,
-        STEPS=[
-            ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation, DESCRIPTOR_FILE="")
-        ],
-    )
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation, DESCRIPTOR_FILE="")
+    ]
+
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
     assert workflow.invocation == expected_invocation
@@ -823,16 +816,13 @@ def test_run_cleanup(
     workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
-    pipeline_name = "my_pipeline"
-    pipeline_version = "1.0"
     workflow.n_success = n_success
     workflow.n_total = n_total
 
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=pipeline_name,
-        VERSION=pipeline_version,
-        STEPS=[ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)],
-    )
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
+    ]
+
     workflow.run_cleanup()
 
     assert expected_message.format(n_success, n_total) in caplog.text

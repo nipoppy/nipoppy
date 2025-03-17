@@ -17,7 +17,7 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, PipelineTypeEnum
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -41,6 +41,8 @@ class PipelineInfo(BaseModel):
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
+    _expected_pipeline_type: Optional[PipelineTypeEnum] = None
+
     # for validation
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
@@ -60,6 +62,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=[],
         description="List of pipeline step configurations",
     )
+    PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -87,6 +90,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 
         Specifically:
         - If STEPS has more than one item, make sure that each step has a unique name.
+        - If _expected_pipeline_type is not None, make sure it matches PIPELINE_TYPE.
         """
         if len(self.STEPS) > 1:
             step_names = []
@@ -105,6 +109,15 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
                         ". Step names must be unique"
                     )
                 step_names.append(step.NAME)
+
+        if (self._expected_pipeline_type is not None) and (
+            self.PIPELINE_TYPE != self._expected_pipeline_type
+        ):
+            raise ValueError(
+                f"Expected pipeline type {self._expected_pipeline_type}"
+                f" but got {self.PIPELINE_TYPE=} for pipeline "
+                f"{self.NAME} {self.VERSION}"
+            )
 
         return self
 
@@ -137,6 +150,8 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
+    _expected_pipeline_type = PipelineTypeEnum.BIDSIFICATION
+
     STEPS: list[BidsPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
@@ -146,6 +161,8 @@ class BidsPipelineConfig(BasePipelineConfig):
 
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
+
+    _expected_pipeline_type = PipelineTypeEnum.PROCESSING
 
     TRACKER_CONFIG_FILE: Optional[Path] = Field(
         default=None,
@@ -165,6 +182,8 @@ class ProcPipelineConfig(BasePipelineConfig):
 
 class ExtractionPipelineConfig(BasePipelineConfig):
     """Schema for extraction pipeline configuration."""
+
+    _expected_pipeline_type = PipelineTypeEnum.EXTRACTION
 
     PROC_DEPENDENCIES: list[PipelineInfo] = Field(
         description=(

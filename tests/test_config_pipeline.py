@@ -13,6 +13,7 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
+from nipoppy.env import PipelineTypeEnum
 
 FIELDS_BASE_PIPELINE = [
     "NAME",
@@ -21,6 +22,7 @@ FIELDS_BASE_PIPELINE = [
     "CONTAINER_INFO",
     "CONTAINER_CONFIG",
     "STEPS",
+    "PIPELINE_TYPE",
 ]
 FIELDS_BIDS_PIPELINE = FIELDS_BASE_PIPELINE
 FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE + ["TRACKER_CONFIG_FILE"]
@@ -37,16 +39,34 @@ def valid_data() -> dict:
 
 
 @pytest.mark.parametrize(
-    "model_class,fields",
+    "model_class,extra_data,fields",
     [
-        (BasePipelineConfig, FIELDS_BASE_PIPELINE),
-        (BidsPipelineConfig, FIELDS_BIDS_PIPELINE),
-        (ProcPipelineConfig, FIELDS_PROC_PIPELINE),
-        (PipelineInfo, FIELDS_PIPELINE_INFO),
+        (BasePipelineConfig, {}, FIELDS_BASE_PIPELINE),
+        (
+            BidsPipelineConfig,
+            {"PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION},
+            FIELDS_BIDS_PIPELINE,
+        ),
+        (
+            ProcPipelineConfig,
+            {"PIPELINE_TYPE": PipelineTypeEnum.PROCESSING},
+            FIELDS_PROC_PIPELINE,
+        ),
+        (
+            ExtractionPipelineConfig,
+            {
+                "PROC_DEPENDENCIES": [
+                    PipelineInfo(NAME="my_pipeline", VERSION="1.0.0")
+                ],
+                "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
+            },
+            FIELDS_EXTRACTION_PIPELINE,
+        ),
+        (PipelineInfo, {}, FIELDS_PIPELINE_INFO),
     ],
 )
-def test_fields(model_class, fields, valid_data):
-    config: BaseModel = model_class(**valid_data)
+def test_fields(model_class, extra_data, fields, valid_data):
+    config: BaseModel = model_class(**valid_data, **extra_data)
     for field in fields:
         assert hasattr(config, field)
 
