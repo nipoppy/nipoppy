@@ -60,7 +60,7 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
     """Make sure a participant ID is valid.
 
     Specifically:
-    - Check that it does not have the 'sub-' prefix
+    - Check that it does not have the `sub-` prefix, stripping it if it does
     - Check that it only has alphanumeric characters
 
     Parameters
@@ -68,9 +68,9 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
     participant_id : Optional[str]
         The participant ID to check. If None, returns None.
     raise_error : bool, optional
-        Whether to raise an error if the participant ID has the prefix, by default
-        False. Note: an error is always raised if the participant ID contains
-        non-alphanumeric characters.
+        Whether to raise an error if the participant ID has the `sub-` prefix, by
+        default False. Note: an error is always raised if the participant ID contains
+        non-alphanumeric characters after being stripped of the `sub-` prefix.
 
     Returns
     -------
@@ -106,7 +106,7 @@ def check_session_id(session_id: Optional[str], raise_error=False):
     """Make sure a session ID is valid.
 
     Specifically:
-    - Check that it does not have the 'ses-' prefix
+    - Check that it does not have the `ses-` prefix, stripping it if it does
     - Check that it only has alphanumeric characters
 
     Parameters
@@ -114,9 +114,9 @@ def check_session_id(session_id: Optional[str], raise_error=False):
     participant_id : Optional[str]
         The participant ID to check. If None, returns None.
     raise_error : bool, optional
-        Whether to raise an error if the session ID has the prefix, by default
+        Whether to raise an error if the session ID has the `ses-` prefix, by default
         False. Note: an error is always raised if the session ID contains
-        non-alphanumeric characters.
+        non-alphanumeric characters even being stripped of the `ses-` prefix.
 
     Returns
     -------
