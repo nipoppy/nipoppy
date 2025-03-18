@@ -4,5 +4,5 @@
     "data_diagnosis": false,
     "force": true,
     "input_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
-    "output_dir": "[[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
+    "output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
 }
