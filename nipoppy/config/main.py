@@ -72,8 +72,6 @@ class PipelineVariables(BaseModel):
         """Convert fields to defaultdicts."""
 
         def _to_defaultdict(nested_dict: dict, level: int):
-            if not isinstance(nested_dict, dict):
-                return nested_dict
             if level == 0:
                 return nested_dict
             return defaultdict(

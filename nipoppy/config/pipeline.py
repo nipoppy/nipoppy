@@ -200,11 +200,12 @@ class ExtractionPipelineConfig(BasePipelineConfig):
     @model_validator(mode="after")
     def validate_after(self):
         """
-        Validate the config instantiation after instantiation.
+        Validate the config after instantiation.
 
         Specifically:
         - Make sure that PROC_DEPENDENCIES is not empty
         """
+        super().validate_after()
         if len(self.PROC_DEPENDENCIES) == 0:
             raise ValueError(
                 "PROC_DEPENDENCIES is an empty list for extraction pipeline "
