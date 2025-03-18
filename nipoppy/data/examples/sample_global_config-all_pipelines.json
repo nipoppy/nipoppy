@@ -315,18 +315,24 @@
             "STEPS": [
                 {
                     "NAME": "preprocess",
-                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
                 },
                 {
                     "NAME": "confound-correction",
-                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
                 },
                 {
                     "NAME": "analysis",
-                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[NIPOPPY_PIPELINE_NAME]]-[[NIPOPPY_PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json"
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
                 }
             ],
             "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
