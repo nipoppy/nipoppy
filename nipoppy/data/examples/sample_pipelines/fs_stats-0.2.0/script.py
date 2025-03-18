@@ -46,7 +46,7 @@ DEFAULT_SES_COLNAME = "session_id"
 DEFAULT_SUB_PREFIX = "sub-"
 DEFAULT_SES_PREFIX = "ses-"
 
-RE_FS_VERSION = re.compile("[\d]\.[\d].[\d]")  # noqa W605
+RE_FS_VERSION = re.compile(r"[\d]\.[\d]\.[\d]")
 FNAME_FS_VERSION = "build-stamp.txt"
 
 
@@ -313,7 +313,7 @@ def _run_mri_cnr(
         for hemi in ["lh", "rh"]:
             index.append((Path(vol_path).name, hemi))
 
-    df = pd.read_csv(out_path, sep="\s+", header=None, names=ALL_CNR_COLS)  # noqa W605
+    df = pd.read_csv(out_path, sep=r"\s+", header=None, names=ALL_CNR_COLS)
     df.index = index
 
     return df
