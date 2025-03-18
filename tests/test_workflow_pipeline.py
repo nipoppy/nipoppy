@@ -280,17 +280,19 @@ def test_descriptor_none(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "substitutions,expected_descriptor",
+    "variables,expected_descriptor",
     [
-        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
-        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "value1"}),
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "[[TO_REPLACE1]]"}),
     ],
 )
-def test_descriptor_substitutions(
-    tmp_path: Path, workflow: PipelineWorkflow, substitutions, expected_descriptor
+def test_descriptor_pipeline_variables(
+    tmp_path: Path, workflow: PipelineWorkflow, variables, expected_descriptor
 ):
-    # set substitutions
-    workflow.config.SUBSTITUTIONS = substitutions
+    # set variables for substitution
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
 
     # set descriptor file and write descriptor content
     fpath_descriptor = tmp_path / "custom_pipeline.json"
@@ -333,17 +335,19 @@ def test_invocation_none(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "substitutions,expected_invocation",
+    "variables,expected_invocation",
     [
-        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
-        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "value1"}),
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "[[TO_REPLACE1]]"}),
     ],
 )
-def test_invocation_substitutions(
-    tmp_path: Path, workflow: PipelineWorkflow, substitutions, expected_invocation
+def test_invocation_pipeline_variables(
+    tmp_path: Path, workflow: PipelineWorkflow, variables, expected_invocation
 ):
-    # set substitutions
-    workflow.config.SUBSTITUTIONS = substitutions
+    # set variables for substitution
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"

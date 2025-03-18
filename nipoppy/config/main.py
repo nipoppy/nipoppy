@@ -11,7 +11,7 @@ from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
+from nipoppy.env import BIDS_SESSION_PREFIX, PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
@@ -19,6 +19,12 @@ from nipoppy.utils import apply_substitutions_to_json, load_json
 
 class PipelineVariables(BaseModel):
     """Schema for pipeline variables in main config."""
+
+    _pipeline_type_to_key = {
+        PipelineTypeEnum.BIDSIFICATION: "BIDSIFICATION",
+        PipelineTypeEnum.PROCESSING: "PROCESSING",
+        PipelineTypeEnum.EXTRACTION: "EXTRACTION",
+    }
 
     BIDSIFICATION: dict[str, dict[str, dict[str, str]]] = Field(
         default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
@@ -44,6 +50,41 @@ class PipelineVariables(BaseModel):
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_variables(
+        self, pipeline_type: PipelineTypeEnum, pipeline_name: str, pipeline_version: str
+    ) -> dict[str, str]:
+        """Get the variables for a specific pipeline."""
+        try:
+            key = self._pipeline_type_to_key[pipeline_type]
+        except KeyError:
+            raise ValueError(
+                f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
+                f"{self._pipeline_type_to_key.keys()}"
+            )
+
+        return getattr(self, key)[pipeline_name][pipeline_version]
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """Convert fields to defaultdicts."""
+
+        def _to_defaultdict(nested_dict: dict, level: int):
+            if not isinstance(nested_dict, dict):
+                return nested_dict
+            if level == 0:
+                return nested_dict
+            return defaultdict(
+                lambda: _to_defaultdict({}, level - 1),
+                {k: _to_defaultdict(v, level - 1) for k, v in nested_dict.items()},
+            )
+
+        for key in self._pipeline_type_to_key.values():
+            setattr(self, key, _to_defaultdict(getattr(self, key), level=2))
+
+        return self
 
 
 class Config(_SchemaWithContainerConfig):
@@ -175,9 +216,21 @@ class Config(_SchemaWithContainerConfig):
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
 
-    def apply_substitutions_to_json(self, json_obj: dict | list) -> dict | list:
-        """Apply substitutions to a JSON object."""
-        return apply_substitutions_to_json(json_obj, self.SUBSTITUTIONS)
+    def apply_pipeline_variables(
+        self,
+        pipeline_type: PipelineTypeEnum,
+        pipeline_name: str,
+        pipeline_version: str,
+        json_obj: dict | list,
+    ) -> dict | list:
+        """Apply pipeline-specific variables to a JSON object."""
+        pipeline_variables = {
+            f"[[{key}]]": value
+            for key, value in self.PIPELINE_VARIABLES.get_variables(
+                pipeline_type, pipeline_name, pipeline_version
+            ).items()
+        }
+        return apply_substitutions_to_json(json_obj, pipeline_variables)
 
     @classmethod
     def load(cls, path: StrOrPathLike, apply_substitutions=True) -> Self:
