@@ -2,5 +2,7 @@
     "plugin": "Linear",
     "local_threads": 24,
     "anat_inho_cor": "method=SyN,otsu_thresh=2,multiotsu=false",
-    "force": true
+    "force": true,
+    "input_dir": "[[NIPOPPY_DPATH_BIDS]]",
+    "output_dir": "[[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
 }
