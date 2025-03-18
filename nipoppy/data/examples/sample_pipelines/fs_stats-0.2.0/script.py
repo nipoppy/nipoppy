@@ -173,6 +173,10 @@ def _run_fs_stats2table_command(
         sys.exit(
             f"\nError running command: {shlex.join(args)} "
             f"with environment variables: {env_vars}."
+            " If running with a FreeSurfer container, make sure the subjects directory "
+            f"{fs_subjects_dir} is mounted correctly and that any symlink target path "
+            "is also mounted. You can also rerun the same command with the --verbose "
+            "flag to see the output of the FreeSurfer command."
         )
 
     # return the output as a DataFrame
@@ -321,11 +325,14 @@ def _run_mri_cnr(
 
 def _get_subject_list(fs_subjects_dir: Union[str, os.PathLike]) -> list[str]:
     """Get a list of subjects in a FreeSurfer subjects directory."""
-    return [
+    subject_list = [
         dpath.name
         for dpath in Path(fs_subjects_dir).iterdir()
         if dpath.name != "fsaverage" and dpath.is_dir()
     ]
+    if len(subject_list) == 0:
+        sys.exit(f"No subjects found in {fs_subjects_dir}")
+    return subject_list
 
 
 def run_single_aseg(
