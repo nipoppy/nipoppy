@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Any, Optional
 
@@ -10,7 +11,7 @@ from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
@@ -19,21 +20,6 @@ from nipoppy.utils import apply_substitutions_to_json, load_json
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
-    DATASET_NAME: str = Field(description="Name of the dataset")
-    VISIT_IDS: list[str] = Field(
-        description=(
-            "List of visits available in the study. A visit ID is an identifier "
-            "for a data collection event, not restricted to imaging data."
-        )
-    )
-    SESSION_IDS: Optional[list[str]] = Field(
-        default=None,  # will be a list after validation
-        description=(
-            "List of BIDS-compliant sessions available in the study"
-            f', prefixed with "{BIDS_SESSION_PREFIX}"'
-            " (inferred from VISITS if not given)"
-        ),
-    )
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
@@ -107,13 +93,22 @@ class Config(_SchemaWithContainerConfig):
         Validate the raw input.
 
         Specifically:
-        - If session_ids is not given, set to be the same as visit_ids
+        - If DATASET_NAME, VISIT_IDS, or SESSION_IDS are present, ignore them and
+          emit a deprecation warning
         """
-        key_session_ids = "SESSION_IDS"
-        key_visit_ids = "VISIT_IDS"
+        deprecated_keys = ["DATASET_NAME", "VISIT_IDS", "SESSION_IDS"]
         if isinstance(data, dict):
-            if key_session_ids not in data:
-                data[key_session_ids] = data[key_visit_ids]
+            for key in deprecated_keys:
+                if key in data:
+                    data.pop(key)
+                    warnings.warn(
+                        (
+                            f"Field {key} is deprecated and will cause an error to be "
+                            "raised in a future version. Please remove it from your "
+                            "config file."
+                        ),
+                        DeprecationWarning,
+                    )
         return data
 
     @model_validator(mode="after")

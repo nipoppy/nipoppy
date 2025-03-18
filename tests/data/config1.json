@@ -1,19 +1,10 @@
 {
-    "DATASET_NAME": "my_dataset",
     "CONTAINER_CONFIG": {
         "COMMAND": "apptainer",
         "ARGS": [
             "--cleanenv"
         ]
     },
-    "SESSION_IDS": [
-        "A",
-        "B"
-    ],
-    "VISIT_IDS": [
-        "V01",
-        "V02"
-    ],
     "CUSTOM": {
         "some_key": "this can be anything"
     }

@@ -1,12 +1,4 @@
 {
-    "DATASET_NAME": "my_dataset",
-    "VISIT_IDS": [
-        "V01",
-        "V02"
-    ],
-    "SESSION_IDS": [
-        "V01"
-    ],
     "PROC_PIPELINES": [
         {
             "NAME": "mriqc",
