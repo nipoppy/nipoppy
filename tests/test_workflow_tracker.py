@@ -55,9 +55,7 @@ def tracker(tmp_path: Path):
 
     fpath_tracker_config.write_text(json.dumps(tracker_config))
 
-    tracker.config = get_config(
-        visit_ids=["1", "2"],
-    )
+    tracker.config = get_config()
 
     create_pipeline_config_files(
         tracker.layout.dpath_pipelines,

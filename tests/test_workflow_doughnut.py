@@ -80,9 +80,7 @@ def test_run_main(
     manifest1.save_with_backup(fpath_manifest)
 
     # prepare config file
-    config = get_config(
-        visit_ids=list(manifest1[Manifest.col_visit_id].unique()),
-    )
+    config = get_config()
     save_json(config.model_dump(mode="json"), fpath_config)
 
     # generate the doughnut
@@ -171,9 +169,7 @@ def test_run_main_regenerate(
     manifest.save_with_backup(fpath_manifest)
 
     # prepare config file
-    config = get_config(
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
+    config = get_config()
     save_json(config.model_dump(mode="json"), fpath_config)
 
     # to be overwritten

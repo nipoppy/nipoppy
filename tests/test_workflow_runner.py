@@ -34,7 +34,6 @@ def runner(tmp_path: Path):
     create_empty_dataset(runner.layout.dpath_root)
 
     runner.config = get_config(
-        visit_ids=["BL", "V04"],
         container_config={
             "COMMAND": "echo",  # dummy command
             "ARGS": ["--flag1"],

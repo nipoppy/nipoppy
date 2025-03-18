@@ -164,23 +164,22 @@ def test_config_not_found(workflow: BaseWorkflow):
 
 
 def test_config_replacement(workflow: BaseWorkflow):
-    config = get_config(dataset_name="[[NIPOPPY_DPATH_ROOT]]")
+    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
     config.save(workflow.layout.fpath_config)
-    assert str(workflow.config.DATASET_NAME) == str(workflow.dpath_root)
+    assert str(workflow.config.DICOM_DIR_MAP_FILE) == str(workflow.dpath_root)
 
 
 def test_manifest(workflow: BaseWorkflow):
     workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
-    config = get_config(
-        visit_ids=["BL", "M12"],
-    )
+    config = get_config()
     workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
     config.save(workflow.layout.fpath_config)
     assert isinstance(workflow.manifest, Manifest)
 
 
 def test_manifest_not_found(workflow: BaseWorkflow):
+    workflow.layout.fpath_manifest.unlink()
     with pytest.raises(FileNotFoundError):
         workflow.manifest
 

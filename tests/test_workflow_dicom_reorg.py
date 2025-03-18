@@ -292,10 +292,7 @@ def test_get_participants_sessions_to_run(
         dpath_organized=workflow.layout.dpath_post_reorg,
     )
 
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
+    config = get_config()
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     config.save(workflow.layout.fpath_config)
@@ -316,10 +313,7 @@ def test_run_setup(tmp_path: Path):
     )
     manifest1.save_with_backup(workflow.layout.fpath_manifest)
 
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest1[Manifest.col_visit_id].unique()),
-    )
+    config = get_config()
     config.save(workflow.layout.fpath_config)
 
     # generate first doughnut with the smaller manifest
@@ -386,10 +380,7 @@ def test_run_main(
         dpath_downloaded=workflow.layout.dpath_pre_reorg,
     )
 
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
+    config = get_config()
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     config.save(workflow.layout.fpath_config)
@@ -449,10 +440,7 @@ def test_run_main_error(tmp_path: Path):
         },
     )
 
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
+    config = get_config()
 
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     config.save(workflow.layout.fpath_config)
