@@ -191,7 +191,7 @@ def test_load(path):
 @pytest.mark.parametrize(
     "path",
     [
-        DPATH_TEST_DATA / "config_invalid2.json",  # has PROC_PIPELINES (old)
+        DPATH_TEST_DATA / "config_invalid1.json",  # has PROC_PIPELINES (old)
     ],
 )
 def test_load_invalid(path):
