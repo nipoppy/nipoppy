@@ -9,5 +9,5 @@
         "/data_diagnosis_datasink/spatial_VE_nii/_split_name_sub-[[NIPOPPY_BIDS_PARTICIPANT_ID]]_ses-[[NIPOPPY_BIDS_SESSION_ID]]_task-rest_acq-EPI_run-1_bold/sub-[[NIPOPPY_BIDS_PARTICIPANT_ID]]_ses-[[NIPOPPY_BIDS_SESSION_ID]]_task-rest_acq-EPI_run-1_bold_VE.nii.gz",
         "/data_diagnosis_datasink/temporal_info_csv/_split_name_sub-[[NIPOPPY_BIDS_PARTICIPANT_ID]]_ses-[[NIPOPPY_BIDS_SESSION_ID]]_task-rest_acq-EPI_run-1_bold/sub-[[NIPOPPY_BIDS_PARTICIPANT_ID]]_ses-[[NIPOPPY_BIDS_SESSION_ID]]_task-rest_acq-EPI_run-1_bold_temporal_info.csv",
         "/data_diagnosis_datasink/temporal_std_nii/_split_name_sub-[[NIPOPPY_BIDS_PARTICIPANT_ID]]_ses-[[NIPOPPY_BIDS_SESSION_ID]]_task-rest_acq-EPI_run-1_bold/sub-[[NIPOPPY_BIDS_PARTICIPANT_ID]]_ses-[[NIPOPPY_BIDS_SESSION_ID]]_task-rest_acq-EPI_run-1_bold_tSTD.nii.gz"
-    ]  
+    ]
 }
