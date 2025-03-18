@@ -217,8 +217,8 @@
             "NAME": "rabies",
             "VERSION": "0.5.1",
             "CONTAINER_INFO": {
-                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/rabies.sif",
-                "URI": "docker://ghcr.io/cobralab/rabies:latest"
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/rabies_0.5.1.sif",
+                "URI": "docker://ghcr.io/cobralab/rabies:0.5.1"
             },
             "CONTAINER_CONFIG": {
             },
