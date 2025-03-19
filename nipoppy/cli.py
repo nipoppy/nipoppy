@@ -13,6 +13,7 @@ from nipoppy.env import (
     PROGRAM_NAME,
     ReturnCode,
 )
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 
 logger = get_logger(
@@ -52,7 +53,7 @@ def dataset_option(func):
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path().cwd(),
-        show_default=True,
+        show_default=False,
         help=(
             "Path to the root of the dataset (default is current working directory)."
         ),
@@ -69,8 +70,8 @@ def dep_params(**params):
     if _dep_dpath_root:
         logger.warning(
             (
-                "The dataset argument is deprecated."
-                "Use the --dataset option in the future."
+                "Giving the dataset path without --dataset is deprecated and will "
+                "cause an error in a future version."
             ),
         )
     params["dpath_root"] = _dep_dpath_root or params.get("dpath_root")
@@ -337,9 +338,36 @@ def extract(**params):
 @dataset_option
 @global_options
 def status(**params):
-    """Workflow for status command."""
+    """Print a summary of the dataset."""
     from nipoppy.workflows.dataset_status import StatusWorkflow
 
     params = dep_params(**params)
     with handle_exception(StatusWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@cli.group(cls=OrderedGroup, context_settings={"help_option_names": ["-h", "--help"]})
+def pipeline():
+    """Pipeline store operations."""
+    pass
+
+
+@pipeline.command()
+@dataset_option
+@click.option(
+    "--path",
+    "dpath_pipeline",
+    help=(
+        "Path to the pipeline directory"
+        f" (should contain a {DatasetLayout.fname_pipeline_config} file)."
+    ),
+    required=True,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+)
+def validate(**params):
+    """Validate a pipeline store directory."""
+    from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
+
+    params = dep_params(**params)
+    with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
         workflow.run()

@@ -3,7 +3,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import boutiques
 from pydantic_core import ValidationError
@@ -12,10 +12,12 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import StrOrPathLike, load_json
+from nipoppy.utils import StrOrPathLike, load_json, process_template_str
 
 
-def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
+def _load_pipeline_config_file(
+    fpath_config: Path, substitution_objs: Optional[list[Any]] = None
+) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
@@ -23,8 +25,13 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
             f"Pipeline configuration file not found: {fpath_config}"
         )
 
+    config_str = process_template_str(
+        fpath_config.read_text(),
+        objs=substitution_objs,
+    )
+
     try:
-        config_dict = load_json(fpath_config)
+        config_dict = json.loads(config_str)
     except json.JSONDecodeError as exception:
         raise RuntimeError(
             f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
@@ -143,24 +150,26 @@ def _check_pipeline_files(
         _log(f"Validating files for step: {step.NAME}")
 
         if step.DESCRIPTOR_FILE is not None:
-            _log(f"Checking descriptor file: {step.DESCRIPTOR_FILE}")
+            _log(f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}")
             descriptor_str = _check_descriptor_file(step.DESCRIPTOR_FILE)
             fpaths.append(step.DESCRIPTOR_FILE)
 
             if step.INVOCATION_FILE is not None:
-                _log(f"Checking invocation file: {step.INVOCATION_FILE}")
+                _log(f"\tChecking invocation file: {step.INVOCATION_FILE}")
                 _check_invocation_file(step.INVOCATION_FILE, descriptor_str)
                 fpaths.append(step.INVOCATION_FILE)
 
         if isinstance(step, ProcPipelineStepConfig):
 
             if step.TRACKER_CONFIG_FILE is not None:
-                _log(f"Checking tracker config file: {step.TRACKER_CONFIG_FILE}")
+                _log(f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}")
                 _check_tracker_config_file(step.TRACKER_CONFIG_FILE)
                 fpaths.append(step.TRACKER_CONFIG_FILE)
 
             if step.PYBIDS_IGNORE_FILE is not None:
-                _log(f"Checking PyBIDS ignore patterns file: {step.PYBIDS_IGNORE_FILE}")
+                _log(
+                    f"\tChecking PyBIDS ignore patterns file: {step.PYBIDS_IGNORE_FILE}"
+                )
                 _check_pybids_ignore_file(step.PYBIDS_IGNORE_FILE)
                 fpaths.append(step.PYBIDS_IGNORE_FILE)
 
@@ -197,6 +206,7 @@ def _check_self_contained(
 
 def check_pipeline_bundle(
     dpath_bundle: StrOrPathLike,
+    substitution_objs: Optional[list[Any]] = None,
     logger: Optional[logging.Logger] = None,
     log_level=logging.DEBUG,
 ) -> BasePipelineConfig:
@@ -205,7 +215,7 @@ def check_pipeline_bundle(
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
 
     # try to load the configuration file
-    config = _load_pipeline_config_file(fpath_config)
+    config = _load_pipeline_config_file(fpath_config, substitution_objs)
 
     # core file content validation
     fpaths = _check_pipeline_files(config, logger=logger, log_level=log_level)
