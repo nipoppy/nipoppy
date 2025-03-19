@@ -44,7 +44,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
             _validate_layout=False,
         )
         self.fname_readme = "README.md"

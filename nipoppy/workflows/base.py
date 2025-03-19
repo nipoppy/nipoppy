@@ -267,7 +267,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
-        _skip_logging: bool = False,
+        _skip_logfile: bool = False,
         _validate_layout: bool = True,
     ):
         """Initialize the workflow instance.
@@ -284,7 +284,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             If True, set the logger to DEBUG level, by default False
         dry_run : bool, optional
             If True, print commands without executing them, by default False
-        _skip_logging : bool, optional
+        _skip_logfile : bool, optional
             If True, do not write log to file, by default False
         _validate_layout : bool, optional
             If True, validate the layout during setup, by default True
@@ -293,7 +293,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
         self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
-        self._skip_logging = _skip_logging
+        self._skip_logfile = _skip_logfile
         self._validate_layout = _validate_layout
 
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
@@ -317,7 +317,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        if not self._skip_logging:
+        if not self._skip_logfile:
             add_logfile(self.logger, self.generate_fpath_log())
 
         super().run_setup()

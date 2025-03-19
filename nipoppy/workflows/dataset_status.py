@@ -31,7 +31,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
         )
         self.col_pipeline = "pipeline"
 

@@ -68,19 +68,19 @@ def test_generate_fpath_log_custom(
     )
 
 
-@pytest.mark.parametrize("skip_logging", [True, False])
+@pytest.mark.parametrize("skip_logfile", [True, False])
 def test_run_setup_logfile(
-    workflow: BaseDatasetWorkflow, skip_logging, mocker: pytest_mock.MockFixture
+    workflow: BaseDatasetWorkflow, skip_logfile, mocker: pytest_mock.MockFixture
 ):
     fpath_log = workflow.dpath_root / "my_workflow.log"
     mocked_generate_fpath_log = mocker.patch.object(
         workflow, "generate_fpath_log", return_value=fpath_log
     )
     mocked_add_logfile = mocker.patch("nipoppy.workflows.base.add_logfile")
-    workflow._skip_logging = skip_logging
+    workflow._skip_logfile = skip_logfile
     workflow.run_setup()
 
-    if skip_logging:
+    if skip_logfile:
         mocked_generate_fpath_log.assert_not_called()
         mocked_add_logfile.assert_not_called()
     else:
