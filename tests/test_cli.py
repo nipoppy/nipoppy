@@ -62,7 +62,7 @@ def test_cli_status(tmp_path: Path):
 
 def test_cli_doughnut(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(cli, ["doughnut", "--dataset", str(dpath_root)])
+    result = runner.invoke(cli, ["doughnut", "--dataset", dpath_root])
 
     # check that a logfile was created
     assert (
@@ -76,7 +76,7 @@ def test_cli_doughnut(tmp_path: Path):
 
 def test_cli_reorg(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(cli, ["reorg", "--dataset", str(dpath_root)])
+    result = runner.invoke(cli, ["reorg", "--dataset", dpath_root])
 
     # check that a logfile was created
     assert (
@@ -99,7 +99,7 @@ def test_cli_bidsify(tmp_path: Path):
         [
             "bidsify",
             "--dataset",
-            str(dpath_root),
+            dpath_root,
             "--pipeline",
             "my_pipeline",
             "--pipeline-version",
@@ -133,7 +133,7 @@ def test_cli_run(tmp_path: Path):
         [
             "run",
             "--dataset",
-            str(dpath_root),
+            dpath_root,
             "--pipeline",
             "my_pipeline",
             "--pipeline-version",
@@ -165,7 +165,7 @@ def test_cli_track(tmp_path: Path):
         [
             "track",
             "--dataset",
-            str(dpath_root),
+            dpath_root,
             "--pipeline",
             "my_pipeline",
             "--pipeline-version",
@@ -196,7 +196,7 @@ def test_cli_extract(tmp_path: Path):
         [
             "extract",
             "--dataset",
-            str(dpath_root),
+            dpath_root,
             "--pipeline",
             "my_pipeline",
             "--pipeline-version",
@@ -217,4 +217,20 @@ def test_cli_extract(tmp_path: Path):
     )
 
     # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
+
+def test_cli_pipeline_validate(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    dpath_pipeline = tmp_path / "pipeline"
+    dpath_pipeline.mkdir()
+    result = runner.invoke(
+        cli,
+        ["pipeline", "validate", "--dataset", dpath_root, "--path", dpath_pipeline],
+    )
+
+    # No log file is created, since the command does not create logs.
+    pass
+
+    # Expects missing path, since init command is not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
