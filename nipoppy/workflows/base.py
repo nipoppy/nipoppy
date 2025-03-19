@@ -26,71 +26,38 @@ from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import add_path_timestamp, process_template_str
 
 
-class BaseDatasetWorkflow(Base, ABC):
-    """Base class with logging/subprocess utilities."""
+class BaseWorkflow(Base, ABC):
+    """Base workflow class with logging/subprocess/filesystem utilities."""
 
     log_prefix_run = "[RUN]"
     log_prefix_run_stdout = "[RUN STDOUT]"
     log_prefix_run_stderr = "[RUN STDERR]"
-    validate_layout = True
 
-    def __init__(
-        self,
-        dpath_root: StrOrPathLike,
-        name: str,
-        fpath_layout: Optional[StrOrPathLike] = None,
-        verbose: bool = False,
-        dry_run: bool = False,
-        _skip_logging: bool = False,
-    ):
+    def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
 
         Parameters
         ----------
-        dpath_root : nipoppy.env.StrOrPathLike
-            Path the the root directory of the dataset.
         name : str
             Name of the workflow, used for logging.
-        logger : logging.Logger, optional
-            Logger, by default None
+        verbose : bool, optional
+            If True, set the logger to DEBUG level, by default False
         dry_run : bool, optional
             If True, print commands without executing them, by default False
         """
         self.name = name
-        self.dpath_root = Path(dpath_root)
-        self.fpath_layout = fpath_layout
         self.verbose = verbose
         self.dry_run = dry_run
-        self._skip_logging = _skip_logging
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
-        self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
-
-        # Setup logging
+        # set up logging
         log_level = logging.DEBUG if verbose else logging.INFO
         self.logger = get_logger(
             name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
             level=log_level,
         )
-
-    def generate_fpath_log(
-        self,
-        dnames_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
-    ) -> Path:
-        """Generate a log file path."""
-        if dnames_parent is None:
-            dnames_parent = []
-        if isinstance(dnames_parent, str):
-            dnames_parent = [dnames_parent]
-        if fname_stem is None:
-            fname_stem = self.name
-        dpath_log = self.layout.dpath_logs / self.name
-        for dname in dnames_parent:
-            dpath_log = dpath_log / dname
-        return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
@@ -196,17 +163,10 @@ class BaseDatasetWorkflow(Base, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        if not self._skip_logging:
-            add_logfile(self.logger, self.generate_fpath_log())
-        logging.captureWarnings(True)
-        capture_warnings(self.logger)
-
         self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.info(self)
         if self.dry_run:
             self.logger.info("Doing a dry run")
-        if self.validate_layout:
-            self.layout.validate()
 
     @abstractmethod
     def run_main(self):
@@ -293,6 +253,75 @@ class BaseDatasetWorkflow(Base, ABC):
         self.logger.log(level=log_level, msg=f"Removing {path}")
         if not self.dry_run:
             shutil.rmtree(path, **kwargs_to_use)
+
+
+class BaseDatasetWorkflow(BaseWorkflow, ABC):
+    """Base workflow class with awareness of dataset layout and components."""
+
+    validate_layout = True
+
+    def __init__(
+        self,
+        dpath_root: StrOrPathLike,
+        name: str,
+        fpath_layout: Optional[StrOrPathLike] = None,
+        verbose: bool = False,
+        dry_run: bool = False,
+        _skip_logging: bool = False,
+    ):
+        """Initialize the workflow instance.
+
+        Parameters
+        ----------
+        dpath_root : nipoppy.env.StrOrPathLike
+            Path the the root directory of the dataset.
+        name : str
+            Name of the workflow, used for logging.
+        fpath_layout : nipoppy.env.StrOrPathLike, optional
+            Path to a custom layout file, by default None
+        verbose : bool, optional
+            If True, set the logger to DEBUG level, by default False
+        dry_run : bool, optional
+            If True, print commands without executing them, by default False
+        _skip_logging : bool, optional
+            If True, do not write log to file, by default False
+        """
+        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
+
+        self.dpath_root = Path(dpath_root)
+        self.fpath_layout = fpath_layout
+        self._skip_logging = _skip_logging
+
+        self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
+
+    def generate_fpath_log(
+        self,
+        dnames_parent: Optional[str | list[str]] = None,
+        fname_stem: Optional[str] = None,
+    ) -> Path:
+        """Generate a log file path."""
+        if dnames_parent is None:
+            dnames_parent = []
+        if isinstance(dnames_parent, str):
+            dnames_parent = [dnames_parent]
+        if fname_stem is None:
+            fname_stem = self.name
+        dpath_log = self.layout.dpath_logs / self.name
+        for dname in dnames_parent:
+            dpath_log = dpath_log / dname
+        return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")
+
+    def run_setup(self):
+        """Run the setup part of the workflow."""
+        if not self._skip_logging:
+            add_logfile(self.logger, self.generate_fpath_log())
+        logging.captureWarnings(True)
+        capture_warnings(self.logger)
+
+        super().run_setup()
+
+        if self.validate_layout:
+            self.layout.validate()
 
     @cached_property
     def config(self) -> Config:
