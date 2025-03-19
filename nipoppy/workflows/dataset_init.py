@@ -28,9 +28,6 @@ from nipoppy.workflows.base import BaseDatasetWorkflow
 class InitWorkflow(BaseDatasetWorkflow):
     """Workflow for init command."""
 
-    # do not validate since the dataset has not been created yet
-    validate_layout = False
-
     def __init__(
         self,
         dpath_root: Path,
@@ -48,6 +45,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             verbose=verbose,
             dry_run=dry_run,
             _skip_logging=True,
+            _validate_layout=False,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source

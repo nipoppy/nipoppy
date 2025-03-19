@@ -260,8 +260,6 @@ class BaseWorkflow(Base, ABC):
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
     """Base workflow class with awareness of dataset layout and components."""
 
-    validate_layout = True
-
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -270,6 +268,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         verbose: bool = False,
         dry_run: bool = False,
         _skip_logging: bool = False,
+        _validate_layout: bool = True,
     ):
         """Initialize the workflow instance.
 
@@ -287,12 +286,15 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             If True, print commands without executing them, by default False
         _skip_logging : bool, optional
             If True, do not write log to file, by default False
+        _validate_layout : bool, optional
+            If True, validate the layout during setup, by default True
         """
         super().__init__(name=name, verbose=verbose, dry_run=dry_run)
 
         self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
         self._skip_logging = _skip_logging
+        self._validate_layout = _validate_layout
 
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
 
@@ -320,7 +322,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
         super().run_setup()
 
-        if self.validate_layout:
+        if self._validate_layout:
             self.layout.validate()
 
     @cached_property
