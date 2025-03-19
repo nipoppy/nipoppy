@@ -22,10 +22,10 @@ from nipoppy.utils import (
     check_session_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class InitWorkflow(BaseWorkflow):
+class InitWorkflow(BaseDatasetWorkflow):
     """Workflow for init command."""
 
     # do not validate since the dataset has not been created yet

@@ -15,7 +15,7 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
+from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.bagel import Bagel
@@ -25,13 +25,10 @@ from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import add_path_timestamp, process_template_str
 
-LOG_SUFFIX = ".log"
 
-
-class BaseWorkflow(Base, ABC):
+class BaseDatasetWorkflow(Base, ABC):
     """Base class with logging/subprocess utilities."""
 
-    path_sep = "-"
     log_prefix_run = "[RUN]"
     log_prefix_run_stdout = "[RUN STDOUT]"
     log_prefix_run_stderr = "[RUN STDERR]"
@@ -93,7 +90,7 @@ class BaseWorkflow(Base, ABC):
         dpath_log = self.layout.dpath_logs / self.name
         for dname in dnames_parent:
             dpath_log = dpath_log / dname
-        return dpath_log / add_path_timestamp(f"{fname_stem}{LOG_SUFFIX}")
+        return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
