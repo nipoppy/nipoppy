@@ -58,6 +58,8 @@ class BaseWorkflow(Base, ABC):
             name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
             level=log_level,
         )
+        logging.captureWarnings(True)
+        capture_warnings(self.logger)
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
@@ -315,8 +317,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         """Run the setup part of the workflow."""
         if not self._skip_logging:
             add_logfile(self.logger, self.generate_fpath_log())
-        logging.captureWarnings(True)
-        capture_warnings(self.logger)
 
         super().run_setup()
 

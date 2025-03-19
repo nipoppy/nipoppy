@@ -1,11 +1,11 @@
-"""Tests for the workflow module."""
+"""Tests for the BaseDatasetWorkflow class."""
 
 import logging
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
@@ -24,9 +24,13 @@ def workflow(tmp_path: Path):
 
     dpath_root = tmp_path / "my_dataset"
     workflow = DummyWorkflow(dpath_root=dpath_root, name="my_workflow")
+    workflow.logger.setLevel(logging.DEBUG)  # capture all logs
+
+    create_empty_dataset(workflow.dpath_root)
+    get_config().save(workflow.layout.fpath_config)
+
     manifest = prepare_dataset(participants_and_sessions_manifest={})
     manifest.save_with_backup(workflow.layout.fpath_manifest)
-    workflow.logger.setLevel(logging.DEBUG)  # capture all logs
     return workflow
 
 
@@ -64,85 +68,24 @@ def test_generate_fpath_log_custom(
     )
 
 
-@pytest.mark.parametrize("command", ["echo x", "echo y"])
-@pytest.mark.parametrize("prefix_run", ["[RUN]", "<run>"])
-def test_log_command(
-    workflow: BaseDatasetWorkflow, command, prefix_run, caplog: pytest.LogCaptureFixture
+@pytest.mark.parametrize("skip_logging", [True, False])
+def test_run_setup_logfile(
+    workflow: BaseDatasetWorkflow, skip_logging, mocker: pytest_mock.MockFixture
 ):
-    workflow.log_prefix_run = prefix_run
-    workflow.log_command(command)
-    assert caplog.records
-    record = caplog.records[-1]
-    assert record.levelno == logging.INFO
-    assert record.message.startswith(prefix_run)
-    assert command in record.message
-
-
-def test_log_command_no_markup(
-    workflow: BaseDatasetWorkflow, caplog: pytest.LogCaptureFixture
-):
-    # message with closing tag
-    message = "[/]"
-
-    # this should not raise a rich markup error
-    workflow.run_command(["echo", message])
-    assert message in caplog.text
-
-
-def test_run_command(workflow: BaseDatasetWorkflow, tmp_path: Path):
-    fpath = tmp_path / "test.txt"
-    process = workflow.run_command(["touch", fpath])
-    assert process.returncode == 0
-    assert fpath.exists()
-
-
-def test_run_command_single_string(workflow: BaseDatasetWorkflow, tmp_path: Path):
-    fpath = tmp_path / "test.txt"
-    process = workflow.run_command(f"touch {fpath}", shell=True)
-    assert process.returncode == 0
-    assert fpath.exists()
-
-
-def test_run_command_dry_run(workflow: BaseDatasetWorkflow, tmp_path: Path):
-    workflow.dry_run = True
-    fpath = tmp_path / "test.txt"
-    command = workflow.run_command(["touch", fpath])
-    assert command == f"touch {fpath}"
-    assert not fpath.exists()
-
-
-def test_run_command_check(workflow: BaseDatasetWorkflow):
-    with pytest.raises(subprocess.CalledProcessError):
-        workflow.run_command(["which", "probably_fake_command"], check=True)
-
-
-def test_run_command_no_markup(
-    workflow: BaseDatasetWorkflow, caplog: pytest.LogCaptureFixture, tmp_path: Path
-):
-    # text with closing tag
-    text = "[/]"
-
-    # this should not raise a rich markup error
-    fpath_txt = tmp_path / "test.txt"
-    fpath_txt.write_text(text)
-    workflow.run_command(["cat", fpath_txt])
-    assert text in caplog.text
-
-
-def test_run_setup(workflow: BaseDatasetWorkflow, caplog: pytest.LogCaptureFixture):
-    create_empty_dataset(workflow.dpath_root)
+    fpath_log = workflow.dpath_root / "my_workflow.log"
+    mocked_generate_fpath_log = mocker.patch.object(
+        workflow, "generate_fpath_log", return_value=fpath_log
+    )
+    mocked_add_logfile = mocker.patch("nipoppy.workflows.base.add_logfile")
+    workflow._skip_logging = skip_logging
     workflow.run_setup()
-    assert "BEGIN" in caplog.text
 
-
-def test_run(workflow: BaseDatasetWorkflow):
-    create_empty_dataset(workflow.dpath_root)
-    assert workflow.run() is None
-
-
-def test_run_cleanup(workflow: BaseDatasetWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_cleanup()
-    assert "END" in caplog.text
+    if skip_logging:
+        mocked_generate_fpath_log.assert_not_called()
+        mocked_add_logfile.assert_not_called()
+    else:
+        mocked_generate_fpath_log.assert_called_once()
+        mocked_add_logfile.assert_called_once_with(workflow.logger, fpath_log)
 
 
 @pytest.mark.parametrize(
@@ -161,6 +104,7 @@ def test_config(workflow: BaseDatasetWorkflow, fpath_config):
 
 
 def test_config_not_found(workflow: BaseDatasetWorkflow):
+    workflow.layout.fpath_config.unlink()
     with pytest.raises(FileNotFoundError):
         workflow.config
 
@@ -183,6 +127,7 @@ def test_manifest(workflow: BaseDatasetWorkflow):
 
 
 def test_manifest_not_found(workflow: BaseDatasetWorkflow):
+    workflow.layout.fpath_manifest.unlink()
     with pytest.raises(FileNotFoundError):
         workflow.manifest
 
