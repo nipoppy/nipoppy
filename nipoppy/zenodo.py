@@ -197,12 +197,15 @@ class ZenodoAPI:
         metadata["metadata"].update(pipeline_metadata)
         return metadata
 
-    def _check_authetication(self):
+    def _check_authetication(self) -> None:
         response = httpx.get(
             f"{self.api_endpoint}/user/records",
             headers=self.headers | {"Content-Type": "application/json"},
         )
-        return True
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to authenticate to Zenodo: {response.json()}"
+            )
 
     def upload_pipeline(
         self, input_dir: Path, zenodo_id: Optional[str] = None
@@ -213,6 +216,8 @@ class ZenodoAPI:
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
             raise ValueError("File must be a directory.")
+
+        self._check_authetication()
 
         metadata = self._get_pipeline_metadata(input_dir)
         if zenodo_id:

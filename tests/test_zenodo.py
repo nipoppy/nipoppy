@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from nipoppy.zenodo import ZenodoAPI, ZenodoAPIError
 from .conftest import DPATH_TEST_DATA, datetime_fixture
@@ -26,10 +27,8 @@ def zenodo_id():
 @pytest.mark.parametrize("zenodo_id_prefix", ["", "zenodo."])
 def test_download_record_files(tmp_path: Path, zenodo_id: str, zenodo_id_prefix: str):
     """Test for downloading a pipeline from Zenodo."""
-    zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
-
     zenodo_id = zenodo_id_prefix + zenodo_id
-    zenodo.download_record_files(zenodo_id, tmp_path)
+    ZenodoAPI(api_endpoint=API_ENDPOINT).download_record_files(zenodo_id, tmp_path)
 
     assert len(list(tmp_path.iterdir())) == 2
 
@@ -39,8 +38,6 @@ def test_download_record_files(tmp_path: Path, zenodo_id: str, zenodo_id_prefix:
 
 def test_download_invalid_record(tmp_path: Path):
     """Test for downloading an invalid pipeline from Zenodo."""
-    zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
-
     zenodo_id = "invalid_record_id"
 
     with pytest.raises(
@@ -50,15 +47,32 @@ def test_download_invalid_record(tmp_path: Path):
             "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
         ),
     ):
-        zenodo.download_record_files(zenodo_id, tmp_path)
+        ZenodoAPI(api_endpoint=API_ENDPOINT).download_record_files(zenodo_id, tmp_path)
 
 
 def test_create_new_version():
+    
     pass
 
 
 def test_create_draft():
+
     pass
+
+
+def test_valid_authentication(mocker: pytest_mock.MockerFixture):
+    mocker.patch("httpx.get", return_value=mocker.Mock(status_code=200))
+
+    ZenodoAPI(
+        api_endpoint=API_ENDPOINT, access_token="valid_token"
+    )._check_authetication()
+
+
+def test_failed_authentication():
+    with pytest.raises(ZenodoAPIError, match="Failed to authenticate to Zenodo:"):
+        ZenodoAPI(
+            api_endpoint=API_ENDPOINT, access_token="invalid_token"
+        )._check_authetication()
 
 
 def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):
@@ -82,7 +96,6 @@ def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):
         }
     }
 
-    zenodo = ZenodoAPI(api_endpoint=API_ENDPOINT)
-    assert expected == zenodo._get_pipeline_metadata(
+    assert expected == ZenodoAPI(api_endpoint=API_ENDPOINT)._get_pipeline_metadata(
         DPATH_TEST_DATA / "pipeline_example" / "fmriprep-24.1.1"
     )
