@@ -364,4 +364,5 @@ def apply_substitutions_to_json(
 
 
 def get_today():
+    """Get today's date in the format YYYY-MM-DD."""
     return datetime.datetime.today().strftime("%Y-%m-%d")

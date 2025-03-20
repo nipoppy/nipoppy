@@ -1,13 +1,14 @@
 """Test for Zenodo API."""
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 import pytest
 import pytest_mock
 
 from nipoppy.zenodo import ZenodoAPI, ZenodoAPIError
-from .conftest import DPATH_TEST_DATA, datetime_fixture
+
+from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
 
 API_ENDPOINT = "https://sandbox.zenodo.org/api"
 
@@ -18,11 +19,11 @@ def zenodo_id():
 
     The Sandbox can be reset at any time, so the Zenodo ID may change.
     If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/170588
+    https://sandbox.zenodo.org/records/185682
 
-    The test file is located at: nipoppy/tests/data/zenodo.zip
+    The test file is located at: tests/data/sample_pipelines/proc/fmriprep-24.1.1
     """
-    return "170588"
+    return "185682"
 
 
 @pytest.mark.parametrize("zenodo_id_prefix", ["", "zenodo."])
@@ -31,10 +32,13 @@ def test_download_record_files(tmp_path: Path, zenodo_id: str, zenodo_id_prefix:
     zenodo_id = zenodo_id_prefix + zenodo_id
     ZenodoAPI(api_endpoint=API_ENDPOINT).download_record_files(zenodo_id, tmp_path)
 
-    assert len(list(tmp_path.iterdir())) == 2
+    assert len(list(tmp_path.iterdir())) == 5
 
-    assert tmp_path.joinpath("zenodo-test.txt").read_text() == "test 123"
-    assert tmp_path.joinpath("test2.txt").read_text() == "test2"
+    # Verify the content of the downloaded files
+    example_dir = DPATH_TEST_DATA / "sample_pipelines" / "proc" / "fmriprep-24.1.1"
+    for file in example_dir.iterdir():
+        assert tmp_path.joinpath(file.name).exists()
+        assert tmp_path.joinpath(file.name).read_text() == file.read_text()
 
 
 def test_download_invalid_record(tmp_path: Path):
@@ -59,7 +63,7 @@ def test_create_new_version():
     ZenodoAPI(
         api_endpoint=API_ENDPOINT, access_token=os.environ["ZENODO_TOKEN"]
     ).upload_pipeline(
-        input_dir=DPATH_TEST_DATA / "pipeline_example" / "fmriprep-24.1.1",
+        input_dir=DPATH_TEST_DATA / "sample_pipelines" / "proc" / "fmriprep-24.1.1",
         zenodo_id=os.environ["ZENODO_ID"],
     )
 
@@ -129,7 +133,7 @@ def test_failed_authentication():
         )._check_authetication()
 
 
-def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):
+def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):  # noqa F811
     expected = {
         "metadata": {
             "title": "Upload test",
@@ -146,10 +150,14 @@ def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):
             "publication_date": "2024-04-04",
             "publisher": "Nipoppy",
             "resource_type": {"id": "software"},
-            "keywords": ["Nipoppy"],
+            "keywords": {"Nipoppy", "processing"},
         }
     }
 
-    assert expected == ZenodoAPI(api_endpoint=API_ENDPOINT)._get_pipeline_metadata(
-        DPATH_TEST_DATA / "pipeline_example" / "fmriprep-24.1.1"
+    results = ZenodoAPI(api_endpoint=API_ENDPOINT)._get_pipeline_metadata(
+        DPATH_TEST_DATA / "sample_pipelines" / "proc" / "fmriprep-24.1.1"
     )
+    # Convert keywords to set to prevent order mismatch
+    results["metadata"]["keywords"] = set(results["metadata"]["keywords"])
+
+    assert results == expected

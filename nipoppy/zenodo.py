@@ -1,12 +1,13 @@
 """Client for Zenodo API."""
 
 import hashlib
+import json
 from pathlib import Path
 from typing import Optional
-from nipoppy.utils import get_today
-import json
 
 import httpx
+
+from nipoppy.utils import get_today
 
 
 class InvalidChecksumError(Exception):
@@ -193,10 +194,10 @@ class ZenodoAPI:
         metadata["metadata"].update(pipeline_metadata)
 
         # Enforce Nipoppy keywords
-        # TODO enforce pipeline type as well
-        # pipeline_type = ...
+        config = json.loads(pipeline_dir.joinpath("config.json").read_text())
+        pipeline_type = config["PIPELINE_TYPE"]
         metadata["metadata"]["keywords"] = list(
-            set(metadata["metadata"]["keywords"] + ["Nipoppy"])
+            set(metadata["metadata"]["keywords"] + ["Nipoppy", pipeline_type])
         )
 
         return metadata
@@ -212,6 +213,7 @@ class ZenodoAPI:
     def upload_pipeline(
         self, input_dir: Path, zenodo_id: Optional[str] = None
     ) -> Optional[str]:
+        """Upload a pipeline to Zenodo."""
         # TODO Add pipeline validation before uploading to Zenodo
 
         if not input_dir.exists():

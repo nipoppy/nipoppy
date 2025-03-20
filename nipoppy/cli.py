@@ -372,15 +372,15 @@ def zenodo_options(func):
     return func
 
 
-@pipeline.command("install")
+@pipeline.command("download")
 @click.argument(
     "zenodo_id",
     type=str,
 )
 @dataset_option
 @zenodo_options
-def pipeline_install(**params):
-    """Install a new pipeline."""
+def pipeline_download(**params):
+    """Download a Zenodo pipeline."""
     from nipoppy.zenodo import ZenodoAPI
 
     zenodo = ZenodoAPI(
@@ -391,10 +391,10 @@ def pipeline_install(**params):
     layout = DatasetLayout(dpath_root=params.get("dpath_root"))
 
     zenodo_id = params.pop("zenodo_id")
-    download_dir = "zenodo." + zenodo_id.removeprefix("zenodo.")
-    zenodo.download_record_files(
-        zenodo_id, output_dir=layout.dpath_pipelines.joinpath(download_dir)
-    )
+    zenodo.download_record_files(zenodo_id, output_dir=layout.dpath_pipelines)
+
+    # TODO Move the pipeline to the correct location in the dataset
+    # and create the pipeline variable in the config file.
 
 
 @pipeline.command("upload")
