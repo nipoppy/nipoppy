@@ -112,17 +112,18 @@ def create_pipeline_config_files(
     extraction_pipelines: Optional[list[dict]] = None,
 ):
     """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
-    for pipeline_config_list, pipeline_type, dname in [
+    for pipeline_config_list, pipeline_type in [
         (
             bids_pipelines,
             PipelineTypeEnum.BIDSIFICATION,
-            DatasetLayout.dname_catalog_bids,
         ),
-        (proc_pipelines, PipelineTypeEnum.PROCESSING, DatasetLayout.dname_catalog_proc),
+        (
+            proc_pipelines,
+            PipelineTypeEnum.PROCESSING,
+        ),
         (
             extraction_pipelines,
             PipelineTypeEnum.EXTRACTION,
-            DatasetLayout.dname_catalog_extraction,
         ),
     ]:
         if pipeline_config_list is None:
@@ -131,7 +132,7 @@ def create_pipeline_config_files(
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
             fpath_config = (
                 dpath_pipelines
-                / dname
+                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
                 / f"{pipeline_config['NAME']}-{pipeline_config['VERSION']}"
                 / DatasetLayout.fname_pipeline_config
             )

@@ -11,7 +11,7 @@ from boutiques import bosh
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig, BidsPipelineConfig
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     DPATH_SAMPLE_PIPELINES,
@@ -79,7 +79,9 @@ def single_subject_dataset(
 @pytest.fixture()
 def bids_pipeline_configs() -> list[BidsPipelineConfig]:
     return get_pipeline_configs(
-        DPATH_SAMPLE_PIPELINES / DatasetLayout.dname_catalog_bids, BidsPipelineConfig
+        DPATH_SAMPLE_PIPELINES
+        / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.BIDSIFICATION],
+        BidsPipelineConfig,
     )
 
 
