@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest_mock
 from click.testing import CliRunner
 
 from nipoppy.cli import cli
@@ -218,3 +219,47 @@ def test_cli_extract(tmp_path: Path):
 
     # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
+
+def test_cli_pipeline_download(tmp_path: Path, mocker: pytest_mock.MockerFixture):
+    dpath_root = tmp_path / "my_dataset"
+
+    mocked_pipeline_download = mocker.patch(
+        "nipoppy.zenodo.ZenodoAPI.download_record_files"
+    )
+
+    result = runner.invoke(
+        cli,
+        [
+            "pipeline",
+            "download",
+            "zenodo.123456",
+            "--dataset",
+            str(dpath_root),
+        ],
+    )
+
+    mocked_pipeline_download.assert_called_once()
+
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.SUCCESS
+
+
+def test_cli_pipeline_upload(mocker: pytest_mock.MockerFixture):
+    mocked_pipeline_download = mocker.patch("nipoppy.zenodo.ZenodoAPI.upload_pipeline")
+
+    result = runner.invoke(
+        cli,
+        [
+            "pipeline",
+            "upload",
+            "tests/data/zenodo.zip",
+            "--zenodo-id",
+            "zenodo.123456",
+        ],
+    )
+
+    mocked_pipeline_download.assert_called_once()
+
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.SUCCESS
