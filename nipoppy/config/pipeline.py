@@ -43,7 +43,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 
     _expected_pipeline_type: Optional[PipelineTypeEnum] = None
 
-    # for validation
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -53,7 +52,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    # Needed for validation
     STEPS: list[
         Union[
             BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig

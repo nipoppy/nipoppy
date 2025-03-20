@@ -21,6 +21,7 @@ from nipoppy.config.boutiques import (
 )
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
+    BidsPipelineConfig,
     ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
@@ -126,7 +127,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
 
     _pipeline_type_to_pipeline_class_map = {
         PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
-        PipelineTypeEnum.BIDSIFICATION: BasePipelineConfig,
+        PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
         PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
     }
 

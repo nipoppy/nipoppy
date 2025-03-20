@@ -41,8 +41,26 @@ def runner(tmp_path: Path):
         },
     )
 
-    fpath_descriptor = tmp_path / "descriptor.json"
-    fpath_invocation = tmp_path / "invocation.json"
+    fname_descriptor = "descriptor.json"
+    fname_invocation = "invocation.json"
+
+    create_pipeline_config_files(
+        runner.layout.dpath_pipelines,
+        proc_pipelines=[
+            {
+                "NAME": "dummy_pipeline",
+                "VERSION": "1.0.0",
+                "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
+                "STEPS": [
+                    {
+                        "DESCRIPTOR_FILE": fname_descriptor,
+                        "INVOCATION_FILE": fname_invocation,
+                        "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
+                    }
+                ],
+            },
+        ],
+    )
 
     descriptor = {
         "name": "dummy_pipeline",
@@ -72,27 +90,8 @@ def runner(tmp_path: Path):
         "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION_ID]]",
         "arg2": 10,
     }
-
-    fpath_descriptor.write_text(json.dumps(descriptor))
-    fpath_invocation.write_text(json.dumps(invocation))
-
-    create_pipeline_config_files(
-        runner.layout.dpath_pipelines,
-        proc_pipelines=[
-            {
-                "NAME": "dummy_pipeline",
-                "VERSION": "1.0.0",
-                "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
-                "STEPS": [
-                    {
-                        "DESCRIPTOR_FILE": str(fpath_descriptor),
-                        "INVOCATION_FILE": str(fpath_invocation),
-                        "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
-                    }
-                ],
-            },
-        ],
-    )
+    (runner.dpath_pipeline_bundle / fname_descriptor).write_text(json.dumps(descriptor))
+    (runner.dpath_pipeline_bundle / fname_invocation).write_text(json.dumps(invocation))
     return runner
 
 
