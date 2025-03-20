@@ -27,7 +27,7 @@ class PipelineVariables(BaseModel):
     }
 
     BIDSIFICATION: dict[str, dict[str, dict[str, str]]] = Field(
-        default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
+        default=defaultdict(lambda: defaultdict(dict)),
         description=(
             "Variables for the BIDSification pipelines. This should be a nested "
             "dictionary with these levels: "
@@ -35,7 +35,7 @@ class PipelineVariables(BaseModel):
         ),
     )
     PROCESSING: dict[str, dict[str, dict[str, str]]] = Field(
-        default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
+        default=defaultdict(lambda: defaultdict(dict)),
         description=(
             "Variables for the processing pipelines. This should be a nested "
             "dictionary with these levels: "
@@ -43,7 +43,7 @@ class PipelineVariables(BaseModel):
         ),
     )
     EXTRACTION: dict[str, dict[str, dict[str, str]]] = Field(
-        default_factory=lambda: defaultdict(lambda: defaultdict(dict)),
+        default=defaultdict(lambda: defaultdict(dict)),
         description=(
             "Variables for the extraction pipelines. This should be a nested "
             "dictionary with these levels: "
@@ -70,17 +70,15 @@ class PipelineVariables(BaseModel):
     @model_validator(mode="after")
     def validate_after(self):
         """Convert fields to defaultdicts."""
-
-        def _to_defaultdict(nested_dict: dict, level: int):
-            if level == 0:
-                return nested_dict
-            return defaultdict(
-                lambda: _to_defaultdict({}, level - 1),
-                {k: _to_defaultdict(v, level - 1) for k, v in nested_dict.items()},
-            )
-
-        for key in self._pipeline_type_to_key.values():
-            setattr(self, key, _to_defaultdict(getattr(self, key), level=2))
+        for pipeline_type_field in self._pipeline_type_to_key.values():
+            original_nested_dict = getattr(self, pipeline_type_field)
+            new_nested_dict = self.model_fields[pipeline_type_field].default
+            for pipeline_name in original_nested_dict:
+                for pipeline_version in original_nested_dict[pipeline_name]:
+                    new_nested_dict[pipeline_name][pipeline_version] = (
+                        original_nested_dict[pipeline_name][pipeline_version]
+                    )
+            setattr(self, pipeline_type_field, new_nested_dict)
 
         return self
 
