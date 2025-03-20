@@ -1,6 +1,7 @@
 """Test for Zenodo API."""
 
 from pathlib import Path
+import os
 
 import pytest
 import pytest_mock
@@ -50,14 +51,67 @@ def test_download_invalid_record(tmp_path: Path):
         ZenodoAPI(api_endpoint=API_ENDPOINT).download_record_files(zenodo_id, tmp_path)
 
 
+@pytest.mark.skipif(
+    os.environ.get("ZENODO_TOKEN") is None or os.environ.get("ZENODO_ID") is None,
+    reason="Requires Zenodo token and ID",
+)
 def test_create_new_version():
-    
-    pass
+    ZenodoAPI(
+        api_endpoint=API_ENDPOINT, access_token=os.environ["ZENODO_TOKEN"]
+    ).upload_pipeline(
+        input_dir=DPATH_TEST_DATA / "pipeline_example" / "fmriprep-24.1.1",
+        zenodo_id=os.environ["ZENODO_ID"],
+    )
 
 
-def test_create_draft():
+def test_create_draft(mocker: pytest_mock.MockerFixture):
+    # Set mock response
+    mock_post = mocker.patch("httpx.post")
+    mock_response = mocker.Mock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"id": "123456"}
+    mock_post.return_value = mock_response
 
-    pass
+    # Call the function under test
+    url = "https://sandbox.zenodo.org/api/records"
+    headers = {
+        "Authorization": "Bearer mocked_api",
+        "Content-Type": "application/json",
+    }
+    metadata = {"metadata": dict()}
+
+    result = ZenodoAPI(
+        api_endpoint=API_ENDPOINT, access_token="mocked_api"
+    )._create_draft(metadata)
+
+    # Assertions
+    mock_post.assert_called_once_with(url, json=metadata, headers=headers)
+    assert result == "123456"
+
+
+def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
+    # Set mock response
+    mock_post = mocker.patch("httpx.post")
+    mock_response = mocker.Mock()
+    mock_response.status_code = 000  # Failed status code
+    mock_response.json.return_value = {"id": "123456"}
+    mock_post.return_value = mock_response
+
+    # Call the function under test
+    url = "https://sandbox.zenodo.org/api/records"
+    headers = {
+        "Authorization": "Bearer mocked_api",
+        "Content-Type": "application/json",
+    }
+    metadata = {"metadata": dict()}
+
+    # Assertions
+    with pytest.raises(ZenodoAPIError, match="Failed to create a draft record:"):
+        ZenodoAPI(api_endpoint=API_ENDPOINT, access_token="mocked_api")._create_draft(
+            metadata
+        )
+
+    mock_post.assert_called_once_with(url, json=metadata, headers=headers)
 
 
 def test_valid_authentication(mocker: pytest_mock.MockerFixture):

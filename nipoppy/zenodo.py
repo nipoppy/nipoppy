@@ -71,14 +71,14 @@ class ZenodoAPI:
             entry["key"]: entry["checksum"].removeprefix("md5:")
             for entry in response.json()["entries"]
         }
-        for filename, checksum in files.items():
+        for file, checksum in files.items():
             response = httpx.get(
-                f"{self.api_endpoint}/records/{zenodo_id}/files/{filename}/content",  # noqa E501
+                f"{self.api_endpoint}/records/{zenodo_id}/files/{file}/content",  # noqa E501
                 headers=self.headers,
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
-                    f"Failed to download file for zenodo.{zenodo_id}: {filename}"
+                    f"Failed to download file for zenodo.{zenodo_id}: {file}"
                     f"\n{response.json()}"
                 )
 
@@ -86,11 +86,10 @@ class ZenodoAPI:
             content_md5 = hashlib.md5(response.content).hexdigest()
             if content_md5 != checksum:
                 raise InvalidChecksumError(
-                    "Checksum mismatch: "
-                    f"{filename} has invalid checksum ({content_md5})"
+                    "Checksum mismatch: " f"{file} has invalid checksum ({content_md5})"
                 )
 
-            output_dir.joinpath(filename).write_bytes(response.content)
+            output_dir.joinpath(file).write_bytes(response.content)
 
     def _create_new_version(self, zenodo_id: str, metadata: dict) -> str:
         response = httpx.post(
@@ -129,43 +128,40 @@ class ZenodoAPI:
         return response.json()["id"]
 
     def _upload_files(self, files: list[Path], zenodo_id: str):
-        try:
-            metadata = [{"key": f.name for f in files}]
-            response = httpx.post(
-                f"{self.api_endpoint}/records/{zenodo_id}/draft/files",
-                headers=self.headers | {"Content-Type": "application/json"},
-                json=metadata,
+        metadata = [{"key": file.name} for file in files]
+        response = httpx.post(
+            f"{self.api_endpoint}/records/{zenodo_id}/draft/files",
+            headers=self.headers | {"Content-Type": "application/json"},
+            json=metadata,
+        )
+        if response.status_code != 201:
+            raise ZenodoAPIError(
+                f"Failed to create upload file list for zenodo.{zenodo_id}: {files}"
+                f"\n{response.json()}"
             )
-            if response.status_code != 201:
-                raise ZenodoAPIError(
-                    f"Failed to create upload file list for zenodo.{zenodo_id}: {files}"
-                    f"\n{response.json()}"
-                )
-        except ZenodoAPIError as e:
-            raise e
 
-        for filename in files:
+        for file in files:
             # Upload the file content
-            with filename.open("rb") as f:
+            with file.open("rb") as f:
                 response = httpx.put(
-                    f"{self.api_endpoint}/records/{zenodo_id}/draft/files/{filename.name}/content",  # noqa E501
+                    f"{self.api_endpoint}/records/{zenodo_id}/draft/files/{file.name}/content",  # noqa E501
                     headers=self.headers | {"Content-Type": "application/octet-stream"},
                     content=f,
                 )
                 if response.status_code != 200:
                     raise ZenodoAPIError(
-                        f"Failed to upload file for zenodo.{zenodo_id}: {filename}"
+                        f"Failed to upload file for zenodo.{zenodo_id}: {file.name}"
                         f"\n{response.json()}"
                     )
 
             # Commit the uploaded file
             response = httpx.post(
-                f"{self.api_endpoint}/records/{zenodo_id}/draft/files/{filename.name}/commit",  # noqa E501
+                f"{self.api_endpoint}/records/{zenodo_id}/draft/files/{file.name}/commit",  # noqa E501
                 headers=self.headers,
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
-                    f"Failed to commit the file file for zenodo.{zenodo_id}: {filename}"
+                    f"Failed to commit the file file for zenodo.{zenodo_id}: {file}"
                     f"\n{response.json()}"
                 )
 
@@ -195,6 +191,14 @@ class ZenodoAPI:
         pipeline_metadata = json.loads(pipeline_dir.joinpath("zenodo.json").read_text())
 
         metadata["metadata"].update(pipeline_metadata)
+
+        # Enforce Nipoppy keywords
+        # TODO enforce pipeline type as well
+        # pipeline_type = ...
+        metadata["metadata"]["keywords"] = list(
+            set(metadata["metadata"]["keywords"] + ["Nipoppy"])
+        )
+
         return metadata
 
     def _check_authetication(self) -> None:
@@ -203,9 +207,7 @@ class ZenodoAPI:
             headers=self.headers | {"Content-Type": "application/json"},
         )
         if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to authenticate to Zenodo: {response.json()}"
-            )
+            raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
 
     def upload_pipeline(
         self, input_dir: Path, zenodo_id: Optional[str] = None
@@ -236,7 +238,7 @@ class ZenodoAPI:
         except Exception as e:
             # Delete the draft if an error occurs
             # Prevents issue when retrying to modify the record while a draft exits.
-            print(f"Reverting record {action} for zenodo.{zenodo_id} due to error {e}")
+            print(f"Reverting record {action} for zenodo.{zenodo_id} due to error: {e}")
             response = httpx.delete(
                 f"{self.api_endpoint}/records/{zenodo_id}/draft",
                 headers=self.headers,
