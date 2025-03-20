@@ -39,8 +39,10 @@ FIELDS_STEP_EXTRACTION = FIELDS_STEP_BASE
             FIELDS_STEP_BASE,
             [
                 {"NAME": "step_name"},
-                {"DESCRIPTOR_FILE": "PATH_TO_DESCRIPTOR_FILE"},
-                {"INVOCATION_FILE": "PATH_TO_INVOCATION_FILE"},
+                {
+                    "DESCRIPTOR_FILE": "PATH_TO_DESCRIPTOR_FILE",
+                    "INVOCATION_FILE": "PATH_TO_INVOCATION_FILE",
+                },
                 {"CONTAINER_CONFIG": {}},
             ],
         ),
@@ -126,7 +128,7 @@ def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_e
         if expect_error
         else nullcontext()
     ):
-        ProcPipelineStepConfig(
+        BasePipelineStepConfig(
             DESCRIPTOR_FILE=descriptor_file, INVOCATION_FILE=invocation_file
         )
 
