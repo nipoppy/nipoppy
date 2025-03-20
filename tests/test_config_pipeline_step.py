@@ -134,6 +134,46 @@ def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_e
 
 
 @pytest.mark.parametrize(
+    "data,pipeline_class,expect_error",
+    [
+        (
+            {
+                "DESCRIPTOR_FILE": "/descriptor.json",
+                "INVOCATION_FILE": "invocation.json",
+            },
+            BasePipelineStepConfig,
+            True,
+        ),
+        (
+            {
+                "DESCRIPTOR_FILE": "descriptor.json",
+                "INVOCATION_FILE": "/invocation.json",
+            },
+            BasePipelineStepConfig,
+            True,
+        ),
+        (
+            {"PYBIDS_IGNORE_FILE": "/pybids_ignore.json"},
+            ProcPipelineStepConfig,
+            True,
+        ),
+        (
+            {"TRACKER_CONFIG_FILE": "/tracker_config.json"},
+            ProcPipelineStepConfig,
+            True,
+        ),
+    ],
+)
+def test_absolute_paths(data, pipeline_class, expect_error):
+    with (
+        pytest.raises(ValidationError, match=".* must be a relative path, got")
+        if expect_error
+        else nullcontext()
+    ):
+        pipeline_class(**data)
+
+
+@pytest.mark.parametrize(
     "analysis_level,expect_error",
     [
         (AnalysisLevelType.participant_session, False),

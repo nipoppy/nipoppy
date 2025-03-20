@@ -101,7 +101,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
 class ProcPipelineStepConfig(BasePipelineStepConfig):
     """Schema for processing pipeline step configuration."""
 
-    _file_path_fields = [
+    _path_fields = [
         "DESCRIPTOR_FILE",
         "INVOCATION_FILE",
         "TRACKER_CONFIG_FILE",
