@@ -6,5 +6,6 @@
         {
             "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "processing"
 }
