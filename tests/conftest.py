@@ -75,25 +75,27 @@ def datetime_fixture(
 
 
 def get_config(
-    dataset_name="my_dataset",
-    session_ids=None,
-    visit_ids=None,
     container_config=None,
+    dicom_dir_map_file=None,
+    dicom_dir_participant_first=None,
+    substitutions=None,
+    custom=None,
 ):
     """Create a valid Config object with all required parameters."""
     # everything empty by default
-    if session_ids is None:
-        session_ids = []
-    if visit_ids is None:
-        visit_ids = []
     if container_config is None:
         container_config = {}
+    if substitutions is None:
+        substitutions = {}
+    if custom is None:
+        custom = {}
 
     return Config(
-        DATASET_NAME=dataset_name,
-        VISIT_IDS=visit_ids,
-        SESSION_IDS=session_ids,
         CONTAINER_CONFIG=container_config,
+        DICOM_DIR_MAP_FILE=dicom_dir_map_file,
+        DICOM_DIR_PARTICIPANT_FIRST=dicom_dir_participant_first,
+        SUBSTITUTIONS=substitutions,
+        CUSTOM=custom,
     )
 
 

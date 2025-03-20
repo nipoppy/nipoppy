@@ -16,10 +16,8 @@ from nipoppy.utils import FPATH_SAMPLE_CONFIG
 from .conftest import DPATH_TEST_DATA
 
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
-
-REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISIT_IDS"]
+REQUIRED_FIELDS_CONFIG = []
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
-    "SESSION_IDS",
     "SUBSTITUTIONS",
     "CUSTOM",
     "CONTAINER_CONFIG",
@@ -31,11 +29,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
 
 @pytest.fixture(scope="function")
 def valid_config_data():
-    return {
-        "DATASET_NAME": "my_dataset",
-        "VISIT_IDS": ["1"],
-        "SESSION_IDS": ["1"],
-    }
+    return {}
 
 
 @pytest.fixture(scope="function")
@@ -84,19 +78,11 @@ def test_no_extra_fields(valid_config_data):
 
 
 @pytest.mark.parametrize(
-    "visit_ids,expected_session_ids",
-    [
-        (["V01", "V02"], ["V01", "V02"]),
-        (["1", "2"], ["1", "2"]),
-    ],
+    "deprecated_field", ["DATASET_NAME", "VISIT_IDS", "SESSION_IDS"]
 )
-def test_sessions_inferred(visit_ids, expected_session_ids):
-    data = {
-        "DATASET_NAME": "my_dataset",
-        "VISIT_IDS": visit_ids,
-    }
-    config = Config(**data)
-    assert config.SESSION_IDS == expected_session_ids
+def test_deprecated_fields(deprecated_field, valid_config_data):
+    with pytest.warns(DeprecationWarning):
+        Config(**valid_config_data, **{deprecated_field: "x"})
 
 
 @pytest.mark.parametrize(
@@ -219,8 +205,7 @@ def test_load(path):
 @pytest.mark.parametrize(
     "path",
     [
-        DPATH_TEST_DATA / "config_invalid1.json",  # missing required
-        DPATH_TEST_DATA / "config_invalid2.json",  # has PROC_PIPELINES (old)
+        DPATH_TEST_DATA / "config_invalid1.json",  # has PROC_PIPELINES (old)
     ],
 )
 def test_load_invalid(path):
