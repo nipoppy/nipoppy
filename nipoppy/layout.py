@@ -134,8 +134,8 @@ class DatasetLayout(Base):
 
     # pipeline store subdirectories
     pipeline_type_to_dname_map = {
-        PipelineTypeEnum.BIDSIFICATION: "bidsification",
-        PipelineTypeEnum.PROCESSING: "processing",
+        PipelineTypeEnum.BIDSIFICATION: "bids",
+        PipelineTypeEnum.PROCESSING: "proc",
         PipelineTypeEnum.EXTRACTION: "extraction",
     }
 
