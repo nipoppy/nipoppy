@@ -19,11 +19,11 @@ def zenodo_id():
 
     The Sandbox can be reset at any time, so the Zenodo ID may change.
     If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/185682
+    https://sandbox.zenodo.org/records/185684
 
     The test file is located at: tests/data/sample_pipelines/proc/fmriprep-24.1.1
     """
-    return "185682"
+    return "185684"
 
 
 @pytest.mark.parametrize("zenodo_id_prefix", ["", "zenodo."])
