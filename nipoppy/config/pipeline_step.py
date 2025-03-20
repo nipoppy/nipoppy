@@ -63,6 +63,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline step configuration before instantiation.
 
         Specifically:
+
         - Apply substitutions for step name in the config
         """
         if isinstance(data, dict):
@@ -138,7 +139,7 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         Specifically:
 
         - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
-        "participant_session"
+          "participant_session"
         """
         super().validate_after()
 
