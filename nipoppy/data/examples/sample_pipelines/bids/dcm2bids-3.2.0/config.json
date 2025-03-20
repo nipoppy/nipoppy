@@ -24,5 +24,6 @@
             },
             "UPDATE_DOUGHNUT": true
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "bidsification"
 }

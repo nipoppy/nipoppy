@@ -6,5 +6,6 @@
         {
             "TRACKER_CONFIG_FILE": "tracker_config.json"
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "processing"
 }

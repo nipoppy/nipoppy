@@ -26,5 +26,6 @@
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "group"
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "extraction"
 }

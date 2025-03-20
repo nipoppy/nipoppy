@@ -12,5 +12,6 @@
             "INVOCATION_FILE": "invocation.json",
             "DESCRIPTOR_FILE": "descriptor.json"
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "extraction"
 }
