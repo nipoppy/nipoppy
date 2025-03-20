@@ -68,7 +68,7 @@ def workflow(tmp_path: Path):
         pipeline_version="1.0",
     )
     # write config
-    config = get_config(visit_ids=["1"])
+    config = get_config()
     config.save(workflow.layout.fpath_config)
 
     create_empty_dataset(workflow.layout.dpath_root)

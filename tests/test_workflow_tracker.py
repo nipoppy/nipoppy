@@ -44,9 +44,7 @@ def tracker(tmp_path: Path):
     )
     manifest.save_with_backup(tracker.layout.fpath_manifest)
 
-    tracker.config = get_config(
-        visit_ids=["1", "2"],
-    )
+    tracker.config = get_config()
 
     fname_tracker_config = "tracker_config.json"
     create_pipeline_config_files(
