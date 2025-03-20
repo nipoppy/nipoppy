@@ -4,9 +4,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import LogColor
+from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
-from nipoppy.utils import StrOrPathLike
 from nipoppy.workflows.base import BaseWorkflow
 
 

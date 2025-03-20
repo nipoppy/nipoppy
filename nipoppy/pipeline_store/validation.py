@@ -11,8 +11,9 @@ from pydantic_core import ValidationError
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import StrOrPathLike, load_json, process_template_str
+from nipoppy.utils import load_json, process_template_str
 
 
 def _load_pipeline_config_file(
