@@ -201,7 +201,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
-    def _dpath_pipeline_bundle(self) -> Path:
+    def dpath_pipeline_bundle(self) -> Path:
         """Path to the pipeline bundle directory."""
         return self.layout.get_dpath_pipeline_store(
             self._pipeline_type
@@ -213,7 +213,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     def pipeline_config(self) -> ProcPipelineConfig:
         """Get the user config object for the processing pipeline."""
         return self._get_pipeline_config(
-            self._dpath_pipeline_bundle,
+            self.dpath_pipeline_bundle,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             pipeline_class=self._pipeline_type_to_pipeline_class_map[
@@ -246,12 +246,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        fpath_descriptor = self.pipeline_step_config.DESCRIPTOR_FILE
-        if fpath_descriptor is None:
+        if (fname_descriptor := self.pipeline_step_config.DESCRIPTOR_FILE) is None:
             raise ValueError(
                 "No descriptor file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+        fpath_descriptor = self.dpath_pipeline_bundle / fname_descriptor
         self.logger.info(f"Loading descriptor from {fpath_descriptor}")
         descriptor = load_json(fpath_descriptor)
         descriptor = self.config.apply_pipeline_variables(
@@ -265,12 +265,12 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        fpath_invocation = self.pipeline_step_config.INVOCATION_FILE
-        if fpath_invocation is None:
+        if (fname_invocation := self.pipeline_step_config.INVOCATION_FILE) is None:
             raise ValueError(
                 "No invocation file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+        fpath_invocation = self.dpath_pipeline_bundle / fname_invocation
         self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
         invocation = self.config.apply_pipeline_variables(
@@ -284,12 +284,14 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def tracker_config(self) -> TrackerConfig:
         """Load the pipeline step's tracker configuration."""
-        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
-        if fpath_tracker_config is None:
+        if (
+            fname_tracker_config := self.pipeline_step_config.TRACKER_CONFIG_FILE
+        ) is None:
             raise ValueError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
+        fpath_tracker_config = self.dpath_pipeline_bundle / fname_tracker_config
         return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
@@ -300,11 +302,13 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        fpath_pybids_ignore = self.pipeline_step_config.PYBIDS_IGNORE_FILE
-
         # no file specified
-        if fpath_pybids_ignore is None:
+        if (
+            fname_pybids_ignore := self.pipeline_step_config.PYBIDS_IGNORE_FILE
+        ) is None:
             return []
+
+        fpath_pybids_ignore = self.dpath_pipeline_bundle / fname_pybids_ignore
 
         # load patterns from file
         patterns = load_json(fpath_pybids_ignore)
