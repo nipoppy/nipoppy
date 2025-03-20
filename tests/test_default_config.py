@@ -38,8 +38,6 @@ def single_subject_dataset(
     session_id = "01"
     container_command = "apptainer"
     substitutions = {
-        "[[NIPOPPY_DPATH_PIPELINES]]": str(DPATH_SAMPLE_PIPELINES),
-        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": str(tmp_path / "heuristic.py"),
         "[[DCM2BIDS_CONFIG_FILE]]": str(tmp_path / "dcm2bids_config.json"),
         "[[FREESURFER_LICENSE_FILE]]": str(tmp_path / "freesurfer_license.txt"),
@@ -199,6 +197,7 @@ def test_pipeline_runner(
         pipeline_version=pipeline_version,
         simulate=True,
     )
+    runner.layout = layout
 
     runner.pipeline_config.get_fpath_container().touch()
 

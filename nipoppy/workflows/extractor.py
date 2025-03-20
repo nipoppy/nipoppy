@@ -13,6 +13,7 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.utils import get_pipeline_tag
 from nipoppy.workflows.runner import PipelineRunner
 
 
@@ -75,7 +76,8 @@ class ExtractionRunner(PipelineRunner):
         proc_pipeline_info = self.pipeline_config.PROC_DEPENDENCIES[0]
 
         self._get_pipeline_config(
-            self.layout.get_dpath_pipeline_store(PipelineTypeEnum.PROCESSING),
+            self.layout.get_dpath_pipeline_store(PipelineTypeEnum.PROCESSING)
+            / get_pipeline_tag(proc_pipeline_info.NAME, proc_pipeline_info.VERSION),
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
             pipeline_class=ProcPipelineConfig,

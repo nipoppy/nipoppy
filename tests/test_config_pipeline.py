@@ -184,6 +184,7 @@ def test_substitutions():
             {
                 "NAME": "step1",
                 "INVOCATION_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",  # noqa: E501
+                "DESCRIPTOR_FILE": "[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",  # noqa: E501
             }
         ],
     }
@@ -211,8 +212,16 @@ def test_get_step_config(valid_data, step_name, expected_name):
     pipeling_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
-            BasePipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            BasePipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+            BasePipelineStepConfig(
+                NAME="step1",
+                INVOCATION_FILE="invocation-step1.json",
+                DESCRIPTOR_FILE="descriptor-step1.json",
+            ),
+            BasePipelineStepConfig(
+                NAME="step2",
+                INVOCATION_FILE="invocation-step2.json",
+                DESCRIPTOR_FILE="descriptor-step1.json",
+            ),
         ],
     )
 
@@ -229,8 +238,16 @@ def test_get_step_config_invalid(valid_data):
     pipeline_config = BasePipelineConfig(
         **valid_data,
         STEPS=[
-            BasePipelineStepConfig(NAME="step1", INVOCATION_FILE="step1.json"),
-            BasePipelineStepConfig(NAME="step2", INVOCATION_FILE="step2.json"),
+            BasePipelineStepConfig(
+                NAME="step1",
+                INVOCATION_FILE="invocation-step1.json",
+                DESCRIPTOR_FILE="descriptor-step1.json",
+            ),
+            BasePipelineStepConfig(
+                NAME="step2",
+                INVOCATION_FILE="invocation-step2.json",
+                DESCRIPTOR_FILE="descriptor-step1.json",
+            ),
         ],
     )
     with pytest.raises(ValueError, match="not found in pipeline"):

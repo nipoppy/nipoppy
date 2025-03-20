@@ -19,7 +19,11 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
+from nipoppy.config.pipeline import (
+    BasePipelineConfig,
+    ExtractionPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
@@ -123,7 +127,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     _pipeline_type_to_pipeline_class_map = {
         PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
         PipelineTypeEnum.BIDSIFICATION: BasePipelineConfig,
-        PipelineTypeEnum.EXTRACTION: BasePipelineConfig,
+        PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
     }
 
     def __init__(
@@ -360,8 +364,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if not fpath_config.exists():
             raise FileNotFoundError(
                 f"Pipeline config file not found at {fpath_config} for "
-                f"{self._pipeline_type.value} pipeline: "
-                f"{pipeline_name} {pipeline_version}"
+                f"pipeline: {pipeline_name} {pipeline_version}"
             )
 
         pipeline_config_json = self.config.apply_pipeline_variables(
