@@ -280,27 +280,25 @@ def test_descriptor_none(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "substitutions,expected_descriptor",
+    "variables,expected_descriptor",
     [
-        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
-        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "value1"}),
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "[[TO_REPLACE1]]"}),
     ],
 )
-def test_descriptor_substitutions(
-    tmp_path: Path, workflow: PipelineWorkflow, substitutions, expected_descriptor
+def test_descriptor_pipeline_variables(
+    tmp_path: Path, workflow: PipelineWorkflow, variables, expected_descriptor
 ):
-    # set substitutions
-    workflow.config.SUBSTITUTIONS = substitutions
+    # set variables for substitution
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
 
     # set descriptor file and write descriptor content
     fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=workflow.pipeline_name,
-        VERSION=workflow.pipeline_version,
-        STEPS=[
-            ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor, INVOCATION_FILE="")
-        ],
-    )
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor, INVOCATION_FILE="")
+    ]
 
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
@@ -337,27 +335,26 @@ def test_invocation_none(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "substitutions,expected_invocation",
+    "variables,expected_invocation",
     [
-        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
-        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "value1"}),
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "[[TO_REPLACE1]]"}),
     ],
 )
-def test_invocation_substitutions(
-    tmp_path: Path, workflow: PipelineWorkflow, substitutions, expected_invocation
+def test_invocation_pipeline_variables(
+    tmp_path: Path, workflow: PipelineWorkflow, variables, expected_invocation
 ):
-    # set substitutions
-    workflow.config.SUBSTITUTIONS = substitutions
+    # set variables for substitution
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=workflow.pipeline_name,
-        VERSION=workflow.pipeline_version,
-        STEPS=[
-            ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation, DESCRIPTOR_FILE="")
-        ],
-    )
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation, DESCRIPTOR_FILE="")
+    ]
+
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
     assert workflow.invocation == expected_invocation
@@ -823,16 +820,13 @@ def test_run_cleanup(
     workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
-    pipeline_name = "my_pipeline"
-    pipeline_version = "1.0"
     workflow.n_success = n_success
     workflow.n_total = n_total
 
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=pipeline_name,
-        VERSION=pipeline_version,
-        STEPS=[ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)],
-    )
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
+    ]
+
     workflow.run_cleanup()
 
     assert expected_message.format(n_success, n_total) in caplog.text

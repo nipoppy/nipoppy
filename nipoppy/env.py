@@ -2,6 +2,7 @@
 
 import os
 import sys
+from enum import Enum
 from typing import TypeVar
 
 StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
@@ -21,6 +22,14 @@ IS_TESTING = "pytest" in sys.modules
 
 # file extensions
 EXT_TAR = ".tar"
+
+
+class PipelineTypeEnum(str, Enum):
+    """Pipeline types."""
+
+    BIDSIFICATION = "bidsification"
+    PROCESSING = "processing"
+    EXTRACTION = "extraction"
 
 
 class ReturnCode:

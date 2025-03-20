@@ -26,5 +26,6 @@
             "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/extraction/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
             "ANALYSIS_LEVEL": "group"
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "extraction"
 }

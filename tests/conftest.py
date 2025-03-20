@@ -13,7 +13,7 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
@@ -114,14 +114,23 @@ def create_pipeline_config_files(
     extraction_pipelines: Optional[list[dict]] = None,
 ):
     """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
-    for pipeline_config_list, dname in [
-        (bids_pipelines, DatasetLayout.dname_catalog_bids),
-        (proc_pipelines, DatasetLayout.dname_catalog_proc),
-        (extraction_pipelines, DatasetLayout.dname_catalog_extraction),
+    for pipeline_config_list, pipeline_type, dname in [
+        (
+            bids_pipelines,
+            PipelineTypeEnum.BIDSIFICATION,
+            DatasetLayout.dname_catalog_bids,
+        ),
+        (proc_pipelines, PipelineTypeEnum.PROCESSING, DatasetLayout.dname_catalog_proc),
+        (
+            extraction_pipelines,
+            PipelineTypeEnum.EXTRACTION,
+            DatasetLayout.dname_catalog_extraction,
+        ),
     ]:
         if pipeline_config_list is None:
             continue
         for pipeline_config in pipeline_config_list:
+            pipeline_config["PIPELINE_TYPE"] = pipeline_type
             fpath_config = (
                 dpath_pipelines
                 / dname

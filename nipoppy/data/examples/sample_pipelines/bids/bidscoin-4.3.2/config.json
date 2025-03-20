@@ -21,5 +21,6 @@
             "ANALYSIS_LEVEL": "participant",
             "UPDATE_DOUGHNUT": true
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "bidsification"
 }
