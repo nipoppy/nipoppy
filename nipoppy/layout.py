@@ -128,6 +128,18 @@ class LayoutConfig(BaseModel):
 class DatasetLayout(Base):
     """File/directory structure for a specific dataset."""
 
+    # pipeline derivative subdirectories
+    dname_pipeline_output = "output"
+    dname_pipeline_idp = "idp"
+
+    # pipeline catalog subdirectories
+    dname_catalog_bids = "bids"
+    dname_catalog_proc = "proc"
+    dname_catalog_extraction = "extraction"
+
+    # file names
+    fname_pipeline_config = "config.json"
+
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -188,10 +200,6 @@ class DatasetLayout(Base):
         self.fpath_manifest: Path
         self.fpath_imaging_bagel: Path
         self.fpath_demographics: Path
-
-        # directory names
-        self.dname_pipeline_output = "output"
-        self.dname_pipeline_idp = "idp"
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
@@ -256,7 +264,7 @@ class DatasetLayout(Base):
         return True
 
     def get_dpath_pipeline(self, pipeline_name: str, pipeline_version: str) -> Path:
-        """Return the path to a pipeline's directory."""
+        """Return the path to a pipeline's derivatives directory."""
         return self.dpath_derivatives / pipeline_name / pipeline_version
 
     def get_dpath_pipeline_work(
@@ -319,6 +327,18 @@ class DatasetLayout(Base):
             session_id=session_id,
         )
         return self.dpath_pybids_db / dname
+
+    def get_dpath_catalog_bids(self) -> Path:
+        """Return the path to the BIDS pipeline catalog directory."""
+        return self.dpath_pipelines / self.dname_catalog_bids
+
+    def get_dpath_catalog_proc(self) -> Path:
+        """Return the path to the processing pipeline catalog directory."""
+        return self.dpath_pipelines / self.dname_catalog_proc
+
+    def get_dpath_catalog_extraction(self) -> Path:
+        """Return the path to the extraction pipeline catalog directory."""
+        return self.dpath_pipelines / self.dname_catalog_extraction
 
 
 # for printing defaults in docs

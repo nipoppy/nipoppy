@@ -6,8 +6,11 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.config.main import get_pipeline_config
-from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
+from nipoppy.config.pipeline import (
+    ExtractionPipelineConfig,
+    PipelineInfo,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
 from nipoppy.env import StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
@@ -51,16 +54,18 @@ class ExtractionRunner(PipelineRunner):
         return [self.dpath_pipeline_idp]
 
     @cached_property
-    def _pipeline_configs(self) -> list[ExtractionPipelineConfig]:
-        # list of possible pipeline configurations
-        # will be searched for the correct one
-        return self.config.EXTRACTION_PIPELINES
+    def _dpath_pipeline_configs(self) -> Path:
+        """Path to the directory containing the appropriate pipeline bundles."""
+        return self.layout.get_dpath_catalog_extraction()
 
-    # for type annotation only
     @cached_property
     def pipeline_config(self) -> ExtractionPipelineConfig:
-        """Get the user config for the extraction pipeline."""
-        return super().pipeline_config
+        """Get the user config object for the extraction pipeline."""
+        return self._get_pipeline_config(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_class=ExtractionPipelineConfig,
+        )
 
     # for type annotation only
     @cached_property
@@ -72,14 +77,15 @@ class ExtractionRunner(PipelineRunner):
     def proc_pipeline_info(self) -> PipelineInfo:
         """Get info about the first processing pipeline associated with extractor.
 
-        Also make sure the it is in the config as a processing pipeline.
+        Also make sure that the processing pipeline configuration exists.
         """
         proc_pipeline_info = self.pipeline_config.PROC_DEPENDENCIES[0]
 
-        get_pipeline_config(
+        self._get_pipeline_config(
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
-            pipeline_configs=self.config.PROC_PIPELINES,
+            pipeline_class=ProcPipelineConfig,
+            dpath_pipelines=self.layout.get_dpath_catalog_proc(),
         ).get_step_config(step_name=proc_pipeline_info.STEP)
 
         return proc_pipeline_info

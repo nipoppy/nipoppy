@@ -13,11 +13,13 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.layout import DatasetLayout
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
+    save_json,
     session_id_to_bids_session_id,
 )
 
@@ -77,9 +79,6 @@ def get_config(
     dataset_name="my_dataset",
     session_ids=None,
     visit_ids=None,
-    bids_pipelines=None,
-    proc_pipelines=None,
-    extraction_pipelines=None,
     container_config=None,
 ):
     """Create a valid Config object with all required parameters."""
@@ -88,12 +87,6 @@ def get_config(
         session_ids = []
     if visit_ids is None:
         visit_ids = []
-    if bids_pipelines is None:
-        bids_pipelines = []
-    if proc_pipelines is None:
-        proc_pipelines = []
-    if extraction_pipelines is None:
-        extraction_pipelines = []
     if container_config is None:
         container_config = {}
 
@@ -101,9 +94,6 @@ def get_config(
         DATASET_NAME=dataset_name,
         VISIT_IDS=visit_ids,
         SESSION_IDS=session_ids,
-        BIDS_PIPELINES=bids_pipelines,
-        PROC_PIPELINES=proc_pipelines,
-        EXTRACTION_PIPELINES=extraction_pipelines,
         CONTAINER_CONFIG=container_config,
     )
 
@@ -114,6 +104,40 @@ def create_empty_dataset(dpath_root: Path):
         (dpath_root / dpath).mkdir(parents=True, exist_ok=True)
     for fpath in ATTR_TO_REQUIRED_FPATH_MAP.values():
         (dpath_root / fpath).touch()
+
+
+def create_pipeline_config_files(
+    dpath_pipelines: Path,
+    bids_pipelines: Optional[list[dict]] = None,
+    proc_pipelines: Optional[list[dict]] = None,
+    extraction_pipelines: Optional[list[dict]] = None,
+):
+    """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
+    for pipeline_config_list, pipeline_type, dname in [
+        (
+            bids_pipelines,
+            PipelineTypeEnum.BIDSIFICATION,
+            DatasetLayout.dname_catalog_bids,
+        ),
+        (proc_pipelines, PipelineTypeEnum.PROCESSING, DatasetLayout.dname_catalog_proc),
+        (
+            extraction_pipelines,
+            PipelineTypeEnum.EXTRACTION,
+            DatasetLayout.dname_catalog_extraction,
+        ),
+    ]:
+        if pipeline_config_list is None:
+            continue
+        for pipeline_config in pipeline_config_list:
+            pipeline_config["PIPELINE_TYPE"] = pipeline_type
+            fpath_config = (
+                dpath_pipelines
+                / dname
+                / f"{pipeline_config['NAME']}-{pipeline_config['VERSION']}"
+                / DatasetLayout.fname_pipeline_config
+            )
+            fpath_config.parent.mkdir(parents=True, exist_ok=True)
+            save_json(pipeline_config, fpath_config)
 
 
 def _process_participants_sessions(

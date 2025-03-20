@@ -1,0 +1,28 @@
+{
+    "NAME": "heudiconv",
+    "VERSION": "0.12.2",
+    "CONTAINER_INFO": {
+        "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+        "URI": "docker://nipy/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+    },
+    "STEPS": [
+        {
+            "NAME": "prepare",
+            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bids/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bids/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json"
+        },
+        {
+            "NAME": "convert",
+            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bids/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bids/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+            "CONTAINER_CONFIG": {
+                "ARGS": [
+                    "--bind",
+                    "[[HEUDICONV_HEURISTIC_FILE]]"
+                ]
+            },
+            "UPDATE_DOUGHNUT": true
+        }
+    ],
+    "PIPELINE_TYPE": "bidsification"
+}

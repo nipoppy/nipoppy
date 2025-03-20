@@ -18,16 +18,14 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
     return tmp_path / request.param
 
 
-def test_run(dpath_root: Path):
-    def exist_or_none(o: object, s: str) -> bool:
-        # walrus operator ":=" does assignment inside the "if" statement
-        if attr := getattr(o, s, None):
-            return attr.exists()
-        return True
+def exist_or_none(o: object, s: str) -> bool:
+    # walrus operator ":=" does assignment inside the "if" statement
+    if attr := getattr(o, s, None):
+        return attr.exists()
+    return True
 
-    workflow = InitWorkflow(dpath_root=dpath_root)
-    workflow.run()
 
+def assert_layout_creation(workflow, dpath_root):
     # check that all directories have been created
     for path in ATTR_TO_DPATH_MAP.values():
         assert Path(dpath_root, path).exists()
@@ -38,24 +36,49 @@ def test_run(dpath_root: Path):
     assert Path(dpath_root, FPATH_MANIFEST).exists()
 
     # check that pipeline config files have been copied
-    for pipeline_configs in (
-        workflow.config.BIDS_PIPELINES,
-        workflow.config.PROC_PIPELINES,
-    ):
-        for pipeline_config in pipeline_configs:
-            assert exist_or_none(pipeline_config, "TRACKER_CONFIG_FILE")
-            for pipeline_step_config in pipeline_config.STEPS:
-                assert exist_or_none(pipeline_step_config, "DESCRIPTOR_FILE")
-                assert exist_or_none(pipeline_step_config, "INVOCATION_FILE")
-                assert exist_or_none(
-                    pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE"
+    assert (
+        len(
+            list(
+                workflow.layout.dpath_pipelines.glob(
+                    f"**/{workflow.layout.fname_pipeline_config}"
                 )
+            )
+        )
+        > 0
+    )
 
 
-def test_run_error(dpath_root: Path):
-    dpath_root.mkdir(parents=True)
+def test_run(dpath_root: Path):
     workflow = InitWorkflow(dpath_root=dpath_root)
-    with pytest.raises(FileExistsError, match="Dataset directory already exists"):
+    workflow.run()
+
+    assert_layout_creation(workflow, dpath_root)
+
+
+def test_empty_dir(dpath_root: Path):
+    dpath_root.mkdir(parents=True)
+    dpath_root.joinpath(".DS_STORE").touch()  # Allow macOS file
+
+    workflow = InitWorkflow(dpath_root=dpath_root)
+    workflow.run()
+
+    assert_layout_creation(workflow, dpath_root)
+
+
+def test_non_empty_dir(dpath_root: Path):
+    dpath_root.mkdir(parents=True)
+    dpath_root.joinpath("unexepected_file").touch()
+
+    with pytest.raises(FileExistsError, match="Dataset directory is non-empty"):
+        workflow = InitWorkflow(dpath_root=dpath_root)
+        workflow.run()
+
+
+def test_is_file(dpath_root: Path):
+    dpath_root.touch()
+
+    with pytest.raises(FileExistsError, match="Dataset is an existing file"):
+        workflow = InitWorkflow(dpath_root=dpath_root)
         workflow.run()
 
 

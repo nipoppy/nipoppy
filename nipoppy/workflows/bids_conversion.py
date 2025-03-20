@@ -58,13 +58,18 @@ class BidsConversionRunner(PipelineRunner):
         return []
 
     @cached_property
-    def _pipeline_configs(self) -> list[BidsPipelineConfig]:
-        return self.config.BIDS_PIPELINES
+    def _dpath_pipeline_configs(self) -> Path:
+        """Path to the directory containing the appropriate pipeline bundles."""
+        return self.layout.get_dpath_catalog_bids()
 
     @cached_property
     def pipeline_config(self) -> BidsPipelineConfig:
-        """Get the user config for the BIDS conversion pipeline."""
-        return super().pipeline_config
+        """Get the user config object for the BIDS pipeline."""
+        return self._get_pipeline_config(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_class=BidsPipelineConfig,
+        )
 
     @cached_property
     def pipeline_step_config(self) -> BidsPipelineStepConfig:
