@@ -22,15 +22,6 @@ share/python-wheels/
 .coverage
 htmlcov
 
-<<<<<<< HEAD
-.env
-env/
-
-# VS Code
-.vscode/
-
-=======
->>>>>>> 4a2bd8eab9e7f37f72c364cf18e65a1536135c28
 # docs
 docs/build
 docs/source/schemas/*.json
