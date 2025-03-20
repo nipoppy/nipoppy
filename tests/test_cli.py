@@ -221,7 +221,7 @@ def test_cli_extract(tmp_path: Path):
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
-def test_cli_pipeline_add(tmp_path: Path, mocker: pytest_mock.MockerFixture):
+def test_cli_pipeline_install(tmp_path: Path, mocker: pytest_mock.MockerFixture):
     dpath_root = tmp_path / "my_dataset"
 
     mocked_pipeline_download = mocker.patch(
@@ -232,7 +232,7 @@ def test_cli_pipeline_add(tmp_path: Path, mocker: pytest_mock.MockerFixture):
         cli,
         [
             "pipeline",
-            "add",
+            "install",
             "zenodo.123456",
             "--dataset",
             str(dpath_root),

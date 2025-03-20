@@ -372,15 +372,15 @@ def zenodo_options(func):
     return func
 
 
-@pipeline.command("add")
+@pipeline.command("install")
 @click.argument(
     "zenodo_id",
     type=str,
 )
 @dataset_option
 @zenodo_options
-def pipeline_add(**params):
-    """Add a new pipeline."""
+def pipeline_install(**params):
+    """Install a new pipeline."""
     from nipoppy.zenodo import ZenodoAPI
 
     zenodo = ZenodoAPI(
