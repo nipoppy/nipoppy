@@ -162,6 +162,16 @@ def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_e
             ProcPipelineStepConfig,
             True,
         ),
+        (
+            {
+                "DESCRIPTOR_FILE": "descriptor.json",
+                "INVOCATION_FILE": "invocation.json",
+                "PYBIDS_IGNORE_FILE": "/pybids_ignore.json",
+                "TRACKER_CONFIG_FILE": "/tracker_config.json",
+            },
+            ProcPipelineStepConfig,
+            False,
+        ),
     ],
 )
 def test_absolute_paths(data, pipeline_class, expect_error):

@@ -465,6 +465,34 @@ def test_get_pipeline_config(
     )
 
 
+def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
+    pipeline_name = "new_pipeline"
+    pipeline_version = "1.0.0"
+    dpath_pipeline_bundle = (
+        workflow.layout.dpath_pipelines / "proc" / f"{pipeline_name}-{pipeline_version}"
+    )
+    config_dict = {
+        "NAME": pipeline_name,
+        "VERSION": "2.0.0",  # different version
+        "PIPELINE_TYPE": "processing",
+    }
+    dpath_pipeline_bundle.mkdir(parents=True)
+    (dpath_pipeline_bundle / "config.json").write_text(json.dumps(config_dict))
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "Expected pipeline config to have "
+            f'NAME="{pipeline_name}" and VERSION="{pipeline_version}"'
+        ),
+    ):
+        workflow._get_pipeline_config(
+            dpath_pipeline_bundle,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_class=ProcPipelineConfig,
+        )
+
+
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
