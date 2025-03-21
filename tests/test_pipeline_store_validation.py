@@ -13,6 +13,7 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_store.validation import (
     _check_descriptor_file,
@@ -194,6 +195,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                 ],
+                "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
             },
             BidsPipelineConfig,
             2,
@@ -208,6 +210,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                         "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json",
                     },
                 ],
+                "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
             },
             ProcPipelineConfig,
             4,
@@ -232,6 +235,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                 ],
+                "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
             },
             ExtractionPipelineConfig,
             6,
