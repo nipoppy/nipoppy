@@ -8,30 +8,59 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.config.container import ContainerConfig
-from nipoppy.config.main import Config
+from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
 
-REQUIRED_FIELDS_CONFIG = ["DATASET_NAME", "VISIT_IDS"]
+FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
+REQUIRED_FIELDS_CONFIG = []
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
-    "SESSION_IDS",
     "SUBSTITUTIONS",
     "CUSTOM",
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "PIPELINE_VARIABLES",
 ]
 
 
 @pytest.fixture(scope="function")
 def valid_config_data():
-    return {
-        "DATASET_NAME": "my_dataset",
-        "VISIT_IDS": ["1"],
-        "SESSION_IDS": ["1"],
+    return {}
+
+
+@pytest.fixture(scope="function")
+def pipeline_variables():
+    data = {
+        "BIDSIFICATION": {
+            "bids_pipeline": {
+                "0.0.1": {
+                    "bids1": "val1",
+                    "bids2": "val2",
+                },
+            },
+        },
+        "PROCESSING": {
+            "proc_pipeline": {
+                "0.1.0": {
+                    "proc1": "val1",
+                },
+                "0.2.0": {
+                    "proc1": "val1",
+                    "proc2": "val2",
+                },
+            },
+        },
+        "EXTRACTION": {
+            "extraction_pipeline": {
+                "1.0.0": {},
+            },
+        },
     }
+    return PipelineVariables(**data)
 
 
 def test_fields(valid_config_data: dict):
@@ -49,19 +78,11 @@ def test_no_extra_fields(valid_config_data):
 
 
 @pytest.mark.parametrize(
-    "visit_ids,expected_session_ids",
-    [
-        (["V01", "V02"], ["V01", "V02"]),
-        (["1", "2"], ["1", "2"]),
-    ],
+    "deprecated_field", ["DATASET_NAME", "VISIT_IDS", "SESSION_IDS"]
 )
-def test_sessions_inferred(visit_ids, expected_session_ids):
-    data = {
-        "DATASET_NAME": "my_dataset",
-        "VISIT_IDS": visit_ids,
-    }
-    config = Config(**data)
-    assert config.SESSION_IDS == expected_session_ids
+def test_deprecated_fields(deprecated_field, valid_config_data):
+    with pytest.warns(DeprecationWarning):
+        Config(**valid_config_data, **{deprecated_field: "x"})
 
 
 @pytest.mark.parametrize(
@@ -166,26 +187,6 @@ def test_save(tmp_path: Path, valid_config_data):
 
 
 @pytest.mark.parametrize(
-    "substitutions,json_obj,expected",
-    [
-        (
-            {"VALUE1": "AAA", "VALUE2": "BBB"},
-            {"KEY": "VALUE1 VALUE2"},
-            {"KEY": "AAA BBB"},
-        ),
-        (
-            {"VALUE1": "CCC", "VALUE2": "DDD"},
-            ["AAA BBB VALUE1", "VALUE2"],
-            ["AAA BBB CCC", "DDD"],
-        ),
-    ],
-)
-def test_apply_substitutions(valid_config_data, substitutions, json_obj, expected):
-    config = Config(**valid_config_data, SUBSTITUTIONS=substitutions)
-    assert config.apply_substitutions_to_json(json_obj) == expected
-
-
-@pytest.mark.parametrize(
     "path",
     [
         FPATH_SAMPLE_CONFIG,
@@ -204,8 +205,7 @@ def test_load(path):
 @pytest.mark.parametrize(
     "path",
     [
-        DPATH_TEST_DATA / "config_invalid1.json",  # missing required
-        DPATH_TEST_DATA / "config_invalid2.json",  # has PROC_PIPELINES (old)
+        DPATH_TEST_DATA / "config_invalid1.json",  # has PROC_PIPELINES (old)
     ],
 )
 def test_load_invalid(path):
@@ -253,3 +253,110 @@ def test_load_no_substitutions(
     assert (
         Config.load(fpath, apply_substitutions=apply_substitutions) == config_expected
     )
+
+
+@pytest.mark.parametrize(
+    "pipeline_type,pipeline_name,pipeline_version,json_obj,expected",
+    [
+        (
+            PipelineTypeEnum.BIDSIFICATION,
+            "bids_pipeline",
+            "0.0.1",
+            {"some_key": "123_[[bids1]]"},
+            {"some_key": "123_val1"},
+        ),
+        (
+            PipelineTypeEnum.PROCESSING,
+            "proc_pipeline",
+            "0.2.0",
+            {"[[proc1]]_key": "123_[[bids1]]"},
+            {"val1_key": "123_[[bids1]]"},
+        ),
+        (
+            PipelineTypeEnum.EXTRACTION,
+            "extraction_pipeline",
+            "1.0.0",
+            {"some_key": "123_[[bids1]]"},
+            {"some_key": "123_[[bids1]]"},
+        ),
+    ],
+)
+def test_apply_pipeline_variables(
+    valid_config_data,
+    pipeline_variables,
+    pipeline_type,
+    pipeline_name,
+    pipeline_version,
+    json_obj,
+    expected,
+):
+    config = Config(**valid_config_data)
+    config.PIPELINE_VARIABLES = pipeline_variables
+    assert (
+        config.apply_pipeline_variables(
+            pipeline_type, pipeline_name, pipeline_version, json_obj
+        )
+        == expected
+    )
+
+
+def test_pipeline_variables(valid_config_data: dict):
+    config = Config(
+        **{k: v for (k, v) in valid_config_data.items() if k in REQUIRED_FIELDS_CONFIG}
+    )
+    pipeline_vars = config.PIPELINE_VARIABLES
+    for field in FIELDS_PIPELINE_VARIABLES:
+        assert hasattr(pipeline_vars, field)
+
+
+def test_pipeline_variables_not_extra_fields():
+    with pytest.raises(ValidationError):
+        PipelineVariables(NOT_A_FIELD="x")
+
+
+@pytest.mark.parametrize(
+    "pipeline_type,pipeline_name,pipeline_version,expected",
+    [
+        (
+            PipelineTypeEnum.BIDSIFICATION,
+            "bids_pipeline",
+            "0.0.1",
+            {"bids1": "val1", "bids2": "val2"},
+        ),
+        (PipelineTypeEnum.PROCESSING, "proc_pipeline", "0.1.0", {"proc1": "val1"}),
+        (
+            PipelineTypeEnum.PROCESSING,
+            "proc_pipeline",
+            "0.2.0",
+            {"proc1": "val1", "proc2": "val2"},
+        ),
+        (PipelineTypeEnum.EXTRACTION, "extraction_pipelines", "1.0.0", {}),
+    ],
+)
+def test_pipeline_variables_get_variables(
+    pipeline_variables, pipeline_type, pipeline_name, pipeline_version, expected
+):
+    assert (
+        pipeline_variables.get_variables(pipeline_type, pipeline_name, pipeline_version)
+        == expected
+    )
+
+
+def test_pipeline_variables_get_variables_error_pipeline_type(pipeline_variables):
+    with pytest.raises(ValueError, match="Invalid pipeline type"):
+        pipeline_variables.get_variables("INVALID", "pipeline1", "version1")
+
+
+def test_pipeline_variables_get_variables_unknown(pipeline_variables):
+    assert (
+        pipeline_variables.get_variables(PipelineTypeEnum.PROCESSING, "xyz", "123")
+        == {}
+    )
+
+
+def test_pipeline_variables_validation(pipeline_variables):
+    # test the conversion to defaultdict
+    # any unknown pipeline should have an empty dict
+    assert pipeline_variables.BIDSIFICATION["unknown_pipeline"]["v1"] == {}
+    assert pipeline_variables.PROCESSING["unknown_pipeline2"]["v2"] == {}
+    assert pipeline_variables.EXTRACTION["unknown_pipeline3"]["v3"] == {}
