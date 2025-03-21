@@ -79,7 +79,7 @@ def single_subject_dataset(
 @pytest.fixture()
 def bids_pipeline_configs() -> list[BidsPipelineConfig]:
     return get_pipeline_configs(
-        DPATH_SAMPLE_PIPELINES / DatasetLayout.dname_catalog_bids, BasePipelineConfig
+        DPATH_SAMPLE_PIPELINES / DatasetLayout.dname_catalog_bids, BidsPipelineConfig
     )
 
 

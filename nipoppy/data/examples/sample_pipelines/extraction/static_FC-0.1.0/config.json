@@ -12,5 +12,6 @@
             "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/extraction/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
             "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/extraction/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json"
         }
-    ]
+    ],
+    "PIPELINE_TYPE": "extraction"
 }

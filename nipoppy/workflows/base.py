@@ -362,14 +362,8 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         Raise error if not found.
         """
         fpath_manifest = Path(self.layout.fpath_manifest)
-        expected_session_ids = self.config.SESSION_IDS
-        expected_visit_ids = self.config.VISIT_IDS
         try:
-            return Manifest.load(
-                fpath_manifest,
-                session_ids=expected_session_ids,
-                visit_ids=expected_visit_ids,
-            )
+            return Manifest.load(fpath_manifest)
         except FileNotFoundError:
             raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
 

@@ -27,6 +27,9 @@ def workflow(tmp_path: Path):
     workflow.logger.setLevel(logging.DEBUG)  # capture all logs
 
     create_empty_dataset(workflow.dpath_root)
+
+    # save a config but do not set workflow.config yet
+    # because some tests check what happens when the config loaded
     get_config().save(workflow.layout.fpath_config)
 
     manifest = prepare_dataset(participants_and_sessions_manifest={})
@@ -110,19 +113,15 @@ def test_config_not_found(workflow: BaseDatasetWorkflow):
 
 
 def test_config_replacement(workflow: BaseDatasetWorkflow):
-    config = get_config(dataset_name="[[NIPOPPY_DPATH_ROOT]]")
+    # overwrite existing config file
+    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
     config.save(workflow.layout.fpath_config)
-    assert str(workflow.config.DATASET_NAME) == str(workflow.dpath_root)
+    assert str(workflow.config.DICOM_DIR_MAP_FILE) == str(workflow.dpath_root)
 
 
 def test_manifest(workflow: BaseDatasetWorkflow):
     workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
-    config = get_config(
-        visit_ids=["BL", "M12"],
-    )
-    workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
-    config.save(workflow.layout.fpath_config)
     assert isinstance(workflow.manifest, Manifest)
 
 
@@ -133,18 +132,15 @@ def test_manifest_not_found(workflow: BaseDatasetWorkflow):
 
 
 def test_dicom_dir_map(workflow: BaseDatasetWorkflow):
-    workflow.config = get_config()
     assert isinstance(workflow.dicom_dir_map, DicomDirMap)
 
 
 def test_dicom_dir_map_custom(workflow: BaseDatasetWorkflow):
-    workflow.config = get_config()
     workflow.config.DICOM_DIR_MAP_FILE = DPATH_TEST_DATA / "dicom_dir_map1.tsv"
     assert isinstance(workflow.dicom_dir_map, DicomDirMap)
 
 
 def test_dicom_dir_map_not_found(workflow: BaseDatasetWorkflow):
-    workflow.config = get_config()
     workflow.config.DICOM_DIR_MAP_FILE = "fake_path"
     with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
         workflow.dicom_dir_map

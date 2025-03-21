@@ -2,38 +2,91 @@
 
 from __future__ import annotations
 
+import warnings
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import BIDS_SESSION_PREFIX, StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils import apply_substitutions_to_json, load_json
 
 
+class PipelineVariables(BaseModel):
+    """Schema for pipeline variables in main config."""
+
+    _pipeline_type_to_key = {
+        PipelineTypeEnum.BIDSIFICATION: "BIDSIFICATION",
+        PipelineTypeEnum.PROCESSING: "PROCESSING",
+        PipelineTypeEnum.EXTRACTION: "EXTRACTION",
+    }
+
+    BIDSIFICATION: dict[str, dict[str, dict[str, str]]] = Field(
+        default=defaultdict(lambda: defaultdict(dict)),
+        description=(
+            "Variables for the BIDSification pipelines. This should be a nested "
+            "dictionary with these levels: "
+            "pipeline name -> pipeline version -> variable name -> variable value"
+        ),
+    )
+    PROCESSING: dict[str, dict[str, dict[str, str]]] = Field(
+        default=defaultdict(lambda: defaultdict(dict)),
+        description=(
+            "Variables for the processing pipelines. This should be a nested "
+            "dictionary with these levels: "
+            "pipeline name -> pipeline version -> variable name -> variable value"
+        ),
+    )
+    EXTRACTION: dict[str, dict[str, dict[str, str]]] = Field(
+        default=defaultdict(lambda: defaultdict(dict)),
+        description=(
+            "Variables for the extraction pipelines. This should be a nested "
+            "dictionary with these levels: "
+            "pipeline name -> pipeline version -> variable name -> variable value"
+        ),
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_variables(
+        self, pipeline_type: PipelineTypeEnum, pipeline_name: str, pipeline_version: str
+    ) -> dict[str, str]:
+        """Get the variables for a specific pipeline."""
+        try:
+            key = self._pipeline_type_to_key[pipeline_type]
+        except KeyError:
+            raise ValueError(
+                f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
+                f"{self._pipeline_type_to_key.keys()}"
+            )
+
+        return getattr(self, key)[pipeline_name][pipeline_version]
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """Convert fields to defaultdicts."""
+        for pipeline_type_field in self._pipeline_type_to_key.values():
+            original_nested_dict = getattr(self, pipeline_type_field)
+            new_nested_dict = self.model_fields[pipeline_type_field].default
+            for pipeline_name in original_nested_dict:
+                for pipeline_version in original_nested_dict[pipeline_name]:
+                    new_nested_dict[pipeline_name][pipeline_version] = (
+                        original_nested_dict[pipeline_name][pipeline_version]
+                    )
+            setattr(self, pipeline_type_field, new_nested_dict)
+
+        return self
+
+
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
-    DATASET_NAME: str = Field(description="Name of the dataset")
-    VISIT_IDS: list[str] = Field(
-        description=(
-            "List of visits available in the study. A visit ID is an identifier "
-            "for a data collection event, not restricted to imaging data."
-        )
-    )
-    SESSION_IDS: Optional[list[str]] = Field(
-        default=None,  # will be a list after validation
-        description=(
-            "List of BIDS-compliant sessions available in the study"
-            f', prefixed with "{BIDS_SESSION_PREFIX}"'
-            " (inferred from VISITS if not given)"
-        ),
-    )
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
@@ -60,6 +113,13 @@ class Config(_SchemaWithContainerConfig):
             "Top-level mapping for replacing placeholder expressions in the rest "
             "of the config file. Note: the replacement only happens if the config "
             "is loaded from a file with :func:`nipoppy.config.main.Config.load`"
+        ),
+    )
+    PIPELINE_VARIABLES: PipelineVariables = Field(
+        default=PipelineVariables(),
+        description=(
+            "Pipeline-specific variables. Typically these are paths to external "
+            "resources needed by a pipeline that need to be provided by the user"
         ),
     )
     CUSTOM: dict = Field(
@@ -107,13 +167,23 @@ class Config(_SchemaWithContainerConfig):
         Validate the raw input.
 
         Specifically:
-        - If session_ids is not given, set to be the same as visit_ids
+
+        - If DATASET_NAME, VISIT_IDS, or SESSION_IDS are present, ignore them and
+          emit a deprecation warning
         """
-        key_session_ids = "SESSION_IDS"
-        key_visit_ids = "VISIT_IDS"
+        deprecated_keys = ["DATASET_NAME", "VISIT_IDS", "SESSION_IDS"]
         if isinstance(data, dict):
-            if key_session_ids not in data:
-                data[key_session_ids] = data[key_visit_ids]
+            for key in deprecated_keys:
+                if key in data:
+                    data.pop(key)
+                    warnings.warn(
+                        (
+                            f"Field {key} is deprecated and will cause an error to be "
+                            "raised in a future version. Please remove it from your "
+                            "config file."
+                        ),
+                        DeprecationWarning,
+                    )
         return data
 
     @model_validator(mode="after")
@@ -138,9 +208,21 @@ class Config(_SchemaWithContainerConfig):
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
 
-    def apply_substitutions_to_json(self, json_obj: dict | list) -> dict | list:
-        """Apply substitutions to a JSON object."""
-        return apply_substitutions_to_json(json_obj, self.SUBSTITUTIONS)
+    def apply_pipeline_variables(
+        self,
+        pipeline_type: PipelineTypeEnum,
+        pipeline_name: str,
+        pipeline_version: str,
+        json_obj: dict | list,
+    ) -> dict | list:
+        """Apply pipeline-specific variables to a JSON object."""
+        pipeline_variables = {
+            f"[[{key}]]": value
+            for key, value in self.PIPELINE_VARIABLES.get_variables(
+                pipeline_type, pipeline_name, pipeline_version
+            ).items()
+        }
+        return apply_substitutions_to_json(json_obj, pipeline_variables)
 
     @classmethod
     def load(cls, path: StrOrPathLike, apply_substitutions=True) -> Self:

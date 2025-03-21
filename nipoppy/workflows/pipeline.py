@@ -243,7 +243,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
         self.logger.info(f"Loading descriptor from {fpath_descriptor}")
         descriptor = load_json(fpath_descriptor)
-        descriptor = self.config.apply_substitutions_to_json(descriptor)
+        descriptor = self.config.apply_pipeline_variables(
+            pipeline_type=self.pipeline_config.PIPELINE_TYPE,
+            pipeline_name=self.pipeline_config.NAME,
+            pipeline_version=self.pipeline_config.VERSION,
+            json_obj=descriptor,
+        )
         return descriptor
 
     @cached_property
@@ -257,7 +262,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
         self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
-        invocation = self.config.apply_substitutions_to_json(invocation)
+        invocation = self.config.apply_pipeline_variables(
+            pipeline_type=self.pipeline_config.PIPELINE_TYPE,
+            pipeline_name=self.pipeline_config.NAME,
+            pipeline_version=self.pipeline_config.VERSION,
+            json_obj=invocation,
+        )
         return invocation
 
     @cached_property
@@ -345,12 +355,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 and pipeline_config_candidate.VERSION == pipeline_version
             ):
                 # once there is a match we apply the substitutions
-                pipeline_config_json = self.config.apply_substitutions_to_json(
-                    self.process_template_json(
+                pipeline_config_json = self.config.apply_pipeline_variables(
+                    pipeline_type=pipeline_config_candidate.PIPELINE_TYPE,
+                    pipeline_name=pipeline_name,
+                    pipeline_version=pipeline_version,
+                    json_obj=self.process_template_json(
                         pipeline_config_candidate.model_dump(mode="json"),
                         objs=[self, self.layout],
                     ),
                 )
+
                 return self.config.propagate_container_config_to_pipeline(
                     pipeline_class(**pipeline_config_json)
                 )

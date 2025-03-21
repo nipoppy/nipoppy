@@ -17,6 +17,7 @@ def workflow():
 
     workflow = DummyWorkflow(name="my_workflow")
     workflow.logger.setLevel(logging.DEBUG)  # capture all logs
+
     return workflow
 
 

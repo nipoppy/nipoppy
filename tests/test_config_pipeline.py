@@ -1,5 +1,6 @@
 """Tests for the pipeline configuration class."""
 
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
+from nipoppy.env import PipelineTypeEnum
 
 FIELDS_BASE_PIPELINE = [
     "NAME",
@@ -21,6 +23,7 @@ FIELDS_BASE_PIPELINE = [
     "CONTAINER_INFO",
     "CONTAINER_CONFIG",
     "STEPS",
+    "PIPELINE_TYPE",
 ]
 FIELDS_BIDS_PIPELINE = FIELDS_BASE_PIPELINE
 FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE + ["TRACKER_CONFIG_FILE"]
@@ -37,30 +40,38 @@ def valid_data() -> dict:
 
 
 @pytest.mark.parametrize(
-    "model_class,fields",
+    "model_class,extra_data,fields",
     [
-        (BasePipelineConfig, FIELDS_BASE_PIPELINE),
-        (BidsPipelineConfig, FIELDS_BIDS_PIPELINE),
-        (ProcPipelineConfig, FIELDS_PROC_PIPELINE),
-        (PipelineInfo, FIELDS_PIPELINE_INFO),
+        (BasePipelineConfig, {}, FIELDS_BASE_PIPELINE),
+        (
+            BidsPipelineConfig,
+            {"PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION},
+            FIELDS_BIDS_PIPELINE,
+        ),
+        (
+            ProcPipelineConfig,
+            {"PIPELINE_TYPE": PipelineTypeEnum.PROCESSING},
+            FIELDS_PROC_PIPELINE,
+        ),
+        (
+            ExtractionPipelineConfig,
+            {
+                "PROC_DEPENDENCIES": [
+                    PipelineInfo(NAME="my_pipeline", VERSION="1.0.0")
+                ],
+                "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
+            },
+            FIELDS_EXTRACTION_PIPELINE,
+        ),
+        (PipelineInfo, {}, FIELDS_PIPELINE_INFO),
     ],
 )
-def test_fields(model_class, fields, valid_data):
-    config: BaseModel = model_class(**valid_data)
+def test_fields(model_class, extra_data, fields, valid_data):
+    config: BaseModel = model_class(**valid_data, **extra_data)
     for field in fields:
         assert hasattr(config, field)
 
     assert len(set(config.model_fields.keys())) == len(fields)
-
-
-def test_fields_extraction_pipeline(valid_data):
-    config = ExtractionPipelineConfig(
-        **valid_data,
-        PROC_DEPENDENCIES=[valid_data],
-    )
-    for field in FIELDS_EXTRACTION_PIPELINE:
-        assert hasattr(config, field)
-    assert len(set(config.model_fields.keys())) == len(FIELDS_EXTRACTION_PIPELINE)
 
 
 @pytest.mark.parametrize("model_class", [BasePipelineConfig, PipelineInfo])
@@ -99,7 +110,53 @@ def test_error_no_dependencies():
             NAME="my_pipeline",
             VERSION="1.0.0",
             PROC_DEPENDENCIES=[],
+            PIPELINE_TYPE=PipelineTypeEnum.EXTRACTION,
         )
+
+
+@pytest.mark.parametrize(
+    "extra_data,pipeline_class,valid",
+    [
+        ({"PIPELINE_TYPE": "bidsification"}, BidsPipelineConfig, True),
+        ({"PIPELINE_TYPE": "processing"}, BidsPipelineConfig, False),
+        ({"PIPELINE_TYPE": "extraction"}, BidsPipelineConfig, False),
+        ({"PIPELINE_TYPE": "bidsification"}, ProcPipelineConfig, False),
+        ({"PIPELINE_TYPE": "processing"}, ProcPipelineConfig, True),
+        ({"PIPELINE_TYPE": "extraction"}, ProcPipelineConfig, False),
+        (
+            {
+                "PIPELINE_TYPE": "bidsification",
+                "PROC_DEPENDENCIES": [{"NAME": "", "VERSION": ""}],
+            },
+            ExtractionPipelineConfig,
+            False,
+        ),
+        (
+            {
+                "PIPELINE_TYPE": "processing",
+                "PROC_DEPENDENCIES": [{"NAME": "", "VERSION": ""}],
+            },
+            ExtractionPipelineConfig,
+            False,
+        ),
+        (
+            {
+                "PIPELINE_TYPE": "extraction",
+                "PROC_DEPENDENCIES": [{"NAME": "", "VERSION": ""}],
+            },
+            ExtractionPipelineConfig,
+            True,
+        ),
+    ],
+)
+def test_error_pipeline_type(valid_data, extra_data, pipeline_class, valid):
+    data = {**valid_data, **extra_data}
+    with (
+        pytest.raises(ValidationError, match="Expected pipeline type .* but got")
+        if not valid
+        else nullcontext()
+    ):
+        pipeline_class(**data)
 
 
 def test_warning_if_duplicate_dependencies():
@@ -114,6 +171,7 @@ def test_warning_if_duplicate_dependencies():
                 PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
                 PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
             ],
+            PIPELINE_TYPE=PipelineTypeEnum.EXTRACTION,
         )
 
 
