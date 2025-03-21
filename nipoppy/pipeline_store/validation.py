@@ -124,6 +124,7 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
 
 def _check_pipeline_files(
     pipeline_config: BasePipelineConfig,
+    dpath_bundle: StrOrPathLike,
     logger: Optional[logging.Logger] = None,
     log_level=logging.DEBUG,
 ) -> list[Path]:
@@ -144,6 +145,8 @@ def _check_pipeline_files(
         if logger is not None:
             logger.log(level=log_level, msg=msg)
 
+    dpath_bundle = Path(dpath_bundle)
+
     # collect paths
     fpaths = []
 
@@ -152,27 +155,31 @@ def _check_pipeline_files(
 
         if step.DESCRIPTOR_FILE is not None:
             _log(f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}")
-            descriptor_str = _check_descriptor_file(step.DESCRIPTOR_FILE)
-            fpaths.append(step.DESCRIPTOR_FILE)
+            fpath_descriptor = dpath_bundle / step.DESCRIPTOR_FILE
+            descriptor_str = _check_descriptor_file(fpath_descriptor)
+            fpaths.append(fpath_descriptor)
 
             if step.INVOCATION_FILE is not None:
                 _log(f"\tChecking invocation file: {step.INVOCATION_FILE}")
-                _check_invocation_file(step.INVOCATION_FILE, descriptor_str)
-                fpaths.append(step.INVOCATION_FILE)
+                fpath_invocation = dpath_bundle / step.INVOCATION_FILE
+                _check_invocation_file(fpath_invocation, descriptor_str)
+                fpaths.append(fpath_invocation)
 
         if isinstance(step, ProcPipelineStepConfig):
 
             if step.TRACKER_CONFIG_FILE is not None:
                 _log(f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}")
-                _check_tracker_config_file(step.TRACKER_CONFIG_FILE)
-                fpaths.append(step.TRACKER_CONFIG_FILE)
+                fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE
+                _check_tracker_config_file(fpath_tracker_config)
+                fpaths.append(fpath_tracker_config)
 
             if step.PYBIDS_IGNORE_FILE is not None:
                 _log(
                     f"\tChecking PyBIDS ignore patterns file: {step.PYBIDS_IGNORE_FILE}"
                 )
-                _check_pybids_ignore_file(step.PYBIDS_IGNORE_FILE)
-                fpaths.append(step.PYBIDS_IGNORE_FILE)
+                fpath_pybids_ignore = dpath_bundle / step.PYBIDS_IGNORE_FILE
+                _check_pybids_ignore_file(fpath_pybids_ignore)
+                fpaths.append(fpath_pybids_ignore)
 
     return fpaths
 
@@ -219,7 +226,9 @@ def check_pipeline_bundle(
     config = _load_pipeline_config_file(fpath_config, substitution_objs)
 
     # core file content validation
-    fpaths = _check_pipeline_files(config, logger=logger, log_level=log_level)
+    fpaths = _check_pipeline_files(
+        config, dpath_bundle, logger=logger, log_level=log_level
+    )
 
     # make sure that all files are within the bundle directory
     _check_self_contained(dpath_bundle, fpaths, logger=logger, log_level=log_level)

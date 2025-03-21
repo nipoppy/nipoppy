@@ -190,8 +190,8 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             {
                 "STEPS": [
                     {
-                        "INVOCATION_FILE": "invocation.json",
-                        "DESCRIPTOR_FILE": "descriptor.json",
+                        "INVOCATION_FILE": "invocation-valid.json",
+                        "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                 ],
             },
@@ -202,10 +202,10 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             {
                 "STEPS": [
                     {
-                        "INVOCATION_FILE": "invocation.json",
-                        "DESCRIPTOR_FILE": "descriptor.json",
-                        "TRACKER_CONFIG_FILE": "tracker_config.json",
-                        "PYBIDS_IGNORE_FILE": "pybids_ignore.json",
+                        "INVOCATION_FILE": "invocation-valid.json",
+                        "DESCRIPTOR_FILE": "descriptor-valid.json",
+                        "TRACKER_CONFIG_FILE": "tracker_config-valid.json",
+                        "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json",
                     },
                 ],
             },
@@ -218,18 +218,18 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 "STEPS": [
                     {
                         "NAME": "step1",
-                        "INVOCATION_FILE": "invocation.json",
-                        "DESCRIPTOR_FILE": "descriptor.json",
+                        "INVOCATION_FILE": "invocation-valid.json",
+                        "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                     {
                         "NAME": "step2",
-                        "INVOCATION_FILE": "invocation.json",
-                        "DESCRIPTOR_FILE": "descriptor.json",
+                        "INVOCATION_FILE": "invocation-valid.json",
+                        "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                     {
                         "NAME": "step3",
-                        "INVOCATION_FILE": "invocation.json",
-                        "DESCRIPTOR_FILE": "descriptor.json",
+                        "INVOCATION_FILE": "invocation-valid.json",
+                        "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                 ],
             },
@@ -238,40 +238,12 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
         ),
     ],
 )
-def test_check_config_files(
-    pipeline_config_data,
-    pipeline_class,
-    n_files_expected,
-    mocker: pytest_mock.MockFixture,
-):
-    mocked_check_descriptor_file = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_descriptor_file"
-    )
-    mocked_check_invocation_file = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_invocation_file"
-    )
-    mocked_check_tracker_config_file = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_tracker_config_file"
-    )
-    mocked_check_pybids_ignore_file = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_pybids_ignore_file"
-    )
+def test_check_config_files(pipeline_config_data, pipeline_class, n_files_expected):
 
     pipeline_config = pipeline_class(
         **pipeline_config_data, NAME="test_pipeline", VERSION="test_version"
     )
-    files = _check_pipeline_files(pipeline_config)
-
-    # check that mocked functions were called
-    if n_files_expected > 0:
-        assert mocked_check_descriptor_file.call_count > 0
-        assert mocked_check_invocation_file.call_count > 0
-        if pipeline_class == ProcPipelineConfig:
-            assert mocked_check_tracker_config_file.call_count > 0
-            assert mocked_check_pybids_ignore_file.call_count > 0
-    else:
-        assert mocked_check_descriptor_file.call_count == 0
-        assert mocked_check_invocation_file.call_count == 0
+    files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
 
     # check that the function returns the expected number of files
     assert isinstance(files, list)
@@ -296,7 +268,9 @@ def test_check_config_files_logging(
     pipeline_config = BasePipelineConfig(
         NAME="test_pipeline", VERSION="test_version", STEPS=[{}]
     )
-    _check_pipeline_files(pipeline_config, logger=logger, log_level=log_level)
+    _check_pipeline_files(
+        pipeline_config, DPATH_TEST_DATA, logger=logger, log_level=log_level
+    )
 
     if logger is None:
         assert len(caplog.records) == 0
@@ -380,7 +354,7 @@ def test_check_pipeline_bundle(logger, log_level, mocker: pytest_mock.MockFixtur
         substitution_objs,
     )
     mocked_check_pipeline_files.assert_called_once_with(
-        config, logger=logger, log_level=log_level
+        config, dpath_bundle, logger=logger, log_level=log_level
     )
     mocked_check_self_contained.assert_called_once_with(
         dpath_bundle, fpaths, logger=logger, log_level=log_level
