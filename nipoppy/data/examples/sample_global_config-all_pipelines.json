@@ -335,8 +335,8 @@
                     "ANALYSIS_LEVEL": "participant_session",
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
                 }
-                
-            ]   
+
+            ]
         }
     ],
     "EXTRACTION_PIPELINES": [
