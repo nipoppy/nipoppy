@@ -331,11 +331,12 @@
                     "NAME": "analysis",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
-                    "ANALYSIS_LEVEL": "group",
-                    "GENERATE_PYBIDS_DATABASE": false
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "ANALYSIS_LEVEL": "participant_session",
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
                 }
-            ],
-            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                
+            ]   
         }
     ],
     "EXTRACTION_PIPELINES": [
