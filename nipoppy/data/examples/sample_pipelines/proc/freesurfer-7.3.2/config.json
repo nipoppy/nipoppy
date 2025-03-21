@@ -4,7 +4,7 @@
     "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 23.0.0 and later",
     "STEPS": [
         {
-            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+            "TRACKER_CONFIG_FILE": "tracker_config.json"
         }
     ],
     "PIPELINE_TYPE": "processing"

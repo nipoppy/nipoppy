@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
@@ -132,10 +132,12 @@ class DatasetLayout(Base):
     dname_pipeline_output = "output"
     dname_pipeline_idp = "idp"
 
-    # pipeline catalog subdirectories
-    dname_catalog_bids = "bids"
-    dname_catalog_proc = "proc"
-    dname_catalog_extraction = "extraction"
+    # pipeline store subdirectories
+    pipeline_type_to_dname_map = {
+        PipelineTypeEnum.BIDSIFICATION: "bids",
+        PipelineTypeEnum.PROCESSING: "proc",
+        PipelineTypeEnum.EXTRACTION: "extraction",
+    }
 
     # file names
     fname_pipeline_config = "config.json"
@@ -328,17 +330,17 @@ class DatasetLayout(Base):
         )
         return self.dpath_pybids_db / dname
 
-    def get_dpath_catalog_bids(self) -> Path:
-        """Return the path to the BIDS pipeline catalog directory."""
-        return self.dpath_pipelines / self.dname_catalog_bids
+    def get_dpath_pipeline_store(self, pipeline_type: PipelineTypeEnum) -> Path:
+        """Return the path to the pipeline store directory."""
+        return self.dpath_pipelines / self.pipeline_type_to_dname_map[pipeline_type]
 
-    def get_dpath_catalog_proc(self) -> Path:
-        """Return the path to the processing pipeline catalog directory."""
-        return self.dpath_pipelines / self.dname_catalog_proc
-
-    def get_dpath_catalog_extraction(self) -> Path:
-        """Return the path to the extraction pipeline catalog directory."""
-        return self.dpath_pipelines / self.dname_catalog_extraction
+    def get_dpath_pipeline_bundle(
+        self, pipeline_type: PipelineTypeEnum, pipeline_name: str, pipeline_version: str
+    ) -> Path:
+        """Return the path to the pipeline bundle directory."""
+        return self.get_dpath_pipeline_store(pipeline_type) / get_pipeline_tag(
+            pipeline_name, pipeline_version
+        )
 
 
 # for printing defaults in docs

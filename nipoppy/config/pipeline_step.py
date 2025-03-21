@@ -28,6 +28,8 @@ class AnalysisLevelType(str, Enum):
 class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
+    _path_fields = ["DESCRIPTOR_FILE", "INVOCATION_FILE"]
+
     NAME: str = Field(
         default=DEFAULT_PIPELINE_STEP_NAME,
         description="Step name. Required if the pipeline has multiple steps",
@@ -61,6 +63,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline step configuration before instantiation.
 
         Specifically:
+
         - Apply substitutions for step name in the config
         """
         if isinstance(data, dict):
@@ -70,9 +73,41 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
                 )
         return data
 
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the pipeline step configuration after creation.
+
+        Specifically:
+
+        - Fields in _path_fields must not be absolute
+        - DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be None
+        """
+        for field in self._path_fields:
+            if (path := getattr(self, field)) is not None:
+                # check that path is relative
+                if Path(path).is_absolute():
+                    raise ValueError(f"{field} must be a relative path, got {path}")
+
+        if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
+            self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
+        ):
+            raise ValueError(
+                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
+                f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
+            )
+        return self
+
 
 class ProcPipelineStepConfig(BasePipelineStepConfig):
     """Schema for processing pipeline step configuration."""
+
+    _path_fields = [
+        "DESCRIPTOR_FILE",
+        "INVOCATION_FILE",
+        "TRACKER_CONFIG_FILE",
+        "PYBIDS_IGNORE_FILE",
+    ]
 
     TRACKER_CONFIG_FILE: Optional[Path] = Field(
         default=None,
@@ -102,17 +137,12 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         Validate the pipeline step configuration after creation.
 
         Specifically:
-        - DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be None
+
         - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
-        "participant_session"
+          "participant_session"
         """
-        if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
-            self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
-        ):
-            raise ValueError(
-                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
-                f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
-            )
+        super().validate_after()
+
         if (
             self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
             and self.TRACKER_CONFIG_FILE is not None

@@ -12,12 +12,14 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
 class ExtractionRunner(PipelineRunner):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
+
+    _pipeline_type = PipelineTypeEnum.EXTRACTION
 
     def __init__(
         self,
@@ -54,18 +56,9 @@ class ExtractionRunner(PipelineRunner):
         return [self.dpath_pipeline_idp]
 
     @cached_property
-    def _dpath_pipeline_configs(self) -> Path:
-        """Path to the directory containing the appropriate pipeline bundles."""
-        return self.layout.get_dpath_catalog_extraction()
-
-    @cached_property
     def pipeline_config(self) -> ExtractionPipelineConfig:
         """Get the user config object for the extraction pipeline."""
-        return self._get_pipeline_config(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_class=ExtractionPipelineConfig,
-        )
+        return super().pipeline_config
 
     # for type annotation only
     @cached_property
@@ -82,10 +75,14 @@ class ExtractionRunner(PipelineRunner):
         proc_pipeline_info = self.pipeline_config.PROC_DEPENDENCIES[0]
 
         self._get_pipeline_config(
+            self.layout.get_dpath_pipeline_bundle(
+                PipelineTypeEnum.PROCESSING,
+                proc_pipeline_info.NAME,
+                proc_pipeline_info.VERSION,
+            ),
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
             pipeline_class=ProcPipelineConfig,
-            dpath_pipelines=self.layout.get_dpath_catalog_proc(),
         ).get_step_config(step_name=proc_pipeline_info.STEP)
 
         return proc_pipeline_info

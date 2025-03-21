@@ -43,7 +43,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 
     _expected_pipeline_type: Optional[PipelineTypeEnum] = None
 
-    # for validation
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -53,7 +52,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    # Needed for validation
     STEPS: list[
         Union[
             BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
@@ -164,15 +162,6 @@ class ProcPipelineConfig(BasePipelineConfig):
 
     _expected_pipeline_type = PipelineTypeEnum.PROCESSING
 
-    TRACKER_CONFIG_FILE: Optional[Path] = Field(
-        default=None,
-        description=(
-            "Path to the tracker configuration file associated with the pipeline"
-            ". This file must contain a list of tracker configurations"
-            ", each of which must be a dictionary with a NAME field (string)"
-            " and a PATHS field (non-empty list of strings)"
-        ),
-    )
     STEPS: list[ProcPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",

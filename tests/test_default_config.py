@@ -11,7 +11,7 @@ from boutiques import bosh
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig, BidsPipelineConfig
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     DPATH_SAMPLE_PIPELINES,
@@ -38,8 +38,6 @@ def single_subject_dataset(
     session_id = "01"
     container_command = "apptainer"
     substitutions = {
-        "[[NIPOPPY_DPATH_PIPELINES]]": str(DPATH_SAMPLE_PIPELINES),
-        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": str(tmp_path / "heuristic.py"),
         "[[DCM2BIDS_CONFIG_FILE]]": str(tmp_path / "dcm2bids_config.json"),
         "[[FREESURFER_LICENSE_FILE]]": str(tmp_path / "freesurfer_license.txt"),
@@ -79,7 +77,9 @@ def single_subject_dataset(
 @pytest.fixture()
 def bids_pipeline_configs() -> list[BidsPipelineConfig]:
     return get_pipeline_configs(
-        DPATH_SAMPLE_PIPELINES / DatasetLayout.dname_catalog_bids, BidsPipelineConfig
+        DPATH_SAMPLE_PIPELINES
+        / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.BIDSIFICATION],
+        BidsPipelineConfig,
     )
 
 
@@ -197,6 +197,7 @@ def test_pipeline_runner(
         pipeline_version=pipeline_version,
         simulate=True,
     )
+    runner.layout = layout
 
     runner.pipeline_config.get_fpath_container().touch()
 

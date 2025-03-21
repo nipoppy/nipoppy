@@ -97,17 +97,17 @@ def test_dpath_pipeline(extractor: ExtractionRunner):
 
 
 def test_proc_pipeline_info(extractor: ExtractionRunner):
-    extractor.pipeline_name = "fs_extractor"
-    extractor.pipeline_version = "2.0.0"  # valid
-    # this also checks that proc_pipeline_info calls _get_pipeline_config with the
+    # check that proc_pipeline_info calls _get_pipeline_config with the
     # correct pipeline_class
     assert isinstance(extractor.proc_pipeline_info, PipelineInfo)
 
 
 def test_proc_pipeline_info_error(extractor: ExtractionRunner):
-    extractor.pipeline_name = "fs_extractor"
-    extractor.pipeline_version = "1.0.0"  # invalid
-    with pytest.raises(ValueError, match="No config found for pipeline with"):
+    bad_version = "invalid_version"
+    extractor.pipeline_config.PROC_DEPENDENCIES[0].VERSION = bad_version
+    with pytest.raises(
+        FileNotFoundError, match=f"Pipeline config file not found at .* {bad_version}"
+    ):
         extractor.proc_pipeline_info
 
 
