@@ -13,7 +13,7 @@ from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
 def is_derived_dicom(fpath: Path) -> bool:
@@ -27,7 +27,7 @@ def is_derived_dicom(fpath: Path) -> bool:
     return "DERIVED" in img_types
 
 
-class DicomReorgWorkflow(BaseWorkflow):
+class DicomReorgWorkflow(BaseDatasetWorkflow):
     """Workflow for organizing raw DICOM files."""
 
     def __init__(

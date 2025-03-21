@@ -5,10 +5,10 @@ from typing import Optional
 
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class DoughnutWorkflow(BaseWorkflow):
+class DoughnutWorkflow(BaseDatasetWorkflow):
     """Workflow for creating/updating a dataset's doughnut file."""
 
     def __init__(

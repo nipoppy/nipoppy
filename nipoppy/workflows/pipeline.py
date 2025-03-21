@@ -42,7 +42,7 @@ from nipoppy.utils import (
     process_template_str,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
 def apply_analysis_level(
@@ -114,7 +114,7 @@ def get_pipeline_version(
         )
 
 
-class BasePipelineWorkflow(BaseWorkflow, ABC):
+class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
 
     def __init__(

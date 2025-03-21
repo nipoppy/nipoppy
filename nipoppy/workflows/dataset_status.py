@@ -11,10 +11,10 @@ from rich.table import Table
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.bagel import STATUS_SUCCESS
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class StatusWorkflow(BaseWorkflow):
+class StatusWorkflow(BaseDatasetWorkflow):
     """Workflow for status command."""
 
     def __init__(
@@ -31,7 +31,7 @@ class StatusWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
         )
         self.col_pipeline = "pipeline"
 
