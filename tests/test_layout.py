@@ -307,8 +307,14 @@ def test_get_dpath_pybids_db(
 
 def test_get_dpath_catalog(dpath_root):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout.get_dpath_catalog_bids() == layout.dpath_root / "pipelines" / "bids"
-    assert layout.get_dpath_catalog_proc() == layout.dpath_root / "pipelines" / "proc"
+    assert (
+        layout.get_dpath_catalog_bids()
+        == layout.dpath_root / "pipelines" / "bidsification"
+    )
+    assert (
+        layout.get_dpath_catalog_proc()
+        == layout.dpath_root / "pipelines" / "processing"
+    )
     assert (
         layout.get_dpath_catalog_extraction()
         == layout.dpath_root / "pipelines" / "extraction"
