@@ -113,7 +113,7 @@ def create_pipeline_config_files(
     proc_pipelines: Optional[list[dict]] = None,
     extraction_pipelines: Optional[list[dict]] = None,
 ):
-    """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
+    """Create pipeline bundles (inside subdirectories)."""
     for pipeline_config_list, pipeline_type, dname in [
         (
             bids_pipelines,

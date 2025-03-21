@@ -18,9 +18,9 @@
     },
     "STEPS": [
         {
-            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
-            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
-            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/processing/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/processing/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/processing/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
         }
     ],
     "PIPELINE_TYPE": "processing"
