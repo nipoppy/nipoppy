@@ -208,10 +208,10 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def dpath_pipeline_bundle(self) -> Path:
         """Path to the pipeline bundle directory."""
-        return self.layout.get_dpath_pipeline_store(
-            self._pipeline_type
-        ) / get_pipeline_tag(
-            pipeline_name=self.pipeline_name, pipeline_version=self.pipeline_version
+        return self.layout.get_dpath_pipeline_bundle(
+            self._pipeline_type,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
         )
 
     @cached_property

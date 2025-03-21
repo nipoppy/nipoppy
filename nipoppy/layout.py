@@ -334,6 +334,14 @@ class DatasetLayout(Base):
         """Return the path to the pipeline store directory."""
         return self.dpath_pipelines / self.pipeline_type_to_dname_map[pipeline_type]
 
+    def get_dpath_pipeline_bundle(
+        self, pipeline_type: PipelineTypeEnum, pipeline_name: str, pipeline_version: str
+    ) -> Path:
+        """Return the path to the pipeline bundle directory."""
+        return self.get_dpath_pipeline_store(pipeline_type) / get_pipeline_tag(
+            pipeline_name, pipeline_version
+        )
+
 
 # for printing defaults in docs
 DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<DATASET_ROOT>")
