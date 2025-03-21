@@ -177,6 +177,7 @@ def test_boutiques_descriptors(fpath_descriptor):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
+        ("bids-validator", "2.0.3"),
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
         ("fmriprep", "24.1.1"),

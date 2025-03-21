@@ -1,6 +1,8 @@
 """Tests for PipelineRunner."""
 
 import json
+import re
+import subprocess
 import tarfile
 from pathlib import Path
 
@@ -133,7 +135,9 @@ def test_run_failed_cleanup(runner: PipelineRunner, n_success):
 
 
 @pytest.mark.parametrize("simulate", [True, False])
-def test_launch_boutiques_run(simulate, runner: PipelineRunner):
+def test_launch_boutiques_run(
+    simulate, runner: PipelineRunner, mocker: pytest_mock.MockFixture
+):
     runner.simulate = simulate
 
     participant_id = "01"
@@ -147,6 +151,9 @@ def test_launch_boutiques_run(simulate, runner: PipelineRunner):
 
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
+
+    mocked_run_command = mocker.patch.object(runner, "run_command")
+
     descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id, container_command=""
     )
@@ -154,6 +161,44 @@ def test_launch_boutiques_run(simulate, runner: PipelineRunner):
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
     assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
     assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
+
+    assert mocked_run_command.call_count == 1
+    assert mocked_run_command.call_args[1].get("quiet") is True
+
+
+@pytest.mark.parametrize("simulate", [True, False])
+def test_launch_boutiques_run_error(
+    simulate,
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.simulate = simulate
+
+    participant_id = "01"
+    session_id = "BL"
+
+    fids.create_fake_bids_dataset(
+        runner.layout.dpath_bids,
+        subjects=participant_id,
+        sessions=session_id,
+    )
+
+    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
+    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
+
+    mocker.patch.object(
+        runner,
+        "run_command",
+        side_effect=subprocess.CalledProcessError(1, "run_command failed"),
+    )
+
+    if simulate:
+        expected_message = "Pipeline simulation failed (return code: 1)"
+    else:
+        expected_message = "Pipeline did not complete successfully (return code: 1)"
+
+    with pytest.raises(RuntimeError, match=re.escape(expected_message)):
+        runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
 def test_process_container_config(runner: PipelineRunner):
