@@ -101,7 +101,7 @@ def test_check_descriptor_file():
         (
             DPATH_TEST_DATA / "descriptor-invalid.json",
             RuntimeError,
-            "Descriptor file is invalid",
+            "Descriptor file .* is invalid",
         ),
     ],
 )
@@ -126,7 +126,7 @@ def test_check_invocation_file(descriptor_str):
         (
             DPATH_TEST_DATA / "invocation-invalid.json",
             RuntimeError,
-            "Invocation file is invalid",
+            "Invocation file .* is invalid",
         ),
     ],
 )
@@ -153,7 +153,7 @@ def test_check_tracker_config_file():
         (
             DPATH_TEST_DATA / "tracker_config-invalid.json",
             RuntimeError,
-            "Tracker config file is invalid",
+            "Tracker config file .* is invalid",
         ),
     ],
 )

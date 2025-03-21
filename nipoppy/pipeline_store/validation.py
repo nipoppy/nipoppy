@@ -64,7 +64,7 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
     try:
         boutiques.validate(descriptor_str)
     except boutiques.DescriptorValidationError as exception:
-        raise RuntimeError(f"Descriptor file is invalid:\n{exception}")
+        raise RuntimeError(f"Descriptor file {descriptor_str} is invalid:\n{exception}")
     return descriptor_str
 
 
@@ -84,7 +84,9 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
             "--invocation", json.dumps(invocation_dict), descriptor_str
         )
     except boutiques.InvocationValidationError as exception:
-        raise RuntimeError(f"Invocation file is invalid:\n{exception}")
+        raise RuntimeError(
+            f"Invocation file {fpath_invocation} is invalid:\n{exception}"
+        )
 
 
 def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
@@ -103,7 +105,9 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
     try:
         TrackerConfig(**tracker_config_dict)
     except ValidationError as exception:
-        raise RuntimeError(f"Tracker config file is invalid:\n{exception}")
+        raise RuntimeError(
+            f"Tracker config file {fpath_tracker_config} is invalid:\n{exception}"
+        )
 
 
 def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
@@ -195,10 +199,7 @@ def _check_self_contained(
     if logger is not None:
         logger.log(
             level=log_level,
-            msg=(
-                "Checking that all files are within the bundle directory"
-                f" {dpath_bundle}"
-            ),
+            msg="Checking that all files are within the bundle directory",
         )
     for fpath in fpaths:
         if not any(

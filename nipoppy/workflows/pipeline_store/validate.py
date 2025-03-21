@@ -41,5 +41,5 @@ class PipelineValidateWorkflow(BaseWorkflow):
         )
 
         self.logger.info(
-            f"[{LogColor.SUCCESS}]All files are valid![/]",
+            f"[{LogColor.SUCCESS}]The pipeline files are all valid![/]",
         )
