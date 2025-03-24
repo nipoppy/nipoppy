@@ -39,7 +39,10 @@ def workflow(tmp_path: Path, pipeline_config: ProcPipelineConfig):
         / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
         / "my_pipeline-1.0.0",
     )
-    workflow.config = get_config()
+    # make the default config have a path placeholder string
+    get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]/my_file.tsv").save(
+        workflow.layout.fpath_config
+    )
     return workflow
 
 
@@ -53,32 +56,75 @@ def _check_files_copied(dpath_source, dpath_dest):
 
 @pytest.mark.parametrize("variables", [{}, {"var1": "description"}])
 @pytest.mark.parametrize("dry_run", [False, True])
-def test_add_variables_to_config(
+def test_update_config_and_save(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcPipelineConfig,
     variables: dict,
-    dry_run,
+    dry_run: bool,
     caplog: pytest.LogCaptureFixture,
 ):
-    workflow.dry_run = dry_run
     pipeline_config.VARIABLES = variables
-    workflow._add_variables_to_config(pipeline_config)
+    workflow.dry_run = dry_run
 
-    if dry_run:
-        assert not workflow.layout.fpath_config.exists()
-    elif variables:
-        # check that the variables were added to the config file
-        assert Config.load(workflow.layout.fpath_config).PIPELINE_VARIABLES.PROCESSING[
-            pipeline_config.NAME
-        ][pipeline_config.VERSION] == {
-            variable_name: None for variable_name in variables
-        }
+    new_config = workflow._update_config_and_save(pipeline_config)
 
-        # check logs
+    # check that the variables were added to the config file
+    assert new_config.PIPELINE_VARIABLES.PROCESSING[pipeline_config.NAME][
+        pipeline_config.VERSION
+    ] == {variable_name: None for variable_name in variables}
+
+    # check logs
+    if variables:
         assert "Adding" in caplog.text
         assert "You must update" in caplog.text
     else:
-        assert len(caplog.records) == 0
+        assert "Adding" not in caplog.text
+        assert "You must update" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "variables,dry_run", [({}, False), ({"var1": "description"}, True)]
+)
+def test_update_config_and_save_no_write(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcPipelineConfig,
+    variables: dict,
+    dry_run: bool,
+    mocker: pytest_mock.MockFixture,
+):
+    pipeline_config.VARIABLES = variables
+    workflow.dry_run = dry_run
+
+    mocked = mocker.patch.object(Config, "save")
+
+    assert isinstance(workflow._update_config_and_save(pipeline_config), Config)
+
+    # should not update the config file if dry_run is True
+    # or if there were no variables to add
+    mocked.assert_not_called()
+
+
+def test_update_config_and_save_no_other_change(
+    workflow: PipelineInstallWorkflow, pipeline_config: ProcPipelineConfig
+):
+    # cache original config
+    original_config = Config.load(
+        workflow.layout.fpath_config  # , apply_substitutions=False
+    )
+
+    # check that placeholder was replaced as expected
+    assert original_config != workflow.config
+    assert workflow.config.DICOM_DIR_MAP_FILE.parent == workflow.dpath_root
+
+    # create new config file with the new pipeline variables
+    pipeline_config.VARIABLES = {"var1": "description"}
+    new_config = workflow._update_config_and_save(pipeline_config)
+
+    # check that the new config file is identical to the old one except for
+    # the pipeline variables
+    assert new_config.model_dump(
+        exclude="PIPELINE_VARIABLES"
+    ) == original_config.model_dump(exclude="PIPELINE_VARIABLES")
 
 
 def test_run_main(
@@ -99,8 +145,8 @@ def test_run_main(
     assert not dpath_installed.parent.exists()
 
     # mock
-    mocked_add_variables_to_config = mocker.patch.object(
-        workflow, "_add_variables_to_config"
+    mocked_update_config_and_save = mocker.patch.object(
+        workflow, "_update_config_and_save"
     )
 
     workflow.run_main()
@@ -108,7 +154,7 @@ def test_run_main(
         workflow.dpath_pipeline,
         dpath_installed,
     )
-    mocked_add_variables_to_config.assert_called_once_with(
+    mocked_update_config_and_save.assert_called_once_with(
         BasePipelineConfig(**pipeline_config.model_dump())
     )
     assert "Successfully installed pipeline" in caplog.text

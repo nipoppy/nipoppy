@@ -315,6 +315,8 @@ class BaseWorkflow(Base, ABC):
             )
 
         # replace path placeholders in the config
+        # (except in the user-defined substitutions)
+        user_substitutions = config.SUBSTITUTIONS
         config = Config(
             **json.loads(
                 process_template_str(
@@ -323,6 +325,7 @@ class BaseWorkflow(Base, ABC):
                 )
             )
         )
+        config.SUBSTITUTIONS = user_substitutions
 
         return config
 
