@@ -28,6 +28,7 @@ class PipelineInstallWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
+            _skip_logging=True,
         )
         self.dpath_pipeline = dpath_pipeline
         self.overwrite = overwrite
@@ -35,7 +36,11 @@ class PipelineInstallWorkflow(BaseWorkflow):
     def run_main(self):
         """Install a pipeline config directory into the dataset."""
         # load the config and validate file contents (including file paths)
-        pipeline_config = check_pipeline_bundle(self.dpath_pipeline, logger=self.logger)
+        pipeline_config = check_pipeline_bundle(
+            self.dpath_pipeline,
+            logger=self.logger,
+            substitution_objs=[self, self.layout],  # to silence warnings
+        )
 
         # generate destination path
         dpath_target = self.layout.get_dpath_pipeline_bundle(
@@ -50,15 +55,13 @@ class PipelineInstallWorkflow(BaseWorkflow):
                     ". Use --overwrite to overwrite.",
                 )
             else:
-                self.logger.info(
-                    f"Overwriting existing pipeline directory: {dpath_target}",
-                )
                 self.rm(dpath_target, log_level=logging.DEBUG)
 
         # copy the directory
         self.copytree(
             path_source=self.dpath_pipeline,
             path_dest=dpath_target,
+            log_level=logging.DEBUG,
         )
 
         self.logger.info(

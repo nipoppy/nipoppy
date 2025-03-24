@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import PipelineTypeEnum
+from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
 from .conftest import create_empty_dataset, create_pipeline_config_files
@@ -30,7 +31,9 @@ def workflow(tmp_path: Path, pipeline_config: dict):
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
-        dpath_pipeline=tmp_path / "proc" / "my_pipeline-1.0.0",
+        dpath_pipeline=tmp_path
+        / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
+        / "my_pipeline-1.0.0",
     )
     return workflow
 
@@ -53,7 +56,11 @@ def test_run_main(
         pipeline_config["NAME"],
         pipeline_config["VERSION"],
     )
+
+    # make sure directory does not already exist
+    # also check that the parent directory will be created without error
     assert not dpath_installed.exists()
+    assert not dpath_installed.parent.exists()
 
     workflow.run_main()
     _check_files_copied(

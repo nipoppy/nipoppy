@@ -352,6 +352,32 @@ def pipeline():
     pass
 
 
+@pipeline.command("install")
+@dataset_option
+@click.option(
+    "--path",
+    "dpath_pipeline",
+    help=(
+        "Path to the pipeline directory"
+        f" (should contain a {DatasetLayout.fname_pipeline_config} file)."
+    ),
+    required=True,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing pipeline directory if it exists.",
+)
+def pipeline_install(**params):
+    """Install a new pipeline into the pipeline store."""
+    from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+
+    params = dep_params(**params)
+    with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
+        workflow.run()
+
+
 @pipeline.command("validate")
 @dataset_option
 @click.option(

@@ -220,6 +220,22 @@ def test_cli_extract(tmp_path: Path):
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
 
 
+def test_cli_pipeline_install(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    dpath_pipeline = tmp_path / "pipeline"
+    dpath_pipeline.mkdir()
+    result = runner.invoke(
+        cli,
+        ["pipeline", "install", "--dataset", dpath_root, "--path", dpath_pipeline],
+    )
+
+    # No log file is created, since the command does not create logs.
+    pass
+
+    # Expects missing path, since init command is not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
+
 def test_cli_pipeline_validate(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     dpath_pipeline = tmp_path / "pipeline"
