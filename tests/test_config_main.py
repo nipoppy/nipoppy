@@ -334,7 +334,11 @@ def test_pipeline_variables_not_extra_fields():
     ],
 )
 def test_pipeline_variables_get_variables(
-    pipeline_variables, pipeline_type, pipeline_name, pipeline_version, expected
+    pipeline_variables: PipelineVariables,
+    pipeline_type,
+    pipeline_name,
+    pipeline_version,
+    expected,
 ):
     assert (
         pipeline_variables.get_variables(pipeline_type, pipeline_name, pipeline_version)
@@ -342,19 +346,59 @@ def test_pipeline_variables_get_variables(
     )
 
 
-def test_pipeline_variables_get_variables_error_pipeline_type(pipeline_variables):
+def test_pipeline_variables_get_variables_error_pipeline_type(
+    pipeline_variables: PipelineVariables,
+):
     with pytest.raises(ValueError, match="Invalid pipeline type"):
         pipeline_variables.get_variables("INVALID", "pipeline1", "version1")
 
 
-def test_pipeline_variables_get_variables_unknown(pipeline_variables):
+def test_pipeline_variables_get_variables_unknown(
+    pipeline_variables: PipelineVariables,
+):
     assert (
         pipeline_variables.get_variables(PipelineTypeEnum.PROCESSING, "xyz", "123")
         == {}
     )
 
 
-def test_pipeline_variables_validation(pipeline_variables):
+@pytest.mark.parametrize(
+    "pipeline_type,pipeline_name,pipeline_version,to_set",
+    [
+        (
+            PipelineTypeEnum.BIDSIFICATION,
+            "new_bids_pipeline",
+            "1.1.1",
+            {"var1": "val1", "var2": "val2"},
+        ),
+        (PipelineTypeEnum.PROCESSING, "proc_pipeline", "0.1.0", {}),
+        (PipelineTypeEnum.EXTRACTION, "extraction_pipelines", "1.0.0", {"A": "1"}),
+    ],
+)
+def test_pipeline_variables_set_variables(
+    pipeline_variables: PipelineVariables,
+    pipeline_type,
+    pipeline_name,
+    pipeline_version,
+    to_set,
+):
+    pipeline_variables.set_variables(
+        pipeline_type, pipeline_name, pipeline_version, to_set
+    )
+    assert (
+        pipeline_variables.get_variables(pipeline_type, pipeline_name, pipeline_version)
+        == to_set
+    )
+
+
+def test_pipeline_variables_set_variables_error_pipeline_type(
+    pipeline_variables: PipelineVariables,
+):
+    with pytest.raises(ValueError, match="Invalid pipeline type"):
+        pipeline_variables.set_variables("INVALID", "pipeline1", "version1", {})
+
+
+def test_pipeline_variables_validation(pipeline_variables: PipelineVariables):
     # test the conversion to defaultdict
     # any unknown pipeline should have an empty dict
     assert pipeline_variables.BIDSIFICATION["unknown_pipeline"]["v1"] == {}

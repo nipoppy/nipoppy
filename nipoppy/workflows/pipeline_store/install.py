@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
 from nipoppy.workflows.base import BaseWorkflow
@@ -32,6 +33,37 @@ class PipelineInstallWorkflow(BaseWorkflow):
         )
         self.dpath_pipeline = dpath_pipeline
         self.overwrite = overwrite
+
+    def _add_variables_to_config(self, pipeline_config: BasePipelineConfig):
+        if len(pipeline_config.VARIABLES) == 0:
+            return
+
+        # update config
+        self.config.PIPELINE_VARIABLES.set_variables(
+            pipeline_config.PIPELINE_TYPE,
+            pipeline_config.NAME,
+            pipeline_config.VERSION,
+            {variable_name: None for variable_name in pipeline_config.VARIABLES},
+        )
+
+        # log variable details
+        self.logger.info(
+            f"Adding {len(pipeline_config.VARIABLES)} variable(s) "
+            "to the global config file:"
+        )
+        for (
+            variable_name,
+            variable_description,
+        ) in pipeline_config.VARIABLES.items():
+            self.logger.info(f"\t{variable_name}\t{variable_description}")
+        self.logger.warning(
+            "You must update the PIPELINE_VARIABLES section in "
+            f"{self.layout.fpath_config} manually before running the pipeline!"
+        )
+
+        # save
+        if not self.dry_run:
+            self.config.save(self.layout.fpath_config)
 
     def run_main(self):
         """Install a pipeline config directory into the dataset."""
@@ -63,6 +95,9 @@ class PipelineInstallWorkflow(BaseWorkflow):
             path_dest=dpath_target,
             log_level=logging.DEBUG,
         )
+
+        # update global config with new pipeline variables
+        self._add_variables_to_config(pipeline_config)
 
         self.logger.info(
             f"[{LogColor.SUCCESS}]Successfully installed pipeline "

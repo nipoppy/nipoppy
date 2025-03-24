@@ -27,24 +27,24 @@ class PipelineVariables(BaseModel):
         PipelineTypeEnum.EXTRACTION: "EXTRACTION",
     }
 
-    BIDSIFICATION: dict[str, dict[str, dict[str, str]]] = Field(
-        default=defaultdict(lambda: defaultdict(dict)),
+    BIDSIFICATION: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+        default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the BIDSification pipelines. This should be a nested "
             "dictionary with these levels: "
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
-    PROCESSING: dict[str, dict[str, dict[str, str]]] = Field(
-        default=defaultdict(lambda: defaultdict(dict)),
+    PROCESSING: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+        default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the processing pipelines. This should be a nested "
             "dictionary with these levels: "
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
-    EXTRACTION: dict[str, dict[str, dict[str, str]]] = Field(
-        default=defaultdict(lambda: defaultdict(dict)),
+    EXTRACTION: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+        default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the extraction pipelines. This should be a nested "
             "dictionary with these levels: "
@@ -68,12 +68,34 @@ class PipelineVariables(BaseModel):
 
         return getattr(self, key)[pipeline_name][pipeline_version]
 
+    def set_variables(
+        self,
+        pipeline_type: PipelineTypeEnum,
+        pipeline_name: str,
+        pipeline_version: str,
+        variables: dict[str, Optional[str]],
+    ) -> Self:
+        """Set the variables for a specific pipeline."""
+        try:
+            key = self._pipeline_type_to_key[pipeline_type]
+        except KeyError:
+            raise ValueError(
+                f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
+                f"{self._pipeline_type_to_key.keys()}"
+            )
+
+        pipeline_variables = getattr(self, key)
+        pipeline_variables[pipeline_name][pipeline_version] = variables
+        setattr(self, key, pipeline_variables)
+
+        return self
+
     @model_validator(mode="after")
     def validate_after(self):
         """Convert fields to defaultdicts."""
         for pipeline_type_field in self._pipeline_type_to_key.values():
             original_nested_dict = getattr(self, pipeline_type_field)
-            new_nested_dict = self.model_fields[pipeline_type_field].default
+            new_nested_dict = self.model_fields[pipeline_type_field].default_factory()
             for pipeline_name in original_nested_dict:
                 for pipeline_version in original_nested_dict[pipeline_name]:
                     new_nested_dict[pipeline_name][pipeline_version] = (
