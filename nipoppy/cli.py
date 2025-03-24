@@ -352,7 +352,7 @@ def pipeline():
     pass
 
 
-@pipeline.command()
+@pipeline.command("validate")
 @dataset_option
 @click.option(
     "--path",
@@ -364,7 +364,7 @@ def pipeline():
     required=True,
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
-def validate(**params):
+def pipeline_validate(**params):
     """Validate a pipeline store directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
