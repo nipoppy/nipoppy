@@ -133,8 +133,8 @@ class DatasetLayout(Base):
     dname_pipeline_idp = "idp"
 
     # pipeline catalog subdirectories
-    dname_catalog_bids = "bids"
-    dname_catalog_proc = "proc"
+    dname_catalog_bids = "bidsification"
+    dname_catalog_proc = "processing"
     dname_catalog_extraction = "extraction"
 
     # file names
