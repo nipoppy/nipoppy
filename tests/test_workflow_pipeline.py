@@ -138,9 +138,9 @@ def test_apply_analysis_level(analysis_level, expected):
 @pytest.mark.parametrize(
     "dname_pipelines,pipeline_name,expected_version",
     [
-        ("proc", "fmriprep", "23.1.3"),
-        ("proc", "my_pipeline", "2.0"),
-        ("bids", "bids_converter", "1.0"),
+        ("processing", "fmriprep", "23.1.3"),
+        ("processing", "my_pipeline", "2.0"),
+        ("bidsification", "bids_converter", "1.0"),
         ("extraction", "extractor1", "0.1.0"),
     ],
 )
@@ -436,9 +436,9 @@ def test_pybids_ignore_patterns_invalid_format(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
-        ("fmriprep", "23.1.3", "proc", ProcPipelineConfig),
-        ("my_pipeline", "2.0", "proc", ProcPipelineConfig),
-        ("bids_converter", "1.0", "bids", BidsPipelineConfig),
+        ("fmriprep", "23.1.3", "processing", ProcPipelineConfig),
+        ("my_pipeline", "2.0", "processing", ProcPipelineConfig),
+        ("bids_converter", "1.0", "bidsification", BidsPipelineConfig),
         ("extractor1", "0.1.0", "extraction", ExtractionPipelineConfig),
     ],
 )
@@ -496,9 +496,9 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
-        ("not_a_pipeline", "23.1.3", "proc", ProcPipelineConfig),
-        ("my_pipeline", "not_a_version", "proc", ProcPipelineConfig),
-        ("bids_converter", "2.0", "bids", BidsPipelineConfig),
+        ("not_a_pipeline", "23.1.3", "processing", ProcPipelineConfig),
+        ("my_pipeline", "not_a_version", "processing", ProcPipelineConfig),
+        ("bids_converter", "2.0", "bidsification", BidsPipelineConfig),
         ("bids_converter", "1.0", "extraction", ExtractionPipelineConfig),
     ],
 )
