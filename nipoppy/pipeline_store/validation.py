@@ -205,7 +205,7 @@ def _check_self_contained(
         if not any(
             [
                 dpath_parent.resolve() == dpath_bundle
-                for dpath_parent in Path(fpath).parents
+                for dpath_parent in Path(fpath).resolve().parents
             ]
         ):
             raise ValueError(

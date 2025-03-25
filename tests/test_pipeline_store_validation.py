@@ -290,6 +290,7 @@ def test_check_config_files_logging(
         ("bundle_dir", ["bundle_dir/file1.txt", "bundle_dir/sub_dir/file2.txt"], True),
         ("bundle_dir", ["bundle_dir/file1.txt", "file2.txt"], False),
         ("bundle_dir", ["bundle_dir/file1.txt", "other_dir/file2.txt"], False),
+        ("bundle_dir", ["bundle_dir/../file1.txt"], False),
     ],
 )
 def test_check_self_contained(dpath_bundle, fpaths, valid):
