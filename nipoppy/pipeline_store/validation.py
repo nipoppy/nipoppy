@@ -213,6 +213,24 @@ def _check_self_contained(
             )
 
 
+def _check_no_subdirectories(
+    dpath_bundle: StrOrPathLike,
+    logger: Optional[logging.Logger] = None,
+    log_level=logging.DEBUG,
+):
+    dpath_bundle: Path = Path(dpath_bundle)
+    if logger is not None:
+        logger.log(
+            level=log_level,
+            msg="Checking that there are no subdirectories inside the bundle directory",
+        )
+    for path in dpath_bundle.iterdir():
+        if path.is_dir():
+            raise ValueError(
+                f"Bundle directory should not contain any subdirectories, found {path}"
+            )
+
+
 def check_pipeline_bundle(
     dpath_bundle: StrOrPathLike,
     substitution_objs: Optional[list[Any]] = None,
@@ -233,5 +251,8 @@ def check_pipeline_bundle(
 
     # make sure that all files are within the bundle directory
     _check_self_contained(dpath_bundle, fpaths, logger=logger, log_level=log_level)
+
+    # make sure that there are no subdirectories inside the bundle directory
+    _check_no_subdirectories(dpath_bundle, logger=logger, log_level=log_level)
 
     return config
