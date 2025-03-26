@@ -241,7 +241,7 @@ class PipelineRunner(BasePipelineWorkflow):
         to the processing status file.
         """
         participants_sessions_completed = set(
-            self.processing_status.get_completed_participants_sessions(
+            self.processing_status_table.get_completed_participants_sessions(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
                 pipeline_step=self.pipeline_step,

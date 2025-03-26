@@ -22,7 +22,7 @@ from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import add_path_timestamp, process_template_str
 
 LOG_SUFFIX = ".log"
@@ -390,16 +390,16 @@ class BaseWorkflow(Base, ABC):
             return doughnut
 
     @cached_property
-    def processing_status(self) -> ProcessingStatus:
+    def processing_status_table(self) -> ProcessingStatusTable:
         """
         Load the processing status file it it exists.
 
-        Otherwise, return an empty processing status dataframe.
+        Otherwise, return an empty processing status table.
         """
         try:
-            return ProcessingStatus.load(self.layout.fpath_processing_status)
+            return ProcessingStatusTable.load(self.layout.fpath_processing_status)
         except FileNotFoundError:
-            return ProcessingStatus()
+            return ProcessingStatusTable()
 
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:

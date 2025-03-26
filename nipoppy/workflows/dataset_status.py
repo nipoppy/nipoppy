@@ -54,7 +54,7 @@ class StatusWorkflow(BaseWorkflow):
         status_df = pd.DataFrame()
         status_df = self._check_manifest(status_df)
         status_df, doughnut_cols = self._check_doughnut(status_df)
-        status_df, processing_status_cols = self._check_processing_status(status_df)
+        status_df, processing_cols = self._check_processing_status_table(status_df)
 
         status_df = status_df.fillna(0).astype(int)
 
@@ -63,12 +63,12 @@ class StatusWorkflow(BaseWorkflow):
             "manifest": "in_manifest",
             "doughnut": doughnut_cols,
             "bids": "in_bids",  # also part of doughnut cols
-            "processing_status": processing_status_cols,
+            "processing": processing_cols,
         }
 
         # reorder the columns
         status_df = status_df[
-            [status_col_dict["manifest"]] + doughnut_cols + processing_status_cols
+            [status_col_dict["manifest"]] + doughnut_cols + processing_cols
         ]
 
         self.logger.debug(status_df)
@@ -155,14 +155,14 @@ class StatusWorkflow(BaseWorkflow):
         status_df = pd.concat([status_df, doughnut_status_df], axis=1)
         return status_df, doughnut_cols
 
-    def _check_processing_status(self, status_df: pd.DataFrame) -> pd.DataFrame:
+    def _check_processing_status_table(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the processing status file (if exists)."""
-        nipoppy_checkpoint = "in_processing_status"
+        nipoppy_checkpoint = "in_processing_status_table"
 
         self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-        processing_status = self.processing_status
+        processing_status_table = self.processing_status_table
 
-        if processing_status.empty:
+        if processing_status_table.empty:
             self.logger.warning(
                 "No imaging processing status file found. Run 'nipoppy track' to"
                 " generate a processing status file"
@@ -170,11 +170,15 @@ class StatusWorkflow(BaseWorkflow):
             return status_df, []
 
         # Get the number of participants in the processing status file
-        participant_ids = processing_status[
-            processing_status.col_participant_id
+        participant_ids = processing_status_table[
+            processing_status_table.col_participant_id
         ].unique()
-        session_ids = processing_status[processing_status.col_session_id].unique()
-        pipelines = processing_status[processing_status.col_pipeline_name].unique()
+        session_ids = processing_status_table[
+            processing_status_table.col_session_id
+        ].unique()
+        pipelines = processing_status_table[
+            processing_status_table.col_pipeline_name
+        ].unique()
 
         self.logger.debug(
             "\tNumber of participants in processing status file: "
@@ -184,8 +188,9 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
         # Check if at least successful run exists
-        if processing_status[
-            processing_status[processing_status.col_status] == STATUS_SUCCESS
+        if processing_status_table[
+            processing_status_table[processing_status_table.col_status]
+            == STATUS_SUCCESS
         ].empty:
             self.logger.warning(
                 "The processing status file exists, but no successful run was found in"
@@ -199,47 +204,45 @@ class StatusWorkflow(BaseWorkflow):
             )
             return status_df, []
 
-        processing_status[self.col_pipeline] = (
-            processing_status[processing_status.col_pipeline_name]
+        processing_status_table[self.col_pipeline] = (
+            processing_status_table[processing_status_table.col_pipeline_name]
             + "\n"
-            + processing_status[processing_status.col_pipeline_version]
+            + processing_status_table[processing_status_table.col_pipeline_version]
             + "\n"
-            + processing_status[processing_status.col_pipeline_step]
+            + processing_status_table[processing_status_table.col_pipeline_step]
         )
 
-        processing_pipeline_df = processing_status[
+        processing_pipeline_df = processing_status_table[
             [
-                processing_status.col_participant_id,
-                processing_status.col_session_id,
+                processing_status_table.col_participant_id,
+                processing_status_table.col_session_id,
                 self.col_pipeline,
-                processing_status.col_status,
+                processing_status_table.col_status,
             ]
         ]
         processing_pipeline_df = processing_pipeline_df[
-            processing_pipeline_df[processing_status.col_status] == STATUS_SUCCESS
+            processing_pipeline_df[processing_status_table.col_status] == STATUS_SUCCESS
         ]
 
         processing_pipeline_df = processing_pipeline_df.pivot(
             index=[
-                processing_status.col_participant_id,
-                processing_status.col_session_id,
+                processing_status_table.col_participant_id,
+                processing_status_table.col_session_id,
             ],
             columns=self.col_pipeline,
-            values=processing_status.col_status,
+            values=processing_status_table.col_status,
         )
 
         processing_status_df = processing_pipeline_df.groupby(
-            [processing_status.col_session_id]
+            [processing_status_table.col_session_id]
         ).count()
 
         self.logger.debug(f"processing_status_df: {processing_status_df}")
 
         status_df = pd.concat([status_df, processing_status_df], axis=1)
 
-        processing_status_cols = list(
-            status_df.columns[status_df.columns.str.contains("\n")]
-        )
-        return status_df, processing_status_cols
+        processing_cols = list(status_df.columns[status_df.columns.str.contains("\n")])
+        return status_df, processing_cols
 
     def _df_to_table(self, status_df: pd.DataFrame, status_col_dict: dict):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
@@ -255,7 +258,7 @@ class StatusWorkflow(BaseWorkflow):
             "in_pre_reorg": "cyan",
             "in_post_reorg": "cornflower_blue",
             "in_bids": "medium_purple3",
-            "in_processing_status": [
+            "in_processing_status_table": [
                 "orchid",
                 "deep_pink4",
                 "hot_pink3",
@@ -268,14 +271,14 @@ class StatusWorkflow(BaseWorkflow):
 
         table = Table(title=title, collapse_padding=False)
 
-        processing_status_cols = status_col_dict["processing_status"]
+        processing_cols = status_col_dict["processing"]
         n_non_proc_cols = 0
         for i_col, column in enumerate(df.columns):
-            if column not in (processing_status_cols):
+            if column not in (processing_cols):
                 col_color = column_colors[column]
                 n_non_proc_cols += 1
             else:
-                proc_colors = column_colors["in_processing_status"]
+                proc_colors = column_colors["in_processing_status_table"]
                 col_color = proc_colors[(i_col - n_non_proc_cols) % len(proc_colors)]
 
             column_header = column

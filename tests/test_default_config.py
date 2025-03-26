@@ -346,22 +346,24 @@ def test_tracker_paths(
 
     # check status
     assert (
-        tracker.processing_status.loc[
+        tracker.processing_status_table.loc[
             (
                 (
-                    tracker.processing_status[
-                        tracker.processing_status.col_participant_id
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_participant_id
                     ]
                     == participant_id
                 )
                 & (
-                    tracker.processing_status[tracker.processing_status.col_session_id]
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_session_id
+                    ]
                     == session_id
                 )
             ),
-            tracker.processing_status.col_status,
+            tracker.processing_status_table.col_status,
         ].item()
-        == tracker.processing_status.status_success
+        == tracker.processing_status_table.status_success
     )
 
 

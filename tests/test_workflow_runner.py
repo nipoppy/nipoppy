@@ -15,7 +15,7 @@ from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner
 
 from .conftest import create_empty_dataset, get_config, prepare_dataset
@@ -404,7 +404,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "01",
@@ -412,7 +412,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "01",
@@ -420,7 +420,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
             ],
             "dummy_pipeline",
@@ -441,7 +441,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_fail,
+                    ProcessingStatusTable.status_fail,
                 ],
                 [
                     "01",
@@ -449,7 +449,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "01",
@@ -457,7 +457,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_fail,
+                    ProcessingStatusTable.status_fail,
                 ],
                 [
                     "01",
@@ -465,7 +465,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
             ],
             "dummy_pipeline",
@@ -486,7 +486,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_fail,
+                    ProcessingStatusTable.status_fail,
                 ],
                 [
                     "01",
@@ -494,7 +494,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "01",
@@ -502,7 +502,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step1",
-                    ProcessingStatus.status_fail,
+                    ProcessingStatusTable.status_fail,
                 ],
                 [
                     "01",
@@ -510,7 +510,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step2",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "01",
@@ -518,7 +518,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step2",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "01",
@@ -526,7 +526,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "1.0.0",
                     "step2",
-                    ProcessingStatus.status_fail,
+                    ProcessingStatusTable.status_fail,
                 ],
                 [
                     "01",
@@ -534,7 +534,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                     "dummy_pipeline",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
             ],
             "dummy_pipeline",
@@ -581,15 +581,15 @@ def test_get_participants_sessions_to_run(
         ]
     )
     if processing_status_data is not None:
-        ProcessingStatus(
+        ProcessingStatusTable(
             processing_status_data,
             columns=[
-                ProcessingStatus.col_participant_id,
-                ProcessingStatus.col_session_id,
-                ProcessingStatus.col_pipeline_name,
-                ProcessingStatus.col_pipeline_version,
-                ProcessingStatus.col_pipeline_step,
-                ProcessingStatus.col_status,
+                ProcessingStatusTable.col_participant_id,
+                ProcessingStatusTable.col_session_id,
+                ProcessingStatusTable.col_pipeline_name,
+                ProcessingStatusTable.col_pipeline_version,
+                ProcessingStatusTable.col_pipeline_step,
+                ProcessingStatusTable.col_status,
             ],
         ).validate().save_with_backup(runner.layout.fpath_processing_status)
 

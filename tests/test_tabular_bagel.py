@@ -5,7 +5,10 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.tabular.processing_status import ProcessingStatus, ProcessingStatusModel
+from nipoppy.tabular.processing_status import (
+    ProcessingStatusModel,
+    ProcessingStatusTable,
+)
 
 from .conftest import DPATH_TEST_DATA
 
@@ -14,35 +17,35 @@ from .conftest import DPATH_TEST_DATA
     "data",
     [
         {
-            ProcessingStatus.col_participant_id: "1",
-            ProcessingStatus.col_bids_participant_id: "sub-1",
-            ProcessingStatus.col_session_id: "01",
-            ProcessingStatus.col_pipeline_name: "my_pipeline",
-            ProcessingStatus.col_pipeline_version: "1.0",
-            ProcessingStatus.col_pipeline_step: "a_step",
-            ProcessingStatus.col_status: ProcessingStatus.status_success,
+            ProcessingStatusTable.col_participant_id: "1",
+            ProcessingStatusTable.col_bids_participant_id: "sub-1",
+            ProcessingStatusTable.col_session_id: "01",
+            ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+            ProcessingStatusTable.col_pipeline_version: "1.0",
+            ProcessingStatusTable.col_pipeline_step: "a_step",
+            ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,
         },
         {
-            ProcessingStatus.col_participant_id: "2",
-            ProcessingStatus.col_session_id: "02",
-            ProcessingStatus.col_pipeline_name: "my_other_pipeline",
-            ProcessingStatus.col_pipeline_version: "2.0",
-            ProcessingStatus.col_pipeline_step: "another_step",
-            ProcessingStatus.col_status: ProcessingStatus.status_fail,
+            ProcessingStatusTable.col_participant_id: "2",
+            ProcessingStatusTable.col_session_id: "02",
+            ProcessingStatusTable.col_pipeline_name: "my_other_pipeline",
+            ProcessingStatusTable.col_pipeline_version: "2.0",
+            ProcessingStatusTable.col_pipeline_step: "another_step",
+            ProcessingStatusTable.col_status: ProcessingStatusTable.status_fail,
         },
     ],
 )
 def test_model(data):
     processing_status_record = ProcessingStatusModel(**data)
     assert set(processing_status_record.model_fields.keys()) == {
-        ProcessingStatus.col_participant_id,
-        ProcessingStatus.col_bids_participant_id,
-        ProcessingStatus.col_session_id,
-        ProcessingStatus.col_pipeline_name,
-        ProcessingStatus.col_pipeline_version,
-        ProcessingStatus.col_pipeline_step,
-        ProcessingStatus.col_status,
-        ProcessingStatus.col_bids_session_id,
+        ProcessingStatusTable.col_participant_id,
+        ProcessingStatusTable.col_bids_participant_id,
+        ProcessingStatusTable.col_session_id,
+        ProcessingStatusTable.col_pipeline_name,
+        ProcessingStatusTable.col_pipeline_version,
+        ProcessingStatusTable.col_pipeline_step,
+        ProcessingStatusTable.col_status,
+        ProcessingStatusTable.col_bids_session_id,
     }
 
 
@@ -56,7 +59,7 @@ def test_model_bids_id(participant_id, expected_bids_id):
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
         pipeline_step="step1",
-        status=ProcessingStatus.status_success,
+        status=ProcessingStatusTable.status_success,
     )
     assert model.bids_participant_id == expected_bids_id
 
@@ -64,10 +67,10 @@ def test_model_bids_id(participant_id, expected_bids_id):
 @pytest.mark.parametrize(
     "status",
     [
-        ProcessingStatus.status_success,
-        ProcessingStatus.status_fail,
-        ProcessingStatus.status_incomplete,
-        ProcessingStatus.status_unavailable,
+        ProcessingStatusTable.status_success,
+        ProcessingStatusTable.status_fail,
+        ProcessingStatusTable.status_incomplete,
+        ProcessingStatusTable.status_unavailable,
     ],
 )
 def test_model_status(status):
@@ -101,127 +104,127 @@ def test_model_status_invalid():
             [],
             [
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
                 },
             ],
             [
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
-                },
-            ],
-        ),
-        (
-            [
-                {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_fail,
-                },
-            ],
-            [
-                {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
-                },
-            ],
-            [
-                {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
                 },
             ],
         ),
         (
             [
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_fail,
-                },
-                {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "2",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_unavailable,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_fail,
                 },
             ],
             [
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "2",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
-                },
-                {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "3",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
                 },
             ],
             [
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "1",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_fail,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
+                },
+            ],
+        ),
+        (
+            [
+                {
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_fail,
                 },
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "2",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "2",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_unavailable,  # noqa E501
+                },
+            ],
+            [
+                {
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "2",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
                 },
                 {
-                    ProcessingStatus.col_participant_id: "01",
-                    ProcessingStatus.col_session_id: "3",
-                    ProcessingStatus.col_pipeline_name: "my_pipeline",
-                    ProcessingStatus.col_pipeline_version: "1.0",
-                    ProcessingStatus.col_pipeline_step: "step1",
-                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "3",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
+                },
+            ],
+            [
+                {
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_fail,
+                },
+                {
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "2",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
+                },
+                {
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "3",
+                    ProcessingStatusTable.col_pipeline_name: "my_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "1.0",
+                    ProcessingStatusTable.col_pipeline_step: "step1",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa E501
                 },
             ],
         ),
     ],
 )
 def test_add_or_update_records(data_orig, data_new, data_expected):
-    processing_status_table = ProcessingStatus(data_orig).validate()
+    processing_status_table = ProcessingStatusTable(data_orig).validate()
     processing_status_table = processing_status_table.add_or_update_records(data_new)
-    expected_table = ProcessingStatus(data_expected).validate()
+    expected_table = ProcessingStatusTable(data_expected).validate()
     assert processing_status_table.equals(expected_table)
 
 
@@ -236,16 +239,23 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
-                ["02", "1", "pipeline1", "1.0", "step1", ProcessingStatus.status_fail],
+                [
+                    "02",
+                    "1",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatusTable.status_fail,
+                ],
                 [
                     "03",
                     "1",
                     "pipeline1",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_incomplete,
+                    ProcessingStatusTable.status_incomplete,
                 ],
                 [
                     "04",
@@ -253,7 +263,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_unavailable,
+                    ProcessingStatusTable.status_unavailable,
                 ],
             ],
             "pipeline1",
@@ -271,7 +281,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S01",
@@ -279,7 +289,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S01",
@@ -287,7 +297,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline2",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S01",
@@ -295,7 +305,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline2",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
             ],
             "pipeline2",
@@ -313,7 +323,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S01",
@@ -321,7 +331,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S01",
@@ -329,7 +339,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline2",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S01",
@@ -337,7 +347,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline2",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S02",
@@ -345,7 +355,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "1.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S02",
@@ -353,7 +363,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline1",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S02",
@@ -361,7 +371,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline2",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
                 [
                     "S02",
@@ -369,7 +379,7 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
                     "pipeline2",
                     "2.0",
                     "step1",
-                    ProcessingStatus.status_success,
+                    ProcessingStatusTable.status_success,
                 ],
             ],
             "pipeline2",
@@ -390,15 +400,15 @@ def test_get_completed_participants_sessions(
     session_id,
     expected,
 ):
-    processing_status_table = ProcessingStatus(
+    processing_status_table = ProcessingStatusTable(
         data,
         columns=[
-            ProcessingStatus.col_participant_id,
-            ProcessingStatus.col_session_id,
-            ProcessingStatus.col_pipeline_name,
-            ProcessingStatus.col_pipeline_version,
-            ProcessingStatus.col_pipeline_step,
-            ProcessingStatus.col_status,
+            ProcessingStatusTable.col_participant_id,
+            ProcessingStatusTable.col_session_id,
+            ProcessingStatusTable.col_pipeline_name,
+            ProcessingStatusTable.col_pipeline_version,
+            ProcessingStatusTable.col_pipeline_step,
+            ProcessingStatusTable.col_status,
         ],
     ).validate()
 
@@ -429,8 +439,8 @@ def test_get_completed_participants_sessions(
     ],
 )
 def test_load(fpath):
-    processing_status_table = ProcessingStatus.load(fpath)
-    assert isinstance(processing_status_table, ProcessingStatus)
+    processing_status_table = ProcessingStatusTable.load(fpath)
+    assert isinstance(processing_status_table, ProcessingStatusTable)
 
 
 @pytest.mark.parametrize(
@@ -442,4 +452,4 @@ def test_load(fpath):
 )
 def test_load_invalid(fname):
     with pytest.raises(ValueError):
-        ProcessingStatus.load(DPATH_TEST_DATA / fname)
+        ProcessingStatusTable.load(DPATH_TEST_DATA / fname)

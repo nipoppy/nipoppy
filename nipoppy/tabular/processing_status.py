@@ -71,15 +71,17 @@ class ProcessingStatusModel(BaseTabularModel):
     def validate_before(cls, data: Any):
         """Set default values for BIDS participant and session IDs."""
         if isinstance(data, dict):
-            if ProcessingStatus.col_bids_participant_id not in data:
-                data[ProcessingStatus.col_bids_participant_id] = (
+            if ProcessingStatusTable.col_bids_participant_id not in data:
+                data[ProcessingStatusTable.col_bids_participant_id] = (
                     participant_id_to_bids_participant_id(
-                        data[ProcessingStatus.col_participant_id]
+                        data[ProcessingStatusTable.col_participant_id]
                     )
                 )
-            if ProcessingStatus.col_bids_session_id not in data:
-                data[ProcessingStatus.col_bids_session_id] = (
-                    session_id_to_bids_session_id(data[ProcessingStatus.col_session_id])
+            if ProcessingStatusTable.col_bids_session_id not in data:
+                data[ProcessingStatusTable.col_bids_session_id] = (
+                    session_id_to_bids_session_id(
+                        data[ProcessingStatusTable.col_session_id]
+                    )
                 )
 
         return data
@@ -92,7 +94,7 @@ class ProcessingStatusModel(BaseTabularModel):
         return self
 
 
-class ProcessingStatus(BaseTabular):
+class ProcessingStatusTable(BaseTabular):
     """A file to track data availability/processing status."""
 
     # column names

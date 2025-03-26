@@ -11,7 +11,7 @@ from nipoppy.config.main import Config
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
 
@@ -73,25 +73,25 @@ def tracker(tmp_path: Path):
 
 def test_run_setup(tracker: PipelineTracker):
     tracker.run_setup()
-    assert tracker.processing_status.empty
+    assert tracker.processing_status_table.empty
 
 
 def test_run_setup_existing_processing_status_file(tracker: PipelineTracker):
-    processing_status_table = ProcessingStatus(
+    processing_status_table = ProcessingStatusTable(
         data={
-            ProcessingStatus.col_participant_id: ["01"],
-            ProcessingStatus.col_session_id: ["1"],
-            ProcessingStatus.col_pipeline_name: ["some_pipeline"],
-            ProcessingStatus.col_pipeline_version: ["some_version"],
-            ProcessingStatus.col_pipeline_step: ["some_step"],
-            ProcessingStatus.col_status: [ProcessingStatus.status_success],
+            ProcessingStatusTable.col_participant_id: ["01"],
+            ProcessingStatusTable.col_session_id: ["1"],
+            ProcessingStatusTable.col_pipeline_name: ["some_pipeline"],
+            ProcessingStatusTable.col_pipeline_version: ["some_version"],
+            ProcessingStatusTable.col_pipeline_step: ["some_step"],
+            ProcessingStatusTable.col_status: [ProcessingStatusTable.status_success],
         }
     ).validate()
     processing_status_table.save_with_backup(tracker.layout.fpath_processing_status)
 
     tracker.run_setup()
 
-    assert tracker.processing_status.equals(processing_status_table)
+    assert tracker.processing_status_table.equals(processing_status_table)
 
 
 def test_run_setup_existing_bad_processing_status_file(
@@ -112,18 +112,21 @@ def test_run_setup_existing_bad_processing_status_file(
             for record in caplog.records
         ]
     )
-    assert tracker.processing_status.empty
+    assert tracker.processing_status_table.empty
 
 
 @pytest.mark.parametrize(
     "relative_paths,expected_status",
     [
-        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt"], ProcessingStatus.status_success),
-        (["**/*.txt"], ProcessingStatus.status_success),
-        (["*file.txt"], ProcessingStatus.status_fail),
+        (
+            ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"],
+            ProcessingStatusTable.status_success,
+        ),
+        (["**/*.txt"], ProcessingStatusTable.status_success),
+        (["*file.txt"], ProcessingStatusTable.status_fail),
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"],
-            ProcessingStatus.status_fail,
+            ProcessingStatusTable.status_fail,
         ),
     ],
 )
@@ -142,21 +145,25 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"],
             "dirA",
-            ProcessingStatus.status_success,
+            ProcessingStatusTable.status_success,
         ),
-        (["dirA/*.txt", "dirA/dirB/file.txt"], "dirA", ProcessingStatus.status_success),
-        (["**/*.txt"], "dirA", ProcessingStatus.status_success),
+        (
+            ["dirA/*.txt", "dirA/dirB/file.txt"],
+            "dirA",
+            ProcessingStatusTable.status_success,
+        ),
+        (["**/*.txt"], "dirA", ProcessingStatusTable.status_success),
         # # FAILING, see note in check_status
         # (["*file.txt"], "dirA", ProcessingStatus.status_fail),
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"],
             "dirA",
-            ProcessingStatus.status_fail,
+            ProcessingStatusTable.status_fail,
         ),
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"],
             "dirA/dirB",
-            ProcessingStatus.status_success,
+            ProcessingStatusTable.status_success,
         ),
     ],
 )
@@ -243,8 +250,8 @@ def test_get_participants_sessions_to_run(
 @pytest.mark.parametrize(
     "participant_id,session_id,expected_status",
     [
-        ("01", "1", ProcessingStatus.status_success),
-        ("02", "2", ProcessingStatus.status_fail),
+        ("01", "1", ProcessingStatusTable.status_success),
+        ("02", "2", ProcessingStatusTable.status_fail),
     ],
 )
 def test_run_single(
@@ -269,10 +276,13 @@ def test_run_single(
     assert tracker.run_single(participant_id, session_id) == expected_status
 
     assert (
-        tracker.processing_status.set_index(
-            [ProcessingStatus.col_participant_id, ProcessingStatus.col_session_id]
+        tracker.processing_status_table.set_index(
+            [
+                ProcessingStatusTable.col_participant_id,
+                ProcessingStatusTable.col_session_id,
+            ]
         )
-        .loc[:, ProcessingStatus.col_status]
+        .loc[:, ProcessingStatusTable.col_status]
         .item()
     ) == expected_status
 
@@ -286,27 +296,29 @@ def test_run_single_no_config(tracker: PipelineTracker):
 @pytest.mark.parametrize(
     "processing_status_table",
     [
-        ProcessingStatus(),
-        ProcessingStatus(
+        ProcessingStatusTable(),
+        ProcessingStatusTable(
             data={
-                ProcessingStatus.col_participant_id: ["01"],
-                ProcessingStatus.col_session_id: ["1"],
-                ProcessingStatus.col_pipeline_name: ["some_pipeline"],
-                ProcessingStatus.col_pipeline_version: ["some_version"],
-                ProcessingStatus.col_pipeline_step: ["some_step"],
-                ProcessingStatus.col_status: [ProcessingStatus.status_success],
+                ProcessingStatusTable.col_participant_id: ["01"],
+                ProcessingStatusTable.col_session_id: ["1"],
+                ProcessingStatusTable.col_pipeline_name: ["some_pipeline"],
+                ProcessingStatusTable.col_pipeline_version: ["some_version"],
+                ProcessingStatusTable.col_pipeline_step: ["some_step"],
+                ProcessingStatusTable.col_status: [
+                    ProcessingStatusTable.status_success
+                ],
             }
         ).validate(),
     ],
 )
 def test_run_cleanup(
-    tracker: PipelineTracker, processing_status_table: ProcessingStatus
+    tracker: PipelineTracker, processing_status_table: ProcessingStatusTable
 ):
-    tracker.processing_status = processing_status_table
+    tracker.processing_status_table = processing_status_table
     tracker.run_cleanup()
 
     assert tracker.layout.fpath_processing_status.exists()
-    assert ProcessingStatus.load(tracker.layout.fpath_processing_status).equals(
+    assert ProcessingStatusTable.load(tracker.layout.fpath_processing_status).equals(
         processing_status_table
     )
 

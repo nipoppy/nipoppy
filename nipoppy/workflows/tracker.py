@@ -6,7 +6,7 @@ from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
-from nipoppy.tabular.processing_status import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -43,12 +43,12 @@ class PipelineTracker(BasePipelineWorkflow):
         rv = super().run_setup()
         if self.layout.fpath_processing_status.exists():
             try:
-                self.processing_status = ProcessingStatus.load(
+                self.processing_status_table = ProcessingStatusTable.load(
                     self.layout.fpath_processing_status
                 )
                 self.logger.info(
                     f"Found existing processing status file with shape"
-                    f" {self.processing_status.shape}"
+                    f" {self.processing_status_table.shape}"
                     f" at {self.layout.fpath_processing_status}"
                 )
             except ValueError as exception:
@@ -58,9 +58,9 @@ class PipelineTracker(BasePipelineWorkflow):
                         f"{self.layout.fpath_processing_status}. Generating a new "
                         f"processing status table.\nOriginal error:\n{exception}"
                     )
-                    self.processing_status = ProcessingStatus()
+                    self.processing_status_table = ProcessingStatusTable()
         else:
-            self.processing_status = ProcessingStatus()
+            self.processing_status_table = ProcessingStatusTable()
             self.logger.info("Initialized empty processing status table")
         return rv
 
@@ -111,9 +111,9 @@ class PipelineTracker(BasePipelineWorkflow):
                 matches_tarred = []
 
             if not (matches_glob or matches_tarred):
-                return ProcessingStatus.status_fail
+                return ProcessingStatusTable.status_fail
 
-        return ProcessingStatus.status_success
+        return ProcessingStatusTable.status_success
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -139,24 +139,27 @@ class PipelineTracker(BasePipelineWorkflow):
             tracker_config.PATHS, tracker_config.PARTICIPANT_SESSION_DIR
         )
         self.logger.debug(f"Status: {status}")
-        self.processing_status = self.processing_status.add_or_update_records(
-            {
-                ProcessingStatus.col_participant_id: participant_id,
-                ProcessingStatus.col_session_id: session_id,
-                ProcessingStatus.col_pipeline_name: self.pipeline_name,
-                ProcessingStatus.col_pipeline_version: self.pipeline_version,
-                ProcessingStatus.col_pipeline_step: self.pipeline_step,
-                ProcessingStatus.col_status: status,
-            }
+        self.processing_status_table = (
+            self.processing_status_table.add_or_update_records(
+                {
+                    ProcessingStatusTable.col_participant_id: participant_id,
+                    ProcessingStatusTable.col_session_id: session_id,
+                    ProcessingStatusTable.col_pipeline_name: self.pipeline_name,
+                    ProcessingStatusTable.col_pipeline_version: self.pipeline_version,
+                    ProcessingStatusTable.col_pipeline_step: self.pipeline_step,
+                    ProcessingStatusTable.col_status: status,
+                }
+            )
         )
         return status
 
     def run_cleanup(self):
         """Save the processing status file."""
         self.logger.info(
-            f"New/updated processing status table shape: {self.processing_status.shape}"
+            "New/updated processing status table shape: "
+            f"{self.processing_status_table.shape}"
         )
         self.save_tabular_file(
-            self.processing_status, self.layout.fpath_processing_status
+            self.processing_status_table, self.layout.fpath_processing_status
         )
         return super().run_cleanup()

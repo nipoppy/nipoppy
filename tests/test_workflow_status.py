@@ -8,7 +8,7 @@ import pytest
 
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.dataset_status import StatusWorkflow
 
 from .conftest import get_config
@@ -140,7 +140,7 @@ def make_doughnut(
     return Doughnut(doughnut), session_participant_counts_df
 
 
-def make_df_processing_status(
+def make_processing_status_table(
     n_participants=10,
     session_ids=("BL", "M12"),
     n_success_percent=50,
@@ -150,7 +150,7 @@ def make_df_processing_status(
         ("fmriprep", "1.0.0", "default"),
     ),
     randomize_counts=False,
-) -> ProcessingStatus:
+) -> ProcessingStatusTable:
 
     manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
@@ -164,14 +164,14 @@ def make_df_processing_status(
         _df = manifest.copy()
         _df[
             [
-                ProcessingStatus.col_pipeline_name,
-                ProcessingStatus.col_pipeline_version,
-                ProcessingStatus.col_pipeline_step,
+                ProcessingStatusTable.col_pipeline_name,
+                ProcessingStatusTable.col_pipeline_version,
+                ProcessingStatusTable.col_pipeline_step,
             ]
         ] = config
         _df_list.append(_df)
 
-    processing_status = ProcessingStatus(pd.concat(_df_list))
+    processing_status_table = ProcessingStatusTable(pd.concat(_df_list))
 
     # repeated participants for each pipeline config
     participant_counts = [n_configs * len(participant_ids)]
@@ -180,12 +180,12 @@ def make_df_processing_status(
     # always keep the first session as complete for all pipelines
     # except when testing 0% success
     if n_success_percent == 0:
-        processing_status[ProcessingStatus.col_status] = "FAIL"
+        processing_status_table[ProcessingStatusTable.col_status] = "FAIL"
     else:
-        processing_status[[ProcessingStatus.col_status]] = "INCOMPLETE"
-        processing_status.loc[
-            processing_status[Manifest.col_session_id] == session_ids[0],
-            ProcessingStatus.col_status,
+        processing_status_table[[ProcessingStatusTable.col_status]] = "INCOMPLETE"
+        processing_status_table.loc[
+            processing_status_table[Manifest.col_session_id] == session_ids[0],
+            ProcessingStatusTable.col_status,
         ] = "SUCCESS"
 
         # add the rest of the sessions
@@ -199,9 +199,9 @@ def make_df_processing_status(
             n_success_pipeline = int(n_session_participants * n_success_percent / 100)
             participant_counts.append(n_success_pipeline)
 
-            processing_status.loc[
-                processing_status[Manifest.col_session_id] == session_id,
-                ProcessingStatus.col_status,
+            processing_status_table.loc[
+                processing_status_table[Manifest.col_session_id] == session_id,
+                ProcessingStatusTable.col_status,
             ] = ["SUCCESS"] * n_success_pipeline + ["INCOMPLETE"] * (
                 n_session_participants - n_success_pipeline
             )
@@ -213,7 +213,7 @@ def make_df_processing_status(
         columns=["session_id", "participant_count"],
     )
 
-    return processing_status, session_participant_counts_df
+    return processing_status_table, session_participant_counts_df
 
 
 @pytest.mark.parametrize(
@@ -326,7 +326,7 @@ def test_doughnut(
         ),
     ],
 )
-def test_check_processing_status(
+def test_check_processing_status_table(
     dpath_root: Path,
     n_participants: int,
     session_ids: list,
@@ -336,8 +336,8 @@ def test_check_processing_status(
 ):
 
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.processing_status, session_participant_counts_df = (
-        make_df_processing_status(
+    workflow.processing_status_table, session_participant_counts_df = (
+        make_processing_status_table(
             n_participants=n_participants,
             session_ids=session_ids,
             n_success_percent=n_success_percent,
@@ -347,7 +347,7 @@ def test_check_processing_status(
     )
 
     status_df = pd.DataFrame()
-    status_df, _ = workflow._check_processing_status(status_df)
+    status_df, _ = workflow._check_processing_status_table(status_df)
 
     if n_success_percent == 0:
         assert status_df.empty
@@ -371,14 +371,15 @@ def test_check_processing_status(
 
 
 @pytest.mark.parametrize(
-    "df_processing_status", [pd.DataFrame(), make_df_processing_status()[0]]
+    "processing_status_table",
+    [ProcessingStatusTable(), make_processing_status_table()[0]],
 )
-def test_run(dpath_root: Path, df_processing_status: pd.DataFrame):
+def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
-    workflow.doughnut = pd.DataFrame()  # Checks for empty doughnut
-    workflow.processing_status = df_processing_status
+    workflow.doughnut = Doughnut()  # Checks for empty doughnut
+    workflow.processing_status_table = processing_status_table
     status_df = workflow.run_main()
 
     assert status_df is not None
