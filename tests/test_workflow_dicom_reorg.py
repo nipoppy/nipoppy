@@ -492,8 +492,10 @@ def test_cleanup_doughnut(doughnut: CurationStatusTable, tmp_path: Path):
 
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_doughnut.exists()
-    assert CurationStatusTable.load(workflow.layout.fpath_doughnut).equals(doughnut)
+    assert workflow.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
+        doughnut
+    )
 
 
 @pytest.mark.parametrize(

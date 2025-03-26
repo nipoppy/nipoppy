@@ -71,7 +71,7 @@
         "path": "proc/global_configs.json",
         "description": "The configuration for a dataset is where all data processing is configured."
     },
-    "fpath_doughnut": {
+    "fpath_curation_status": {
         "path": "scratch/raw_dicom/doughnut.tsv",
         "description": "The doughnut file is generated/updated internally and is used to keep track of the raw data organization and BIDS conversion process."
     },

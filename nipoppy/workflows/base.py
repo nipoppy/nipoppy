@@ -362,7 +362,7 @@ class BaseWorkflow(Base, ABC):
         Otherwise, generate a new one.
         """
         logger = self.logger
-        fpath_doughnut = Path(self.layout.fpath_doughnut)
+        fpath_doughnut = Path(self.layout.fpath_curation_status)
         try:
             return CurationStatusTable.load(fpath_doughnut)
         except FileNotFoundError:

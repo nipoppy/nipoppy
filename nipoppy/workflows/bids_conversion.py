@@ -122,5 +122,5 @@ class BidsConversionRunner(PipelineRunner):
         """
         update_doughnut = self.pipeline_step_config.UPDATE_DOUGHNUT
         if update_doughnut and not self.simulate:
-            self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+            self.save_tabular_file(self.doughnut, self.layout.fpath_curation_status)
         return super().run_cleanup(**kwargs)

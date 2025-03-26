@@ -50,7 +50,7 @@
     "fpath_config": {
         "path": "code/global_config.json"
     },
-    "fpath_doughnut": {
+    "fpath_curation_status": {
         "path": "scratch/raw_dicom/doughnut.tsv"
     },
     "fpath_manifest": {

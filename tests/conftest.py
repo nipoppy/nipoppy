@@ -51,7 +51,7 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "sourcedata/imaging/doughnut.tsv",
+    "fpath_curation_status": "sourcedata/imaging/doughnut.tsv",
     "fpath_processing_status": "derivatives/bagel.tsv",
     "fpath_demographics": "tabular/demographics.tsv",
 }

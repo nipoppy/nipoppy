@@ -455,7 +455,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, "
-                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
+                f"and/or check the doughnut file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was

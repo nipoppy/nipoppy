@@ -136,8 +136,10 @@ def test_cleanup(doughnut: CurationStatusTable, config: Config, tmp_path: Path):
 
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_doughnut.exists()
-    assert CurationStatusTable.load(workflow.layout.fpath_doughnut).equals(doughnut)
+    assert workflow.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
+        doughnut
+    )
 
 
 def test_cleanup_simulate(tmp_path: Path, config: Config):
@@ -153,7 +155,7 @@ def test_cleanup_simulate(tmp_path: Path, config: Config):
 
     workflow.run_cleanup()
 
-    assert not workflow.layout.fpath_doughnut.exists()
+    assert not workflow.layout.fpath_curation_status.exists()
 
 
 def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
@@ -168,7 +170,7 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
 
     workflow.run_cleanup()
 
-    assert not workflow.layout.fpath_doughnut.exists()
+    assert not workflow.layout.fpath_curation_status.exists()
 
 
 @pytest.mark.parametrize(

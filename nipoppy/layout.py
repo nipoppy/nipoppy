@@ -94,10 +94,9 @@ class LayoutConfig(BaseModel):
 
     fpath_config: FpathInfo = Field(description="Path to the configuration file")
     fpath_manifest: FpathInfo = Field(description="Path to the manifest file")
-    fpath_doughnut: OptionalFpathInfo = Field(
+    fpath_curation_status: OptionalFpathInfo = Field(
         description=(
-            "Path to the doughnut file (for tracking the "
-            "DICOM-to-BIDS conversion process)"
+            "Path to the curation status file (for tracking the BIDSification process)"
         )
     )
     fpath_processing_status: OptionalFpathInfo = Field(
@@ -184,7 +183,7 @@ class DatasetLayout(Base):
 
         # files (for type hinting)
         self.fpath_config: Path
-        self.fpath_doughnut: Path
+        self.fpath_curation_status: Path
         self.fpath_manifest: Path
         self.fpath_processing_status: Path
         self.fpath_demographics: Path

@@ -54,7 +54,7 @@
     "fpath_config": {
         "path": "proc/global_config.json"
     },
-    "fpath_doughnut": {
+    "fpath_curation_status": {
         "path": "scratch/raw_dicom/doughnut.tsv"
     },
     "fpath_manifest": {

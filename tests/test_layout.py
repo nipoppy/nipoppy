@@ -307,4 +307,7 @@ def test_get_dpath_pybids_db(
 
 def test_doughnut_parent_directory(dpath_root: Path):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout.fpath_doughnut.parent == layout.dpath_root / "sourcedata" / "imaging"
+    assert (
+        layout.fpath_curation_status.parent
+        == layout.dpath_root / "sourcedata" / "imaging"
+    )

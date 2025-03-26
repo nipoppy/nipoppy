@@ -203,13 +203,13 @@ class DicomReorgWorkflow(BaseWorkflow):
         - Write updated doughnut file
         - Log a summary message
         """
-        self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        self.save_tabular_file(self.doughnut, self.layout.fpath_curation_status)
 
         if self.n_total == 0:
             self.logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
                 "mistakes in the dataset's manifest or config file, and/or check the "
-                f"doughnut file at {self.layout.fpath_doughnut}"
+                f"doughnut file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was

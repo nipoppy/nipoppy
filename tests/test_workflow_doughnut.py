@@ -65,7 +65,7 @@ def test_run_main(
     dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
-    fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
+    fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_curation_status"]
 
     create_empty_dataset(dpath_root)
     manifest1 = prepare_dataset(
@@ -157,7 +157,7 @@ def test_run_main_regenerate(
     dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
     fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
     fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
-    fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_doughnut"]
+    fpath_doughnut = dpath_root / ATTR_TO_FPATH_MAP["fpath_curation_status"]
 
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
