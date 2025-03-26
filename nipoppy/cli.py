@@ -343,3 +343,20 @@ def status(**params):
     params = dep_params(**params)
     with handle_exception(StatusWorkflow(**params)) as workflow:
         workflow.run()
+
+
+@cli.group(cls=OrderedGroup, context_settings={"help_option_names": ["-h", "--help"]})
+def pipeline():
+    """Pipeline store operations."""
+    pass
+
+
+@pipeline.command("list")
+@dataset_option
+def pipeline_list(**params):
+    """List available pipelines for a dataset."""
+    from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
+
+    params = dep_params(**params)
+    with handle_exception(PipelineListWorkflow(**params)) as workflow:
+        workflow.run()
