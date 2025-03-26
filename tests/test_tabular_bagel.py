@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.tabular.bagel import ProcessingStatus, ProcessingStatusModel
+from nipoppy.tabular.processing_status import ProcessingStatus, ProcessingStatusModel
 
 from .conftest import DPATH_TEST_DATA
 

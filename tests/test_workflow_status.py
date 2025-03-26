@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatus
 from nipoppy.workflows.dataset_status import StatusWorkflow
 
 from .conftest import get_config

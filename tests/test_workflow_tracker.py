@@ -9,9 +9,9 @@ import pytest
 
 from nipoppy.config.main import Config
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatus
 from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
 

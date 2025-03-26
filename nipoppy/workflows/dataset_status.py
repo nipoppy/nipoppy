@@ -10,7 +10,7 @@ from rich.table import Table
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.tabular.bagel import STATUS_SUCCESS
+from nipoppy.tabular.processing_status import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseWorkflow
 
 

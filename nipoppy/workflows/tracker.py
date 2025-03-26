@@ -6,7 +6,7 @@ from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
-from nipoppy.tabular.bagel import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatus
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -49,7 +49,7 @@ class PipelineTracker(BasePipelineWorkflow):
                     f" at {self.layout.fpath_imaging_bagel}"
                 )
             except ValueError as exception:
-                if "Error when validating the bagel" in str(exception):
+                if "Error when validating the " in str(exception):
                     self.logger.warning(
                         "Failed to load existing bagel at "
                         f"{self.layout.fpath_imaging_bagel}. Generating a new bagel."

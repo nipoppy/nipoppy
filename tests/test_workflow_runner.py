@@ -13,9 +13,9 @@ from fids import fids
 
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatus
 from nipoppy.workflows.runner import PipelineRunner
 
 from .conftest import create_empty_dataset, get_config, prepare_dataset

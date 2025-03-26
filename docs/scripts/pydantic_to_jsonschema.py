@@ -8,10 +8,10 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.layout import LayoutConfig
-from nipoppy.tabular.bagel import ProcessingStatusModel
 from nipoppy.tabular.dicom_dir_map import DicomDirMapModel
 from nipoppy.tabular.doughnut import DoughnutModel
 from nipoppy.tabular.manifest import ManifestModel
+from nipoppy.tabular.processing_status import ProcessingStatusModel
 
 DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "schemas"
 

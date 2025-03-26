@@ -8,7 +8,7 @@ import pytest_mock
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ExtractionPipelineConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.bagel import ProcessingStatus
+from nipoppy.tabular.processing_status import ProcessingStatus
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
