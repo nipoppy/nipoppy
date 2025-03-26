@@ -100,9 +100,9 @@ class LayoutConfig(BaseModel):
             "DICOM-to-BIDS conversion process)"
         )
     )
-    fpath_imaging_bagel: OptionalFpathInfo = Field(
+    fpath_processing_status: OptionalFpathInfo = Field(
         description=(
-            "Path to the imaging bagel file (for tracking imaging derivative "
+            "Path to the processing status file (for tracking imaging derivative "
             "availability at the participant level)"
         )
     )
@@ -186,7 +186,7 @@ class DatasetLayout(Base):
         self.fpath_config: Path
         self.fpath_doughnut: Path
         self.fpath_manifest: Path
-        self.fpath_imaging_bagel: Path
+        self.fpath_processing_status: Path
         self.fpath_demographics: Path
 
         # directory names

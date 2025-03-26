@@ -41,19 +41,19 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_setup(self):
         """Load/initialize the bagel file."""
         rv = super().run_setup()
-        if self.layout.fpath_imaging_bagel.exists():
+        if self.layout.fpath_processing_status.exists():
             try:
-                self.bagel = ProcessingStatus.load(self.layout.fpath_imaging_bagel)
+                self.bagel = ProcessingStatus.load(self.layout.fpath_processing_status)
                 self.logger.info(
                     f"Found existing bagel with shape {self.bagel.shape}"
-                    f" at {self.layout.fpath_imaging_bagel}"
+                    f" at {self.layout.fpath_processing_status}"
                 )
             except ValueError as exception:
                 if "Error when validating the " in str(exception):
                     self.logger.warning(
                         "Failed to load existing bagel at "
-                        f"{self.layout.fpath_imaging_bagel}. Generating a new bagel."
-                        f"\nOriginal error:\n{exception}"
+                        f"{self.layout.fpath_processing_status}. Generating a new "
+                        f"bagel.\nOriginal error:\n{exception}"
                     )
                     self.bagel = ProcessingStatus()
         else:
@@ -151,5 +151,5 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_cleanup(self):
         """Save the bagel file."""
         self.logger.info(f"New/updated bagel shape: {self.bagel.shape}")
-        self.save_tabular_file(self.bagel, self.layout.fpath_imaging_bagel)
+        self.save_tabular_file(self.bagel, self.layout.fpath_processing_status)
         return super().run_cleanup()

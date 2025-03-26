@@ -79,7 +79,7 @@
         "path": "tabular/manifest.tsv",
         "description": "The manifest file lists all expected study participants and visits."
     },
-    "fpath_imaging_bagel": {
+    "fpath_processing_status": {
         "path": "derivatives/bagel.tsv",
         "description": "The imaging bagel file lists availability of derived imaging data and pipeline processing statuses."
     },

@@ -591,7 +591,7 @@ def test_get_participants_sessions_to_run(
                 ProcessingStatus.col_pipeline_step,
                 ProcessingStatus.col_status,
             ],
-        ).validate().save_with_backup(runner.layout.fpath_imaging_bagel)
+        ).validate().save_with_backup(runner.layout.fpath_processing_status)
 
     assert [
         tuple(x)

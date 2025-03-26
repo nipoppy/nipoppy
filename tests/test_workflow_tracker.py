@@ -87,7 +87,7 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
             ProcessingStatus.col_status: [ProcessingStatus.status_success],
         }
     ).validate()
-    bagel.save_with_backup(tracker.layout.fpath_imaging_bagel)
+    bagel.save_with_backup(tracker.layout.fpath_processing_status)
 
     tracker.run_setup()
 
@@ -99,7 +99,7 @@ def test_run_setup_existing_bad_bagel(
 ):
     # bagel with wrong columns
     bad_bagel = pd.DataFrame([{"col1": "val1"}])
-    bad_bagel.to_csv(tracker.layout.fpath_imaging_bagel, index=False)
+    bad_bagel.to_csv(tracker.layout.fpath_processing_status, index=False)
 
     tracker.run_setup()
 
@@ -301,8 +301,8 @@ def test_run_cleanup(tracker: PipelineTracker, bagel: ProcessingStatus):
     tracker.bagel = bagel
     tracker.run_cleanup()
 
-    assert tracker.layout.fpath_imaging_bagel.exists()
-    assert ProcessingStatus.load(tracker.layout.fpath_imaging_bagel).equals(bagel)
+    assert tracker.layout.fpath_processing_status.exists()
+    assert ProcessingStatus.load(tracker.layout.fpath_processing_status).equals(bagel)
 
 
 def test_run_no_create_work_directory(tracker: PipelineTracker):

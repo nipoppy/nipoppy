@@ -397,7 +397,7 @@ class BaseWorkflow(Base, ABC):
         Otherwise, return an empty bagel.
         """
         try:
-            return ProcessingStatus.load(self.layout.fpath_imaging_bagel)
+            return ProcessingStatus.load(self.layout.fpath_processing_status)
         except FileNotFoundError:
             return ProcessingStatus()
 

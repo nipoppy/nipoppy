@@ -60,7 +60,7 @@
     "fpath_manifest": {
         "path": "tabular/manifest.tsv"
     },
-    "fpath_imaging_bagel": {
+    "fpath_processing_status": {
         "path": "derivatives/bagel.tsv"
     },
     "fpath_demographics": {
