@@ -109,15 +109,24 @@ def create_empty_dataset(dpath_root: Path):
 
 def create_pipeline_config_files(
     dpath_pipelines: Path,
-    bids_pipelines: Optional[list[dict]] = None,
-    proc_pipelines: Optional[list[dict]] = None,
+    bidsification_pipelines: Optional[list[dict]] = None,
+    processing_pipelines: Optional[list[dict]] = None,
     extraction_pipelines: Optional[list[dict]] = None,
 ):
-    """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
+    """Create pipeline bundles (inside subdirectories)."""
     for pipeline_config_list, pipeline_type in [
-        (bids_pipelines, PipelineTypeEnum.BIDSIFICATION),
-        (proc_pipelines, PipelineTypeEnum.PROCESSING),
-        (extraction_pipelines, PipelineTypeEnum.EXTRACTION),
+        (
+            bidsification_pipelines,
+            PipelineTypeEnum.BIDSIFICATION,
+        ),
+        (
+            processing_pipelines,
+            PipelineTypeEnum.PROCESSING,
+        ),
+        (
+            extraction_pipelines,
+            PipelineTypeEnum.EXTRACTION,
+        ),
     ]:
         if pipeline_config_list is None:
             continue
