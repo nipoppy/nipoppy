@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.tabular.bagel import Bagel, BagelModel
+from nipoppy.tabular.bagel import ProcessingStatus, ProcessingStatusModel
 
 from .conftest import DPATH_TEST_DATA
 
@@ -14,35 +14,35 @@ from .conftest import DPATH_TEST_DATA
     "data",
     [
         {
-            Bagel.col_participant_id: "1",
-            Bagel.col_bids_participant_id: "sub-1",
-            Bagel.col_session_id: "01",
-            Bagel.col_pipeline_name: "my_pipeline",
-            Bagel.col_pipeline_version: "1.0",
-            Bagel.col_pipeline_step: "a_step",
-            Bagel.col_status: Bagel.status_success,
+            ProcessingStatus.col_participant_id: "1",
+            ProcessingStatus.col_bids_participant_id: "sub-1",
+            ProcessingStatus.col_session_id: "01",
+            ProcessingStatus.col_pipeline_name: "my_pipeline",
+            ProcessingStatus.col_pipeline_version: "1.0",
+            ProcessingStatus.col_pipeline_step: "a_step",
+            ProcessingStatus.col_status: ProcessingStatus.status_success,
         },
         {
-            Bagel.col_participant_id: "2",
-            Bagel.col_session_id: "02",
-            Bagel.col_pipeline_name: "my_other_pipeline",
-            Bagel.col_pipeline_version: "2.0",
-            Bagel.col_pipeline_step: "another_step",
-            Bagel.col_status: Bagel.status_fail,
+            ProcessingStatus.col_participant_id: "2",
+            ProcessingStatus.col_session_id: "02",
+            ProcessingStatus.col_pipeline_name: "my_other_pipeline",
+            ProcessingStatus.col_pipeline_version: "2.0",
+            ProcessingStatus.col_pipeline_step: "another_step",
+            ProcessingStatus.col_status: ProcessingStatus.status_fail,
         },
     ],
 )
 def test_model(data):
-    bagel = BagelModel(**data)
+    bagel = ProcessingStatusModel(**data)
     assert set(bagel.model_fields.keys()) == {
-        Bagel.col_participant_id,
-        Bagel.col_bids_participant_id,
-        Bagel.col_session_id,
-        Bagel.col_pipeline_name,
-        Bagel.col_pipeline_version,
-        Bagel.col_pipeline_step,
-        Bagel.col_status,
-        Bagel.col_bids_session_id,
+        ProcessingStatus.col_participant_id,
+        ProcessingStatus.col_bids_participant_id,
+        ProcessingStatus.col_session_id,
+        ProcessingStatus.col_pipeline_name,
+        ProcessingStatus.col_pipeline_version,
+        ProcessingStatus.col_pipeline_step,
+        ProcessingStatus.col_status,
+        ProcessingStatus.col_bids_session_id,
     }
 
 
@@ -50,13 +50,13 @@ def test_model(data):
     "participant_id,expected_bids_id", [("01", "sub-01"), ("1", "sub-1")]
 )
 def test_model_bids_id(participant_id, expected_bids_id):
-    model = BagelModel(
+    model = ProcessingStatusModel(
         participant_id=participant_id,
         session_id="01",
         pipeline_name="my_pipeline",
         pipeline_version="1.0",
         pipeline_step="step1",
-        status=Bagel.status_success,
+        status=ProcessingStatus.status_success,
     )
     assert model.bids_participant_id == expected_bids_id
 
@@ -64,14 +64,14 @@ def test_model_bids_id(participant_id, expected_bids_id):
 @pytest.mark.parametrize(
     "status",
     [
-        Bagel.status_success,
-        Bagel.status_fail,
-        Bagel.status_incomplete,
-        Bagel.status_unavailable,
+        ProcessingStatus.status_success,
+        ProcessingStatus.status_fail,
+        ProcessingStatus.status_incomplete,
+        ProcessingStatus.status_unavailable,
     ],
 )
 def test_model_status(status):
-    model = BagelModel(
+    model = ProcessingStatusModel(
         participant_id="1",
         session_id="01",
         pipeline_name="my_pipeline",
@@ -84,7 +84,7 @@ def test_model_status(status):
 
 def test_model_status_invalid():
     with pytest.raises(ValidationError):
-        BagelModel(
+        ProcessingStatusModel(
             participant_id="1",
             session_id="01",
             pipeline_name="my_pipeline",
@@ -101,127 +101,127 @@ def test_model_status_invalid():
             [],
             [
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
                 },
             ],
             [
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
-                },
-            ],
-        ),
-        (
-            [
-                {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_fail,
-                },
-            ],
-            [
-                {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
-                },
-            ],
-            [
-                {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
                 },
             ],
         ),
         (
             [
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_fail,
-                },
-                {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "2",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_unavailable,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_fail,
                 },
             ],
             [
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "2",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
-                },
-                {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "3",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
                 },
             ],
             [
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "1",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_fail,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                },
+            ],
+        ),
+        (
+            [
+                {
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_fail,
                 },
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "2",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "2",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_unavailable,
+                },
+            ],
+            [
+                {
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "2",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
                 },
                 {
-                    Bagel.col_participant_id: "01",
-                    Bagel.col_session_id: "3",
-                    Bagel.col_pipeline_name: "my_pipeline",
-                    Bagel.col_pipeline_version: "1.0",
-                    Bagel.col_pipeline_step: "step1",
-                    Bagel.col_status: Bagel.status_success,
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "3",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                },
+            ],
+            [
+                {
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "1",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_fail,
+                },
+                {
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "2",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
+                },
+                {
+                    ProcessingStatus.col_participant_id: "01",
+                    ProcessingStatus.col_session_id: "3",
+                    ProcessingStatus.col_pipeline_name: "my_pipeline",
+                    ProcessingStatus.col_pipeline_version: "1.0",
+                    ProcessingStatus.col_pipeline_step: "step1",
+                    ProcessingStatus.col_status: ProcessingStatus.status_success,
                 },
             ],
         ),
     ],
 )
 def test_add_or_update_records(data_orig, data_new, data_expected):
-    bagel = Bagel(data_orig).validate()
+    bagel = ProcessingStatus(data_orig).validate()
     bagel = bagel.add_or_update_records(data_new)
-    expected_bagel = Bagel(data_expected).validate()
+    expected_bagel = ProcessingStatus(data_expected).validate()
     assert bagel.equals(expected_bagel)
 
 
@@ -230,10 +230,31 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
     [
         (
             [
-                ["01", "1", "pipeline1", "1.0", "step1", Bagel.status_success],
-                ["02", "1", "pipeline1", "1.0", "step1", Bagel.status_fail],
-                ["03", "1", "pipeline1", "1.0", "step1", Bagel.status_incomplete],
-                ["04", "1", "pipeline1", "1.0", "step1", Bagel.status_unavailable],
+                [
+                    "01",
+                    "1",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                ["02", "1", "pipeline1", "1.0", "step1", ProcessingStatus.status_fail],
+                [
+                    "03",
+                    "1",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_incomplete,
+                ],
+                [
+                    "04",
+                    "1",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_unavailable,
+                ],
             ],
             "pipeline1",
             "1.0",
@@ -244,10 +265,38 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
         ),
         (
             [
-                ["S01", "BL", "pipeline1", "1.0", "step1", Bagel.status_success],
-                ["S01", "BL", "pipeline1", "2.0", "step1", Bagel.status_success],
-                ["S01", "BL", "pipeline2", "1.0", "step1", Bagel.status_success],
-                ["S01", "BL", "pipeline2", "2.0", "step1", Bagel.status_success],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline1",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline2",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline2",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
             ],
             "pipeline2",
             "2.0",
@@ -258,14 +307,70 @@ def test_add_or_update_records(data_orig, data_new, data_expected):
         ),
         (
             [
-                ["S01", "BL", "pipeline1", "1.0", "step1", Bagel.status_success],
-                ["S01", "BL", "pipeline1", "2.0", "step1", Bagel.status_success],
-                ["S01", "BL", "pipeline2", "1.0", "step1", Bagel.status_success],
-                ["S01", "M12", "pipeline2", "2.0", "step1", Bagel.status_success],
-                ["S02", "BL", "pipeline1", "1.0", "step1", Bagel.status_success],
-                ["S02", "BL", "pipeline1", "2.0", "step1", Bagel.status_success],
-                ["S02", "BL", "pipeline2", "2.0", "step1", Bagel.status_success],
-                ["S02", "M12", "pipeline2", "2.0", "step1", Bagel.status_success],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline1",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S01",
+                    "BL",
+                    "pipeline2",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S01",
+                    "M12",
+                    "pipeline2",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S02",
+                    "BL",
+                    "pipeline1",
+                    "1.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S02",
+                    "BL",
+                    "pipeline1",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S02",
+                    "BL",
+                    "pipeline2",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "S02",
+                    "M12",
+                    "pipeline2",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
             ],
             "pipeline2",
             "2.0",
@@ -285,15 +390,15 @@ def test_get_completed_participants_sessions(
     session_id,
     expected,
 ):
-    bagel = Bagel(
+    bagel = ProcessingStatus(
         data,
         columns=[
-            Bagel.col_participant_id,
-            Bagel.col_session_id,
-            Bagel.col_pipeline_name,
-            Bagel.col_pipeline_version,
-            Bagel.col_pipeline_step,
-            Bagel.col_status,
+            ProcessingStatus.col_participant_id,
+            ProcessingStatus.col_session_id,
+            ProcessingStatus.col_pipeline_name,
+            ProcessingStatus.col_pipeline_version,
+            ProcessingStatus.col_pipeline_step,
+            ProcessingStatus.col_status,
         ],
     ).validate()
 
@@ -324,8 +429,8 @@ def test_get_completed_participants_sessions(
     ],
 )
 def test_load(fpath):
-    bagel = Bagel.load(fpath)
-    assert isinstance(bagel, Bagel)
+    bagel = ProcessingStatus.load(fpath)
+    assert isinstance(bagel, ProcessingStatus)
 
 
 @pytest.mark.parametrize(
@@ -337,4 +442,4 @@ def test_load(fpath):
 )
 def test_load_invalid(fname):
     with pytest.raises(ValueError):
-        Bagel.load(DPATH_TEST_DATA / fname)
+        ProcessingStatus.load(DPATH_TEST_DATA / fname)

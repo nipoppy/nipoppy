@@ -6,7 +6,7 @@ from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -43,7 +43,7 @@ class PipelineTracker(BasePipelineWorkflow):
         rv = super().run_setup()
         if self.layout.fpath_imaging_bagel.exists():
             try:
-                self.bagel = Bagel.load(self.layout.fpath_imaging_bagel)
+                self.bagel = ProcessingStatus.load(self.layout.fpath_imaging_bagel)
                 self.logger.info(
                     f"Found existing bagel with shape {self.bagel.shape}"
                     f" at {self.layout.fpath_imaging_bagel}"
@@ -55,9 +55,9 @@ class PipelineTracker(BasePipelineWorkflow):
                         f"{self.layout.fpath_imaging_bagel}. Generating a new bagel."
                         f"\nOriginal error:\n{exception}"
                     )
-                    self.bagel = Bagel()
+                    self.bagel = ProcessingStatus()
         else:
-            self.bagel = Bagel()
+            self.bagel = ProcessingStatus()
             self.logger.info("Initialized empty bagel")
         return rv
 
@@ -108,9 +108,9 @@ class PipelineTracker(BasePipelineWorkflow):
                 matches_tarred = []
 
             if not (matches_glob or matches_tarred):
-                return Bagel.status_fail
+                return ProcessingStatus.status_fail
 
-        return Bagel.status_success
+        return ProcessingStatus.status_success
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -138,12 +138,12 @@ class PipelineTracker(BasePipelineWorkflow):
         self.logger.debug(f"Status: {status}")
         self.bagel = self.bagel.add_or_update_records(
             {
-                Bagel.col_participant_id: participant_id,
-                Bagel.col_session_id: session_id,
-                Bagel.col_pipeline_name: self.pipeline_name,
-                Bagel.col_pipeline_version: self.pipeline_version,
-                Bagel.col_pipeline_step: self.pipeline_step,
-                Bagel.col_status: status,
+                ProcessingStatus.col_participant_id: participant_id,
+                ProcessingStatus.col_session_id: session_id,
+                ProcessingStatus.col_pipeline_name: self.pipeline_name,
+                ProcessingStatus.col_pipeline_version: self.pipeline_version,
+                ProcessingStatus.col_pipeline_step: self.pipeline_step,
+                ProcessingStatus.col_status: status,
             }
         )
         return status

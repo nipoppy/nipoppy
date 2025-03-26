@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.dataset_status import StatusWorkflow
@@ -150,7 +150,7 @@ def make_bagel(
         ("fmriprep", "1.0.0", "default"),
     ),
     randomize_counts=False,
-) -> Bagel:
+) -> ProcessingStatus:
 
     manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
@@ -164,14 +164,14 @@ def make_bagel(
         _df = manifest.copy()
         _df[
             [
-                Bagel.col_pipeline_name,
-                Bagel.col_pipeline_version,
-                Bagel.col_pipeline_step,
+                ProcessingStatus.col_pipeline_name,
+                ProcessingStatus.col_pipeline_version,
+                ProcessingStatus.col_pipeline_step,
             ]
         ] = config
         _df_list.append(_df)
 
-    bagel = Bagel(pd.concat(_df_list))
+    bagel = ProcessingStatus(pd.concat(_df_list))
 
     # repeated participants for each pipeline config
     participant_counts = [n_configs * len(participant_ids)]
@@ -180,11 +180,12 @@ def make_bagel(
     # always keep the first session as complete for all pipelines
     # except when testing 0% success
     if n_success_percent == 0:
-        bagel[Bagel.col_status] = "FAIL"
+        bagel[ProcessingStatus.col_status] = "FAIL"
     else:
-        bagel[[Bagel.col_status]] = "INCOMPLETE"
+        bagel[[ProcessingStatus.col_status]] = "INCOMPLETE"
         bagel.loc[
-            bagel[Manifest.col_session_id] == session_ids[0], Bagel.col_status
+            bagel[Manifest.col_session_id] == session_ids[0],
+            ProcessingStatus.col_status,
         ] = "SUCCESS"
 
         # add the rest of the sessions
@@ -199,7 +200,8 @@ def make_bagel(
             participant_counts.append(n_success_pipeline)
 
             bagel.loc[
-                bagel[Manifest.col_session_id] == session_id, Bagel.col_status
+                bagel[Manifest.col_session_id] == session_id,
+                ProcessingStatus.col_status,
             ] = ["SUCCESS"] * n_success_pipeline + ["INCOMPLETE"] * (
                 n_session_participants - n_success_pipeline
             )

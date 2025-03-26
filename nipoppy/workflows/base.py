@@ -18,7 +18,7 @@ from nipoppy.config.main import Config
 from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
@@ -390,16 +390,16 @@ class BaseWorkflow(Base, ABC):
             return doughnut
 
     @cached_property
-    def bagel(self) -> Bagel:
+    def bagel(self) -> ProcessingStatus:
         """
         Load the bagel it it exists.
 
         Otherwise, return an empty bagel.
         """
         try:
-            return Bagel.load(self.layout.fpath_imaging_bagel)
+            return ProcessingStatus.load(self.layout.fpath_imaging_bagel)
         except FileNotFoundError:
-            return Bagel()
+            return ProcessingStatus()
 
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:

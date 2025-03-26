@@ -13,7 +13,7 @@ from fids import fids
 
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.runner import PipelineRunner
@@ -398,9 +398,30 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
             ],
             "dummy_pipeline",
             "1.0.0",
@@ -414,10 +435,38 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_fail,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_fail,
+                ],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
             ],
             "dummy_pipeline",
             "1.0.0",
@@ -431,13 +480,62 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "1.0.0", "step2", Bagel.status_success],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step2", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step2", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_fail,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatus.status_fail,
+                ],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step2",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step2",
+                    ProcessingStatus.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step2",
+                    ProcessingStatus.status_fail,
+                ],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "2.0",
+                    "step1",
+                    ProcessingStatus.status_success,
+                ],
             ],
             "dummy_pipeline",
             "1.0.0",
@@ -483,15 +581,15 @@ def test_get_participants_sessions_to_run(
         ]
     )
     if bagel_data is not None:
-        Bagel(
+        ProcessingStatus(
             bagel_data,
             columns=[
-                Bagel.col_participant_id,
-                Bagel.col_session_id,
-                Bagel.col_pipeline_name,
-                Bagel.col_pipeline_version,
-                Bagel.col_pipeline_step,
-                Bagel.col_status,
+                ProcessingStatus.col_participant_id,
+                ProcessingStatus.col_session_id,
+                ProcessingStatus.col_pipeline_name,
+                ProcessingStatus.col_pipeline_version,
+                ProcessingStatus.col_pipeline_step,
+                ProcessingStatus.col_status,
             ],
         ).validate().save_with_backup(runner.layout.fpath_imaging_bagel)
 

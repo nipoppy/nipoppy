@@ -8,7 +8,7 @@ import pytest_mock
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ExtractionPipelineConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
@@ -115,11 +115,17 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
     [
         (
             [
-                ["S01", "1", "freesurfer", "7.3.2", Bagel.status_success],
-                ["S01", "2", "freesurfer", "7.3.2", Bagel.status_incomplete],
-                ["S01", "3", "freesurfer", "7.3.2", Bagel.status_fail],
-                ["S02", "1", "freesurfer", "7.3.2", Bagel.status_unavailable],
-                ["S02", "2", "freesurfer", "7.3.2", Bagel.status_success],
+                ["S01", "1", "freesurfer", "7.3.2", ProcessingStatus.status_success],
+                ["S01", "2", "freesurfer", "7.3.2", ProcessingStatus.status_incomplete],
+                ["S01", "3", "freesurfer", "7.3.2", ProcessingStatus.status_fail],
+                [
+                    "S02",
+                    "1",
+                    "freesurfer",
+                    "7.3.2",
+                    ProcessingStatus.status_unavailable,
+                ],
+                ["S02", "2", "freesurfer", "7.3.2", ProcessingStatus.status_success],
             ],
             "fs_extractor",
             "7.3.2",
@@ -129,7 +135,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
         ),
         (
             [
-                ["S01", "1", "freesurfer", "7.3.2", Bagel.status_success],
+                ["S01", "1", "freesurfer", "7.3.2", ProcessingStatus.status_success],
             ],
             "fs_extractor",
             "7.3.2",
@@ -139,12 +145,12 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
         ),
         (
             [
-                ["P01", "A", "freesurfer", "6.0.1", Bagel.status_success],
-                ["P01", "B", "freesurfer", "6.0.1", Bagel.status_fail],
-                ["P02", "B", "freesurfer", "6.0.1", Bagel.status_success],
-                ["P01", "A", "fmriprep", "20.0.7", Bagel.status_fail],
-                ["P01", "B", "fmriprep", "20.0.7", Bagel.status_success],
-                ["P02", "B", "fmriprep", "20.0.7", Bagel.status_success],
+                ["P01", "A", "freesurfer", "6.0.1", ProcessingStatus.status_success],
+                ["P01", "B", "freesurfer", "6.0.1", ProcessingStatus.status_fail],
+                ["P02", "B", "freesurfer", "6.0.1", ProcessingStatus.status_success],
+                ["P01", "A", "fmriprep", "20.0.7", ProcessingStatus.status_fail],
+                ["P01", "B", "fmriprep", "20.0.7", ProcessingStatus.status_success],
+                ["P02", "B", "fmriprep", "20.0.7", ProcessingStatus.status_success],
             ],
             "fs_fmriprep_extractor",
             "1.0.0",
@@ -170,19 +176,21 @@ def test_get_participants_sessions_to_run(
         pipeline_version=pipeline_version,
         pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
     )
-    extractor.bagel = Bagel().add_or_update_records(
+    extractor.bagel = ProcessingStatus().add_or_update_records(
         records=[
             {
-                Bagel.col_participant_id: data[0],
-                Bagel.col_session_id: data[1],
-                Bagel.col_bids_participant_id: participant_id_to_bids_participant_id(
+                ProcessingStatus.col_participant_id: data[0],
+                ProcessingStatus.col_session_id: data[1],
+                ProcessingStatus.col_bids_participant_id: participant_id_to_bids_participant_id(
                     data[0]
                 ),
-                Bagel.col_bids_session_id: session_id_to_bids_session_id(data[1]),
-                Bagel.col_pipeline_name: data[2],
-                Bagel.col_pipeline_version: data[3],
-                Bagel.col_pipeline_step: DEFAULT_PIPELINE_STEP_NAME,
-                Bagel.col_status: data[4],
+                ProcessingStatus.col_bids_session_id: session_id_to_bids_session_id(
+                    data[1]
+                ),
+                ProcessingStatus.col_pipeline_name: data[2],
+                ProcessingStatus.col_pipeline_version: data[3],
+                ProcessingStatus.col_pipeline_step: DEFAULT_PIPELINE_STEP_NAME,
+                ProcessingStatus.col_status: data[4],
             }
             for data in bagel_data
         ]

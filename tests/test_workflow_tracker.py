@@ -9,7 +9,7 @@ import pytest
 
 from nipoppy.config.main import Config
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.bagel import ProcessingStatus
 from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.runner import PipelineRunner
@@ -77,14 +77,14 @@ def test_run_setup(tracker: PipelineTracker):
 
 
 def test_run_setup_existing_bagel(tracker: PipelineTracker):
-    bagel = Bagel(
+    bagel = ProcessingStatus(
         data={
-            Bagel.col_participant_id: ["01"],
-            Bagel.col_session_id: ["1"],
-            Bagel.col_pipeline_name: ["some_pipeline"],
-            Bagel.col_pipeline_version: ["some_version"],
-            Bagel.col_pipeline_step: ["some_step"],
-            Bagel.col_status: [Bagel.status_success],
+            ProcessingStatus.col_participant_id: ["01"],
+            ProcessingStatus.col_session_id: ["1"],
+            ProcessingStatus.col_pipeline_name: ["some_pipeline"],
+            ProcessingStatus.col_pipeline_version: ["some_version"],
+            ProcessingStatus.col_pipeline_step: ["some_step"],
+            ProcessingStatus.col_status: [ProcessingStatus.status_success],
         }
     ).validate()
     bagel.save_with_backup(tracker.layout.fpath_imaging_bagel)
@@ -116,10 +116,13 @@ def test_run_setup_existing_bad_bagel(
 @pytest.mark.parametrize(
     "relative_paths,expected_status",
     [
-        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt"], Bagel.status_success),
-        (["**/*.txt"], Bagel.status_success),
-        (["*file.txt"], Bagel.status_fail),
-        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"], Bagel.status_fail),
+        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt"], ProcessingStatus.status_success),
+        (["**/*.txt"], ProcessingStatus.status_success),
+        (["*file.txt"], ProcessingStatus.status_fail),
+        (
+            ["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"],
+            ProcessingStatus.status_fail,
+        ),
     ],
 )
 def test_check_status(tracker: PipelineTracker, relative_paths, expected_status):
@@ -134,20 +137,24 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
 @pytest.mark.parametrize(
     "relative_paths,relative_dpath_to_tar,expected_status",
     [
-        (["dirA/01_ses-1.txt", "dirA/dirB/file.txt"], "dirA", Bagel.status_success),
-        (["dirA/*.txt", "dirA/dirB/file.txt"], "dirA", Bagel.status_success),
-        (["**/*.txt"], "dirA", Bagel.status_success),
+        (
+            ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"],
+            "dirA",
+            ProcessingStatus.status_success,
+        ),
+        (["dirA/*.txt", "dirA/dirB/file.txt"], "dirA", ProcessingStatus.status_success),
+        (["**/*.txt"], "dirA", ProcessingStatus.status_success),
         # # FAILING, see note in check_status
         # (["*file.txt"], "dirA", Bagel.status_fail),
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"],
             "dirA",
-            Bagel.status_fail,
+            ProcessingStatus.status_fail,
         ),
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt"],
             "dirA/dirB",
-            Bagel.status_success,
+            ProcessingStatus.status_success,
         ),
     ],
 )
@@ -233,7 +240,10 @@ def test_get_participants_sessions_to_run(
 
 @pytest.mark.parametrize(
     "participant_id,session_id,expected_status",
-    [("01", "1", Bagel.status_success), ("02", "2", Bagel.status_fail)],
+    [
+        ("01", "1", ProcessingStatus.status_success),
+        ("02", "2", ProcessingStatus.status_fail),
+    ],
 )
 def test_run_single(
     participant_id, session_id, expected_status, tracker: PipelineTracker
@@ -257,8 +267,10 @@ def test_run_single(
     assert tracker.run_single(participant_id, session_id) == expected_status
 
     assert (
-        tracker.bagel.set_index([Bagel.col_participant_id, Bagel.col_session_id])
-        .loc[:, Bagel.col_status]
+        tracker.bagel.set_index(
+            [ProcessingStatus.col_participant_id, ProcessingStatus.col_session_id]
+        )
+        .loc[:, ProcessingStatus.col_status]
         .item()
     ) == expected_status
 
@@ -272,25 +284,25 @@ def test_run_single_no_config(tracker: PipelineTracker):
 @pytest.mark.parametrize(
     "bagel",
     [
-        Bagel(),
-        Bagel(
+        ProcessingStatus(),
+        ProcessingStatus(
             data={
-                Bagel.col_participant_id: ["01"],
-                Bagel.col_session_id: ["1"],
-                Bagel.col_pipeline_name: ["some_pipeline"],
-                Bagel.col_pipeline_version: ["some_version"],
-                Bagel.col_pipeline_step: ["some_step"],
-                Bagel.col_status: [Bagel.status_success],
+                ProcessingStatus.col_participant_id: ["01"],
+                ProcessingStatus.col_session_id: ["1"],
+                ProcessingStatus.col_pipeline_name: ["some_pipeline"],
+                ProcessingStatus.col_pipeline_version: ["some_version"],
+                ProcessingStatus.col_pipeline_step: ["some_step"],
+                ProcessingStatus.col_status: [ProcessingStatus.status_success],
             }
         ).validate(),
     ],
 )
-def test_run_cleanup(tracker: PipelineTracker, bagel: Bagel):
+def test_run_cleanup(tracker: PipelineTracker, bagel: ProcessingStatus):
     tracker.bagel = bagel
     tracker.run_cleanup()
 
     assert tracker.layout.fpath_imaging_bagel.exists()
-    assert Bagel.load(tracker.layout.fpath_imaging_bagel).equals(bagel)
+    assert ProcessingStatus.load(tracker.layout.fpath_imaging_bagel).equals(bagel)
 
 
 def test_run_no_create_work_directory(tracker: PipelineTracker):
