@@ -13,7 +13,7 @@ from fids import fids
 
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner

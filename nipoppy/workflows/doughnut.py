@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.env import LogColor, StrOrPathLike
-from nipoppy.tabular.doughnut import (
+from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
     update_curation_status_table,

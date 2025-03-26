@@ -12,7 +12,7 @@ from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.utils import apply_substitutions_to_json
 
 

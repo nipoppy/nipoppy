@@ -7,12 +7,12 @@ import pandas as pd
 import pytest
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
-from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import (
+from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
     update_curation_status_table,
 )
+from nipoppy.tabular.dicom_dir_map import DicomDirMap
 
 from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 

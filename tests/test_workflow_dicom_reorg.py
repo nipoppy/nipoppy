@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import LogColor, ReturnCode
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,

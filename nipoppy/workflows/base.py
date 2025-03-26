@@ -19,8 +19,11 @@ from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular
+from nipoppy.tabular.curation_status import (
+    CurationStatusTable,
+    generate_curation_status_table,
+)
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import CurationStatusTable, generate_curation_status_table
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import add_path_timestamp, process_template_str

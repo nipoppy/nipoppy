@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.dataset_status import StatusWorkflow

@@ -8,7 +8,7 @@ from typing import Optional
 import pydicom
 
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
-from nipoppy.tabular.doughnut import update_curation_status_table
+from nipoppy.tabular.curation_status import update_curation_status_table
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,

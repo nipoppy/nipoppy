@@ -9,7 +9,7 @@ import pytest
 
 from nipoppy.config.main import Config
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner

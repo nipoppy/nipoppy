@@ -1,6 +1,6 @@
 """Classes for tabular data representation/manipulation."""
 
-from .doughnut import (
+from .curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
     update_curation_status_table,

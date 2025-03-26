@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json
 from nipoppy.workflows.doughnut import DoughnutWorkflow

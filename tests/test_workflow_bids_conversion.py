@@ -6,7 +6,7 @@ import pytest
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BidsPipelineConfig
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
 from .conftest import create_empty_dataset, get_config

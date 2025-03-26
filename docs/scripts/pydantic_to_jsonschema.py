@@ -8,8 +8,8 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.layout import LayoutConfig
+from nipoppy.tabular.curation_status import CurationStatusModel
 from nipoppy.tabular.dicom_dir_map import DicomDirMapModel
-from nipoppy.tabular.doughnut import CurationStatusModel
 from nipoppy.tabular.manifest import ManifestModel
 from nipoppy.tabular.processing_status import ProcessingStatusModel
 

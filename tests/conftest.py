@@ -14,7 +14,7 @@ from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
 from nipoppy.env import StrOrPathLike
-from nipoppy.tabular.doughnut import CurationStatusTable
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
