@@ -565,7 +565,7 @@ def test_get_participants_sessions_to_run(
         session_id=session_id,
     )
     runner.config = config
-    runner.doughnut = CurationStatusTable().add_or_update_records(
+    runner.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
             {
                 CurationStatusTable.col_participant_id: data[0],

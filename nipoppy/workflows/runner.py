@@ -250,7 +250,9 @@ class PipelineRunner(BasePipelineWorkflow):
             )
         )
 
-        for participant_session in self.doughnut.get_bidsified_participants_sessions(
+        for (
+            participant_session
+        ) in self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         ):
             if participant_session not in participants_sessions_completed:

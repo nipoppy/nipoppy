@@ -323,7 +323,9 @@ def test_run_setup(tmp_path: Path):
     config.save(workflow.layout.fpath_config)
 
     # generate first doughnut with the smaller manifest
-    doughnut1 = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name).doughnut
+    doughnut1 = DicomReorgWorkflow(
+        dpath_root=tmp_path / dataset_name
+    ).curation_status_table
 
     # update manifest
     manifest2 = prepare_dataset(
@@ -335,8 +337,8 @@ def test_run_setup(tmp_path: Path):
     # check that doughnut was regenerated
     workflow.run_setup()
 
-    assert not workflow.doughnut.equals(doughnut1)
-    assert len(workflow.doughnut) == len(manifest2)
+    assert not workflow.curation_status_table.equals(doughnut1)
+    assert len(workflow.curation_status_table) == len(manifest2)
 
 
 @pytest.mark.parametrize(
@@ -423,10 +425,10 @@ def test_run_main(
                 assert count > 0
 
                 # check that the doughnut has been updated
-                assert workflow.doughnut.get_status(
+                assert workflow.curation_status_table.get_status(
                     participant_id=participant_id,
                     session_id=session_id,
-                    col=workflow.doughnut.col_in_post_reorg,
+                    col=workflow.curation_status_table.col_in_post_reorg,
                 )
 
             else:
@@ -458,7 +460,9 @@ def test_run_main_error(tmp_path: Path):
     config.save(workflow.layout.fpath_config)
 
     # will cause the workflow to fail because the directories cannot be found
-    workflow.doughnut[workflow.doughnut.col_in_pre_reorg] = True
+    workflow.curation_status_table[workflow.curation_status_table.col_in_pre_reorg] = (
+        True
+    )
 
     try:
         workflow.run_main()
@@ -488,7 +492,7 @@ def test_run_main_error(tmp_path: Path):
 )
 def test_cleanup_doughnut(doughnut: CurationStatusTable, tmp_path: Path):
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / "my_dataset")
-    workflow.doughnut = doughnut
+    workflow.curation_status_table = doughnut
 
     workflow.run_cleanup()
 
@@ -528,7 +532,9 @@ def test_run_cleanup_message(
 ):
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    workflow.doughnut = CurationStatusTable()  # empty doughnut to avoid error
+    workflow.curation_status_table = (
+        CurationStatusTable()
+    )  # empty doughnut to avoid error
 
     workflow.n_success = n_success
     workflow.n_total = n_total

@@ -119,7 +119,7 @@ class PipelineTracker(BasePipelineWorkflow):
         self, participant_id: Optional[str], session_id: Optional[str]
     ):
         """Get participant-session pairs with BIDS data to run the tracker on."""
-        return self.doughnut.get_bidsified_participants_sessions(
+        return self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         )
 

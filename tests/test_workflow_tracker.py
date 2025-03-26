@@ -223,7 +223,7 @@ def test_get_participants_sessions_to_run(
         pipeline_name="",
         pipeline_version="",
     )
-    tracker.doughnut = CurationStatusTable().add_or_update_records(
+    tracker.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
             {
                 CurationStatusTable.col_participant_id: data[0],

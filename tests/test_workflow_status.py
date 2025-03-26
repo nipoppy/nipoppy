@@ -272,7 +272,7 @@ def test_doughnut(
 ):
 
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.doughnut, session_participant_counts_df = make_doughnut(
+    workflow.curation_status_table, session_participant_counts_df = make_doughnut(
         n_participants=n_participants,
         session_ids=session_ids,
         n_success_percents=n_success_percents,
@@ -388,7 +388,7 @@ def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
-    workflow.doughnut = CurationStatusTable()  # Checks for empty doughnut
+    workflow.curation_status_table = CurationStatusTable()  # Checks for empty doughnut
     workflow.processing_status_table = processing_status_table
     status_df = workflow.run_main()
 

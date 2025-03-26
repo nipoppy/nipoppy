@@ -126,7 +126,7 @@ class StatusWorkflow(BaseWorkflow):
         nipoppy_checkpoint = "in_doughnut"
 
         self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-        doughnut = self.doughnut
+        doughnut = self.curation_status_table
 
         if doughnut.empty:
             self.logger.warning("No doughnut file found.")

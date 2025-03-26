@@ -35,7 +35,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         self, participant_id: Optional[str], session_id: Optional[str]
     ):
         """Only run on participant_id/sessions with BIDS data."""
-        return self.doughnut.get_bidsified_participants_sessions(
+        return self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         )
 

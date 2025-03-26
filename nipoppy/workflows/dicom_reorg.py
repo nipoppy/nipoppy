@@ -149,27 +149,29 @@ class DicomReorgWorkflow(BaseWorkflow):
                 )
 
         # update doughnut entry
-        self.doughnut.set_status(
+        self.curation_status_table.set_status(
             participant_id=participant_id,
             session_id=session_id,
-            col=self.doughnut.col_in_post_reorg,
+            col=self.curation_status_table.col_in_post_reorg,
             status=True,
         )
 
     def get_participants_sessions_to_run(self):
         """Return participant-session pairs to reorganize."""
         participants_sessions_organized = set(
-            self.doughnut.get_organized_participants_sessions()
+            self.curation_status_table.get_organized_participants_sessions()
         )
-        for participant_session in self.doughnut.get_downloaded_participants_sessions():
+        for (
+            participant_session
+        ) in self.curation_status_table.get_downloaded_participants_sessions():
             if participant_session not in participants_sessions_organized:
                 yield participant_session
 
     def run_setup(self):
         """Update the doughnut in case it is not up-to-date."""
         super().run_setup()
-        self.doughnut = update_curation_status_table(
-            curation_status_table=self.doughnut,
+        self.curation_status_table = update_curation_status_table(
+            curation_status_table=self.curation_status_table,
             manifest=self.manifest,
             dicom_dir_map=self.dicom_dir_map,
             dpath_downloaded=self.layout.dpath_pre_reorg,
@@ -203,7 +205,9 @@ class DicomReorgWorkflow(BaseWorkflow):
         - Write updated doughnut file
         - Log a summary message
         """
-        self.save_tabular_file(self.doughnut, self.layout.fpath_curation_status)
+        self.save_tabular_file(
+            self.curation_status_table, self.layout.fpath_curation_status
+        )
 
         if self.n_total == 0:
             self.logger.warning(

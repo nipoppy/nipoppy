@@ -131,7 +131,7 @@ def test_cleanup(doughnut: CurationStatusTable, config: Config, tmp_path: Path):
         pipeline_version="0.12.2",
         pipeline_step="convert",
     )
-    workflow.doughnut = doughnut
+    workflow.curation_status_table = doughnut
     config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
@@ -150,7 +150,7 @@ def test_cleanup_simulate(tmp_path: Path, config: Config):
         pipeline_step="convert",
         simulate=True,
     )
-    workflow.doughnut = CurationStatusTable()
+    workflow.curation_status_table = CurationStatusTable()
     config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
@@ -165,7 +165,7 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
         pipeline_version="0.12.2",
         pipeline_step="prepare",
     )
-    workflow.doughnut = CurationStatusTable()
+    workflow.curation_status_table = CurationStatusTable()
     config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
@@ -207,7 +207,7 @@ def test_get_participants_sessions_to_run(
         pipeline_version="0.12.2",
         pipeline_step="prepare",
     )
-    workflow.doughnut = CurationStatusTable().add_or_update_records(
+    workflow.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
             {
                 CurationStatusTable.col_participant_id: data[0],

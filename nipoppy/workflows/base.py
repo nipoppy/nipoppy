@@ -355,22 +355,22 @@ class BaseWorkflow(Base, ABC):
             raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
 
     @cached_property
-    def doughnut(self) -> CurationStatusTable:
+    def curation_status_table(self) -> CurationStatusTable:
         """
-        Load the doughnut if it exists.
+        Load the curation status file if it exists.
 
         Otherwise, generate a new one.
         """
         logger = self.logger
-        fpath_doughnut = Path(self.layout.fpath_curation_status)
+        fpath_table = Path(self.layout.fpath_curation_status)
         try:
-            return CurationStatusTable.load(fpath_doughnut)
+            return CurationStatusTable.load(fpath_table)
         except FileNotFoundError:
             self.logger.warning(
-                f"Doughnut file not found: {fpath_doughnut}"
+                f"Curation status file not found: {fpath_table}"
                 ". Generating a new one on-the-fly"
             )
-            doughnut = generate_curation_status_table(
+            table = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.layout.dpath_pre_reorg,
@@ -381,16 +381,18 @@ class BaseWorkflow(Base, ABC):
             )
 
             if not self.dry_run:
-                fpath_doughnut_backup = doughnut.save_with_backup(fpath_doughnut)
+                fpath_table_backup = table.save_with_backup(fpath_table)
                 logger.info(
-                    f"Saved doughnut to {fpath_doughnut} (-> {fpath_doughnut_backup})"
+                    "Saved curation status table to "
+                    f"{fpath_table} (-> {fpath_table_backup})"
                 )
             else:
                 logger.info(
-                    f"Not writing doughnut to {fpath_doughnut} since this is a dry run"
+                    "Not writing curation status table to "
+                    f"{fpath_table} since this is a dry run"
                 )
 
-            return doughnut
+            return table
 
     @cached_property
     def processing_status_table(self) -> ProcessingStatusTable:
