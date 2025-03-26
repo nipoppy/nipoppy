@@ -427,15 +427,15 @@ def test_get_completed_participants_sessions(
 @pytest.mark.parametrize(
     "fpath",
     [
-        DPATH_TEST_DATA / "bagel1.tsv",
-        DPATH_TEST_DATA / "bagel2.tsv",
+        DPATH_TEST_DATA / "processing_status1.tsv",
+        DPATH_TEST_DATA / "processing_status2.tsv",
         Path(__file__).parent
         / ".."
         / "docs"
         / "source"
         / "user_guide"
         / "inserts"
-        / "mriqc_bagel.tsv",
+        / "mriqc_processing_status.tsv",
     ],
 )
 def test_load(fpath):
@@ -446,8 +446,8 @@ def test_load(fpath):
 @pytest.mark.parametrize(
     "fname",
     [
-        "bagel_invalid1.tsv",
-        "bagel_invalid2.tsv",
+        "processing_status_invalid1.tsv",
+        "processing_status_invalid2.tsv",
     ],
 )
 def test_load_invalid(fname):
