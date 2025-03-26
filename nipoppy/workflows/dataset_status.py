@@ -160,7 +160,7 @@ class StatusWorkflow(BaseWorkflow):
         nipoppy_checkpoint = "in_imaging_bagel"
 
         self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-        bagel = self.bagel
+        bagel = self.processing_status
 
         if bagel.empty:
             self.logger.warning(

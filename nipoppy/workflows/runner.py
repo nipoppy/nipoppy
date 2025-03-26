@@ -238,10 +238,10 @@ class PipelineRunner(BasePipelineWorkflow):
 
         Specifically, this list will include participants who have BIDS data but
         who have not previously successfully completed the pipeline (according)
-        to the bagel file.
+        to the processing status file.
         """
         participants_sessions_completed = set(
-            self.bagel.get_completed_participants_sessions(
+            self.processing_status.get_completed_participants_sessions(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
                 pipeline_step=self.pipeline_step,

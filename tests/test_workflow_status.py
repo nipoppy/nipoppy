@@ -336,7 +336,7 @@ def test_bagel(
 ):
 
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.bagel, session_participant_counts_df = make_bagel(
+    workflow.processing_status, session_participant_counts_df = make_bagel(
         n_participants=n_participants,
         session_ids=session_ids,
         n_success_percent=n_success_percent,
@@ -372,7 +372,7 @@ def test_run(dpath_root: Path, bagel: pd.DataFrame):
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
     workflow.doughnut = pd.DataFrame()  # Checks for empty doughnut
-    workflow.bagel = bagel
+    workflow.processing_status = bagel
     status_df = workflow.run_main()
 
     assert status_df is not None

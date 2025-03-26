@@ -73,7 +73,7 @@ def tracker(tmp_path: Path):
 
 def test_run_setup(tracker: PipelineTracker):
     tracker.run_setup()
-    assert tracker.bagel.empty
+    assert tracker.processing_status.empty
 
 
 def test_run_setup_existing_bagel(tracker: PipelineTracker):
@@ -91,7 +91,7 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
 
     tracker.run_setup()
 
-    assert tracker.bagel.equals(bagel)
+    assert tracker.processing_status.equals(bagel)
 
 
 def test_run_setup_existing_bad_bagel(
@@ -106,11 +106,11 @@ def test_run_setup_existing_bad_bagel(
     assert any(
         [
             record.levelno == logging.WARNING
-            and "Failed to load existing bagel at " in record.message
+            and "Failed to load existing processing status file at " in record.message
             for record in caplog.records
         ]
     )
-    assert tracker.bagel.empty
+    assert tracker.processing_status.empty
 
 
 @pytest.mark.parametrize(
@@ -267,7 +267,7 @@ def test_run_single(
     assert tracker.run_single(participant_id, session_id) == expected_status
 
     assert (
-        tracker.bagel.set_index(
+        tracker.processing_status.set_index(
             [ProcessingStatus.col_participant_id, ProcessingStatus.col_session_id]
         )
         .loc[:, ProcessingStatus.col_status]
@@ -298,7 +298,7 @@ def test_run_single_no_config(tracker: PipelineTracker):
     ],
 )
 def test_run_cleanup(tracker: PipelineTracker, bagel: ProcessingStatus):
-    tracker.bagel = bagel
+    tracker.processing_status = bagel
     tracker.run_cleanup()
 
     assert tracker.layout.fpath_processing_status.exists()

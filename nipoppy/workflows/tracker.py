@@ -39,26 +39,29 @@ class PipelineTracker(BasePipelineWorkflow):
         )
 
     def run_setup(self):
-        """Load/initialize the bagel file."""
+        """Load/initialize the processing status file."""
         rv = super().run_setup()
         if self.layout.fpath_processing_status.exists():
             try:
-                self.bagel = ProcessingStatus.load(self.layout.fpath_processing_status)
+                self.processing_status = ProcessingStatus.load(
+                    self.layout.fpath_processing_status
+                )
                 self.logger.info(
-                    f"Found existing bagel with shape {self.bagel.shape}"
+                    f"Found existing processing status file with shape"
+                    f" {self.processing_status.shape}"
                     f" at {self.layout.fpath_processing_status}"
                 )
             except ValueError as exception:
                 if "Error when validating the " in str(exception):
                     self.logger.warning(
-                        "Failed to load existing bagel at "
+                        "Failed to load existing processing status file at "
                         f"{self.layout.fpath_processing_status}. Generating a new "
-                        f"bagel.\nOriginal error:\n{exception}"
+                        f"processing status table.\nOriginal error:\n{exception}"
                     )
-                    self.bagel = ProcessingStatus()
+                    self.processing_status = ProcessingStatus()
         else:
-            self.bagel = ProcessingStatus()
-            self.logger.info("Initialized empty bagel")
+            self.processing_status = ProcessingStatus()
+            self.logger.info("Initialized empty processing status table")
         return rv
 
     def check_status(
@@ -131,12 +134,12 @@ class PipelineTracker(BasePipelineWorkflow):
             )
         )
 
-        # check status and update bagel
+        # check status and update processing status file
         status = self.check_status(
             tracker_config.PATHS, tracker_config.PARTICIPANT_SESSION_DIR
         )
         self.logger.debug(f"Status: {status}")
-        self.bagel = self.bagel.add_or_update_records(
+        self.processing_status = self.processing_status.add_or_update_records(
             {
                 ProcessingStatus.col_participant_id: participant_id,
                 ProcessingStatus.col_session_id: session_id,
@@ -149,7 +152,11 @@ class PipelineTracker(BasePipelineWorkflow):
         return status
 
     def run_cleanup(self):
-        """Save the bagel file."""
-        self.logger.info(f"New/updated bagel shape: {self.bagel.shape}")
-        self.save_tabular_file(self.bagel, self.layout.fpath_processing_status)
+        """Save the processing status file."""
+        self.logger.info(
+            f"New/updated processing status table shape: {self.processing_status.shape}"
+        )
+        self.save_tabular_file(
+            self.processing_status, self.layout.fpath_processing_status
+        )
         return super().run_cleanup()

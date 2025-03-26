@@ -390,11 +390,11 @@ class BaseWorkflow(Base, ABC):
             return doughnut
 
     @cached_property
-    def bagel(self) -> ProcessingStatus:
+    def processing_status(self) -> ProcessingStatus:
         """
-        Load the bagel it it exists.
+        Load the processing status file it it exists.
 
-        Otherwise, return an empty bagel.
+        Otherwise, return an empty processing status dataframe.
         """
         try:
             return ProcessingStatus.load(self.layout.fpath_processing_status)

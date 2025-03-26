@@ -176,7 +176,7 @@ def test_get_participants_sessions_to_run(
         pipeline_version=pipeline_version,
         pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
     )
-    extractor.bagel = ProcessingStatus().add_or_update_records(
+    extractor.processing_status = ProcessingStatus().add_or_update_records(
         records=[
             {
                 ProcessingStatus.col_participant_id: data[0],
