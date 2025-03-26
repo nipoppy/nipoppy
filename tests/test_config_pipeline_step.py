@@ -27,7 +27,7 @@ FIELDS_STEP_PROC = FIELDS_STEP_BASE + [
     "TRACKER_CONFIG_FILE",
     "GENERATE_PYBIDS_DATABASE",
 ]
-FIELDS_STEP_BIDS = FIELDS_STEP_BASE + ["UPDATE_DOUGHNUT"]
+FIELDS_STEP_BIDS = FIELDS_STEP_BASE + ["UPDATE_STATUS"]
 FIELDS_STEP_EXTRACTION = FIELDS_STEP_BASE
 
 
@@ -47,7 +47,7 @@ FIELDS_STEP_EXTRACTION = FIELDS_STEP_BASE
         (
             BidsPipelineStepConfig,
             FIELDS_STEP_BIDS,
-            [{"UPDATE_DOUGHNUT": True}],
+            [{"UPDATE_STATUS": True}],
         ),
         (
             ProcPipelineStepConfig,

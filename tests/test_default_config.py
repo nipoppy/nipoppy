@@ -270,10 +270,10 @@ def test_bids_conversion_runner(
 def test_bids_pipeline_configs():
     config = Config.load(FPATH_SAMPLE_CONFIG_FULL)
     for pipeline_config in config.BIDS_PIPELINES:
-        count = sum([step.UPDATE_DOUGHNUT for step in pipeline_config.STEPS])
+        count = sum([step.UPDATE_STATUS for step in pipeline_config.STEPS])
         assert count == 1, (
             f"BIDS pipeline {pipeline_config.NAME} {pipeline_config.VERSION}"
-            f" should have exactly one step with UPDATE_DOUGHNUT=true (got {count})"
+            f" should have exactly one step with UPDATE_STATUS=true (got {count})"
         )
 
 

@@ -21,7 +21,7 @@ def config() -> Config:
                 "VERSION": "0.12.2",
                 "STEPS": [
                     {"NAME": "prepare"},
-                    {"NAME": "convert", "UPDATE_DOUGHNUT": True},
+                    {"NAME": "convert", "UPDATE_STATUS": True},
                 ],
             },
             {
@@ -29,7 +29,7 @@ def config() -> Config:
                 "VERSION": "3.1.0",
                 "STEPS": [
                     {"NAME": "prepare"},
-                    {"NAME": "convert", "UPDATE_DOUGHNUT": True},
+                    {"NAME": "convert", "UPDATE_STATUS": True},
                 ],
             },
         ]

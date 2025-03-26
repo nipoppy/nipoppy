@@ -119,11 +119,11 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
 class BidsPipelineStepConfig(BasePipelineStepConfig):
     """Schema for BIDS pipeline step configuration."""
 
-    UPDATE_DOUGHNUT: Optional[bool] = Field(
+    UPDATE_STATUS: Optional[bool] = Field(
         default=False,
         description=(
             f"Whether or not the {CurationStatusTable.col_in_bids} column "
-            "in the doughnut file should be updated"
+            "in the curation status file should be updated"
         ),
     )
     model_config = ConfigDict(extra="forbid")

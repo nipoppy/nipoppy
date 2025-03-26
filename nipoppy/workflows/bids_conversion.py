@@ -123,7 +123,7 @@ class BidsConversionRunner(PipelineRunner):
 
         - Write updated curation status file
         """
-        update_status = self.pipeline_step_config.UPDATE_DOUGHNUT
+        update_status = self.pipeline_step_config.UPDATE_STATUS
         if update_status and not self.simulate:
             self.save_tabular_file(
                 self.curation_status_table, self.layout.fpath_curation_status
