@@ -34,8 +34,8 @@ def data():
 @pytest.mark.parametrize(
     "fpath",
     [
-        DPATH_TEST_DATA / "doughnut1.tsv",
-        DPATH_TEST_DATA / "doughnut2.tsv",
+        DPATH_TEST_DATA / "curation_status1.tsv",
+        DPATH_TEST_DATA / "curation_status2.tsv",
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
@@ -48,10 +48,10 @@ def test_load(fpath, validate):
 @pytest.mark.parametrize(
     "fpath,is_valid",
     [
-        (DPATH_TEST_DATA / "doughnut1.tsv", True),
-        (DPATH_TEST_DATA / "doughnut2.tsv", True),
-        (DPATH_TEST_DATA / "doughnut_invalid1.tsv", False),
-        (DPATH_TEST_DATA / "doughnut_invalid2.tsv", False),
+        (DPATH_TEST_DATA / "curation_status1.tsv", True),
+        (DPATH_TEST_DATA / "curation_status2.tsv", True),
+        (DPATH_TEST_DATA / "curation_status_invalid1.tsv", False),
+        (DPATH_TEST_DATA / "curation_status_invalid2.tsv", False),
     ],
 )
 def test_validate(fpath, is_valid):
