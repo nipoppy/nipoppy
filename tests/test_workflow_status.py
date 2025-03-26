@@ -140,7 +140,7 @@ def make_doughnut(
     return Doughnut(doughnut), session_participant_counts_df
 
 
-def make_bagel(
+def make_df_processing_status(
     n_participants=10,
     session_ids=("BL", "M12"),
     n_success_percent=50,
@@ -171,7 +171,7 @@ def make_bagel(
         ] = config
         _df_list.append(_df)
 
-    bagel = ProcessingStatus(pd.concat(_df_list))
+    processing_status = ProcessingStatus(pd.concat(_df_list))
 
     # repeated participants for each pipeline config
     participant_counts = [n_configs * len(participant_ids)]
@@ -180,11 +180,11 @@ def make_bagel(
     # always keep the first session as complete for all pipelines
     # except when testing 0% success
     if n_success_percent == 0:
-        bagel[ProcessingStatus.col_status] = "FAIL"
+        processing_status[ProcessingStatus.col_status] = "FAIL"
     else:
-        bagel[[ProcessingStatus.col_status]] = "INCOMPLETE"
-        bagel.loc[
-            bagel[Manifest.col_session_id] == session_ids[0],
+        processing_status[[ProcessingStatus.col_status]] = "INCOMPLETE"
+        processing_status.loc[
+            processing_status[Manifest.col_session_id] == session_ids[0],
             ProcessingStatus.col_status,
         ] = "SUCCESS"
 
@@ -199,8 +199,8 @@ def make_bagel(
             n_success_pipeline = int(n_session_participants * n_success_percent / 100)
             participant_counts.append(n_success_pipeline)
 
-            bagel.loc[
-                bagel[Manifest.col_session_id] == session_id,
+            processing_status.loc[
+                processing_status[Manifest.col_session_id] == session_id,
                 ProcessingStatus.col_status,
             ] = ["SUCCESS"] * n_success_pipeline + ["INCOMPLETE"] * (
                 n_session_participants - n_success_pipeline
@@ -213,7 +213,7 @@ def make_bagel(
         columns=["session_id", "participant_count"],
     )
 
-    return bagel, session_participant_counts_df
+    return processing_status, session_participant_counts_df
 
 
 @pytest.mark.parametrize(
@@ -326,7 +326,7 @@ def test_doughnut(
         ),
     ],
 )
-def test_bagel(
+def test_check_processing_status(
     dpath_root: Path,
     n_participants: int,
     session_ids: list,
@@ -336,16 +336,18 @@ def test_bagel(
 ):
 
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.processing_status, session_participant_counts_df = make_bagel(
-        n_participants=n_participants,
-        session_ids=session_ids,
-        n_success_percent=n_success_percent,
-        pipeline_configs=pipeline_configs,
-        randomize_counts=randomize_counts,
+    workflow.processing_status, session_participant_counts_df = (
+        make_df_processing_status(
+            n_participants=n_participants,
+            session_ids=session_ids,
+            n_success_percent=n_success_percent,
+            pipeline_configs=pipeline_configs,
+            randomize_counts=randomize_counts,
+        )
     )
 
     status_df = pd.DataFrame()
-    status_df, bagel_cols = workflow._check_bagel(status_df)
+    status_df, _ = workflow._check_processing_status(status_df)
 
     if n_success_percent == 0:
         assert status_df.empty
@@ -355,24 +357,28 @@ def test_bagel(
             status_df, session_participant_counts_df, on="session_id", how="left"
         )
 
-        # Sum up the bagel counts for all pipeline configs
-        status_df["bagel_counts"] = 0
+        # Sum up the counts for all pipeline configs
+        status_df["processing_status_counts"] = 0
         for config in pipeline_configs:
             pipeline_status_col = f"{config[0]}\n{config[1]}\n{config[2]}"
-            status_df["bagel_counts"] += status_df[pipeline_status_col]
+            status_df["processing_status_counts"] += status_df[pipeline_status_col]
 
         # check manifest status
         assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
-        assert status_df["bagel_counts"].equals(status_df["participant_count"])
+        assert status_df["processing_status_counts"].equals(
+            status_df["participant_count"]
+        )
 
 
-@pytest.mark.parametrize("bagel", [pd.DataFrame(), make_bagel()[0]])
-def test_run(dpath_root: Path, bagel: pd.DataFrame):
+@pytest.mark.parametrize(
+    "df_processing_status", [pd.DataFrame(), make_df_processing_status()[0]]
+)
+def test_run(dpath_root: Path, df_processing_status: pd.DataFrame):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
     workflow.doughnut = pd.DataFrame()  # Checks for empty doughnut
-    workflow.processing_status = bagel
+    workflow.processing_status = df_processing_status
     status_df = workflow.run_main()
 
     assert status_df is not None
