@@ -148,7 +148,7 @@ class DicomReorgWorkflow(BaseWorkflow):
                     log_level=logging.DEBUG,
                 )
 
-        # update doughnut entry
+        # update curation status
         self.curation_status_table.set_status(
             participant_id=participant_id,
             session_id=session_id,
@@ -168,7 +168,7 @@ class DicomReorgWorkflow(BaseWorkflow):
                 yield participant_session
 
     def run_setup(self):
-        """Update the doughnut in case it is not up-to-date."""
+        """Update the curation status table in case it is not up-to-date."""
         super().run_setup()
         self.curation_status_table = update_curation_status_table(
             curation_status_table=self.curation_status_table,
@@ -202,7 +202,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         Clean up after main DICOM reorg part is run.
 
         Specifically:
-        - Write updated doughnut file
+        - Write updated curation status file
         - Log a summary message
         """
         self.save_tabular_file(
@@ -213,7 +213,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             self.logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
                 "mistakes in the dataset's manifest or config file, and/or check the "
-                f"doughnut file at {self.layout.fpath_curation_status}"
+                f"curation status file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was

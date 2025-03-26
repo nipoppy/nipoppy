@@ -322,8 +322,8 @@ def test_run_setup(tmp_path: Path):
     )
     config.save(workflow.layout.fpath_config)
 
-    # generate first doughnut with the smaller manifest
-    doughnut1 = DicomReorgWorkflow(
+    # generate first curation status table with the smaller manifest
+    curation_status_table1 = DicomReorgWorkflow(
         dpath_root=tmp_path / dataset_name
     ).curation_status_table
 
@@ -334,10 +334,10 @@ def test_run_setup(tmp_path: Path):
     manifest2.save_with_backup(workflow.layout.fpath_manifest)
     workflow.manifest = manifest2
 
-    # check that doughnut was regenerated
+    # check that curation status table was regenerated
     workflow.run_setup()
 
-    assert not workflow.curation_status_table.equals(doughnut1)
+    assert not workflow.curation_status_table.equals(curation_status_table1)
     assert len(workflow.curation_status_table) == len(manifest2)
 
 
@@ -424,7 +424,7 @@ def test_run_main(
                     count += 1
                 assert count > 0
 
-                # check that the doughnut has been updated
+                # check that the curation status table has been updated
                 assert workflow.curation_status_table.get_status(
                     participant_id=participant_id,
                     session_id=session_id,
@@ -473,7 +473,7 @@ def test_run_main_error(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut",
+    "curation_status_table",
     [
         CurationStatusTable(),
         CurationStatusTable(
@@ -490,15 +490,17 @@ def test_run_main_error(tmp_path: Path):
         ).validate(),
     ],
 )
-def test_cleanup_doughnut(doughnut: CurationStatusTable, tmp_path: Path):
+def test_cleanup_curation_status(
+    curation_status_table: CurationStatusTable, tmp_path: Path
+):
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / "my_dataset")
-    workflow.curation_status_table = doughnut
+    workflow.curation_status_table = curation_status_table
 
     workflow.run_cleanup()
 
     assert workflow.layout.fpath_curation_status.exists()
     assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
-        doughnut
+        curation_status_table
     )
 
 
@@ -532,9 +534,7 @@ def test_run_cleanup_message(
 ):
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    workflow.curation_status_table = (
-        CurationStatusTable()
-    )  # empty doughnut to avoid error
+    workflow.curation_status_table = CurationStatusTable()  # empty table to avoid error
 
     workflow.n_success = n_success
     workflow.n_total = n_total

@@ -39,7 +39,7 @@ class StatusWorkflow(BaseWorkflow):
         """Check the status of the dataset and report.
 
         1) Number of participants in manifest per BIDS datatype,
-        2) Doughnut information if available,
+        2) Curation status information if available,
         3) Processing status information if available
         """
         # load global_config to get the dataset name
@@ -53,7 +53,7 @@ class StatusWorkflow(BaseWorkflow):
 
         status_df = pd.DataFrame()
         status_df = self._check_manifest(status_df)
-        status_df, doughnut_cols = self._check_doughnut(status_df)
+        status_df, curation_cols = self._check_curation_status_table(status_df)
         status_df, processing_cols = self._check_processing_status_table(status_df)
 
         status_df = status_df.fillna(0).astype(int)
@@ -61,14 +61,14 @@ class StatusWorkflow(BaseWorkflow):
         # define the status columns and rewards columns
         status_col_dict = {
             "manifest": "in_manifest",
-            "doughnut": doughnut_cols,
-            "bids": "in_bids",  # also part of doughnut cols
+            "curation": curation_cols,
+            "bids": "in_bids",  # also part of curation cols
             "processing": processing_cols,
         }
 
         # reorder the columns
         status_df = status_df[
-            [status_col_dict["manifest"]] + doughnut_cols + processing_cols
+            [status_col_dict["manifest"]] + curation_cols + processing_cols
         ]
 
         self.logger.debug(status_df)
@@ -121,48 +121,46 @@ class StatusWorkflow(BaseWorkflow):
         status_df = pd.concat([status_df, manifest_status_df], axis=1)
         return status_df
 
-    def _check_doughnut(self, status_df: pd.DataFrame) -> pd.DataFrame:
-        """Check the doughnut file (if exists)."""
-        nipoppy_checkpoint = "in_doughnut"
+    def _check_curation_status_table(self, status_df: pd.DataFrame) -> pd.DataFrame:
+        """Check the curation status file (if exists)."""
+        nipoppy_checkpoint = "in_curation_status_table"
 
         self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-        doughnut = self.curation_status_table
+        table = self.curation_status_table
 
-        if doughnut.empty:
-            self.logger.warning("No doughnut file found.")
+        if table.empty:
+            self.logger.warning("No curation status file found.")
             return status_df, []
 
-        doughnut_cols = [
-            doughnut.col_in_pre_reorg,
-            doughnut.col_in_post_reorg,
-            doughnut.col_in_bids,
+        curation_cols = [
+            table.col_in_pre_reorg,
+            table.col_in_post_reorg,
+            table.col_in_bids,
         ]
 
-        # Get the number of participants in the doughnut
-        participant_ids = doughnut[doughnut.col_participant_id].unique()
-        session_ids = doughnut[doughnut.col_session_id].unique()
+        # Get the number of participants in the curation status file
+        participant_ids = table[table.col_participant_id].unique()
+        session_ids = table[table.col_session_id].unique()
 
         self.logger.debug(
-            f"\tNumber of participants in doughnut: {len(participant_ids)}"
+            f"\tNumber of participants in curation status file: {len(participant_ids)}"
         )
         self.logger.debug(f"\tAvailable sessions (n={len(session_ids)}): {session_ids}")
 
-        doughnut_status_df = doughnut.groupby([doughnut.col_session_id]).sum()[
-            doughnut_cols
-        ]
+        curation_status_df = table.groupby([table.col_session_id]).sum()[curation_cols]
 
-        self.logger.debug(f"doughnut_status_df: {doughnut_status_df}")
-        status_df = pd.concat([status_df, doughnut_status_df], axis=1)
-        return status_df, doughnut_cols
+        self.logger.debug(f"curation_status_df: {curation_status_df}")
+        status_df = pd.concat([status_df, curation_status_df], axis=1)
+        return status_df, curation_cols
 
     def _check_processing_status_table(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the processing status file (if exists)."""
         nipoppy_checkpoint = "in_processing_status_table"
 
         self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
-        processing_status_table = self.processing_status_table
+        table = self.processing_status_table
 
-        if processing_status_table.empty:
+        if table.empty:
             self.logger.warning(
                 "No imaging processing status file found. Run 'nipoppy track' to"
                 " generate a processing status file"
@@ -170,15 +168,9 @@ class StatusWorkflow(BaseWorkflow):
             return status_df, []
 
         # Get the number of participants in the processing status file
-        participant_ids = processing_status_table[
-            processing_status_table.col_participant_id
-        ].unique()
-        session_ids = processing_status_table[
-            processing_status_table.col_session_id
-        ].unique()
-        pipelines = processing_status_table[
-            processing_status_table.col_pipeline_name
-        ].unique()
+        participant_ids = table[table.col_participant_id].unique()
+        session_ids = table[table.col_session_id].unique()
+        pipelines = table[table.col_pipeline_name].unique()
 
         self.logger.debug(
             "\tNumber of participants in processing status file: "
@@ -188,10 +180,7 @@ class StatusWorkflow(BaseWorkflow):
         self.logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
         # Check if at least successful run exists
-        if processing_status_table[
-            processing_status_table[processing_status_table.col_status]
-            == STATUS_SUCCESS
-        ].empty:
+        if table[table[table.col_status] == STATUS_SUCCESS].empty:
             self.logger.warning(
                 "The processing status file exists, but no successful run was found in"
                 f" the imaging processing status file for pipeline(s): {pipelines}."
@@ -204,37 +193,37 @@ class StatusWorkflow(BaseWorkflow):
             )
             return status_df, []
 
-        processing_status_table[self.col_pipeline] = (
-            processing_status_table[processing_status_table.col_pipeline_name]
+        table[self.col_pipeline] = (
+            table[table.col_pipeline_name]
             + "\n"
-            + processing_status_table[processing_status_table.col_pipeline_version]
+            + table[table.col_pipeline_version]
             + "\n"
-            + processing_status_table[processing_status_table.col_pipeline_step]
+            + table[table.col_pipeline_step]
         )
 
-        processing_pipeline_df = processing_status_table[
+        processing_pipeline_df = table[
             [
-                processing_status_table.col_participant_id,
-                processing_status_table.col_session_id,
+                table.col_participant_id,
+                table.col_session_id,
                 self.col_pipeline,
-                processing_status_table.col_status,
+                table.col_status,
             ]
         ]
         processing_pipeline_df = processing_pipeline_df[
-            processing_pipeline_df[processing_status_table.col_status] == STATUS_SUCCESS
+            processing_pipeline_df[table.col_status] == STATUS_SUCCESS
         ]
 
         processing_pipeline_df = processing_pipeline_df.pivot(
             index=[
-                processing_status_table.col_participant_id,
-                processing_status_table.col_session_id,
+                table.col_participant_id,
+                table.col_session_id,
             ],
             columns=self.col_pipeline,
-            values=processing_status_table.col_status,
+            values=table.col_status,
         )
 
         processing_status_df = processing_pipeline_df.groupby(
-            [processing_status_table.col_session_id]
+            [table.col_session_id]
         ).count()
 
         self.logger.debug(f"processing_status_df: {processing_status_df}")

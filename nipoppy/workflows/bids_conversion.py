@@ -120,10 +120,11 @@ class BidsConversionRunner(PipelineRunner):
         Clean up after main BIDS conversion part is run.
 
         Specifically:
-        - Write updated doughnut file
+
+        - Write updated curation status file
         """
-        update_doughnut = self.pipeline_step_config.UPDATE_DOUGHNUT
-        if update_doughnut and not self.simulate:
+        update_status = self.pipeline_step_config.UPDATE_DOUGHNUT
+        if update_status and not self.simulate:
             self.save_tabular_file(
                 self.curation_status_table, self.layout.fpath_curation_status
             )

@@ -107,7 +107,7 @@ def test_setup(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut",
+    "table",
     [
         CurationStatusTable(),
         CurationStatusTable(
@@ -124,22 +124,20 @@ def test_setup(config: Config, tmp_path: Path):
         ).validate(),
     ],
 )
-def test_cleanup(doughnut: CurationStatusTable, config: Config, tmp_path: Path):
+def test_cleanup(table: CurationStatusTable, config: Config, tmp_path: Path):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="heudiconv",
         pipeline_version="0.12.2",
         pipeline_step="convert",
     )
-    workflow.curation_status_table = doughnut
+    workflow.curation_status_table = table
     config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
 
     assert workflow.layout.fpath_curation_status.exists()
-    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
-        doughnut
-    )
+    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(table)
 
 
 def test_cleanup_simulate(tmp_path: Path, config: Config):
@@ -158,7 +156,7 @@ def test_cleanup_simulate(tmp_path: Path, config: Config):
     assert not workflow.layout.fpath_curation_status.exists()
 
 
-def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
+def test_cleanup_no_status_update(config: Config, tmp_path: Path):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="heudiconv",
@@ -174,7 +172,7 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,participant_id,session_id,expected",
+    "status_data,participant_id,session_id,expected",
     [
         (
             [
@@ -199,7 +197,7 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data, participant_id, session_id, expected, tmp_path: Path
+    status_data, participant_id, session_id, expected, tmp_path: Path
 ):
     workflow = BidsConversionRunner(
         dpath_root=tmp_path / "my_dataset",
@@ -219,7 +217,7 @@ def test_get_participants_sessions_to_run(
                 CurationStatusTable.col_participant_dicom_dir: "",
                 CurationStatusTable.col_in_pre_reorg: False,
             }
-            for data in doughnut_data
+            for data in status_data
         ]
     )
     assert [

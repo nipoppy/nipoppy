@@ -13,7 +13,7 @@ from nipoppy.workflows.base import BaseWorkflow
 
 
 class DoughnutWorkflow(BaseWorkflow):
-    """Workflow for creating/updating a dataset's doughnut file."""
+    """Workflow for creating/updating a dataset's curation status file."""
 
     def __init__(
         self,
@@ -37,19 +37,21 @@ class DoughnutWorkflow(BaseWorkflow):
         self.regenerate = regenerate
 
     def run_main(self):
-        """Generate/update the dataset's doughnut file."""
-        fpath_doughnut = self.layout.fpath_curation_status
+        """Generate/update the dataset's curation status file."""
+        fpath_table = self.layout.fpath_curation_status
         dpath_downloaded = self.layout.dpath_pre_reorg
         dpath_organized = self.layout.dpath_post_reorg
         dpath_bidsified = self.layout.dpath_bids
         empty = self.empty
         logger = self.logger
 
-        if fpath_doughnut.exists() and not self.regenerate:
-            old_doughnut = CurationStatusTable.load(fpath_doughnut)
-            logger.info(f"Found existing doughnut (shape: {old_doughnut.shape})")
-            doughnut = update_curation_status_table(
-                curation_status_table=old_doughnut,
+        if fpath_table.exists() and not self.regenerate:
+            old_table = CurationStatusTable.load(fpath_table)
+            logger.info(
+                f"Found existing curation status file (shape: {old_table.shape})"
+            )
+            table = update_curation_status_table(
+                curation_status_table=old_table,
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=dpath_downloaded,
@@ -61,10 +63,12 @@ class DoughnutWorkflow(BaseWorkflow):
 
         else:
             if self.regenerate:
-                logger.info("Regenerating the entire doughnut")
+                logger.info("Regenerating the entire curation status file")
             else:
-                logger.info(f"Did not find existing doughnut at {fpath_doughnut}")
-            doughnut = generate_curation_status_table(
+                logger.info(
+                    f"Did not find existing curation status file at {fpath_table}"
+                )
+            table = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=dpath_downloaded,
@@ -74,13 +78,13 @@ class DoughnutWorkflow(BaseWorkflow):
                 logger=logger,
             )
 
-        logger.info(f"New/updated doughnut shape: {doughnut.shape}")
-        self.save_tabular_file(doughnut, fpath_doughnut)
+        logger.info(f"New/updated curation status table shape: {table.shape}")
+        self.save_tabular_file(table, fpath_table)
 
     def run_cleanup(self):
         """Log a success message."""
         self.logger.info(
             f"[{LogColor.SUCCESS}]Successfully generated/updated the dataset's "
-            "doughnut file![/]"
+            "curation status file![/]"
         )
         return super().run_cleanup()

@@ -365,7 +365,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,processing_status_data,pipeline_name,pipeline_version,pipeline_step,expected",  # noqa: E501
+    "curation_status_data,processing_status_data,pipeline_name,pipeline_version,pipeline_step,expected",  # noqa: E501
     [
         (
             [
@@ -545,7 +545,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data,
+    curation_status_data,
     processing_status_data,
     pipeline_name,
     pipeline_version,
@@ -577,7 +577,7 @@ def test_get_participants_sessions_to_run(
                 CurationStatusTable.col_in_pre_reorg: False,
                 CurationStatusTable.col_in_post_reorg: False,
             }
-            for data in doughnut_data
+            for data in curation_status_data
         ]
     )
     if processing_status_data is not None:

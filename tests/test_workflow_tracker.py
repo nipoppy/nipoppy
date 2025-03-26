@@ -191,7 +191,7 @@ def test_check_status_with_tarball(
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,participant_id,session_id,expected",
+    "curation_status_data,participant_id,session_id,expected",
     [
         (
             [
@@ -216,7 +216,7 @@ def test_check_status_with_tarball(
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data, participant_id, session_id, expected, tmp_path: Path
+    curation_status_data, participant_id, session_id, expected, tmp_path: Path
 ):
     tracker = PipelineTracker(
         dpath_root=tmp_path,
@@ -235,7 +235,7 @@ def test_get_participants_sessions_to_run(
                 CurationStatusTable.col_in_pre_reorg: False,
                 CurationStatusTable.col_in_post_reorg: False,
             }
-            for data in doughnut_data
+            for data in curation_status_data
         ]
     )
 
