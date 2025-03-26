@@ -76,8 +76,8 @@ def test_run_setup(tracker: PipelineTracker):
     assert tracker.processing_status.empty
 
 
-def test_run_setup_existing_bagel(tracker: PipelineTracker):
-    bagel = ProcessingStatus(
+def test_run_setup_existing_processing_status_file(tracker: PipelineTracker):
+    processing_status_table = ProcessingStatus(
         data={
             ProcessingStatus.col_participant_id: ["01"],
             ProcessingStatus.col_session_id: ["1"],
@@ -87,19 +87,21 @@ def test_run_setup_existing_bagel(tracker: PipelineTracker):
             ProcessingStatus.col_status: [ProcessingStatus.status_success],
         }
     ).validate()
-    bagel.save_with_backup(tracker.layout.fpath_processing_status)
+    processing_status_table.save_with_backup(tracker.layout.fpath_processing_status)
 
     tracker.run_setup()
 
-    assert tracker.processing_status.equals(bagel)
+    assert tracker.processing_status.equals(processing_status_table)
 
 
-def test_run_setup_existing_bad_bagel(
+def test_run_setup_existing_bad_processing_status_file(
     tracker: PipelineTracker, caplog: pytest.LogCaptureFixture
 ):
-    # bagel with wrong columns
-    bad_bagel = pd.DataFrame([{"col1": "val1"}])
-    bad_bagel.to_csv(tracker.layout.fpath_processing_status, index=False)
+    # processing status file with wrong columns
+    bad_processing_status_table = pd.DataFrame([{"col1": "val1"}])
+    bad_processing_status_table.to_csv(
+        tracker.layout.fpath_processing_status, index=False
+    )
 
     tracker.run_setup()
 
@@ -145,7 +147,7 @@ def test_check_status(tracker: PipelineTracker, relative_paths, expected_status)
         (["dirA/*.txt", "dirA/dirB/file.txt"], "dirA", ProcessingStatus.status_success),
         (["**/*.txt"], "dirA", ProcessingStatus.status_success),
         # # FAILING, see note in check_status
-        # (["*file.txt"], "dirA", Bagel.status_fail),
+        # (["*file.txt"], "dirA", ProcessingStatus.status_fail),
         (
             ["dirA/01_ses-1.txt", "dirA/dirB/file.txt", "missing.txt"],
             "dirA",
@@ -282,7 +284,7 @@ def test_run_single_no_config(tracker: PipelineTracker):
 
 
 @pytest.mark.parametrize(
-    "bagel",
+    "processing_status_table",
     [
         ProcessingStatus(),
         ProcessingStatus(
@@ -297,12 +299,16 @@ def test_run_single_no_config(tracker: PipelineTracker):
         ).validate(),
     ],
 )
-def test_run_cleanup(tracker: PipelineTracker, bagel: ProcessingStatus):
-    tracker.processing_status = bagel
+def test_run_cleanup(
+    tracker: PipelineTracker, processing_status_table: ProcessingStatus
+):
+    tracker.processing_status = processing_status_table
     tracker.run_cleanup()
 
     assert tracker.layout.fpath_processing_status.exists()
-    assert ProcessingStatus.load(tracker.layout.fpath_processing_status).equals(bagel)
+    assert ProcessingStatus.load(tracker.layout.fpath_processing_status).equals(
+        processing_status_table
+    )
 
 
 def test_run_no_create_work_directory(tracker: PipelineTracker):

@@ -1,4 +1,4 @@
-"""Tests for the bagel."""
+"""Tests for the processing status table."""
 
 from pathlib import Path
 
@@ -33,8 +33,8 @@ from .conftest import DPATH_TEST_DATA
     ],
 )
 def test_model(data):
-    bagel = ProcessingStatusModel(**data)
-    assert set(bagel.model_fields.keys()) == {
+    processing_status_record = ProcessingStatusModel(**data)
+    assert set(processing_status_record.model_fields.keys()) == {
         ProcessingStatus.col_participant_id,
         ProcessingStatus.col_bids_participant_id,
         ProcessingStatus.col_session_id,
@@ -219,10 +219,10 @@ def test_model_status_invalid():
     ],
 )
 def test_add_or_update_records(data_orig, data_new, data_expected):
-    bagel = ProcessingStatus(data_orig).validate()
-    bagel = bagel.add_or_update_records(data_new)
-    expected_bagel = ProcessingStatus(data_expected).validate()
-    assert bagel.equals(expected_bagel)
+    processing_status_table = ProcessingStatus(data_orig).validate()
+    processing_status_table = processing_status_table.add_or_update_records(data_new)
+    expected_table = ProcessingStatus(data_expected).validate()
+    assert processing_status_table.equals(expected_table)
 
 
 @pytest.mark.parametrize(
@@ -390,7 +390,7 @@ def test_get_completed_participants_sessions(
     session_id,
     expected,
 ):
-    bagel = ProcessingStatus(
+    processing_status_table = ProcessingStatus(
         data,
         columns=[
             ProcessingStatus.col_participant_id,
@@ -404,7 +404,7 @@ def test_get_completed_participants_sessions(
 
     assert [
         tuple(x)
-        for x in bagel.get_completed_participants_sessions(
+        for x in processing_status_table.get_completed_participants_sessions(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
@@ -429,8 +429,8 @@ def test_get_completed_participants_sessions(
     ],
 )
 def test_load(fpath):
-    bagel = ProcessingStatus.load(fpath)
-    assert isinstance(bagel, ProcessingStatus)
+    processing_status_table = ProcessingStatus.load(fpath)
+    assert isinstance(processing_status_table, ProcessingStatus)
 
 
 @pytest.mark.parametrize(

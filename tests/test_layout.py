@@ -136,7 +136,7 @@ def test_validate(dpath_root: Path):
     assert DatasetLayout(dpath_root=dpath_root).validate()
 
 
-def test_validate_no_doughnut_or_bagel(dpath_root: Path):
+def test_validate_no_status_file(dpath_root: Path):
     create_empty_dataset(dpath_root)
     assert DatasetLayout(dpath_root=dpath_root).validate()
 

@@ -111,7 +111,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "bagel_data,pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "processing_status_data,pipeline_name,pipeline_version,participant_id,session_id,expected",  # noqa: E501
     [
         (
             [
@@ -139,7 +139,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
             ],
             "fs_extractor",
             "7.3.2",
-            "S02",  # S02 is not in bagel
+            "S02",  # S02 is not in processing status table
             "1",
             [],
         ),
@@ -161,7 +161,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
-    bagel_data,
+    processing_status_data,
     pipeline_name,
     pipeline_version,
     participant_id,
@@ -192,7 +192,7 @@ def test_get_participants_sessions_to_run(
                 ProcessingStatus.col_pipeline_step: DEFAULT_PIPELINE_STEP_NAME,
                 ProcessingStatus.col_status: data[4],
             }
-            for data in bagel_data
+            for data in processing_status_data
         ]
     )
     config.save(extractor.layout.fpath_config)
