@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json
 from nipoppy.workflows.doughnut import DoughnutWorkflow
@@ -87,7 +87,7 @@ def test_run_main(
 
     # generate the doughnut
     DoughnutWorkflow(dpath_root=dpath_root, empty=empty).run_main()
-    doughnut1 = Doughnut.load(fpath_doughnut)
+    doughnut1 = CurationStatusTable.load(fpath_doughnut)
 
     assert len(doughnut1) == len(manifest1)
     check_doughnut(
@@ -105,7 +105,7 @@ def test_run_main(
 
     # update the doughnut
     DoughnutWorkflow(dpath_root=dpath_root, empty=empty).run()
-    doughnut2 = Doughnut.load(fpath_doughnut)
+    doughnut2 = CurationStatusTable.load(fpath_doughnut)
 
     assert len(doughnut2) == len(manifest2)
     check_doughnut(
@@ -182,22 +182,28 @@ def test_run_main_regenerate(
         participant_id = manifest_record[Manifest.col_participant_id]
         doughnut_records.append(
             {
-                Doughnut.col_participant_id: participant_id,
-                Doughnut.col_visit_id: manifest_record[Manifest.col_visit_id],
-                Doughnut.col_session_id: manifest_record[Manifest.col_session_id],
-                Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
-                Doughnut.col_participant_dicom_dir: participant_id,
-                Doughnut.col_in_pre_reorg: True,
-                Doughnut.col_in_post_reorg: True,
-                Doughnut.col_in_bids: True,
+                CurationStatusTable.col_participant_id: participant_id,
+                CurationStatusTable.col_visit_id: manifest_record[
+                    Manifest.col_visit_id
+                ],
+                CurationStatusTable.col_session_id: manifest_record[
+                    Manifest.col_session_id
+                ],
+                CurationStatusTable.col_datatype: manifest_record[
+                    Manifest.col_datatype
+                ],
+                CurationStatusTable.col_participant_dicom_dir: participant_id,
+                CurationStatusTable.col_in_pre_reorg: True,
+                CurationStatusTable.col_in_post_reorg: True,
+                CurationStatusTable.col_in_bids: True,
             }
         )
-    doughnut_old = Doughnut(doughnut_records)
+    doughnut_old = CurationStatusTable(doughnut_records)
     assert doughnut_old.save_with_backup(fpath_doughnut) is not None
 
     # regenerate the doughnut
     DoughnutWorkflow(dpath_root=dpath_root, empty=empty, regenerate=True).run_main()
-    doughnut = Doughnut.load(fpath_doughnut)
+    doughnut = CurationStatusTable.load(fpath_doughnut)
 
     assert len(doughnut) == len(manifest)
     check_doughnut(

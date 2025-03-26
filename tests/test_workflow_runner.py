@@ -13,7 +13,7 @@ from fids import fids
 
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner
@@ -565,17 +565,17 @@ def test_get_participants_sessions_to_run(
         session_id=session_id,
     )
     runner.config = config
-    runner.doughnut = Doughnut().add_or_update_records(
+    runner.doughnut = CurationStatusTable().add_or_update_records(
         records=[
             {
-                Doughnut.col_participant_id: data[0],
-                Doughnut.col_session_id: data[1],
-                Doughnut.col_visit_id: data[1],
-                Doughnut.col_in_bids: data[2],
-                Doughnut.col_datatype: None,
-                Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_pre_reorg: False,
-                Doughnut.col_in_post_reorg: False,
+                CurationStatusTable.col_participant_id: data[0],
+                CurationStatusTable.col_session_id: data[1],
+                CurationStatusTable.col_visit_id: data[1],
+                CurationStatusTable.col_in_bids: data[2],
+                CurationStatusTable.col_datatype: None,
+                CurationStatusTable.col_participant_dicom_dir: "",
+                CurationStatusTable.col_in_pre_reorg: False,
+                CurationStatusTable.col_in_post_reorg: False,
             }
             for data in doughnut_data
         ]

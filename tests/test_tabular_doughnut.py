@@ -8,7 +8,11 @@ import pytest
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
+from nipoppy.tabular.doughnut import (
+    CurationStatusTable,
+    generate_curation_status_table,
+    update_curation_status_table,
+)
 
 from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 
@@ -16,14 +20,14 @@ from .conftest import DPATH_TEST_DATA, check_doughnut, prepare_dataset
 @pytest.fixture
 def data():
     return {
-        Doughnut.col_participant_id: ["01", "01", "02", "02"],
-        Doughnut.col_visit_id: ["BL", "M12", "BL", "M12"],
-        Doughnut.col_session_id: ["BL", "M12", "BL", "M12"],
-        Doughnut.col_datatype: ["anat", "anat", "anat", "anat"],
-        Doughnut.col_participant_dicom_dir: ["01", "01", "02", "02"],
-        Doughnut.col_in_pre_reorg: [True, True, True, False],
-        Doughnut.col_in_post_reorg: [True, False, True, False],
-        Doughnut.col_in_bids: [True, False, False, False],
+        CurationStatusTable.col_participant_id: ["01", "01", "02", "02"],
+        CurationStatusTable.col_visit_id: ["BL", "M12", "BL", "M12"],
+        CurationStatusTable.col_session_id: ["BL", "M12", "BL", "M12"],
+        CurationStatusTable.col_datatype: ["anat", "anat", "anat", "anat"],
+        CurationStatusTable.col_participant_dicom_dir: ["01", "01", "02", "02"],
+        CurationStatusTable.col_in_pre_reorg: [True, True, True, False],
+        CurationStatusTable.col_in_post_reorg: [True, False, True, False],
+        CurationStatusTable.col_in_bids: [True, False, False, False],
     }
 
 
@@ -36,7 +40,9 @@ def data():
 )
 @pytest.mark.parametrize("validate", [True, False])
 def test_load(fpath, validate):
-    assert isinstance(Doughnut.load(fpath, validate=validate), Doughnut)
+    assert isinstance(
+        CurationStatusTable.load(fpath, validate=validate), CurationStatusTable
+    )
 
 
 @pytest.mark.parametrize(
@@ -49,62 +55,71 @@ def test_load(fpath, validate):
     ],
 )
 def test_validate(fpath, is_valid):
-    df_doughnut = Doughnut.load(fpath, validate=False)
+    df_doughnut = CurationStatusTable.load(fpath, validate=False)
     with pytest.raises(ValueError) if not is_valid else nullcontext():
-        assert isinstance(Doughnut.validate(df_doughnut), Doughnut)
+        assert isinstance(
+            CurationStatusTable.validate(df_doughnut), CurationStatusTable
+        )
 
 
 @pytest.mark.parametrize(
     "col",
-    [Doughnut.col_in_pre_reorg, Doughnut.col_in_post_reorg, Doughnut.col_in_bids],
+    [
+        CurationStatusTable.col_in_pre_reorg,
+        CurationStatusTable.col_in_post_reorg,
+        CurationStatusTable.col_in_bids,
+    ],
 )
 def test_check_status_col(col):
-    assert Doughnut._check_status_col(col) == col
+    assert CurationStatusTable._check_status_col(col) == col
 
 
 def test_check_status_col_invalid():
     with pytest.raises(ValueError, match="Invalid status column"):
-        Doughnut._check_status_col("invalid_col")
+        CurationStatusTable._check_status_col("invalid_col")
 
 
 @pytest.mark.parametrize("value", [True, False])
 def test_check_status_value(value):
-    assert Doughnut._check_status_value(value) == value
+    assert CurationStatusTable._check_status_value(value) == value
 
 
 def test_check_status_value_invalid():
     with pytest.raises(ValueError, match="Invalid status value"):
-        assert Doughnut._check_status_value("123")
+        assert CurationStatusTable._check_status_value("123")
 
 
 @pytest.mark.parametrize(
     "participant_id,session_id,col,expected_status",
     [
-        ("01", "BL", Doughnut.col_in_pre_reorg, True),
-        ("01", "BL", Doughnut.col_in_post_reorg, True),
-        ("01", "BL", Doughnut.col_in_bids, True),
-        ("02", "M12", Doughnut.col_in_pre_reorg, False),
-        ("02", "M12", Doughnut.col_in_post_reorg, False),
-        ("02", "M12", Doughnut.col_in_bids, False),
+        ("01", "BL", CurationStatusTable.col_in_pre_reorg, True),
+        ("01", "BL", CurationStatusTable.col_in_post_reorg, True),
+        ("01", "BL", CurationStatusTable.col_in_bids, True),
+        ("02", "M12", CurationStatusTable.col_in_pre_reorg, False),
+        ("02", "M12", CurationStatusTable.col_in_post_reorg, False),
+        ("02", "M12", CurationStatusTable.col_in_bids, False),
     ],
 )
 def test_get_status(data, participant_id, session_id, col, expected_status):
-    assert Doughnut(data).get_status(participant_id, session_id, col) == expected_status
+    assert (
+        CurationStatusTable(data).get_status(participant_id, session_id, col)
+        == expected_status
+    )
 
 
 @pytest.mark.parametrize(
     "participant_id,session_id,col,status",
     [
-        ("01", "BL", Doughnut.col_in_pre_reorg, False),
-        ("01", "BL", Doughnut.col_in_post_reorg, False),
-        ("01", "BL", Doughnut.col_in_bids, False),
-        ("02", "M12", Doughnut.col_in_pre_reorg, True),
-        ("02", "M12", Doughnut.col_in_post_reorg, True),
-        ("02", "M12", Doughnut.col_in_bids, True),
+        ("01", "BL", CurationStatusTable.col_in_pre_reorg, False),
+        ("01", "BL", CurationStatusTable.col_in_post_reorg, False),
+        ("01", "BL", CurationStatusTable.col_in_bids, False),
+        ("02", "M12", CurationStatusTable.col_in_pre_reorg, True),
+        ("02", "M12", CurationStatusTable.col_in_post_reorg, True),
+        ("02", "M12", CurationStatusTable.col_in_bids, True),
     ],
 )
 def test_set_status(data, participant_id, session_id, col, status):
-    doughnut = Doughnut(data)
+    doughnut = CurationStatusTable(data)
     doughnut.set_status(
         participant_id=participant_id, session_id=session_id, col=col, status=status
     )
@@ -117,29 +132,29 @@ def test_set_status(data, participant_id, session_id, col, status):
 
 
 def test_set_status_index_reset(data):
-    doughnut = Doughnut(data)
+    doughnut = CurationStatusTable(data)
     with pytest.raises(ValueError):
         doughnut.set_status("01", "BL", "bad_col", True)
 
-    assert set(doughnut.columns) == set(Doughnut().columns)
+    assert set(doughnut.columns) == set(CurationStatusTable().columns)
     assert isinstance(doughnut.index, pd.RangeIndex)
 
 
 @pytest.mark.parametrize(
     "status_col,participant_id,session_id,expected_count",
     [
-        (Doughnut.col_in_pre_reorg, None, None, 3),
-        (Doughnut.col_in_post_reorg, None, None, 2),
-        (Doughnut.col_in_bids, None, None, 1),
-        (Doughnut.col_in_pre_reorg, "01", None, 2),
-        (Doughnut.col_in_post_reorg, None, "M12", 0),
-        (Doughnut.col_in_bids, "01", "BL", 1),
+        (CurationStatusTable.col_in_pre_reorg, None, None, 3),
+        (CurationStatusTable.col_in_post_reorg, None, None, 2),
+        (CurationStatusTable.col_in_bids, None, None, 1),
+        (CurationStatusTable.col_in_pre_reorg, "01", None, 2),
+        (CurationStatusTable.col_in_post_reorg, None, "M12", 0),
+        (CurationStatusTable.col_in_bids, "01", "BL", 1),
     ],
 )
 def test_get_participant_sessions_helper(
     data, status_col, participant_id, session_id, expected_count
 ):
-    doughnut = Doughnut(data)
+    doughnut = CurationStatusTable(data)
     count = 0
     for _ in doughnut._get_participant_sessions_helper(
         status_col=status_col, participant_id=participant_id, session_id=session_id
@@ -223,7 +238,7 @@ def test_generate_and_update(
     )
 
     # generate the doughnut
-    doughnut1 = generate_doughnut(
+    doughnut1 = generate_curation_status_table(
         manifest=manifest1,
         dicom_dir_map=DicomDirMap.load_or_generate(
             manifest=manifest1, fpath_dicom_dir_map=None, participant_first=True
@@ -247,8 +262,8 @@ def test_generate_and_update(
 
     # create a new manifest
     manifest2 = prepare_dataset(participants_and_sessions_manifest2)
-    doughnut2 = update_doughnut(
-        doughnut=doughnut1,
+    doughnut2 = update_curation_status_table(
+        curation_status_table=doughnut1,
         manifest=manifest2,
         dicom_dir_map=DicomDirMap.load_or_generate(
             manifest=manifest2, fpath_dicom_dir_map=None, participant_first=True
@@ -291,7 +306,7 @@ def test_generate_missing_paths(tmp_path: Path):
         dpath_bidsified=dpath_bidsified,
     )
 
-    doughnut = generate_doughnut(
+    doughnut = generate_curation_status_table(
         manifest=manifest,
         dicom_dir_map=DicomDirMap.load_or_generate(
             manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
@@ -302,9 +317,9 @@ def test_generate_missing_paths(tmp_path: Path):
         empty=False,
     )
 
-    assert doughnut[Doughnut.col_in_pre_reorg].all()
-    assert (~doughnut[Doughnut.col_in_post_reorg]).all()
-    assert doughnut[Doughnut.col_in_bids].all()
+    assert doughnut[CurationStatusTable.col_in_pre_reorg].all()
+    assert (~doughnut[CurationStatusTable.col_in_post_reorg]).all()
+    assert doughnut[CurationStatusTable.col_in_bids].all()
 
 
 def test_doughnut_generation_no_session(
@@ -336,7 +351,7 @@ def test_doughnut_generation_no_session(
         dpath_bidsified=dpath_bidsified,
     )
 
-    doughnut = generate_doughnut(
+    doughnut = generate_curation_status_table(
         manifest=manifest,
         dicom_dir_map=DicomDirMap.load_or_generate(
             manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
@@ -347,5 +362,5 @@ def test_doughnut_generation_no_session(
         empty=False,
     )
 
-    assert doughnut[Doughnut.col_participant_id].to_list() == ["01", "02"]
-    assert doughnut[Doughnut.col_in_bids].all()
+    assert doughnut[CurationStatusTable.col_participant_id].to_list() == ["01", "02"]
+    assert doughnut[CurationStatusTable.col_in_bids].all()

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.dataset_status import StatusWorkflow
@@ -76,7 +76,7 @@ def make_doughnut(
     session_ids=("BL", "M12"),
     n_success_percents=(80, 60, 40),
     randomize_counts=False,
-) -> Doughnut:
+) -> CurationStatusTable:
     # reuse manifest generation
     manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
@@ -88,16 +88,23 @@ def make_doughnut(
     # always keep the first session as complete
     doughnut = manifest.copy()
     doughnut[
-        [Doughnut.col_in_pre_reorg, Doughnut.col_in_post_reorg, Doughnut.col_in_bids]
+        [
+            CurationStatusTable.col_in_pre_reorg,
+            CurationStatusTable.col_in_post_reorg,
+            CurationStatusTable.col_in_bids,
+        ]
     ] = False  # sets dtype to bool and avoids pandas warnings
     doughnut.loc[
-        doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_pre_reorg
+        doughnut[Manifest.col_session_id] == session_ids[0],
+        CurationStatusTable.col_in_pre_reorg,
     ] = True
     doughnut.loc[
-        doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_post_reorg
+        doughnut[Manifest.col_session_id] == session_ids[0],
+        CurationStatusTable.col_in_post_reorg,
     ] = True
     doughnut.loc[
-        doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_bids
+        doughnut[Manifest.col_session_id] == session_ids[0],
+        CurationStatusTable.col_in_bids,
     ] = True
 
     # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
@@ -117,17 +124,20 @@ def make_doughnut(
         )
 
         doughnut.loc[
-            doughnut[Manifest.col_session_id] == session_id, Doughnut.col_in_pre_reorg
+            doughnut[Manifest.col_session_id] == session_id,
+            CurationStatusTable.col_in_pre_reorg,
         ] = [True] * n_success_pre_reorg + [False] * (
             n_session_participants - n_success_pre_reorg
         )
         doughnut.loc[
-            doughnut[Manifest.col_session_id] == session_id, Doughnut.col_in_post_reorg
+            doughnut[Manifest.col_session_id] == session_id,
+            CurationStatusTable.col_in_post_reorg,
         ] = [True] * n_success_post_reorg + [False] * (
             n_session_participants - n_success_post_reorg
         )
         doughnut.loc[
-            doughnut[Manifest.col_session_id] == session_id, Doughnut.col_in_bids
+            doughnut[Manifest.col_session_id] == session_id,
+            CurationStatusTable.col_in_bids,
         ] = [True] * n_success_bids + [False] * (
             n_session_participants - n_success_bids
         )
@@ -137,7 +147,7 @@ def make_doughnut(
         columns=["session_id", "participant_count"],
     )
 
-    return Doughnut(doughnut), session_participant_counts_df
+    return CurationStatusTable(doughnut), session_participant_counts_df
 
 
 def make_processing_status_table(
@@ -277,9 +287,9 @@ def test_doughnut(
     )
     status_df["doughnut_counts"] = list(
         zip(
-            status_df[Doughnut.col_in_pre_reorg],
-            status_df[Doughnut.col_in_post_reorg],
-            status_df[Doughnut.col_in_bids],
+            status_df[CurationStatusTable.col_in_pre_reorg],
+            status_df[CurationStatusTable.col_in_post_reorg],
+            status_df[CurationStatusTable.col_in_bids],
         )
     )
 
@@ -378,7 +388,7 @@ def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
-    workflow.doughnut = Doughnut()  # Checks for empty doughnut
+    workflow.doughnut = CurationStatusTable()  # Checks for empty doughnut
     workflow.processing_status_table = processing_status_table
     status_df = workflow.run_main()
 

@@ -8,7 +8,7 @@ import pytest
 
 from nipoppy.env import LogColor, ReturnCode
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -471,29 +471,29 @@ def test_run_main_error(tmp_path: Path):
 @pytest.mark.parametrize(
     "doughnut",
     [
-        Doughnut(),
-        Doughnut(
+        CurationStatusTable(),
+        CurationStatusTable(
             data={
-                Doughnut.col_participant_id: ["01"],
-                Doughnut.col_visit_id: ["1"],
-                Doughnut.col_session_id: ["1"],
-                Doughnut.col_datatype: "['anat']",
-                Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_pre_reorg: [True],
-                Doughnut.col_in_post_reorg: [True],
-                Doughnut.col_in_bids: [True],
+                CurationStatusTable.col_participant_id: ["01"],
+                CurationStatusTable.col_visit_id: ["1"],
+                CurationStatusTable.col_session_id: ["1"],
+                CurationStatusTable.col_datatype: "['anat']",
+                CurationStatusTable.col_participant_dicom_dir: ["01"],
+                CurationStatusTable.col_in_pre_reorg: [True],
+                CurationStatusTable.col_in_post_reorg: [True],
+                CurationStatusTable.col_in_bids: [True],
             }
         ).validate(),
     ],
 )
-def test_cleanup_doughnut(doughnut: Doughnut, tmp_path: Path):
+def test_cleanup_doughnut(doughnut: CurationStatusTable, tmp_path: Path):
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / "my_dataset")
     workflow.doughnut = doughnut
 
     workflow.run_cleanup()
 
     assert workflow.layout.fpath_doughnut.exists()
-    assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
+    assert CurationStatusTable.load(workflow.layout.fpath_doughnut).equals(doughnut)
 
 
 @pytest.mark.parametrize(
@@ -526,7 +526,7 @@ def test_run_cleanup_message(
 ):
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    workflow.doughnut = Doughnut()  # empty doughnut to avoid error
+    workflow.doughnut = CurationStatusTable()  # empty doughnut to avoid error
 
     workflow.n_success = n_success
     workflow.n_total = n_total

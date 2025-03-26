@@ -4,7 +4,11 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.env import LogColor, StrOrPathLike
-from nipoppy.tabular.doughnut import Doughnut, generate_doughnut, update_doughnut
+from nipoppy.tabular.doughnut import (
+    CurationStatusTable,
+    generate_curation_status_table,
+    update_curation_status_table,
+)
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -42,10 +46,10 @@ class DoughnutWorkflow(BaseWorkflow):
         logger = self.logger
 
         if fpath_doughnut.exists() and not self.regenerate:
-            old_doughnut = Doughnut.load(fpath_doughnut)
+            old_doughnut = CurationStatusTable.load(fpath_doughnut)
             logger.info(f"Found existing doughnut (shape: {old_doughnut.shape})")
-            doughnut = update_doughnut(
-                doughnut=old_doughnut,
+            doughnut = update_curation_status_table(
+                curation_status_table=old_doughnut,
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=dpath_downloaded,
@@ -60,7 +64,7 @@ class DoughnutWorkflow(BaseWorkflow):
                 logger.info("Regenerating the entire doughnut")
             else:
                 logger.info(f"Did not find existing doughnut at {fpath_doughnut}")
-            doughnut = generate_doughnut(
+            doughnut = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=dpath_downloaded,

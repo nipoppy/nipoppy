@@ -1,4 +1,4 @@
-"""Class for processing status files."""
+"""Class for the processing status file."""
 
 from typing import Any, Optional
 

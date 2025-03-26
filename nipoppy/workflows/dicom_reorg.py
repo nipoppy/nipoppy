@@ -8,7 +8,7 @@ from typing import Optional
 import pydicom
 
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
-from nipoppy.tabular.doughnut import update_doughnut
+from nipoppy.tabular.doughnut import update_curation_status_table
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
@@ -168,8 +168,8 @@ class DicomReorgWorkflow(BaseWorkflow):
     def run_setup(self):
         """Update the doughnut in case it is not up-to-date."""
         super().run_setup()
-        self.doughnut = update_doughnut(
-            doughnut=self.doughnut,
+        self.doughnut = update_curation_status_table(
+            curation_status_table=self.doughnut,
             manifest=self.manifest,
             dicom_dir_map=self.dicom_dir_map,
             dpath_downloaded=self.layout.dpath_pre_reorg,

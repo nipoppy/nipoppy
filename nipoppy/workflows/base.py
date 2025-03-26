@@ -20,7 +20,7 @@ from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable, generate_curation_status_table
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import add_path_timestamp, process_template_str
@@ -352,7 +352,7 @@ class BaseWorkflow(Base, ABC):
             raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
 
     @cached_property
-    def doughnut(self) -> Doughnut:
+    def doughnut(self) -> CurationStatusTable:
         """
         Load the doughnut if it exists.
 
@@ -361,13 +361,13 @@ class BaseWorkflow(Base, ABC):
         logger = self.logger
         fpath_doughnut = Path(self.layout.fpath_doughnut)
         try:
-            return Doughnut.load(fpath_doughnut)
+            return CurationStatusTable.load(fpath_doughnut)
         except FileNotFoundError:
             self.logger.warning(
                 f"Doughnut file not found: {fpath_doughnut}"
                 ". Generating a new one on-the-fly"
             )
-            doughnut = generate_doughnut(
+            doughnut = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.layout.dpath_pre_reorg,

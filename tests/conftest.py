@@ -14,7 +14,7 @@ from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
 from nipoppy.env import StrOrPathLike
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -317,7 +317,7 @@ def prepare_dataset(
 
 
 def check_doughnut(
-    doughnut: Doughnut,
+    doughnut: CurationStatusTable,
     participants_and_sessions_manifest,
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,

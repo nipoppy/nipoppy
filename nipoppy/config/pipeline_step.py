@@ -12,7 +12,7 @@ from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.doughnut import CurationStatusTable
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -122,7 +122,7 @@ class BidsPipelineStepConfig(BasePipelineStepConfig):
     UPDATE_DOUGHNUT: Optional[bool] = Field(
         default=False,
         description=(
-            f"Whether or not the {Doughnut.col_in_bids} column "
+            f"Whether or not the {CurationStatusTable.col_in_bids} column "
             "in the doughnut file should be updated"
         ),
     )
