@@ -406,7 +406,7 @@ def pipeline_download(**params):
     "--zenodo-id",
     type=str,
     required=False,
-    help="To updated the pipeline, provide the Zenodo ID.",
+    help="To update an existing pipeline, provide the Zenodo ID.",
 )
 @zenodo_options
 def pipeline_upload(**params):
