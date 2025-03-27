@@ -469,7 +469,9 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
     pipeline_name = "new_pipeline"
     pipeline_version = "1.0.0"
     dpath_pipeline_bundle = (
-        workflow.layout.dpath_pipelines / "proc" / f"{pipeline_name}-{pipeline_version}"
+        workflow.layout.dpath_pipelines
+        / "processing"
+        / f"{pipeline_name}-{pipeline_version}"
     )
     config_dict = {
         "NAME": pipeline_name,
