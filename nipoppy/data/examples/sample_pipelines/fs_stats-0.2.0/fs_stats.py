@@ -8,6 +8,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional, Tuple, Union
@@ -48,6 +49,10 @@ DEFAULT_SES_PREFIX = "ses-"
 
 RE_FS_VERSION = re.compile(r"[\d]\.[\d]\.[\d]")
 FNAME_FS_VERSION = "build-stamp.txt"
+
+
+def _print_error_and_exit(message: str):
+    sys.exit(f"\nERROR: {message}\nStopping fs_stats\n")
 
 
 def _get_fs_version(dpath, fname_version=FNAME_FS_VERSION, re_version=RE_FS_VERSION):
@@ -98,7 +103,7 @@ def _load_fs_stats_table(
 def _run_subprocess(args, verbose=False, **kwargs) -> subprocess.CompletedProcess:
     """Run a subprocess with optional verbosity."""
     if verbose:
-        print(f"\nRunning command: {shlex.join(args)}")
+        print(f"\nRunning command: {shlex.join(args)}\n")
     else:
         kwargs["stdout"] = subprocess.DEVNULL
         kwargs["stderr"] = subprocess.DEVNULL
@@ -170,14 +175,16 @@ def _run_fs_stats2table_command(
     # run command with some feedback
     process = _run_subprocess(args, env=env, verbose=verbose)
     if process.returncode != 0:
-        sys.exit(
-            f"\nError running command: {shlex.join(args)} "
+        error_message = (
+            f"Error running command: {shlex.join(args)} "
             f"with environment variables: {env_vars}."
-            " If running with a FreeSurfer container, make sure the subjects directory "
-            f"{fs_subjects_dir} is mounted correctly and that any symlink target path "
-            "is also mounted. You can also rerun the same command with the --verbose "
-            "flag to see the output of the FreeSurfer command."
         )
+        if not verbose:
+            error_message += (
+                " Tip: rerun the same command with the --verbose flag "
+                "to see the output of the FreeSurfer command."
+            )
+        _print_error_and_exit(error_message)
 
     # return the output as a DataFrame
     return _load_fs_stats_table(
@@ -266,7 +273,7 @@ def _run_mris_euler_number(
     # run command with some feedback
     process = _run_subprocess(args, verbose=verbose, check=True)
     if process.returncode != 0:
-        sys.exit(f"\nError running command: {shlex.join(args)}")
+        _print_error_and_exit(f"Error running command: {shlex.join(args)}")
 
     # return the number of holes
     return int(Path(out_path).read_text().strip())
@@ -309,7 +316,7 @@ def _run_mri_cnr(
     # run command with some feedback
     process = _run_subprocess(args, verbose=verbose, check=True)
     if process.returncode != 0:
-        sys.exit(f"\nError running command: {shlex.join(args)}")
+        _print_error_and_exit(f"Error running command: {shlex.join(args)}")
 
     # return the 8 CNR values
     index = []
@@ -323,15 +330,30 @@ def _run_mri_cnr(
     return df
 
 
-def _get_subject_list(fs_subjects_dir: Union[str, os.PathLike]) -> list[str]:
+def _get_subject_list(
+    fs_subjects_dir: Union[str, os.PathLike], using_container=False
+) -> list[str]:
     """Get a list of subjects in a FreeSurfer subjects directory."""
-    subject_list = [
-        dpath.name
-        for dpath in Path(fs_subjects_dir).iterdir()
-        if dpath.name != "fsaverage" and dpath.is_dir()
-    ]
-    if len(subject_list) == 0:
-        sys.exit(f"No subjects found in {fs_subjects_dir}")
+    subject_list = []
+    for dpath in Path(fs_subjects_dir).iterdir():
+        if dpath.name == "fsaverage":
+            continue
+
+        if dpath.is_symlink():
+            if not dpath.resolve().exists():
+                _print_error_and_exit(f"Found broken symlink: {dpath}")
+
+            # potential source of error that leads to unclear FreeSurfer error message
+            if using_container:
+                warnings.warn(
+                    "Found symlink(s) in the subjects directory. Make sure the symlink "
+                    "target path(s) are mounted correctly in the container."
+                )
+
+        subject_list.append(dpath.name)
+
+    if not subject_list:
+        _print_error_and_exit(f"No subjects found in {fs_subjects_dir}")
     return subject_list
 
 
@@ -372,7 +394,9 @@ def run_single_aseg(
         Keys are measure names.
         Values are dataframes for aseg stats, with subject index.
     """
-    subjects = _get_subject_list(subjects_dir_path)
+    subjects = _get_subject_list(
+        subjects_dir_path, using_container=container_command_and_args
+    )
     dfs_aseg = {}
 
     # create a temporary directory to store the stats files (will be deleted)
@@ -442,7 +466,9 @@ def run_single_aparc(
         Keys are tuples of parcellation and measure names.
         Values are dataframes for aparc stats, with subject index.
     """
-    subjects = _get_subject_list(subjects_dir_path)
+    subjects = _get_subject_list(
+        subjects_dir_path, using_container=container_command_and_args
+    )
     dfs_aparc = {}
 
     # create a temporary directory to store the stats files (will be deleted)
@@ -514,7 +540,7 @@ def run_single_aparc(
                 # and make sure there are no duplicate column names
                 df_aparc = pd.concat([df_aparc_lh, df_aparc_rh], axis="columns")
                 if len(set(df_aparc.columns)) != len(df_aparc.columns):
-                    sys.exit(
+                    _print_error_and_exit(
                         "Duplicate column names in the stats files: "
                         f"{df_aparc.columns[df_aparc.columns.duplicated()]}"
                     )
@@ -573,7 +599,9 @@ def run_single_qc(
     print("Getting QC metrics")
 
     data_for_df = []
-    subjects = _get_subject_list(subjects_dir_path)
+    subjects = _get_subject_list(
+        subjects_dir_path, using_container=container_command_and_args
+    )
     with tempfile.TemporaryDirectory(dir=subjects_dir_path) as tmpdir:
         for subject in subjects:
             data_subject = {sub_colname: subject.removeprefix(sub_prefix)}
@@ -822,7 +850,7 @@ def run_multi(
         session_df_map_qc[session_id] = df_qc
 
     if n_sessions == 0:
-        sys.exit(f"No session directories found in {sessions_dir_path}.")
+        _print_error_and_exit(f"No session directories found in {sessions_dir_path}.")
 
     dfs_aseg_multi = {
         key: pd.concat(df_map, names=[ses_colname])
@@ -963,7 +991,9 @@ def run(
         )
 
     else:
-        sys.exit(f"\nInvalid mode: {mode}. Must be one of: {MODE_SINGLE}, {MODE_MULTI}")
+        _print_error_and_exit(
+            f"Invalid mode: {mode}. Must be one of: {MODE_SINGLE}, {MODE_MULTI}"
+        )
 
     # output directory
     output_dir_path = Path(output_dir_path)
