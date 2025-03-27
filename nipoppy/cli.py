@@ -29,7 +29,7 @@ def handle_exception(workflow):
     except Exception:
         workflow.logger.exception("Error while running nipoppy")
         if workflow.return_code == ReturnCode.SUCCESS:
-            workflow.return_code = ReturnCode.UNKOWN_FAILURE
+            workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     finally:
         sys.exit(workflow.return_code)
 
