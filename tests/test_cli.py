@@ -221,12 +221,11 @@ def test_cli_extract(tmp_path: Path):
 
 
 def test_cli_pipeline_validate(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
     dpath_pipeline = tmp_path / "pipeline"
     dpath_pipeline.mkdir()
     result = runner.invoke(
         cli,
-        ["pipeline", "validate", "--dataset", dpath_root, "--path", dpath_pipeline],
+        ["pipeline", "validate", dpath_pipeline],
     )
 
     # Expects missing path, since init command is not run.

@@ -14,7 +14,6 @@ from nipoppy.env import (
     PROGRAM_NAME,
     ReturnCode,
 )
-from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 
 logger = get_logger(
@@ -354,14 +353,8 @@ def pipeline():
 
 
 @pipeline.command("validate")
-@dataset_option
-@click.option(
-    "--path",
-    "dpath_pipeline",
-    help=(
-        "Path to the pipeline directory"
-        f" (should contain a {DatasetLayout.fname_pipeline_config} file)."
-    ),
+@click.argument(
+    "path",
     required=True,
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
@@ -369,6 +362,6 @@ def pipeline_validate(**params):
     """Validate a pipeline store directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
-    params = dep_params(**params)
+    params["dpath_pipeline"] = params.pop("path")
     with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
         workflow.run()

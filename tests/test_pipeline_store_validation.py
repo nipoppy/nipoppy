@@ -14,7 +14,6 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_store.validation import (
     _check_descriptor_file,
     _check_invocation_file,
@@ -41,27 +40,6 @@ def test_load_pipeline_config_file():
         _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json"),
         BasePipelineConfig,
     )
-
-
-@pytest.mark.parametrize(
-    "substitution_objs,expected_description",
-    [
-        ([DatasetLayout("/test")], "/test"),
-        ([DatasetLayout("/test2")], "/test2"),
-    ],
-)
-def test_load_pipeline_config_file_substitutions(
-    substitution_objs, expected_description, tmp_path: Path
-):
-    config_to_write = BasePipelineConfig(
-        NAME="test", VERSION="0.0.1", DESCRIPTION="[[NIPOPPY_DPATH_ROOT]]"
-    )
-    fpath_pipeline_config = tmp_path / "pipeline_config.json"
-    fpath_pipeline_config.write_text(config_to_write.model_dump_json(indent=4))
-    pipeline_config = _load_pipeline_config_file(
-        fpath_pipeline_config, substitution_objs
-    )
-    assert pipeline_config.DESCRIPTION == expected_description
 
 
 @pytest.mark.parametrize(
@@ -388,7 +366,6 @@ def test_check_no_subdirectories_logging(
 )
 def test_check_pipeline_bundle(logger, log_level, mocker: pytest_mock.MockFixture):
     dpath_bundle = Path("bundle_dir").resolve()
-    substitution_objs = [dpath_bundle]
     config = BasePipelineConfig(NAME="test_pipeline", VERSION="test_version")
     fpaths = [dpath_bundle / "file1.txt", dpath_bundle / "file2.txt"]
 
@@ -407,13 +384,10 @@ def test_check_pipeline_bundle(logger, log_level, mocker: pytest_mock.MockFixtur
         "nipoppy.pipeline_store.validation._check_no_subdirectories"
     )
 
-    check_pipeline_bundle(
-        dpath_bundle, substitution_objs, logger=logger, log_level=log_level
-    )
+    check_pipeline_bundle(dpath_bundle, logger=logger, log_level=log_level)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
         dpath_bundle / "config.json",
-        substitution_objs,
     )
     mocked_check_pipeline_files.assert_called_once_with(
         config, dpath_bundle, logger=logger, log_level=log_level
