@@ -241,7 +241,7 @@ def test_cli_pipeline_download(tmp_path: Path, mocker: pytest_mock.MockerFixture
 
     mocked_pipeline_download.assert_called_once()
 
-    # Expect non-zero return code, because nipoppy init was not run.
+    # Expects missing path, since init command is not run.
     assert result.exit_code == ReturnCode.SUCCESS
 
 
@@ -261,5 +261,5 @@ def test_cli_pipeline_upload(mocker: pytest_mock.MockerFixture):
 
     mocked_pipeline_download.assert_called_once()
 
-    # Expect non-zero return code, because nipoppy init was not run.
+    # Expects missing path, since init command is not run.
     assert result.exit_code == ReturnCode.SUCCESS

@@ -1,6 +1,7 @@
 """Test for Zenodo API."""
 
 import os
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -53,6 +54,41 @@ def test_download_invalid_record(tmp_path: Path):
         ),
     ):
         ZenodoAPI(api_endpoint=API_ENDPOINT).download_record_files(zenodo_id, tmp_path)
+
+
+@pytest.mark.parametrize(
+    "content,expected_checksum, checksum_match",
+    [
+        ("abc", "900150983cd24fb0d6963f7d28e17f72", True),
+        ("abc", "wrong_checksum", False),
+    ],
+)
+def test_download_record_checksum(
+    tmp_path: Path,
+    content,
+    expected_checksum,
+    checksum_match,
+    mocker: pytest_mock.MockerFixture,
+):
+    mock_post = mocker.patch("httpx.get")
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_response.content.return_value = content.encode()
+    mock_post.return_value = mock_response
+
+    with (
+        nullcontext()
+        if checksum_match
+        else pytest.raises(
+            ZenodoAPIError, match="Checksum mismatch: file has invalid checksum"
+        )
+    ):
+        assert (
+            ZenodoAPI(api_endpoint=API_ENDPOINT).download_record_files(
+                output_dir=tmp_path, zenodo_id="123456"
+            )
+            == expected_checksum
+        )
 
 
 @pytest.mark.skipif(
@@ -123,14 +159,14 @@ def test_valid_authentication(mocker: pytest_mock.MockerFixture):
 
     ZenodoAPI(
         api_endpoint=API_ENDPOINT, access_token="valid_token"
-    )._check_authetication()
+    )._check_authentication()
 
 
 def test_failed_authentication():
     with pytest.raises(ZenodoAPIError, match="Failed to authenticate to Zenodo:"):
         ZenodoAPI(
             api_endpoint=API_ENDPOINT, access_token="invalid_token"
-        )._check_authetication()
+        )._check_authentication()
 
 
 def test_get_pipeline_metadata(tmp_path: Path, datetime_fixture):  # noqa F811

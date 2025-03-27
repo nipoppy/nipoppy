@@ -367,7 +367,7 @@ def zenodo_options(func):
         default="https://zenodo.org/api",
         type=str,
         required=False,
-        help="Zenodo access token.",
+        help="URL to the zenodo API. ",
     )(func)
     return func
 

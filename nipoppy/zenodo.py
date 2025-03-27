@@ -33,6 +33,7 @@ class ZenodoAPI:
         self.api_endpoint = api_endpoint
         self.access_token = access_token
 
+        # Access token is required for uploading files
         if self.access_token is not None:
             self.headers = {
                 "Authorization": f"Bearer {self.access_token}",
@@ -202,7 +203,7 @@ class ZenodoAPI:
 
         return metadata
 
-    def _check_authetication(self) -> None:
+    def _check_authentication(self) -> None:
         response = httpx.get(
             f"{self.api_endpoint}/user/records",
             headers=self.headers | {"Content-Type": "application/json"},
@@ -221,7 +222,7 @@ class ZenodoAPI:
         if not input_dir.is_dir():
             raise ValueError("File must be a directory.")
 
-        self._check_authetication()
+        self._check_authentication()
 
         metadata = self._get_pipeline_metadata(input_dir)
         if zenodo_id:
