@@ -38,3 +38,6 @@ env/
 venv/
 .venv/
 nipoppy_env/
+
+# Env var file
+.env

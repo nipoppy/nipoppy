@@ -13,6 +13,7 @@ from nipoppy.env import (
     PROGRAM_NAME,
     ReturnCode,
 )
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 
 logger = get_logger(
@@ -343,3 +344,81 @@ def status(**params):
     params = dep_params(**params)
     with handle_exception(StatusWorkflow(**params)) as workflow:
         workflow.run()
+
+
+@cli.group(cls=OrderedGroup)
+def pipeline():
+    """Local pipeline management."""
+    pass
+
+
+def zenodo_options(func):
+    """Define global options for the CLI."""
+    func = click.option(
+        "--zenodo-token",
+        envvar="ZENODO_TOKEN",
+        type=str,
+        required=False,
+        help="Zenodo access token.",
+    )(func)
+    func = click.option(
+        "--zenodo-api",
+        envvar="ZENODO_API",
+        default="https://zenodo.org/api",
+        type=str,
+        required=False,
+        help="URL to the zenodo API. ",
+    )(func)
+    return func
+
+
+@pipeline.command("download")
+@click.argument(
+    "zenodo_id",
+    type=str,
+)
+@dataset_option
+@zenodo_options
+def pipeline_download(**params):
+    """Download a Zenodo pipeline."""
+    from nipoppy.zenodo import ZenodoAPI
+
+    zenodo = ZenodoAPI(
+        api_endpoint=params.get("zenodo_api"),
+        access_token=params.get("zenodo_token"),
+    )
+
+    layout = DatasetLayout(dpath_root=params.get("dpath_root"))
+
+    zenodo_id = params.pop("zenodo_id")
+    zenodo.download_record_files(zenodo_id, output_dir=layout.dpath_pipelines)
+
+    # TODO Move the pipeline to the correct location in the dataset
+    # and create the pipeline variable in the config file.
+
+
+@pipeline.command("upload")
+@click.argument(
+    "input_dir",
+    type=str,
+)
+@click.option(
+    "--zenodo-id",
+    type=str,
+    required=False,
+    help="To update an existing pipeline, provide the Zenodo ID.",
+)
+@zenodo_options
+def pipeline_upload(**params):
+    """Add a new pipeline."""
+    from nipoppy.zenodo import ZenodoAPI
+
+    zenodo = ZenodoAPI(
+        api_endpoint=params.get("zenodo_api"),
+        access_token=params.get("zenodo_token"),
+    )
+
+    zenodo.upload_pipeline(
+        input_dir=Path(params.pop("input_dir")),
+        zenodo_id=params.pop("zenodo_id"),
+    )
