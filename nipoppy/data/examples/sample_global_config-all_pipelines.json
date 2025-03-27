@@ -307,7 +307,7 @@
     "EXTRACTION_PIPELINES": [
         {
             "NAME": "fs_stats",
-            "VERSION": "0.2.0",
+            "VERSION": "0.2.1",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/freesurfer_7.3.2.sif",
                 "URI": "docker://freesurfer/freesurfer:7.3.2"
