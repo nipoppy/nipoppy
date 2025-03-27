@@ -229,8 +229,5 @@ def test_cli_pipeline_validate(tmp_path: Path):
         ["pipeline", "validate", "--dataset", dpath_root, "--path", dpath_pipeline],
     )
 
-    # No log file is created, since the command does not create logs.
-    pass
-
     # Expects missing path, since init command is not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE

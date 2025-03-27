@@ -202,12 +202,7 @@ def _check_self_contained(
             msg="Checking that all files are within the bundle directory",
         )
     for fpath in fpaths:
-        if not any(
-            [
-                dpath_parent.resolve() == dpath_bundle
-                for dpath_parent in Path(fpath).resolve().parents
-            ]
-        ):
+        if dpath_bundle not in Path(fpath).resolve().parents:
             raise ValueError(
                 f"Path {fpath} is not within the bundle directory {dpath_bundle}"
             )
