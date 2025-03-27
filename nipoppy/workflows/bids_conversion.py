@@ -8,12 +8,14 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
 class BidsConversionRunner(PipelineRunner):
     """Convert data to BIDS."""
+
+    _pipeline_type = PipelineTypeEnum.BIDSIFICATION
 
     def __init__(
         self,
@@ -58,18 +60,9 @@ class BidsConversionRunner(PipelineRunner):
         return []
 
     @cached_property
-    def _dpath_pipeline_configs(self) -> Path:
-        """Path to the directory containing the appropriate pipeline bundles."""
-        return self.layout.get_dpath_catalog_bids()
-
-    @cached_property
     def pipeline_config(self) -> BidsPipelineConfig:
         """Get the user config object for the BIDS pipeline."""
-        return self._get_pipeline_config(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_class=BidsPipelineConfig,
-        )
+        return super().pipeline_config
 
     @cached_property
     def pipeline_step_config(self) -> BidsPipelineStepConfig:

@@ -8,13 +8,13 @@
     "STEPS": [
         {
             "NAME": "prepare",
-            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bidsification/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bidsification/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json"
+            "INVOCATION_FILE": "invocation-[[STEP_NAME]].json",
+            "DESCRIPTOR_FILE": "descriptor.json"
         },
         {
             "NAME": "convert",
-            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bidsification/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/bidsification/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+            "INVOCATION_FILE": "invocation-[[STEP_NAME]].json",
+            "DESCRIPTOR_FILE": "descriptor.json",
             "CONTAINER_CONFIG": {
                 "ARGS": [
                     "--bind",
