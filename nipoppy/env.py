@@ -22,6 +22,7 @@ IS_TESTING = "pytest" in sys.modules
 
 # file extensions
 EXT_TAR = ".tar"
+EXT_LOG = ".log"
 
 
 class PipelineTypeEnum(str, Enum):
