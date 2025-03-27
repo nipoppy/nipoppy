@@ -219,7 +219,7 @@ class ZenodoAPI:
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
-            raise ValueError("File must be a directory.")
+            raise ValueError(f"{input_dir} must be a directory.")
 
         self._check_authetication()
 
