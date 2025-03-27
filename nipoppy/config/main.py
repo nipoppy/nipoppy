@@ -73,7 +73,9 @@ class PipelineVariables(BaseModel):
         """Convert fields to defaultdicts."""
         for pipeline_type_field in self._pipeline_type_to_key.values():
             original_nested_dict = getattr(self, pipeline_type_field)
-            new_nested_dict = self.model_fields[pipeline_type_field].default
+            new_nested_dict = PipelineVariables.model_fields[
+                pipeline_type_field
+            ].default
             for pipeline_name in original_nested_dict:
                 for pipeline_version in original_nested_dict[pipeline_name]:
                     new_nested_dict[pipeline_name][pipeline_version] = (
