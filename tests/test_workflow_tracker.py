@@ -49,7 +49,7 @@ def tracker(tmp_path: Path):
     fname_tracker_config = "tracker_config.json"
     create_pipeline_config_files(
         tracker.layout.dpath_pipelines,
-        proc_pipelines=[
+        processing_pipelines=[
             {
                 "NAME": tracker.pipeline_name,
                 "VERSION": tracker.pipeline_version,

@@ -218,3 +218,19 @@ def test_cli_extract(tmp_path: Path):
 
     # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+
+
+def test_cli_pipeline_list(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    dpath_pipeline = tmp_path / "pipeline"
+    dpath_pipeline.mkdir()
+    result = runner.invoke(
+        cli,
+        ["pipeline", "list", "--dataset", dpath_root],
+    )
+
+    # No log file is created, since the command does not create logs.
+    pass
+
+    # Expects missing path, since init command is not run.
+    assert result.exit_code == ReturnCode.UNKOWN_FAILURE

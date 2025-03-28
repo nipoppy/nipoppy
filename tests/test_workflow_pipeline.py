@@ -75,7 +75,7 @@ def workflow(tmp_path: Path):
 
     create_pipeline_config_files(
         workflow.layout.dpath_pipelines,
-        bids_pipelines=[
+        bidsification_pipelines=[
             {
                 "NAME": "bids_converter",
                 "VERSION": "1.0",
@@ -87,7 +87,7 @@ def workflow(tmp_path: Path):
                 "VERSION": "0.1",
             },
         ],
-        proc_pipelines=[
+        processing_pipelines=[
             {
                 "NAME": "fmriprep",
                 "VERSION": "23.1.3",
