@@ -1,5 +1,6 @@
 """Nipoppy CLI."""
 
+import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -29,7 +30,7 @@ def handle_exception(workflow):
     except Exception:
         workflow.logger.exception("Error while running nipoppy")
         if workflow.return_code == ReturnCode.SUCCESS:
-            workflow.return_code = ReturnCode.UNKOWN_FAILURE
+            workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     finally:
         sys.exit(workflow.return_code)
 
@@ -53,7 +54,7 @@ def dataset_option(func):
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path().cwd(),
-        show_default=False,
+        show_default=(False if os.environ.get("READTHEDOCS") else True),
         help=(
             "Path to the root of the dataset (default is current working directory)."
         ),
@@ -380,13 +381,8 @@ def pipeline_install(**params):
 
 @pipeline.command("validate")
 @dataset_option
-@click.option(
-    "--path",
-    "dpath_pipeline",
-    help=(
-        "Path to the pipeline directory"
-        f" (should contain a {DatasetLayout.fname_pipeline_config} file)."
-    ),
+@click.argument(
+    "path",
     required=True,
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
@@ -394,6 +390,6 @@ def pipeline_validate(**params):
     """Validate a pipeline store directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
-    params = dep_params(**params)
+    params["dpath_pipeline"] = params.pop("path")
     with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
         workflow.run()

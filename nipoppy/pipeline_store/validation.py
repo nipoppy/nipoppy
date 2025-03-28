@@ -3,7 +3,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import boutiques
 from pydantic_core import ValidationError
@@ -13,12 +13,10 @@ from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import load_json, process_template_str
+from nipoppy.utils import load_json
 
 
-def _load_pipeline_config_file(
-    fpath_config: Path, substitution_objs: Optional[list[Any]] = None
-) -> BasePipelineConfig:
+def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
@@ -26,13 +24,8 @@ def _load_pipeline_config_file(
             f"Pipeline configuration file not found: {fpath_config}"
         )
 
-    config_str = process_template_str(
-        fpath_config.read_text(),
-        objs=substitution_objs,
-    )
-
     try:
-        config_dict = json.loads(config_str)
+        config_dict = load_json(fpath_config)
     except json.JSONDecodeError as exception:
         raise RuntimeError(
             f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
@@ -202,20 +195,32 @@ def _check_self_contained(
             msg="Checking that all files are within the bundle directory",
         )
     for fpath in fpaths:
-        if not any(
-            [
-                dpath_parent.resolve() == dpath_bundle
-                for dpath_parent in Path(fpath).parents
-            ]
-        ):
+        if dpath_bundle not in Path(fpath).resolve().parents:
             raise ValueError(
                 f"Path {fpath} is not within the bundle directory {dpath_bundle}"
             )
 
 
+def _check_no_subdirectories(
+    dpath_bundle: StrOrPathLike,
+    logger: Optional[logging.Logger] = None,
+    log_level=logging.DEBUG,
+):
+    dpath_bundle: Path = Path(dpath_bundle)
+    if logger is not None:
+        logger.log(
+            level=log_level,
+            msg="Checking that there are no subdirectories inside the bundle directory",
+        )
+    for path in dpath_bundle.iterdir():
+        if path.is_dir():
+            raise ValueError(
+                f"Bundle directory should not contain any subdirectories, found {path}"
+            )
+
+
 def check_pipeline_bundle(
     dpath_bundle: StrOrPathLike,
-    substitution_objs: Optional[list[Any]] = None,
     logger: Optional[logging.Logger] = None,
     log_level=logging.DEBUG,
 ) -> BasePipelineConfig:
@@ -224,7 +229,7 @@ def check_pipeline_bundle(
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
 
     # try to load the configuration file
-    config = _load_pipeline_config_file(fpath_config, substitution_objs)
+    config = _load_pipeline_config_file(fpath_config)
 
     # core file content validation
     fpaths = _check_pipeline_files(
@@ -233,5 +238,8 @@ def check_pipeline_bundle(
 
     # make sure that all files are within the bundle directory
     _check_self_contained(dpath_bundle, fpaths, logger=logger, log_level=log_level)
+
+    # make sure that there are no subdirectories inside the bundle directory
+    _check_no_subdirectories(dpath_bundle, logger=logger, log_level=log_level)
 
     return config

@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
@@ -14,19 +13,14 @@ class PipelineValidateWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        dpath_root: StrOrPathLike,
         dpath_pipeline: StrOrPathLike,
-        fpath_layout: Optional[StrOrPathLike] = None,
         verbose=False,
         dry_run=False,
     ):
         super().__init__(
-            dpath_root=dpath_root,
             name="pipeline_validate",
-            fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
         )
         self.dpath_pipeline = Path(dpath_pipeline)
 
@@ -34,10 +28,7 @@ class PipelineValidateWorkflow(BaseWorkflow):
         """Run the main workflow."""
         self.logger.info(f"Validating pipeline at {self.dpath_pipeline}")
         check_pipeline_bundle(
-            self.dpath_pipeline,
-            substitution_objs=[self, self.layout],
-            logger=self.logger,
-            log_level=logging.INFO,
+            self.dpath_pipeline, logger=self.logger, log_level=logging.INFO
         )
 
         self.logger.info(

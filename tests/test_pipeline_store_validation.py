@@ -14,10 +14,10 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_store.validation import (
     _check_descriptor_file,
     _check_invocation_file,
+    _check_no_subdirectories,
     _check_pipeline_files,
     _check_pybids_ignore_file,
     _check_self_contained,
@@ -40,27 +40,6 @@ def test_load_pipeline_config_file():
         _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json"),
         BasePipelineConfig,
     )
-
-
-@pytest.mark.parametrize(
-    "substitution_objs,expected_description",
-    [
-        ([DatasetLayout("/test")], "/test"),
-        ([DatasetLayout("/test2")], "/test2"),
-    ],
-)
-def test_load_pipeline_config_file_substitutions(
-    substitution_objs, expected_description, tmp_path: Path
-):
-    config_to_write = BasePipelineConfig(
-        NAME="test", VERSION="0.0.1", DESCRIPTION="[[NIPOPPY_DPATH_ROOT]]"
-    )
-    fpath_pipeline_config = tmp_path / "pipeline_config.json"
-    fpath_pipeline_config.write_text(config_to_write.model_dump_json(indent=4))
-    pipeline_config = _load_pipeline_config_file(
-        fpath_pipeline_config, substitution_objs
-    )
-    assert pipeline_config.DESCRIPTION == expected_description
 
 
 @pytest.mark.parametrize(
@@ -290,6 +269,7 @@ def test_check_config_files_logging(
         ("bundle_dir", ["bundle_dir/file1.txt", "bundle_dir/sub_dir/file2.txt"], True),
         ("bundle_dir", ["bundle_dir/file1.txt", "file2.txt"], False),
         ("bundle_dir", ["bundle_dir/file1.txt", "other_dir/file2.txt"], False),
+        ("bundle_dir", ["bundle_dir/../file1.txt"], False),
     ],
 )
 def test_check_self_contained(dpath_bundle, fpaths, valid):
@@ -328,12 +308,64 @@ def test_check_self_container_logging(
 
 
 @pytest.mark.parametrize(
+    "dpaths_to_create,fpaths_to_create,valid",
+    [
+        (["sub_dir1"], [], False),
+        ([], ["file1.txt"], True),
+        ([], [], True),
+    ],
+)
+def test_check_no_subdirectories(
+    tmp_path: Path, dpaths_to_create, fpaths_to_create, valid
+):
+    dpath_bundle = tmp_path / "bundle_dir"
+    dpath_bundle.mkdir()
+
+    for dpath in dpaths_to_create:
+        (dpath_bundle / dpath).mkdir(parents=True, exist_ok=True)
+    for fpath in fpaths_to_create:
+        (dpath_bundle / fpath).touch()
+
+    with (
+        pytest.raises(
+            ValueError, match="Bundle directory should not contain any subdirectories"
+        )
+        if not valid
+        else nullcontext()
+    ):
+        _check_no_subdirectories(dpath_bundle)
+
+
+@pytest.mark.parametrize(
+    "logger,log_level",
+    [
+        (None, logging.DEBUG),
+        (logging.getLogger("test"), logging.DEBUG),
+        (logging.getLogger("test"), logging.INFO),
+    ],
+)
+def test_check_no_subdirectories_logging(
+    tmp_path: Path, logger, log_level, caplog: pytest.LogCaptureFixture
+):
+    caplog.set_level(log_level)
+
+    dpath_bundle = tmp_path / "bundle_dir"
+    dpath_bundle.mkdir()
+    _check_no_subdirectories(dpath_bundle, logger=logger, log_level=log_level)
+
+    if logger is None:
+        assert len(caplog.records) == 0
+    else:
+        assert len(caplog.records) > 0
+        assert all([record.levelno == log_level for record in caplog.records])
+
+
+@pytest.mark.parametrize(
     "logger,log_level",
     [(None, logging.DEBUG), (logging.getLogger("test"), logging.INFO)],
 )
 def test_check_pipeline_bundle(logger, log_level, mocker: pytest_mock.MockFixture):
     dpath_bundle = Path("bundle_dir").resolve()
-    substitution_objs = [dpath_bundle]
     config = BasePipelineConfig(NAME="test_pipeline", VERSION="test_version")
     fpaths = [dpath_bundle / "file1.txt", dpath_bundle / "file2.txt"]
 
@@ -348,18 +380,21 @@ def test_check_pipeline_bundle(logger, log_level, mocker: pytest_mock.MockFixtur
     mocked_check_self_contained = mocker.patch(
         "nipoppy.pipeline_store.validation._check_self_contained"
     )
-
-    check_pipeline_bundle(
-        dpath_bundle, substitution_objs, logger=logger, log_level=log_level
+    mocked_check_no_subdirectories = mocker.patch(
+        "nipoppy.pipeline_store.validation._check_no_subdirectories"
     )
+
+    check_pipeline_bundle(dpath_bundle, logger=logger, log_level=log_level)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
         dpath_bundle / "config.json",
-        substitution_objs,
     )
     mocked_check_pipeline_files.assert_called_once_with(
         config, dpath_bundle, logger=logger, log_level=log_level
     )
     mocked_check_self_contained.assert_called_once_with(
         dpath_bundle, fpaths, logger=logger, log_level=log_level
+    )
+    mocked_check_no_subdirectories.assert_called_once_with(
+        dpath_bundle, logger=logger, log_level=log_level
     )
