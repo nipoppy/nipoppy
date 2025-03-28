@@ -242,6 +242,29 @@
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
                     "GENERATE_PYBIDS_DATABASE": false,
+                    "ANALYSIS_LEVEL": "group"
+                },
+                {
+                    "NAME": "preprocess-tracking",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "participant_session",
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                },
+                {
+                    "NAME": "confound-correction-tracking",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "participant_session",
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                },
+                {
+                    "NAME": "analysis-tracking",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "GENERATE_PYBIDS_DATABASE": false,
                     "ANALYSIS_LEVEL": "participant_session",
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
                 }
