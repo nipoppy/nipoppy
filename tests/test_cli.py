@@ -256,7 +256,7 @@ def test_cli_pipeline_install(tmp_path: Path):
     pass
 
     # Expects missing path, since init command is not run.
-    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
 def test_cli_pipeline_validate(tmp_path: Path):

@@ -380,7 +380,6 @@ def pipeline_install(**params):
 
 
 @pipeline.command("validate")
-@dataset_option
 @click.argument(
     "path",
     required=True,
