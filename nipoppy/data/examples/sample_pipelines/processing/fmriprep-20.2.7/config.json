@@ -1,6 +1,6 @@
 {
-    "NAME": "mriqc",
-    "VERSION": "23.1.0",
+    "NAME": "fmriprep",
+    "VERSION": "20.2.7",
     "CONTAINER_INFO": {
         "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
         "URI": "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
@@ -11,14 +11,16 @@
         },
         "ARGS": [
             "--bind",
+            "[[FREESURFER_LICENSE_FILE]]",
+            "--bind",
             "[[TEMPLATEFLOW_HOME]]"
         ]
     },
     "STEPS": [
         {
-            "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
-            "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
-            "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/proc/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+            "INVOCATION_FILE": "invocation.json",
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "TRACKER_CONFIG_FILE": "tracker_config.json"
         }
     ],
     "PIPELINE_TYPE": "processing"
