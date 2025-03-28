@@ -4,10 +4,10 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PROGRAM_NAME, LogColor, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import load_json
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class PipelineListWorkflow(BaseWorkflow):
+class PipelineListWorkflow(BaseDatasetWorkflow):
     """List pipelines and versions that have been installed into a dataset."""
 
     def __init__(
@@ -23,7 +23,7 @@ class PipelineListWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
         )
 
     def _get_pipeline_info_map(
