@@ -8,10 +8,10 @@ from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class PipelineInstallWorkflow(BaseWorkflow):
+class PipelineInstallWorkflow(BaseDatasetWorkflow):
     """Workflow for pipeline install command."""
 
     def __init__(
@@ -30,7 +30,7 @@ class PipelineInstallWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
         )
         self.dpath_pipeline = dpath_pipeline
         self.overwrite = overwrite
@@ -83,7 +83,6 @@ class PipelineInstallWorkflow(BaseWorkflow):
         pipeline_config = check_pipeline_bundle(
             self.dpath_pipeline,
             logger=self.logger,
-            substitution_objs=[self, self.layout],  # to silence warnings
         )
 
         # generate destination path
