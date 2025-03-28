@@ -212,6 +212,64 @@
                     "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
                 }
             ]
+        },
+        {
+            "NAME": "rabies",
+            "VERSION": "0.5.1",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/rabies_0.5.1.sif",
+                "URI": "docker://ghcr.io/cobralab/rabies:0.5.1"
+            },
+            "CONTAINER_CONFIG": {
+            },
+            "STEPS": [
+                {
+                    "NAME": "preprocess",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
+                },
+                {
+                    "NAME": "confound-correction",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
+                },
+                {
+                    "NAME": "analysis",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "ANALYSIS_LEVEL": "group"
+                },
+                {
+                    "NAME": "preprocess-tracking",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "participant_session",
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                },
+                {
+                    "NAME": "confound-correction-tracking",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "ANALYSIS_LEVEL": "participant_session",
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                },
+                {
+                    "NAME": "analysis-tracking",
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
+                    "GENERATE_PYBIDS_DATABASE": false,
+                    "ANALYSIS_LEVEL": "participant_session",
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                }
+
+            ]
         }
     ],
     "EXTRACTION_PIPELINES": [
