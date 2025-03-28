@@ -60,6 +60,14 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=[],
         description="List of pipeline step configurations",
     )
+    VARIABLES: dict[str, str] = Field(
+        default={},
+        description=(
+            "Required user-defined pipeline variables."
+            " This should be a dictionary with variable names as keys"
+            " and descriptions as values."
+        ),
+    )
     PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
 
     @model_validator(mode="before")
