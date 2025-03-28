@@ -115,18 +115,9 @@ def create_pipeline_config_files(
 ):
     """Create pipeline bundles (inside subdirectories)."""
     for pipeline_config_list, pipeline_type in [
-        (
-            bidsification_pipelines,
-            PipelineTypeEnum.BIDSIFICATION,
-        ),
-        (
-            processing_pipelines,
-            PipelineTypeEnum.PROCESSING,
-        ),
-        (
-            extraction_pipelines,
-            PipelineTypeEnum.EXTRACTION,
-        ),
+        (bidsification_pipelines, PipelineTypeEnum.BIDSIFICATION),
+        (processing_pipelines, PipelineTypeEnum.PROCESSING),
+        (extraction_pipelines, PipelineTypeEnum.EXTRACTION),
     ]:
         if pipeline_config_list is None:
             continue

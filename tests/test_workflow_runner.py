@@ -55,7 +55,7 @@ def runner(tmp_path: Path):
                         "DESCRIPTOR_FILE": fname_descriptor,
                         "INVOCATION_FILE": fname_invocation,
                         "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
-                    }
+                    },
                 ],
             },
         ],
