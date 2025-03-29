@@ -76,25 +76,27 @@ def datetime_fixture(
 
 
 def get_config(
-    dataset_name="my_dataset",
-    session_ids=None,
-    visit_ids=None,
     container_config=None,
+    dicom_dir_map_file=None,
+    dicom_dir_participant_first=None,
+    substitutions=None,
+    custom=None,
 ):
     """Create a valid Config object with all required parameters."""
     # everything empty by default
-    if session_ids is None:
-        session_ids = []
-    if visit_ids is None:
-        visit_ids = []
     if container_config is None:
         container_config = {}
+    if substitutions is None:
+        substitutions = {}
+    if custom is None:
+        custom = {}
 
     return Config(
-        DATASET_NAME=dataset_name,
-        VISIT_IDS=visit_ids,
-        SESSION_IDS=session_ids,
         CONTAINER_CONFIG=container_config,
+        DICOM_DIR_MAP_FILE=dicom_dir_map_file,
+        DICOM_DIR_PARTICIPANT_FIRST=dicom_dir_participant_first,
+        SUBSTITUTIONS=substitutions,
+        CUSTOM=custom,
     )
 
 
@@ -113,18 +115,10 @@ def create_pipeline_config_files(
     extraction_pipelines: Optional[list[dict]] = None,
 ):
     """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
-    for pipeline_config_list, pipeline_type, dname in [
-        (
-            bids_pipelines,
-            PipelineTypeEnum.BIDSIFICATION,
-            DatasetLayout.dname_catalog_bids,
-        ),
-        (proc_pipelines, PipelineTypeEnum.PROCESSING, DatasetLayout.dname_catalog_proc),
-        (
-            extraction_pipelines,
-            PipelineTypeEnum.EXTRACTION,
-            DatasetLayout.dname_catalog_extraction,
-        ),
+    for pipeline_config_list, pipeline_type in [
+        (bids_pipelines, PipelineTypeEnum.BIDSIFICATION),
+        (proc_pipelines, PipelineTypeEnum.PROCESSING),
+        (extraction_pipelines, PipelineTypeEnum.EXTRACTION),
     ]:
         if pipeline_config_list is None:
             continue
@@ -132,7 +126,7 @@ def create_pipeline_config_files(
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
             fpath_config = (
                 dpath_pipelines
-                / dname
+                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
                 / f"{pipeline_config['NAME']}-{pipeline_config['VERSION']}"
                 / DatasetLayout.fname_pipeline_config
             )

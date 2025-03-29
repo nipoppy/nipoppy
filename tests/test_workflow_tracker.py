@@ -44,21 +44,9 @@ def tracker(tmp_path: Path):
     )
     manifest.save_with_backup(tracker.layout.fpath_manifest)
 
-    fpath_tracker_config = tmp_path / "tracker_config.json"
-    tracker_config = {
-        "PATHS": [
-            "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
-            "file.txt",
-        ],
-        "PARTICIPANT_SESSION_DIR": "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]",
-    }
+    tracker.config = get_config()
 
-    fpath_tracker_config.write_text(json.dumps(tracker_config))
-
-    tracker.config = get_config(
-        visit_ids=["1", "2"],
-    )
-
+    fname_tracker_config = "tracker_config.json"
     create_pipeline_config_files(
         tracker.layout.dpath_pipelines,
         proc_pipelines=[
@@ -68,11 +56,22 @@ def tracker(tmp_path: Path):
                 "STEPS": [
                     {
                         "NAME": tracker.pipeline_step,
-                        "TRACKER_CONFIG_FILE": str(fpath_tracker_config),
+                        "TRACKER_CONFIG_FILE": fname_tracker_config,
                     }
                 ],
             },
         ],
+    )
+    tracker_config = {
+        "PATHS": [
+            "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
+            "file.txt",
+        ],
+        "PARTICIPANT_SESSION_DIR": "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]",
+    }
+
+    (tracker.dpath_pipeline_bundle / fname_tracker_config).write_text(
+        json.dumps(tracker_config)
     )
 
     return tracker

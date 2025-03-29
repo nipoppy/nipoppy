@@ -11,10 +11,10 @@ from rich.table import Table
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.bagel import STATUS_SUCCESS
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class StatusWorkflow(BaseWorkflow):
+class StatusWorkflow(BaseDatasetWorkflow):
     """Workflow for status command."""
 
     def __init__(
@@ -31,7 +31,7 @@ class StatusWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
         )
         self.col_pipeline = "pipeline"
 
@@ -42,16 +42,7 @@ class StatusWorkflow(BaseWorkflow):
         2) Doughnut information if available,
         3) Bagel information if available
         """
-        # load global_config to get the dataset name
-        dataset_name = self.config.DATASET_NAME
-        expected_sessions = self.config.SESSION_IDS
-        expected_visits = self.config.VISIT_IDS
-
-        self.logger.info(f"Dataset name: {dataset_name}")
-        self.logger.info(f"\tExpected sessions: {sorted(expected_sessions)}")
-        self.logger.info(f"\tExpected visits: {sorted(expected_visits)}")
-
-        status_df = pd.DataFrame()
+        status_df: pd.DataFrame = pd.DataFrame()
         status_df = self._check_manifest(status_df)
         status_df, doughnut_cols = self._check_doughnut(status_df)
         status_df, bagel_cols = self._check_bagel(status_df)
@@ -80,7 +71,7 @@ class StatusWorkflow(BaseWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        self.logger.info("Manifest status")
+        self.logger.info("Dataset summary (based on the manifest file):")
 
         manifest = self.manifest
 
