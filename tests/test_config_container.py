@@ -40,7 +40,7 @@ def test_container_config(data):
     container_config = ContainerConfig(**data)
     for field in FIELDS_CONTAINER_CONFIG:
         assert hasattr(container_config, field)
-    assert len(container_config.model_fields) == len(FIELDS_CONTAINER_CONFIG)
+    assert len(container_config.model_dump()) == len(FIELDS_CONTAINER_CONFIG)
 
 
 @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ def test_container_info(data):
     container_info = ContainerInfo(**data)
     for field in FIELDS_CONTAINER_INFO:
         assert hasattr(container_info, field)
-    assert len(container_info.model_fields) == len(FIELDS_CONTAINER_INFO)
+    assert len(container_info.model_dump()) == len(FIELDS_CONTAINER_INFO)
 
 
 def test_container_info_no_extra_fields():

@@ -1,0 +1,211 @@
+{
+    "name": "bids-validator",
+    "description": "bids-validator",
+    "tool-version": "2.0.3",
+    "schema-version": "0.5",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] run -ERWN jsr:@bids/validator [DATASET_DIRECTORY] [HELP] [VERSION] [JSON] [SCHEMA] [CONFIG] [MAX_ROWS] [VERBOSE] [IGNORE_WARNINGS] [IGNORE_NIFTI_HEADERS] [DEBUG] [FILENAME_MODE] [BLACKLIST_MODALITIES] [RECURSIVE] [PRUNE] [OUTFILE] [COLOR] [NO_COLOR]",
+    "inputs": [
+        {
+            "id": "dataset_directory",
+            "name": "dataset_directory",
+            "description": "The root folder of the dataset to validate.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[DATASET_DIRECTORY]"
+        },
+        {
+            "id": "help",
+            "name": "help",
+            "description": "Show this help.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[HELP]",
+            "command-line-flag": "--help"
+        },
+        {
+            "id": "version",
+            "name": "version",
+            "description": "Show the version number for this program.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[VERSION]",
+            "command-line-flag": "--version"
+        },
+        {
+            "id": "json",
+            "name": "json",
+            "description": "Output machine readable JSON",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[JSON]",
+            "command-line-flag": "--json"
+        },
+        {
+            "id": "schema",
+            "name": "schema",
+            "description": "Specify a schema version to use for validation (URL or tag)",
+            "optional": true,
+            "type": "String",
+            "value-key": "[SCHEMA]",
+            "command-line-flag": "--schema"
+        },
+        {
+            "id": "config",
+            "name": "config",
+            "description": "Path to a JSON configuration file",
+            "optional": true,
+            "type": "File",
+            "value-key": "[CONFIG]",
+            "command-line-flag": "--config"
+        },
+        {
+            "id": "max_rows",
+            "name": "max_rows",
+            "description": "Maximum number of rows to validate in TSVs. Use 0 to validate headers only. Use -1 to validate all.",
+            "optional": true,
+            "default-value": 1000,
+            "type": "Number",
+            "value-key": "[MAX_ROWS]",
+            "command-line-flag": "--max-rows"
+        },
+        {
+            "id": "verbose",
+            "name": "verbose",
+            "description": "Log more extensive information about issues.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[VERBOSE]",
+            "command-line-flag": "--verbose"
+        },
+        {
+            "id": "ignore_warnings",
+            "name": "ignore_warnings",
+            "description": "Disregard non-critical issues.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[IGNORE_WARNINGS]",
+            "command-line-flag": "--ignoreWarnings"
+        },
+        {
+            "id": "ignore_nifti_headers",
+            "name": "ignore_nifti_headers",
+            "description": "Disregard NIfTI header content during validation.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[IGNORE_NIFTI_HEADERS]",
+            "command-line-flag": "--ignoreNiftiHeaders"
+        },
+        {
+            "id": "debug",
+            "name": "debug",
+            "description": "Enable debug output.",
+            "optional": true,
+            "default-value": "ERROR",
+            "value-choices": [
+                "NOTSET",
+                "DEBUG",
+                "INFO",
+                "WARN",
+                "ERROR",
+                "CRITICAL"
+            ],
+            "type": "String",
+            "value-key": "[DEBUG]",
+            "command-line-flag": "--debug"
+        },
+        {
+            "id": "filename_mode",
+            "name": "filename_mode",
+            "description": "Enable filename checks for newline separated filenames read from stdin.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[FILENAME_MODE]",
+            "command-line-flag": "--filenameMode"
+        },
+        {
+            "id": "blacklist_modalities",
+            "name": "blacklist_modalities",
+            "description": "Array of modalities to error on if detected.",
+            "optional": true,
+            "list": true,
+            "value-choices": [
+                "mri",
+                "eeg",
+                "ieeg",
+                "meg",
+                "beh",
+                "pet",
+                "micr",
+                "motion",
+                "nirs",
+                "mrs"
+            ],
+            "type": "String",
+            "value-key": "[BLACKLIST_MODALITIES]",
+            "command-line-flag": "--blacklistModalities"
+        },
+        {
+            "id": "recursive",
+            "name": "recursive",
+            "description": "Validate datasets found in derivatives directories in addition to root dataset.",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[RECURSIVE]",
+            "command-line-flag": "--recursive"
+        },
+        {
+            "id": "prune",
+            "name": "prune",
+            "description": "Prune derivatives and sourcedata directories on load (disables -r and will underestimate dataset size).",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[PRUNE]",
+            "command-line-flag": "--prune"
+        },
+        {
+            "id": "outfile",
+            "name": "outfile",
+            "description": "File to write validation results to.",
+            "optional": true,
+            "type": "File",
+            "value-key": "[OUTFILE]",
+            "command-line-flag": "--outfile"
+        },
+        {
+            "id": "color",
+            "name": "color",
+            "description": "Enable color output (defaults to detected support)",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[COLOR]",
+            "command-line-flag": "--color"
+        },
+        {
+            "id": "no_color",
+            "name": "no_color",
+            "description": "Disable color output (defaults to detected support)",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[NO_COLOR]",
+            "command-line-flag": "--no-color"
+        }
+    ],
+    "groups": [
+        {
+            "id": "color_group",
+            "name": "color_group",
+            "description": "This is a group for the mutually exclusive color options.",
+            "members": [
+                "color",
+                "no_color"
+            ],
+            "mutually-exclusive": true
+        }
+    ],
+    "tags": {},
+    "suggested-resources": {
+        "cpu-cores": 1,
+        "ram": 1,
+        "walltime-estimate": 60
+    }
+}

@@ -71,7 +71,7 @@ def test_fields(model_class, extra_data, fields, valid_data):
     for field in fields:
         assert hasattr(config, field)
 
-    assert len(set(config.model_fields.keys())) == len(fields)
+    assert len(set(config.model_dump())) == len(fields)
 
 
 @pytest.mark.parametrize("model_class", [BasePipelineConfig, PipelineInfo])

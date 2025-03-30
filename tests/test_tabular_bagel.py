@@ -34,7 +34,7 @@ from .conftest import DPATH_TEST_DATA
 )
 def test_model(data):
     bagel = BagelModel(**data)
-    assert set(bagel.model_fields.keys()) == {
+    assert set(bagel.model_dump().keys()) == {
         Bagel.col_participant_id,
         Bagel.col_bids_participant_id,
         Bagel.col_session_id,
