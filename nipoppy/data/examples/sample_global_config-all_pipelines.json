@@ -340,7 +340,7 @@
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
                     "ANALYSIS_LEVEL": "participant_session",
                     "GENERATE_PYBIDS_DATABASE": false,
-                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/[[STEP_NAME]]_tracker_config.json"
                 },
                 {
                     "NAME": "confound-correction-tracking",
@@ -348,7 +348,7 @@
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
                     "ANALYSIS_LEVEL": "participant_session",
                     "GENERATE_PYBIDS_DATABASE": false,
-                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/[[STEP_NAME]]_tracker_config.json"
                 },
                 {
                     "NAME": "analysis-tracking",
@@ -356,7 +356,7 @@
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-[[STEP_NAME]].json",
                     "GENERATE_PYBIDS_DATABASE": false,
                     "ANALYSIS_LEVEL": "participant_session",
-                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/tracker_config.json"
+                    "TRACKER_CONFIG_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/[[STEP_NAME]]_tracker_config.json"
                 }
 
             ]
