@@ -370,7 +370,7 @@ def test_tracker_paths(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("fs_stats", "0.2.0"),
+        ("fs_stats", "0.2.1"),
         ("static_FC", "0.1.0"),
     ],
 )

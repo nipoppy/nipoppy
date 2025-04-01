@@ -37,7 +37,7 @@ from .conftest import DPATH_TEST_DATA
 )
 def test_model(data):
     processing_status_record = ProcessingStatusModel(**data)
-    assert set(processing_status_record.model_fields.keys()) == {
+    assert set(processing_status_record.model_dump().keys()) == {
         ProcessingStatusTable.col_participant_id,
         ProcessingStatusTable.col_bids_participant_id,
         ProcessingStatusTable.col_session_id,
