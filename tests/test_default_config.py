@@ -196,6 +196,7 @@ def test_boutiques_descriptors(fpath_descriptor):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
+        ("bids-validator", "2.0.3"),
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
         ("fmriprep", "24.1.1"),
@@ -234,6 +235,8 @@ def test_pipeline_runner(
         ("heudiconv", "0.12.2", "convert"),
         ("dcm2bids", "3.1.0", "prepare"),
         ("dcm2bids", "3.1.0", "convert"),
+        ("dcm2bids", "3.2.0", "prepare"),
+        ("dcm2bids", "3.2.0", "convert"),
         ("bidscoin", "4.3.2", "prepare"),
         ("bidscoin", "4.3.2", "edit"),
         ("bidscoin", "4.3.2", "convert"),
@@ -357,7 +360,7 @@ def test_tracker_paths(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("fs_stats", "0.2.0"),
+        ("fs_stats", "0.2.1"),
         ("static_FC", "0.1.0"),
     ],
 )

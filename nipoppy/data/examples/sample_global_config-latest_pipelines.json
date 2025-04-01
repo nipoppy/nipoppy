@@ -9,7 +9,7 @@
         "<OTHER_SESSION_LABEL>"
     ],
     "SUBSTITUTIONS": {
-        "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_CONTAINER_STORE_DIRECTORY>",
+        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HEUDICONV_HEURISTIC_FILE]]": "<PATH_TO_HEURISTIC_FILE>",
         "[[DCM2BIDS_CONFIG_FILE]]": "<PATH_TO_CONFIG_FILE>",
         "[[FREESURFER_LICENSE_FILE]]": "<PATH_TO_FREESURFER_LICENSE_FILE>",
@@ -61,7 +61,7 @@
         },
         {
             "NAME": "dcm2bids",
-            "VERSION": "3.1.0",
+            "VERSION": "3.2.0",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://unfmontreal/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
@@ -77,7 +77,8 @@
                 {
                     "NAME": "prepare",
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
-                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-dcm2bids_helper.json"
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-dcm2bids_helper.json",
+                    "ANALYSIS_LEVEL": "group"
                 },
                 {
                     "NAME": "convert",
@@ -127,6 +128,35 @@
         }
     ],
     "PROC_PIPELINES": [
+        {
+            "NAME": "bids-validator",
+            "VERSION": "2.0.3",
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/deno_2.2.3.sif",
+                "URI": "docker://denoland/deno:2.2.3"
+            },
+            "CONTAINER_CONFIG": {
+                "ARGS": [
+                    "--bind",
+                    "[[NIPOPPY_DPATH_SCRATCH]]/deno:/deno-dir"
+                ]
+            },
+            "HPC_CONFIG": {
+                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+                "TIME": "1:00:00",
+                "CORES": "1",
+                "MEMORY": "4G",
+                "ARRAY_CONCURRENCY_LIMIT": ""
+            },
+            "STEPS": [
+                {
+                    "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
+                    "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor.json",
+                    "ANALYSIS_LEVEL": "group",
+                    "GENERATE_PYBIDS_DATABASE": false
+                }
+            ]
+        },
         {
             "NAME": "fmriprep",
             "VERSION": "24.1.1",
@@ -238,7 +268,7 @@
     "EXTRACTION_PIPELINES": [
         {
             "NAME": "fs_stats",
-            "VERSION": "0.2.0",
+            "VERSION": "0.2.1",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/freesurfer_7.3.2.sif",
                 "URI": "docker://freesurfer/freesurfer:7.3.2"

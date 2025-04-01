@@ -60,14 +60,20 @@ def session_id_to_bids_session_id(session_id: Optional[str]) -> str:
 
 
 def check_participant_id(participant_id: Optional[str], raise_error=False):
-    """Make sure a participant ID does not have the BIDS prefix.
+    """Make sure a participant ID is valid.
+
+    Specifically:
+    - Check that it does not have the `sub-` prefix, stripping it if it does
+    - Check that it only has alphanumeric characters
 
     Parameters
     ----------
     participant_id : Optional[str]
         The participant ID to check. If None, returns None.
-    strict : bool, optional
-        Whether to raise an error if the participant ID has the prefix, by default False
+    raise_error : bool, optional
+        Whether to raise an error if the participant ID has the `sub-` prefix, by
+        default False. Note: an error is always raised if the participant ID contains
+        non-alphanumeric characters after being stripped of the `sub-` prefix.
 
     Returns
     -------
@@ -84,24 +90,36 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
     if participant_id.startswith(BIDS_SUBJECT_PREFIX):
         if raise_error:
             raise ValueError(
-                f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
+                f'Invalid participant ID: should not start with "{BIDS_SUBJECT_PREFIX}"'
                 f", got {participant_id}"
             )
         else:
-            return participant_id.removeprefix(BIDS_SUBJECT_PREFIX)
+            participant_id = participant_id.removeprefix(BIDS_SUBJECT_PREFIX)
+
+    if not participant_id.isalnum():
+        raise ValueError(
+            f"Invalid participant ID: must only contain alphanumeric characters, "
+            f"got {participant_id}"
+        )
 
     return participant_id
 
 
 def check_session_id(session_id: Optional[str], raise_error=False):
-    """Make sure a session ID does not have the BIDS prefix.
+    """Make sure a session ID is valid.
+
+    Specifically:
+    - Check that it does not have the `ses-` prefix, stripping it if it does
+    - Check that it only has alphanumeric characters
 
     Parameters
     ----------
-    session_id : Optional[str]
-        The session ID to check. If None, returns None.
-    strict : bool, optional
-        Whether to raise an error if the session ID has the prefix, by default False
+    participant_id : Optional[str]
+        The participant ID to check. If None, returns None.
+    raise_error : bool, optional
+        Whether to raise an error if the session ID has the `ses-` prefix, by default
+        False. Note: an error is always raised if the session ID contains
+        non-alphanumeric characters even being stripped of the `ses-` prefix.
 
     Returns
     -------
@@ -118,11 +136,18 @@ def check_session_id(session_id: Optional[str], raise_error=False):
     if session_id.startswith(BIDS_SESSION_PREFIX):
         if raise_error:
             raise ValueError(
-                f'Session ID should not start with "{BIDS_SESSION_PREFIX}"'
+                f'Invalid session ID: should not start with "{BIDS_SESSION_PREFIX}"'
                 f", got {session_id}"
             )
         else:
-            return session_id.removeprefix(BIDS_SESSION_PREFIX)
+            session_id = session_id.removeprefix(BIDS_SESSION_PREFIX)
+
+    if not session_id.isalnum():
+        raise ValueError(
+            f"Invalid session ID: must only contain alphanumeric characters, "
+            f"got {session_id}"
+        )
+
     return session_id
 
 

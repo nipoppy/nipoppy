@@ -31,6 +31,7 @@ release = __version__
 
 extensions = [
     "autoapi.extension",
+    "hoverxref.extension",
     "myst_parser",
     "sphinx_click.ext",
     "sphinx_copybutton",
@@ -40,6 +41,7 @@ extensions = [
     "sphinx.ext.autodoc.typehints",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_design",
 ]
 
 templates_path = ["_templates"]
@@ -183,7 +185,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "**/cli.py"]
+autoapi_ignore = ["*_version*", "**/cli.py", "**/nipoppy/data"]
 autoapi_options = [
     "members",
     "undoc-members",
@@ -232,6 +234,11 @@ jsonschema_options = {
     "auto_reference": True,
     "auto_target": True,
 }
+
+# -- Hoverxref configuration ---------------------------------------------------
+hoverxref_roles = [
+    "term",
+]
 
 # # TODO
 # def linkcode_resolve(domain, info):
