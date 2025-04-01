@@ -51,13 +51,13 @@
         "path": "code/global_config.json"
     },
     "fpath_curation_status": {
-        "path": "scratch/raw_dicom/doughnut.tsv"
+        "path": "scratch/raw_dicom/curation_status.tsv"
     },
     "fpath_manifest": {
         "path": "tabular/manifest.tsv"
     },
     "fpath_processing_status": {
-        "path": "derivatives/bagel.tsv"
+        "path": "derivatives/processing_status.tsv"
     },
     "fpath_demographics": {
         "path": "tabular/demographics.tsv"
