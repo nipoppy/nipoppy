@@ -80,7 +80,7 @@ class InitWorkflow(BaseWorkflow):
                 )
 
         # create directories
-        for dpath in self.layout.dpaths:
+        for dpath in self.layout.get_paths(directory=True, include_optional=True):
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 if self.mode == "copy":
