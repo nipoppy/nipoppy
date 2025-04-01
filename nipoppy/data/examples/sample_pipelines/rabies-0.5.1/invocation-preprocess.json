@@ -4,5 +4,5 @@
     "anat_inho_cor": "method=SyN,otsu_thresh=2,multiotsu=false",
     "force": true,
     "bids_dir": "[[NIPOPPY_DPATH_BIDS]]",
-    "output_dir": "[[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
+    "output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
 }
