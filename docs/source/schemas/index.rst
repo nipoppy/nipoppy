@@ -46,30 +46,30 @@ Here is the schema for the manifest file:
 .. jsonschema:: manifest.json
     :lift_title: False
 
-.. _doughnut-schema:
+.. _track-curation-schema:
 
-Doughnut file
+Curation status file
 -------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the doughnut file:
+Here is the schema for the curation status file:
 
-.. jsonschema:: doughnut.json
+.. jsonschema:: curation_status.json
     :lift_title: False
 
-.. _imaging-bagel-schema:
+.. _processing-status-schema:
 
-Imaging bagel file
+Processing status file
 ------------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the imaging bagel file:
+Here is the schema for the processing status file:
 
-.. jsonschema:: bagel.json
+.. jsonschema:: processing_status.json
     :lift_title: False
 
 .. _dicom-dir-map-schema:

@@ -20,9 +20,9 @@ MODEL_FILENAME_MAP = {
     Config: "config.json",
     LayoutConfig: "layout.json",
     TrackerConfig: "tracker.json",
-    ProcessingStatusModel: "bagel.json",
+    ProcessingStatusModel: "processing_status.json",
     DicomDirMapModel: "dicom_dir_map.json",
-    CurationStatusModel: "doughnut.json",
+    CurationStatusModel: "curation_status.json",
     ManifestModel: "manifest.json",
 }
 

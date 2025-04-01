@@ -41,12 +41,12 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 
 ### Workflow
 
-1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_post_reorg}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
-    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.rst)
+1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_post_reorg}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`curation status file`
+    - An existing, out-of-date curation status file can be updated with [`nipoppy track-curation --regenerate`](../cli_reference/curation_status.rst)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
-    3. The doughnut file is updated to indicate that this participant-session pair now has BIDS data
+    3. The curation status file is updated to indicate that this participant-session pair now has BIDS data
 
 ## Configuring the BIDS conversion
 
