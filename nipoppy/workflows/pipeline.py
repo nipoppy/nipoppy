@@ -184,10 +184,19 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
 
         elif not fpath_container.exists():
-            raise FileNotFoundError(
+            error_message = (
                 f"No container image file found at {fpath_container} for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+            if self.pipeline_config.CONTAINER_INFO.URI is not None:
+                error_message += (
+                    ". This file can be downloaded to the appropriate path by running "
+                    "the following command:"
+                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
+                    f"{self.pipeline_config.CONTAINER_INFO.FILE} "
+                    f"{self.pipeline_config.CONTAINER_INFO.URI}"
+                )
+            raise FileNotFoundError(error_message)
         return fpath_container
 
     @cached_property

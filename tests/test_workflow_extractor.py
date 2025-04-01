@@ -262,8 +262,8 @@ def test_pipeline_config(extractor: ExtractionRunner, config: Config):
                 "pipeline_name": "other_pipeline",
                 "pipeline_version": "1.0.0",
                 "pipeline_step": "step1",
-                "participant_id": "should_not_be_used",  # should be skipped
-                "session_id": "should_not_be_used",  # should be skipped
+                "participant_id": "ShouldNotBeUsed",  # should be skipped
+                "session_id": "ShouldNotBeUsed",  # should be skipped
                 "simulate": True,  # should be skipped
                 "keep_workdir": True,
                 "hpc": "slurm",  # should be skipped

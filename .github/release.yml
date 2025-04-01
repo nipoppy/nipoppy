@@ -3,6 +3,7 @@ changelog:
     authors:
       - pre-commit-ci
       - dependabot[bot]
+      - nipoppy-bot
   categories:
     - title: Breaking Changes
       labels:

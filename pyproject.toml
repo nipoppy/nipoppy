@@ -27,6 +27,7 @@ dependencies = [
     "rich",
     "rich-click",
     "typing-extensions",
+    "requests",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
@@ -36,7 +37,6 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -46,9 +46,12 @@ doc = [
     "sphinx-click",
     "sphinx-copybutton",
     "sphinx-github-changelog",
+    "sphinx-hoverxref",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
+    "sphinx_design",
 ]
+dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 test = [
     "fids>=0.1.0",
     "packaging",
