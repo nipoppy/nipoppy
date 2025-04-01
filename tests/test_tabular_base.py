@@ -103,7 +103,9 @@ def test_load_error_csv(tmp_path: Path):
 def test_validate(data, is_valid):
     tabular = TabularWithModel(data)
     with (
-        pytest.raises(ValueError, match="Error when validating")
+        pytest.raises(
+            ValueError, match="Error when validating the tabular with model file"
+        )
         if not is_valid
         else nullcontext()
     ):

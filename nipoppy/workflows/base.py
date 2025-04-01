@@ -18,11 +18,14 @@ from nipoppy.config.main import Config
 from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
-from nipoppy.tabular.bagel import Bagel
 from nipoppy.tabular.base import BaseTabular
+from nipoppy.tabular.curation_status import (
+    CurationStatusTable,
+    generate_curation_status_table,
+)
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import add_path_timestamp, process_template_str
 
 LOG_SUFFIX = ".log"
@@ -352,22 +355,22 @@ class BaseWorkflow(Base, ABC):
             raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
 
     @cached_property
-    def doughnut(self) -> Doughnut:
+    def curation_status_table(self) -> CurationStatusTable:
         """
-        Load the doughnut if it exists.
+        Load the curation status file if it exists.
 
         Otherwise, generate a new one.
         """
         logger = self.logger
-        fpath_doughnut = Path(self.layout.fpath_doughnut)
+        fpath_table = Path(self.layout.fpath_curation_status)
         try:
-            return Doughnut.load(fpath_doughnut)
+            return CurationStatusTable.load(fpath_table)
         except FileNotFoundError:
             self.logger.warning(
-                f"Doughnut file not found: {fpath_doughnut}"
+                f"Curation status file not found: {fpath_table}"
                 ". Generating a new one on-the-fly"
             )
-            doughnut = generate_doughnut(
+            table = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.layout.dpath_pre_reorg,
@@ -378,28 +381,30 @@ class BaseWorkflow(Base, ABC):
             )
 
             if not self.dry_run:
-                fpath_doughnut_backup = doughnut.save_with_backup(fpath_doughnut)
+                fpath_table_backup = table.save_with_backup(fpath_table)
                 logger.info(
-                    f"Saved doughnut to {fpath_doughnut} (-> {fpath_doughnut_backup})"
+                    "Saved curation status table to "
+                    f"{fpath_table} (-> {fpath_table_backup})"
                 )
             else:
                 logger.info(
-                    f"Not writing doughnut to {fpath_doughnut} since this is a dry run"
+                    "Not writing curation status table to "
+                    f"{fpath_table} since this is a dry run"
                 )
 
-            return doughnut
+            return table
 
     @cached_property
-    def bagel(self) -> Bagel:
+    def processing_status_table(self) -> ProcessingStatusTable:
         """
-        Load the bagel it it exists.
+        Load the processing status file it it exists.
 
-        Otherwise, return an empty bagel.
+        Otherwise, return an empty processing status table.
         """
         try:
-            return Bagel.load(self.layout.fpath_imaging_bagel)
+            return ProcessingStatusTable.load(self.layout.fpath_processing_status)
         except FileNotFoundError:
-            return Bagel()
+            return ProcessingStatusTable()
 
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:

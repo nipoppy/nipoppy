@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nipoppy.tabular.bagel import Bagel
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.dataset_status import StatusWorkflow
 
 from .conftest import get_config
@@ -71,12 +71,12 @@ def make_manifest(
     return _df, session_participant_counts_df
 
 
-def make_doughnut(
+def make_curation_status_table(
     n_participants=10,
     session_ids=("BL", "M12"),
     n_success_percents=(80, 60, 40),
     randomize_counts=False,
-) -> Doughnut:
+) -> CurationStatusTable:
     # reuse manifest generation
     manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
@@ -86,18 +86,25 @@ def make_doughnut(
 
     # add pre_reorg, post_reorg, and bids status columns
     # always keep the first session as complete
-    doughnut = manifest.copy()
-    doughnut[
-        [Doughnut.col_in_pre_reorg, Doughnut.col_in_post_reorg, Doughnut.col_in_bids]
+    table = manifest.copy()
+    table[
+        [
+            CurationStatusTable.col_in_pre_reorg,
+            CurationStatusTable.col_in_post_reorg,
+            CurationStatusTable.col_in_bids,
+        ]
     ] = False  # sets dtype to bool and avoids pandas warnings
-    doughnut.loc[
-        doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_pre_reorg
+    table.loc[
+        table[Manifest.col_session_id] == session_ids[0],
+        CurationStatusTable.col_in_pre_reorg,
     ] = True
-    doughnut.loc[
-        doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_post_reorg
+    table.loc[
+        table[Manifest.col_session_id] == session_ids[0],
+        CurationStatusTable.col_in_post_reorg,
     ] = True
-    doughnut.loc[
-        doughnut[Manifest.col_session_id] == session_ids[0], Doughnut.col_in_bids
+    table.loc[
+        table[Manifest.col_session_id] == session_ids[0],
+        CurationStatusTable.col_in_bids,
     ] = True
 
     # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
@@ -116,18 +123,21 @@ def make_doughnut(
             (n_success_pre_reorg, n_success_post_reorg, n_success_bids)
         )
 
-        doughnut.loc[
-            doughnut[Manifest.col_session_id] == session_id, Doughnut.col_in_pre_reorg
+        table.loc[
+            table[Manifest.col_session_id] == session_id,
+            CurationStatusTable.col_in_pre_reorg,
         ] = [True] * n_success_pre_reorg + [False] * (
             n_session_participants - n_success_pre_reorg
         )
-        doughnut.loc[
-            doughnut[Manifest.col_session_id] == session_id, Doughnut.col_in_post_reorg
+        table.loc[
+            table[Manifest.col_session_id] == session_id,
+            CurationStatusTable.col_in_post_reorg,
         ] = [True] * n_success_post_reorg + [False] * (
             n_session_participants - n_success_post_reorg
         )
-        doughnut.loc[
-            doughnut[Manifest.col_session_id] == session_id, Doughnut.col_in_bids
+        table.loc[
+            table[Manifest.col_session_id] == session_id,
+            CurationStatusTable.col_in_bids,
         ] = [True] * n_success_bids + [False] * (
             n_session_participants - n_success_bids
         )
@@ -137,10 +147,10 @@ def make_doughnut(
         columns=["session_id", "participant_count"],
     )
 
-    return Doughnut(doughnut), session_participant_counts_df
+    return CurationStatusTable(table), session_participant_counts_df
 
 
-def make_bagel(
+def make_processing_status_table(
     n_participants=10,
     session_ids=("BL", "M12"),
     n_success_percent=50,
@@ -150,7 +160,7 @@ def make_bagel(
         ("fmriprep", "1.0.0", "default"),
     ),
     randomize_counts=False,
-) -> Bagel:
+) -> ProcessingStatusTable:
 
     manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
@@ -164,14 +174,14 @@ def make_bagel(
         _df = manifest.copy()
         _df[
             [
-                Bagel.col_pipeline_name,
-                Bagel.col_pipeline_version,
-                Bagel.col_pipeline_step,
+                ProcessingStatusTable.col_pipeline_name,
+                ProcessingStatusTable.col_pipeline_version,
+                ProcessingStatusTable.col_pipeline_step,
             ]
         ] = config
         _df_list.append(_df)
 
-    bagel = Bagel(pd.concat(_df_list))
+    table = ProcessingStatusTable(pd.concat(_df_list))
 
     # repeated participants for each pipeline config
     participant_counts = [n_configs * len(participant_ids)]
@@ -180,11 +190,12 @@ def make_bagel(
     # always keep the first session as complete for all pipelines
     # except when testing 0% success
     if n_success_percent == 0:
-        bagel[Bagel.col_status] = "FAIL"
+        table[ProcessingStatusTable.col_status] = "FAIL"
     else:
-        bagel[[Bagel.col_status]] = "INCOMPLETE"
-        bagel.loc[
-            bagel[Manifest.col_session_id] == session_ids[0], Bagel.col_status
+        table[[ProcessingStatusTable.col_status]] = "INCOMPLETE"
+        table.loc[
+            table[Manifest.col_session_id] == session_ids[0],
+            ProcessingStatusTable.col_status,
         ] = "SUCCESS"
 
         # add the rest of the sessions
@@ -198,8 +209,9 @@ def make_bagel(
             n_success_pipeline = int(n_session_participants * n_success_percent / 100)
             participant_counts.append(n_success_pipeline)
 
-            bagel.loc[
-                bagel[Manifest.col_session_id] == session_id, Bagel.col_status
+            table.loc[
+                table[Manifest.col_session_id] == session_id,
+                ProcessingStatusTable.col_status,
             ] = ["SUCCESS"] * n_success_pipeline + ["INCOMPLETE"] * (
                 n_session_participants - n_success_pipeline
             )
@@ -211,7 +223,7 @@ def make_bagel(
         columns=["session_id", "participant_count"],
     )
 
-    return bagel, session_participant_counts_df
+    return table, session_participant_counts_df
 
 
 @pytest.mark.parametrize(
@@ -251,7 +263,7 @@ def test_manifest(
         (100, ["BL", "M06", "M12", "M24"], (100, 80, 0), True),
     ],
 )
-def test_doughnut(
+def test_check_curation_status_table(
     dpath_root: Path,
     n_participants: int,
     session_ids: list,
@@ -260,30 +272,32 @@ def test_doughnut(
 ):
 
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.doughnut, session_participant_counts_df = make_doughnut(
-        n_participants=n_participants,
-        session_ids=session_ids,
-        n_success_percents=n_success_percents,
-        randomize_counts=randomize_counts,
+    workflow.curation_status_table, session_participant_counts_df = (
+        make_curation_status_table(
+            n_participants=n_participants,
+            session_ids=session_ids,
+            n_success_percents=n_success_percents,
+            randomize_counts=randomize_counts,
+        )
     )
 
     status_df = pd.DataFrame()
-    status_df, _ = workflow._check_doughnut(status_df)
+    status_df, _ = workflow._check_curation_status_table(status_df)
 
     status_df = pd.merge(
         status_df, session_participant_counts_df, on="session_id", how="left"
     )
-    status_df["doughnut_counts"] = list(
+    status_df["curation_counts"] = list(
         zip(
-            status_df[Doughnut.col_in_pre_reorg],
-            status_df[Doughnut.col_in_post_reorg],
-            status_df[Doughnut.col_in_bids],
+            status_df[CurationStatusTable.col_in_pre_reorg],
+            status_df[CurationStatusTable.col_in_post_reorg],
+            status_df[CurationStatusTable.col_in_bids],
         )
     )
 
     # check manifest status
     assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
-    assert status_df["doughnut_counts"].equals(status_df["participant_count"])
+    assert status_df["curation_counts"].equals(status_df["participant_count"])
 
 
 @pytest.mark.parametrize(
@@ -324,7 +338,7 @@ def test_doughnut(
         ),
     ],
 )
-def test_bagel(
+def test_check_processing_status_table(
     dpath_root: Path,
     n_participants: int,
     session_ids: list,
@@ -334,16 +348,18 @@ def test_bagel(
 ):
 
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.bagel, session_participant_counts_df = make_bagel(
-        n_participants=n_participants,
-        session_ids=session_ids,
-        n_success_percent=n_success_percent,
-        pipeline_configs=pipeline_configs,
-        randomize_counts=randomize_counts,
+    workflow.processing_status_table, session_participant_counts_df = (
+        make_processing_status_table(
+            n_participants=n_participants,
+            session_ids=session_ids,
+            n_success_percent=n_success_percent,
+            pipeline_configs=pipeline_configs,
+            randomize_counts=randomize_counts,
+        )
     )
 
     status_df = pd.DataFrame()
-    status_df, bagel_cols = workflow._check_bagel(status_df)
+    status_df, _ = workflow._check_processing_status_table(status_df)
 
     if n_success_percent == 0:
         assert status_df.empty
@@ -353,24 +369,29 @@ def test_bagel(
             status_df, session_participant_counts_df, on="session_id", how="left"
         )
 
-        # Sum up the bagel counts for all pipeline configs
-        status_df["bagel_counts"] = 0
+        # Sum up the counts for all pipeline configs
+        status_df["processing_status_counts"] = 0
         for config in pipeline_configs:
             pipeline_status_col = f"{config[0]}\n{config[1]}\n{config[2]}"
-            status_df["bagel_counts"] += status_df[pipeline_status_col]
+            status_df["processing_status_counts"] += status_df[pipeline_status_col]
 
         # check manifest status
         assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
-        assert status_df["bagel_counts"].equals(status_df["participant_count"])
+        assert status_df["processing_status_counts"].equals(
+            status_df["participant_count"]
+        )
 
 
-@pytest.mark.parametrize("bagel", [pd.DataFrame(), make_bagel()[0]])
-def test_run(dpath_root: Path, bagel: pd.DataFrame):
+@pytest.mark.parametrize(
+    "processing_status_table",
+    [ProcessingStatusTable(), make_processing_status_table()[0]],
+)
+def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
-    workflow.doughnut = pd.DataFrame()  # Checks for empty doughnut
-    workflow.bagel = bagel
+    workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
+    workflow.processing_status_table = processing_status_table
     status_df = workflow.run_main()
 
     assert status_df is not None

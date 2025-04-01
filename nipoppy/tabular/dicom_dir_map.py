@@ -46,7 +46,8 @@ class DicomDirMap(BaseTabular):
     """
     A dataset's DICOM directory mapping.
 
-    This mapping is used during DICOM reorganization and doughnut generation.
+    This mapping is used during DICOM reorganization and curation status file
+    generation.
     """
 
     # column names

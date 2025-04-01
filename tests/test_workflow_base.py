@@ -210,6 +210,6 @@ def test_dicom_dir_map_not_found(workflow: BaseWorkflow):
         workflow.dicom_dir_map
 
 
-def test_bagel_empty_if_not_found(workflow: BaseWorkflow):
-    assert not workflow.layout.fpath_imaging_bagel.exists()
-    assert len(workflow.bagel) == 0
+def test_processing_status_empty_if_not_found(workflow: BaseWorkflow):
+    assert not workflow.layout.fpath_processing_status.exists()
+    assert len(workflow.processing_status_table) == 0

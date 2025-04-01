@@ -17,7 +17,7 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
     - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
 - Processed imaging data in {{dpath_pipeline_output}} for the relevant processing pipeline(s) that the extractor depends on
     - See <project:processing.md>
-- An {term}`imaging bagel file` with completion statuses for the processing pipeline(s) associated with the extraction pipeline.
+- An {term}`processing status file` with completion statuses for the processing pipeline(s) associated with the extraction pipeline.
     - This is obtained by running `nipoppy track` (see <project:tracking.md>)
 
 ### Data directories
@@ -34,8 +34,8 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
 
 ### Workflow
 
-1. Nipoppy will check the {term}`imaging bagel file` and loop over all participants/sessions that have completed processing for all the pipelines listed in the `PROC_DEPENDENCIES` field.
-    - See <project:tracking.md> for more information on how to generate the bagel file
+1. Nipoppy will check the {term}`processing status file` and loop over all participants/sessions that have completed processing for all the pipelines listed in the `PROC_DEPENDENCIES` field.
+    - See <project:tracking.md> for more information on how to generate the processing status file
     - Note: an extraction pipeline may be associated with more than one processing pipeline, and the same processing pipeline can have more than one downstream extraction pipeline
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values

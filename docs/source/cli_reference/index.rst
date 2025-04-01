@@ -8,7 +8,7 @@ Command-line interface
 
    init.rst
    status.rst
-   doughnut.rst
+   track_curation.rst
    reorg.rst
    bidsify.rst
    run.rst

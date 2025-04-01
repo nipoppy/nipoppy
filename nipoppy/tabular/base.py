@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Optional, Sequence
@@ -125,6 +126,11 @@ class BaseTabular(pd.DataFrame, ABC):
 
     def validate(self) -> Self:
         """Validate the dataframe based on the model."""
+        # for error messages
+        name_processed = " ".join(
+            re.findall("[A-Z][^A-Z]*", self.__class__.__name__)
+        ).lower()
+
         records = self.to_dict(orient="records")
         try:
             df_validated = self.__class__(
@@ -136,15 +142,14 @@ class BaseTabular(pd.DataFrame, ABC):
             if isinstance(exception, ValidationError):
                 error_message += str(exception.errors())
             raise ValueError(
-                f"Error when validating the {self.__class__.__name__.lower()}"
-                f": {error_message}"
+                f"Error when validating the {name_processed} file: {error_message}"
             )
 
         if self.index_cols is not None:
             df_duplicated = df_validated.find_duplicates()
             if len(df_duplicated) > 0:
                 raise ValueError(
-                    f"Duplicate records found in {self.__class__.__name__.lower()}"
+                    f"Duplicate records found in the {name_processed} file"
                     f". Columns {self.index_cols} must uniquely identify a record"
                     f". Got duplicates:\n{df_duplicated}"
                 )
