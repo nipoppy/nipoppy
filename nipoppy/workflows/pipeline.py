@@ -570,13 +570,18 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             if self.hpc != "sge":
                 raise exception
 
+        fpath_job_script = dpath_work / self.fname_job_script
+        if fpath_job_script.exists():
+            self.logger.info(f"Job script created at {fpath_job_script}")
+        else:
+            self.logger.warning(f"No job script found at {fpath_job_script}.")
+
         # raise error if an error file was created
         if fpath_hpc_error.exists():
             raise RuntimeError(
                 "Error occurred while submitting the HPC job:"
                 f"\n{fpath_hpc_error.read_text()}"
-                "\nThe job script can be found at "
-                f"{dpath_work / self.fname_job_script}."
+                f"\nThe job script can be found at {fpath_job_script}."
                 "\nThis file is auto-generated. To modify it, you will need to "
                 "modify the pipeline's HPC configuration in the config file and/or "
                 f"the template job script in {self.layout.dpath_hpc}."
