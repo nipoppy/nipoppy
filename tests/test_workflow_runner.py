@@ -222,12 +222,17 @@ def test_process_container_config(config: Config, tmp_path: Path):
 
     runner.config = config
 
-    result = runner.process_container_config(participant_id="01", session_id="BL")
+    bind_path = tmp_path / "to_bind"
+    result = runner.process_container_config(
+        participant_id="01", session_id="BL", bind_paths=[bind_path]
+    )
 
     # check that the subcommand 'exec' from the Boutiques container config is used
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
     assert result.startswith("echo exec")
+    assert f"--bind {runner.layout.dpath_root.resolve()} " in result
+    assert result.endswith(f"--bind {bind_path.resolve()}")
 
     # check that the right container config was used
     assert "--flag1" in result
