@@ -1,5 +1,6 @@
 """PipelineRunner workflow."""
 
+import subprocess
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
@@ -149,15 +150,39 @@ class PipelineRunner(BasePipelineWorkflow):
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
         # run as a subprocess so that stdout/error are captured in the log
-        # by default this will raise an exception if the command fails
+        # by default, this will raise an exception if the command fails
         if self.simulate:
-            self.run_command(
-                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
-            )
+            self.logger.info("Simulating pipeline command")
+            try:
+                self.run_command(
+                    ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
+                    quiet=True,
+                )
+            except subprocess.CalledProcessError as exception:
+                raise RuntimeError(
+                    "Pipeline simulation failed"
+                    f" (return code: {exception.returncode})"
+                )
         else:
-            self.run_command(
-                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
-            )
+            self.logger.info("Running pipeline command")
+            try:
+                self.run_command(
+                    [
+                        "bosh",
+                        "exec",
+                        "launch",
+                        "--stream",
+                        descriptor_str,
+                        invocation_str,
+                    ],
+                    quiet=True,
+                )
+            except subprocess.CalledProcessError as exception:
+                raise RuntimeError(
+                    "Pipeline did not complete successfully"
+                    f" (return code: {exception.returncode})"
+                    ". Hint: make sure the shell command above is correct."
+                )
 
         return descriptor_str, invocation_str
 

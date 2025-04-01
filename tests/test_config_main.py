@@ -77,7 +77,7 @@ def test_fields(valid_config_data: dict):
     )
     for field in FIELDS_CONFIG:
         assert hasattr(config, field)
-    assert len(config.model_fields) == len(FIELDS_CONFIG)
+    assert len(config.model_dump()) == len(FIELDS_CONFIG)
 
 
 def test_no_extra_fields(valid_config_data):
