@@ -12,7 +12,7 @@ from nipoppy.tabular.curation_status import (
 from nipoppy.workflows.base import BaseWorkflow
 
 
-class DoughnutWorkflow(BaseWorkflow):
+class TrackCurationWorkflow(BaseWorkflow):
     """Workflow for creating/updating a dataset's curation status file."""
 
     def __init__(

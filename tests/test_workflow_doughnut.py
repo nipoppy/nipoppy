@@ -1,4 +1,4 @@
-"""Tests for the DoughnutWorkflow."""
+"""Tests for the TrackCurationWorkflow."""
 
 from pathlib import Path
 
@@ -7,7 +7,7 @@ import pytest
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import save_json
-from nipoppy.workflows.doughnut import DoughnutWorkflow
+from nipoppy.workflows.track_curation import TrackCurationWorkflow
 
 from .conftest import (
     ATTR_TO_DPATH_MAP,
@@ -86,7 +86,7 @@ def test_run_main(
     save_json(config.model_dump(mode="json"), fpath_config)
 
     # generate the curation status table
-    DoughnutWorkflow(dpath_root=dpath_root, empty=empty).run_main()
+    TrackCurationWorkflow(dpath_root=dpath_root, empty=empty).run_main()
     table1 = CurationStatusTable.load(fpath_table)
 
     assert len(table1) == len(manifest1)
@@ -104,7 +104,7 @@ def test_run_main(
     manifest2.save_with_backup(fpath_manifest)
 
     # update the curation status table
-    DoughnutWorkflow(dpath_root=dpath_root, empty=empty).run()
+    TrackCurationWorkflow(dpath_root=dpath_root, empty=empty).run()
     table2 = CurationStatusTable.load(fpath_table)
 
     assert len(table2) == len(manifest2)
@@ -202,7 +202,9 @@ def test_run_main_regenerate(
     assert table_old.save_with_backup(fpath_table) is not None
 
     # regenerate the table
-    DoughnutWorkflow(dpath_root=dpath_root, empty=empty, regenerate=True).run_main()
+    TrackCurationWorkflow(
+        dpath_root=dpath_root, empty=empty, regenerate=True
+    ).run_main()
     table = CurationStatusTable.load(fpath_table)
 
     assert len(table) == len(manifest)
@@ -217,7 +219,7 @@ def test_run_main_regenerate(
 
 
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    DoughnutWorkflow(dpath_root=tmp_path).run_cleanup()
+    TrackCurationWorkflow(dpath_root=tmp_path).run_cleanup()
     assert (
         "Successfully generated/updated the dataset's curation status file!"
         in caplog.text
