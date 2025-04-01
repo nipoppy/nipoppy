@@ -46,10 +46,10 @@ Here is the schema for the manifest file:
 .. jsonschema:: manifest.json
     :lift_title: False
 
-.. _track-curation-schema:
+.. _curation-status-schema:
 
 Curation status file
--------------
+--------------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
@@ -62,7 +62,7 @@ Here is the schema for the curation status file:
 .. _processing-status-schema:
 
 Processing status file
-------------------
+----------------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_

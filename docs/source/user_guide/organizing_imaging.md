@@ -28,7 +28,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_pre_reorg}} but *do not have* data in {{dpath_post_reorg}} according to the {term}`curation status file`
     - If the curation status file does not exist, it will be automatically generated
     - If there is an existing curation status file but it does not have all the rows in the manifest, new entries will be automatically added to the curation status file
-    - The curation status file can also be completely regenerated with [`nipoppy track-curation --regenerate`](../cli_reference/curation_status.rst)
+    - The curation status file can also be completely regenerated with [`nipoppy track-curation --regenerate`](../cli_reference/track_curation.rst)
 2. For each participant-session pair:
     1. Files from the {{dpath_pre_reorg}} directory will be "copied" (the default is to create symlinks) to the {{dpath_post_reorg}} directory into a flat list
     2. The curation status file is updated to indicate that this participant-session pair now has data in {{dpath_post_reorg}}
