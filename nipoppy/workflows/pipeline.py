@@ -21,6 +21,7 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.main import get_pipeline_config, get_pipeline_version
 from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
@@ -236,6 +237,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
+        self.logger.info(f"Loading tracker config from {fpath_tracker_config}")
         return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
@@ -253,6 +255,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             return []
 
         # load patterns from file
+        self.logger.info(f"Loading PyBIDS ignore patterns from {fpath_pybids_ignore}")
         patterns = load_json(fpath_pybids_ignore)
 
         # validate format
@@ -263,6 +266,17 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
 
         return [re.compile(pattern) for pattern in patterns]
+
+    @cached_property
+    def hpc_config(self) -> HpcConfig:
+        """Load the pipeline step's HPC configuration."""
+        fpath_hpc_config = self.pipeline_step_config.HPC_CONFIG_FILE
+        if fpath_hpc_config is None:
+            data = {}
+        else:
+            self.logger.info(f"Loading HPC config from {fpath_hpc_config}")
+            data = load_json(fpath_hpc_config)
+        return HpcConfig(**data)
 
     @cached_property
     def boutiques_config(self):
@@ -474,13 +488,9 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         This function logs a warning if the HPC config does not exist (or is empty) or
         if it contains variables that are not defined in the template job script.
         """
-        if (hpc_config := self.pipeline_config.HPC_CONFIG) is None:
-            job_args = {}
-        else:
-            job_args = hpc_config.model_dump()
-
+        job_args = self.hpc_config.model_dump()
         if len(job_args) == 0:
-            self.logger.warning("No HPC configuration found in pipeline config")
+            self.logger.warning("HPC configuration is empty")
 
         template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
         template_vars = meta.find_undeclared_variables(template_ast)
