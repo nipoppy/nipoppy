@@ -32,13 +32,6 @@
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://nipy/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
             },
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "1:00:00",
-                "CORES": "1",
-                "MEMORY": "4G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "NAME": "prepare",
@@ -66,13 +59,6 @@
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
                 "URI": "docker://unfmontreal/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
             },
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "1:00:00",
-                "CORES": "1",
-                "MEMORY": "4G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "NAME": "prepare",
@@ -97,13 +83,6 @@
         {
             "NAME": "bidscoin",
             "VERSION": "4.3.2",
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "1:00:00",
-                "CORES": "1",
-                "MEMORY": "4G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "NAME": "prepare",
@@ -141,13 +120,6 @@
                     "[[NIPOPPY_DPATH_SCRATCH]]/deno:/deno-dir"
                 ]
             },
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "1:00:00",
-                "CORES": "1",
-                "MEMORY": "4G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
@@ -174,13 +146,6 @@
                     "--bind",
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
-            },
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "12:00:00",
-                "CORES": "8",
-                "MEMORY": "64G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
             },
             "STEPS": [
                 {
@@ -216,13 +181,6 @@
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
             },
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "00:20:00",
-                "CORES": "4",
-                "MEMORY": "32G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
@@ -248,13 +206,6 @@
                     "--bind",
                     "[[TEMPLATEFLOW_HOME]]"
                 ]
-            },
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "8:00:00",
-                "CORES": "8",
-                "MEMORY": "32G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
             },
             "STEPS": [
                 {
@@ -288,13 +239,6 @@
                     "VERSION": "7.3.2"
                 }
             ],
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "1:00:00",
-                "CORES": "1",
-                "MEMORY": "4G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
@@ -312,13 +256,6 @@
                     "VERSION": "23.1.3"
                 }
             ],
-            "HPC_CONFIG": {
-                "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-                "TIME": "2:00:00",
-                "CORES": "1",
-                "MEMORY": "12G",
-                "ARRAY_CONCURRENCY_LIMIT": ""
-            },
             "STEPS": [
                 {
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation.json",
