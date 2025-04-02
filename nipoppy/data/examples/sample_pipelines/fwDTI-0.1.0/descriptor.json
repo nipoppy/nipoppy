@@ -1,0 +1,63 @@
+{
+    "name": "fwDTI",
+    "description": "fwDTI",
+    "tool-version": "0.1.0",
+    "schema-version": "0.5",
+    "command-line": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]] [PARTICIPANT_LABEL] [SESSION_LABEL] [DWI_FILE] [DWI_BVAL] [DWI_BVEC] [OUTPUT_DIR]",
+    "inputs": [
+        {
+            "id": "subject",
+            "name": "subject",
+            "description": "The subject ID to be processed.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[PARTICIPANT_LABEL]"
+        },
+        {
+            "id": "session",
+            "name": "session",
+            "description": "The session ID to be processed.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[SESSION_LABEL]"
+        },
+        {
+            "id": "dwi_file",
+            "name": "dwi_file",
+            "description": "The preprocessed DWI .nii.gz file used to fit the DTI / fwDTI model.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[DWI_FILE]"
+        },
+        {
+            "id": "dwi_bval",
+            "name": "dwi_bval",
+            "description": "The preprocessed DWI .bval file used to fit the DTI / fwDTI model.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[DWI_BVAL]"
+        },
+        {
+            "id": "dwi_bvec",
+            "name": "dwi_bvec",
+            "description": "The preprocessed DWI .bvec file used to fit the DTI / fwDTI model.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[DWI_BVEC]"
+        },
+        {
+            "id": "output_dir",
+            "name": "output_dir",
+            "description": "The derivatives directory to write results into.",
+            "optional": false,
+            "type": "String",
+            "value-key": "[OUTPUT_DIR]"
+        }
+    ],
+    "tags": {},
+    "suggested-resources": {
+        "cpu-cores": 4,
+        "ram": 16,
+        "walltime-estimate": 120
+    }
+}
