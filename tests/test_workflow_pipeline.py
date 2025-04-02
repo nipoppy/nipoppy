@@ -385,6 +385,19 @@ def test_pybids_ignore_patterns_invalid_format(
         workflow.pybids_ignore_patterns
 
 
+@pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])
+def test_hpc_config(hpc_config_data: dict, workflow: PipelineWorkflow, tmp_path: Path):
+    fpath_hpc_config = tmp_path / "hpc_config.json"
+    fpath_hpc_config.write_text(json.dumps(hpc_config_data))
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config
+    assert isinstance(workflow.hpc_config, HpcConfig)
+
+
+def test_hpc_config_no_file(workflow: PipelineWorkflow):
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = None
+    assert workflow.hpc_config == HpcConfig()
+
+
 @pytest.mark.parametrize("return_str", [True, False])
 def test_process_template_json(return_str, tmp_path: Path):
     workflow = PipelineWorkflow(
