@@ -9,5 +9,6 @@ from .doughnut import DoughnutWorkflow
 from .extractor import ExtractionRunner
 from .pipeline import BasePipelineWorkflow
 from .pipeline_store.install import PipelineInstallWorkflow
+from .pipeline_store.validate import PipelineValidateWorkflow
 from .runner import PipelineRunner
 from .tracker import PipelineTracker
