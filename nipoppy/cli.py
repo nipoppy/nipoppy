@@ -407,7 +407,7 @@ def pipeline_download(**params):
 )
 @click.option(
     "--zenodo-id",
-    "zenodo_id",
+    "record_id",
     type=str,
     required=False,
     help="To update an existing pipeline, provide the Zenodo ID.",
