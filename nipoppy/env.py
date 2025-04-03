@@ -37,7 +37,7 @@ class ReturnCode:
     """Return codes used for the CLI commands."""
 
     SUCCESS = 0
-    UNKOWN_FAILURE = 1
+    UNKNOWN_FAILURE = 1
     PARTIAL_SUCCESS = 64
 
 
