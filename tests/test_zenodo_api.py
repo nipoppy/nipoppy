@@ -12,9 +12,7 @@ from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
 from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
 
 ZENODO_SANDBOX = True
-TEST_PIPELINE = (
-    DPATH_TEST_DATA / "sample_pipelines" / "processing" / "fmriprep-24.1.1"
-)
+TEST_PIPELINE = DPATH_TEST_DATA / "sample_pipelines" / "processing" / "fmriprep-24.1.1"
 
 
 @pytest.fixture(scope="function")

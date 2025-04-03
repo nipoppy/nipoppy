@@ -7,7 +7,6 @@ from typing import Optional
 import httpx
 
 
-
 class InvalidChecksumError(Exception):
     """Checksum mismatch between two files."""
 
@@ -194,7 +193,6 @@ class ZenodoAPI:
         record_id: Optional[str] = None,
     ) -> Optional[str]:
         """Upload a pipeline to Zenodo."""
-
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():

@@ -1,18 +1,13 @@
+from contextlib import nullcontext
 from pathlib import Path
 
-from contextlib import nullcontext
+import pytest
+import pytest_mock
 
 from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow, ZenodoUploadWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
-import logging
-import pytest_mock
 
-from nipoppy.utils import load_json
-
-from .conftest import create_empty_dataset, DPATH_TEST_DATA
-
-import pytest
-
+from .conftest import DPATH_TEST_DATA, create_empty_dataset
 
 TEST_PIPELINE = DPATH_TEST_DATA / "sample_pipelines" / "processing" / "fmriprep-24.1.1"
 DATASET_PATH = "my_dataset"
@@ -109,7 +104,27 @@ def test_download_install_dir_exist(
         workflow.run_main()
 
 
-def test_upload(mocker: pytest_mock.MockerFixture): ...
+def test_upload(mocker: pytest_mock.MockerFixture):
+    upload_pipeline = mocker.patch(
+        "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
+    )
+    get_pipeline_metadata = mocker.patch(
+        "nipoppy.workflows.zenodo.ZenodoUploadWorkflow._get_pipeline_metadata",
+    )
+    validator = mocker.patch(
+        "nipoppy.workflows.pipeline_store.validate.PipelineValidateWorkflow.run_main",
+    )
+
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,
+        zenodo_api=zenodo_api,
+    )
+    workflow.run_main()
+
+    upload_pipeline.assert_called_once()
+    get_pipeline_metadata.assert_called_once()
+    validator.assert_called_once()
 
 
 def test_get_pipeline_metadata(
