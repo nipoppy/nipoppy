@@ -1,5 +1,6 @@
 """Nipoppy CLI."""
 
+import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -29,7 +30,7 @@ def handle_exception(workflow):
     except Exception:
         workflow.logger.exception("Error while running nipoppy")
         if workflow.return_code == ReturnCode.SUCCESS:
-            workflow.return_code = ReturnCode.UNKOWN_FAILURE
+            workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     finally:
         sys.exit(workflow.return_code)
 
@@ -53,7 +54,7 @@ def dataset_option(func):
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path().cwd(),
-        show_default=True,
+        show_default=(False if os.environ.get("READTHEDOCS") else True),
         help=(
             "Path to the root of the dataset (default is current working directory)."
         ),
@@ -70,8 +71,8 @@ def dep_params(**params):
     if _dep_dpath_root:
         logger.warning(
             (
-                "The dataset argument is deprecated."
-                "Use the --dataset option in the future."
+                "Giving the dataset path without --dataset is deprecated and will "
+                "cause an error in a future version."
             ),
         )
     params["dpath_root"] = _dep_dpath_root or params.get("dpath_root")
@@ -338,7 +339,7 @@ def extract(**params):
 @dataset_option
 @global_options
 def status(**params):
-    """Workflow for status command."""
+    """Print a summary of the dataset."""
     from nipoppy.workflows.dataset_status import StatusWorkflow
 
     params = dep_params(**params)
@@ -397,11 +398,12 @@ def pipeline_download(**params):
     # and create the pipeline variable in the config file.
 
 
-@pipeline.command("upload")
-@click.argument(
-    "input_dir",
-    type=str,
-)
+@cli.group(cls=OrderedGroup, context_settings={"help_option_names": ["-h", "--help"]})
+def pipeline():
+    """Pipeline store operations."""
+    pass
+
+
 @click.option(
     "--zenodo-id",
     type=str,
@@ -422,3 +424,18 @@ def pipeline_upload(**params):
         input_dir=Path(params.pop("input_dir")),
         zenodo_id=params.pop("zenodo_id"),
     )
+
+
+@pipeline.command("validate")
+@click.argument(
+    "path",
+    required=True,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+)
+def pipeline_validate(**params):
+    """Validate a pipeline store directory."""
+    from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
+
+    params["dpath_pipeline"] = params.pop("path")
+    with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
+        workflow.run()
