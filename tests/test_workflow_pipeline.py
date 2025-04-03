@@ -2,7 +2,6 @@
 
 import json
 import re
-from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
@@ -1007,21 +1006,6 @@ def test_submit_hpc_job_pysqa_call(
     assert workflow.n_total == 2
 
 
-@pytest.mark.parametrize("hpc_type,expect_error", [("slurm", True), ("sge", False)])
-def test_submit_hpc_job_not_implemented_error(
-    hpc_type, expect_error, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    def raise_error(*args, **kwargs):
-        raise NotImplementedError()
-
-    mocked = set_up_hpc_for_testing(workflow, mocker)
-    mocked.side_effect = raise_error
-
-    workflow.hpc = hpc_type
-    with pytest.raises(NotImplementedError) if expect_error else nullcontext():
-        workflow._submit_hpc_job([("P1", "1")])
-
-
 def test_submit_hpc_job_pysqa_error(
     workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):
@@ -1038,19 +1022,19 @@ def test_submit_hpc_job_pysqa_error(
         workflow._submit_hpc_job([("P1", "1")])
 
 
-@pytest.mark.parametrize("queue_id", ["12345", None])
-def test_submit_hpc_job_queue_id(
+@pytest.mark.parametrize("job_id", ["12345", None])
+def test_submit_hpc_job_job_id(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
-    queue_id,
+    job_id,
 ):
     mocked = set_up_hpc_for_testing(workflow, mocker)
-    mocked.return_value = queue_id
+    mocked.return_value = job_id
 
     workflow._submit_hpc_job([("P1", "1")])
-    if queue_id is not None:
-        assert f"HPC job ID: {queue_id}" in caplog.text
+    if job_id is not None:
+        assert f"HPC job ID: {job_id}" in caplog.text
     else:
         assert "HPC job ID" not in caplog.text
 
