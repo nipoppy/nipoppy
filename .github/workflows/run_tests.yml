@@ -44,6 +44,8 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest --cov=nipoppy --cov-report=xml
+      env:
+        ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

@@ -240,12 +240,11 @@ def test_cli_extract(tmp_path: Path):
     )
 
     # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
 def test_cli_pipeline_download(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
-
     result = runner.invoke(
         cli,
         [
@@ -259,7 +258,7 @@ def test_cli_pipeline_download(tmp_path: Path):
     )
 
     # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKOWN_FAILURE
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
 def test_cli_pipeline_upload():
