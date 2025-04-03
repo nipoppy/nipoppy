@@ -2,6 +2,10 @@
 
 This guide shows how to create a dataset's manifest file, which is a list of participants and visits available in the study.
 
+:::{note}
+If the Nipoppy dataset was initialized from an existing BIDS dataset with `nipoppy init --bids-source`, then a valid and accurate manifest file was automatically generated from the BIDS data. In this case, it is not necessary to manually create or update the manifest file.
+:::
+
 Every Nipoppy dataset should have a manifest file at {{fpath_manifest}}.
 This file is tab-separated and has four columns: `participant_id`, `visit_id`, `session_id` and `datatype`.
 Here is an example of a valid manifest file:
