@@ -52,7 +52,6 @@
 {%- elif NIPOPPY_HPC == 'sge' %}
 {% set NIPOPPY_ARRAY_VAR = 'SGE_TASK_ID' %}
 # ===== SGE configs =====
-#$ -cwd
 #$ -N {{ NIPOPPY_JOB_NAME }}
 #$ -o {{ NIPOPPY_DPATH_LOGS }}/$JOB_NAME_$JOB_ID_$TASK_ID.out
 #$ -j y
