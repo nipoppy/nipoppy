@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import requests
+import httpx
 
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -142,7 +142,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                     "https://raw.githubusercontent.com/"
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
-                response = requests.get(url)
+                response = httpx.get(url)
                 fpath_readme.write_text(response.content.decode("utf-8"))
 
     def _init_manifest_from_bids_dataset(self) -> None:
