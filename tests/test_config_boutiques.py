@@ -16,7 +16,7 @@ def test_boutiques_config():
     boutiques_config = BoutiquesConfig()
     for field in FIELDS_BOUTIQUES:
         assert hasattr(boutiques_config, field)
-    assert len(boutiques_config.model_fields) == len(FIELDS_BOUTIQUES)
+    assert len(boutiques_config.model_dump()) == len(FIELDS_BOUTIQUES)
 
 
 def test_boutiques_config_no_extra_fields():
