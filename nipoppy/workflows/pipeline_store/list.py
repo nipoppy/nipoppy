@@ -28,7 +28,7 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
 
     def _get_pipeline_info_map(
         self,
-    ) -> dict[PipelineTypeEnum, list[tuple[str, str]]]:
+    ) -> dict[PipelineTypeEnum, dict[str, list[str]]]:
         pipeline_type_to_info_map = {}
         for pipeline_type in PipelineTypeEnum:
             pipeline_names_to_versions_map = {}
@@ -61,9 +61,9 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
     def _log_pipeline_info(
         self,
         pipeline_type: PipelineTypeEnum,
-        pipeline_info: dict[str, list[str]],
+        pipelines: dict[str, list[str]],
     ):
-        if len(pipeline_info) == 0:
+        if len(pipelines) == 0:
             self.logger.info(
                 f"[{LogColor.FAILURE}]No available {pipeline_type.value} "
                 "pipelines[/]"
@@ -76,11 +76,9 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
         )
 
         # to align the pipeline version substrings
-        max_characters = max(
-            len(pipeline_name) for pipeline_name in pipeline_info.keys()
-        )
+        max_characters = max(len(pipeline_name) for pipeline_name in pipelines.keys())
 
-        for pipeline_name, pipeline_versions in pipeline_info.items():
+        for pipeline_name, pipeline_versions in pipelines.items():
             self.logger.info(
                 f"\t- {pipeline_name.ljust(max_characters)}"
                 f" ({', '.join(pipeline_versions)})"
@@ -93,8 +91,8 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
         self.logger.info(
             f"Checking pipelines installed in {self.layout.dpath_pipelines}"
         )
-        for pipeline_type, pipeline_info_list in pipeline_type_to_info_map.items():
-            self._log_pipeline_info(pipeline_type, pipeline_info_list)
+        for pipeline_type, pipelines in pipeline_type_to_info_map.items():
+            self._log_pipeline_info(pipeline_type, pipelines)
 
         self.logger.info(
             f'Pipelines can be installed with the "{PROGRAM_NAME} pipeline install"'
