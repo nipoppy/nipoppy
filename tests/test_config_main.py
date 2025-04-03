@@ -23,6 +23,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "HPC_PREAMBLE",
     "EXTRACTION_PIPELINES",
 ]
 
@@ -33,6 +34,7 @@ def valid_config_data():
         "DATASET_NAME": "my_dataset",
         "VISIT_IDS": ["1"],
         "SESSION_IDS": ["1"],
+        "HPC_PREAMBLE": "module load preamble",
         "BIDS_PIPELINES": [
             {
                 "NAME": "bids_converter",
@@ -98,6 +100,15 @@ def test_sessions_inferred(visit_ids, expected_session_ids):
     }
     config = Config(**data)
     assert config.SESSION_IDS == expected_session_ids
+
+
+@pytest.mark.parametrize(
+    "hpc_preamble", ["module load preamble", ["module load preamble"]]
+)
+def test_hpc_preamble_list(hpc_preamble, valid_config_data):
+    valid_config_data["HPC_PREAMBLE"] = hpc_preamble
+    config = Config(**valid_config_data)
+    assert config.HPC_PREAMBLE == ["module load preamble"]
 
 
 @pytest.mark.parametrize(

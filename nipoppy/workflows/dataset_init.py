@@ -15,6 +15,7 @@ from nipoppy.env import (
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
+    DPATH_HPC,
     DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
@@ -59,6 +60,7 @@ class InitWorkflow(BaseWorkflow):
         Create directories and add a readme in each.
         Copy boutiques descriptors and invocations.
         Copy default config files.
+        Copy Jinja templates for HPC.
 
         If the BIDS source dataset is requested, it is symlinked.
         """
@@ -78,7 +80,7 @@ class InitWorkflow(BaseWorkflow):
                 )
 
         # create directories
-        for dpath in self.layout.dpaths:
+        for dpath in self.layout.get_paths(directory=True, include_optional=True):
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 if self.mode == "copy":
@@ -118,6 +120,14 @@ class InitWorkflow(BaseWorkflow):
                 self.layout.fpath_manifest,
                 log_level=logging.DEBUG,
             )
+
+        # copy HPC files
+        self.copytree(
+            DPATH_HPC,
+            self.layout.dpath_hpc,
+            dirs_exist_ok=True,
+            log_level=logging.DEBUG,
+        )
 
         # inform user to edit the sample files
         self.logger.warning(

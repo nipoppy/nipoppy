@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline_step import (
     BasePipelineStepConfig,
     BidsPipelineStepConfig,
@@ -18,6 +19,7 @@ from nipoppy.config.pipeline_step import (
     ProcPipelineStepConfig,
 )
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -59,6 +61,14 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     ] = Field(
         default=[],
         description="List of pipeline step configurations",
+    )
+
+    HPC_CONFIG: Optional[HpcConfig] = Field(
+        default=None,
+        description=(
+            "Key-value pairs to be passed to the Jinja template inside the "
+            f"{DEFAULT_LAYOUT_INFO.dpath_hpc} directory."
+        ),
     )
 
     @model_validator(mode="before")
@@ -156,10 +166,12 @@ class ProcPipelineConfig(BasePipelineConfig):
             " and a PATHS field (non-empty list of strings)"
         ),
     )
+
     STEPS: list[ProcPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
     )
+
     model_config = ConfigDict(extra="forbid")
 
 
