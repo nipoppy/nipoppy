@@ -8,6 +8,7 @@ from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
 
 class ZenodoUploadWorkflow(BaseDatasetWorkflow):
@@ -62,11 +63,18 @@ class ZenodoUploadWorkflow(BaseDatasetWorkflow):
         """Run the main workflow."""
         pipeline_dir = Path(self.dpath_pipeline)
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
-        # TODO Add pipeline validation before uploading to Zenodo
-        pipeline_config = ...
+
+        try:
+            pipeline_config = PipelineValidateWorkflow(self.dpath_pipeline).run_main()
+        except Exception as e:
+            self.logger.error(
+                f"Pipeline validation failed. Please check the pipeline files: {e}"
+            )
+            raise SystemExit(1)
+        
         zenodo_metadata = pipeline_dir.joinpath(
             "zenodo.json"
-        )  # Should use layout instead
+        )
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
         self.zenodo_api.upload_pipeline(
             input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata

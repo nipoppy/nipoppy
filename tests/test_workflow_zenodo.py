@@ -4,6 +4,10 @@ from contextlib import nullcontext
 
 from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow, ZenodoUploadWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
+import logging
+import pytest_mock
+
+from nipoppy.utils import load_json
 
 from .conftest import create_empty_dataset, DPATH_TEST_DATA
 
@@ -103,3 +107,47 @@ def test_download_install_dir_exist(
     )
     with pytest.raises(SystemExit) if fails else nullcontext():
         workflow.run_main()
+
+
+def test_upload(mocker: pytest_mock.MockerFixture): ...
+
+
+def test_get_pipeline_metadata(
+    tmp_path: Path,
+    datetime_fixture,
+):  # noqa F811
+    expected = {
+        "metadata": {
+            "title": "Upload test",
+            "description": "This is a test upload",
+            "creators": [
+                {
+                    "person_or_org": {
+                        "given_name": "Nipoppy",
+                        "family_name": "Test",
+                        "type": "personal",
+                    }
+                }
+            ],
+            "publication_date": "2024-04-04",
+            "publisher": "Nipoppy",
+            "resource_type": {"id": "software"},
+            "keywords": ["Nipoppy", "processing"],
+        }
+    }
+
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,
+        zenodo_api=zenodo_api,
+    )
+
+    results = workflow._get_pipeline_metadata(
+        zenodo_metadata=TEST_PIPELINE / "zenodo.json",
+        pipeline_config=TEST_PIPELINE / "config.json",
+    )
+    # Convert keywords to set to prevent order mismatch
+    results["metadata"]["keywords"] = set(results["metadata"]["keywords"])
+    expected["metadata"]["keywords"] = set(expected["metadata"]["keywords"])
+
+    assert results == expected

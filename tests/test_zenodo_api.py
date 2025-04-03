@@ -204,35 +204,3 @@ def test_failed_authentication():
         ZenodoAPI(
             sandbox=ZENODO_SANDBOX, access_token="invalid_token"
         )._check_authentication()
-
-
-# def test_get_pipeline_metadata(
-#     tmp_path: Path,
-#     zenodo_api: ZenodoAPI,
-#     datetime_fixture,
-# ):  # noqa F811
-#     expected = {
-#         "metadata": {
-#             "title": "Upload test",
-#             "description": "This is a test upload",
-#             "creators": [
-#                 {
-#                     "person_or_org": {
-#                         "given_name": "Nipoppy",
-#                         "family_name": "Test",
-#                         "type": "personal",
-#                     }
-#                 }
-#             ],
-#             "publication_date": "2024-04-04",
-#             "publisher": "Nipoppy",
-#             "resource_type": {"id": "software"},
-#             "keywords": {"Nipoppy", "processing"},
-#         }
-#     }
-
-#     results = zenodo_api._get_pipeline_metadata(TEST_PIPELINE)
-#     # Convert keywords to set to prevent order mismatch
-#     results["metadata"]["keywords"] = set(results["metadata"]["keywords"])
-
-#     assert results == expected
