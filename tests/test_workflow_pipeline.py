@@ -1006,6 +1006,30 @@ def test_submit_hpc_job_pysqa_call(
     assert workflow.n_total == 2
 
 
+@pytest.mark.parametrize(
+    "write_job_script,expected_message",
+    [(True, "Job script created at "), (False, "No job script found at ")],
+)
+def test_submit_hpc_job_job_script(
+    write_job_script: bool,
+    expected_message,
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    def touch_job_script(*args, **kwargs):
+        fpath_script = workflow.dpath_pipeline_work / "run_queue.sh"
+        fpath_script.parent.mkdir(parents=True, exist_ok=True)
+        fpath_script.touch()
+
+    mocked = set_up_hpc_for_testing(workflow, mocker)
+    if write_job_script:
+        mocked.side_effect = touch_job_script
+
+    workflow._submit_hpc_job([("P1", "1")])
+    assert expected_message in caplog.text
+
+
 def test_submit_hpc_job_pysqa_error(
     workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):
