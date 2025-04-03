@@ -365,3 +365,14 @@ def pipeline_validate(**params):
     params["dpath_pipeline"] = params.pop("path")
     with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
         workflow.run()
+
+
+@pipeline.command("list")
+@dataset_option
+def pipeline_list(**params):
+    """List available pipelines for a dataset."""
+    from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
+
+    params = dep_params(**params)
+    with handle_exception(PipelineListWorkflow(**params)) as workflow:
+        workflow.run()
