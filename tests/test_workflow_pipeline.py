@@ -384,6 +384,19 @@ def test_pybids_ignore_patterns_invalid_format(
         workflow.pybids_ignore_patterns
 
 
+@pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])
+def test_hpc_config(hpc_config_data: dict, workflow: PipelineWorkflow, tmp_path: Path):
+    fpath_hpc_config = tmp_path / "hpc_config.json"
+    fpath_hpc_config.write_text(json.dumps(hpc_config_data))
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config
+    assert isinstance(workflow.hpc_config, HpcConfig)
+
+
+def test_hpc_config_no_file(workflow: PipelineWorkflow):
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = None
+    assert workflow.hpc_config == HpcConfig()
+
+
 @pytest.mark.parametrize("return_str", [True, False])
 def test_process_template_json(return_str, tmp_path: Path):
     workflow = PipelineWorkflow(
@@ -859,23 +872,21 @@ def test_generate_fpath_log(
     "hpc_config_data", [{"CORES": "8", "MEMORY": "32G"}, {"ACCOUNT": "my_account"}]
 )
 def test_check_hpc_config(hpc_config_data, workflow: PipelineWorkflow):
-    workflow.pipeline_config.HPC_CONFIG = HpcConfig(**hpc_config_data)
+    workflow.hpc_config = HpcConfig(**hpc_config_data)
     assert workflow._check_hpc_config() == hpc_config_data
 
 
-@pytest.mark.parametrize("hpc_config", [HpcConfig(), None])
 def test_check_hpc_config_empty(
-    hpc_config,
     workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
-    workflow.pipeline_config.HPC_CONFIG = hpc_config
+    workflow.hpc_config = HpcConfig()
     workflow._check_hpc_config()
     assert (
         sum(
             [
                 (
-                    "No HPC configuration found" in record.message
+                    "HPC configuration is empty" in record.message
                     and record.levelname == "WARNING"
                 )
                 for record in caplog.records
@@ -888,7 +899,7 @@ def test_check_hpc_config_empty(
 def test_check_hpc_config_unused_vars(
     workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
 ):
-    workflow.pipeline_config.HPC_CONFIG = HpcConfig(CORES="8", RANDOM_VAR="value")
+    workflow.hpc_config = HpcConfig(CORES="8", RANDOM_VAR="value")
     workflow._check_hpc_config()
     assert sum(
         [
@@ -960,7 +971,7 @@ def test_submit_hpc_job_pysqa_call(
     mocked_submit_job = set_up_hpc_for_testing(workflow, mocker)
     workflow.hpc = hpc_type
 
-    workflow.pipeline_config.HPC_CONFIG = HpcConfig(**hpc_config)
+    workflow.hpc_config = HpcConfig(**hpc_config)
     workflow.config.HPC_PREAMBLE = preamble_list
 
     participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
