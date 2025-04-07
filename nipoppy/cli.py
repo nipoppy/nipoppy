@@ -272,17 +272,17 @@ def init(**params):
     "-f",
     is_flag=True,
     help=(
-        "Regenerate the doughnut file even if it already exists"
+        "Regenerate the curation status file even if it already exists"
         " (default: only append rows for new records)"
     ),
 )
 @global_options
-def doughnut(**params):
-    """Create or update a dataset's doughnut file."""
-    from nipoppy.workflows.doughnut import DoughnutWorkflow
+def track_curation(**params):
+    """Create or update a dataset's curation status file."""
+    from nipoppy.workflows.track_curation import TrackCurationWorkflow
 
     params = dep_params(**params)
-    with handle_exception(DoughnutWorkflow(**params)) as workflow:
+    with handle_exception(TrackCurationWorkflow(**params)) as workflow:
         workflow.run()
 
 

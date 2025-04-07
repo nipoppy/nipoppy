@@ -136,7 +136,7 @@ def test_validate(dpath_root: Path):
     assert DatasetLayout(dpath_root=dpath_root).validate()
 
 
-def test_validate_no_doughnut_or_bagel(dpath_root: Path):
+def test_validate_no_status_file(dpath_root: Path):
     create_empty_dataset(dpath_root)
     assert DatasetLayout(dpath_root=dpath_root).validate()
 
@@ -305,6 +305,9 @@ def test_get_dpath_pybids_db(
     )
 
 
-def test_doughnut_parent_directory(dpath_root: Path):
+def test_curation_status_file_parent_directory(dpath_root: Path):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout.fpath_doughnut.parent == layout.dpath_root / "sourcedata" / "imaging"
+    assert (
+        layout.fpath_curation_status.parent
+        == layout.dpath_root / "sourcedata" / "imaging"
+    )

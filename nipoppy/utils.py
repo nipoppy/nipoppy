@@ -305,11 +305,17 @@ def save_df_with_backup(
     if "sep" not in kwargs:
         kwargs["sep"] = "\t"
 
-    fpath_symlink = Path(fpath_symlink)
+    fpath_symlink: Path = Path(fpath_symlink)
 
     fname_backup = add_path_timestamp(fpath_symlink.name)
     if dname_backups is None:
-        dname_backups = f".{fpath_symlink.stem}s"
+        file_stem = fpath_symlink.stem
+        # make it plural
+        if file_stem.endswith("status"):
+            suffix = "es"
+        else:
+            suffix = "s"
+        dname_backups = f".{fpath_symlink.stem}{suffix}"
 
     fpath_backup_full: Path = fpath_symlink.parent / dname_backups / fname_backup
 

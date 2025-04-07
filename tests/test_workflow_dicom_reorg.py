@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import LogColor, ReturnCode
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -322,8 +322,10 @@ def test_run_setup(tmp_path: Path):
     )
     config.save(workflow.layout.fpath_config)
 
-    # generate first doughnut with the smaller manifest
-    doughnut1 = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name).doughnut
+    # generate first curation status table with the smaller manifest
+    curation_status_table1 = DicomReorgWorkflow(
+        dpath_root=tmp_path / dataset_name
+    ).curation_status_table
 
     # update manifest
     manifest2 = prepare_dataset(
@@ -332,11 +334,11 @@ def test_run_setup(tmp_path: Path):
     manifest2.save_with_backup(workflow.layout.fpath_manifest)
     workflow.manifest = manifest2
 
-    # check that doughnut was regenerated
+    # check that curation status table was regenerated
     workflow.run_setup()
 
-    assert not workflow.doughnut.equals(doughnut1)
-    assert len(workflow.doughnut) == len(manifest2)
+    assert not workflow.curation_status_table.equals(curation_status_table1)
+    assert len(workflow.curation_status_table) == len(manifest2)
 
 
 @pytest.mark.parametrize(
@@ -422,11 +424,11 @@ def test_run_main(
                     count += 1
                 assert count > 0
 
-                # check that the doughnut has been updated
-                assert workflow.doughnut.get_status(
+                # check that the curation status table has been updated
+                assert workflow.curation_status_table.get_status(
                     participant_id=participant_id,
                     session_id=session_id,
-                    col=workflow.doughnut.col_in_post_reorg,
+                    col=workflow.curation_status_table.col_in_post_reorg,
                 )
 
             else:
@@ -458,7 +460,9 @@ def test_run_main_error(tmp_path: Path):
     config.save(workflow.layout.fpath_config)
 
     # will cause the workflow to fail because the directories cannot be found
-    workflow.doughnut[workflow.doughnut.col_in_pre_reorg] = True
+    workflow.curation_status_table[workflow.curation_status_table.col_in_pre_reorg] = (
+        True
+    )
 
     try:
         workflow.run_main()
@@ -469,31 +473,35 @@ def test_run_main_error(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut",
+    "curation_status_table",
     [
-        Doughnut(),
-        Doughnut(
+        CurationStatusTable(),
+        CurationStatusTable(
             data={
-                Doughnut.col_participant_id: ["01"],
-                Doughnut.col_visit_id: ["1"],
-                Doughnut.col_session_id: ["1"],
-                Doughnut.col_datatype: "['anat']",
-                Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_pre_reorg: [True],
-                Doughnut.col_in_post_reorg: [True],
-                Doughnut.col_in_bids: [True],
+                CurationStatusTable.col_participant_id: ["01"],
+                CurationStatusTable.col_visit_id: ["1"],
+                CurationStatusTable.col_session_id: ["1"],
+                CurationStatusTable.col_datatype: "['anat']",
+                CurationStatusTable.col_participant_dicom_dir: ["01"],
+                CurationStatusTable.col_in_pre_reorg: [True],
+                CurationStatusTable.col_in_post_reorg: [True],
+                CurationStatusTable.col_in_bids: [True],
             }
         ).validate(),
     ],
 )
-def test_cleanup_doughnut(doughnut: Doughnut, tmp_path: Path):
+def test_cleanup_curation_status(
+    curation_status_table: CurationStatusTable, tmp_path: Path
+):
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / "my_dataset")
-    workflow.doughnut = doughnut
+    workflow.curation_status_table = curation_status_table
 
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_doughnut.exists()
-    assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
+    assert workflow.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
+        curation_status_table
+    )
 
 
 @pytest.mark.parametrize(
@@ -526,7 +534,7 @@ def test_run_cleanup_message(
 ):
     dataset_name = "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    workflow.doughnut = Doughnut()  # empty doughnut to avoid error
+    workflow.curation_status_table = CurationStatusTable()  # empty table to avoid error
 
     workflow.n_success = n_success
     workflow.n_total = n_total
