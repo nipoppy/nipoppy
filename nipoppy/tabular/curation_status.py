@@ -108,8 +108,8 @@ class CurationStatusTable(Manifest):
         session_id: Optional[str] = None,
     ):
         """Get subset of participants/sessions based on a status column."""
-        table_subset: CurationStatusTable = self.loc[self[status_col]]
-        return table_subset.get_participants_sessions(
+        curation_status_subset: CurationStatusTable = self.loc[self[status_col]]
+        return curation_status_subset.get_participants_sessions(
             participant_id=participant_id, session_id=session_id
         )
 

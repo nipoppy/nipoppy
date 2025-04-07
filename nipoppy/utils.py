@@ -310,6 +310,7 @@ def save_df_with_backup(
     fname_backup = add_path_timestamp(fpath_symlink.name)
     if dname_backups is None:
         file_stem = fpath_symlink.stem
+        # make it plural
         if file_stem.endswith("status"):
             suffix = "es"
         else:
