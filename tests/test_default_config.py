@@ -196,6 +196,7 @@ def test_boutiques_descriptors(fpath_descriptor):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
+        ("bids-validator", "2.0.3"),
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
         ("fmriprep", "24.1.1"),
@@ -269,10 +270,10 @@ def test_bids_conversion_runner(
 def test_bids_pipeline_configs():
     config = Config.load(FPATH_SAMPLE_CONFIG_FULL)
     for pipeline_config in config.BIDS_PIPELINES:
-        count = sum([step.UPDATE_DOUGHNUT for step in pipeline_config.STEPS])
+        count = sum([step.UPDATE_STATUS for step in pipeline_config.STEPS])
         assert count == 1, (
             f"BIDS pipeline {pipeline_config.NAME} {pipeline_config.VERSION}"
-            f" should have exactly one step with UPDATE_DOUGHNUT=true (got {count})"
+            f" should have exactly one step with UPDATE_STATUS=true (got {count})"
         )
 
 
@@ -345,21 +346,31 @@ def test_tracker_paths(
 
     # check status
     assert (
-        tracker.bagel.loc[
+        tracker.processing_status_table.loc[
             (
-                (tracker.bagel[tracker.bagel.col_participant_id] == participant_id)
-                & (tracker.bagel[tracker.bagel.col_session_id] == session_id)
+                (
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_participant_id
+                    ]
+                    == participant_id
+                )
+                & (
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_session_id
+                    ]
+                    == session_id
+                )
             ),
-            tracker.bagel.col_status,
+            tracker.processing_status_table.col_status,
         ].item()
-        == tracker.bagel.status_success
+        == tracker.processing_status_table.status_success
     )
 
 
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("fs_stats", "0.2.0"),
+        ("fs_stats", "0.2.1"),
         ("static_FC", "0.1.0"),
     ],
 )

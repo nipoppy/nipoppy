@@ -5,7 +5,7 @@ Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques 
 - [MRIQC](https://mriqc.readthedocs.io/en/latest/index.html), a pipeline for automated quality control (QC) metric extraction
 
 ```{note}
-Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.io/about/), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating a Boutiques descriptor file and modifying the global configuration file accordingly.
+Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/tools/bids-apps.html), Nipoppy can also be used to run pipelines that are not BIDS Apps. Custom pipelines can be added by creating Boutiques descriptor and invocation files and modifying the global configuration file accordingly.
 ```
 
 ## Summary
@@ -34,9 +34,9 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids-apps.neuroimaging.
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`doughnut file` but *have not* yet successfully completed the pipeline according to the {term}`imaging bagel file`
-    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.rst)
-    - The imaging bagel file can be updated with [`nipoppy track`](../cli_reference/track.rst)
+1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`curation status file` but *have not* yet successfully completed the pipeline according to the {term}`processing status file`
+    - An existing, out-of-date curation status file can be updated with [`nipoppy track-curation --regenerate`](../cli_reference/track_curation.rst)
+    - The processing status file can be updated with [`nipoppy track`](../cli_reference/track.rst)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}

@@ -21,7 +21,7 @@ def test_fields(data):
     for field in FIELDS_STEP:
         assert hasattr(tracker_config, field)
 
-    assert len(set(tracker_config.model_fields.keys())) == len(FIELDS_STEP)
+    assert len(set(tracker_config.model_dump())) == len(FIELDS_STEP)
 
 
 def test_no_extra_field():

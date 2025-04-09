@@ -127,6 +127,13 @@ def test_run_command_no_markup(
     assert text in caplog.text
 
 
+def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
+    message = "This should be printed"
+    workflow.run_command(["echo", message], quiet=True)
+    assert workflow.log_prefix_run not in caplog.text
+    assert message in caplog.text
+
+
 def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     create_empty_dataset(workflow.dpath_root)
     workflow.run_setup()
@@ -203,6 +210,6 @@ def test_dicom_dir_map_not_found(workflow: BaseWorkflow):
         workflow.dicom_dir_map
 
 
-def test_bagel_empty_if_not_found(workflow: BaseWorkflow):
-    assert not workflow.layout.fpath_imaging_bagel.exists()
-    assert len(workflow.bagel) == 0
+def test_processing_status_empty_if_not_found(workflow: BaseWorkflow):
+    assert not workflow.layout.fpath_processing_status.exists()
+    assert len(workflow.processing_status_table) == 0

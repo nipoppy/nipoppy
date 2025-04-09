@@ -50,7 +50,7 @@ def test_fields(model_class, fields, valid_data):
     for field in fields:
         assert hasattr(config, field)
 
-    assert len(set(config.model_fields.keys())) == len(fields)
+    assert len(set(config.model_dump())) == len(fields)
 
 
 def test_fields_extraction_pipeline(valid_data):
@@ -60,7 +60,7 @@ def test_fields_extraction_pipeline(valid_data):
     )
     for field in FIELDS_EXTRACTION_PIPELINE:
         assert hasattr(config, field)
-    assert len(set(config.model_fields.keys())) == len(FIELDS_EXTRACTION_PIPELINE)
+    assert len(set(config.model_dump())) == len(FIELDS_EXTRACTION_PIPELINE)
 
 
 @pytest.mark.parametrize("model_class", [BasePipelineConfig, PipelineInfo])

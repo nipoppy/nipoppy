@@ -12,7 +12,7 @@ from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -119,11 +119,11 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
 class BidsPipelineStepConfig(BasePipelineStepConfig):
     """Schema for BIDS pipeline step configuration."""
 
-    UPDATE_DOUGHNUT: Optional[bool] = Field(
+    UPDATE_STATUS: Optional[bool] = Field(
         default=False,
         description=(
-            f"Whether or not the {Doughnut.col_in_bids} column "
-            "in the doughnut file should be updated"
+            f"Whether or not the {CurationStatusTable.col_in_bids} column "
+            "in the curation status file should be updated"
         ),
     )
     model_config = ConfigDict(extra="forbid")

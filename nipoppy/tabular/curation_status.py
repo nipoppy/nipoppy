@@ -1,4 +1,4 @@
-"""Class for the doughnut file."""
+"""Class for the curation status file."""
 
 from __future__ import annotations
 
@@ -19,14 +19,14 @@ from nipoppy.utils import (
 )
 
 
-class DoughnutModel(ManifestModel):
+class CurationStatusModel(ManifestModel):
     """
-    An internally- or user-generated file to keep track of the BIDS conversion process.
+    An internally- or user-generated file to keep track of the BIDSification process.
 
     Should contain exactly the same data as the manifest, with some additional columns.
 
     Note: This class is called "model" to be consistent with Pydantic nomenclature,
-    but it can be thought of as a schema for each row in the doughnut file.
+    but it can be thought of as a schema for each row in the curation status file.
     """
 
     participant_dicom_dir: str = Field(
@@ -46,8 +46,8 @@ class DoughnutModel(ManifestModel):
     )
 
 
-class Doughnut(Manifest):
-    """A dataset's doughnut, for tracking DICOM-to-BIDS conversion status."""
+class CurationStatusTable(Manifest):
+    """A dataset's curation status file, for tracking BIDSification progress."""
 
     # column names
     col_participant_dicom_dir = "participant_dicom_dir"
@@ -58,7 +58,7 @@ class Doughnut(Manifest):
     status_cols = [col_in_pre_reorg, col_in_post_reorg, col_in_bids]
 
     # set the model
-    model = DoughnutModel
+    model = CurationStatusModel
 
     index_cols = [Manifest.col_participant_id, Manifest.col_session_id]
 
@@ -108,8 +108,8 @@ class Doughnut(Manifest):
         session_id: Optional[str] = None,
     ):
         """Get subset of participants/sessions based on a status column."""
-        doughnut_subset: Doughnut = self.loc[self[status_col]]
-        return doughnut_subset.get_participants_sessions(
+        curation_status_subset: CurationStatusTable = self.loc[self[status_col]]
+        return curation_status_subset.get_participants_sessions(
             participant_id=participant_id, session_id=session_id
         )
 
@@ -146,7 +146,7 @@ class Doughnut(Manifest):
         )
 
 
-def generate_doughnut(
+def generate_curation_status_table(
     manifest: Manifest,
     dicom_dir_map: DicomDirMap,
     dpath_downloaded: Optional[StrOrPathLike] = None,
@@ -154,8 +154,8 @@ def generate_doughnut(
     dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
-) -> Doughnut:
-    """Generate a doughnut object."""
+) -> CurationStatusTable:
+    """Generate a curation status table."""
 
     def check_status(
         dpath: Optional[StrOrPathLike],
@@ -175,14 +175,14 @@ def generate_doughnut(
         return status
 
     if logger is None:
-        logger = get_logger("generate_doughnut")
+        logger = get_logger("generate_curation_status_table")
 
     # get participants/sessions with imaging data
     logger.debug(f"Full manifest:\n{manifest}")
     manifest_imaging_only = manifest.get_imaging_subset()
     logger.debug(f"Imaging-only manifest:\n{manifest_imaging_only}")
 
-    doughnut_records = []
+    curation_status_records = []
     for _, manifest_record in manifest_imaging_only.iterrows():
         participant_id = manifest_record[manifest.col_participant_id]
         session_id = manifest_record[manifest.col_session_id]
@@ -220,26 +220,30 @@ def generate_doughnut(
                 dname_subdirectory=dname_subdirectory,
             )
 
-        doughnut_records.append(
+        curation_status_records.append(
             {
-                Doughnut.col_participant_id: participant_id,
-                Doughnut.col_visit_id: manifest_record[Manifest.col_visit_id],
-                Doughnut.col_session_id: session_id,
-                Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
-                Doughnut.col_participant_dicom_dir: participant_dicom_dir,
-                Doughnut.col_in_pre_reorg: status_downloaded,
-                Doughnut.col_in_post_reorg: status_organized,
-                Doughnut.col_in_bids: status_bidsified,
+                CurationStatusTable.col_participant_id: participant_id,
+                CurationStatusTable.col_visit_id: manifest_record[
+                    Manifest.col_visit_id
+                ],
+                CurationStatusTable.col_session_id: session_id,
+                CurationStatusTable.col_datatype: manifest_record[
+                    Manifest.col_datatype
+                ],
+                CurationStatusTable.col_participant_dicom_dir: participant_dicom_dir,
+                CurationStatusTable.col_in_pre_reorg: status_downloaded,
+                CurationStatusTable.col_in_post_reorg: status_organized,
+                CurationStatusTable.col_in_bids: status_bidsified,
             }
         )
 
-    doughnut = Doughnut(doughnut_records)
-    logger.debug(f"Generated doughnut:\n{doughnut}")
-    return doughnut
+    curation_status_table = CurationStatusTable(curation_status_records)
+    logger.debug(f"Generated curation status table:\n{curation_status_table}")
+    return curation_status_table
 
 
-def update_doughnut(
-    doughnut: Doughnut,
+def update_curation_status_table(
+    curation_status_table: CurationStatusTable,
     manifest: Manifest,
     dicom_dir_map: DicomDirMap,
     dpath_downloaded: Optional[StrOrPathLike] = None,
@@ -247,21 +251,23 @@ def update_doughnut(
     dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
     logger: Optional[logging.Logger] = None,
-) -> Doughnut:
-    """Update an existing doughnut file."""
+) -> CurationStatusTable:
+    """Update an existing curation status file."""
     if logger is None:
-        logger = get_logger("update_doughnut")
+        logger = get_logger("update_curation_status_table")
 
-    logger.debug(f"Original doughnut:\n{doughnut}")
+    logger.debug(f"Original curation status table:\n{curation_status_table}")
     logger.debug(f"Manifest:\n{manifest}")
-    manifest_subset = manifest.get_diff(doughnut, cols=doughnut.index_cols)
+    manifest_subset = manifest.get_diff(
+        curation_status_table, cols=curation_status_table.index_cols
+    )
     logger.debug(
-        "Manifest subset (difference between manifest and doughnut)"
+        "Manifest subset (difference between manifest and curation status table)"
         f":\n{manifest_subset}"
     )
 
-    updated_doughnut = doughnut.concatenate(
-        generate_doughnut(
+    updated_table = curation_status_table.concatenate(
+        generate_curation_status_table(
             manifest=manifest_subset,
             dicom_dir_map=dicom_dir_map,
             dpath_downloaded=dpath_downloaded,
@@ -272,6 +278,6 @@ def update_doughnut(
         )
     )
 
-    logger.debug(f"Updated doughnut:\t{updated_doughnut}")
+    logger.debug(f"Updated curation status table:\t{updated_table}")
 
-    return updated_doughnut
+    return updated_table
