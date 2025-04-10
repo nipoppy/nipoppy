@@ -128,7 +128,7 @@ def test_download_record_checksum(
 
 
 @pytest.mark.skipif(
-    os.environ.get("ZENODO_TOKEN") is None or os.environ.get("record_id") is None,
+    os.environ.get("ZENODO_TOKEN") is None or os.environ.get("ZENODO_ID") is None,
     reason="Requires Zenodo token and ID",
 )
 def test_create_new_version(metadata: dict):
@@ -137,7 +137,7 @@ def test_create_new_version(metadata: dict):
     ).upload_pipeline(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
-        record_id=os.environ["record_id"],
+        record_id=os.environ["ZENODO_ID"],
     )
 
 
