@@ -3,8 +3,11 @@
 import hashlib
 from pathlib import Path
 from typing import Optional
+import logging
 
 import httpx
+
+from nipoppy.logger import get_logger
 
 
 class InvalidChecksumError(Exception):
@@ -26,11 +29,21 @@ class ZenodoAPI:
     https://inveniordm.docs.cern.ch/reference/rest_api_index/
     """
 
-    def __init__(self, sandbox: bool = False, access_token: Optional[str] = None):
+    def __init__(
+        self,
+        sandbox: bool = False,
+        access_token: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
+    ):
         self.api_endpoint = (
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
         self.access_token = access_token
+
+        if logger is None:
+            self.logger = get_logger(__name__)
+        else:
+            self.logger = logger
 
         # Access token is required for uploading files
         if self.access_token is not None:
@@ -39,6 +52,10 @@ class ZenodoAPI:
             }
         else:
             self.headers = {}
+
+    def set_logger(self, logger: logging.Logger):
+        """Set the logger for the ZenodoAPI instance."""
+        self.logger = logger
 
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
@@ -191,7 +208,7 @@ class ZenodoAPI:
         input_dir: Path,
         metadata: dict,
         record_id: Optional[str] = None,
-    ) -> Optional[str]:
+    ) -> str:
         """Upload a pipeline to Zenodo."""
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
@@ -216,14 +233,18 @@ class ZenodoAPI:
         except Exception as e:
             # Delete the draft if an error occurs
             # Prevents issue when retrying to modify the record while a draft exits.
-            print(f"Reverting record {action} for zenodo.{record_id} due to error: {e}")
+            self.logger.info(
+                f"Reverting record {action} for zenodo.{record_id} due to error: {e}"
+            )
             response = httpx.delete(
                 f"{self.api_endpoint}/records/{record_id}/draft",
                 headers=self.headers,
             )
             if response == 204:
-                print(f"Record {action} reverted")
+                self.logger.info(f"Record {action} reverted")
             else:
-                print(f"Failed to revert record {action} for zenodo.{record_id}")
+                self.logger.warning(
+                    f"Failed to revert record {action} for zenodo.{record_id}"
+                )
 
-            return None
+            raise SystemExit(1)

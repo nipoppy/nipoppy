@@ -6,12 +6,12 @@ from typing import Optional
 
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.utils import get_today, load_json
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow, BaseWorkflow
 from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
 
-class ZenodoUploadWorkflow(BaseDatasetWorkflow):
+class ZenodoUploadWorkflow(BaseWorkflow):
     """Workflow for Zenodo upload."""
 
     def __init__(
@@ -19,7 +19,6 @@ class ZenodoUploadWorkflow(BaseDatasetWorkflow):
         dpath_pipeline: StrOrPathLike,
         zenodo_api: ZenodoAPI,
         record_id: Optional[str] = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
         verbose=False,
         dry_run=False,
     ):
@@ -28,12 +27,12 @@ class ZenodoUploadWorkflow(BaseDatasetWorkflow):
         self.record_id = record_id
 
         super().__init__(
-            dpath_root=Path(self.dpath_pipeline).parent.parent,
             name="pipeline_upload",
-            fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
         )
+
+        self.zenodo_api.set_logger(self.logger)
 
     def _get_pipeline_metadata(
         self, zenodo_metadata: Path, pipeline_config: Path
@@ -74,11 +73,11 @@ class ZenodoUploadWorkflow(BaseDatasetWorkflow):
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
-        self.zenodo_api.upload_pipeline(
+        doi = self.zenodo_api.upload_pipeline(
             input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
         )
         self.logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline successfully uploaded[/]",
+            f"[{LogColor.SUCCESS}]Pipeline successfully uploaded at {doi}[/]",
         )
 
 
