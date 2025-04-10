@@ -128,7 +128,9 @@ def test_download_record_checksum(
 
 
 @pytest.mark.skipif(
-    os.environ.get("ZENODO_TOKEN") is None or os.environ.get("ZENODO_ID") is None,
+    os.environ.get("ZENODO_TOKEN") is None
+    or os.environ.get("ZENODO_TOKEN") == ""
+    or os.environ.get("ZENODO_ID") is None,
     reason="Requires Zenodo token and ID",
 )
 def test_create_new_version(metadata: dict):
