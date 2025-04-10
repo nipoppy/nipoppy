@@ -41,3 +41,6 @@ nipoppy_env/
 
 # Env var file
 .env
+
+# Logs
+*.log
