@@ -64,7 +64,8 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 
         try:
-            pipeline_config = PipelineValidateWorkflow(self.dpath_pipeline).run_main()
+            # with: from nipoppy.pipeline_store.validation import check_pipeline_bundle
+            pipeline_config = check_pipeline_bundle(pipeline_dir, logger=self.logger)
         except Exception as e:
             self.logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"
