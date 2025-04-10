@@ -732,9 +732,9 @@ def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
         workflow.pipeline_version
     ] = variables
     with (
-        pytest.raises(ValueError, match="Variable .* is not set in the config")
-        if not valid
-        else nullcontext()
+        nullcontext()
+        if valid
+        else pytest.raises(ValueError, match="Variable .* is not set in the config")
     ):
         assert workflow._check_pipeline_variables() is None
 

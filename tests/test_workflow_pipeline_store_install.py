@@ -46,7 +46,7 @@ def workflow(tmp_path: Path, pipeline_config: ProcPipelineConfig):
     return workflow
 
 
-def _check_files_copied(dpath_source, dpath_dest):
+def _assert_files_copied(dpath_source, dpath_dest):
     paths_source = set(
         path.relative_to(dpath_source) for path in dpath_source.rglob("*")
     )
@@ -150,7 +150,7 @@ def test_run_main(
     )
 
     workflow.run_main()
-    _check_files_copied(
+    _assert_files_copied(
         workflow.dpath_pipeline,
         dpath_installed,
     )
@@ -182,4 +182,4 @@ def test_run_main_overwrite(
         else pytest.raises(FileExistsError, match="Use --overwrite to overwrite")
     ):
         workflow.run_main()
-        _check_files_copied(workflow.dpath_pipeline, dpath_installed)
+        _assert_files_copied(workflow.dpath_pipeline, dpath_installed)

@@ -37,15 +37,18 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
     def _update_config_and_save(self, pipeline_config: BasePipelineConfig) -> Config:
         """
-        Add pipeline variables to the global config file.
+        Add pipeline variables (e.g. for user-defined paths) to the global config file.
 
-        NOTE: this loads a new Config object (i.e., does not use already loaded
+        Notes
+        -----
+        This loads a new Config object (i.e., does not use already-loaded
         self.config object).
         """
         # do not use self.config since it has been changed by substitutions already
         config = self.config.load(self.layout.fpath_config, apply_substitutions=False)
 
         if len(pipeline_config.VARIABLES) == 0:
+            self.logger.info("No changes to the global config file.")
             return config
 
         # update config
@@ -78,7 +81,11 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         return config
 
     def run_main(self):
-        """Install a pipeline config directory into the dataset."""
+        """Install a pipeline.
+
+        The pipeline config directory is put in the appropriate location in the dataset,
+        and any pipeline variables are added to the global config file.
+        """
         # load the config and validate file contents (including file paths)
         pipeline_config = check_pipeline_bundle(
             self.dpath_pipeline,

@@ -14,7 +14,6 @@ from nipoppy.env import (
     PROGRAM_NAME,
     ReturnCode,
 )
-from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 
 logger = get_logger(
@@ -355,17 +354,13 @@ def pipeline():
 
 @pipeline.command("install")
 @dataset_option
-@click.option(
-    "--path",
-    "dpath_pipeline",
-    help=(
-        "Path to the pipeline directory"
-        f" (should contain a {DatasetLayout.fname_pipeline_config} file)."
-    ),
-    required=True,
+@click.argument(
+    "location",
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
 @click.option(
+    "--force",
+    "-f",
     "--overwrite",
     is_flag=True,
     help="Overwrite existing pipeline directory if it exists.",
@@ -375,6 +370,7 @@ def pipeline_install(**params):
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
     params = dep_params(**params)
+    params["dpath_pipeline"] = params.pop("location")
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
 
