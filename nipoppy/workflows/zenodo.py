@@ -4,10 +4,11 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.pipeline_store.validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseDatasetWorkflow, BaseWorkflow
-from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
 
@@ -34,26 +35,48 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
         self.zenodo_api.set_logger(self.logger)
 
+    def get_creators(self):
+        """Get the list of creators for the Zenodo metadata."""
+        # TODO fetch user information from zenodo
+        return [
+            {
+                "person_or_org": {
+                    "given_name": "Nipoppy",
+                    "family_name": "Test",
+                    "type": "personal",
+                }
+            }
+        ]
+
     def _get_pipeline_metadata(
-        self, zenodo_metadata: Path, pipeline_config: Path
+        self, zenodo_metadata_file: Path, pipeline_config: BasePipelineConfig
     ) -> dict:
+        default_description = (
+            "Nipoppy configuration files for "
+            f"{pipeline_config.NAME} {pipeline_config.VERSION} pipeline"
+        )
         metadata = {
             "metadata": {
+                "title": f"{pipeline_config.NAME}-{pipeline_config.VERSION}",
+                "description": (pipeline_config.DESCRIPTION or default_description),
                 "publication_date": get_today(),
                 "publisher": "Nipoppy",
+                "creators": self.get_creators(),
                 "resource_type": {"id": "software"},
                 "keywords": [],
             }
         }
 
-        pipeline_metadata = load_json(zenodo_metadata)
-        metadata["metadata"].update(pipeline_metadata)
+        if zenodo_metadata_file.exists():
+            pipeline_metadata = load_json(zenodo_metadata_file)
+            metadata["metadata"].update(pipeline_metadata)
 
         # Enforce Nipoppy keywords
-        config = load_json(pipeline_config)
-        pipeline_type = config["PIPELINE_TYPE"]
         metadata["metadata"]["keywords"] = list(
-            set(metadata["metadata"]["keywords"] + ["Nipoppy", pipeline_type])
+            set(
+                metadata["metadata"]["keywords"]
+                + ["Nipoppy", pipeline_config.PIPELINE_TYPE]
+            )
         )
 
         return metadata
@@ -64,7 +87,6 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 
         try:
-            # with: from nipoppy.pipeline_store.validation import check_pipeline_bundle
             pipeline_config = check_pipeline_bundle(pipeline_dir, logger=self.logger)
         except Exception as e:
             self.logger.error(

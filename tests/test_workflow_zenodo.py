@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
+from nipoppy.pipeline_store.validation import _load_pipeline_config_file
 from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow, ZenodoUploadWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
@@ -112,7 +113,7 @@ def test_upload(mocker: pytest_mock.MockerFixture):
         "nipoppy.workflows.zenodo.ZenodoUploadWorkflow._get_pipeline_metadata",
     )
     validator = mocker.patch(
-        "nipoppy.workflows.pipeline_store.validate.PipelineValidateWorkflow.run_main",
+        "nipoppy.workflows.zenodo.check_pipeline_bundle",
     )
 
     zenodo_api = ZenodoAPI(sandbox=True)
@@ -157,9 +158,11 @@ def test_get_pipeline_metadata(
         zenodo_api=zenodo_api,
     )
 
+    pipeline_config = _load_pipeline_config_file(TEST_PIPELINE / "config.json")
+
     results = workflow._get_pipeline_metadata(
-        zenodo_metadata=TEST_PIPELINE / "zenodo.json",
-        pipeline_config=TEST_PIPELINE / "config.json",
+        zenodo_metadata_file=TEST_PIPELINE / "zenodo.json",
+        pipeline_config=pipeline_config,
     )
     # Convert keywords to set to prevent order mismatch
     results["metadata"]["keywords"] = set(results["metadata"]["keywords"])
