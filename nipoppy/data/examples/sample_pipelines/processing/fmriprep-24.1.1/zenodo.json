@@ -1,0 +1,13 @@
+{
+    "title": "Upload test",
+    "description": "This is a test upload",
+    "creators": [
+        {
+            "person_or_org": {
+                "given_name": "Nipoppy",
+                "family_name": "Test",
+                "type": "personal"
+            }
+        }
+    ]
+}
