@@ -69,7 +69,7 @@ def test_field_base(step_class: type[BaseModel], fields, data_list):
         for field in fields:
             assert hasattr(pipeline_step_config, field)
 
-        assert len(set(pipeline_step_config.model_dump().keys())) == len(fields)
+        assert len(set(pipeline_step_config.model_dump())) == len(fields)
 
 
 @pytest.mark.parametrize(

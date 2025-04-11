@@ -246,8 +246,22 @@ def test_fpath_container_not_specified(workflow: PipelineWorkflow):
         workflow.fpath_container
 
 
-def test_fpath_container_not_found(workflow: PipelineWorkflow):
-    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+@pytest.mark.parametrize("container_uri", [None, "docker://some/uri:tag"])
+def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
+    workflow.pipeline_config.CONTAINER_INFO.URI = container_uri
+    error_message = (
+        "No container image file found at "
+        f"{workflow.pipeline_config.CONTAINER_INFO.FILE} for pipeline "
+        f"{workflow.pipeline_name} {workflow.pipeline_version}"
+    )
+    if container_uri is not None:
+        error_message += (
+            ". This file can be downloaded to the appropriate path by running the "
+            "following command:\n\n"
+            f"apptainer pull {workflow.pipeline_config.CONTAINER_INFO.FILE}"
+            f" {workflow.pipeline_config.CONTAINER_INFO.URI}"
+        )
+    with pytest.raises(FileNotFoundError, match=error_message):
         workflow.fpath_container
 
 

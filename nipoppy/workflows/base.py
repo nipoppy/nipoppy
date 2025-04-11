@@ -71,6 +71,7 @@ class BaseWorkflow(Base, ABC):
         self,
         command_or_args: Sequence[str] | str,
         check=True,
+        quiet=False,
         **kwargs,
     ) -> subprocess.Popen | str:
         """Run a command in a subprocess.
@@ -89,6 +90,8 @@ class BaseWorkflow(Base, ABC):
         check : bool, optional
             If True, raise an error if the process exits with a non-zero code,
             by default True
+        quiet : bool, optional
+            If True, do not log the command, by default False
         **kwargs
             Passed to `subprocess.Popen`.
 
@@ -121,7 +124,8 @@ class BaseWorkflow(Base, ABC):
         if not kwargs.get("shell"):
             command_or_args = args
 
-        self.log_command(command)
+        if not quiet:
+            self.log_command(command)
 
         if not self.dry_run:
             process = subprocess.Popen(

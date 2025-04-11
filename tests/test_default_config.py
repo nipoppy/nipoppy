@@ -177,6 +177,7 @@ def test_boutiques_descriptors(fpath_descriptor):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
+        ("bids-validator", "2.0.3"),
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
         ("fmriprep", "24.1.1"),
@@ -340,7 +341,7 @@ def test_tracker_paths(
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("fs_stats", "0.2.0"),
+        ("fs_stats", "0.2.1"),
         ("static_FC", "0.1.0"),
     ],
 )
@@ -383,7 +384,7 @@ def test_extractor(
         (PipelineTypeEnum.PROCESSING, "freesurfer", "7.3.2"),
         (PipelineTypeEnum.PROCESSING, "mriqc", "23.1.0"),
         (PipelineTypeEnum.PROCESSING, "qsiprep", "0.23.0"),
-        (PipelineTypeEnum.EXTRACTION, "fs_stats", "0.2.0"),
+        (PipelineTypeEnum.EXTRACTION, "fs_stats", "0.2.1"),
         (PipelineTypeEnum.EXTRACTION, "static_FC", "0.1.0"),
     ],
 )

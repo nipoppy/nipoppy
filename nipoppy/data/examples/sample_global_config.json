@@ -1,6 +1,6 @@
 {
     "SUBSTITUTIONS": {
-        "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_CONTAINER_STORE_DIRECTORY>",
+        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_ROOT]]/containers",
         "[[HEUDICONV_HEURISTIC_FILE]]": "<PATH_TO_HEURISTIC_FILE>",
         "[[DCM2BIDS_CONFIG_FILE]]": "<PATH_TO_CONFIG_FILE>",
         "[[FREESURFER_LICENSE_FILE]]": "<PATH_TO_FREESURFER_LICENSE_FILE>",
@@ -58,7 +58,7 @@
         },
         "EXTRACTION": {
             "fs_stats": {
-                "0.2.0": {
+                "0.2.1": {
                     "FREESURFER_LICENSE_FILE": "[[FREESURFER_LICENSE_FILE]]"
                 }
             }
