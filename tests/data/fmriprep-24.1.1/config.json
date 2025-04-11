@@ -1,9 +1,9 @@
 {
-    "NAME": "qsiprep",
-    "VERSION": "0.23.0",
+    "NAME": "fmriprep",
+    "VERSION": "24.1.1",
     "CONTAINER_INFO": {
         "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
-        "URI": "docker://pennbbl/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+        "URI": "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
     },
     "CONTAINER_CONFIG": {
         "ENV_VARS": {
@@ -23,9 +23,5 @@
             "TRACKER_CONFIG_FILE": "tracker_config.json"
         }
     ],
-    "VARIABLES": {
-        "FREESURFER_LICENSE_FILE": "Path to FreeSurfer license file",
-        "TEMPLATEFLOW_HOME": "Path to the directory where TemplateFlow will store templates (can be empty)"
-    },
     "PIPELINE_TYPE": "processing"
 }

@@ -517,6 +517,19 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def _check_pipeline_variables(self):
+        """Check that the pipeline variables are not null in the config."""
+        for name, value in self.config.PIPELINE_VARIABLES.get_variables(
+            self._pipeline_type, self.pipeline_name, self.pipeline_version
+        ).items():
+            if value is None:
+                raise ValueError(
+                    f"Variable {name} is not set in the config for pipeline "
+                    f"{self.pipeline_name}, version {self.pipeline_version}. You need "
+                    "to set it in the PIPELINE_VARIABLES section of the config file at "
+                    f"{self.layout.fpath_config}"
+                )
+
     def check_pipeline_step(self):
         """Set the pipeline step name based on the config if it is not given."""
         if self.pipeline_step is None:
@@ -530,6 +543,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self._check_pipeline_variables()
         self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:

@@ -347,6 +347,9 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             )
 
         # replace path placeholders in the config
+        # (except in the user-defined substitutions)
+        user_substitutions = config.SUBSTITUTIONS  # stash original substitutions
+        # this might modify the SUBSTITUTIONS field (which we don't want)
         config = Config(
             **json.loads(
                 process_template_str(
@@ -355,6 +358,8 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 )
             )
         )
+        # restore original substitutions
+        config.SUBSTITUTIONS = user_substitutions
 
         return config
 

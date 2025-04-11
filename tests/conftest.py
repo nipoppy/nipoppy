@@ -26,6 +26,7 @@ from nipoppy.utils import (
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
+TEST_PIPELINE = DPATH_TEST_DATA / "fmriprep-24.1.1"
 
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
@@ -71,6 +72,7 @@ def datetime_fixture(
     """
     mocked_datetime = mocker.patch("nipoppy.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
+    mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
 
 

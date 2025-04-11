@@ -2,6 +2,7 @@
 
 import json
 import re
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
@@ -735,6 +736,21 @@ def test_check_pipeline_version(
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
     assert f"using version {expected_version}" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "variables,valid", [({"var1": "val1"}, True), ({"var2": None}, False)]
+)
+def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
+    with (
+        nullcontext()
+        if valid
+        else pytest.raises(ValueError, match="Variable .* is not set in the config")
+    ):
+        assert workflow._check_pipeline_variables() is None
 
 
 @pytest.mark.parametrize(
