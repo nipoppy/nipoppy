@@ -26,6 +26,7 @@ from nipoppy.utils import (
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
+TEST_PIPELINE = DPATH_TEST_DATA / "zenodo_record"
 
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",
