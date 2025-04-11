@@ -179,7 +179,7 @@ def test_run_main_overwrite(
     with (
         nullcontext()
         if overwrite
-        else pytest.raises(FileExistsError, match="Use --overwrite to overwrite")
+        else pytest.raises(FileExistsError, match="Use --force to overwrite")
     ):
         workflow.run_main()
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
