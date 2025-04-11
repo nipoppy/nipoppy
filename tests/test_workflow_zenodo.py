@@ -8,7 +8,7 @@ from nipoppy.pipeline_store.validation import _load_pipeline_config_file
 from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow, ZenodoUploadWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
-from .conftest import DPATH_TEST_DATA, TEST_PIPELINE, create_empty_dataset
+from .conftest import TEST_PIPELINE, create_empty_dataset
 
 DATASET_PATH = "my_dataset"
 
