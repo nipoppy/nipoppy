@@ -21,5 +21,8 @@
             "TRACKER_CONFIG_FILE": "tracker_config.json"
         }
     ],
+    "VARIABLES": {
+        "TEMPLATEFLOW_HOME": "Path to the directory where TemplateFlow will store templates (can be empty)"
+    },
     "PIPELINE_TYPE": "processing"
 }

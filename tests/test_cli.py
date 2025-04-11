@@ -278,6 +278,19 @@ def test_cli_pipeline_upload():
     # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
+def test_cli_pipeline_install(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    dpath_pipeline = tmp_path / "pipeline"
+    dpath_pipeline.mkdir()
+    result = runner.invoke(
+        cli,
+        ["pipeline", "install", "--dataset", str(dpath_root), str(dpath_pipeline)],
+        catch_exceptions=False,
+    )
+
+    # Expects missing path, since init command is not run.
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
+
 
 def test_cli_pipeline_validate(tmp_path: Path):
     dpath_pipeline = tmp_path / "pipeline"
