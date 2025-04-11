@@ -12,7 +12,7 @@ from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
 from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
 
 ZENODO_SANDBOX = True
-TEST_PIPELINE = DPATH_TEST_DATA / "sample_pipelines" / "processing" / "fmriprep-24.1.1"
+TEST_PIPELINE = DPATH_TEST_DATA / "zenodo_record"
 
 
 @pytest.fixture(scope="function")
@@ -23,7 +23,7 @@ def record_id():
     If the test fails verify the Zenodo record at:
     https://sandbox.zenodo.org/records/194256
 
-    The test file is located at: tests/data/sample_pipelines/proc/fmriprep-24.1.1
+    The test file is located at: tests/data/zenodo_record
     """
     return "194256"
 
