@@ -166,7 +166,7 @@ def test_run_main_overwrite(
     pipeline_config: ProcPipelineConfig,
     overwrite: bool,
 ):
-    workflow.overwrite = overwrite
+    workflow.force = overwrite
 
     # create directory where the pipeline is supposed to be installed
     dpath_installed = workflow.layout.get_dpath_pipeline_bundle(

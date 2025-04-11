@@ -18,7 +18,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self,
         dpath_root: Path,
         dpath_pipeline: StrOrPathLike,
-        overwrite: bool = False,
+        force: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -33,7 +33,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             _skip_logfile=True,
         )
         self.dpath_pipeline = dpath_pipeline
-        self.overwrite = overwrite
+        self.force = force
 
     def _update_config_and_save(self, pipeline_config: BasePipelineConfig) -> Config:
         """
@@ -99,10 +99,10 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         # check if the target directory already exists
         if dpath_target.exists():
-            if not self.overwrite:
+            if not self.force:
                 raise FileExistsError(
                     f"Pipeline directory exists: {dpath_target}"
-                    ". Use --overwrite to overwrite.",
+                    ". Use --force to overwrite.",
                 )
             else:
                 self.rm(dpath_target, log_level=logging.DEBUG)

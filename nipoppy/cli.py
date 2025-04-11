@@ -353,11 +353,11 @@ def pipeline():
 
 
 @pipeline.command("install")
-@dataset_option
 @click.argument(
-    "location",
+    "path_or_zenodo_id",
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
+@dataset_option
 @click.option(
     "--force",
     "-f",
@@ -370,7 +370,8 @@ def pipeline_install(**params):
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
     params = dep_params(**params)
-    params["dpath_pipeline"] = params.pop("location")
+    params["dpath_pipeline"] = params.pop("path_or_zenodo_id")
+    print("HERE")
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
 
