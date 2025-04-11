@@ -249,7 +249,7 @@ def test_cli_pipeline_install(tmp_path: Path):
     dpath_pipeline.mkdir()
     result = runner.invoke(
         cli,
-        ["pipeline", "install", "--dataset", dpath_root, dpath_pipeline],
+        ["pipeline", "install", "--dataset", str(dpath_root), str(dpath_pipeline)],
     )
 
     # No log file is created, since the command does not create logs.

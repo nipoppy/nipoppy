@@ -371,7 +371,6 @@ def pipeline_install(**params):
 
     params = dep_params(**params)
     params["dpath_pipeline"] = params.pop("path_or_zenodo_id")
-    print("HERE")
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
 
