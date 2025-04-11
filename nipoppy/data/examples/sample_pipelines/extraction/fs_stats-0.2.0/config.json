@@ -27,5 +27,8 @@
             "ANALYSIS_LEVEL": "group"
         }
     ],
+    "VARIABLES": {
+        "FREESURFER_LICENSE_FILE": "Path to FreeSurfer license file"
+    },
     "PIPELINE_TYPE": "extraction"
 }
