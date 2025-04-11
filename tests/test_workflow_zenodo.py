@@ -5,7 +5,10 @@ import pytest
 import pytest_mock
 
 from nipoppy.pipeline_store.validation import _load_pipeline_config_file
-from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow, ZenodoUploadWorkflow
+from nipoppy.workflows.pipeline_store.zenodo import (
+    ZenodoDownloadWorkflow,
+    ZenodoUploadWorkflow,
+)
 from nipoppy.zenodo_api import ZenodoAPI
 
 from .conftest import TEST_PIPELINE, create_empty_dataset
@@ -109,10 +112,10 @@ def test_upload(mocker: pytest_mock.MockerFixture):
         "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
     )
     get_pipeline_metadata = mocker.patch(
-        "nipoppy.workflows.zenodo.ZenodoUploadWorkflow._get_pipeline_metadata",
+        "nipoppy.workflows.pipeline_store.zenodo.ZenodoUploadWorkflow._get_pipeline_metadata",
     )
     validator = mocker.patch(
-        "nipoppy.workflows.zenodo.check_pipeline_bundle",
+        "nipoppy.workflows.pipeline_store.zenodo.check_pipeline_bundle",
     )
 
     zenodo_api = ZenodoAPI(sandbox=True)

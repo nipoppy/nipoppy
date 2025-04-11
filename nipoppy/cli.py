@@ -441,7 +441,7 @@ def zenodo_options(func):
 @zenodo_options
 def pipeline_download(**params):
     """Download a Zenodo pipeline."""
-    from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow
+    from nipoppy.workflows.pipeline_store.zenodo import ZenodoDownloadWorkflow
 
     params = dep_params(**params)
     params["zenodo_api"] = ZenodoAPI(
@@ -467,7 +467,7 @@ def pipeline_download(**params):
 @zenodo_options
 def pipeline_upload(**params):
     """Add a new pipeline."""
-    from nipoppy.workflows.zenodo import ZenodoUploadWorkflow
+    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
