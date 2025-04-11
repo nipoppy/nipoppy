@@ -117,7 +117,7 @@ class ZenodoAPI:
         if response.status_code != 201:
             raise ZenodoAPIError(
                 f"Failed to create a new version for zenodo.{record_id}:"
-                + response.json()
+                f" {response.json()}"
             )
         new_record_id = response.json()["id"]
 
