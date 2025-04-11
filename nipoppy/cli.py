@@ -423,6 +423,7 @@ def pipeline_upload(**params):
     )
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
+        workflow.run()
 
 
 @pipeline.command("install")
