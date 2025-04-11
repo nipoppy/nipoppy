@@ -243,6 +243,42 @@ def test_cli_extract(tmp_path: Path):
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
+def test_cli_pipeline_download(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    result = runner.invoke(
+        cli,
+        [
+            "pipeline",
+            "download",
+            "zenodo.123456",
+            "--dataset",
+            str(dpath_root),
+        ],
+        catch_exceptions=False,
+    )
+
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
+
+
+def test_cli_pipeline_upload():
+
+    result = runner.invoke(
+        cli,
+        [
+            "pipeline",
+            "upload",
+            "tests/data/zenodo.zip",
+            "--zenodo-id",
+            "zenodo.123456",
+        ],
+        catch_exceptions=False,
+    )
+
+    # Expect non-zero return code, because nipoppy init was not run.
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
+
+
 def test_cli_pipeline_install(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     dpath_pipeline = tmp_path / "pipeline"
@@ -252,9 +288,6 @@ def test_cli_pipeline_install(tmp_path: Path):
         ["pipeline", "install", "--dataset", str(dpath_root), str(dpath_pipeline)],
         catch_exceptions=False,
     )
-
-    # No log file is created, since the command does not create logs.
-    pass
 
     # Expects missing path, since init command is not run.
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
@@ -269,5 +302,5 @@ def test_cli_pipeline_validate(tmp_path: Path):
         catch_exceptions=False,
     )
 
-    # Expects missing path, since init command is not run.
+    # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
