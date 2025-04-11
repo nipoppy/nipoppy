@@ -9,10 +9,9 @@ import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
 
-from .conftest import DPATH_TEST_DATA, datetime_fixture  # noqa F401
+from .conftest import TEST_PIPELINE, datetime_fixture  # noqa F401
 
 ZENODO_SANDBOX = True
-TEST_PIPELINE = DPATH_TEST_DATA / "zenodo_record"
 
 
 @pytest.fixture(scope="function")
@@ -23,7 +22,7 @@ def record_id():
     If the test fails verify the Zenodo record at:
     https://sandbox.zenodo.org/records/194256
 
-    The test file is located at: tests/data/zenodo_record
+    See TEST_PIPELINE for test file location.
     """
     return "194256"
 
