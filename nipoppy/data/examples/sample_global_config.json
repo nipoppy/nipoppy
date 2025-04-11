@@ -58,7 +58,7 @@
         },
         "EXTRACTION": {
             "fs_stats": {
-                "0.2.0": {
+                "0.2.1": {
                     "FREESURFER_LICENSE_FILE": "[[FREESURFER_LICENSE_FILE]]"
                 }
             }
