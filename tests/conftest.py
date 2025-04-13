@@ -15,7 +15,7 @@ from fids.fids import create_fake_bids_dataset
 from nipoppy.config.main import Config
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DatasetLayout
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -54,8 +54,8 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "sourcedata/imaging/doughnut.tsv",
-    "fpath_imaging_bagel": "derivatives/bagel.tsv",
+    "fpath_curation_status": "sourcedata/imaging/curation_status.tsv",
+    "fpath_processing_status": "derivatives/processing_status.tsv",
     "fpath_demographics": "tabular/demographics.tsv",
 }
 
@@ -336,33 +336,33 @@ def prepare_dataset(
     return manifest
 
 
-def check_doughnut(
-    doughnut: Doughnut,
+def check_curation_status_table(
+    table: CurationStatusTable,
     participants_and_sessions_manifest,
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,
     participants_and_sessions_bidsified,
     empty,
 ):
-    """Check that a doughnut has the corrected statuses."""
+    """Check that a curation status table has the corrected status values."""
     if empty:
         for col in [
-            doughnut.col_in_pre_reorg,
-            doughnut.col_in_post_reorg,
-            doughnut.col_in_bids,
+            table.col_in_pre_reorg,
+            table.col_in_post_reorg,
+            table.col_in_bids,
         ]:
-            assert (~doughnut[col]).all()
+            assert (~table[col]).all()
     else:
         for participant_id in participants_and_sessions_manifest:
             for session_id in participants_and_sessions_manifest[participant_id]:
                 for col, participants_and_sessions_true in {
-                    doughnut.col_in_pre_reorg: participants_and_sessions_downloaded,
-                    doughnut.col_in_post_reorg: participants_and_sessions_organized,
-                    doughnut.col_in_bids: participants_and_sessions_bidsified,
+                    table.col_in_pre_reorg: participants_and_sessions_downloaded,
+                    table.col_in_post_reorg: participants_and_sessions_organized,
+                    table.col_in_bids: participants_and_sessions_bidsified,
                 }.items():
-                    status: pd.Series = doughnut.loc[
-                        (doughnut[doughnut.col_participant_id] == participant_id)
-                        & (doughnut[doughnut.col_session_id] == session_id),
+                    status: pd.Series = table.loc[
+                        (table[table.col_participant_id] == participant_id)
+                        & (table[table.col_session_id] == session_id),
                         col,
                     ]
 
