@@ -9,6 +9,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
 from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.zenodo_api import ZenodoAPI
 
 
 class PipelineInstallWorkflow(BaseDatasetWorkflow):
@@ -17,7 +18,8 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        dpath_pipeline: StrOrPathLike,
+        dpath_pipeline_or_zenodo_id: StrOrPathLike | str,
+        zenodo_api: ZenodoAPI = None,
         force: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
@@ -32,8 +34,23 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-        self.dpath_pipeline = dpath_pipeline
+        self.dpath_pipeline_or_zenodo_id = dpath_pipeline_or_zenodo_id
+        self.zenodo_api = zenodo_api or ZenodoAPI()
         self.force = force
+
+        self.zenodo_api.set_logger(self.logger)
+
+        self.dpath_pipeline = None
+        self.zenodo_id = None
+        if (dpath_pipeline := Path(dpath_pipeline_or_zenodo_id)).exists():
+            self.dpath_pipeline = dpath_pipeline.resolve()
+        elif dpath_pipeline_or_zenodo_id.removeprefix("zenodo.").isnumeric():
+            self.zenodo_id = dpath_pipeline_or_zenodo_id
+        else:
+            self.logger.warning(
+                f"{dpath_pipeline_or_zenodo_id} does not seem like a valid path "
+                "or Zenodo ID"
+            )
 
     def _update_config_and_save(self, pipeline_config: BasePipelineConfig) -> Config:
         """
@@ -86,9 +103,30 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         The pipeline config directory is put in the appropriate location in the dataset,
         and any pipeline variables are added to the global config file.
         """
+        if self.zenodo_id is not None:
+            dpath_pipeline = self.layout.dpath_pipelines / self.zenodo_id
+            if dpath_pipeline.exists() and not self.force:
+                self.logger.error(
+                    f"Output directory {dpath_pipeline} already exists."
+                    "Use the '--force' flag to overwrite the current content. Aborting."
+                )
+                raise SystemExit(1)
+
+            self.logger.info(
+                f"Downloading pipeline {self.zenodo_id} in {dpath_pipeline}"
+            )
+            self.zenodo_api.download_record_files(
+                record_id=self.zenodo_id, output_dir=dpath_pipeline
+            )
+            self.logger.info(
+                f"[{LogColor.SUCCESS}]Pipeline successfully downloaded[/]",
+            )
+        else:
+            dpath_pipeline = self.dpath_pipeline
+
         # load the config and validate file contents (including file paths)
         pipeline_config = check_pipeline_bundle(
-            self.dpath_pipeline,
+            dpath_pipeline,
             logger=self.logger,
         )
 
@@ -102,17 +140,26 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             if not self.force:
                 raise FileExistsError(
                     f"Pipeline directory exists: {dpath_target}"
-                    ". Use --force to overwrite.",
+                    ". Use --force to overwrite",
                 )
             else:
                 self.rm(dpath_target, log_level=logging.DEBUG)
 
         # copy the directory
-        self.copytree(
-            path_source=self.dpath_pipeline,
-            path_dest=dpath_target,
-            log_level=logging.DEBUG,
-        )
+        if self.dpath_pipeline is not None:
+            self.copytree(
+                path_source=dpath_pipeline,
+                path_dest=dpath_target,
+                log_level=logging.DEBUG,
+            )
+        else:
+            # if the pipeline was downloaded from Zenodo, move it to the target location
+            self.movetree(
+                path_source=dpath_pipeline,
+                path_dest=dpath_target,
+                log_level=logging.DEBUG,
+            )
+            self.rm(dpath_pipeline, log_level=logging.DEBUG)
 
         # update global config with new pipeline variables
         self._update_config_and_save(pipeline_config)

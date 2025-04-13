@@ -184,6 +184,9 @@ click.rich_click.OPTION_GROUPS = {
                 "--copy-files",
                 "--check-dicoms",
                 "--tar",
+                "--zenodo-token",
+                "--sandbox",
+                "--force",
             ],
         },
         {
@@ -426,32 +429,6 @@ def zenodo_options(func):
     return func
 
 
-@pipeline.command("download")
-@click.argument(
-    "record_id",
-    type=str,
-)
-@click.option(
-    "--force",
-    "-f",
-    is_flag=True,
-    help="Force download and overwrite existing files.",
-)
-@dataset_option
-@zenodo_options
-def pipeline_download(**params):
-    """Download a Zenodo pipeline."""
-    from nipoppy.workflows.pipeline_store.zenodo import ZenodoDownloadWorkflow
-
-    params = dep_params(**params)
-    params["zenodo_api"] = ZenodoAPI(
-        sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
-    )
-    with handle_exception(ZenodoDownloadWorkflow(**params)) as workflow:
-        workflow.run()
-
-
 @pipeline.command("upload")
 @click.argument(
     "pipeline_dir",
@@ -481,8 +458,9 @@ def pipeline_upload(**params):
 @pipeline.command("install")
 @click.argument(
     "path_or_zenodo_id",
-    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+    type=str,
 )
+@zenodo_options
 @dataset_option
 @click.option(
     "--force",
@@ -491,12 +469,17 @@ def pipeline_upload(**params):
     is_flag=True,
     help="Overwrite existing pipeline directory if it exists.",
 )
+@global_options
 def pipeline_install(**params):
     """Install a new pipeline into the pipeline store."""
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
     params = dep_params(**params)
-    params["dpath_pipeline"] = params.pop("path_or_zenodo_id")
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
+    params["dpath_pipeline_or_zenodo_id"] = params.pop("path_or_zenodo_id")
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
 
