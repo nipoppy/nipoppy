@@ -1,5 +1,6 @@
 """Tests for PipelineInstallWorkflow class."""
 
+import logging
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -64,6 +65,20 @@ def _assert_files_copied(dpath_source, dpath_dest):
     )
     paths_dest = set(path.relative_to(dpath_dest) for path in dpath_dest.rglob("*"))
     assert paths_source == paths_dest
+
+
+def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    PipelineInstallWorkflow(
+        dpath_root=(tmp_path / "my_dataset"),
+        dpath_pipeline_or_zenodo_id="not_a_path",
+    )
+    assert any(
+        [
+            "does not seem like a valid path or Zenodo ID" in record.message
+            and record.levelno == logging.WARNING
+            for record in caplog.records
+        ]
+    )
 
 
 @pytest.mark.parametrize("variables", [{}, {"var1": "description"}])
