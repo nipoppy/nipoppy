@@ -372,6 +372,7 @@ def test_tracker_paths(
     [
         ("fs_stats", "0.2.1"),
         ("static_FC", "0.1.0"),
+        ("fwDTI", "0.1.0"),
     ],
 )
 def test_extractor(
