@@ -21,7 +21,7 @@
                     "[[HEUDICONV_HEURISTIC_FILE]]"
                 ]
             },
-            "UPDATE_DOUGHNUT": true
+            "UPDATE_STATUS": true
         }
     ],
     "VARIABLES": {

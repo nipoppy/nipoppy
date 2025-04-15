@@ -1,0 +1,23 @@
+{
+    "NAME": "bids-validator",
+    "VERSION": "2.0.3",
+    "CONTAINER_INFO": {
+        "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/deno_2.2.3.sif",
+        "URI": "docker://denoland/deno:2.2.3"
+    },
+    "CONTAINER_CONFIG": {
+        "ARGS": [
+            "--bind",
+            "[[NIPOPPY_DPATH_SCRATCH]]/deno:/deno-dir"
+        ]
+    },
+    "STEPS": [
+        {
+            "INVOCATION_FILE": "invocation.json",
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "ANALYSIS_LEVEL": "group",
+            "GENERATE_PYBIDS_DATABASE": false
+        }
+    ],
+    "PIPELINE_TYPE": "processing"
+}

@@ -394,7 +394,7 @@ def test_extractor(
         (PipelineTypeEnum.PROCESSING, "freesurfer", "7.3.2"),
         (PipelineTypeEnum.PROCESSING, "mriqc", "23.1.0"),
         (PipelineTypeEnum.PROCESSING, "qsiprep", "0.23.0"),
-        (PipelineTypeEnum.EXTRACTION, "fs_stats", "0.2.0"),
+        (PipelineTypeEnum.EXTRACTION, "fs_stats", "0.2.1"),
         (PipelineTypeEnum.EXTRACTION, "static_FC", "0.1.0"),
     ],
 )
