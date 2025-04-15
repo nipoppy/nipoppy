@@ -148,7 +148,6 @@ def test_get_pipeline_metadata(
             "resource_type": {"id": "software"},
             "subjects": [
                 {"subject": "Nipoppy"},
-                {"subject": "test"},
                 {"subject": "pipeline_type:processing"},
             ],
         }
