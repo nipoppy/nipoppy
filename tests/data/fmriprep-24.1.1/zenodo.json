@@ -9,5 +9,13 @@
                 "type": "personal"
             }
         }
+    ],
+    "subjects": [
+        {
+            "subject": "Nipoppy"
+        },
+        {
+            "subject": "test"
+        }
     ]
 }
