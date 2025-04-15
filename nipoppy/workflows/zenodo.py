@@ -63,7 +63,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
                 "publisher": "Nipoppy",
                 "creators": self.get_creators(),
                 "resource_type": {"id": "software"},
-                "keywords": [],
+                "subjects": [],
             }
         }
 
@@ -72,12 +72,14 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             metadata["metadata"].update(pipeline_metadata)
 
         # Enforce Nipoppy keywords
-        metadata["metadata"]["keywords"] = list(
-            set(
-                metadata["metadata"]["keywords"]
-                + ["Nipoppy", pipeline_config.PIPELINE_TYPE]
-            )
-        )
+        for keyword in [
+            "Nipoppy",
+            f"pipeline_type:{pipeline_config.PIPELINE_TYPE.value}",
+        ]:
+            if (keyword_dict := {"subject": keyword}) not in metadata["metadata"][
+                "subjects"
+            ]:
+                metadata["metadata"]["subjects"].append(keyword_dict)
 
         return metadata
 
