@@ -41,8 +41,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         return [
             {
                 "person_or_org": {
-                    "given_name": "Nipoppy",
-                    "family_name": "Test",
+                    "family_name": "Nipoppy user",
                     "type": "personal",
                 }
             }
