@@ -82,8 +82,8 @@ def dep_params(**params):
     return params
 
 
-def global_options(func):
-    """Define global options for the CLI."""
+def global_options_no_layout(func):
+    """Define global options (no layout) for the CLI."""
     func = click.option(
         "--verbose",
         "-v",
@@ -96,6 +96,12 @@ def global_options(func):
         is_flag=True,
         help="Print commands but do not execute them.",
     )(func)
+    return func
+
+
+def global_options(func):
+    """Define global options (including layout) for the CLI."""
+    func = global_options_no_layout(func)
     func = click.option(
         "--layout",
         "fpath_layout",
@@ -184,6 +190,10 @@ click.rich_click.OPTION_GROUPS = {
                 "--copy-files",
                 "--check-dicoms",
                 "--tar",
+                "--query",
+                "--size",
+                "--zenodo-token",
+                "--sandbox",
             ],
         },
         {
@@ -439,6 +449,7 @@ def zenodo_options(func):
 )
 @dataset_option
 @zenodo_options
+@global_options
 def pipeline_download(**params):
     """Download a Zenodo pipeline."""
     from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow
@@ -465,6 +476,7 @@ def pipeline_download(**params):
     help="To update an existing pipeline, provide the Zenodo ID.",
 )
 @zenodo_options
+@global_options_no_layout
 def pipeline_upload(**params):
     """Add a new pipeline."""
     from nipoppy.workflows.zenodo import ZenodoUploadWorkflow
@@ -491,6 +503,7 @@ def pipeline_upload(**params):
     is_flag=True,
     help="Overwrite existing pipeline directory if it exists.",
 )
+@global_options
 def pipeline_install(**params):
     """Install a new pipeline into the pipeline store."""
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
@@ -507,10 +520,34 @@ def pipeline_install(**params):
     required=True,
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
+@global_options_no_layout
 def pipeline_validate(**params):
     """Validate a pipeline store directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
     params["dpath_pipeline"] = params.pop("path")
     with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("search")
+@click.argument("query", type=str)
+@click.option(
+    "--size",
+    type=click.IntRange(min=1),
+    help="Number of items to show",
+    default=10,
+    show_default=True,
+)
+@zenodo_options
+@global_options_no_layout
+def pipeline_search(**params):
+    """Search for available pipelines on Zenodo."""
+    from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
+
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
+    with handle_exception(PipelineSearchWorkflow(**params)) as workflow:
         workflow.run()
