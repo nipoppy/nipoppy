@@ -253,16 +253,19 @@ class ZenodoAPI:
         self,
         query: str,
         keywords: Optional[list[str]] = None,
-        page=1,
-        size=10,
+        size: int = 10,
     ):
         """Search for records in Zenodo."""
+        if size < 1:
+            raise ValueError(f"size must be greater than 0, got {size}.")
+
         if keywords is None:
             keywords = []
 
         full_query = query
         for keyword in keywords:
             full_query += f" AND metadata.subjects.subject:{keyword}"
+        full_query = full_query.removeprefix(" AND ")  # in case initial query is empty
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
 
@@ -271,7 +274,6 @@ class ZenodoAPI:
             headers=self.headers,
             params={
                 "q": full_query,
-                "page": page,
                 "size": size,
             },
         )

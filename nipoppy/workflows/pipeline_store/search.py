@@ -35,15 +35,15 @@ class PipelineSearchWorkflow(BaseWorkflow):
 
         self.zenodo_api.set_logger(self.logger)
 
-    def _hits_to_df(self, hits: dict) -> pd.DataFrame:
+    def _hits_to_df(self, hits: list[dict]) -> pd.DataFrame:
         data_for_df = []
         for hit in hits:
             data_for_df.append(
                 {
-                    "Zenodo ID": hit["id"],
-                    "Title": hit["title"],
-                    "Description": hit["metadata"]["description"],
-                    "Downloads": hit["stats"]["downloads"],
+                    "Zenodo ID": hit.get("id"),
+                    "Title": hit.get("title"),
+                    "Description": hit.get("metadata", {}).get("description"),
+                    "Downloads": hit.get("stats", {}).get("downloads"),
                 }
             )
         return pd.DataFrame(data_for_df).sort_values("Downloads", ascending=False)
@@ -67,7 +67,9 @@ class PipelineSearchWorkflow(BaseWorkflow):
         n_total = results["total"]
 
         if n_total == 0:
-            self.logger.info(f"[{LogColor.FAILURE}]No results found.[/red]")
+            self.logger.warning(
+                f'[{LogColor.FAILURE}]No results found for query "{self.query}".[/red]'
+            )
             return
 
         df_hits = self._hits_to_df(hits)

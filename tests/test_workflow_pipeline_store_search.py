@@ -1,5 +1,7 @@
 """Tests for PipelineSearchWorkflow class."""
 
+import logging
+
 import pandas as pd
 import pytest
 import pytest_mock
@@ -35,7 +37,7 @@ def hits():
             "id": 67890,
             "title": "Pipeline 2",
             "stats": {"downloads": 100},
-            "metadata": {"description": "Description 2"},
+            "metadata": {},
         },
     ]
 
@@ -47,7 +49,7 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     # order is switched because of sorting by downloads
     assert df.iloc[0]["Zenodo ID"] == 67890
     assert df.iloc[0]["Title"] == "Pipeline 2"
-    assert df.iloc[0]["Description"] == "Description 2"
+    assert df.iloc[0]["Description"] is None
     assert df.iloc[0]["Downloads"] == 100
 
     assert df.iloc[1]["Zenodo ID"] == 12345
@@ -86,3 +88,19 @@ def test_run_main(
     mocked_hits_to_df.assert_called_once_with(hits)
     mocked_df_to_table.assert_called_once_with(df)
     assert "Showing 2 of 2 results" in caplog.text
+
+
+def test_run_main_no_results(
+    workflow: PipelineSearchWorkflow,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow.query = "fake_pipeline_name"
+    workflow.run()
+
+    assert any(
+        [
+            "No results found for query" in record.message
+            and record.levelno == logging.WARNING
+            for record in caplog.records
+        ]
+    )
