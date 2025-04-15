@@ -55,15 +55,19 @@ def test_session_id_to_bids_session_id(session, expected):
         ("sub-01", True, False, None),
         ("01", True, True, "01"),
         (None, True, True, None),
+        ("P-01", True, False, None),
+        ("sub_01", False, False, None),
     ],
 )
 def test_check_participant_id(participant_id, raise_error, is_valid, expected):
     with (
-        pytest.raises(ValueError, match="Participant ID should not start with")
+        pytest.raises(ValueError, match="Invalid participant ID")
         if not is_valid
         else nullcontext()
     ):
-        assert check_participant_id(participant_id, raise_error=raise_error) == expected
+        output = check_participant_id(participant_id, raise_error=raise_error)
+        if is_valid:
+            assert output == expected
 
 
 @pytest.mark.parametrize(
@@ -75,15 +79,19 @@ def test_check_participant_id(participant_id, raise_error, is_valid, expected):
         ("ses-1", True, False, None),
         ("1", True, True, "1"),
         (None, True, True, None),
+        ("-01", True, False, None),
+        ("1_", False, False, None),
     ],
 )
 def test_check_session_id(session_id, raise_error, is_valid, expected):
     with (
-        pytest.raises(ValueError, match="Session ID should not start with")
+        pytest.raises(ValueError, match="Invalid session ID")
         if not is_valid
         else nullcontext()
     ):
-        assert check_session_id(session_id, raise_error=raise_error) == expected
+        output = check_session_id(session_id, raise_error=raise_error)
+        if is_valid:
+            assert output == expected
 
 
 @pytest.mark.parametrize(
@@ -228,7 +236,7 @@ def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # no
 @pytest.mark.parametrize("dname_backups", [None, ".tests"])
 @pytest.mark.parametrize(
     "fname,dname_backups_processed",
-    [("test.tsv", ".tests"), ("test2.tsv", ".test2s")],
+    [("test.tsv", ".tests"), ("curation_status.tsv", ".curation_statuses")],
 )
 def test_save_df_with_backup(
     fname: str,

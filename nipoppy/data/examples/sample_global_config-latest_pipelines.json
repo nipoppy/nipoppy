@@ -46,7 +46,7 @@
                             "[[HEUDICONV_HEURISTIC_FILE]]"
                         ]
                     },
-                    "UPDATE_DOUGHNUT": true
+                    "UPDATE_STATUS": true
                 }
             ]
         },
@@ -74,7 +74,7 @@
                             "[[DCM2BIDS_CONFIG_FILE]]"
                         ]
                     },
-                    "UPDATE_DOUGHNUT": true
+                    "UPDATE_STATUS": true
                 }
             ]
         },
@@ -99,7 +99,7 @@
                     "INVOCATION_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/invocation-[[STEP_NAME]].json",
                     "DESCRIPTOR_FILE": "[[NIPOPPY_DPATH_PIPELINES]]/[[PIPELINE_NAME]]-[[PIPELINE_VERSION]]/descriptor-bidscoiner.json",
                     "ANALYSIS_LEVEL": "participant",
-                    "UPDATE_DOUGHNUT": true
+                    "UPDATE_STATUS": true
                 }
             ]
         }
@@ -263,7 +263,7 @@
     "EXTRACTION_PIPELINES": [
         {
             "NAME": "fs_stats",
-            "VERSION": "0.2.0",
+            "VERSION": "0.2.1",
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/freesurfer_7.3.2.sif",
                 "URI": "docker://freesurfer/freesurfer:7.3.2"

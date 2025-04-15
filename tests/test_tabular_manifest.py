@@ -16,6 +16,7 @@ from .conftest import DPATH_TEST_DATA
         DPATH_TEST_DATA / "manifest1.tsv",
         DPATH_TEST_DATA / "manifest2.tsv",
         DPATH_TEST_DATA / "manifest3.tsv",
+        DPATH_TEST_DATA / "manifest4.tsv",
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
@@ -36,10 +37,14 @@ def test_load_keep_extra_cols():
     [
         (DPATH_TEST_DATA / "manifest1.tsv", True),
         (DPATH_TEST_DATA / "manifest2.tsv", True),
+        (DPATH_TEST_DATA / "manifest3.tsv", True),
+        (DPATH_TEST_DATA / "manifest4.tsv", True),
         (DPATH_TEST_DATA / "manifest_invalid1.tsv", False),
         (DPATH_TEST_DATA / "manifest_invalid2.tsv", False),
         (DPATH_TEST_DATA / "manifest_invalid3.tsv", False),
         (DPATH_TEST_DATA / "manifest_invalid4.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid5.tsv", False),
+        (DPATH_TEST_DATA / "manifest_invalid6.tsv", False),
     ],
 )
 def test_validate(fpath, is_valid):

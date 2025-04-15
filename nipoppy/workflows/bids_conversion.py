@@ -76,11 +76,13 @@ class BidsConversionRunner(PipelineRunner):
     ):
         """Return participant-session pairs to run the pipeline on."""
         participants_sessions_bidsified = set(
-            self.doughnut.get_bidsified_participants_sessions(
+            self.curation_status_table.get_bidsified_participants_sessions(
                 participant_id=participant_id, session_id=session_id
             )
         )
-        for participant_session in self.doughnut.get_organized_participants_sessions(
+        for (
+            participant_session
+        ) in self.curation_status_table.get_organized_participants_sessions(
             participant_id=participant_id, session_id=session_id
         ):
             if participant_session not in participants_sessions_bidsified:
@@ -104,10 +106,10 @@ class BidsConversionRunner(PipelineRunner):
         )
 
         # update status
-        self.doughnut.set_status(
+        self.curation_status_table.set_status(
             participant_id=participant_id,
             session_id=session_id,
-            col=self.doughnut.col_in_bids,
+            col=self.curation_status_table.col_in_bids,
             status=True,
         )
 
@@ -118,9 +120,12 @@ class BidsConversionRunner(PipelineRunner):
         Clean up after main BIDS conversion part is run.
 
         Specifically:
-        - Write updated doughnut file
+
+        - Write updated curation status file
         """
-        update_doughnut = self.pipeline_step_config.UPDATE_DOUGHNUT
-        if update_doughnut and not self.simulate:
-            self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        update_status = self.pipeline_step_config.UPDATE_STATUS
+        if update_status and not self.simulate:
+            self.save_tabular_file(
+                self.curation_status_table, self.layout.fpath_curation_status
+            )
         return super().run_cleanup(**kwargs)
