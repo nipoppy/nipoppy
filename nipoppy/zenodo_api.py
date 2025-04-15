@@ -264,7 +264,7 @@ class ZenodoAPI:
         for keyword in keywords:
             full_query += f" AND metadata.subjects.subject:{keyword}"
 
-        self.logger.debug(f"Using Zenodo query string: {full_query}")
+        self.logger.debug(f'Using Zenodo query string: "{full_query}"')
 
         response = httpx.get(
             f"{self.api_endpoint}/records",
