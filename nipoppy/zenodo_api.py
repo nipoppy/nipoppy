@@ -248,3 +248,30 @@ class ZenodoAPI:
                 )
 
             raise SystemExit(1)
+
+    def search_records(
+        self,
+        query: str,
+        keywords: Optional[list[str]] = None,
+        page=1,
+        size=10,
+    ):
+        """Search for records in Zenodo."""
+        if keywords is None:
+            keywords = []
+
+        full_query = query
+        for keyword in keywords:
+            full_query += f" AND metadata.subjects.subject:{keyword}"
+
+        response = httpx.get(
+            f"{self.api_endpoint}/records",
+            headers=self.headers,
+            params={
+                "q": full_query,
+                "page": page,
+                "size": size,
+            },
+        )
+
+        return response.json()["hits"]

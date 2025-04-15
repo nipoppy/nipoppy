@@ -203,3 +203,31 @@ def test_failed_authentication():
         ZenodoAPI(
             sandbox=ZENODO_SANDBOX, access_token="invalid_token"
         )._check_authentication()
+
+
+def test_search_records(zenodo_api: ZenodoAPI):
+    # TODO update the test record to have the correct keywords, then use default
+    # keywords in search
+    results = zenodo_api.search_records("FMRIPREP", keywords=[])
+    assert len(results["hits"]) > 0
+    assert results["total"] > 0
+
+
+def test_search_records_api_call(
+    zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    search_query = "FMRIPREP"
+    keyword = "Nipoppy"
+    page = 2
+    size = 100
+
+    mocked = mocker.patch("httpx.get")
+    zenodo_api.search_records(search_query, keywords=[keyword], page=page, size=size)
+
+    mocked.assert_called_once()
+
+    params = mocked.call_args[1]["params"]
+    assert search_query in params["q"]
+    assert f"metadata.subjects.subject:{keyword}" in params["q"]
+    assert params["page"] == page
+    assert params["size"] == size
