@@ -206,9 +206,10 @@ def test_failed_authentication():
 
 
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
-def test_search_records(query, zenodo_api: ZenodoAPI):
+@pytest.mark.parametrize("keywords", [None, []])
+def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     # TODO search in official Zenodo instead of sandbox
-    results = zenodo_api.search_records(query, keywords=[])
+    results = zenodo_api.search_records(query, keywords=keywords)
     assert len(results["hits"]) > 0
     assert results["total"] > 0
 
