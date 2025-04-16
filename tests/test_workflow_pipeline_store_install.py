@@ -212,6 +212,28 @@ def test_run_main_force(
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
 
 
+def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow):
+    # https://zenodo.org/records/1482743 is the Boutiques FSL BET descriptor
+    workflow_zenodo.zenodo_id = "1482743"
+    workflow_zenodo.zenodo_api = ZenodoAPI(sandbox=False)
+
+    with pytest.raises(
+        FileNotFoundError,
+        match="Pipeline configuration file not found: .* Make sure the record at",
+    ):
+        workflow_zenodo.run_main()
+
+
+def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
+    # create a non-existent path
+    workflow.dpath_pipeline = workflow.layout.dpath_pipelines / "non_existent_path"
+    with pytest.raises(
+        FileNotFoundError,
+        match="Pipeline configuration file not found: .*/config.json$",
+    ):
+        workflow.run_main()
+
+
 def test_download(workflow_zenodo: PipelineInstallWorkflow):
 
     workflow_zenodo.run_main()

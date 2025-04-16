@@ -127,10 +127,25 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             dpath_pipeline = self.dpath_pipeline
 
         # load the config and validate file contents (including file paths)
-        pipeline_config = check_pipeline_bundle(
-            dpath_pipeline,
-            logger=self.logger,
-        )
+        try:
+            pipeline_config = check_pipeline_bundle(
+                dpath_pipeline,
+                logger=self.logger,
+            )
+        except FileNotFoundError as exception:
+            # if the files were downloaded from Zenodo, point user to the Zenodo record
+            if self.zenodo_id is not None:
+                record_url = (
+                    self.zenodo_api.api_endpoint.removesuffix("/api")
+                    + "/records/"
+                    + self.zenodo_id
+                )
+                raise FileNotFoundError(
+                    f"{str(exception)}. Make sure the record at "
+                    f"{record_url} contains valid Nipoppy pipeline configuration files."
+                )
+            else:
+                raise exception
 
         # generate destination path
         dpath_target = self.layout.get_dpath_pipeline_bundle(
