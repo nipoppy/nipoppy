@@ -19,7 +19,7 @@
             "INVOCATION_FILE": "invocation-[[STEP_NAME]].json",
             "DESCRIPTOR_FILE": "descriptor-bidscoiner.json",
             "ANALYSIS_LEVEL": "participant",
-            "UPDATE_DOUGHNUT": true
+            "UPDATE_STATUS": true
         }
     ],
     "PIPELINE_TYPE": "bidsification"

@@ -22,7 +22,7 @@
                     "[[DCM2BIDS_CONFIG_FILE]]"
                 ]
             },
-            "UPDATE_DOUGHNUT": true
+            "UPDATE_STATUS": true
         }
     ],
     "VARIABLES": {

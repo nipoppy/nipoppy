@@ -8,10 +8,10 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.layout import LayoutConfig
-from nipoppy.tabular.bagel import BagelModel
+from nipoppy.tabular.curation_status import CurationStatusModel
 from nipoppy.tabular.dicom_dir_map import DicomDirMapModel
-from nipoppy.tabular.doughnut import DoughnutModel
 from nipoppy.tabular.manifest import ManifestModel
+from nipoppy.tabular.processing_status import ProcessingStatusModel
 
 DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "schemas"
 
@@ -20,9 +20,9 @@ MODEL_FILENAME_MAP = {
     Config: "config.json",
     LayoutConfig: "layout.json",
     TrackerConfig: "tracker.json",
-    BagelModel: "bagel.json",
+    ProcessingStatusModel: "processing_status.json",
     DicomDirMapModel: "dicom_dir_map.json",
-    DoughnutModel: "doughnut.json",
+    CurationStatusModel: "curation_status.json",
     ManifestModel: "manifest.json",
 }
 
