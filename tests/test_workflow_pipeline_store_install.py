@@ -38,7 +38,7 @@ def workflow(tmp_path: Path, pipeline_config: ProcPipelineConfig):
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
-        dpath_pipeline_or_zenodo_id=(
+        source=(
             tmp_path
             / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
             / "my_pipeline-1.0.0"
@@ -70,7 +70,7 @@ def _assert_files_copied(dpath_source, dpath_dest):
 def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     PipelineInstallWorkflow(
         dpath_root=(tmp_path / "my_dataset"),
-        dpath_pipeline_or_zenodo_id="not_a_path",
+        source="not_a_path",
     )
     assert any(
         [

@@ -20,7 +20,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        dpath_pipeline_or_zenodo_id: StrOrPathLike | str,
+        source: StrOrPathLike | str,
         zenodo_api: ZenodoAPI = None,
         force: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -36,7 +36,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-        self.dpath_pipeline_or_zenodo_id = dpath_pipeline_or_zenodo_id
+        self.source = source
         self.zenodo_api = zenodo_api or ZenodoAPI()
         self.force = force
 
@@ -44,14 +44,13 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         self.dpath_pipeline = None
         self.zenodo_id = None
-        if (dpath_pipeline := Path(dpath_pipeline_or_zenodo_id)).exists():
+        if (dpath_pipeline := Path(source)).exists():
             self.dpath_pipeline = dpath_pipeline.resolve()
-        elif dpath_pipeline_or_zenodo_id.removeprefix("zenodo.").isnumeric():
-            self.zenodo_id = dpath_pipeline_or_zenodo_id
+        elif source.removeprefix("zenodo.").isnumeric():
+            self.zenodo_id = source
         else:
             self.logger.warning(
-                f"{dpath_pipeline_or_zenodo_id} does not seem like a valid path "
-                "or Zenodo ID"
+                f"{source} does not seem like a valid path " "or Zenodo ID"
             )
 
     def _update_config_and_save(self, pipeline_config: BasePipelineConfig) -> Config:
@@ -176,8 +175,6 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 path_dest=dpath_target,
                 log_level=logging.DEBUG,
             )
-            self.rm(dpath_pipeline, log_level=logging.DEBUG)
-
         # update global config with new pipeline variables
         self._update_config_and_save(pipeline_config)
 

@@ -245,6 +245,7 @@ class BaseWorkflow(Base, ABC):
                     dst=path_dest,
                     **kwargs_move,
                 )
+            Path(path_source).rmdir()
 
     def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Create a symlink to another path."""

@@ -457,7 +457,7 @@ def pipeline_upload(**params):
 
 @pipeline.command("install")
 @click.argument(
-    "path_or_zenodo_id",
+    "source",
     type=str,
 )
 @zenodo_options
@@ -471,7 +471,11 @@ def pipeline_upload(**params):
 )
 @global_options
 def pipeline_install(**params):
-    """Install a new pipeline into the pipeline store."""
+    """
+    Install a new pipeline into the pipeline store.
+
+    The source of the pipeline can be a local directory or a Zenodo ID.
+    """
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
     params = dep_params(**params)
@@ -479,7 +483,6 @@ def pipeline_install(**params):
         sandbox=params.pop("sandbox"),
         access_token=params.pop("access_token"),
     )
-    params["dpath_pipeline_or_zenodo_id"] = params.pop("path_or_zenodo_id")
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
 

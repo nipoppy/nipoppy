@@ -275,11 +275,11 @@ def test_cli_pipeline_install(from_zenodo, tmp_path: Path):
     dpath_pipeline = tmp_path / "pipeline"
     dpath_pipeline.mkdir()
 
-    location_arg = "zenodo.123456" if from_zenodo else str(dpath_pipeline)
+    source = "zenodo.123456" if from_zenodo else str(dpath_pipeline)
 
     result = runner.invoke(
         cli,
-        ["pipeline", "install", "--dataset", str(dpath_root), location_arg],
+        ["pipeline", "install", "--dataset", str(dpath_root), source],
         catch_exceptions=False,
     )
 
