@@ -149,6 +149,8 @@ def test_get_pipeline_metadata(
             "subjects": [
                 {"subject": "Nipoppy"},
                 {"subject": "pipeline_type:processing"},
+                {"subject": "pipeline_name:fmriprep"},
+                {"subject": "pipeline_version:24.1.1"},
             ],
         }
     }
