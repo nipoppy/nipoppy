@@ -31,7 +31,7 @@ def workflow(tmp_path: Path, pipeline_config: ProcPipelineConfig):
     dpath_root = tmp_path / "my_dataset"
     create_pipeline_config_files(
         tmp_path,
-        proc_pipelines=[pipeline_config.model_dump()],
+        processing_pipelines=[pipeline_config.model_dump()],
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
