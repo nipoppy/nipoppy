@@ -7,7 +7,7 @@ import pytest_mock
 
 from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
@@ -112,15 +112,39 @@ def test_proc_pipeline_info_error(extractor: ExtractionRunner):
 
 
 @pytest.mark.parametrize(
-    "bagel_data,pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "processing_status_data,pipeline_name,pipeline_version,participant_id,session_id,expected",  # noqa: E501
     [
         (
             [
-                ["S01", "1", "freesurfer", "7.3.2", Bagel.status_success],
-                ["S01", "2", "freesurfer", "7.3.2", Bagel.status_incomplete],
-                ["S01", "3", "freesurfer", "7.3.2", Bagel.status_fail],
-                ["S02", "1", "freesurfer", "7.3.2", Bagel.status_unavailable],
-                ["S02", "2", "freesurfer", "7.3.2", Bagel.status_success],
+                [
+                    "S01",
+                    "1",
+                    "freesurfer",
+                    "7.3.2",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "S01",
+                    "2",
+                    "freesurfer",
+                    "7.3.2",
+                    ProcessingStatusTable.status_incomplete,
+                ],
+                ["S01", "3", "freesurfer", "7.3.2", ProcessingStatusTable.status_fail],
+                [
+                    "S02",
+                    "1",
+                    "freesurfer",
+                    "7.3.2",
+                    ProcessingStatusTable.status_unavailable,
+                ],
+                [
+                    "S02",
+                    "2",
+                    "freesurfer",
+                    "7.3.2",
+                    ProcessingStatusTable.status_success,
+                ],
             ],
             "fs_extractor",
             "2.0.0",
@@ -130,22 +154,52 @@ def test_proc_pipeline_info_error(extractor: ExtractionRunner):
         ),
         (
             [
-                ["S01", "1", "freesurfer", "7.3.2", Bagel.status_success],
+                [
+                    "S01",
+                    "1",
+                    "freesurfer",
+                    "7.3.2",
+                    ProcessingStatusTable.status_success,
+                ],
             ],
             "fs_extractor",
             "2.0.0",
-            "S02",  # S02 is not in bagel
+            "S02",  # S02 is not in processing status table
             "1",
             [],
         ),
         (
             [
-                ["P01", "A", "freesurfer", "6.0.1", Bagel.status_success],
-                ["P01", "B", "freesurfer", "6.0.1", Bagel.status_fail],
-                ["P02", "B", "freesurfer", "6.0.1", Bagel.status_success],
-                ["P01", "A", "fmriprep", "20.0.7", Bagel.status_fail],
-                ["P01", "B", "fmriprep", "20.0.7", Bagel.status_success],
-                ["P02", "B", "fmriprep", "20.0.7", Bagel.status_success],
+                [
+                    "P01",
+                    "A",
+                    "freesurfer",
+                    "6.0.1",
+                    ProcessingStatusTable.status_success,
+                ],
+                ["P01", "B", "freesurfer", "6.0.1", ProcessingStatusTable.status_fail],
+                [
+                    "P02",
+                    "B",
+                    "freesurfer",
+                    "6.0.1",
+                    ProcessingStatusTable.status_success,
+                ],
+                ["P01", "A", "fmriprep", "20.0.7", ProcessingStatusTable.status_fail],
+                [
+                    "P01",
+                    "B",
+                    "fmriprep",
+                    "20.0.7",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "P02",
+                    "B",
+                    "fmriprep",
+                    "20.0.7",
+                    ProcessingStatusTable.status_success,
+                ],
             ],
             "fs_fmriprep_extractor",
             "1.0.0",
@@ -156,7 +210,7 @@ def test_proc_pipeline_info_error(extractor: ExtractionRunner):
     ],
 )
 def test_get_participants_sessions_to_run(
-    bagel_data,
+    processing_status_data,
     pipeline_name,
     pipeline_version,
     participant_id,
@@ -167,21 +221,23 @@ def test_get_participants_sessions_to_run(
     extractor.pipeline_name = pipeline_name
     extractor.pipeline_version = pipeline_version
     extractor.pipeline_step = DEFAULT_PIPELINE_STEP_NAME
-    extractor.bagel = Bagel().add_or_update_records(
+    extractor.processing_status_table = ProcessingStatusTable().add_or_update_records(
         records=[
             {
-                Bagel.col_participant_id: data[0],
-                Bagel.col_session_id: data[1],
-                Bagel.col_bids_participant_id: participant_id_to_bids_participant_id(
+                ProcessingStatusTable.col_participant_id: data[0],
+                ProcessingStatusTable.col_session_id: data[1],
+                ProcessingStatusTable.col_bids_participant_id: participant_id_to_bids_participant_id(
                     data[0]
                 ),
-                Bagel.col_bids_session_id: session_id_to_bids_session_id(data[1]),
-                Bagel.col_pipeline_name: data[2],
-                Bagel.col_pipeline_version: data[3],
-                Bagel.col_pipeline_step: DEFAULT_PIPELINE_STEP_NAME,
-                Bagel.col_status: data[4],
+                ProcessingStatusTable.col_bids_session_id: session_id_to_bids_session_id(
+                    data[1]
+                ),
+                ProcessingStatusTable.col_pipeline_name: data[2],
+                ProcessingStatusTable.col_pipeline_version: data[3],
+                ProcessingStatusTable.col_pipeline_step: DEFAULT_PIPELINE_STEP_NAME,
+                ProcessingStatusTable.col_status: data[4],
             }
-            for data in bagel_data
+            for data in processing_status_data
         ]
     )
     assert [

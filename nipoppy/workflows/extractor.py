@@ -120,7 +120,7 @@ class ExtractionRunner(PipelineRunner):
         participants_sessions = None
         for proc_pipeline_info in self.pipeline_config.PROC_DEPENDENCIES:
             to_update = set(
-                self.bagel.get_completed_participants_sessions(
+                self.processing_status_table.get_completed_participants_sessions(
                     pipeline_name=proc_pipeline_info.NAME,
                     pipeline_version=proc_pipeline_info.VERSION,
                     pipeline_step=proc_pipeline_info.STEP,

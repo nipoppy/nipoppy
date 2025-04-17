@@ -1,21 +1,26 @@
-"""Tests for the DoughnutWorkflow."""
+"""Tests for the TrackCurationWorkflow."""
 
 from pathlib import Path
 
 import pytest
 
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.workflows.doughnut import DoughnutWorkflow
+from nipoppy.workflows.track_curation import TrackCurationWorkflow
 
-from .conftest import check_doughnut, create_empty_dataset, get_config, prepare_dataset
+from .conftest import (
+    check_curation_status_table,
+    create_empty_dataset,
+    get_config,
+    prepare_dataset,
+)
 
 
 @pytest.fixture(scope="function")
 def workflow(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     create_empty_dataset(dpath_root)
-    workflow = DoughnutWorkflow(dpath_root=dpath_root)
+    workflow = TrackCurationWorkflow(dpath_root=dpath_root)
     workflow.config = get_config()
     workflow.config.save(workflow.layout.fpath_config)
     return workflow
@@ -52,7 +57,7 @@ def workflow(tmp_path: Path):
 )
 @pytest.mark.parametrize("empty", [True, False])
 def test_run_main(
-    workflow: DoughnutWorkflow,
+    workflow: TrackCurationWorkflow,
     participants_and_sessions_manifest1: dict[str, list[str]],
     participants_and_sessions_manifest2: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
@@ -74,13 +79,13 @@ def test_run_main(
     )
     workflow.manifest = manifest1
 
-    # generate the doughnut
+    # generate the curation status table
     workflow.run_main()
-    doughnut1 = Doughnut.load(workflow.layout.fpath_doughnut)
+    table1 = CurationStatusTable.load(workflow.layout.fpath_curation_status)
 
-    assert len(doughnut1) == len(manifest1)
-    check_doughnut(
-        doughnut=doughnut1,
+    assert len(table1) == len(manifest1)
+    check_curation_status_table(
+        table=table1,
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
@@ -92,13 +97,13 @@ def test_run_main(
     manifest2 = prepare_dataset(participants_and_sessions_manifest2)
     manifest2.save_with_backup(workflow.layout.fpath_manifest)
 
-    # update the doughnut
-    DoughnutWorkflow(dpath_root=workflow.dpath_root, empty=empty).run_main()
-    doughnut2 = Doughnut.load(workflow.layout.fpath_doughnut)
+    # update the curation status table
+    TrackCurationWorkflow(dpath_root=workflow.dpath_root, empty=empty).run()
+    table2 = CurationStatusTable.load(workflow.layout.fpath_curation_status)
 
-    assert len(doughnut2) == len(manifest2)
-    check_doughnut(
-        doughnut=doughnut2,
+    assert len(table2) == len(manifest2)
+    check_curation_status_table(
+        table=table2,
         participants_and_sessions_manifest=participants_and_sessions_manifest2,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
@@ -131,7 +136,7 @@ def test_run_main(
 )
 @pytest.mark.parametrize("empty", [True, False])
 def test_run_main_regenerate(
-    workflow: DoughnutWorkflow,
+    workflow: TrackCurationWorkflow,
     participants_and_sessions_manifest: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
@@ -153,31 +158,37 @@ def test_run_main_regenerate(
     workflow.manifest = manifest
 
     # to be overwritten
-    doughnut_records = []
+    table_records = []
     for _, manifest_record in manifest.iterrows():
         participant_id = manifest_record[Manifest.col_participant_id]
-        doughnut_records.append(
+        table_records.append(
             {
-                Doughnut.col_participant_id: participant_id,
-                Doughnut.col_visit_id: manifest_record[Manifest.col_visit_id],
-                Doughnut.col_session_id: manifest_record[Manifest.col_session_id],
-                Doughnut.col_datatype: manifest_record[Manifest.col_datatype],
-                Doughnut.col_participant_dicom_dir: participant_id,
-                Doughnut.col_in_pre_reorg: True,
-                Doughnut.col_in_post_reorg: True,
-                Doughnut.col_in_bids: True,
+                CurationStatusTable.col_participant_id: participant_id,
+                CurationStatusTable.col_visit_id: manifest_record[
+                    Manifest.col_visit_id
+                ],
+                CurationStatusTable.col_session_id: manifest_record[
+                    Manifest.col_session_id
+                ],
+                CurationStatusTable.col_datatype: manifest_record[
+                    Manifest.col_datatype
+                ],
+                CurationStatusTable.col_participant_dicom_dir: participant_id,
+                CurationStatusTable.col_in_pre_reorg: True,
+                CurationStatusTable.col_in_post_reorg: True,
+                CurationStatusTable.col_in_bids: True,
             }
         )
-    doughnut_old = Doughnut(doughnut_records)
-    assert doughnut_old.save_with_backup(workflow.layout.fpath_doughnut) is not None
+    table_old = CurationStatusTable(table_records)
+    assert table_old.save_with_backup(workflow.layout.fpath_curation_status) is not None
 
-    # regenerate the doughnut
+    # regenerate the table
     workflow.run_main()
-    doughnut = Doughnut.load(workflow.layout.fpath_doughnut)
+    table = CurationStatusTable.load(workflow.layout.fpath_curation_status)
 
-    assert len(doughnut) == len(manifest)
-    check_doughnut(
-        doughnut=doughnut,
+    assert len(table) == len(manifest)
+    check_curation_status_table(
+        table=table,
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
@@ -187,5 +198,8 @@ def test_run_main_regenerate(
 
 
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    DoughnutWorkflow(dpath_root=tmp_path).run_cleanup()
-    assert "Successfully generated/updated the dataset's doughnut file!" in caplog.text
+    TrackCurationWorkflow(dpath_root=tmp_path).run_cleanup()
+    assert (
+        "Successfully generated/updated the dataset's curation status file!"
+        in caplog.text
+    )

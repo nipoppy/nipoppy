@@ -242,10 +242,19 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
 
         elif not fpath_container.exists():
-            raise FileNotFoundError(
+            error_message = (
                 f"No container image file found at {fpath_container} for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+            if self.pipeline_config.CONTAINER_INFO.URI is not None:
+                error_message += (
+                    ". This file can be downloaded to the appropriate path by running "
+                    "the following command:"
+                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
+                    f"{self.pipeline_config.CONTAINER_INFO.FILE} "
+                    f"{self.pipeline_config.CONTAINER_INFO.URI}"
+                )
+            raise FileNotFoundError(error_message)
         return fpath_container
 
     @cached_property
@@ -508,6 +517,19 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
+    def _check_pipeline_variables(self):
+        """Check that the pipeline variables are not null in the config."""
+        for name, value in self.config.PIPELINE_VARIABLES.get_variables(
+            self._pipeline_type, self.pipeline_name, self.pipeline_version
+        ).items():
+            if value is None:
+                raise ValueError(
+                    f"Variable {name} is not set in the config for pipeline "
+                    f"{self.pipeline_name}, version {self.pipeline_version}. You need "
+                    "to set it in the PIPELINE_VARIABLES section of the config file at "
+                    f"{self.layout.fpath_config}"
+                )
+
     def check_pipeline_step(self):
         """Set the pipeline step name based on the config if it is not given."""
         if self.pipeline_step is None:
@@ -521,6 +543,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self._check_pipeline_variables()
         self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
@@ -568,8 +591,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if self.n_total == 0:
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, "
-                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
+                "in the input arguments, the dataset's manifest or config file, and/or "
+                f"check the curation status file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was

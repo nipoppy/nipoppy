@@ -22,8 +22,11 @@
                     "[[DCM2BIDS_CONFIG_FILE]]"
                 ]
             },
-            "UPDATE_DOUGHNUT": true
+            "UPDATE_STATUS": true
         }
     ],
+    "VARIABLES": {
+        "DCM2BIDS_CONFIG_FILE": "Path to the JSON config file needed for the \"convert\" step"
+    },
     "PIPELINE_TYPE": "bidsification"
 }

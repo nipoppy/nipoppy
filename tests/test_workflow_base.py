@@ -97,6 +97,13 @@ def test_run_command_no_markup(
     assert text in caplog.text
 
 
+def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
+    message = "This should be printed"
+    workflow.run_command(["echo", message], quiet=True)
+    assert workflow.log_prefix_run not in caplog.text
+    assert message in caplog.text
+
+
 def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     workflow.run_setup()
     assert "BEGIN" in caplog.text

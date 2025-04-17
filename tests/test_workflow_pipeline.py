@@ -2,6 +2,7 @@
 
 import json
 import re
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
@@ -49,7 +50,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         self, participant_id: Optional[str], session_id: Optional[str]
     ):
         """Only run on participant_id/sessions with BIDS data."""
-        return self.doughnut.get_bidsified_participants_sessions(
+        return self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         )
 
@@ -245,8 +246,22 @@ def test_fpath_container_not_specified(workflow: PipelineWorkflow):
         workflow.fpath_container
 
 
-def test_fpath_container_not_found(workflow: PipelineWorkflow):
-    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+@pytest.mark.parametrize("container_uri", [None, "docker://some/uri:tag"])
+def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
+    workflow.pipeline_config.CONTAINER_INFO.URI = container_uri
+    error_message = (
+        "No container image file found at "
+        f"{workflow.pipeline_config.CONTAINER_INFO.FILE} for pipeline "
+        f"{workflow.pipeline_name} {workflow.pipeline_version}"
+    )
+    if container_uri is not None:
+        error_message += (
+            ". This file can be downloaded to the appropriate path by running the "
+            "following command:\n\n"
+            f"apptainer pull {workflow.pipeline_config.CONTAINER_INFO.FILE}"
+            f" {workflow.pipeline_config.CONTAINER_INFO.URI}"
+        )
+    with pytest.raises(FileNotFoundError, match=error_message):
         workflow.fpath_container
 
 
@@ -721,6 +736,21 @@ def test_check_pipeline_version(
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
     assert f"using version {expected_version}" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "variables,valid", [({"var1": "val1"}, True), ({"var2": None}, False)]
+)
+def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
+    with (
+        nullcontext()
+        if valid
+        else pytest.raises(ValueError, match="Variable .* is not set in the config")
+    ):
+        assert workflow._check_pipeline_variables() is None
 
 
 @pytest.mark.parametrize(

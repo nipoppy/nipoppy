@@ -15,6 +15,7 @@ from nipoppy.env import (
     ReturnCode,
 )
 from nipoppy.logger import get_logger
+from nipoppy.zenodo_api import ZenodoAPI
 
 logger = get_logger(
     name=f"{PROGRAM_NAME}.{__name__}",
@@ -26,6 +27,8 @@ def handle_exception(workflow):
     """Handle exceptions raised during workflow execution."""
     try:
         yield workflow
+    except SystemExit:
+        workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     except Exception:
         workflow.logger.exception("Error while running nipoppy")
         if workflow.return_code == ReturnCode.SUCCESS:
@@ -165,6 +168,58 @@ class OrderedGroup(click.RichGroup):
         return list(self.commands.keys())
 
 
+click.rich_click.OPTION_GROUPS = {
+    "nipoppy *": [
+        {
+            "name": "Command-specific",
+            "options": [
+                "--dataset",
+                "--pipeline",
+                "--pipeline-version",
+                "--pipeline-step",
+                "--bids-source",
+                "--mode",
+                "--empty",
+                "--regenerate",
+                "--copy-files",
+                "--check-dicoms",
+                "--tar",
+            ],
+        },
+        {
+            "name": "Filtering",
+            "options": [
+                "--participant-id",
+                "--session-id",
+            ],
+        },
+        {
+            "name": "Parallelization",
+            "options": [
+                "--hpc",
+                "--write-list",
+            ],
+        },
+        {
+            "name": "Troubleshooting",
+            "options": [
+                "--verbose",
+                "--dry-run",
+                "--simulate",
+                "--keep-workdir",
+            ],
+        },
+        {
+            "name": "Miscellaneous",
+            "options": [
+                "--layout",
+                "--help",
+            ],
+        },
+    ]
+}
+
+
 @click.group(
     cls=OrderedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -221,17 +276,17 @@ def init(**params):
     "-f",
     is_flag=True,
     help=(
-        "Regenerate the doughnut file even if it already exists"
+        "Regenerate the curation status file even if it already exists"
         " (default: only append rows for new records)"
     ),
 )
 @global_options
-def doughnut(**params):
-    """Create or update a dataset's doughnut file."""
-    from nipoppy.workflows.doughnut import DoughnutWorkflow
+def track_curation(**params):
+    """Create or update a dataset's curation status file."""
+    from nipoppy.workflows.track_curation import TrackCurationWorkflow
 
     params = dep_params(**params)
-    with handle_exception(DoughnutWorkflow(**params)) as workflow:
+    with handle_exception(TrackCurationWorkflow(**params)) as workflow:
         workflow.run()
 
 
@@ -350,6 +405,100 @@ def status(**params):
 def pipeline():
     """Pipeline store operations."""
     pass
+
+
+def zenodo_options(func):
+    """Define Zenodo options for the CLI."""
+    func = click.option(
+        "--zenodo-token",
+        "access_token",
+        envvar="ZENODO_TOKEN",
+        type=str,
+        required=False,
+        help="Zenodo access token.",
+    )(func)
+    func = click.option(
+        "--sandbox",
+        "sandbox",
+        is_flag=True,
+        help="Use the Zenodo sandbox API for tests.",
+    )(func)
+    return func
+
+
+@pipeline.command("download")
+@click.argument(
+    "record_id",
+    type=str,
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Force download and overwrite existing files.",
+)
+@dataset_option
+@zenodo_options
+def pipeline_download(**params):
+    """Download a Zenodo pipeline."""
+    from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow
+
+    params = dep_params(**params)
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
+    with handle_exception(ZenodoDownloadWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("upload")
+@click.argument(
+    "pipeline_dir",
+    type=str,
+)
+@click.option(
+    "--zenodo-id",
+    "record_id",
+    type=str,
+    required=False,
+    help="To update an existing pipeline, provide the Zenodo ID.",
+)
+@zenodo_options
+def pipeline_upload(**params):
+    """Add a new pipeline."""
+    from nipoppy.workflows.zenodo import ZenodoUploadWorkflow
+
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
+    params["dpath_pipeline"] = params.pop("pipeline_dir")
+    with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("install")
+@click.argument(
+    "path_or_zenodo_id",
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+)
+@dataset_option
+@click.option(
+    "--force",
+    "-f",
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing pipeline directory if it exists.",
+)
+def pipeline_install(**params):
+    """Install a new pipeline into the pipeline store."""
+    from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+
+    params = dep_params(**params)
+    params["dpath_pipeline"] = params.pop("path_or_zenodo_id")
+    with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
+        workflow.run()
 
 
 @pipeline.command("validate")

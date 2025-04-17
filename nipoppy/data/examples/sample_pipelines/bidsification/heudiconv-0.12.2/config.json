@@ -21,8 +21,11 @@
                     "[[HEUDICONV_HEURISTIC_FILE]]"
                 ]
             },
-            "UPDATE_DOUGHNUT": true
+            "UPDATE_STATUS": true
         }
     ],
+    "VARIABLES": {
+        "HEUDICONV_HEURISTIC_FILE": "Path to the Python heuristic file needed for the \"convert\" step"
+    },
     "PIPELINE_TYPE": "bidsification"
 }

@@ -177,6 +177,7 @@ def test_boutiques_descriptors(fpath_descriptor):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
+        ("bids-validator", "2.0.3"),
         ("fmriprep", "20.2.7"),
         ("fmriprep", "23.1.3"),
         ("fmriprep", "24.1.1"),
@@ -250,10 +251,10 @@ def test_bids_conversion_runner(
 
 def test_bids_pipeline_configs(bids_pipeline_configs: list[BidsPipelineConfig]):
     for pipeline_config in bids_pipeline_configs:
-        count = sum([step.UPDATE_DOUGHNUT for step in pipeline_config.STEPS])
+        count = sum([step.UPDATE_STATUS for step in pipeline_config.STEPS])
         assert count == 1, (
             f"BIDS pipeline {pipeline_config.NAME} {pipeline_config.VERSION}"
-            f" should have exactly one step with UPDATE_DOUGHNUT=true (got {count})"
+            f" should have exactly one step with UPDATE_STATUS=true (got {count})"
         )
 
 
@@ -326,21 +327,31 @@ def test_tracker_paths(
 
     # check status
     assert (
-        tracker.bagel.loc[
+        tracker.processing_status_table.loc[
             (
-                (tracker.bagel[tracker.bagel.col_participant_id] == participant_id)
-                & (tracker.bagel[tracker.bagel.col_session_id] == session_id)
+                (
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_participant_id
+                    ]
+                    == participant_id
+                )
+                & (
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_session_id
+                    ]
+                    == session_id
+                )
             ),
-            tracker.bagel.col_status,
+            tracker.processing_status_table.col_status,
         ].item()
-        == tracker.bagel.status_success
+        == tracker.processing_status_table.status_success
     )
 
 
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("fs_stats", "0.2.0"),
+        ("fs_stats", "0.2.1"),
         ("static_FC", "0.1.0"),
     ],
 )
@@ -367,3 +378,40 @@ def test_extractor(
 
     assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
+
+
+@pytest.mark.parametrize(
+    "pipeline_type,pipeline_name,pipeline_version",
+    [
+        (PipelineTypeEnum.BIDSIFICATION, "bidscoin", "4.3.2"),
+        (PipelineTypeEnum.BIDSIFICATION, "dcm2bids", "3.1.0"),
+        (PipelineTypeEnum.BIDSIFICATION, "dcm2bids", "3.2.0"),
+        (PipelineTypeEnum.BIDSIFICATION, "heudiconv", "0.12.2"),
+        (PipelineTypeEnum.PROCESSING, "fmriprep", "20.2.7"),
+        (PipelineTypeEnum.PROCESSING, "fmriprep", "23.1.3"),
+        (PipelineTypeEnum.PROCESSING, "fmriprep", "24.1.1"),
+        (PipelineTypeEnum.PROCESSING, "freesurfer", "6.0.1"),
+        (PipelineTypeEnum.PROCESSING, "freesurfer", "7.3.2"),
+        (PipelineTypeEnum.PROCESSING, "mriqc", "23.1.0"),
+        (PipelineTypeEnum.PROCESSING, "qsiprep", "0.23.0"),
+        (PipelineTypeEnum.EXTRACTION, "fs_stats", "0.2.1"),
+        (PipelineTypeEnum.EXTRACTION, "static_FC", "0.1.0"),
+    ],
+)
+def test_pipeline_variables(pipeline_type, pipeline_name, pipeline_version):
+    main_config = Config.load(FPATH_SAMPLE_CONFIG)
+    variables_in_main_config = set(
+        main_config.PIPELINE_VARIABLES.get_variables(
+            pipeline_type, pipeline_name, pipeline_version
+        ).keys()
+    )
+    pipeline_config = BasePipelineConfig(
+        **load_json(
+            DPATH_SAMPLE_PIPELINES
+            / pipeline_type.value
+            / f"{pipeline_name}-{pipeline_version}"
+            / DatasetLayout.fname_pipeline_config
+        )
+    )
+    variables_in_pipeline_config = set(pipeline_config.VARIABLES.keys())
+    assert variables_in_main_config == variables_in_pipeline_config

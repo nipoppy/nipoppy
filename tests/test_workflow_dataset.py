@@ -147,5 +147,5 @@ def test_dicom_dir_map_not_found(workflow: BaseDatasetWorkflow):
 
 
 def test_bagel_empty_if_not_found(workflow: BaseDatasetWorkflow):
-    assert not workflow.layout.fpath_imaging_bagel.exists()
-    assert len(workflow.bagel) == 0
+    assert not workflow.layout.fpath_curation_status.exists()
+    assert len(workflow.curation_status_table) == 0
