@@ -34,9 +34,7 @@ def test_upload(mocker: pytest_mock.MockerFixture):
     validator.assert_called_once()
 
 
-def test_get_pipeline_metadata(
-    datetime_fixture,
-):  # noqa F811
+def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
     expected = {
         "metadata": {
             "title": "Upload test",
@@ -53,7 +51,12 @@ def test_get_pipeline_metadata(
             "publication_date": "2024-04-04",
             "publisher": "Nipoppy",
             "resource_type": {"id": "software"},
-            "keywords": ["Nipoppy", "processing"],
+            "subjects": [
+                {"subject": "Nipoppy"},
+                {"subject": "pipeline_type:processing"},
+                {"subject": "pipeline_name:fmriprep"},
+                {"subject": "pipeline_version:24.1.1"},
+            ],
         }
     }
 
@@ -69,8 +72,5 @@ def test_get_pipeline_metadata(
         zenodo_metadata_file=TEST_PIPELINE / "zenodo.json",
         pipeline_config=pipeline_config,
     )
-    # Convert keywords to set to prevent order mismatch
-    results["metadata"]["keywords"] = set(results["metadata"]["keywords"])
-    expected["metadata"]["keywords"] = set(expected["metadata"]["keywords"])
 
     assert results == expected
