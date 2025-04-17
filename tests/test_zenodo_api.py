@@ -148,7 +148,7 @@ def test_create_draft(mocker: pytest_mock.MockerFixture):
     mock_post = mocker.patch("httpx.post")
     mock_response = mocker.Mock()
     mock_response.status_code = 201
-    mock_response.json.return_value = {"id": "123456"}
+    mock_response.json.return_value = {"id": "123456", "owners": [{"id": "987"}]}
     mock_post.return_value = mock_response
 
     # Call the function under test
@@ -165,7 +165,7 @@ def test_create_draft(mocker: pytest_mock.MockerFixture):
 
     # Assertions
     mock_post.assert_called_once_with(url, json=metadata, headers=headers)
-    assert result == "123456"
+    assert result == ("123456", "987")
 
 
 def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
