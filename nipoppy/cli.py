@@ -82,7 +82,7 @@ def dep_params(**params):
     return params
 
 
-def global_options_no_layout(func):
+def global_options(func):
     """Define global options (no layout) for the CLI."""
     func = click.option(
         "--verbose",
@@ -99,9 +99,8 @@ def global_options_no_layout(func):
     return func
 
 
-def global_options(func):
-    """Define global options (including layout) for the CLI."""
-    func = global_options_no_layout(func)
+def layout_option(func):
+    """Define layout option for the CLI."""
     func = click.option(
         "--layout",
         "fpath_layout",
@@ -261,6 +260,7 @@ def cli():
     ),
 )
 @global_options
+@layout_option
 def init(**params):
     """Initialize a new dataset."""
     from nipoppy.workflows.dataset_init import InitWorkflow
@@ -291,6 +291,7 @@ def init(**params):
     ),
 )
 @global_options
+@layout_option
 def track_curation(**params):
     """Create or update a dataset's curation status file."""
     from nipoppy.workflows.track_curation import TrackCurationWorkflow
@@ -317,6 +318,7 @@ def track_curation(**params):
     ),
 )
 @global_options
+@layout_option
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
@@ -334,6 +336,7 @@ def reorg(**params):
 @dataset_option
 @runners_options
 @global_options
+@layout_option
 def bidsify(**params):
     """Run a BIDS conversion pipeline."""
     from nipoppy.workflows.bids_conversion import BidsConversionRunner
@@ -364,6 +367,7 @@ def bidsify(**params):
     ),
 )
 @global_options
+@layout_option
 def run(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
@@ -377,6 +381,7 @@ def run(**params):
 @dataset_option
 @pipeline_options
 @global_options
+@layout_option
 def track(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
@@ -390,6 +395,7 @@ def track(**params):
 @dataset_option
 @runners_options
 @global_options
+@layout_option
 def extract(**params):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
     from nipoppy.workflows.extractor import ExtractionRunner
@@ -402,6 +408,7 @@ def extract(**params):
 @cli.command()
 @dataset_option
 @global_options
+@layout_option
 def status(**params):
     """Print a summary of the dataset."""
     from nipoppy.workflows.dataset_status import StatusWorkflow
@@ -450,6 +457,7 @@ def zenodo_options(func):
 @dataset_option
 @zenodo_options
 @global_options
+@layout_option
 def pipeline_download(**params):
     """Download a Zenodo pipeline."""
     from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow
@@ -476,7 +484,7 @@ def pipeline_download(**params):
     help="To update an existing pipeline, provide the Zenodo ID.",
 )
 @zenodo_options
-@global_options_no_layout
+@global_options
 def pipeline_upload(**params):
     """Add a new pipeline."""
     from nipoppy.workflows.zenodo import ZenodoUploadWorkflow
@@ -504,6 +512,7 @@ def pipeline_upload(**params):
     help="Overwrite existing pipeline directory if it exists.",
 )
 @global_options
+@layout_option
 def pipeline_install(**params):
     """Install a new pipeline into the pipeline store."""
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
@@ -520,7 +529,7 @@ def pipeline_install(**params):
     required=True,
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
-@global_options_no_layout
+@global_options
 def pipeline_validate(**params):
     """Validate a pipeline store directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
@@ -531,16 +540,17 @@ def pipeline_validate(**params):
 
 
 @pipeline.command("search")
-@click.argument("query", type=str)
+@click.argument("query", type=str, default="")
 @click.option(
     "--size",
+    "-s",
     type=click.IntRange(min=1),
     help="Number of items to show",
     default=10,
     show_default=True,
 )
 @zenodo_options
-@global_options_no_layout
+@global_options
 def pipeline_search(**params):
     """Search for available pipelines on Zenodo."""
     from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow

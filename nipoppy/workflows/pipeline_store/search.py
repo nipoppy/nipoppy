@@ -20,8 +20,8 @@ class PipelineSearchWorkflow(BaseWorkflow):
         query: str,
         zenodo_api: Optional[ZenodoAPI] = None,
         size: int = 10,
-        verbose=False,
-        dry_run=False,
+        verbose: bool = False,
+        dry_run: bool = False,
     ):
         """Initialize the workflow."""
         super().__init__(

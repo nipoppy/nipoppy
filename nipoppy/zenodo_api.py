@@ -265,7 +265,8 @@ class ZenodoAPI:
         full_query = query
         for keyword in keywords:
             full_query += f" AND metadata.subjects.subject:{keyword}"
-        full_query = full_query.removeprefix(" AND ")  # in case initial query is empty
+        # handle case where initial query is empty
+        full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
 
