@@ -132,13 +132,14 @@ def test_download_record_checksum(
     or os.environ.get("ZENODO_ID") is None,
     reason="Requires Zenodo token and ID",
 )
-def test_create_new_version(metadata: dict):
+@pytest.mark.parametrize("prefix", ["", "zenodo."])
+def test_create_new_version(prefix: str, metadata: dict):
     ZenodoAPI(
         sandbox=ZENODO_SANDBOX, access_token=os.environ["ZENODO_TOKEN"]
     ).upload_pipeline(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
-        record_id=os.environ["ZENODO_ID"],
+        record_id=f"{prefix}{os.environ['ZENODO_ID']}",
     )
 
 

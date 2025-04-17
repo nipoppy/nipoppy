@@ -210,6 +210,7 @@ class ZenodoAPI:
         record_id: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
+        record_id = record_id.removeprefix("zenodo.") if record_id else None
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
