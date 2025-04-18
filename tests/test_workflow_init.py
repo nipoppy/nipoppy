@@ -35,7 +35,7 @@ def assert_layout_creation(workflow, dpath_root):
     assert Path(dpath_root, FPATH_CONFIG).exists()
     assert Path(dpath_root, FPATH_MANIFEST).exists()
 
-    # check no pipeline config files have been copied
+    # check that no pipeline config files have been copied
     assert (
         len(
             list(
