@@ -28,5 +28,6 @@
     "VARIABLES": {
         "DCM2BIDS_CONFIG_FILE": "Path to the JSON config file needed for the \"convert\" step"
     },
-    "PIPELINE_TYPE": "bidsification"
+    "PIPELINE_TYPE": "bidsification",
+    "SCHEMA_VERSION": "1"
 }
