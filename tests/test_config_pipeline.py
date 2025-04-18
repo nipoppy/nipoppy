@@ -14,7 +14,7 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 
 FIELDS_BASE_PIPELINE = [
     "NAME",
@@ -25,6 +25,7 @@ FIELDS_BASE_PIPELINE = [
     "STEPS",
     "VARIABLES",
     "PIPELINE_TYPE",
+    "SCHEMA_VERSION",
 ]
 FIELDS_BIDS_PIPELINE = FIELDS_BASE_PIPELINE
 FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE
@@ -37,6 +38,7 @@ def valid_data() -> dict:
     return {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
     }
 
 
@@ -64,7 +66,6 @@ def valid_data() -> dict:
             },
             FIELDS_EXTRACTION_PIPELINE,
         ),
-        (PipelineInfo, {}, FIELDS_PIPELINE_INFO),
     ],
 )
 def test_fields(model_class, extra_data, fields, valid_data):
@@ -72,7 +73,17 @@ def test_fields(model_class, extra_data, fields, valid_data):
     for field in fields:
         assert hasattr(config, field)
 
-    assert len(set(config.model_dump())) == len(fields)
+    assert len(config.model_dump()) == len(fields)
+
+
+def test_fields_pipeline_info():
+    data = {
+        "NAME": "my_pipeline",
+        "VERSION": "1.0.0",
+        "STEP": "step1",
+    }
+    config = PipelineInfo(**data)
+    assert len(config.model_dump()) == len(FIELDS_PIPELINE_INFO)
 
 
 @pytest.mark.parametrize("model_class", [BasePipelineConfig, PipelineInfo])
@@ -105,11 +116,10 @@ def test_step_names_error_duplicate(valid_data):
         )
 
 
-def test_error_no_dependencies():
+def test_error_no_dependencies(valid_data):
     with pytest.raises(ValidationError, match="PROC_DEPENDENCIES is an empty list"):
         ExtractionPipelineConfig(
-            NAME="my_pipeline",
-            VERSION="1.0.0",
+            **valid_data,
             PROC_DEPENDENCIES=[],
             PIPELINE_TYPE=PipelineTypeEnum.EXTRACTION,
         )
@@ -160,14 +170,25 @@ def test_error_pipeline_type(valid_data, extra_data, pipeline_class, valid):
         pipeline_class(**data)
 
 
-def test_warning_if_duplicate_dependencies():
+def test_error_schema_version():
+    with pytest.raises(
+        ValidationError,
+        match=("Pipeline .* uses schema version.*which is incompatible with"),
+    ):
+        BasePipelineConfig(
+            NAME="my_pipeline",
+            VERSION="1.0.0",
+            SCHEMA_VERSION="invalid_version",
+        )
+
+
+def test_warning_if_duplicate_dependencies(valid_data):
     with pytest.warns(
         UserWarning,
         match="PROC_DEPENDENCIES contains duplicate entries for extraction pipeline",
     ):
         ExtractionPipelineConfig(
-            NAME="my_pipeline",
-            VERSION="1.0.0",
+            **valid_data,
             PROC_DEPENDENCIES=[
                 PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
                 PipelineInfo(NAME="my_pipeline", VERSION="1.0.0", STEP="step1"),
@@ -176,10 +197,9 @@ def test_warning_if_duplicate_dependencies():
         )
 
 
-def test_substitutions():
+def test_substitutions(valid_data):
     data = {
-        "NAME": "my_pipeline",
-        "VERSION": "1.0.0",
+        **valid_data,
         "DESCRIPTION": "[[PIPELINE_NAME]] version [[PIPELINE_VERSION]]",
         "STEPS": [
             {
