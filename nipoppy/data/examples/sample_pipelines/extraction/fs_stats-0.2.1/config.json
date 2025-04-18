@@ -30,5 +30,6 @@
     "VARIABLES": {
         "FREESURFER_LICENSE_FILE": "Path to FreeSurfer license file"
     },
-    "PIPELINE_TYPE": "extraction"
+    "PIPELINE_TYPE": "extraction",
+    "SCHEMA_VERSION": "1"
 }

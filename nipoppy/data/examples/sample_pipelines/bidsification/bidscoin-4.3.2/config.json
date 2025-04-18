@@ -22,5 +22,6 @@
             "UPDATE_STATUS": true
         }
     ],
-    "PIPELINE_TYPE": "bidsification"
+    "PIPELINE_TYPE": "bidsification",
+    "SCHEMA_VERSION": "1"
 }

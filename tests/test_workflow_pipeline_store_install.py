@@ -8,7 +8,7 @@ import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
@@ -22,6 +22,7 @@ def pipeline_config():
             "NAME": "my_pipeline",
             "VERSION": "1.0.0",
             "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
+            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
         }
     )
 

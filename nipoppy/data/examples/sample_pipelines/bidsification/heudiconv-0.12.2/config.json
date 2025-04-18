@@ -27,5 +27,6 @@
     "VARIABLES": {
         "HEUDICONV_HEURISTIC_FILE": "Path to the Python heuristic file needed for the \"convert\" step"
     },
-    "PIPELINE_TYPE": "bidsification"
+    "PIPELINE_TYPE": "bidsification",
+    "SCHEMA_VERSION": "1"
 }
