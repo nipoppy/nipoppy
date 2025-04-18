@@ -23,7 +23,7 @@ def workflow(tmp_path: Path) -> BidsConversionRunner:
     create_empty_dataset(workflow.dpath_root)
     create_pipeline_config_files(
         workflow.layout.dpath_pipelines,
-        bids_pipelines=[
+        bidsification_pipelines=[
             {
                 "NAME": "heudiconv",
                 "VERSION": "0.12.2",

@@ -444,82 +444,6 @@ def zenodo_options(func):
     return func
 
 
-@pipeline.command("upload")
-@click.argument(
-    "pipeline_dir",
-    type=str,
-)
-@click.option(
-    "--zenodo-id",
-    "record_id",
-    type=str,
-    required=False,
-    help="To update an existing pipeline, provide the Zenodo ID.",
-)
-@zenodo_options
-@global_options
-def pipeline_upload(**params):
-    """Add a new pipeline."""
-    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
-
-    params["zenodo_api"] = ZenodoAPI(
-        sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
-    )
-    params["dpath_pipeline"] = params.pop("pipeline_dir")
-    with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
-        workflow.run()
-
-
-@pipeline.command("install")
-@click.argument(
-    "source",
-    type=str,
-)
-@zenodo_options
-@dataset_option
-@click.option(
-    "--force",
-    "-f",
-    "--overwrite",
-    is_flag=True,
-    help="Overwrite existing pipeline directory if it exists.",
-)
-@global_options
-@layout_option
-def pipeline_install(**params):
-    """
-    Install a new pipeline into the pipeline store.
-
-    The source of the pipeline can be a local directory or a Zenodo ID.
-    """
-    from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
-
-    params = dep_params(**params)
-    params["zenodo_api"] = ZenodoAPI(
-        sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
-    )
-    with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
-        workflow.run()
-
-
-@pipeline.command("validate")
-@click.argument(
-    "path",
-    required=True,
-    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
-)
-@global_options
-def pipeline_validate(**params):
-    """Validate a pipeline store directory."""
-    from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
-
-    params["dpath_pipeline"] = params.pop("path")
-    with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
-        workflow.run()
-
-
 @pipeline.command("search")
 @click.argument("query", type=str, default="")
 @click.option(
@@ -541,4 +465,91 @@ def pipeline_search(**params):
         access_token=params.pop("access_token"),
     )
     with handle_exception(PipelineSearchWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("install")
+@click.argument(
+    "source",
+    type=str,
+)
+@zenodo_options
+@dataset_option
+@click.option(
+    "--force",
+    "-f",
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing pipeline directory if it exists.",
+)
+@global_options
+@layout_option
+def pipeline_install(**params):
+    """
+    Install a new pipeline into a dataset.
+
+    The source of the pipeline can be a local directory or a Zenodo ID.
+    """
+    from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+
+    params = dep_params(**params)
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
+    with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("list")
+@dataset_option
+def pipeline_list(**params):
+    """List installed pipelines for a dataset."""
+    from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
+
+    params = dep_params(**params)
+    with handle_exception(PipelineListWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("validate")
+@click.argument(
+    "path",
+    required=True,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+)
+@global_options
+def pipeline_validate(**params):
+    """Validate a pipeline config directory."""
+    from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
+
+    params["dpath_pipeline"] = params.pop("path")
+    with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("upload")
+@click.argument(
+    "pipeline_dir",
+    type=str,
+)
+@click.option(
+    "--zenodo-id",
+    "record_id",
+    type=str,
+    required=False,
+    help="To update an existing pipeline, provide the Zenodo ID.",
+)
+@zenodo_options
+@global_options
+def pipeline_upload(**params):
+    """Upload a pipeline config directory to Zenodo."""
+    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
+
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
+    params["dpath_pipeline"] = params.pop("pipeline_dir")
+    with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
         workflow.run()

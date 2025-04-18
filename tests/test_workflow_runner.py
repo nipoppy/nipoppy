@@ -47,7 +47,7 @@ def runner(tmp_path: Path):
 
     create_pipeline_config_files(
         runner.layout.dpath_pipelines,
-        proc_pipelines=[
+        processing_pipelines=[
             {
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
@@ -57,7 +57,7 @@ def runner(tmp_path: Path):
                         "DESCRIPTOR_FILE": fname_descriptor,
                         "INVOCATION_FILE": fname_invocation,
                         "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
-                    }
+                    },
                 ],
             },
         ],

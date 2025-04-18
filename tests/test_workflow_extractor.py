@@ -29,7 +29,7 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
     create_empty_dataset(extractor.dpath_root)
     create_pipeline_config_files(
         extractor.layout.dpath_pipelines,
-        proc_pipelines=[
+        processing_pipelines=[
             {
                 "NAME": "freesurfer",
                 "VERSION": "7.3.2",

@@ -251,6 +251,17 @@ def test_cli_extract(tmp_path: Path):
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
+def test_cli_pipeline_list(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    result = runner.invoke(
+        cli,
+        ["pipeline", "list", "--dataset", dpath_root],
+    )
+
+    # Expects missing path, since init command is not run.
+    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
+
+
 def test_cli_pipeline_upload():
 
     result = runner.invoke(
