@@ -1,5 +1,7 @@
 """Workflow for pipeline list command."""
 
+from collections import defaultdict
+
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PROGRAM_NAME, LogColor, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
@@ -31,7 +33,7 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
     ) -> dict[PipelineTypeEnum, dict[str, list[str]]]:
         pipeline_type_to_info_map = {}
         for pipeline_type in PipelineTypeEnum:
-            pipeline_names_to_versions_map = {}
+            pipeline_names_to_versions_map = defaultdict(list)
             dpath_pipeline_bundles = (
                 self.layout.dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
@@ -46,9 +48,6 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
                         f"Error when loading pipeline config at {fpath_config}"
                         f": {exception}"
                     )
-
-                if pipeline_config.NAME not in pipeline_names_to_versions_map:
-                    pipeline_names_to_versions_map[pipeline_config.NAME] = []
 
                 pipeline_names_to_versions_map[pipeline_config.NAME].append(
                     pipeline_config.VERSION
