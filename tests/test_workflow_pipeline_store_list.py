@@ -6,7 +6,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
 
 from .conftest import create_empty_dataset
@@ -37,21 +37,25 @@ def workflow(tmp_path: Path):
                     "NAME": "pipeline1",
                     "VERSION": "0.0.1",
                     "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
+                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
                 },
                 {
                     "NAME": "pipeline1",
                     "VERSION": "0.0.2",
                     "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
+                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
                 },
                 {
                     "NAME": "pipeline2",
                     "VERSION": "0.1.0",
                     "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
+                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
                 },
                 {
                     "NAME": "pipeline3",
                     "VERSION": "1.0.0",
                     "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
+                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
                 },
             ],
             {
