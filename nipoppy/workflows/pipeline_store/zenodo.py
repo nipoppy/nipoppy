@@ -75,6 +75,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             f"pipeline_type:{pipeline_config.PIPELINE_TYPE.value}",
             f"pipeline_name:{pipeline_config.NAME.lower()}",
             f"pipeline_version:{pipeline_config.VERSION}",
+            f"schema_version:{pipeline_config.SCHEMA_VERSION}",
         ]:
             if (keyword_dict := {"subject": keyword}) not in metadata["metadata"][
                 "subjects"

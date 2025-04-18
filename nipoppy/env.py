@@ -9,6 +9,9 @@ StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 PROGRAM_NAME = "nipoppy"
 
+# pipeline config schema version
+CURRENT_SCHEMA_VERSION = "1"
+
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"

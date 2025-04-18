@@ -19,5 +19,6 @@
             "GENERATE_PYBIDS_DATABASE": false
         }
     ],
-    "PIPELINE_TYPE": "processing"
+    "PIPELINE_TYPE": "processing",
+    "SCHEMA_VERSION": "1"
 }

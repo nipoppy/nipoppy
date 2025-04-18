@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
 
 from .conftest import DPATH_TEST_DATA
@@ -168,6 +168,7 @@ def test_propagate_container_config(
             "VERSION": pipeline_version,
             container_config_key: data_pipeline,
             "STEPS": [{"NAME": step_name, container_config_key: data_step}],
+            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
         }
     )
 

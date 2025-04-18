@@ -24,7 +24,7 @@ def record_id():
 
     See TEST_PIPELINE for test file location.
     """
-    return "194256"
+    return "199318"
 
 
 @pytest.fixture(scope="function")
@@ -203,3 +203,38 @@ def test_failed_authentication():
         ZenodoAPI(
             sandbox=ZENODO_SANDBOX, access_token="invalid_token"
         )._check_authentication()
+
+
+@pytest.mark.parametrize("query", ["FMRIPREP", ""])
+@pytest.mark.parametrize("keywords", [None, []])
+def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
+    # TODO search in official Zenodo instead of sandbox
+    results = zenodo_api.search_records(query, keywords=keywords)
+    assert len(results["hits"]) > 0
+    assert results["total"] > 0
+
+
+def test_search_records_api_call(
+    zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    search_query = "FMRIPREP"
+    keyword = "Nipoppy"
+    size = 100
+
+    mocked = mocker.patch("httpx.get")
+    zenodo_api.search_records(search_query, keywords=[keyword], size=size)
+
+    mocked.assert_called_once()
+
+    params = mocked.call_args[1]["params"]
+    assert search_query in params["q"]
+    assert f"metadata.subjects.subject:{keyword}" in params["q"]
+    assert params["size"] == size
+
+
+def test_search_records_error_size(zenodo_api: ZenodoAPI):
+    with pytest.raises(
+        ValueError,
+        match="size must be greater than 0",
+    ):
+        zenodo_api.search_records(query="FMRIPREP", size=0)

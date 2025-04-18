@@ -56,6 +56,7 @@ def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
                 {"subject": "pipeline_type:processing"},
                 {"subject": "pipeline_name:fmriprep"},
                 {"subject": "pipeline_version:24.1.1"},
+                {"subject": "schema_version:1"},
             ],
         }
     }

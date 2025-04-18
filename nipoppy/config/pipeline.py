@@ -17,7 +17,11 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME, PipelineTypeEnum
+from nipoppy.env import (
+    CURRENT_SCHEMA_VERSION,
+    DEFAULT_PIPELINE_STEP_NAME,
+    PipelineTypeEnum,
+)
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -70,6 +74,12 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         ),
     )
     PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
+    SCHEMA_VERSION: str = Field(
+        description=(
+            "Version of the schema used for this pipeline configuration. The current "
+            f"latest version is {CURRENT_SCHEMA_VERSION}"
+        ),
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -124,6 +134,13 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
                 f"Expected pipeline type {self._expected_pipeline_type}"
                 f" but got {self.PIPELINE_TYPE=} for pipeline "
                 f"{self.NAME} {self.VERSION}"
+            )
+
+        if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION:
+            raise ValueError(
+                f"Pipeline {self.NAME} {self.VERSION} uses schema version "
+                f"{self.SCHEMA_VERSION}, which is incompatible with the current version"
+                f" of Nipoppy (expected schema version: {CURRENT_SCHEMA_VERSION})"
             )
 
         return self

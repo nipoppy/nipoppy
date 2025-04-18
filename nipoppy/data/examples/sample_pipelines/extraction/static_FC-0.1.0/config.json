@@ -13,5 +13,6 @@
             "DESCRIPTOR_FILE": "descriptor.json"
         }
     ],
-    "PIPELINE_TYPE": "extraction"
+    "PIPELINE_TYPE": "extraction",
+    "SCHEMA_VERSION": "1"
 }

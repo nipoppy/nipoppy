@@ -298,3 +298,12 @@ def test_cli_pipeline_validate(tmp_path: Path):
 
     # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
+
+
+def test_cli_pipeline_search():
+    result = runner.invoke(
+        cli,
+        ["pipeline", "search", "mriqc"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
