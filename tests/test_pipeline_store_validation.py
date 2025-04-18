@@ -13,7 +13,7 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcPipelineConfig,
 )
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.pipeline_store.validation import (
     _check_descriptor_file,
     _check_invocation_file,
@@ -33,6 +33,16 @@ from .conftest import DPATH_TEST_DATA
 def descriptor_str():
     """Fixture for _check_invocation_file."""
     return Path(DPATH_TEST_DATA / "descriptor-valid.json").read_text()
+
+
+@pytest.fixture()
+def valid_config_data():
+    """Minimal data for a valid BasePipelineConfig."""
+    return {
+        "NAME": "test_pipeline",
+        "VERSION": "test_version",
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+    }
 
 
 def test_load_pipeline_config_file():
@@ -221,11 +231,11 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
         ),
     ],
 )
-def test_check_config_files(pipeline_config_data, pipeline_class, n_files_expected):
+def test_check_config_files(
+    pipeline_config_data, pipeline_class, n_files_expected, valid_config_data
+):
 
-    pipeline_config = pipeline_class(
-        **pipeline_config_data, NAME="test_pipeline", VERSION="test_version"
-    )
+    pipeline_config = pipeline_class(**pipeline_config_data, **valid_config_data)
     files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
 
     # check that the function returns the expected number of files
@@ -244,12 +254,14 @@ def test_check_config_files(pipeline_config_data, pipeline_class, n_files_expect
 def test_check_config_files_logging(
     logger,
     log_level,
+    valid_config_data,
     caplog: pytest.LogCaptureFixture,
 ):
     caplog.set_level(log_level)
 
     pipeline_config = BasePipelineConfig(
-        NAME="test_pipeline", VERSION="test_version", STEPS=[{}]
+        **valid_config_data,
+        STEPS=[{}],
     )
     _check_pipeline_files(
         pipeline_config, DPATH_TEST_DATA, logger=logger, log_level=log_level
@@ -364,9 +376,11 @@ def test_check_no_subdirectories_logging(
     "logger,log_level",
     [(None, logging.DEBUG), (logging.getLogger("test"), logging.INFO)],
 )
-def test_check_pipeline_bundle(logger, log_level, mocker: pytest_mock.MockFixture):
+def test_check_pipeline_bundle(
+    logger, log_level, valid_config_data, mocker: pytest_mock.MockFixture
+):
     dpath_bundle = Path("bundle_dir").resolve()
-    config = BasePipelineConfig(NAME="test_pipeline", VERSION="test_version")
+    config = BasePipelineConfig(**valid_config_data)
     fpaths = [dpath_bundle / "file1.txt", dpath_bundle / "file2.txt"]
 
     mocked_load_pipeline_config_file = mocker.patch(
