@@ -97,9 +97,7 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # create empty pipeline config subdirectories
         for pipeline_type in PipelineTypeEnum:
-            self.layout.get_dpath_pipeline_store(pipeline_type).mkdir(
-                parents=True, exist_ok=True
-            )
+            self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
         self.copy(
