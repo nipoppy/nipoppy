@@ -62,6 +62,19 @@ ATTR_TO_FPATH_MAP = {
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
 
 
+@pytest.fixture(scope="function")
+def record_id():
+    """Fixture for Zenodo ID.
+
+    The Sandbox can be reset at any time, so the Zenodo ID may change.
+    If the test fails verify the Zenodo record at:
+    https://sandbox.zenodo.org/records/{record_id}
+
+    The test file is located at TEST_PIPELINE
+    """
+    return "199319"
+
+
 @pytest.fixture()
 def datetime_fixture(
     mocker: pytest_mock.MockerFixture,

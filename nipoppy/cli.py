@@ -193,6 +193,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--size",
                 "--zenodo-token",
                 "--sandbox",
+                "--force",
             ],
         },
         {
@@ -443,34 +444,6 @@ def zenodo_options(func):
     return func
 
 
-@pipeline.command("download")
-@click.argument(
-    "record_id",
-    type=str,
-)
-@click.option(
-    "--force",
-    "-f",
-    is_flag=True,
-    help="Force download and overwrite existing files.",
-)
-@dataset_option
-@zenodo_options
-@global_options
-@layout_option
-def pipeline_download(**params):
-    """Download a Zenodo pipeline."""
-    from nipoppy.workflows.zenodo import ZenodoDownloadWorkflow
-
-    params = dep_params(**params)
-    params["zenodo_api"] = ZenodoAPI(
-        sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
-    )
-    with handle_exception(ZenodoDownloadWorkflow(**params)) as workflow:
-        workflow.run()
-
-
 @pipeline.command("upload")
 @click.argument(
     "pipeline_dir",
@@ -487,7 +460,7 @@ def pipeline_download(**params):
 @global_options
 def pipeline_upload(**params):
     """Add a new pipeline."""
-    from nipoppy.workflows.zenodo import ZenodoUploadWorkflow
+    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
@@ -500,9 +473,10 @@ def pipeline_upload(**params):
 
 @pipeline.command("install")
 @click.argument(
-    "path_or_zenodo_id",
-    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
+    "source",
+    type=str,
 )
+@zenodo_options
 @dataset_option
 @click.option(
     "--force",
@@ -514,11 +488,18 @@ def pipeline_upload(**params):
 @global_options
 @layout_option
 def pipeline_install(**params):
-    """Install a new pipeline into the pipeline store."""
+    """
+    Install a new pipeline into the pipeline store.
+
+    The source of the pipeline can be a local directory or a Zenodo ID.
+    """
     from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 
     params = dep_params(**params)
-    params["dpath_pipeline"] = params.pop("path_or_zenodo_id")
+    params["zenodo_api"] = ZenodoAPI(
+        sandbox=params.pop("sandbox"),
+        access_token=params.pop("access_token"),
+    )
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
 

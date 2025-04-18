@@ -1,5 +1,6 @@
 """Tests for PipelineInstallWorkflow class."""
 
+import logging
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -11,8 +12,10 @@ from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+from nipoppy.zenodo_api import ZenodoAPI
 
-from .conftest import create_pipeline_config_files, get_config
+from .conftest import record_id  # noqa: F401
+from .conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
 
 
 @pytest.fixture(scope="function")
@@ -36,14 +39,24 @@ def workflow(tmp_path: Path, pipeline_config: ProcPipelineConfig):
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
-        dpath_pipeline=tmp_path
-        / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
-        / "my_pipeline-1.0.0",
+        source=(
+            tmp_path
+            / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
+            / "my_pipeline-1.0.0"
+        ),
+        zenodo_api=ZenodoAPI(sandbox=True),
     )
     # make the default config have a path placeholder string
     get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]/my_file.tsv").save(
         workflow.layout.fpath_config
     )
+    return workflow
+
+
+@pytest.fixture(scope="function")
+def workflow_zenodo(record_id, workflow: PipelineInstallWorkflow):  # noqa: F811
+    workflow.zenodo_id = record_id
+    workflow.dpath_pipeline = None
     return workflow
 
 
@@ -53,6 +66,20 @@ def _assert_files_copied(dpath_source, dpath_dest):
     )
     paths_dest = set(path.relative_to(dpath_dest) for path in dpath_dest.rglob("*"))
     assert paths_source == paths_dest
+
+
+def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    PipelineInstallWorkflow(
+        dpath_root=(tmp_path / "my_dataset"),
+        source="not_a_path",
+    )
+    assert any(
+        [
+            "does not seem like a valid path or Zenodo ID" in record.message
+            and record.levelno == logging.WARNING
+            for record in caplog.records
+        ]
+    )
 
 
 @pytest.mark.parametrize("variables", [{}, {"var1": "description"}])
@@ -161,13 +188,13 @@ def test_run_main(
     assert "Successfully installed pipeline" in caplog.text
 
 
-@pytest.mark.parametrize("overwrite", [False, True])
-def test_run_main_overwrite(
+@pytest.mark.parametrize("force", [False, True])
+def test_run_main_force(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcPipelineConfig,
-    overwrite: bool,
+    force: bool,
 ):
-    workflow.force = overwrite
+    workflow.force = force
 
     # create directory where the pipeline is supposed to be installed
     dpath_installed = workflow.layout.get_dpath_pipeline_bundle(
@@ -179,8 +206,81 @@ def test_run_main_overwrite(
 
     with (
         nullcontext()
-        if overwrite
+        if force
         else pytest.raises(FileExistsError, match="Use --force to overwrite")
     ):
         workflow.run_main()
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
+
+
+def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow):
+    # https://zenodo.org/records/1482743 is the Boutiques FSL BET descriptor
+    workflow_zenodo.zenodo_id = "1482743"
+    workflow_zenodo.zenodo_api = ZenodoAPI(sandbox=False)
+
+    with pytest.raises(
+        FileNotFoundError,
+        match="Pipeline configuration file not found: .* Make sure the record at",
+    ):
+        workflow_zenodo.run_main()
+
+
+def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
+    # create a non-existent path
+    workflow.dpath_pipeline = workflow.layout.dpath_pipelines / "non_existent_path"
+    with pytest.raises(
+        FileNotFoundError,
+        match="Pipeline configuration file not found: .*/config.json$",
+    ):
+        workflow.run_main()
+
+
+def test_download(workflow_zenodo: PipelineInstallWorkflow):
+
+    workflow_zenodo.run_main()
+
+    # Check that the pipeline was downloaded and moved correctly
+    assert not (
+        workflow_zenodo.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+    ).exists()
+    assert (
+        workflow_zenodo.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
+    ).exists()
+
+
+@pytest.mark.parametrize("force, fails", [(True, False), (False, True)])
+def test_download_dir_exist(
+    workflow_zenodo: PipelineInstallWorkflow, force: bool, fails: bool
+):
+    """Test the behavior when the download directory already exists."""
+    workflow_zenodo.force = force
+
+    download_dir = workflow_zenodo.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+    download_dir.mkdir(parents=True, exist_ok=True)
+    assert download_dir.exists()
+
+    with pytest.raises(SystemExit) if fails else nullcontext():
+        workflow_zenodo.run_main()
+
+
+@pytest.mark.parametrize("force, fails", [(True, False), (False, True)])
+def test_download_install_dir_exist(
+    workflow_zenodo: PipelineInstallWorkflow, force: bool, fails: bool
+):
+    workflow_zenodo.force = force
+
+    download_dir = (
+        workflow_zenodo.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
+    )
+    download_dir.mkdir(parents=True, exist_ok=True)
+    assert download_dir.exists()
+
+    with (
+        pytest.raises(
+            FileExistsError,
+            match="Pipeline directory exists: .* Use --force to overwrite",
+        )
+        if fails
+        else nullcontext()
+    ):
+        workflow_zenodo.run_main()
