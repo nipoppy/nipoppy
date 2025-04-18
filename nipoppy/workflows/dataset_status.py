@@ -249,7 +249,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         # Initiate a Table instance
         title = "Participant counts by session at each Nipoppy checkpoint"
 
-        table = Table(title=title, collapse_padding=False)
+        table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD, collapse_padding=False)
 
         processing_cols = status_col_dict["processing"]
         n_non_proc_cols = 0
@@ -275,6 +275,4 @@ class StatusWorkflow(BaseDatasetWorkflow):
             row = [str(x) for x in value_list]
             table.add_row(*row)
 
-        # Update the style of the table
-        table.box = box.MINIMAL_DOUBLE_HEAD  # SIMPLE_HEAD
         console.print(table)
