@@ -68,11 +68,11 @@ def record_id():
 
     The Sandbox can be reset at any time, so the Zenodo ID may change.
     If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/194256
+    https://sandbox.zenodo.org/records/{record_id}
 
-    The test file is located at: tests/data/sample_pipelines/proc/fmriprep-24.1.1
+    The test file is located at TEST_PIPELINE
     """
-    return "194256"
+    return "199319"
 
 
 @pytest.fixture()
