@@ -11,11 +11,11 @@ from nipoppy.env import (
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     LogColor,
+    PipelineTypeEnum,
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
@@ -95,12 +95,10 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         self._write_readmes()
 
-        # copy pipeline files
-        for dpath_pipeline in DPATH_SAMPLE_PIPELINES.iterdir():
-            self.copytree(
-                dpath_pipeline,
-                self.layout.dpath_pipelines / dpath_pipeline.name,
-                log_level=logging.DEBUG,
+        # create empty pipeline config subdirectories
+        for pipeline_type in PipelineTypeEnum:
+            self.layout.get_dpath_pipeline_store(pipeline_type).mkdir(
+                parents=True, exist_ok=True
             )
 
         # copy sample config and manifest files
