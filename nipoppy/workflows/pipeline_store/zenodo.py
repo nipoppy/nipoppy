@@ -34,18 +34,6 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
         self.zenodo_api.set_logger(self.logger)
 
-    def get_creators(self):
-        """Get the list of creators for the Zenodo metadata."""
-        # TODO fetch user information from zenodo
-        return [
-            {
-                "person_or_org": {
-                    "family_name": "Nipoppy user",
-                    "type": "personal",
-                }
-            }
-        ]
-
     def _get_pipeline_metadata(
         self, zenodo_metadata_file: Path, pipeline_config: BasePipelineConfig
     ) -> dict:
@@ -59,13 +47,14 @@ class ZenodoUploadWorkflow(BaseWorkflow):
                 "description": (pipeline_config.DESCRIPTION or default_description),
                 "publication_date": get_today(),
                 "publisher": "Nipoppy",
-                "creators": self.get_creators(),
+                "creators": [],  # to be set by user or ZenodoAPI
                 "resource_type": {"id": "software"},
                 "subjects": [],
             }
         }
 
         if zenodo_metadata_file.exists():
+            self.logger.info(f"Loading metadata from {zenodo_metadata_file}")
             pipeline_metadata = load_json(zenodo_metadata_file)
             metadata["metadata"].update(pipeline_metadata)
 

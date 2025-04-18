@@ -3,7 +3,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import httpx
 
@@ -109,7 +109,7 @@ class ZenodoAPI:
 
             output_dir.joinpath(file).write_bytes(response.content)
 
-    def _create_new_version(self, record_id: str, metadata: dict) -> str:
+    def _create_new_version(self, record_id: str, metadata: dict) -> Tuple[str, str]:
         response = httpx.post(
             f"{self.api_endpoint}/records/{record_id}/versions",
             headers=self.headers,
@@ -120,6 +120,7 @@ class ZenodoAPI:
                 f" {response.json()}"
             )
         new_record_id = response.json()["id"]
+        owner_id = response.json()["owners"][0]["id"]
 
         # Required to update the metadata to include the new publication date
         response = httpx.put(
@@ -132,9 +133,9 @@ class ZenodoAPI:
                 f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
             )
 
-        return new_record_id
+        return new_record_id, owner_id
 
-    def _create_draft(self, metadata: dict) -> str:
+    def _create_draft(self, metadata: dict) -> Tuple[str, str]:
         response = httpx.post(
             f"{self.api_endpoint}/records",
             headers=self.headers | {"Content-Type": "application/json"},
@@ -143,7 +144,53 @@ class ZenodoAPI:
         if response.status_code != 201:
             raise ZenodoAPIError(f"Failed to create a draft record: {response.json()}")
 
-        return response.json()["id"]
+        return response.json()["id"], response.json()["owners"][0]["id"]
+
+    def _update_creators(self, record_id: str, owner_id: str, metadata: dict):
+        # get user profile info
+        response = httpx.get(
+            f"{self.api_endpoint}/users/{owner_id}", headers=self.headers
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get information for user {owner_id}: {response.json()}"
+            )
+
+        # extract creator name
+        # use username (always defined) as fallback
+        response_json = response.json()
+        if (creator_name := response_json["profile"]["full_name"]) == "":
+            creator_name = response_json["username"]
+            self.logger.warning(
+                f"User {owner_id} has no full name in Zenodo profile, "
+                f'using username ("{creator_name}") instead'
+            )
+        # also get affiliation and ORCID (may be empty)
+        affiliation = response_json["profile"]["affiliations"]
+        orcid = response_json["identities"].get("orcid")
+
+        # update metadata with new creator information
+        metadata["metadata"]["creators"] = [
+            {
+                "person_or_org": {
+                    "family_name": creator_name,
+                    "identifiers": (
+                        [{"identifier": orcid, "scheme": "orcid"}] if orcid else []
+                    ),
+                    "type": "personal",
+                },
+                "affiliations": [{"name": affiliation}] if affiliation else [],
+            }
+        ]
+        response = httpx.put(
+            f"{self.api_endpoint}/records/{record_id}/draft",
+            headers=self.headers,
+            json=metadata,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
+            )
 
     def _upload_files(self, files: list[Path], record_id: str):
         metadata = [{"key": file.name} for file in files]
@@ -210,6 +257,7 @@ class ZenodoAPI:
         record_id: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
+        record_id = record_id.removeprefix("zenodo.") if record_id else None
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
@@ -218,13 +266,16 @@ class ZenodoAPI:
         self._check_authentication()
 
         if record_id:
-            record_id = self._create_new_version(record_id, metadata)
+            record_id, owner_id = self._create_new_version(record_id, metadata)
             action = "update"
         else:
-            record_id = self._create_draft(metadata)
+            record_id, owner_id = self._create_draft(metadata)
             action = "creation"
 
         try:
+            if not metadata["metadata"].get("creators"):
+                self._update_creators(record_id, owner_id, metadata)
+
             files = list(input_dir.iterdir())
             self._upload_files(files, record_id)
             doi = self._publish(record_id)
@@ -240,11 +291,12 @@ class ZenodoAPI:
                 f"{self.api_endpoint}/records/{record_id}/draft",
                 headers=self.headers,
             )
-            if response == 204:
+            if response.status_code == 204:
                 self.logger.info(f"Record {action} reverted")
             else:
                 self.logger.warning(
-                    f"Failed to revert record {action} for zenodo.{record_id}"
+                    f"Failed to revert record {action} for zenodo.{record_id}: "
+                    f"{response.json()}"
                 )
 
             raise SystemExit(1)
