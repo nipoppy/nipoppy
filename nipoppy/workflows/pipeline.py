@@ -39,6 +39,7 @@ from nipoppy.env import (
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
+    apply_substitutions_to_json,
     check_participant_id,
     check_session_id,
     create_bids_db,
@@ -377,6 +378,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"pipeline: {pipeline_name} {pipeline_version}"
             )
 
+        # NOTE: user-defined substitutions take precedence over the pipeline variables
         pipeline_config_json = self.config.apply_pipeline_variables(
             pipeline_type=self._pipeline_type,
             pipeline_name=pipeline_name,
@@ -410,9 +412,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         bids_session_id: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
+        with_substitutions: bool = True,
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
+        if with_substitutions:
+            # apply user-defined substitutions to maintain compatibility with older
+            # pipeline config files that do not use the new pipeline variables
+            template_json = apply_substitutions_to_json(
+                template_json, self.config.SUBSTITUTIONS
+            )
         if participant_id is not None:
             if bids_participant_id is None:
                 bids_participant_id = participant_id_to_bids_participant_id(
