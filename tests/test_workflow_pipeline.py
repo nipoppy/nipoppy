@@ -543,12 +543,12 @@ def test_get_pipeline_config_missing(
 
 
 @pytest.mark.parametrize("return_str", [True, False])
-def test_process_template_json(return_str, tmp_path: Path):
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
-    )
+def test_process_template_json(workflow: PipelineWorkflow, return_str):
+    # add user-defined substitution variables
+    workflow.config.SUBSTITUTIONS = {
+        "USER_SUBSTITUTION": "val1",
+        "OTHER_USER_SUBSTITUTION": "val2",
+    }
 
     class Test:
         extra2 = "extra_obj_attribute"
@@ -559,6 +559,7 @@ def test_process_template_json(return_str, tmp_path: Path):
             "[[NIPOPPY_BIDS_SESSION_ID]]": "[[NIPOPPY_SESSION_ID]]",
             "[[NIPOPPY_DPATH_PIPELINE]]": "[[NIPOPPY_DPATH_BIDS]]",
             "[[NIPOPPY_EXTRA1]]": "[[NIPOPPY_EXTRA2]]",
+            "USER_SUBSTITUTION": "OTHER_USER_SUBSTITUTION",
         },
         participant_id="01",
         session_id="1",
@@ -583,6 +584,8 @@ def test_process_template_json(return_str, tmp_path: Path):
         "[[NIPOPPY_DPATH_BIDS]]",
         "[[NIPOPPY_EXTRA1]]",
         "[[NIPOPPY_EXTRA2]]",
+        "USER_SUBSTITUTION",
+        "OTHER_USER_SUBSTITUTION",
     ]:
         assert pattern not in processed
 
