@@ -185,7 +185,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--bids-source",
                 "--mode",
                 "--empty",
-                "--regenerate",
                 "--copy-files",
                 "--check-dicoms",
                 "--tar",
