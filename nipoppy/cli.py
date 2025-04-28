@@ -36,6 +36,7 @@ def handle_exception(workflow):
     finally:
         sys.exit(workflow.return_code)
 
+
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
         {
@@ -90,6 +91,7 @@ click.rich_click.OPTION_GROUPS = {
         },
     ]
 }
+
 
 def dataset_option(func):
     """Define dataset options for the CLI.
