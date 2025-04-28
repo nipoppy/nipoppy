@@ -20,18 +20,18 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 
 ### Commands
 
-- Command-line interface: [`nipoppy reorg`](<project:../cli_reference/reorg.md>)
+- Command-line interface: [`nipoppy reorg`](<project:../cli_reference/reorg.rst>)
 - Python API: {class}`nipoppy.workflows.DicomReorgWorkflow`
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_pre_reorg}} but *do not have* data in {{dpath_post_reorg}} according to the {term}`doughnut file`
-    - If the doughnut file does not exist, it will be automatically generated
-    - If there is an existing doughnut file but it does not have all the rows in the manifest, new entries will be automatically added to the doughnut file
-    - The doughnut file can also be completely regenerated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
+1. Nipoppy will loop over all participants/sessions that *have* data in {{dpath_pre_reorg}} but *do not have* data in {{dpath_post_reorg}} according to the {term}`curation status file`
+    - If the curation status file does not exist, it will be automatically generated
+    - If there is an existing curation status file but it does not have all the rows in the manifest, new entries will be automatically added to the curation status file
+    - The curation status file can also be completely regenerated with [`nipoppy track-curation --regenerate`](../cli_reference/track_curation.rst)
 2. For each participant-session pair:
     1. Files from the {{dpath_pre_reorg}} directory will be "copied" (the default is to create symlinks) to the {{dpath_post_reorg}} directory into a flat list
-    2. The doughnut file is updated to indicate that this participant-session pair now has data in {{dpath_post_reorg}}
+    2. The curation status file is updated to indicate that this participant-session pair now has data in {{dpath_post_reorg}}
 
 ## Configuring the reorganization
 
@@ -80,10 +80,10 @@ More granular customization can also be achieved for both the input file paths a
 ### Using the command-line interface
 
 ```console
-$ nipoppy reorg <DATASET_ROOT>
+$ nipoppy reorg --datatset <DATASET_ROOT>
 ```
 
-See the [CLI reference page](<project:../cli_reference/reorg.md>) for more information on optional arguments (e.g., reading DICOM headers to check the image type, and copying files instead of creating symlinks).
+See the [CLI reference page](<project:../cli_reference/reorg.rst>) for more information on optional arguments (e.g., reading DICOM headers to check the image type, and copying files instead of creating symlinks).
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/dicom_reorg`
@@ -99,7 +99,7 @@ workflow = DicomReorgWorkflow(dpath_root=dpath_root)
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.md>)).
+See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.rst>)).
 
 (customizing-dicom-reorg)=
 #### Customizing input and output file paths

@@ -8,26 +8,22 @@ from pathlib import Path
 import pytest
 
 from nipoppy.config.main import Config
-from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import BaseWorkflow
 
-from .conftest import datetime_fixture  # noqa F401
 from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
 
 
-@pytest.fixture(params=[get_logger("my_logger"), None], scope="function")
-def workflow(request: pytest.FixtureRequest, tmp_path: Path):
+@pytest.fixture()
+def workflow(tmp_path: Path):
     class DummyWorkflow(BaseWorkflow):
         def run_main(self):
             pass
 
     dpath_root = tmp_path / "my_dataset"
-    workflow = DummyWorkflow(
-        dpath_root=dpath_root, name="my_workflow", logger=request.param
-    )
+    workflow = DummyWorkflow(dpath_root=dpath_root, name="my_workflow")
     manifest = prepare_dataset(participants_and_sessions_manifest={})
     manifest.save_with_backup(workflow.layout.fpath_manifest)
     workflow.logger.setLevel(logging.DEBUG)  # capture all logs
@@ -41,7 +37,6 @@ def test_abstract_class():
 
 def test_init(workflow: BaseWorkflow):
     assert isinstance(workflow.dpath_root, Path)
-    assert isinstance(workflow.logger, logging.Logger)
 
 
 def test_generate_fpath_log(workflow: BaseWorkflow, datetime_fixture):  # noqa F811
@@ -55,7 +50,9 @@ def test_generate_fpath_log(workflow: BaseWorkflow, datetime_fixture):  # noqa F
 
 @pytest.mark.parametrize("fname_stem", ["123", "test", "my_workflow"])
 def test_generate_fpath_log_custom(
-    fname_stem, workflow: BaseWorkflow, datetime_fixture  # noqa F811
+    fname_stem,
+    workflow: BaseWorkflow,
+    datetime_fixture,  # noqa F811
 ):
     fpath_log = workflow.generate_fpath_log(fname_stem=fname_stem)
     assert isinstance(fpath_log, Path)
@@ -128,6 +125,13 @@ def test_run_command_no_markup(
     fpath_txt.write_text(text)
     workflow.run_command(["cat", fpath_txt])
     assert text in caplog.text
+
+
+def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
+    message = "This should be printed"
+    workflow.run_command(["echo", message], quiet=True)
+    assert workflow.log_prefix_run not in caplog.text
+    assert message in caplog.text
 
 
 def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
@@ -206,6 +210,6 @@ def test_dicom_dir_map_not_found(workflow: BaseWorkflow):
         workflow.dicom_dir_map
 
 
-def test_bagel_empty_if_not_found(workflow: BaseWorkflow):
-    assert not workflow.layout.fpath_imaging_bagel.exists()
-    assert len(workflow.bagel) == 0
+def test_processing_status_empty_if_not_found(workflow: BaseWorkflow):
+    assert not workflow.layout.fpath_processing_status.exists()
+    assert len(workflow.processing_status_table) == 0

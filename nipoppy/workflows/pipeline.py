@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import bids
+import pandas as pd
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
@@ -81,22 +82,25 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run=False,
     ):
-        super().__init__(
-            dpath_root=dpath_root,
-            name=name,
-            fpath_layout=fpath_layout,
-            logger=logger,
-            dry_run=dry_run,
-        )
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.write_list = write_list
+
+        super().__init__(
+            dpath_root=dpath_root,
+            name=name,
+            fpath_layout=fpath_layout,
+            verbose=verbose,
+            dry_run=dry_run,
+        )
 
         # the message logged in run_cleanup will depend on
         # the final values for these attributes (updated in run_main)
@@ -170,10 +174,19 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             )
 
         elif not fpath_container.exists():
-            raise FileNotFoundError(
+            error_message = (
                 f"No container image file found at {fpath_container} for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+            if self.pipeline_config.CONTAINER_INFO.URI is not None:
+                error_message += (
+                    ". This file can be downloaded to the appropriate path by running "
+                    "the following command:"
+                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
+                    f"{self.pipeline_config.CONTAINER_INFO.FILE} "
+                    f"{self.pipeline_config.CONTAINER_INFO.URI}"
+                )
+            raise FileNotFoundError(error_message)
         return fpath_container
 
     @cached_property
@@ -412,29 +425,37 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        for participant_id, session_id in participants_sessions:
-            self.n_total += 1
-            self.logger.info(
-                f"Running for participant {participant_id}, session {session_id}"
-            )
-            try:
-                self.run_single(participant_id, session_id)
-                self.n_success += 1
-            except Exception as exception:
-                self.return_code = ReturnCode.PARTIAL_SUCCESS
-                self.logger.error(
-                    f"Error running {self.pipeline_name} {self.pipeline_version}"
-                    f" on participant {participant_id}, session {session_id}"
-                    f": {exception}"
+        # TODO mutually exclusive with HPC option
+        if self.write_list is not None:
+            if not self.dry_run:
+                pd.DataFrame(participants_sessions).to_csv(
+                    self.write_list, header=False, index=False, sep="\t"
                 )
+            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+        else:
+            for participant_id, session_id in participants_sessions:
+                self.n_total += 1
+                self.logger.info(
+                    f"Running for participant {participant_id}, session {session_id}"
+                )
+                try:
+                    self.run_single(participant_id, session_id)
+                    self.n_success += 1
+                except Exception as exception:
+                    self.return_code = ReturnCode.PARTIAL_SUCCESS
+                    self.logger.error(
+                        f"Error running {self.pipeline_name} {self.pipeline_version}"
+                        f" on participant {participant_id}, session {session_id}"
+                        f": {exception}"
+                    )
 
     def run_cleanup(self):
         """Log a summary message."""
         if self.n_total == 0:
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, "
-                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
+                "in the input arguments, the dataset's manifest or config file, and/or "
+                f"check the curation status file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was

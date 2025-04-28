@@ -1,0 +1,24 @@
+{
+    "script_path": "[[NIPOPPY_DPATH_PIPELINES]]/fs_stats-0.2.1/fs_stats.py",
+    "input_dir_path": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
+    "output_dir_path": "[[NIPOPPY_DPATH_PIPELINE_IDP]]/fs_stats-0.2.1",
+    "mode": "multi",
+    "with_qc": false,
+    "aseg_measures": [
+        "volume"
+    ],
+    "aparc_parcellations": [
+        "aparc",
+        "aparc.a2009s",
+        "aparc.DKTatlas"
+    ],
+    "aparc_measures": [
+        "thickness",
+        "area",
+        "meancurv"
+    ],
+    "container": "[[NIPOPPY_CONTAINER_COMMAND]] [[NIPOPPY_FPATH_CONTAINER]]",
+    "aseg_args": " --skip",
+    "aparc_args": " --skip",
+    "verbose": true
+}

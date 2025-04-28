@@ -1,0 +1,234 @@
+{
+    "name": "fs_stats",
+    "description": "FreeSurfer aseg/aparc stats (and QC metrics) extractor",
+    "tool-version": "0.2.1",
+    "schema-version": "0.5",
+    "command-line": "[SCRIPT_PATH] [INPUT_DIR_PATH] [OUTPUT_DIR_PATH] [MODE] [WITH_QC] [ASEG_MEASURES] [APARC_PARCELLATIONS] [APARC_MEASURES] [CONTAINER] [ASEG_ARGS] [APARC_ARGS] [EULER_SURF_PATHS] [CNR_VOL_PATHS] [CNR_MEASURES] [SUB_COLNAME] [SES_COLNAME] [SUB_PREFIX] [SES_PREFIX] [VERBOSE]",
+    "inputs": [
+        {
+            "name": "script_path",
+            "id": "script_path",
+            "description": "Path to the script to run.",
+            "type": "String",
+            "optional": false,
+            "value-key": "[SCRIPT_PATH]"
+        },
+        {
+            "name": "input_dir_path",
+            "id": "input_dir_path",
+            "description": "Path to the input directory. Can be either a single FreeSurfer subjects directories (if \"--mode single\" is used) or a directory containing multiple FreeSurfer directories (if \"--mode multi\" is used).",
+            "type": "String",
+            "optional": false,
+            "value-key": "[INPUT_DIR_PATH]"
+        },
+        {
+            "name": "output_dir_path",
+            "id": "output_dir_path",
+            "description": "Path to the output directory.",
+            "type": "String",
+            "optional": false,
+            "value-key": "[OUTPUT_DIR_PATH]"
+        },
+        {
+            "name": "mode",
+            "id": "mode",
+            "description": "Whether to process a single FreeSurfer subjects directory or multiple directories (default: single).",
+            "type": "String",
+            "optional": true,
+            "default-value": "single",
+            "command-line-flag": "--mode",
+            "value-key": "[MODE]",
+            "value-choices": [
+                "single",
+                "multi"
+            ]
+        },
+        {
+            "name": "with_qc",
+            "id": "with_qc",
+            "description": "Whether to compute QC metrics and save them to a separate file.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--with-qc",
+            "value-key": "[WITH_QC]"
+        },
+        {
+            "name": "aseg_measures",
+            "id": "aseg_measures",
+            "description": "List of measures to use for asegstats2table. Default: ['volume'].",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "volume"
+            ],
+            "command-line-flag": "--aseg-measures",
+            "value-key": "[ASEG_MEASURES]"
+        },
+        {
+            "name": "aparc_parcellations",
+            "id": "aparc_parcellations",
+            "description": "List of parcellations to use for aparcstats2table (minus 'aparc.' prefix). Default: ['aparc', 'aparc.a2009s', 'aparc.DKTatlas'].",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "aparc",
+                "aparc.a2009s",
+                "aparc.DKTatlas"
+            ],
+            "command-line-flag": "--aparc-parcellations",
+            "value-key": "[APARC_PARCELLATIONS]"
+        },
+        {
+            "name": "aparc_measures",
+            "id": "aparc_measures",
+            "description": "List of measure to use for aparcstats2table. Default: ['thickness', 'area', 'meancurv'].",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "thickness",
+                "area",
+                "meancurv"
+            ],
+            "command-line-flag": "--aparc-measures",
+            "value-key": "[APARC_MEASURES]"
+        },
+        {
+            "name": "container",
+            "id": "container",
+            "description": "Container command and arguments (including image file), as a single string. This needs to contain everything needed to be able to run the FreeSurfer commands, for example \"apptainer exec --bind <INPUT_DIR_PATH> <IMAGE_FILE_PATH>\". Does not need to be specified if running on a system with FreeSurfer installed. IMPORTANT: only the Singularity/Apptainer container engine is explicitly supported because it allows for forwarding environment variables; this script might work with Docker containers but likely only with --mode single.",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "--container",
+            "value-key": "[CONTAINER]"
+        },
+        {
+            "name": "aseg_args",
+            "id": "aseg_args",
+            "description": "Optional arguments to pass to asegstats2table, as a single string. Should not include --subjects, --tablefile or --meas arguments.",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "--aseg-args",
+            "value-key": "[ASEG_ARGS]"
+        },
+        {
+            "name": "aparc_args",
+            "id": "aparc_args",
+            "description": "Optional arguments to pass to aparcstats2table, as a single string. Should not include --subjects, --tablefile (or -t), --hemi, --measure or --parc arguments.",
+            "type": "String",
+            "optional": true,
+            "command-line-flag": "--aparc-args",
+            "value-key": "[APARC_ARGS]"
+        },
+        {
+            "name": "euler_surf_paths",
+            "id": "euler_surf_paths",
+            "description": "Paths to the surface files to calculate the Euler number from (default: ['surf/lh.white', 'surf/rh.white', 'surf/lh.pial', 'surf/rh.pial']).",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "surf/lh.white",
+                "surf/rh.white",
+                "surf/lh.pial",
+                "surf/rh.pial"
+            ],
+            "command-line-flag": "--euler-surf-paths",
+            "value-key": "[EULER_SURF_PATHS]"
+        },
+        {
+            "name": "cnr_vol_paths",
+            "id": "cnr_vol_paths",
+            "description": "Paths to the volume files to calculate the contrast-to-noise ratio from (default: ['mri/norm.mgz']).",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "mri/norm.mgz"
+            ],
+            "command-line-flag": "--cnr-vol-paths",
+            "value-key": "[CNR_VOL_PATHS]"
+        },
+        {
+            "name": "cnr_measures",
+            "id": "cnr_measures",
+            "description": "Names of the CNR measures to include in the QC metrics file for each volume (default: ['gray_white_cnr', 'gray_csf_cnr']).",
+            "type": "String",
+            "list": true,
+            "optional": true,
+            "default-value": [
+                "gray_white_cnr",
+                "gray_csf_cnr"
+            ],
+            "command-line-flag": "--cnr-measures",
+            "value-key": "[CNR_MEASURES]",
+            "value-choices": [
+                "gray_white_cnr",
+                "gray_csf_cnr",
+                "white_mean",
+                "gray_mean",
+                "csf_mean",
+                "sqrt_white_var",
+                "sqrt_gray_var",
+                "sqrt_csf_var"
+            ]
+        },
+        {
+            "name": "sub_colname",
+            "id": "sub_colname",
+            "description": "Column name to use for the subject ID in the final output file (default: \"participant_id\").",
+            "type": "String",
+            "optional": true,
+            "default-value": "participant_id",
+            "command-line-flag": "--sub-colname",
+            "value-key": "[SUB_COLNAME]"
+        },
+        {
+            "name": "ses_colname",
+            "id": "ses_colname",
+            "description": "Column name to use for the session ID in the final output file (default: \"session_id\").",
+            "type": "String",
+            "optional": true,
+            "default-value": "session_id",
+            "command-line-flag": "--ses-colname",
+            "value-key": "[SES_COLNAME]"
+        },
+        {
+            "name": "sub_prefix",
+            "id": "sub_prefix",
+            "description": "Prefix to strip from the subject IDs in the final output file (default: \"sub-\"). Set as empty string to keep the original values.",
+            "type": "String",
+            "optional": true,
+            "default-value": "sub-",
+            "command-line-flag": "--sub-prefix",
+            "value-key": "[SUB_PREFIX]"
+        },
+        {
+            "name": "ses_prefix",
+            "id": "ses_prefix",
+            "description": "Prefix to strip from the session IDs in the final output file (default: \"ses-\"). Set as empty string to keep the original values.",
+            "type": "String",
+            "optional": true,
+            "default-value": "ses-",
+            "command-line-flag": "--ses-prefix",
+            "value-key": "[SES_PREFIX]"
+        },
+        {
+            "name": "verbose",
+            "id": "verbose",
+            "description": "Print more information during execution.",
+            "type": "Flag",
+            "optional": true,
+            "command-line-flag": "--verbose",
+            "value-key": "[VERBOSE]"
+        }
+    ],
+    "tags": {},
+    "suggested-resources": {
+        "cpu-cores": 1,
+        "ram": 1,
+        "walltime-estimate": 60
+    }
+}

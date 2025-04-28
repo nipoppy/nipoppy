@@ -6,7 +6,7 @@ BIDS conversion with Nipoppy can be skipped if you already have BIDSified data.
 
 Organizing imaging data following the {term}`Brain Imaging Data Structure <BIDS>` standard can greatly facilitate downstream processing and sharing of data. However, BIDS conversion can be a tricky process, especially for retrospective and/or messy datasets. Some manual work and trial-and-error process is usually needed to create an accurate configuration file to map the raw DICOMs (or NIfTIs) to valid BIDS paths.
 
-Currently, the default Nipoppy global configuration file (as created with [`nipoppy init`](<project:../cli_reference/init.md>)) allows users to run any of the following BIDS converters:
+Currently, the default Nipoppy global configuration file (as created with [`nipoppy init`](<project:../cli_reference/init.rst>)) allows users to run any of the following BIDS converters:
 - [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/latest), a user-friendly DICOM (or NIfTI) converter that is configured with a {term}`JSON` file
 - [HeuDiConv](https://heudiconv.readthedocs.io/en/latest/), a flexible DICOM converter that is configured with a heuristic Python file
 - [BIDScoin](https://bidscoin.readthedocs.io/en/stable/), a user-friendly DICOM (or NIfTI) converter with a graphical user interface (GUI) for editing the configuration file
@@ -36,17 +36,17 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 
 ### Commands
 
-- Command-line interface: [`nipoppy bidsify`](<project:../cli_reference/bidsify.md>)
+- Command-line interface: [`nipoppy bidsify`](<project:../cli_reference/bidsify.rst>)
 - Python API: {class}`nipoppy.workflows.BidsConversionRunner`
 
 ### Workflow
 
-1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_post_reorg}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`doughnut file`
-    - An existing, out-of-date doughnut file can be updated with [`nipoppy doughnut --regenerate`](../cli_reference/doughnut.md)
+1. Nipoppy BIDS conversion runners will loop over all participants/sessions that *have* data in {{dpath_post_reorg}} but *do not have* BIDS data in {{dpath_bids}} according to the {term}`curation status file`
+    - An existing, out-of-date curation status file can be updated with [`nipoppy track-curation --regenerate`](../cli_reference/track_curation.rst)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. The pipeline is launched using {term}`Boutiques`, which will be combine the processed invocation with the pipeline's descriptor file to produce and run a command-line expression
-    3. The doughnut file is updated to indicate that this participant-session pair now has BIDS data
+    3. The curation status file is updated to indicate that this participant-session pair now has BIDS data
 
 ## Configuring the BIDS conversion
 
@@ -82,7 +82,7 @@ These step names `prepare` and `convert` (and `edit`) are a Nipoppy convention b
 To convert all participants and sessions in a dataset, run:
 ```console
 $ nipoppy bidsify \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME>
 ```
@@ -95,7 +95,7 @@ If `--pipeline-step` is not specified, the first step defined in the global conf
 The BIDS conversion can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy bidsify \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --pipeline-step <PIPELINE_STEP_NAME> \
     --participant-id <PARTICIPANT_ID> \
@@ -106,7 +106,7 @@ $ nipoppy bidsify \
 The `--simulate` argument will make Nipoppy print out the command to be executed with Boutiques (instead of actually executing it). It can be useful for checking runtime parameters or debugging the invocation file.
 ```
 
-See the [CLI reference page](<project:../cli_reference/bidsify.md>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../cli_reference/bidsify.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/bids_conversion`
@@ -130,7 +130,7 @@ workflow = BidsConversionRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.BidsConversionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.md>)).
+See the API reference for {class}`nipoppy.workflows.BidsConversionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/reorg.rst>)).
 
 ## Next steps
 

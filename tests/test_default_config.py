@@ -194,18 +194,23 @@ def test_boutiques_descriptors(fpath_descriptor):
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version",
+    "pipeline_name,pipeline_version,pipeline_step",
     [
-        ("fmriprep", "20.2.7"),
-        ("fmriprep", "23.1.3"),
-        ("fmriprep", "24.1.1"),
-        ("mriqc", "23.1.0"),
-        ("qsiprep", "0.23.0"),
+        ("bids-validator", "2.0.3", None),
+        ("fmriprep", "20.2.7", None),
+        ("fmriprep", "23.1.3", None),
+        ("fmriprep", "24.1.1", None),
+        ("mriqc", "23.1.0", None),
+        ("qsiprep", "0.23.0", None),
+        ("rabies", "0.5.1", "preprocess"),
+        ("rabies", "0.5.1", "confound-correction"),
+        ("rabies", "0.5.1", "analysis"),
     ],
 )
 def test_pipeline_runner(
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     single_subject_dataset,
 ):
     layout, participant_id, session_id = single_subject_dataset
@@ -214,11 +219,10 @@ def test_pipeline_runner(
         dpath_root=layout.dpath_root,
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
+        pipeline_step=pipeline_step,
         simulate=True,
     )
-
     runner.pipeline_config.get_fpath_container().touch()
-
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id
     )
@@ -234,6 +238,8 @@ def test_pipeline_runner(
         ("heudiconv", "0.12.2", "convert"),
         ("dcm2bids", "3.1.0", "prepare"),
         ("dcm2bids", "3.1.0", "convert"),
+        ("dcm2bids", "3.2.0", "prepare"),
+        ("dcm2bids", "3.2.0", "convert"),
         ("bidscoin", "4.3.2", "prepare"),
         ("bidscoin", "4.3.2", "edit"),
         ("bidscoin", "4.3.2", "convert"),
@@ -267,10 +273,10 @@ def test_bids_conversion_runner(
 def test_bids_pipeline_configs():
     config = Config.load(FPATH_SAMPLE_CONFIG_FULL)
     for pipeline_config in config.BIDS_PIPELINES:
-        count = sum([step.UPDATE_DOUGHNUT for step in pipeline_config.STEPS])
+        count = sum([step.UPDATE_STATUS for step in pipeline_config.STEPS])
         assert count == 1, (
             f"BIDS pipeline {pipeline_config.NAME} {pipeline_config.VERSION}"
-            f" should have exactly one step with UPDATE_DOUGHNUT=true (got {count})"
+            f" should have exactly one step with UPDATE_STATUS=true (got {count})"
         )
 
 
@@ -343,21 +349,32 @@ def test_tracker_paths(
 
     # check status
     assert (
-        tracker.bagel.loc[
+        tracker.processing_status_table.loc[
             (
-                (tracker.bagel[tracker.bagel.col_participant_id] == participant_id)
-                & (tracker.bagel[tracker.bagel.col_session_id] == session_id)
+                (
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_participant_id
+                    ]
+                    == participant_id
+                )
+                & (
+                    tracker.processing_status_table[
+                        tracker.processing_status_table.col_session_id
+                    ]
+                    == session_id
+                )
             ),
-            tracker.bagel.col_status,
+            tracker.processing_status_table.col_status,
         ].item()
-        == tracker.bagel.status_success
+        == tracker.processing_status_table.status_success
     )
 
 
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version",
     [
-        ("freesurfer_stats_and_qc", "0.1.0"),
+        ("fs_stats", "0.2.1"),
+        ("static_FC", "0.1.0"),
     ],
 )
 def test_extractor(
@@ -374,7 +391,8 @@ def test_extractor(
         simulate=True,
     )
 
-    runner.pipeline_config.get_fpath_container().touch()
+    if (fpath_container := runner.pipeline_config.get_fpath_container()) is not None:
+        fpath_container.touch()
 
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id

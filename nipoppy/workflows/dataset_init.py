@@ -35,8 +35,9 @@ class InitWorkflow(BaseWorkflow):
         self,
         dpath_root: Path,
         bids_source=None,
+        mode="symlink",
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -44,11 +45,13 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
+            _skip_logging=True,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
+        self.mode = mode
 
     def run_main(self):
         """Create dataset directory structure.
@@ -57,18 +60,38 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
-        If the BIDS source dataset is requested, it is copied.
+        If the BIDS source dataset is requested, it is symlinked.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            raise FileExistsError("Dataset directory already exists")
+            try:
+                filenames = [
+                    f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
+                ]
+
+            except NotADirectoryError:
+                raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
+
+            if len(filenames) > 0:
+                raise FileExistsError(
+                    f"Dataset directory is non-empty: {self.dpath_root}"
+                )
 
         # create directories
         for dpath in self.layout.dpaths:
-
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
-                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                if self.mode == "copy":
+                    self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "move":
+                    self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "symlink":
+                    self.mkdir(self.dpath_root)
+                    self.create_symlink(
+                        self.bids_source, str(dpath), log_level=logging.DEBUG
+                    )
+                else:
+                    raise ValueError(f"Invalid mode: {self.mode}")
             else:
                 self.mkdir(dpath)
 
@@ -148,7 +171,6 @@ class InitWorkflow(BaseWorkflow):
         self.logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for bids_participant_id in bids_participant_ids:
-
             bids_session_ids = sorted(
                 [
                     x.name

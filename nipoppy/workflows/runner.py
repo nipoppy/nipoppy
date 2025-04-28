@@ -1,6 +1,6 @@
 """PipelineRunner workflow."""
 
-import logging
+import subprocess
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
@@ -22,6 +22,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
+        name: str = "run",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
@@ -29,25 +30,27 @@ class PipelineRunner(BasePipelineWorkflow):
         keep_workdir: bool = False,
         tar: bool = False,
         simulate: bool = False,
+        write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
+        self.simulate = simulate
+        self.keep_workdir = keep_workdir
+        self.tar = tar
         super().__init__(
             dpath_root=dpath_root,
-            name="run",
+            name=name,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
+            write_list=write_list,
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
-        self.keep_workdir = keep_workdir
-        self.tar = tar
-        self.simulate = simulate
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -145,15 +148,39 @@ class PipelineRunner(BasePipelineWorkflow):
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
         # run as a subprocess so that stdout/error are captured in the log
-        # by default this will raise an exception if the command fails
+        # by default, this will raise an exception if the command fails
         if self.simulate:
-            self.run_command(
-                ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
-            )
+            self.logger.info("Simulating pipeline command")
+            try:
+                self.run_command(
+                    ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
+                    quiet=True,
+                )
+            except subprocess.CalledProcessError as exception:
+                raise RuntimeError(
+                    "Pipeline simulation failed"
+                    f" (return code: {exception.returncode})"
+                )
         else:
-            self.run_command(
-                ["bosh", "exec", "launch", "--stream", descriptor_str, invocation_str]
-            )
+            self.logger.info("Running pipeline command")
+            try:
+                self.run_command(
+                    [
+                        "bosh",
+                        "exec",
+                        "launch",
+                        "--stream",
+                        descriptor_str,
+                        invocation_str,
+                    ],
+                    quiet=True,
+                )
+            except subprocess.CalledProcessError as exception:
+                raise RuntimeError(
+                    "Pipeline did not complete successfully"
+                    f" (return code: {exception.returncode})"
+                    ". Hint: make sure the shell command above is correct."
+                )
 
         return descriptor_str, invocation_str
 
@@ -211,10 +238,10 @@ class PipelineRunner(BasePipelineWorkflow):
 
         Specifically, this list will include participants who have BIDS data but
         who have not previously successfully completed the pipeline (according)
-        to the bagel file.
+        to the processing status file.
         """
         participants_sessions_completed = set(
-            self.bagel.get_completed_participants_sessions(
+            self.processing_status_table.get_completed_participants_sessions(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
                 pipeline_step=self.pipeline_step,
@@ -223,7 +250,9 @@ class PipelineRunner(BasePipelineWorkflow):
             )
         )
 
-        for participant_session in self.doughnut.get_bidsified_participants_sessions(
+        for (
+            participant_session
+        ) in self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         ):
             if participant_session not in participants_sessions_completed:

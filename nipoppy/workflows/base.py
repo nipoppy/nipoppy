@@ -15,14 +15,17 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
-from nipoppy.logger import get_logger
-from nipoppy.tabular.bagel import Bagel
+from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular
+from nipoppy.tabular.curation_status import (
+    CurationStatusTable,
+    generate_curation_status_table,
+)
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut, generate_doughnut
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import add_path_timestamp, process_template_str
 
 LOG_SUFFIX = ".log"
@@ -42,8 +45,9 @@ class BaseWorkflow(Base, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
-        dry_run=False,
+        verbose: bool = False,
+        dry_run: bool = False,
+        _skip_logging: bool = False,
     ):
         """Initialize the workflow instance.
 
@@ -58,19 +62,24 @@ class BaseWorkflow(Base, ABC):
         dry_run : bool, optional
             If True, print commands without executing them, by default False
         """
-        if logger is None:
-            logger = get_logger(name=name)
-
-        self.dpath_root = Path(dpath_root)
         self.name = name
+        self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
-        self.logger = logger
+        self.verbose = verbose
         self.dry_run = dry_run
+        self._skip_logging = _skip_logging
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
         self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
+
+        # Setup logging
+        log_level = logging.DEBUG if verbose else logging.INFO
+        self.logger = get_logger(
+            name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
+            level=log_level,
+        )
 
     def generate_fpath_log(
         self,
@@ -99,6 +108,7 @@ class BaseWorkflow(Base, ABC):
         self,
         command_or_args: Sequence[str] | str,
         check=True,
+        quiet=False,
         **kwargs,
     ) -> subprocess.Popen | str:
         """Run a command in a subprocess.
@@ -117,6 +127,8 @@ class BaseWorkflow(Base, ABC):
         check : bool, optional
             If True, raise an error if the process exits with a non-zero code,
             by default True
+        quiet : bool, optional
+            If True, do not log the command, by default False
         **kwargs
             Passed to `subprocess.Popen`.
 
@@ -149,7 +161,8 @@ class BaseWorkflow(Base, ABC):
         if not kwargs.get("shell"):
             command_or_args = args
 
-        self.log_command(command)
+        if not quiet:
+            self.log_command(command)
 
         if not self.dry_run:
             process = subprocess.Popen(
@@ -193,17 +206,17 @@ class BaseWorkflow(Base, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
+        if not self._skip_logging:
+            add_logfile(self.logger, self.generate_fpath_log())
+        logging.captureWarnings(True)
+        capture_warnings(self.logger)
+
         self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.info(self)
         if self.dry_run:
             self.logger.info("Doing a dry run")
         if self.validate_layout:
-            try:
-                self.layout.validate()
-            except FileNotFoundError as exception:
-                raise RuntimeError(
-                    f"Dataset does not follow expected directory structure: {exception}"
-                )
+            self.layout.validate()
 
     @abstractmethod
     def run_main(self):
@@ -251,6 +264,28 @@ class BaseWorkflow(Base, ABC):
         self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
         if not self.dry_run:
             shutil.copytree(src=path_source, dst=path_dest, **kwargs)
+
+    def movetree(
+        self,
+        path_source,
+        path_dest,
+        kwargs_mkdir=None,
+        kwargs_move=None,
+        log_level=logging.INFO,
+    ):
+        """Move directory tree."""
+        kwargs_mkdir = kwargs_mkdir or {}
+        kwargs_move = kwargs_move or {}
+        self.logger.log(level=log_level, msg=f"Moving {path_source} to {path_dest}")
+        if not self.dry_run:
+            self.mkdir(path_dest, log_level=log_level, **kwargs_mkdir)
+            file_names = os.listdir(path_source)
+            for file_name in file_names:
+                shutil.move(
+                    src=os.path.join(path_source, file_name),
+                    dst=path_dest,
+                    **kwargs_move,
+                )
 
     def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
         """Create a symlink to another path."""
@@ -320,22 +355,22 @@ class BaseWorkflow(Base, ABC):
             raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
 
     @cached_property
-    def doughnut(self) -> Doughnut:
+    def curation_status_table(self) -> CurationStatusTable:
         """
-        Load the doughnut if it exists.
+        Load the curation status file if it exists.
 
         Otherwise, generate a new one.
         """
         logger = self.logger
-        fpath_doughnut = Path(self.layout.fpath_doughnut)
+        fpath_table = Path(self.layout.fpath_curation_status)
         try:
-            return Doughnut.load(fpath_doughnut)
+            return CurationStatusTable.load(fpath_table)
         except FileNotFoundError:
             self.logger.warning(
-                f"Doughnut file not found: {fpath_doughnut}"
+                f"Curation status file not found: {fpath_table}"
                 ". Generating a new one on-the-fly"
             )
-            doughnut = generate_doughnut(
+            table = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.layout.dpath_pre_reorg,
@@ -346,28 +381,30 @@ class BaseWorkflow(Base, ABC):
             )
 
             if not self.dry_run:
-                fpath_doughnut_backup = doughnut.save_with_backup(fpath_doughnut)
+                fpath_table_backup = table.save_with_backup(fpath_table)
                 logger.info(
-                    f"Saved doughnut to {fpath_doughnut} (-> {fpath_doughnut_backup})"
+                    "Saved curation status table to "
+                    f"{fpath_table} (-> {fpath_table_backup})"
                 )
             else:
                 logger.info(
-                    f"Not writing doughnut to {fpath_doughnut} since this is a dry run"
+                    "Not writing curation status table to "
+                    f"{fpath_table} since this is a dry run"
                 )
 
-            return doughnut
+            return table
 
     @cached_property
-    def bagel(self) -> Bagel:
+    def processing_status_table(self) -> ProcessingStatusTable:
         """
-        Load the bagel it it exists.
+        Load the processing status file it it exists.
 
-        Otherwise, return an empty bagel.
+        Otherwise, return an empty processing status table.
         """
         try:
-            return Bagel.load(self.layout.fpath_imaging_bagel)
+            return ProcessingStatusTable.load(self.layout.fpath_processing_status)
         except FileNotFoundError:
-            return Bagel()
+            return ProcessingStatusTable()
 
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:

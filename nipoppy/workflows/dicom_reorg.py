@@ -8,7 +8,7 @@ from typing import Optional
 import pydicom
 
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
-from nipoppy.tabular.doughnut import update_doughnut
+from nipoppy.tabular.curation_status import update_curation_status_table
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
@@ -36,7 +36,7 @@ class DicomReorgWorkflow(BaseWorkflow):
         copy_files: bool = False,
         check_dicoms: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""
@@ -44,7 +44,7 @@ class DicomReorgWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="dicom_reorg",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
         )
         self.copy_files = copy_files
@@ -82,16 +82,16 @@ class DicomReorgWorkflow(BaseWorkflow):
         return fpaths
 
     def apply_fname_mapping(
-        self, fname_source: str, participant_id: str, session_id: str
+        self, fpath_source: StrOrPathLike, participant_id: str, session_id: str
     ) -> str:
         """
-        Apply a mapping to the file name.
+        Apply a mapping from the original (full) file path to destination file name.
 
         This method does not change the file name by default, but it can be overridden
         if the file names need to be changed during reorganization (e.g. for easier
         BIDS conversion).
         """
-        return fname_source
+        return Path(fpath_source).name
 
     def run_single(self, participant_id: str, session_id: str):
         """Reorganize downloaded DICOM files for a single participant and session."""
@@ -119,9 +119,14 @@ class DicomReorgWorkflow(BaseWorkflow):
                         f"Error checking DICOM file {fpath_source}: {exception}"
                     )
 
-            fpath_dest = dpath_reorganized / self.apply_fname_mapping(
-                fpath_source.name, participant_id=participant_id, session_id=session_id
-            )
+            # the destination path is under dpath_reorganized
+            # resolve the path to avoid issues with symlinks
+            fpath_dest = (
+                dpath_reorganized
+                / self.apply_fname_mapping(
+                    fpath_source, participant_id=participant_id, session_id=session_id
+                )
+            ).resolve()
 
             # do not overwrite existing files
             if fpath_dest.exists():
@@ -131,34 +136,42 @@ class DicomReorgWorkflow(BaseWorkflow):
                 )
 
             # either create symlinks or copy original files
-            if not self.dry_run:
-                if self.copy_files:
-                    self.copy(fpath_source, fpath_dest)
-                else:
-                    fpath_source = os.path.relpath(fpath_source, fpath_dest.parent)
-                    self.create_symlink(path_source=fpath_source, path_dest=fpath_dest)
+            if self.copy_files:
+                self.copy(fpath_source, fpath_dest, log_level=logging.DEBUG)
+            else:
+                fpath_source = os.path.relpath(
+                    fpath_source.resolve(), fpath_dest.parent
+                )
+                self.create_symlink(
+                    path_source=fpath_source,
+                    path_dest=fpath_dest,
+                    log_level=logging.DEBUG,
+                )
 
-        # update doughnut entry
-        self.doughnut.set_status(
+        # update curation status
+        self.curation_status_table.set_status(
             participant_id=participant_id,
             session_id=session_id,
-            col=self.doughnut.col_in_post_reorg,
+            col=self.curation_status_table.col_in_post_reorg,
             status=True,
         )
 
     def get_participants_sessions_to_run(self):
         """Return participant-session pairs to reorganize."""
         participants_sessions_organized = set(
-            self.doughnut.get_organized_participants_sessions()
+            self.curation_status_table.get_organized_participants_sessions()
         )
-        for participant_session in self.doughnut.get_downloaded_participants_sessions():
+        for (
+            participant_session
+        ) in self.curation_status_table.get_downloaded_participants_sessions():
             if participant_session not in participants_sessions_organized:
                 yield participant_session
 
     def run_setup(self):
-        """Update the doughnut in case it is not up-to-date."""
-        self.doughnut = update_doughnut(
-            doughnut=self.doughnut,
+        """Update the curation status table in case it is not up-to-date."""
+        super().run_setup()
+        self.curation_status_table = update_curation_status_table(
+            curation_status_table=self.curation_status_table,
             manifest=self.manifest,
             dicom_dir_map=self.dicom_dir_map,
             dpath_downloaded=self.layout.dpath_pre_reorg,
@@ -189,16 +202,18 @@ class DicomReorgWorkflow(BaseWorkflow):
         Clean up after main DICOM reorg part is run.
 
         Specifically:
-        - Write updated doughnut file
+        - Write updated curation status file
         - Log a summary message
         """
-        self.save_tabular_file(self.doughnut, self.layout.fpath_doughnut)
+        self.save_tabular_file(
+            self.curation_status_table, self.layout.fpath_curation_status
+        )
 
         if self.n_total == 0:
             self.logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
                 "mistakes in the dataset's manifest or config file, and/or check the "
-                f"doughnut file at {self.layout.fpath_doughnut}"
+                f"curation status file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was
