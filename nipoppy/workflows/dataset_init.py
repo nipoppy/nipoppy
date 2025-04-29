@@ -212,24 +212,17 @@ class InitWorkflow(BaseWorkflow):
                         ]
                     )
                 else:
-                    try:
-                        datatypes = sorted(
-                            [
-                                x.name
-                                for x in (
-                                    self.layout.dpath_bids
-                                    / bids_participant_id
-                                    / bids_session_id
-                                ).iterdir()
-                                if x.is_dir()
-                            ]
-                        )
-                    except PermissionError:
-                        datatypes = ["mri"]
-                        self.logger.warning(
-                            f"Permission denied reading {bids_participant_id}"
-                            " in the BIDS dataset."
-                        )
+                    datatypes = sorted(
+                        [
+                            x.name
+                            for x in (
+                                self.layout.dpath_bids
+                                / bids_participant_id
+                                / bids_session_id
+                            ).iterdir()
+                            if x.is_dir()
+                        ]
+                    )
 
                 df[Manifest.col_participant_id].append(
                     check_participant_id(bids_participant_id)
