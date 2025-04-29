@@ -227,6 +227,9 @@ def test_pipeline_runner(
     assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
 
+    if runner.pipeline_step_config.HPC_CONFIG_FILE is not None:
+        assert runner.pipeline_step_config.HPC_CONFIG_FILE.exists()
+
 
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,pipeline_step",
@@ -265,6 +268,9 @@ def test_bids_conversion_runner(
 
     assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
+
+    if runner.pipeline_step_config.HPC_CONFIG_FILE is not None:
+        assert runner.pipeline_step_config.HPC_CONFIG_FILE.exists()
 
 
 def test_bids_pipeline_configs():
@@ -387,3 +393,6 @@ def test_extractor(
 
     assert TEMPLATE_REPLACE_PATTERN.search(invocation_str) is None
     assert TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is None
+
+    if runner.pipeline_step_config.HPC_CONFIG_FILE is not None:
+        assert runner.pipeline_step_config.HPC_CONFIG_FILE.exists()
