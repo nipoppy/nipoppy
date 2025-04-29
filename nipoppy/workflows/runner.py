@@ -208,8 +208,9 @@ class PipelineRunner(BasePipelineWorkflow):
                 f"{self.pipeline_step_config.TRACKER_CONFIG_FILE}"
             )
 
-    def tar_directory(self, dpath: Path) -> Path:
+    def tar_directory(self, dpath: StrOrPathLike) -> Path:
         """Tar a directory and delete it."""
+        dpath = Path(dpath)
         if not dpath.exists():
             raise RuntimeError(f"Not tarring {dpath} since it does not exist")
         if not dpath.is_dir():

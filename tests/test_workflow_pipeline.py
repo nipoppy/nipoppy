@@ -2,6 +2,7 @@
 
 import json
 import re
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
@@ -10,19 +11,34 @@ import pytest_mock
 from fids import fids
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline import (
+    BidsPipelineConfig,
+    ExtractionPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
+    CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
     LogColor,
     ReturnCode,
 )
-from nipoppy.workflows.pipeline import BasePipelineWorkflow, apply_analysis_level
+from nipoppy.workflows.pipeline import (
+    BasePipelineWorkflow,
+    apply_analysis_level,
+    get_pipeline_version,
+)
 
 from .conftest import datetime_fixture  # noqa F401
-from .conftest import create_empty_dataset, get_config, prepare_dataset
+from .conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+    prepare_dataset,
+)
 
 
 class PipelineWorkflow(BasePipelineWorkflow):
@@ -54,16 +70,31 @@ def workflow(tmp_path: Path):
         pipeline_version="1.0",
     )
     # write config
-    config = get_config(
-        visit_ids=["1"],
-        proc_pipelines=[
-            # built-in pipelines
+    config = get_config()
+    config.save(workflow.layout.fpath_config)
+
+    create_empty_dataset(workflow.layout.dpath_root)
+
+    create_pipeline_config_files(
+        workflow.layout.dpath_pipelines,
+        bidsification_pipelines=[
+            {
+                "NAME": "bids_converter",
+                "VERSION": "1.0",
+                "CONTAINER_INFO": {"FILE": "path"},
+                "STEPS": [{"NAME": "step1"}, {"NAME": "step2"}],
+            },
+            {
+                "NAME": "bids_converter",
+                "VERSION": "0.1",
+            },
+        ],
+        processing_pipelines=[
             {
                 "NAME": "fmriprep",
                 "VERSION": "23.1.3",
                 "STEPS": [{}],
             },
-            # user-added pipeline
             {
                 "NAME": "my_pipeline",
                 "VERSION": "1.0",
@@ -78,8 +109,14 @@ def workflow(tmp_path: Path):
                 "STEPS": [{}],
             },
         ],
+        extraction_pipelines=[
+            {
+                "NAME": "extractor1",
+                "VERSION": "0.1.0",
+                "PROC_DEPENDENCIES": [{"NAME": "pipeline1", "VERSION": "v1"}],
+            },
+        ],
     )
-    config.save(workflow.layout.fpath_config)
     return workflow
 
 
@@ -98,6 +135,34 @@ def workflow(tmp_path: Path):
 def test_apply_analysis_level(analysis_level, expected):
     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
     assert apply_analysis_level(participants_sessions, analysis_level) == expected
+
+
+@pytest.mark.parametrize(
+    "dname_pipelines,pipeline_name,expected_version",
+    [
+        ("processing", "fmriprep", "23.1.3"),
+        ("processing", "my_pipeline", "2.0"),
+        ("bidsification", "bids_converter", "1.0"),
+        ("extraction", "extractor1", "0.1.0"),
+    ],
+)
+def test_get_pipeline_version(
+    dname_pipelines: str,
+    pipeline_name: str,
+    expected_version: str,
+    workflow: BasePipelineWorkflow,
+):
+    assert (
+        get_pipeline_version(
+            pipeline_name, workflow.layout.dpath_pipelines / dname_pipelines
+        )
+        == expected_version
+    )
+
+
+def test_get_pipeline_version_invalid_name(tmp_path: Path):
+    with pytest.raises(ValueError, match="No config found for pipeline"):
+        get_pipeline_version("pipeline1", tmp_path)
 
 
 @pytest.mark.parametrize(
@@ -220,10 +285,11 @@ def test_descriptor(
     workflow.pipeline_version = pipeline_version
     workflow.pipeline_step = pipeline_step
 
-    # user-added pipelines with descriptor file
-    fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_step_config.DESCRIPTOR_FILE = fpath_descriptor
+    fpath_descriptor = tmp_path / "descriptor.json"
     fpath_descriptor.write_text(json.dumps(descriptor))
+
+    workflow.pipeline_step_config.DESCRIPTOR_FILE = fpath_descriptor.name
+    workflow.dpath_pipeline_bundle = fpath_descriptor.parent
     assert workflow.descriptor == descriptor
 
 
@@ -233,27 +299,26 @@ def test_descriptor_none(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "substitutions,expected_descriptor",
+    "variables,expected_descriptor",
     [
-        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
-        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "value1"}),
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "[[TO_REPLACE1]]"}),
     ],
 )
-def test_descriptor_substitutions(
-    tmp_path: Path, workflow: PipelineWorkflow, substitutions, expected_descriptor
+def test_descriptor_pipeline_variables(
+    tmp_path: Path, workflow: PipelineWorkflow, variables, expected_descriptor
 ):
-    # set substitutions
-    workflow.config.SUBSTITUTIONS = substitutions
+    # set variables for substitution
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
 
     # set descriptor file and write descriptor content
-    fpath_descriptor = tmp_path / "custom_pipeline.json"
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=workflow.pipeline_name,
-        VERSION=workflow.pipeline_version,
-        STEPS=[ProcPipelineStepConfig(DESCRIPTOR_FILE=fpath_descriptor)],
-    )
-
+    fpath_descriptor = tmp_path / "descriptor.json"
     fpath_descriptor.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
+
+    workflow.pipeline_step_config.DESCRIPTOR_FILE = fpath_descriptor.name
+    workflow.dpath_pipeline_bundle = fpath_descriptor.parent
 
     assert workflow.descriptor == expected_descriptor
 
@@ -278,7 +343,8 @@ def test_invocation(
     fpath_invocation = tmp_path / "invocation.json"
     fpath_invocation.write_text(json.dumps(invocation))
 
-    workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation
+    workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation.name
+    workflow.dpath_pipeline_bundle = fpath_invocation.parent
     assert workflow.invocation == invocation
 
 
@@ -288,28 +354,55 @@ def test_invocation_none(workflow: PipelineWorkflow):
 
 
 @pytest.mark.parametrize(
-    "substitutions,expected_invocation",
+    "variables,expected_invocation",
     [
-        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "value1"}),
-        ({"TO_REPLACE1": "value1"}, {"key1": "[[value1]]"}),
+        ({"TO_REPLACE1": "value1"}, {"key1": "value1"}),
+        ({"[[TO_REPLACE1]]": "value1"}, {"key1": "[[TO_REPLACE1]]"}),
     ],
 )
-def test_invocation_substitutions(
-    tmp_path: Path, workflow: PipelineWorkflow, substitutions, expected_invocation
+def test_invocation_pipeline_variables(
+    tmp_path: Path, workflow: PipelineWorkflow, variables, expected_invocation
 ):
-    # set substitutions
-    workflow.config.SUBSTITUTIONS = substitutions
+    # set variables for substitution
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
 
     # set invocation file and write invocation content
     fpath_invocation = tmp_path / "invocation.json"
-    workflow.pipeline_config = ProcPipelineConfig(
-        NAME=workflow.pipeline_name,
-        VERSION=workflow.pipeline_version,
-        STEPS=[ProcPipelineStepConfig(INVOCATION_FILE=fpath_invocation)],
-    )
     fpath_invocation.write_text(json.dumps({"key1": "[[TO_REPLACE1]]"}))
 
+    workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation.name
+    workflow.dpath_pipeline_bundle = fpath_invocation.parent
+
     assert workflow.invocation == expected_invocation
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,pipeline_step,tracker_config_data",
+    [
+        ("fmriprep", "23.1.3", None, {"PATHS": ["path1"]}),
+        ("my_pipeline", "1.0", None, {"PATHS": ["path1", "path2"]}),
+    ],
+)
+def test_tracker_config(
+    workflow: PipelineWorkflow,
+    pipeline_name,
+    pipeline_version,
+    pipeline_step,
+    tracker_config_data,
+    tmp_path: Path,
+):
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = pipeline_version
+    workflow.pipeline_step = pipeline_step
+
+    fpath_tracker_config = tmp_path / "tracker_config.json"
+    fpath_tracker_config.write_text(json.dumps(tracker_config_data))
+
+    workflow.pipeline_step_config.TRACKER_CONFIG_FILE = fpath_tracker_config.name
+    workflow.dpath_pipeline_bundle = fpath_tracker_config.parent
+    assert workflow.tracker_config == TrackerConfig(**tracker_config_data)
 
 
 @pytest.mark.parametrize(
@@ -331,7 +424,9 @@ def test_pybids_ignore_patterns(
 
     fpath_patterns = tmp_path / "pybids_ignore_patterns.json"
     fpath_patterns.write_text(json.dumps(patterns))
-    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
+
+    workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns.name
+    workflow.dpath_pipeline_bundle = fpath_patterns.parent
 
     assert workflow.pybids_ignore_patterns == [
         re.compile(pattern) for pattern in patterns
@@ -352,6 +447,99 @@ def test_pybids_ignore_patterns_invalid_format(
 
     with pytest.raises(ValueError, match="Expected a list of strings"):
         workflow.pybids_ignore_patterns
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
+    [
+        ("fmriprep", "23.1.3", "processing", ProcPipelineConfig),
+        ("my_pipeline", "2.0", "processing", ProcPipelineConfig),
+        ("bids_converter", "1.0", "bidsification", BidsPipelineConfig),
+        ("extractor1", "0.1.0", "extraction", ExtractionPipelineConfig),
+    ],
+)
+def test_get_pipeline_config(
+    pipeline_name,
+    pipeline_version,
+    dname_pipelines,
+    pipeline_class,
+    workflow: PipelineWorkflow,
+):
+    dpath_pipeline_bundle = (
+        workflow.layout.dpath_pipelines
+        / dname_pipelines
+        / f"{pipeline_name}-{pipeline_version}"
+    )
+    assert isinstance(
+        workflow._get_pipeline_config(
+            dpath_pipeline_bundle,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_class=pipeline_class,
+        ),
+        pipeline_class,
+    )
+
+
+def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
+    pipeline_name = "new_pipeline"
+    pipeline_version = "1.0.0"
+    dpath_pipeline_bundle = (
+        workflow.layout.dpath_pipelines
+        / "processing"
+        / f"{pipeline_name}-{pipeline_version}"
+    )
+    config_dict = {
+        "NAME": pipeline_name,
+        "VERSION": "2.0.0",  # different version
+        "PIPELINE_TYPE": "processing",
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+    }
+    dpath_pipeline_bundle.mkdir(parents=True)
+    (dpath_pipeline_bundle / "config.json").write_text(json.dumps(config_dict))
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "Expected pipeline config to have "
+            f'NAME="{pipeline_name}" and VERSION="{pipeline_version}"'
+        ),
+    ):
+        workflow._get_pipeline_config(
+            dpath_pipeline_bundle,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_class=ProcPipelineConfig,
+        )
+
+
+@pytest.mark.parametrize(
+    "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
+    [
+        ("not_a_pipeline", "23.1.3", "processing", ProcPipelineConfig),
+        ("my_pipeline", "not_a_version", "processing", ProcPipelineConfig),
+        ("bids_converter", "2.0", "bidsification", BidsPipelineConfig),
+        ("bids_converter", "1.0", "extraction", ExtractionPipelineConfig),
+    ],
+)
+def test_get_pipeline_config_missing(
+    pipeline_name,
+    pipeline_version,
+    dname_pipelines,
+    pipeline_class,
+    workflow: PipelineWorkflow,
+):
+    dpath_pipeline_bundle = (
+        workflow.layout.dpath_pipelines
+        / dname_pipelines
+        / f"{pipeline_name}-{pipeline_version}"
+    )
+    with pytest.raises(FileNotFoundError, match="Pipeline config file not found at"):
+        workflow._get_pipeline_config(
+            dpath_pipeline_bundle,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_class=pipeline_class,
+        )
 
 
 @pytest.mark.parametrize("return_str", [True, False])
@@ -537,7 +725,7 @@ def test_set_up_bids_db_no_session(
 
 @pytest.mark.parametrize(
     "pipeline_name,expected_version",
-    [("fmriprep", "23.1.3"), ("my_pipeline", "1.0")],
+    [("fmriprep", "23.1.3"), ("my_pipeline", "2.0")],
 )
 def test_check_pipeline_version(
     pipeline_name,
@@ -545,12 +733,26 @@ def test_check_pipeline_version(
     workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
-    # initialize with version=None
     workflow.pipeline_name = pipeline_name
-    workflow.pipeline_version = None
+    workflow.pipeline_version = None  # should be inferred
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
     assert f"using version {expected_version}" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "variables,valid", [({"var1": "val1"}, True), ({"var2": None}, False)]
+)
+def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
+    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+        workflow.pipeline_version
+    ] = variables
+    with (
+        nullcontext()
+        if valid
+        else pytest.raises(ValueError, match="Variable .* is not set in the config")
+    ):
+        assert workflow._check_pipeline_variables() is None
 
 
 @pytest.mark.parametrize(
@@ -580,28 +782,13 @@ def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
     workflow.pipeline_step = None
     create_empty_dataset(workflow.layout.dpath_root)
     workflow.run_setup()
-    assert workflow.pipeline_version == "1.0"
+    assert workflow.pipeline_version == "2.0"
     assert workflow.pipeline_step == DEFAULT_PIPELINE_STEP_NAME
 
 
 @pytest.mark.parametrize("dry_run", [True, False])
-def test_run_setup_create_directories(dry_run: bool, tmp_path: Path):
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="my_pipeline",
-        pipeline_version="1.0",
-        dry_run=dry_run,
-    )
-    create_empty_dataset(workflow.layout.dpath_root)
-    get_config(
-        proc_pipelines=[
-            ProcPipelineConfig(
-                NAME=workflow.pipeline_name,
-                VERSION=workflow.pipeline_version,
-                STEPS=[ProcPipelineStepConfig()],
-            )
-        ]
-    ).save(workflow.layout.fpath_config)
+def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool):
+    workflow.dry_run = dry_run
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 
@@ -733,29 +920,15 @@ def test_run_cleanup(
     n_total,
     analysis_level,
     expected_message: str,
-    tmp_path: Path,
+    workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
-    pipeline_name = "my_pipeline"
-    pipeline_version = "1.0"
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
-    )
-
     workflow.n_success = n_success
     workflow.n_total = n_total
 
-    get_config(
-        proc_pipelines=[
-            ProcPipelineConfig(
-                NAME=pipeline_name,
-                VERSION=pipeline_version,
-                STEPS=[ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)],
-            )
-        ]
-    ).save(workflow.layout.fpath_config)
+    workflow.pipeline_config.STEPS = [
+        ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
+    ]
 
     workflow.run_cleanup()
 
@@ -777,7 +950,7 @@ def test_run_cleanup(
             None,
             "sub1",
             None,
-            "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
+            "test/my_pipeline-2.0/my_pipeline-2.0-sub1",
         ),
         ("fmriprep", None, None, "1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
     ],

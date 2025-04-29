@@ -1,0 +1,12 @@
+{
+    "NAME": "freesurfer",
+    "VERSION": "7.3.2",
+    "DESCRIPTION": "Freesurfer version associated with fMRIPrep version 23.0.0 and later",
+    "STEPS": [
+        {
+            "TRACKER_CONFIG_FILE": "tracker_config.json"
+        }
+    ],
+    "PIPELINE_TYPE": "processing",
+    "SCHEMA_VERSION": "1"
+}

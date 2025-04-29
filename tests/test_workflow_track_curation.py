@@ -6,17 +6,24 @@ import pytest
 
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import save_json
 from nipoppy.workflows.track_curation import TrackCurationWorkflow
 
 from .conftest import (
-    ATTR_TO_DPATH_MAP,
-    ATTR_TO_FPATH_MAP,
     check_curation_status_table,
     create_empty_dataset,
     get_config,
     prepare_dataset,
 )
+
+
+@pytest.fixture(scope="function")
+def workflow(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    create_empty_dataset(dpath_root)
+    workflow = TrackCurationWorkflow(dpath_root=dpath_root)
+    workflow.config = get_config()
+    workflow.config.save(workflow.layout.fpath_config)
+    return workflow
 
 
 @pytest.mark.parametrize(
@@ -50,44 +57,31 @@ from .conftest import (
 )
 @pytest.mark.parametrize("empty", [True, False])
 def test_run_main(
+    workflow: TrackCurationWorkflow,
     participants_and_sessions_manifest1: dict[str, list[str]],
     participants_and_sessions_manifest2: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
     participants_and_sessions_bidsified: dict[str, list[str]],
     empty: bool,
-    tmp_path: Path,
 ):
-    dpath_root = tmp_path / "my_dataset"
+    workflow.empty = empty
 
-    dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_pre_reorg"]
-    dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_post_reorg"]
-    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
-    fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
-    fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
-    fpath_table = dpath_root / ATTR_TO_FPATH_MAP["fpath_curation_status"]
-
-    create_empty_dataset(dpath_root)
+    # initial manifest
     manifest1 = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest1,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        dpath_downloaded=dpath_downloaded,
-        dpath_organized=dpath_organized,
-        dpath_bidsified=dpath_bidsified,
+        dpath_downloaded=workflow.layout.dpath_pre_reorg,
+        dpath_organized=workflow.layout.dpath_post_reorg,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
-    manifest1.save_with_backup(fpath_manifest)
-
-    # prepare config file
-    config = get_config(
-        visit_ids=list(manifest1[Manifest.col_visit_id].unique()),
-    )
-    save_json(config.model_dump(mode="json"), fpath_config)
+    workflow.manifest = manifest1
 
     # generate the curation status table
-    TrackCurationWorkflow(dpath_root=dpath_root, empty=empty).run_main()
-    table1 = CurationStatusTable.load(fpath_table)
+    workflow.run_main()
+    table1 = CurationStatusTable.load(workflow.layout.fpath_curation_status)
 
     assert len(table1) == len(manifest1)
     check_curation_status_table(
@@ -99,13 +93,13 @@ def test_run_main(
         empty=empty,
     )
 
-    # update the manifest
+    # update the manifest (add rows)
     manifest2 = prepare_dataset(participants_and_sessions_manifest2)
-    manifest2.save_with_backup(fpath_manifest)
+    manifest2.save_with_backup(workflow.layout.fpath_manifest)
 
     # update the curation status table
-    TrackCurationWorkflow(dpath_root=dpath_root, empty=empty).run()
-    table2 = CurationStatusTable.load(fpath_table)
+    TrackCurationWorkflow(dpath_root=workflow.dpath_root, empty=empty).run()
+    table2 = CurationStatusTable.load(workflow.layout.fpath_curation_status)
 
     assert len(table2) == len(manifest2)
     check_curation_status_table(
@@ -142,39 +136,26 @@ def test_run_main(
 )
 @pytest.mark.parametrize("empty", [True, False])
 def test_run_main_regenerate(
+    workflow: TrackCurationWorkflow,
     participants_and_sessions_manifest: dict[str, list[str]],
     participants_and_sessions_downloaded: dict[str, list[str]],
     participants_and_sessions_organized: dict[str, list[str]],
     participants_and_sessions_bidsified: dict[str, list[str]],
     empty: bool,
-    tmp_path: Path,
 ):
-    dpath_root = tmp_path / "my_dataset"
-    create_empty_dataset(dpath_root)
-
-    dpath_downloaded = dpath_root / ATTR_TO_DPATH_MAP["dpath_pre_reorg"]
-    dpath_organized = dpath_root / ATTR_TO_DPATH_MAP["dpath_post_reorg"]
-    dpath_bidsified = dpath_root / ATTR_TO_DPATH_MAP["dpath_bids"]
-    fpath_manifest = dpath_root / ATTR_TO_FPATH_MAP["fpath_manifest"]
-    fpath_config = dpath_root / ATTR_TO_FPATH_MAP["fpath_config"]
-    fpath_table = dpath_root / ATTR_TO_FPATH_MAP["fpath_curation_status"]
+    workflow.empty = empty
+    workflow.regenerate = True
 
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        dpath_downloaded=dpath_downloaded,
-        dpath_organized=dpath_organized,
-        dpath_bidsified=dpath_bidsified,
+        dpath_downloaded=workflow.layout.dpath_pre_reorg,
+        dpath_organized=workflow.layout.dpath_post_reorg,
+        dpath_bidsified=workflow.layout.dpath_bids,
     )
-    manifest.save_with_backup(fpath_manifest)
-
-    # prepare config file
-    config = get_config(
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
-    save_json(config.model_dump(mode="json"), fpath_config)
+    workflow.manifest = manifest
 
     # to be overwritten
     table_records = []
@@ -199,13 +180,11 @@ def test_run_main_regenerate(
             }
         )
     table_old = CurationStatusTable(table_records)
-    assert table_old.save_with_backup(fpath_table) is not None
+    assert table_old.save_with_backup(workflow.layout.fpath_curation_status) is not None
 
     # regenerate the table
-    TrackCurationWorkflow(
-        dpath_root=dpath_root, empty=empty, regenerate=True
-    ).run_main()
-    table = CurationStatusTable.load(fpath_table)
+    workflow.run_main()
+    table = CurationStatusTable.load(workflow.layout.fpath_curation_status)
 
     assert len(table) == len(manifest)
     check_curation_status_table(

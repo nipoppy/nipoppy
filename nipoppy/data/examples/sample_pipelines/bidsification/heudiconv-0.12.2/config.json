@@ -1,0 +1,32 @@
+{
+    "NAME": "heudiconv",
+    "VERSION": "0.12.2",
+    "CONTAINER_INFO": {
+        "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+        "URI": "docker://nipy/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+    },
+    "STEPS": [
+        {
+            "NAME": "prepare",
+            "INVOCATION_FILE": "invocation-[[STEP_NAME]].json",
+            "DESCRIPTOR_FILE": "descriptor.json"
+        },
+        {
+            "NAME": "convert",
+            "INVOCATION_FILE": "invocation-[[STEP_NAME]].json",
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "CONTAINER_CONFIG": {
+                "ARGS": [
+                    "--bind",
+                    "[[HEUDICONV_HEURISTIC_FILE]]"
+                ]
+            },
+            "UPDATE_STATUS": true
+        }
+    ],
+    "VARIABLES": {
+        "HEUDICONV_HEURISTIC_FILE": "Path to the Python heuristic file needed for the \"convert\" step"
+    },
+    "PIPELINE_TYPE": "bidsification",
+    "SCHEMA_VERSION": "1"
+}

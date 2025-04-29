@@ -5,8 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.main import Config
-from nipoppy.config.pipeline import ExtractionPipelineConfig
+from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import (
@@ -15,23 +14,35 @@ from nipoppy.utils import (
 )
 from nipoppy.workflows.extractor import ExtractionRunner
 
-from .conftest import create_empty_dataset, get_config
+from .conftest import create_empty_dataset, create_pipeline_config_files, get_config
 
 
-@pytest.fixture
-def config() -> Config:
-    return get_config(
-        proc_pipelines=[
+@pytest.fixture(scope="function")
+def extractor(tmp_path: Path) -> ExtractionRunner:
+    extractor = ExtractionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="fs_extractor",
+        pipeline_version="2.0.0",
+        pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
+    )
+    extractor.config = get_config()
+    create_empty_dataset(extractor.dpath_root)
+    create_pipeline_config_files(
+        extractor.layout.dpath_pipelines,
+        processing_pipelines=[
             {
                 "NAME": "freesurfer",
                 "VERSION": "7.3.2",
-                "STEPS": [{}],
+                "STEPS": [
+                    # field unique to ProcPipelineStepConfig
+                    {"TRACKER_CONFIG_FILE": "tracker_config.json"}
+                ],
             },
         ],
         extraction_pipelines=[
             {
                 "NAME": "fs_extractor",
-                "VERSION": "7.3.2",
+                "VERSION": "2.0.0",
                 "PROC_DEPENDENCIES": [
                     {
                         "NAME": "freesurfer",
@@ -57,16 +68,7 @@ def config() -> Config:
             },
         ],
     )
-
-
-@pytest.fixture(scope="function")
-def extractor(tmp_path: Path) -> ExtractionRunner:
-    return ExtractionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="fs_extractor",
-        pipeline_version="7.3.2",
-        pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
-    )
+    return extractor
 
 
 @pytest.mark.parametrize(
@@ -77,37 +79,36 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
         ("dpath_pipeline_idp", "derivatives/freesurfer/7.3.2/idp"),
     ],
 )
-def test_paths(extractor: ExtractionRunner, config: Config, attribute, expected):
-    extractor.config = config
+def test_paths(extractor: ExtractionRunner, attribute, expected):
     assert getattr(extractor, attribute) == extractor.dpath_root / expected
 
 
-def test_setup(extractor: ExtractionRunner, config: Config):
-    create_empty_dataset(extractor.dpath_root)
-    config.save(extractor.layout.fpath_config)
-
+def test_setup(extractor: ExtractionRunner):
     assert not extractor.dpath_pipeline_idp.exists()
     extractor.run_setup()
     assert extractor.dpath_pipeline_idp.exists()
 
 
-def test_dpath_pipeline(extractor: ExtractionRunner, config: Config):
-    config.save(extractor.layout.fpath_config)
+def test_dpath_pipeline(extractor: ExtractionRunner):
     assert (
         extractor.dpath_pipeline
         == extractor.layout.dpath_derivatives / "freesurfer" / "7.3.2"
     )
 
 
-def test_proc_pipeline_info(config: Config, tmp_path: Path):
-    workflow = ExtractionRunner(
-        dpath_root=tmp_path,
-        pipeline_name="fs_extractor",
-        pipeline_version="6.0.1",  # not in PROC_PIPELINES
-    )
-    config.save(workflow.layout.fpath_config)
-    with pytest.raises(ValueError, match="No config found for pipeline with"):
-        workflow.proc_pipeline_info
+def test_proc_pipeline_info(extractor: ExtractionRunner):
+    # check that proc_pipeline_info calls _get_pipeline_config with the
+    # correct pipeline_class
+    assert isinstance(extractor.proc_pipeline_info, PipelineInfo)
+
+
+def test_proc_pipeline_info_error(extractor: ExtractionRunner):
+    bad_version = "invalid_version"
+    extractor.pipeline_config.PROC_DEPENDENCIES[0].VERSION = bad_version
+    with pytest.raises(
+        FileNotFoundError, match=f"Pipeline config file not found at .* {bad_version}"
+    ):
+        extractor.proc_pipeline_info
 
 
 @pytest.mark.parametrize(
@@ -146,7 +147,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
                 ],
             ],
             "fs_extractor",
-            "7.3.2",
+            "2.0.0",
             None,
             None,
             [("S01", "1"), ("S02", "2")],
@@ -162,7 +163,7 @@ def test_proc_pipeline_info(config: Config, tmp_path: Path):
                 ],
             ],
             "fs_extractor",
-            "7.3.2",
+            "2.0.0",
             "S02",  # S02 is not in processing status table
             "1",
             [],
@@ -215,15 +216,11 @@ def test_get_participants_sessions_to_run(
     participant_id,
     session_id,
     expected,
-    config: Config,
-    tmp_path: Path,
+    extractor: ExtractionRunner,
 ):
-    extractor = ExtractionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
-        pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
-    )
+    extractor.pipeline_name = pipeline_name
+    extractor.pipeline_version = pipeline_version
+    extractor.pipeline_step = DEFAULT_PIPELINE_STEP_NAME
     extractor.processing_status_table = ProcessingStatusTable().add_or_update_records(
         records=[
             {
@@ -243,7 +240,6 @@ def test_get_participants_sessions_to_run(
             for data in processing_status_data
         ]
     )
-    config.save(extractor.layout.fpath_config)
     assert [
         tuple(x)
         for x in extractor.get_participants_sessions_to_run(
@@ -255,9 +251,7 @@ def test_get_participants_sessions_to_run(
 def test_run_single(
     extractor: ExtractionRunner,
     mocker: pytest_mock.MockerFixture,
-    config: Config,
 ):
-    extractor.config = config
 
     mocked_process_container_config = mocker.patch(
         "nipoppy.workflows.runner.PipelineRunner.process_container_config"
@@ -276,17 +270,13 @@ def test_run_single(
     assert mocked_launch_boutiques_container.call_count == 1
 
 
-def test_check_pipeline_version(config: Config, tmp_path: Path):
-    workflow = ExtractionRunner(
-        dpath_root=tmp_path,
-        pipeline_name="fs_extractor",
-        pipeline_version=None,
-    )
-    config.save(workflow.layout.fpath_config)
-    workflow.check_pipeline_version()
-    assert workflow.pipeline_version == "7.3.2"
+def test_check_pipeline_version(extractor: ExtractionRunner):
+    extractor.pipeline_name = "fs_extractor"
+    extractor.pipeline_version = None
+
+    extractor.check_pipeline_version()
+    assert extractor.pipeline_version == "2.0.0"
 
 
-def test_pipeline_config(extractor: ExtractionRunner, config: Config):
-    config.save(extractor.layout.fpath_config)
+def test_pipeline_config(extractor: ExtractionRunner):
     assert isinstance(extractor.pipeline_config, ExtractionPipelineConfig)

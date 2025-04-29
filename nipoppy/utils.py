@@ -22,8 +22,7 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 DPATH_DATA = Path(__file__).parent / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
 DPATH_SAMPLE_PIPELINES = DPATH_EXAMPLES / "sample_pipelines"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.json"
-FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
@@ -393,3 +392,8 @@ def apply_substitutions_to_json(
     for key, value in substitutions.items():
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
+
+
+def get_today():
+    """Get today's date in the format YYYY-MM-DD."""
+    return datetime.datetime.today().strftime("%Y-%m-%d")

@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import requests
+import httpx
 
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -22,14 +22,11 @@ from nipoppy.utils import (
     check_session_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class InitWorkflow(BaseWorkflow):
+class InitWorkflow(BaseDatasetWorkflow):
     """Workflow for init command."""
-
-    # do not validate since the dataset has not been created yet
-    validate_layout = False
 
     def __init__(
         self,
@@ -47,7 +44,8 @@ class InitWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
+            _validate_layout=False,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
@@ -144,7 +142,7 @@ class InitWorkflow(BaseWorkflow):
                     "https://raw.githubusercontent.com/"
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
-                response = requests.get(url)
+                response = httpx.get(url)
                 fpath_readme.write_text(response.content.decode("utf-8"))
 
     def _init_manifest_from_bids_dataset(self) -> None:
