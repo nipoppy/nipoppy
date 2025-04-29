@@ -37,6 +37,62 @@ def handle_exception(workflow):
         sys.exit(workflow.return_code)
 
 
+click.rich_click.OPTION_GROUPS = {
+    "nipoppy *": [
+        {
+            "name": "Command-specific",
+            "options": [
+                "--dataset",
+                "--pipeline",
+                "--pipeline-version",
+                "--pipeline-step",
+                "--bids-source",
+                "--mode",
+                "--empty",
+                "--copy-files",
+                "--check-dicoms",
+                "--tar",
+                "--query",
+                "--size",
+                "--zenodo-token",
+                "--sandbox",
+                "--force",
+            ],
+        },
+        {
+            "name": "Filtering",
+            "options": [
+                "--participant-id",
+                "--session-id",
+            ],
+        },
+        {
+            "name": "Parallelization",
+            "options": [
+                "--hpc",
+                "--write-list",
+            ],
+        },
+        {
+            "name": "Troubleshooting",
+            "options": [
+                "--verbose",
+                "--dry-run",
+                "--simulate",
+                "--keep-workdir",
+            ],
+        },
+        {
+            "name": "Miscellaneous",
+            "options": [
+                "--layout",
+                "--help",
+            ],
+        },
+    ]
+}
+
+
 def dataset_option(func):
     """Define dataset options for the CLI.
 
@@ -171,63 +227,6 @@ class OrderedGroup(click.RichGroup):
     def list_commands(self, ctx):
         """List commands in the order they were added."""
         return list(self.commands.keys())
-
-
-click.rich_click.OPTION_GROUPS = {
-    "nipoppy *": [
-        {
-            "name": "Command-specific",
-            "options": [
-                "--dataset",
-                "--pipeline",
-                "--pipeline-version",
-                "--pipeline-step",
-                "--bids-source",
-                "--mode",
-                "--empty",
-                "--regenerate",
-                "--copy-files",
-                "--check-dicoms",
-                "--tar",
-                "--query",
-                "--size",
-                "--zenodo-token",
-                "--sandbox",
-                "--force",
-            ],
-        },
-        {
-            "name": "Filtering",
-            "options": [
-                "--participant-id",
-                "--session-id",
-            ],
-        },
-        {
-            "name": "Parallelization",
-            "options": [
-                "--hpc",
-                "--write-list",
-            ],
-        },
-        {
-            "name": "Troubleshooting",
-            "options": [
-                "--verbose",
-                "--dry-run",
-                "--simulate",
-                "--keep-workdir",
-            ],
-        },
-        {
-            "name": "Miscellaneous",
-            "options": [
-                "--layout",
-                "--help",
-            ],
-        },
-    ]
-}
 
 
 @click.group(
