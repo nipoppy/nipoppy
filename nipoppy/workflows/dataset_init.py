@@ -145,7 +145,14 @@ class InitWorkflow(BaseWorkflow):
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
                 response = requests.get(url)
-                fpath_readme.write_text(response.content.decode("utf-8"))
+                try:
+                    fpath_readme.write_text(response.content.decode("utf-8"))
+                except PermissionError:
+                    self.logger.warning(
+                        f"Permission denied when writing {fpath_readme}. "
+                        "Skipping README creation."
+                    )
+                    continue
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
