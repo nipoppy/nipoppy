@@ -24,7 +24,7 @@ def record_id():
 
     See TEST_PIPELINE for test file location.
     """
-    return "194256"
+    return "199318"
 
 
 @pytest.fixture(scope="function")
@@ -132,13 +132,14 @@ def test_download_record_checksum(
     or os.environ.get("ZENODO_ID") is None,
     reason="Requires Zenodo token and ID",
 )
-def test_create_new_version(metadata: dict):
+@pytest.mark.parametrize("prefix", ["", "zenodo."])
+def test_create_new_version(prefix: str, metadata: dict):
     ZenodoAPI(
         sandbox=ZENODO_SANDBOX, access_token=os.environ["ZENODO_TOKEN"]
     ).upload_pipeline(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
-        record_id=os.environ["ZENODO_ID"],
+        record_id=f"{prefix}{os.environ['ZENODO_ID']}",
     )
 
 
@@ -147,7 +148,7 @@ def test_create_draft(mocker: pytest_mock.MockerFixture):
     mock_post = mocker.patch("httpx.post")
     mock_response = mocker.Mock()
     mock_response.status_code = 201
-    mock_response.json.return_value = {"id": "123456"}
+    mock_response.json.return_value = {"id": "123456", "owners": [{"id": "987"}]}
     mock_post.return_value = mock_response
 
     # Call the function under test
@@ -164,7 +165,7 @@ def test_create_draft(mocker: pytest_mock.MockerFixture):
 
     # Assertions
     mock_post.assert_called_once_with(url, json=metadata, headers=headers)
-    assert result == "123456"
+    assert result == ("123456", "987")
 
 
 def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
@@ -203,3 +204,38 @@ def test_failed_authentication():
         ZenodoAPI(
             sandbox=ZENODO_SANDBOX, access_token="invalid_token"
         )._check_authentication()
+
+
+@pytest.mark.parametrize("query", ["FMRIPREP", ""])
+@pytest.mark.parametrize("keywords", [None, []])
+def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
+    # TODO search in official Zenodo instead of sandbox
+    results = zenodo_api.search_records(query, keywords=keywords)
+    assert len(results["hits"]) > 0
+    assert results["total"] > 0
+
+
+def test_search_records_api_call(
+    zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    search_query = "FMRIPREP"
+    keyword = "Nipoppy"
+    size = 100
+
+    mocked = mocker.patch("httpx.get")
+    zenodo_api.search_records(search_query, keywords=[keyword], size=size)
+
+    mocked.assert_called_once()
+
+    params = mocked.call_args[1]["params"]
+    assert search_query in params["q"]
+    assert f"metadata.subjects.subject:{keyword}" in params["q"]
+    assert params["size"] == size
+
+
+def test_search_records_error_size(zenodo_api: ZenodoAPI):
+    with pytest.raises(
+        ValueError,
+        match="size must be greater than 0",
+    ):
+        zenodo_api.search_records(query="FMRIPREP", size=0)

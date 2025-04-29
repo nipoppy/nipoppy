@@ -251,21 +251,14 @@ def test_cli_extract(tmp_path: Path):
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
-def test_cli_pipeline_download(tmp_path: Path):
+def test_cli_pipeline_list(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     result = runner.invoke(
         cli,
-        [
-            "pipeline",
-            "download",
-            "zenodo.123456",
-            "--dataset",
-            str(dpath_root),
-        ],
-        catch_exceptions=False,
+        ["pipeline", "list", "--dataset", dpath_root],
     )
 
-    # Expect non-zero return code, because nipoppy init was not run.
+    # Expects missing path, since init command is not run.
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
@@ -287,13 +280,17 @@ def test_cli_pipeline_upload():
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
 
 
-def test_cli_pipeline_install(tmp_path: Path):
+@pytest.mark.parametrize("from_zenodo", [True, False])
+def test_cli_pipeline_install(from_zenodo, tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     dpath_pipeline = tmp_path / "pipeline"
     dpath_pipeline.mkdir()
+
+    source = "zenodo.123456" if from_zenodo else str(dpath_pipeline)
+
     result = runner.invoke(
         cli,
-        ["pipeline", "install", "--dataset", str(dpath_root), str(dpath_pipeline)],
+        ["pipeline", "install", "--dataset", str(dpath_root), source],
         catch_exceptions=False,
     )
 
@@ -312,3 +309,12 @@ def test_cli_pipeline_validate(tmp_path: Path):
 
     # Expect non-zero return code, because nipoppy init was not run.
     assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
+
+
+def test_cli_pipeline_search():
+    result = runner.invoke(
+        cli,
+        ["pipeline", "search", "mriqc"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS

@@ -13,7 +13,7 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
@@ -60,6 +60,19 @@ ATTR_TO_FPATH_MAP = {
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
+
+
+@pytest.fixture(scope="function")
+def record_id():
+    """Fixture for Zenodo ID.
+
+    The Sandbox can be reset at any time, so the Zenodo ID may change.
+    If the test fails verify the Zenodo record at:
+    https://sandbox.zenodo.org/records/{record_id}
+
+    The test file is located at TEST_PIPELINE
+    """
+    return "199319"
 
 
 @pytest.fixture()
@@ -111,20 +124,21 @@ def create_empty_dataset(dpath_root: Path):
 
 def create_pipeline_config_files(
     dpath_pipelines: Path,
-    bids_pipelines: Optional[list[dict]] = None,
-    proc_pipelines: Optional[list[dict]] = None,
+    bidsification_pipelines: Optional[list[dict]] = None,
+    processing_pipelines: Optional[list[dict]] = None,
     extraction_pipelines: Optional[list[dict]] = None,
 ):
-    """Create pipeline bundles (inside bids/proc/extraction subdirectories)."""
+    """Create pipeline bundles (inside subdirectories)."""
     for pipeline_config_list, pipeline_type in [
-        (bids_pipelines, PipelineTypeEnum.BIDSIFICATION),
-        (proc_pipelines, PipelineTypeEnum.PROCESSING),
+        (bidsification_pipelines, PipelineTypeEnum.BIDSIFICATION),
+        (processing_pipelines, PipelineTypeEnum.PROCESSING),
         (extraction_pipelines, PipelineTypeEnum.EXTRACTION),
     ]:
         if pipeline_config_list is None:
             continue
         for pipeline_config in pipeline_config_list:
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
+            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION
             fpath_config = (
                 dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]

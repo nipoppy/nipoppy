@@ -20,6 +20,7 @@ from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConf
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
+    CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
     LogColor,
@@ -76,7 +77,7 @@ def workflow(tmp_path: Path):
 
     create_pipeline_config_files(
         workflow.layout.dpath_pipelines,
-        bids_pipelines=[
+        bidsification_pipelines=[
             {
                 "NAME": "bids_converter",
                 "VERSION": "1.0",
@@ -88,7 +89,7 @@ def workflow(tmp_path: Path):
                 "VERSION": "0.1",
             },
         ],
-        proc_pipelines=[
+        processing_pipelines=[
             {
                 "NAME": "fmriprep",
                 "VERSION": "23.1.3",
@@ -492,6 +493,7 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
         "NAME": pipeline_name,
         "VERSION": "2.0.0",  # different version
         "PIPELINE_TYPE": "processing",
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
     }
     dpath_pipeline_bundle.mkdir(parents=True)
     (dpath_pipeline_bundle / "config.json").write_text(json.dumps(config_dict))

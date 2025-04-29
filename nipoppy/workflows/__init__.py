@@ -8,6 +8,7 @@ from .dicom_reorg import DicomReorgWorkflow
 from .extractor import ExtractionRunner
 from .pipeline import BasePipelineWorkflow
 from .pipeline_store.install import PipelineInstallWorkflow
+from .pipeline_store.list import PipelineListWorkflow
 from .pipeline_store.validate import PipelineValidateWorkflow
 from .runner import PipelineRunner
 from .track_curation import TrackCurationWorkflow

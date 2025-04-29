@@ -47,7 +47,7 @@ def runner(tmp_path: Path):
 
     create_pipeline_config_files(
         runner.layout.dpath_pipelines,
-        proc_pipelines=[
+        processing_pipelines=[
             {
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
@@ -57,7 +57,7 @@ def runner(tmp_path: Path):
                         "DESCRIPTOR_FILE": fname_descriptor,
                         "INVOCATION_FILE": fname_invocation,
                         "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
-                    }
+                    },
                 ],
             },
         ],
@@ -135,7 +135,7 @@ def test_run_failed_cleanup(runner: PipelineRunner, n_success):
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(
-    simulate, runner: PipelineRunner, mocker: pytest_mock.MockFixture, tmp_path: Path
+    simulate, runner: PipelineRunner, mocker: pytest_mock.MockFixture
 ):
     runner.simulate = simulate
 
@@ -167,9 +167,12 @@ def test_launch_boutiques_run(
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run_error(
-    simulate, runner: PipelineRunner, mocker: pytest_mock.MockFixture, tmp_path: Path
+    simulate,
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
 ):
     runner.simulate = simulate
+
     participant_id = "01"
     session_id = "BL"
 
