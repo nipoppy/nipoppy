@@ -41,5 +41,6 @@
             "TRACKER_CONFIG_FILE": "[[STEP_NAME]]_tracker_config.json"
         }
     ],
-    "SCHEMA_VERSION": "1"
+    "SCHEMA_VERSION": "1",
+    "PIPELINE_TYPE": "processing"
 }
