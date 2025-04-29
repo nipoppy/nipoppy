@@ -175,19 +175,23 @@ def test_boutiques_descriptors(fpath_descriptor):
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version",
+    "pipeline_name,pipeline_version,pipeline_step",
     [
-        ("bids-validator", "2.0.3"),
-        ("fmriprep", "20.2.7"),
-        ("fmriprep", "23.1.3"),
-        ("fmriprep", "24.1.1"),
-        ("mriqc", "23.1.0"),
-        ("qsiprep", "0.23.0"),
+        ("bids-validator", "2.0.3", None),
+        ("fmriprep", "20.2.7", None),
+        ("fmriprep", "23.1.3", None),
+        ("fmriprep", "24.1.1", None),
+        ("mriqc", "23.1.0", None),
+        ("qsiprep", "0.23.0", None),
+        ("rabies", "0.5.1", "preprocess"),
+        ("rabies", "0.5.1", "confound-correction"),
+        ("rabies", "0.5.1", "analysis"),
     ],
 )
 def test_pipeline_runner(
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     single_subject_dataset,
 ):
     layout, participant_id, session_id = single_subject_dataset
@@ -196,12 +200,11 @@ def test_pipeline_runner(
         dpath_root=layout.dpath_root,
         pipeline_name=pipeline_name,
         pipeline_version=pipeline_version,
+        pipeline_step=pipeline_step,
         simulate=True,
     )
     runner.layout = layout
-
     runner.pipeline_config.get_fpath_container().touch()
-
     invocation_str, descriptor_str = runner.run_single(
         participant_id=participant_id, session_id=session_id
     )
