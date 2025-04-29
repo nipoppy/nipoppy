@@ -120,15 +120,14 @@ def test_init_bids(tmp_path):
     workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
     workflow.run()
 
-    # # this doesn't work
     assert isinstance(workflow.manifest, Manifest)
-    # assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    # assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_datatype].to_list() == [
-    #     ["anat", "func"],
-    #     ["anat", "func"],
-    # ]
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+        ["anat", "func"],
+    ]
 
     source_files = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
     target_files = [
@@ -166,15 +165,14 @@ def test_init_bids_move_mode(tmp_path):
     )
     workflow.run()
 
-    # # this doesn't work
-    # assert isinstance(workflow.manifest, Manifest)
-    # assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    # assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_datatype].to_list() == [
-    #     ["anat", "func"],
-    #     ["anat", "func"],
-    # ]
+    assert isinstance(workflow.manifest, Manifest)
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+        ["anat", "func"],
+    ]
 
     source_files_after_init = [
         x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
@@ -216,15 +214,14 @@ def test_init_bids_symlink_mode(tmp_path):
     )
     workflow.run()
 
-    # # this doesn't work
-    # assert isinstance(workflow.manifest, Manifest)
-    # assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    # assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_datatype].to_list() == [
-    #     ["anat", "func"],
-    #     ["anat", "func"],
-    # ]
+    assert isinstance(workflow.manifest, Manifest)
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+        ["anat", "func"],
+    ]
 
     source_files_after_init = [
         x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
@@ -263,22 +260,21 @@ def test_init_bids_symlink_readonly(tmp_path):
     ]
 
     # make the source is read-only
-    os.chmod(bids_to_link, 0o555)  # +rw
+    os.chmod(bids_to_link, 0o555)  # +rx
 
     workflow = InitWorkflow(
         dpath_root=dpath_root, bids_source=bids_to_link, mode="symlink"
     )
     workflow.run()
 
-    # # this doesn't work...?
-    # assert isinstance(workflow.manifest, Manifest)
-    # assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    # assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_datatype].to_list() == [
-    #     ["anat", "func"],
-    #     ["anat", "func"],
-    # ]
+    assert isinstance(workflow.manifest, Manifest)
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+        ["anat", "func"],
+    ]
 
     source_files_after_init = [
         x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
@@ -360,11 +356,10 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
         in caplog.text
     )
 
-    # # this doesn't work
-    # assert isinstance(workflow.manifest, Manifest)
-    # assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01"]
-    # assert workflow.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
-    # assert workflow.manifest[Manifest.col_session_id].to_list() == [FAKE_SESSION_ID]
-    # assert workflow.manifest[Manifest.col_datatype].to_list() == [
-    #     ["anat", "func"],
-    # ]
+    assert isinstance(workflow.manifest, Manifest)
+    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01"]
+    assert workflow.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
+    assert workflow.manifest[Manifest.col_session_id].to_list() == [FAKE_SESSION_ID]
+    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+        ["anat", "func"],
+    ]
