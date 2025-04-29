@@ -228,7 +228,7 @@ class InitWorkflow(BaseWorkflow):
                         datatypes = ["mri"]
                         self.logger.warning(
                             f"Permission denied reading {bids_participant_id}"
-                            "in the BIDS dataset."
+                            " in the BIDS dataset."
                         )
 
                 df[Manifest.col_participant_id].append(
