@@ -29,6 +29,7 @@ DPATH_TEST_DATA = Path(__file__).parent / "data"
 TEST_PIPELINE = DPATH_TEST_DATA / "fmriprep-24.1.1"
 
 ATTR_TO_DPATH_MAP = {
+    "dpath_nipoppy": ".nipoppy",
     "dpath_bids": "bids",
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",

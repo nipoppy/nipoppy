@@ -412,4 +412,11 @@ def is_nipoppy_project(cwd=Path.cwd()):
     cwd : _type_, optional
         _description_, by default Path.cwd()
     """
-    ...
+    current = cwd.resolve()
+    while True:
+        candidate = current / ".nipoppy"
+        if candidate.is_dir():
+            return current  # Found
+        if current.parent == current:
+            return False  # Reached root, not found
+        current = current.parent
