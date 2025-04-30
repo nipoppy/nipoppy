@@ -397,3 +397,19 @@ def apply_substitutions_to_json(
 def get_today():
     """Get today's date in the format YYYY-MM-DD."""
     return datetime.datetime.today().strftime("%Y-%m-%d")
+
+
+def is_nipoppy_project(cwd=Path.cwd()):
+    """Verify if the current directory is a nipoppy project.
+
+    This is done by checking if the `.nipoppy` directory exists in the
+    current directory or any of its parents.
+    If the directory is found, it returns the path to the `.nipoppy`
+    directory. If not, it returns False.
+
+    Parameters
+    ----------
+    cwd : _type_, optional
+        _description_, by default Path.cwd()
+    """
+    ...
