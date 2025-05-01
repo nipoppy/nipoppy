@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
@@ -94,15 +94,14 @@ class LayoutConfig(BaseModel):
 
     fpath_config: FpathInfo = Field(description="Path to the configuration file")
     fpath_manifest: FpathInfo = Field(description="Path to the manifest file")
-    fpath_doughnut: OptionalFpathInfo = Field(
+    fpath_curation_status: OptionalFpathInfo = Field(
         description=(
-            "Path to the doughnut file (for tracking the "
-            "DICOM-to-BIDS conversion process)"
+            "Path to the curation status file (for tracking the BIDSification process)"
         )
     )
-    fpath_imaging_bagel: OptionalFpathInfo = Field(
+    fpath_processing_status: OptionalFpathInfo = Field(
         description=(
-            "Path to the imaging bagel file (for tracking imaging derivative "
+            "Path to the processing status file (for tracking imaging derivative "
             "availability at the participant level)"
         )
     )
@@ -127,6 +126,20 @@ class LayoutConfig(BaseModel):
 
 class DatasetLayout(Base):
     """File/directory structure for a specific dataset."""
+
+    # pipeline derivative subdirectories
+    dname_pipeline_output = "output"
+    dname_pipeline_idp = "idp"
+
+    # pipeline store subdirectories
+    pipeline_type_to_dname_map = {
+        PipelineTypeEnum.BIDSIFICATION: "bidsification",
+        PipelineTypeEnum.PROCESSING: "processing",
+        PipelineTypeEnum.EXTRACTION: "extraction",
+    }
+
+    # file names
+    fname_pipeline_config = "config.json"
 
     def __init__(
         self,
@@ -184,14 +197,10 @@ class DatasetLayout(Base):
 
         # files (for type hinting)
         self.fpath_config: Path
-        self.fpath_doughnut: Path
+        self.fpath_curation_status: Path
         self.fpath_manifest: Path
-        self.fpath_imaging_bagel: Path
+        self.fpath_processing_status: Path
         self.fpath_demographics: Path
-
-        # directory names
-        self.dname_pipeline_output = "output"
-        self.dname_pipeline_idp = "idp"
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
@@ -256,7 +265,7 @@ class DatasetLayout(Base):
         return True
 
     def get_dpath_pipeline(self, pipeline_name: str, pipeline_version: str) -> Path:
-        """Return the path to a pipeline's directory."""
+        """Return the path to a pipeline's derivatives directory."""
         return self.dpath_derivatives / pipeline_name / pipeline_version
 
     def get_dpath_pipeline_work(
@@ -319,6 +328,18 @@ class DatasetLayout(Base):
             session_id=session_id,
         )
         return self.dpath_pybids_db / dname
+
+    def get_dpath_pipeline_store(self, pipeline_type: PipelineTypeEnum) -> Path:
+        """Return the path to the pipeline store directory."""
+        return self.dpath_pipelines / self.pipeline_type_to_dname_map[pipeline_type]
+
+    def get_dpath_pipeline_bundle(
+        self, pipeline_type: PipelineTypeEnum, pipeline_name: str, pipeline_version: str
+    ) -> Path:
+        """Return the path to the pipeline bundle directory."""
+        return self.get_dpath_pipeline_store(pipeline_type) / get_pipeline_tag(
+            pipeline_name, pipeline_version
+        )
 
 
 # for printing defaults in docs

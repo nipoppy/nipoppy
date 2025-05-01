@@ -211,8 +211,9 @@ class PipelineRunner(BasePipelineWorkflow):
                 f"{self.pipeline_step_config.TRACKER_CONFIG_FILE}"
             )
 
-    def tar_directory(self, dpath: Path) -> Path:
+    def tar_directory(self, dpath: StrOrPathLike) -> Path:
         """Tar a directory and delete it."""
+        dpath = Path(dpath)
         if not dpath.exists():
             raise RuntimeError(f"Not tarring {dpath} since it does not exist")
         if not dpath.is_dir():
@@ -241,10 +242,10 @@ class PipelineRunner(BasePipelineWorkflow):
 
         Specifically, this list will include participants who have BIDS data but
         who have not previously successfully completed the pipeline (according)
-        to the bagel file.
+        to the processing status file.
         """
         participants_sessions_completed = set(
-            self.bagel.get_completed_participants_sessions(
+            self.processing_status_table.get_completed_participants_sessions(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
                 pipeline_step=self.pipeline_step,
@@ -253,7 +254,9 @@ class PipelineRunner(BasePipelineWorkflow):
             )
         )
 
-        for participant_session in self.doughnut.get_bidsified_participants_sessions(
+        for (
+            participant_session
+        ) in self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         ):
             if participant_session not in participants_sessions_completed:

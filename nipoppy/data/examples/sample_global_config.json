@@ -1,0 +1,18 @@
+{
+    "SUBSTITUTIONS": {
+        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_ROOT]]/containers"
+    },
+    "DICOM_DIR_PARTICIPANT_FIRST": true,
+    "CONTAINER_CONFIG": {
+        "COMMAND": "apptainer",
+        "ARGS": [
+            "--cleanenv"
+        ]
+    },
+    "PIPELINE_VARIABLES": {
+        "BIDSIFICATION": {},
+        "PROCESSING": {},
+        "EXTRACTION": {}
+    },
+    "CUSTOM": {}
+}
