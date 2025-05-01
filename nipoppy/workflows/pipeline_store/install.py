@@ -9,7 +9,7 @@ from typing import Optional
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
-from nipoppy.pipeline_store.validation import check_pipeline_bundle
+from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 

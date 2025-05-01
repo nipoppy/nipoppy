@@ -1,4 +1,4 @@
-"""Tests for the nipoppy.pipeline_store.validation module."""
+"""Tests for the nipoppy.pipeline_validation module."""
 
 import logging
 from contextlib import nullcontext
@@ -14,7 +14,7 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.pipeline_store.validation import (
+from nipoppy.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
     _check_invocation_file,
@@ -414,18 +414,18 @@ def test_check_pipeline_bundle(
     fpaths = [dpath_bundle / "file1.txt", dpath_bundle / "file2.txt"]
 
     mocked_load_pipeline_config_file = mocker.patch(
-        "nipoppy.pipeline_store.validation._load_pipeline_config_file",
+        "nipoppy.pipeline_validation._load_pipeline_config_file",
         return_value=config,
     )
     mocked_check_pipeline_files = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_pipeline_files",
+        "nipoppy.pipeline_validation._check_pipeline_files",
         return_value=fpaths,
     )
     mocked_check_self_contained = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_self_contained"
+        "nipoppy.pipeline_validation._check_self_contained"
     )
     mocked_check_no_subdirectories = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_no_subdirectories"
+        "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
     check_pipeline_bundle(dpath_bundle, logger=logger, log_level=log_level)
