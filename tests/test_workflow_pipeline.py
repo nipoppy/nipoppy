@@ -493,6 +493,16 @@ def test_hpc_config_no_file(workflow: PipelineWorkflow):
     assert workflow.hpc_config == HpcConfig()
 
 
+def test_hpc_config_substitutions(workflow: PipelineWorkflow):
+    workflow.config.SUBSTITUTIONS["[[MEMORY]]"] = "32G"
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = "hpc_config.json"
+    (
+        workflow.dpath_pipeline_bundle / workflow.pipeline_step_config.HPC_CONFIG_FILE
+    ).write_text(json.dumps({"CORES": "8", "MEMORY": "[[MEMORY]]"}))
+    print(workflow.hpc_config)
+    assert getattr(workflow.hpc_config, "MEMORY") == "32G"
+
+
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [

@@ -358,7 +358,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         else:
             fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
             self.logger.info(f"Loading HPC config from {fpath_hpc_config}")
-            data = load_json(fpath_hpc_config)
+            data = self.process_template_json(load_json(fpath_hpc_config))
         return HpcConfig(**data)
 
     @cached_property
