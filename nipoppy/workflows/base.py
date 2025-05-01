@@ -56,10 +56,9 @@ class BaseWorkflow(Base, ABC):
         self.return_code = ReturnCode.SUCCESS
 
         # set up logging
-        log_level = logging.DEBUG if verbose else logging.INFO
         self.logger = get_logger(
             name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
-            level=log_level,
+            verbose=verbose,
         )
         logging.captureWarnings(True)
         capture_warnings(self.logger)
