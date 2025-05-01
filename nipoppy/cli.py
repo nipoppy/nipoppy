@@ -142,6 +142,7 @@ def global_options(func):
     """Define global options (no layout) for the CLI."""
     func = click.option(
         "--verbose",
+        "--debug",
         "-v",
         is_flag=True,
         help="Verbose mode (Show DEBUG messages).",
