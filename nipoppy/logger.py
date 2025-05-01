@@ -1,6 +1,7 @@
 """Logger."""
 
 import logging
+import types
 from functools import partial
 from pathlib import Path
 from typing import Optional
@@ -9,11 +10,29 @@ import rich_click as click
 from rich.console import Console
 from rich.logging import RichHandler
 
-from nipoppy.env import IS_TESTING, StrOrPathLike
+from nipoppy.env import IS_TESTING, LogColor, StrOrPathLike
 
 DATE_FORMAT = "[%Y-%m-%d %X]"
 FORMAT_RICH = "%(message)s"
 FORMAT_FILE = "%(asctime)s %(levelname)-7s %(message)s"
+
+
+def success(self, message, *args, **kwargs):
+    """Log a success message.
+
+    Standardize format for success messages.
+
+    Parameters
+    ----------
+    message : str
+        The message to log.
+    """
+    self._log(
+        logging.INFO,
+        f"[{LogColor.SUCCESS}]{message} 🎉🎉🎉[/]",
+        args,
+        **kwargs,
+    )
 
 
 def get_logger(
@@ -47,6 +66,9 @@ def get_logger(
     stdout_handler = rich_handler(verbosity, console=Console(stderr=False))
     stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
     logger.addHandler(stdout_handler)
+
+    # Add custom method for SUCCESS level
+    setattr(logger, "success", types.MethodType(success, logger))
 
     return logger
 
