@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Optional, Sequence
@@ -73,9 +74,9 @@ class BaseTabular(pd.DataFrame, ABC):
     See https://pandas.pydata.org/docs/development/extending.html.
     """
 
-    _series_classes = {}
-    index_cols = None
-    _metadata = []
+    _series_classes: dict = {}
+    index_cols: list = []
+    _metadata: list = []
 
     sep = "\t"
 
@@ -119,12 +120,17 @@ class BaseTabular(pd.DataFrame, ABC):
         super().__init__(*args, **kwargs)
 
         # set column names if the dataframe is empty
-        if self.empty:
+        if self.empty and len(self.columns) == 0:
             for col in self.model.model_fields.keys():
                 self[col] = None
 
     def validate(self) -> Self:
         """Validate the dataframe based on the model."""
+        # for error messages
+        name_processed = " ".join(
+            re.findall("[A-Z][^A-Z]*", self.__class__.__name__)
+        ).lower()
+
         records = self.to_dict(orient="records")
         try:
             df_validated = self.__class__(
@@ -136,15 +142,14 @@ class BaseTabular(pd.DataFrame, ABC):
             if isinstance(exception, ValidationError):
                 error_message += str(exception.errors())
             raise ValueError(
-                f"Error when validating the {self.__class__.__name__.lower()}"
-                f": {error_message}"
+                f"Error when validating the {name_processed} file: {error_message}"
             )
 
         if self.index_cols is not None:
             df_duplicated = df_validated.find_duplicates()
             if len(df_duplicated) > 0:
                 raise ValueError(
-                    f"Duplicate records found in {self.__class__.__name__.lower()}"
+                    f"Duplicate records found in the {name_processed} file"
                     f". Columns {self.index_cols} must uniquely identify a record"
                     f". Got duplicates:\n{df_duplicated}"
                 )
@@ -186,24 +191,32 @@ class BaseTabular(pd.DataFrame, ABC):
         if isinstance(records, dict):
             records = [records]
 
+        # identify non-index columns
+        # need to do this before modifying the dataframe
+        non_index_cols = set(self.columns) - set(self.index_cols)
+
         # set the index (temporary)
         self.set_index(self.index_cols, inplace=True)
 
-        # identify non-index columns
-        non_index_cols = set(self.columns) - set(self.index_cols)
+        try:
+            for record in records:
+                # process record data
+                if validate:
+                    record = self.model(**record).model_dump()
 
-        for record in records:
-            # process record data
-            if validate:
-                record = self.model(**record).model_dump()
+                # add/update
+                for col in non_index_cols:
 
-            # add/update
-            for col in non_index_cols:
-                self.loc[tuple(record[col] for col in self.index_cols), col] = record[
-                    col
-                ]
+                    # need to sort to avoid performance warning
+                    self.sort_index(inplace=True)
 
-        self.reset_index(inplace=True)
+                    idx = tuple(record[col] for col in self.index_cols)
+                    if len(idx) == 1:
+                        idx = idx[0]
+                    self.loc[idx, col] = record[col]
+        finally:
+            self.reset_index(inplace=True)
+
         return self
 
     def concatenate(self, other: Self, validate=True) -> Self:
@@ -223,7 +236,7 @@ class BaseTabular(pd.DataFrame, ABC):
     ) -> Path | None:
         """Save the dataframe to a file with a backup."""
         tabular_new = self.sort_values() if sort else self
-        if fpath_symlink.exists():
+        if Path(fpath_symlink).exists():
             with contextlib.suppress(Exception):
                 tabular_old = self.load(fpath_symlink)
                 if sort:
@@ -239,7 +252,7 @@ class BaseTabular(pd.DataFrame, ABC):
             sep=self.sep,
         )
 
-    def equals(self, other: object) -> Self:
+    def equals(self, other: object) -> bool:
         """Check if two dataframes are equal."""
         try:
             pd.testing.assert_frame_equal(

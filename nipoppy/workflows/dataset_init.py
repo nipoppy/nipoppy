@@ -4,39 +4,37 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import requests
+import httpx
 
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     LogColor,
+    PipelineTypeEnum,
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
     check_session_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class InitWorkflow(BaseWorkflow):
+class InitWorkflow(BaseDatasetWorkflow):
     """Workflow for init command."""
-
-    # do not validate since the dataset has not been created yet
-    validate_layout = False
 
     def __init__(
         self,
         dpath_root: Path,
         bids_source=None,
+        mode="symlink",
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger: Optional[logging.Logger] = None,
+        verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the workflow."""
@@ -44,11 +42,14 @@ class InitWorkflow(BaseWorkflow):
             dpath_root=dpath_root,
             name="init",
             fpath_layout=fpath_layout,
-            logger=logger,
+            verbose=verbose,
             dry_run=dry_run,
+            _skip_logfile=True,
+            _validate_layout=False,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
+        self.mode = mode
 
     def run_main(self):
         """Create dataset directory structure.
@@ -57,30 +58,46 @@ class InitWorkflow(BaseWorkflow):
         Copy boutiques descriptors and invocations.
         Copy default config files.
 
-        If the BIDS source dataset is requested, it is copied.
+        If the BIDS source dataset is requested, it is symlinked.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
-            raise FileExistsError("Dataset directory already exists")
+            try:
+                filenames = [
+                    f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
+                ]
+
+            except NotADirectoryError:
+                raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
+
+            if len(filenames) > 0:
+                raise FileExistsError(
+                    f"Dataset directory is non-empty: {self.dpath_root}"
+                )
 
         # create directories
         for dpath in self.layout.dpaths:
-
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
-                self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                if self.mode == "copy":
+                    self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "move":
+                    self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                elif self.mode == "symlink":
+                    self.mkdir(self.dpath_root)
+                    self.create_symlink(
+                        self.bids_source, str(dpath), log_level=logging.DEBUG
+                    )
+                else:
+                    raise ValueError(f"Invalid mode: {self.mode}")
             else:
                 self.mkdir(dpath)
 
         self._write_readmes()
 
-        # copy pipeline files
-        for dpath_pipeline in DPATH_SAMPLE_PIPELINES.iterdir():
-            self.copytree(
-                dpath_pipeline,
-                self.layout.dpath_pipelines / dpath_pipeline.name,
-                log_level=logging.DEBUG,
-            )
+        # create empty pipeline config subdirectories
+        for pipeline_type in PipelineTypeEnum:
+            self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
         self.copy(
@@ -121,7 +138,7 @@ class InitWorkflow(BaseWorkflow):
                     "https://raw.githubusercontent.com/"
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
-                response = requests.get(url)
+                response = httpx.get(url)
                 fpath_readme.write_text(response.content.decode("utf-8"))
 
     def _init_manifest_from_bids_dataset(self) -> None:
@@ -148,7 +165,6 @@ class InitWorkflow(BaseWorkflow):
         self.logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for bids_participant_id in bids_participant_ids:
-
             bids_session_ids = sorted(
                 [
                     x.name

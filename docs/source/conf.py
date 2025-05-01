@@ -31,8 +31,9 @@ release = __version__
 
 extensions = [
     "autoapi.extension",
+    "hoverxref.extension",
     "myst_parser",
-    "sphinxarg.ext",
+    "sphinx_click.ext",
     "sphinx_copybutton",
     "sphinx_github_changelog",
     "sphinx-jsonschema",
@@ -40,6 +41,7 @@ extensions = [
     "sphinx.ext.autodoc.typehints",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_design",
 ]
 
 templates_path = ["_templates"]
@@ -56,9 +58,19 @@ nitpicky = True
 html_theme = "furo"
 html_static_path = ["_static"]
 
-html_css_files = [
-    "theme.css",
-]
+if (
+    "READTHEDOCS" in os.environ
+    and os.environ.get("READTHEDOCS_CANONICAL_URL").startswith(
+        "https://nipoppy.readthedocs.io"
+    )
+    and os.environ.get("READTHEDOCS_VERSION_TYPE") != "external"  # exclude PR builds
+):
+    html_js_files = [
+        (
+            "https://plausible.neurobagel.org/js/script.js",
+            {"data-domain": "nipoppy.readthedocs.io", "defer": "defer"},
+        ),
+    ]
 
 # -- Furo configuration ------------------------------------------------------
 #  https://pradyunsg.me/furo/customisation/#customisation
@@ -105,7 +117,7 @@ intersphinx_mapping = {
 
 # -- MyST configuration -------------------------------------------------------
 
-myst_enable_extensions = ["fieldlist", "substitution"]
+myst_enable_extensions = ["fieldlist", "substitution", "colon_fence"]
 
 myst_heading_anchors = 5
 
@@ -144,8 +156,8 @@ myst_substitutions = {
     "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
-    "fpath_doughnut": f"`{DEFAULT_LAYOUT_INFO.fpath_doughnut}`",
-    "fpath_imaging_bagel": f"`{DEFAULT_LAYOUT_INFO.fpath_imaging_bagel}`",
+    "fpath_curation_status": f"`{DEFAULT_LAYOUT_INFO.fpath_curation_status}`",
+    "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
     "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
     "content_dpath_pre_reorg": (
@@ -173,7 +185,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "*/cli/*"]
+autoapi_ignore = ["*_version*", "**/cli.py", "**/nipoppy/data"]
 autoapi_options = [
     "members",
     "undoc-members",
@@ -222,6 +234,11 @@ jsonschema_options = {
     "auto_reference": True,
     "auto_target": True,
 }
+
+# -- Hoverxref configuration ---------------------------------------------------
+hoverxref_roles = [
+    "term",
+]
 
 # # TODO
 # def linkcode_resolve(domain, info):

@@ -1,8 +1,9 @@
 changelog:
   exclude:
     authors:
+      - dependabot
+      - nipoppy-bot
       - pre-commit-ci
-      - dependabot[bot]
   categories:
     - title: Breaking Changes
       labels:

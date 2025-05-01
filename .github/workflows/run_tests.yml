@@ -27,11 +27,11 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -44,10 +44,13 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest --cov=nipoppy --cov-report=xml
+      env:
+        ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+        ZENODO_ID: ${{ env.ZENODO_ID }}
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
-        file: ./coverage.xml
+        files: ./coverage.xml
         name: codecov-umbrella
         token: ${{ secrets.CODECOV_TOKEN }}

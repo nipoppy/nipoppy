@@ -21,9 +21,7 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 # paths
 DPATH_DATA = Path(__file__).parent / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-DPATH_SAMPLE_PIPELINES = DPATH_EXAMPLES / "sample_pipelines"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config-latest_pipelines.json"
-FPATH_SAMPLE_CONFIG_FULL = DPATH_EXAMPLES / "sample_global_config-all_pipelines.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
@@ -57,14 +55,20 @@ def session_id_to_bids_session_id(session_id: Optional[str]) -> str:
 
 
 def check_participant_id(participant_id: Optional[str], raise_error=False):
-    """Make sure a participant ID does not have the BIDS prefix.
+    """Make sure a participant ID is valid.
+
+    Specifically:
+    - Check that it does not have the `sub-` prefix, stripping it if it does
+    - Check that it only has alphanumeric characters
 
     Parameters
     ----------
     participant_id : Optional[str]
         The participant ID to check. If None, returns None.
-    strict : bool, optional
-        Whether to raise an error if the participant ID has the prefix, by default False
+    raise_error : bool, optional
+        Whether to raise an error if the participant ID has the `sub-` prefix, by
+        default False. Note: an error is always raised if the participant ID contains
+        non-alphanumeric characters after being stripped of the `sub-` prefix.
 
     Returns
     -------
@@ -81,24 +85,36 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
     if participant_id.startswith(BIDS_SUBJECT_PREFIX):
         if raise_error:
             raise ValueError(
-                f'Participant ID should not start with "{BIDS_SUBJECT_PREFIX}"'
+                f'Invalid participant ID: should not start with "{BIDS_SUBJECT_PREFIX}"'
                 f", got {participant_id}"
             )
         else:
-            return participant_id.removeprefix(BIDS_SUBJECT_PREFIX)
+            participant_id = participant_id.removeprefix(BIDS_SUBJECT_PREFIX)
+
+    if not participant_id.isalnum():
+        raise ValueError(
+            f"Invalid participant ID: must only contain alphanumeric characters, "
+            f"got {participant_id}"
+        )
 
     return participant_id
 
 
 def check_session_id(session_id: Optional[str], raise_error=False):
-    """Make sure a session ID does not have the BIDS prefix.
+    """Make sure a session ID is valid.
+
+    Specifically:
+    - Check that it does not have the `ses-` prefix, stripping it if it does
+    - Check that it only has alphanumeric characters
 
     Parameters
     ----------
-    session_id : Optional[str]
-        The session ID to check. If None, returns None.
-    strict : bool, optional
-        Whether to raise an error if the session ID has the prefix, by default False
+    participant_id : Optional[str]
+        The participant ID to check. If None, returns None.
+    raise_error : bool, optional
+        Whether to raise an error if the session ID has the `ses-` prefix, by default
+        False. Note: an error is always raised if the session ID contains
+        non-alphanumeric characters even being stripped of the `ses-` prefix.
 
     Returns
     -------
@@ -115,11 +131,18 @@ def check_session_id(session_id: Optional[str], raise_error=False):
     if session_id.startswith(BIDS_SESSION_PREFIX):
         if raise_error:
             raise ValueError(
-                f'Session ID should not start with "{BIDS_SESSION_PREFIX}"'
+                f'Invalid session ID: should not start with "{BIDS_SESSION_PREFIX}"'
                 f", got {session_id}"
             )
         else:
-            return session_id.removeprefix(BIDS_SESSION_PREFIX)
+            session_id = session_id.removeprefix(BIDS_SESSION_PREFIX)
+
+    if not session_id.isalnum():
+        raise ValueError(
+            f"Invalid session ID: must only contain alphanumeric characters, "
+            f"got {session_id}"
+        )
+
     return session_id
 
 
@@ -280,11 +303,17 @@ def save_df_with_backup(
     if "sep" not in kwargs:
         kwargs["sep"] = "\t"
 
-    fpath_symlink = Path(fpath_symlink)
+    fpath_symlink: Path = Path(fpath_symlink)
 
     fname_backup = add_path_timestamp(fpath_symlink.name)
     if dname_backups is None:
-        dname_backups = f".{fpath_symlink.stem}s"
+        file_stem = fpath_symlink.stem
+        # make it plural
+        if file_stem.endswith("status"):
+            suffix = "es"
+        else:
+            suffix = "s"
+        dname_backups = f".{fpath_symlink.stem}{suffix}"
 
     fpath_backup_full: Path = fpath_symlink.parent / dname_backups / fname_backup
 
@@ -362,3 +391,8 @@ def apply_substitutions_to_json(
     for key, value in substitutions.items():
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
+
+
+def get_today():
+    """Get today's date in the format YYYY-MM-DD."""
+    return datetime.datetime.today().strftime("%Y-%m-%d")

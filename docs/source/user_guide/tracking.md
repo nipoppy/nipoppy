@@ -16,32 +16,32 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 | Directory or file | Content description |
 |---|---|
 | {{dpath_pipeline_output}} | **Input** -- {{content_dpath_pipeline_output}} |
-| {{fpath_imaging_bagel}} | **Output** -- Tabular file containing processing status for each participant/session and pipeline |
+| {{fpath_processing_status}} | **Output** -- Tabular file containing processing status for each participant/session and pipeline |
 
 ### Commands
 
-- Command-line interface: [`nipoppy track`](<project:../cli_reference/track.md>)
+- Command-line interface: [`nipoppy track`](<project:../cli_reference/track.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineTracker`
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that have BIDS data according to the {term}`doughnut file`
+1. Nipoppy will loop over all participants/sessions that have BIDS data according to the {term}`curation status file`
 2. For each participant-session pair:
     1. Paths in the pipeline's tracker configuration will be processed such that template strings related to the participant/session (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
-    2. Each path in the list is checked, then a status is assigned, and the bagel file is updated accordingly
+    2. Each path in the list is checked, then a status is assigned, and the processing status file is updated accordingly
 
 ## Configuring a pipeline tracker
 
 The global configuration file should include paths to tracker configuration files, which are {term}`JSON` files containing lists of dictionaries.
 
-Here is example of tracker configuration file (default for MRIQC 23.1.0):
-```{literalinclude} ../../../nipoppy/data/examples/sample_pipelines/mriqc-23.1.0/tracker_config.json
+Here is example of tracker configuration file for the MRIQC pipeline, version 23.1.0:
+```{literalinclude} ./inserts/mriqc-23.1.0-tracker_config.json
 ```
 
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
 
 ```{tip}
-- The paths are expected to be relative to the {{dpath_pipeline_output}}`/<PIPELINE_NAME>/<PIPELINE_VERSION>/output` directory.
+- The paths are expected to be relative to the {{dpath_pipeline_output}} directory.
 - "Glob" expressions (i.e., that include `*`) are allowed in paths. If at least one file matches the expression, then the file will be considered found for that expression.
 ```
 
@@ -56,17 +56,17 @@ class: no-copybutton
 ---
 ```
 
-Running the tracker with the above configuration will result in the imaging bagel file showing:
+Running the tracker with the above configuration will result in the processing status file showing:
 ```{csv-table}
 ---
-file: ./inserts/mriqc_bagel.tsv
+file: ./inserts/mriqc_processing_status.tsv
 header-rows: 1
 delim: tab
 ---
 ```
 
 ```{note}
-If there is an existing bagel, the rows relevant to the specific pipeline, participants, and sessions will be updated. Other rows will be left as-is.
+If there is an existing processing status file, the rows relevant to the specific pipeline, participants, and sessions will be updated. Other rows will be left as-is.
 ```
 
 The `pipeline_complete` column can have the following values:
@@ -80,7 +80,7 @@ The `pipeline_complete` column can have the following values:
 To track all available participants and sessions, run:
 ```console
 $ nipoppy track \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -92,13 +92,13 @@ If there are multiple versions or steps for the same pipeline in the global conf
 The tracker can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy track \
-    <DATASET_ROOT> \
+    --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
 ```
 
-See the [CLI reference page](<project:../cli_reference/track.md>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../cli_reference/track.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/track`
@@ -120,7 +120,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.md>)).
+See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.rst>)).
 
 ## Next steps
 

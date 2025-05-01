@@ -5,24 +5,32 @@ from pathlib import Path
 import pytest
 from pytest_mock import MockerFixture
 
-from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BidsPipelineConfig
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
-from .conftest import create_empty_dataset, get_config
+from .conftest import create_empty_dataset, create_pipeline_config_files, get_config
 
 
 @pytest.fixture
-def config() -> Config:
-    return get_config(
-        bids_pipelines=[
+def workflow(tmp_path: Path) -> BidsConversionRunner:
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="prepare",
+    )
+    workflow.config = get_config()
+    create_empty_dataset(workflow.dpath_root)
+    create_pipeline_config_files(
+        workflow.layout.dpath_pipelines,
+        bidsification_pipelines=[
             {
                 "NAME": "heudiconv",
                 "VERSION": "0.12.2",
                 "STEPS": [
                     {"NAME": "prepare"},
-                    {"NAME": "convert", "UPDATE_DOUGHNUT": True},
+                    {"NAME": "convert", "UPDATE_STATUS": True},
                 ],
             },
             {
@@ -30,11 +38,12 @@ def config() -> Config:
                 "VERSION": "3.1.0",
                 "STEPS": [
                     {"NAME": "prepare"},
-                    {"NAME": "convert", "UPDATE_DOUGHNUT": True},
+                    {"NAME": "convert", "UPDATE_STATUS": True},
                 ],
             },
-        ]
+        ],
     )
+    return workflow
 
 
 @pytest.mark.parametrize(
@@ -45,14 +54,12 @@ def config() -> Config:
     ],
 )
 def test_check_pipeline_version(
-    pipeline_name, expected_version, config: Config, tmp_path: Path
+    pipeline_name,
+    expected_version,
+    workflow: BidsConversionRunner,
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path,
-        pipeline_name=pipeline_name,
-        pipeline_version=None,
-    )
-    config.save(workflow.layout.fpath_config)
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = None
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
 
@@ -65,146 +72,105 @@ def test_check_pipeline_version(
     ],
 )
 def test_pipeline_config(
-    pipeline_name, pipeline_version, config: Config, tmp_path: Path
+    pipeline_name, pipeline_version, workflow: BidsConversionRunner
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path,
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
-    )
-    config.save(workflow.layout.fpath_config)
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = pipeline_version
     assert isinstance(workflow.pipeline_config, BidsPipelineConfig)
 
 
-def test_dpath_pipeline_error(tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
+def test_dpath_pipeline_error(workflow: BidsConversionRunner):
     with pytest.raises(
         RuntimeError, match='"dpath_pipeline" attribute is not available for '
     ):
         workflow.dpath_pipeline
 
 
-def test_setup(config: Config, tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
-    create_empty_dataset(workflow.dpath_root)
-    config.save(workflow.layout.fpath_config)
-
+def test_setup(workflow: BidsConversionRunner):
     # check that no file/directory is created during setup
     files_before = set(workflow.dpath_root.rglob("*"))
     workflow.run_setup()
     files_after = set(workflow.dpath_root.rglob("*"))
-    assert files_before == files_after
+    log_files = set(workflow.dpath_root.joinpath("logs").rglob("*"))
+    assert files_before == (files_after - log_files)
 
 
-@pytest.mark.parametrize("update_doughnut", [True, False])
+@pytest.mark.parametrize("update_status", [True, False])
 def test_run_single(
-    update_doughnut, config: Config, tmp_path: Path, mocker: MockerFixture
+    update_status, workflow: BidsConversionRunner, mocker: MockerFixture
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
-    config.save(workflow.layout.fpath_config)
-    workflow.doughnut = Doughnut()
-    workflow.pipeline_step_config.UPDATE_DOUGHNUT = update_doughnut
+    workflow.curation_status_table = CurationStatusTable()
+    workflow.pipeline_step_config.UPDATE_STATUS = update_status
 
     mocked_process_container_config = mocker.patch.object(
         workflow, "process_container_config"
     )
     mocked_launch_boutiques_run = mocker.patch.object(workflow, "launch_boutiques_run")
 
-    mocked_doughnut_set_status = mocker.patch.object(workflow.doughnut, "set_status")
+    mocked_set_status = mocker.patch.object(
+        workflow.curation_status_table, "set_status"
+    )
 
     workflow.run_single("01", "1")
 
     mocked_process_container_config.assert_called_once()
     mocked_launch_boutiques_run.assert_called_once()
 
-    if update_doughnut:
-        mocked_doughnut_set_status.assert_called_once()
+    if update_status:
+        mocked_set_status.assert_called_once()
     else:
-        mocked_doughnut_set_status.assert_not_called()
+        mocked_set_status.assert_not_called()
 
 
 @pytest.mark.parametrize(
-    "doughnut",
+    "table",
     [
-        Doughnut(),
-        Doughnut(
+        CurationStatusTable(),
+        CurationStatusTable(
             data={
-                Doughnut.col_participant_id: ["01"],
-                Doughnut.col_visit_id: ["1"],
-                Doughnut.col_session_id: ["1"],
-                Doughnut.col_datatype: "['anat']",
-                Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_pre_reorg: [True],
-                Doughnut.col_in_post_reorg: [True],
-                Doughnut.col_in_bids: [True],
+                CurationStatusTable.col_participant_id: ["01"],
+                CurationStatusTable.col_visit_id: ["1"],
+                CurationStatusTable.col_session_id: ["1"],
+                CurationStatusTable.col_datatype: "['anat']",
+                CurationStatusTable.col_participant_dicom_dir: ["01"],
+                CurationStatusTable.col_in_pre_reorg: [True],
+                CurationStatusTable.col_in_post_reorg: [True],
+                CurationStatusTable.col_in_bids: [True],
             }
         ).validate(),
     ],
 )
-def test_cleanup(doughnut: Doughnut, config: Config, tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="convert",
-    )
-    workflow.doughnut = doughnut
-    config.save(workflow.layout.fpath_config)
+def test_cleanup(table: CurationStatusTable, workflow: BidsConversionRunner):
+    workflow.pipeline_step = "convert"
+    workflow.curation_status_table = table
 
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_doughnut.exists()
-    assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
+    assert workflow.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(table)
 
 
-def test_cleanup_simulate(tmp_path: Path, config: Config):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="convert",
-        simulate=True,
-    )
-    workflow.doughnut = Doughnut()
-    config.save(workflow.layout.fpath_config)
+def test_cleanup_simulate(workflow: BidsConversionRunner):
+    workflow.pipeline_step = "convert"
+    workflow.simulate = True
+    workflow.curation_status_table = CurationStatusTable()
 
     workflow.run_cleanup()
 
-    assert not workflow.layout.fpath_doughnut.exists()
+    assert not workflow.layout.fpath_curation_status.exists()
 
 
-def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
-    workflow.doughnut = Doughnut()
-    config.save(workflow.layout.fpath_config)
+def test_cleanup_no_status_update(workflow: BidsConversionRunner):
+    workflow.pipeline_step = "prepare"
+    workflow.curation_status_table = CurationStatusTable()
 
     workflow.run_cleanup()
 
-    assert not workflow.layout.fpath_doughnut.exists()
+    assert not workflow.layout.fpath_curation_status.exists()
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,participant_id,session_id,expected",
+    "status_data,participant_id,session_id,expected",
     [
         (
             [
@@ -229,27 +195,21 @@ def test_cleanup_no_doughnut_update(config: Config, tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data, participant_id, session_id, expected, tmp_path: Path
+    status_data, participant_id, session_id, expected, workflow: BidsConversionRunner
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
-    workflow.doughnut = Doughnut().add_or_update_records(
+    workflow.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
             {
-                Doughnut.col_participant_id: data[0],
-                Doughnut.col_session_id: data[1],
-                Doughnut.col_in_post_reorg: data[2],
-                Doughnut.col_in_bids: data[3],
-                Doughnut.col_visit_id: data[1],
-                Doughnut.col_datatype: None,
-                Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_pre_reorg: False,
+                CurationStatusTable.col_participant_id: data[0],
+                CurationStatusTable.col_session_id: data[1],
+                CurationStatusTable.col_in_post_reorg: data[2],
+                CurationStatusTable.col_in_bids: data[3],
+                CurationStatusTable.col_visit_id: data[1],
+                CurationStatusTable.col_datatype: None,
+                CurationStatusTable.col_participant_dicom_dir: "",
+                CurationStatusTable.col_in_pre_reorg: False,
             }
-            for data in doughnut_data
+            for data in status_data
         ]
     )
     assert [
