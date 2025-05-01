@@ -79,7 +79,6 @@ def add_logfile(logger: logging.Logger, fpath_log: StrOrPathLike) -> None:
 
     dpath_log = fpath_log.parent
     if not dpath_log.exists():
-        logger.warning(f"Creating log directory because it does not exist: {dpath_log}")
         dpath_log.mkdir(parents=True, exist_ok=True)
 
     file_handler = logging.FileHandler(fpath_log)
