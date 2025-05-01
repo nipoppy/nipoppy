@@ -282,8 +282,8 @@ def init(**params):
     ),
 )
 @click.option(
-    "--regenerate",
     "--force",
+    "--regenerate",
     "-f",
     is_flag=True,
     help=(

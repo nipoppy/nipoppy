@@ -116,7 +116,10 @@ def get_pipeline_version(
         raise ValueError(
             f"No config found for pipeline with NAME={pipeline_name}"
             ". Available pipelines: "
-            + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+            + (
+                ", ".join(f"{name} {version}" for name, version in available_pipelines)
+                or "None"
+            )
         )
 
 
