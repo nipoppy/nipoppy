@@ -32,13 +32,13 @@ class ZenodoAPI:
     def __init__(
         self,
         sandbox: bool = False,
-        access_token: Optional[str] = None,
+        password_file: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
     ):
+        self.sandbox = sandbox
         self.api_endpoint = (
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
-        self.access_token = access_token
 
         if logger is None:
             self.logger = get_logger(__name__)
@@ -46,9 +46,11 @@ class ZenodoAPI:
             self.logger = logger
 
         # Access token is required for uploading files
-        if self.access_token is not None:
+        self.password_file = password_file
+        if self.password_file is not None:
+            access_token = self.password_file.read_text().strip()
             self.headers = {
-                "Authorization": f"Bearer {self.access_token}",
+                "Authorization": f"Bearer {access_token}",
             }
         else:
             self.headers = {}

@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Optional
 
+from rich.prompt import Confirm
+
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
@@ -75,6 +77,14 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
+        continue_ = Confirm.ask(
+            "The Nipoppy pipeline will be uploaded/updated on Zenodo,"
+            " this is a [bold]permanent[/] action."
+        )
+        if not continue_:
+            self.logger.info("Zenodo upload cancelled.")
+            raise SystemExit(1)
+
         pipeline_dir = Path(self.dpath_pipeline)
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 

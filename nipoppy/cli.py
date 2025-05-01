@@ -427,14 +427,6 @@ def pipeline():
 def zenodo_options(func):
     """Define Zenodo options for the CLI."""
     func = click.option(
-        "--zenodo-token",
-        "access_token",
-        envvar="ZENODO_TOKEN",
-        type=str,
-        required=False,
-        help="Zenodo access token.",
-    )(func)
-    func = click.option(
         "--sandbox",
         "sandbox",
         is_flag=True,
@@ -539,6 +531,12 @@ def pipeline_validate(**params):
     required=False,
     help="To update an existing pipeline, provide the Zenodo ID.",
 )
+@click.option(
+    "--password-file",
+    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
+    required=True,
+    help="Zenodo access token.",
+)
 @zenodo_options
 @global_options
 def pipeline_upload(**params):
@@ -547,7 +545,7 @@ def pipeline_upload(**params):
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
+        password_file=params.pop("password_file"),
     )
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
