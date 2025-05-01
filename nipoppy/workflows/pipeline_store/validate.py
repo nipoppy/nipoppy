@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -31,6 +31,4 @@ class PipelineValidateWorkflow(BaseWorkflow):
             self.dpath_pipeline, logger=self.logger, log_level=logging.INFO
         )
 
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]The pipeline files are all valid![/]",
-        )
+        self.logger.success("The pipeline files are all valid!")

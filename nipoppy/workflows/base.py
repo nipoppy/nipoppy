@@ -171,8 +171,8 @@ class BaseWorkflow(Base, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        self.logger.info(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
-        self.logger.info(self)
+        self.logger.debug(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
+        self.logger.debug(self)
         if self.dry_run:
             self.logger.info("Doing a dry run")
 
@@ -183,7 +183,7 @@ class BaseWorkflow(Base, ABC):
 
     def run_cleanup(self):
         """Run the cleanup part of the workflow."""
-        self.logger.info(f"========== END {self.name.upper()} WORKFLOW ==========")
+        self.logger.debug(f"========== END {self.name.upper()} WORKFLOW ==========")
 
     def run(self):
         """Run the workflow."""
@@ -342,7 +342,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         fpath_config = self.layout.fpath_config
         try:
             # load and apply user-defined substitutions
-            self.logger.info(f"Loading config from {fpath_config}")
+            self.logger.debug(f"Loading config from {fpath_config}")
             config = Config.load(fpath_config)
         except FileNotFoundError:
             raise FileNotFoundError(

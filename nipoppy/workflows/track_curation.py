@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
@@ -83,8 +83,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
 
     def run_cleanup(self):
         """Log a success message."""
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully generated/updated the dataset's "
-            "curation status file![/]"
+        self.logger.success(
+            "Successfully generated/updated the dataset's curation status file!"
         )
         return super().run_cleanup()

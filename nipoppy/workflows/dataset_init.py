@@ -10,7 +10,6 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
-    LogColor,
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
@@ -228,8 +227,5 @@ class InitWorkflow(BaseDatasetWorkflow):
 
     def run_cleanup(self):
         """Log a success message."""
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully initialized a dataset "
-            f"at {self.dpath_root}![/]"
-        )
+        self.logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
         return super().run_cleanup()

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.pipeline_store.validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
@@ -91,6 +91,4 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         doi = self.zenodo_api.upload_pipeline(
             input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
         )
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline successfully uploaded at {doi}[/]",
-        )
+        self.logger.info(f"Pipeline successfully uploaded at {doi}")

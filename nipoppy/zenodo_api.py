@@ -281,19 +281,15 @@ class ZenodoAPI:
             doi = self._publish(record_id)
             return doi
 
-        except Exception as e:
+        except Exception:
             # Delete the draft if an error occurs
             # Prevents issue when retrying to modify the record while a draft exits.
-            self.logger.info(
-                f"Reverting record {action} for zenodo.{record_id} due to error: {e}"
-            )
+            self.logger.warning(f"Reverting record {action} for zenodo.{record_id}")
             response = httpx.delete(
                 f"{self.api_endpoint}/records/{record_id}/draft",
                 headers=self.headers,
             )
-            if response.status_code == 204:
-                self.logger.info(f"Record {action} reverted")
-            else:
+            if response.status_code != 204:
                 self.logger.warning(
                     f"Failed to revert record {action} for zenodo.{record_id}: "
                     f"{response.json()}"

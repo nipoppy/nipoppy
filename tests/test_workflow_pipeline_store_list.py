@@ -151,10 +151,7 @@ def test_log_pipeline_info_empty(
     workflow._log_pipeline_info(pipeline_type, pipeline_info)
 
     assert len(caplog.records) == 1
-    assert (
-        f"[red]No available {pipeline_type.value} pipelines"
-        in caplog.records[0].message
-    )
+    assert f"No available {pipeline_type.value} pipelines" in caplog.records[0].message
 
 
 def test_run_main(

@@ -31,7 +31,6 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
-    LogColor,
     PipelineTypeEnum,
     ReturnCode,
     StrOrPathLike,
@@ -604,27 +603,20 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"check the curation status file at {self.layout.fpath_curation_status}"
             )
         else:
-            # change the message depending on how successful the run was
-            prefix = "Ran"
-            suffix = ""
-            if self.n_success == 0:
-                color = LogColor.FAILURE
-            elif self.n_success == self.n_total:
-                color = LogColor.SUCCESS
-                prefix = f"Successfully {prefix.lower()}"
-                suffix = "!"
-            else:
-                color = LogColor.PARTIAL_SUCCESS
-
             if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
-                message_body = "on the entire study"
+                log_msg = "Ran on the entire study"
             else:
-                message_body = (
-                    f"for {self.n_success} out of "
+                log_msg = (
+                    f"Ran for {self.n_success} out of "
                     f"{self.n_total} participants or sessions"
                 )
 
-            self.logger.info(f"[{color}]{prefix} {message_body}{suffix}[/]")
+            if self.n_success == 0:
+                self.logger.error(f"{log_msg}!")
+            elif self.n_success == self.n_total:
+                self.logger.success(f"{log_msg}!")
+            else:
+                self.logger.warning(f"{log_msg}!")
 
         return super().run_cleanup()
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import LogColor, ReturnCode
+from nipoppy.env import ReturnCode
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
@@ -467,17 +467,17 @@ def test_cleanup_curation_status(
         (
             0,
             1,
-            f"[{LogColor.FAILURE}]Reorganized files for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+            "Reorganized files for {0} out of {1} participant-session pairs",  # noqa: E501
         ),
         (
             1,
             2,
-            f"[{LogColor.PARTIAL_SUCCESS}]Reorganized files for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+            "Reorganized files for {0} out of {1} participant-session pairs",  # noqa: E501
         ),
         (
             2,
             2,
-            f"[{LogColor.SUCCESS}]Successfully reorganized files for {{0}} out of {{1}} participant-session pairs",  # noqa: E501
+            "Reorganized files for {0} out of {1} participant-session pairs",  # noqa: E501
         ),
     ],
 )
