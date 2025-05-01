@@ -17,6 +17,7 @@ classifiers = [
 dependencies = [
     "boutiques",
     "click",
+    "httpx",
     "jinja2",
     "pandas",
     "pybids!=0.18.0",
@@ -27,7 +28,6 @@ dependencies = [
     "rich",
     "rich-click",
     "typing-extensions",
-    "requests",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }

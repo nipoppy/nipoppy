@@ -1,0 +1,20 @@
+{
+    "SUBSTITUTIONS": {
+        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_ROOT]]/containers",
+        "[[HPC_ACCOUNT_NAME]]": ""
+    },
+    "DICOM_DIR_PARTICIPANT_FIRST": true,
+    "CONTAINER_CONFIG": {
+        "COMMAND": "apptainer",
+        "ARGS": [
+            "--cleanenv"
+        ]
+    },
+    "HPC_PREAMBLE": [],
+    "PIPELINE_VARIABLES": {
+        "BIDSIFICATION": {},
+        "PROCESSING": {},
+        "EXTRACTION": {}
+    },
+    "CUSTOM": {}
+}

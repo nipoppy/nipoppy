@@ -13,17 +13,20 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
-from nipoppy.env import StrOrPathLike
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, StrOrPathLike
+from nipoppy.layout import DatasetLayout
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
+    save_json,
     session_id_to_bids_session_id,
 )
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
+TEST_PIPELINE = DPATH_TEST_DATA / "fmriprep-24.1.1"
 
 ATTR_TO_REQUIRED_DPATH_MAP = {
     "dpath_bids": "bids",
@@ -56,12 +59,25 @@ ATTR_TO_REQUIRED_FPATH_MAP = {
 
 ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
-    "fpath_doughnut": "sourcedata/imaging/doughnut.tsv",
-    "fpath_imaging_bagel": "derivatives/bagel.tsv",
+    "fpath_curation_status": "sourcedata/imaging/curation_status.tsv",
+    "fpath_processing_status": "derivatives/processing_status.tsv",
     "fpath_demographics": "tabular/demographics.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
+
+
+@pytest.fixture(scope="function")
+def record_id():
+    """Fixture for Zenodo ID.
+
+    The Sandbox can be reset at any time, so the Zenodo ID may change.
+    If the test fails verify the Zenodo record at:
+    https://sandbox.zenodo.org/records/{record_id}
+
+    The test file is located at TEST_PIPELINE
+    """
+    return "199319"
 
 
 @pytest.fixture()
@@ -74,41 +90,32 @@ def datetime_fixture(
     """
     mocked_datetime = mocker.patch("nipoppy.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
+    mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
 
 
 def get_config(
-    dataset_name="my_dataset",
-    session_ids=None,
-    visit_ids=None,
-    bids_pipelines=None,
-    proc_pipelines=None,
-    extraction_pipelines=None,
     container_config=None,
+    dicom_dir_map_file=None,
+    dicom_dir_participant_first=None,
+    substitutions=None,
+    custom=None,
 ):
     """Create a valid Config object with all required parameters."""
     # everything empty by default
-    if session_ids is None:
-        session_ids = []
-    if visit_ids is None:
-        visit_ids = []
-    if bids_pipelines is None:
-        bids_pipelines = []
-    if proc_pipelines is None:
-        proc_pipelines = []
-    if extraction_pipelines is None:
-        extraction_pipelines = []
     if container_config is None:
         container_config = {}
+    if substitutions is None:
+        substitutions = {}
+    if custom is None:
+        custom = {}
 
     return Config(
-        DATASET_NAME=dataset_name,
-        VISIT_IDS=visit_ids,
-        SESSION_IDS=session_ids,
-        BIDS_PIPELINES=bids_pipelines,
-        PROC_PIPELINES=proc_pipelines,
-        EXTRACTION_PIPELINES=extraction_pipelines,
         CONTAINER_CONFIG=container_config,
+        DICOM_DIR_MAP_FILE=dicom_dir_map_file,
+        DICOM_DIR_PARTICIPANT_FIRST=dicom_dir_participant_first,
+        SUBSTITUTIONS=substitutions,
+        CUSTOM=custom,
     )
 
 
@@ -118,6 +125,33 @@ def create_empty_dataset(dpath_root: Path):
         (dpath_root / dpath).mkdir(parents=True, exist_ok=True)
     for fpath in ATTR_TO_REQUIRED_FPATH_MAP.values():
         (dpath_root / fpath).touch()
+
+
+def create_pipeline_config_files(
+    dpath_pipelines: Path,
+    bidsification_pipelines: Optional[list[dict]] = None,
+    processing_pipelines: Optional[list[dict]] = None,
+    extraction_pipelines: Optional[list[dict]] = None,
+):
+    """Create pipeline bundles (inside subdirectories)."""
+    for pipeline_config_list, pipeline_type in [
+        (bidsification_pipelines, PipelineTypeEnum.BIDSIFICATION),
+        (processing_pipelines, PipelineTypeEnum.PROCESSING),
+        (extraction_pipelines, PipelineTypeEnum.EXTRACTION),
+    ]:
+        if pipeline_config_list is None:
+            continue
+        for pipeline_config in pipeline_config_list:
+            pipeline_config["PIPELINE_TYPE"] = pipeline_type
+            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION
+            fpath_config = (
+                dpath_pipelines
+                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
+                / f"{pipeline_config['NAME']}-{pipeline_config['VERSION']}"
+                / DatasetLayout.fname_pipeline_config
+            )
+            fpath_config.parent.mkdir(parents=True, exist_ok=True)
+            save_json(pipeline_config, fpath_config)
 
 
 def _process_participants_sessions(
@@ -321,33 +355,33 @@ def prepare_dataset(
     return manifest
 
 
-def check_doughnut(
-    doughnut: Doughnut,
+def check_curation_status_table(
+    table: CurationStatusTable,
     participants_and_sessions_manifest,
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,
     participants_and_sessions_bidsified,
     empty,
 ):
-    """Check that a doughnut has the corrected statuses."""
+    """Check that a curation status table has the corrected status values."""
     if empty:
         for col in [
-            doughnut.col_in_pre_reorg,
-            doughnut.col_in_post_reorg,
-            doughnut.col_in_bids,
+            table.col_in_pre_reorg,
+            table.col_in_post_reorg,
+            table.col_in_bids,
         ]:
-            assert (~doughnut[col]).all()
+            assert (~table[col]).all()
     else:
         for participant_id in participants_and_sessions_manifest:
             for session_id in participants_and_sessions_manifest[participant_id]:
                 for col, participants_and_sessions_true in {
-                    doughnut.col_in_pre_reorg: participants_and_sessions_downloaded,
-                    doughnut.col_in_post_reorg: participants_and_sessions_organized,
-                    doughnut.col_in_bids: participants_and_sessions_bidsified,
+                    table.col_in_pre_reorg: participants_and_sessions_downloaded,
+                    table.col_in_post_reorg: participants_and_sessions_organized,
+                    table.col_in_bids: participants_and_sessions_bidsified,
                 }.items():
-                    status: pd.Series = doughnut.loc[
-                        (doughnut[doughnut.col_participant_id] == participant_id)
-                        & (doughnut[doughnut.col_session_id] == session_id),
+                    status: pd.Series = table.loc[
+                        (table[table.col_participant_id] == participant_id)
+                        & (table[table.col_session_id] == session_id),
                         col,
                     ]
 

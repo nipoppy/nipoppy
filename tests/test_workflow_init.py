@@ -35,19 +35,17 @@ def assert_layout_creation(workflow, dpath_root):
     assert Path(dpath_root, FPATH_CONFIG).exists()
     assert Path(dpath_root, FPATH_MANIFEST).exists()
 
-    # check that pipeline config files have been copied
-    for pipeline_configs in (
-        workflow.config.BIDS_PIPELINES,
-        workflow.config.PROC_PIPELINES,
-    ):
-        for pipeline_config in pipeline_configs:
-            assert exist_or_none(pipeline_config, "TRACKER_CONFIG_FILE")
-            for pipeline_step_config in pipeline_config.STEPS:
-                assert exist_or_none(pipeline_step_config, "DESCRIPTOR_FILE")
-                assert exist_or_none(pipeline_step_config, "INVOCATION_FILE")
-                assert exist_or_none(
-                    pipeline_step_config, "PYBIDS_IGNORE_PATTERNS_FILE"
+    # check that no pipeline config files have been copied
+    assert (
+        len(
+            list(
+                workflow.layout.dpath_pipelines.glob(
+                    f"**/{workflow.layout.fname_pipeline_config}"
                 )
+            )
+        )
+        == 0
+    )
 
     # check that HPC config files have been copied
     for fname in DPATH_HPC.glob("*"):

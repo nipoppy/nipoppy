@@ -13,7 +13,7 @@ from pydantic_core import to_jsonable_python
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -28,6 +28,8 @@ class AnalysisLevelType(str, Enum):
 
 class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
+
+    _path_fields = ["DESCRIPTOR_FILE", "INVOCATION_FILE"]
 
     NAME: str = Field(
         default=DEFAULT_PIPELINE_STEP_NAME,
@@ -70,6 +72,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline step configuration before instantiation.
 
         Specifically:
+
         - Apply substitutions for step name in the config
         """
         if isinstance(data, dict):
@@ -79,9 +82,41 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
                 )
         return data
 
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the pipeline step configuration after creation.
+
+        Specifically:
+
+        - Fields in _path_fields must not be absolute
+        - DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be None
+        """
+        for field in self._path_fields:
+            if (path := getattr(self, field)) is not None:
+                # check that path is relative
+                if Path(path).is_absolute():
+                    raise ValueError(f"{field} must be a relative path, got {path}")
+
+        if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
+            self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
+        ):
+            raise ValueError(
+                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
+                f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
+            )
+        return self
+
 
 class ProcPipelineStepConfig(BasePipelineStepConfig):
     """Schema for processing pipeline step configuration."""
+
+    _path_fields = [
+        "DESCRIPTOR_FILE",
+        "INVOCATION_FILE",
+        "TRACKER_CONFIG_FILE",
+        "PYBIDS_IGNORE_FILE",
+    ]
 
     TRACKER_CONFIG_FILE: Optional[Path] = Field(
         default=None,
@@ -111,9 +146,12 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         Validate the pipeline step configuration after creation.
 
         Specifically:
-        - Make sure that the tracker configuration file is not set if the analysis
-        level is not participant_session
+
+        - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
+          "participant_session"
         """
+        super().validate_after()
+
         if (
             self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
             and self.TRACKER_CONFIG_FILE is not None
@@ -128,11 +166,11 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
 class BidsPipelineStepConfig(BasePipelineStepConfig):
     """Schema for BIDS pipeline step configuration."""
 
-    UPDATE_DOUGHNUT: Optional[bool] = Field(
+    UPDATE_STATUS: Optional[bool] = Field(
         default=False,
         description=(
-            f"Whether or not the {Doughnut.col_in_bids} column "
-            "in the doughnut file should be updated"
+            f"Whether or not the {CurationStatusTable.col_in_bids} column "
+            "in the curation status file should be updated"
         ),
     )
     model_config = ConfigDict(extra="forbid")
