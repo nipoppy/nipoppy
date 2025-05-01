@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import LogColor, ReturnCode
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.doughnut import Doughnut
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -19,8 +19,16 @@ from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
 from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
 
 
-def test_init_attributes(tmp_path: Path):
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path)
+@pytest.fixture()
+def workflow(tmp_path: Path):
+    dpath_root = tmp_path / "my_dataset"
+    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+    workflow.config = get_config()
+    workflow.config.save(workflow.layout.fpath_config)
+    return workflow
+
+
+def test_init_attributes(workflow: DicomReorgWorkflow):
     assert workflow.copy_files is False
     assert workflow.check_dicoms is False
     assert workflow.n_success == 0
@@ -51,15 +59,12 @@ def test_is_derived_dicom(fpath, expected_result):
     ],
 )
 def test_get_fpaths_to_reorg(
-    participant_id, session_id, fpaths, participant_first, tmp_path: Path
+    workflow: DicomReorgWorkflow, participant_id, session_id, fpaths, participant_first
 ):
-    dpath_root = tmp_path / "my_dataset"
-
     manifest = prepare_dataset(
         participants_and_sessions_manifest={participant_id: [session_id]}
     )
 
-    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
     workflow.dicom_dir_map = DicomDirMap.load_or_generate(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=participant_first
     )
@@ -76,12 +81,9 @@ def test_get_fpaths_to_reorg(
     ) == len(fpaths)
 
 
-def test_get_fpaths_to_reorg_error_not_found(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
+def test_get_fpaths_to_reorg_error_not_found(workflow: DicomReorgWorkflow):
     participant_id = "XXX"
     session_id = "X"
-
-    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
     manifest = prepare_dataset(
         participants_and_sessions_manifest={participant_id: [session_id]}
     )
@@ -106,11 +108,8 @@ def test_get_fpaths_to_reorg_error_not_found(tmp_path: Path):
         ),
     ],
 )
-def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
+def test_apply_fname_mapping(workflow: DicomReorgWorkflow, mapping_func, expected):
     workflow.apply_fname_mapping = mapping_func
-
     fname = "123456.dcm"
     participant_id = "01"
     session_id = "1"
@@ -125,10 +124,9 @@ def test_apply_fname_mapping(mapping_func, expected, tmp_path: Path):
         ("123/dicoms.tar.gz", "dicoms.tar.gz"),
     ],
 )
-def test_apply_fname_mapping_default(fpath_source, expected, tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=dpath_root)
-
+def test_apply_fname_mapping_default(
+    workflow: DicomReorgWorkflow, fpath_source, expected
+):
     assert (
         workflow.apply_fname_mapping(
             fpath_source=fpath_source, participant_id="", session_id=""
@@ -137,13 +135,9 @@ def test_apply_fname_mapping_default(fpath_source, expected, tmp_path: Path):
     )
 
 
-def test_run_single_error_file_exists(tmp_path: Path):
+def test_run_single_error_file_exists(workflow: DicomReorgWorkflow):
     participant_id = "01"
     session_id = "1"
-    dataset_name = "my_dataset"
-
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-
     manifest = prepare_dataset(
         participants_and_sessions_manifest={participant_id: [session_id]}
     )
@@ -167,11 +161,12 @@ def test_run_single_error_file_exists(tmp_path: Path):
         workflow.run_single(participant_id, session_id)
 
 
-def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+def test_run_single_invalid_dicom(
+    workflow: DicomReorgWorkflow, caplog: pytest.LogCaptureFixture
+):
     participant_id = "01"
     session_id = "1"
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
+    workflow.check_dicoms = True
 
     manifest = prepare_dataset(
         participants_and_sessions_manifest={participant_id: [session_id]}
@@ -201,11 +196,10 @@ def test_run_single_invalid_dicom(tmp_path: Path, caplog: pytest.LogCaptureFixtu
     )
 
 
-def test_run_single_error_dicom_read(tmp_path: Path):
+def test_run_single_error_dicom_read(workflow: DicomReorgWorkflow):
     participant_id = "01"
     session_id = "1"
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name, check_dicoms=True)
+    workflow.check_dicoms = True
 
     manifest = prepare_dataset(
         participants_and_sessions_manifest={participant_id: [session_id]}
@@ -270,18 +264,16 @@ def test_run_single_error_dicom_read(tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
+    workflow: DicomReorgWorkflow,
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,
     expected,
-    tmp_path: Path,
 ):
     participants_and_sessions_manifest = {
         "S01": ["1", "2", "3"],
         "S02": ["1", "2", "3"],
         "S03": ["1", "2", "3"],
     }
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
     create_empty_dataset(workflow.layout.dpath_root)
 
     manifest: Manifest = prepare_dataset(
@@ -291,23 +283,14 @@ def test_get_participants_sessions_to_run(
         dpath_downloaded=workflow.layout.dpath_pre_reorg,
         dpath_organized=workflow.layout.dpath_post_reorg,
     )
-
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
-
     manifest.save_with_backup(workflow.layout.fpath_manifest)
-    config.save(workflow.layout.fpath_config)
 
     assert [tuple(x) for x in workflow.get_participants_sessions_to_run()] == expected
 
 
-def test_run_setup(tmp_path: Path):
-    dataset_name = "my_dataset"
+def test_run_setup(workflow: DicomReorgWorkflow):
     participants_and_sessions1 = {"01": ["1"]}
     participants_and_sessions2 = {"01": ["1", "2"], "02": ["1"]}
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
 
     create_empty_dataset(workflow.layout.dpath_root)
 
@@ -316,14 +299,10 @@ def test_run_setup(tmp_path: Path):
     )
     manifest1.save_with_backup(workflow.layout.fpath_manifest)
 
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest1[Manifest.col_visit_id].unique()),
-    )
-    config.save(workflow.layout.fpath_config)
-
-    # generate first doughnut with the smaller manifest
-    doughnut1 = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name).doughnut
+    # generate first curation status table with the smaller manifest
+    curation_status_table1 = DicomReorgWorkflow(
+        dpath_root=workflow.dpath_root
+    ).curation_status_table
 
     # update manifest
     manifest2 = prepare_dataset(
@@ -332,11 +311,11 @@ def test_run_setup(tmp_path: Path):
     manifest2.save_with_backup(workflow.layout.fpath_manifest)
     workflow.manifest = manifest2
 
-    # check that doughnut was regenerated
+    # check that curation status table was regenerated
     workflow.run_setup()
 
-    assert not workflow.doughnut.equals(doughnut1)
-    assert len(workflow.doughnut) == len(manifest2)
+    assert not workflow.curation_status_table.equals(curation_status_table1)
+    assert len(workflow.curation_status_table) == len(manifest2)
 
 
 @pytest.mark.parametrize(
@@ -370,29 +349,19 @@ def test_run_setup(tmp_path: Path):
 )
 @pytest.mark.parametrize("copy_files", [True, False])
 def test_run_main(
+    workflow: DicomReorgWorkflow,
     participants_and_sessions_manifest: dict,
     participants_and_sessions_downloaded: dict,
     copy_files: bool,
-    tmp_path: Path,
 ):
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(
-        dpath_root=tmp_path / dataset_name, copy_files=copy_files
-    )
+    workflow.copy_files = copy_files
 
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         dpath_downloaded=workflow.layout.dpath_pre_reorg,
     )
-
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
-
     manifest.save_with_backup(workflow.layout.fpath_manifest)
-    config.save(workflow.layout.fpath_config)
 
     workflow.run_main()
 
@@ -422,11 +391,11 @@ def test_run_main(
                     count += 1
                 assert count > 0
 
-                # check that the doughnut has been updated
-                assert workflow.doughnut.get_status(
+                # check that the curation status table has been updated
+                assert workflow.curation_status_table.get_status(
                     participant_id=participant_id,
                     session_id=session_id,
-                    col=workflow.doughnut.col_in_post_reorg,
+                    col=workflow.curation_status_table.col_in_post_reorg,
                 )
 
             else:
@@ -436,9 +405,7 @@ def test_run_main(
     assert workflow.n_success == workflow.n_total
 
 
-def test_run_main_error(tmp_path: Path):
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
+def test_run_main_error(workflow: DicomReorgWorkflow):
     create_empty_dataset(workflow.layout.dpath_root)
 
     manifest: Manifest = prepare_dataset(
@@ -448,17 +415,12 @@ def test_run_main_error(tmp_path: Path):
             "S03": ["1", "2", "3"],
         },
     )
-
-    config = get_config(
-        dataset_name=dataset_name,
-        visit_ids=list(manifest[Manifest.col_visit_id].unique()),
-    )
-
     manifest.save_with_backup(workflow.layout.fpath_manifest)
-    config.save(workflow.layout.fpath_config)
 
     # will cause the workflow to fail because the directories cannot be found
-    workflow.doughnut[workflow.doughnut.col_in_pre_reorg] = True
+    workflow.curation_status_table[workflow.curation_status_table.col_in_pre_reorg] = (
+        True
+    )
 
     try:
         workflow.run_main()
@@ -469,31 +431,33 @@ def test_run_main_error(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut",
+    "curation_status_table",
     [
-        Doughnut(),
-        Doughnut(
+        CurationStatusTable(),
+        CurationStatusTable(
             data={
-                Doughnut.col_participant_id: ["01"],
-                Doughnut.col_visit_id: ["1"],
-                Doughnut.col_session_id: ["1"],
-                Doughnut.col_datatype: "['anat']",
-                Doughnut.col_participant_dicom_dir: ["01"],
-                Doughnut.col_in_pre_reorg: [True],
-                Doughnut.col_in_post_reorg: [True],
-                Doughnut.col_in_bids: [True],
+                CurationStatusTable.col_participant_id: ["01"],
+                CurationStatusTable.col_visit_id: ["1"],
+                CurationStatusTable.col_session_id: ["1"],
+                CurationStatusTable.col_datatype: "['anat']",
+                CurationStatusTable.col_participant_dicom_dir: ["01"],
+                CurationStatusTable.col_in_pre_reorg: [True],
+                CurationStatusTable.col_in_post_reorg: [True],
+                CurationStatusTable.col_in_bids: [True],
             }
         ).validate(),
     ],
 )
-def test_cleanup_doughnut(doughnut: Doughnut, tmp_path: Path):
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / "my_dataset")
-    workflow.doughnut = doughnut
-
+def test_cleanup_curation_status(
+    workflow: DicomReorgWorkflow, curation_status_table: CurationStatusTable
+):
+    workflow.curation_status_table = curation_status_table
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_doughnut.exists()
-    assert Doughnut.load(workflow.layout.fpath_doughnut).equals(doughnut)
+    assert workflow.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
+        curation_status_table
+    )
 
 
 @pytest.mark.parametrize(
@@ -518,16 +482,13 @@ def test_cleanup_doughnut(doughnut: Doughnut, tmp_path: Path):
     ],
 )
 def test_run_cleanup_message(
+    workflow: DicomReorgWorkflow,
     n_success,
     n_total,
     expected_message: str,
-    tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ):
-    dataset_name = "my_dataset"
-    workflow = DicomReorgWorkflow(dpath_root=tmp_path / dataset_name)
-    workflow.doughnut = Doughnut()  # empty doughnut to avoid error
-
+    workflow.curation_status_table = CurationStatusTable()  # empty table to avoid error
     workflow.n_success = n_success
     workflow.n_total = n_total
     workflow.run_cleanup()

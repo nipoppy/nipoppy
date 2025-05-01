@@ -6,15 +6,20 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.config.main import get_pipeline_config
-from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
+from nipoppy.config.pipeline import (
+    ExtractionPipelineConfig,
+    PipelineInfo,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
-from nipoppy.env import PROGRAM_NAME, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
 from nipoppy.workflows.runner import PipelineRunner
 
 
 class ExtractionRunner(PipelineRunner):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
+
+    _pipeline_type = PipelineTypeEnum.EXTRACTION
 
     def __init__(
         self,
@@ -55,15 +60,8 @@ class ExtractionRunner(PipelineRunner):
         return [self.dpath_pipeline_work, self.dpath_pipeline_idp]
 
     @cached_property
-    def _pipeline_configs(self) -> list[ExtractionPipelineConfig]:
-        # list of possible pipeline configurations
-        # will be searched for the correct one
-        return self.config.EXTRACTION_PIPELINES
-
-    # for type annotation only
-    @cached_property
     def pipeline_config(self) -> ExtractionPipelineConfig:
-        """Get the user config for the extraction pipeline."""
+        """Get the user config object for the extraction pipeline."""
         return super().pipeline_config
 
     # for type annotation only
@@ -76,14 +74,19 @@ class ExtractionRunner(PipelineRunner):
     def proc_pipeline_info(self) -> PipelineInfo:
         """Get info about the first processing pipeline associated with extractor.
 
-        Also make sure the it is in the config as a processing pipeline.
+        Also make sure that the processing pipeline configuration exists.
         """
         proc_pipeline_info = self.pipeline_config.PROC_DEPENDENCIES[0]
 
-        get_pipeline_config(
+        self._get_pipeline_config(
+            self.layout.get_dpath_pipeline_bundle(
+                PipelineTypeEnum.PROCESSING,
+                proc_pipeline_info.NAME,
+                proc_pipeline_info.VERSION,
+            ),
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
-            pipeline_configs=self.config.PROC_PIPELINES,
+            pipeline_class=ProcPipelineConfig,
         ).get_step_config(step_name=proc_pipeline_info.STEP)
 
         return proc_pipeline_info
@@ -153,7 +156,7 @@ class ExtractionRunner(PipelineRunner):
         participants_sessions = None
         for proc_pipeline_info in self.pipeline_config.PROC_DEPENDENCIES:
             to_update = set(
-                self.bagel.get_completed_participants_sessions(
+                self.processing_status_table.get_completed_participants_sessions(
                     pipeline_name=proc_pipeline_info.NAME,
                     pipeline_version=proc_pipeline_info.VERSION,
                     pipeline_step=proc_pipeline_info.STEP,

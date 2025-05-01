@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.layout import DatasetLayout, PathInfo
 from nipoppy.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 
@@ -131,7 +132,7 @@ def test_validate(dpath_root: Path):
     assert DatasetLayout(dpath_root=dpath_root).validate()
 
 
-def test_validate_no_doughnut_or_bagel(dpath_root: Path):
+def test_validate_no_status_file(dpath_root: Path):
     create_empty_dataset(dpath_root)
     assert DatasetLayout(dpath_root=dpath_root).validate()
 
@@ -300,6 +301,47 @@ def test_get_dpath_pybids_db(
     )
 
 
-def test_doughnut_parent_directory(dpath_root: Path):
+@pytest.mark.parametrize(
+    "pipeline_type,expected_path_relative",
+    [
+        (PipelineTypeEnum.BIDSIFICATION, "pipelines/bidsification"),
+        (PipelineTypeEnum.PROCESSING, "pipelines/processing"),
+        (PipelineTypeEnum.EXTRACTION, "pipelines/extraction"),
+    ],
+)
+def test_get_dpath_pipeline_store(dpath_root, pipeline_type, expected_path_relative):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout.fpath_doughnut.parent == layout.dpath_root / "sourcedata" / "imaging"
+    assert (
+        layout.get_dpath_pipeline_store(pipeline_type)
+        == layout.dpath_root / expected_path_relative
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_type,pipeline_name,pipeline_version,expected_path_relative",
+    [
+        (PipelineTypeEnum.BIDSIFICATION, "A", "1.0", "pipelines/bidsification/A-1.0"),
+        (PipelineTypeEnum.PROCESSING, "B", "0.2", "pipelines/processing/B-0.2"),
+        (PipelineTypeEnum.EXTRACTION, "C", "0.0.1", "pipelines/extraction/C-0.0.1"),
+    ],
+)
+def test_get_dpath_pipeline_bundle(
+    dpath_root,
+    pipeline_type,
+    pipeline_name,
+    pipeline_version,
+    expected_path_relative,
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_bundle(pipeline_type, pipeline_name, pipeline_version)
+        == layout.dpath_root / expected_path_relative
+    )
+
+
+def test_curation_status_file_parent_directory(dpath_root: Path):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.fpath_curation_status.parent
+        == layout.dpath_root / "sourcedata" / "imaging"
+    )

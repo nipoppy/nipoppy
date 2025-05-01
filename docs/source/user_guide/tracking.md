@@ -16,7 +16,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 | Directory or file | Content description |
 |---|---|
 | {{dpath_pipeline_output}} | **Input** -- {{content_dpath_pipeline_output}} |
-| {{fpath_imaging_bagel}} | **Output** -- Tabular file containing processing status for each participant/session and pipeline |
+| {{fpath_processing_status}} | **Output** -- Tabular file containing processing status for each participant/session and pipeline |
 
 ### Commands
 
@@ -25,17 +25,17 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 ### Workflow
 
-1. Nipoppy will loop over all participants/sessions that have BIDS data according to the {term}`doughnut file`
+1. Nipoppy will loop over all participants/sessions that have BIDS data according to the {term}`curation status file`
 2. For each participant-session pair:
     1. Paths in the pipeline's tracker configuration will be processed such that template strings related to the participant/session (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
-    2. Each path in the list is checked, then a status is assigned, and the bagel file is updated accordingly
+    2. Each path in the list is checked, then a status is assigned, and the processing status file is updated accordingly
 
 ## Configuring a pipeline tracker
 
 The global configuration file should include paths to tracker configuration files, which are {term}`JSON` files containing lists of dictionaries.
 
-Here is example of tracker configuration file (default for MRIQC 23.1.0):
-```{literalinclude} ../../../nipoppy/data/examples/sample_pipelines/mriqc-23.1.0/tracker_config.json
+Here is example of tracker configuration file for the MRIQC pipeline, version 23.1.0:
+```{literalinclude} ./inserts/mriqc-23.1.0-tracker_config.json
 ```
 
 Importantly, pipeline completion status is **not** inferred from exit codes as trackers are run independently of the pipeline runners. Moreover, the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
@@ -56,17 +56,17 @@ class: no-copybutton
 ---
 ```
 
-Running the tracker with the above configuration will result in the imaging bagel file showing:
+Running the tracker with the above configuration will result in the processing status file showing:
 ```{csv-table}
 ---
-file: ./inserts/mriqc_bagel.tsv
+file: ./inserts/mriqc_processing_status.tsv
 header-rows: 1
 delim: tab
 ---
 ```
 
 ```{note}
-If there is an existing bagel, the rows relevant to the specific pipeline, participants, and sessions will be updated. Other rows will be left as-is.
+If there is an existing processing status file, the rows relevant to the specific pipeline, participants, and sessions will be updated. Other rows will be left as-is.
 ```
 
 The `pipeline_complete` column can have the following values:

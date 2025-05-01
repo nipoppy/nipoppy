@@ -236,7 +236,7 @@ def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # no
 @pytest.mark.parametrize("dname_backups", [None, ".tests"])
 @pytest.mark.parametrize(
     "fname,dname_backups_processed",
-    [("test.tsv", ".tests"), ("test2.tsv", ".test2s")],
+    [("test.tsv", ".tests"), ("curation_status.tsv", ".curation_statuses")],
 )
 def test_save_df_with_backup(
     fname: str,
