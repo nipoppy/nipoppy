@@ -353,10 +353,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def hpc_config(self) -> HpcConfig:
         """Load the pipeline step's HPC configuration."""
-        fpath_hpc_config = self.pipeline_step_config.HPC_CONFIG_FILE
-        if fpath_hpc_config is None:
+        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
             data = {}
         else:
+            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
             self.logger.info(f"Loading HPC config from {fpath_hpc_config}")
             data = load_json(fpath_hpc_config)
         return HpcConfig(**data)

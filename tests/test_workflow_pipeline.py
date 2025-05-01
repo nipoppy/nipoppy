@@ -482,7 +482,9 @@ def test_pybids_ignore_patterns_invalid_format(
 def test_hpc_config(hpc_config_data: dict, workflow: PipelineWorkflow, tmp_path: Path):
     fpath_hpc_config = tmp_path / "hpc_config.json"
     fpath_hpc_config.write_text(json.dumps(hpc_config_data))
-    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config
+
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config.name
+    workflow.dpath_pipeline_bundle = fpath_hpc_config.parent
     assert isinstance(workflow.hpc_config, HpcConfig)
 
 
