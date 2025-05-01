@@ -58,9 +58,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         Create directories and add a readme in each.
         Copy boutiques descriptors and invocations.
         Copy default config files.
-        Copy Jinja templates for HPC.
-
-        If the BIDS source dataset is requested, it is symlinked.
+        Copy HPC config files.
         """
         # dataset must not already exist
         if self.dpath_root.exists():

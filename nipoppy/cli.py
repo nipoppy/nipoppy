@@ -194,7 +194,7 @@ def pipeline_options(func):
         type=str,
         help=(
             "Pipeline version, as specified in the config file"
-            " (default: first version in list)."
+            " (default: latest version)."
         ),
     )(func)
     func = click.option(
