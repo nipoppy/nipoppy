@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -163,21 +162,19 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     ". Use --force to overwrite",
                 )
             else:
-                self.rm(dpath_target, log_level=logging.DEBUG)
+                self.rm(dpath_target)
 
         # copy the directory
         if self.dpath_pipeline is not None:
             self.copytree(
                 path_source=dpath_pipeline,
                 path_dest=dpath_target,
-                log_level=logging.DEBUG,
             )
         else:
             # if the pipeline was downloaded from Zenodo, move it to the target location
             self.movetree(
                 path_source=dpath_pipeline,
                 path_dest=dpath_target,
-                log_level=logging.DEBUG,
             )
         # update global config with new pipeline variables
         self._update_config_and_save(pipeline_config)

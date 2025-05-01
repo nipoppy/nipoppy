@@ -203,7 +203,7 @@ class BaseWorkflow(Base, ABC):
         dpath = Path(dpath)
 
         if not dpath.exists():
-            self.logger.log(level=log_level, msg=f"Creating directory {dpath}")
+            self.logger.debug(f"Creating directory {dpath}")
             if not self.dry_run:
                 dpath.mkdir(**kwargs_to_use)
         elif not dpath.is_dir():
@@ -211,15 +211,15 @@ class BaseWorkflow(Base, ABC):
                 f"Path already exists but is not a directory: {dpath}"
             )
 
-    def copy(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+    def copy(self, path_source, path_dest, **kwargs):
         """Copy a file or directory."""
-        self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
+        self.logger.debug(f"Copying {path_source} to {path_dest}")
         if not self.dry_run:
             shutil.copy2(src=path_source, dst=path_dest, **kwargs)
 
-    def copytree(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+    def copytree(self, path_source, path_dest, **kwargs):
         """Copy directory tree."""
-        self.logger.log(level=log_level, msg=f"Copying {path_source} to {path_dest}")
+        self.logger.debug(f"Copying {path_source} to {path_dest}")
         if not self.dry_run:
             shutil.copytree(src=path_source, dst=path_dest, **kwargs)
 
@@ -229,14 +229,13 @@ class BaseWorkflow(Base, ABC):
         path_dest,
         kwargs_mkdir=None,
         kwargs_move=None,
-        log_level=logging.INFO,
     ):
         """Move directory tree."""
         kwargs_mkdir = kwargs_mkdir or {}
         kwargs_move = kwargs_move or {}
-        self.logger.log(level=log_level, msg=f"Moving {path_source} to {path_dest}")
+        self.logger.debug(f"Moving {path_source} to {path_dest}")
         if not self.dry_run:
-            self.mkdir(path_dest, log_level=log_level, **kwargs_mkdir)
+            self.mkdir(path_dest, **kwargs_mkdir)
             file_names = os.listdir(path_source)
             for file_name in file_names:
                 shutil.move(
@@ -246,20 +245,17 @@ class BaseWorkflow(Base, ABC):
                 )
             Path(path_source).rmdir()
 
-    def create_symlink(self, path_source, path_dest, log_level=logging.INFO, **kwargs):
+    def create_symlink(self, path_source, path_dest, **kwargs):
         """Create a symlink to another path."""
-        self.logger.log(
-            level=log_level,
-            msg=f"Creating a symlink from {path_source} to {path_dest}",
-        )
+        self.logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
         if not self.dry_run:
             os.symlink(path_source, path_dest, **kwargs)
 
-    def rm(self, path, log_level=logging.INFO, **kwargs):
+    def rm(self, path, **kwargs):
         """Remove a file or directory."""
         kwargs_to_use = {"ignore_errors": True}
         kwargs_to_use.update(kwargs)
-        self.logger.log(level=log_level, msg=f"Removing {path}")
+        self.logger.debug(f"Removing {path}")
         if not self.dry_run:
             shutil.rmtree(path, **kwargs_to_use)
 

@@ -1,6 +1,5 @@
 """DICOM file organization."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -137,7 +136,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
             # either create symlinks or copy original files
             if self.copy_files:
-                self.copy(fpath_source, fpath_dest, log_level=logging.DEBUG)
+                self.copy(fpath_source, fpath_dest)
             else:
                 fpath_source = os.path.relpath(
                     fpath_source.resolve(), fpath_dest.parent
@@ -145,7 +144,6 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 self.create_symlink(
                     path_source=fpath_source,
                     path_dest=fpath_dest,
-                    log_level=logging.DEBUG,
                 )
 
         # update curation status

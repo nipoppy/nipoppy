@@ -1,6 +1,5 @@
 """Workflow for init command."""
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -79,14 +78,12 @@ class InitWorkflow(BaseDatasetWorkflow):
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 if self.mode == "copy":
-                    self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                    self.copytree(self.bids_source, str(dpath))
                 elif self.mode == "move":
-                    self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+                    self.movetree(self.bids_source, str(dpath))
                 elif self.mode == "symlink":
                     self.mkdir(self.dpath_root)
-                    self.create_symlink(
-                        self.bids_source, str(dpath), log_level=logging.DEBUG
-                    )
+                    self.create_symlink(self.bids_source, str(dpath))
                 else:
                     raise ValueError(f"Invalid mode: {self.mode}")
             else:
@@ -99,13 +96,10 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.copytree(
                 dpath_pipeline,
                 self.layout.dpath_pipelines / dpath_pipeline.name,
-                log_level=logging.DEBUG,
             )
 
         # copy sample config and manifest files
-        self.copy(
-            FPATH_SAMPLE_CONFIG, self.layout.fpath_config, log_level=logging.DEBUG
-        )
+        self.copy(FPATH_SAMPLE_CONFIG, self.layout.fpath_config)
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
@@ -113,7 +107,6 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.copy(
                 FPATH_SAMPLE_MANIFEST,
                 self.layout.fpath_manifest,
-                log_level=logging.DEBUG,
             )
 
         # inform user to edit the sample files
