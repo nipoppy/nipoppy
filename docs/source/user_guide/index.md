@@ -1,4 +1,4 @@
-# User guide
+# Steps
 
 This guide covers the main steps in the Nipoppy protocol:
 

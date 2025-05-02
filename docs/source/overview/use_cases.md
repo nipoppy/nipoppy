@@ -1,4 +1,4 @@
-# User Cases
+# Use cases
 
 Nipoppy can help several types of users and use cases to help address challenges related to data curation and processing.
 
@@ -12,7 +12,7 @@ In general, Nipoppy workflows are designed to be light-weight and for “self-he
 
 Below we list several use case scenarios and their touchpoints with Nipoppy for users to get started.
 
-## Use cases (individual researchers)
+## Use cases for individual researchers
 
 ### Imaging Data Curation
 
@@ -57,7 +57,7 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
     - HPCs (recommended)
 - Nipoppy touchpoints:
     - Commands: [run](../cli_reference/run.rst), [track](../cli_reference/track.rst)
-    - Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`descriptor.json <Boutiques>`, {term}`invocation.json <Boutiques>`, {term}`pybids_ignore.json <Pybids ignore file>`, {term}`tracker_config.json <Tracker config file>`, {term}`processing_status.tsv <Processing status file>`
+    - Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`descriptor.json <Boutiques>`, {term}`invocation.json <Boutiques>`, {term}`tracker_config.json <Tracker config file>`, {term}`processing_status.tsv <Processing status file>`
 
 ### Imaging Data Extraction (with neuroimaging pipelines with extractors)
 - Task: Extract “analysis-ready” imaging-derived-phenotypes from the processed output
@@ -70,7 +70,7 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
     - Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`descriptor.json <Boutiques>`, {term}`invocation.json <Boutiques>`, {term}`processing_status.tsv <Processing status file>`
 
 
-### Use cases (institutes and consortia)
+## Use cases for institutes and consortia
 
 The above use cases target individual researchers and data managers to help adopt best-practices and [FAIR](https://www.go-fair.org/fair-principles/) data workflows. This can significantly improve reproducibility, reuse, and reduce duplication of effort - particularly in the following two canonical data governance setups.
 

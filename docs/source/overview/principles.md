@@ -1,4 +1,4 @@
-# Inspirations and guiding principles
+# Inspirations and principles
 
 
 Nipoppy design is inspired by and built upon the previous work of others. These include community standards (e.g. [BIDS](https://bids.neuroimaging.io/)), tools (e.g. [Boutiques](https://boutiques.github.io/)), and technologies (e.g. [Apptainer](https://apptainer.org/)).
