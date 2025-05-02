@@ -8,9 +8,14 @@
         "COMMAND": "apptainer",
         "ARGS": [
             "--cleanenv"
-        ]
+        ],
+        "ENV_VARS": {
+            "PYTHONUNBUFFERED": "1"
+        }
     },
-    "HPC_PREAMBLE": [],
+    "HPC_PREAMBLE": [
+        "export PYTHONUNBUFFERED=1"
+    ],
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {},
         "PROCESSING": {},
