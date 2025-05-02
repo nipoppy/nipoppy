@@ -2,13 +2,17 @@
 
 Nipoppy can help several types of users and use cases to help address challenges related to data curation and processing.
 
-<img alt="comic_panel_1" src="../_static/img/nipoppy_usecases.jpg" width=850px>
+## Users
+
+<img alt="comic_panel_1" src="../_static/img/nipoppy_usecases.jpg" width=750px>
 
 The modular design of Nipoppy offers a variety of entry points for Nipoppy adoption suitable for your workflows and analysis.
 
 In general, Nipoppy workflows are designed to be light-weight and for “self-help” - making the data wrangling tasks simpler and often requiring a “human-in-the-loop” process to address research data heterogeneity issues.
 
 Below we list several use case scenarios and their touchpoints with Nipoppy for users to get started.
+
+## Use cases (individual researchers)
 
 ### Imaging Data Curation
 
@@ -66,7 +70,7 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
     - Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`descriptor.json <Boutiques>`, {term}`invocation.json <Boutiques>`, {term}`processing_status.tsv <Processing status file>`
 
 
-### Adoption setup considerations
+### Use cases (institutes and consortia)
 
 The above use cases target individual researchers and data managers to help adopt best-practices and [FAIR](https://www.go-fair.org/fair-principles/) data workflows. This can significantly improve reproducibility, reuse, and reduce duplication of effort - particularly in the following two canonical data governance setups.
 
