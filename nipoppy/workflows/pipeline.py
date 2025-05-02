@@ -299,11 +299,13 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         fpath_invocation = self.dpath_pipeline_bundle / fname_invocation
         self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
+
+        # NOTE: user-defined substitutions take precedence over the pipeline variables
         invocation = self.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
             pipeline_name=self.pipeline_config.NAME,
             pipeline_version=self.pipeline_config.VERSION,
-            json_obj=invocation,
+            json_obj=self.process_template_json(invocation),
         )
         return invocation
 
