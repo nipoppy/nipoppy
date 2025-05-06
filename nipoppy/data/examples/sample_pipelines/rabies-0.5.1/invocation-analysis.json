@@ -1,8 +1,0 @@
-{
-    "plugin": "Linear",
-    "local_threads": 24,
-    "data_diagnosis": true,
-    "force": true,
-    "input_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
-    "output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
-}

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.layout import DatasetLayout, PathInfo
 from nipoppy.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 
@@ -39,7 +40,10 @@ def test_config_path_infos():
 
 def test_init_default(dpath_root):
     layout = DatasetLayout(dpath_root=dpath_root)
-    for attr, path in {**ATTR_TO_DPATH_MAP, **ATTR_TO_REQUIRED_FPATH_MAP}.items():
+    for attr, path in {
+        **ATTR_TO_DPATH_MAP,
+        **ATTR_TO_REQUIRED_FPATH_MAP,
+    }.items():
         assert getattr(layout, attr) == Path(dpath_root) / path
 
 
@@ -89,20 +93,6 @@ def test_get_full_path(dpath_root: Path, path, expected):
     assert layout.get_full_path(path) == expected
 
 
-def test_dpaths(dpath_root: Path):
-    layout = DatasetLayout(dpath_root=dpath_root)
-    dpaths = layout.dpaths
-    for path in ATTR_TO_DPATH_MAP.values():
-        assert Path(dpath_root / path) in dpaths
-
-
-def test_fpaths(dpath_root: Path):
-    layout = DatasetLayout(dpath_root=dpath_root)
-    fpaths = layout.fpaths
-    for path in ATTR_TO_REQUIRED_FPATH_MAP.values():
-        assert Path(dpath_root / path) in fpaths
-
-
 @pytest.mark.parametrize(
     "paths_to_delete",
     [
@@ -129,6 +119,12 @@ def test_find_missing_paths(dpath_root: Path, paths_to_delete: list[str]):
     create_invalid_dataset(dpath_root, paths_to_delete)
     layout = DatasetLayout(dpath_root=dpath_root)
     assert len(layout._find_missing_paths()) == len(paths_to_delete)
+
+
+def test_find_missing_paths_optional_okay(dpath_root: Path):
+    create_invalid_dataset(dpath_root, ["code/hpc"])
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert len(layout._find_missing_paths()) == 0
 
 
 def test_validate(dpath_root: Path):
@@ -302,6 +298,44 @@ def test_get_dpath_pybids_db(
             session_id=session_id,
         )
         == dpath_root / expected
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_type,expected_path_relative",
+    [
+        (PipelineTypeEnum.BIDSIFICATION, "pipelines/bidsification"),
+        (PipelineTypeEnum.PROCESSING, "pipelines/processing"),
+        (PipelineTypeEnum.EXTRACTION, "pipelines/extraction"),
+    ],
+)
+def test_get_dpath_pipeline_store(dpath_root, pipeline_type, expected_path_relative):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_store(pipeline_type)
+        == layout.dpath_root / expected_path_relative
+    )
+
+
+@pytest.mark.parametrize(
+    "pipeline_type,pipeline_name,pipeline_version,expected_path_relative",
+    [
+        (PipelineTypeEnum.BIDSIFICATION, "A", "1.0", "pipelines/bidsification/A-1.0"),
+        (PipelineTypeEnum.PROCESSING, "B", "0.2", "pipelines/processing/B-0.2"),
+        (PipelineTypeEnum.EXTRACTION, "C", "0.0.1", "pipelines/extraction/C-0.0.1"),
+    ],
+)
+def test_get_dpath_pipeline_bundle(
+    dpath_root,
+    pipeline_type,
+    pipeline_name,
+    pipeline_version,
+    expected_path_relative,
+):
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert (
+        layout.get_dpath_pipeline_bundle(pipeline_type, pipeline_name, pipeline_version)
+        == layout.dpath_root / expected_path_relative
     )
 
 

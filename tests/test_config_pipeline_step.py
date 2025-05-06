@@ -18,6 +18,7 @@ FIELDS_STEP_BASE = [
     "NAME",
     "DESCRIPTOR_FILE",
     "INVOCATION_FILE",
+    "HPC_CONFIG_FILE",
     "CONTAINER_CONFIG",
     "ANALYSIS_LEVEL",
 ]
@@ -39,8 +40,10 @@ FIELDS_STEP_EXTRACTION = FIELDS_STEP_BASE
             FIELDS_STEP_BASE,
             [
                 {"NAME": "step_name"},
-                {"DESCRIPTOR_FILE": "PATH_TO_DESCRIPTOR_FILE"},
-                {"INVOCATION_FILE": "PATH_TO_INVOCATION_FILE"},
+                {
+                    "DESCRIPTOR_FILE": "PATH_TO_DESCRIPTOR_FILE",
+                    "INVOCATION_FILE": "PATH_TO_INVOCATION_FILE",
+                },
                 {"CONTAINER_CONFIG": {}},
             ],
         ),
@@ -98,9 +101,87 @@ def test_analysis_level_invalid():
 def test_substitutions(step_class: Type[BasePipelineStepConfig]):
     step_config = step_class(
         NAME="step_name",
-        DESCRIPTOR_FILE="[[STEP_NAME]].json",
+        DESCRIPTOR_FILE="descriptor-[[STEP_NAME]].json",
+        INVOCATION_FILE="invocation-[[STEP_NAME]].json",
     )
-    assert str(step_config.DESCRIPTOR_FILE) == "step_name.json"
+    assert str(step_config.DESCRIPTOR_FILE) == "descriptor-step_name.json"
+    assert str(step_config.INVOCATION_FILE) == "invocation-step_name.json"
+
+
+@pytest.mark.parametrize(
+    "descriptor_file,invocation_file,expect_error",
+    [
+        (None, None, False),
+        ("descriptor.json", "invocation.json", False),
+        ("descriptor.json", None, True),
+        (None, "invocation.json", True),
+    ],
+)
+def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_error):
+    with (
+        pytest.raises(
+            ValidationError,
+            match=(
+                "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined "
+                "or both be None, "
+            ),
+        )
+        if expect_error
+        else nullcontext()
+    ):
+        BasePipelineStepConfig(
+            DESCRIPTOR_FILE=descriptor_file, INVOCATION_FILE=invocation_file
+        )
+
+
+@pytest.mark.parametrize(
+    "data,pipeline_class,expect_error",
+    [
+        (
+            {
+                "DESCRIPTOR_FILE": "/descriptor.json",
+                "INVOCATION_FILE": "invocation.json",
+            },
+            BasePipelineStepConfig,
+            True,
+        ),
+        (
+            {
+                "DESCRIPTOR_FILE": "descriptor.json",
+                "INVOCATION_FILE": "/invocation.json",
+            },
+            BasePipelineStepConfig,
+            True,
+        ),
+        (
+            {"PYBIDS_IGNORE_FILE": "/pybids_ignore.json"},
+            ProcPipelineStepConfig,
+            True,
+        ),
+        (
+            {"TRACKER_CONFIG_FILE": "/tracker_config.json"},
+            ProcPipelineStepConfig,
+            True,
+        ),
+        (
+            {
+                "DESCRIPTOR_FILE": "descriptor.json",
+                "INVOCATION_FILE": "invocation.json",
+                "PYBIDS_IGNORE_FILE": "pybids_ignore.json",
+                "TRACKER_CONFIG_FILE": "tracker_config.json",
+            },
+            ProcPipelineStepConfig,
+            False,
+        ),
+    ],
+)
+def test_absolute_paths(data, pipeline_class, expect_error):
+    with (
+        pytest.raises(ValidationError, match=".* must be a relative path, got")
+        if expect_error
+        else nullcontext()
+    ):
+        pipeline_class(**data)
 
 
 @pytest.mark.parametrize(

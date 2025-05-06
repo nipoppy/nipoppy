@@ -7,7 +7,6 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from nipoppy.config.main import Config
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
@@ -15,7 +14,12 @@ from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
 
-from .conftest import create_empty_dataset, get_config, prepare_dataset
+from .conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+    prepare_dataset,
+)
 
 
 @pytest.fixture(scope="function")
@@ -40,7 +44,24 @@ def tracker(tmp_path: Path):
     )
     manifest.save_with_backup(tracker.layout.fpath_manifest)
 
-    fpath_tracker_config = tmp_path / "tracker_config.json"
+    tracker.config = get_config()
+
+    fname_tracker_config = "tracker_config.json"
+    create_pipeline_config_files(
+        tracker.layout.dpath_pipelines,
+        processing_pipelines=[
+            {
+                "NAME": tracker.pipeline_name,
+                "VERSION": tracker.pipeline_version,
+                "STEPS": [
+                    {
+                        "NAME": tracker.pipeline_step,
+                        "TRACKER_CONFIG_FILE": fname_tracker_config,
+                    }
+                ],
+            },
+        ],
+    )
     tracker_config = {
         "PATHS": [
             "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/results.txt",
@@ -49,24 +70,9 @@ def tracker(tmp_path: Path):
         "PARTICIPANT_SESSION_DIR": "[[NIPOPPY_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]",
     }
 
-    fpath_tracker_config.write_text(json.dumps(tracker_config))
-
-    config: Config = get_config(
-        visit_ids=["1", "2"],
-        proc_pipelines=[
-            {
-                "NAME": tracker.pipeline_name,
-                "VERSION": tracker.pipeline_version,
-                "STEPS": [
-                    {
-                        "NAME": tracker.pipeline_step,
-                        "TRACKER_CONFIG_FILE": fpath_tracker_config,
-                    }
-                ],
-            },
-        ],
+    (tracker.dpath_pipeline_bundle / fname_tracker_config).write_text(
+        json.dumps(tracker_config)
     )
-    config.save(tracker.layout.fpath_config)
 
     return tracker
 

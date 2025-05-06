@@ -3,19 +3,28 @@
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
-from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
-from .conftest import create_empty_dataset, get_config
+from .conftest import create_empty_dataset, create_pipeline_config_files, get_config
 
 
 @pytest.fixture
-def config() -> Config:
-    return get_config(
-        bids_pipelines=[
+def workflow(tmp_path: Path) -> BidsConversionRunner:
+    workflow = BidsConversionRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="heudiconv",
+        pipeline_version="0.12.2",
+        pipeline_step="prepare",
+    )
+    workflow.config = get_config()
+    create_empty_dataset(workflow.dpath_root)
+    create_pipeline_config_files(
+        workflow.layout.dpath_pipelines,
+        bidsification_pipelines=[
             {
                 "NAME": "heudiconv",
                 "VERSION": "0.12.2",
@@ -32,8 +41,9 @@ def config() -> Config:
                     {"NAME": "convert", "UPDATE_STATUS": True},
                 ],
             },
-        ]
+        ],
     )
+    return workflow
 
 
 @pytest.mark.parametrize(
@@ -44,14 +54,12 @@ def config() -> Config:
     ],
 )
 def test_check_pipeline_version(
-    pipeline_name, expected_version, config: Config, tmp_path: Path
+    pipeline_name,
+    expected_version,
+    workflow: BidsConversionRunner,
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path,
-        pipeline_name=pipeline_name,
-        pipeline_version=None,
-    )
-    config.save(workflow.layout.fpath_config)
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = None
     workflow.check_pipeline_version()
     assert workflow.pipeline_version == expected_version
 
@@ -64,46 +72,25 @@ def test_check_pipeline_version(
     ],
 )
 def test_pipeline_config(
-    pipeline_name, pipeline_version, config: Config, tmp_path: Path
+    pipeline_name, pipeline_version, workflow: BidsConversionRunner
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path,
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
-    )
-    config.save(workflow.layout.fpath_config)
+    workflow.pipeline_name = pipeline_name
+    workflow.pipeline_version = pipeline_version
     assert isinstance(workflow.pipeline_config, BidsPipelineConfig)
 
 
-def test_dpath_pipeline_error(tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
+def test_dpath_pipeline_error(workflow: BidsConversionRunner):
     with pytest.raises(
         RuntimeError, match='"dpath_pipeline" attribute is not available for '
     ):
         workflow.dpath_pipeline
 
 
-def test_setup(config: Config, tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
-    create_empty_dataset(workflow.dpath_root)
-    config.save(workflow.layout.fpath_config)
-
-    # check that no file/directory is created during setup
-    files_before = set(workflow.dpath_root.rglob("*"))
+def test_setup(workflow: BidsConversionRunner):
+    # check that the working directory is created
+    assert not workflow.dpath_pipeline_work.exists()
     workflow.run_setup()
-    files_after = set(workflow.dpath_root.rglob("*"))
-    log_files = set(workflow.dpath_root.joinpath("logs").rglob("*"))
-    assert files_before == (files_after - log_files)
+    assert workflow.dpath_pipeline_work.exists()
 
 
 @pytest.mark.parametrize(
@@ -124,15 +111,9 @@ def test_setup(config: Config, tmp_path: Path):
         ).validate(),
     ],
 )
-def test_cleanup(table: CurationStatusTable, config: Config, tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="convert",
-    )
+def test_cleanup(table: CurationStatusTable, workflow: BidsConversionRunner):
+    workflow.pipeline_step = "convert"
     workflow.curation_status_table = table
-    config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
 
@@ -140,31 +121,19 @@ def test_cleanup(table: CurationStatusTable, config: Config, tmp_path: Path):
     assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(table)
 
 
-def test_cleanup_simulate(tmp_path: Path, config: Config):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="convert",
-        simulate=True,
-    )
+def test_cleanup_simulate(workflow: BidsConversionRunner):
+    workflow.pipeline_step = "convert"
+    workflow.simulate = True
     workflow.curation_status_table = CurationStatusTable()
-    config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
 
     assert not workflow.layout.fpath_curation_status.exists()
 
 
-def test_cleanup_no_status_update(config: Config, tmp_path: Path):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
+def test_cleanup_no_status_update(workflow: BidsConversionRunner):
+    workflow.pipeline_step = "prepare"
     workflow.curation_status_table = CurationStatusTable()
-    config.save(workflow.layout.fpath_config)
 
     workflow.run_cleanup()
 
@@ -197,14 +166,8 @@ def test_cleanup_no_status_update(config: Config, tmp_path: Path):
     ],
 )
 def test_get_participants_sessions_to_run(
-    status_data, participant_id, session_id, expected, tmp_path: Path
+    status_data, participant_id, session_id, expected, workflow: BidsConversionRunner
 ):
-    workflow = BidsConversionRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="heudiconv",
-        pipeline_version="0.12.2",
-        pipeline_step="prepare",
-    )
     workflow.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
             {
@@ -226,3 +189,79 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
+
+
+@pytest.mark.parametrize(
+    "init_params,participant_id,session_id,expected_command",
+    [
+        (
+            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "bidsify",
+                "--dataset",
+                "/path/to/root",
+                "--pipeline",
+                "my_pipeline",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+            ],
+        ),
+        (
+            {
+                "dpath_root": "/path/to/other/root",
+                "pipeline_name": "other_pipeline",
+                "pipeline_version": "1.0.0",
+                "pipeline_step": "step1",
+                "participant_id": "ShouldNotBeUsed",  # should be skipped
+                "session_id": "ShouldNotBeUsed",  # should be skipped
+                "simulate": True,  # should be skipped
+                "keep_workdir": True,
+                "hpc": "slurm",  # should be skipped
+                "write_list": "/path/to/list",  # should be skipped
+                "fpath_layout": "/path/to/layout",
+                "dry_run": True,  # should be skipped
+                "verbose": True,
+            },
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "bidsify",
+                "--dataset",
+                "/path/to/other/root",
+                "--pipeline",
+                "other_pipeline",
+                "--pipeline-version",
+                "1.0.0",
+                "--pipeline-step",
+                "step1",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+                "--keep-workdir",
+                "--layout",
+                "/path/to/layout",
+                "--verbose",
+            ],
+        ),
+    ],
+)
+def test_generate_cli_command_for_hpc(
+    init_params,
+    participant_id,
+    session_id,
+    expected_command,
+    mocker: pytest_mock.MockFixture,
+):
+    mocker.patch("nipoppy.workflows.base.DatasetLayout")
+    runner = BidsConversionRunner(**init_params)
+    assert (
+        runner._generate_cli_command_for_hpc(participant_id, session_id)
+        == expected_command
+    )

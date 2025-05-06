@@ -11,10 +11,10 @@ from rich.table import Table
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.processing_status import STATUS_SUCCESS
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class StatusWorkflow(BaseWorkflow):
+class StatusWorkflow(BaseDatasetWorkflow):
     """Workflow for status command."""
 
     def __init__(
@@ -31,7 +31,7 @@ class StatusWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
         )
         self.col_pipeline = "pipeline"
 
@@ -42,16 +42,7 @@ class StatusWorkflow(BaseWorkflow):
         2) Curation status information if available,
         3) Processing status information if available
         """
-        # load global_config to get the dataset name
-        dataset_name = self.config.DATASET_NAME
-        expected_sessions = self.config.SESSION_IDS
-        expected_visits = self.config.VISIT_IDS
-
-        self.logger.info(f"Dataset name: {dataset_name}")
-        self.logger.info(f"\tExpected sessions: {sorted(expected_sessions)}")
-        self.logger.info(f"\tExpected visits: {sorted(expected_visits)}")
-
-        status_df = pd.DataFrame()
+        status_df: pd.DataFrame = pd.DataFrame()
         status_df = self._check_manifest(status_df)
         status_df, curation_cols = self._check_curation_status_table(status_df)
         status_df, processing_cols = self._check_processing_status_table(status_df)
@@ -80,7 +71,7 @@ class StatusWorkflow(BaseWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        self.logger.info("Manifest status")
+        self.logger.info("Dataset summary (based on the manifest file):")
 
         manifest = self.manifest
 
@@ -258,7 +249,7 @@ class StatusWorkflow(BaseWorkflow):
         # Initiate a Table instance
         title = "Participant counts by session at each Nipoppy checkpoint"
 
-        table = Table(title=title, collapse_padding=False)
+        table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD, collapse_padding=False)
 
         processing_cols = status_col_dict["processing"]
         n_non_proc_cols = 0
@@ -284,6 +275,4 @@ class StatusWorkflow(BaseWorkflow):
             row = [str(x) for x in value_list]
             table.add_row(*row)
 
-        # Update the style of the table
-        table.box = box.MINIMAL_DOUBLE_HEAD  # SIMPLE_HEAD
         console.print(table)

@@ -9,10 +9,10 @@ from nipoppy.tabular.curation_status import (
     generate_curation_status_table,
     update_curation_status_table,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class TrackCurationWorkflow(BaseWorkflow):
+class TrackCurationWorkflow(BaseDatasetWorkflow):
     """Workflow for creating/updating a dataset's curation status file."""
 
     def __init__(
