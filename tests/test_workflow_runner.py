@@ -11,20 +11,57 @@ import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
-from nipoppy.config.main import Config
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.tabular.bagel import Bagel
-from nipoppy.tabular.doughnut import Doughnut
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner
 
-from .conftest import create_empty_dataset, get_config, prepare_dataset
+from .conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+    prepare_dataset,
+)
 
 
 @pytest.fixture(scope="function")
-def config(tmp_path: Path):
-    fpath_descriptor = tmp_path / "descriptor.json"
-    fpath_invocation = tmp_path / "invocation.json"
+def runner(tmp_path: Path):
+    runner = PipelineRunner(
+        dpath_root=tmp_path / "my_dataset",
+        pipeline_name="dummy_pipeline",
+        pipeline_version="1.0.0",
+    )
+
+    create_empty_dataset(runner.layout.dpath_root)
+
+    runner.config = get_config(
+        container_config={
+            "COMMAND": "echo",  # dummy command
+            "ARGS": ["--flag1"],
+        },
+    )
+
+    fname_descriptor = "descriptor.json"
+    fname_invocation = "invocation.json"
+
+    create_pipeline_config_files(
+        runner.layout.dpath_pipelines,
+        processing_pipelines=[
+            {
+                "NAME": "dummy_pipeline",
+                "VERSION": "1.0.0",
+                "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
+                "STEPS": [
+                    {
+                        "DESCRIPTOR_FILE": fname_descriptor,
+                        "INVOCATION_FILE": fname_invocation,
+                        "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
+                    },
+                ],
+            },
+        ],
+    )
 
     descriptor = {
         "name": "dummy_pipeline",
@@ -54,41 +91,12 @@ def config(tmp_path: Path):
         "arg1": "[[NIPOPPY_PARTICIPANT_ID]] [[NIPOPPY_BIDS_SESSION_ID]]",
         "arg2": 10,
     }
-
-    fpath_descriptor.write_text(json.dumps(descriptor))
-    fpath_invocation.write_text(json.dumps(invocation))
-
-    return get_config(
-        visit_ids=["BL", "V04"],
-        container_config={
-            "COMMAND": "echo",  # dummy command
-            "ARGS": ["--flag1"],
-        },
-        proc_pipelines=[
-            {
-                "NAME": "dummy_pipeline",
-                "VERSION": "1.0.0",
-                "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
-                "STEPS": [
-                    {
-                        "DESCRIPTOR_FILE": fpath_descriptor,
-                        "INVOCATION_FILE": fpath_invocation,
-                        "CONTAINER_CONFIG": {"ARGS": ["--flag3"]},
-                    }
-                ],
-            },
-        ],
-    ).propagate_container_config()
+    (runner.dpath_pipeline_bundle / fname_descriptor).write_text(json.dumps(descriptor))
+    (runner.dpath_pipeline_bundle / fname_invocation).write_text(json.dumps(invocation))
+    return runner
 
 
-def test_run_setup(config: Config, tmp_path: Path, mocker: pytest_mock.MockFixture):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
-    create_empty_dataset(runner.dpath_root)
-    runner.config = config
+def test_run_setup(runner: PipelineRunner, mocker: pytest_mock.MockFixture):
     mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
@@ -97,13 +105,8 @@ def test_run_setup(config: Config, tmp_path: Path, mocker: pytest_mock.MockFixtu
 
 
 @pytest.mark.parametrize("keep_workdir", [True, False])
-def test_run_cleanup(tmp_path: Path, keep_workdir):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        keep_workdir=keep_workdir,
-    )
+def test_run_cleanup(runner: PipelineRunner, keep_workdir):
+    runner.keep_workdir = keep_workdir
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
@@ -116,16 +119,10 @@ def test_run_cleanup(tmp_path: Path, keep_workdir):
 
 
 @pytest.mark.parametrize("n_success", [1, 2])
-def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        keep_workdir=False,
-    )
+def test_run_failed_cleanup(runner: PipelineRunner, n_success):
+    runner.keep_workdir = False
     runner.n_success = n_success
     runner.n_total = 2
-    runner.config = config
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
         dpath.mkdir(parents=True)
@@ -138,15 +135,9 @@ def test_run_failed_cleanup(tmp_path: Path, n_success, config: Config):
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(
-    simulate, config: Config, mocker: pytest_mock.MockFixture, tmp_path: Path
+    simulate, runner: PipelineRunner, mocker: pytest_mock.MockFixture
 ):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        simulate=simulate,
-    )
-    runner.config = config
+    runner.simulate = simulate
 
     participant_id = "01"
     session_id = "BL"
@@ -176,15 +167,11 @@ def test_launch_boutiques_run(
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run_error(
-    simulate, config: Config, mocker: pytest_mock.MockFixture, tmp_path: Path
+    simulate,
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
 ):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        simulate=simulate,
-    )
-    runner.config = config
+    runner.simulate = simulate
 
     participant_id = "01"
     session_id = "BL"
@@ -213,21 +200,18 @@ def test_launch_boutiques_run_error(
         runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
-def test_process_container_config(config: Config, tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
+def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
+    bind_path = tmp_path / "to_bind"
+    result = runner.process_container_config(
+        participant_id="01", session_id="BL", bind_paths=[bind_path]
     )
-
-    runner.config = config
-
-    result = runner.process_container_config(participant_id="01", session_id="BL")
 
     # check that the subcommand 'exec' from the Boutiques container config is used
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
     assert result.startswith("echo exec")
+    assert f"--bind {runner.layout.dpath_root.resolve()} " in result
+    assert result.endswith(f"--bind {bind_path.resolve()}")
 
     # check that the right container config was used
     assert "--flag1" in result
@@ -235,14 +219,8 @@ def test_process_container_config(config: Config, tmp_path: Path):
     assert "--flag3" in result
 
 
-def test_check_tar_conditions_no_tracker_config(config: Config, tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        tar=True,
-    )
-    runner.config = config
+def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
+    runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
     with pytest.raises(
         RuntimeError, match="Tarring requested but is no tracker config file"
@@ -250,14 +228,8 @@ def test_check_tar_conditions_no_tracker_config(config: Config, tmp_path: Path):
         runner._check_tar_conditions()
 
 
-def test_check_tar_conditions_no_dir(config: Config, tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        tar=True,
-    )
-    runner.config = config
+def test_check_tar_conditions_no_dir(runner: PipelineRunner, tmp_path: Path):
+    runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = tmp_path  # not used
     runner.tracker_config = TrackerConfig(
         PATHS=[tmp_path], PARTICIPANT_SESSION_DIR=None
@@ -269,18 +241,13 @@ def test_check_tar_conditions_no_dir(config: Config, tmp_path: Path):
         runner._check_tar_conditions()
 
 
-def test_check_tar_conditions_no_tar(config: Config, tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        tar=False,
-    )
-    runner.config = config
+def test_check_tar_conditions_no_tar(runner: PipelineRunner):
+    runner.tar = False
     runner._check_tar_conditions()
 
 
-def test_tar_directory(tmp_path: Path):
+@pytest.mark.parametrize("dpath_type", [Path, str])
+def test_tar_directory(tmp_path: Path, dpath_type):
     # create dummy files to tar
     dpath_to_tar = tmp_path / "my_data"
     fpaths_to_tar = [
@@ -296,7 +263,7 @@ def test_tar_directory(tmp_path: Path):
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
-    fpath_tarred = runner.tar_directory(dpath_to_tar)
+    fpath_tarred = runner.tar_directory(dpath_type(dpath_to_tar))
 
     assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
     assert fpath_tarred.exists()
@@ -312,18 +279,15 @@ def test_tar_directory(tmp_path: Path):
 
 
 def test_tar_directory_failure(
-    tmp_path: Path, mocker: pytest_mock.MockFixture, caplog: pytest.LogCaptureFixture
+    runner: PipelineRunner,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
 ):
     dpath_to_tar = tmp_path / "my_data"
     fpath_to_tar = dpath_to_tar / "file.txt"
     fpath_to_tar.parent.mkdir(parents=True)
     fpath_to_tar.touch()
-
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
 
     mocked_is_tarfile = mocker.patch(
         "nipoppy.workflows.runner.is_tarfile", return_value=False
@@ -337,24 +301,12 @@ def test_tar_directory_failure(
     assert f"Failed to tar {dpath_to_tar}" in caplog.text
 
 
-def test_tar_directory_warning_not_found(tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
-
+def test_tar_directory_warning_not_found(runner: PipelineRunner):
     with pytest.raises(RuntimeError, match="Not tarring .* since it does not exist"):
-        runner.tar_directory(tmp_path / "invalid_path")
+        runner.tar_directory("invalid_path")
 
 
-def test_tar_directory_warning_not_dir(tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
-
+def test_tar_directory_warning_not_dir(runner: PipelineRunner, tmp_path: Path):
     fpath_to_tar = tmp_path / "file.txt"
     fpath_to_tar.touch()
 
@@ -365,7 +317,7 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "doughnut_data,bagel_data,pipeline_name,pipeline_version,pipeline_step,expected",
+    "curation_status_data,processing_status_data,pipeline_step,expected",  # noqa: E501
     [
         (
             [
@@ -374,8 +326,6 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             None,
-            "dummy_pipeline",
-            "1.0.0",
             "step1",
             [("01", "2"), ("01", "3")],
         ),
@@ -386,8 +336,6 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [],
-            "dummy_pipeline",
-            "1.0.0",
             "step1",
             [("01", "2"), ("01", "3")],
         ),
@@ -398,12 +346,31 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
             ],
-            "dummy_pipeline",
-            "1.0.0",
             "step1",
             [],
         ),
@@ -414,13 +381,39 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_fail,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_fail,
+                ],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "2.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
             ],
-            "dummy_pipeline",
-            "1.0.0",
             "step1",
             [("01", "1"), ("01", "3")],
         ),
@@ -431,69 +424,108 @@ def test_tar_directory_warning_not_dir(tmp_path: Path):
                 ["01", "3", True],
             ],
             [
-                ["01", "1", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step1", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step1", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "1.0.0", "step2", Bagel.status_success],
-                ["01", "2", "dummy_pipeline", "1.0.0", "step2", Bagel.status_success],
-                ["01", "3", "dummy_pipeline", "1.0.0", "step2", Bagel.status_fail],
-                ["01", "1", "dummy_pipeline", "2.0", "step1", Bagel.status_success],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_fail,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step1",
+                    ProcessingStatusTable.status_fail,
+                ],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step2",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "01",
+                    "2",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step2",
+                    ProcessingStatusTable.status_success,
+                ],
+                [
+                    "01",
+                    "3",
+                    "dummy_pipeline",
+                    "1.0.0",
+                    "step2",
+                    ProcessingStatusTable.status_fail,
+                ],
+                [
+                    "01",
+                    "1",
+                    "dummy_pipeline",
+                    "2.0",
+                    "step1",
+                    ProcessingStatusTable.status_success,
+                ],
             ],
-            "dummy_pipeline",
-            "1.0.0",
             "step2",
             [("01", "3")],
         ),
     ],
 )
 def test_get_participants_sessions_to_run(
-    doughnut_data,
-    bagel_data,
-    pipeline_name,
-    pipeline_version,
+    curation_status_data,
+    processing_status_data,
     pipeline_step,
     expected,
-    config: Config,
-    tmp_path: Path,
+    runner: PipelineRunner,
 ):
     participant_id = None
     session_id = None
-    runner = PipelineRunner(
-        dpath_root=tmp_path,
-        pipeline_name=pipeline_name,
-        pipeline_version=pipeline_version,
-        pipeline_step=pipeline_step,
-        participant_id=participant_id,
-        session_id=session_id,
-    )
-    runner.config = config
-    runner.doughnut = Doughnut().add_or_update_records(
+    runner.pipeline_step = pipeline_step
+    runner.participant_id = participant_id
+    runner.session_id = session_id
+
+    runner.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
             {
-                Doughnut.col_participant_id: data[0],
-                Doughnut.col_session_id: data[1],
-                Doughnut.col_visit_id: data[1],
-                Doughnut.col_in_bids: data[2],
-                Doughnut.col_datatype: None,
-                Doughnut.col_participant_dicom_dir: "",
-                Doughnut.col_in_pre_reorg: False,
-                Doughnut.col_in_post_reorg: False,
+                CurationStatusTable.col_participant_id: data[0],
+                CurationStatusTable.col_session_id: data[1],
+                CurationStatusTable.col_visit_id: data[1],
+                CurationStatusTable.col_in_bids: data[2],
+                CurationStatusTable.col_datatype: None,
+                CurationStatusTable.col_participant_dicom_dir: "",
+                CurationStatusTable.col_in_pre_reorg: False,
+                CurationStatusTable.col_in_post_reorg: False,
             }
-            for data in doughnut_data
+            for data in curation_status_data
         ]
     )
-    if bagel_data is not None:
-        Bagel(
-            bagel_data,
+    if processing_status_data is not None:
+        ProcessingStatusTable(
+            processing_status_data,
             columns=[
-                Bagel.col_participant_id,
-                Bagel.col_session_id,
-                Bagel.col_pipeline_name,
-                Bagel.col_pipeline_version,
-                Bagel.col_pipeline_step,
-                Bagel.col_status,
+                ProcessingStatusTable.col_participant_id,
+                ProcessingStatusTable.col_session_id,
+                ProcessingStatusTable.col_pipeline_name,
+                ProcessingStatusTable.col_pipeline_version,
+                ProcessingStatusTable.col_pipeline_step,
+                ProcessingStatusTable.col_status,
             ],
-        ).validate().save_with_backup(runner.layout.fpath_imaging_bagel)
+        ).validate().save_with_backup(runner.layout.fpath_processing_status)
 
     assert [
         tuple(x)
@@ -503,17 +535,11 @@ def test_get_participants_sessions_to_run(
     ] == expected
 
 
-def test_run_multiple(config: Config, tmp_path: Path):
+def test_run_multiple(runner: PipelineRunner):
     participant_id = None
     session_id = None
-    runner = PipelineRunner(
-        dpath_root=tmp_path,
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        participant_id=participant_id,
-        session_id=session_id,
-    )
-    runner.config = config
+    runner.participant_id = participant_id
+    runner.session_id = session_id
 
     participants_and_sessions = {"01": ["1"], "02": ["2"]}
     create_empty_dataset(runner.layout.dpath_root)
@@ -533,18 +559,11 @@ def test_run_multiple(config: Config, tmp_path: Path):
 @pytest.mark.parametrize("generate_pybids_database", [True, False])
 def test_run_single_pybids_db(
     generate_pybids_database: bool,
-    config: Config,
+    runner: PipelineRunner,
     mocker: pytest_mock.MockFixture,
-    tmp_path: Path,
 ):
     participant_id = "01"
     session_id = "1"
-    runner = PipelineRunner(
-        dpath_root=tmp_path,
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
-    runner.config = config
 
     # Set GENERATE_PYBIDS_DATABASE
     runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
@@ -569,19 +588,12 @@ def test_run_single_pybids_db(
 @pytest.mark.parametrize("tar", [True, False])
 @pytest.mark.parametrize("boutiques_success", [True, False])
 def test_run_single_tar(
-    config: Config,
     tar: bool,
+    runner: PipelineRunner,
     boutiques_success: bool,
     mocker: pytest_mock.MockFixture,
-    tmp_path: Path,
 ):
-    runner = PipelineRunner(
-        dpath_root=tmp_path,
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-        tar=tar,
-    )
-    runner.config = config
+    runner.tar = tar
 
     # mock the parts of run_single that are not relevant for this test
     mocker.patch(
@@ -603,7 +615,7 @@ def test_run_single_tar(
     participant_id = "01"
     session_id = "1"
     runner.tracker_config = TrackerConfig(
-        PATHS=[tmp_path],  # not used
+        PATHS=["fake_path"],  # not used
         PARTICIPANT_SESSION_DIR=(
             "[[NIPOPPY_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]"
         ),
@@ -622,14 +634,7 @@ def test_run_single_tar(
         mocked_tar_directory.assert_not_called()
 
 
-def test_run_missing_container_raises_error(config: Config, tmp_path: Path):
-    runner = PipelineRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
-    config.save(runner.layout.fpath_config)
-    create_empty_dataset(runner.dpath_root)
+def test_run_missing_container_raises_error(runner: PipelineRunner):
     runner.manifest = Manifest()
 
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")

@@ -4,32 +4,29 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import requests
+import httpx
 
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     LogColor,
+    PipelineTypeEnum,
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    DPATH_SAMPLE_PIPELINES,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
     check_session_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
-class InitWorkflow(BaseWorkflow):
+class InitWorkflow(BaseDatasetWorkflow):
     """Workflow for init command."""
-
-    # do not validate since the dataset has not been created yet
-    validate_layout = False
 
     def __init__(
         self,
@@ -47,7 +44,8 @@ class InitWorkflow(BaseWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logging=True,
+            _skip_logfile=True,
+            _validate_layout=False,
         )
         self.fname_readme = "README.md"
         self.bids_source = bids_source
@@ -97,13 +95,9 @@ class InitWorkflow(BaseWorkflow):
 
         self._write_readmes()
 
-        # copy pipeline files
-        for dpath_pipeline in DPATH_SAMPLE_PIPELINES.iterdir():
-            self.copytree(
-                dpath_pipeline,
-                self.layout.dpath_pipelines / dpath_pipeline.name,
-                log_level=logging.DEBUG,
-            )
+        # create empty pipeline config subdirectories
+        for pipeline_type in PipelineTypeEnum:
+            self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
         self.copy(
@@ -144,7 +138,7 @@ class InitWorkflow(BaseWorkflow):
                     "https://raw.githubusercontent.com/"
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
-                response = requests.get(url)
+                response = httpx.get(url)
                 fpath_readme.write_text(response.content.decode("utf-8"))
 
     def _init_manifest_from_bids_dataset(self) -> None:

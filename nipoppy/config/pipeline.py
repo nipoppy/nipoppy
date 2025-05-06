@@ -17,7 +17,11 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.env import (
+    CURRENT_SCHEMA_VERSION,
+    DEFAULT_PIPELINE_STEP_NAME,
+    PipelineTypeEnum,
+)
 from nipoppy.utils import apply_substitutions_to_json
 
 
@@ -41,7 +45,8 @@ class PipelineInfo(BaseModel):
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
-    # for validation
+    _expected_pipeline_type: Optional[PipelineTypeEnum] = None
+
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
     DESCRIPTION: Optional[str] = Field(
@@ -51,7 +56,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         default=ContainerInfo(),
         description="Information about the container image file",
     )
-    # Needed for validation
     STEPS: list[
         Union[
             BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
@@ -59,6 +63,22 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     ] = Field(
         default=[],
         description="List of pipeline step configurations",
+    )
+    VARIABLES: dict[str, str] = Field(
+        default={},
+        description=(
+            "Required user-defined pipeline variables."
+            " This should be a dictionary with variable names as keys"
+            " and descriptions as values."
+            ' For example: {{"REQUIRED_FILE": "This file is for running the pipeline"}}'
+        ),
+    )
+    PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
+    SCHEMA_VERSION: str = Field(
+        description=(
+            "Version of the schema used for this pipeline configuration. The current "
+            f"latest version is {CURRENT_SCHEMA_VERSION}"
+        ),
     )
 
     @model_validator(mode="before")
@@ -87,6 +107,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 
         Specifically:
         - If STEPS has more than one item, make sure that each step has a unique name.
+        - If _expected_pipeline_type is not None, make sure it matches PIPELINE_TYPE.
         """
         if len(self.STEPS) > 1:
             step_names = []
@@ -105,6 +126,22 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
                         ". Step names must be unique"
                     )
                 step_names.append(step.NAME)
+
+        if (self._expected_pipeline_type is not None) and (
+            self.PIPELINE_TYPE != self._expected_pipeline_type
+        ):
+            raise ValueError(
+                f"Expected pipeline type {self._expected_pipeline_type}"
+                f" but got {self.PIPELINE_TYPE=} for pipeline "
+                f"{self.NAME} {self.VERSION}"
+            )
+
+        if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION:
+            raise ValueError(
+                f"Pipeline {self.NAME} {self.VERSION} uses schema version "
+                f"{self.SCHEMA_VERSION}, which is incompatible with the current version"
+                f" of Nipoppy (expected schema version: {CURRENT_SCHEMA_VERSION})"
+            )
 
         return self
 
@@ -137,6 +174,8 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 class BidsPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
+    _expected_pipeline_type = PipelineTypeEnum.BIDSIFICATION
+
     STEPS: list[BidsPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
@@ -147,15 +186,8 @@ class BidsPipelineConfig(BasePipelineConfig):
 class ProcPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
-    TRACKER_CONFIG_FILE: Optional[Path] = Field(
-        default=None,
-        description=(
-            "Path to the tracker configuration file associated with the pipeline"
-            ". This file must contain a list of tracker configurations"
-            ", each of which must be a dictionary with a NAME field (string)"
-            " and a PATHS field (non-empty list of strings)"
-        ),
-    )
+    _expected_pipeline_type = PipelineTypeEnum.PROCESSING
+
     STEPS: list[ProcPipelineStepConfig] = Field(
         default=[],
         description="List of pipeline step configurations",
@@ -165,6 +197,8 @@ class ProcPipelineConfig(BasePipelineConfig):
 
 class ExtractionPipelineConfig(BasePipelineConfig):
     """Schema for extraction pipeline configuration."""
+
+    _expected_pipeline_type = PipelineTypeEnum.EXTRACTION
 
     PROC_DEPENDENCIES: list[PipelineInfo] = Field(
         description=(
@@ -181,11 +215,12 @@ class ExtractionPipelineConfig(BasePipelineConfig):
     @model_validator(mode="after")
     def validate_after(self):
         """
-        Validate the config instantiation after instantiation.
+        Validate the config after instantiation.
 
         Specifically:
         - Make sure that PROC_DEPENDENCIES is not empty
         """
+        super().validate_after()
         if len(self.PROC_DEPENDENCIES) == 0:
             raise ValueError(
                 "PROC_DEPENDENCIES is an empty list for extraction pipeline "

@@ -8,18 +8,23 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, Type
 
 import bids
 import pandas as pd
+from packaging.version import Version
 from pydantic import ValidationError
 
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.main import get_pipeline_config, get_pipeline_version
-from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline import (
+    BasePipelineConfig,
+    BidsPipelineConfig,
+    ExtractionPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import (
@@ -27,11 +32,14 @@ from nipoppy.env import (
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     LogColor,
+    PipelineTypeEnum,
     ReturnCode,
     StrOrPathLike,
 )
+from nipoppy.layout import DatasetLayout
 from nipoppy.utils import (
     add_pybids_ignore_patterns,
+    apply_substitutions_to_json,
     check_participant_id,
     check_session_id,
     create_bids_db,
@@ -41,7 +49,7 @@ from nipoppy.utils import (
     process_template_str,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 
 def apply_analysis_level(
@@ -70,8 +78,59 @@ def apply_analysis_level(
         return participants_sessions
 
 
-class BasePipelineWorkflow(BaseWorkflow, ABC):
+def get_pipeline_version(
+    pipeline_name: str,
+    dpath_pipelines: StrOrPathLike,
+) -> str:
+    """Get the latest version associated with a pipeline.
+
+    Parameters
+    ----------
+    pipeline_name : str
+        Name of the pipeline, as specified in the config
+    dpath_pipelines : nipoppy.env.StrOrPathLike
+        Path to directory containing pipeline bundle subdirectories
+
+    Returns
+    -------
+    str
+        The pipeline version
+    """
+    available_pipelines = []
+    pipeline_config_latest = None
+    for fpath_pipeline_config in Path(dpath_pipelines).glob(
+        f"*/{DatasetLayout.fname_pipeline_config}"
+    ):
+        pipeline_config = BasePipelineConfig(**load_json(fpath_pipeline_config))
+        if pipeline_config.NAME == pipeline_name:
+            if pipeline_config_latest is None:
+                pipeline_config_latest = pipeline_config
+            elif Version(pipeline_config.VERSION) > Version(
+                pipeline_config_latest.VERSION
+            ):
+                pipeline_config_latest = pipeline_config
+        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
+
+    if pipeline_config_latest is not None:
+        return pipeline_config_latest.VERSION
+    else:
+        raise ValueError(
+            f"No config found for pipeline with NAME={pipeline_name}"
+            ". Available pipelines: "
+            + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+        )
+
+
+class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
+
+    _pipeline_type = PipelineTypeEnum.PROCESSING
+
+    _pipeline_type_to_pipeline_class_map = {
+        PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
+        PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
+        PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
+    }
 
     def __init__(
         self,
@@ -148,14 +207,24 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         )
 
     @cached_property
-    def _pipeline_configs(self) -> list[ProcPipelineConfig]:
-        return self.config.PROC_PIPELINES
+    def dpath_pipeline_bundle(self) -> Path:
+        """Path to the pipeline bundle directory."""
+        return self.layout.get_dpath_pipeline_bundle(
+            self._pipeline_type,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+        )
 
     @cached_property
     def pipeline_config(self) -> ProcPipelineConfig:
-        """Get the user config for the pipeline."""
-        return get_pipeline_config(
-            self.pipeline_name, self.pipeline_version, self._pipeline_configs
+        """Get the user config object for the processing pipeline."""
+        return self._get_pipeline_config(
+            self.dpath_pipeline_bundle,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_class=self._pipeline_type_to_pipeline_class_map[
+                self._pipeline_type
+            ],
         )
 
     @cached_property
@@ -192,40 +261,52 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        fpath_descriptor = self.pipeline_step_config.DESCRIPTOR_FILE
-        if fpath_descriptor is None:
+        if (fname_descriptor := self.pipeline_step_config.DESCRIPTOR_FILE) is None:
             raise ValueError(
                 "No descriptor file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+        fpath_descriptor = self.dpath_pipeline_bundle / fname_descriptor
         self.logger.info(f"Loading descriptor from {fpath_descriptor}")
         descriptor = load_json(fpath_descriptor)
-        descriptor = self.config.apply_substitutions_to_json(descriptor)
+        descriptor = self.config.apply_pipeline_variables(
+            pipeline_type=self.pipeline_config.PIPELINE_TYPE,
+            pipeline_name=self.pipeline_config.NAME,
+            pipeline_version=self.pipeline_config.VERSION,
+            json_obj=descriptor,
+        )
         return descriptor
 
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        fpath_invocation = self.pipeline_step_config.INVOCATION_FILE
-        if fpath_invocation is None:
+        if (fname_invocation := self.pipeline_step_config.INVOCATION_FILE) is None:
             raise ValueError(
                 "No invocation file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+        fpath_invocation = self.dpath_pipeline_bundle / fname_invocation
         self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
-        invocation = self.config.apply_substitutions_to_json(invocation)
+        invocation = self.config.apply_pipeline_variables(
+            pipeline_type=self.pipeline_config.PIPELINE_TYPE,
+            pipeline_name=self.pipeline_config.NAME,
+            pipeline_version=self.pipeline_config.VERSION,
+            json_obj=invocation,
+        )
         return invocation
 
     @cached_property
     def tracker_config(self) -> TrackerConfig:
         """Load the pipeline step's tracker configuration."""
-        fpath_tracker_config = self.pipeline_step_config.TRACKER_CONFIG_FILE
-        if fpath_tracker_config is None:
+        if (
+            fname_tracker_config := self.pipeline_step_config.TRACKER_CONFIG_FILE
+        ) is None:
             raise ValueError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
+        fpath_tracker_config = self.dpath_pipeline_bundle / fname_tracker_config
         return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
@@ -236,11 +317,13 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        fpath_pybids_ignore = self.pipeline_step_config.PYBIDS_IGNORE_FILE
-
         # no file specified
-        if fpath_pybids_ignore is None:
+        if (
+            fname_pybids_ignore := self.pipeline_step_config.PYBIDS_IGNORE_FILE
+        ) is None:
             return []
+
+        fpath_pybids_ignore = self.dpath_pipeline_bundle / fname_pybids_ignore
 
         # load patterns from file
         patterns = load_json(fpath_pybids_ignore)
@@ -280,18 +363,65 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
         return boutiques_config
 
+    def _get_pipeline_config(
+        self,
+        dpath_pipeline_bundle: Path,
+        pipeline_name: str,
+        pipeline_version: str,
+        pipeline_class: Type[BasePipelineConfig],
+    ) -> BasePipelineConfig:
+        """Get the config for a pipeline."""
+        fpath_config = dpath_pipeline_bundle / self.layout.fname_pipeline_config
+        if not fpath_config.exists():
+            raise FileNotFoundError(
+                f"Pipeline config file not found at {fpath_config} for "
+                f"pipeline: {pipeline_name} {pipeline_version}"
+            )
+
+        # NOTE: user-defined substitutions take precedence over the pipeline variables
+        pipeline_config_json = self.config.apply_pipeline_variables(
+            pipeline_type=self._pipeline_type,
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            json_obj=self.process_template_json(
+                load_json(fpath_config),
+            ),
+        )
+
+        pipeline_config = pipeline_class(**pipeline_config_json)
+
+        # make sure the config is for the correct pipeline
+        if not (
+            pipeline_config.NAME == pipeline_name
+            and pipeline_config.VERSION == pipeline_version
+        ):
+            raise RuntimeError(
+                f'Expected pipeline config to have NAME="{pipeline_name}" '
+                f'and VERSION="{pipeline_version}", got "{pipeline_config.NAME}" and '
+                f'"{pipeline_config.VERSION}" instead'
+            )
+
+        return self.config.propagate_container_config_to_pipeline(pipeline_config)
+
     def process_template_json(
         self,
         template_json: dict,
-        participant_id: Optional[str],
-        session_id: Optional[str],
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
         bids_participant_id: Optional[str] = None,
         bids_session_id: Optional[str] = None,
         objs: Optional[list] = None,
         return_str: bool = False,
+        with_substitutions: bool = True,
         **kwargs,
     ):
         """Replace template strings in a JSON object."""
+        if with_substitutions:
+            # apply user-defined substitutions to maintain compatibility with older
+            # pipeline config files that do not use the new pipeline variables
+            template_json = apply_substitutions_to_json(
+                template_json, self.config.SUBSTITUTIONS
+            )
         if participant_id is not None:
             if bids_participant_id is None:
                 bids_participant_id = participant_id_to_bids_participant_id(
@@ -388,11 +518,26 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if self.pipeline_version is None:
             self.pipeline_version = get_pipeline_version(
                 pipeline_name=self.pipeline_name,
-                pipeline_configs=self._pipeline_configs,
+                dpath_pipelines=self.layout.get_dpath_pipeline_store(
+                    self._pipeline_type
+                ),
             )
             self.logger.warning(
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
+
+    def _check_pipeline_variables(self):
+        """Check that the pipeline variables are not null in the config."""
+        for name, value in self.config.PIPELINE_VARIABLES.get_variables(
+            self._pipeline_type, self.pipeline_name, self.pipeline_version
+        ).items():
+            if value is None:
+                raise ValueError(
+                    f"Variable {name} is not set in the config for pipeline "
+                    f"{self.pipeline_name}, version {self.pipeline_version}. You need "
+                    "to set it in the PIPELINE_VARIABLES section of the config file at "
+                    f"{self.layout.fpath_config}"
+                )
 
     def check_pipeline_step(self):
         """Set the pipeline step name based on the config if it is not given."""
@@ -407,6 +552,7 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         to_return = super().run_setup()
 
         self.check_pipeline_version()
+        self._check_pipeline_variables()
         self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
@@ -454,8 +600,8 @@ class BasePipelineWorkflow(BaseWorkflow, ABC):
         if self.n_total == 0:
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, "
-                f"and/or check the doughnut file at {self.layout.fpath_doughnut}"
+                "in the input arguments, the dataset's manifest or config file, and/or "
+                f"check the curation status file at {self.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was
