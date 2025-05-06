@@ -47,10 +47,11 @@ class ZenodoAPI:
 
         # Access token is required for uploading files
         self.password_file = password_file
+        self.access_token = None
         if self.password_file is not None:
-            access_token = self.password_file.read_text().strip()
+            self.access_token = self.password_file.read_text().strip()
             self.headers = {
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {self.access_token}",
             }
         else:
             self.headers = {}

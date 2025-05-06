@@ -26,6 +26,7 @@ def test_upload(mocker: pytest_mock.MockerFixture):
     workflow = ZenodoUploadWorkflow(
         dpath_pipeline=TEST_PIPELINE,
         zenodo_api=zenodo_api,
+        assume_yes=True,
     )
     workflow.run_main()
 

@@ -54,7 +54,8 @@ click.rich_click.OPTION_GROUPS = {
                 "--tar",
                 "--query",
                 "--size",
-                "--zenodo-token",
+                "--password-file",
+                "--assume-yes",
                 "--sandbox",
                 "--force",
             ],
@@ -453,7 +454,6 @@ def pipeline_search(**params):
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
     )
     with handle_exception(PipelineSearchWorkflow(**params)) as workflow:
         workflow.run()
@@ -486,7 +486,6 @@ def pipeline_install(**params):
     params = dep_params(**params)
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
     )
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
@@ -530,6 +529,13 @@ def pipeline_validate(**params):
     type=str,
     required=False,
     help="To update an existing pipeline, provide the Zenodo ID.",
+)
+@click.option(
+    "--assume-yes",
+    "--yes",
+    "-y",
+    is_flag=True,
+    help="Assume yes to all questions.",
 )
 @click.option(
     "--password-file",
