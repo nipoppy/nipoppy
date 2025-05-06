@@ -152,7 +152,6 @@ class InitWorkflow(BaseWorkflow):
                         f"Permission denied when writing {fpath_readme}. "
                         "Skipping README creation."
                     )
-                    continue
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
