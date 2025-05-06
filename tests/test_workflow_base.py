@@ -98,9 +98,18 @@ def test_run_command_no_markup(
 
 
 def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
-    message = "This should be printed"
+    message = "test"
     workflow.run_command(["echo", message], quiet=True)
     assert workflow.log_prefix_run not in caplog.text
+    assert message in caplog.text
+
+
+def test_run_command_no_carriage_return(
+    workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture
+):
+    message = "test"
+    workflow.run_command(["python", "-c", f'print("{message}\\r")'])
+    assert workflow.log_prefix_run_stdout not in caplog.text
     assert message in caplog.text
 
 
