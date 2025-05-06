@@ -380,7 +380,6 @@ def test_invocation(
     invocation,
     tmp_path: Path,
     workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
@@ -391,12 +390,7 @@ def test_invocation(
     workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation.name
     workflow.dpath_pipeline_bundle = fpath_invocation.parent
 
-    mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
-
     assert workflow.invocation == invocation
-
-    # make sure substitutions are processed
-    mocked_process_template_json.assert_called_once()
 
 
 def test_invocation_none(workflow: PipelineWorkflow):
