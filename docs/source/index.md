@@ -13,10 +13,7 @@ The framework includes three components:
 
 3. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework
 
-
-To get started, see the [Installation instructions](#installation) and/or the [Quickstart guide](#quickstart).
-
-For high-level-vision refer to following:
+## Next steps
 
 ::::{grid} 3
 :::{grid-item-card}  [Why Nipoppy](overview/why_nipoppy)
@@ -79,6 +76,4 @@ caption: Other
 changelog
 contributing
 glossary
-installation
-quickstart
 ```
