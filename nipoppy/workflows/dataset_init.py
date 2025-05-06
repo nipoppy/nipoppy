@@ -148,7 +148,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 )
                 response = httpx.get(url)
                 fpath_readme.write_text(response.content.decode("utf-8"))
-                
+
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
 
