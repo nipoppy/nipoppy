@@ -40,7 +40,10 @@ def test_config_path_infos():
 
 def test_init_default(dpath_root):
     layout = DatasetLayout(dpath_root=dpath_root)
-    for attr, path in {**ATTR_TO_DPATH_MAP, **ATTR_TO_REQUIRED_FPATH_MAP}.items():
+    for attr, path in {
+        **ATTR_TO_DPATH_MAP,
+        **ATTR_TO_REQUIRED_FPATH_MAP,
+    }.items():
         assert getattr(layout, attr) == Path(dpath_root) / path
 
 
@@ -90,20 +93,6 @@ def test_get_full_path(dpath_root: Path, path, expected):
     assert layout.get_full_path(path) == expected
 
 
-def test_dpaths(dpath_root: Path):
-    layout = DatasetLayout(dpath_root=dpath_root)
-    dpaths = layout.dpaths
-    for path in ATTR_TO_DPATH_MAP.values():
-        assert Path(dpath_root / path) in dpaths
-
-
-def test_fpaths(dpath_root: Path):
-    layout = DatasetLayout(dpath_root=dpath_root)
-    fpaths = layout.fpaths
-    for path in ATTR_TO_REQUIRED_FPATH_MAP.values():
-        assert Path(dpath_root / path) in fpaths
-
-
 @pytest.mark.parametrize(
     "paths_to_delete",
     [
@@ -130,6 +119,12 @@ def test_find_missing_paths(dpath_root: Path, paths_to_delete: list[str]):
     create_invalid_dataset(dpath_root, paths_to_delete)
     layout = DatasetLayout(dpath_root=dpath_root)
     assert len(layout._find_missing_paths()) == len(paths_to_delete)
+
+
+def test_find_missing_paths_optional_okay(dpath_root: Path):
+    create_invalid_dataset(dpath_root, ["code/hpc"])
+    layout = DatasetLayout(dpath_root=dpath_root)
+    assert len(layout._find_missing_paths()) == 0
 
 
 def test_validate(dpath_root: Path):
