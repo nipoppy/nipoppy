@@ -27,6 +27,7 @@ FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 TEST_PIPELINE = DPATH_TEST_DATA / "fmriprep-24.1.1"
+PASSWORD_FILE = DPATH_TEST_DATA / "zenodo_password.txt"
 
 ATTR_TO_DPATH_MAP = {
     "dpath_bids": "bids",

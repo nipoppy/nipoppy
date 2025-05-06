@@ -10,13 +10,9 @@ import pytest_mock
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
 
 from .conftest import datetime_fixture  # noqa F401
-from .conftest import (
-    DPATH_TEST_DATA,
-    TEST_PIPELINE,
-)
+from .conftest import PASSWORD_FILE, TEST_PIPELINE
 
 ZENODO_SANDBOX = True
-PASSWORD_FILE = DPATH_TEST_DATA / "zenodo_password.txt"
 
 
 @pytest.fixture(scope="function")

@@ -541,7 +541,7 @@ def pipeline_validate(**params):
     "--password-file",
     type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
     required=True,
-    help="Zenodo access token.",
+    help="Path to file containing Zenodo access token (and nothing else)",
 )
 @zenodo_options
 @global_options
