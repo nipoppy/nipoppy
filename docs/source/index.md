@@ -45,7 +45,7 @@ overview/quickstart
 hidden:
 includehidden:
 titlesonly:
-caption: How-to guide
+caption: How-to guides
 ---
 how_to_guides/user_guide/index
 how_to_guides/init/index

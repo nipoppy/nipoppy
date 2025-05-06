@@ -22,10 +22,10 @@ The principles<principles>
 ```
 
 ::::{grid} 2
-:::{grid-item-card}  [The use cases](use_cases)
-The practical use cases for various users
-:::
 :::{grid-item-card}  [The principles](principles)
 The inspirations and design principles
+:::
+:::{grid-item-card}  [The use cases](use_cases)
+The practical use cases for various users
 :::
 ::::
