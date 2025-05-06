@@ -16,7 +16,7 @@ The framework includes three components:
 ## Next steps
 
 ::::{grid} 3
-:::{grid-item-card}  [Why Nipoppy](overview/why_nipoppy)
+:::{grid-item-card}  [Why Nipoppy](overview/why_nipoppy/index.md)
 The motivation behind creating Nipoppy
 :::
 :::{grid-item-card}  [Installation](overview/installation)
@@ -35,9 +35,7 @@ includehidden:
 titlesonly:
 caption: Overview
 ---
-overview/why_nipoppy
-overview/use_cases
-overview/principles
+overview/why_nipoppy/index
 overview/installation
 overview/quickstart
 ```
