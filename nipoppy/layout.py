@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
 from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
@@ -47,6 +47,10 @@ class LayoutConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    dpath_nipoppy: DpathInfo = Field(
+        default=DpathInfo(path=Path(NIPOPPY_DIR_NAME), _is_directory=True),
+        description="Directory Nippopy specific files",
+    )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
@@ -177,6 +181,7 @@ class DatasetLayout(Base):
         self.config = config
 
         # directories (for type hinting)
+        self.dpath_nipoppy: Path
         self.dpath_bids: Path
         self.dpath_derivatives: Path
         self.dpath_sourcedata: Path

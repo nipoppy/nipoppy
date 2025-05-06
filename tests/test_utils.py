@@ -19,6 +19,7 @@ from nipoppy.utils import (
     check_participant_id,
     check_session_id,
     get_pipeline_tag,
+    is_nipoppy_project,
     load_json,
     participant_id_to_bids_participant_id,
     process_template_str,
@@ -28,7 +29,10 @@ from nipoppy.utils import (
 )
 
 from .conftest import datetime_fixture  # noqa F401
-from .conftest import DPATH_TEST_DATA
+from .conftest import (
+    DPATH_TEST_DATA,
+    create_empty_dataset,
+)
 
 
 @pytest.mark.parametrize(
@@ -327,3 +331,24 @@ def test_process_template_str_error_replace():
 )
 def test_apply_substitutions_to_json(json_obj, substitutions, expected_output):
     assert apply_substitutions_to_json(json_obj, substitutions) == expected_output
+
+
+@pytest.mark.parametrize(
+    "current_path, is_inside_project",
+    [
+        ("bids", True),
+        (".", True),
+        ("..", False),
+    ],
+)
+def test_is_nipoppy_project(
+    tmp_path: Path, current_path: Path, is_inside_project: bool
+):
+    """Test if the current path is a nipoppy project."""
+    dataset_path = tmp_path / "dataset"
+    create_empty_dataset(dataset_path)
+
+    if is_inside_project:
+        assert is_nipoppy_project(dataset_path / current_path) == Path(dataset_path)
+    else:
+        assert is_nipoppy_project(dataset_path.joinpath(current_path)) is False
