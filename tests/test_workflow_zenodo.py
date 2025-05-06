@@ -1,6 +1,6 @@
 import pytest_mock
 
-from nipoppy.pipeline_store.validation import _load_pipeline_config_file
+from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.zenodo import (
     ZenodoUploadWorkflow,
 )

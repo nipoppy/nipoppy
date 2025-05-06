@@ -125,7 +125,9 @@ def workflow(tmp_path: Path):
     return workflow
 
 
-def set_up_hpc_for_testing(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
+def _set_up_hpc_for_testing(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
     # set HPC attribute to something valid
     workflow.hpc = "slurm"
 
@@ -147,6 +149,14 @@ def set_up_hpc_for_testing(workflow: PipelineWorkflow, mocker: pytest_mock.MockF
     )
 
     return mock_submit_job
+
+
+def _set_up_substitution_testing(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockerFixture
+):
+    return mocker.patch.object(
+        workflow, "process_template_json", side_effect=workflow.process_template_json
+    )
 
 
 @pytest.mark.parametrize(
@@ -252,8 +262,13 @@ def test_pipeline_version_optional():
     assert workflow.pipeline_version is None
 
 
-def test_pipeline_config(workflow: PipelineWorkflow):
+def test_pipeline_config(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
+    mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
+
     assert isinstance(workflow.pipeline_config, ProcPipelineConfig)
+
+    # make sure substitutions are processed
+    mocked_process_template_json.assert_called_once()
 
 
 def test_fpath_container(workflow: PipelineWorkflow):
@@ -365,6 +380,7 @@ def test_invocation(
     invocation,
     tmp_path: Path,
     workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
@@ -374,7 +390,13 @@ def test_invocation(
 
     workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation.name
     workflow.dpath_pipeline_bundle = fpath_invocation.parent
+
+    mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
+
     assert workflow.invocation == invocation
+
+    # make sure substitutions are processed
+    mocked_process_template_json.assert_called_once()
 
 
 def test_invocation_none(workflow: PipelineWorkflow):
@@ -479,11 +501,24 @@ def test_pybids_ignore_patterns_invalid_format(
 
 
 @pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])
-def test_hpc_config(hpc_config_data: dict, workflow: PipelineWorkflow, tmp_path: Path):
+def test_hpc_config(
+    hpc_config_data: dict,
+    workflow: PipelineWorkflow,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+):
     fpath_hpc_config = tmp_path / "hpc_config.json"
     fpath_hpc_config.write_text(json.dumps(hpc_config_data))
-    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config
+
+    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config.name
+    workflow.dpath_pipeline_bundle = fpath_hpc_config.parent
+
+    mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
+
     assert isinstance(workflow.hpc_config, HpcConfig)
+
+    # make sure substitutions are processed
+    mocked_process_template_json.assert_called_once()
 
 
 def test_hpc_config_no_file(workflow: PipelineWorkflow):
@@ -1103,7 +1138,7 @@ def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
 def test_submit_hpc_job_invalid_hpc(
     workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):
-    set_up_hpc_for_testing(workflow, mocker)
+    _set_up_hpc_for_testing(workflow, mocker)
     workflow.hpc = "invalid"
 
     with pytest.raises(ValueError, match="Invalid HPC cluster type"):
@@ -1113,7 +1148,7 @@ def test_submit_hpc_job_invalid_hpc(
 def test_submit_hpc_job_logs(
     workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):
-    set_up_hpc_for_testing(workflow, mocker)
+    _set_up_hpc_for_testing(workflow, mocker)
 
     dpath_logs = workflow.layout.dpath_logs / workflow.dname_hpc_logs
 
@@ -1126,7 +1161,7 @@ def test_submit_hpc_job_logs(
 def test_submit_hpc_job_no_jobs(
     workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):
-    mocked = set_up_hpc_for_testing(workflow, mocker)
+    mocked = _set_up_hpc_for_testing(workflow, mocker)
     workflow._submit_hpc_job([])
     assert not mocked.called
 
@@ -1143,7 +1178,7 @@ def test_submit_hpc_job_pysqa_call(
         "MEMORY": "32G",
     }
 
-    mocked_submit_job = set_up_hpc_for_testing(workflow, mocker)
+    mocked_submit_job = _set_up_hpc_for_testing(workflow, mocker)
     workflow.hpc = hpc_type
 
     workflow.hpc_config = HpcConfig(**hpc_config)
@@ -1208,7 +1243,7 @@ def test_submit_hpc_job_job_script(
         fpath_script.parent.mkdir(parents=True, exist_ok=True)
         fpath_script.touch()
 
-    mocked = set_up_hpc_for_testing(workflow, mocker)
+    mocked = _set_up_hpc_for_testing(workflow, mocker)
     if write_job_script:
         mocked.side_effect = touch_job_script
 
@@ -1224,7 +1259,7 @@ def test_submit_hpc_job_pysqa_error(
         fpath_error.parent.mkdir(parents=True, exist_ok=True)
         fpath_error.write_text("PYSQA ERROR\n")
 
-    mocked = set_up_hpc_for_testing(workflow, mocker)
+    mocked = _set_up_hpc_for_testing(workflow, mocker)
     mocked.side_effect = write_error_file
     with pytest.raises(
         RuntimeError, match="Error occurred while submitting the HPC job:\nPYSQA ERROR"
@@ -1239,7 +1274,7 @@ def test_submit_hpc_job_job_id(
     caplog: pytest.LogCaptureFixture,
     job_id,
 ):
-    mocked = set_up_hpc_for_testing(workflow, mocker)
+    mocked = _set_up_hpc_for_testing(workflow, mocker)
     mocked.return_value = job_id
 
     workflow._submit_hpc_job([("P1", "1")])
