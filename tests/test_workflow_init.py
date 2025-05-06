@@ -267,26 +267,9 @@ def test_init_bids_symlink_readonly(tmp_path):
     )
     workflow.run()
 
-    # assert isinstance(workflow.manifest, Manifest)
-    # assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    # assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    # assert workflow.manifest[Manifest.col_datatype].to_list() == [
-    #     ["anat", "func"],
-    #     ["anat", "func"],
-    # ]
-
     source_files_after_init = [
         x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
     ]
-
-    # for f in source_files_before_init:
-    #     assert f in source_files_after_init
-
-    # assert (dpath_root / "bids").is_symlink()
-    # # only the directory is linked, not the files within
-
-    # assert (dpath_root / "bids").readlink() == bids_to_link
 
     assert len(source_files_after_init) == len(source_files_before_init)
     assert not (dpath_root / "bids" / "README.md").exists()
