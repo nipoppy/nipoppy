@@ -5,10 +5,11 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 
 class ZenodoUploadWorkflow(BaseWorkflow):
@@ -86,6 +87,19 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             )
             raise SystemExit(1)
 
+        if self.record_id:
+            self.record_id = self.record_id.removeprefix("zenodo.")
+            current_metadata = self.zenodo_api.get_record_metadata(self.record_id)
+            if not _is_same_pipeline(pipeline_config, current_metadata):
+                raise ZenodoAPIError(
+                    "The pipeline metadata does not match the existing record "
+                    f"(zenodo.{self.record_id}). Aborting."
+                    "\nUse the --assume-yes flag to force the update."
+                )
+        else:
+            # TODO : Check if the pipeline already exists in Zenodo
+            ...
+
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
         doi = self.zenodo_api.upload_pipeline(
@@ -94,3 +108,41 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         self.logger.info(
             f"[{LogColor.SUCCESS}]Pipeline successfully uploaded at {doi}[/]",
         )
+
+
+def _is_same_pipeline(
+    pipeline_config: BasePipelineConfig, zenodo_metadata: dict
+) -> bool:
+    """Check if two pipelines are the same.
+
+    This is done by comparing the pipeline
+        - type
+        - name
+        - version
+
+    Parameters
+    ----------
+    pipeline_config : BasePipelineConfig
+        Pipeline configuration.
+    zenodo_metadata : dict
+        Zenodo metadata.
+
+    Returns
+    -------
+    bool
+        True if the pipelines are the same, False otherwise.
+    """
+    keywords = zenodo_metadata["keywords"]
+    pipeline_type = DatasetLayout.pipeline_type_to_dname_map[
+        pipeline_config.PIPELINE_TYPE
+    ]
+    pipeline_name = pipeline_config.NAME
+    pipeline_version = pipeline_config.VERSION
+
+    return all(
+        [
+            keywords.count(f"pipeline_type:{pipeline_type}"),
+            keywords.count(f"pipeline_name:{pipeline_name}"),
+            keywords.count(f"pipeline_version:{pipeline_version}"),
+        ]
+    )

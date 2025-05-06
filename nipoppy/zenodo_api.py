@@ -265,10 +265,13 @@ class ZenodoAPI:
 
         self._check_authentication()
 
+        print(metadata)
         if record_id:
+            # TODO prevent updating a record with a different metadata
             record_id, owner_id = self._create_new_version(record_id, metadata)
             action = "update"
         else:
+            # TODO prevent creating duplicate records
             record_id, owner_id = self._create_draft(metadata)
             action = "creation"
 
@@ -332,3 +335,17 @@ class ZenodoAPI:
         )
 
         return response.json()["hits"]
+
+    def get_record_metadata(self, record_id: str):
+        """Get the metadata of a Zenodo record."""
+        record_id = record_id.removeprefix("zenodo.")
+        response = httpx.get(
+            f"{self.api_endpoint}/records/{record_id}",
+            headers=self.headers,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get metadata for zenodo.{record_id}: {response.json()}"
+            )
+
+        return response.json()["metadata"]

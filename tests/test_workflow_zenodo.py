@@ -1,10 +1,14 @@
+import pytest
 import pytest_mock
 
+from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.zenodo import (
     ZenodoUploadWorkflow,
+    _is_same_pipeline,
 )
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 from .conftest import TEST_PIPELINE
 
@@ -75,3 +79,76 @@ def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
     )
 
     assert results == expected
+
+
+@pytest.mark.parametrize(
+    "pipeline_config, zenodo_metadata, expected",
+    [
+        (
+            BasePipelineConfig(
+                PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
+                NAME="fmriprep",
+                VERSION="24.1.1",
+                SCHEMA_VERSION="1",
+            ),
+            {
+                "keywords": [
+                    "Nipoppy",
+                    "pipeline_type:processing",
+                    "pipeline_name:fmriprep",
+                    "pipeline_version:24.1.1",
+                    "schema_version:1",
+                ]
+            },
+            True,
+        ),
+        (
+            BasePipelineConfig(
+                PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
+                NAME="mriqc",
+                VERSION="23.1.0",
+                SCHEMA_VERSION="1",
+            ),
+            {
+                "keywords": [
+                    "Nipoppy",
+                    "pipeline_type:processing",
+                    "pipeline_name:fmriprep",
+                    "pipeline_version:24.1.1",
+                    "schema_version:1",
+                ]
+            },
+            False,
+        ),
+    ],
+)
+def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
+    assert _is_same_pipeline(pipeline_config, zenodo_metadata) == expected
+
+
+def test_upload_same_pipeline(mocker: pytest_mock.MockerFixture):
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
+        zenodo_api=zenodo_api,
+        record_id="1234567",
+    )
+
+    get_record_metadata = mocker.patch.object(
+        workflow.zenodo_api, "get_record_metadata"
+    )
+    # Mismatched pipeline metadata
+    get_record_metadata.return_value = {
+        "keywords": [
+            "Nipoppy",
+            "pipeline_type:processing",
+            "pipeline_name:mriqc",
+            "pipeline_version:23.1.0",
+            "schema_version:1",
+        ]
+    }
+
+    with pytest.raises(
+        ZenodoAPIError, match="The pipeline metadata does not match the existing record"
+    ):
+        workflow.run()
