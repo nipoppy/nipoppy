@@ -1,4 +1,4 @@
-# Welcome to Nipoppy docs!
+# Welcome to the Nipoppy documentation website!
 
 Nipoppy is a lightweight framework for standardized organization and processing of neuroimaging-clinical datasets. Its goal is to help users adopt the [FAIR](https://www.go-fair.org/fair-principles/) principles and improve the reproducibility of studies.
 
@@ -7,11 +7,11 @@ Nipoppy is a lightweight framework for standardized organization and processing 
 
 The framework includes three components:
 
-1. A **protocol** for data curation and processing
+1. A **protocol** for data _wrangling_ to standardize generation of analysis-ready datasets
 
 2. A **specification** for dataset organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/)
 
-3. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework.
+3. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework
 
 
 To get started, see the [Installation instructions](#installation) and/or the [Quickstart guide](#quickstart).
@@ -22,11 +22,11 @@ For high-level-vision refer to following:
 :::{grid-item-card}  [Why Nipoppy](overview/why_nipoppy)
 The motivation behind creating Nipoppy
 :::
-:::{grid-item-card}  [The use cases](overview/use_cases)
-The practical use cases for various users
+:::{grid-item-card}  [Installation](overview/installation)
+Instructions to set up Nipoppy package
 :::
-:::{grid-item-card}  [The principles](overview/principles)
-The inspirations and design principles
+:::{grid-item-card}  [Quickstart](overview/quickstart)
+A user guide to get started
 :::
 ::::
 
@@ -36,11 +36,13 @@ The inspirations and design principles
 hidden:
 includehidden:
 titlesonly:
-caption: High-level-view
+caption: Overview
 ---
 overview/why_nipoppy
 overview/use_cases
 overview/principles
+overview/installation
+overview/quickstart
 ```
 
 ```{toctree}
@@ -48,20 +50,12 @@ overview/principles
 hidden:
 includehidden:
 titlesonly:
-caption: User guide
+caption: How-to guide
 ---
-user_guide/index
-```
-
-```{toctree}
----
-hidden:
-includehidden:
-titlesonly:
-caption: How-to guides
----
+how_to_guides/user_guide/index
 how_to_guides/init/index
 ```
+
 
 ```{toctree}
 ---

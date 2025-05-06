@@ -9,10 +9,10 @@ Manifest file
     There must be only one row per unique participant/visit combination.
 
 Global config file
-    The global configuration file at {{fpath_config}} contains the local environment details and configurations for running the available pipelines (e.g., pipeline version and runtime parameters).
+    The global configuration file at {{fpath_config}} allows for high-level configuration of the Nipoppy software tools (e.g., user-provided paths needed to run pipelines, container runtime arguments).
 
 Tracker config file
-    Tracker config file list the expected output files for a given pipeline. Nipoppy checks the presence of these files to mark successful completion of the pipeline. Note that the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
+    The tracker config file lists the expected output files for a given pipeline. Nipoppy checks the presence of these files to mark successful completion of the pipeline. Note that the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
 
 Curation status file
 
