@@ -17,33 +17,33 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
 
 **Imaging Data Curation**
 
-| Task | Starting point | End goal | Related resources | Nipoppy touchpoints |
-|:-------|:------------------------------------------------------------------------|:--|:--|:--|
-| Standardize acquired imaging scans | Source images (e.g. DICOMs) with an expected list of participants | Curate BIDSified dataset and assert multimodal data availability | [BIDS](https://bids.neuroimaging.io/) and [BIDSification tools](../../how_to_guides/user_guide/bids_conversion.md) | Commands: [reorg](../../cli_reference/reorg.rst), [bidsify](../../cli_reference/bidsify.rst) <br> Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`invocation.json <Boutiques>`, {term}`curation_status.tsv <Curation status file>` |
+| Task | Starting point | End goal | Related resources |
+|:-------|:------------------------------------------------------------------------|:--|:--|
+| Standardize acquired imaging scans | Source images (e.g. DICOMs) with an expected list of participants | Curate BIDSified dataset and assert multimodal data availability | [BIDS](https://bids.neuroimaging.io/) and [BIDSification tools](../../how_to_guides/user_guide/bids_conversion.md) |
 
 **Tabular Data Curation** (_under development_)
 
-| Task | Starting point | End goal | Related resources | Nipoppy touchpoints |
-|:-------|:------------------------------------------------------------------------|:--|:--|:--|
-|Organize source demographic, clinical, and other tabular data | Source tabular data collected in spreadsheets or other data capture software (e.g. RedCAP) | Assert data availability across data types and link with imaging modalities | Pandas (Python) or R | Commands: (_under development_) <br> Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, demographics.tsv, phenotypic_status.tsv |
+| Task | Starting point | End goal | Related resources |
+|:-------|:------------------------------------------------------------------------|:--|:--|
+|Organize source demographic, clinical, and other tabular data | Source tabular data collected in spreadsheets or other data capture software (e.g. RedCAP) | Assert data availability across data types and link with imaging modalities | Pandas (Python) or R |
 
 **Imaging Data Processing** (_with common pipelines_)
 
-| Task | Starting point | End goal | Related resources | Nipoppy touchpoints |
-|:-------|:------------------------------------------------------------------------|:--|:--|:--|
-|Process BIDSified data to produce derived imaging output| Valid BIDS dataset | Assert availability of processed output |[Apptainer](https://apptainer.org/) / [Docker](https://www.docker.com/) <br> [Boutiques](https://boutiques.github.io/) <br> HPCs (recommended) | Commands: [run](../../cli_reference/run.rst), [track](../../cli_reference/track.rst) <br> Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`invocation.json <Boutiques>`, {term}`tracker_config.json <Tracker config file>`, {term}`processing_status.tsv <Processing status file>`
+| Task | Starting point | End goal | Related resources |
+|:-------|:------------------------------------------------------------------------|:--|:--|
+|Process BIDSified data to produce derived imaging output| Valid BIDS dataset | Assert availability of processed output |[Apptainer](https://apptainer.org/) / [Docker](https://www.docker.com/) <br> [Boutiques](https://boutiques.github.io/) <br> HPCs (recommended) |
 
 **Imaging Data Processing** (_with custom pipelines_)
 
-| Task | Starting point | End goal | Related resources | Nipoppy touchpoints |
-|:-------|:------------------------------------------------------------------------|:--|:--|:--|
-|Process BIDSified data to produce custom derived imaging output | Organized dataset (BIDS or otherwise) required by the custom pipeline | Assert availability of processed output | [Apptainer](https://apptainer.org/) / [Docker](https://www.docker.com/) <br> [Boutiques](https://boutiques.github.io/) <br> HPCs (recommended) | Commands: [run](../../cli_reference/run.rst), [track](../../cli_reference/track.rst) <br> Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`descriptor.json <Boutiques>`, {term}`invocation.json <Boutiques>`, {term}`tracker_config.json <Tracker config file>`, {term}`processing_status.tsv <Processing status file>`|
+| Task | Starting point | End goal | Related resources |
+|:-------|:------------------------------------------------------------------------|:--|:--|
+|Process BIDSified data to produce custom derived imaging output | Organized dataset (BIDS or otherwise) required by the custom pipeline | Assert availability of processed output | [Apptainer](https://apptainer.org/) / [Docker](https://www.docker.com/) <br> [Boutiques](https://boutiques.github.io/) <br> HPCs (recommended) |
 
 **Imaging Data Extraction**
 
-| Task | Starting point | End goal | Related resources | Nipoppy touchpoints |
-|:-------|:------------------------------------------------------------------------|:--|:--|:--|
-|Extract “analysis-ready” imaging-derived-phenotypes from the processed output | Successful run from a pipeline with extractor support | Generate tabular files and/or data structures ready for statistical analysis | [Boutiques](https://boutiques.github.io/) | Commands: [extract](../../cli_reference/extract.rst) <br> Files: {term}`manifest.tsv <Manifest file>`, {term}`global_config.json <Global config file>`, {term}`descriptor.json <Boutiques>`, {term}`invocation.json <Boutiques>`, {term}`processing_status.tsv <Processing status file>` |
+| Task | Starting point | End goal | Related resources |
+|:-------|:------------------------------------------------------------------------|:--|:--|
+|Extract “analysis-ready” imaging-derived-phenotypes from the processed output | Successful run from a pipeline with extractor support | Generate tabular files and/or data structures ready for statistical analysis | [Boutiques](https://boutiques.github.io/) |
 
 ## Long-term sustainable benefits for institutes and consortia
 
