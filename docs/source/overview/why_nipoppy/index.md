@@ -17,8 +17,8 @@ Given the heterogeneity in data, tools, and usage practices, we don’t think th
 hidden:
 includehidden:
 ---
-The use cases<use_cases>
 The principles<principles>
+The use cases<use_cases>
 ```
 
 ::::{grid} 2
