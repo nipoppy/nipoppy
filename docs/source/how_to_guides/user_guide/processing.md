@@ -29,14 +29,14 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 
 ### Commands
 
-- Command-line interface: [`nipoppy run`](<project:../../cli_reference/run.rst>)
+- Command-line interface: [`nipoppy process`](<project:../../cli_reference/process.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineRunner`
 
 ### Workflow
 
 1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`curation status file` but *have not* yet successfully completed the pipeline according to the {term}`processing status file`
     - An existing, out-of-date curation status file can be updated with [`nipoppy track-curation --regenerate`](../../cli_reference/track_curation.rst)
-    - The processing status file can be updated with [`nipoppy track`](../../cli_reference/track.rst)
+    - The processing status file can be updated with [`nipoppy track-processing`](../../cli_reference/track.rst)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}
@@ -72,7 +72,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 
 To process all participants and sessions in a dataset (sequentially), run:
 ```console
-$ nipoppy run \
+$ nipoppy process \
     --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
@@ -86,7 +86,7 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 
 The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
-$ nipoppy run \
+$ nipoppy process \
     --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \

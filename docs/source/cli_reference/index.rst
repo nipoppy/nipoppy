@@ -11,8 +11,8 @@ Command-line interface
    track_curation.rst
    reorg.rst
    bidsify.rst
-   run.rst
-   track.rst
+   process.rst
+   track_processing.rst
    extract.rst
 
 .. click:: nipoppy.cli:cli
