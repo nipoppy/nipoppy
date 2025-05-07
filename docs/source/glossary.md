@@ -3,6 +3,17 @@
 ## Nipoppy terms
 
 ```{glossary}
+Manifest file
+    The manifest file at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
+
+    There must be only one row per unique participant/visit combination.
+
+Global config file
+    The global configuration file at {{fpath_config}} allows for high-level configuration of the Nipoppy software tools (e.g., user-provided paths needed to run pipelines, container runtime arguments).
+
+Tracker config file
+    The tracker config file lists the expected output files for a given pipeline. Nipoppy checks the presence of these files to mark successful completion of the pipeline. Note that the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
+
 Curation status file
 
     ```{note}
@@ -28,6 +39,7 @@ Session ID
 Visit ID
     An identifier for a data collection event, not restricted to imaging data.
 ```
+
 
 ### Session IDs vs visit IDs
 
