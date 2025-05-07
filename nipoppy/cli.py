@@ -383,7 +383,7 @@ def bidsify(**params):
 )
 @global_options
 @layout_option
-def run(**params):
+def process(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
 
@@ -397,7 +397,7 @@ def run(**params):
 @pipeline_options
 @global_options
 @layout_option
-def track(**params):
+def track_processing(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
 

@@ -160,7 +160,7 @@ def test_cli_run(tmp_path: Path):
     result = runner.invoke(
         cli,
         [
-            "run",
+            "process",
             "--dataset",
             dpath_root,
             "--pipeline",
@@ -192,7 +192,7 @@ def test_cli_track(tmp_path: Path):
     result = runner.invoke(
         cli,
         [
-            "track",
+            "track-processing",
             "--dataset",
             str(dpath_root),
             "--pipeline",
