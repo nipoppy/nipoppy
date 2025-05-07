@@ -176,7 +176,7 @@ def test_cli_run(tmp_path: Path):
         len(
             list(
                 (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "run/my_pipeline-1.0/*.log"
+                    "process/my_pipeline-1.0/*.log"
                 )
             )
         )
@@ -208,7 +208,7 @@ def test_cli_track(tmp_path: Path):
         len(
             list(
                 (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "track/my_pipeline-1.0/*.log"
+                    "track_processing/my_pipeline-1.0/*.log"
                 )
             )
         )
