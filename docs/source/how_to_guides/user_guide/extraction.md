@@ -14,11 +14,11 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
 - Processed imaging data in {{dpath_pipeline_output}} for the relevant processing pipeline(s) that the extractor depends on
     - See <project:processing.md>
 - An {term}`processing status file` with completion statuses for the processing pipeline(s) associated with the extraction pipeline.
-    - This is obtained by running `nipoppy track` (see <project:tracking.md>)
+    - This is obtained by running `nipoppy track-processing` (see <project:tracking.md>)
 
 ### Data directories
 
@@ -29,7 +29,7 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
 
 ### Commands
 
-- Command-line interface: [`nipoppy extract`](<project:../cli_reference/extract.md>)
+- Command-line interface: [`nipoppy extract`](<project:../../cli_reference/extract.md>)
 - Python API: {class}`nipoppy.workflows.ExtractionRunner`
 
 ### Workflow
@@ -95,7 +95,7 @@ $ nipoppy extract \
 The `--simulate` argument will make Nipoppy print out the command to be executed with Boutiques (instead of actually executing it). It can be useful for checking runtime parameters or debugging the invocation file.
 ```
 
-See the [CLI reference page](<project:../cli_reference/extract.md>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../../cli_reference/extract.md>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/extract`
@@ -117,7 +117,7 @@ workflow = ExtractionRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.ExtractionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/extract.md>)).
+See the API reference for {class}`nipoppy.workflows.ExtractionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/extract.md>)).
 
 ## Next steps
 
