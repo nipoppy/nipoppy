@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+
 import pytest
 import pytest_mock
 
@@ -13,6 +15,20 @@ from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 from .conftest import TEST_PIPELINE
 
 DATASET_PATH = "my_dataset"
+
+
+@pytest.fixture(scope="function")
+def zenodo_api_mocker(mocker: pytest_mock.MockerFixture):
+    mocker.patch(
+        "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
+    )
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.zenodo.ZenodoUploadWorkflow._get_pipeline_metadata",
+    )
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.zenodo.check_pipeline_bundle",
+    )
+    yield mocker
 
 
 def test_upload(mocker: pytest_mock.MockerFixture):
@@ -31,6 +47,7 @@ def test_upload(mocker: pytest_mock.MockerFixture):
         dpath_pipeline=TEST_PIPELINE,
         zenodo_api=zenodo_api,
         assume_yes=True,
+        force=True,
     )
     workflow.run_main()
 
@@ -127,16 +144,21 @@ def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
     assert _is_same_pipeline(pipeline_config, zenodo_metadata) == expected
 
 
-def test_upload_same_pipeline(mocker: pytest_mock.MockerFixture):
+@pytest.mark.parametrize("force", [True, False])
+def test_upload_same_pipeline(
+    force: bool, zenodo_api_mocker: pytest_mock.MockerFixture
+):
     zenodo_api = ZenodoAPI(sandbox=True)
     workflow = ZenodoUploadWorkflow(
         dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
         zenodo_api=zenodo_api,
         record_id="1234567",
         assume_yes=True,
+        force=force,
     )
 
-    get_record_metadata = mocker.patch.object(
+    # Mock current pipeline metadata on Zenodo
+    get_record_metadata = zenodo_api_mocker.patch.object(
         workflow.zenodo_api, "get_record_metadata"
     )
     # Mismatched pipeline metadata
@@ -150,16 +172,22 @@ def test_upload_same_pipeline(mocker: pytest_mock.MockerFixture):
         ]
     }
 
-    with pytest.raises(
-        ZenodoAPIError, match="The pipeline metadata does not match the existing record"
+    # Fails if force is False
+    with (
+        nullcontext()
+        if force
+        else pytest.raises(
+            ZenodoAPIError,
+            match="The pipeline metadata does not match the existing record",
+        )
     ):
         workflow.run()
 
 
 def test_confirm_upload_no(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+    zenodo_api_mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
 ):
-    mocker.patch(
+    zenodo_api_mocker.patch(
         "nipoppy.workflows.pipeline_store.zenodo.Confirm.ask",
         return_value=False,
     )
@@ -174,3 +202,53 @@ def test_confirm_upload_no(
         workflow.run_main()
 
     assert "Zenodo upload cancelled." in caplog.text
+
+
+@pytest.mark.parametrize(
+    "hits", [[], [{"doi": "abc.123"}, {"doi": "abc.123"}, {"doi": "abc.123"}]]
+)
+def test_upload_duplicate_record(
+    hits: list, zenodo_api_mocker: pytest_mock.MockerFixture
+):
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
+        zenodo_api=zenodo_api,
+        assume_yes=True,
+    )
+
+    search_records = zenodo_api_mocker.patch.object(
+        workflow.zenodo_api, "search_records"
+    )
+    search_records.return_value = {
+        "hits": hits,
+    }
+
+    with (
+        pytest.raises(
+            ZenodoAPIError,
+            match="It looks like this pipeline already exist in Zenodo. Aborting.",
+        )
+        if len(hits) > 0
+        else nullcontext()
+    ):
+        workflow.run()
+
+
+def test_force_upload_duplicate_record(zenodo_api_mocker: pytest_mock.MockerFixture):
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
+        zenodo_api=zenodo_api,
+        assume_yes=True,
+        force=True,
+    )
+
+    search_records = zenodo_api_mocker.patch.object(
+        workflow.zenodo_api, "search_records"
+    )
+    search_records.return_value = {
+        "hits": {"doi": "abc.123"},
+    }
+
+    workflow.run()

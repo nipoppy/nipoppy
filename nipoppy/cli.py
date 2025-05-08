@@ -558,6 +558,12 @@ def pipeline_validate(**params):
     required=True,
     help="Path to file containing Zenodo access token (and nothing else)",
 )
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Ignore safeguard warnings and upload anyway. Use with caution.",
+)
 @zenodo_options
 @global_options
 def pipeline_upload(**params):

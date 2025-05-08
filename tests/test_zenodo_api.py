@@ -136,7 +136,7 @@ def test_download_record_checksum(
 @pytest.mark.parametrize("prefix", ["", "zenodo."])
 def test_create_new_version(prefix: str, metadata: dict):
     api = ZenodoAPI(sandbox=ZENODO_SANDBOX)
-    api.access_token = os.environ["ZENODO_TOKEN"]
+    api.set_authorization(os.environ["ZENODO_TOKEN"])
     api.upload_pipeline(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
@@ -210,7 +210,7 @@ def test_failed_authentication():
 
 
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
-@pytest.mark.parametrize("keywords", [None, []])
+@pytest.mark.parametrize("keywords", [None, [], ["Nipoppy", "schema_version:1"]])
 def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     # TODO search in official Zenodo instead of sandbox
     results = zenodo_api.search_records(query, keywords=keywords)
@@ -232,7 +232,7 @@ def test_search_records_api_call(
 
     params = mocked.call_args[1]["params"]
     assert search_query in params["q"]
-    assert f"metadata.subjects.subject:{keyword}" in params["q"]
+    assert f'metadata.subjects.subject:"{keyword}"' in params["q"]
     assert params["size"] == size
 
 
