@@ -23,12 +23,9 @@ def test_cli():
     assert result.exit_code == ReturnCode.SUCCESS
 
 
-def test_cli_invalid():
-    result = runner.invoke(
-        cli,
-        ["--fake-arg"],
-        catch_exceptions=False,
-    )
+@pytest.mark.parametrize("args", [["--fake-arg"], ["fake_command"]])
+def test_cli_invalid(args):
+    result = runner.invoke(cli, args, catch_exceptions=False)
     assert result.exit_code != ReturnCode.SUCCESS
 
 
@@ -160,7 +157,7 @@ def test_cli_run(tmp_path: Path):
     result = runner.invoke(
         cli,
         [
-            "run",
+            "process",
             "--dataset",
             dpath_root,
             "--pipeline",
@@ -176,7 +173,7 @@ def test_cli_run(tmp_path: Path):
         len(
             list(
                 (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "run/my_pipeline-1.0/*.log"
+                    "process/my_pipeline-1.0/*.log"
                 )
             )
         )
@@ -192,7 +189,7 @@ def test_cli_track(tmp_path: Path):
     result = runner.invoke(
         cli,
         [
-            "track",
+            "track-processing",
             "--dataset",
             str(dpath_root),
             "--pipeline",
@@ -208,7 +205,7 @@ def test_cli_track(tmp_path: Path):
         len(
             list(
                 (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "track/my_pipeline-1.0/*.log"
+                    "track_processing/my_pipeline-1.0/*.log"
                 )
             )
         )
@@ -319,3 +316,14 @@ def test_cli_pipeline_search():
         catch_exceptions=False,
     )
     assert result.exit_code == ReturnCode.SUCCESS
+
+
+@pytest.mark.parametrize("command", ["doughnut", "run", "track"])
+def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
+    runner.invoke(cli, [command, "-h"], catch_exceptions=False)
+    assert any(
+        [
+            (record.levelno == logging.WARNING and "is deprecated" in record.message)
+            for record in caplog.records
+        ]
+    )

@@ -245,16 +245,47 @@ def runners_options(func):
     return func
 
 
-class OrderedGroup(click.RichGroup):
-    """Group that lists commands in the order they were added."""
+class OrderedAliasedGroup(click.RichGroup):
+    """Group that lists commands in the order they were added and supports aliases."""
+
+    alias_map = {
+        "doughnut": "track-curation",
+        "run": "process",
+        "track": "track-processing",
+    }
 
     def list_commands(self, ctx):
         """List commands in the order they were added."""
         return list(self.commands.keys())
 
+    def get_command(self, ctx, cmd_name):
+        """Handle aliases.
+
+        Given a context and a command name, this returns a Command object if it exists
+        or returns None.
+        """
+        # recognized command
+        command = click.Group.get_command(self, ctx, cmd_name)
+        if command is not None:
+            return command
+
+        # aliases (to be deprecated)
+        try:
+            new_cmd_name = self.alias_map[cmd_name]
+        except KeyError:
+            return None
+
+        logger.warning(
+            (
+                f"The '{cmd_name}' subcommand is deprecated and will cause an error "
+                f"in a future version. Use '{new_cmd_name}' instead."
+            ),
+        )
+        return click.Group.get_command(self, ctx, new_cmd_name)
+
 
 @click.group(
-    cls=OrderedGroup,
+    cls=OrderedAliasedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
     epilog=(
         "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
@@ -384,7 +415,7 @@ def bidsify(**params):
 )
 @global_options
 @layout_option
-def run(**params):
+def process(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
 
@@ -398,7 +429,7 @@ def run(**params):
 @pipeline_options
 @global_options
 @layout_option
-def track(**params):
+def track_processing(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
 
@@ -434,7 +465,9 @@ def status(**params):
         workflow.run()
 
 
-@cli.group(cls=OrderedGroup, context_settings={"help_option_names": ["-h", "--help"]})
+@cli.group(
+    cls=OrderedAliasedGroup, context_settings={"help_option_names": ["-h", "--help"]}
+)
 def pipeline():
     """Pipeline store operations."""
     pass

@@ -20,7 +20,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 ### Commands
 
-- Command-line interface: [`nipoppy track`](<project:../../cli_reference/track.rst>)
+- Command-line interface: [`nipoppy track-processing`](<project:../../cli_reference/track_processing.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineTracker`
 
 ### Workflow
@@ -79,7 +79,7 @@ The `pipeline_complete` column can have the following values:
 
 To track all available participants and sessions, run:
 ```console
-$ nipoppy track \
+$ nipoppy track-processing \
     --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
@@ -91,14 +91,14 @@ If there are multiple versions or steps for the same pipeline in the global conf
 
 The tracker can also be run on a single participant and/or session at a time:
 ```console
-$ nipoppy track \
+$ nipoppy track-processing \
     --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
 ```
 
-See the [CLI reference page](<project:../../cli_reference/track.rst>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../../cli_reference/track_processing.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/track`
@@ -120,7 +120,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track.rst>)).
+See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track_processing.rst>)).
 
 ## Next steps
 
