@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from nipoppy.cli import cli
 from nipoppy.env import ReturnCode
 
-from .conftest import ATTR_TO_DPATH_MAP
+from .conftest import ATTR_TO_DPATH_MAP, PASSWORD_FILE
 
 runner = CliRunner()
 
@@ -263,7 +263,6 @@ def test_cli_pipeline_list(tmp_path: Path):
 
 
 def test_cli_pipeline_upload():
-
     result = runner.invoke(
         cli,
         [
@@ -272,6 +271,8 @@ def test_cli_pipeline_upload():
             "tests/data/zenodo.zip",
             "--zenodo-id",
             "zenodo.123456",
+            "--password-file",
+            PASSWORD_FILE,
         ],
         catch_exceptions=False,
     )
