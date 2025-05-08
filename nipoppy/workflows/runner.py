@@ -57,7 +57,7 @@ class PipelineRunner(BasePipelineWorkflow):
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
-        return super().dpaths_to_check + [
+        return [
             self.dpath_pipeline_output,
             self.dpath_pipeline_work,
         ]
