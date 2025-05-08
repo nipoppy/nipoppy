@@ -11,7 +11,7 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, StrOrPathLike
+from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -27,13 +27,14 @@ class PipelineRunner(BasePipelineWorkflow):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        simulate: bool = False,
         keep_workdir: bool = False,
         tar: bool = False,
-        simulate: bool = False,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
+        hpc: Optional[str] = None,
     ):
         self.simulate = simulate
         self.keep_workdir = keep_workdir
@@ -50,6 +51,7 @@ class PipelineRunner(BasePipelineWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
+            hpc=hpc,
         )
 
     @cached_property
@@ -69,6 +71,9 @@ class PipelineRunner(BasePipelineWorkflow):
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
+
+        # always bind the dataset's root directory
+        bind_paths = [self.layout.dpath_root] + bind_paths
 
         # get and process container config
         container_config = self.pipeline_step_config.get_container_config()
@@ -258,6 +263,40 @@ class PipelineRunner(BasePipelineWorkflow):
         ):
             if participant_session not in participants_sessions_completed:
                 yield participant_session
+
+    def _generate_cli_command_for_hpc(
+        self, participant_id=None, session_id=None
+    ) -> list[str]:
+        """
+        Generate the CLI command to be run on the HPC cluster for a participant/session.
+
+        Skip the --simulate, --hpc, --write-list and --dry-run options.
+        """
+        command = [
+            PROGRAM_NAME,
+            "run",
+            "--dataset",
+            self.dpath_root,
+            "--pipeline",
+            self.pipeline_name,
+        ]
+        if self.pipeline_version is not None:
+            command.extend(["--pipeline-version", self.pipeline_version])
+        if self.pipeline_step is not None:
+            command.extend(["--pipeline-step", self.pipeline_step])
+        if participant_id is not None:
+            command.extend(["--participant-id", participant_id])
+        if session_id is not None:
+            command.extend(["--session-id", session_id])
+        if self.keep_workdir:
+            command.append("--keep-workdir")
+        if self.tar:
+            command.append("--tar")
+        if self.fpath_layout:
+            command.extend(["--layout", self.fpath_layout])
+        if self.verbose:
+            command.append("--verbose")
+        return [str(component) for component in command]
 
     def run_setup(self):
         """Run pipeline runner setup."""

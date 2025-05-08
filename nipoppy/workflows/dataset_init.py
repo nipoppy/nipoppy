@@ -16,6 +16,7 @@ from nipoppy.env import (
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
+    DPATH_HPC,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
@@ -57,8 +58,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         Create directories and add a readme in each.
         Copy boutiques descriptors and invocations.
         Copy default config files.
-
-        If the BIDS source dataset is requested, it is symlinked.
+        Copy HPC config files.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
@@ -76,7 +76,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 )
 
         # create directories
-        for dpath in self.layout.dpaths:
+        for dpath in self.layout.get_paths(directory=True, include_optional=True):
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 if self.mode == "copy":
@@ -113,6 +113,14 @@ class InitWorkflow(BaseDatasetWorkflow):
                 log_level=logging.DEBUG,
             )
 
+        # copy HPC files
+        self.copytree(
+            DPATH_HPC,
+            self.layout.dpath_hpc,
+            dirs_exist_ok=True,
+            log_level=logging.DEBUG,
+        )
+
         # inform user to edit the sample files
         self.logger.warning(
             f"Sample config and manifest files copied to {self.layout.fpath_config}"
@@ -139,7 +147,14 @@ class InitWorkflow(BaseDatasetWorkflow):
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
                 response = httpx.get(url)
-                fpath_readme.write_text(response.content.decode("utf-8"))
+                readme_content = response.content.decode("utf-8")
+                try:
+                    fpath_readme.write_text(readme_content)
+                except PermissionError:
+                    self.logger.warning(
+                        f"Permission denied when writing {fpath_readme}. "
+                        "Skipping README creation."
+                    )
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.

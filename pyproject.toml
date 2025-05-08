@@ -18,10 +18,13 @@ dependencies = [
     "boutiques",
     "click",
     "httpx",
+    "jinja2",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
     "pydicom!=3.0.0",
+    "pysqa[sge]>=0.2.4",
+    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
@@ -34,7 +37,6 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -47,8 +49,9 @@ doc = [
     "sphinx-hoverxref",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
-    "sphinx_design"
+    "sphinx_design",
 ]
+dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 test = [
     "fids>=0.1.0",
     "packaging",

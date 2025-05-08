@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pytest
-from pytest_mock import MockerFixture
+import pytest_mock
 
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.tabular.curation_status import CurationStatusTable
@@ -87,17 +87,15 @@ def test_dpath_pipeline_error(workflow: BidsConversionRunner):
 
 
 def test_setup(workflow: BidsConversionRunner):
-    # check that no file/directory is created during setup
-    files_before = set(workflow.dpath_root.rglob("*"))
+    # check that the working directory is created
+    assert not workflow.dpath_pipeline_work.exists()
     workflow.run_setup()
-    files_after = set(workflow.dpath_root.rglob("*"))
-    log_files = set(workflow.dpath_root.joinpath("logs").rglob("*"))
-    assert files_before == (files_after - log_files)
+    assert workflow.dpath_pipeline_work.exists()
 
 
 @pytest.mark.parametrize("update_status", [True, False])
 def test_run_single(
-    update_status, workflow: BidsConversionRunner, mocker: MockerFixture
+    update_status, workflow: BidsConversionRunner, mocker: pytest_mock.MockerFixture
 ):
     workflow.curation_status_table = CurationStatusTable()
     workflow.pipeline_step_config.UPDATE_STATUS = update_status
@@ -218,3 +216,79 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
+
+
+@pytest.mark.parametrize(
+    "init_params,participant_id,session_id,expected_command",
+    [
+        (
+            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "bidsify",
+                "--dataset",
+                "/path/to/root",
+                "--pipeline",
+                "my_pipeline",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+            ],
+        ),
+        (
+            {
+                "dpath_root": "/path/to/other/root",
+                "pipeline_name": "other_pipeline",
+                "pipeline_version": "1.0.0",
+                "pipeline_step": "step1",
+                "participant_id": "ShouldNotBeUsed",  # should be skipped
+                "session_id": "ShouldNotBeUsed",  # should be skipped
+                "simulate": True,  # should be skipped
+                "keep_workdir": True,
+                "hpc": "slurm",  # should be skipped
+                "write_list": "/path/to/list",  # should be skipped
+                "fpath_layout": "/path/to/layout",
+                "dry_run": True,  # should be skipped
+                "verbose": True,
+            },
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "bidsify",
+                "--dataset",
+                "/path/to/other/root",
+                "--pipeline",
+                "other_pipeline",
+                "--pipeline-version",
+                "1.0.0",
+                "--pipeline-step",
+                "step1",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+                "--keep-workdir",
+                "--layout",
+                "/path/to/layout",
+                "--verbose",
+            ],
+        ),
+    ],
+)
+def test_generate_cli_command_for_hpc(
+    init_params,
+    participant_id,
+    session_id,
+    expected_command,
+    mocker: pytest_mock.MockFixture,
+):
+    mocker.patch("nipoppy.workflows.base.DatasetLayout")
+    runner = BidsConversionRunner(**init_params)
+    assert (
+        runner._generate_cli_command_for_hpc(participant_id, session_id)
+        == expected_command
+    )
