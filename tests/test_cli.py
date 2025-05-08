@@ -23,12 +23,9 @@ def test_cli():
     assert result.exit_code == ReturnCode.SUCCESS
 
 
-def test_cli_invalid():
-    result = runner.invoke(
-        cli,
-        ["--fake-arg"],
-        catch_exceptions=False,
-    )
+@pytest.mark.parametrize("args", [["--fake-arg"], ["fake_command"]])
+def test_cli_invalid(args):
+    result = runner.invoke(cli, args, catch_exceptions=False)
     assert result.exit_code != ReturnCode.SUCCESS
 
 
