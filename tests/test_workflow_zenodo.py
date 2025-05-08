@@ -1,3 +1,4 @@
+import pytest
 import pytest_mock
 
 from nipoppy.pipeline_store.validation import _load_pipeline_config_file
@@ -76,3 +77,23 @@ def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
     )
 
     assert results == expected
+
+
+def test_confirm_upload_no(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.zenodo.Confirm.ask",
+        return_value=False,
+    )
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline="not_used",
+        zenodo_api=zenodo_api,
+        assume_yes=False,
+    )
+
+    with pytest.raises(SystemExit):
+        workflow.run_main()
+
+    assert "Zenodo upload cancelled." in caplog.text
