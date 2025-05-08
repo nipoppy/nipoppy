@@ -184,12 +184,18 @@ def pipeline_options(func):
     func = click.option(
         "--pipeline-step",
         type=str,
-        help="Pipeline step, as specified in the config file (default: first step).",
+        help=(
+            "Pipeline step, as specified in the pipeline config file "
+            "(default: first step)."
+        ),
     )(func)
     func = click.option(
         "--pipeline-version",
         type=str,
-        help="Pipeline version, as specified in the config file.",
+        help=(
+            "Pipeline version, as specified in the pipeline config file "
+            "(default: latest out of the installed versions)."
+        ),
     )(func)
     func = click.option(
         "--pipeline",
