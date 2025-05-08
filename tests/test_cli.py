@@ -318,3 +318,14 @@ def test_cli_pipeline_search():
         catch_exceptions=False,
     )
     assert result.exit_code == ReturnCode.SUCCESS
+
+
+@pytest.mark.parametrize("command", ["doughnut", "run", "track"])
+def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
+    runner.invoke(cli, [command, "-h"], catch_exceptions=False)
+    assert any(
+        [
+            (record.levelno == logging.WARNING and "is deprecated" in record.message)
+            for record in caplog.records
+        ]
+    )
