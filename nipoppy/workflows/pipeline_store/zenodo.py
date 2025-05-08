@@ -10,7 +10,7 @@ from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 
 class ZenodoUploadWorkflow(BaseWorkflow):
@@ -22,6 +22,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         zenodo_api: ZenodoAPI,
         record_id: Optional[str] = None,
         assume_yes: bool = False,
+        force: bool = False,
         verbose=False,
         dry_run=False,
     ):
@@ -29,6 +30,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         self.zenodo_api = zenodo_api
         self.record_id = record_id
         self.assume_yes = assume_yes
+        self.force = force
 
         super().__init__(
             name="pipeline_upload",
@@ -100,6 +102,36 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             )
             raise SystemExit(1)
 
+        if self.record_id:
+            self.record_id = self.record_id.removeprefix("zenodo.")
+            current_metadata = self.zenodo_api.get_record_metadata(self.record_id)
+            if not self.force and not _is_same_pipeline(
+                pipeline_config, current_metadata
+            ):
+                raise ZenodoAPIError(
+                    "The pipeline metadata does not match the existing record "
+                    f"(zenodo.{self.record_id}). Aborting."
+                    "\nUse the --force flag to force the update."
+                )
+        else:
+            pipeline_type = pipeline_config.PIPELINE_TYPE.value
+            pipeline_name = pipeline_config.NAME
+            pipeline_version = pipeline_config.VERSION
+            records = self.zenodo_api.search_records(
+                "",
+                keywords=[
+                    f"pipeline_type:{pipeline_type}",
+                    f"pipeline_name:{pipeline_name}",
+                    f"pipeline_version:{pipeline_version}",
+                ],
+            )["hits"]
+            if not self.force and len(records) > 0:
+                raise ZenodoAPIError(
+                    "It looks like this pipeline already exist in Zenodo. Aborting."
+                    "\nPlease use the --record-id flag to update it or the"
+                    " --force flag to force the upload."
+                )
+
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
         doi = self.zenodo_api.upload_pipeline(
@@ -108,3 +140,39 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         self.logger.info(
             f"[{LogColor.SUCCESS}]Pipeline successfully uploaded at {doi}[/]",
         )
+
+
+def _is_same_pipeline(
+    pipeline_config: BasePipelineConfig, zenodo_metadata: dict
+) -> bool:
+    """Check if two pipelines are the same.
+
+    This is done by comparing the pipeline
+        - type
+        - name
+        - version
+
+    Parameters
+    ----------
+    pipeline_config : BasePipelineConfig
+        Pipeline configuration.
+    zenodo_metadata : dict
+        Zenodo metadata.
+
+    Returns
+    -------
+    bool
+        True if the pipelines are the same, False otherwise.
+    """
+    keywords = zenodo_metadata["keywords"]
+    pipeline_type = pipeline_config.PIPELINE_TYPE.value
+    pipeline_name = pipeline_config.NAME
+    pipeline_version = pipeline_config.VERSION
+
+    return all(
+        [
+            keywords.count(f"pipeline_type:{pipeline_type}"),
+            keywords.count(f"pipeline_name:{pipeline_name}"),
+            keywords.count(f"pipeline_version:{pipeline_version}"),
+        ]
+    )
