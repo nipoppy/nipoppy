@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Converting a dataset to BIDS
 
 ```{tip}

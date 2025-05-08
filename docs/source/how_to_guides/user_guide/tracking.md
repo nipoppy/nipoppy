@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Tracking pipeline processing status
 
 Nipoppy trackers search for expected file paths or patterns in pipeline output files. They are specific to pipeline steps, and can be configured to include custom paths.

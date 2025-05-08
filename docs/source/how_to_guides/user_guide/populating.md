@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Populating an empty dataset
 
 Once an empty Nipoppy dataset has been created, the next step is to manually populate it with the raw data available in the study.

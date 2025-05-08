@@ -49,6 +49,8 @@ caption: How-to guides
 ---
 how_to_guides/user_guide/index
 how_to_guides/init/index
+how_to_guides/pipeline_install/index
+how_to_guides/pipeline_run/index
 ```
 
 

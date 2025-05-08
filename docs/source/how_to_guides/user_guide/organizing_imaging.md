@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Organizing raw imaging data
 
 To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data first needs to be organized in a way that Nipoppy can understand and pass to underlying BIDS converters (see <project:bids_conversion.md>). Since different studies typically follow their own methods for raw imaging data organization, this step may require the creation of a custom mapping file or the overriding of some existing methods in the Python API.
