@@ -433,6 +433,7 @@ def test_get_completed_participants_sessions(
         / ".."
         / "docs"
         / "source"
+        / "how_to_guides"
         / "user_guide"
         / "inserts"
         / "mriqc_processing_status.tsv",

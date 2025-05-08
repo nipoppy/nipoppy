@@ -1,5 +1,6 @@
 """Tests for the dataset init workflow."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,7 @@ from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import DPATH_LAYOUTS
+from nipoppy.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 from .conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
@@ -46,6 +47,10 @@ def assert_layout_creation(workflow, dpath_root):
         )
         == 0
     )
+
+    # check that HPC config files have been copied
+    for fname in DPATH_HPC.glob("*"):
+        assert (workflow.layout.dpath_hpc / fname).exists()
 
 
 def test_run(dpath_root: Path):
@@ -118,7 +123,6 @@ def test_init_bids(tmp_path):
     workflow.run()
 
     assert isinstance(workflow.manifest, Manifest)
-
     assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
     assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
     assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
@@ -164,7 +168,6 @@ def test_init_bids_move_mode(tmp_path):
     workflow.run()
 
     assert isinstance(workflow.manifest, Manifest)
-
     assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
     assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
     assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
@@ -214,7 +217,6 @@ def test_init_bids_symlink_mode(tmp_path):
     workflow.run()
 
     assert isinstance(workflow.manifest, Manifest)
-
     assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
     assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
     assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
@@ -237,6 +239,42 @@ def test_init_bids_symlink_mode(tmp_path):
 
     assert len(source_files_after_init) == 25
     assert (dpath_root / "bids" / "README.md").exists()
+
+
+def test_init_bids_symlink_readonly(tmp_path):
+    """Create dummy BIDS dataset to use during init and use move symlink.
+
+    The BIDS dataset is read-only on disk w/o a README.
+    Make sure:
+    - InitWorkflow succeeds while warning no README could be created.
+    """
+    dpath_root = tmp_path / "nipoppy"
+    bids_to_link = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_to_link,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+
+    source_files_before_init = [
+        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+    ]
+
+    # make the source is read-only
+    os.chmod(bids_to_link, 0o555)  # +rx
+
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, bids_source=bids_to_link, mode="symlink"
+    )
+    workflow.run()
+
+    source_files_after_init = [
+        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+    ]
+
+    assert len(source_files_after_init) == len(source_files_before_init)
+    assert not (dpath_root / "bids" / "README.md").exists()
 
 
 def test_init_bids_invalid_mode(tmp_path):
@@ -304,7 +342,6 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
     )
 
     assert isinstance(workflow.manifest, Manifest)
-
     assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01"]
     assert workflow.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
     assert workflow.manifest[Manifest.col_session_id].to_list() == [FAKE_SESSION_ID]

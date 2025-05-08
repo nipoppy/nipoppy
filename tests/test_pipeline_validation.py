@@ -1,4 +1,4 @@
-"""Tests for the nipoppy.pipeline_store.validation module."""
+"""Tests for the nipoppy.pipeline_validation module."""
 
 import logging
 from contextlib import nullcontext
@@ -14,8 +14,9 @@ from nipoppy.config.pipeline import (
     ProcPipelineConfig,
 )
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.pipeline_store.validation import (
+from nipoppy.pipeline_validation import (
     _check_descriptor_file,
+    _check_hpc_config_file,
     _check_invocation_file,
     _check_no_subdirectories,
     _check_pipeline_files,
@@ -127,6 +128,31 @@ def test_check_invocation_file_invalid(
         _check_invocation_file(fpath, descriptor_str)
 
 
+def test_check_hpc_config_file():
+    _check_hpc_config_file(DPATH_TEST_DATA / "hpc_config-valid.json")
+
+
+@pytest.mark.parametrize(
+    "fpath,exception_class,exception_message",
+    [
+        ("fake_path.json", FileNotFoundError, "HPC config file not found"),
+        (
+            DPATH_TEST_DATA / "empty_file.txt",
+            RuntimeError,
+            "HPC config file is not a valid JSON file",
+        ),
+        (
+            DPATH_TEST_DATA / "hpc_config-invalid.json",
+            RuntimeError,
+            "HPC config file .* is invalid",
+        ),
+    ],
+)
+def test_check_hpc_config_file_invalid(fpath, exception_class, exception_message):
+    with pytest.raises(exception_class, match=exception_message):
+        _check_hpc_config_file(fpath)
+
+
 def test_check_tracker_config_file():
     _check_tracker_config_file(DPATH_TEST_DATA / "tracker_config-valid.json")
 
@@ -182,12 +208,13 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                     {
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
                     },
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
             },
             BidsPipelineConfig,
-            2,
+            3,
         ),
         (
             {
@@ -195,6 +222,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                     {
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
                         "TRACKER_CONFIG_FILE": "tracker_config-valid.json",
                         "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json",
                     },
@@ -202,7 +230,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
             },
             ProcPipelineConfig,
-            4,
+            5,
         ),
         (
             {
@@ -212,11 +240,13 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                         "NAME": "step1",
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
                     },
                     {
                         "NAME": "step2",
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
                     },
                     {
                         "NAME": "step3",
@@ -227,7 +257,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
             },
             ExtractionPipelineConfig,
-            6,
+            8,
         ),
     ],
 )
@@ -384,18 +414,18 @@ def test_check_pipeline_bundle(
     fpaths = [dpath_bundle / "file1.txt", dpath_bundle / "file2.txt"]
 
     mocked_load_pipeline_config_file = mocker.patch(
-        "nipoppy.pipeline_store.validation._load_pipeline_config_file",
+        "nipoppy.pipeline_validation._load_pipeline_config_file",
         return_value=config,
     )
     mocked_check_pipeline_files = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_pipeline_files",
+        "nipoppy.pipeline_validation._check_pipeline_files",
         return_value=fpaths,
     )
     mocked_check_self_contained = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_self_contained"
+        "nipoppy.pipeline_validation._check_self_contained"
     )
     mocked_check_no_subdirectories = mocker.patch(
-        "nipoppy.pipeline_store.validation._check_no_subdirectories"
+        "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
     check_pipeline_bundle(dpath_bundle, logger=logger, log_level=log_level)

@@ -12,6 +12,7 @@ from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.utils import apply_substitutions_to_json
 
@@ -34,6 +35,17 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         default=DEFAULT_PIPELINE_STEP_NAME,
         description="Step name. Required if the pipeline has multiple steps",
     )
+    ANALYSIS_LEVEL: AnalysisLevelType = Field(
+        default=AnalysisLevelType.participant_session,
+        description=(
+            "Analysis level of the pipeline step. This controls the granularity of "
+            "the loop over subjects and sessions. By default, pipeline runners will "
+            "loop over all subjects and sessions, but this field field can be set to "
+            f'"{AnalysisLevelType.participant}" to loop over subjects only, '
+            f'"{AnalysisLevelType.session}" to loop over sessions only, '
+            f"and {AnalysisLevelType.group} to only run the pipeline a single time."
+        ),
+    )
     DESCRIPTOR_FILE: Optional[Path] = Field(
         default=None,
         description=(
@@ -44,15 +56,12 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         default=None,
         description="Path to the JSON invocation file",
     )
-    ANALYSIS_LEVEL: AnalysisLevelType = Field(
-        default=AnalysisLevelType.participant_session,
+    HPC_CONFIG_FILE: Optional[Path] = Field(
+        default=None,
         description=(
-            "Analysis level of the pipeline step. This controls the granularity of "
-            "the loop over subjects and sessions. By default, pipeline runners will "
-            "loop over all subjects and sessions, but this field field can be set to "
-            f'"{AnalysisLevelType.participant}" to loop over subjects only, '
-            f'"{AnalysisLevelType.session}" to loop over sessions only, '
-            f"and {AnalysisLevelType.group} to only run the pipeline a single time."
+            "Path to the HPC config file. This file should contain key-value pairs to "
+            "be passed to the Jinja template inside the "
+            f"{DEFAULT_LAYOUT_INFO.dpath_hpc} directory."
         ),
     )
 

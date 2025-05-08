@@ -640,3 +640,81 @@ def test_run_missing_container_raises_error(runner: PipelineRunner):
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
     with pytest.raises(FileNotFoundError, match="No container image file found at"):
         runner.run()
+
+
+@pytest.mark.parametrize(
+    "init_params,participant_id,session_id,expected_command",
+    [
+        (
+            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "run",
+                "--dataset",
+                "/path/to/root",
+                "--pipeline",
+                "my_pipeline",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+            ],
+        ),
+        (
+            {
+                "dpath_root": "/path/to/other/root",
+                "pipeline_name": "other_pipeline",
+                "pipeline_version": "1.0.0",
+                "pipeline_step": "step1",
+                "participant_id": "ShouldNotBeUsed",  # should be skipped
+                "session_id": "ShouldNotBeUsed",  # should be skipped
+                "simulate": True,  # should be skipped
+                "keep_workdir": True,
+                "hpc": "slurm",  # should be skipped
+                "write_list": "/path/to/list",  # should be skipped
+                "tar": True,
+                "fpath_layout": "/path/to/layout",
+                "dry_run": True,  # should be skipped
+                "verbose": True,
+            },
+            "P01",
+            "1",
+            [
+                "nipoppy",
+                "run",
+                "--dataset",
+                "/path/to/other/root",
+                "--pipeline",
+                "other_pipeline",
+                "--pipeline-version",
+                "1.0.0",
+                "--pipeline-step",
+                "step1",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+                "--keep-workdir",
+                "--tar",
+                "--layout",
+                "/path/to/layout",
+                "--verbose",
+            ],
+        ),
+    ],
+)
+def test_generate_cli_command_for_hpc(
+    init_params,
+    participant_id,
+    session_id,
+    expected_command,
+    mocker: pytest_mock.MockFixture,
+):
+    mocker.patch("nipoppy.workflows.base.DatasetLayout")
+    runner = PipelineRunner(**init_params)
+    assert (
+        runner._generate_cli_command_for_hpc(participant_id, session_id)
+        == expected_command
+    )

@@ -47,7 +47,7 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = [
     # not ideal but otherwise we wrongly get a warning
-    "user_guide/inserts/boutiques_stub.md",
+    "how_to_guides/user_guide/inserts/boutiques_stub.md",
 ]
 
 nitpicky = True

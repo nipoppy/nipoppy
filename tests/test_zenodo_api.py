@@ -20,11 +20,11 @@ def record_id():
 
     The Sandbox can be reset at any time, so the Zenodo ID may change.
     If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/194256
+    https://sandbox.zenodo.org/records/{record_id}
 
     See TEST_PIPELINE for test file location.
     """
-    return "199318"
+    return "213135"
 
 
 @pytest.fixture(scope="function")
@@ -65,7 +65,7 @@ def test_download_record_files(
     record_id = record_id_prefix + record_id
     zenodo_api.download_record_files(record_id, tmp_path)
 
-    assert len(list(tmp_path.iterdir())) == 5
+    assert len(list(tmp_path.iterdir())) == 6
 
     # Verify the content of the downloaded files
     for file in TEST_PIPELINE.iterdir():
