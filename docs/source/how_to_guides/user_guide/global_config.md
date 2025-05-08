@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Understanding the global configuration file
 
 This guide goes over [required/optional fields](#fields-in-the-global-configuration-file) in the global configuration file. It also includes some notes on [substitution and template string replacement logic](#substitutions-and-template-string-replacements) in {term}`JSON` configuration files.
