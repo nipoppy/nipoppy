@@ -14,6 +14,11 @@ Command-line interface
    run.rst
    track.rst
    extract.rst
+   pipeline_search.rst
+   pipeline_install.rst
+   pipeline_list.rst
+   pipeline_validate.rst
+   pipeline_upload.rst
 
 .. click:: nipoppy.cli:cli
    :prog: nipoppy
