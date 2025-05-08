@@ -126,10 +126,6 @@ class ZenodoUploadWorkflow(BaseWorkflow):
                 ],
             )["hits"]
             if not self.force and len(records) > 0:
-                self.logger.warning(
-                    f"Found {len(records)} existing records for this pipeline."
-                    f"\n{records}"
-                )
                 raise ZenodoAPIError(
                     "It looks like this pipeline already exist in Zenodo. Aborting."
                     "\nPlease use the --record-id flag to update it or the"
