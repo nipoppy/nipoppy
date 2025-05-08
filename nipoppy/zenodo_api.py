@@ -269,13 +269,10 @@ class ZenodoAPI:
 
         self._check_authentication()
 
-        print(metadata)
         if record_id:
-            # TODO prevent updating a record with a different metadata
             record_id, owner_id = self._create_new_version(record_id, metadata)
             action = "update"
         else:
-            # TODO prevent creating duplicate records
             record_id, owner_id = self._create_draft(metadata)
             action = "creation"
 
@@ -329,7 +326,6 @@ class ZenodoAPI:
         # full_query = f"'{full_query.strip().removeprefix("AND ")}'"
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
-        print(f'Using Zenodo query string: "{full_query}"')
         response = httpx.get(
             f"{self.api_endpoint}/records",
             headers=self.headers,
@@ -338,8 +334,6 @@ class ZenodoAPI:
                 "size": size,
             },
         )
-        print(response._request)
-        print(response.json())
         return response.json()["hits"]
 
     def get_record_metadata(self, record_id: str):

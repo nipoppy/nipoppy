@@ -126,13 +126,14 @@ class ZenodoUploadWorkflow(BaseWorkflow):
                 ],
             )["hits"]
             if not self.force and len(records) > 0:
-                print(records)
+                self.logger.warning(
+                    f"Found {len(records)} existing records for this pipeline."
+                    f"\n{records}"
+                )
                 raise ZenodoAPIError(
                     "It looks like this pipeline already exist in Zenodo. Aborting."
                     "\nPlease use the --record-id flag to update it or the"
                     " --force flag to force the upload."
-                    "\nPotential duplicate:"
-                    f"\n{'\n'.join([record['doi'] for record in records])}"
                 )
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
