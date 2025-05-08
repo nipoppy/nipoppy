@@ -30,6 +30,7 @@ def test_upload(mocker: pytest_mock.MockerFixture):
     workflow = ZenodoUploadWorkflow(
         dpath_pipeline=TEST_PIPELINE,
         zenodo_api=zenodo_api,
+        assume_yes=True,
     )
     workflow.run_main()
 
@@ -132,6 +133,7 @@ def test_upload_same_pipeline(mocker: pytest_mock.MockerFixture):
         dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
         zenodo_api=zenodo_api,
         record_id="1234567",
+        assume_yes=True,
     )
 
     get_record_metadata = mocker.patch.object(
@@ -152,3 +154,23 @@ def test_upload_same_pipeline(mocker: pytest_mock.MockerFixture):
         ZenodoAPIError, match="The pipeline metadata does not match the existing record"
     ):
         workflow.run()
+
+
+def test_confirm_upload_no(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.zenodo.Confirm.ask",
+        return_value=False,
+    )
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline="not_used",
+        zenodo_api=zenodo_api,
+        assume_yes=False,
+    )
+
+    with pytest.raises(SystemExit):
+        workflow.run_main()
+
+    assert "Zenodo upload cancelled." in caplog.text

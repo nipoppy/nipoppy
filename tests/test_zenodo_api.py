@@ -9,7 +9,8 @@ import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
 
-from .conftest import TEST_PIPELINE, datetime_fixture  # noqa F401
+from .conftest import datetime_fixture  # noqa F401
+from .conftest import PASSWORD_FILE, TEST_PIPELINE
 
 ZENODO_SANDBOX = True
 
@@ -134,9 +135,9 @@ def test_download_record_checksum(
 )
 @pytest.mark.parametrize("prefix", ["", "zenodo."])
 def test_create_new_version(prefix: str, metadata: dict):
-    ZenodoAPI(
-        sandbox=ZENODO_SANDBOX, access_token=os.environ["ZENODO_TOKEN"]
-    ).upload_pipeline(
+    api = ZenodoAPI(sandbox=ZENODO_SANDBOX)
+    api.access_token = os.environ["ZENODO_TOKEN"]
+    api.upload_pipeline(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
         record_id=f"{prefix}{os.environ['ZENODO_ID']}",
@@ -159,9 +160,9 @@ def test_create_draft(mocker: pytest_mock.MockerFixture):
     }
     metadata = {"metadata": dict()}
 
-    result = ZenodoAPI(sandbox=ZENODO_SANDBOX, access_token="mocked_api")._create_draft(
-        metadata
-    )
+    result = ZenodoAPI(
+        sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE
+    )._create_draft(metadata)
 
     # Assertions
     mock_post.assert_called_once_with(url, json=metadata, headers=headers)
@@ -186,7 +187,7 @@ def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
 
     # Assertions
     with pytest.raises(ZenodoAPIError, match="Failed to create a draft record:"):
-        ZenodoAPI(sandbox=ZENODO_SANDBOX, access_token="mocked_api")._create_draft(
+        ZenodoAPI(sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE)._create_draft(
             metadata
         )
 
@@ -196,13 +197,15 @@ def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
 def test_valid_authentication(mocker: pytest_mock.MockerFixture):
     mocker.patch("httpx.get", return_value=mocker.Mock(status_code=200))
 
-    ZenodoAPI(sandbox=ZENODO_SANDBOX, access_token="mocked_api")._check_authentication()
+    ZenodoAPI(
+        sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE
+    )._check_authentication()
 
 
 def test_failed_authentication():
     with pytest.raises(ZenodoAPIError, match="Failed to authenticate to Zenodo:"):
         ZenodoAPI(
-            sandbox=ZENODO_SANDBOX, access_token="invalid_token"
+            sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE
         )._check_authentication()
 
 

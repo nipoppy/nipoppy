@@ -7,7 +7,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
 - Processed imaging data the {{dpath_pipeline_output}} directory
     - See <project:processing.md> for expected subdirectory structure
 
@@ -20,7 +20,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 
 ### Commands
 
-- Command-line interface: [`nipoppy track`](<project:../cli_reference/track.rst>)
+- Command-line interface: [`nipoppy track`](<project:../../cli_reference/track.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineTracker`
 
 ### Workflow
@@ -98,7 +98,7 @@ $ nipoppy track \
     --session-id <SESSION_ID>
 ```
 
-See the [CLI reference page](<project:../cli_reference/track.rst>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../../cli_reference/track.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/track`
@@ -120,7 +120,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/track.rst>)).
+See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track.rst>)).
 
 ## Next steps
 
