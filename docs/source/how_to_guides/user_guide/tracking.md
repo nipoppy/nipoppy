@@ -98,7 +98,7 @@ $ nipoppy track-processing \
     --session-id <SESSION_ID>
 ```
 
-See the [CLI reference page](<project:../../cli_reference/track.rst>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../../cli_reference/track_processing.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/track`
@@ -120,7 +120,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track.rst>)).
+See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track_processing.rst>)).
 
 ## Next steps
 
