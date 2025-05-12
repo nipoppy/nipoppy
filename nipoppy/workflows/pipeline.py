@@ -180,7 +180,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
-        return [self.dpath_pipeline]
+        return []
 
     @cached_property
     def dpath_pipeline(self) -> Path:
