@@ -8,6 +8,7 @@ from typing import Optional
 import boutiques
 from pydantic_core import ValidationError
 
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
@@ -82,6 +83,25 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
         )
 
 
+def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
+    """Validate an HPC config file."""
+    fpath_hpc_config: Path = Path(fpath_hpc_config)
+    if not fpath_hpc_config.exists():
+        raise FileNotFoundError(f"HPC config file not found: {fpath_hpc_config}")
+
+    try:
+        hpc_config_dict = load_json(fpath_hpc_config)
+    except json.JSONDecodeError as exception:
+        raise RuntimeError(f"HPC config file is not a valid JSON file: {exception}")
+
+    try:
+        HpcConfig(**hpc_config_dict)
+    except ValidationError as exception:
+        raise RuntimeError(
+            f"HPC config file {fpath_hpc_config} is invalid:\n{exception}"
+        )
+
+
 def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
     """Validate a tracker config file."""
     fpath_tracker_config: Path = Path(fpath_tracker_config)
@@ -132,6 +152,7 @@ def _check_pipeline_files(
 
     - the descriptor file (if present)
     - the invocation file (if present)
+    - the HPC config file (if present)
     - the tracker config file (if present and pipeline is a processing pipeline)
     - the PyBIDS ignore patterns file (if present and pipeline is a processing pipeline)
 
@@ -161,6 +182,12 @@ def _check_pipeline_files(
                 fpath_invocation = dpath_bundle / step.INVOCATION_FILE
                 _check_invocation_file(fpath_invocation, descriptor_str)
                 fpaths.append(fpath_invocation)
+
+        if step.HPC_CONFIG_FILE is not None:
+            _log(f"\tChecking HPC config file: {step.HPC_CONFIG_FILE}")
+            fpath_hpc_config = dpath_bundle / step.HPC_CONFIG_FILE
+            _check_hpc_config_file(fpath_hpc_config)
+            fpaths.append(fpath_hpc_config)
 
         if isinstance(step, ProcPipelineStepConfig):
 

@@ -1,6 +1,6 @@
 # Running processing pipelines
 
-Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run image processing pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../cli_reference/init.rst>)) are populated with descriptor files and default invocation files for the following processing pipelines:
+Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run image processing pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../../cli_reference/init.rst>)) are populated with descriptor files and default invocation files for the following processing pipelines:
 - [fMRIPrep](https://fmriprep.org/en/stable/), a pipeline for preprocessing anatomical and functional MRI data.
 - [MRIQC](https://mriqc.readthedocs.io/en/latest/index.html), a pipeline for automated quality control (QC) metric extraction
 
@@ -13,7 +13,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
 - Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_bids}} directory
     - See <project:bids_conversion.md>
 
@@ -29,14 +29,14 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 
 ### Commands
 
-- Command-line interface: [`nipoppy run`](<project:../cli_reference/run.rst>)
+- Command-line interface: [`nipoppy process`](<project:../../cli_reference/process.rst>)
 - Python API: {class}`nipoppy.workflows.PipelineRunner`
 
 ### Workflow
 
 1. Nipoppy will loop over all participants/sessions that *have* BIDS data according to the {term}`curation status file` but *have not* yet successfully completed the pipeline according to the {term}`processing status file`
-    - An existing, out-of-date curation status file can be updated with [`nipoppy track-curation --regenerate`](../cli_reference/track_curation.rst)
-    - The processing status file can be updated with [`nipoppy track`](../cli_reference/track.rst)
+    - An existing, out-of-date curation status file can be updated with [`nipoppy track-curation --regenerate`](../../cli_reference/track_curation.rst)
+    - The processing status file can be updated with [`nipoppy track-processing`](../../cli_reference/track_processing.rst)
 2. For each participant-session pair:
     1. The pipeline's invocation will be processed such that template strings related to the participant/session and dataset paths (e.g., `[[NIPOPPY_PARTICIPANT_ID]]`) are replaced by the appropriate values
     2. A [PyBIDS](https://bids-standard.github.io/pybids/) database indexing the BIDS data for this participant and session is created in a subdirectory inside {{dpath_pybids_db}}
@@ -72,7 +72,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 
 To process all participants and sessions in a dataset (sequentially), run:
 ```console
-$ nipoppy run \
+$ nipoppy process \
     --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
@@ -86,7 +86,7 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 
 The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
-$ nipoppy run \
+$ nipoppy process \
     --dataset <DATASET_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
@@ -97,7 +97,7 @@ $ nipoppy run \
 The `--simulate` argument will make Nipoppy print out the command to be executed with Boutiques (instead of actually executing it). It can be useful for checking runtime parameters or debugging the invocation file.
 ```
 
-See the [CLI reference page](<project:../cli_reference/run.rst>) for more information on additional optional arguments.
+See the [CLI reference page](<project:../../cli_reference/process.rst>) for more information on additional optional arguments.
 
 ```{note}
 Log files for this command will be written to {{dpath_logs}}`/run`
@@ -119,7 +119,7 @@ workflow = PipelineRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../cli_reference/run.rst>)).
+See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/process.rst>)).
 
 ## Next steps
 

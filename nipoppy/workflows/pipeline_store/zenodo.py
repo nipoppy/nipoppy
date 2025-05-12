@@ -3,9 +3,11 @@
 from pathlib import Path
 from typing import Optional
 
+from rich.prompt import Confirm
+
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import LogColor, StrOrPathLike
-from nipoppy.pipeline_store.validation import check_pipeline_bundle
+from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -19,12 +21,14 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         dpath_pipeline: StrOrPathLike,
         zenodo_api: ZenodoAPI,
         record_id: Optional[str] = None,
+        assume_yes: bool = False,
         verbose=False,
         dry_run=False,
     ):
         self.dpath_pipeline = dpath_pipeline
         self.zenodo_api = zenodo_api
         self.record_id = record_id
+        self.assume_yes = assume_yes
 
         super().__init__(
             name="pipeline_upload",
@@ -75,6 +79,16 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
+        if not self.assume_yes:
+            continue_ = Confirm.ask(
+                "The Nipoppy pipeline will be uploaded/updated on Zenodo"
+                f"{' (sanbox) 'if self.zenodo_api.sandbox else ''},"
+                " this is a [bold]permanent[/] action."
+            )
+            if not continue_:
+                self.logger.info("Zenodo upload cancelled.")
+                raise SystemExit(1)
+
         pipeline_dir = Path(self.dpath_pipeline)
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 

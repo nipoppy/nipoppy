@@ -23,6 +23,7 @@ FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
+    "HPC_PREAMBLE",
     "PIPELINE_VARIABLES",
 ]
 
@@ -83,6 +84,15 @@ def test_no_extra_fields(valid_config_data):
 def test_deprecated_fields(deprecated_field, valid_config_data):
     with pytest.warns(DeprecationWarning):
         Config(**valid_config_data, **{deprecated_field: "x"})
+
+
+@pytest.mark.parametrize(
+    "hpc_preamble", ["module load preamble", ["module load preamble"]]
+)
+def test_hpc_preamble_list(hpc_preamble, valid_config_data):
+    valid_config_data["HPC_PREAMBLE"] = hpc_preamble
+    config = Config(**valid_config_data)
+    assert config.HPC_PREAMBLE == ["module load preamble"]
 
 
 @pytest.mark.parametrize(
