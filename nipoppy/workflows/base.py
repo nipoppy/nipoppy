@@ -297,10 +297,8 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         _validate_layout : bool, optional
             If True, validate the layout during setup, by default True
         """
-        self.dpath_root = is_nipoppy_project(dpath_root)
         # `.nipoppy` is not created by default in version 0.3.4 and below
-        if self.dpath_root is False:
-            self.dpath_root = Path(dpath_root)
+        self.dpath_root = is_nipoppy_project(dpath_root) or Path(dpath_root)
         self.fpath_layout = fpath_layout
         self._skip_logfile = _skip_logfile
         self._validate_layout = _validate_layout
