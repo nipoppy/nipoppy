@@ -132,7 +132,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         if not self.assume_yes:
             continue_ = Confirm.ask(
                 "The Nipoppy pipeline will be uploaded/updated on Zenodo"
-                f"{' (sandbox)'if self.zenodo_api.sandbox else ''},"
+                f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
                 " this is a [bold]permanent[/] action, are you sure?"
             )
             if not continue_:
