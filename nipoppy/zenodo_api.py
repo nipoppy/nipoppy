@@ -323,7 +323,6 @@ class ZenodoAPI:
             full_query += f' AND metadata.subjects.subject:"{keyword}"'
         # handle case where initial query is empty
         full_query = full_query.strip().removeprefix("AND ")
-        # full_query = f"'{full_query.strip().removeprefix("AND ")}'"
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
         response = httpx.get(
