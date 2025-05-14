@@ -10,6 +10,7 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
+    NIPOPPY_DIR_NAME,
     LogColor,
     PipelineTypeEnum,
     StrOrPathLike,
@@ -76,6 +77,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 )
 
         # create directories
+        self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
         for dpath in self.layout.get_paths(directory=True, include_optional=True):
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
