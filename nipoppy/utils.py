@@ -416,8 +416,8 @@ def is_nipoppy_project(cwd=Path.cwd()):
 
     Parameters
     ----------
-    cwd : _type_, optional
-        _description_, by default Path.cwd()
+    cwd : nipoppy.env.StrOrPathLike, optional
+        Path to directory, by default Path.cwd()
     """
     current = Path(cwd).resolve()
     while True:
