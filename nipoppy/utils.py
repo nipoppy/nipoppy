@@ -424,6 +424,6 @@ def is_nipoppy_project(cwd=Path.cwd()):
         candidate = current / NIPOPPY_DIR_NAME
         if candidate.is_dir():
             return current  # Found
-        if current.parent == current:
+        if current == Path("/"):
             return False  # Reached root, not found
         current = current.parent

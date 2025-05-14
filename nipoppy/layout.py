@@ -52,11 +52,6 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
-
-    dpath_nipoppy: OptionalDpathInfo = Field(
-        default=OptionalDpathInfo(path=Path(NIPOPPY_DIR_NAME), _is_directory=True),
-        description="Directory Nippopy specific files",
-    )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
@@ -188,9 +183,9 @@ class DatasetLayout(Base):
         self.dpath_root = Path(dpath_root)
         self.fpath_spec = Path(fpath_config)
         self.config = config
+        self.dpath_nipoppy = self.dpath_root / NIPOPPY_DIR_NAME
 
         # directories (for type hinting)
-        self.dpath_nipoppy: Path
         self.dpath_bids: Path
         self.dpath_derivatives: Path
         self.dpath_sourcedata: Path
