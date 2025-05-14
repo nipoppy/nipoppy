@@ -3,7 +3,9 @@
 This guide shows how to create a dataset's manifest file, which is a list of participants recruited in the study, their  visits, and expected data modalities.
 
 :::{note}
-If the Nipoppy dataset was initialized from an existing BIDS dataset with `nipoppy init --bids-source`, then a valid and accurate manifest file was automatically generated from the BIDS data. In this case, it is not necessary to manually create or update the manifest file.
+If the Nipoppy dataset was initialized from an existing BIDS dataset with `nipoppy init --bids-source`, then a manifest file containing valid and accurate entries for the imaging data was automatically generated from the BIDS input. In this case, it is not necessary to manually insert or update the imaging data information in the manifest file.
+
+However, if the study has additional visits that were not present in the BIDS data (e.g., non-imaging visits), they will need to be added to the manifest separately.
 :::
 
 Every Nipoppy dataset should have a manifest file at {{fpath_manifest}}.
