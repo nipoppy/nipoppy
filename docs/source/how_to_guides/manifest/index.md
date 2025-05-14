@@ -1,6 +1,6 @@
 # Creating the manifest file
 
-This guide shows how to create a dataset's manifest file, which is a list of participants and visits available in the study.
+This guide shows how to create a dataset's manifest file, which is a list of participants recruited in the study, their  visits, and expected data modalities.
 
 :::{note}
 If the Nipoppy dataset was initialized from an existing BIDS dataset with `nipoppy init --bids-source`, then a valid and accurate manifest file was automatically generated from the BIDS data. In this case, it is not necessary to manually create or update the manifest file.
@@ -95,9 +95,9 @@ Common {term}`MRI` datatypes include:
 
 The full list of valid datatypes is listed in the [BIDS schema](https://github.com/bids-standard/bids-specification/blob/master/src/schema/objects/datatypes.yaml).
 
-<!-- :::{note}
+:::{note}
 If it is too difficult to determine the exact imaging datatypes collected for a given participant and session, you can set the `datatype` value for this row to be all available datatypes in the study.
-::: -->
+:::
 
 ## Guidelines and examples for creating a study's manifest file
 

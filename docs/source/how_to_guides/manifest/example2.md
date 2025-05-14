@@ -15,7 +15,7 @@ We start with the demographics CSV file `example2-demographics.csv`:
 :::
 
 This demographics file gives us the following information:
-- The study have 2 participants, one female and one male
+- The study has 2 participants, one female and one male
 - Each participant has 3 non-imaging visits (`NEUROPSYCH_{1,2,3}`) and 2 imaging visits (`MRI_{1,2}`)
 
 Given that we know that all imaging sessions collected anatomical data only, we have all the information required for the manifest file.
