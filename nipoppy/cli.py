@@ -54,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--tar",
                 "--query",
                 "--size",
+                "--zenodo-id",
                 "--password-file",
                 "--assume-yes",
                 "--sandbox",
@@ -590,6 +591,12 @@ def pipeline_validate(**params):
     type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
     required=True,
     help="Path to file containing Zenodo access token (and nothing else)",
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Ignore safeguard warnings and upload anyway. Use with caution.",
 )
 @zenodo_options
 @global_options
