@@ -117,10 +117,15 @@ class ZenodoUploadWorkflow(BaseWorkflow):
                 ],
             )["hits"]
             if not self.force and len(records) > 0:
+                potential_duplicates = [
+                    record["links"]["self_html"] for record in records
+                ]
                 raise ZenodoAPIError(
                     "It looks like this pipeline already exists in Zenodo. Aborting."
                     "\nPlease use the --zenodo-id flag to update it or the"
                     " --force flag to force the upload."
+                    f"\nFound {len(records)} potential duplicates: "
+                    f"{', '.join(potential_duplicates)}",
                 )
 
         # Confirm upload

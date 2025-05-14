@@ -205,10 +205,23 @@ def test_confirm_upload_no(
 
 
 @pytest.mark.parametrize(
-    "hits", [[], [{"doi": "abc.123"}, {"doi": "abc.123"}, {"doi": "abc.123"}]]
+    "hits, potential_dupliactes",
+    [
+        [
+            [
+                {"links": {"self_html": "https://zenodo.org/records/123456"}},
+                {"links": {"self_html": "https://zenodo.org/records/123456"}},
+                {"links": {"self_html": "https://zenodo.org/records/123456"}},
+            ],
+            "https://zenodo.org/records/123456, https://zenodo.org/records/123456, https://zenodo.org/records/123456",
+        ]
+    ],
 )
 def test_upload_duplicate_record(
-    hits: list, zenodo_api_mocker: pytest_mock.MockerFixture
+    hits: list,
+    potential_dupliactes: str,
+    zenodo_api_mocker: pytest_mock.MockerFixture,
+    caplog: pytest.LogCaptureFixture,
 ):
     zenodo_api = ZenodoAPI(sandbox=True)
     workflow = ZenodoUploadWorkflow(
@@ -224,15 +237,12 @@ def test_upload_duplicate_record(
         "hits": hits,
     }
 
-    with (
-        pytest.raises(
-            ZenodoAPIError,
-            match="It looks like this pipeline already exist in Zenodo. Aborting.",
-        )
-        if len(hits) > 0
-        else nullcontext()
+    with pytest.raises(
+        ZenodoAPIError,
+        match="It looks like this pipeline already exists in Zenodo. Aborting.",
     ):
         workflow.run()
+        assert potential_dupliactes in caplog.text
 
 
 def test_force_upload_duplicate_record(zenodo_api_mocker: pytest_mock.MockerFixture):
