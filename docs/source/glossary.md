@@ -3,6 +3,17 @@
 ## Nipoppy terms
 
 ```{glossary}
+Manifest file
+    The manifest file at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
+
+    There must be only one row per unique participant/visit combination.
+
+Global config file
+    The global configuration file at {{fpath_config}} allows for high-level configuration of the Nipoppy software tools (e.g., user-provided paths needed to run pipelines, container runtime arguments).
+
+Tracker config file
+    The tracker config file lists the expected output files for a given pipeline. Nipoppy checks the presence of these files to mark successful completion of the pipeline. Note that the default tracker configuration files are somewhat minimal and do not check all possible output files generated these pipelines.
+
 Curation status file
 
     ```{note}
@@ -18,7 +29,7 @@ Processing status file
     In older versions of `nipoppy`, this file was called the "bagel file".
     ```
 
-    A tabular file at {{fpath_processing_status}} that indicates the completion status of processing pipelines of interest at the participant-session level. The processing status file is created by the [`nipoppy track`](./cli_reference/track.rst) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/user_guide/cli).
+    A tabular file at {{fpath_processing_status}} that indicates the completion status of processing pipelines of interest at the participant-session level. The processing status file is created by the [`nipoppy track`](./cli_reference/track_processing.rst) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/user_guide/cli).
 
     See {ref}`here <processing-status-schema>` for more information about the columns in the file.
 
@@ -28,6 +39,7 @@ Session ID
 Visit ID
     An identifier for a data collection event, not restricted to imaging data.
 ```
+
 
 ### Session IDs vs visit IDs
 

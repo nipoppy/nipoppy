@@ -1,8 +1,0 @@
-{
-    "plugin": "Linear",
-    "local_threads": 24,
-    "frame_censoring":"FD_censoring=false,FD_threshold=0.05,DVARS_censoring=false,minimum_timepoint=3",
-    "force": true,
-    "input_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]",
-    "output_dir": "[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]"
-}

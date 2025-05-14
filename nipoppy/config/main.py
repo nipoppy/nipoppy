@@ -111,6 +111,15 @@ class PipelineVariables(BaseModel):
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
+    HPC_PREAMBLE: list[str] = Field(
+        default=[],
+        description=(
+            "Optional string (or list of strings) for HPC setup, including job "
+            "scheduler directives or environment initialization. Examples: loading "
+            "modules (e.g., Apptainer/Singularity), activating a Python environment "
+            "with Nipoppy installed, and setting up job-specific variables."
+        ),
+    )
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(
@@ -194,8 +203,10 @@ class Config(_SchemaWithContainerConfig):
 
         - If DATASET_NAME, VISIT_IDS, or SESSION_IDS are present, ignore them and
           emit a deprecation warning
+        - Convert HPC_PREAMBLE to list of strings if needed
         """
         deprecated_keys = ["DATASET_NAME", "VISIT_IDS", "SESSION_IDS"]
+        key_hpc_preamble = "HPC_PREAMBLE"
         if isinstance(data, dict):
             for key in deprecated_keys:
                 if key in data:
@@ -208,6 +219,8 @@ class Config(_SchemaWithContainerConfig):
                         ),
                         DeprecationWarning,
                     )
+            if isinstance(data.get(key_hpc_preamble), str):
+                data[key_hpc_preamble] = [data[key_hpc_preamble]]
         return data
 
     @model_validator(mode="after")
