@@ -81,19 +81,10 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
-        if not self.assume_yes:
-            continue_ = Confirm.ask(
-                "The Nipoppy pipeline will be uploaded/updated on Zenodo"
-                f"{' (sanbox) 'if self.zenodo_api.sandbox else ''},"
-                " this is a [bold]permanent[/] action."
-            )
-            if not continue_:
-                self.logger.info("Zenodo upload cancelled.")
-                raise SystemExit(1)
-
         pipeline_dir = Path(self.dpath_pipeline)
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 
+        # Safeguard before uploading
         try:
             pipeline_config = check_pipeline_bundle(pipeline_dir, logger=self.logger)
         except Exception as e:
@@ -128,9 +119,20 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             if not self.force and len(records) > 0:
                 raise ZenodoAPIError(
                     "It looks like this pipeline already exists in Zenodo. Aborting."
-                    "\nPlease use the --record-id flag to update it or the"
+                    "\nPlease use the --zenodo-id flag to update it or the"
                     " --force flag to force the upload."
                 )
+
+        # Confirm upload
+        if not self.assume_yes:
+            continue_ = Confirm.ask(
+                "The Nipoppy pipeline will be uploaded/updated on Zenodo"
+                f"{' (sandbox) 'if self.zenodo_api.sandbox else ''},"
+                " this is a [bold]permanent[/] action, are you sure?"
+            )
+            if not continue_:
+                self.logger.info("Zenodo upload cancelled.")
+                raise SystemExit(1)
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
