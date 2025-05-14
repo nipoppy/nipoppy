@@ -54,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--tar",
                 "--query",
                 "--size",
+                "--zenodo-id",
                 "--password-file",
                 "--assume-yes",
                 "--sandbox",

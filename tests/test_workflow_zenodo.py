@@ -205,7 +205,7 @@ def test_confirm_upload_no(
 
 
 @pytest.mark.parametrize(
-    "hits, potential_dupliactes",
+    "hits, potential_duplicates",
     [
         [
             [
@@ -219,7 +219,7 @@ def test_confirm_upload_no(
 )
 def test_upload_duplicate_record(
     hits: list,
-    potential_dupliactes: str,
+    potential_duplicates: str,
     zenodo_api_mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -242,7 +242,7 @@ def test_upload_duplicate_record(
         match="It looks like this pipeline already exists in Zenodo. Aborting.",
     ):
         workflow.run()
-        assert potential_dupliactes in caplog.text
+        assert potential_duplicates in caplog.text
 
 
 def test_force_upload_duplicate_record(zenodo_api_mocker: pytest_mock.MockerFixture):
