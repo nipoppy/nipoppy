@@ -53,8 +53,8 @@ class LayoutConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    dpath_nipoppy: DpathInfo = Field(
-        default=DpathInfo(path=Path(NIPOPPY_DIR_NAME), _is_directory=True),
+    dpath_nipoppy: OptionalDpathInfo = Field(
+        default=OptionalDpathInfo(path=Path(NIPOPPY_DIR_NAME), _is_directory=True),
         description="Directory Nippopy specific files",
     )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")

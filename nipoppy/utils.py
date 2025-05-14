@@ -13,7 +13,12 @@ from typing import List, Optional, Sequence
 import bids
 import pandas as pd
 
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    NIPOPPY_DIR_NAME,
+    StrOrPathLike,
+)
 
 # user configs (pipeline configs, invocations, descriptors)
 TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
@@ -416,7 +421,8 @@ def is_nipoppy_project(cwd=Path.cwd()):
     """
     current = cwd.resolve()
     while True:
-        candidate = current / ".nipoppy"
+        candidate = current / NIPOPPY_DIR_NAME
+        print(candidate.is_dir(), candidate)
         if candidate.is_dir():
             return current  # Found
         if current.parent == current:
