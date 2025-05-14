@@ -26,7 +26,7 @@ from nipoppy.tabular.curation_status import (
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils import add_path_timestamp, process_template_str
+from nipoppy.utils import add_path_timestamp, is_nipoppy_project, process_template_str
 
 
 class BaseWorkflow(Base, ABC):
@@ -297,14 +297,20 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         _validate_layout : bool, optional
             If True, validate the layout during setup, by default True
         """
-        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
-
-        self.dpath_root = Path(dpath_root)
+        self.dpath_root = is_nipoppy_project(dpath_root)
+        # `.nipoppy` is not created by default in version 0.3.4 and below
+        if self.dpath_root is False:
+            self.dpath_root = Path(dpath_root)
         self.fpath_layout = fpath_layout
         self._skip_logfile = _skip_logfile
         self._validate_layout = _validate_layout
 
-        self.layout = DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_layout)
+        self.layout = DatasetLayout(
+            dpath_root=self.dpath_root,
+            fpath_config=self.fpath_layout,
+        )
+
+        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
 
     def generate_fpath_log(
         self,
