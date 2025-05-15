@@ -1,0 +1,9 @@
+participant,age,sex,dwi,func
+001,25,F,True,True
+002,26,F,False,True
+003,27,F,True,False
+004,28,F,False,False
+005,29,M,True,True
+006,30,M,False,True
+007,31,M,True,True
+008,32,M,True,False
