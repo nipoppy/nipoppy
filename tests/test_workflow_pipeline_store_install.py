@@ -247,10 +247,10 @@ def test_download_container_failed(
         side_effect=subprocess.CalledProcessError(1, error_message),
     )
 
-    workflow._download_container(pipeline_config)
+    with pytest.raises(SystemExit, match=f"{ReturnCode.UNKNOWN_FAILURE}"):
+        workflow._download_container(pipeline_config)
 
     mocked.assert_called_once()
-    assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
 
     last_record = caplog.records[-1]
     assert last_record.levelno == logging.ERROR
