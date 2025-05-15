@@ -93,6 +93,33 @@ def test_setup(workflow: BidsConversionRunner):
     assert workflow.dpath_pipeline_work.exists()
 
 
+@pytest.mark.parametrize("update_status", [True, False])
+def test_run_single(
+    update_status, workflow: BidsConversionRunner, mocker: pytest_mock.MockerFixture
+):
+    workflow.curation_status_table = CurationStatusTable()
+    workflow.pipeline_step_config.UPDATE_STATUS = update_status
+
+    mocked_process_container_config = mocker.patch.object(
+        workflow, "process_container_config"
+    )
+    mocked_launch_boutiques_run = mocker.patch.object(workflow, "launch_boutiques_run")
+
+    mocked_set_status = mocker.patch.object(
+        workflow.curation_status_table, "set_status"
+    )
+
+    workflow.run_single("01", "1")
+
+    mocked_process_container_config.assert_called_once()
+    mocked_launch_boutiques_run.assert_called_once()
+
+    if update_status:
+        mocked_set_status.assert_called_once()
+    else:
+        mocked_set_status.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "table",
     [

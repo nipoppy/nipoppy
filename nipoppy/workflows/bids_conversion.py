@@ -139,12 +139,13 @@ class BidsConversionRunner(PipelineRunner):
         )
 
         # update status
-        self.curation_status_table.set_status(
-            participant_id=participant_id,
-            session_id=session_id,
-            col=self.curation_status_table.col_in_bids,
-            status=True,
-        )
+        if self.pipeline_step_config.UPDATE_STATUS:
+            self.curation_status_table.set_status(
+                participant_id=participant_id,
+                session_id=session_id,
+                col=self.curation_status_table.col_in_bids,
+                status=True,
+            )
 
         return invocation_and_descriptor
 
@@ -156,8 +157,7 @@ class BidsConversionRunner(PipelineRunner):
 
         - Write updated curation status file
         """
-        update_status = self.pipeline_step_config.UPDATE_STATUS
-        if update_status and not self.simulate:
+        if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.save_tabular_file(
                 self.curation_status_table, self.layout.fpath_curation_status
             )
