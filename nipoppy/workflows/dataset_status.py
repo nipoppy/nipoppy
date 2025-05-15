@@ -5,9 +5,9 @@ from typing import Optional
 
 import pandas as pd
 from rich import box
-from rich.console import Console
 from rich.table import Table
 
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.processing_status import STATUS_SUCCESS
@@ -230,8 +230,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
         df = status_df.copy().reset_index()
         df = df.sort_values(by=self.manifest.col_session_id)
 
-        console = Console()
-
         # Define the colors for the columns
         column_colors = {
             "session_id": None,
@@ -276,4 +274,4 @@ class StatusWorkflow(BaseDatasetWorkflow):
             row = [str(x) for x in value_list]
             table.add_row(*row)
 
-        console.print(table)
+        CONSOLE_STDOUT.print_with_indent(table)

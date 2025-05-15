@@ -3,9 +3,8 @@
 from pathlib import Path
 from typing import Optional
 
-from rich.prompt import Confirm
-
 from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import LogColor, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
@@ -130,10 +129,10 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
         # Confirm upload
         if not self.assume_yes:
-            continue_ = Confirm.ask(
+            continue_ = CONSOLE_STDOUT.confirm_with_indent(
                 "The Nipoppy pipeline will be uploaded/updated on Zenodo"
                 f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
-                " this is a [bold]permanent[/] action, are you sure?"
+                " this is a [bold]permanent[/] action, are you sure?",
             )
             if not continue_:
                 self.logger.info("Zenodo upload cancelled.")
