@@ -88,7 +88,7 @@ Running this command will download all pipeline configuration files for fMRIPrep
 
 ## Update pipeline variables in the global config file (if needed)
 
-Some pipelines require user-specified paths to files that Nipoppy is not aware of, for example a FreeSurfer license file or other configuration files. Nipoppy handle these cases through the use of **pipeline variables** and allows users to set them in the global config file. For example, when installing fMRIPRep 24.1.1 (Zenodo ID: 15306677), we see the following output:
+Some pipelines require user-specified paths to files that Nipoppy is not aware of, for example a FreeSurfer license file or other configuration files. Nipoppy handles these cases through the use of **pipeline variables** and allows users to set them in the global config file. For example, when installing fMRIPRep 24.1.1 (Zenodo ID: 15306677), we see the following output:
 
 ```
 INFO     Adding 2 variable(s) to the global config file:

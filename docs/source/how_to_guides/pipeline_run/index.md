@@ -39,11 +39,13 @@ $ nipoppy <SUBCOMMAND> \
     --pipeline <PIPELINE_NAME>
 ```
 
+Where `<SUBCOMMAND>` is either `bidsify`, `process`, or `extract`.
+
 If there are multiple versions for the same pipeline in the global configuration file, use `--pipeline-version` to specify the desired version. By default, the latest version out of the installed pipelines will be used.
 
 Similarly, if `--pipeline-step` is not specified, the first step defined in the pipeline configuration file will be used.
 
-The pipeline can also be run on a single participant and/or session (useful for testing pipelines/configurations):
+The above command will run the pipeline on all participants and/or sessions who have not already completed the pipeline (according to the {term}`curation status <curation status file>` and {term}`processing status <processing status file>` files). It is also possible to restrict the run to a single participant and/or session, which can be useful for testing pipelines/configurations:
 
 ```console
 $ nipoppy <SUBCOMMAND> \
