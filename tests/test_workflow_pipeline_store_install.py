@@ -187,7 +187,9 @@ def test_download_container(
     )
 
 
+@pytest.mark.parametrize("confirm_download", [True, False])
 def test_download_container_confirm_true(
+    confirm_download: bool,
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcPipelineConfig,
     mocker: pytest_mock.MockFixture,
@@ -195,32 +197,19 @@ def test_download_container_confirm_true(
     workflow.assume_yes = False
 
     mocked_confirm_ask = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.Confirm.ask", return_value=True
+        "nipoppy.workflows.pipeline_store.install.Confirm.ask",
+        return_value=confirm_download,
     )
 
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 
     workflow._download_container(pipeline_config)
     mocked_confirm_ask.assert_called_once()
-    mocked_run_command.assert_called_once()
 
-
-def test_download_container_confirm_false(
-    workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
-    mocker: pytest_mock.MockFixture,
-):
-    workflow.assume_yes = False
-
-    mocked_confirm_ask = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.Confirm.ask", return_value=False
-    )
-
-    mocked_run_command = mocker.patch.object(workflow, "run_command")
-
-    workflow._download_container(pipeline_config)
-    mocked_confirm_ask.assert_called_once()
-    mocked_run_command.assert_not_called()
+    if confirm_download:
+        mocked_run_command.assert_called_once()
+    else:
+        mocked_run_command.assert_not_called()
 
 
 def test_download_container_status(

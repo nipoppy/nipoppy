@@ -155,7 +155,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
                     f" to {fpath_container}: {exception}"
                 )
-                self.return_code = ReturnCode.UNKNOWN_FAILURE
+                raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
 
     def run_main(self):
         """Install a pipeline.
