@@ -1,13 +1,13 @@
+import json
 from pathlib import Path
 
 import pytest
 
+from nipoppy.config.pipeline import PipelineTypeEnum
+from nipoppy.env import TEMPLATE_PIPELINE_PATH
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )
-from tests.conftest import DPATH_TEST_DATA
-
-TEMPLATE_BUNDLE = DPATH_TEST_DATA / "template_pipeline_bundle"
 
 
 @pytest.fixture(scope="function")
@@ -16,37 +16,68 @@ def target(tmp_path: Path) -> Path:
     return tmp_path / "target"
 
 
-def test_create(target: Path):
+@pytest.mark.parametrize(
+    "type_",
+    [
+        PipelineTypeEnum.BIDSIFICATION,
+        PipelineTypeEnum.PROCESSING,
+        PipelineTypeEnum.EXTRACTION,
+    ],
+)
+def test_create(target: Path, type_: str):
     """Test the creation of a pipeline bundle."""
     assert not target.exists()
 
     # Run the workflow
     PipelineCreateWorkflow(
         target=target,
+        type_=type_,
     ).run_main()
 
     # Check the bundle content exists and is correct
     assert target.joinpath("descriptor.json").is_file()
     assert (
-        target.joinpath("descriptor.json").read_text()
-        == TEMPLATE_BUNDLE.joinpath("descriptor.json").read_text()
+        target.joinpath("descriptor.json").read_text().strip()
+        == TEMPLATE_PIPELINE_PATH.joinpath("descriptor.json").read_text().strip()
     )
 
     assert target.joinpath("invocation.json").is_file()
     # Cannot compare the content of the invocation.json file
-    # because boutiques generates random args values
-
-    assert target.joinpath("tracker.json").is_file()
+    # because boutiques generates random args values.
+    # Instead, we compare the keys of the JSON object
     assert (
-        target.joinpath("tracker.json").read_text()
-        == TEMPLATE_BUNDLE.joinpath("tracker.json").read_text()
+        json.loads(target.joinpath("invocation.json").read_text()).keys()
+        == json.loads(
+            TEMPLATE_PIPELINE_PATH.joinpath("invocation.json").read_text()
+        ).keys()
+    )
+
+    assert target.joinpath("hpc.json").is_file()
+    assert (
+        target.joinpath("hpc.json").read_text().strip()
+        == TEMPLATE_PIPELINE_PATH.joinpath("hpc.json").read_text().strip()
+    )
+
+    assert target.joinpath("zenodo.json").is_file()
+    assert (
+        target.joinpath("zenodo.json").read_text().strip()
+        == TEMPLATE_PIPELINE_PATH.joinpath("zenodo.json").read_text().strip()
     )
 
     assert target.joinpath("config.json").is_file()
     assert (
-        target.joinpath("config.json").read_text()
-        == TEMPLATE_BUNDLE.joinpath("config.json").read_text()
+        target.joinpath("config.json").read_text().strip()
+        == TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
+        .read_text()
+        .strip()
     )
+
+    if type_ == PipelineTypeEnum.PROCESSING:
+        assert target.joinpath("tracker.json").is_file()
+        assert (
+            target.joinpath("tracker.json").read_text().strip()
+            == TEMPLATE_PIPELINE_PATH.joinpath("tracker.json").read_text().strip()
+        )
 
 
 def test_create_already_exists(target: Path):
@@ -57,6 +88,7 @@ def test_create_already_exists(target: Path):
     with pytest.raises(IsADirectoryError, match="Target directory .* already exists"):
         PipelineCreateWorkflow(
             target=target,
+            type_=PipelineTypeEnum.PROCESSING,
         ).run_main()
 
 
