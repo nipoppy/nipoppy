@@ -12,7 +12,7 @@ To show all available pipelines, run the command without any argument:
 $ nipoppy pipeline search
 ```
 
-Here is the output obtained at the time of writing:
+Here is the (trimmed) output obtained at the time of writing:
 
 <!-- TODO auto-generate this table when building docs? -->
 
@@ -49,7 +49,7 @@ $ nipoppy pipeline search fmriprep
 See [this guide](https://help.zenodo.org/guides/search/) for the full Zenodo search syntax. You may need to add quotes around the query string if it contains spaces or other special characters.
 ```
 
-At the time of writing, the above command prints the following table:
+At the time of writing, the above command prints the following table (trimmed):
 
 ```
             ╷                           ╷
