@@ -32,13 +32,13 @@ class ZenodoAPI:
     def __init__(
         self,
         sandbox: bool = False,
-        access_token: Optional[str] = None,
+        password_file: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
     ):
+        self.sandbox = sandbox
         self.api_endpoint = (
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
-        self.access_token = access_token
 
         if logger is None:
             self.logger = get_logger(__name__)
@@ -46,12 +46,16 @@ class ZenodoAPI:
             self.logger = logger
 
         # Access token is required for uploading files
-        if self.access_token is not None:
-            self.headers = {
-                "Authorization": f"Bearer {self.access_token}",
-            }
-        else:
-            self.headers = {}
+        self.password_file = password_file
+        self.access_token = None
+        self.headers: dict[str, str] = dict()
+        if self.password_file is not None:
+            self.access_token = self.password_file.read_text().strip()
+            self.set_authorization(self.access_token)
+
+    def set_authorization(self, access_token: str):
+        """Set the headers for the ZenodoAPI instance."""
+        self.headers.update({"Authorization": f"Bearer {access_token}"})
 
     def set_logger(self, logger: logging.Logger):
         """Set the logger for the ZenodoAPI instance."""
@@ -316,12 +320,11 @@ class ZenodoAPI:
 
         full_query = query
         for keyword in keywords:
-            full_query += f" AND metadata.subjects.subject:{keyword}"
+            full_query += f' AND metadata.subjects.subject:"{keyword}"'
         # handle case where initial query is empty
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
-
         response = httpx.get(
             f"{self.api_endpoint}/records",
             headers=self.headers,
@@ -330,5 +333,18 @@ class ZenodoAPI:
                 "size": size,
             },
         )
-
         return response.json()["hits"]
+
+    def get_record_metadata(self, record_id: str):
+        """Get the metadata of a Zenodo record."""
+        record_id = record_id.removeprefix("zenodo.")
+        response = httpx.get(
+            f"{self.api_endpoint}/records/{record_id}",
+            headers=self.headers,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get metadata for zenodo.{record_id}: {response.json()}"
+            )
+
+        return response.json()["metadata"]

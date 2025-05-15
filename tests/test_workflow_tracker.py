@@ -80,6 +80,7 @@ def tracker(tmp_path: Path):
 def test_run_setup(tracker: PipelineTracker):
     tracker.run_setup()
     assert tracker.processing_status_table.empty
+    assert not tracker.dpath_pipeline.exists(), "Tracker should not create directory"
 
 
 def test_run_setup_existing_processing_status_file(tracker: PipelineTracker):

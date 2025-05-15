@@ -380,7 +380,6 @@ def test_invocation(
     invocation,
     tmp_path: Path,
     workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
@@ -391,12 +390,7 @@ def test_invocation(
     workflow.pipeline_step_config.INVOCATION_FILE = fpath_invocation.name
     workflow.dpath_pipeline_bundle = fpath_invocation.parent
 
-    mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
-
     assert workflow.invocation == invocation
-
-    # make sure substitutions are processed
-    mocked_process_template_json.assert_called_once()
 
 
 def test_invocation_none(workflow: PipelineWorkflow):
@@ -869,6 +863,10 @@ def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
 @pytest.mark.parametrize("dry_run", [True, False])
 def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool):
     workflow.dry_run = dry_run
+
+    assert len(workflow.dpaths_to_check) == 0
+    workflow.dpaths_to_check = [workflow.dpath_pipeline]
+
     workflow.run_setup()
     assert workflow.dpath_pipeline.exists() == (not dry_run)
 

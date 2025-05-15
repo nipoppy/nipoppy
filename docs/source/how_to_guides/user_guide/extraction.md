@@ -18,7 +18,7 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
 - Processed imaging data in {{dpath_pipeline_output}} for the relevant processing pipeline(s) that the extractor depends on
     - See <project:processing.md>
 - An {term}`processing status file` with completion statuses for the processing pipeline(s) associated with the extraction pipeline.
-    - This is obtained by running `nipoppy track` (see <project:tracking.md>)
+    - This is obtained by running `nipoppy track-processing` (see <project:tracking.md>)
 
 ### Data directories
 
