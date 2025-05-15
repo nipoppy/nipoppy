@@ -138,6 +138,24 @@ def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
             },
             False,
         ),
+        (
+            BasePipelineConfig(
+                PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
+                NAME="FMRIPREP",
+                VERSION="24.1.1",
+                SCHEMA_VERSION="1",
+            ),
+            {
+                "keywords": [
+                    "Nipoppy",
+                    "pipeline_type:processing",
+                    "pipeline_name:fmriprep",
+                    "pipeline_version:24.1.1",
+                    "schema_version:1",
+                ]
+            },
+            True,
+        ),
     ],
 )
 def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
