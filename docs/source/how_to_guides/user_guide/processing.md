@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Running processing pipelines
 
 Just like with the BIDS conversion pipelines, Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run image processing pipelines. By default, new Nipoppy datasets (as created with [`nipoppy init`](<project:../../cli_reference/init.rst>)) are populated with descriptor files and default invocation files for the following processing pipelines:

@@ -124,7 +124,7 @@ def test_container_config_no_extra_fields():
     [
         {},
         {"FILE": "path/to/container.sif"},
-        {"URI": "docker://my/container"},
+        {"FILE": "path/to/container.sif", "URI": "docker://my/container"},
     ],
 )
 def test_container_info(data):
@@ -137,6 +137,11 @@ def test_container_info(data):
 def test_container_info_no_extra_fields():
     with pytest.raises(ValidationError):
         ContainerInfo(not_a_field="a")
+
+
+def test_container_info_file_exists_if_uri_exists():
+    with pytest.raises(ValidationError, match="FILE must be specified if URI is set"):
+        ContainerInfo(URI="docker://my/container")
 
 
 def test_schema_with_container_config():
