@@ -1,13 +1,40 @@
 """Rich console with padding to align output with logger output."""
 
-import types
+from __future__ import annotations
 
 from rich.console import Console, RenderableType
 from rich.padding import Padding
 from rich.prompt import Confirm
 from rich.status import Status
+from rich.style import StyleType
 
 _INDENT = 9  # match Rich logger offset
+
+
+class _Status(Status):
+    """Add utilities to indent output."""
+
+    def __init__(
+        self,
+        status: RenderableType,
+        *,
+        console: Console | None = None,
+        spinner_style: StyleType = "status.spinner",
+        speed: float = 1,
+        refresh_per_second: float = 12.5,
+    ):
+        super().__init__(
+            status=Padding.indent(status, _INDENT - 2),
+            console=console,
+            spinner="dots",  # do not allow other spinners
+            spinner_style=spinner_style,
+            speed=speed,
+            refresh_per_second=refresh_per_second,
+        )
+
+    def update(self, status: RenderableType) -> None:
+        """Update the status with indenting."""
+        super().update(Padding.indent(status, _INDENT - 2))
 
 
 class _Console(Console):
@@ -21,22 +48,13 @@ class _Console(Console):
         """Print a table with indenting."""
         super().print(Padding.indent(renderable, _INDENT), **kwargs)
 
-    def status_with_indent(self, status, speed=1.0, refresh_per_second=12.5) -> Status:
+    def status_with_indent(self, status, **kwargs) -> _Status:
         """Override status to use padding."""
-
-        def _padded_update(self: Status, status: RenderableType):
-            return self.update(Padding.indent(status, _INDENT - 2))
-
-        status = super().status(
-            Padding.indent(status, _INDENT - 2),
-            spinner="dots",
-            spinner_style="status.spinner",
-            speed=speed,
-            refresh_per_second=refresh_per_second,
+        return _Status(
+            status=status,
+            console=self,
+            **kwargs,
         )
-        # add an update method to the status object that uses padding too
-        setattr(status, "padded_update", types.MethodType(_padded_update, status))
-        return status
 
 
 CONSOLE_STDOUT = _Console(stderr=False)

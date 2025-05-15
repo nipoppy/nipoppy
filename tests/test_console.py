@@ -1,24 +1,20 @@
 """Tests for nipoppy.console module."""
 
 import io
+import time
 
 import pytest
 from rich.logging import RichHandler
 from rich.table import Table
 
-from nipoppy.console import (
-    _INDENT,
-    CONSOLE_STDERR,
-    CONSOLE_STDOUT,
-    _Console,
-)
+from nipoppy.console import _INDENT, CONSOLE_STDERR, CONSOLE_STDOUT, _Console, _Status
 from nipoppy.logger import get_logger
 
 
 @pytest.fixture
 def console():
     """Fixture for Console instance."""
-    return _Console()
+    return _Console(force_terminal=True)
 
 
 def test_global_consoles():
@@ -26,7 +22,7 @@ def test_global_consoles():
     assert CONSOLE_STDERR.stderr is True
 
 
-def test_console_with_padding_confirm(console: _Console, capsys: pytest.CaptureFixture):
+def test_console_confirm_with_indent(console: _Console, capsys: pytest.CaptureFixture):
     # check that no newline is added at the end of the prompt
     message = "test message"
     console.confirm_with_indent(message, stream=io.StringIO("y\n"))
@@ -35,9 +31,7 @@ def test_console_with_padding_confirm(console: _Console, capsys: pytest.CaptureF
     assert not captured.out.endswith("\n")
 
 
-def test_console_with_padding_print_table(
-    console: _Console, capsys: pytest.CaptureFixture
-):
+def test_console_print_with_indent(console: _Console, capsys: pytest.CaptureFixture):
     table = Table()
     table.add_column("Column 1")
     table.add_row("Row 1")
@@ -48,7 +42,7 @@ def test_console_with_padding_print_table(
     assert captured.out.endswith("\n")
 
 
-def test_console_with_padding_loghandler_no_indent(capsys: pytest.CaptureFixture):
+def test_console_no_indent_in_log(capsys: pytest.CaptureFixture):
     logger = get_logger("test_logger")
     for handler in logger.handlers:
         if isinstance(handler, RichHandler):
@@ -60,3 +54,26 @@ def test_console_with_padding_loghandler_no_indent(capsys: pytest.CaptureFixture
     captured = capsys.readouterr()
     assert not captured.out.startswith(" " * _INDENT)
     assert captured.out[_INDENT:].startswith(message)  # check alignment
+
+
+def test_console_status_with_indent(console: _Console):
+    assert isinstance(console.status_with_indent(""), _Status)
+
+
+def test_status_context_manager(console: _Console, capsys: pytest.CaptureFixture):
+    message = "test status"
+    with _Status(message, console=console):
+        time.sleep(0.1)
+
+    captured = capsys.readouterr()
+    assert f"{' ' * (_INDENT-2)}{message}" in captured.out
+
+
+def test_status_update(console: _Console, capsys: pytest.CaptureFixture):
+    message = "test update"
+    with console.status_with_indent("tmp") as status:
+        time.sleep(0.1)
+        status.update(message)
+
+    captured = capsys.readouterr()
+    assert f"{' '* (_INDENT-2)}{message}" in captured.out
