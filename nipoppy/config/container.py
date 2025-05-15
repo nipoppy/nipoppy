@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.logger import get_logger
@@ -114,6 +114,22 @@ class ContainerInfo(BaseModel):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the container info after instantiation.
+
+        Specifically:
+
+        - If URI is specified, FILE must also be specified
+        """
+        if self.URI is not None and self.FILE is None:
+            raise ValueError(
+                f"FILE must be specified if URI is set, got {self.FILE} and "
+                f"{self.URI} respectively"
+            )
+        return self
 
 
 class _SchemaWithContainerConfig(BaseModel):
