@@ -180,7 +180,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
-        return [self.dpath_pipeline]
+        return []
 
     @cached_property
     def dpath_pipeline(self) -> Path:
@@ -300,12 +300,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
 
-        # NOTE: user-defined substitutions take precedence over the pipeline variables
         invocation = self.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
             pipeline_name=self.pipeline_config.NAME,
             pipeline_version=self.pipeline_config.VERSION,
-            json_obj=self.process_template_json(invocation),
+            json_obj=invocation,
         )
         return invocation
 

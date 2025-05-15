@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID
+from nipoppy.env import FAKE_SESSION_ID, NIPOPPY_DIR_NAME
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
@@ -30,7 +30,11 @@ def assert_layout_creation(workflow, dpath_root):
     # check that all directories have been created
     for path in ATTR_TO_DPATH_MAP.values():
         assert Path(dpath_root, path).exists()
-        assert Path(dpath_root, path, "README.md").exists()
+        if path == NIPOPPY_DIR_NAME:
+            # Nipoppy project directory doesn't have a README file.
+            continue
+        else:
+            assert Path(dpath_root, path, "README.md").exists()
 
     # check that sample config files have been copied
     assert Path(dpath_root, FPATH_CONFIG).exists()

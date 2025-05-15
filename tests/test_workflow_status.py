@@ -395,3 +395,23 @@ def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     status_df = workflow.run_main()
 
     assert status_df is not None
+
+
+@pytest.mark.parametrize(
+    "processing_status_table",
+    [ProcessingStatusTable(), make_processing_status_table()[0]],
+)
+def test_run_sub_directory(
+    dpath_root: Path, processing_status_table: ProcessingStatusTable
+):
+    derivatives = dpath_root.joinpath("derivatives")
+    derivatives.mkdir(parents=True, exist_ok=True)
+
+    workflow = StatusWorkflow(dpath_root=derivatives)
+    workflow.config = get_config()
+    workflow.manifest = make_manifest(n_participants=10)[0]
+    workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
+    workflow.processing_status_table = processing_status_table
+    status_df = workflow.run_main()
+
+    assert status_df is not None
