@@ -76,4 +76,4 @@ def test_status_update(console: _Console, capsys: pytest.CaptureFixture):
         status.update(message)
 
     captured = capsys.readouterr()
-    assert f"{' '* (_INDENT - 2)}{message}" in captured.out
+    assert f"{' ' * (_INDENT - 2)}{message}" in captured.out
