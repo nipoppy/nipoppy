@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.pipeline import PipelineTypeEnum
-from nipoppy.env import TEMPLATE_PIPELINE_PATH
+from nipoppy.env import TEMPLATE_PIPELINE_PATH, PipelineTypeEnum
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )

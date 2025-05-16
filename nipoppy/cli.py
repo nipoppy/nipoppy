@@ -8,11 +8,11 @@ from pathlib import Path
 import rich_click as click
 
 from nipoppy._version import __version__
-from nipoppy.config.pipeline import PipelineTypeEnum
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     PROGRAM_NAME,
+    PipelineTypeEnum,
     ReturnCode,
 )
 from nipoppy.logger import get_logger

@@ -6,10 +6,7 @@ from typing import Optional
 
 import boutiques as bosh
 
-from nipoppy.config.pipeline import (
-    PipelineTypeEnum,
-)
-from nipoppy.env import TEMPLATE_PIPELINE_PATH, LogColor
+from nipoppy.env import TEMPLATE_PIPELINE_PATH, LogColor, PipelineTypeEnum
 from nipoppy.workflows.base import BaseWorkflow
 
 
