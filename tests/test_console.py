@@ -25,9 +25,15 @@ def test_global_consoles():
 def test_console_confirm_with_indent(console: _Console, capsys: pytest.CaptureFixture):
     # check that no newline is added at the end of the prompt
     message = "test message"
-    console.confirm_with_indent(message, stream=io.StringIO("y\n"))
+    # use a prompt that has multiple lines
+    console.confirm_with_indent("\n".join([message] * 2), stream=io.StringIO("y\n"))
     captured = capsys.readouterr()
-    assert captured.out.startswith(f"{' ' * _INDENT}{message}")
+    assert all(
+        [
+            line.startswith(f"{' ' * _INDENT}{message}")
+            for line in captured.out.splitlines()
+        ]
+    )
     assert not captured.out.endswith("\n")
 
 

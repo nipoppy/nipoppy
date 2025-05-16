@@ -2,13 +2,36 @@
 
 from __future__ import annotations
 
-from rich.console import Console, RenderableType
+from rich.console import Console, RenderableType, RenderResult
 from rich.padding import Padding
 from rich.prompt import Confirm
 from rich.status import Status
 from rich.style import StyleType
 
 _INDENT = 9  # match Rich logger offset
+
+
+class _PaddingWithoutNewline(Padding):
+    """
+    Padding that does not add a newline or spaces at the end.
+
+    Used to add indentation to the prompt in _Confirm without adding a newline.
+    """
+
+    def __rich_console__(self, *args, **kwargs) -> RenderResult:
+        """Return a list of rich.segment.Segment objects to be printed."""
+        segments = list(super().__rich_console__(*args, **kwargs))
+
+        # remove trailing spaces and newlines
+        while len(segments) > 0 and segments[-1].text.strip() == "":
+            segments.pop()
+        return segments
+
+
+class _Confirm(Confirm):
+    def make_prompt(self, *args) -> RenderableType:
+        """Override to add indenting."""
+        return _PaddingWithoutNewline(super().make_prompt(*args), (0, 0, 0, _INDENT))
 
 
 class _Status(Status):
@@ -26,7 +49,7 @@ class _Status(Status):
         super().__init__(
             status=Padding.indent(status, _INDENT - 2),
             console=console,
-            spinner="dots",  # do not allow other spinners
+            spinner="dots",  # do not allow other spinners since the indent is fixed
             spinner_style=spinner_style,
             speed=speed,
             refresh_per_second=refresh_per_second,
@@ -42,10 +65,10 @@ class _Console(Console):
 
     def confirm_with_indent(self, prompt: str, **kwargs) -> bool:
         """Prompt for confirmation with indenting."""
-        return Confirm.ask(f"{' ' * _INDENT}{prompt}", console=self, **kwargs)
+        return _Confirm.ask(prompt, console=self, **kwargs)
 
     def print_with_indent(self, renderable: RenderableType, **kwargs) -> None:
-        """Print a table with indenting."""
+        """Print an object with indenting."""
         super().print(Padding.indent(renderable, _INDENT), **kwargs)
 
     def status_with_indent(self, status, **kwargs) -> _Status:
