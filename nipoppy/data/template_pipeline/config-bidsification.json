@@ -1,6 +1,6 @@
 {
-    "NAME": "Tool Name",
-    "VERSION": "x.y.z",
+    "NAME": "tool name",
+    "VERSION": "v0.1.0",
     "CONTAINER_INFO": {
         "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
         "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"

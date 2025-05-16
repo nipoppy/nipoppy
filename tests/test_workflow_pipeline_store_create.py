@@ -8,6 +8,7 @@ from nipoppy.env import TEMPLATE_PIPELINE_PATH
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )
+from tests.conftest import TEST_PIPELINE
 
 
 @pytest.fixture(scope="function")
@@ -24,7 +25,7 @@ def target(tmp_path: Path) -> Path:
         PipelineTypeEnum.EXTRACTION,
     ],
 )
-def test_create(target: Path, type_: str):
+def test_create(target: Path, type_: PipelineTypeEnum):
     """Test the creation of a pipeline bundle."""
     assert not target.exists()
 
@@ -92,7 +93,28 @@ def test_create_already_exists(target: Path):
         ).run_main()
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_create_from_descriptor(target: Path):
     """Test the behavior when the bundle is created from a descriptor."""
-    ...
+    source_descriptor = TEST_PIPELINE / "descriptor.json"
+
+    PipelineCreateWorkflow(
+        target=target,
+        type_=PipelineTypeEnum.PROCESSING,
+        source_descriptor=source_descriptor,
+    ).run_main()
+
+    assert (
+        target.joinpath("descriptor.json").read_text().strip()
+        == source_descriptor.read_text().strip()
+    )
+
+    assert set(json.loads(target.joinpath("invocation.json").read_text()).keys()) == {
+        "bids_dir",
+        "output_dir",
+        "analysis_level",
+    }
+
+    descriptor = json.loads(target.joinpath("descriptor.json").read_text())
+    config = json.loads(target.joinpath("config.json").read_text())
+    assert config["NAME"] == descriptor["name"]
+    assert config["VERSION"] == descriptor["tool-version"]

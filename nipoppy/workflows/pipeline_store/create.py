@@ -1,5 +1,6 @@
 """Workflow for pipeline validate command."""
 
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -47,9 +48,9 @@ class PipelineCreateWorkflow(BaseWorkflow):
         )
         self.logger.warning("Edit the files to customize your pipeline.")
         self.logger.info(
-            "You can run `nipoppy validate` to check your pipeline configuration"
-            "and `nipoppy upload` to upload it to Zenodo."
-            "It is recommended to test the pipeline with a small dataset before"
+            "You can run [magenta]nipoppy validate[/] to check your pipeline"
+            " configuration and [magenta]nipoppy upload[/] to upload it to Zenodo."
+            "\nIt is recommended to test the pipeline with a small dataset before"
             " uploading it to Zenodo."
         )
 
@@ -70,7 +71,11 @@ def create_bundle(
         target.mkdir(parents=True, exist_ok=True)
 
     descriptor_path = target / "descriptor.json"
-    bosh.create(descriptor_path.as_posix())
+    if source_descriptor:
+        descriptor_path.write_text(source_descriptor.read_text())
+    else:
+        bosh.create(descriptor_path.as_posix())
+
     target.joinpath("invocation.json").write_text(
         bosh.example(descriptor_path.as_posix())
     )
@@ -80,12 +85,18 @@ def create_bundle(
     target.joinpath("zenodo.json").write_text(
         TEMPLATE_PIPELINE_PATH.joinpath("zenodo.json").read_text()
     )
-    target.joinpath("config.json").write_text(
+
+    # Populate the config.json using descriptor information
+    config = json.loads(
         TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json").read_text()
     )
+    descriptor = json.loads(descriptor_path.read_text())
+    config["NAME"] = descriptor["name"]
+    config["VERSION"] = descriptor["tool-version"]
+    target.joinpath("config.json").write_text(json.dumps(config, indent=4))
 
+    # Only PROCESSING pipelines have a tracker.json file
     if PipelineTypeEnum.PROCESSING:
-        # Tracker
         target.joinpath("tracker.json").write_text(
             TEMPLATE_PIPELINE_PATH.joinpath("tracker.json").read_text()
         )
