@@ -32,20 +32,20 @@ The [`nipoppy init`](../cli_reference/init) command copies examples of these fil
 (customizing-config)=
 ### Customizing the global configuration file
 
-The global configuration file at {{fpath_config}} contains high-level essential configurations for running Nipoppy commands. As pipelines are installed into the dataset, this file may need to be modified to set pipeline-specific variables.
-
-````{admonition} The example global config file
----
-class: dropdown
----
-Here is the default content of {{fpath_config}}:
+The global configuration file at {{fpath_config}} contains high-level essential configurations for running Nipoppy commands. It starts out like this:
 ```{literalinclude} ../../../nipoppy/data/examples/sample_global_config.json
 ---
 linenos: True
 language: json
 ---
 ```
-````
+
+By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
+- If you are on a system that still uses Singularity (which has been renamed to Apptainer), you need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
+- If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_ROOT]]/containers"` by the full path to that shared directory. Alternatively, you can create a symlink from `<DATASET_ROOT>/containers` to that directory (then this line in the configuration can be deleted).
+
+As pipelines are installed into the dataset, this file may need to be modified to set pipeline-specific variables.
+
 
 ### Generating the manifest file
 
