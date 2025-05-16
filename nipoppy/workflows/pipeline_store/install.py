@@ -136,9 +136,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 # use stderr for status messages so that the Apptainer/Singularity
                 # output does not break the status display
                 # ("apptainer/singularity pull" seems to only print to stderr)
-                with CONSOLE_STDERR.status(
+                with CONSOLE_STDERR.status_with_indent(
                     "Downloading the container, this can take a while..."
-                ) as status:
+                ):
                     self.run_command(
                         [
                             self.config.CONTAINER_CONFIG.COMMAND,
@@ -147,7 +147,6 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                             pipeline_config.CONTAINER_INFO.URI,
                         ]
                     )
-                    status.update(f"Container downloaded to {fpath_container}")
             except subprocess.CalledProcessError as exception:
                 self.logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
