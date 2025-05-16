@@ -5,6 +5,7 @@ import logging
 import pandas as pd
 import pytest
 import pytest_mock
+from rich.table import Table
 
 from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -78,7 +79,9 @@ def test_run_main(
         return_value={"hits": hits, "total": 2},
     )
     mocked_hits_to_df = mocker.patch.object(workflow, "_hits_to_df", return_value=df)
-    mocked_df_to_table = mocker.patch.object(workflow, "_df_to_table")
+    mocked_df_to_table = mocker.patch.object(
+        workflow, "_df_to_table", return_value=Table()
+    )
 
     workflow.run()
 
