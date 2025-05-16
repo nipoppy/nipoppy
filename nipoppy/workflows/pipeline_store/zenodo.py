@@ -178,7 +178,7 @@ def _is_same_pipeline(
     return all(
         [
             keywords.count(f"pipeline_type:{pipeline_type}"),
-            keywords.count(f"pipeline_name:{pipeline_name}"),
+            keywords.count(f"pipeline_name:{pipeline_name.lower()}"),
             keywords.count(f"pipeline_version:{pipeline_version}"),
         ]
     )
