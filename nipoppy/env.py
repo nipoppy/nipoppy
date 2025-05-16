@@ -3,12 +3,15 @@
 import os
 import sys
 from enum import Enum
+from pathlib import Path
 from typing import TypeVar
 
 StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 PROGRAM_NAME = "nipoppy"
 NIPOPPY_DIR_NAME = ".nipoppy"
+
+TEMPLATE_PIPELINE_PATH = Path(__file__).parent / "data" / "template_pipeline"
 
 # pipeline config schema version
 CURRENT_SCHEMA_VERSION = "1"
