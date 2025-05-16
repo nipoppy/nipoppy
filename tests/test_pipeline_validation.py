@@ -63,7 +63,17 @@ def test_load_pipeline_config_file():
             "Pipeline configuration file .* is not a valid JSON file",
         ),
         (
-            DPATH_TEST_DATA / "pipeline_config-invalid.json",
+            DPATH_TEST_DATA / "pipeline_config-invalid1.json",
+            RuntimeError,
+            "Pipeline configuration file .* is invalid",
+        ),
+        (
+            DPATH_TEST_DATA / "pipeline_config-invalid2.json",
+            RuntimeError,
+            "Pipeline configuration file .* is invalid",
+        ),
+        (
+            DPATH_TEST_DATA / "pipeline_config-invalid3.json",
             RuntimeError,
             "Pipeline configuration file .* is invalid",
         ),
