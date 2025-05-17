@@ -9,12 +9,23 @@ import boutiques
 from pydantic_core import ValidationError
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.config.pipeline import (
+    BasePipelineConfig,
+    BidsPipelineConfig,
+    ExtractionPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import load_json
+
+PIPELINE_TYPE_TO_CLASS = {
+    PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
+    PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
+    PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
+}
 
 
 def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
@@ -35,6 +46,7 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
 
     try:
         config = BasePipelineConfig(**config_dict)
+        config = PIPELINE_TYPE_TO_CLASS[config.PIPELINE_TYPE](**config_dict)
     except ValidationError as exception:
         raise RuntimeError(
             f"Pipeline configuration file {fpath_config} is invalid:\n{exception}"
