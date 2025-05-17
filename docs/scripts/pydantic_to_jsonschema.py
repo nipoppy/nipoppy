@@ -5,7 +5,13 @@ import json
 from pathlib import Path
 
 from nipoppy.config.boutiques import BoutiquesConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.main import Config
+from nipoppy.config.pipeline import (
+    BidsPipelineConfig,
+    ExtractionPipelineConfig,
+    ProcPipelineConfig,
+)
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.layout import LayoutConfig
 from nipoppy.tabular.curation_status import CurationStatusModel
@@ -19,6 +25,10 @@ MODEL_FILENAME_MAP = {
     BoutiquesConfig: "boutiques.json",
     Config: "config.json",
     LayoutConfig: "layout.json",
+    BidsPipelineConfig: "bids_pipeline.json",
+    ProcPipelineConfig: "proc_pipeline.json",
+    ExtractionPipelineConfig: "extraction_pipeline.json",
+    HpcConfig: "hpc.json",
     TrackerConfig: "tracker.json",
     ProcessingStatusModel: "processing_status.json",
     DicomDirMapModel: "dicom_dir_map.json",

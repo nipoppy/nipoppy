@@ -98,4 +98,4 @@ $ git tag <NEW_VERSION>
 $ git push upstream tag <NEW_VERSION>
 ```
 
-This assumes that the Git repository has a remote called `upstream` that is pointing to https://github.com/nipoppy/nipoppy.git.
+This assumes that the Git repository has a remote called `upstream` that is pointing to the [`nipoppy/nipoppy` repository](https://github.com/nipoppy/nipoppy.git).
