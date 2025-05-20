@@ -106,6 +106,9 @@ class BaseWorkflow(Base, ABC):
         def process_output(output_source, log_prefix: str, log_level=logging.INFO):
             """Consume lines from an IO stream and log them."""
             for line in output_source:
+                line = line.decode()
+                if "\r" in line:
+                    continue
                 line = line.strip("\n")
                 # using extra={"markup": False} in case the output contains substrings
                 # that would be interpreted as closing tags by the RichHandler
@@ -135,7 +138,6 @@ class BaseWorkflow(Base, ABC):
                 command_or_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
                 **kwargs,
             )
 
