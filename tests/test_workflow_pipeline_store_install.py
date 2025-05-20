@@ -197,7 +197,7 @@ def test_download_container_confirm_true(
     workflow.assume_yes = False
 
     mocked_confirm_ask = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.Confirm.ask",
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.confirm",
         return_value=confirm_download,
     )
 
@@ -217,11 +217,9 @@ def test_download_container_status(
     pipeline_config: ProcPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
-    mocked_console = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.Console",
+    mocked_status = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDERR.status",
     )
-    mocked_status = mocked_console.return_value.status
-    mocked_status_update = mocked_status.return_value.__enter__.return_value.update
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 
     workflow._download_container(pipeline_config)
@@ -229,8 +227,6 @@ def test_download_container_status(
     mocked_status.assert_called_once_with(
         "Downloading the container, this can take a while..."
     )
-    mocked_status_update.assert_called_once()
-    assert "Container downloaded to" in mocked_status_update.call_args[0][0]
     mocked_run_command.assert_called_once()
 
 

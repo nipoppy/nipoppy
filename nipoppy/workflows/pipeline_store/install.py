@@ -7,11 +7,9 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from rich.console import Console
-from rich.prompt import Confirm
-
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import apply_substitutions_to_json, process_template_str
@@ -127,20 +125,20 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             return
 
         # prompt user and confirm
-        if self.assume_yes or Confirm.ask(
+        if self.assume_yes or CONSOLE_STDOUT.confirm(
             (
                 "[yellow]This pipeline is containerized: do you want to download the "
                 f"container (to [magenta]{fpath_container}[/]) now?[/]"
             ),
-            default=True,
+            kwargs_call={"default": True},
         ):
             try:
                 # use stderr for status messages so that the Apptainer/Singularity
                 # output does not break the status display
                 # ("apptainer/singularity pull" seems to only print to stderr)
-                with Console().status(
+                with CONSOLE_STDERR.status(
                     "Downloading the container, this can take a while..."
-                ) as status:
+                ):
                     self.run_command(
                         [
                             self.config.CONTAINER_CONFIG.COMMAND,
@@ -149,7 +147,6 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                             pipeline_config.CONTAINER_INFO.URI,
                         ]
                     )
-                    status.update(f"Container downloaded to {fpath_container}")
             except subprocess.CalledProcessError as exception:
                 self.logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
