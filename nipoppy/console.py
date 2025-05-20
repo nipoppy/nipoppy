@@ -23,7 +23,7 @@ def _force_indent_if_internal(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        """Set indent to True if the caller is from this package."""
+        """Set with_indent to True if the caller is from this package."""
         stack = inspect.stack()
         if len(stack) > 1:
             # the first frame is this function (wrapper), the second frame is the caller
