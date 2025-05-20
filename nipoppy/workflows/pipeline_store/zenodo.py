@@ -129,7 +129,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
         # Confirm upload
         if not self.assume_yes:
-            continue_ = CONSOLE_STDOUT.confirm_with_indent(
+            continue_ = CONSOLE_STDOUT.confirm(
                 "The Nipoppy pipeline will be uploaded/updated on Zenodo"
                 f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
                 " this is a [bold]permanent[/] action, are you sure?",

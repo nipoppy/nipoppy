@@ -19,14 +19,18 @@ def console():
 
 def test_global_consoles():
     assert CONSOLE_STDOUT.stderr is False
+    assert CONSOLE_STDOUT.indent == _INDENT
     assert CONSOLE_STDERR.stderr is True
+    assert CONSOLE_STDERR.indent == _INDENT
 
 
-def test_console_confirm_with_indent(console: _Console, capsys: pytest.CaptureFixture):
+def test_console_confirm(console: _Console, capsys: pytest.CaptureFixture):
     # check that no newline is added at the end of the prompt
     message = "test message"
     # use a prompt that has multiple lines
-    console.confirm_with_indent("\n".join([message] * 2), stream=io.StringIO("y\n"))
+    console.confirm(
+        "\n".join([message] * 2), kwargs_call={"stream": io.StringIO("y\n")}
+    )
     captured = capsys.readouterr()
     assert all(
         [
@@ -37,13 +41,12 @@ def test_console_confirm_with_indent(console: _Console, capsys: pytest.CaptureFi
     assert not captured.out.endswith("\n")
 
 
-def test_console_print_with_indent(console: _Console, capsys: pytest.CaptureFixture):
+def test_console_print(console: _Console, capsys: pytest.CaptureFixture):
     table = Table()
     table.add_column("Column 1")
     table.add_row("Row 1")
-    console.print_with_indent(table)
+    console.print(table, with_indent=True)
     captured = capsys.readouterr()
-    print(f"{captured.out=}")
     assert captured.out.startswith(" " * _INDENT)
     assert captured.out.endswith("\n")
 
@@ -62,8 +65,8 @@ def test_console_no_indent_in_log(capsys: pytest.CaptureFixture):
     assert captured.out[_INDENT:].startswith(message)  # check alignment
 
 
-def test_console_status_with_indent(console: _Console):
-    assert isinstance(console.status_with_indent(""), _Status)
+def test_console_status(console: _Console):
+    assert isinstance(console.status(""), _Status)
 
 
 def test_status_context_manager(console: _Console, capsys: pytest.CaptureFixture):
@@ -77,7 +80,7 @@ def test_status_context_manager(console: _Console, capsys: pytest.CaptureFixture
 
 def test_status_update(console: _Console, capsys: pytest.CaptureFixture):
     message = "test update"
-    with console.status_with_indent("tmp") as status:
+    with console.status("tmp") as status:
         time.sleep(0.1)
         status.update(message)
 

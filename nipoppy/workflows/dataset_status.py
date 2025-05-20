@@ -274,4 +274,4 @@ class StatusWorkflow(BaseDatasetWorkflow):
             row = [str(x) for x in value_list]
             table.add_row(*row)
 
-        CONSOLE_STDOUT.print_with_indent(table)
+        CONSOLE_STDOUT.print(table)

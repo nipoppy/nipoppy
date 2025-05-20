@@ -197,7 +197,7 @@ def test_download_container_confirm_true(
     workflow.assume_yes = False
 
     mocked_confirm_ask = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.confirm_with_indent",
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.confirm",
         return_value=confirm_download,
     )
 
@@ -218,7 +218,7 @@ def test_download_container_status(
     mocker: pytest_mock.MockFixture,
 ):
     mocked_status = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDERR.status_with_indent",
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDERR.status",
     )
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 

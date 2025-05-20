@@ -76,4 +76,4 @@ class PipelineSearchWorkflow(BaseWorkflow):
         table = self._df_to_table(df_hits)
 
         self.logger.info(f"Showing {len(hits)} of {n_total} results")
-        CONSOLE_STDOUT.print_with_indent(table)
+        CONSOLE_STDOUT.print(table)

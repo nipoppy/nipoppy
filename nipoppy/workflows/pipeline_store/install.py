@@ -125,18 +125,18 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             return
 
         # prompt user and confirm
-        if self.assume_yes or CONSOLE_STDOUT.confirm_with_indent(
+        if self.assume_yes or CONSOLE_STDOUT.confirm(
             (
                 "[yellow]This pipeline is containerized: do you want to download the "
                 f"container (to [magenta]{fpath_container}[/]) now?[/]"
             ),
-            default=True,
+            kwargs_call={"default": True},
         ):
             try:
                 # use stderr for status messages so that the Apptainer/Singularity
                 # output does not break the status display
                 # ("apptainer/singularity pull" seems to only print to stderr)
-                with CONSOLE_STDERR.status_with_indent(
+                with CONSOLE_STDERR.status(
                     "Downloading the container, this can take a while..."
                 ):
                     self.run_command(
