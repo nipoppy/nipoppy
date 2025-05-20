@@ -185,7 +185,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "**/cli.py", "**/nipoppy/data"]
+autoapi_ignore = ["*_version*", "**/cli.py", "**/tui.py", "**/nipoppy/data"]
 autoapi_options = [
     "members",
     "undoc-members",
