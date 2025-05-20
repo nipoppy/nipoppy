@@ -9,7 +9,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.main import Config
-from nipoppy.config.pipeline import BasePipelineConfig, ProcPipelineConfig
+from nipoppy.config.pipeline import ProcPipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
@@ -311,9 +311,8 @@ def test_run_main(
         workflow.dpath_pipeline,
         dpath_installed,
     )
-    base_pipeline_config = BasePipelineConfig(**pipeline_config.model_dump())
-    mocked_update_config_and_save.assert_called_once_with(base_pipeline_config)
-    mocked_download_container.assert_called_once_with(base_pipeline_config)
+    mocked_update_config_and_save.assert_called_once_with(pipeline_config)
+    mocked_download_container.assert_called_once_with(pipeline_config)
     assert "Successfully installed pipeline" in caplog.text
 
 
