@@ -45,8 +45,8 @@ class PipelineCreateWorkflow(BaseWorkflow):
         )
         self.logger.warning("Edit the files to customize your pipeline.")
         self.logger.info(
-            "You can run [magenta]nipoppy validate[/] to check your pipeline"
-            " configuration and [magenta]nipoppy upload[/] to upload it to Zenodo."
+            "You can run [magenta]nipoppy pipeline validate[/] to check your pipeline"
+            " configuration and [magenta]nipoppy pipeline upload[/] to upload it to Zenodo."
             "\nIt is recommended to test the pipeline with a small dataset before"
             " uploading it to Zenodo."
         )
