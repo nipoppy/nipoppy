@@ -654,7 +654,6 @@ def pipeline_create(**params):
     """Create a template pipeline config directory."""
     from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
 
-    params["target"] = params.pop("pipeline_dir")
     params["type_"] = params.pop("type")
     with handle_exception(PipelineCreateWorkflow(**params)) as workflow:
         workflow.run()

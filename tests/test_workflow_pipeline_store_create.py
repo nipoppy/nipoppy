@@ -1,13 +1,19 @@
-import json
 from pathlib import Path
 
 import pytest
 
-from nipoppy.env import TEMPLATE_PIPELINE_PATH, PipelineTypeEnum
+from nipoppy.env import PipelineTypeEnum
+from nipoppy.pipeline_validation import check_pipeline_bundle
+from nipoppy.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )
 from tests.conftest import TEST_PIPELINE
+
+
+def _has_same_content(a: Path, b: Path) -> bool:
+    """Check if two files are the same."""
+    return a.read_text().strip() == b.read_text().strip()
 
 
 @pytest.fixture(scope="function")
@@ -30,15 +36,17 @@ def test_create(target: Path, type_: PipelineTypeEnum):
 
     # Run the workflow
     PipelineCreateWorkflow(
-        target=target,
+        pipeline_dir=target,
         type_=type_,
     ).run_main()
 
+    check_pipeline_bundle(target)
+
     # Check the bundle content exists and is correct
     assert target.joinpath("descriptor.json").is_file()
-    assert (
-        target.joinpath("descriptor.json").read_text().strip()
-        == TEMPLATE_PIPELINE_PATH.joinpath("descriptor.json").read_text().strip()
+    assert _has_same_content(
+        target.joinpath("descriptor.json"),
+        TEMPLATE_PIPELINE_PATH.joinpath("descriptor.json"),
     )
 
     assert target.joinpath("invocation.json").is_file()
@@ -46,37 +54,26 @@ def test_create(target: Path, type_: PipelineTypeEnum):
     # because boutiques generates random args values.
     # Instead, we compare the keys of the JSON object
     assert (
-        json.loads(target.joinpath("invocation.json").read_text()).keys()
-        == json.loads(
-            TEMPLATE_PIPELINE_PATH.joinpath("invocation.json").read_text()
-        ).keys()
+        load_json(target.joinpath("invocation.json")).keys()
+        == load_json(TEMPLATE_PIPELINE_PATH.joinpath("invocation.json")).keys()
     )
 
     assert target.joinpath("hpc.json").is_file()
-    assert (
-        target.joinpath("hpc.json").read_text().strip()
-        == TEMPLATE_PIPELINE_PATH.joinpath("hpc.json").read_text().strip()
-    )
-
-    assert target.joinpath("zenodo.json").is_file()
-    assert (
-        target.joinpath("zenodo.json").read_text().strip()
-        == TEMPLATE_PIPELINE_PATH.joinpath("zenodo.json").read_text().strip()
+    assert _has_same_content(
+        target.joinpath("hpc.json"), TEMPLATE_PIPELINE_PATH.joinpath("hpc.json")
     )
 
     assert target.joinpath("config.json").is_file()
-    assert (
-        target.joinpath("config.json").read_text().strip()
-        == TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
-        .read_text()
-        .strip()
+    assert _has_same_content(
+        target.joinpath("config.json"),
+        TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
     )
 
     if type_ == PipelineTypeEnum.PROCESSING:
         assert target.joinpath("tracker.json").is_file()
-        assert (
-            target.joinpath("tracker.json").read_text().strip()
-            == TEMPLATE_PIPELINE_PATH.joinpath("tracker.json").read_text().strip()
+        assert _has_same_content(
+            target.joinpath("tracker.json"),
+            TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
         )
 
 
@@ -87,7 +84,7 @@ def test_create_already_exists(target: Path):
 
     with pytest.raises(IsADirectoryError, match="Target directory .* already exists"):
         PipelineCreateWorkflow(
-            target=target,
+            pipeline_dir=target,
             type_=PipelineTypeEnum.PROCESSING,
         ).run_main()
 
@@ -97,23 +94,22 @@ def test_create_from_descriptor(target: Path):
     source_descriptor = TEST_PIPELINE / "descriptor.json"
 
     PipelineCreateWorkflow(
-        target=target,
+        pipeline_dir=target,
         type_=PipelineTypeEnum.PROCESSING,
         source_descriptor=source_descriptor,
     ).run_main()
 
-    assert (
-        target.joinpath("descriptor.json").read_text().strip()
-        == source_descriptor.read_text().strip()
-    )
+    check_pipeline_bundle(target)
 
-    assert set(json.loads(target.joinpath("invocation.json").read_text()).keys()) == {
+    assert _has_same_content(target.joinpath("descriptor.json"), source_descriptor)
+
+    assert set(load_json(target.joinpath("invocation.json")).keys()) == {
         "bids_dir",
         "output_dir",
         "analysis_level",
     }
 
-    descriptor = json.loads(target.joinpath("descriptor.json").read_text())
-    config = json.loads(target.joinpath("config.json").read_text())
+    descriptor = load_json(target.joinpath("descriptor.json"))
+    config = load_json(target.joinpath("config.json"))
     assert config["NAME"] == descriptor["name"]
     assert config["VERSION"] == descriptor["tool-version"]

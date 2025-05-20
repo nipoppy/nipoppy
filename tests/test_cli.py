@@ -326,7 +326,7 @@ def test_cli_pipeline_create(tmp_path: Path):
             "create",
             "--type",
             "processing",
-            tmp_path.joinpath("new_pipeline_bundle").as_posix(),
+            str(tmp_path.joinpath("new_pipeline_bundle")),
         ],
         catch_exceptions=False,
     )

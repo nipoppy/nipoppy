@@ -1,12 +1,12 @@
 """Workflow for pipeline validate command."""
 
-import json
 from pathlib import Path
 from typing import Optional
 
 import boutiques as bosh
 
-from nipoppy.env import TEMPLATE_PIPELINE_PATH, LogColor, PipelineTypeEnum
+from nipoppy.env import LogColor, PipelineTypeEnum
+from nipoppy.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
 
 
@@ -15,7 +15,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        target: Path,
+        pipeline_dir: Path,
         type_: PipelineTypeEnum,
         *,
         source_descriptor: Optional[Path] = None,
@@ -27,21 +27,21 @@ class PipelineCreateWorkflow(BaseWorkflow):
             verbose=verbose,
             dry_run=dry_run,
         )
-        self.target = target
+        self.pipeline_dir = pipeline_dir
         self.type_ = type_
         self.source_descriptor = source_descriptor
 
     def run_main(self):
         """Run the main workflow."""
-        self.logger.debug(f"Creating pipeline bundle at {self.target}")
+        self.logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
         create_bundle(
-            target=self.target,
+            target=self.pipeline_dir,
             type_=self.type_,
             source_descriptor=self.source_descriptor,
         )
         self.logger.info(
             f"[{LogColor.SUCCESS}]Pipeline bundle successfully created at "
-            f"{self.target}![/]",
+            f"{self.pipeline_dir}![/]",
         )
         self.logger.warning("Edit the files to customize your pipeline.")
         self.logger.info(
@@ -79,18 +79,13 @@ def create_bundle(
     target.joinpath("hpc.json").write_text(
         TEMPLATE_PIPELINE_PATH.joinpath("hpc.json").read_text()
     )
-    target.joinpath("zenodo.json").write_text(
-        TEMPLATE_PIPELINE_PATH.joinpath("zenodo.json").read_text()
-    )
 
     # Populate the config.json using descriptor information
-    config = json.loads(
-        TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json").read_text()
-    )
-    descriptor = json.loads(descriptor_path.read_text())
+    config = load_json(TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"))
+    descriptor = load_json(descriptor_path)
     config["NAME"] = descriptor["name"]
     config["VERSION"] = descriptor["tool-version"]
-    target.joinpath("config.json").write_text(json.dumps(config, indent=4))
+    save_json(config, target.joinpath("config.json"))
 
     # Only PROCESSING pipelines have a tracker.json file
     if PipelineTypeEnum.PROCESSING:
