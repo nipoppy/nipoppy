@@ -11,19 +11,42 @@ This page contains auto-generated :term:`JSON` schemas [#f1]_ for the text files
 Global configuration file
 -------------------------
 
-.. tip::
-
-    See the :ref:`Quickstart guide <customizing-config>` for an example config file.
-
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
 Below is the schema used for the global configuration :term:`JSON` file.
 
 .. jsonschema:: config.json
+    :lift_title: False
+
+Pipeline configuration files
+----------------------------
+
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Here are the schemas for the ``config.json`` files in pipeline configuration directories.
+
+BIDSification pipelines
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. jsonschema:: bids_pipeline.json
+    :lift_title: False
+
+Processing pipelines
+~~~~~~~~~~~~~~~~~~~~
+
+.. jsonschema:: proc_pipeline.json
+    :lift_title: False
+
+Extraction pipelines
+~~~~~~~~~~~~~~~~~~~~
+
+.. jsonschema:: extraction_pipeline.json
+    :lift_title: False
 
 Tracker configuration file
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
@@ -31,6 +54,17 @@ Tracker configuration file
 Here is the schema for a tracker configuration file:
 
 .. jsonschema:: tracker.json
+    :lift_title: False
+
+HPC configuration file
+----------------------
+
+.. include:: schema_howto.md
+    :parser: myst_parser.sphinx_
+
+Here is the schema for an HPC (high-performance computing) configuration file:
+
+.. jsonschema:: hpc.json
     :lift_title: False
 
 .. _manifest-schema:
