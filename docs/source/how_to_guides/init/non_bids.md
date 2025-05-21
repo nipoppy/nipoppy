@@ -14,7 +14,7 @@ This will create the directory tree and copy an [example manifest](https://githu
 ```{attention}
 It is extremely unlikely that the example manifest accurately represents your dataset, so you will have to generate one yourself.
 
-The default [global configuration file](../user_guide/global_config.md) also has dataset-specific fields that you will need to replace.
+You may also need to modify the default [global configuration file](../user_guide/global_config.md), depending on your setup.
 ```
 
 Then the raw imaging data should be added (symlinked/copied/moved) to {{dpath_pre_reorg}} and reorganized with [`nipoppy reorg`](../../cli_reference/reorg) to prepare it for BIDS conversion. See [this guide](../user_guide/organizing_imaging.md) for more information.

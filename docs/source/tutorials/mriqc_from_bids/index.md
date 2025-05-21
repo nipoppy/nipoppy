@@ -19,7 +19,7 @@ This tutorial assumes that [Apptainer](https://apptainer.org) (or Singularity) i
 
 ## Step 0: Download the BIDS dataset
 
-We will use the [**ds004101 dataset**](https://openneuro.org/datasets/ds004101/versions/1.0.1) from OpenNeuro, which includes structural and functional MRI data for 9 subjects (2 sessions). The dataset can be downloaded by following instructions [here](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). If you do not have DataLad or Node.js installed, you can use the shell script method:
+We will use the [**ds004101 dataset from OpenNeuro**](https://openneuro.org/datasets/ds004101/versions/1.0.1), which includes structural and functional MRI data for 9 subjects (2 sessions). The dataset can be downloaded by following instructions [here](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). If you do not have DataLad or Node.js installed, you can use the shell script method:
 
 - Click on the "Download shell script" link at the bottom of [this page](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). This should download a file called `ds004101-1.0.1.sh` to your computer.
 - Move `ds004101-1.0.1.sh` to the directory you will use for this tutorial.
@@ -116,9 +116,9 @@ emphasize-lines: 3,8
 ```
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
-- If you are on a system that still uses Singularity (which has been renamed to Apptainer), you need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
+- If you are on a system that still uses Singularity (which has been renamed to Apptainer), you will need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
 - If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_ROOT]]/containers"` by the full path to that shared directory.
-    - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted).
+    - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted) (recommended).
 
 ## Step 3: Install the MRIQC pipeline into the dataset
 
