@@ -1,7 +1,3 @@
----
-orphan:
----
-
 # Creating a manifest from a wide-form tabular file for a longitudinal study with imaging and non-imaging visits
 
 In this example, we have a longitudinal study with both non-imaging and imaging visits. Specifically, non-imaging (neuropsychological) data was collected every year, and imaging data (anatomical only) was collected every two years.

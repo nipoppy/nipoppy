@@ -1,5 +1,15 @@
 # Creating the manifest file
 
+```{toctree}
+---
+hidden:
+includehidden:
+---
+Example script 1<example1>
+Example script 2<example2>
+Example script 3<example3>
+```
+
 This guide shows how to create a dataset's manifest file, which is a list of participants recruited in the study, their visits, and expected data modalities.
 
 :::{note}

@@ -1,7 +1,3 @@
----
-orphan:
----
-
 # Creating a manifest from another tabular file for a cross-sectional study
 
 In this example, we have a cross-sectional study where not all participants have the same MRI modalities (datatypes).

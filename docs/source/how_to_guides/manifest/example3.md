@@ -1,7 +1,3 @@
----
-orphan:
----
-
 # Creating a manifest from data directories on disk for a study with different imaging datatypes
 
 In this example, we have a longitudinal study with imaging visits, but not all participants have the same imaging datatypes for all visits.
