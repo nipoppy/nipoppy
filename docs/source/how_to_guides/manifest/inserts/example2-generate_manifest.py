@@ -7,40 +7,46 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    # get the path to the demographics file
+    # get the path to the demographics/neuropsych file and the MRI file
     # we assume that it is in the same directory as this script
-    path_demographics = Path(__file__).parent / "example2-demographics.csv"
+    path_neuropsych = Path(__file__).parent / "example2-demographics_neuropsych.csv"
+    path_mri = Path(__file__).parent / "example2-mri.csv"
 
-    # load the demographics file
-    df_demographics = pd.read_csv(path_demographics, dtype=str)
-
-    # all participants only have anat datatype
-    datatype = ["anat"]
+    # load the files and merge them
+    df_neuropsych = pd.read_csv(path_neuropsych, dtype=str)
+    df_mri = pd.read_csv(path_mri, dtype=str)
+    df_merged = pd.merge(
+        df_neuropsych, df_mri, how="left", left_on="PARTICIPANT", right_on="PARTICIPANT"
+    )
 
     data_for_manifest = []
-    for _, row in df_demographics.iterrows():
+    for _, row in df_merged.iterrows():
 
         # remove underscores
         participant_id = row["PARTICIPANT"].replace("_", "")
 
         # each row in the demographics file is multiple rows in the manifest file
         for visit_id in [
-            "NEUROPSYCH_1",
-            "NEUROPSYCH_2",
-            "NEUROPSYCH_3",
-            "MRI_1",
-            "MRI_2",
+            "NEUROPSYCH1",
+            "NEUROPSYCH2",
+            "NEUROPSYCH3",
+            "MRI1",
+            "MRI2",
         ]:
 
-            # if the AGE column is empty, the visit did not happen yet
-            if pd.isna(row[f"AGE_{visit_id}"]):
+            # if the DATE column is empty, the visit did not happen yet
+            if pd.isna(row[f"DATE_{visit_id}"]):
                 continue
 
             # session_id is only defined for MRI visits
-            if visit_id.startswith("MRI_"):
-                session_id = visit_id.removeprefix("MRI_")
+            if visit_id.startswith("MRI"):
+                session_id = visit_id.removeprefix("MRI")
+
+                # all participants only have anat datatype
+                datatype = ["anat"]
             else:
                 session_id = pd.NA
+                datatype = []
 
             # create the manifest entry
             data_for_manifest.append(
