@@ -146,6 +146,7 @@ template_strings_proc_runner = template_strings_bids_runner[:-1] + [
 
 myst_substitutions = {
     "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
+    "dpath_containers": f"`{DEFAULT_LAYOUT_INFO.dpath_containers}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
     "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
