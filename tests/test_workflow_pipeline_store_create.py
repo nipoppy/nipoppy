@@ -75,6 +75,11 @@ def test_create(target: Path, type_: PipelineTypeEnum):
             target.joinpath("tracker.json"),
             TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
         )
+        assert target.joinpath("pybids_ignore.json").is_file()
+        assert _has_same_content(
+            target.joinpath("pybids_ignore.json"),
+            TEMPLATE_PIPELINE_PATH.joinpath("pybids_ignore.json"),
+        )
 
 
 def test_create_already_exists(target: Path):
