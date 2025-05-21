@@ -60,9 +60,12 @@ test = [
     "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
+tui = ["trogon"]
+gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
 nipoppy = "nipoppy.cli:cli"
+nipoppy-gui = "nipoppy.tui:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
