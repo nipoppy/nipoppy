@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import rich_click as click
+from trogon import tui
 
 from nipoppy._version import __version__
 from nipoppy.env import (
@@ -297,6 +298,7 @@ class OrderedAliasedGroup(click.RichGroup):
         return click.Group.get_command(self, ctx, new_cmd_name)
 
 
+@tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
     cls=OrderedAliasedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -309,6 +311,9 @@ class OrderedAliasedGroup(click.RichGroup):
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
     pass
+
+
+cli.commands["gui"].hidden = True
 
 
 @cli.command()
