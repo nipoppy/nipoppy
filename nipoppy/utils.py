@@ -13,7 +13,12 @@ from typing import List, Optional, Sequence
 import bids
 import pandas as pd
 
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    NIPOPPY_DIR_NAME,
+    StrOrPathLike,
+)
 
 # user configs (pipeline configs, invocations, descriptors)
 TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
@@ -399,3 +404,26 @@ def apply_substitutions_to_json(
 def get_today():
     """Get today's date in the format YYYY-MM-DD."""
     return datetime.datetime.today().strftime("%Y-%m-%d")
+
+
+def is_nipoppy_project(cwd=Path.cwd()):
+    """Verify if the current directory is a nipoppy project.
+
+    This is done by checking if the `.nipoppy` directory exists in the
+    current directory or any of its parents.
+    If the directory is found, it returns the path to the `.nipoppy`
+    directory. If not, it returns False.
+
+    Parameters
+    ----------
+    cwd : nipoppy.env.StrOrPathLike, optional
+        Path to directory, by default Path.cwd()
+    """
+    current = Path(cwd).resolve()
+    while True:
+        candidate = current / NIPOPPY_DIR_NAME
+        if candidate.is_dir():
+            return current  # Found
+        if current == Path("/"):
+            return False  # Reached root, not found
+        current = current.parent

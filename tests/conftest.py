@@ -13,7 +13,12 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import (
+    CURRENT_SCHEMA_VERSION,
+    NIPOPPY_DIR_NAME,
+    PipelineTypeEnum,
+    StrOrPathLike,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
@@ -51,6 +56,7 @@ ATTR_TO_REQUIRED_DPATH_MAP = {
 ATTR_TO_DPATH_MAP = {
     **ATTR_TO_REQUIRED_DPATH_MAP,
     "dpath_hpc": "code/hpc",
+    "dpath_nipoppy": ".nipoppy",
 }
 
 ATTR_TO_REQUIRED_FPATH_MAP = {
@@ -122,6 +128,7 @@ def get_config(
 
 def create_empty_dataset(dpath_root: Path):
     """Create an empty dataset with all required directory and files."""
+    dpath_root.joinpath(NIPOPPY_DIR_NAME).mkdir(parents=True, exist_ok=True)
     for dpath in ATTR_TO_REQUIRED_DPATH_MAP.values():
         (dpath_root / dpath).mkdir(parents=True, exist_ok=True)
     for fpath in ATTR_TO_REQUIRED_FPATH_MAP.values():

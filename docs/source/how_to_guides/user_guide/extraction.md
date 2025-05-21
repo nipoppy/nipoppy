@@ -1,3 +1,7 @@
+```{attention}
+This is the **legacy** user guide and may contain information that is out-of-date.
+```
+
 # Extracting IDPs from pipeline derivatives
 
 Extraction pipelines ingest a subset of processing pipeline outputs into analysis-ready participant- and/or group-level imaging-derived phenotypes (IDPs) useful for particular downstream analysis (e.g., cortical thickness/subcortical volume tables, connectivity matrices).

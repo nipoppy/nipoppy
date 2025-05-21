@@ -143,7 +143,7 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
     @model_validator(mode="after")
     def validate_after(self):
         """
-        Validate the pipeline step configuration after creation.
+        Validate the processing pipeline step configuration after creation.
 
         Specifically:
 
@@ -174,6 +174,25 @@ class BidsPipelineStepConfig(BasePipelineStepConfig):
         ),
     )
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the BIDS pipeline step configuration after creation.
+
+        Specifically:
+        - Make sure that the UPDATE_STATUS field is not True if the analysis
+        level is not participant_session
+        """
+        if (
+            self.UPDATE_STATUS
+            and self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
+        ):
+            raise ValueError(
+                "UPDATE_STATUS cannot be True if ANALYSIS_LEVEL is not "
+                f"{AnalysisLevelType.participant_session}"
+            )
+        return self
 
 
 class ExtractionPipelineStepConfig(BasePipelineStepConfig):

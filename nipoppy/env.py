@@ -8,6 +8,7 @@ from typing import TypeVar
 StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 PROGRAM_NAME = "nipoppy"
+NIPOPPY_DIR_NAME = ".nipoppy"
 
 # pipeline config schema version
 CURRENT_SCHEMA_VERSION = "1"

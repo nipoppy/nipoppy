@@ -54,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--tar",
                 "--query",
                 "--size",
+                "--zenodo-id",
                 "--password-file",
                 "--assume-yes",
                 "--sandbox",
@@ -242,6 +243,18 @@ def runners_options(func):
         help="Simulate the pipeline run without executing the generated command-line.",
     )(func)
     func = pipeline_options(func)
+    return func
+
+
+def assume_yes_option(func):
+    """Define assume-yes option for the CLI."""
+    func = click.option(
+        "--assume-yes",
+        "--yes",
+        "-y",
+        is_flag=True,
+        help="Assume yes to all questions.",
+    )(func)
     return func
 
 
@@ -523,6 +536,7 @@ def pipeline_search(**params):
 )
 @global_options
 @layout_option
+@assume_yes_option
 def pipeline_install(**params):
     """
     Install a new pipeline into a dataset.
@@ -578,18 +592,18 @@ def pipeline_validate(**params):
     required=False,
     help="To update an existing pipeline, provide the Zenodo ID.",
 )
-@click.option(
-    "--assume-yes",
-    "--yes",
-    "-y",
-    is_flag=True,
-    help="Assume yes to all questions.",
-)
+@assume_yes_option
 @click.option(
     "--password-file",
     type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
     required=True,
     help="Path to file containing Zenodo access token (and nothing else)",
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Ignore safeguard warnings and upload anyway. Use with caution.",
 )
 @zenodo_options
 @global_options
