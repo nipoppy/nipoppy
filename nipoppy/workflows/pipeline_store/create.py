@@ -71,7 +71,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         save_json(config, target.joinpath("config.json"))
 
         # Only PROCESSING pipelines have a tracker.json file
-        if PipelineTypeEnum.PROCESSING:
+        if self.type_ == PipelineTypeEnum.PROCESSING:
             self.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
                 target.joinpath("tracker.json"),
