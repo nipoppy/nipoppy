@@ -521,6 +521,44 @@ def pipeline_search(**params):
         workflow.run()
 
 
+@pipeline.command("create")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=False, path_type=Path, resolve_path=True),
+)
+@click.option(
+    "--type",
+    "-t",
+    "type_",
+    type=click.Choice(
+        [
+            PipelineTypeEnum.BIDSIFICATION,
+            PipelineTypeEnum.PROCESSING,
+            PipelineTypeEnum.EXTRACTION,
+        ],
+        case_sensitive=False,
+    ),
+    required=True,
+    help=(
+        "Pipeline type. This is used to create the correct pipeline config directory."
+    ),
+)
+@click.option(
+    "--source-descriptor",
+    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
+    help=(
+        "Path to an existing Boutiques descriptor file. This is used to create the "
+        "pipeline config directory."
+    ),
+)
+def pipeline_create(**params):
+    """Create a template pipeline config directory."""
+    from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
+
+    with handle_exception(PipelineCreateWorkflow(**params)) as workflow:
+        workflow.run()
+
+
 @pipeline.command("install")
 @click.argument(
     "source",
@@ -618,42 +656,4 @@ def pipeline_upload(**params):
     )
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
-        workflow.run()
-
-
-@pipeline.command("create")
-@click.argument(
-    "pipeline_dir",
-    type=click.Path(exists=False, path_type=Path, resolve_path=True),
-)
-@click.option(
-    "--type",
-    "-t",
-    type=click.Choice(
-        [
-            PipelineTypeEnum.BIDSIFICATION,
-            PipelineTypeEnum.PROCESSING,
-            PipelineTypeEnum.EXTRACTION,
-        ],
-        case_sensitive=False,
-    ),
-    required=True,
-    help=(
-        "Pipeline type. This is used to create the correct pipeline config directory."
-    ),
-)
-@click.option(
-    "--source-descriptor",
-    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
-    help=(
-        "Path to an existing Boutiques descriptor file. This is used to create the "
-        "pipeline config directory."
-    ),
-)
-def pipeline_create(**params):
-    """Create a template pipeline config directory."""
-    from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
-
-    params["type_"] = params.pop("type")
-    with handle_exception(PipelineCreateWorkflow(**params)) as workflow:
         workflow.run()
