@@ -45,6 +45,16 @@ overview/quickstart
 hidden:
 includehidden:
 titlesonly:
+caption: Explanations
+---
+explanations/manifest
+```
+
+```{toctree}
+---
+hidden:
+includehidden:
+titlesonly:
 caption: How-to guides
 ---
 how_to_guides/user_guide/index
