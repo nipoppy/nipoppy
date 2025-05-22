@@ -4,9 +4,9 @@
 
 ```{glossary}
 Manifest file
-    The manifest file at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
+    The [manifest file](./explanations/manifest) at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
 
-    There must be only one row per unique participant/visit combination.
+    A guide for how to create a manifest file can be found [here](./how_to_guides/manifest/index).
 
 Global config file
     The global configuration file at {{fpath_config}} allows for high-level configuration of the Nipoppy software tools (e.g., user-provided paths needed to run pipelines, container runtime arguments).
