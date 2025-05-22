@@ -1,0 +1,27 @@
+{
+    "NAME": "tool name",
+    "VERSION": "v0.1.0",
+    "CONTAINER_INFO": {
+        "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+        "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+    },
+    "CONTAINER_CONFIG": {
+        "ENV_VARS": {},
+        "ARGS": []
+    },
+    "STEPS": [
+        {
+            "INVOCATION_FILE": "invocation.json",
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "HPC_CONFIG_FILE": "hpc.json"
+        }
+    ],
+    "PROC_DEPENDENCIES": [
+        {
+            "NAME": "proc_pipeline",
+            "VERSION": "x.y.z"
+        }
+    ],
+    "PIPELINE_TYPE": "extraction",
+    "SCHEMA_VERSION": "1"
+}

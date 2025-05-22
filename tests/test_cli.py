@@ -318,6 +318,21 @@ def test_cli_pipeline_search():
     assert result.exit_code == ReturnCode.SUCCESS
 
 
+def test_cli_pipeline_create(tmp_path: Path):
+    result = runner.invoke(
+        cli,
+        [
+            "pipeline",
+            "create",
+            "--type",
+            "processing",
+            str(tmp_path.joinpath("new_pipeline_bundle")),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
+
+
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
     runner.invoke(cli, [command, "-h"], catch_exceptions=False)

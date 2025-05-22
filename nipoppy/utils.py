@@ -33,7 +33,7 @@ DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 DPATH_HPC = DPATH_DATA / "hpc"
 FPATH_HPC_TEMPLATE = DPATH_HPC / "job_script_template.sh"
-
+TEMPLATE_PIPELINE_PATH = Path(__file__).parent / "data" / "template_pipeline"
 
 # descriptions for common fields in the Pydantic models
 FIELD_DESCRIPTION_MAP = {
