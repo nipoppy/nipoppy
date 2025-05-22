@@ -1,0 +1,5 @@
+participant_id	visit_id	session_id	datatype
+ABC001	BL	BL	['anat', 'dwi']
+ABC001	M12	M12	['anat']
+ABC002	BL	BL	['anat', 'dwi']
+ABC002	M12	M12	['anat', 'dwi']

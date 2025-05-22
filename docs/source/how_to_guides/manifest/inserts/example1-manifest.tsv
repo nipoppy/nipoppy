@@ -1,0 +1,9 @@
+participant_id	visit_id	session_id	datatype
+001	1	1	['anat', 'dwi', 'func']
+002	1	1	['anat', 'func']
+003	1	1	['anat', 'dwi']
+004	1	1	['anat']
+005	1	1	['anat', 'dwi', 'func']
+006	1	1	['anat', 'func']
+007	1	1	['anat', 'dwi', 'func']
+008	1	1	['anat', 'dwi']
