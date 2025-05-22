@@ -21,7 +21,7 @@ If you do not already have Python set up on your system and/or wish to run Nipop
 
 Install `conda` (e.g. through Miniconda) following instructions from [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
-Create a new environment (if needed) with Python version of at least `3.9`. Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
+Create a new environment (if needed) with Python version of at least `3.9` (we recommended the [latest available version](https://www.python.org/doc/versions)). Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
 ```{code-block} console
 $ conda create --name nipoppy_env python=3
 ```
@@ -80,7 +80,7 @@ Please open a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new/choos
 
 ### Error when installing `pydantic-core`
 
-The latest version of the `pydantic-core` package (required by `pydantic`) is written in Rust, not pure Python. If package needs to be compiled during the install, but Rust is not available, then there might be an error complaining that Rust and/or Cargo cannot be found. In that case, if you are on an {term}`HPC` system that uses `lmod`, try loading Rust before installing:
+The latest version of the `pydantic-core` package (required by `pydantic`) is written in Rust, not pure Python. If this package needs to be compiled during the install, but Rust is not available, then there might be an error complaining that Rust and/or Cargo cannot be found. In that case, if you are on an {term}`HPC` system that uses `lmod`, try loading Rust before installing:
 ```{code-block} console
 $ module load rust
 ```

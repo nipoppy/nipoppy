@@ -29,7 +29,7 @@ Processing status file
     In older versions of `nipoppy`, this file was called the "bagel file".
     ```
 
-    A tabular file at {{fpath_processing_status}} that indicates the completion status of processing pipelines of interest at the participant-session level. The processing status file is created by the [`nipoppy track`](./cli_reference/track_processing.rst) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/user_guide/cli).
+    A tabular file at {{fpath_processing_status}} that indicates the completion status of processing pipelines of interest at the participant-session level. The processing status file is created by the [`nipoppy track-processing`](./cli_reference/track_processing.rst) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/user_guide/cli).
 
     See {ref}`here <processing-status-schema>` for more information about the columns in the file.
 
