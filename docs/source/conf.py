@@ -149,6 +149,8 @@ myst_substitutions = {
     "dpath_containers": f"`{DEFAULT_LAYOUT_INFO.dpath_containers}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
+    "dpath_src_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_src_tabular}`",
+    "dpath_src_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_src_imaging}`",
     "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
     "dpath_post_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_post_reorg}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",

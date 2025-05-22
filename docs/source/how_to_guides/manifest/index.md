@@ -51,8 +51,9 @@ There must be only **one row** per unique `participant_id`/`visit_id` combinatio
 A unique identifier for a participant in the study. Must be present in every row.
 - **Cannot** contain non-alphanumeric characters (spaces, dashes, underscores, etc.)
 - **Cannot** have the `sub-` prefix
-- Example valid values: `001`, `Control1`, `ABC01`
-- Example invalid values: `sub-001`, `Control_1`, `ABC.01`
+- Example valid values: `001`, `ABC01`
+    - Example valid but not recommended: `control1`, `alzheimers1`, `sub1`
+- Example invalid values: `sub-001`, `ABC.01`
 
 ::::{admonition} What if the participant IDs in my existing study files are not Nipoppy-compatible?
 ---
@@ -114,7 +115,7 @@ If it is too difficult to determine the exact imaging datatypes collected for a 
 ## Guidelines and examples for creating a study's manifest file
 
 We **highly recommend** writing a script that automatically generates the manifest based on existing files.
-These can be tabular files (CSVs, TSVs, Excel sheets, etc.) and/or imaging data on disk.
+These can be tabular files (CSVs, TSVs, Excel sheets, etc.) in {{dpath_src_tabular}} and/or imaging data in {{dpath_src_imaging}}.
 The script can be rerun whenever the source files are modified to automatically update the manifest, reducing future manual work and keeping a record of what was done.
 
 Below are some examples from common cases we have encountered.
@@ -125,7 +126,7 @@ Note that the example use Python scripts, but other programming languages like R
 Creating a manifest from another tabular file for a cross-sectional study with different imaging datatypes
 :::
 :::{grid-item-card} [Example 2](./example2)
-Creating a manifest from a wide-form tabular file for a longitudinal study with imaging and non-imaging visits
+Creating a manifest from wide-form tabular files for a longitudinal study with imaging and non-imaging visits
 :::
 :::{grid-item-card}  [Example 3](./example3)
 Creating a manifest from data directories on disk for a study with different imaging datatypes
