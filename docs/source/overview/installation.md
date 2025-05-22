@@ -57,6 +57,16 @@ The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal 
 $ pip install nipoppy
 ```
 
+````{note}
+You can also install the "bleeding-edge" development version of Nipoppy from GitHub directly:
+
+```{code-block} console
+$ pip install git+https://github.com/nipoppy/nipoppy.git@main
+```
+
+This version is **unstable**, and things could break without any notice. Use at your own risk.
+````
+
 ### Verifying the install
 
 Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
@@ -66,7 +76,7 @@ $ nipoppy -h
 
 ## Troubleshooting
 
-Please create a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new/choose) for any error not covered below.
+Please open a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new/choose) for any error not covered below.
 
 ### Error when installing `pydantic-core`
 

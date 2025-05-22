@@ -1,0 +1,23 @@
+{
+    "NAME": "tool name",
+    "VERSION": "v0.1.0",
+    "CONTAINER_INFO": {
+        "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+        "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+    },
+    "CONTAINER_CONFIG": {
+        "ENV_VARS": {},
+        "ARGS": []
+    },
+    "STEPS": [
+        {
+            "INVOCATION_FILE": "invocation.json",
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "HPC_CONFIG_FILE": "hpc.json",
+            "TRACKER_CONFIG_FILE": "tracker.json",
+            "PYBIDS_IGNORE_FILE": "pybids_ignore.json"
+        }
+    ],
+    "PIPELINE_TYPE": "processing",
+    "SCHEMA_VERSION": "1"
+}
