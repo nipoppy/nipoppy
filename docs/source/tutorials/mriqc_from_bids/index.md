@@ -139,11 +139,7 @@ That is because a newly initialized Nipoppy dataset does not contain any pipelin
 $ nipoppy pipeline install --dataset nipoppy_study 15427844
 ```
 
-```{tip}
-You can use the `nipoppy pipeline search` command to get the Zenodo IDs of available pipelines.
-```
-
-When running `nipoppy pipeline install`, you will be asked if you would like to download the MRIQC container. Type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. The container image is downloaded to `nipoppy_study/containers/mriqc_23.1.0.sif`.
+When running `nipoppy pipeline install`, you will be asked if you would like to download the MRIQC container. Type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. The container image will be downloaded as `mriqc_23.1.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file).
 
 The pipeline installation process will add a `TEMPLATEFLOW_HOME` pipeline variable to the `nipoppy_study/global_config.json` file:
 
@@ -169,7 +165,7 @@ Open `nipoppy_study/global_config.json` and set `TEMPLATEFLOW_HOME` to a meaning
     },
 ```
 
-In general, we recommend using a shared directory within your research group for all Templateflow files, but you can also set it to something like `"[[NIPOPPY_DPATH_ROOT]]/templateflow"` (`[[NIPOPPY_DPATH_ROOT]]` will be resolved to the full path of the `nipoppy_study` directory at runtime).
+In general, we recommend using a shared directory within your research group for all Templateflow files, but you can also set it to something like `"[[NIPOPPY_DPATH_ROOT]]/templateflow"` (`[[NIPOPPY_DPATH_ROOT]]` will be resolved to the full path of the `nipoppy_study` directory at runtime). This directory will be created at runtime by Nipoppy if it does not exist -- you do not need to create it yourself.
 
 ## Step 4: Run MRIQC on a single participant and session
 
@@ -283,4 +279,4 @@ For this dataset specifically, MRIQC will fail on all `ses-2post` sessions becau
 
 And that's it! You have successfully run MRIQC on a BIDS dataset using Nipoppy!
 
-While other pipelines may have different pipeline specific configurations to be set up, the general workflow described in this tutorial can be adapted to any other pipeline run with Nipoppy. 
+While other pipelines may have different pipeline specific configurations to be set up, the general workflow described in this tutorial can be adapted to any other pipeline run with Nipoppy.
