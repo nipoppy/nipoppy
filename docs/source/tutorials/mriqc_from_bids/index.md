@@ -134,7 +134,7 @@ INFO     No available processing pipelines
 INFO     No available extraction pipelines
 ```
 
-That is because newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch). The [configuration files for MRIQC](https://zenodo.org/records/15427844) can be downloaded by running the following:
+That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for MRIQC](https://zenodo.org/records/15427844) can be downloaded by running the following:
 ```console
 $ nipoppy pipeline install --dataset nipoppy_study 15427844
 ```
@@ -282,3 +282,5 @@ For this dataset specifically, MRIQC will fail on all `ses-2post` sessions becau
 ```
 
 And that's it! You have successfully run MRIQC on a BIDS dataset using Nipoppy!
+
+While other pipelines may have different pipeline specific configurations to be set up, the general workflow described in this tutorial can be adapted to any other pipeline run with Nipoppy. 
