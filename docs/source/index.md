@@ -45,6 +45,16 @@ overview/quickstart
 hidden:
 includehidden:
 titlesonly:
+caption: Tutorials
+---
+tutorials/mriqc_from_bids/index
+```
+
+```{toctree}
+---
+hidden:
+includehidden:
+titlesonly:
 caption: Explanations
 ---
 explanations/manifest
