@@ -32,7 +32,7 @@ jobs:
 
     - name: Update CITATION.cff and open pull request
       # Note: this removes blank lines from the CITATION.cff file
-      uses: fjogeleit/yaml-update-action@v0.16.0
+      uses: fjogeleit/yaml-update-action@v0.16.1
       with:
         valueFile: CITATION.cff
         propertyPath: version
