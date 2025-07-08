@@ -4,6 +4,10 @@ Nipoppy is under active development, and we welcome outside contributions!
 
 Below are some guidelines that could be helpful for potential contributors.
 
+## All contributors
+
+This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [GitHub repository's README file](https://github.com/nipoppy/nipoppy#contributors). The `all-contributors` bot can be used to update the list of contributors -- instructions can be found [here](https://allcontributors.org/docs/en/bot/usage).
+
 ## Contributing through GitHub
 
 Nipoppy development happens on [GitHub](https://github.com/). You will need an account to participate in issue threads and contribute code. Instructions for setting up an account can be found [here](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github).
@@ -78,7 +82,7 @@ This will run the entire test suite, but it is also possible to only run a subse
 
 ## Building the documentation
 
-We use the [Sphinx framework](https://www.sphinx-doc.org/en/master/) for our documentation.To build the documentation locally, move the the `docs` directory:
+We use the [Sphinx framework](https://www.sphinx-doc.org/en/master/) for our documentation. To build the documentation locally, move into the `docs` directory:
 ```{code-block} console
 $ cd docs
 ```
