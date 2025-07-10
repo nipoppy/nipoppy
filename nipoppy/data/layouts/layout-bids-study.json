@@ -1,0 +1,94 @@
+{
+    "dpath_bids": {
+        "path": "sourcedata/raw",
+        "description": "This directory contains the raw dataset converted to the BIDS standard."
+    },
+    "dpath_derivatives": {
+        "path": "derivatives",
+        "description": "This directory contains the outputs of image processing pipelines. Outputs of different pipelines are stored in `<pipeline_name>/<pipeline_version>` subdirectories. Each subdirectory has two additional subdirectories: one for the actual output (under `output`) and one for temporary files created during processing (under `work`)."
+    },
+    "dpath_sourcedata": {
+        "path": "sourcedata",
+        "description": "This directory is for the unorganized or arbitrarily organized source data (imaging and tabular)."
+    },
+    "dpath_src_tabular": {
+        "path": "sourcedata/tabular",
+        "description": "This directory is for the unorganized or arbitrarily organized tabular data."
+    },
+    "dpath_src_imaging": {
+        "path": "sourcedata/imaging",
+        "description": "This directory is for the unorganized or arbitrarily organized imaging data (files and archives)."
+    },
+    "dpath_downloads": {
+        "path": "sourcedata/imaging/downloads",
+        "description": "This directory is for downloaded data archives (e.g., tarballs or zipped files)."
+    },
+    "dpath_pre_reorg": {
+        "path": "sourcedata/imaging/pre_reorg",
+        "description": "This directory is for arbitrarily organized source imaging files."
+    },
+    "dpath_post_reorg": {
+        "path": "sourcedata/imaging/post_reorg",
+        "description": "This directory is for the organized source data that is ready for BIDS conversion."
+    },
+    "dpath_code": {
+        "path": "code",
+        "description": "This directory is for custom code at the study level."
+    },
+    "dpath_hpc": {
+        "path": "code/hpc",
+        "description": "This directory is for HPC job submission templates. It can be deleted if HPC job submission is not needed."
+    },
+    "dpath_containers": {
+        "path": "containers",
+        "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
+    },
+    "dpath_pipelines": {
+        "path": "pipelines",
+        "description": "This directory is for storing the Nipoppy configuration information and custom code."
+    },
+    "dpath_scratch": {
+        "path": "scratch",
+        "description": "This directory is for temporary/working files."
+    },
+    "dpath_pybids_db": {
+        "path": "scratch/pybids_db",
+        "description": "This directory is for PyBIDS databases generated/used during processing."
+    },
+    "dpath_work": {
+        "path": "scratch/work",
+        "description": "This directory is for temporary/working files generated/used during processing."
+    },
+    "dpath_logs": {
+        "path": "logs",
+        "description": "This directory contains log files."
+    },
+    "dpath_tabular": {
+        "path": "tabular",
+        "description": "This directory is for tabular/phenotypic data."
+    },
+    "dpath_assessments": {
+        "path": "tabular/assessments",
+        "description": "This directory is for assessments data."
+    },
+    "fpath_config": {
+        "path": "global_config.json",
+        "description": "The configuration file for the study/dataset where all data processing is configured."
+    },
+    "fpath_curation_status": {
+        "path": "sourcedata/imaging/curation_status.tsv",
+        "description": "The curation status file is generated/updated internally and is used to keep track of the raw data organization and BIDSification process."
+    },
+    "fpath_manifest": {
+        "path": "manifest.tsv",
+        "description": "The manifest file lists all expected study participants and visits."
+    },
+    "fpath_processing_status": {
+        "path": "derivatives/processing_status.tsv",
+        "description": "The processing status file lists availability of derived imaging data and pipeline processing statuses."
+    },
+    "fpath_demographics": {
+        "path": "tabular/demographics.tsv",
+        "description": "The demographics file contains demographic information for study participants."
+    }
+}
