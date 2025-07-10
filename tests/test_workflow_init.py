@@ -83,6 +83,14 @@ def test_non_empty_dir(dpath_root: Path):
         workflow.run()
 
 
+def test_non_empty_dir_forced(dpath_root: Path):
+    dpath_root.mkdir(parents=True)
+    dpath_root.joinpath("unexepected_file").touch()
+
+    workflow = InitWorkflow(dpath_root=dpath_root, force=True)
+    workflow.run()
+
+
 def test_is_file(dpath_root: Path):
     dpath_root.touch()
 

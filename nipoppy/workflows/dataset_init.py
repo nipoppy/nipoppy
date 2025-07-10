@@ -35,6 +35,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         dpath_root: Path,
         bids_source=None,
         mode="symlink",
+        force=False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -52,6 +53,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.fname_readme = "README.md"
         self.bids_source = bids_source
         self.mode = mode
+        self.force = force
 
     def run_main(self):
         """Create dataset directory structure.
@@ -72,9 +74,13 @@ class InitWorkflow(BaseDatasetWorkflow):
                 raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
 
             if len(filenames) > 0:
-                raise FileExistsError(
-                    f"Dataset directory is non-empty: {self.dpath_root}"
-                )
+                msg = f"Dataset directory is non-empty: {self.dpath_root}"
+                if self.force:
+                    self.logger.warning(
+                        f"{msg} `--force` specified, proceeding anyway."
+                    )
+                else:
+                    raise FileExistsError(msg)
 
         # create directories
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
