@@ -85,6 +85,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         # create directories
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
         for dpath in self.layout.get_paths(directory=True, include_optional=True):
+            if dpath.exists() and self.force:
+                self._remove_existing(dpath)
             # If a bids_source is passed it means datalad is installed.
             if self.bids_source is not None and dpath.stem == "bids":
                 if self.mode == "copy":
