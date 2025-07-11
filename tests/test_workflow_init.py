@@ -91,6 +91,146 @@ def test_non_empty_dir_forced(dpath_root: Path):
     workflow.run()
 
 
+def test_force_with_bids_source_existing_bids_dir(dpath_root: Path, tmp_path: Path):
+    """Test --force with --bids-source when BIDS directory already exists."""
+    # Create a source BIDS dataset
+    bids_source = tmp_path / "source_bids"
+    bids_source.mkdir()
+
+    # Create target with existing bids directory
+    existing_bids = dpath_root / "bids"
+    existing_bids.mkdir(parents=True)
+    (existing_bids / "old_file.txt").write_text("old content")
+
+    # Test with force=True - should succeed
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, bids_source=bids_source, mode="copy", force=True
+    )
+    workflow.run()
+
+    # Verify old content was replaced
+    assert existing_bids.exists()
+    assert not (existing_bids / "old_file.txt").exists()
+
+
+def test_force_with_bids_source_existing_bids_symlink(dpath_root: Path, tmp_path: Path):
+    """Test --force with --bids-source when BIDS symlink already exists."""
+    # Create a source BIDS dataset
+    bids_source = tmp_path / "source_bids"
+    bids_source.mkdir()
+
+    # Create another target for the old symlink
+    old_target = tmp_path / "old_bids"
+    old_target.mkdir()
+    (old_target / "old_file.txt").write_text("old content")
+
+    # Create target with existing bids symlink
+    dpath_root.mkdir(parents=True)
+    existing_bids_symlink = dpath_root / "bids"
+    existing_bids_symlink.symlink_to(old_target)
+
+    # Test with force=True - should succeed
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, bids_source=bids_source, mode="symlink", force=True
+    )
+    workflow.run()
+
+    # Verify old symlink was replaced
+    assert existing_bids_symlink.is_symlink()
+    assert existing_bids_symlink.resolve() == bids_source.resolve()
+    assert old_target.exists()  # Old target should remain
+
+
+def test_remove_existing_file(tmp_path: Path):
+    """Test _remove_existing removes regular files."""
+    test_file = tmp_path / "test_file.txt"
+    test_file.write_text("content")
+
+    workflow = InitWorkflow(dpath_root=tmp_path)
+    workflow._remove_existing(test_file)
+
+    assert not test_file.exists()
+
+
+def test_remove_existing_directory(tmp_path: Path):
+    """Test _remove_existing removes directories."""
+    test_dir = tmp_path / "test_dir"
+    test_dir.mkdir()
+    (test_dir / "nested_file.txt").write_text("content")
+
+    workflow = InitWorkflow(dpath_root=tmp_path)
+    workflow._remove_existing(test_dir)
+
+    assert not test_dir.exists()
+
+
+def test_remove_existing_symlink_to_file(tmp_path: Path):
+    """Test _remove_existing removes symlinks to files."""
+    target_file = tmp_path / "target.txt"
+    target_file.write_text("content")
+
+    symlink = tmp_path / "link_to_file"
+    symlink.symlink_to(target_file)
+
+    workflow = InitWorkflow(dpath_root=tmp_path)
+    workflow._remove_existing(symlink)
+
+    assert not symlink.exists()
+    assert target_file.exists()  # Target should remain
+
+
+def test_remove_existing_symlink_to_directory(tmp_path: Path):
+    """Test _remove_existing removes symlinks to directories."""
+    target_dir = tmp_path / "target_dir"
+    target_dir.mkdir()
+
+    symlink = tmp_path / "link_to_dir"
+    symlink.symlink_to(target_dir)
+
+    workflow = InitWorkflow(dpath_root=tmp_path)
+    workflow._remove_existing(symlink)
+
+    assert not symlink.exists()
+    assert target_dir.exists()  # Target should remain
+
+
+def test_remove_existing_surfaces_permission_error(tmp_path: Path):
+    """Test _remove_existing surfaces permission errors instead of ignoring them."""
+    # Create a directory with a file, then make it read-only
+    test_dir = tmp_path / "readonly_dir"
+    test_dir.mkdir()
+    (test_dir / "file.txt").write_text("content")
+
+    # Make directory read-only (no write/execute permissions)
+    test_dir.chmod(0o444)
+
+    workflow = InitWorkflow(dpath_root=tmp_path)
+
+    try:
+        with pytest.raises(PermissionError):
+            workflow._remove_existing(test_dir)
+    finally:
+        # Cleanup: restore permissions so test cleanup works
+        test_dir.chmod(0o755)
+
+
+def test_remove_existing_broken_symlink(tmp_path: Path):
+    """Test _remove_existing handles broken symlinks."""
+    nonexistent_target = tmp_path / "does_not_exist.txt"
+    broken_symlink = tmp_path / "broken_link"
+    broken_symlink.symlink_to(nonexistent_target)
+
+    # Verify it's actually broken
+    assert broken_symlink.is_symlink()
+    assert not broken_symlink.exists()
+
+    workflow = InitWorkflow(dpath_root=tmp_path)
+    workflow._remove_existing(broken_symlink)
+
+    assert not broken_symlink.is_symlink()
+    assert not broken_symlink.exists()
+
+
 def test_is_file(dpath_root: Path):
     dpath_root.touch()
 
