@@ -86,20 +86,10 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
         for dpath in self.layout.get_paths(directory=True, include_optional=True):
             if dpath.exists() and self.force:
-                self._remove_existing(dpath)
-            # If a bids_source is passed it means datalad is installed.
-            if self.bids_source is not None and dpath.stem == "bids":
-                if self.mode == "copy":
-                    self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
-                elif self.mode == "move":
-                    self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
-                elif self.mode == "symlink":
-                    self.mkdir(self.dpath_root)
-                    self.create_symlink(
-                        self.bids_source, str(dpath), log_level=logging.DEBUG
-                    )
-                else:
-                    raise ValueError(f"Invalid mode: {self.mode}")
+                self._remove_existing(dpath, log_level=logging.DEBUG)
+
+            if self.bids_source is not None and dpath == self.layout.dpath_bids:
+                self.handle_bids_source()
             else:
                 self.mkdir(dpath)
 
@@ -137,6 +127,26 @@ class InitWorkflow(BaseDatasetWorkflow):
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
         )
+
+    def handle_bids_source(self) -> None:
+        """Create bids source directory.
+
+        Handles copy/move/symlink modes.
+        If --force, attempt to remove the pre-existing conflicting bids source.
+        """
+        dpath = self.layout.dpath_bids
+
+        # Handle edge case where we need to clobber existing data
+
+        if self.mode == "copy":
+            self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+        elif self.mode == "move":
+            self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+        elif self.mode == "symlink":
+            self.mkdir(self.dpath_root)
+            self.create_symlink(self.bids_source, str(dpath), log_level=logging.DEBUG)
+        else:
+            raise ValueError(f"Invalid mode: {self.mode}")
 
     def _write_readmes(self) -> None:
         if self.dry_run:
