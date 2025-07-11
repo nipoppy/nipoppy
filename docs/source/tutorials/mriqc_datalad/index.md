@@ -1,10 +1,10 @@
 # Run MRIQC on a BIDS dataset with DataLad provenance tracking
 
-This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using DataLad for full provenance tracking. This is based on the [main MRIQC tutorial](../mriqc_from_bids/) but uses DataLad commands for reproducibility.
+This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using DataLad for full provenance tracking. This is based on the {doc}`main MRIQC tutorial <../mriqc_from_bids/index>` but uses DataLad commands for reproducibility.
 
 ## Step 0: Download the BIDS dataset with DataLad
 
-```console
+```shell
 datalad clone https://github.com/OpenNeuroDatasets/ds004101.git
 cd ds004101
 # Now retrieve all the data
@@ -18,7 +18,7 @@ This downloads the dataset and gets all the data files.
 
 Create a DataLad dataset first so we can record the provenance of all the nipoppy commands from the beginning.
 
-```console
+```shell
 datalad create -c text2git nipoppy_study
 cd nipoppy_study
 # We use `init --force` because the datalad dataset contains .git and .datalad directories.
@@ -27,33 +27,33 @@ datalad run -m "Initialize nipoppy dataset" nipoppy init --bids-source ../ds0041
 
 ## Step 2: Modify the global configuration file
 
-Follow [main tutorial Step 2](../mriqc_from_bids/#step-2-modify-the-global-configuration-file).
+Follow the {doc}`main tutorial Step 2 <../mriqc_from_bids/index>`.
 If any changes were made, save them with datalad.
 
-```console
+```shell
 datalad save -m "Update nipoppy config"
 ```
 
 ## Step 3: Install the MRIQC pipeline
 
-Now we install the pipeline from [main tutorial Step 3](../mriqc_from_bids/#step-3-install-the-mriqc-pipeline-into-the-dataset)
+Now we install the pipeline from the {doc}`main tutorial Step 3 <../mriqc_from_bids/index>`
 
-```console
+```shell
 datalad run -m "Install pipeline" \
     nipoppy pipeline install 15427844
 ```
 
 Then manually update the `TEMPLATEFLOW_HOME` in `global_config.json` as described in the main tutorial, and save the change:
 
-```console
-$ datalad save -m "set templateflow home"
+```shell
+datalad save -m "set templateflow home"
 ```
 
 ## Step 4: Run MRIQC with DataLad provenance
 
-Now we will run the pipeline on a single participant, [see main tutorial Step 4](../mriqc_from_bids/#step-4-run-mriqc-on-a-single-participant-and-session).
+Now we will run the pipeline on a single participant, see the {doc}`main tutorial Step 4 <../mriqc_from_bids/index>`.
 
-```console
+```shell
 datalad run -m "process single participant/session" \
     nipoppy process \
         --pipeline mriqc \
@@ -64,9 +64,9 @@ datalad run -m "process single participant/session" \
 
 ## Step 5: Track the pipeline processing status
 
-Next we will record the tracking status from [main tutorial Step 5](../mriqc_from_bids/#step-5-track-the-pipeline-processing-status).
+Next we will record the tracking status from the {doc}`main tutorial Step 5 <../mriqc_from_bids/index>`.
 
-```console
+```shell
 datalad run -m "Track processing status" \
     nipoppy track-processing \
         --dataset nipoppy_study \
@@ -78,7 +78,7 @@ datalad run -m "Track processing status" \
 
 Now we can see the advantage of using `datalad run` with nipoppy, the exact commands and parameters have been recorded into the git history!
 
-```console
+```shell
 git log
 ```
 
