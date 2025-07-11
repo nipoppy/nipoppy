@@ -124,7 +124,7 @@ class BidsConversionRunner(PipelineRunner):
     def run_single(self, participant_id: str, session_id: str):
         """Run BIDS conversion on a single participant/session."""
         # get container command
-        container_command = self.process_container_config(
+        container_command, container_config = self.process_container_config(
             participant_id=participant_id,
             session_id=session_id,
             bind_paths=[
@@ -135,7 +135,10 @@ class BidsConversionRunner(PipelineRunner):
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
-            participant_id, session_id, container_command=container_command
+            participant_id,
+            session_id,
+            container_args=container_config.ARGS,
+            container_command=container_command,
         )
 
         # update status

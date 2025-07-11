@@ -11,6 +11,7 @@ import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
+from nipoppy.config.container import ContainerConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
@@ -45,6 +46,9 @@ def runner(tmp_path: Path):
     fname_descriptor = "descriptor.json"
     fname_invocation = "invocation.json"
 
+    fpath_container = tmp_path / "fake_container.sif"
+    fpath_container.touch()
+
     create_pipeline_config_files(
         runner.layout.dpath_pipelines,
         processing_pipelines=[
@@ -52,6 +56,10 @@ def runner(tmp_path: Path):
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
                 "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
+                "CONTAINER_INFO": {
+                    "FILE": str(fpath_container),
+                    "URI": "docker://org/name:1.0.0",
+                },
                 "STEPS": [
                     {
                         "DESCRIPTOR_FILE": fname_descriptor,
@@ -202,21 +210,32 @@ def test_launch_boutiques_run_error(
 
 def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
     bind_path = tmp_path / "to_bind"
-    result = runner.process_container_config(
+    container_command, container_config = runner.process_container_config(
         participant_id="01", session_id="BL", bind_paths=[bind_path]
     )
 
     # check that the subcommand 'exec' from the Boutiques container config is used
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
-    assert result.startswith("echo exec")
-    assert f"--bind {runner.layout.dpath_root.resolve()} " in result
-    assert result.endswith(f"--bind {bind_path.resolve()}")
+    root_path = runner.layout.dpath_root.resolve()
+    assert container_command.startswith("echo exec")
+    assert f"--bind {root_path} " in container_command
+    assert container_command.endswith(f"--bind {bind_path.resolve()}")
 
     # check that the right container config was used
-    assert "--flag1" in result
-    assert "--flag2" in result
-    assert "--flag3" in result
+    assert "--flag1" in container_command
+    assert "--flag2" in container_command
+    assert "--flag3" in container_command
+
+    # check that container config object matches command string
+    assert isinstance(container_config, ContainerConfig)
+    assert container_config.COMMAND == "echo"
+    assert "--bind" in container_config.ARGS
+    assert str(root_path) in container_config.ARGS
+    assert str(bind_path.resolve()) in container_config.ARGS
+    assert "--flag1" in container_config.ARGS
+    assert "--flag2" in container_config.ARGS
+    assert "--flag3" in container_config.ARGS
 
 
 def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
