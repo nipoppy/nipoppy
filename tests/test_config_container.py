@@ -259,10 +259,10 @@ def test_check_container_command_error(command):
         ({}, "apptainer run"),
         (
             {
-                "COMMAND": "/path/to/singularity",
+                "COMMAND": "singularity",
                 "ARGS": ["--cleanenv"],
             },
-            "/path/to/singularity run --cleanenv",
+            "singularity run --cleanenv",
         ),
     ],
 )

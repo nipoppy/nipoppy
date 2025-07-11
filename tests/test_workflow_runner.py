@@ -13,6 +13,7 @@ from fids import fids
 
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.env import ContainerCommandEnum
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -27,7 +28,7 @@ from .conftest import (
 
 
 @pytest.fixture(scope="function")
-def runner(tmp_path: Path):
+def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> PipelineRunner:
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
@@ -38,9 +39,13 @@ def runner(tmp_path: Path):
 
     runner.config = get_config(
         container_config={
-            "COMMAND": "echo",  # dummy command
+            "COMMAND": "apptainer",  # mocked
             "ARGS": ["--flag1"],
         },
+    )
+
+    mocker.patch(
+        "nipoppy.config.container.check_container_command", side_effect=(lambda x: x)
     )
 
     fname_descriptor = "descriptor.json"
@@ -218,7 +223,7 @@ def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
     root_path = runner.layout.dpath_root.resolve()
-    assert container_command.startswith("echo exec")
+    assert container_command.startswith("apptainer exec")
     assert f"--bind {root_path} " in container_command
     assert container_command.endswith(f"--bind {bind_path.resolve()}")
 
@@ -229,7 +234,7 @@ def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
 
     # check that container config object matches command string
     assert isinstance(container_config, ContainerConfig)
-    assert container_config.COMMAND == "echo"
+    assert container_config.COMMAND == ContainerCommandEnum.APPTAINER
     assert "--bind" in container_config.ARGS
     assert str(root_path) in container_config.ARGS
     assert str(bind_path.resolve()) in container_config.ARGS

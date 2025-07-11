@@ -29,6 +29,13 @@ EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
 
+class ContainerCommandEnum(str, Enum):
+    """Container commands."""
+
+    SINGULARITY = "singularity"
+    APPTAINER = "apptainer"
+
+
 class PipelineTypeEnum(str, Enum):
     """Pipeline types."""
 
