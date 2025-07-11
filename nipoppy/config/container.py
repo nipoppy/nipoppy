@@ -292,7 +292,7 @@ def prepare_container(
     str
         The command string
     """
-    command = container_config.COMMAND
+    command = container_config.COMMAND.value
     args = container_config.ARGS
     env_vars = container_config.ENV_VARS
 

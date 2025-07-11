@@ -123,14 +123,11 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         participant_id: str,
         session_id: str,
-        container_args: Optional[list[str]] = None,
+        container_config: Optional[ContainerConfig] = None,
         objs: Optional[list] = None,
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
-        if container_args is None:
-            container_args = []
-
         bosh_exec_launch_args = []
 
         # process the descriptor if it containers Nipoppy-specific placeholder
@@ -147,16 +144,19 @@ class PipelineRunner(BasePipelineWorkflow):
             )
         else:
             descriptor_str = json.dumps(self.descriptor)
-            bosh_exec_launch_args.extend(
-                [
-                    "--force-singularity",  # TODO either this or --no-container
-                    "--no-automount",
-                    "--imagepath",
-                    str(self.fpath_container),
-                    "--container-opts",
-                    shlex.join(container_args),
-                ]
-            )
+            if container_config is None:
+                bosh_exec_launch_args.append("--no-container")
+            else:
+                bosh_exec_launch_args.extend(
+                    [
+                        "--force-singularity",
+                        "--no-automount",
+                        "--imagepath",
+                        str(self.fpath_container),
+                        "--container-opts",
+                        shlex.join(container_config.ARGS),
+                    ]
+                )
 
         # validate the descriptor
         self.logger.debug(f"Descriptor string: {descriptor_str}")
@@ -187,7 +187,9 @@ class PipelineRunner(BasePipelineWorkflow):
                     quiet=True,
                 )
                 if bosh_exec_launch_args:
-                    self.logger.info(f"Container options: {bosh_exec_launch_args}")
+                    self.logger.info(
+                        f"Additional launch options: {bosh_exec_launch_args}"
+                    )
             except subprocess.CalledProcessError as exception:
                 raise RuntimeError(
                     "Pipeline simulation failed"
@@ -359,23 +361,26 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         # get container command
-        container_command, container_config = self.process_container_config(
-            participant_id=participant_id,
-            session_id=session_id,
-            bind_paths=[
-                self.layout.dpath_bids,
-                self.dpath_pipeline_output,
-                self.dpath_pipeline_work,
-                self.dpath_pipeline_bids_db,
-            ],
-        )
+        launch_boutiques_run_kwargs = {}
+        if self.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_config = self.process_container_config(
+                participant_id=participant_id,
+                session_id=session_id,
+                bind_paths=[
+                    self.layout.dpath_bids,
+                    self.dpath_pipeline_output,
+                    self.dpath_pipeline_work,
+                    self.dpath_pipeline_bids_db,
+                ],
+            )
+            launch_boutiques_run_kwargs["container_command"] = container_command
+            launch_boutiques_run_kwargs["container_config"] = container_config
 
         # run pipeline with Boutiques
-        to_return = self.launch_boutiques_run(
+        invocation_and_descriptor = self.launch_boutiques_run(
             participant_id,
             session_id,
-            container_args=container_config.ARGS,
-            container_command=container_command,
+            **launch_boutiques_run_kwargs,
         )
 
         if self.tar and not self.simulate:
@@ -390,7 +395,7 @@ class PipelineRunner(BasePipelineWorkflow):
                 self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
             )
 
-        return to_return
+        return invocation_and_descriptor
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""

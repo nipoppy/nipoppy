@@ -175,21 +175,24 @@ class ExtractionRunner(PipelineRunner):
     def run_single(self, participant_id: str, session_id: str):
         """Run extractor on a single participant/session."""
         # get container command
-        container_command, container_config = self.process_container_config(
-            participant_id=participant_id,
-            session_id=session_id,
-            bind_paths=[
-                self.dpath_pipeline_idp,
-                self.dpath_pipeline_output,
-            ],
-        )
+        launch_boutiques_run_kwargs = {}
+        if self.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_config = self.process_container_config(
+                participant_id=participant_id,
+                session_id=session_id,
+                bind_paths=[
+                    self.dpath_pipeline_idp,
+                    self.dpath_pipeline_output,
+                ],
+            )
+            launch_boutiques_run_kwargs["container_command"] = container_command
+            launch_boutiques_run_kwargs["container_config"] = container_config
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
             participant_id,
             session_id,
-            container_args=container_config.ARGS,
-            container_command=container_command,
+            **launch_boutiques_run_kwargs,
         )
 
         return invocation_and_descriptor
