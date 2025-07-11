@@ -85,9 +85,6 @@ class InitWorkflow(BaseDatasetWorkflow):
         # create directories
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
         for dpath in self.layout.get_paths(directory=True, include_optional=True):
-            if dpath.exists() and self.force:
-                self._remove_existing(dpath, log_level=logging.DEBUG)
-
             if self.bids_source is not None and dpath == self.layout.dpath_bids:
                 self.handle_bids_source()
             else:
@@ -137,6 +134,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         dpath = self.layout.dpath_bids
 
         # Handle edge case where we need to clobber existing data
+        if dpath.exists() and self.force:
+            self._remove_existing(dpath, log_level=logging.DEBUG)
 
         if self.mode == "copy":
             self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
