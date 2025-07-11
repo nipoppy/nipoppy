@@ -7,7 +7,7 @@ This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using DataLa
 Instead of using the shell script method from the [main tutorial Step 0](docs/source/tutorials/mriqc_from_bids/index.md#step-0-download-the-bids-dataset), we'll use DataLad:
 
 ```console
-$ datalad clone https://github.com/OpenNeuroDatasets/ds004101.git 
+$ datalad clone https://github.com/OpenNeuroDatasets/ds004101.git
 $ datalad get -r ds004101
 ```
 
@@ -15,29 +15,21 @@ This downloads the dataset and gets all the data files, with full provenance tra
 
 ## Step 1: Initialize the Nipoppy dataset
 
-Same as [main tutorial Step 1](docs/source/tutorials/mriqc_from_bids/index.md#step-1-initialize-the-nipoppy-dataset):
+**DataLad-first approach**: Create the DataLad dataset first, then initialize nipoppy inside it with `--force`:
 
 ```console
-$ nipoppy init --dataset nipoppy_study --bids-source ds004101
-```
-
-**DataLad addition**: Turn the nipoppy study into a DataLad dataset for tracking:
-
-```console
+$ datalad create nipoppy_study
 $ cd nipoppy_study
-$ datalad create --force .
-$ datalad save -m "nipoppy init"
+$ datalad run -m "Initialize nipoppy dataset" nipoppy init --bids-source ../ds004101 --force
 ```
 
-# TODO Yarik?
-Note: The bids-source creates a symlink rather than a proper DataLad subdataset link, which isn't ideal for full provenance.
-Personally, I'd prefer to do nipoppy init from an existing but empty datalad repo.
+This approach provides better provenance tracking by having DataLad track the nipoppy initialization step itself.
 
 ## Step 2: Modify the global configuration file
 
 Follow [main tutorial Step 2](docs/source/tutorials/mriqc_from_bids/index.md#step-2-modify-the-global-configuration-file) exactly - no DataLad changes needed.
 
-## Step 3: Install the MRIQC pipeline 
+## Step 3: Install the MRIQC pipeline
 
 Instead of the plain command from [main tutorial Step 3](docs/source/tutorials/mriqc_from_bids/index.md#step-3-install-the-mriqc-pipeline-into-the-dataset), use `datalad run` for provenance:
 
