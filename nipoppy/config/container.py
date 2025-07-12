@@ -292,6 +292,9 @@ def prepare_container(
     str
         The command string
     """
+    if container_config.COMMAND is None:
+        raise ValueError("COMMAND cannot be None in container config")
+
     command = container_config.COMMAND.value
     args = container_config.ARGS
     env_vars = container_config.ENV_VARS

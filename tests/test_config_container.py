@@ -270,6 +270,11 @@ def test_prepare_container(data, expected):
     assert prepare_container(ContainerConfig(**data), check=False) == expected
 
 
+def test_prepare_container_error():
+    with pytest.raises(ValueError, match="COMMAND cannot be None"):
+        prepare_container(ContainerConfig(COMMAND=None), check=False)
+
+
 @pytest.mark.parametrize(
     "env_vars",
     [

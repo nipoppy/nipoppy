@@ -155,19 +155,10 @@ def test_launch_boutiques_run(
     participant_id = "01"
     session_id = "BL"
 
-    fids.create_fake_bids_dataset(
-        runner.layout.dpath_bids,
-        subjects=participant_id,
-        sessions=session_id,
-    )
-
-    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
-    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
-
     mocked_run_command = mocker.patch.object(runner, "run_command")
 
     descriptor_str, invocation_str = runner.launch_boutiques_run(
-        participant_id, session_id, container_command=""
+        participant_id, session_id
     )
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
@@ -176,6 +167,55 @@ def test_launch_boutiques_run(
 
     assert mocked_run_command.call_count == 1
     assert mocked_run_command.call_args[1].get("quiet") is True
+
+
+@pytest.mark.parametrize(
+    "container_config,expected_container_opts",
+    [
+        (None, ["--no-container"]),
+        (
+            ContainerConfig(),
+            [
+                "--force-singularity",
+                "--no-automount",
+                "--imagepath",
+                "--container-opts",
+            ],
+        ),
+    ],
+)
+@pytest.mark.parametrize("simulate", [True, False])
+def test_launch_boutiques_run_bosh_container_opts(
+    container_config,
+    expected_container_opts,
+    simulate,
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    runner.simulate = simulate
+    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
+
+    participant_id = "01"
+    session_id = "BL"
+
+    mocked_run_command = mocker.patch.object(runner, "run_command")
+
+    runner.launch_boutiques_run(
+        participant_id,
+        session_id,
+        container_config=container_config,
+    )
+
+    if not simulate:
+        container_opts = mocked_run_command.call_args[0][0]  # first positional argument
+        for opt in expected_container_opts:
+            assert (
+                opt in container_opts
+            ), f"Expected container option '{opt}' not found in {container_opts}"
+
+    else:
+        assert "Additional launch options:" in caplog.text
 
 
 @pytest.mark.parametrize("simulate", [True, False])
@@ -241,6 +281,11 @@ def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
     assert "--flag1" in container_config.ARGS
     assert "--flag2" in container_config.ARGS
     assert "--flag3" in container_config.ARGS
+
+
+def test_process_container_config_no_bindpaths(runner: PipelineRunner):
+    # smoke test for no bind paths
+    runner.process_container_config(participant_id="01", session_id="BL")
 
 
 def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
