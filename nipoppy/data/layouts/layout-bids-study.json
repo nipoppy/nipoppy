@@ -64,11 +64,11 @@
         "description": "This directory contains log files."
     },
     "dpath_tabular": {
-        "path": "tabular",
+        "path": "sourcedata/tabular",
         "description": "This directory is for tabular/phenotypic data."
     },
     "dpath_assessments": {
-        "path": "tabular/assessments",
+        "path": "sourcedata/tabular/assessments",
         "description": "This directory is for assessments data."
     },
     "fpath_config": {
@@ -88,7 +88,7 @@
         "description": "The processing status file lists availability of derived imaging data and pipeline processing statuses."
     },
     "fpath_demographics": {
-        "path": "tabular/demographics.tsv",
+        "path": "sourcedata/tabular/demographics.tsv",
         "description": "The demographics file contains demographic information for study participants."
     }
 }
