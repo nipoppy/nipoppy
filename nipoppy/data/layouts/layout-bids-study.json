@@ -40,11 +40,11 @@
         "description": "This directory is for HPC job submission templates. It can be deleted if HPC job submission is not needed."
     },
     "dpath_containers": {
-        "path": "containers",
+        "path": "code/containers",
         "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
     },
     "dpath_pipelines": {
-        "path": "pipelines",
+        "path": "code/pipelines",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
     "dpath_scratch": {
