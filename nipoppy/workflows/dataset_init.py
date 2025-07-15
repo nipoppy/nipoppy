@@ -1,5 +1,6 @@
 """Workflow for init command."""
 
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +23,7 @@ from nipoppy.utils.bids import (
 from nipoppy.utils.utils import (
     DPATH_HPC,
     FPATH_SAMPLE_CONFIG,
+    FPATH_SAMPLE_DATASET_DESCRIPTION,
     FPATH_SAMPLE_MANIFEST,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -107,6 +109,17 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.copy(
                 FPATH_SAMPLE_MANIFEST,
                 self.layout.fpath_manifest,
+            )
+
+        # copy dataset description file if specified in layout
+        if (
+            hasattr(self.layout, "fpath_bids_dataset_description")
+            and self.layout.fpath_bids_dataset_description is not None
+        ):
+            self.copy(
+                FPATH_SAMPLE_DATASET_DESCRIPTION,
+                self.layout.fpath_bids_dataset_description,
+                log_level=logging.DEBUG,
             )
 
         # copy HPC files
