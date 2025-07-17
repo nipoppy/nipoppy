@@ -82,6 +82,10 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> PipelineRunner:
         "description": "A dummy pipeline for testing",
         "schema-version": "0.5",
         "command-line": "echo [ARG1] [ARG2] [[NIPOPPY_DPATH_BIDS]]",
+        "container-image": {
+            "image": "dummy/image",
+            "type": "docker",
+        },
         "inputs": [
             {
                 "id": "arg1",
@@ -216,6 +220,28 @@ def test_launch_boutiques_run_bosh_container_opts(
 
     else:
         assert "Additional launch options:" in caplog.text
+
+
+def test_launch_boutiques_run_bosh_no_container_image(
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
+    runner.descriptor.pop("container-image")
+
+    participant_id = "01"
+    session_id = "BL"
+
+    mocked_run_command = mocker.patch.object(runner, "run_command")
+
+    runner.launch_boutiques_run(
+        participant_id,
+        session_id,
+        container_config=ContainerConfig(),
+    )
+
+    container_opts = mocked_run_command.call_args[0][0]  # first positional argument
+    assert "--no-container" in container_opts
 
 
 @pytest.mark.parametrize("simulate", [True, False])

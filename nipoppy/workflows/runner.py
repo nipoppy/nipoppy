@@ -144,7 +144,10 @@ class PipelineRunner(BasePipelineWorkflow):
             )
         else:
             descriptor_str = json.dumps(self.descriptor)
-            if container_config is None:
+            if (
+                container_config is None
+                or self.descriptor.get("container-image") is None
+            ):
                 bosh_exec_launch_args.append("--no-container")
             else:
                 bosh_exec_launch_args.extend(
