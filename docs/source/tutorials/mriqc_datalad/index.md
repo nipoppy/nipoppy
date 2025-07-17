@@ -1,6 +1,7 @@
 # Run MRIQC on a BIDS dataset with DataLad provenance tracking
 
-This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using DataLad for full provenance tracking. This is based on the {doc}`main MRIQC tutorial <../mriqc_from_bids/index>` but uses DataLad commands for reproducibility.
+This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using [DataLad](https://datalad.org) for full provenance tracking.
+This is based on the {doc}`main MRIQC tutorial <../mriqc_from_bids/index>` but uses DataLad commands for reproducibility.
 
 ## Step 0: Download the BIDS dataset with DataLad
 
