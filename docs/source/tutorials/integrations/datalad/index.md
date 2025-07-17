@@ -1,7 +1,7 @@
-# Run MRIQC on a BIDS dataset with DataLad provenance tracking
+# DataLad
 
 This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using [DataLad](https://datalad.org) for full provenance tracking.
-This is based on the {doc}`main MRIQC tutorial <../mriqc_from_bids/index>` but uses DataLad commands for reproducibility.
+This is based on the {doc}`main MRIQC tutorial <../../mriqc_from_bids/index>` but uses DataLad commands for reproducibility.
 
 ## Step 0: Download the BIDS dataset with DataLad
 
@@ -28,7 +28,7 @@ $ datalad run -m "Initialize nipoppy dataset" nipoppy init --bids-source ../ds00
 
 ## Step 2: Modify the global configuration file
 
-Follow the {doc}`main tutorial Step 2 <../mriqc_from_bids/index>`.
+Follow the {doc}`main tutorial Step 2 <../../mriqc_from_bids/index>`.
 If any changes were made, save them with datalad.
 
 ```console
@@ -37,7 +37,7 @@ $ datalad save -m "Update nipoppy config"
 
 ## Step 3: Install the MRIQC pipeline
 
-Now we install the pipeline from the {doc}`main tutorial Step 3 <../mriqc_from_bids/index>`
+Now we install the pipeline from the {doc}`main tutorial Step 3 <../../mriqc_from_bids/index>`
 
 ```console
 $ datalad run -m "Install pipeline" \
@@ -52,7 +52,7 @@ $ datalad save -m "set templateflow home"
 
 ## Step 4: Run MRIQC with DataLad provenance
 
-Now we will run the pipeline on a single participant, see the {doc}`main tutorial Step 4 <../mriqc_from_bids/index>`.
+Now we will run the pipeline on a single participant, see the {doc}`main tutorial Step 4 <../../mriqc_from_bids/index>`.
 
 ```console
 $ datalad run -m "process single participant/session" \
@@ -65,7 +65,7 @@ $ datalad run -m "process single participant/session" \
 
 ## Step 5: Track the pipeline processing status
 
-Next we will record the tracking status from the {doc}`main tutorial Step 5 <../mriqc_from_bids/index>`.
+Next we will record the tracking status from the {doc}`main tutorial Step 5 <../../mriqc_from_bids/index>`.
 
 ```console
 $ datalad run -m "Track processing status" \

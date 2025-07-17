@@ -48,7 +48,7 @@ titlesonly:
 caption: Tutorials
 ---
 tutorials/mriqc_from_bids/index
-tutorials/mriqc_datalad/index
+tutorials/integrations/index
 ```
 
 ```{toctree}
