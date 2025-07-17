@@ -1,6 +1,7 @@
 """Nipoppy CLI."""
 
 import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -623,3 +624,8 @@ def pipeline_upload(**params):
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
         workflow.run()
+
+
+def tui_launch():
+    """Launch the Nipoppy TUI."""
+    subprocess.run(["nipoppy", "gui"])

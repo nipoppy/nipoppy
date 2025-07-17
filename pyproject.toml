@@ -65,7 +65,7 @@ gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
 nipoppy = "nipoppy.cli:cli"
-nipoppy-gui = "nipoppy.tui:main"
+nipoppy-gui = "nipoppy.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
