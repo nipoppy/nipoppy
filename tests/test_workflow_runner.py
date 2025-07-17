@@ -189,15 +189,18 @@ def test_launch_boutiques_run(
     ],
 )
 @pytest.mark.parametrize("simulate", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
 def test_launch_boutiques_run_bosh_container_opts(
     container_config,
     expected_container_opts,
     simulate,
+    verbose,
     runner: PipelineRunner,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
     runner.simulate = simulate
+    runner.verbose = verbose
     runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
 
     participant_id = "01"
@@ -212,14 +215,19 @@ def test_launch_boutiques_run_bosh_container_opts(
     )
 
     if not simulate:
-        container_opts = mocked_run_command.call_args[0][0]  # first positional argument
+        # first positional argument
+        bosh_command_args = mocked_run_command.call_args[0][0]
+
         for opt in expected_container_opts:
             assert (
-                opt in container_opts
-            ), f"Expected container option '{opt}' not found in {container_opts}"
+                opt in bosh_command_args
+            ), f"Expected container option '{opt}' not found in {bosh_command_args}"
+
+        assert ("--debug" in bosh_command_args) == verbose
 
     else:
         assert "Additional launch options:" in caplog.text
+        assert ("--debug" in caplog.text) == verbose
 
 
 def test_launch_boutiques_run_bosh_no_container_image(
