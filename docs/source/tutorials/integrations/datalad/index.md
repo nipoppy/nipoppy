@@ -1,7 +1,7 @@
 # DataLad
 
 This tutorial shows how to run the MRIQC pipeline on a BIDS dataset using [DataLad](https://datalad.org) for full provenance tracking.
-This is based on the {doc}`main MRIQC tutorial <../../mriqc_from_bids/index>` but uses DataLad commands for reproducibility.
+This is based on the {doc}`main MRIQC tutorial <../../mriqc_from_bids/index>` but uses DataLad commands for full reproducibility.
 
 ## Step 0: Download the BIDS dataset with DataLad
 
@@ -17,7 +17,7 @@ $ cd ..
 
 ## Step 1: Initialize the Nipoppy dataset
 
-Create a DataLad dataset first so we can record the provenance of all the nipoppy commands from the beginning.
+Create a DataLad dataset first so we can record the provenance of all the Nipoppy commands from the beginning.
 
 ```console
 $ datalad create -c text2git nipoppy_study
@@ -77,7 +77,7 @@ $ datalad run -m "Track processing status" \
 
 ## Step 6: Review Recorded Provenance
 
-Now we can see the advantage of using `datalad run` with nipoppy, the exact commands and parameters have been recorded into the git history!
+Now we can see the advantage of using `datalad run` with Nipoppy, the exact commands and parameters have been recorded into the git history!
 
 ```console
 $ git log
