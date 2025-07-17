@@ -7,7 +7,19 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import rich_click as click
-from trogon import tui
+
+try:
+    from trogon import tui
+except ImportError:
+    # Fallback no-op decorator if Trogon isn't installed
+    def tui(*args, **kwargs):
+        """No-op decorator for Trogon."""
+
+        def decorator(f):
+            return f
+
+        return decorator
+
 
 from nipoppy._version import __version__
 from nipoppy.env import (
@@ -314,7 +326,8 @@ def cli():
     pass
 
 
-cli.commands["gui"].hidden = True
+if cli.commands.get("gui"):
+    cli.commands["gui"].hidden = True
 
 
 @cli.command()
