@@ -327,3 +327,17 @@ def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
             for record in caplog.records
         ]
     )
+
+
+def test_cli_tui():
+    """Verify that the TUI `gui` command is registered.
+
+    TODO: It would be better to test the Trogon app directly, but we would have to
+    invoke Trogon directly, without the tui decorator.
+    """
+    result = runner.invoke(
+        cli,
+        ["gui", "--help"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
