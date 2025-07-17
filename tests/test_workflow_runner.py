@@ -63,7 +63,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> PipelineRunner:
                 "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
                 "CONTAINER_INFO": {
                     "FILE": str(fpath_container),
-                    "URI": "docker://org/name:1.0.0",
+                    "URI": "docker://dummy/image:1.0.0",
                 },
                 "STEPS": [
                     {
@@ -665,6 +665,9 @@ def test_run_single_pybids_db(
 
     # Mock the set_up_bids_db method
     mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
+
+    # Mock launch_boutiques_run to avoid issues with bosh trying to launch Docker
+    mocker.patch.object(runner, "launch_boutiques_run")
 
     # Call run_single
     runner.run_single(participant_id=participant_id, session_id=session_id)
