@@ -80,7 +80,9 @@ class InitWorkflow(BaseDatasetWorkflow):
                         f"{msg} `--force` specified, proceeding anyway."
                     )
                 else:
-                    raise FileExistsError(msg)
+                    raise FileExistsError(
+                        f"{msg}, if this is intended consider using the --force flag."
+                    )
 
         # create directories
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
