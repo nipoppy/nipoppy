@@ -141,7 +141,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 ):
                     self.run_command(
                         [
-                            self.config.CONTAINER_CONFIG.COMMAND,
+                            self.config.CONTAINER_CONFIG.COMMAND.value,
                             "pull",
                             fpath_container,
                             pipeline_config.CONTAINER_INFO.URI,

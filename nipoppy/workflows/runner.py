@@ -130,6 +130,9 @@ class PipelineRunner(BasePipelineWorkflow):
         """Launch a pipeline run using Boutiques."""
         bosh_exec_launch_args = []
 
+        if self.verbose:
+            bosh_exec_launch_args.append("--debug")
+
         # process the descriptor if it containers Nipoppy-specific placeholder
         # expressions (legacy behaviour)
         if TEMPLATE_REPLACE_PATTERN.search(self.descriptor["command-line"]):
