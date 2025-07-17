@@ -687,6 +687,6 @@ def pipeline_upload(**params):
         workflow.run()
 
 
-def tui_launch():
+def tui_launch():  # pragma: no cover
     """Launch the Nipoppy TUI."""
     subprocess.run(["nipoppy", "gui"])
