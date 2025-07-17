@@ -320,6 +320,15 @@ def cli():
     help=("Path to a BIDS dataset to initialize the layout with."),
 )
 @click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help=(
+        "Create a nipoppy dataset even if there are already files present."
+        " (May clobber existing files.)"
+    ),
+)
+@click.option(
     "--mode",
     type=click.Choice(["copy", "move", "symlink"]),
     default="symlink",
