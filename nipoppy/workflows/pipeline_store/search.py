@@ -4,9 +4,9 @@ from typing import Optional
 
 import pandas as pd
 from rich import box
-from rich.console import Console
 from rich.table import Table
 
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import LogColor
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -76,4 +76,4 @@ class PipelineSearchWorkflow(BaseWorkflow):
         table = self._df_to_table(df_hits)
 
         self.logger.info(f"Showing {len(hits)} of {n_total} results")
-        Console().print(table)
+        CONSOLE_STDOUT.print(table)

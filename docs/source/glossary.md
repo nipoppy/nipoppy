@@ -4,9 +4,9 @@
 
 ```{glossary}
 Manifest file
-    The manifest file at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
+    The [manifest file](./explanations/manifest) at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
 
-    There must be only one row per unique participant/visit combination.
+    A guide for how to create a manifest file can be found [here](./how_to_guides/manifest/index).
 
 Global config file
     The global configuration file at {{fpath_config}} allows for high-level configuration of the Nipoppy software tools (e.g., user-provided paths needed to run pipelines, container runtime arguments).
@@ -29,7 +29,7 @@ Processing status file
     In older versions of `nipoppy`, this file was called the "bagel file".
     ```
 
-    A tabular file at {{fpath_processing_status}} that indicates the completion status of processing pipelines of interest at the participant-session level. The processing status file is created by the [`nipoppy track`](./cli_reference/track_processing.rst) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/user_guide/cli).
+    A tabular file at {{fpath_processing_status}} that indicates the completion status of processing pipelines of interest at the participant-session level. The processing status file is created by the [`nipoppy track-processing`](./cli_reference/track_processing.rst) command and can be used as input to [the Neurobagel CLI](https://neurobagel.org/user_guide/cli).
 
     See {ref}`here <processing-status-schema>` for more information about the columns in the file.
 
@@ -39,11 +39,6 @@ Session ID
 Visit ID
     An identifier for a data collection event, not restricted to imaging data.
 ```
-
-
-### Session IDs vs visit IDs
-
-Nipoppy uses the term "session ID" for imaging data, following the convention established by BIDS. The term "visit ID", on the other hand, is used to refer to any data collection event (not necessarily imaging-related), and is more common in clinical contexts. In most cases, `session_id` and `visit_id` will be identical (or `session_id`s will be a subset of `visit_id`s). However, having two descriptors becomes particularly useful when imaging and non-imaging assessments do not use the same naming conventions.
 
 ## Neuroimaging/software terms
 

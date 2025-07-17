@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Optional
 
 import rich_click as click
-from rich.console import Console
 from rich.logging import RichHandler
 
+from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.env import IS_TESTING, StrOrPathLike
 
 DATE_FORMAT = "[%Y-%m-%d %X]"
@@ -33,18 +33,19 @@ def get_logger(
     rich_handler = partial(
         RichHandler,
         show_time=False,
+        show_path=False,
         markup=True,
         rich_tracebacks=True,
         tracebacks_suppress=[click],
     )
 
     # stream WARNING and above to stderr with rich formatting
-    stderr_handler = rich_handler(console=Console(stderr=True))
+    stderr_handler = rich_handler(console=CONSOLE_STDERR)
     stderr_handler.addFilter(lambda record: record.levelno >= logging.WARNING)
     logger.addHandler(stderr_handler)
 
     # stream levels below WARNING to stdout with rich formatting
-    stdout_handler = rich_handler(console=Console(stderr=False))
+    stdout_handler = rich_handler(console=CONSOLE_STDOUT)
     stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
     logger.addHandler(stdout_handler)
 

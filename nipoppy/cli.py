@@ -26,6 +26,7 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     PROGRAM_NAME,
+    PipelineTypeEnum,
     ReturnCode,
 )
 from nipoppy.logger import get_logger
@@ -338,6 +339,15 @@ if cli.commands.get("gui"):
     help=("Path to a BIDS dataset to initialize the layout with."),
 )
 @click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help=(
+        "Create a nipoppy dataset even if there are already files present."
+        " (May clobber existing files.)"
+    ),
+)
+@click.option(
     "--mode",
     type=click.Choice(["copy", "move", "symlink"]),
     default="symlink",
@@ -536,6 +546,44 @@ def pipeline_search(**params):
         sandbox=params.pop("sandbox"),
     )
     with handle_exception(PipelineSearchWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("create")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=False, path_type=Path, resolve_path=True),
+)
+@click.option(
+    "--type",
+    "-t",
+    "type_",
+    type=click.Choice(
+        [
+            PipelineTypeEnum.BIDSIFICATION,
+            PipelineTypeEnum.PROCESSING,
+            PipelineTypeEnum.EXTRACTION,
+        ],
+        case_sensitive=False,
+    ),
+    required=True,
+    help=(
+        "Pipeline type. This is used to create the correct pipeline config directory."
+    ),
+)
+@click.option(
+    "--source-descriptor",
+    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
+    help=(
+        "Path to an existing Boutiques descriptor file. This is used to create the "
+        "pipeline config directory."
+    ),
+)
+def pipeline_create(**params):
+    """Create a template pipeline config directory."""
+    from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
+
+    with handle_exception(PipelineCreateWorkflow(**params)) as workflow:
         workflow.run()
 
 

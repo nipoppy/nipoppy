@@ -1,49 +1,36 @@
 cff-version: 1.2.0
-
-title: "nipoppy"
-
-version: 0.3.3
-
+title: nipoppy
+version: 0.4.0
 abstract: A lightweight framework for neuroimaging-clinical data organization/processing.
-
-message: "If you use this software, please cite it as below."
-
-repository-code: "https://github.com/nipoppy/nipoppy.git"
-
-doi: "10.5281/zenodo.8084759"
-
+message: If you use this software, please cite it as below.
+repository-code: https://github.com/nipoppy/nipoppy.git
+doi: 10.5281/zenodo.8084759
 contact:
-  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+  - affiliation: ORIGAMI lab, McGill University, Montréal, Canada
     family-names: Poline
     given-names: Jean-Baptiste
-    orcid: "https://orcid.org/0000-0002-9794-749X"
-
+    orcid: https://orcid.org/0000-0002-9794-749X
 authors:
   - family-names: Nipoppy contributors
-  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
-    email:  nikhil.bhagwat@mcgill.ca
+  - affiliation: ORIGAMI lab, McGill University, Montréal, Canada
+    email: nikhil.bhagwat@mcgill.ca
     family-names: Bhagwat
     given-names: Nikhil
-    orcid: "https://orcid.org/0000-0001-6073-7141"
-
-  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    orcid: https://orcid.org/0000-0001-6073-7141
+  - affiliation: ORIGAMI lab, McGill University, Montréal, Canada
     family-names: Wang
     given-names: Michelle
-    orcid: "https://orcid.org/0000-0002-3432-6899"
-
-  - affiliation: "Big Data Infrastructures for Neuroinformatics lab, Concordia University, Montréal, Canada"
+    orcid: https://orcid.org/0000-0002-3432-6899
+  - affiliation: Big Data Infrastructures for Neuroinformatics lab, Concordia University, Montréal, Canada
     family-names: Dugré
     given-names: Mathieu
-    orcid: "https://orcid.org/0000-0003-2828-6031"
-
-  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    orcid: https://orcid.org/0000-0003-2828-6031
+  - affiliation: ORIGAMI lab, McGill University, Montréal, Canada
     family-names: McPherson
     given-names: Brent
-    orcid: "https://orcid.org/0000-0001-8378-8136"
-
-  - affiliation: "ORIGAMI lab, McGill University, Montréal, Canada"
+    orcid: https://orcid.org/0000-0001-8378-8136
+  - affiliation: ORIGAMI lab, McGill University, Montréal, Canada
     family-names: Poline
     given-names: Jean-Baptiste
-    orcid: "https://orcid.org/0000-0002-9794-749X"
-
+    orcid: https://orcid.org/0000-0002-9794-749X
 license: MIT

@@ -264,6 +264,18 @@ class BaseWorkflow(Base, ABC):
         if not self.dry_run:
             shutil.rmtree(path, **kwargs_to_use)
 
+    def _remove_existing(self, path, log_level=logging.INFO):
+        """Remove existing file, directory, or symlink without ignoring errors."""
+        self.logger.log(level=log_level, msg=f"Removing existing {path}")
+        if not self.dry_run:
+            path_obj = Path(path)
+            if path_obj.is_symlink():
+                path_obj.unlink()
+            elif path_obj.is_dir():
+                shutil.rmtree(path)
+            else:
+                path_obj.unlink()
+
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
     """Base workflow class with awareness of dataset layout and components."""

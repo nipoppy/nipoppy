@@ -206,7 +206,7 @@ def test_confirm_upload_no(
     zenodo_api_mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
 ):
     zenodo_api_mocker.patch(
-        "nipoppy.workflows.pipeline_store.zenodo.Confirm.ask",
+        "nipoppy.workflows.pipeline_store.zenodo.CONSOLE_STDOUT.confirm",
         return_value=False,
     )
     zenodo_api = ZenodoAPI(sandbox=True)
