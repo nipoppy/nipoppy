@@ -321,6 +321,7 @@ def cli():
 )
 @click.option(
     "--force",
+    "-f",
     is_flag=True,
     help=(
         "Create a nipoppy dataset even if there are already files present."
