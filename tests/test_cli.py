@@ -356,3 +356,21 @@ def test_cli_tui():
         catch_exceptions=False,
     )
     assert result.exit_code == ReturnCode.SUCCESS
+
+
+@pytest.mark.parametrize("trogon_installed", [True, False])
+def test_cli_gui_visibility(monkeypatch, trogon_installed):
+    import importlib
+    import sys
+
+    if not trogon_installed:
+        monkeypatch.setitem(sys.modules, "trogon", None)
+
+    import nipoppy.cli as cli
+
+    importlib.reload(cli)
+
+    runner = CliRunner()
+    result = runner.invoke(cli.cli, ["gui", "--help"])
+
+    assert ("Open the Nipoppy terminal GUI. " in result.output) == trogon_installed

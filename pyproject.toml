@@ -51,7 +51,7 @@ doc = [
     "sphinx-togglebutton",
     "sphinx_design",
 ]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
+dev = ["nipoppy[doc]", "nipoppy[test]", "nipoppy[gui]", "pre-commit"]
 test = [
     "fids>=0.1.0",
     "packaging",
