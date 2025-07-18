@@ -746,11 +746,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def run_cleanup(self):
         """Log a summary message."""
         if self.n_total == 0:
-            self.logger.warning(
+            self.logger.error(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, and/or "
                 f"check the curation status file at {self.layout.fpath_curation_status}"
             )
+            self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:
             if self.n_success == 0:
                 self.logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
