@@ -170,7 +170,7 @@ class ZenodoAPI:
                 f'using username ("{creator_name}") instead'
             )
         # also get affiliation and ORCID (may be empty)
-        affiliation = response_json["profile"]["affiliations"]
+        affiliation = response_json["profile"].get("affiliations")
         orcid = response_json["identities"].get("orcid")
 
         # update metadata with new creator information
