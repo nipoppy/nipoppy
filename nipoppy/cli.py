@@ -1,11 +1,25 @@
 """Nipoppy CLI."""
 
 import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
 
 import rich_click as click
+
+try:
+    from trogon import tui
+except ImportError:
+    # Fallback no-op decorator if Trogon isn't installed
+    def tui(*args, **kwargs):
+        """No-op decorator for Trogon."""
+
+        def decorator(f):
+            return f
+
+        return decorator
+
 
 from nipoppy._version import __version__
 from nipoppy.env import (
@@ -298,6 +312,7 @@ class OrderedAliasedGroup(click.RichGroup):
         return click.Group.get_command(self, ctx, new_cmd_name)
 
 
+@tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
     cls=OrderedAliasedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -310,6 +325,10 @@ class OrderedAliasedGroup(click.RichGroup):
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
     pass
+
+
+if cli.commands.get("gui"):
+    cli.commands["gui"].hidden = True
 
 
 @cli.command()
@@ -666,3 +685,8 @@ def pipeline_upload(**params):
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
         workflow.run()
+
+
+def tui_launch():  # pragma: no cover
+    """Launch the Nipoppy TUI."""
+    subprocess.run(["nipoppy", "gui"])

@@ -74,6 +74,14 @@ Nipoppy was installed successfully if the {term}`CLI` runs. The following comman
 $ nipoppy -h
 ```
 
+````{note}
+You can also install the optional terminal user interface of Nipoppy using
+```{code-block} console
+$ pip install "nipoppy[gui]"
+```
+The user interface is available with the `nipoppy-gui` command.
+````
+
 ## Troubleshooting
 
 Please open a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new/choose) for any error not covered below.

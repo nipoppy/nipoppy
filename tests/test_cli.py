@@ -342,3 +342,35 @@ def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
             for record in caplog.records
         ]
     )
+
+
+def test_cli_tui():
+    """Verify that the TUI `gui` command is registered.
+
+    TODO: It would be better to test the Trogon app directly, but we would have to
+    invoke Trogon directly, without the tui decorator.
+    """
+    result = runner.invoke(
+        cli,
+        ["gui", "--help"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
+
+
+@pytest.mark.parametrize("trogon_installed", [True, False])
+def test_cli_gui_visibility(monkeypatch, trogon_installed):
+    import importlib
+    import sys
+
+    if not trogon_installed:
+        monkeypatch.setitem(sys.modules, "trogon", None)
+
+    import nipoppy.cli as cli
+
+    importlib.reload(cli)
+
+    runner = CliRunner()
+    result = runner.invoke(cli.cli, ["gui", "--help"])
+
+    assert ("Open the Nipoppy terminal GUI. " in result.output) == trogon_installed

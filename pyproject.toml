@@ -51,7 +51,7 @@ doc = [
     "sphinx-togglebutton",
     "sphinx_design",
 ]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
+dev = ["nipoppy[doc,test,gui]", "pre-commit"]
 test = [
     "fids>=0.1.0",
     "packaging",
@@ -60,9 +60,12 @@ test = [
     "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
+tui = ["trogon"]
+gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
 nipoppy = "nipoppy.cli:cli"
+nipoppy-gui = "nipoppy.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]

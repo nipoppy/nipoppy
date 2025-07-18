@@ -39,7 +39,7 @@ jobs:
     - name: Install package
       run: |
         pip install -U pip
-        pip install .[tests]
+        pip install .[tests,gui]
 
     - name: Run tests
       run: |
