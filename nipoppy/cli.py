@@ -419,8 +419,8 @@ def track_curation(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``
+    From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
