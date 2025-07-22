@@ -58,6 +58,7 @@ def zenodo_api():
     return ZenodoAPI(sandbox=ZENODO_SANDBOX)
 
 
+@pytest.mark.api
 @pytest.mark.parametrize("record_id_prefix", ["", "zenodo."])
 def test_download_record_files(
     tmp_path: Path, zenodo_api: ZenodoAPI, record_id: str, record_id_prefix: str
@@ -74,6 +75,7 @@ def test_download_record_files(
         assert tmp_path.joinpath(file.name).read_text() == file.read_text()
 
 
+@pytest.mark.api
 def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
     """Test for downloading an invalid pipeline from Zenodo."""
     record_id = "invalid_record_id"
@@ -127,6 +129,7 @@ def test_download_record_checksum(
         zenodo_api.download_record_files(output_dir=tmp_path, record_id="123456")
 
 
+@pytest.mark.api
 @pytest.mark.skipif(
     os.environ.get("ZENODO_TOKEN") is None
     or os.environ.get("ZENODO_TOKEN") == ""
@@ -202,6 +205,7 @@ def test_valid_authentication(mocker: pytest_mock.MockerFixture):
     )._check_authentication()
 
 
+@pytest.mark.api
 def test_failed_authentication():
     with pytest.raises(ZenodoAPIError, match="Failed to authenticate to Zenodo:"):
         ZenodoAPI(
@@ -209,6 +213,7 @@ def test_failed_authentication():
         )._check_authentication()
 
 
+@pytest.mark.api
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
 @pytest.mark.parametrize("keywords", [None, [], ["Nipoppy", "schema_version:1"]])
 def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
@@ -236,6 +241,7 @@ def test_search_records_api_call(
     assert params["size"] == size
 
 
+@pytest.mark.api
 def test_search_records_error_size(zenodo_api: ZenodoAPI):
     with pytest.raises(
         ValueError,
