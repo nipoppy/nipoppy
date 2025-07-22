@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 import pytest_httpx
-import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
 
@@ -56,7 +55,7 @@ def metadata():
 @pytest.fixture(scope="function")
 def zenodo_api():
     """Fixture for Zenodo API."""
-    return ZenodoAPI(sandbox=ZENODO_SANDBOX)
+    return ZenodoAPI(sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE)
 
 
 @pytest.mark.api
@@ -154,70 +153,69 @@ def test_create_new_version(prefix: str, metadata: dict):
     )
 
 
-def test_create_draft(mocker: pytest_mock.MockerFixture):
+def test_create_draft(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
     # Set mock response
-    mock_post = mocker.patch("httpx.post")
-    mock_response = mocker.Mock()
-    mock_response.status_code = 201
-    mock_response.json.return_value = {"id": "123456", "owners": [{"id": "987"}]}
-    mock_post.return_value = mock_response
-
-    # Call the function under test
-    url = "https://sandbox.zenodo.org/api/records"
-    headers = {
-        "Authorization": "Bearer mocked_api",
-        "Content-Type": "application/json",
-    }
     metadata = {"metadata": dict()}
-
-    result = ZenodoAPI(
-        sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE
-    )._create_draft(metadata)
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + "/records",
+        status_code=201,
+        method="POST",
+        json={"id": "123456", "owners": [{"id": "987"}]},
+        match_headers={
+            "Authorization": "Bearer mocked_api",
+            "Content-Type": "application/json",
+        },
+        match_json=metadata,
+    )
 
     # Assertions
-    mock_post.assert_called_once_with(url, json=metadata, headers=headers)
+    result = zenodo_api._create_draft(metadata)
     assert result == ("123456", "987")
 
 
-def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
+def test_create_draft_fails(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
     # Set mock response
-    mock_post = mocker.patch("httpx.post")
-    mock_response = mocker.Mock()
-    mock_response.status_code = 000  # Failed status code
-    mock_response.json.return_value = {"id": "123456"}
-    mock_post.return_value = mock_response
-
-    # Call the function under test
-    url = "https://sandbox.zenodo.org/api/records"
-    headers = {
-        "Authorization": "Bearer mocked_api",
-        "Content-Type": "application/json",
-    }
     metadata = {"metadata": dict()}
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + "/records",
+        method="POST",
+        status_code=000,  # Failed status code
+        json={"id": "123456"},
+        match_headers={
+            "Authorization": "Bearer mocked_api",
+            "Content-Type": "application/json",
+        },
+    )
 
     # Assertions
     with pytest.raises(ZenodoAPIError, match="Failed to create a draft record:"):
-        ZenodoAPI(sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE)._create_draft(
-            metadata
-        )
-
-    mock_post.assert_called_once_with(url, json=metadata, headers=headers)
+        zenodo_api._create_draft(metadata)
 
 
-def test_valid_authentication(mocker: pytest_mock.MockerFixture):
-    mocker.patch("httpx.get", return_value=mocker.Mock(status_code=200))
+def test_valid_authentication(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + "/user/records",
+        method="GET",
+        status_code=200,
+    )
 
-    ZenodoAPI(
-        sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE
-    )._check_authentication()
+    zenodo_api._check_authentication()
 
 
-@pytest.mark.api
-def test_failed_authentication():
+def test_failed_authentication(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + "/user/records",
+        method="GET",
+        status_code=403,
+        json={"status": 403, "message": "Permission denied."},
+    )
+
     with pytest.raises(ZenodoAPIError, match="Failed to authenticate to Zenodo:"):
-        ZenodoAPI(
-            sandbox=ZENODO_SANDBOX, password_file=PASSWORD_FILE
-        )._check_authentication()
+        zenodo_api._check_authentication()
 
 
 @pytest.mark.api
@@ -231,27 +229,25 @@ def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
 
 
 def test_search_records_api_call(
-    zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
 ):
     search_query = "FMRIPREP"
     keyword = "Nipoppy"
     size = 100
 
-    mocked = mocker.patch("httpx.get")
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint
+        + "/records?q=FMRIPREP+AND+metadata.subjects.subject%3A%22Nipoppy%22&size=100",
+        method="GET",
+        json={"hits": {}},
+    )
     zenodo_api.search_records(search_query, keywords=[keyword], size=size)
 
-    mocked.assert_called_once()
 
-    params = mocked.call_args[1]["params"]
-    assert search_query in params["q"]
-    assert f'metadata.subjects.subject:"{keyword}"' in params["q"]
-    assert params["size"] == size
-
-
-@pytest.mark.api
 def test_search_records_error_size(zenodo_api: ZenodoAPI):
     with pytest.raises(
         ValueError,
         match="size must be greater than 0",
     ):
+        # exits before actually making the API call
         zenodo_api.search_records(query="FMRIPREP", size=0)
