@@ -751,6 +751,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 "in the input arguments, the dataset's manifest or config file, and/or "
                 f"check the curation status file at {self.layout.fpath_curation_status}"
             )
+            self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:
             if self.n_success == 0:
                 self.logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")

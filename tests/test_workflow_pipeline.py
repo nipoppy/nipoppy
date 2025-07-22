@@ -1013,6 +1013,22 @@ def test_run_cleanup(
     assert expected_message.format(n_success, n_total) in caplog.text
 
 
+def test_run_cleanup_no_participants_warning(
+    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
+):
+    workflow.n_success = 0
+    workflow.n_total = 0
+    workflow.run_cleanup()
+    assert any(
+        record.levelname == "WARNING"
+        and "No participants or sessions to run" in record.message
+        for record in caplog.records
+    ), "Wrong log message or level"
+    assert (
+        workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
+    ), "Wrong return code"
+
+
 @pytest.mark.parametrize(
     "n_success,n_total,expected_message",
     [
