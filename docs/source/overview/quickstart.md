@@ -50,7 +50,7 @@ As pipelines are installed into the dataset, this file may need to be modified t
 
 ### Generating the manifest file
 
-The manifest file at {{fpath_manifest}} contains *ground truth* information about the participants and visits/sessions available for a dataset.
+The manifest file at {{fpath_manifest}} contains *expected availability* information about the participants and visits/sessions available for a dataset.
 
 There must be only **one row** per unique participant/visit combination.
 

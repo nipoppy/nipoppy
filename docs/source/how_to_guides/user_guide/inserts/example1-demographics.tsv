@@ -1,0 +1,6 @@
+participant_id	age	sex	recruitment_cohort	date_of_recruitment
+001	29	M	control	2023-01-15
+002	34	F	control	2023-01-16
+003	28	M	patient	2023-01-27
+004	45	F	control	2023-02-08
+005	31	M	patient	2023-02-19
