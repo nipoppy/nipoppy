@@ -746,7 +746,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def run_cleanup(self):
         """Log a summary message."""
         if self.n_total == 0:
-            self.logger.error(
+            self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, and/or "
                 f"check the curation status file at {self.layout.fpath_curation_status}"
