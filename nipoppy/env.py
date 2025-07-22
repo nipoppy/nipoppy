@@ -43,6 +43,7 @@ class ReturnCode:
     SUCCESS = 0
     UNKNOWN_FAILURE = 1
     PARTIAL_SUCCESS = 64
+    NO_PARTICIPANTS_OR_SESSIONS_TO_RUN = 65
 
 
 class LogColor:
