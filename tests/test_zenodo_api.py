@@ -5,6 +5,7 @@ from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
+import pytest_httpx
 import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
@@ -100,24 +101,30 @@ def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
 def test_download_record_checksum(
     tmp_path: Path,
     zenodo_api: ZenodoAPI,
-    content,
+    content: str,
     expected_checksum,
     checksum_match,
-    mocker: pytest_mock.MockerFixture,
+    httpx_mock: pytest_httpx.HTTPXMock,
 ):
-    mock_post = mocker.patch("httpx.get")
-    mock_response = mocker.Mock()
-    mock_response.status_code = 200
-    mock_response.content = content.encode()
-    mock_response.json.return_value = {
-        "entries": [
-            {
-                "key": "not_used",
-                "checksum": expected_checksum,
-            }
-        ]
-    }
-    mock_post.return_value = mock_response
+    record_id = "123456"
+    filename = "fake_file"
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + f"/records/{record_id}/files",
+        method="GET",
+        json={
+            "entries": [
+                {
+                    "key": filename,
+                    "checksum": expected_checksum,
+                }
+            ]
+        },
+    )
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + f"/records/{record_id}/files/{filename}/content",
+        method="GET",
+        content=content.encode(),
+    )
 
     with (
         nullcontext()
@@ -126,7 +133,7 @@ def test_download_record_checksum(
             InvalidChecksumError, match="Checksum mismatch: .* has invalid checksum"
         )
     ):
-        zenodo_api.download_record_files(output_dir=tmp_path, record_id="123456")
+        zenodo_api.download_record_files(output_dir=tmp_path, record_id=record_id)
 
 
 @pytest.mark.api
