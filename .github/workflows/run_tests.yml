@@ -11,7 +11,7 @@ on:
 
 # cancel previous runs if new one is triggered
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -43,12 +43,9 @@ jobs:
         pip install -U pip
         pip install .[tests,gui]
 
-    - name: Run tests
+    - name: Run non-API tests
       run: |
         python -m pytest -m "not api" --cov=nipoppy --cov-report=xml
-      env:
-        ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
-        ZENODO_ID: ${{ env.ZENODO_ID }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
@@ -56,3 +53,11 @@ jobs:
         files: ./coverage.xml
         name: codecov-umbrella
         token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Run API tests
+      if: github.event_name == 'schedule'
+      run: |
+        python -m pytest -m api
+      env:
+        ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+        ZENODO_ID: ${{ env.ZENODO_ID }}
