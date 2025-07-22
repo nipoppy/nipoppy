@@ -30,7 +30,7 @@ class ContainerConfig(BaseModel):
         default=ContainerCommandEnum.APPTAINER,
         description=(
             "Name of container engine. If null/None, the pipeline will not run in a "
-            "container (for e.g., baremetal installations or NeuroDesk)."
+            "container (e.g., baremetal installations)."
         ),
     )
     ARGS: list[str] = Field(
