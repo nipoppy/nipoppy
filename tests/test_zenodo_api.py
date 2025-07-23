@@ -300,8 +300,11 @@ def test_search_records_api_call(
     size = 100
 
     httpx_mock.add_response(
-        url=zenodo_api.api_endpoint
-        + "/records?q=FMRIPREP+AND+metadata.subjects.subject%3A%22Nipoppy%22&size=100",
+        url=(
+            zenodo_api.api_endpoint
+            + "/records?"
+            + "q=%2AFMRIPREP%2A+AND+metadata.subjects.subject%3A%22Nipoppy%22&size=100"
+        ),
         method="GET",
         json={"hits": {}},
     )
