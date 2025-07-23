@@ -83,7 +83,7 @@ $ nipoppy -h
 ```
 
 ### Enable shell completion
-We list the configuration for `bash` and `zsh` shells. For more details on shell completion with click, visit the official documentation at: https://click.palletsprojects.com/en/stable/shell-completion/
+We list the configuration for `bash` and `zsh` shells. For more details on shell completion with Click, visit the official documentation at: https://click.palletsprojects.com/en/stable/shell-completion/
 
 #### Bash
 Save the script somewhere.
