@@ -65,8 +65,8 @@ tui = ["trogon"]
 gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
-nipoppy = "nipoppy.cli:cli"
-nipoppy-gui = "nipoppy.cli:tui_launch"
+nipoppy = "nipoppy.cli.main:cli"
+nipoppy-gui = "nipoppy.cli.main:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]

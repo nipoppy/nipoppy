@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from nipoppy.cli import cli
+from nipoppy.cli.main import cli
 from nipoppy.env import ReturnCode
 
 from .conftest import ATTR_TO_DPATH_MAP, PASSWORD_FILE
@@ -366,11 +366,11 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
     if not trogon_installed:
         monkeypatch.setitem(sys.modules, "trogon", None)
 
-    import nipoppy.cli as cli
+    import nipoppy.cli.main as main
 
-    importlib.reload(cli)
+    importlib.reload(main)
 
     runner = CliRunner()
-    result = runner.invoke(cli.cli, ["gui", "--help"])
+    result = runner.invoke(main.cli, ["gui", "--help"])
 
     assert ("Open the Nipoppy terminal GUI. " in result.output) == trogon_installed
