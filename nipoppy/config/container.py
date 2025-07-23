@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 
 # Apptainer
@@ -26,9 +26,12 @@ class ContainerConfig(BaseModel):
     Does not include information about the container image.
     """
 
-    COMMAND: str = Field(
-        default="apptainer",
-        description="Name of or path to Apptainer/Singularity executable",
+    COMMAND: Optional[ContainerCommandEnum] = Field(
+        default=ContainerCommandEnum.APPTAINER,
+        description=(
+            "Name of container engine. If null/None, the pipeline will not run in a "
+            "container (e.g., baremetal installations)."
+        ),
     )
     ARGS: list[str] = Field(
         default=[],
@@ -289,7 +292,10 @@ def prepare_container(
     str
         The command string
     """
-    command = container_config.COMMAND
+    if container_config.COMMAND is None:
+        raise ValueError("COMMAND cannot be None in container config")
+
+    command = container_config.COMMAND.value
     args = container_config.ARGS
     env_vars = container_config.ENV_VARS
 

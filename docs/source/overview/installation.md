@@ -67,13 +67,6 @@ $ pip install git+https://github.com/nipoppy/nipoppy.git@main
 This version is **unstable**, and things could break without any notice. Use at your own risk.
 ````
 
-### Verifying the install
-
-Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
-```{code-block} console
-$ nipoppy -h
-```
-
 ````{note}
 You can also install the optional terminal user interface of Nipoppy using
 ```{code-block} console
@@ -81,6 +74,50 @@ $ pip install "nipoppy[gui]"
 ```
 The user interface is available with the `nipoppy-gui` command.
 ````
+
+### Verifying the install
+
+Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
+```{code-block} console
+$ nipoppy -h
+```
+
+### Enable shell completion
+We list the configuration for `bash` and `zsh` shells. For more details on shell completion with Click, visit the official documentation at: https://click.palletsprojects.com/en/stable/shell-completion/
+
+::::{tab-set}
+
+:::{tab-item} Bash
+Save the script somewhere.
+
+```{code-block} console
+$ _NIPOPPY_COMPLETE=bash_source nipoppy > ~/.nipoppy-complete.bash
+```
+
+Source the file in `~/.bashrc`.
+
+```{code-block} console
+$ . ~/.nipoppy-complete.bash
+```
+
+:::
+
+:::{tab-item} Zsh
+Save the script somewhere.
+
+```{code-block} console
+$ _NIPOPPY_COMPLETE=zsh_source nipoppy > ~/.nipoppy-complete.zsh
+```
+
+Source the file in `~/.zshrc`.
+
+```{code-block} console
+$ . ~/.nipoppy-complete.zsh
+```
+
+:::
+
+::::
 
 ## Troubleshooting
 
