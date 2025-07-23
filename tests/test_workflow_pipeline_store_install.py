@@ -10,7 +10,12 @@ import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcPipelineConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, ReturnCode
+from nipoppy.env import (
+    CURRENT_SCHEMA_VERSION,
+    ContainerCommandEnum,
+    PipelineTypeEnum,
+    ReturnCode,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -185,6 +190,8 @@ def test_download_container(
             "fake_uri",
         ]
     )
+    # first call, positional arg list, first element
+    assert not isinstance(mocked.call_args[0][0][0], ContainerCommandEnum)
 
 
 @pytest.mark.parametrize("confirm_download", [True, False])

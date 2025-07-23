@@ -254,7 +254,9 @@ def test_run_single(
 ):
 
     mocked_process_container_config = mocker.patch(
-        "nipoppy.workflows.runner.PipelineRunner.process_container_config"
+        "nipoppy.workflows.runner.PipelineRunner.process_container_config",
+        # usually returns string and config object
+        return_value=(None, mocker.MagicMock()),
     )
     mocked_launch_boutiques_container = mocker.patch(
         "nipoppy.workflows.runner.PipelineRunner.launch_boutiques_run"

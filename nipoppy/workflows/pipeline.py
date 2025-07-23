@@ -101,7 +101,7 @@ def get_pipeline_version(
     str
         The pipeline version
     """
-    available_pipelines = []
+    installed_pipelines = []
     pipeline_config_latest = None
     for fpath_pipeline_config in Path(dpath_pipelines).glob(
         f"*/{DatasetLayout.fname_pipeline_config}"
@@ -114,15 +114,15 @@ def get_pipeline_version(
                 pipeline_config_latest.VERSION
             ):
                 pipeline_config_latest = pipeline_config
-        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
+        installed_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
 
     if pipeline_config_latest is not None:
         return pipeline_config_latest.VERSION
     else:
         raise ValueError(
             f"No config found for pipeline with NAME={pipeline_name}"
-            ". Available pipelines: "
-            + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+            ". Installed pipelines: "
+            + ", ".join(f"{name} {version}" for name, version in installed_pipelines)
         )
 
 
@@ -262,8 +262,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
                     "the following command:"
-                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
-                    f"{self.pipeline_config.CONTAINER_INFO.FILE} "
+                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND.value} "
+                    f"pull {self.pipeline_config.CONTAINER_INFO.FILE} "
                     f"{self.pipeline_config.CONTAINER_INFO.URI}"
                 )
             raise FileNotFoundError(error_message)

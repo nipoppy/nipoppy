@@ -101,7 +101,10 @@ def test_run_single(
     workflow.pipeline_step_config.UPDATE_STATUS = update_status
 
     mocked_process_container_config = mocker.patch.object(
-        workflow, "process_container_config"
+        workflow,
+        "process_container_config",
+        # usually returns string and config object
+        return_value=(None, mocker.MagicMock()),
     )
     mocked_launch_boutiques_run = mocker.patch.object(workflow, "launch_boutiques_run")
 

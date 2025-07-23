@@ -11,7 +11,9 @@ import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
+from nipoppy.config.container import ContainerConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.env import ContainerCommandEnum
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -26,7 +28,7 @@ from .conftest import (
 
 
 @pytest.fixture(scope="function")
-def runner(tmp_path: Path):
+def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> PipelineRunner:
     runner = PipelineRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
@@ -37,13 +39,20 @@ def runner(tmp_path: Path):
 
     runner.config = get_config(
         container_config={
-            "COMMAND": "echo",  # dummy command
+            "COMMAND": "apptainer",  # mocked
             "ARGS": ["--flag1"],
         },
     )
 
+    mocker.patch(
+        "nipoppy.config.container.check_container_command", side_effect=(lambda x: x)
+    )
+
     fname_descriptor = "descriptor.json"
     fname_invocation = "invocation.json"
+
+    fpath_container = tmp_path / "fake_container.sif"
+    fpath_container.touch()
 
     create_pipeline_config_files(
         runner.layout.dpath_pipelines,
@@ -52,6 +61,10 @@ def runner(tmp_path: Path):
                 "NAME": "dummy_pipeline",
                 "VERSION": "1.0.0",
                 "CONTAINER_CONFIG": {"ARGS": ["--flag2"]},
+                "CONTAINER_INFO": {
+                    "FILE": str(fpath_container),
+                    "URI": "docker://dummy/image:1.0.0",
+                },
                 "STEPS": [
                     {
                         "DESCRIPTOR_FILE": fname_descriptor,
@@ -69,6 +82,10 @@ def runner(tmp_path: Path):
         "description": "A dummy pipeline for testing",
         "schema-version": "0.5",
         "command-line": "echo [ARG1] [ARG2] [[NIPOPPY_DPATH_BIDS]]",
+        "container-image": {
+            "image": "dummy/image",
+            "type": "docker",
+        },
         "inputs": [
             {
                 "id": "arg1",
@@ -142,19 +159,10 @@ def test_launch_boutiques_run(
     participant_id = "01"
     session_id = "BL"
 
-    fids.create_fake_bids_dataset(
-        runner.layout.dpath_bids,
-        subjects=participant_id,
-        sessions=session_id,
-    )
-
-    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
-    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
-
     mocked_run_command = mocker.patch.object(runner, "run_command")
 
     descriptor_str, invocation_str = runner.launch_boutiques_run(
-        participant_id, session_id, container_command=""
+        participant_id, session_id
     )
 
     assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
@@ -163,6 +171,85 @@ def test_launch_boutiques_run(
 
     assert mocked_run_command.call_count == 1
     assert mocked_run_command.call_args[1].get("quiet") is True
+
+
+@pytest.mark.parametrize(
+    "container_config,expected_container_opts",
+    [
+        (None, ["--no-container"]),
+        (
+            ContainerConfig(),
+            [
+                "--force-singularity",
+                "--no-automount",
+                "--imagepath",
+                "--container-opts",
+            ],
+        ),
+    ],
+)
+@pytest.mark.parametrize("simulate", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
+def test_launch_boutiques_run_bosh_container_opts(
+    container_config,
+    expected_container_opts,
+    simulate,
+    verbose,
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    runner.simulate = simulate
+    runner.verbose = verbose
+    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
+
+    participant_id = "01"
+    session_id = "BL"
+
+    mocked_run_command = mocker.patch.object(runner, "run_command")
+
+    runner.launch_boutiques_run(
+        participant_id,
+        session_id,
+        container_config=container_config,
+    )
+
+    if not simulate:
+        # first positional argument
+        bosh_command_args = mocked_run_command.call_args[0][0]
+
+        for opt in expected_container_opts:
+            assert (
+                opt in bosh_command_args
+            ), f"Expected container option '{opt}' not found in {bosh_command_args}"
+
+        assert ("--debug" in bosh_command_args) == verbose
+
+    else:
+        assert "Additional launch options:" in caplog.text
+        assert ("--debug" in caplog.text) == verbose
+
+
+def test_launch_boutiques_run_bosh_no_container_image(
+    runner: PipelineRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
+    runner.descriptor.pop("container-image")
+
+    participant_id = "01"
+    session_id = "BL"
+
+    mocked_run_command = mocker.patch.object(runner, "run_command")
+
+    runner.launch_boutiques_run(
+        participant_id,
+        session_id,
+        container_config=ContainerConfig(),
+    )
+
+    container_opts = mocked_run_command.call_args[0][0]  # first positional argument
+    assert "--no-container" in container_opts
 
 
 @pytest.mark.parametrize("simulate", [True, False])
@@ -202,21 +289,37 @@ def test_launch_boutiques_run_error(
 
 def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
     bind_path = tmp_path / "to_bind"
-    result = runner.process_container_config(
+    container_command, container_config = runner.process_container_config(
         participant_id="01", session_id="BL", bind_paths=[bind_path]
     )
 
     # check that the subcommand 'exec' from the Boutiques container config is used
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
-    assert result.startswith("echo exec")
-    assert f"--bind {runner.layout.dpath_root.resolve()} " in result
-    assert result.endswith(f"--bind {bind_path.resolve()}")
+    root_path = runner.layout.dpath_root.resolve()
+    assert container_command.startswith("apptainer exec")
+    assert f"--bind {root_path} " in container_command
+    assert container_command.endswith(f"--bind {bind_path.resolve()}")
 
     # check that the right container config was used
-    assert "--flag1" in result
-    assert "--flag2" in result
-    assert "--flag3" in result
+    assert "--flag1" in container_command
+    assert "--flag2" in container_command
+    assert "--flag3" in container_command
+
+    # check that container config object matches command string
+    assert isinstance(container_config, ContainerConfig)
+    assert container_config.COMMAND == ContainerCommandEnum.APPTAINER
+    assert "--bind" in container_config.ARGS
+    assert str(root_path) in container_config.ARGS
+    assert str(bind_path.resolve()) in container_config.ARGS
+    assert "--flag1" in container_config.ARGS
+    assert "--flag2" in container_config.ARGS
+    assert "--flag3" in container_config.ARGS
+
+
+def test_process_container_config_no_bindpaths(runner: PipelineRunner):
+    # smoke test for no bind paths
+    runner.process_container_config(participant_id="01", session_id="BL")
 
 
 def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
@@ -570,6 +673,9 @@ def test_run_single_pybids_db(
 
     # Mock the set_up_bids_db method
     mocked_set_up_bids_db = mocker.patch.object(runner, "set_up_bids_db")
+
+    # Mock launch_boutiques_run to avoid issues with bosh trying to launch Docker
+    mocker.patch.object(runner, "launch_boutiques_run")
 
     # Call run_single
     runner.run_single(participant_id=participant_id, session_id=session_id)
