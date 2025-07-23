@@ -27,9 +27,8 @@ from nipoppy.utils import (
     save_json,
     session_id_to_bids_session_id,
 )
-
-from .conftest import datetime_fixture  # noqa F401
-from .conftest import (
+from tests.conftest import datetime_fixture  # noqa F401
+from tests.conftest import (
     DPATH_TEST_DATA,
     create_empty_dataset,
 )

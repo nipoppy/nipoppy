@@ -12,8 +12,7 @@ from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.utils import FPATH_SAMPLE_CONFIG
-
-from .conftest import DPATH_TEST_DATA
+from tests.conftest import DPATH_TEST_DATA
 
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
 REQUIRED_FIELDS_CONFIG = []

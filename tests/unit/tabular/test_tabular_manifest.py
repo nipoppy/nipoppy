@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from nipoppy.tabular.manifest import Manifest
-
-from .conftest import DPATH_TEST_DATA
+from tests.conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(

@@ -8,9 +8,8 @@ import pytest
 import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
-
-from .conftest import datetime_fixture  # noqa F401
-from .conftest import PASSWORD_FILE, TEST_PIPELINE
+from tests.conftest import datetime_fixture  # noqa F401
+from tests.conftest import PASSWORD_FILE, TEST_PIPELINE
 
 ZENODO_SANDBOX = True
 

@@ -10,8 +10,7 @@ from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.dataset_status import StatusWorkflow
-
-from .conftest import get_config
+from tests.conftest import get_config
 
 
 @pytest.fixture()
@@ -161,7 +160,6 @@ def make_processing_status_table(
     ),
     randomize_counts=False,
 ) -> ProcessingStatusTable:
-
     manifest, session_participant_counts_df = make_manifest(
         n_participants, session_ids, randomize_counts
     )
@@ -236,7 +234,6 @@ def make_processing_status_table(
 def test_manifest(
     dpath_root: Path, n_participants: int, session_ids: list, randomize_counts: bool
 ):
-
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.manifest, session_participant_counts_df = make_manifest(
         n_participants=n_participants,
@@ -270,7 +267,6 @@ def test_check_curation_status_table(
     n_success_percents: tuple,
     randomize_counts: bool,
 ):
-
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.curation_status_table, session_participant_counts_df = (
         make_curation_status_table(
@@ -346,7 +342,6 @@ def test_check_processing_status_table(
     pipeline_configs: tuple,
     randomize_counts: bool,
 ):
-
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.processing_status_table, session_participant_counts_df = (
         make_processing_status_table(

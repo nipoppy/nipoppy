@@ -10,8 +10,7 @@ from nipoppy.env import FAKE_SESSION_ID, NIPOPPY_DIR_NAME
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
-
-from .conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
+from tests.conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])

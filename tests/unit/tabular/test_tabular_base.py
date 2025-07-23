@@ -9,8 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
-
-from .conftest import DPATH_TEST_DATA
+from tests.conftest import DPATH_TEST_DATA
 
 
 class Tabular(BaseTabular):

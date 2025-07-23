@@ -14,9 +14,8 @@ from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
-
-from .conftest import record_id  # noqa: F401
-from .conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
+from tests.conftest import record_id  # noqa: F401
+from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
 
 
 @pytest.fixture(scope="function")
@@ -364,7 +363,6 @@ def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
 
 
 def test_download(workflow_zenodo: PipelineInstallWorkflow):
-
     workflow_zenodo.run_main()
 
     # Check that the pipeline was downloaded and moved correctly

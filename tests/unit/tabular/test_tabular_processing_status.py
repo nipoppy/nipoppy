@@ -9,8 +9,7 @@ from nipoppy.tabular.processing_status import (
     ProcessingStatusModel,
     ProcessingStatusTable,
 )
-
-from .conftest import DPATH_TEST_DATA
+from tests.conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(
@@ -429,8 +428,7 @@ def test_get_completed_participants_sessions(
     [
         DPATH_TEST_DATA / "processing_status1.tsv",
         DPATH_TEST_DATA / "processing_status2.tsv",
-        Path(__file__).parent
-        / ".."
+        Path(__file__).parents[3]
         / "docs"
         / "source"
         / "how_to_guides"

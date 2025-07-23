@@ -13,8 +13,7 @@ from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.runner import PipelineRunner
 from nipoppy.workflows.tracker import PipelineTracker
-
-from .conftest import (
+from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
     get_config,

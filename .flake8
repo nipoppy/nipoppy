@@ -8,10 +8,10 @@ exclude =
 	venv,
 per-file-ignores =
     # - docstrings rules that should not be applied to tests
-	tests/test_*.py: D100, D101, D103
-    __init__.py: D104, F401
+	**/test_*.py: D100, D101, D103
+    **/__init__.py: D104, F401
     # allow "weird indentation"
-	tests/test_workflow_*.py: D100, D103, E127, E131, E501
+	**/test_workflow_*.py: D103, E127, E131, E501
     docs/source/conf.py: E501
 docstring-convention = numpy
 max_complexity = 12

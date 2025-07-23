@@ -34,9 +34,8 @@ from nipoppy.workflows.pipeline import (
     apply_analysis_level,
     get_pipeline_version,
 )
-
-from .conftest import datetime_fixture  # noqa F401
-from .conftest import (
+from tests.conftest import datetime_fixture  # noqa F401
+from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
     get_config,

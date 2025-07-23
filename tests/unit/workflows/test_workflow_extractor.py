@@ -13,8 +13,11 @@ from nipoppy.utils import (
     session_id_to_bids_session_id,
 )
 from nipoppy.workflows.extractor import ExtractionRunner
-
-from .conftest import create_empty_dataset, create_pipeline_config_files, get_config
+from tests.conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+)
 
 
 @pytest.fixture(scope="function")
@@ -252,7 +255,6 @@ def test_run_single(
     extractor: ExtractionRunner,
     mocker: pytest_mock.MockerFixture,
 ):
-
     mocked_process_container_config = mocker.patch(
         "nipoppy.workflows.runner.PipelineRunner.process_container_config"
     )

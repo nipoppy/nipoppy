@@ -26,8 +26,7 @@ from nipoppy.pipeline_validation import (
     _load_pipeline_config_file,
     check_pipeline_bundle,
 )
-
-from .conftest import DPATH_TEST_DATA
+from tests.conftest import DPATH_TEST_DATA
 
 
 @pytest.fixture()
@@ -274,7 +273,6 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
 def test_check_config_files(
     pipeline_config_data, pipeline_class, n_files_expected, valid_config_data
 ):
-
     pipeline_config = pipeline_class(**pipeline_config_data, **valid_config_data)
     files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
 
