@@ -318,6 +318,10 @@ class ZenodoAPI:
         if keywords is None:
             keywords = []
 
+        # Fuzzy search when the query is a single word
+        if len(query.split()) == 1:
+            query = f"*{query}*"
+
         full_query = query
         for keyword in keywords:
             full_query += f' AND metadata.subjects.subject:"{keyword}"'
