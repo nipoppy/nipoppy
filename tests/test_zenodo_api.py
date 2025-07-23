@@ -5,6 +5,7 @@ from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
+import pytest_httpx
 import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
@@ -192,6 +193,71 @@ def test_create_draft_fails(mocker: pytest_mock.MockerFixture):
         )
 
     mock_post.assert_called_once_with(url, json=metadata, headers=headers)
+
+
+@pytest.mark.parametrize(
+    "json_response,expected_creators",
+    [
+        (
+            {"profile": {}, "identities": {}, "username": "fake_user"},
+            [
+                {
+                    "person_or_org": {
+                        "family_name": "fake_user",
+                        "identifiers": [],
+                        "type": "personal",
+                    },
+                    "affiliations": [],
+                }
+            ],
+        ),
+        (
+            {
+                "profile": {
+                    "full_name": "first_name last_name",
+                    "affiliations": "Fake University",
+                },
+                "identities": {"orcid": "0000-0000-0000-0000"},
+                "username": "fake_user",
+            },
+            [
+                {
+                    "person_or_org": {
+                        "family_name": "first_name last_name",
+                        "identifiers": [
+                            {"identifier": "0000-0000-0000-0000", "scheme": "orcid"}
+                        ],
+                        "type": "personal",
+                    },
+                    "affiliations": [{"name": "Fake University"}],
+                }
+            ],
+        ),
+    ],
+)
+def test_update_creators(
+    json_response,
+    expected_creators,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+):
+    record_id = "123456"
+    owner_id = "888888"
+    metadata = {"metadata": {}}
+
+    # mock the API
+    httpx_mock.add_response(
+        method="GET",
+        url=zenodo_api.api_endpoint + f"/users/{owner_id}",
+        json=json_response,
+    )
+    httpx_mock.add_response(
+        url=zenodo_api.api_endpoint + f"/records/{record_id}/draft",
+        method="PUT",
+        match_json={"metadata": {"creators": expected_creators}},
+    )
+
+    zenodo_api._update_creators(record_id, owner_id, metadata)
 
 
 def test_valid_authentication(mocker: pytest_mock.MockerFixture):
