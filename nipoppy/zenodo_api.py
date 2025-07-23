@@ -163,7 +163,7 @@ class ZenodoAPI:
         # extract creator name
         # use username (always defined) as fallback
         response_json = response.json()
-        if (creator_name := response_json["profile"]["full_name"]) == "":
+        if not (creator_name := response_json["profile"].get("full_name")):
             creator_name = response_json["username"]
             self.logger.warning(
                 f"User {owner_id} has no full name in Zenodo profile, "
