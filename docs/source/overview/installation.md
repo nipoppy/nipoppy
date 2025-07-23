@@ -88,12 +88,12 @@ We list the configuration for `bash` and `zsh` shells. For more details on shell
 #### Bash
 Save the script somewhere.
 ```{code-block} console
-$ _FOO_BAR_COMPLETE=bash_source foo-bar > ~/.foo-bar-complete.bash
+$ _NIPOPPY_COMPLETE=bash_source nipoppy > ~/.nipoppy-complete.bash
 ```
 
-Source the file in ~/.bashrc.
+Source the file in `~/.bashrc`.
 ```{code-block} console
-$ . ~/.foo-bar-complete.bash
+$ . ~/.nipoppy-complete.bash
 ```
 
 #### zsh
