@@ -35,7 +35,7 @@ The minimal command to run any of these commands is:
 
 ```console
 $ nipoppy <SUBCOMMAND> \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 
@@ -49,7 +49,7 @@ The above command will run the pipeline on all participants and/or sessions who 
 
 ```console
 $ nipoppy <SUBCOMMAND> \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
@@ -61,7 +61,7 @@ We recommend always testing a new pipeline **in simulate mode** with a single pa
 
 ```console
 $ nipoppy process \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline fmriprep \
     --pipeline-version 24.1.1 \
     --participant-id <PARTICIPANT_ID> \
