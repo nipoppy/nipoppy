@@ -85,27 +85,39 @@ $ nipoppy -h
 ### Enable shell completion
 We list the configuration for `bash` and `zsh` shells. For more details on shell completion with Click, visit the official documentation at: https://click.palletsprojects.com/en/stable/shell-completion/
 
-#### Bash
+::::{tab-set}
+
+:::{tab-item} Bash
 Save the script somewhere.
+
 ```{code-block} console
 $ _NIPOPPY_COMPLETE=bash_source nipoppy > ~/.nipoppy-complete.bash
 ```
 
 Source the file in `~/.bashrc`.
+
 ```{code-block} console
 $ . ~/.nipoppy-complete.bash
 ```
 
-#### zsh
+:::
+
+:::{tab-item} Zsh
 Save the script somewhere.
+
 ```{code-block} console
 $ _NIPOPPY_COMPLETE=zsh_source nipoppy > ~/.nipoppy-complete.zsh
 ```
 
 Source the file in `~/.zshrc`.
+
 ```{code-block} console
 $ . ~/.nipoppy-complete.zsh
 ```
+
+:::
+
+::::
 
 ## Troubleshooting
 
