@@ -262,8 +262,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
                     "the following command:"
-                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
-                    f"{self.pipeline_config.CONTAINER_INFO.FILE} "
+                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND.value} "
+                    f"pull {self.pipeline_config.CONTAINER_INFO.FILE} "
                     f"{self.pipeline_config.CONTAINER_INFO.URI}"
                 )
             raise FileNotFoundError(error_message)
