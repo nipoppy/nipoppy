@@ -99,12 +99,12 @@ $ . ~/.foo-bar-complete.bash
 #### zsh
 Save the script somewhere.
 ```{code-block} console
-$ _FOO_BAR_COMPLETE=zsh_source foo-bar > ~/.foo-bar-complete.zsh
+$ _NIPOPPY_COMPLETE=zsh_source nipoppy > ~/.nipoppy-complete.zsh
 ```
 
-Source the file in ~/.zshrc.
+Source the file in `~/.zshrc`.
 ```{code-block} console
-$ . ~/.foo-bar-complete.zsh
+$ . ~/.nipoppy-complete.zsh
 ```
 
 ## Troubleshooting
