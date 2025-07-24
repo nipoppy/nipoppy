@@ -86,6 +86,10 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
     ),
     [
         (
+            ["--help"],
+            None,
+        ),
+        (
             [
                 "init",
                 "--dataset",
@@ -224,7 +228,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
 )
 def test_cli_command(
     command: list[str],
-    workflow: str,
+    workflow: str | None,
     mocker: pytest_mock.MockerFixture,
     tmp_path: Path,
 ):
@@ -235,5 +239,6 @@ def test_cli_command(
     # Hack to inject the mocked directory into the command
     command = [arg.replace("[mocked_dir]", str(tmp_path)) for arg in command]
 
-    mocker.patch(f"{workflow}.run")
+    if workflow:
+        mocker.patch(f"{workflow}.run")
     assert_command_success(command)
