@@ -15,8 +15,12 @@ from nipoppy.utils import (
     session_id_to_bids_session_id,
 )
 from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
-
-from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
+from tests.conftest import (
+    DPATH_TEST_DATA,
+    create_empty_dataset,
+    get_config,
+    prepare_dataset,
+)
 
 
 @pytest.fixture()

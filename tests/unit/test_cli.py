@@ -8,8 +8,7 @@ from click.testing import CliRunner
 
 from nipoppy.cli import cli
 from nipoppy.env import ReturnCode
-
-from .conftest import ATTR_TO_DPATH_MAP, PASSWORD_FILE
+from tests.conftest import ATTR_TO_DPATH_MAP, PASSWORD_FILE
 
 runner = CliRunner()
 

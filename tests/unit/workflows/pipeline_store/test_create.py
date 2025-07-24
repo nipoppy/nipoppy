@@ -1,3 +1,5 @@
+"""Tests for PipelineCreateWorkflow class."""
+
 from pathlib import Path
 
 import pytest

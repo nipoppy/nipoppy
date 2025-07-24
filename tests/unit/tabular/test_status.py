@@ -13,8 +13,7 @@ from nipoppy.tabular.curation_status import (
     update_curation_status_table,
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-
-from .conftest import DPATH_TEST_DATA, check_curation_status_table, prepare_dataset
+from tests.conftest import DPATH_TEST_DATA, check_curation_status_table, prepare_dataset
 
 
 @pytest.fixture

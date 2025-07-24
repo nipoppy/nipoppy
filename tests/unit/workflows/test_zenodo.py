@@ -1,3 +1,5 @@
+"""Test for the ZenodoAPI class."""
+
 from contextlib import nullcontext
 
 import pytest
@@ -11,8 +13,7 @@ from nipoppy.workflows.pipeline_store.zenodo import (
     _is_same_pipeline,
 )
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
-
-from .conftest import TEST_PIPELINE
+from tests.conftest import TEST_PIPELINE
 
 DATASET_PATH = "my_dataset"
 

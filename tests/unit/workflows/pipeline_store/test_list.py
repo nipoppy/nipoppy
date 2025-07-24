@@ -8,8 +8,7 @@ import pytest_mock
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
-
-from .conftest import create_empty_dataset
+from tests.conftest import create_empty_dataset
 
 
 @pytest.fixture()

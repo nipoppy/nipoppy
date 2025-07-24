@@ -7,8 +7,7 @@ import pytest
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.workflows.track_curation import TrackCurationWorkflow
-
-from .conftest import (
+from tests.conftest import (
     check_curation_status_table,
     create_empty_dataset,
     get_config,

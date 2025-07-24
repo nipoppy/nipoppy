@@ -10,8 +10,7 @@ import pytest_httpx
 import pytest_mock
 
 from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
-
-from .conftest import PASSWORD_FILE
+from tests.conftest import PASSWORD_FILE
 
 
 @pytest.fixture(scope="function")

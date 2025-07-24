@@ -12,8 +12,12 @@ from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import BaseDatasetWorkflow
-
-from .conftest import DPATH_TEST_DATA, create_empty_dataset, get_config, prepare_dataset
+from tests.conftest import (
+    DPATH_TEST_DATA,
+    create_empty_dataset,
+    get_config,
+    prepare_dataset,
+)
 
 
 @pytest.fixture()

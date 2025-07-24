@@ -5,8 +5,7 @@ import pytest
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_DICOM_DIR_MAP
-
-from .conftest import DPATH_TEST_DATA
+from tests.conftest import DPATH_TEST_DATA
 
 
 @pytest.mark.parametrize(

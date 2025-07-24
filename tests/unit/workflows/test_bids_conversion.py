@@ -8,8 +8,11 @@ import pytest_mock
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.workflows.bids_conversion import BidsConversionRunner
-
-from .conftest import create_empty_dataset, create_pipeline_config_files, get_config
+from tests.conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+)
 
 
 @pytest.fixture
