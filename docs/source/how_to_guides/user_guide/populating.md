@@ -51,4 +51,4 @@ If both DICOMs and NIfTIs are available, we recommend starting over with the DIC
 
 For imaging data, the next step is to [reorganize the data](organizing_imaging.md) in a way that prepares it for {term}`BIDS` conversion.
 
-If you have tabular non-imaging (e.g., demographic or assessments) data, guidelines for wrangling and linking tabular data can be found [here](organizing_tabular.md)
+If you have tabular non-imaging (e.g., demographic or assessments) data, guidelines for wrangling and linking tabular data can be found [here](../tabular_data/index.md)
