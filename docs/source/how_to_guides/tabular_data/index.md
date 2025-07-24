@@ -5,7 +5,7 @@ The question of managing tabular (e.g. clinical or behavioural) data is a comple
 2. Asynchrony between tabular and imaging data collection workflows
 3. Difficulty in defining criteria for data validation
 
-BIDS extension proposal ([BEP36](https://bids.neuroimaging.io/extensions/beps/bep_036.html)) is one of the major efforts in this space aimed at providing guidelines on standardized naming and organization of tabular data. Nipoppy will support and promote this standard once merged, and therefore we do not have any strong rules or validations for tabular data management the moment. Having said that, we do have a few recommendations that align with the BIDS direction and can be helpful in general.
+[BIDS extension proposal (BEP) 36](https://bids.neuroimaging.io/extensions/beps/bep_036.html) is one of the major efforts in this space aimed at providing guidelines on standardized naming and organization of tabular data. Nipoppy will support and promote this standard once merged, and therefore we do not have any strong rules or validations for tabular data management the moment. Having said that, we do have a few recommendations that align with the BIDS direction and can be helpful in general.
 
 ## Source (i.e. acquired) data
 Similar to imaging data, it is good to separate "data collection" from "data curation" tasks even for the tabular data. This way we don't modify the acquired source data and only create "clean" curated copies. This is especially useful when your study has different naming conventions for your `participant_id`s and/or `visit_id`s for the tabular vs imaging data. The recommended location for putting the "collected/acquired" data dump is {{dpath_src_tabular}} directory.
