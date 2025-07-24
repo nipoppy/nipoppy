@@ -41,7 +41,7 @@ delim: tab
 :::
 
 ### Data dictionaries
-For each file generated, it is recommended to create data dictionary i.e. `demographics.json`, `assessment_A.json` etc. next to the data file itself (see examples in [BIDS docs](https://bids.neuroimaging.io/getting_started/folders_and_files/metadata/json.html)). Nipoppy or BIDS itself doesn't help with creating "standardized" data dictionaries, but another related project [Neurobagel](https://annotate.neurobagel.org/) can help you with it. Neurobagel provides a simple annotation tool to help generate the data dictionaries with standardized vocabulary (when available) for your variable names. This will allow you to harmonize variable naming across different datasets (e.g. all demographic variables will be mapped to the same term) - which can be super helpful when you want to combine, compare or analyze multiple datasets.
+For each file generated, it is recommended to create data dictionary i.e. `demographics.json`, `assessment_A.json` etc. next to the data file itself (see examples in [BIDS docs](https://bids.neuroimaging.io/getting_started/folders_and_files/metadata/json.html)). Nipoppy or BIDS itself doesn't help with creating "standardized" data dictionaries, but another related project, [Neurobagel](https://neurobagel.org), can help you with it. Neurobagel provides a simple [annotation tool](https://annotate.neurobagel.org) to help generate the data dictionaries with standardized vocabulary (when available) for your variable names. This will allow you to harmonize variable naming across different datasets (e.g. all demographic variables will be mapped to the same term) - which can be super helpful when you want to combine, compare or analyze multiple datasets.
 
 
 ```{note}
