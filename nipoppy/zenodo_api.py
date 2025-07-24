@@ -230,7 +230,7 @@ class ZenodoAPI:
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
-                    f"Failed to commit the file file for zenodo.{record_id}: {file}"
+                    f"Failed to commit file for zenodo.{record_id}: {file}"
                     f"\n{response.json()}"
                 )
 
