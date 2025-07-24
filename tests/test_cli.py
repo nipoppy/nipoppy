@@ -4,36 +4,39 @@ import logging
 from pathlib import Path
 
 import pytest
+import pytest_mock
 from click.testing import CliRunner
 
 from nipoppy.cli.main import cli
 from nipoppy.env import ReturnCode
 
-from .conftest import ATTR_TO_DPATH_MAP, PASSWORD_FILE
+from .conftest import PASSWORD_FILE
 
 runner = CliRunner()
 
 
-def test_cli():
-    result = runner.invoke(
-        cli,
-        ["-h"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == ReturnCode.SUCCESS
-
-
-@pytest.mark.parametrize("args", [["--fake-arg"], ["fake_command"]])
-def test_cli_invalid(args):
+def assert_command_success(args):
+    """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
-    assert result.exit_code != ReturnCode.SUCCESS
+    assert (
+        result.exit_code == ReturnCode.SUCCESS
+    ), f"Command failed: {args}\n{result.output}"
+
+
+@pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
+def test_cli_invalid(args):
+    """Test that a fake command does not exist."""
+    result = runner.invoke(cli, args, catch_exceptions=False)
+    assert (
+        result.exit_code == ReturnCode.INVALID_COMMAND
+    ), f"Expected invalid command exit code for: {args}\n{result.output}"
 
 
 def test_dep_params(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    dpath_root = tmp_path / "my_dataset"
+    nipoppy_study_path = tmp_path / "nipoppy_study"
     result = runner.invoke(
         cli,
-        ["init", str(dpath_root)],
+        ["init", str(nipoppy_study_path)],
         catch_exceptions=False,
     )
 
@@ -47,315 +50,15 @@ def test_dep_params(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     assert result.exit_code == ReturnCode.SUCCESS
 
 
-def test_cli_init(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        ["init", "--dataset", dpath_root],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == ReturnCode.SUCCESS
-
-
-def test_cli_status(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        ["status", "--dataset", dpath_root],
-        catch_exceptions=False,
-    )
-
-    # No log file is created, since the status command does not create logs.
-    pass
-
-    # Expects missing path, since init command is not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_track_curation(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        ["track-curation", "--dataset", str(dpath_root)],
-        catch_exceptions=False,
-    )
-
-    # check that a logfile was created
-    assert (
-        len(
-            list(
-                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "track_curation/*.log"
-                )
-            )
-        )
-        == 1
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_reorg(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        ["reorg", "--dataset", dpath_root],
-        catch_exceptions=False,
-    )
-
-    # check that a logfile was created
-    assert (
-        len(
-            list(
-                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob("dicom_reorg/*.log")
-            )
-        )
-        == 1
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_bidsify(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        [
-            "bidsify",
-            "--dataset",
-            dpath_root,
-            "--pipeline",
-            "my_pipeline",
-            "--pipeline-version",
-            "1.0",
-            "--pipeline-step",
-            "step1",
-        ],
-        catch_exceptions=False,
-    )
-
-    # check that a logfile was created
-    assert (
-        len(
-            list(
-                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "bids_conversion/my_pipeline-1.0/*.log"
-                )
-            )
-        )
-        == 1
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_run(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        [
-            "process",
-            "--dataset",
-            dpath_root,
-            "--pipeline",
-            "my_pipeline",
-            "--pipeline-version",
-            "1.0",
-        ],
-        catch_exceptions=False,
-    )
-
-    # check that a logfile was created
-    assert (
-        len(
-            list(
-                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "process/my_pipeline-1.0/*.log"
-                )
-            )
-        )
-        == 1
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_track(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        [
-            "track-processing",
-            "--dataset",
-            str(dpath_root),
-            "--pipeline",
-            "my_pipeline",
-            "--pipeline-version",
-            "1.0",
-        ],
-        catch_exceptions=False,
-    )
-
-    # check that a logfile was created
-    assert (
-        len(
-            list(
-                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "track_processing/my_pipeline-1.0/*.log"
-                )
-            )
-        )
-        == 1
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_extract(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        [
-            "extract",
-            "--dataset",
-            str(dpath_root),
-            "--pipeline",
-            "my_pipeline",
-            "--pipeline-version",
-            "1.0",
-        ],
-        catch_exceptions=False,
-    )
-
-    # check that a logfile was created
-    assert (
-        len(
-            list(
-                (dpath_root / ATTR_TO_DPATH_MAP["dpath_logs"]).glob(
-                    "extract/my_pipeline-1.0/*.log"
-                )
-            )
-        )
-        == 1
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_pipeline_list(tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    result = runner.invoke(
-        cli,
-        ["pipeline", "list", "--dataset", dpath_root],
-    )
-
-    # Expects missing path, since init command is not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_pipeline_upload():
-    result = runner.invoke(
-        cli,
-        [
-            "pipeline",
-            "upload",
-            "tests/data/zenodo.zip",
-            "--zenodo-id",
-            "zenodo.123456",
-            "--password-file",
-            PASSWORD_FILE,
-        ],
-        catch_exceptions=False,
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-@pytest.mark.parametrize("from_zenodo", [True, False])
-def test_cli_pipeline_install(from_zenodo, tmp_path: Path):
-    dpath_root = tmp_path / "my_dataset"
-    dpath_pipeline = tmp_path / "pipeline"
-    dpath_pipeline.mkdir()
-
-    source = "zenodo.123456" if from_zenodo else str(dpath_pipeline)
-
-    result = runner.invoke(
-        cli,
-        ["pipeline", "install", "--dataset", str(dpath_root), source],
-        catch_exceptions=False,
-    )
-
-    # Expects missing path, since init command is not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_pipeline_validate(tmp_path: Path):
-    dpath_pipeline = tmp_path / "pipeline"
-    dpath_pipeline.mkdir()
-    result = runner.invoke(
-        cli,
-        ["pipeline", "validate", str(dpath_pipeline)],
-        catch_exceptions=False,
-    )
-
-    # Expect non-zero return code, because nipoppy init was not run.
-    assert result.exit_code == ReturnCode.UNKNOWN_FAILURE
-
-
-def test_cli_pipeline_search():
-    result = runner.invoke(
-        cli,
-        ["pipeline", "search", "mriqc"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == ReturnCode.SUCCESS
-
-
-def test_cli_pipeline_create(tmp_path: Path):
-    result = runner.invoke(
-        cli,
-        [
-            "pipeline",
-            "create",
-            "--type",
-            "processing",
-            str(tmp_path.joinpath("new_pipeline_bundle")),
-        ],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == ReturnCode.SUCCESS
-
-
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
-    runner.invoke(cli, [command, "-h"], catch_exceptions=False)
+    assert_command_success(command + " -h")
     assert any(
         [
             (record.levelno == logging.WARNING and "is deprecated" in record.message)
             for record in caplog.records
         ]
     )
-
-
-def test_cli_tui():
-    """Verify that the TUI `gui` command is registered.
-
-    TODO: It would be better to test the Trogon app directly, but we would have to
-    invoke Trogon directly, without the tui decorator.
-    """
-    result = runner.invoke(
-        cli,
-        ["gui", "--help"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == ReturnCode.SUCCESS
 
 
 @pytest.mark.parametrize("trogon_installed", [True, False])
@@ -374,3 +77,163 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
     result = runner.invoke(main.cli, ["gui", "--help"])
 
     assert ("Open the Nipoppy terminal GUI. " in result.output) == trogon_installed
+
+
+@pytest.mark.parametrize(
+    (
+        "command",
+        "workflow",
+    ),
+    [
+        (
+            [
+                "init",
+                "--dataset",
+                "[mocked_dir]",
+            ],
+            "nipoppy.workflows.dataset_init.InitWorkflow",
+        ),
+        (
+            [
+                "track-curation",
+                "--dataset",
+                "[mocked_dir]",
+            ],
+            "nipoppy.workflows.track_curation.TrackCurationWorkflow",
+        ),
+        (
+            [
+                "reorg",
+                "--dataset",
+                "[mocked_dir]",
+            ],
+            "nipoppy.workflows.dicom_reorg.DicomReorgWorkflow",
+        ),
+        (
+            [
+                "bidsify",
+                "--dataset",
+                "[mocked_dir]",
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+                "--pipeline-step",
+                "step1",
+            ],
+            "nipoppy.workflows.bids_conversion.BidsConversionRunner",
+        ),
+        (
+            [
+                "process",
+                "--dataset",
+                "[mocked_dir]",
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+            ],
+            "nipoppy.workflows.runner.PipelineRunner",
+        ),
+        (
+            [
+                "track-processing",
+                "--dataset",
+                "[mocked_dir]",
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+            ],
+            "nipoppy.workflows.tracker.PipelineTracker",
+        ),
+        (
+            [
+                "extract",
+                "--dataset",
+                "[mocked_dir]",
+                "--pipeline",
+                "my_pipeline",
+                "--pipeline-version",
+                "1.0",
+            ],
+            "nipoppy.workflows.extractor.ExtractionRunner",
+        ),
+        (
+            [
+                "status",
+                "--dataset",
+                "[mocked_dir]",
+            ],
+            "nipoppy.workflows.dataset_status.StatusWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "search",
+                "mriqc",
+            ],
+            "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "create",
+                "--type",
+                "processing",
+                "[mocked_dir]",
+            ],
+            "nipoppy.workflows.pipeline_store.create.PipelineCreateWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "install",
+                "--dataset",
+                "[mocked_dir]",
+                "zenodo.123456",
+            ],
+            "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "list",
+                "--dataset",
+                "[mocked_dir]",
+            ],
+            "nipoppy.workflows.pipeline_store.list.PipelineListWorkflow",
+        ),
+        (
+            ["pipeline", "validate", "[mocked_dir]"],
+            "nipoppy.workflows.pipeline_store.validate.PipelineValidateWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "upload",
+                "mocked.zip",
+                "--zenodo-id",
+                "zenodo.123456",
+                "--password-file",
+                str(PASSWORD_FILE),
+            ],
+            "nipoppy.workflows.pipeline_store.zenodo.ZenodoUploadWorkflow",
+        ),
+    ],
+)
+def test_cli_command(
+    command: list[str],
+    workflow: str,
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+):
+    """Test that the CLI commands run the expected workflows."""
+    # Required for some Click commands to work properly
+    tmp_path.joinpath("mocked_dir").mkdir(exist_ok=False)
+
+    # Hack to inject the mocked directory into the command
+    command = [arg.replace("[mocked_dir]", str(tmp_path)) for arg in command]
+
+    mocker.patch(f"{workflow}.run")
+    assert_command_success(command)
