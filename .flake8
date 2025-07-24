@@ -11,7 +11,7 @@ per-file-ignores =
     **/test_*.py: D100, D101, D103
     **/__init__.py: D104, F401
     # allow "weird indentation"
-    **/test_workflow_*.py: D103, E127, E131, E501
+    tests/unit/workflows/test_*.py: D103, E127, E131, E501
     docs/source/conf.py: E501
 docstring-convention = numpy
 max_complexity = 12
