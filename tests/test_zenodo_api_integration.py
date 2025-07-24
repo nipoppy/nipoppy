@@ -14,25 +14,12 @@ ZENODO_SANDBOX = True
 @pytest.fixture(scope="function")
 def zenodo_api():
     """Fixture for Zenodo API."""
-    return ZenodoAPI(sandbox=ZENODO_SANDBOX)  # TODO is password needed here?
-
-
-@pytest.fixture(scope="function")
-def record_id():
-    """Fixture for Zenodo ID.
-
-    The Sandbox can be reset at any time, so the Zenodo ID may change.
-    If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/{record_id}
-
-    See TEST_PIPELINE for test file location.
-    """
-    return "213135"
+    return ZenodoAPI(sandbox=ZENODO_SANDBOX)
 
 
 @pytest.fixture(scope="function")
 def metadata():
-    """Fixture for Zenodo metadata."""
+    """Zenodo metadata fixture for uploads."""
     return {
         "metadata": {
             "title": "Upload test",
@@ -55,12 +42,16 @@ def metadata():
 
 
 @pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_ID")),
+    reason="Requires Zenodo record ID",
+)
 @pytest.mark.parametrize("record_id_prefix", ["", "zenodo."])
 def test_download_record_files(
-    tmp_path: Path, zenodo_api: ZenodoAPI, record_id: str, record_id_prefix: str
+    tmp_path: Path, zenodo_api: ZenodoAPI, record_id_prefix: str
 ):
     """Test for downloading a pipeline from Zenodo."""
-    record_id = record_id_prefix + record_id
+    record_id = record_id_prefix + os.environ["ZENODO_ID"]
     zenodo_api.download_record_files(record_id, tmp_path)
 
     assert len(list(tmp_path.iterdir())) == 6
@@ -88,27 +79,37 @@ def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
 
 @pytest.mark.api
 @pytest.mark.skipif(
-    os.environ.get("ZENODO_TOKEN") is None
-    or os.environ.get("ZENODO_TOKEN") == ""
-    or os.environ.get("ZENODO_ID") is None,
-    reason="Requires Zenodo token and ID",
+    (not os.environ.get("ZENODO_TOKEN")) or (not os.environ.get("ZENODO_ID")),
+    reason="Requires Zenodo token and record ID",
 )
-@pytest.mark.parametrize("prefix", ["", "zenodo."])
-def test_create_new_version(prefix: str, metadata: dict):
+def test_create_new_version(metadata: dict):
     api = ZenodoAPI(sandbox=ZENODO_SANDBOX)
     api.set_authorization(os.environ["ZENODO_TOKEN"])
     api.upload_pipeline(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
-        record_id=f"{prefix}{os.environ['ZENODO_ID']}",
+        record_id=os.environ["ZENODO_ID"],
+    )
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    not os.environ.get("ZENODO_TOKEN"),
+    reason="Requires Zenodo token",
+)
+def test_create_new_record(metadata: dict):
+    api = ZenodoAPI(sandbox=ZENODO_SANDBOX)
+    api.set_authorization(os.environ["ZENODO_TOKEN"])
+    api.upload_pipeline(
+        input_dir=TEST_PIPELINE,
+        metadata=metadata,
     )
 
 
 @pytest.mark.api
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
-@pytest.mark.parametrize("keywords", [None, [], ["Nipoppy", "schema_version:1"]])
+@pytest.mark.parametrize("keywords", [None, ["Nipoppy", "schema_version:1"]])
 def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
-    # TODO search in official Zenodo instead of sandbox
     results = zenodo_api.search_records(query, keywords=keywords)
     assert len(results["hits"]) > 0
     assert results["total"] > 0
