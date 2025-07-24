@@ -703,7 +703,7 @@ def test_upload_pipeline_delete_draft(
     [
         (
             "FMRIPREP",
-            [],
+            None,
             100,
             "%2AFMRIPREP%2A&size=100",
         ),
