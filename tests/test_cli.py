@@ -7,7 +7,7 @@ import pytest
 import pytest_mock
 from click.testing import CliRunner
 
-from nipoppy.cli.main import cli
+from nipoppy.cli.cli import cli
 from nipoppy.env import ReturnCode
 
 from .conftest import PASSWORD_FILE
@@ -69,12 +69,12 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
     if not trogon_installed:
         monkeypatch.setitem(sys.modules, "trogon", None)
 
-    import nipoppy.cli.main as main
+    import nipoppy.cli.cli as cli
 
-    importlib.reload(main)
+    importlib.reload(cli)
 
     runner = CliRunner()
-    result = runner.invoke(main.cli, ["gui", "--help"])
+    result = runner.invoke(cli.cli, ["gui", "--help"])
 
     assert ("Open the Nipoppy terminal GUI. " in result.output) == trogon_installed
 
