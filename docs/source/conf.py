@@ -160,6 +160,7 @@ myst_substitutions = {
     "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "dpath_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_tabular}`",
+    "dpath_assessments": f"`{DEFAULT_LAYOUT_INFO.dpath_assessments}`",
     "fpath_curation_status": f"`{DEFAULT_LAYOUT_INFO.fpath_curation_status}`",
     "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
