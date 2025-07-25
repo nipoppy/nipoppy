@@ -126,11 +126,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 pipeline_config.model_dump(mode="json"), self.config.SUBSTITUTIONS
             )
         )
-        fpath_container = Path(
-            process_template_str(
-                str(pipeline_config.get_fpath_container()), objs=[self.layout]
-            )
-        )
+        fpath_container = pipeline_config.get_fpath_container(layout=self.layout)
 
         # container file already exists
         if fpath_container.exists():
