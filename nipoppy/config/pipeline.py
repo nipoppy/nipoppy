@@ -145,9 +145,15 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 
         return self
 
-    def get_fpath_container(self) -> Path:
+    def get_fpath_container(self, layout=None) -> Path:
         """Return the path to the pipeline's container."""
-        return self.CONTAINER_INFO.FILE
+        if layout is not None:
+            # Use layout-aware container directory if provided
+            container_filename = Path(self.CONTAINER_INFO.FILE).name
+            return layout.dpath_containers / container_filename
+        else:
+            # Fallback to original behavior
+            return self.CONTAINER_INFO.FILE
 
     def get_step_config(
         self, step_name: Optional[str] = None

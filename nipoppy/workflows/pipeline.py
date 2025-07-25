@@ -293,7 +293,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
-        fpath_container = self.pipeline_config.get_fpath_container()
+        fpath_container = self.pipeline_config.get_fpath_container(layout=self.layout)
         if fpath_container is None:
             raise RuntimeError(
                 f"No container image file specified in config for pipeline"
