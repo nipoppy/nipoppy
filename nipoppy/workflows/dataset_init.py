@@ -148,13 +148,14 @@ class InitWorkflow(BaseDatasetWorkflow):
         if dpath.exists() and self.force:
             self._remove_existing(dpath)
 
+        self.mkdir(dpath.parent)
+
         if self.mode == "copy":
             self.copytree(self.bids_source, str(dpath))
         elif self.mode == "move":
             self.movetree(self.bids_source, str(dpath))
         elif self.mode == "symlink":
-            self.mkdir(self.dpath_root)
-            self.create_symlink(self.bids_source, str(dpath))
+            self.create_symlink(self.bids_source, str(dpath), log_level=logging.DEBUG)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 
