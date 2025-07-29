@@ -280,7 +280,7 @@ class ZenodoAPI:
             if not metadata["metadata"].get("creators"):
                 self._update_creators(record_id, owner_id, metadata)
 
-            files = list(input_dir.iterdir())
+            files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
             doi = self._publish(record_id)
             return doi
