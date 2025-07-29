@@ -185,7 +185,7 @@ def pipeline_validate(**params):
 @global_options
 def pipeline_upload(**params):
     """Upload a pipeline config directory to Zenodo."""
-    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
+    from nipoppy.workflows.pipeline_store.upload import ZenodoUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),

@@ -60,4 +60,4 @@ jobs:
         python -m pytest -m api
       env:
         ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
-        ZENODO_ID: ${{ env.ZENODO_ID }}
+        ZENODO_ID: ${{ vars.ZENODO_ID }}
