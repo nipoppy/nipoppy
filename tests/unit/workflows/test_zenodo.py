@@ -1,4 +1,4 @@
-"""Test for the ZenodoAPI class."""
+"""Test for the ZenodoUploadWorkflow class."""
 
 from contextlib import nullcontext
 
