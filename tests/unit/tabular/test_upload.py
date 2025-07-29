@@ -1,4 +1,4 @@
-"""Test for the ZenodoUploadWorkflow class."""
+"""Test for the ZenodoAPI class."""
 
 from contextlib import nullcontext
 
@@ -24,7 +24,7 @@ def zenodo_api_mocker(mocker: pytest_mock.MockerFixture):
         "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
     )
     mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow._get_pipeline_metadata",
+        "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow._get_pipeline_metadata",  # noqa: E501
     )
     mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
@@ -37,7 +37,7 @@ def test_upload(mocker: pytest_mock.MockerFixture):
         "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
     )
     get_pipeline_metadata = mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow._get_pipeline_metadata",
+        "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow._get_pipeline_metadata",  # noqa: E501
     )
     validator = mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
@@ -232,7 +232,9 @@ def test_confirm_upload_no(
                 {"links": {"self_html": "https://zenodo.org/records/123456"}},
                 {"links": {"self_html": "https://zenodo.org/records/123456"}},
             ],
-            "https://zenodo.org/records/123456, https://zenodo.org/records/123456, https://zenodo.org/records/123456",
+            # TODO: This should be a list of URLs, not a single string
+            # We can handle the conversion in the test itself
+            "https://zenodo.org/records/123456, https://zenodo.org/records/123456, https://zenodo.org/records/123456",  # noqa: E501
         ]
     ],
 )
