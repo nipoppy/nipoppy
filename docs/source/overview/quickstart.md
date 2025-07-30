@@ -93,7 +93,7 @@ INFO     ========== END STATUS WORKFLOW ==========
 ...
 ```
 
-## [Pipeline setups](../how_to_guides/pipeline_install/)
+## [Pipeline setups](../how_to_guides/pipeline_install/index.md)
 
 A newly initialized Nipoppy dataset does not contain any pipeline setups or containers.
 
