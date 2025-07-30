@@ -6,7 +6,7 @@ This page is intended to give you a quick first run through the most important N
 See the [Installation instructions](#installation) first if you have not yet installed Nipoppy and do not forget to activate your Nipoppy environment.
 ```
 
-#### Download the example dataset
+## Download the example dataset
 
 ```{code-block} console
 $ git clone git@github.com:nipoppy/tutorial-dataset.git
@@ -38,7 +38,7 @@ $ cd my-example-dataset
 ## Creating/modifying required files
 
 (customizing-config)=
-#### Customizing the global configuration file
+### Customizing the global configuration file
 
 The global configuration file at {{fpath_config}} starts out like this:
 ```{literalinclude} ../../../nipoppy/data/examples/sample_global_config.json
@@ -52,7 +52,7 @@ language: json
 - If you are on a system that uses Singularity instead of Apptainer, you need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
 - If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_ROOT]]/containers"` by the full path to that shared directory. Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted).
 
-#### [Customizing the manifest.tsv file](../how_to_guides/manifest/index.md)
+### [Customizing the manifest.tsv file](../how_to_guides/manifest/index.md)
 
 The manifest file at {{fpath_manifest}} looks like this:
 ```{literalinclude} ../../../nipoppy/data/examples/sample_manifest.tsv
@@ -97,7 +97,7 @@ INFO     ========== END STATUS WORKFLOW ==========
 
 A newly initialized Nipoppy dataset does not contain any pipeline setups or containers.
 
-#### dcm2bids example
+### dcm2bids example
 
 **1.** Search for the desired pipeline:
 ```{code-block} console
