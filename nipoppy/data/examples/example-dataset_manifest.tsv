@@ -1,0 +1,5 @@
+participant_id	visit_id	session_id	datatype
+ED01	BL	BL	['anat', 'func', 'dwi']
+ED02	BL	BL	['anat', 'func', 'dwi']
+ED03	BL	BL	['anat', 'func']
+ED04	BL	BL	['anat']
