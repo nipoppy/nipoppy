@@ -131,7 +131,7 @@ Usually you would start with running `nipoppy bidsify` with the first `--pipelin
 ```
 
 **1.** Replace the placeholder for `"DCM2BIDS_CONFIG_FILE"` in the `global_config,json` with the path to your code directory:
-```json
+```yaml
 ...
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
@@ -201,7 +201,7 @@ $ mkdir templateflow
 
 **4.** Replace the placeholders in the `global_config.json`:
 
-```json
+```yaml
 ...
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
