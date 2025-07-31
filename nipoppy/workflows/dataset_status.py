@@ -5,9 +5,9 @@ from typing import Optional
 
 import pandas as pd
 from rich import box
-from rich.console import Console
 from rich.table import Table
 
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.processing_status import STATUS_SUCCESS
@@ -153,8 +153,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
         if table.empty:
             self.logger.warning(
-                "No imaging processing status file found. Run 'nipoppy track' to"
-                " generate a processing status file"
+                "No imaging processing status file found. Run "
+                "'nipoppy track-processing' to generate a processing status file"
             )
             return status_df, []
 
@@ -175,12 +175,13 @@ class StatusWorkflow(BaseDatasetWorkflow):
             self.logger.warning(
                 "The processing status file exists, but no successful run was found in"
                 f" the imaging processing status file for pipeline(s): {pipelines}."
-                " If you have run a pipeline followed by 'nipoppy track', it is"
-                " likely that your pipeline output does not meet the criteria in the"
+                " If you have run a pipeline followed by 'nipoppy track-processing', it"
+                " is likely that your pipeline output does not meet the criteria in the"
                 f" '{DEFAULT_LAYOUT_INFO.dpath_pipelines}/<PIPELINE_NAME>-"
                 "<PIPELINE_VERSION>/tracker_config.json' file."
-                " Please check the tracker configuration and re-run 'nipoppy track' to "
-                "generate a processing status file with at least one successful run."
+                " Please check the tracker configuration and re-run "
+                "'nipoppy track-processing' to generate a processing status file with "
+                "at least one successful run."
             )
             return status_df, []
 
@@ -229,8 +230,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
         df = status_df.copy().reset_index()
         df = df.sort_values(by=self.manifest.col_session_id)
 
-        console = Console()
-
         # Define the colors for the columns
         column_colors = {
             "session_id": None,
@@ -275,4 +274,4 @@ class StatusWorkflow(BaseDatasetWorkflow):
             row = [str(x) for x in value_list]
             table.add_row(*row)
 
-        console.print(table)
+        CONSOLE_STDOUT.print(table)

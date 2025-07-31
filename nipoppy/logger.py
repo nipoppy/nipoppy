@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Optional
 
 import rich_click as click
-from rich.console import Console
 from rich.logging import RichHandler
 
+from nipoppy.console import _Console
 from nipoppy.env import IS_TESTING, LogColor, StrOrPathLike
 
 DATE_FORMAT = "[%Y-%m-%d %X]"
@@ -51,19 +51,20 @@ def get_logger(
     rich_handler = partial(
         RichHandler,
         show_time=False,
+        show_path=False,
         markup=True,
         rich_tracebacks=True,
         tracebacks_suppress=[click],
     )
 
     # stderr: ERROR and CRITICAL
-    stderr_handler = rich_handler(logging.ERROR, console=Console(stderr=True))
+    stderr_handler = rich_handler(logging.ERROR, console=_Console(stderr=True))
     logger.addHandler(stderr_handler)
 
     # stdout: INFO and WARNING
     # If verbosity is enabled, also display DEBUG
     verbosity = logging.DEBUG if verbose else logging.INFO
-    stdout_handler = rich_handler(verbosity, console=Console(stderr=False))
+    stdout_handler = rich_handler(verbosity, console=_Console(stderr=False))
     stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
     logger.addHandler(stdout_handler)
 
@@ -79,6 +80,7 @@ def add_logfile(logger: logging.Logger, fpath_log: StrOrPathLike) -> None:
 
     dpath_log = fpath_log.parent
     if not dpath_log.exists():
+        logger.warning(f"Creating log directory because it does not exist: {dpath_log}")
         dpath_log.mkdir(parents=True, exist_ok=True)
 
     file_handler = logging.FileHandler(fpath_log)

@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from typing import Optional
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import StrOrPathLike
-from nipoppy.pipeline_store.validation import check_pipeline_bundle
+from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
+from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.pipeline_validation import check_pipeline_bundle
+from nipoppy.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
@@ -21,6 +24,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         dpath_root: Path,
         source: StrOrPathLike | str,
         zenodo_api: ZenodoAPI = None,
+        assume_yes: bool = False,
         force: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
@@ -36,6 +40,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
         self.source = source
         self.zenodo_api = zenodo_api or ZenodoAPI()
+        self.assume_yes = assume_yes
         self.force = force
 
         self.zenodo_api.set_logger(self.logger)
@@ -48,7 +53,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             self.zenodo_id = source
         else:
             self.logger.warning(
-                f"{source} does not seem like a valid path " "or Zenodo ID"
+                f"{source} does not seem like a valid path or Zenodo ID"
             )
 
     def _update_config_and_save(self, pipeline_config: BasePipelineConfig) -> Config:
@@ -95,6 +100,57 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             config.save(self.layout.fpath_config)
 
         return config
+
+    def _download_container(self, pipeline_config: BasePipelineConfig):
+        # pipeline is not containerized
+        if pipeline_config.CONTAINER_INFO.URI is None:
+            return
+
+        # apply substitutions
+        pipeline_config = BasePipelineConfig(
+            **apply_substitutions_to_json(
+                pipeline_config.model_dump(mode="json"), self.config.SUBSTITUTIONS
+            )
+        )
+        fpath_container = Path(
+            process_template_str(
+                str(pipeline_config.get_fpath_container()), objs=[self.layout]
+            )
+        )
+
+        # container file already exists
+        if fpath_container.exists():
+            return
+
+        # prompt user and confirm
+        if self.assume_yes or CONSOLE_STDOUT.confirm(
+            (
+                "[yellow]This pipeline is containerized: do you want to download the "
+                f"container (to [magenta]{fpath_container}[/]) now?[/]"
+            ),
+            kwargs_call={"default": True},
+        ):
+            try:
+                # use stderr for status messages so that the Apptainer/Singularity
+                # output does not break the status display
+                # ("apptainer/singularity pull" seems to only print to stderr)
+                with CONSOLE_STDERR.status(
+                    "Downloading the container, this can take a while..."
+                ):
+                    self.run_command(
+                        [
+                            self.config.CONTAINER_CONFIG.COMMAND.value,
+                            "pull",
+                            fpath_container,
+                            pipeline_config.CONTAINER_INFO.URI,
+                        ]
+                    )
+            except subprocess.CalledProcessError as exception:
+                self.logger.error(
+                    f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
+                    f" to {fpath_container}: {exception}"
+                )
+                raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
 
     def run_main(self):
         """Install a pipeline.
@@ -176,8 +232,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 path_source=dpath_pipeline,
                 path_dest=dpath_target,
             )
+
         # update global config with new pipeline variables
         self._update_config_and_save(pipeline_config)
+
+        # download container if it is specified
+        self._download_container(pipeline_config)
 
         self.logger.success(
             "Successfully installed pipeline "

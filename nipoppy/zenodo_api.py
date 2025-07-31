@@ -32,13 +32,13 @@ class ZenodoAPI:
     def __init__(
         self,
         sandbox: bool = False,
-        access_token: Optional[str] = None,
+        password_file: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
     ):
+        self.sandbox = sandbox
         self.api_endpoint = (
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
-        self.access_token = access_token
 
         if logger is None:
             self.logger = get_logger(__name__)
@@ -46,12 +46,16 @@ class ZenodoAPI:
             self.logger = logger
 
         # Access token is required for uploading files
-        if self.access_token is not None:
-            self.headers = {
-                "Authorization": f"Bearer {self.access_token}",
-            }
-        else:
-            self.headers = {}
+        self.password_file = password_file
+        self.access_token = None
+        self.headers: dict[str, str] = dict()
+        if self.password_file is not None:
+            self.access_token = self.password_file.read_text().strip()
+            self.set_authorization(self.access_token)
+
+    def set_authorization(self, access_token: str):
+        """Set the headers for the ZenodoAPI instance."""
+        self.headers.update({"Authorization": f"Bearer {access_token}"})
 
     def set_logger(self, logger: logging.Logger):
         """Set the logger for the ZenodoAPI instance."""
@@ -159,14 +163,14 @@ class ZenodoAPI:
         # extract creator name
         # use username (always defined) as fallback
         response_json = response.json()
-        if (creator_name := response_json["profile"]["full_name"]) == "":
+        if not (creator_name := response_json["profile"].get("full_name")):
             creator_name = response_json["username"]
             self.logger.warning(
                 f"User {owner_id} has no full name in Zenodo profile, "
                 f'using username ("{creator_name}") instead'
             )
         # also get affiliation and ORCID (may be empty)
-        affiliation = response_json["profile"]["affiliations"]
+        affiliation = response_json["profile"].get("affiliations")
         orcid = response_json["identities"].get("orcid")
 
         # update metadata with new creator information
@@ -226,7 +230,7 @@ class ZenodoAPI:
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
-                    f"Failed to commit the file file for zenodo.{record_id}: {file}"
+                    f"Failed to commit file for zenodo.{record_id}: {file}"
                     f"\n{response.json()}"
                 )
 
@@ -276,20 +280,24 @@ class ZenodoAPI:
             if not metadata["metadata"].get("creators"):
                 self._update_creators(record_id, owner_id, metadata)
 
-            files = list(input_dir.iterdir())
+            files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
             doi = self._publish(record_id)
             return doi
 
-        except Exception:
+        except Exception as e:
             # Delete the draft if an error occurs
             # Prevents issue when retrying to modify the record while a draft exits.
-            self.logger.warning(f"Reverting record {action} for zenodo.{record_id}")
+            self.logger.info(
+                f"Reverting record {action} for zenodo.{record_id} due to error: {e}"
+            )
             response = httpx.delete(
                 f"{self.api_endpoint}/records/{record_id}/draft",
                 headers=self.headers,
             )
-            if response.status_code != 204:
+            if response.status_code == 204:
+                self.logger.info(f"Record {action} reverted")
+            else:
                 self.logger.warning(
                     f"Failed to revert record {action} for zenodo.{record_id}: "
                     f"{response.json()}"
@@ -310,14 +318,17 @@ class ZenodoAPI:
         if keywords is None:
             keywords = []
 
+        # Fuzzy search when the query is a single word
+        if len(query.split()) == 1:
+            query = f"*{query}*"
+
         full_query = query
         for keyword in keywords:
-            full_query += f" AND metadata.subjects.subject:{keyword}"
+            full_query += f' AND metadata.subjects.subject:"{keyword}"'
         # handle case where initial query is empty
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
-
         response = httpx.get(
             f"{self.api_endpoint}/records",
             headers=self.headers,
@@ -326,5 +337,18 @@ class ZenodoAPI:
                 "size": size,
             },
         )
-
         return response.json()["hits"]
+
+    def get_record_metadata(self, record_id: str):
+        """Get the metadata of a Zenodo record."""
+        record_id = record_id.removeprefix("zenodo.")
+        response = httpx.get(
+            f"{self.api_endpoint}/records/{record_id}",
+            headers=self.headers,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get metadata for zenodo.{record_id}: {response.json()}"
+            )
+
+        return response.json()["metadata"]

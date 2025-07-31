@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
 from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
@@ -30,6 +30,12 @@ class DpathInfo(PathInfo):
     _is_directory = True
 
 
+class OptionalDpathInfo(DpathInfo):
+    """Relative path and description for a directory that is optional."""
+
+    _is_required = False
+
+
 class FpathInfo(PathInfo):
     """Relative path and description for a file."""
 
@@ -46,7 +52,6 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
-
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
@@ -71,6 +76,9 @@ class LayoutConfig(BaseModel):
         description="Directory for imaging data that is organized but not yet in BIDS"
     )
     dpath_code: DpathInfo = Field(description="Directory for code and scripts")
+    dpath_hpc: OptionalDpathInfo = Field(
+        description="Directory for HPC job submission template files"
+    )
     dpath_pipelines: DpathInfo = Field(
         description=(
             "Directory for configurations or other files needed to run pipelines"
@@ -175,6 +183,7 @@ class DatasetLayout(Base):
         self.dpath_root = Path(dpath_root)
         self.fpath_spec = Path(fpath_config)
         self.config = config
+        self.dpath_nipoppy = self.dpath_root / NIPOPPY_DIR_NAME
 
         # directories (for type hinting)
         self.dpath_bids: Path
@@ -186,6 +195,7 @@ class DatasetLayout(Base):
         self.dpath_pre_reorg: Path
         self.dpath_post_reorg: Path
         self.dpath_code: Path
+        self.dpath_hpc: Path
         self.dpath_pipelines: Path
         self.dpath_containers: Path
         self.dpath_scratch: Path
@@ -226,16 +236,6 @@ class DatasetLayout(Base):
         return paths
 
     @cached_property
-    def dpaths(self) -> list[Path]:
-        """Return a list of all required directory paths."""
-        return self.get_paths(directory=True)
-
-    @cached_property
-    def fpaths(self) -> list[Path]:
-        """Return a list of all required file paths."""
-        return self.get_paths(directory=False)
-
-    @cached_property
     def dpath_descriptions(self) -> list[Tuple[Path, str]]:
         """Return a list of directory paths and associated description strings."""
         info_list = [
@@ -247,8 +247,12 @@ class DatasetLayout(Base):
 
     def _find_missing_paths(self) -> list[Path]:
         """Return a list of missing paths."""
-        missing = [dpath for dpath in self.dpaths if not dpath.exists()]
-        for fpath in self.fpaths:
+        missing = [
+            dpath
+            for dpath in self.get_paths(directory=True, include_optional=False)
+            if not dpath.exists()
+        ]
+        for fpath in self.get_paths(directory=False, include_optional=False):
             if not fpath.exists():
                 missing.append(fpath)
         return missing
@@ -343,4 +347,4 @@ class DatasetLayout(Base):
 
 
 # for printing defaults in docs
-DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<DATASET_ROOT>")
+DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<NIPOPPY_PROJECT_ROOT>")

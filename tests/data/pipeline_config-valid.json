@@ -2,5 +2,6 @@
     "NAME": "my_test_pipeline",
     "VERSION": "1.0.0",
     "STEPS": [],
-    "SCHEMA_VERSION": "1"
+    "SCHEMA_VERSION": "1",
+    "PIPELINE_TYPE": "processing"
 }

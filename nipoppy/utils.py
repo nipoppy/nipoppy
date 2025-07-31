@@ -13,7 +13,12 @@ from typing import List, Optional, Sequence
 import bids
 import pandas as pd
 
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    NIPOPPY_DIR_NAME,
+    StrOrPathLike,
+)
 
 # user configs (pipeline configs, invocations, descriptors)
 TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
@@ -21,12 +26,14 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 # paths
 DPATH_DATA = Path(__file__).parent / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-DPATH_SAMPLE_PIPELINES = DPATH_EXAMPLES / "sample_pipelines"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
+DPATH_HPC = DPATH_DATA / "hpc"
+FPATH_HPC_TEMPLATE = DPATH_HPC / "job_script_template.sh"
+TEMPLATE_PIPELINE_PATH = Path(__file__).parent / "data" / "template_pipeline"
 
 # descriptions for common fields in the Pydantic models
 FIELD_DESCRIPTION_MAP = {
@@ -397,3 +404,26 @@ def apply_substitutions_to_json(
 def get_today():
     """Get today's date in the format YYYY-MM-DD."""
     return datetime.datetime.today().strftime("%Y-%m-%d")
+
+
+def is_nipoppy_project(cwd=Path.cwd()):
+    """Verify if the current directory is a nipoppy project.
+
+    This is done by checking if the `.nipoppy` directory exists in the
+    current directory or any of its parents.
+    If the directory is found, it returns the path to the `.nipoppy`
+    directory. If not, it returns False.
+
+    Parameters
+    ----------
+    cwd : nipoppy.env.StrOrPathLike, optional
+        Path to directory, by default Path.cwd()
+    """
+    current = Path(cwd).resolve()
+    while True:
+        candidate = current / NIPOPPY_DIR_NAME
+        if candidate.is_dir():
+            return current  # Found
+        if current == Path("/"):
+            return False  # Reached root, not found
+        current = current.parent

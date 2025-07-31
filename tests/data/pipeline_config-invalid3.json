@@ -1,0 +1,11 @@
+{
+    "NAME": "my_test_pipeline",
+    "VERSION": "1.0.0",
+    "STEPS": [
+        {
+            "UPDATE_STATUS": true
+        }
+    ],
+    "SCHEMA_VERSION": "1",
+    "PIPELINE_TYPE": "processing"
+}

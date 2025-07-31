@@ -9,11 +9,13 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
+    NIPOPPY_DIR_NAME,
+    PipelineTypeEnum,
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
-    DPATH_SAMPLE_PIPELINES,
+    DPATH_HPC,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
@@ -31,6 +33,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         dpath_root: Path,
         bids_source=None,
         mode="symlink",
+        force=False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -48,6 +51,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.fname_readme = "README.md"
         self.bids_source = bids_source
         self.mode = mode
+        self.force = force
 
     def run_main(self):
         """Create dataset directory structure.
@@ -55,8 +59,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         Create directories and add a readme in each.
         Copy boutiques descriptors and invocations.
         Copy default config files.
-
-        If the BIDS source dataset is requested, it is symlinked.
+        Copy HPC config files.
         """
         # dataset must not already exist
         if self.dpath_root.exists():
@@ -69,34 +72,29 @@ class InitWorkflow(BaseDatasetWorkflow):
                 raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
 
             if len(filenames) > 0:
-                raise FileExistsError(
-                    f"Dataset directory is non-empty: {self.dpath_root}"
-                )
+                msg = f"Dataset directory is non-empty: {self.dpath_root}"
+                if self.force:
+                    self.logger.warning(
+                        f"{msg} `--force` specified, proceeding anyway."
+                    )
+                else:
+                    raise FileExistsError(
+                        f"{msg}, if this is intended consider using the --force flag."
+                    )
 
         # create directories
-        for dpath in self.layout.dpaths:
-            # If a bids_source is passed it means datalad is installed.
-            if self.bids_source is not None and dpath.stem == "bids":
-                if self.mode == "copy":
-                    self.copytree(self.bids_source, str(dpath))
-                elif self.mode == "move":
-                    self.movetree(self.bids_source, str(dpath))
-                elif self.mode == "symlink":
-                    self.mkdir(self.dpath_root)
-                    self.create_symlink(self.bids_source, str(dpath))
-                else:
-                    raise ValueError(f"Invalid mode: {self.mode}")
+        self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
+        for dpath in self.layout.get_paths(directory=True, include_optional=True):
+            if self.bids_source is not None and dpath == self.layout.dpath_bids:
+                self.handle_bids_source()
             else:
                 self.mkdir(dpath)
 
         self._write_readmes()
 
-        # copy pipeline files
-        for dpath_pipeline in DPATH_SAMPLE_PIPELINES.iterdir():
-            self.copytree(
-                dpath_pipeline,
-                self.layout.dpath_pipelines / dpath_pipeline.name,
-            )
+        # create empty pipeline config subdirectories
+        for pipeline_type in PipelineTypeEnum:
+            self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
         self.copy(FPATH_SAMPLE_CONFIG, self.layout.fpath_config)
@@ -109,12 +107,41 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.layout.fpath_manifest,
             )
 
+        # copy HPC files
+        self.copytree(
+            DPATH_HPC,
+            self.layout.dpath_hpc,
+            dirs_exist_ok=True,
+        )
+
         # inform user to edit the sample files
         self.logger.warning(
             f"Sample config and manifest files copied to {self.layout.fpath_config}"
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
         )
+
+    def handle_bids_source(self) -> None:
+        """Create bids source directory.
+
+        Handles copy/move/symlink modes.
+        If --force, attempt to remove the pre-existing conflicting bids source.
+        """
+        dpath = self.layout.dpath_bids
+
+        # Handle edge case where we need to clobber existing data
+        if dpath.exists() and self.force:
+            self._remove_existing(dpath)
+
+        if self.mode == "copy":
+            self.copytree(self.bids_source, str(dpath))
+        elif self.mode == "move":
+            self.movetree(self.bids_source, str(dpath))
+        elif self.mode == "symlink":
+            self.mkdir(self.dpath_root)
+            self.create_symlink(self.bids_source, str(dpath))
+        else:
+            raise ValueError(f"Invalid mode: {self.mode}")
 
     def _write_readmes(self) -> None:
         if self.dry_run:
@@ -135,7 +162,14 @@ class InitWorkflow(BaseDatasetWorkflow):
                     f"{gh_org}/{gh_repo}/{commit}/{path}"
                 )
                 response = httpx.get(url)
-                fpath_readme.write_text(response.content.decode("utf-8"))
+                readme_content = response.content.decode("utf-8")
+                try:
+                    fpath_readme.write_text(readme_content)
+                except PermissionError:
+                    self.logger.warning(
+                        f"Permission denied when writing {fpath_readme}. "
+                        "Skipping README creation."
+                    )
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.

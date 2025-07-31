@@ -15,13 +15,16 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "boutiques",
+    "boutiques>=0.5.30",
     "click",
     "httpx",
+    "jinja2",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
     "pydicom!=3.0.0",
+    "pysqa[sge]>=0.2.4",
+    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
@@ -34,7 +37,6 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -47,19 +49,24 @@ doc = [
     "sphinx-hoverxref",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
-    "sphinx_design"
+    "sphinx_design",
 ]
+dev = ["nipoppy[doc,test,gui]", "pre-commit"]
 test = [
     "fids>=0.1.0",
     "packaging",
     "pytest-cov",
+    "pytest-httpx",
     "pytest-mock",
     "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
+tui = ["trogon"]
+gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
 nipoppy = "nipoppy.cli:cli"
+nipoppy-gui = "nipoppy.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
@@ -81,3 +88,4 @@ addopts = "-ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
+markers = ["api: mark a test as an api test."]

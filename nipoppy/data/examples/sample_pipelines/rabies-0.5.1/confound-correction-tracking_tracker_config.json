@@ -1,5 +1,0 @@
-{
-    "PATHS": [
-        "confound_correction_datasink/cleaned_timeseries/_split_name_[[NIPOPPY_BIDS_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]*_bold/[[NIPOPPY_BIDS_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]*_bold_RAS_combined_cleaned.nii.gz"
-       ]
-}

@@ -47,7 +47,7 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = [
     # not ideal but otherwise we wrongly get a warning
-    "user_guide/inserts/boutiques_stub.md",
+    "how_to_guides/user_guide/inserts/boutiques_stub.md",
 ]
 
 nitpicky = True
@@ -146,8 +146,11 @@ template_strings_proc_runner = template_strings_bids_runner[:-1] + [
 
 myst_substitutions = {
     "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
+    "dpath_containers": f"`{DEFAULT_LAYOUT_INFO.dpath_containers}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
+    "dpath_src_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_src_tabular}`",
+    "dpath_src_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_src_imaging}`",
     "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
     "dpath_post_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_post_reorg}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
@@ -156,6 +159,8 @@ myst_substitutions = {
     "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
+    "dpath_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_tabular}`",
+    "dpath_assessments": f"`{DEFAULT_LAYOUT_INFO.dpath_assessments}`",
     "fpath_curation_status": f"`{DEFAULT_LAYOUT_INFO.fpath_curation_status}`",
     "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
@@ -185,7 +190,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "**/cli.py", "**/nipoppy/data"]
+autoapi_ignore = ["*_version*", "**/cli.py", "**/tui.py", "**/nipoppy/data"]
 autoapi_options = [
     "members",
     "undoc-members",

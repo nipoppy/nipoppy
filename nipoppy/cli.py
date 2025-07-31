@@ -1,17 +1,32 @@
 """Nipoppy CLI."""
 
 import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
 
 import rich_click as click
 
+try:
+    from trogon import tui
+except ImportError:
+    # Fallback no-op decorator if Trogon isn't installed
+    def tui(*args, **kwargs):
+        """No-op decorator for Trogon."""
+
+        def decorator(f):
+            return f
+
+        return decorator
+
+
 from nipoppy._version import __version__
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     PROGRAM_NAME,
+    PipelineTypeEnum,
     ReturnCode,
 )
 from nipoppy.logger import get_logger
@@ -54,7 +69,9 @@ click.rich_click.OPTION_GROUPS = {
                 "--tar",
                 "--query",
                 "--size",
-                "--zenodo-token",
+                "--zenodo-id",
+                "--password-file",
+                "--assume-yes",
                 "--sandbox",
                 "--force",
             ],
@@ -185,12 +202,18 @@ def pipeline_options(func):
     func = click.option(
         "--pipeline-step",
         type=str,
-        help="Pipeline step, as specified in the config file (default: first step).",
+        help=(
+            "Pipeline step, as specified in the pipeline config file "
+            "(default: first step)."
+        ),
     )(func)
     func = click.option(
         "--pipeline-version",
         type=str,
-        help="Pipeline version, as specified in the config file.",
+        help=(
+            "Pipeline version, as specified in the pipeline config file "
+            "(default: latest out of the installed versions)."
+        ),
     )(func)
     func = click.option(
         "--pipeline",
@@ -205,11 +228,6 @@ def pipeline_options(func):
 def runners_options(func):
     """Define options for the pipeline runner commands."""
     func = click.option(
-        "--simulate",
-        is_flag=True,
-        help="Simulate the pipeline run without executing the generated command-line.",
-    )(func)
-    func = click.option(
         "--write-list",
         type=click.Path(path_type=Path, resolve_path=True, dir_okay=False),
         help=(
@@ -218,20 +236,86 @@ def runners_options(func):
             "participant and session IDs will be written to this file."
         ),
     )(func)
+    func = click.option(
+        "--hpc",
+        help=(
+            "Submit HPC jobs instead of running the pipeline directly. "
+            "The value should be the HPC cluster type. Currently, "
+            "'slurm' and 'sge' have built-in support, but it is possible to add "
+            "other cluster types supported by PySQA (https://pysqa.readthedocs.io/)."
+        ),
+    )(func)
+    func = click.option(
+        "--keep-workdir",
+        is_flag=True,
+        help=(
+            "Keep pipeline working directory upon success "
+            "(default: working directory deleted unless a run failed)"
+        ),
+    )(func)
+    func = click.option(
+        "--simulate",
+        is_flag=True,
+        help="Simulate the pipeline run without executing the generated command-line.",
+    )(func)
     func = pipeline_options(func)
     return func
 
 
-class OrderedGroup(click.RichGroup):
-    """Group that lists commands in the order they were added."""
+def assume_yes_option(func):
+    """Define assume-yes option for the CLI."""
+    func = click.option(
+        "--assume-yes",
+        "--yes",
+        "-y",
+        is_flag=True,
+        help="Assume yes to all questions.",
+    )(func)
+    return func
+
+
+class OrderedAliasedGroup(click.RichGroup):
+    """Group that lists commands in the order they were added and supports aliases."""
+
+    alias_map = {
+        "doughnut": "track-curation",
+        "run": "process",
+        "track": "track-processing",
+    }
 
     def list_commands(self, ctx):
         """List commands in the order they were added."""
         return list(self.commands.keys())
 
+    def get_command(self, ctx, cmd_name):
+        """Handle aliases.
 
+        Given a context and a command name, this returns a Command object if it exists
+        or returns None.
+        """
+        # recognized command
+        command = click.Group.get_command(self, ctx, cmd_name)
+        if command is not None:
+            return command
+
+        # aliases (to be deprecated)
+        try:
+            new_cmd_name = self.alias_map[cmd_name]
+        except KeyError:
+            return None
+
+        logger.warning(
+            (
+                f"The '{cmd_name}' subcommand is deprecated and will cause an error "
+                f"in a future version. Use '{new_cmd_name}' instead."
+            ),
+        )
+        return click.Group.get_command(self, ctx, new_cmd_name)
+
+
+@tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
-    cls=OrderedGroup,
+    cls=OrderedAliasedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
     epilog=(
         "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
@@ -244,12 +328,25 @@ def cli():
     pass
 
 
+if cli.commands.get("gui"):
+    cli.commands["gui"].hidden = True
+
+
 @cli.command()
 @dataset_option
 @click.option(
     "--bids-source",
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
     help=("Path to a BIDS dataset to initialize the layout with."),
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help=(
+        "Create a nipoppy dataset even if there are already files present."
+        " (May clobber existing files.)"
+    ),
 )
 @click.option(
     "--mode",
@@ -323,8 +420,8 @@ def track_curation(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``
+    From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
@@ -351,14 +448,6 @@ def bidsify(**params):
 @dataset_option
 @runners_options
 @click.option(
-    "--keep-workdir",
-    is_flag=True,
-    help=(
-        "Keep pipeline working directory upon success "
-        "(default: working directory deleted unless a run failed)"
-    ),
-)
-@click.option(
     "--tar",
     is_flag=True,
     help=(
@@ -369,7 +458,7 @@ def bidsify(**params):
 )
 @global_options
 @layout_option
-def run(**params):
+def process(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.runner import PipelineRunner
 
@@ -383,7 +472,7 @@ def run(**params):
 @pipeline_options
 @global_options
 @layout_option
-def track(**params):
+def track_processing(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
 
@@ -419,7 +508,9 @@ def status(**params):
         workflow.run()
 
 
-@cli.group(cls=OrderedGroup, context_settings={"help_option_names": ["-h", "--help"]})
+@cli.group(
+    cls=OrderedAliasedGroup, context_settings={"help_option_names": ["-h", "--help"]}
+)
 def pipeline():
     """Pipeline store operations."""
     pass
@@ -427,14 +518,6 @@ def pipeline():
 
 def zenodo_options(func):
     """Define Zenodo options for the CLI."""
-    func = click.option(
-        "--zenodo-token",
-        "access_token",
-        envvar="ZENODO_TOKEN",
-        type=str,
-        required=False,
-        help="Zenodo access token.",
-    )(func)
     func = click.option(
         "--sandbox",
         "sandbox",
@@ -462,9 +545,46 @@ def pipeline_search(**params):
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
     )
     with handle_exception(PipelineSearchWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("create")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=False, path_type=Path, resolve_path=True),
+)
+@click.option(
+    "--type",
+    "-t",
+    "type_",
+    type=click.Choice(
+        [
+            PipelineTypeEnum.BIDSIFICATION,
+            PipelineTypeEnum.PROCESSING,
+            PipelineTypeEnum.EXTRACTION,
+        ],
+        case_sensitive=False,
+    ),
+    required=True,
+    help=(
+        "Pipeline type. This is used to create the correct pipeline config directory."
+    ),
+)
+@click.option(
+    "--source-descriptor",
+    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
+    help=(
+        "Path to an existing Boutiques descriptor file. This is used to create the "
+        "pipeline config directory."
+    ),
+)
+def pipeline_create(**params):
+    """Create a template pipeline config directory."""
+    from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
+
+    with handle_exception(PipelineCreateWorkflow(**params)) as workflow:
         workflow.run()
 
 
@@ -484,6 +604,7 @@ def pipeline_search(**params):
 )
 @global_options
 @layout_option
+@assume_yes_option
 def pipeline_install(**params):
     """
     Install a new pipeline into a dataset.
@@ -495,7 +616,6 @@ def pipeline_install(**params):
     params = dep_params(**params)
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
     )
     with handle_exception(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
@@ -540,16 +660,34 @@ def pipeline_validate(**params):
     required=False,
     help="To update an existing pipeline, provide the Zenodo ID.",
 )
+@assume_yes_option
+@click.option(
+    "--password-file",
+    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
+    required=True,
+    help="Path to file containing Zenodo access token (and nothing else)",
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Ignore safeguard warnings and upload anyway. Use with caution.",
+)
 @zenodo_options
 @global_options
 def pipeline_upload(**params):
     """Upload a pipeline config directory to Zenodo."""
-    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
+    from nipoppy.workflows.pipeline_store.upload import ZenodoUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
-        access_token=params.pop("access_token"),
+        password_file=params.pop("password_file"),
     )
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
         workflow.run()
+
+
+def tui_launch():  # pragma: no cover
+    """Launch the Nipoppy TUI."""
+    subprocess.run(["nipoppy", "gui"])

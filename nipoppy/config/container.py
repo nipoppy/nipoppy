@@ -8,9 +8,9 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 
 # Apptainer
@@ -26,9 +26,12 @@ class ContainerConfig(BaseModel):
     Does not include information about the container image.
     """
 
-    COMMAND: str = Field(
-        default="apptainer",
-        description="Name of or path to Apptainer/Singularity executable",
+    COMMAND: Optional[ContainerCommandEnum] = Field(
+        default=ContainerCommandEnum.APPTAINER,
+        description=(
+            "Name of container engine. If null/None, the pipeline will not run in a "
+            "container (e.g., baremetal installations)."
+        ),
     )
     ARGS: list[str] = Field(
         default=[],
@@ -114,6 +117,22 @@ class ContainerInfo(BaseModel):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the container info after instantiation.
+
+        Specifically:
+
+        - If URI is specified, FILE must also be specified
+        """
+        if self.URI is not None and self.FILE is None:
+            raise ValueError(
+                f"FILE must be specified if URI is set, got {self.FILE} and "
+                f"{self.URI} respectively"
+            )
+        return self
 
 
 class _SchemaWithContainerConfig(BaseModel):
@@ -273,7 +292,10 @@ def prepare_container(
     str
         The command string
     """
-    command = container_config.COMMAND
+    if container_config.COMMAND is None:
+        raise ValueError("COMMAND cannot be None in container config")
+
+    command = container_config.COMMAND.value
     args = container_config.ARGS
     env_vars = container_config.ENV_VARS
 
