@@ -8,6 +8,7 @@ on:
     branches: ['*']
   schedule:
     - cron: '0 11 * * *' # Every day at 11:00 UTC
+  workflow_dispatch:
 
 # cancel previous runs if new one is triggered
 concurrency:
@@ -22,6 +23,8 @@ jobs:
 
     strategy:
       matrix:
+        # NOTE: when adding a new version, update the 'if' condition in
+        #       the 'Run API tests' step
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     # only trigger on upstream repo
@@ -55,7 +58,8 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run API tests
-      if: github.event_name == 'schedule'
+      # if: github.event_name == 'schedule' && matrix.python-version == '3.13'
+      if: matrix.python-version == '3.13'  # for testing
       run: |
         python -m pytest -m api
       env:
