@@ -615,11 +615,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 )
 
             if self.n_success == 0:
-                self.logger.error(f"{log_msg}!")
+                self.logger.error(log_msg)
             elif self.n_success == self.n_total:
-                self.logger.success(f"{log_msg}!")
+                self.logger.success(log_msg)
             else:
-                self.logger.warning(f"{log_msg}!")
+                self.logger.warning(log_msg)
 
         return super().run_cleanup()
 
