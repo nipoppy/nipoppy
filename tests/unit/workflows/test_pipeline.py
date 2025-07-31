@@ -969,19 +969,19 @@ def test_run_main_write_list(
             1,
             2,
             "participant_session",
-            "Ran for {0} out of {1} participants or sessions",  # noqa: E501
+            "Ran for {0} out of {1} participants or sessions",
         ),
         (
             0,
             1,
             "participant_session",
-            "Ran for {0} out of {1} participants or sessions",  # noqa: E501
+            "Ran for {0} out of {1} participants or sessions",
         ),
         (
             2,
             2,
             "participant_session",
-            "Ran for {0} out of {1} participants or sessions",  # noqa: E501
+            "Ran for {0} out of {1} participants or sessions",
         ),
         (
             1,

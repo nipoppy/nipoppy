@@ -171,7 +171,6 @@ class BaseWorkflow(Base, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        self.logger.debug(f"========== BEGIN {self.name.upper()} WORKFLOW ==========")
         self.logger.debug(self)
         if self.dry_run:
             self.logger.info("Doing a dry run")
@@ -183,7 +182,7 @@ class BaseWorkflow(Base, ABC):
 
     def run_cleanup(self):
         """Run the cleanup part of the workflow."""
-        self.logger.debug(f"========== END {self.name.upper()} WORKFLOW ==========")
+        pass
 
     def run(self):
         """Run the workflow."""
@@ -449,7 +448,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
         if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
             raise FileNotFoundError(
-                "DICOM directory map file not found" f": {fpath_dicom_dir_map}"
+                f"DICOM directory map file not found: {fpath_dicom_dir_map}"
             )
 
         return DicomDirMap.load_or_generate(

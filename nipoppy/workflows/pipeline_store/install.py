@@ -242,5 +242,5 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self.logger.success(
             "Successfully installed pipeline "
             f"{pipeline_config.NAME}, version {pipeline_config.VERSION} at "
-            f"{dpath_target}!"
+            f"{dpath_target}"
         )

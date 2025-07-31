@@ -471,17 +471,17 @@ def test_cleanup_curation_status(
         (
             0,
             1,
-            "Reorganized files for {0} out of {1} participant-session pairs",  # noqa: E501
+            "Reorganized files for {0} out of {1} participant-session pairs",
         ),
         (
             1,
             2,
-            "Reorganized files for {0} out of {1} participant-session pairs",  # noqa: E501
+            "Reorganized files for {0} out of {1} participant-session pairs",
         ),
         (
             2,
             2,
-            "Reorganized files for {0} out of {1} participant-session pairs",  # noqa: E501
+            "Reorganized files for {0} out of {1} participant-session pairs",
         ),
     ],
 )
