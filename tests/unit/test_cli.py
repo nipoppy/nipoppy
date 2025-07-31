@@ -9,6 +9,7 @@ import pytest
 import pytest_mock
 from click.testing import CliRunner
 
+from nipoppy.cli import handle_exception
 from nipoppy.cli.cli import cli
 from nipoppy.env import ReturnCode
 from tests.conftest import PASSWORD_FILE
@@ -243,3 +244,44 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     assert_command_success(command)
+
+
+class TestContextManager:
+    """Test the context manager for CLI commands."""
+
+    def test_no_exception(self, mocker):
+        """Test that the context manager exits with SUCCESS when no exception occurs."""
+        workflow = mocker.Mock()
+        workflow.return_code = ReturnCode.SUCCESS
+        mock_exit = mocker.patch("sys.exit")
+
+        with handle_exception(workflow):
+            pass
+
+        mock_exit.assert_called_once_with(ReturnCode.SUCCESS)
+
+    @pytest.mark.parametrize(
+        "exception, return_code, expected_return_code",
+        [
+            (SystemExit, ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
+            (RuntimeError, ReturnCode.SUCCESS, ReturnCode.UNKNOWN_FAILURE),
+            (RuntimeError, ReturnCode.PARTIAL_SUCCESS, ReturnCode.PARTIAL_SUCCESS),
+            (ValueError, ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
+        ],
+    )
+    def test_exception(self, mocker, exception, return_code, expected_return_code):
+        """Test that the context manager handles exceptions correctly.
+
+        SystemExit is treated as an unknown failure, while other exceptions
+        are logged and set to UNKNOWN_FAILURE if the workflow exit code is still
+        SUCCESS. Other exit codes are preserved.
+        """
+        workflow = mocker.Mock()
+        workflow.return_code = return_code
+        mock_exit = mocker.patch("sys.exit")
+
+        with handle_exception(workflow):
+            raise exception()
+
+        assert workflow.return_code == expected_return_code
+        mock_exit.assert_called_once_with(expected_return_code)
