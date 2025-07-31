@@ -48,14 +48,15 @@ jobs:
 
     - name: Run non-API tests
       run: |
-        python -m pytest -m "not api" --cov=nipoppy --cov-report=xml
+        python -m pytest -m "not api"
+    #     python -m pytest -m "not api" --cov=nipoppy --cov-report=xml
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        files: ./coverage.xml
-        name: codecov-umbrella
-        token: ${{ secrets.CODECOV_TOKEN }}
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v5
+    #   with:
+    #     files: ./coverage.xml
+    #     name: codecov-umbrella
+    #     token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run API tests
       if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.13'
