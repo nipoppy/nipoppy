@@ -5,7 +5,7 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import StrOrPathLike
-from nipoppy.pipeline_store.validation import check_pipeline_bundle
+from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
