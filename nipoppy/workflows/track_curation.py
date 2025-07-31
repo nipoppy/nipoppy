@@ -84,6 +84,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
     def run_cleanup(self):
         """Log a success message."""
         self.logger.success(
-            "Successfully generated/updated the dataset's curation status file!"
+            "Successfully generated/updated the dataset's curation status file"
         )
         return super().run_cleanup()
