@@ -31,4 +31,4 @@ class PipelineValidateWorkflow(BaseWorkflow):
             self.dpath_pipeline, logger=self.logger, log_level=logging.INFO
         )
 
-        self.logger.success("The pipeline files are all valid!")
+        self.logger.success("The pipeline files are all valid")
