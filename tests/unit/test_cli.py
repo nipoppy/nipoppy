@@ -53,7 +53,7 @@ def test_dep_params(tmp_path: Path, caplog: pytest.LogCaptureFixture):
 
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
-    assert_command_success(command + " -h")
+    assert_command_success(f"{command} -h")
     assert any(
         [
             (record.levelno == logging.WARNING and "is deprecated" in record.message)
