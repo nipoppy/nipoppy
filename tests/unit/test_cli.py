@@ -9,7 +9,7 @@ import pytest
 import pytest_mock
 from click.testing import CliRunner
 
-from nipoppy.cli import handle_exception
+from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
 from nipoppy.env import ReturnCode
 from tests.conftest import PASSWORD_FILE
@@ -255,7 +255,7 @@ class TestContextManager:
         workflow.return_code = ReturnCode.SUCCESS
         mock_exit = mocker.patch("sys.exit")
 
-        with handle_exception(workflow):
+        with exception_handler(workflow):
             pass
 
         mock_exit.assert_called_once_with(ReturnCode.SUCCESS)
@@ -280,7 +280,7 @@ class TestContextManager:
         workflow.return_code = return_code
         mock_exit = mocker.patch("sys.exit")
 
-        with handle_exception(workflow):
+        with exception_handler(workflow):
             raise exception()
 
         assert workflow.return_code == expected_return_code
