@@ -913,7 +913,7 @@ def test_run_main_write_list(
             1,
             1,
             "group",
-            "Ran on the entire study",  # noqa: E501
+            "Ran on the entire study",
         ),
     ],
 )
