@@ -1,11 +1,25 @@
 """Nipoppy CLI."""
 
 import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
 
 import rich_click as click
+
+try:
+    from trogon import tui
+except ImportError:
+    # Fallback no-op decorator if Trogon isn't installed
+    def tui(*args, **kwargs):
+        """No-op decorator for Trogon."""
+
+        def decorator(f):
+            return f
+
+        return decorator
+
 
 from nipoppy._version import __version__
 from nipoppy.env import (
@@ -298,6 +312,7 @@ class OrderedAliasedGroup(click.RichGroup):
         return click.Group.get_command(self, ctx, new_cmd_name)
 
 
+@tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
     cls=OrderedAliasedGroup,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -312,12 +327,25 @@ def cli():
     pass
 
 
+if cli.commands.get("gui"):
+    cli.commands["gui"].hidden = True
+
+
 @cli.command()
 @dataset_option
 @click.option(
     "--bids-source",
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
     help=("Path to a BIDS dataset to initialize the layout with."),
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help=(
+        "Create a nipoppy dataset even if there are already files present."
+        " (May clobber existing files.)"
+    ),
 )
 @click.option(
     "--mode",
@@ -391,8 +419,8 @@ def track_curation(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From ``<DATASET_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<DATASET_ROOT>/sourcedata/imaging/post_reorg``
+    From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
@@ -648,7 +676,7 @@ def pipeline_validate(**params):
 @global_options
 def pipeline_upload(**params):
     """Upload a pipeline config directory to Zenodo."""
-    from nipoppy.workflows.pipeline_store.zenodo import ZenodoUploadWorkflow
+    from nipoppy.workflows.pipeline_store.upload import ZenodoUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
@@ -657,3 +685,8 @@ def pipeline_upload(**params):
     params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
         workflow.run()
+
+
+def tui_launch():  # pragma: no cover
+    """Launch the Nipoppy TUI."""
+    subprocess.run(["nipoppy", "gui"])

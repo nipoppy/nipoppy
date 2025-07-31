@@ -13,7 +13,6 @@ titlesonly:
 ---
 global_config
 populating
-organizing_tabular
 organizing_imaging
 bids_conversion
 processing

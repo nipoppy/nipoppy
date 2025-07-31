@@ -1,4 +1,3 @@
 coverage:
   ignore:
     - docs/ # documentation
-    - nipoppy/zenodo_api.py
