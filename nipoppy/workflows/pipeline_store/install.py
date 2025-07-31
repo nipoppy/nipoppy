@@ -180,7 +180,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self._update_config_and_save(pipeline_config)
 
         self.logger.success(
-            "Successfully installed pipeline"
+            "Successfully installed pipeline "
             f"{pipeline_config.NAME}, version {pipeline_config.VERSION} at "
             f"{dpath_target}!"
         )
