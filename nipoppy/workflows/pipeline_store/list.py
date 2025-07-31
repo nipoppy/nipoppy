@@ -63,7 +63,7 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
         pipelines: dict[str, list[str]],
     ):
         if len(pipelines) == 0:
-            self.logger.error(f"No available {pipeline_type.value} " "pipelines")
+            self.logger.error(f"No available {pipeline_type.value} pipelines")
             return
 
         self.logger.info(
