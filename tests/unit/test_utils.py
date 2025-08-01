@@ -236,6 +236,7 @@ def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # no
     assert add_path_timestamp(path=path, timestamp_format=timestamp_format) == expected
 
 
+@pytest.mark.parametrize("use_relative_path", [True, False])
 @pytest.mark.parametrize("dname_backups", [None, ".tests"])
 @pytest.mark.parametrize(
     "fname,dname_backups_processed",
@@ -245,11 +246,14 @@ def test_save_df_with_backup(
     fname: str,
     dname_backups: Optional[str],
     dname_backups_processed: str,
+    use_relative_path: bool,
     tmp_path: Path,
 ):
     fpath_symlink = tmp_path / fname
     df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-    fpath_backup = save_df_with_backup(df, fpath_symlink, dname_backups)
+    fpath_backup = save_df_with_backup(
+        df, fpath_symlink, dname_backups, use_relative_path
+    )
 
     if dname_backups is None:
         dname_backups = dname_backups_processed
@@ -302,6 +306,11 @@ def test_process_template_str(template_str, resolve_paths, objs, kwargs, expecte
         )
         == expected
     )
+
+
+def test_process_template_str_duplicate_key():
+    with pytest.warns(UserWarning, match="Replacing .* with None"):
+        assert process_template_str("[[NIPOPPY_KWARG1]]", kwarg1=None) == "None"
 
 
 def test_process_template_str_warning():
