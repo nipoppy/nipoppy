@@ -89,3 +89,9 @@ testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
 markers = ["api: mark a test as an api test."]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "@abstractmethod",
+]
