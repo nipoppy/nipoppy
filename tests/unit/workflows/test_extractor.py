@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
+from nipoppy.config.pipeline import (
+    ExtractionPipelineConfig,
+    ExtractionPipelineStepConfig,
+    PipelineInfo,
+)
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils import (
@@ -284,6 +288,10 @@ def test_check_pipeline_version(extractor: ExtractionRunner):
 
 def test_pipeline_config(extractor: ExtractionRunner):
     assert isinstance(extractor.pipeline_config, ExtractionPipelineConfig)
+
+
+def test_pipeline_step_config(extractor: ExtractionRunner):
+    assert isinstance(extractor.pipeline_step_config, ExtractionPipelineStepConfig)
 
 
 @pytest.mark.parametrize(
