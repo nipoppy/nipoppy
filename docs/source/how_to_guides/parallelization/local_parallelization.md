@@ -23,8 +23,8 @@ On Linux systems, this can be done using the [`parallel`](https://www.gnu.org/so
 $ parallel \
     --colsep '\t' \
     --jobs <N_MAX_JOBS> \
-    nipoppy run \
-        --dataset <PATH_TO_DATASET_ROOT> \
+    nipoppy <SUBCOMMAND> \
+        --dataset <NIPOPPY_PROJECT_ROOT> \
         --pipeline <PIPELINE_NAME> \
         # other desired options \
         # ... \
