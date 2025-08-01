@@ -6,7 +6,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import PipelineTypeEnum, ReturnCode
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     ZenodoUploadWorkflow,
@@ -283,3 +283,26 @@ def test_force_upload_duplicate_record(zenodo_api_mocker: pytest_mock.MockerFixt
     }
 
     workflow.run()
+
+
+def test_fails_check_pipeline_bundle(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
+        side_effect=Exception("Mocked validation failed"),
+    )
+
+    zenodo_api = ZenodoAPI(sandbox=True)
+    workflow = ZenodoUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,
+        zenodo_api=zenodo_api,
+        assume_yes=True,
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        workflow.run_main()
+
+    assert exc_info.value.code == ReturnCode.UNKNOWN_FAILURE
+
+    assert "Pipeline validation failed. Please check the pipeline files" in caplog.text
