@@ -308,11 +308,6 @@ def test_process_template_str(template_str, resolve_paths, objs, kwargs, expecte
     )
 
 
-def test_process_template_str_duplicate_key():
-    with pytest.warns(UserWarning, match="Replacing .* with None"):
-        assert process_template_str("[[NIPOPPY_KWARG1]]", kwarg1=None) == "None"
-
-
 def test_process_template_str_warning():
     with pytest.warns(UserWarning, match="Replacing .* with None"):
         assert process_template_str("[[NIPOPPY_KWARG1]]", kwarg1=None) == "None"
