@@ -50,7 +50,7 @@ If not using a source descriptor, be sure to update the `"NAME"` and `"VERSION"`
 ::::
 
 ### `descriptor.json`
-Defines how to run your pipeline, including inputs, outputs, and command-line structure, using the [Boutiques](https://boutiques.github.io/) descriptor schema.
+Define how to run your pipeline, including inputs, outputs, and command-line structure, using the [Boutiques](https://boutiques.github.io/) descriptor schema.
 
 ::::{note}
 You can skip this step if you used a source descriptor.
