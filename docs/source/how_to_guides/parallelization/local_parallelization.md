@@ -1,6 +1,6 @@
 # Parallelizing pipeline runs on non-HPC systems
 
-This guide shows possible ways to parallelize pipeline runs on computer systems that do not have job schedulers supported by the Nipoppy tools.
+This guide shows possible ways to parallelize pipeline runs on computer systems without job schedulers supported by Nipoppy.
 
 ## Getting a list of participants and sessions to run
 
