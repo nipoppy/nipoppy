@@ -25,7 +25,6 @@ from nipoppy.env import (
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
-    LogColor,
     ReturnCode,
 )
 from nipoppy.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
@@ -970,25 +969,25 @@ def test_run_main_write_list(
             1,
             2,
             "participant_session",
-            f"[{LogColor.PARTIAL_SUCCESS}]Ran for {{0}} out of {{1}} participants or sessions",  # noqa: E501
+            "Ran for {0} out of {1} participants or sessions",
         ),
         (
             0,
             1,
             "participant_session",
-            f"[{LogColor.FAILURE}]Ran for {{0}} out of {{1}} participants or sessions",  # noqa: E501
+            "Ran for {0} out of {1} participants or sessions",
         ),
         (
             2,
             2,
             "participant_session",
-            f"[{LogColor.SUCCESS}]Successfully ran for {{0}} out of {{1}} participants or sessions",  # noqa: E501
+            "Ran for {0} out of {1} participants or sessions",
         ),
         (
             1,
             1,
             "group",
-            f"[{LogColor.SUCCESS}]Successfully ran on the entire study",  # noqa: E501
+            "Ran on the entire study",
         ),
     ],
 )

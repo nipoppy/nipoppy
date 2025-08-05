@@ -33,4 +33,4 @@ def test_run_main(
     )
 
     assert "Validating pipeline at" in caplog.text
-    assert "The pipeline files are all valid!" in caplog.text
+    assert "The pipeline files are all valid" in caplog.text

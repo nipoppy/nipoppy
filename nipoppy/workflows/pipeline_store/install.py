@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -10,7 +9,7 @@ from typing import Optional
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -38,7 +37,6 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
-            _skip_logfile=True,
         )
         self.source = source
         self.zenodo_api = zenodo_api or ZenodoAPI()
@@ -71,7 +69,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         config = self.config.load(self.layout.fpath_config, apply_substitutions=False)
 
         if len(pipeline_config.VARIABLES) == 0:
-            self.logger.info("No changes to the global config file.")
+            self.logger.debug("No changes to the global config file.")
             return config
 
         # update config
@@ -83,7 +81,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
 
         # log variable details
-        self.logger.info(
+        self.logger.warning(
             f"Adding {len(pipeline_config.VARIABLES)} variable(s) "
             "to the global config file:"
         )
@@ -91,7 +89,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             variable_name,
             variable_description,
         ) in pipeline_config.VARIABLES.items():
-            self.logger.info(f"\t{variable_name}\t{variable_description}")
+            self.logger.warning(f"\t{variable_name}\t{variable_description}")
         self.logger.warning(
             "You must update the PIPELINE_VARIABLES section in "
             f"{self.layout.fpath_config} manually before running the pipeline!"
@@ -161,6 +159,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         and any pipeline variables are added to the global config file.
         """
         if self.zenodo_id is not None:
+            record_source = (
+                self.zenodo_api.api_endpoint.removesuffix("api")
+                + "records/"
+                + self.zenodo_id
+            )
+            self.logger.info(f"Installing pipeline from {record_source}")
             dpath_pipeline = self.layout.dpath_pipelines / self.zenodo_id
             if dpath_pipeline.exists() and not self.force:
                 self.logger.error(
@@ -169,16 +173,15 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 )
                 raise SystemExit(1)
 
-            self.logger.info(
+            self.logger.debug(
                 f"Downloading pipeline {self.zenodo_id} in {dpath_pipeline}"
             )
             self.zenodo_api.download_record_files(
                 record_id=self.zenodo_id, output_dir=dpath_pipeline
             )
-            self.logger.info(
-                f"[{LogColor.SUCCESS}]Pipeline successfully downloaded[/]",
-            )
+            self.logger.success("Pipeline successfully downloaded")
         else:
+            self.logger.info(f"Installing pipeline from {self.source}")
             dpath_pipeline = self.dpath_pipeline
 
         # load the config and validate file contents (including file paths)
@@ -215,21 +218,19 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     ". Use --force to overwrite",
                 )
             else:
-                self.rm(dpath_target, log_level=logging.DEBUG)
+                self.rm(dpath_target)
 
         # copy the directory
         if self.dpath_pipeline is not None:
             self.copytree(
                 path_source=dpath_pipeline,
                 path_dest=dpath_target,
-                log_level=logging.DEBUG,
             )
         else:
             # if the pipeline was downloaded from Zenodo, move it to the target location
             self.movetree(
                 path_source=dpath_pipeline,
                 path_dest=dpath_target,
-                log_level=logging.DEBUG,
             )
 
         # update global config with new pipeline variables
@@ -238,8 +239,8 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         # download container if it is specified
         self._download_container(pipeline_config)
 
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully installed pipeline "
-            f"{pipeline_config.NAME}, version {pipeline_config.VERSION} "
-            f"at {dpath_target}![/]"
+        self.logger.success(
+            "Successfully installed pipeline "
+            f"{pipeline_config.NAME}, version {pipeline_config.VERSION} at "
+            f"{dpath_target}"
         )

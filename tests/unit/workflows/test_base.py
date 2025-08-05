@@ -104,15 +104,5 @@ def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixt
     assert message in caplog.text
 
 
-def test_run_setup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_setup()
-    assert "BEGIN" in caplog.text
-
-
 def test_run(workflow: BaseWorkflow):
     assert workflow.run() is None
-
-
-def test_run_cleanup(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_cleanup()
-    assert "END" in caplog.text

@@ -1,6 +1,5 @@
 """Workflow for init command."""
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -11,7 +10,6 @@ from nipoppy.env import (
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     NIPOPPY_DIR_NAME,
-    LogColor,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -99,9 +97,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
-        self.copy(
-            FPATH_SAMPLE_CONFIG, self.layout.fpath_config, log_level=logging.DEBUG
-        )
+        self.copy(FPATH_SAMPLE_CONFIG, self.layout.fpath_config)
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
@@ -109,7 +105,6 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.copy(
                 FPATH_SAMPLE_MANIFEST,
                 self.layout.fpath_manifest,
-                log_level=logging.DEBUG,
             )
 
         # copy HPC files
@@ -117,7 +112,6 @@ class InitWorkflow(BaseDatasetWorkflow):
             DPATH_HPC,
             self.layout.dpath_hpc,
             dirs_exist_ok=True,
-            log_level=logging.DEBUG,
         )
 
         # inform user to edit the sample files
@@ -137,15 +131,15 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # Handle edge case where we need to clobber existing data
         if dpath.exists() and self.force:
-            self._remove_existing(dpath, log_level=logging.DEBUG)
+            self._remove_existing(dpath)
 
         if self.mode == "copy":
-            self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+            self.copytree(self.bids_source, str(dpath))
         elif self.mode == "move":
-            self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
+            self.movetree(self.bids_source, str(dpath))
         elif self.mode == "symlink":
             self.mkdir(self.dpath_root)
-            self.create_symlink(self.bids_source, str(dpath), log_level=logging.DEBUG)
+            self.create_symlink(self.bids_source, str(dpath))
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 
@@ -260,8 +254,5 @@ class InitWorkflow(BaseDatasetWorkflow):
 
     def run_cleanup(self):
         """Log a success message."""
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully initialized a dataset "
-            f"at {self.dpath_root}![/]"
-        )
+        self.logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
         return super().run_cleanup()
