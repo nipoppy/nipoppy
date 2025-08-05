@@ -103,6 +103,7 @@ bosh exec simulate descriptor.json invocation.json
 #### References
 
 Full schema: <https://github.com/boutiques/boutiques/blob/master/boutiques/schema/descriptor.schema.json/>
+
 Documentation: <https://boutiques.github.io/doc/>
 
 
