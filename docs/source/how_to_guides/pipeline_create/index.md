@@ -18,7 +18,7 @@ Use the `--source-descriptor` flag to initialize the configuration based on an e
 
 This will create the following structure:
 
-```bash
+```console
 $ tree ./pipelines/howto
 pipelines/howto
 ├── config.json
