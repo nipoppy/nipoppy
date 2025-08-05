@@ -35,7 +35,7 @@ pipelines/howto
 
 Edit general pipeline metadata and settings.
 
-Example:
+Example for the [FSL SIENA](https://fsl.fmrib.ox.ac.uk/fsl/docs/#/structural/siena/index) pipeline:
 
 ```{literalinclude} data/config.json
 ---
