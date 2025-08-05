@@ -1,6 +1,6 @@
 # Parallelizing pipeline runs on HPC systems
 
-This guide shows how to parallelize pipeline runs on {term}`HPC` systems that use job schedulers supported by the Nipoppy tools.
+This guide shows how to parallelize pipeline runs on {term}`HPC` systems that use job schedulers supported by Nipoppy.
 
 Currently, we have built-in support for the [Slurm](https://slurm.schedmd.com/overview.html) and [SGE](https://en.wikipedia.org/wiki/Oracle_Grid_Engine) job schedulers.
 However, it may also be possible to use other job schedulers [with some manual work](#support-for-other-job-schedulers).
