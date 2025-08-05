@@ -8,12 +8,11 @@ Use the `nipoppy pipeline create` command to generate a sample configuration. Ni
 ```bash
 nipoppy pipeline create \
     --type processing \
-    --source-descriptor $HOME/.cache/boutiques/production/zenodo-7435009.json \
-    pipelines/howto
+    <PIPELINE_DIR>
 ```
 
 ::::{tip}
-Use the `--source-descriptor` flag to initialize the configuration based on an existing [Boutiques](https://boutiques.github.io/) descriptor.
+Optionally, use the `--source-descriptor` flag to initialize the configuration based on a local [Boutiques](https://boutiques.github.io/) descriptor file. See the [Creating a Boutiques descriptor](#creating-a-boutiques-descriptor)
 ::::
 
 This will create the following structure:
@@ -45,8 +44,15 @@ emphasize-lines: 2-11
 ---
 ```
 
+::::{note}
+`[[NIPOPPY_DPATH_CONTAINERS]]`: is set in the nipoppy config file.
+
+`[[PIPELINE_NAME]]` and `[[PIPELINE_VERSION]]` are set dynamically during execution using the value from the `"NAME"` and `"VERSION"` fields,
+respectively.
+::::
+
 ::::{warning}
-If not using a source descriptor, be sure to update the `"NAME"` and `"VERSION"` fields.
+If not using a source descriptor, be sure to update the `"NAME"` and `"VERSION"` fields, and the `<OWNER>` placeholder of the `CONTAINER_INFO`'s `URI`. You may need to replace the entire `URI` if the container name does not follow the `<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]` naming convention.
 ::::
 
 ### `descriptor.json`
@@ -78,7 +84,12 @@ language: json
 
 </div>
 
-::::{dropdown} Helpful commands
+
+````{admonition} Helpful commands
+---
+
+class: dropdown
+---
 
 Validating a descriptor:
 
@@ -98,7 +109,7 @@ Simulating a run:
 bosh exec simulate descriptor.json invocation.json
 ```
 
-::::
+````
 
 #### References
 
@@ -139,6 +150,18 @@ Defines output tracking paths:
 }
 ```
 
+::::{note}
+The tracked paths are relative to `{{dpath_pipeline_output}}`.
+
+Assuming a participant 001 and session A, the template strings will resolve to:
+
+- `[[NIPOPPY_PARTICIPANT_ID]]`: `001`
+- `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: `sub-001`
+- `[[NIPOPPY_SESSION_ID]]`: `A`
+- `[[NIPOPPY_BIDS_SESSION_ID]]`: `ses-A`
+
+::::
+
 ### `hpc.json` (Optional)
 
 Defines HPC job submission parameters.
@@ -155,7 +178,11 @@ Defines HPC job submission parameters.
 
 ### `zenodo.json` (Optional)
 
-Customize the Zenodo record metadata. By default, Nipoppy infers the value using the metadata from the user Zenodo account.
+This file is optional. To provide custom metadata for your Zenodo record you must specify it in the `zenodo.json` file. This file is not part of the `config.json` file.
+
+::::{note}
+By default, Nipoppy infers the value using the metadata from the user Zenodo account.
+::::
 
 ```{literalinclude} /../../nipoppy/data/template_pipeline/zenodo.json
 ---
