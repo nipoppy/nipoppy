@@ -91,7 +91,6 @@ xfail_strict = true
 markers = ["api: mark a test as an api test."]
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "@abstractmethod",
-]
+# Preserves the "pragma: no cover" and skip functions decorated with "@abstractmethod"
+# More info at: https://coverage.readthedocs.io/en/latest/config.html#report-exclude-also
+exclude_also = ["@abstractmethod"]
