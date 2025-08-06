@@ -1,13 +1,12 @@
 """DICOM file organization."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Optional
 
 import pydicom
 
-from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
+from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.tabular.curation_status import update_curation_status_table
 from nipoppy.utils import (
     participant_id_to_bids_participant_id,
@@ -137,7 +136,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
             # either create symlinks or copy original files
             if self.copy_files:
-                self.copy(fpath_source, fpath_dest, log_level=logging.DEBUG)
+                self.copy(fpath_source, fpath_dest)
             else:
                 fpath_source = os.path.relpath(
                     fpath_source.resolve(), fpath_dest.parent
@@ -145,7 +144,6 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 self.create_symlink(
                     path_source=fpath_source,
                     path_dest=fpath_dest,
-                    log_level=logging.DEBUG,
                 )
 
         # update curation status
@@ -217,22 +215,15 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             )
         else:
             # change the message depending on how successful the run was
-            prefix = "Reorganized"
-            suffix = ""
-            if self.n_success == 0:
-                color = LogColor.FAILURE
-            elif self.n_success == self.n_total:
-                color = LogColor.SUCCESS
-                prefix = f"Successfully {prefix.lower()}"
-                suffix = "!"
-            else:
-                color = LogColor.PARTIAL_SUCCESS
-
-            self.logger.info(
-                (
-                    f"[{color}]{prefix} files for {self.n_success} out of "
-                    f"{self.n_total} participant-session pairs{suffix}[/]"
-                )
+            log_msg = (
+                f"Reorganized files for {self.n_success} out of "
+                f"{self.n_total} participant-session pairs."
             )
+            if self.n_success == 0:
+                self.logger.error(log_msg)
+            elif self.n_success == self.n_total:
+                self.logger.success(log_msg)
+            else:
+                self.logger.warning(log_msg)
 
         return super().run_cleanup()

@@ -419,7 +419,7 @@ def test_tar_directory_warning_not_dir(runner: PipelineRunner, tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "curation_status_data,processing_status_data,pipeline_step,expected",  # noqa: E501
+    "curation_status_data,processing_status_data,pipeline_step,expected",
     [
         (
             [

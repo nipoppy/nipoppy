@@ -20,6 +20,6 @@ Command-line interface
    pipeline_validate.rst
    pipeline_upload.rst
 
-.. click:: nipoppy.cli:cli
+.. click:: nipoppy.cli.cli:cli
    :prog: nipoppy
    :nested: none
