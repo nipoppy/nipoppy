@@ -37,7 +37,7 @@ caption: Overview
 ---
 overview/why_nipoppy/index
 overview/installation
-overview/quickstart
+overview/quickstart/index
 ```
 
 ```{toctree}
