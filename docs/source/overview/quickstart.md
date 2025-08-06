@@ -177,7 +177,7 @@ Expected output:
 
 ## [Run a processing pipeline on BIDS data](../how_to_guides/pipeline_run/index.md)
 
-**1.** Search and install the MRIQC pipeline, version 23.1.0 (and if necessary the container) as described above.
+**1.** Search and install the MRIQC pipeline, version 23.1.0 (and if necessary the container) as described above.<br>
 **2.** Check the pipeline installation:
 ```{code-block} console
 $ nipoppy pipeline list
