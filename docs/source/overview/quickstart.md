@@ -9,14 +9,14 @@ See the [Installation instructions](#installation) first if you have not yet ins
 ## Download the example dataset
 
 ```{code-block} console
-$ git clone git@github.com:nipoppy/tutorial-dataset.git
+$ git clone https://github.com/nipoppy/tutorial-dataset.git
 ```
 
 ## Initializing a new dataset
 
 **1.** Initialize a Nipoppy dataset:
 ```{code-block} console
-$ nipoppy init --dataset my-example-dataset
+$ nipoppy init --dataset my-example-study
 ```
 
 ```{important}
@@ -32,7 +32,7 @@ $ mv -t my-example-study/bids tutorial-dataset/bidsify/participants.tsv tutorial
 
 **3.** Change directory into your Nipoppy dataset:
 ```{code-block} console
-$ cd my-example-dataset
+$ cd my-example-study
 ```
 
 ## Creating/modifying required files
@@ -61,7 +61,7 @@ linenos: True
 ---
 ```
 
-**For the example dataset, we manually change it to this:**
+**For our example study, we manually change it to this:**
 ```{literalinclude} ../../../nipoppy/data/examples/example-dataset_manifest.tsv
 ---
 linenos: True
@@ -172,7 +172,6 @@ Expected output:
           ════════════╪═════════════╪══════════════╪═══════════════╪═════════
                BL     │      4      │      4       │       4       │    4
                       ╵             ╵              ╵               ╵
-INFO     ========== END STATUS WORKFLOW ==========
 ...
 ```
 
