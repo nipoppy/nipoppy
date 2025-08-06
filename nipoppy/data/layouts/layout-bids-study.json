@@ -72,7 +72,7 @@
         "description": "This directory is for assessments data."
     },
     "fpath_config": {
-        "path": "code/nipoppy_global_config.json",
+        "path": ".nipoppy/config.json",
         "description": "The configuration file for the study/dataset where all data processing is configured."
     },
     "fpath_curation_status": {
@@ -80,7 +80,7 @@
         "description": "The curation status file is generated/updated internally and is used to keep track of the raw data organization and BIDSification process."
     },
     "fpath_manifest": {
-        "path": "manifest.tsv",
+        "path": ".nipoppy/manifest.tsv",
         "description": "The manifest file lists all expected study participants and visits."
     },
     "fpath_processing_status": {
