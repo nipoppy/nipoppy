@@ -41,7 +41,7 @@ $ cd my-example-study
 ### Customizing the global configuration file
 
 The global configuration file at {{fpath_config}} starts out like this:
-```{literalinclude} ../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
 ---
 linenos: True
 language: json
@@ -52,17 +52,17 @@ language: json
 - If you are on a system that uses Singularity instead of Apptainer, you need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
 - If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_ROOT]]/containers"` by the full path to that shared directory. Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted).
 
-### [Customizing the manifest.tsv file](../how_to_guides/manifest/index.md)
+### [Customizing the manifest.tsv file](../../how_to_guides/manifest/index.md)
 
 The manifest file at {{fpath_manifest}} looks like this:
-```{literalinclude} ../../../nipoppy/data/examples/sample_manifest.tsv
+```{literalinclude} ../../../../nipoppy/data/examples/sample_manifest.tsv
 ---
 linenos: True
 ---
 ```
 
 **For our example study, we manually change it to this:**
-```{literalinclude} ../../../nipoppy/data/examples/example-dataset_manifest.tsv
+```{literalinclude} example-dataset_manifest.tsv
 ---
 linenos: True
 ---
@@ -92,7 +92,7 @@ Expected output:
 ...
 ```
 
-## [Pipeline setups](../how_to_guides/pipeline_install/index.md)
+## [Pipeline setups](../../how_to_guides/pipeline_install/index.md)
 
 A newly initialized Nipoppy dataset does not contain any pipeline setups or containers.
 
@@ -175,7 +175,10 @@ Expected output:
 ...
 ```
 
-## [Run a processing pipeline on BIDS data](../how_to_guides/pipeline_run/index.md)
+````{tip}
+You can also upload your curation status file to the Neurobagel digest dashboard at https://digest.neurobagel.org/ to get a nice summary and visualization of your work!
+
+## [Run a processing pipeline on BIDS data](../../how_to_guides/pipeline_run/index.md)
 
 **1.** Search and install the MRIQC pipeline, version 23.1.0 (and if necessary the container) as described above.<br>
 **2.** Check the pipeline installation:
