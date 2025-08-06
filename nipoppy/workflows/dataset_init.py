@@ -18,8 +18,8 @@ from nipoppy.env import (
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     DPATH_HPC,
+    FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
     FPATH_SAMPLE_CONFIG,
-    FPATH_SAMPLE_DATASET_DESCRIPTION,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
     check_session_id,
@@ -114,12 +114,9 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy dataset description file if specified in layout
-        if (
-            hasattr(self.layout, "fpath_bids_dataset_description")
-            and self.layout.fpath_bids_dataset_description is not None
-        ):
+        if getattr(self.layout, "fpath_bids_dataset_description"):
             self.copy(
-                FPATH_SAMPLE_DATASET_DESCRIPTION,
+                FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.layout.fpath_bids_dataset_description,
                 log_level=logging.DEBUG,
             )
