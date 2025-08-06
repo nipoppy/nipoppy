@@ -89,7 +89,6 @@ Expected output:
           ════════════╪═════════════╪══════════════╪═══════════════╪═════════
                BL     │      4      │      4       │       4       │    0
                       ╵             ╵              ╵               ╵
-INFO     ========== END STATUS WORKFLOW ==========
 ...
 ```
 
@@ -103,7 +102,7 @@ A newly initialized Nipoppy dataset does not contain any pipeline setups or cont
 ```{code-block} console
 $ nipoppy pipeline search dcm2bids
 ```
-**2.** Copy the Zenodo-ID of the pipeline and run:
+**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (15428012 at the time of writing) and run:
 ```{code-block} console
 $ nipoppy pipeline install 15428012
 ```
@@ -119,12 +118,12 @@ Expected output:
 ...
 
 INFO     Available bidsification pipelines and versions:
-INFO            - dcm2bids(3.2.0)
+INFO            - dcm2bids (3.2.0)
 
 ...
 ```
 
-## Bidsify the sourcdata
+## Bidsify the sourcedata
 
 ```{note}
 Usually you would start with running `nipoppy bidsify` with the first `--pipeline-step` (e.g. `prepare`). For `dcm2bids` this step would run the `dcm2bids_helper` in order to extract information from the dicom headers to create a `dcm2bids_config.json`. We already provided you with a `dcm2bids_config.json`, so we will skip this step here.
@@ -138,7 +137,7 @@ Usually you would start with running `nipoppy bidsify` with the first `--pipelin
         "BIDSIFICATION": {
             "dcm2bids": {
                 "3.1.0": {
-                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code"
+                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code/dcm2bids_config.json"
                 }
             }
         }
@@ -179,7 +178,7 @@ INFO     ========== END STATUS WORKFLOW ==========
 
 ## [Run a processing pipeline on BIDS data](../how_to_guides/pipeline_run/index.md)
 
-**1.** Search and install the MRIQC pipeline (and if necessary the container) as described above.
+**1.** Search and install the MRIQC pipeline, version 23.1.0 (and if necessary the container) as described above.
 **2.** Check the pipeline installation:
 ```{code-block} console
 $ nipoppy pipeline list
@@ -190,9 +189,9 @@ Expected output:
 ...
 
 INFO     Available bidsification pipelines and versions:
-INFO            - dcm2bids(3.2.0)
+INFO            - dcm2bids (3.2.0)
 INFO     Available processing pipelines and versions:
-INFO            - mriqc(23.1.0)
+INFO            - mriqc (23.1.0)
 
 ...
 ```
@@ -210,7 +209,7 @@ $ mkdir templateflow
         "BIDSIFICATION": {
             "dcm2bids": {
                 "3.1.0": {
-                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code"
+                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code/dcm2bids_config.json"
                 }
             }
         },
@@ -238,7 +237,7 @@ $ nipoppy process --pipeline mriqc --participant-id ED01
 
 **6.** Track the processing status:
 ```{code-block} console
-$ nipoppy track-process --pipeline mriqc
+$ nipoppy track-processing --pipeline mriqc
 ```
 
 The processing status file can be found at {{fpath_processing_status}}.
@@ -259,7 +258,6 @@ Expected output:
           ════════════╪═════════════╪══════════════╪═══════════════╪═════════╪══════════
                BL     │      4      │      4       │       4       │    4    │    1
                       ╵             ╵              ╵               ╵         ╵
-INFO     ========== END STATUS WORKFLOW ==========
 ...
 ```
 
