@@ -3,7 +3,7 @@
 This page is intended to give you a quick first run through the most important Nipoppy commands using real data from an example dataset.
 
 ```{important}
-See the [Installation instructions](#installation) first if you have not yet installed Nipoppy and do not forget to activate your Nipoppy environment.
+See the [Installation instructions](../installation.md) first if you have not yet installed Nipoppy and do not forget to activate your Nipoppy environment.
 ```
 
 ## Download the example dataset
