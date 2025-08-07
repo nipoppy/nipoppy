@@ -1140,24 +1140,35 @@ def test_check_hpc_config_unused_vars(
     )
 
 
-@pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
+@pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
 def test_submit_hpc_job(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
-    hpc_type,
+    caplog: pytest.LogCaptureFixture,
+    hpc_type: str,
+    hpc_command: str,
 ):
+    job_id = "12345"
     hpc_config = {
         "CORES": "8",
         "MEMORY": "32G",
     }
-    workflow.hpc = hpc_type
     _set_up_hpc_for_testing(workflow, mocker, mock_pysqa=False)
+    workflow.hpc = hpc_type
 
     mocker.patch.object(workflow, "_check_hpc_config", return_value=hpc_config)
-
+    mocked_check_output = mocker.patch(
+        "pysqa.base.core.subprocess.check_output", return_value=job_id
+    )
     participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
 
     workflow._submit_hpc_job(participants_sessions)
+
+    mocked_check_output.assert_called_once()
+    # positional arguments, index 0, first element of the list
+    assert mocked_check_output.call_args[0][0][0] == hpc_command
+
+    assert f"HPC job ID: {job_id}" in caplog.text
 
 
 def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
