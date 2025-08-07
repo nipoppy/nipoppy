@@ -29,6 +29,13 @@ EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
 
+class ContainerCommandEnum(str, Enum):
+    """Container commands."""
+
+    SINGULARITY = "singularity"
+    APPTAINER = "apptainer"
+
+
 class PipelineTypeEnum(str, Enum):
     """Pipeline types."""
 
@@ -42,7 +49,9 @@ class ReturnCode:
 
     SUCCESS = 0
     UNKNOWN_FAILURE = 1
+    INVALID_COMMAND = 2
     PARTIAL_SUCCESS = 64
+    NO_PARTICIPANTS_OR_SESSIONS_TO_RUN = 65
 
 
 class LogColor:

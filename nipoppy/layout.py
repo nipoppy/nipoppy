@@ -347,4 +347,4 @@ class DatasetLayout(Base):
 
 
 # for printing defaults in docs
-DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<DATASET_ROOT>")
+DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<NIPOPPY_PROJECT_ROOT>")

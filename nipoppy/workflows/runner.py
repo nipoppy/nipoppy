@@ -1,10 +1,12 @@
 """PipelineRunner workflow."""
 
+import json
+import shlex
 import subprocess
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
-from typing import Optional
+from typing import Optional, Tuple
 
 from boutiques import bosh
 
@@ -12,6 +14,7 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
+from nipoppy.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -67,7 +70,7 @@ class PipelineRunner(BasePipelineWorkflow):
         participant_id: str,
         session_id: str,
         bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> str:
+    ) -> Tuple[str, ContainerConfig]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
@@ -114,26 +117,54 @@ class PipelineRunner(BasePipelineWorkflow):
             logger=self.logger,
         )
 
-        return container_command
+        return container_command, container_config
 
     def launch_boutiques_run(
         self,
         participant_id: str,
         session_id: str,
+        container_config: Optional[ContainerConfig] = None,
         objs: Optional[list] = None,
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
-        # process and validate the descriptor
-        self.logger.info("Processing the JSON descriptor")
-        descriptor_str = self.process_template_json(
-            self.descriptor,
-            participant_id=participant_id,
-            session_id=session_id,
-            objs=objs,
-            **kwargs,
-            return_str=True,
-        )
+        bosh_exec_launch_args = []
+
+        if self.verbose:
+            bosh_exec_launch_args.append("--debug")
+
+        # process the descriptor if it containers Nipoppy-specific placeholder
+        # expressions (legacy behaviour)
+        if TEMPLATE_REPLACE_PATTERN.search(self.descriptor["command-line"]):
+            self.logger.info("Processing the JSON descriptor")
+            descriptor_str = self.process_template_json(
+                self.descriptor,
+                participant_id=participant_id,
+                session_id=session_id,
+                objs=objs,
+                **kwargs,
+                return_str=True,
+            )
+        else:
+            descriptor_str = json.dumps(self.descriptor)
+            if (
+                container_config is None
+                or self.descriptor.get("container-image") is None
+            ):
+                bosh_exec_launch_args.append("--no-container")
+            else:
+                bosh_exec_launch_args.extend(
+                    [
+                        "--force-singularity",
+                        "--no-automount",
+                        "--imagepath",
+                        str(self.fpath_container),
+                        "--container-opts",
+                        shlex.join(container_config.ARGS),
+                    ]
+                )
+
+        # validate the descriptor
         self.logger.debug(f"Descriptor string: {descriptor_str}")
         self.logger.info("Validating the JSON descriptor")
         bosh(["validate", descriptor_str])
@@ -161,6 +192,10 @@ class PipelineRunner(BasePipelineWorkflow):
                     ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
                     quiet=True,
                 )
+                if bosh_exec_launch_args:
+                    self.logger.info(
+                        f"Additional launch options: {bosh_exec_launch_args}"
+                    )
             except subprocess.CalledProcessError as exception:
                 raise RuntimeError(
                     "Pipeline simulation failed"
@@ -170,14 +205,17 @@ class PipelineRunner(BasePipelineWorkflow):
             self.logger.info("Running pipeline command")
             try:
                 self.run_command(
-                    [
-                        "bosh",
-                        "exec",
-                        "launch",
-                        "--stream",
-                        descriptor_str,
-                        invocation_str,
-                    ],
+                    (
+                        [
+                            "bosh",
+                            "exec",
+                            "launch",
+                            "--stream",
+                            descriptor_str,
+                            invocation_str,
+                        ]
+                        + bosh_exec_launch_args
+                    ),
                     quiet=True,
                 )
             except subprocess.CalledProcessError as exception:
@@ -329,20 +367,26 @@ class PipelineRunner(BasePipelineWorkflow):
             )
 
         # get container command
-        container_command = self.process_container_config(
-            participant_id=participant_id,
-            session_id=session_id,
-            bind_paths=[
-                self.layout.dpath_bids,
-                self.dpath_pipeline_output,
-                self.dpath_pipeline_work,
-                self.dpath_pipeline_bids_db,
-            ],
-        )
+        launch_boutiques_run_kwargs = {}
+        if self.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_config = self.process_container_config(
+                participant_id=participant_id,
+                session_id=session_id,
+                bind_paths=[
+                    self.layout.dpath_bids,
+                    self.dpath_pipeline_output,
+                    self.dpath_pipeline_work,
+                    self.dpath_pipeline_bids_db,
+                ],
+            )
+            launch_boutiques_run_kwargs["container_command"] = container_command
+            launch_boutiques_run_kwargs["container_config"] = container_config
 
         # run pipeline with Boutiques
-        to_return = self.launch_boutiques_run(
-            participant_id, session_id, container_command=container_command
+        invocation_and_descriptor = self.launch_boutiques_run(
+            participant_id,
+            session_id,
+            **launch_boutiques_run_kwargs,
         )
 
         if self.tar and not self.simulate:
@@ -357,7 +401,7 @@ class PipelineRunner(BasePipelineWorkflow):
                 self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
             )
 
-        return to_return
+        return invocation_and_descriptor
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""

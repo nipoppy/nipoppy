@@ -163,14 +163,14 @@ class ZenodoAPI:
         # extract creator name
         # use username (always defined) as fallback
         response_json = response.json()
-        if (creator_name := response_json["profile"]["full_name"]) == "":
+        if not (creator_name := response_json["profile"].get("full_name")):
             creator_name = response_json["username"]
             self.logger.warning(
                 f"User {owner_id} has no full name in Zenodo profile, "
                 f'using username ("{creator_name}") instead'
             )
         # also get affiliation and ORCID (may be empty)
-        affiliation = response_json["profile"]["affiliations"]
+        affiliation = response_json["profile"].get("affiliations")
         orcid = response_json["identities"].get("orcid")
 
         # update metadata with new creator information
@@ -230,7 +230,7 @@ class ZenodoAPI:
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
-                    f"Failed to commit the file file for zenodo.{record_id}: {file}"
+                    f"Failed to commit file for zenodo.{record_id}: {file}"
                     f"\n{response.json()}"
                 )
 
@@ -280,7 +280,7 @@ class ZenodoAPI:
             if not metadata["metadata"].get("creators"):
                 self._update_creators(record_id, owner_id, metadata)
 
-            files = list(input_dir.iterdir())
+            files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
             doi = self._publish(record_id)
             return doi
@@ -317,6 +317,10 @@ class ZenodoAPI:
 
         if keywords is None:
             keywords = []
+
+        # Fuzzy search when the query is a single word
+        if len(query.split()) == 1:
+            query = f"*{query}*"
 
         full_query = query
         for keyword in keywords:

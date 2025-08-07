@@ -6,10 +6,13 @@ on:
     branches: ['*']
   pull_request:
     branches: ['*']
+  schedule:
+    - cron: '0 11 * * *' # Every day at 11:00 UTC
+  workflow_dispatch:
 
 # cancel previous runs if new one is triggered
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -20,6 +23,8 @@ jobs:
 
     strategy:
       matrix:
+        # NOTE: when adding a new version, update the 'if' condition in
+        #       the 'Run API tests' step
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     # only trigger on upstream repo
@@ -39,14 +44,11 @@ jobs:
     - name: Install package
       run: |
         pip install -U pip
-        pip install .[tests]
+        pip install .[tests,gui]
 
-    - name: Run tests
+    - name: Run non-API tests
       run: |
-        python -m pytest --cov=nipoppy --cov-report=xml
-      env:
-        ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
-        ZENODO_ID: ${{ env.ZENODO_ID }}
+        python -m pytest -m "not api" --cov=nipoppy --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
@@ -54,3 +56,11 @@ jobs:
         files: ./coverage.xml
         name: codecov-umbrella
         token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Run API tests
+      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.13'
+      run: |
+        python -m pytest -m api
+      env:
+        ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+        ZENODO_ID: ${{ vars.ZENODO_ID }}

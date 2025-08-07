@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import re
 import shlex
 from abc import ABC, abstractmethod
@@ -101,7 +100,7 @@ def get_pipeline_version(
     str
         The pipeline version
     """
-    available_pipelines = []
+    installed_pipelines = []
     pipeline_config_latest = None
     for fpath_pipeline_config in Path(dpath_pipelines).glob(
         f"*/{DatasetLayout.fname_pipeline_config}"
@@ -114,15 +113,15 @@ def get_pipeline_version(
                 pipeline_config_latest.VERSION
             ):
                 pipeline_config_latest = pipeline_config
-        available_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
+        installed_pipelines.append((pipeline_config.NAME, pipeline_config.VERSION))
 
     if pipeline_config_latest is not None:
         return pipeline_config_latest.VERSION
     else:
         raise ValueError(
             f"No config found for pipeline with NAME={pipeline_name}"
-            ". Available pipelines: "
-            + ", ".join(f"{name} {version}" for name, version in available_pipelines)
+            ". Installed pipelines: "
+            + ", ".join(f"{name} {version}" for name, version in installed_pipelines)
         )
 
 
@@ -262,8 +261,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
                     "the following command:"
-                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND} pull "
-                    f"{self.pipeline_config.CONTAINER_INFO.FILE} "
+                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND.value} "
+                    f"pull {self.pipeline_config.CONTAINER_INFO.FILE} "
                     f"{self.pipeline_config.CONTAINER_INFO.URI}"
                 )
             raise FileNotFoundError(error_message)
@@ -536,7 +535,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def check_dir(self, dpath: Path):
         """Create directory if it does not exist."""
         if not dpath.exists():
-            self.mkdir(dpath, log_level=logging.WARNING)
+            self.mkdir(dpath)
 
     def check_pipeline_version(self):
         """Set the pipeline version based on the config if it is not given."""
@@ -751,6 +750,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 "in the input arguments, the dataset's manifest or config file, and/or "
                 f"check the curation status file at {self.layout.fpath_curation_status}"
             )
+            self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:
             if self.n_success == 0:
                 self.logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
@@ -760,27 +760,20 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                     "HPC job(s)[/]"
                 )
         else:
-            # change the message depending on how successful the run was
-            prefix = "Ran"
-            suffix = ""
-            if self.n_success == 0:
-                color = LogColor.FAILURE
-            elif self.n_success == self.n_total:
-                color = LogColor.SUCCESS
-                prefix = f"Successfully {prefix.lower()}"
-                suffix = "!"
-            else:
-                color = LogColor.PARTIAL_SUCCESS
-
             if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
-                message_body = "on the entire study"
+                log_msg = "Ran on the entire study"
             else:
-                message_body = (
-                    f"for {self.n_success} out of "
+                log_msg = (
+                    f"Ran for {self.n_success} out of "
                     f"{self.n_total} participants or sessions"
                 )
 
-            self.logger.info(f"[{color}]{prefix} {message_body}{suffix}[/]")
+            if self.n_success == 0:
+                self.logger.error(log_msg)
+            elif self.n_success == self.n_total:
+                self.logger.success(log_msg)
+            else:
+                self.logger.warning(log_msg)
 
         return super().run_cleanup()
 

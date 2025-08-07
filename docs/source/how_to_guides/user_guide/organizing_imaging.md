@@ -84,7 +84,7 @@ More granular customization can also be achieved for both the input file paths a
 ### Using the command-line interface
 
 ```console
-$ nipoppy reorg --datatset <DATASET_ROOT>
+$ nipoppy reorg --datatset <NIPOPPY_PROJECT_ROOT>
 ```
 
 See the [CLI reference page](<project:../../cli_reference/reorg.rst>) for more information on optional arguments (e.g., reading DICOM headers to check the image type, and copying files instead of creating symlinks).
