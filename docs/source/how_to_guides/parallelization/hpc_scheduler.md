@@ -21,7 +21,7 @@ The default global configuration file has two {term}`HPC`-related fields that sh
 ---
 linenos: True
 language: json
-emphasize-lines: 4,16-18
+emphasize-lines: 4,16-24
 ---
 ```
 
@@ -45,7 +45,9 @@ If your HPC system needs flags other than `--account-name` or `-q` need to be se
 ### Pipeline-specific settings
 
 Job time limit and CPU and memory requests can be configured separately for each pipeline via the HPC config file.
-Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/{bidsification,processing,extraction}/<PIPELINE_NAME>/<PIPELINE_VERSION>` -- it is most likely called `hpc.json` or `hpc_config.json` and should look something like this:
+Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/{bidsification,processing,extraction}/<PIPELINE_NAME>/<PIPELINE_VERSION>` -- it is most likely called `hpc.json` or `hpc_config.json` (see the pipeline's `config.json` file for the exact name)
+
+The HPC config file should look similar to this:
 
 ```{literalinclude} ../../../../nipoppy/data/template_pipeline/hpc.json
 ---
@@ -96,7 +98,7 @@ $ nipoppy <SUBCOMMAND> \
 ```
 
 This will submit a job array (one job per participant/session to run) through the requested job scheduler.
-Currently, only `'slurm'` and `'sge'` have built-in support, but it is possible to [add other cluster types](#support-for-other-job-schedulers).
+Currently, only `'slurm'` and `'sge'` have built-in support, but it is possible to [add a different job scheduler](#support-for-other-job-schedulers).
 
 ```{tip}
 We recommend submitting a single job (i.e. by specifying both `--participant-id` and `--session-id`) the first time you launch jobs on an HPC.

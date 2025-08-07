@@ -14,6 +14,12 @@
         }
     },
     "HPC_PREAMBLE": [
+        "# ========== Activate Python environment ==========",
+        "# Here we need the command to activate your Python environment in an ",
+        "# HPC job, for example:",
+        "# - venv:  source <PATH_TO_VENV>/bin/activate",
+        "# - conda: source ~/.bashrc; conda activate <ENV_NAME>",
+        "# ========== Set environment variables ==========",
         "export PYTHONUNBUFFERED=1"
     ],
     "PIPELINE_VARIABLES": {
