@@ -711,6 +711,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 queue=self.hpc,
                 working_directory=str(dpath_work),
                 command="",  # not used in default template but cannot be None
+                cores=0,  # not used in default template but cannot be None
                 NIPOPPY_HPC=self.hpc,
                 NIPOPPY_JOB_NAME=job_name,
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
