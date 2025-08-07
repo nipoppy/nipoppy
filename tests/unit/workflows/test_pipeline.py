@@ -124,16 +124,15 @@ def workflow(tmp_path: Path):
 
 
 def _set_up_hpc_for_testing(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+    mock_pysqa=True,
 ):
     # set HPC attribute to something valid
     workflow.hpc = "slurm"
 
     # copy HPC config files
     workflow.copytree(DPATH_HPC, workflow.layout.dpath_hpc)
-
-    # mock PySQA job submission function
-    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
 
     mocker.patch.object(
         workflow,
@@ -146,7 +145,10 @@ def _set_up_hpc_for_testing(
         ),
     )
 
-    return mock_submit_job
+    # mock PySQA job submission function
+    if mock_pysqa:
+        mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
+        return mock_submit_job
 
 
 def _set_up_substitution_testing(
@@ -1136,6 +1138,26 @@ def test_check_hpc_config_unused_vars(
             for record in caplog.records
         ]
     )
+
+
+@pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
+def test_submit_hpc_job(
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+    hpc_type,
+):
+    hpc_config = {
+        "CORES": "8",
+        "MEMORY": "32G",
+    }
+    workflow.hpc = hpc_type
+    _set_up_hpc_for_testing(workflow, mocker, mock_pysqa=False)
+
+    mocker.patch.object(workflow, "_check_hpc_config", return_value=hpc_config)
+
+    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+
+    workflow._submit_hpc_job(participants_sessions)
 
 
 def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
