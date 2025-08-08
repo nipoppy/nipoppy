@@ -70,7 +70,14 @@
 {%- endif %}
 {% endif %}
 
-{#-
+# for custom scripting
+DPATH_ROOT="{{ NIPOPPY_DPATH_ROOT }}"
+PIPELINE_NAME="{{ NIPOPPY_PIPELINE_NAME }}"
+PIPELINE_VERSION="{{ NIPOPPY_PIPELINE_VERSION }}"
+PIPELINE_STEP="{{ NIPOPPY_PIPELINE_STEP }}"
+PARTICIPANT_IDS=({% for participant_id in NIPOPPY_PARTICIPANT_IDS %} "{{ participant_id }}"{% endfor %} )
+SESSION_IDS=({% for session_id in NIPOPPY_SESSION_IDS %} "{{ session_id }}"{% endfor %} )
+{#
 # -------------------
 # START OF JOB SCRIPT
 # -------------------
@@ -94,6 +101,10 @@ COMMANDS=( \
 # but the job array is one-indexed for compatibility with SGE
 I_JOB=$(({{NIPOPPY_ARRAY_VAR}}-1))
 COMMAND=${COMMANDS[$I_JOB]}
+
+# for custom scripting
+PARTICIPANT_ID=${PARTICIPANT_IDS[$I_JOB]}
+SESSION_ID=${SESSION_IDS[$I_JOB]}
 
 # print/run command
 echo $COMMAND

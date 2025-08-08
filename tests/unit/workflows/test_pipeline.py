@@ -1221,6 +1221,19 @@ def test_submit_hpc_job_pysqa_call(
     )
     assert submit_job_args["NIPOPPY_HPC_PREAMBLE_STRINGS"] == preamble_list
 
+    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == workflow.layout.dpath_root
+    assert submit_job_args["NIPOPPY_PIPELINE_NAME"] == workflow.pipeline_name
+    assert submit_job_args["NIPOPPY_PIPELINE_VERSION"] == workflow.pipeline_version
+    assert submit_job_args["NIPOPPY_PIPELINE_STEP"] == workflow.pipeline_step
+
+    submitted_participant_ids = submit_job_args["NIPOPPY_PARTICIPANT_IDS"]
+    submitted_session_ids = submit_job_args["NIPOPPY_SESSION_IDS"]
+    assert len(submitted_participant_ids) == len(participants_sessions)
+    assert len(submitted_session_ids) == len(participants_sessions)
+    assert set(zip(submitted_participant_ids, submitted_session_ids)) == set(
+        participants_sessions
+    )
+
     command_list = submit_job_args["NIPOPPY_COMMANDS"]
     assert len(command_list) == len(participants_sessions)
     for participant_id, session_id in participants_sessions:
