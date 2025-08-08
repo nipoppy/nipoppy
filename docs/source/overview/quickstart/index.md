@@ -175,8 +175,6 @@ Expected output:
 ...
 ```
 
-````{tip}
-You can also upload your curation status file to the Neurobagel digest dashboard at https://digest.neurobagel.org/ to get a nice summary and visualization of your work!
 
 ## [Run a processing pipeline on BIDS data](../../how_to_guides/pipeline_run/index.md)
 
@@ -261,6 +259,10 @@ Expected output:
                BL     │      4      │      4       │       4       │    4    │    1
                       ╵             ╵              ╵               ╵         ╵
 ...
+```
+
+```{tip}
+You can also upload your processing status file to the Neurobagel digest dashboard at [https://digest.neurobagel.org/](https://digest.neurobagel.org/) to get a nice summary and visualization of your work!
 ```
 
 ## Next steps
