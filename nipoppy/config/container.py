@@ -225,13 +225,13 @@ def check_container_args(
                 path_local = path_local.resolve()
                 if path_local != path_local_original:
                     path_local = path_local.resolve()
-                    logger.warning(
+                    logger.debug(
                         "Resolving path for container"
                         f": {path_local_original} -> {path_local}"
                     )
                 if not path_local.exists():
                     path_local.mkdir(parents=True)
-                    logger.warning(
+                    logger.debug(
                         "Creating missing directory for container bind path"
                         f": {path_local}"
                     )

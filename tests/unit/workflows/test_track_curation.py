@@ -143,7 +143,7 @@ def test_run_main_regenerate(
     empty: bool,
 ):
     workflow.empty = empty
-    workflow.regenerate = True
+    workflow.force = True
 
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
@@ -199,6 +199,6 @@ def test_run_main_regenerate(
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     TrackCurationWorkflow(dpath_root=tmp_path).run_cleanup()
     assert (
-        "Successfully generated/updated the dataset's curation status file!"
+        "Successfully generated/updated the dataset's curation status file"
         in caplog.text
     )

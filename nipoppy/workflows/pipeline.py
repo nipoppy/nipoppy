@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import re
 import shlex
 from abc import ABC, abstractmethod
@@ -536,7 +535,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def check_dir(self, dpath: Path):
         """Create directory if it does not exist."""
         if not dpath.exists():
-            self.mkdir(dpath, log_level=logging.WARNING)
+            self.mkdir(dpath)
 
     def check_pipeline_version(self):
         """Set the pipeline version based on the config if it is not given."""
@@ -761,27 +760,20 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                     "HPC job(s)[/]"
                 )
         else:
-            # change the message depending on how successful the run was
-            prefix = "Ran"
-            suffix = ""
-            if self.n_success == 0:
-                color = LogColor.FAILURE
-            elif self.n_success == self.n_total:
-                color = LogColor.SUCCESS
-                prefix = f"Successfully {prefix.lower()}"
-                suffix = "!"
-            else:
-                color = LogColor.PARTIAL_SUCCESS
-
             if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
-                message_body = "on the entire study"
+                log_msg = "Ran on the entire study"
             else:
-                message_body = (
-                    f"for {self.n_success} out of "
+                log_msg = (
+                    f"Ran for {self.n_success} out of "
                     f"{self.n_total} participants or sessions"
                 )
 
-            self.logger.info(f"[{color}]{prefix} {message_body}{suffix}[/]")
+            if self.n_success == 0:
+                self.logger.error(log_msg)
+            elif self.n_success == self.n_total:
+                self.logger.success(log_msg)
+            else:
+                self.logger.warning(log_msg)
 
         return super().run_cleanup()
 

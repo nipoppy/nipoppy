@@ -63,15 +63,13 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
         pipelines: dict[str, list[str]],
     ):
         if len(pipelines) == 0:
-            self.logger.info(
-                f"[{LogColor.FAILURE}]No available {pipeline_type.value} "
-                "pipelines[/]"
-            )
+            self.logger.warning(f"No available {pipeline_type.value} pipelines")
             return
 
         self.logger.info(
-            f"[{LogColor.SUCCESS}]Available {pipeline_type.value} pipelines and "
-            "versions:[/]"
+            f"[{LogColor.SUCCESS}]"
+            f"Available {pipeline_type.value} pipelines and versions"
+            "[/]"
         )
 
         # to align the pipeline version substrings
