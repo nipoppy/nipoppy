@@ -24,7 +24,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Organized (but not BIDS) imaging data in {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directories
     - See <project:organizing_imaging.md>
 

@@ -17,7 +17,7 @@ Depending on the study you are working with, there might not be any data to put 
 ### Prerequisites
 
 - An empty Nipoppy dataset, as created by [`nipoppy init`](../../cli_reference/init.rst)
-    - See the [Quickstart guide](../../overview/quickstart.md) for full instructions on
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for full instructions on
     initializing a new dataset
 
 ### Data directories

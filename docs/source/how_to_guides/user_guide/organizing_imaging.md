@@ -11,7 +11,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Raw imaging data in {{dpath_pre_reorg}}
     - See <project:populating.md>
 
