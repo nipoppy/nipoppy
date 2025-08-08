@@ -372,8 +372,6 @@ def process_template_str(
 
     matches = TEMPLATE_REPLACE_PATTERN.finditer(template_str)
     for match in matches:
-        if len(match.groups()) != 1:
-            raise ValueError(f"Expected exactly one match group for match: {match}")
         to_replace = match.group()
         replacement_key = match.groups()[0].lower()  # always convert to lowercase
 
