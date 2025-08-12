@@ -128,7 +128,7 @@ language: json
 ---
 ```
 
-::::{tip}
+::::{note}
 Optionally, you can regenerate the `invocation.json` file to match the descriptor arguments.
 
 ```bash
@@ -209,11 +209,9 @@ Before uploading a pipeline to the catalog via the Nipoppy CLI, you must [genera
 
 ### `zenodo.json` (Optional)
 
-This file is optional. To provide custom metadata for your Zenodo record you must specify it in the `zenodo.json` file. This file is not part of the `config.json` file.
-
-::::{note}
 By default, Nipoppy infers the value using the metadata from the user Zenodo account.
-::::
+
+This file is optional. To provide custom metadata for your Zenodo record you must specify it in the `zenodo.json` file. This file is not part of the `config.json` file.
 
 ```console
 nipoppy pipeline upload \
