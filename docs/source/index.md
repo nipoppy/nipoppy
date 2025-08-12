@@ -48,6 +48,7 @@ titlesonly:
 caption: Tutorials
 ---
 tutorials/mriqc_from_bids/index
+tutorials/integrations/index
 ```
 
 ```{toctree}
@@ -74,6 +75,7 @@ how_to_guides/tabular_data/index
 how_to_guides/pipeline_install/index
 how_to_guides/pipeline_run/index
 how_to_guides/pipeline_create/index
+how_to_guides/parallelization/index
 ```
 
 
