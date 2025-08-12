@@ -1229,7 +1229,9 @@ def test_submit_hpc_job_pysqa_call(
     workflow.hpc_config = HpcConfig(**hpc_config)
     workflow.config.HPC_PREAMBLE = preamble_list
 
-    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+    participant_ids = ["participant1", "participant2"]
+    session_ids = ["session1", "session2"]
+    participants_sessions = list(zip(participant_ids, session_ids))
 
     # Call the function we're testing
     workflow._submit_hpc_job(participants_sessions)
@@ -1261,11 +1263,8 @@ def test_submit_hpc_job_pysqa_call(
 
     submitted_participant_ids = submit_job_args["NIPOPPY_PARTICIPANT_IDS"]
     submitted_session_ids = submit_job_args["NIPOPPY_SESSION_IDS"]
-    assert len(submitted_participant_ids) == len(participants_sessions)
-    assert len(submitted_session_ids) == len(participants_sessions)
-    assert set(zip(submitted_participant_ids, submitted_session_ids)) == set(
-        participants_sessions
-    )
+    assert submitted_participant_ids == participant_ids
+    assert submitted_session_ids == session_ids
 
     command_list = submit_job_args["NIPOPPY_COMMANDS"]
     assert len(command_list) == len(participants_sessions)
