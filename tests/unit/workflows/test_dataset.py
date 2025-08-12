@@ -95,6 +95,20 @@ def test_run_setup_logfile(
         mocked_add_logfile.assert_called_once_with(workflow.logger, fpath_log)
 
 
+def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):
+    # delete required directory
+    workflow.layout.dpath_bids.rmdir()
+
+    # expect layout validation error
+    with pytest.raises(
+        FileNotFoundError, match="Dataset does not follow expected directory structure"
+    ):
+        workflow.run_setup()
+
+    # make sure no logfile is created
+    assert list(workflow.layout.dpath_logs.iterdir()) == []
+
+
 @pytest.mark.parametrize(
     "fpath_config",
     [

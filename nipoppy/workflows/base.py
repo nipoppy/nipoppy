@@ -335,13 +335,13 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
     def run_setup(self):
         """Run the setup part of the workflow."""
+        if self._validate_layout:
+            self.layout.validate()
+
         if not self._skip_logfile:
             add_logfile(self.logger, self.generate_fpath_log())
 
         super().run_setup()
-
-        if self._validate_layout:
-            self.layout.validate()
 
     @cached_property
     def config(self) -> Config:
