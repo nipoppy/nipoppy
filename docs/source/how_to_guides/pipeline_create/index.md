@@ -56,6 +56,7 @@ If not using a source descriptor, be sure to update the `"NAME"` and `"VERSION"`
 ::::
 
 ### `descriptor.json`
+
 Define how to run your pipeline, including inputs, outputs, and command-line structure, using the [Boutiques](https://boutiques.github.io/) descriptor schema.
 
 ::::{note}
@@ -113,12 +114,11 @@ bosh exec simulate descriptor.json invocation.json
 
 #### References
 
-Full schema: <https://github.com/boutiques/boutiques/blob/master/boutiques/schema/descriptor.schema.json/>
-
-Documentation: <https://boutiques.github.io/doc/>
-
+- Full schema: <https://github.com/boutiques/boutiques/blob/master/boutiques/schema/descriptor.schema.json/>
+- Documentation: <https://boutiques.github.io/doc/>
 
 ### `invocation.json`
+
 Defines input arguments to the pipeline.
 
 ```{literalinclude} data/invocation.json
@@ -137,7 +137,23 @@ bosh example ./pipelines/howtodescriptor.json > ./pipelines/howto/invocation.jso
 
 ::::
 
-### `tracker.json`
+### `hpc.json` (Optional)
+
+Defines HPC job submission parameters.
+
+```json
+{
+    "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+    "TIME": "1:00:00",
+    "CORES": "1",
+    "MEMORY": "16G",
+    "ARRAY_CONCURRENCY_LIMIT": ""
+}
+```
+
+### Processing pipeline specific files
+
+#### `tracker.json`
 
 Defines output tracking paths:
 
@@ -162,19 +178,34 @@ Assuming a participant 001 and session A, the template strings will resolve to:
 
 ::::
 
-### `hpc.json` (Optional)
+#### `pybids_ignore.json`
 
-Defines HPC job submission parameters.
+Defines file patterns to be excluded from the PyBIDS index. For example:
 
-```json
-{
-    "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
-    "TIME": "1:00:00",
-    "CORES": "1",
-    "MEMORY": "16G",
-    "ARRAY_CONCURRENCY_LIMIT": ""
-}
+```yaml
+[
+    "(.*_)*+T2w",  # ignores all T2w images.
+    "(.*_)*+FLAIR",  # ignores all FLAIR images.
+    ".*/dwi/",  # Skip any file inside a `dwi` folder.
+]
 ```
+
+::::{note}
+Patterns are relative to the BIDS root and use Unix-style wildcards (*, ?).
+Use this file to exclude temporary files, logs, and other non-BIDS outputs from indexing.
+::::
+
+::::{tip}
+Optionally, You can set `GENERATE_PYBIDS_DATABASE` to `False`—skipping the database indexing—to accelerate the pipeline launch.
+::::
+
+## Uploading to Nipoppy catalog
+
+Nipoppy provides an easy way to upload and install [community-developed pipelines](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) via Zenodo.
+
+::::{important}
+Before uploading a pipeline to the catalog via the Nipoppy CLI, you must [generate a Zenodo token](https://zenodo.org/account/settings/applications/tokens/new/).
+::::
 
 ### `zenodo.json` (Optional)
 
