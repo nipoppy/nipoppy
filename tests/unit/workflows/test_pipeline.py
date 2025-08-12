@@ -1229,7 +1229,9 @@ def test_submit_hpc_job_pysqa_call(
     workflow.hpc_config = HpcConfig(**hpc_config)
     workflow.config.HPC_PREAMBLE = preamble_list
 
-    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+    participant_ids = ["participant1", "participant2"]
+    session_ids = ["session1", "session2"]
+    participants_sessions = list(zip(participant_ids, session_ids))
 
     # Call the function we're testing
     workflow._submit_hpc_job(participants_sessions)
@@ -1253,6 +1255,16 @@ def test_submit_hpc_job_pysqa_call(
         == workflow.layout.dpath_logs / workflow.dname_hpc_logs
     )
     assert submit_job_args["NIPOPPY_HPC_PREAMBLE_STRINGS"] == preamble_list
+
+    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == workflow.layout.dpath_root
+    assert submit_job_args["NIPOPPY_PIPELINE_NAME"] == workflow.pipeline_name
+    assert submit_job_args["NIPOPPY_PIPELINE_VERSION"] == workflow.pipeline_version
+    assert submit_job_args["NIPOPPY_PIPELINE_STEP"] == workflow.pipeline_step
+
+    submitted_participant_ids = submit_job_args["NIPOPPY_PARTICIPANT_IDS"]
+    submitted_session_ids = submit_job_args["NIPOPPY_SESSION_IDS"]
+    assert submitted_participant_ids == participant_ids
+    assert submitted_session_ids == session_ids
 
     command_list = submit_job_args["NIPOPPY_COMMANDS"]
     assert len(command_list) == len(participants_sessions)

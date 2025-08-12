@@ -670,13 +670,17 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f". Available clusters are: {qa.list_clusters()}"
             )
 
-        # Generate the list of nipoppy commands as a single string for a shell array
+        # generate the list of nipoppy commands for a shell array
         job_array_commands = []
+        participant_ids = []
+        session_ids = []
         for participant_id, session_id in participants_sessions:
             command = self._generate_cli_command_for_hpc(
                 participant_id=participant_id, session_id=session_id
             )
             job_array_commands.append(shlex.join(command))
+            participant_ids.append(participant_id)
+            session_ids.append(session_id)
             self.n_total += 1  # for logging in run_cleanup()
 
         # skip if there are no jobs to submit
@@ -717,6 +721,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
                 NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
                 NIPOPPY_COMMANDS=job_array_commands,
+                NIPOPPY_DPATH_ROOT=self.layout.dpath_root,
+                NIPOPPY_PIPELINE_NAME=self.pipeline_name,
+                NIPOPPY_PIPELINE_VERSION=self.pipeline_version,
+                NIPOPPY_PIPELINE_STEP=self.pipeline_step,
+                NIPOPPY_PARTICIPANT_IDS=participant_ids,
+                NIPOPPY_SESSION_IDS=session_ids,
                 **job_args,
             )
 
