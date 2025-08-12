@@ -215,6 +215,17 @@ This file is optional. To provide custom metadata for your Zenodo record you mus
 By default, Nipoppy infers the value using the metadata from the user Zenodo account.
 ::::
 
+```console
+nipoppy pipeline upload \
+  --password-file <PASSWORD_FILE> \
+  <PIPELINE_DIR>
+```
+
+:::{note}
+To update an existing Zenodo record, use the `--zenodo-id` flag.
+:::
+
+
 ```{literalinclude} /../../nipoppy/data/template_pipeline/zenodo.json
 ---
 linenos: True
