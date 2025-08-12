@@ -7,8 +7,8 @@
 
 # All variables starting with the "NIPOPPY_" prefix are set internally by
 # Nipoppy and cannot be changed. Other (optional) variables can be defined in a
-# pipeline's HPC_CONFIG field in the global config file. Additional variables
-# can also be defined in the HPC_CONFIG for further customization.
+# pipeline's HPC config file (i.e., hpc.json). Additional variables can also be
+# defined in the HPC config file for further customization.
 
 # Lines surrounded by { # and # } (without spaces) are Jinja comments and will
 # not be included in the final job script.
