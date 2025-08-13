@@ -1,6 +1,6 @@
 # Quickstart
 
-This page is intended to give you a quick first run through the most important Nipoppy commands using real data from an example dataset.
+This page is intended to give you a quick first run through the curation and processing stages with Nipoppy using real dicom data from an example dataset.
 
 ```{important}
 See the [Installation instructions](../installation.md) first if you have not yet installed Nipoppy and do not forget to activate your Nipoppy environment.
@@ -25,9 +25,10 @@ The newly created directory tree follows the Nipoppy specification. Other Nipopp
 
 **2.** Move the example dataset and files into your Nipoppy dataset:
 ```{code-block} console
+$ mv tutorial-dataset/manifest.tsv my-example-study
 $ mv tutorial-dataset/reorg/* my-example-study/sourcedata/imaging/pre_reorg
-$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code
-$ mv -t my-example-study/bids tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json
+$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code # see [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the dcm2bids_config.json
+$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids # see the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about valid BIDS dataset requirements
 ```
 
 **3.** Change directory into your Nipoppy dataset:
@@ -61,7 +62,9 @@ linenos: True
 ---
 ```
 
-**For our example study, we manually change it to this:**
+**For our example study, we changed it to this:**
+
+(This is the `manifest.tsv` file you copied from the tutorial-dataset)
 ```{literalinclude} example-dataset_manifest.tsv
 ---
 linenos: True
@@ -70,7 +73,7 @@ linenos: True
 
 ## Prepare sourcedata for bidsification
 
-**1.** Reorganize the sourcedata:
+**1.** Reorganize the sourcedata to simplify bidsification:
 ```{code-block} console
 $ nipoppy reorg
 ```
@@ -126,7 +129,9 @@ INFO            - dcm2bids (3.2.0)
 ## Bidsify the sourcedata
 
 ```{note}
-Usually you would start with running `nipoppy bidsify` with the first `--pipeline-step` (e.g. `prepare`). For `dcm2bids` this step would run the `dcm2bids_helper` in order to extract information from the dicom headers to create a `dcm2bids_config.json`. We already provided you with a `dcm2bids_config.json`, so we will skip this step here.
+Please see the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/) documentation to know what dcm2bids does and how it works. 
+
+Usually you would start with running `nipoppy bidsify` with the first `--pipeline-step` (e.g. `prepare`). For `dcm2bids` this step would run the `dcm2bids_helper` in order to extract information from the dicom headers to create a `dcm2bids_config.json`. We already provided you with a `dcm2bids_config.json`, so we will skip this step here. 
 ```
 
 **1.** Replace the placeholder for `"DCM2BIDS_CONFIG_FILE"` in the `global_config,json` with the path to your code directory:
@@ -153,7 +158,7 @@ $ nipoppy bidsify --pipeline dcm2bids --pipeline-step convert
 
 **3.** Track the curation status:
 ```{code-block} console
-$ nipoppy track-curation
+$ nipoppy track-curation --regenerate
 ```
 
 The curation status file can be found at {{fpath_curation_status}}.
@@ -192,15 +197,15 @@ INFO     Available bidsification pipelines and versions:
 INFO            - dcm2bids (3.2.0)
 INFO     Available processing pipelines and versions:
 INFO            - mriqc (23.1.0)
-
+**3.** Create a new directory in the Nipoppy dataset root called templateflow (required by MRIQC, see [TemplateFlow](https://www.templateflow.org/) docs):
 ...
 ```
-**3.** Create a new directory in the dataset root called templateflow:
+**3.** Create a new directory in the Nipoppy dataset root called templateflow:
 ```{code-block} console
 $ mkdir templateflow
 ```
 
-**4.** Replace the placeholders in the `global_config.json`:
+**4.** Replace the placeholders (here: the templateflow path) in the `global_config.json`:
 
 ```yaml
 {
@@ -267,4 +272,4 @@ You can also upload your processing status file to the Neurobagel digest dashboa
 
 ## Next steps
 
-Repeat the steps of the previous section with a processing pipeline such as `fmriprep` to consequently use the `nipoppy extract` with the `fs_stats` pipeline. Try it out, it will be fun!
+Repeat the steps of the previous section with a processing pipeline such as `fmriprep` to consequently use the `nipoppy extract` command with the `fs_stats` pipeline. Try it out, it will be fun!
