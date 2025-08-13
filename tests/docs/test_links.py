@@ -10,7 +10,7 @@ import pytest
     "link",
     (
         Path(__file__)
-        .parents[2]
+        .parents[2]  # Path: /
         .joinpath("docs/source/ignored_links.txt")
         .read_text()
         .splitlines()
