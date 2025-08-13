@@ -27,7 +27,7 @@ The newly created directory tree follows the Nipoppy specification. Other Nipopp
 ```{code-block} console
 $ mv tutorial-dataset/manifest.tsv my-example-study
 $ mv tutorial-dataset/reorg/* my-example-study/sourcedata/imaging/pre_reorg
-$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code 
+$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code
 $ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids
 ```
 
