@@ -74,8 +74,8 @@ how_to_guides/manifest/index
 how_to_guides/tabular_data/index
 how_to_guides/pipeline_install/index
 how_to_guides/pipeline_run/index
-how_to_guides/pipeline_create/index
 how_to_guides/parallelization/index
+how_to_guides/pipeline_create/index
 ```
 
 
