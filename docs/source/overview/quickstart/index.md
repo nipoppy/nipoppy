@@ -27,8 +27,8 @@ The newly created directory tree follows the Nipoppy specification. Other Nipopp
 ```{code-block} console
 $ mv tutorial-dataset/manifest.tsv my-example-study
 $ mv tutorial-dataset/reorg/* my-example-study/sourcedata/imaging/pre_reorg
-$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code #
-$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids # see
+$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code 
+$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids
 ```
 
 See the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the `dcm2bids_config.json` and the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about `valid BIDS dataset` requirements.
