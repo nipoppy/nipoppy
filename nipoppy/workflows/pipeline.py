@@ -13,6 +13,7 @@ from typing import Iterable, Optional, Tuple, Type
 import bids
 import pandas as pd
 from jinja2 import Environment, meta
+from joblib import Parallel, delayed
 from packaging.version import Version
 from pydantic import ValidationError
 from pysqa import QueueAdapter
@@ -151,9 +152,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         session_id: str = None,
         hpc: Optional[str] = None,
         write_list: Optional[StrOrPathLike] = None,
+        n_jobs: Optional[int] = 1,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run=False,
+        _skip_logfile: bool = False,
     ):
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
@@ -162,6 +165,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.session_id = check_session_id(session_id)
         self.hpc = hpc
         self.write_list = write_list
+        self.n_jobs = n_jobs
 
         super().__init__(
             dpath_root=dpath_root,
@@ -169,6 +173,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
+            _skip_logfile=_skip_logfile,
         )
 
         # the message logged in run_cleanup will depend on
@@ -586,6 +591,32 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def run_main(self):
         """Run the pipeline."""
+
+        def _run_single_wrapper(participant_id, session_id) -> bool:
+            """
+            Run a single participant/session and handle exceptions.
+
+            This is a helper function for parallelization with joblib.
+            Returns True if the run was successful, False otherwise.
+            """
+            self.logger.info(
+                f"Running for participant {participant_id}, session {session_id}"
+            )
+
+            try:
+                # success
+                self.run_single(participant_id, session_id)
+                return True
+            except Exception as exception:
+                self.logger.error(
+                    f"Error running {self.pipeline_name} {self.pipeline_version}"
+                    f" on participant {participant_id}, session {session_id}"
+                    f": {exception}"
+                )
+
+            # failure
+            return False
+
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
@@ -605,21 +636,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
-            for participant_id, session_id in participants_sessions:
-                self.n_total += 1
-                self.logger.info(
-                    f"Running for participant {participant_id}, session {session_id}"
-                )
-                try:
-                    self.run_single(participant_id, session_id)
-                    self.n_success += 1
-                except Exception as exception:
-                    self.return_code = ReturnCode.PARTIAL_SUCCESS
-                    self.logger.error(
-                        f"Error running {self.pipeline_name} {self.pipeline_version}"
-                        f" on participant {participant_id}, session {session_id}"
-                        f": {exception}"
-                    )
+            results = Parallel(n_jobs=self.n_jobs)(
+                delayed(_run_single_wrapper)(participant_id, session_id)
+                for participant_id, session_id in participants_sessions
+            )
+            self.n_success += sum(results)
+            self.n_total += len(results)
+
+            # update return code if needed
+            if (self.n_success != self.n_total) and (self.n_total != 0):
+                self.return_code = ReturnCode.PARTIAL_SUCCESS
 
     def _generate_cli_command_for_hpc(
         self, participant_id=None, session_id=None

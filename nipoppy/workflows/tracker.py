@@ -21,6 +21,7 @@ class PipelineTracker(BasePipelineWorkflow):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        n_jobs: Optional[int] = 1,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -33,9 +34,11 @@ class PipelineTracker(BasePipelineWorkflow):
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
+            n_jobs=n_jobs,
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
+            _skip_logfile=True,
         )
 
     def run_setup(self):
