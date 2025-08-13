@@ -132,7 +132,7 @@ language: json
 Optionally, you can regenerate the `invocation.json` file to match the descriptor arguments.
 
 ```bash
-bosh example ./pipelines/howtodescriptor.json > ./pipelines/howto/invocation.json
+bosh example ./pipelines/howto/descriptor.json > ./pipelines/howto/invocation.json
 ```
 
 ::::
