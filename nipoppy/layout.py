@@ -2,7 +2,7 @@
 
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -186,44 +186,63 @@ class DatasetLayout(Base):
         self.dpath_nipoppy = self.dpath_root / NIPOPPY_DIR_NAME
 
         # directories (for type hinting)
-        self.dpath_bids: Path
-        self.dpath_derivatives: Path
-        self.dpath_sourcedata: Path
-        self.dpath_src_tabular: Path
-        self.dpath_src_imaging: Path
-        self.dpath_downloads: Path
-        self.dpath_pre_reorg: Path
-        self.dpath_post_reorg: Path
-        self.dpath_code: Path
-        self.dpath_hpc: Path
-        self.dpath_pipelines: Path
-        self.dpath_containers: Path
-        self.dpath_scratch: Path
-        self.dpath_work: Path
-        self.dpath_pybids_db: Path
-        self.dpath_logs: Path
-        self.dpath_tabular: Path
-        self.dpath_assessments: Path
+        self.dpath_bids: Path = self.get_full_path(self.config.dpath_bids.path)
+        self.dpath_derivatives: Path = self.get_full_path(
+            self.config.dpath_derivatives.path
+        )
+        self.dpath_sourcedata: Path = self.get_full_path(
+            self.config.dpath_sourcedata.path
+        )
+        self.dpath_src_tabular: Path = self.get_full_path(
+            self.config.dpath_src_tabular.path
+        )
+        self.dpath_src_imaging: Path = self.get_full_path(
+            self.config.dpath_src_imaging.path
+        )
+        self.dpath_downloads: Path = self.get_full_path(
+            self.config.dpath_downloads.path
+        )
+        self.dpath_pre_reorg: Path = self.get_full_path(
+            self.config.dpath_pre_reorg.path
+        )
+        self.dpath_post_reorg: Path = self.get_full_path(
+            self.config.dpath_post_reorg.path
+        )
+        self.dpath_code: Path = self.get_full_path(self.config.dpath_code.path)
+        self.dpath_hpc: Path = self.get_full_path(self.config.dpath_hpc.path)
+        self.dpath_pipelines: Path = self.get_full_path(
+            self.config.dpath_pipelines.path
+        )
+        self.dpath_containers: Path = self.get_full_path(
+            self.config.dpath_containers.path
+        )
+        self.dpath_scratch: Path = self.get_full_path(self.config.dpath_scratch.path)
+        self.dpath_work: Path = self.get_full_path(self.config.dpath_work.path)
+        self.dpath_pybids_db: Path = self.get_full_path(
+            self.config.dpath_pybids_db.path
+        )
+        self.dpath_logs: Path = self.get_full_path(self.config.dpath_logs.path)
+        self.dpath_tabular: Path = self.get_full_path(self.config.dpath_tabular.path)
+        self.dpath_assessments: Path = self.get_full_path(
+            self.config.dpath_assessments.path
+        )
 
         # files (for type hinting)
-        self.fpath_config: Path
-        self.fpath_curation_status: Path
-        self.fpath_manifest: Path
-        self.fpath_processing_status: Path
-        self.fpath_demographics: Path
+        self.fpath_config: Path = self.get_full_path(self.config.fpath_config.path)
+        self.fpath_curation_status: Path = self.get_full_path(
+            self.config.fpath_curation_status.path
+        )
+        self.fpath_manifest: Path = self.get_full_path(self.config.fpath_manifest.path)
+        self.fpath_processing_status: Path = self.get_full_path(
+            self.config.fpath_processing_status.path
+        )
+        self.fpath_demographics: Path = self.get_full_path(
+            self.config.fpath_demographics.path
+        )
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
         return self.dpath_root / path
-
-    def __getattribute__(self, name: str) -> Any:
-        try:
-            return super().__getattribute__(name)
-        except AttributeError as exception:
-            if name in self.config.path_labels:
-                return self.get_full_path(self.config.get_path_info(name).path)
-            else:
-                raise exception
 
     def get_paths(self, directory=True, include_optional=False) -> list[Path]:
         """Return a list of all directory or file paths."""

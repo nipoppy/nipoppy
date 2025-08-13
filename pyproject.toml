@@ -19,6 +19,7 @@ dependencies = [
     "click",
     "httpx",
     "jinja2",
+    "joblib",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
