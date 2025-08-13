@@ -5,6 +5,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import os
+from datetime import datetime
 
 from nipoppy._version import __version__
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
@@ -13,7 +14,7 @@ from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Nipoppy"
-copyright = "2024, NeuroDataScience-ORIGAMI Lab"
+copyright = f"{datetime.today().year}, NeuroDataScience-ORIGAMI Lab"
 author = "NeuroDataScience-ORIGAMI Lab"
 
 # The version info for the project you're documenting, acts as replacement

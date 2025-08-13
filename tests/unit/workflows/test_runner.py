@@ -756,7 +756,7 @@ def test_run_missing_container_raises_error(runner: PipelineRunner):
             "1",
             [
                 "nipoppy",
-                "run",
+                "process",
                 "--dataset",
                 "/path/to/root",
                 "--pipeline",
@@ -788,7 +788,7 @@ def test_run_missing_container_raises_error(runner: PipelineRunner):
             "1",
             [
                 "nipoppy",
-                "run",
+                "process",
                 "--dataset",
                 "/path/to/other/root",
                 "--pipeline",

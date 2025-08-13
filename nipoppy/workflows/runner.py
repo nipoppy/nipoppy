@@ -312,7 +312,7 @@ class PipelineRunner(BasePipelineWorkflow):
         """
         command = [
             PROGRAM_NAME,
-            "run",
+            "process",
             "--dataset",
             self.dpath_root,
             "--pipeline",
