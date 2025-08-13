@@ -133,7 +133,7 @@ language: json
 Optionally, you can regenerate the `invocation.json` file to match the descriptor arguments.
 
 ```bash
-bosh example ./pipelines/howtodescriptor.json > ./pipelines/howto/invocation.json
+bosh example ./pipelines/howto/descriptor.json > ./pipelines/howto/invocation.json
 ```
 
 ::::
@@ -168,7 +168,7 @@ Defines output tracking paths:
 ```
 
 ::::{note}
-The tracked paths are relative to `{{dpath_pipeline_output}}`.
+The tracked paths are relative to {{dpath_pipeline_output}}.
 
 Assuming a participant 001 and session A, the template strings will resolve to:
 
