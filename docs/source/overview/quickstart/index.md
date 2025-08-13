@@ -27,11 +27,11 @@ The newly created directory tree follows the Nipoppy specification. Other Nipopp
 ```{code-block} console
 $ mv tutorial-dataset/manifest.tsv my-example-study
 $ mv tutorial-dataset/reorg/* my-example-study/sourcedata/imaging/pre_reorg
-$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code # 
-$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids # see  
+$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code #
+$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids # see
 ```
 
-See the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the `dcm2bids_config.json` and the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about `valid BIDS dataset` requirements. 
+See the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the `dcm2bids_config.json` and the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about `valid BIDS dataset` requirements.
 
 
 **3.** Change directory into your Nipoppy dataset:
@@ -132,9 +132,9 @@ INFO            - dcm2bids (3.2.0)
 ## Bidsify the sourcedata
 
 ```{note}
-Please see the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/) documentation to know what dcm2bids does and how it works. 
+Please see the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/) documentation to know what dcm2bids does and how it works.
 
-Usually you would start with running `nipoppy bidsify` with the first `--pipeline-step` (e.g. `prepare`). For `dcm2bids` this step would run the `dcm2bids_helper` in order to extract information from the dicom headers to create a `dcm2bids_config.json`. We already provided you with a `dcm2bids_config.json`, so we will skip this step here. 
+Usually you would start with running `nipoppy bidsify` with the first `--pipeline-step` (e.g. `prepare`). For `dcm2bids` this step would run the `dcm2bids_helper` in order to extract information from the dicom headers to create a `dcm2bids_config.json`. We already provided you with a `dcm2bids_config.json`, so we will skip this step here.
 ```
 
 **1.** Replace the placeholder for `"DCM2BIDS_CONFIG_FILE"` in the `global_config,json` with the path to your code directory:
