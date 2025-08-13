@@ -48,7 +48,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     )
     DESCRIPTOR_FILE: Optional[Path] = Field(
         default=None,
-        description=("Path to the JSON descriptor file."),
+        description="Path to the JSON descriptor file.",
     )
     INVOCATION_FILE: Optional[Path] = Field(
         default=None,
