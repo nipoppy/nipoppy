@@ -2,7 +2,7 @@
 
 This guide shows how to run a pipeline with Nipoppy.
 
-## List installed pipelines
+## Listing installed pipelines
 
 The `nipoppy pipeline list` command displays pipelines that can be run for a given dataset. Here is an example command output:
 
@@ -24,7 +24,7 @@ INFO             - static_FC (0.1.0)
 
 If the pipeline you want to run is not listed, you will have to [install](<project:../pipeline_install/index.md>) it first.
 
-## Run the pipeline
+## Running the pipeline
 
 The command to run a pipeline depends on the **pipeline type**:
 - BIDSification pipelines: [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>)
