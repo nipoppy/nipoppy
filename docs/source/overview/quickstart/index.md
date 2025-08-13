@@ -27,9 +27,12 @@ The newly created directory tree follows the Nipoppy specification. Other Nipopp
 ```{code-block} console
 $ mv tutorial-dataset/manifest.tsv my-example-study
 $ mv tutorial-dataset/reorg/* my-example-study/sourcedata/imaging/pre_reorg
-$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code # see [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the dcm2bids_config.json
-$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids # see the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about valid BIDS dataset requirements
+$ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code # 
+$ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids # see  
 ```
+
+See the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the `dcm2bids_config.json` and the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about `valid BIDS dataset` requirements. 
+
 
 **3.** Change directory into your Nipoppy dataset:
 ```{code-block} console
@@ -55,7 +58,7 @@ language: json
 
 ### [Customizing the manifest.tsv file](../../how_to_guides/manifest/index.md)
 
-The manifest file at {{fpath_manifest}} looks like this:
+The example manifest file created at {{fpath_manifest}} by `nipoppy init` always looks like this:
 ```{literalinclude} ../../../../nipoppy/data/examples/sample_manifest.tsv
 ---
 linenos: True
@@ -64,7 +67,7 @@ linenos: True
 
 **For our example study, we changed it to this:**
 
-(This is the `manifest.tsv` file you copied from the tutorial-dataset)
+(This is the `manifest.tsv` file you copied from the tutorial-dataset; you will always have to modify the `manifest.tsv` according to your study setup)
 ```{literalinclude} example-dataset_manifest.tsv
 ---
 linenos: True
@@ -184,6 +187,7 @@ Expected output:
 ## [Run a processing pipeline on BIDS data](../../how_to_guides/pipeline_run/index.md)
 
 **1.** Search and install the MRIQC pipeline, version 23.1.0 (and if necessary the container) as described above.<br>
+
 **2.** Check the pipeline installation:
 ```{code-block} console
 $ nipoppy pipeline list
@@ -197,10 +201,10 @@ INFO     Available bidsification pipelines and versions:
 INFO            - dcm2bids (3.2.0)
 INFO     Available processing pipelines and versions:
 INFO            - mriqc (23.1.0)
-**3.** Create a new directory in the Nipoppy dataset root called templateflow (required by MRIQC, see [TemplateFlow](https://www.templateflow.org/) docs):
+
 ...
 ```
-**3.** Create a new directory in the Nipoppy dataset root called templateflow:
+**3.** Create a new directory in the Nipoppy dataset root called templateflow (required by MRIQC, see [TemplateFlow](https://www.templateflow.org/) docs):
 ```{code-block} console
 $ mkdir templateflow
 ```
