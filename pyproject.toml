@@ -84,7 +84,7 @@ source = "vcs"
 skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
-addopts = "-ra -q -vv"
+addopts = "--color=yes -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
