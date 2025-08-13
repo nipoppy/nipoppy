@@ -167,7 +167,7 @@ Defines output tracking paths:
 ```
 
 ::::{note}
-The tracked paths are relative to `{{dpath_pipeline_output}}`.
+The tracked paths are relative to {{dpath_pipeline_output}}.
 
 Assuming a participant 001 and session A, the template strings will resolve to:
 
