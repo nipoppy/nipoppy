@@ -124,16 +124,15 @@ def workflow(tmp_path: Path):
 
 
 def _set_up_hpc_for_testing(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+    mock_pysqa=True,
 ):
     # set HPC attribute to something valid
     workflow.hpc = "slurm"
 
     # copy HPC config files
     workflow.copytree(DPATH_HPC, workflow.layout.dpath_hpc)
-
-    # mock PySQA job submission function
-    mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
 
     mocker.patch.object(
         workflow,
@@ -146,7 +145,10 @@ def _set_up_hpc_for_testing(
         ),
     )
 
-    return mock_submit_job
+    # mock PySQA job submission function
+    if mock_pysqa:
+        mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
+        return mock_submit_job
 
 
 def _set_up_substitution_testing(
@@ -1138,6 +1140,37 @@ def test_check_hpc_config_unused_vars(
     )
 
 
+@pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
+def test_submit_hpc_job(
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+    hpc_type: str,
+    hpc_command: str,
+):
+    job_id = "12345"
+    hpc_config = {
+        "CORES": "8",
+        "MEMORY": "32G",
+    }
+    _set_up_hpc_for_testing(workflow, mocker, mock_pysqa=False)
+    workflow.hpc = hpc_type
+
+    mocker.patch.object(workflow, "_check_hpc_config", return_value=hpc_config)
+    mocked_check_output = mocker.patch(
+        "pysqa.base.core.subprocess.check_output", return_value=job_id
+    )
+    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+
+    workflow._submit_hpc_job(participants_sessions)
+
+    mocked_check_output.assert_called_once()
+    # positional arguments, index 0, first element of the list
+    assert mocked_check_output.call_args[0][0][0] == hpc_command
+
+    assert f"HPC job ID: {job_id}" in caplog.text
+
+
 def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
     assert not workflow.layout.dpath_hpc.exists()
     with pytest.raises(
@@ -1196,7 +1229,9 @@ def test_submit_hpc_job_pysqa_call(
     workflow.hpc_config = HpcConfig(**hpc_config)
     workflow.config.HPC_PREAMBLE = preamble_list
 
-    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+    participant_ids = ["participant1", "participant2"]
+    session_ids = ["session1", "session2"]
+    participants_sessions = list(zip(participant_ids, session_ids))
 
     # Call the function we're testing
     workflow._submit_hpc_job(participants_sessions)
@@ -1220,6 +1255,16 @@ def test_submit_hpc_job_pysqa_call(
         == workflow.layout.dpath_logs / workflow.dname_hpc_logs
     )
     assert submit_job_args["NIPOPPY_HPC_PREAMBLE_STRINGS"] == preamble_list
+
+    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == workflow.layout.dpath_root
+    assert submit_job_args["NIPOPPY_PIPELINE_NAME"] == workflow.pipeline_name
+    assert submit_job_args["NIPOPPY_PIPELINE_VERSION"] == workflow.pipeline_version
+    assert submit_job_args["NIPOPPY_PIPELINE_STEP"] == workflow.pipeline_step
+
+    submitted_participant_ids = submit_job_args["NIPOPPY_PARTICIPANT_IDS"]
+    submitted_session_ids = submit_job_args["NIPOPPY_SESSION_IDS"]
+    assert submitted_participant_ids == participant_ids
+    assert submitted_session_ids == session_ids
 
     command_list = submit_job_args["NIPOPPY_COMMANDS"]
     assert len(command_list) == len(participants_sessions)

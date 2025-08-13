@@ -347,7 +347,8 @@ def test_is_nipoppy_project(
     dataset_path = tmp_path / "dataset"
     create_empty_dataset(dataset_path)
 
+    cwd_path = dataset_path / current_path
     if is_inside_project:
-        assert is_nipoppy_project(dataset_path / current_path) == Path(dataset_path)
+        assert is_nipoppy_project(cwd_path) == Path(dataset_path)
     else:
-        assert is_nipoppy_project(dataset_path.joinpath(current_path)) is False
+        assert is_nipoppy_project(cwd_path) is False
