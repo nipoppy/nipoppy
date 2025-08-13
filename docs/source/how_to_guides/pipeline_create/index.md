@@ -5,7 +5,7 @@ This guide explains how to generate and customize a pipeline configuration for u
 ## Creating initial configuration files
 Use the `nipoppy pipeline create` command to generate a sample configuration. Nipoppy supports three pipeline types: `bidsification`, `processing`, and `extraction`.
 
-```bash
+```console
 nipoppy pipeline create \
     --type processing \
     <PIPELINE_DIR>
@@ -91,22 +91,23 @@ language: json
 
 class: dropdown
 ---
+`bosh` is the CLI from Boutiques—already installed with Nipoppy.
 
 Validating a descriptor:
 
-```bash
+```console
 bosh validate descriptor.json
 ```
 
 Generating an invocation template:
 
-```bash
+```console
 bosh example descriptor.json > invocation.json
 ```
 
 Simulating a run:
 
-```bash
+```console
 bosh exec simulate descriptor.json invocation.json
 ```
 
@@ -207,22 +208,21 @@ Nipoppy provides an easy way to upload and install [community-developed pipeline
 Before uploading a pipeline to the catalog via the Nipoppy CLI, you must [generate a Zenodo token](https://zenodo.org/account/settings/applications/tokens/new/).
 ::::
 
-### `zenodo.json` (Optional)
-
-By default, Nipoppy infers the value using the metadata from the user Zenodo account.
-
-This file is optional. To provide custom metadata for your Zenodo record you must specify it in the `zenodo.json` file. This file is not part of the `config.json` file.
-
 ```console
 nipoppy pipeline upload \
   --password-file <PASSWORD_FILE> \
   <PIPELINE_DIR>
 ```
 
+### `zenodo.json` (Optional)
+
+By default, Nipoppy infers the value using the metadata from the user Zenodo account.
+
+This file is optional. To provide custom metadata for your Zenodo record you must specify it in the `zenodo.json` file. This file is not part of the `config.json` file.
+
 :::{note}
 To update an existing Zenodo record, use the `--zenodo-id` flag.
 :::
-
 
 ```{literalinclude} /../../nipoppy/data/template_pipeline/zenodo.json
 ---
