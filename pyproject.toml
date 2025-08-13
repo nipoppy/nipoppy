@@ -58,6 +58,7 @@ test = [
     "pytest-cov",
     "pytest-httpx",
     "pytest-mock",
+    "pytest-xdist",
     "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
@@ -84,7 +85,7 @@ source = "vcs"
 skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
-addopts = "-ra -q -vv"
+addopts = "-n auto --dist loadfile -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
