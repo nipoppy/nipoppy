@@ -12,7 +12,7 @@ nipoppy pipeline create \
 ```
 
 ::::{tip}
-Optionally, use the `--source-descriptor` flag to initialize the configuration based on a local [Boutiques](https://boutiques.github.io/) descriptor file. See the [Creating a Boutiques descriptor](#creating-a-boutiques-descriptor)
+Optionally, use the `--source-descriptor` flag to initialize the configuration based on a local [Boutiques](https://boutiques.github.io/) descriptor file. See the [Creating a Boutiques descriptor](#creating-a-boutiques-descriptor) section below.
 ::::
 
 This will create the following structure:
