@@ -62,7 +62,36 @@ class StatusWorkflow(BaseDatasetWorkflow):
             [status_col_dict["manifest"]] + curation_cols + processing_cols
         ]
 
-        self.logger.debug(status_df)
+        self.logger.info(status_df)
+
+        self.logger.info(f"curation columns: {curation_cols}")
+        self.logger.info(f"processing columns: {processing_cols}")
+
+        # check if col_in_pre_reorg and col_in_post_reorg are all False
+        if (
+            curation_cols
+            and (~status_df[self.curation_status_table.col_in_pre_reorg]).all()
+            and (~status_df[self.curation_status_table.col_in_post_reorg]).all()
+            and status_df[self.curation_status_table.col_in_bids].equals(
+                status_df["in_manifest"]
+            )
+        ):
+            self.logger.debug(
+                "No participants found in pre-reorg or post-reorg stages. "
+                "The number of participants in BIDS is equal to the number of "
+                "participants in the manifest."
+                "This is likely from the fact that nipoppy dataset was initialized "
+                "with pre-exising BIDS dataset. "
+                "Therefore hiding empty pre-reorg and post-reorg columns from status "
+                "table to reduce clutter."
+            )
+            status_df = status_df.drop(
+                [
+                    self.curation_status_table.col_in_pre_reorg,
+                    self.curation_status_table.col_in_post_reorg,
+                ],
+                axis=1,
+            )
 
         self._df_to_table(status_df, status_col_dict)
 
@@ -172,7 +201,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
         # Check if at least successful run exists
         if table[table[table.col_status] == STATUS_SUCCESS].empty:
-            self.logger.warning(
+            self.logger.info(
                 "The processing status file exists, but no successful run was found in"
                 f" the imaging processing status file for pipeline(s): {pipelines}."
                 " If you have run a pipeline followed by 'nipoppy track-processing', it"
