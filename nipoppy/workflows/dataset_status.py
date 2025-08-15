@@ -62,11 +62,15 @@ class StatusWorkflow(BaseDatasetWorkflow):
             [status_col_dict["manifest"]] + curation_cols + processing_cols
         ]
 
-        self.logger.debug(status_df)
+        self.logger.info(status_df)
+
+        self.logger.info(f"curation columns: {curation_cols}")
+        self.logger.info(f"processing columns: {processing_cols}")
 
         # check if col_in_pre_reorg and col_in_post_reorg are all False
         if (
-            (~status_df[self.curation_status_table.col_in_pre_reorg]).all()
+            curation_cols
+            and (~status_df[self.curation_status_table.col_in_pre_reorg]).all()
             and (~status_df[self.curation_status_table.col_in_post_reorg]).all()
             and status_df[self.curation_status_table.col_in_bids].equals(
                 status_df["in_manifest"]
