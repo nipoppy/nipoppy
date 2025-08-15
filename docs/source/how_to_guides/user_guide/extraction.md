@@ -18,7 +18,7 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Processed imaging data in {{dpath_pipeline_output}} for the relevant processing pipeline(s) that the extractor depends on
     - See <project:processing.md>
 - An {term}`processing status file` with completion statuses for the processing pipeline(s) associated with the extraction pipeline.

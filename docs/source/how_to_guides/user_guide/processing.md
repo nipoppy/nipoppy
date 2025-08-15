@@ -17,7 +17,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_bids}} directory
     - See <project:bids_conversion.md>
 
