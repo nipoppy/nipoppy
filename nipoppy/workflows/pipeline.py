@@ -149,6 +149,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        use_list: Optional[StrOrPathLike] = None,
         hpc: Optional[str] = None,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -160,6 +161,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.use_list = use_list
         self.hpc = hpc
         self.write_list = write_list
 
@@ -589,6 +591,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
+
+        if self.use_list is not None:
+            df_participants_sessions = pd.read_csv(self.use_list, header=None, sep="\t")
+            participants_sessions = set(participants_sessions) & set(
+                df_participants_sessions.itertuples(index=False, name=None)
+            )
 
         participants_sessions = apply_analysis_level(
             participants_sessions=participants_sessions,
