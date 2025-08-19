@@ -6,6 +6,7 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 import pytest
 import pytest_mock
 from fids import fids
@@ -961,6 +962,95 @@ def test_run_main_write_list(
     else:
         assert not write_list.exists()
     assert f"Wrote participant-session list to {write_list}" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "original_participants_sessions_to_run,list_content,final_participants_sessions_to_run",
+    [
+        (
+            [("01", "A"), ("02", "B"), ("03", "C")],
+            [("01", "A"), ("02", "B")],
+            [("01", "A"), ("02", "B")],
+        ),
+        (
+            [("01", "A"), ("02", "B"), ("03", "C")],
+            [("01", "A"), ("02", "B"), ("04", "D")],
+            [("01", "A"), ("02", "B")],
+        ),
+        (
+            [],
+            [("01", "A")],
+            [],
+        ),
+    ],
+)
+def test_run_main_use_list(
+    original_participants_sessions_to_run: list[tuple[str, str]],
+    list_content: list[tuple[str, str]],
+    final_participants_sessions_to_run: list[tuple[str, str]],
+    workflow: PipelineWorkflow,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+):
+    fpath_list = tmp_path / "to_run.tsv"
+    pd.DataFrame(list_content).to_csv(fpath_list, sep="\t", header=False, index=False)
+
+    workflow.use_list = fpath_list
+
+    mocker.patch.object(
+        workflow,
+        "get_participants_sessions_to_run",
+        return_value=original_participants_sessions_to_run,
+    )
+    mocked_run_single = mocker.patch.object(workflow, "run_single")
+
+    workflow.run_main()
+
+    for participant_id, session_id in final_participants_sessions_to_run:
+        mocked_run_single.assert_any_call(participant_id, session_id)
+
+
+def test_run_main_use_list_not_found(
+    workflow: PipelineWorkflow, tmp_path: Path, mocker: pytest_mock.MockFixture
+):
+    fpath_list = tmp_path / "to_run.tsv"
+    workflow.use_list = fpath_list
+
+    assert not fpath_list.exists(), "File cannot exist"
+
+    mocker.patch.object(
+        workflow,
+        "get_participants_sessions_to_run",
+        return_value=[("01", "A")],
+    )
+
+    with pytest.raises(
+        FileNotFoundError,
+        match=f"Participant-session list file {fpath_list} not found",
+    ):
+        workflow.run_main()
+
+
+def test_run_main_use_list_empty_file(
+    workflow: PipelineWorkflow,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+):
+    fpath_list: Path = tmp_path / "to_run.tsv"
+    workflow.use_list = fpath_list
+
+    fpath_list.touch()
+
+    mocker.patch.object(
+        workflow,
+        "get_participants_sessions_to_run",
+        return_value=[("01", "A")],
+    )
+
+    with pytest.raises(
+        RuntimeError, match=f"Participant-session list file {fpath_list} is empty"
+    ):
+        workflow.run_main()
 
 
 @pytest.mark.parametrize(

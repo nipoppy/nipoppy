@@ -593,7 +593,19 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         )
 
         if self.use_list is not None:
-            df_participants_sessions = pd.read_csv(self.use_list, header=None, sep="\t")
+            try:
+                df_participants_sessions = pd.read_csv(
+                    self.use_list, header=None, sep="\t", dtype=str
+                )
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"Participant-session list file {self.use_list} not found"
+                )
+            except pd.errors.EmptyDataError:
+                raise RuntimeError(
+                    f"Participant-session list file {self.use_list} is empty"
+                )
+
             participants_sessions = set(participants_sessions) & set(
                 df_participants_sessions.itertuples(index=False, name=None)
             )
