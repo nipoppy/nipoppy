@@ -22,11 +22,11 @@ from nipoppy.env import (
 from nipoppy.layout import DatasetLayout
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import (
+from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
-    save_json,
     session_id_to_bids_session_id,
 )
+from nipoppy.utils.utils import save_json
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
@@ -95,7 +95,7 @@ def datetime_fixture(
 
     See https://stackoverflow.com/a/75591976 for mocking datetime.datetime.now
     """
-    mocked_datetime = mocker.patch("nipoppy.utils.datetime")
+    mocked_datetime = mocker.patch("nipoppy.utils.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime

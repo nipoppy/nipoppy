@@ -5,7 +5,7 @@ from collections import defaultdict
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PROGRAM_NAME, LogColor, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import load_json
+from nipoppy.utils.utils import load_json
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 

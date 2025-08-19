@@ -11,7 +11,13 @@ from typing_extensions import Self
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import FIELD_DESCRIPTION_MAP, check_participant_id, check_session_id
+from nipoppy.utils.bids import (
+    check_participant_id,
+    check_session_id,
+)
+from nipoppy.utils.utils import (
+    FIELD_DESCRIPTION_MAP,
+)
 
 
 class DicomDirMapModel(BaseTabularModel):

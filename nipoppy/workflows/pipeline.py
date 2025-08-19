@@ -40,18 +40,20 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import (
-    FPATH_HPC_TEMPLATE,
+from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
-    apply_substitutions_to_json,
     check_participant_id,
     check_session_id,
     create_bids_db,
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
+from nipoppy.utils.utils import (
+    FPATH_HPC_TEMPLATE,
+    apply_substitutions_to_json,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_participant_id,
     process_template_str,
-    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
 

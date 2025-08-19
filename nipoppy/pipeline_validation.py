@@ -19,7 +19,7 @@ from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import load_json
+from nipoppy.utils.utils import load_json
 
 PIPELINE_TYPE_TO_CLASS = {
     PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
