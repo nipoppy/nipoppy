@@ -22,7 +22,7 @@ The motivation behind creating Nipoppy
 :::{grid-item-card}  [Installation](overview/installation)
 Instructions to set up Nipoppy package
 :::
-:::{grid-item-card}  [Quickstart](overview/quickstart)
+:::{grid-item-card}  [Quickstart](overview/quickstart/index.md)
 A user guide to get started
 :::
 ::::
@@ -37,7 +37,7 @@ caption: Overview
 ---
 overview/why_nipoppy/index
 overview/installation
-overview/quickstart
+overview/quickstart/index
 ```
 
 ```{toctree}
