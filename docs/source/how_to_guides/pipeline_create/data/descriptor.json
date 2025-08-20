@@ -1,0 +1,133 @@
+{
+    "author": "Oxford Centre for Functional MRI of the Brain (FMRIB)",
+    "name": "FSL SIENA",
+    "description": "SIENA is a package for both single-time-point (\"cross-sectional\") and two-time-point (\"longitudinal\") analysis of brain change, in particular, the estimation of atrophy (volumetric loss of brain tissue)",
+    "tool-version": "6.0.4",
+    "schema-version": "0.5",
+    "command-line": "/opt/fsl-6.0.4/bin/siena [INPUT1] [INPUT2] [OUTPUT_DIR] [DEBUG] [BET_OPTS] [TWO_CLASS_SEGMENTATION] [T2_WEIGHTED] [STANDARD_SPACE_MASKING] [IGNORE_UPWARDS] [IGNORE_DOWNWARDS] [SIENA_DIFF_OPTS] [VIENA] [VENTRICLE_MASK_IMAGE]",
+    "container-image": {
+        "image": "mathdugre/fsl:6.0.4",
+        "index": "docker://",
+        "type": "singularity"
+    },
+    "inputs": [
+        {
+            "id": "input1",
+            "name": "First T1 weighted image",
+            "optional": false,
+            "type": "String",
+            "value-key": "[INPUT1]"
+        },
+        {
+            "id": "input2",
+            "name": "Second T1 weighted image",
+            "optional": false,
+            "type": "String",
+            "value-key": "[INPUT2]"
+        },
+        {
+            "command-line-flag": "-o",
+            "id": "output_dir",
+            "name": "set output directory (default output is <input1>_to_<input2>_siena)",
+            "optional": true,
+            "type": "String",
+            "value-key": "[OUTPUT_DIR]"
+        },
+        {
+            "command-line-flag": "-d",
+            "id": "debug",
+            "name": "debug (don't delete intermediate files)",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[DEBUG]"
+        },
+        {
+            "command-line-flag": "-B",
+            "id": "bet_opts",
+            "name": "options to pass to BET brain extraction (inside double-quotes), e.g. -B \"-f 0.3\"",
+            "optional": true,
+            "type": "String",
+            "value-key": "[BET_OPTS]"
+        },
+        {
+            "command-line-flag": "-2",
+            "id": "two_class_segmentation",
+            "name": "two-class segmentation (don't segment grey and white matter separately)",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[TWO_CLASS_SEGMENTATION]"
+        },
+        {
+            "command-line-flag": "-t2",
+            "id": "t2_weighted",
+            "name": "T2-weighted input image (default T1-weighted)",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[T2_WEIGHTED]"
+        },
+        {
+            "command-line-flag": "-m",
+            "id": "standard_space_masking",
+            "name": "use standard-space masking as well as BET",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[STANDARD_SPACE_MASKING]"
+        },
+        {
+            "command-line-flag": "-t",
+            "id": "ignore_upwards",
+            "name": "ignore from t (mm) upwards in MNI152/Talairach space",
+            "optional": true,
+            "type": "Number",
+            "value-key": "[IGNORE_UPWARDS]"
+        },
+        {
+            "command-line-flag": "-b",
+            "id": "ignore_downwards",
+            "name": "ignore from b (mm) downwards in MNI152/Talairach space (b should probably be negative)",
+            "optional": true,
+            "type": "Number",
+            "value-key": "[IGNORE_DOWNWARDS]"
+        },
+        {
+            "command-line-flag": "-S",
+            "id": "siena_diff_opts",
+            "name": "options to pass to siena_diff timepoint differencing (inside double-quotes), e.g. -S \"-s -i 20\"",
+            "optional": true,
+            "type": "String",
+            "value-key": "[SIENA_DIFF_OPTS]"
+        },
+        {
+            "command-line-flag": "-V",
+            "id": "viena",
+            "name": "run ventricle analysis (VIENA)",
+            "optional": true,
+            "type": "Flag",
+            "value-key": "[VIENA]"
+        },
+        {
+            "command-line-flag": "-v",
+            "id": "ventricle_mask_image",
+            "name": "optional user-supplied ventricle mask (default is /opt/fsl-6.0.4/data/standard/MNI152_T1_2mm_VentricleMask)",
+            "optional": true,
+            "type": "String",
+            "value-key": "[VENTRICLE_MASK_IMAGE]"
+        }
+    ],
+    "output-files": [
+        {
+            "id": "output1",
+            "name": "Output directory",
+            "optional": false,
+            "path-template": "[OUTPUT_DIR]"
+        }
+    ],
+    "tags": {
+        "domain": [
+            "neuroimaging",
+            "mri",
+            "fmri"
+        ],
+        "toolbox": "fsl"
+    }
+}
