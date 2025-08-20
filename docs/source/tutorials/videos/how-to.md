@@ -6,14 +6,14 @@ This tutorial series is meant to give you a hands-on experience of the Nipoppy t
 $ git clone https://github.com/nipoppy/tutorial-dataset.git
 ```
 
-or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and download the data without using `git`. We show in the videos how to! 
+or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and download the data without using `git`. We show in the videos how to!
 
 ## 1. nipoppy init
 
-In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will 
+In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
 - run the `nipoppy init` command
 - discover the directories that follow the Nipoppy specification
-- explore the `nipoppy status` command 
+- explore the `nipoppy status` command
 - modify the content of the `manifest.tsv` file according to our dataset
 - and run the `nipoppy track-curation --regenerate` command
 
@@ -21,7 +21,7 @@ In this tutorial we will cover how to create a new Nipoppy dataset. More concret
 
 ## 2. nipoppy pipeline
 
-In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. More concretely, we will 
+In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. More concretely, we will
 - explore the `nipoppy pipeline` subcommands
 - learn how to share containers
 - set pipeline configurations
