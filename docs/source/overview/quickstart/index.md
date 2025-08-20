@@ -1,6 +1,6 @@
 # Quickstart
 
-This page is intended to give you a quick first run through the curation and processing stages with Nipoppy using real dicom data from an example dataset.
+This page is intended to give you a quick first run through the curation and processing stages with Nipoppy using real DICOM data from an example dataset.
 
 ```{important}
 See the [Installation instructions](../installation.md) first if you have not yet installed Nipoppy and do not forget to activate your Nipoppy environment.
@@ -31,7 +31,7 @@ $ mv tutorial-dataset/bidsify/dcm2bids_config.json my-example-study/code
 $ mv tutorial-dataset/bidsify/participants.tsv tutorial-dataset/bidsify/dataset_description.json my-example-study/bids
 ```
 
-See the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the `dcm2bids_config.json` and the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about `valid BIDS dataset` requirements.
+See the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/#building-the-configuration-file) docs for info about the `dcm2bids_config.json` and the [BIDS](https://bids.neuroimaging.io/getting_started/tutorials/annotation.html) docs for info about valid BIDS dataset requirements.
 
 
 **3.** Change directory into your Nipoppy dataset:
@@ -108,7 +108,7 @@ A newly initialized Nipoppy dataset does not contain any pipeline setups or cont
 ```{code-block} console
 $ nipoppy pipeline search dcm2bids
 ```
-**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (15428012 at the time of writing) and run:
+**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (16876754 at the time of writing) and run:
 ```{code-block} console
 $ nipoppy pipeline install 15428012
 ```
@@ -204,7 +204,7 @@ INFO            - mriqc (23.1.0)
 
 ...
 ```
-**3.** Create a new directory in the Nipoppy dataset root called templateflow (required by MRIQC, see [TemplateFlow](https://www.templateflow.org/) docs):
+**3.** Create a new directory in the Nipoppy dataset root called `templateflow` (required by MRIQC, see [TemplateFlow](https://www.templateflow.org/) docs):
 ```{code-block} console
 $ mkdir templateflow
 ```
