@@ -108,9 +108,9 @@ A newly initialized Nipoppy dataset does not contain any pipeline setups or cont
 ```{code-block} console
 $ nipoppy pipeline search dcm2bids
 ```
-**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (15428012 at the time of writing) and run:
+**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (16876754 at the time of writing) and run:
 ```{code-block} console
-$ nipoppy pipeline install 15428012
+$ nipoppy pipeline install 16876754
 ```
 **3.** Choose to install the container as well or not: `y/n`
 
