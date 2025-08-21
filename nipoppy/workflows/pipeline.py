@@ -156,12 +156,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         verbose: bool = False,
         dry_run=False,
     ):
-        if (use_list is not None) and (participant_id or session_id):
-            raise ValueError(
-                "Filtering by participant or session ID when a list of participants "
-                "and sessions is specified is not supported."
-            )
-
         if hpc and (write_list is not None):
             raise ValueError(
                 "HPC job submission and writing a list of participants and sessions "
