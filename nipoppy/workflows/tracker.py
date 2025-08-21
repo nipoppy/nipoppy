@@ -142,22 +142,21 @@ class PipelineTracker(BasePipelineWorkflow):
             tracker_config.PATHS, tracker_config.PARTICIPANT_SESSION_DIR
         )
         self.logger.debug(f"Status: {status}")
-        self.processing_status_table = (
-            self.processing_status_table.add_or_update_records(
-                {
-                    ProcessingStatusTable.col_participant_id: participant_id,
-                    ProcessingStatusTable.col_session_id: session_id,
-                    ProcessingStatusTable.col_pipeline_name: self.pipeline_name,
-                    ProcessingStatusTable.col_pipeline_version: self.pipeline_version,
-                    ProcessingStatusTable.col_pipeline_step: self.pipeline_step,
-                    ProcessingStatusTable.col_status: status,
-                }
-            )
-        )
-        return status
+        processing_status_record = {
+            ProcessingStatusTable.col_participant_id: participant_id,
+            ProcessingStatusTable.col_session_id: session_id,
+            ProcessingStatusTable.col_pipeline_name: self.pipeline_name,
+            ProcessingStatusTable.col_pipeline_version: self.pipeline_version,
+            ProcessingStatusTable.col_pipeline_step: self.pipeline_step,
+            ProcessingStatusTable.col_status: status,
+        }
+        return processing_status_record
 
     def run_cleanup(self):
-        """Save the processing status file."""
+        """Update the processing status file."""
+        self.processing_status_table = (
+            self.processing_status_table.add_or_update_records(self.run_single_results)
+        )
         self.logger.info(
             "New/updated processing status table shape: "
             f"{self.processing_status_table.shape}"

@@ -185,6 +185,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.n_success = 0
         self.n_total = 0
 
+        self.run_single_results = None
+
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
@@ -601,7 +603,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             Run a single participant/session and handle exceptions.
 
             This is a helper function for parallelization with joblib.
-            Returns True if the run was successful, False otherwise.
+            Returns (True, <result>) if the run was successful, (False, None) otherwise.
             """
             # need to reinitialize the logger if we are running in parallel
             if len(self.logger.handlers) == 0:
@@ -613,8 +615,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
             try:
                 # success
-                self.run_single(participant_id, session_id)
-                return True
+                return True, self.run_single(participant_id, session_id)
             except Exception as exception:
                 self.logger.error(
                     f"Error running {self.pipeline_name} {self.pipeline_version}"
@@ -623,7 +624,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 )
 
             # failure
-            return False
+            return False, None
 
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
@@ -648,8 +649,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 delayed(_run_single_wrapper)(participant_id, session_id)
                 for participant_id, session_id in participants_sessions
             )
-            self.n_success += sum(results)
-            self.n_total += len(results)
+
+            if len(results) == 0:
+                run_statuses = []
+                run_single_results = []
+            else:
+                run_statuses, run_single_results = zip(*results)
+
+            self.n_success += sum(run_statuses)
+            self.n_total += len(run_statuses)
+            self.run_single_results = run_single_results
 
             # update return code if needed
             if (self.n_success != self.n_total) and (self.n_total != 0):

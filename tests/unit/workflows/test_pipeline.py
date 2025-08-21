@@ -61,6 +61,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         self.logger.info(f"Running on {participant_id}, {session_id}")
         if participant_id == "FAIL":
             raise RuntimeError("FAIL")
+        return "SUCCESS"
 
 
 @pytest.fixture(scope="function")
@@ -912,6 +913,7 @@ def test_run_main(
     workflow.run_main()
     assert workflow.n_total == expected_count
     assert workflow.n_success == expected_count
+    assert workflow.run_single_results == tuple(["SUCCESS"] * expected_count)
 
 
 def test_run_main_analysis_level(
