@@ -130,6 +130,18 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         ),
         (
             [
+                "bidsify",
+                "--dataset",
+                "[mocked_dir]",
+                "--pipeline",
+                "my_pipeline",
+                "--use-list",
+                "[mocked_file]",
+            ],
+            "nipoppy.workflows.bids_conversion.BidsConversionRunner",
+        ),
+        (
+            [
                 "process",
                 "--dataset",
                 "[mocked_dir]",
@@ -235,10 +247,14 @@ def test_cli_command(
 ):
     """Test that the CLI commands run the expected workflows."""
     # Required for some Click commands to work properly
-    tmp_path.joinpath("mocked_dir").mkdir(exist_ok=False)
+    mocked_dir = tmp_path.joinpath("mocked_dir")
+    mocked_dir.mkdir(exist_ok=False)
+    mocked_file = tmp_path.joinpath("mocked_file")
+    mocked_file.touch()
 
     # Hack to inject the mocked directory into the command
-    command = [arg.replace("[mocked_dir]", str(tmp_path)) for arg in command]
+    command = [arg.replace("[mocked_dir]", str(mocked_dir)) for arg in command]
+    command = [arg.replace("[mocked_file]", str(mocked_file)) for arg in command]
 
     if workflow:
         mocker.patch(f"{workflow}.run")
