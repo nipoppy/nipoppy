@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import shlex
+import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
@@ -13,7 +14,6 @@ from typing import Iterable, Optional, Tuple, Type
 import bids
 import pandas as pd
 from jinja2 import Environment, meta
-from joblib import Parallel, delayed
 from packaging.version import Version
 from pydantic import ValidationError
 from pysqa import QueueAdapter
@@ -56,6 +56,29 @@ from nipoppy.utils import (
     session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+try:
+    from joblib import Parallel, delayed
+
+    JOBLIB_INSTALLED = True
+
+except ImportError as error:
+    if str(error).startswith("No module named 'joblib'"):
+
+        JOBLIB_INSTALLED = False
+
+        class Parallel:
+            """No-op fallback to be used if joblib is not installed."""
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def __call__(self, generator):
+                """Wrap output in a list."""
+                return list(generator)
+
+    else:
+        raise
 
 
 def apply_analysis_level(
@@ -161,6 +184,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     ):
         if n_jobs is not None and not _skip_logfile:
             raise ValueError("n_jobs is not supported when _skip_logfile is False.")
+        if n_jobs is None:
+            n_jobs = 1
 
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
@@ -186,6 +211,13 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.n_total = 0
 
         self.run_single_results = None
+
+        if not JOBLIB_INSTALLED and self.n_jobs not in (None, 1):
+            self.logger.error(
+                "An additional dependency is required to enable local parallelization "
+                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
+            )
+            sys.exit(ReturnCode.MISSING_DEPENDENCY)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -646,7 +678,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self._submit_hpc_job(participants_sessions)
         else:
             results = Parallel(n_jobs=self.n_jobs)(
-                delayed(_run_single_wrapper)(participant_id, session_id)
+                (
+                    _run_single_wrapper(participant_id, session_id)
+                    if not JOBLIB_INSTALLED
+                    else delayed(_run_single_wrapper)(participant_id, session_id)
+                )
                 for participant_id, session_id in participants_sessions
             )
 

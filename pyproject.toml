@@ -19,7 +19,6 @@ dependencies = [
     "click",
     "httpx",
     "jinja2",
-    "joblib",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
@@ -38,6 +37,7 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
+parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -52,7 +52,7 @@ doc = [
     "sphinx-togglebutton",
     "sphinx_design",
 ]
-dev = ["nipoppy[doc,test,gui]", "pre-commit"]
+dev = ["nipoppy[parallel,doc,test,gui]", "pre-commit"]
 test = [
     "fids>=0.1.0",
     "packaging",
