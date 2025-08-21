@@ -235,6 +235,46 @@ def test_init(args):
 
 
 @pytest.mark.parametrize(
+    "args, exception_class, exception_message",
+    [
+        (
+            {
+                "dpath_root": "my_dataset",
+                "pipeline_name": "my_pipeline",
+                "hpc": "slurm",
+                "write_list": "list.tsv",
+            },
+            ValueError,
+            "HPC job submission and writing a list of participants and sessions are mutually exclusive.",  # noqa: E501
+        ),
+        (
+            {
+                "dpath_root": "my_dataset",
+                "pipeline_name": "my_pipeline",
+                "participant_id": "01",
+                "use_list": "to_run.tsv",
+            },
+            ValueError,
+            "Filtering by participant or session ID when a list of participants and sessions is specified is not supported.",  # noqa: E501
+        ),
+        (
+            {
+                "dpath_root": "my_dataset",
+                "pipeline_name": "my_pipeline",
+                "session_id": "A",
+                "use_list": "to_run.tsv",
+            },
+            ValueError,
+            "Filtering by participant or session ID when a list of participants and sessions is specified is not supported.",  # noqa: E501
+        ),
+    ],
+)
+def test_init_errors(args, exception_class, exception_message):
+    with pytest.raises(exception_class, match=exception_message):
+        PipelineWorkflow(**args)
+
+
+@pytest.mark.parametrize(
     "participant_id,session_id,participant_expected,session_expected",
     [
         ("01", "BL", "01", "BL"),
