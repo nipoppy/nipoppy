@@ -21,7 +21,7 @@ class PipelineTracker(BasePipelineWorkflow):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
-        n_jobs: Optional[int] = 1,
+        n_jobs: int = 1,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,

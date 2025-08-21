@@ -41,6 +41,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
+from nipoppy.logger import get_logger
 from nipoppy.utils import (
     FPATH_HPC_TEMPLATE,
     add_pybids_ignore_patterns,
@@ -152,12 +153,15 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         session_id: str = None,
         hpc: Optional[str] = None,
         write_list: Optional[StrOrPathLike] = None,
-        n_jobs: Optional[int] = 1,
+        n_jobs: Optional[int] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run=False,
         _skip_logfile: bool = False,
     ):
+        if n_jobs is not None and not _skip_logfile:
+            raise ValueError("n_jobs is not supported when _skip_logfile is False.")
+
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
@@ -599,6 +603,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             This is a helper function for parallelization with joblib.
             Returns True if the run was successful, False otherwise.
             """
+            # need to reinitialize the logger if we are running in parallel
+            if len(self.logger.handlers) == 0:
+                self.logger = get_logger(name=self.logger.name, verbose=self.verbose)
+
             self.logger.info(
                 f"Running for participant {participant_id}, session {session_id}"
             )

@@ -254,6 +254,18 @@ def test_init_participant_session(
     assert workflow.session_id == session_expected
 
 
+def test_init_n_jobs_logfile():
+    with pytest.raises(
+        ValueError, match="n_jobs is not supported when _skip_logfile is False."
+    ):
+        PipelineWorkflow(
+            dpath_root="my_dataset",
+            pipeline_name="my_pipeline",
+            n_jobs=2,
+            _skip_logfile=False,
+        )
+
+
 def test_pipeline_version_optional():
     workflow = PipelineWorkflow(
         dpath_root="my_dataset",
@@ -878,14 +890,17 @@ def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool)
     "participant_id,session_id,expected_count",
     [(None, None, 4), ("01", None, 3), ("01", "2", 1)],
 )
+@pytest.mark.parametrize("n_jobs", [1, 2])
 def test_run_main(
     workflow: PipelineWorkflow,
     participant_id,
     session_id,
     expected_count,
+    n_jobs,
 ):
     workflow.participant_id = participant_id
     workflow.session_id = session_id
+    workflow.n_jobs = n_jobs
 
     participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
     manifest = prepare_dataset(
