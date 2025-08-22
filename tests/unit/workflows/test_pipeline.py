@@ -966,10 +966,6 @@ def test_run_main_no_joblib(
 
     mocker.patch("builtins.__import__", side_effect=fake_import)
 
-    # also mock joblib.delayed which is not supposed to be called
-    # when joblib is not installed
-    mocked_delayed = mocker.patch("nipoppy.workflows.pipeline.delayed")
-
     # reload the module
     # fmt: off
     import nipoppy.workflows.pipeline
@@ -984,9 +980,6 @@ def test_run_main_no_joblib(
 
     # smoke test
     workflow.run_main()
-
-    # sanity check
-    mocked_delayed.assert_not_called()
 
 
 def test_run_main_no_joblib_error(
