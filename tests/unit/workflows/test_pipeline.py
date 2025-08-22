@@ -935,7 +935,7 @@ def test_run_main_n_jobs(workflow: PipelineWorkflow, n_jobs: int):
     # fmt: off
     # make sure joblib is installed
     from nipoppy.workflows.pipeline import JOBLIB_INSTALLED
-    assert JOBLIB_INSTALLED
+    assert JOBLIB_INSTALLED, "joblib must be installed"
     # fmt: on
 
     workflow.n_jobs = n_jobs
@@ -995,7 +995,29 @@ def test_run_main_no_joblib(
     mocked_delayed.assert_not_called()
 
 
-def test_run_main_no_joblib_error(
+def test_run_main_joblib_import_fails(
+    mocker: pytest_mock.MockFixture,
+):
+    """Test that ImportError is propagated if joblib exists but import fails."""
+    # pretend that joblib is not installed
+    real_import = builtins.__import__
+    error_message = "Unexpected exception during import"
+
+    def fake_import(name, *args, **kwargs):
+        if name == "joblib":
+            raise ImportError(error_message)
+        return real_import(name, *args, **kwargs)
+
+    mocker.patch("builtins.__import__", side_effect=fake_import)
+
+    # reload the module
+    import nipoppy.workflows.pipeline
+
+    with pytest.raises(ImportError, match=error_message):
+        importlib.reload(nipoppy.workflows.pipeline)
+
+
+def test_run_main_n_jobs_but_no_joblib(
     tmp_path: Path,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
