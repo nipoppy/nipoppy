@@ -234,23 +234,17 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
-@pytest.mark.parametrize(
-    "args, exception_class, exception_message",
-    [
-        (
-            {
-                "dpath_root": "my_dataset",
-                "pipeline_name": "my_pipeline",
-                "hpc": "slurm",
-                "write_list": "list.tsv",
-            },
-            ValueError,
-            "HPC job submission and writing a list of participants and sessions are mutually exclusive.",  # noqa: E501
-        ),
-    ],
-)
-def test_init_errors(args, exception_class, exception_message):
-    with pytest.raises(exception_class, match=exception_message):
+def test_init_errors():
+    args = {
+        "dpath_root": "my_dataset",
+        "pipeline_name": "my_pipeline",
+        "hpc": "slurm",
+        "write_list": "list.tsv",
+    }
+    with pytest.raises(
+        ValueError,
+        match="HPC job submission and writing a list of participants and sessions are mutually exclusive.",  # noqa: E501
+    ):
         PipelineWorkflow(**args)
 
 

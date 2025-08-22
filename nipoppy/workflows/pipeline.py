@@ -156,7 +156,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         verbose: bool = False,
         dry_run=False,
     ):
-        if hpc and (write_list is not None):
+        if hpc and write_list:
             raise ValueError(
                 "HPC job submission and writing a list of participants and sessions "
                 "are mutually exclusive."
