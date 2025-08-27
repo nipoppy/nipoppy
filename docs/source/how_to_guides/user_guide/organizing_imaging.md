@@ -11,7 +11,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Raw imaging data in {{dpath_pre_reorg}}
     - See <project:populating.md>
 
@@ -84,7 +84,7 @@ More granular customization can also be achieved for both the input file paths a
 ### Using the command-line interface
 
 ```console
-$ nipoppy reorg --datatset <DATASET_ROOT>
+$ nipoppy reorg --datatset <NIPOPPY_PROJECT_ROOT>
 ```
 
 See the [CLI reference page](<project:../../cli_reference/reorg.rst>) for more information on optional arguments (e.g., reading DICOM headers to check the image type, and copying files instead of creating symlinks).

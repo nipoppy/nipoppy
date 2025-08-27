@@ -1,4 +1,4 @@
-<DATASET_ROOT>
+<NIPOPPY_PROJECT_ROOT>
 └── sourcedata/
     └── imaging/
         └── post_reorg/

@@ -2,7 +2,7 @@
 
 This guide shows how to run a pipeline with Nipoppy.
 
-## List installed pipelines
+## Listing installed pipelines
 
 The `nipoppy pipeline list` command displays pipelines that can be run for a given dataset. Here is an example command output:
 
@@ -24,7 +24,7 @@ INFO             - static_FC (0.1.0)
 
 If the pipeline you want to run is not listed, you will have to [install](<project:../pipeline_install/index.md>) it first.
 
-## Run the pipeline
+## Running the pipeline
 
 The command to run a pipeline depends on the **pipeline type**:
 - BIDSification pipelines: [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>)
@@ -35,7 +35,7 @@ The minimal command to run any of these commands is:
 
 ```console
 $ nipoppy <SUBCOMMAND> \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 
@@ -49,7 +49,7 @@ The above command will run the pipeline on all participants and/or sessions who 
 
 ```console
 $ nipoppy <SUBCOMMAND> \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
@@ -61,7 +61,7 @@ We recommend always testing a new pipeline **in simulate mode** with a single pa
 
 ```console
 $ nipoppy process \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline fmriprep \
     --pipeline-version 24.1.1 \
     --participant-id <PARTICIPANT_ID> \

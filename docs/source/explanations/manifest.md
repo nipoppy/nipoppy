@@ -1,6 +1,6 @@
 # The manifest file
 
-The Nipoppy manifest file is a TSV file that contains *ground truth* information about the participants, visits, sessions, and imaging datatypes available in a dataset.
+The Nipoppy manifest file is a TSV file that contains *expected availability* information about the participants, visits, sessions, and imaging datatypes available in a dataset.
 
 Here is an example manifest file:
 

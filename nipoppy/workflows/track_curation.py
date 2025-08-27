@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
@@ -19,7 +19,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         self,
         dpath_root: Path,
         empty: bool = False,
-        regenerate: bool = False,
+        force: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -34,7 +34,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         )
 
         self.empty = empty
-        self.regenerate = regenerate
+        self.force = force
 
     def run_main(self):
         """Generate/update the dataset's curation status file."""
@@ -45,7 +45,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         empty = self.empty
         logger = self.logger
 
-        if fpath_table.exists() and not self.regenerate:
+        if fpath_table.exists() and not self.force:
             old_table = CurationStatusTable.load(fpath_table)
             logger.info(
                 f"Found existing curation status file (shape: {old_table.shape})"
@@ -62,7 +62,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             )
 
         else:
-            if self.regenerate:
+            if self.force:
                 logger.info("Regenerating the entire curation status file")
             else:
                 logger.info(
@@ -83,8 +83,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
 
     def run_cleanup(self):
         """Log a success message."""
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully generated/updated the dataset's "
-            "curation status file![/]"
+        self.logger.success(
+            "Successfully generated/updated the dataset's curation status file"
         )
         return super().run_cleanup()

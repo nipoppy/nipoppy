@@ -1,6 +1,7 @@
 """Logger."""
 
 import logging
+import types
 from functools import partial
 from pathlib import Path
 from typing import Optional
@@ -8,21 +9,38 @@ from typing import Optional
 import rich_click as click
 from rich.logging import RichHandler
 
-from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
-from nipoppy.env import IS_TESTING, StrOrPathLike
+from nipoppy.console import _Console
+from nipoppy.env import IS_TESTING, LogColor, StrOrPathLike
 
 DATE_FORMAT = "[%Y-%m-%d %X]"
 FORMAT_RICH = "%(message)s"
 FORMAT_FILE = "%(asctime)s %(levelname)-7s %(message)s"
 
 
+def success(self, message, *args, **kwargs):
+    """Log a success message.
+
+    Standardize format for success messages.
+
+    Parameters
+    ----------
+    message : str
+        The message to log.
+    """
+    self._log(
+        logging.INFO,
+        f"[{LogColor.SUCCESS}]{message} 🎉🎉🎉[/]",
+        args,
+        **kwargs,
+    )
+
+
 def get_logger(
-    name: Optional[str] = "nipoppy", level: int = logging.INFO
+    name: Optional[str] = "nipoppy", verbose: bool = False
 ) -> logging.Logger:
     """Create/get a logger with rich formatting."""
-    # create logger
     logger = logging.getLogger(name=name)
-    logger.setLevel(level)
+    logger.setLevel(logging.DEBUG)
 
     # propagate should be False to avoid duplicates from root logger
     # except when testing because otherwise pytest does not capture the logs
@@ -39,15 +57,19 @@ def get_logger(
         tracebacks_suppress=[click],
     )
 
-    # stream WARNING and above to stderr with rich formatting
-    stderr_handler = rich_handler(console=CONSOLE_STDERR)
-    stderr_handler.addFilter(lambda record: record.levelno >= logging.WARNING)
+    # stderr: ERROR and CRITICAL
+    stderr_handler = rich_handler(logging.ERROR, console=_Console(stderr=True))
     logger.addHandler(stderr_handler)
 
-    # stream levels below WARNING to stdout with rich formatting
-    stdout_handler = rich_handler(console=CONSOLE_STDOUT)
-    stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+    # stdout: INFO and WARNING
+    # If verbosity is enabled, also display DEBUG
+    verbosity = logging.DEBUG if verbose else logging.INFO
+    stdout_handler = rich_handler(verbosity, console=_Console(stderr=False))
+    stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
     logger.addHandler(stdout_handler)
+
+    # Add custom method for SUCCESS level
+    setattr(logger, "success", types.MethodType(success, logger))
 
     return logger
 

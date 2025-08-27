@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "boutiques",
+    "boutiques>=0.5.30",
     "click",
     "httpx",
     "jinja2",
@@ -56,6 +56,7 @@ test = [
     "fids>=0.1.0",
     "packaging",
     "pytest-cov",
+    "pytest-httpx",
     "pytest-mock",
     "pytest>=6.0.0",
 ]
@@ -64,8 +65,8 @@ tui = ["trogon"]
 gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
-nipoppy = "nipoppy.cli:cli"
-nipoppy-gui = "nipoppy.cli:tui_launch"
+nipoppy = "nipoppy.cli.cli:cli"
+nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
@@ -83,7 +84,8 @@ source = "vcs"
 skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
-addopts = "-ra -q -vv"
+addopts = "--color=yes -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
+markers = ["api: mark a test as an api test."]
