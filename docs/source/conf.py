@@ -5,6 +5,9 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import os
+import re
+from datetime import datetime
+from pathlib import Path
 
 from nipoppy._version import __version__
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
@@ -13,7 +16,7 @@ from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Nipoppy"
-copyright = "2024, NeuroDataScience-ORIGAMI Lab"
+copyright = f"{datetime.today().year}, NeuroDataScience-ORIGAMI Lab"
 author = "NeuroDataScience-ORIGAMI Lab"
 
 # The version info for the project you're documenting, acts as replacement
@@ -245,6 +248,13 @@ jsonschema_options = {
 # -- Hoverxref configuration ---------------------------------------------------
 hoverxref_roles = [
     "term",
+]
+
+# -- Linkcheck configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-the-linkcheck-builder
+# Ignore links are defined in `./ignored_links.txt`
+linkcheck_ignore = [
+    re.escape(link) for link in Path("ignored_links.txt").read_text().splitlines()
 ]
 
 # # TODO

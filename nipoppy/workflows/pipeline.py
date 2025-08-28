@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import shlex
+import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
@@ -39,6 +40,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
+from nipoppy.logger import get_logger
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -58,6 +60,16 @@ from nipoppy.workflows.base import BaseDatasetWorkflow
 
 if TYPE_CHECKING:
     import bids
+try:
+    from joblib import Parallel, delayed
+
+    JOBLIB_INSTALLED = True
+
+except ImportError as error:
+    if str(error).startswith("No module named 'joblib'"):
+        JOBLIB_INSTALLED = False
+    else:
+        raise
 
 
 def apply_analysis_level(
@@ -153,19 +165,35 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        use_subcohort: Optional[StrOrPathLike] = None,
         hpc: Optional[str] = None,
-        write_list: Optional[StrOrPathLike] = None,
+        write_subcohort: Optional[StrOrPathLike] = None,
+        n_jobs: Optional[int] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run=False,
+        _skip_logfile: bool = False,
     ):
+        if hpc and write_subcohort:
+            raise ValueError(
+                "HPC job submission and writing a list of participants and sessions "
+                "are mutually exclusive."
+            )
+
+        if n_jobs is not None and not _skip_logfile:
+            raise ValueError("n_jobs is not supported when _skip_logfile is False.")
+        if n_jobs is None:
+            n_jobs = 1
+
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.use_subcohort = use_subcohort
         self.hpc = hpc
-        self.write_list = write_list
+        self.write_subcohort = write_subcohort
+        self.n_jobs = n_jobs
 
         super().__init__(
             dpath_root=dpath_root,
@@ -173,12 +201,22 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
+            _skip_logfile=_skip_logfile,
         )
 
         # the message logged in run_cleanup will depend on
         # the final values for these attributes (updated in run_main)
         self.n_success = 0
         self.n_total = 0
+
+        self.run_single_results = None
+
+        if not JOBLIB_INSTALLED and self.n_jobs not in (None, 1):
+            self.logger.error(
+                "An additional dependency is required to enable local parallelization "
+                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
+            )
+            sys.exit(ReturnCode.MISSING_DEPENDENCY)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -588,42 +626,94 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return to_return
 
+    def _run_single_wrapper(self, participant_id, session_id) -> bool:
+        """
+        Run a single participant/session and handle exceptions.
+
+        This is a helper function for parallelization with joblib.
+        Returns (True, <result>) if the run was successful, (False, None) otherwise.
+        """
+        # need to reinitialize the logger if we are running in parallel
+        if len(self.logger.handlers) == 0:
+            self.logger = get_logger(name=self.logger.name, verbose=self.verbose)
+
+        self.logger.info(
+            f"Running for participant {participant_id}, session {session_id}"
+        )
+
+        try:
+            # success
+            return True, self.run_single(participant_id, session_id)
+        except Exception as exception:
+            self.logger.error(
+                f"Error running {self.pipeline_name} {self.pipeline_version}"
+                f" on participant {participant_id}, session {session_id}"
+                f": {exception}"
+            )
+
+        # failure
+        return False, None
+
     def run_main(self):
         """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
 
+        if self.use_subcohort is not None:
+            try:
+                df_participants_sessions = pd.read_csv(
+                    self.use_subcohort, header=None, sep="\t", dtype=str
+                )
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"Subcohort file {self.use_subcohort} not found"
+                )
+            except pd.errors.EmptyDataError:
+                raise RuntimeError(f"Subcohort file {self.use_subcohort} is empty")
+
+            participants_sessions = set(participants_sessions) & set(
+                df_participants_sessions.itertuples(index=False, name=None)
+            )
+
         participants_sessions = apply_analysis_level(
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        # TODO mutually exclusive with HPC option
-        if self.write_list is not None:
+        if self.write_subcohort is not None:
             if not self.dry_run:
                 pd.DataFrame(participants_sessions).to_csv(
-                    self.write_list, header=False, index=False, sep="\t"
+                    self.write_subcohort, header=False, index=False, sep="\t"
                 )
-            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+            self.logger.info(f"Wrote subcohort to {self.write_subcohort}")
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
-            for participant_id, session_id in participants_sessions:
-                self.n_total += 1
-                self.logger.info(
-                    f"Running for participant {participant_id}, session {session_id}"
+            if JOBLIB_INSTALLED:
+                results = Parallel(n_jobs=self.n_jobs)(
+                    delayed(self._run_single_wrapper)(participant_id, session_id)
+                    for participant_id, session_id in participants_sessions
                 )
-                try:
-                    self.run_single(participant_id, session_id)
-                    self.n_success += 1
-                except Exception as exception:
-                    self.return_code = ReturnCode.PARTIAL_SUCCESS
-                    self.logger.error(
-                        f"Error running {self.pipeline_name} {self.pipeline_version}"
-                        f" on participant {participant_id}, session {session_id}"
-                        f": {exception}"
-                    )
+            else:
+                results = [
+                    self._run_single_wrapper(participant_id, session_id)
+                    for participant_id, session_id in participants_sessions
+                ]
+
+            if len(results) == 0:
+                run_statuses = []
+                run_single_results = []
+            else:
+                run_statuses, run_single_results = zip(*results)
+
+            self.n_success += sum(run_statuses)
+            self.n_total += len(run_statuses)
+            self.run_single_results = run_single_results
+
+            # update return code if needed
+            if (self.n_success != self.n_total) and (self.n_total != 0):
+                self.return_code = ReturnCode.PARTIAL_SUCCESS
 
     def _generate_cli_command_for_hpc(
         self, participant_id=None, session_id=None

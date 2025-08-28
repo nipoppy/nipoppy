@@ -11,7 +11,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Processed imaging data the {{dpath_pipeline_output}} directory
     - See <project:processing.md> for expected subdirectory structure
 

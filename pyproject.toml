@@ -37,6 +37,7 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
+parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -51,8 +52,9 @@ doc = [
     "sphinx-togglebutton",
     "sphinx_design",
 ]
-dev = ["nipoppy[doc,test,gui]", "pre-commit"]
+dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
+    "nipoppy[gui,parallel]",
     "fids>=0.1.0",
     "packaging",
     "pytest-cov",
@@ -84,7 +86,7 @@ source = "vcs"
 skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
-addopts = "-ra -q -vv"
+addopts = "--color=yes -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
