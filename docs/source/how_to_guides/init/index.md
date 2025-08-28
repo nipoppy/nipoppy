@@ -15,7 +15,7 @@ The following guides show how to initialize a new Nipoppy dataset from different
 :::{grid-item-card}  [Starting with non-BIDS data](non_bids)
 Initializing a new Nipoppy dataset with source imaging data **not** in {term}`BIDS`
 :::
-:::{grid-item-card}  [Starting with BIDS data](bids)
+:::{grid-item-card}  {doc}`Starting with BIDS data <bids>`
 Initializing a new Nipoppy dataset with source imaging data in {term}`BIDS`
 :::
 ::::
