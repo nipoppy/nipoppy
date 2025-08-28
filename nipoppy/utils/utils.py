@@ -8,14 +8,16 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import Optional
-
-import pandas as pd
+from typing import TYPE_CHECKING, Optional
 
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
+
+if TYPE_CHECKING:
+    import pandas as pd
+
 
 # user configs (pipeline configs, invocations, descriptors)
 TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")

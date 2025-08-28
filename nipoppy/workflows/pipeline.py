@@ -8,9 +8,8 @@ import shlex
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Type
 
-import bids
 import pandas as pd
 from jinja2 import Environment, meta
 from packaging.version import Version
@@ -56,6 +55,9 @@ from nipoppy.utils.utils import (
     process_template_str,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+if TYPE_CHECKING:
+    import bids
 
 
 def apply_analysis_level(

@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import List, Optional, Sequence
-
-import bids
+from typing import TYPE_CHECKING, List, Optional, Sequence
 
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
+
+if TYPE_CHECKING:
+    import bids
 
 
 def participant_id_to_bids_participant_id(participant_id: str) -> str:
@@ -129,6 +130,8 @@ def create_bids_db(
     resolve_paths=True,
 ) -> bids.BIDSLayout:
     """Create a BIDSLayout using an indexer."""
+    import bids
+
     dpath_bids = Path(dpath_bids)
     if resolve_paths:
         dpath_bids = dpath_bids.resolve()
