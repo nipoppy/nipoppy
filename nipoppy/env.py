@@ -52,6 +52,7 @@ class ReturnCode:
     INVALID_COMMAND = 2
     PARTIAL_SUCCESS = 64
     NO_PARTICIPANTS_OR_SESSIONS_TO_RUN = 65
+    MISSING_DEPENDENCY = 66
 
 
 class LogColor:
