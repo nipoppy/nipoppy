@@ -67,6 +67,7 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--hpc",
                 "--write-subcohort",
+                "--n-jobs",
             ],
         },
         {
@@ -246,6 +247,13 @@ def process(**params):
 @cli.command()
 @dataset_option
 @pipeline_options
+@click.option(
+    "--n-jobs",
+    type=int,
+    default=1,
+    show_default=True,
+    help=("Number of parallel workers to use."),
+)
 @global_options
 @layout_option
 def track_processing(**params):
