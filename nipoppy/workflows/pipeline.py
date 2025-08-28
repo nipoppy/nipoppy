@@ -64,19 +64,7 @@ try:
 
 except ImportError as error:
     if str(error).startswith("No module named 'joblib'"):
-
         JOBLIB_INSTALLED = False
-
-        class Parallel:
-            """No-op fallback to be used if joblib is not installed."""
-
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def __call__(self, generator):
-                """Wrap output in a list."""
-                return list(generator)
-
     else:
         raise
 
@@ -677,14 +665,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
-            results = Parallel(n_jobs=self.n_jobs)(
-                (
-                    _run_single_wrapper(participant_id, session_id)
-                    if not JOBLIB_INSTALLED
-                    else delayed(_run_single_wrapper)(participant_id, session_id)
+            if JOBLIB_INSTALLED:
+                results = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_run_single_wrapper)(participant_id, session_id)
+                    for participant_id, session_id in participants_sessions
                 )
-                for participant_id, session_id in participants_sessions
-            )
+            else:
+                results = [
+                    _run_single_wrapper(participant_id, session_id)
+                    for participant_id, session_id in participants_sessions
+                ]
 
             if len(results) == 0:
                 run_statuses = []
