@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 
 import httpx
 
-from nipoppy.console import CONSOLE_STDERR
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.logger import get_logger
 
 
@@ -330,7 +330,7 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
-        with CONSOLE_STDERR.status("Searching Nipoppy pipelines on Zenodo..."):
+        with CONSOLE_STDOUT.status("Searching Nipoppy pipelines on Zenodo..."):
             response = httpx.get(
                 f"{self.api_endpoint}/records",
                 headers=self.headers,
