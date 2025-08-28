@@ -37,7 +37,7 @@ Duration: 6:31m
 In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
 - explore the sourcedata directory
 - run the [`nipoppy reorg`](../../cli_reference/reorg.rst) command
-- and look at the [`curation_status.tsv](../../glossary.md) file
+- and look at the [`curation_status.tsv`](../../glossary.md) file
 
 Duration: 6:06m
 
