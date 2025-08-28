@@ -110,7 +110,7 @@ $ nipoppy pipeline search dcm2bids
 ```
 **2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (16876754 at the time of writing) and run:
 ```{code-block} console
-$ nipoppy pipeline install 15428012
+$ nipoppy pipeline install 16876754
 ```
 **3.** Choose to install the container as well or not: `y/n`
 
@@ -144,7 +144,7 @@ Usually you would start with running `nipoppy bidsify` with the first `--pipelin
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
             "dcm2bids": {
-                "3.1.0": {
+                "3.2.0": {
                     "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code/dcm2bids_config.json"
                 }
             }
@@ -217,7 +217,7 @@ $ mkdir templateflow
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
             "dcm2bids": {
-                "3.1.0": {
+                "3.2.0": {
                     "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code/dcm2bids_config.json"
                 }
             }
