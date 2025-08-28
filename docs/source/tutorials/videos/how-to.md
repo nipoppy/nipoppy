@@ -1,4 +1,4 @@
-# "How to?" Tutorial Series
+# "How to?" tutorial series
 
 This tutorial series is meant to give you a hands-on experience of the Nipoppy toolbox. Please have Nipoppy installed on your device (see [Installation](../../overview/installation.md)) and have our example dataset ready:
 
