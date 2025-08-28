@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import shlex
 from pathlib import Path
 
 import pytest
@@ -33,18 +34,47 @@ def test_cli_invalid(args):
     ), f"Expected invalid command exit code for: {args}\n{result.output}"
 
 
-def test_dep_params(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    nipoppy_study_path = tmp_path / "nipoppy_study"
-    result = runner.invoke(
-        cli,
-        ["init", str(nipoppy_study_path)],
-        catch_exceptions=False,
-    )
+@pytest.mark.parametrize(
+    "command,workflow,expected_warning",
+    [
+        (
+            ["init", "[tmp_path]/nipoppy_study"],
+            "nipoppy.workflows.dataset_init.InitWorkflow",
+            "Giving the dataset path without --dataset is deprecated",
+        ),
+        (
+            [
+                "process",
+                "--dataset",
+                "[tmp_path]/nipoppy_study",
+                "--pipeline",
+                "fake_pipeline",
+                "--write-list",
+                "[tmp_path]/subcohort.txt",
+            ],
+            "nipoppy.workflows.runner.PipelineRunner",
+            (
+                "The --write-list option is deprecated and will be removed in a future "
+                "version. Use --write-subcohort instead."
+            ),
+        ),
+    ],
+)
+def test_dep_params(
+    command: str,
+    workflow: str,
+    expected_warning,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    mocker.patch(f"{workflow}.run")
+    command = shlex.join(command).replace("[tmp_path]", str(tmp_path))
+    result = runner.invoke(cli, command, catch_exceptions=False)
 
     assert any(
         [
-            "Giving the dataset path without --dataset is deprecated" in record.message
-            and record.levelno == logging.WARNING
+            expected_warning in record.message and record.levelno == logging.WARNING
             for record in caplog.records
         ]
     )

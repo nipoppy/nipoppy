@@ -151,12 +151,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         session_id: str = None,
         use_subcohort: Optional[StrOrPathLike] = None,
         hpc: Optional[str] = None,
-        write_list: Optional[StrOrPathLike] = None,
+        write_subcohort: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run=False,
     ):
-        if hpc and write_list:
+        if hpc and write_subcohort:
             raise ValueError(
                 "HPC job submission and writing a list of participants and sessions "
                 "are mutually exclusive."
@@ -169,7 +169,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.session_id = check_session_id(session_id)
         self.use_subcohort = use_subcohort
         self.hpc = hpc
-        self.write_list = write_list
+        self.write_subcohort = write_subcohort
 
         super().__init__(
             dpath_root=dpath_root,
@@ -619,12 +619,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        if self.write_list is not None:
+        if self.write_subcohort is not None:
             if not self.dry_run:
                 pd.DataFrame(participants_sessions).to_csv(
-                    self.write_list, header=False, index=False, sep="\t"
+                    self.write_subcohort, header=False, index=False, sep="\t"
                 )
-            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+            self.logger.info(f"Wrote subcohort to {self.write_subcohort}")
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
