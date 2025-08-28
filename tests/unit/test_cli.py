@@ -261,8 +261,11 @@ def list_commands(group: click.Group, prefix=""):
 @pytest.mark.parametrize("command", list_commands(cli))
 def test_no_duplicated_flag(
     command: str,
-    caplog: pytest.LogCaptureFixture,
+    recwarn: pytest.WarningsRecorder,
 ):
     """Test that no duplicated flags are present in the CLI commands."""
-    runner.invoke(cli, f"nipoppy {command} --help", catch_exceptions=False)
-    assert "Remove its duplicate as parameters should be unique." not in caplog.text
+    runner.invoke(cli, f"{command} --help", catch_exceptions=False)
+    assert not any(
+        "Remove its duplicate as parameters should be unique." in str(warning.message)
+        for warning in recwarn
+    )
