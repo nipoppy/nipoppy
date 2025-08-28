@@ -16,6 +16,7 @@ In this tutorial we will cover how to create a new Nipoppy dataset. More concret
 - explore the [`nipoppy status`](../../cli_reference/status.rst) command
 - modify the content of the [`manifest.tsv`](../../explanations/manifest.md) file according to our dataset
 - and run the [`nipoppy track-curation --regenerate`](../../cli_reference/track_curation.rst) command
+
 Duration: 7:43m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/POHCcIHEezE?si=HYgD75sE0kwY0wIu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>

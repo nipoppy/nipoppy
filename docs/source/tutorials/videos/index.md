@@ -1,4 +1,4 @@
-# Nipoppy tutorial videos
+# Video series
 
 Learn all about the Nipoppy toolbox and its protocol and experience a full usage of all Nipoppy functionalities by following our tutorial series!
 
