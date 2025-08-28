@@ -64,7 +64,6 @@ def global_options(func):
     )(func)
     func = click.option(
         "--dry-run",
-        "-n",
         is_flag=True,
         help="Print commands but do not execute them.",
     )(func)
