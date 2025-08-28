@@ -59,13 +59,14 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--participant-id",
                 "--session-id",
+                "--use-subcohort",
             ],
         },
         {
             "name": "Parallelization",
             "options": [
                 "--hpc",
-                "--write-list",
+                "--write-subcohort",
                 "--n-jobs",
             ],
         },
@@ -113,15 +114,15 @@ if cli.commands.get("gui"):
 @click.option(
     "--bids-source",
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
-    help=("Path to a BIDS dataset to initialize the layout with."),
+    help="Path to a BIDS dataset to initialize the layout with.",
 )
 @click.option(
     "--force",
     "-f",
     is_flag=True,
     help=(
-        "Create a nipoppy dataset even if there are already files present."
-        " (May clobber existing files.)"
+        "Create a nipoppy dataset even if there are already files present"
+        " (may clobber existing files)."
     ),
 )
 @click.option(

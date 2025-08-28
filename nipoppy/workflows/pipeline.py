@@ -162,14 +162,21 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        use_subcohort: Optional[StrOrPathLike] = None,
         hpc: Optional[str] = None,
-        write_list: Optional[StrOrPathLike] = None,
+        write_subcohort: Optional[StrOrPathLike] = None,
         n_jobs: Optional[int] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run=False,
         _skip_logfile: bool = False,
     ):
+        if hpc and write_subcohort:
+            raise ValueError(
+                "HPC job submission and writing a list of participants and sessions "
+                "are mutually exclusive."
+            )
+
         if n_jobs is not None and not _skip_logfile:
             raise ValueError("n_jobs is not supported when _skip_logfile is False.")
         if n_jobs is None:
@@ -180,8 +187,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
+        self.use_subcohort = use_subcohort
         self.hpc = hpc
-        self.write_list = write_list
+        self.write_subcohort = write_subcohort
         self.n_jobs = n_jobs
 
         super().__init__(
@@ -615,64 +623,78 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return to_return
 
-    def run_main(self):
-        """Run the pipeline."""
+    def _run_single_wrapper(self, participant_id, session_id) -> bool:
+        """
+        Run a single participant/session and handle exceptions.
 
-        def _run_single_wrapper(participant_id, session_id) -> bool:
-            """
-            Run a single participant/session and handle exceptions.
+        This is a helper function for parallelization with joblib.
+        Returns (True, <result>) if the run was successful, (False, None) otherwise.
+        """
+        # need to reinitialize the logger if we are running in parallel
+        if len(self.logger.handlers) == 0:
+            self.logger = get_logger(name=self.logger.name, verbose=self.verbose)
 
-            This is a helper function for parallelization with joblib.
-            Returns (True, <result>) if the run was successful, (False, None) otherwise.
-            """
-            # need to reinitialize the logger if we are running in parallel
-            if len(self.logger.handlers) == 0:
-                self.logger = get_logger(name=self.logger.name, verbose=self.verbose)
+        self.logger.info(
+            f"Running for participant {participant_id}, session {session_id}"
+        )
 
-            self.logger.info(
-                f"Running for participant {participant_id}, session {session_id}"
+        try:
+            # success
+            return True, self.run_single(participant_id, session_id)
+        except Exception as exception:
+            self.logger.error(
+                f"Error running {self.pipeline_name} {self.pipeline_version}"
+                f" on participant {participant_id}, session {session_id}"
+                f": {exception}"
             )
 
-            try:
-                # success
-                return True, self.run_single(participant_id, session_id)
-            except Exception as exception:
-                self.logger.error(
-                    f"Error running {self.pipeline_name} {self.pipeline_version}"
-                    f" on participant {participant_id}, session {session_id}"
-                    f": {exception}"
-                )
+        # failure
+        return False, None
 
-            # failure
-            return False, None
-
+    def run_main(self):
+        """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
+
+        if self.use_subcohort is not None:
+            try:
+                df_participants_sessions = pd.read_csv(
+                    self.use_subcohort, header=None, sep="\t", dtype=str
+                )
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"Subcohort file {self.use_subcohort} not found"
+                )
+            except pd.errors.EmptyDataError:
+                raise RuntimeError(f"Subcohort file {self.use_subcohort} is empty")
+
+            participants_sessions = set(participants_sessions) & set(
+                df_participants_sessions.itertuples(index=False, name=None)
+            )
 
         participants_sessions = apply_analysis_level(
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        # TODO mutually exclusive with HPC option
-        if self.write_list is not None:
+        if self.write_subcohort is not None:
             if not self.dry_run:
                 pd.DataFrame(participants_sessions).to_csv(
-                    self.write_list, header=False, index=False, sep="\t"
+                    self.write_subcohort, header=False, index=False, sep="\t"
                 )
-            self.logger.info(f"Wrote participant-session list to {self.write_list}")
+            self.logger.info(f"Wrote subcohort to {self.write_subcohort}")
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
             if JOBLIB_INSTALLED:
                 results = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_run_single_wrapper)(participant_id, session_id)
+                    delayed(self._run_single_wrapper)(participant_id, session_id)
                     for participant_id, session_id in participants_sessions
                 )
             else:
                 results = [
-                    _run_single_wrapper(participant_id, session_id)
+                    self._run_single_wrapper(participant_id, session_id)
                     for participant_id, session_id in participants_sessions
                 ]
 
