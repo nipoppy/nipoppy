@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import click
 import pytest
 import pytest_mock
 from click.testing import CliRunner
@@ -243,3 +244,25 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     assert_command_success(command)
+
+
+def list_commands(group: click.Group, prefix=""):
+    commands = []
+    for name, cmd in group.commands.items():
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
+    return commands
+
+
+@pytest.mark.parametrize("command", list_commands(cli))
+def test_no_duplicated_flag(
+    command: str,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test that no duplicated flags are present in the CLI commands."""
+    runner.invoke(cli, f"nipoppy {command} --help", catch_exceptions=False)
+    assert "Remove its duplicate as parameters should be unique." not in caplog.text
