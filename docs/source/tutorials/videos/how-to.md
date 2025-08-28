@@ -11,20 +11,23 @@ or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and down
 ## 1. nipoppy init
 
 In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
-- run the `nipoppy init` command
+- run the [`nipoppy init`](../../cli_reference/init.rst) command
 - discover the directories that follow the Nipoppy specification
-- explore the `nipoppy status` command
-- modify the content of the `manifest.tsv` file according to our dataset
-- and run the `nipoppy track-curation --regenerate` command
+- explore the [`nipoppy status`](../../cli_reference/status.rst) command
+- modify the content of the [`manifest.tsv`](../../explanations/manifest.md) file according to our dataset
+- and run the [`nipoppy track-curation --regenerate`](../../cli_reference/track_curation.rst) command
+Duration: 7:43m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/POHCcIHEezE?si=HYgD75sE0kwY0wIu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## 2. nipoppy pipeline
 
 In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. More concretely, we will
-- explore the `nipoppy pipeline` subcommands
+- explore the [`nipoppy pipeline`](../../cli_reference/pipeline_install.rst) subcommands
 - learn how to share containers
 - set pipeline configurations
+
+Duration: 6:31m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/5egRvhzQR2g?si=P6FChitCH2qbkTOK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
@@ -32,8 +35,10 @@ In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. M
 
 In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
 - explore the sourcedata directory
-- run the `nipoppy reorg` command
-- and look at the `curation_status.tsv` file
+- run the [`nipoppy reorg`](../../cli_reference/reorg.rst) command
+- and look at the [`curation_status.tsv](../../glossary.md) file
+
+Duration: 6:06m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/udA0FxuMJoc?si=miTxSK9MTpbgvWbl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
