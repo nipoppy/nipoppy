@@ -109,7 +109,7 @@ class ZenodoAPI:
             content_md5 = hashlib.md5(response.content).hexdigest()
             if content_md5 != checksum:
                 raise InvalidChecksumError(
-                    f"Checksum mismatch: '{file}' has invalid checksum {content_md5}"
+                    f"Checksum mismatch: '{file}' has invalid checksum {content_md5} (expected: {checksum})"
                 )
 
             output_dir.joinpath(file).write_bytes(response.content)
