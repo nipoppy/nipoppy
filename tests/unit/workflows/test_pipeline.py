@@ -998,7 +998,7 @@ def test_run_main_write_list(
         ),
     ],
 )
-def test_run_main_use_list(
+def test_run_main_use_subcohort(
     original_participants_sessions_to_run: list[tuple[str, str]],
     list_content: list[tuple[str, str]],
     final_participants_sessions_to_run: list[tuple[str, str]],
@@ -1009,7 +1009,7 @@ def test_run_main_use_list(
     fpath_list = tmp_path / "to_run.tsv"
     pd.DataFrame(list_content).to_csv(fpath_list, sep="\t", header=False, index=False)
 
-    workflow.use_list = fpath_list
+    workflow.use_subcohort = fpath_list
 
     mocker.patch.object(
         workflow,
@@ -1024,11 +1024,11 @@ def test_run_main_use_list(
         mocked_run_single.assert_any_call(participant_id, session_id)
 
 
-def test_run_main_use_list_not_found(
+def test_run_main_use_subcohort_not_found(
     workflow: PipelineWorkflow, tmp_path: Path, mocker: pytest_mock.MockFixture
 ):
     fpath_list = tmp_path / "to_run.tsv"
-    workflow.use_list = fpath_list
+    workflow.use_subcohort = fpath_list
 
     assert not fpath_list.exists(), "File cannot exist"
 
@@ -1040,18 +1040,18 @@ def test_run_main_use_list_not_found(
 
     with pytest.raises(
         FileNotFoundError,
-        match=f"Participant-session list file {fpath_list} not found",
+        match=f"Subcohort file {fpath_list} not found",
     ):
         workflow.run_main()
 
 
-def test_run_main_use_list_empty_file(
+def test_run_main_use_subcohort_empty_file(
     workflow: PipelineWorkflow,
     tmp_path: Path,
     mocker: pytest_mock.MockFixture,
 ):
     fpath_list: Path = tmp_path / "to_run.tsv"
-    workflow.use_list = fpath_list
+    workflow.use_subcohort = fpath_list
 
     fpath_list.touch()
 
@@ -1061,9 +1061,7 @@ def test_run_main_use_list_empty_file(
         return_value=[("01", "A")],
     )
 
-    with pytest.raises(
-        RuntimeError, match=f"Participant-session list file {fpath_list} is empty"
-    ):
+    with pytest.raises(RuntimeError, match=f"Subcohort file {fpath_list} is empty"):
         workflow.run_main()
 
 

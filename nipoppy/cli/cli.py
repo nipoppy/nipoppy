@@ -59,7 +59,7 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--participant-id",
                 "--session-id",
-                "--use-list",
+                "--use-subcohort",
             ],
         },
         {

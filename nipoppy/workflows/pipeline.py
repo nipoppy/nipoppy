@@ -149,7 +149,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
-        use_list: Optional[StrOrPathLike] = None,
+        use_subcohort: Optional[StrOrPathLike] = None,
         hpc: Optional[str] = None,
         write_list: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -167,7 +167,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
         self.session_id = check_session_id(session_id)
-        self.use_list = use_list
+        self.use_subcohort = use_subcohort
         self.hpc = hpc
         self.write_list = write_list
 
@@ -598,19 +598,17 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self.participant_id, self.session_id
         )
 
-        if self.use_list is not None:
+        if self.use_subcohort is not None:
             try:
                 df_participants_sessions = pd.read_csv(
-                    self.use_list, header=None, sep="\t", dtype=str
+                    self.use_subcohort, header=None, sep="\t", dtype=str
                 )
             except FileNotFoundError:
                 raise FileNotFoundError(
-                    f"Participant-session list file {self.use_list} not found"
+                    f"Subcohort file {self.use_subcohort} not found"
                 )
             except pd.errors.EmptyDataError:
-                raise RuntimeError(
-                    f"Participant-session list file {self.use_list} is empty"
-                )
+                raise RuntimeError(f"Subcohort file {self.use_subcohort} is empty")
 
             participants_sessions = set(participants_sessions) & set(
                 df_participants_sessions.itertuples(index=False, name=None)
