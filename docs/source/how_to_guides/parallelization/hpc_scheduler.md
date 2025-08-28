@@ -45,7 +45,7 @@ If your HPC system needs flags other than `--account-name` or `-q` need to be se
 ### Pipeline-specific settings
 
 Job time limit and CPU and memory requests can be configured separately for each pipeline via the HPC config file.
-Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/{bidsification,processing,extraction}/<PIPELINE_NAME>/<PIPELINE_VERSION>` -- it is most likely called `hpc.json` or `hpc_config.json` (see the pipeline's `config.json` file for the exact name)
+Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/<PIPELINE_TYPE>/<PIPELINE_NAME>/<PIPELINE_VERSION>` -- it is most likely called `hpc.json` or `hpc_config.json` (see the pipeline's `config.json` file for the exact name)
 
 The HPC config file should look similar to this:
 

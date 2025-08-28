@@ -15,7 +15,7 @@ If you do have different naming conventions for the clinical visits vs imaging s
 ```
 
 ## Demographic variables
-For data curation, we begin with writing custom scripts to generate "clean" data files from source data dump. These files will go in the {{dpath_tabular}} directory. Here we usually recommend first creating a `demographics.tsv` file that includes typical demographic variables collected by most studies, such as `date of birth`/`age`, `sex`, `recruitment cohort`, `screening date` etc. One can also think of this file as the basic participant information recorded at a recruitment / screening visit that is static and does not change over time. However, since Nipoppy does not validate any tabular files, you can include multiple visits per participants here if preferred.
+For data curation, we begin with writing custom scripts to generate "clean" data files from source data dump. These files will go in the {{dpath_tabular}} directory. Here we usually recommend first creating a `demographics.tsv` file that includes typical demographic variables collected by most studies, such as date of birth/age, sex, recruitment cohort, screening date, etc. One can also think of this file as the basic participant information recorded at a recruitment / screening visit that is static and does not change over time. However, since Nipoppy does not validate any tabular files, you can include multiple visits per participants here if preferred.
 
 ### Example demographics TSV file
 
