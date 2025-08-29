@@ -6,6 +6,7 @@ import logging
 import shlex
 from pathlib import Path
 
+import click
 import pytest
 import pytest_mock
 from click.testing import CliRunner
@@ -23,6 +24,18 @@ def assert_command_success(args):
     assert (
         result.exit_code == ReturnCode.SUCCESS
     ), f"Command failed: {args}\n{result.output}"
+
+
+def list_commands(group: click.Group, prefix=""):
+    commands = []
+    for name, cmd in group.commands.items():
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
+    return commands
 
 
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
@@ -274,3 +287,16 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     assert_command_success(command)
+
+
+@pytest.mark.parametrize("command", list_commands(cli))
+def test_no_duplicated_flag(
+    command: str,
+    recwarn: pytest.WarningsRecorder,
+):
+    """Test that no duplicated flags are present in the CLI commands."""
+    runner.invoke(cli, f"{command} --help", catch_exceptions=False)
+    assert not any(
+        "Remove its duplicate as parameters should be unique." in str(warning.message)
+        for warning in recwarn
+    )
