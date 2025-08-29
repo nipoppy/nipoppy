@@ -26,6 +26,18 @@ def assert_command_success(args):
     ), f"Command failed: {args}\n{result.output}"
 
 
+def list_commands(group: click.Group, prefix=""):
+    commands = []
+    for name, cmd in group.commands.items():
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
+    return commands
+
+
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
 def test_cli_invalid(args):
     """Test that a fake command does not exist."""
@@ -275,18 +287,6 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     assert_command_success(command)
-
-
-def list_commands(group: click.Group, prefix=""):
-    commands = []
-    for name, cmd in group.commands.items():
-        full_name = f"{prefix}{name}"
-        commands.append(full_name)
-
-        # If the command is itself a group, recurse
-        if isinstance(cmd, click.Group):
-            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
-    return commands
 
 
 @pytest.mark.parametrize("command", list_commands(cli))
