@@ -13,6 +13,8 @@ from nipoppy.workflows.pipeline import BasePipelineWorkflow
 class PipelineTracker(BasePipelineWorkflow):
     """Pipeline tracker."""
 
+    progress_bar_description = "Tracking..."
+
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -39,6 +41,7 @@ class PipelineTracker(BasePipelineWorkflow):
             verbose=verbose,
             dry_run=dry_run,
             _skip_logfile=True,
+            _show_progress=True,
         )
 
     def run_setup(self):
