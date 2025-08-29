@@ -6,7 +6,7 @@ import json
 import re
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional, Generator
+from typing import Generator, Optional
 
 import pandas as pd
 import pytest
