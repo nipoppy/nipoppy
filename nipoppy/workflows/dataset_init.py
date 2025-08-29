@@ -16,6 +16,7 @@ from nipoppy.env import (
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import (
     DPATH_HPC,
+    FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
     check_participant_id,
@@ -107,6 +108,14 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.layout.fpath_manifest,
             )
 
+        # copy dataset description file if specified in layout
+        if getattr(self.layout, "fpath_bids_dataset_description"):
+            self.copy(
+                FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
+                self.layout.fpath_bids_dataset_description,
+                log_level=logging.DEBUG,
+            )
+
         # copy HPC files
         self.copytree(
             DPATH_HPC,
@@ -132,6 +141,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         # Handle edge case where we need to clobber existing data
         if dpath.exists() and self.force:
             self._remove_existing(dpath)
+
+        self.mkdir(dpath.parent)
 
         if self.mode == "copy":
             self.copytree(self.bids_source, str(dpath))
