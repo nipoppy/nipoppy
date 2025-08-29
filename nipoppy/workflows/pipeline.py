@@ -669,7 +669,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 return_as="generator",
             )(results_generator)
 
-        if self._show_progress:
+        if self._show_progress and n_total != 0:
             results_generator = track(
                 results_generator,
                 description=f'{" "*_INDENT}{self.progress_bar_description}',
