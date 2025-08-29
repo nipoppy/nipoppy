@@ -49,6 +49,7 @@ caption: Tutorials
 ---
 tutorials/mriqc_from_bids/index
 tutorials/integrations/index
+tutorials/videos/index
 ```
 
 ```{toctree}
