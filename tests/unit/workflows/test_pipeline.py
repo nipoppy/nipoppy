@@ -138,7 +138,7 @@ def reimport_joblib(mocker: pytest_mock.MockerFixture):
     importlib.reload(nipoppy.workflows.pipeline)
     from nipoppy.workflows.pipeline import (
         JOBLIB_INSTALLED,
-        BasePipelineWorkflow,
+        BasePipelineWorkflow,  # noqa F401
     )
     assert JOBLIB_INSTALLED
     # fmt: on
