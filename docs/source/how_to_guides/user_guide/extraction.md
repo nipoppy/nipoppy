@@ -34,7 +34,7 @@ Just like with the BIDS conversion and processing pipelines, Nipoppy uses the {t
 ### Commands
 
 - Command-line interface: [`nipoppy extract`](<project:../../cli_reference/extract.md>)
-- Python API: {class}`nipoppy.workflows.ExtractionRunner`
+- Python API: {class}`nipoppy.workflows.extractor.ExtractionRunner`
 
 ### Workflow
 
@@ -108,7 +108,7 @@ Log files for this command will be written to {{dpath_logs}}`/extract`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import ExtractionRunner
+from nipoppy.workflows.extractor import ExtractionRunner
 
 # replace by appropriate values
 dpath_root = "<NIPOPPY_PROJECT_ROOT>"
@@ -121,7 +121,7 @@ workflow = ExtractionRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.ExtractionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/extract.md>)).
+See the API reference for {class}`nipoppy.workflows.extractor.ExtractionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/extract.md>)).
 
 ## Next steps
 

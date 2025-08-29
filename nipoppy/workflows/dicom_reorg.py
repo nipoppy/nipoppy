@@ -8,7 +8,7 @@ import pydicom
 
 from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.tabular.curation_status import update_curation_status_table
-from nipoppy.utils import (
+from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )

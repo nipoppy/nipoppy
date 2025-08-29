@@ -25,7 +25,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 ### Commands
 
 - Command-line interface: [`nipoppy track-processing`](<project:../../cli_reference/track_processing.rst>)
-- Python API: {class}`nipoppy.workflows.PipelineTracker`
+- Python API: {class}`nipoppy.workflows.tracker.PipelineTracker`
 
 ### Workflow
 
@@ -111,7 +111,7 @@ Log files for this command will be written to {{dpath_logs}}`/track`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import PipelineTracker
+from nipoppy.workflows.tracker import PipelineTracker
 
 # replace by appropriate values
 dpath_root = "<NIPOPPY_PROJECT_ROOT>"
@@ -124,7 +124,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track_processing.rst>)).
+See the API reference for {class}`nipoppy.workflows.tracker.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track_processing.rst>)).
 
 ## Next steps
 
