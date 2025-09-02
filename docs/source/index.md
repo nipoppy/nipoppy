@@ -22,7 +22,7 @@ The motivation behind creating Nipoppy
 :::{grid-item-card}  [Installation](overview/installation)
 Instructions to set up Nipoppy package
 :::
-:::{grid-item-card}  [Quickstart](overview/quickstart)
+:::{grid-item-card}  [Quickstart](overview/quickstart/index.md)
 A user guide to get started
 :::
 ::::
@@ -37,7 +37,7 @@ caption: Overview
 ---
 overview/why_nipoppy/index
 overview/installation
-overview/quickstart
+overview/quickstart/index
 ```
 
 ```{toctree}
@@ -49,6 +49,7 @@ caption: Tutorials
 ---
 tutorials/mriqc_from_bids/index
 tutorials/integrations/index
+tutorials/videos/index
 ```
 
 ```{toctree}
@@ -75,6 +76,7 @@ how_to_guides/tabular_data/index
 how_to_guides/pipeline_install/index
 how_to_guides/pipeline_run/index
 how_to_guides/parallelization/index
+how_to_guides/pipeline_create/index
 ```
 
 
