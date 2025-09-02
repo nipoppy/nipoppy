@@ -325,7 +325,7 @@ def test_pipeline_step_config(extractor: ExtractionRunner):
                 "simulate": True,  # should be skipped
                 "keep_workdir": True,
                 "hpc": "slurm",  # should be skipped
-                "write_list": "/path/to/list",  # should be skipped
+                "use_subcohort": "/path/to/list",  # should be skipped
                 "fpath_layout": "/path/to/layout",
                 "dry_run": True,  # should be skipped
                 "verbose": True,

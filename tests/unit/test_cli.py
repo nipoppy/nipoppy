@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import shlex
 from pathlib import Path
 
+import click
 import pytest
 import pytest_mock
 from click.testing import CliRunner
@@ -25,6 +27,18 @@ def assert_command_success(args):
     ), f"Command failed: {args}\n{result.output}"
 
 
+def list_commands(group: click.Group, prefix=""):
+    commands = []
+    for name, cmd in group.commands.items():
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
+    return commands
+
+
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
 def test_cli_invalid(args):
     """Test that a fake command does not exist."""
@@ -34,18 +48,47 @@ def test_cli_invalid(args):
     ), f"Expected invalid command exit code for: {args}\n{result.output}"
 
 
-def test_dep_params(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    nipoppy_study_path = tmp_path / "nipoppy_study"
-    result = runner.invoke(
-        cli,
-        ["init", str(nipoppy_study_path)],
-        catch_exceptions=False,
-    )
+@pytest.mark.parametrize(
+    "command,workflow,expected_warning",
+    [
+        (
+            ["init", "[tmp_path]/nipoppy_study"],
+            "nipoppy.workflows.dataset_init.InitWorkflow",
+            "Giving the dataset path without --dataset is deprecated",
+        ),
+        (
+            [
+                "process",
+                "--dataset",
+                "[tmp_path]/nipoppy_study",
+                "--pipeline",
+                "fake_pipeline",
+                "--write-list",
+                "[tmp_path]/subcohort.txt",
+            ],
+            "nipoppy.workflows.runner.PipelineRunner",
+            (
+                "The --write-list option is deprecated and will be removed in a future "
+                "version. Use --write-subcohort instead."
+            ),
+        ),
+    ],
+)
+def test_dep_params(
+    command: str,
+    workflow: str,
+    expected_warning,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    mocker.patch(f"{workflow}.run")
+    command = shlex.join(command).replace("[tmp_path]", str(tmp_path))
+    result = runner.invoke(cli, command, catch_exceptions=False)
 
     assert any(
         [
-            "Giving the dataset path without --dataset is deprecated" in record.message
-            and record.levelno == logging.WARNING
+            expected_warning in record.message and record.levelno == logging.WARNING
             for record in caplog.records
         ]
     )
@@ -236,10 +279,11 @@ def test_cli_command(
 ):
     """Test that the CLI commands run the expected workflows."""
     # Required for some Click commands to work properly
-    tmp_path.joinpath("mocked_dir").mkdir(exist_ok=False)
+    mocked_dir = tmp_path.joinpath("mocked_dir")
+    mocked_dir.mkdir(exist_ok=False)
 
     # Hack to inject the mocked directory into the command
-    command = [arg.replace("[mocked_dir]", str(tmp_path)) for arg in command]
+    command = [arg.replace("[mocked_dir]", str(mocked_dir)) for arg in command]
 
     if workflow:
         mocker.patch(f"{workflow}.run")
@@ -285,3 +329,16 @@ def test_context_manager_exception(
 
     assert workflow.return_code == expected_return_code
     mock_exit.assert_called_once_with(expected_return_code)
+
+
+@pytest.mark.parametrize("command", list_commands(cli))
+def test_no_duplicated_flag(
+    command: str,
+    recwarn: pytest.WarningsRecorder,
+):
+    """Test that no duplicated flags are present in the CLI commands."""
+    runner.invoke(cli, f"{command} --help", catch_exceptions=False)
+    assert not any(
+        "Remove its duplicate as parameters should be unique." in str(warning.message)
+        for warning in recwarn
+    )
