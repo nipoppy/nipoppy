@@ -71,8 +71,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
             status_df["in_manifest"]
         ):
             self.logger.info(
-                "The number of BIDS participants match the manifest; hiding pre- and \
-                    post-reorg stages."
+                "The number of BIDS participants match the manifest; hiding "
+                "counts for pre- and post-reorg stages."
             )
             status_df = status_df.drop(
                 [
