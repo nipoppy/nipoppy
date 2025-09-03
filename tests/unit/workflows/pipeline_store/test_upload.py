@@ -226,7 +226,7 @@ def test_upload_duplicate_record(
 
 
 def test_force_upload_duplicate_record(workflow: ZenodoUploadWorkflow):
-    workflow.assume_yes = (True,)
+    workflow.assume_yes = True
     workflow.force = True
 
     workflow.zenodo_api.search_records.return_value = {"hits": {"doi": "abc.123"}}
