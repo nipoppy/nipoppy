@@ -48,7 +48,8 @@ jobs:
 
     - name: Run non-API tests
       run: |
-        python -m pytest -m "not api" --cov=nipoppy --cov-report=xml
+        python -m pytest -m "not api and not no_xdist" --cov=nipoppy --cov-report=xml
+        python -m pytest -m "not api and no_xdist" -n 0 --cov=nipoppy --cov-report=xml --cov-append
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

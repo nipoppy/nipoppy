@@ -91,4 +91,7 @@ addopts = "--color=yes -n auto --dist loadfile -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
-markers = ["api: mark a test as an api test."]
+markers = [
+    "api: mark a test as an api test.",
+    "no_xdist: mark a test that should not be run with xdist in CI.",
+]
