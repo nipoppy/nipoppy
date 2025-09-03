@@ -85,19 +85,6 @@ def clean_loggers():
         logging.getLogger(name).handlers.clear()
 
 
-@pytest.fixture(scope="function")
-def record_id():
-    """Fixture for Zenodo ID.
-
-    The Sandbox can be reset at any time, so the Zenodo ID may change.
-    If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/{record_id}
-
-    The test file is located at TEST_PIPELINE
-    """
-    return "199319"
-
-
 @pytest.fixture()
 def datetime_fixture(
     mocker: pytest_mock.MockerFixture,
