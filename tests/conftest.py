@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -72,6 +73,16 @@ ATTR_TO_FPATH_MAP = {
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
+
+
+@pytest.fixture(autouse=True)
+def clean_loggers():
+    """Clear handler(s) for every logger."""
+    yield
+
+    # run after every test
+    for name in logging.Logger.manager.loggerDict:
+        logging.getLogger(name).handlers.clear()
 
 
 @pytest.fixture()
