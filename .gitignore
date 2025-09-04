@@ -19,6 +19,7 @@ share/python-wheels/
 .ipynb_checkpoints
 
 # tests
+coverage.xml
 .coverage
 htmlcov
 
