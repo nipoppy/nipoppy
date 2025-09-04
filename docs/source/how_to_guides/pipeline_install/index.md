@@ -62,7 +62,7 @@ At the time of writing, the above command prints the following table (trimmed):
             ╵                           ╵
 ```
 
-## Installing a pipeline into a Nipoppy dataset
+## Installing a pipeline into a Nipoppy project
 
 Once you know the Zenodo ID of the pipeline we wish to use, you can install it directly from Zenodo using the `nipoppy pipeline install` command. Here we install fMRIPrep version 24.1.1.
 

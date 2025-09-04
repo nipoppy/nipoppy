@@ -16,7 +16,7 @@ Without the `--regenerate` flag, `nipoppy track-curation` will only update the c
 ```
 
 The above command creates or updates the curation status file at {{fpath_curation_status}}.
-A summary of curation statuses can be displayed by running the [`nipoppy status`](../../cli_reference/status.rst) command, which outputs something like this:
+A summary of curation statuses can be displayed by running the [`nipoppy status`](../../cli_reference/status.rst) command, which outputs a table with participant counts at different curation stages, like this:
 
 ```
       Participant counts by session at each Nipoppy checkpoint
@@ -32,13 +32,13 @@ A summary of curation statuses can be displayed by running the [`nipoppy status`
 The `in_pre_reorg` and `in_post_reorg` columns will be collapsed if all participants in the manifest have been BIDSified.
 ```
 
-Columns related to the curation stages are:
+For each curation stage, the status is determined based on the presence of files in expected directories:
 
-| Name | Description |
+| Column | Relevant directory |
 |---|---|
-| `in_pre_reorg` | Number of participants with data in {{dpath_pre_reorg}} |
-| `in_post_reorg` | Number of participants with data in {{dpath_post_reorg}} `/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
-| `in_bids` | Number of participants with data in {{dpath_bids}} `/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
+| `in_pre_reorg` | {{dpath_pre_reorg}}`/<PARTICIPANT_ID>/<SESSION_ID>` (configurable) |
+| `in_post_reorg` | {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
+| `in_bids` | {{dpath_bids}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
 
 <!-- TODO add tip box pointing to guide on reorg -->
 
@@ -50,7 +50,7 @@ The [`nipoppy track-processing`](../../cli_reference/track_processing.rst) comma
 $ nipoppy track-processing --pipeline <PIPELINE_NAME>
 ```
 
-```{note}
+```{tip}
 The pipeline version and step name can be optionally specified using the `--pipeline-version` and `--pipeline-step` arguments respectively. By default, the latest version and the first step are used.
 
 It is also possible to restrict the run to a single participant and/or session by using the `--participant-id` and `--session-id` arguments respectively.
@@ -96,9 +96,11 @@ Here is example of tracker configuration file for the MRIQC pipeline, version 23
 ```{literalinclude} ./mriqc-23.1.0-tracker_config.json
 ```
 
+These paths are expected to be relative to the {{dpath_pipeline_output}} directory.
+
 ```{tip}
-- The paths are expected to be relative to the {{dpath_pipeline_output}} directory.
-- "Glob" expressions (i.e., that include `*`) are allowed in paths. If at least one file matches the expression, then the file will be considered found for that expression.
+"Glob" expressions (i.e., that include `*`) are allowed in paths.
+If at least one file matches the expression, then the file will be considered found for that expression.
 ```
 
 ```{note}
