@@ -81,7 +81,7 @@ def clean_loggers():
     yield
 
     # run after every test
-    for name in list(logging.Logger.manager.loggerDict.keys()):
+    for name in logging.Logger.manager.loggerDict:
         logging.getLogger(name).handlers.clear()
 
 
