@@ -40,6 +40,7 @@ def zenodo_options(func):
 @click.option(
     "--size",
     "-s",
+    "-n",
     type=click.IntRange(min=1),
     help="Number of items to show",
     default=10,

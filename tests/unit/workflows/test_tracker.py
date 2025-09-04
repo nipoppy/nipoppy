@@ -279,18 +279,10 @@ def test_run_single(
         ).tar_directory(dpath_to_tar)
 
     assert not dpath_to_tar.exists()
-    assert tracker.run_single(participant_id, session_id) == expected_status
-
     assert (
-        tracker.processing_status_table.set_index(
-            [
-                ProcessingStatusTable.col_participant_id,
-                ProcessingStatusTable.col_session_id,
-            ]
-        )
-        .loc[:, ProcessingStatusTable.col_status]
-        .item()
-    ) == expected_status
+        tracker.run_single(participant_id, session_id)[ProcessingStatusTable.col_status]
+        == expected_status
+    )
 
 
 def test_run_single_no_config(tracker: PipelineTracker):
@@ -300,32 +292,46 @@ def test_run_single_no_config(tracker: PipelineTracker):
 
 
 @pytest.mark.parametrize(
-    "processing_status_table",
+    "records,expected_processing_status_table",
     [
-        ProcessingStatusTable(),
-        ProcessingStatusTable(
-            data={
-                ProcessingStatusTable.col_participant_id: ["01"],
-                ProcessingStatusTable.col_session_id: ["1"],
-                ProcessingStatusTable.col_pipeline_name: ["some_pipeline"],
-                ProcessingStatusTable.col_pipeline_version: ["some_version"],
-                ProcessingStatusTable.col_pipeline_step: ["some_step"],
-                ProcessingStatusTable.col_status: [
-                    ProcessingStatusTable.status_success
-                ],
-            }
-        ).validate(),
+        ([], ProcessingStatusTable()),
+        (
+            [
+                {
+                    ProcessingStatusTable.col_participant_id: "01",
+                    ProcessingStatusTable.col_session_id: "1",
+                    ProcessingStatusTable.col_pipeline_name: "some_pipeline",
+                    ProcessingStatusTable.col_pipeline_version: "some_version",
+                    ProcessingStatusTable.col_pipeline_step: "some_step",
+                    ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,  # noqa: E501
+                }
+            ],
+            ProcessingStatusTable(
+                data={
+                    ProcessingStatusTable.col_participant_id: ["01"],
+                    ProcessingStatusTable.col_session_id: ["1"],
+                    ProcessingStatusTable.col_pipeline_name: ["some_pipeline"],
+                    ProcessingStatusTable.col_pipeline_version: ["some_version"],
+                    ProcessingStatusTable.col_pipeline_step: ["some_step"],
+                    ProcessingStatusTable.col_status: [
+                        ProcessingStatusTable.status_success
+                    ],
+                }
+            ).validate(),
+        ),
     ],
 )
 def test_run_cleanup(
-    tracker: PipelineTracker, processing_status_table: ProcessingStatusTable
+    tracker: PipelineTracker,
+    records,
+    expected_processing_status_table: ProcessingStatusTable,
 ):
-    tracker.processing_status_table = processing_status_table
+    tracker.run_single_results = records
     tracker.run_cleanup()
 
     assert tracker.layout.fpath_processing_status.exists()
     assert ProcessingStatusTable.load(tracker.layout.fpath_processing_status).equals(
-        processing_status_table
+        expected_processing_status_table
     )
 
 

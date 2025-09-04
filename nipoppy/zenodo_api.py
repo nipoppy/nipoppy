@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 
 import httpx
 
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.logger import get_logger
 
 
@@ -108,7 +109,8 @@ class ZenodoAPI:
             content_md5 = hashlib.md5(response.content).hexdigest()
             if content_md5 != checksum:
                 raise InvalidChecksumError(
-                    "Checksum mismatch: " f"'{file}' has invalid checksum {content_md5}"
+                    f"Checksum mismatch: '{file}' has invalid checksum {content_md5}"
+                    f" (expected: {checksum})"
                 )
 
             output_dir.joinpath(file).write_bytes(response.content)
@@ -329,14 +331,16 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
-        response = httpx.get(
-            f"{self.api_endpoint}/records",
-            headers=self.headers,
-            params={
-                "q": full_query,
-                "size": size,
-            },
-        )
+        with CONSOLE_STDOUT.status("Searching Nipoppy pipelines on Zenodo..."):
+            response = httpx.get(
+                f"{self.api_endpoint}/records",
+                headers=self.headers,
+                params={
+                    "q": full_query,
+                    "size": size,
+                },
+                timeout=10.0,
+            )
         return response.json()["hits"]
 
     def get_record_metadata(self, record_id: str):
