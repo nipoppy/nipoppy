@@ -185,6 +185,30 @@ def test_update_config_and_save_no_other_change(
     ) == original_config.model_dump(exclude="PIPELINE_VARIABLES")
 
 
+def test_update_config_and_save_no_overwrite(
+    workflow: PipelineInstallWorkflow, pipeline_config: ProcPipelineConfig
+):
+    variable_name = "var1"
+    variable_value = "some_value"
+    pipeline_config.VARIABLES = {variable_name: "description"}
+    workflow.config.PIPELINE_VARIABLES.set_variables(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+        {variable_name: variable_value},
+    )
+    workflow.config.save(workflow.layout.fpath_config)
+
+    workflow._update_config_and_save(pipeline_config)
+
+    updated_config = workflow.config.load(workflow.layout.fpath_config)
+    assert updated_config.PIPELINE_VARIABLES.get_variables(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+    ) == {variable_name: variable_value}
+
+
 def test_download_container(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcPipelineConfig,
