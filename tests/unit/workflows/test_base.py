@@ -15,7 +15,7 @@ def workflow():
         def run_main(self):
             pass
 
-    workflow = DummyWorkflow(name="my_workflow")
+    workflow = DummyWorkflow(_name="my_workflow")
 
     return workflow
 
@@ -26,7 +26,7 @@ def test_abstract_class():
 
 
 def test_init(workflow: BaseWorkflow):
-    assert workflow.name == "my_workflow"
+    assert workflow._name == "my_workflow"
     assert workflow.return_code == 0
     assert isinstance(workflow.logger, logging.Logger)
 

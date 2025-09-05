@@ -54,9 +54,9 @@ def workflow(
             / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
             / "my_pipeline-1.0.0"
         ),
-        zenodo_api=mocker.MagicMock(),
         assume_yes=True,
     )
+    workflow.zenodo_api = mocker.MagicMock()
     # make the default config have a path placeholder string
     get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]/my_file.tsv").save(
         workflow.layout.fpath_config

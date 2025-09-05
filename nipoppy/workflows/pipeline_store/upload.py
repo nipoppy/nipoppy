@@ -12,31 +12,36 @@ from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 
-class ZenodoUploadWorkflow(BaseWorkflow):
+class PipelineUploadWorkflow(BaseWorkflow):
     """Workflow for Zenodo upload."""
 
     def __init__(
         self,
-        dpath_pipeline: StrOrPathLike,
-        zenodo_api: ZenodoAPI,
+        pipeline_dir: StrOrPathLike,
+        password_file: StrOrPathLike,
+        sandbox: bool = False,
         record_id: Optional[str] = None,
         assume_yes: bool = False,
         force: bool = False,
         verbose=False,
         dry_run=False,
     ):
-        self.dpath_pipeline = dpath_pipeline
-        self.zenodo_api = zenodo_api
+        self.pipeline_dir = pipeline_dir
+        self.password_file = password_file
+        self.sandbox = sandbox
         self.record_id = record_id
         self.assume_yes = assume_yes
         self.force = force
 
         super().__init__(
-            name="pipeline_upload",
+            _name="pipeline_upload",
             verbose=verbose,
             dry_run=dry_run,
         )
 
+        self.zenodo_api = ZenodoAPI(
+            sandbox=self.sandbox, password_file=self.password_file
+        )
         self.zenodo_api.set_logger(self.logger)
 
     def _get_pipeline_metadata(
@@ -80,7 +85,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
-        pipeline_dir = Path(self.dpath_pipeline)
+        pipeline_dir = Path(self.pipeline_dir)
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 
         # Safeguard before uploading
