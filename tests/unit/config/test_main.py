@@ -118,6 +118,14 @@ def test_check_dicom_dir_options(
 
 
 @pytest.mark.parametrize(
+    "substitutions", [{"": "abc"}, {"valid_key": "abc", "": "def"}]
+)
+def test_check_substitutions(valid_config_data, substitutions):
+    with pytest.raises(ValueError, match="Substitutions cannot have empty keys"):
+        Config(**valid_config_data, SUBSTITUTIONS=substitutions)
+
+
+@pytest.mark.parametrize(
     "data_root,data_pipeline,data_step,data_expected",
     [
         (

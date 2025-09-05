@@ -176,6 +176,14 @@ class Config(_SchemaWithContainerConfig):
 
         return self
 
+    def _check_substitutions(self) -> Self:
+        """Check that substitutions do not have empty keys."""
+        for key in self.SUBSTITUTIONS:
+            if not key:
+                raise ValueError("Substitutions cannot have empty keys")
+
+        return self
+
     def propagate_container_config_to_pipeline(
         self, pipeline_config: BasePipelineConfig
     ) -> BasePipelineConfig:
@@ -227,6 +235,7 @@ class Config(_SchemaWithContainerConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_dicom_dir_options()
+        self._check_substitutions()
 
         return self
 
@@ -269,9 +278,7 @@ class Config(_SchemaWithContainerConfig):
         substitutions = config_dict.get(substitutions_key, {})
         if apply_substitutions and substitutions:
             # apply user-defined substitutions to all fields except SUBSTITUTIONS itself
-            config = cls(**apply_substitutions_to_json(config_dict, substitutions))
-            config.SUBSTITUTIONS = substitutions
-        else:
-            config = cls(**config_dict)
-
+            config_dict = apply_substitutions_to_json(config_dict, substitutions)
+            config_dict[substitutions_key] = substitutions
+        config = cls(**config_dict)
         return config
