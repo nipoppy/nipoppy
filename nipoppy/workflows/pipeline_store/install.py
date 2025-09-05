@@ -73,11 +73,20 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             return config
 
         # update config
+        # set variables value to None unless if they have not already been set
+        variables = {variable_name: None for variable_name in pipeline_config.VARIABLES}
+        variables.update(
+            config.PIPELINE_VARIABLES.get_variables(
+                pipeline_config.PIPELINE_TYPE,
+                pipeline_config.NAME,
+                pipeline_config.VERSION,
+            )
+        )
         config.PIPELINE_VARIABLES.set_variables(
             pipeline_config.PIPELINE_TYPE,
             pipeline_config.NAME,
             pipeline_config.VERSION,
-            {variable_name: None for variable_name in pipeline_config.VARIABLES},
+            variables,
         )
 
         # log variable details
