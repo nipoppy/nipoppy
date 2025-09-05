@@ -21,7 +21,7 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
     ):
         super().__init__(
             dpath_root,
-            name="pipeline_list",
+            _name="pipeline_list",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,

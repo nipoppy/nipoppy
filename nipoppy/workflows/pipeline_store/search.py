@@ -25,7 +25,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
     ):
         """Initialize the workflow."""
         super().__init__(
-            name="pipeline_search",
+            _name="pipeline_search",
             verbose=verbose,
             dry_run=dry_run,
         )

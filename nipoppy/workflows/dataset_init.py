@@ -41,7 +41,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         """Initialize the workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            name="init",
+            _name="init",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,

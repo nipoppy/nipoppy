@@ -49,7 +49,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
     """Dummy pipeline workflow for testing."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, name="test", **kwargs)
+        super().__init__(*args, _name="test", **kwargs)
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]

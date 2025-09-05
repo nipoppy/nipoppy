@@ -40,7 +40,7 @@ class ExtractionRunner(PipelineRunner):
     ):
         super().__init__(
             dpath_root=dpath_root,
-            name="extract",
+            _name="extract",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
