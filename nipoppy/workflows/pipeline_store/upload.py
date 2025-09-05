@@ -17,7 +17,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        dpath_pipeline: StrOrPathLike,
+        pipeline_dir: StrOrPathLike,
         zenodo_api: ZenodoAPI,
         record_id: Optional[str] = None,
         assume_yes: bool = False,
@@ -25,7 +25,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         verbose=False,
         dry_run=False,
     ):
-        self.dpath_pipeline = dpath_pipeline
+        self.pipeline_dir = pipeline_dir
         self.zenodo_api = zenodo_api
         self.record_id = record_id
         self.assume_yes = assume_yes
@@ -80,7 +80,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
-        pipeline_dir = Path(self.dpath_pipeline)
+        pipeline_dir = Path(self.pipeline_dir)
         self.logger.info(f"Uploading pipeline from {pipeline_dir}")
 
         # Safeguard before uploading

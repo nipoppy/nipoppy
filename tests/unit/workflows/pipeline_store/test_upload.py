@@ -21,7 +21,7 @@ DATASET_PATH = "my_dataset"
 @pytest.fixture(scope="function")
 def workflow(mocker: pytest_mock.MockerFixture):
     workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,
+        pipeline_dir=TEST_PIPELINE,
         zenodo_api=mocker.MagicMock(),
     )
     return workflow

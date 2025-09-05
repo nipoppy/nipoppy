@@ -13,7 +13,7 @@ class PipelineValidateWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        dpath_pipeline: StrOrPathLike,
+        pipeline_dir: StrOrPathLike,
         verbose=False,
         dry_run=False,
     ):
@@ -22,13 +22,13 @@ class PipelineValidateWorkflow(BaseWorkflow):
             verbose=verbose,
             dry_run=dry_run,
         )
-        self.dpath_pipeline = Path(dpath_pipeline)
+        self.pipeline_dir = Path(pipeline_dir)
 
     def run_main(self):
         """Run the main workflow."""
-        self.logger.info(f"Validating pipeline at {self.dpath_pipeline}")
+        self.logger.info(f"Validating pipeline at {self.pipeline_dir}")
         check_pipeline_bundle(
-            self.dpath_pipeline, logger=self.logger, log_level=logging.INFO
+            self.pipeline_dir, logger=self.logger, log_level=logging.INFO
         )
 
         self.logger.success("The pipeline files are all valid")

@@ -146,7 +146,7 @@ def pipeline_list(**params):
 
 @pipeline.command("validate")
 @click.argument(
-    "path",
+    "pipeline_dir",
     required=True,
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
@@ -195,6 +195,5 @@ def pipeline_upload(**params):
         sandbox=params.pop("sandbox"),
         password_file=params.pop("password_file"),
     )
-    params["dpath_pipeline"] = params.pop("pipeline_dir")
     with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
         workflow.run()
