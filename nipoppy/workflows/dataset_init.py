@@ -112,7 +112,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy dataset description file if specified in layout
-        if getattr(self.layout, "fpath_bids_dataset_description"):
+        if getattr(self.layout, "fpath_bids_dataset_description", None):
             self.copy(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.layout.fpath_bids_dataset_description,
