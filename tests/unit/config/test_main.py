@@ -138,7 +138,11 @@ def test_check_substitutions_strip_values(valid_config_data):
         "key3": "value3",
         "key4": "value4",
     }
-    config = Config(**valid_config_data, SUBSTITUTIONS=substitutions_before)
+    with pytest.warns(
+        UserWarning,
+        match=r"Substitution value for key '.*' has leading/trailing whitespace: '.*'.",
+    ):
+        config = Config(**valid_config_data, SUBSTITUTIONS=substitutions_before)
     assert config.SUBSTITUTIONS == substitutions_after
 
 

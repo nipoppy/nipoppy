@@ -181,7 +181,16 @@ class Config(_SchemaWithContainerConfig):
         for key, value in self.SUBSTITUTIONS.items():
             if not key:
                 raise ValueError("Substitutions cannot have empty keys")
-            self.SUBSTITUTIONS[key] = value.strip()
+
+            if value != (value_stripped := value.strip()):
+                warnings.warn(
+                    (
+                        f"Substitution value for key '{key}' has leading/trailing "
+                        f"whitespace: '{value}'. Stripping it."
+                    ),
+                    UserWarning,
+                )
+                self.SUBSTITUTIONS[key] = value_stripped
 
         return self
 
