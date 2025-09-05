@@ -118,6 +118,35 @@ def test_check_dicom_dir_options(
 
 
 @pytest.mark.parametrize(
+    "substitutions", [{"": "abc"}, {"valid_key": "abc", "": "def"}]
+)
+def test_check_substitutions_empty_key(valid_config_data, substitutions):
+    with pytest.raises(ValueError, match="Substitutions cannot have empty keys"):
+        Config(**valid_config_data, SUBSTITUTIONS=substitutions)
+
+
+def test_check_substitutions_strip_values(valid_config_data):
+    substitutions_before = {
+        "key1": "  value1",
+        "key2": "value2  ",
+        "key3": "  value3  ",
+        "key4": "value4",
+    }
+    substitutions_after = {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3",
+        "key4": "value4",
+    }
+    with pytest.warns(
+        UserWarning,
+        match=r"Substitution value for key '.*' has leading/trailing whitespace: '.*'.",
+    ):
+        config = Config(**valid_config_data, SUBSTITUTIONS=substitutions_before)
+    assert config.SUBSTITUTIONS == substitutions_after
+
+
+@pytest.mark.parametrize(
     "data_root,data_pipeline,data_step,data_expected",
     [
         (
