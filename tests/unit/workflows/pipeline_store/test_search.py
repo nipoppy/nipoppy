@@ -14,11 +14,12 @@ from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
 def workflow(mocker: pytest_mock.MockerFixture):
     """Fixture for PipelineSearchWorkflow."""
     # use sandbox because for now there are no Nipoppy records on official Zenodo
-    return PipelineSearchWorkflow(
+    workflow = PipelineSearchWorkflow(
         query="mriqc",
-        zenodo_api=mocker.MagicMock(),
         size=1,
     )
+    workflow.zenodo_api = mocker.MagicMock()
+    return workflow
 
 
 @pytest.fixture(scope="function")

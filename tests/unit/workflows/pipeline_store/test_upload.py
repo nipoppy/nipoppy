@@ -13,7 +13,7 @@ from nipoppy.workflows.pipeline_store.upload import (
     _is_same_pipeline,
 )
 from nipoppy.zenodo_api import ZenodoAPIError
-from tests.conftest import TEST_PIPELINE
+from tests.conftest import PASSWORD_FILE, TEST_PIPELINE
 
 DATASET_PATH = "my_dataset"
 
@@ -22,8 +22,9 @@ DATASET_PATH = "my_dataset"
 def workflow(mocker: pytest_mock.MockerFixture):
     workflow = PipelineUploadWorkflow(
         pipeline_dir=TEST_PIPELINE,
-        zenodo_api=mocker.MagicMock(),
+        password_file=PASSWORD_FILE,
     )
+    workflow.zenodo_api = mocker.MagicMock()
     return workflow
 
 

@@ -48,7 +48,7 @@ class BaseWorkflow(Base, ABC):
         dry_run : bool, optional
             If True, print commands without executing them, by default False
         """
-        self.name = _name
+        self._name = _name
         self.verbose = verbose
         self.dry_run = dry_run
 
@@ -327,8 +327,8 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         if isinstance(dnames_parent, str):
             dnames_parent = [dnames_parent]
         if fname_stem is None:
-            fname_stem = self.name
-        dpath_log = self.layout.dpath_logs / self.name
+            fname_stem = self._name
+        dpath_log = self.layout.dpath_logs / self._name
         for dname in dnames_parent:
             dpath_log = dpath_log / dname
         return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")

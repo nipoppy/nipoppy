@@ -148,7 +148,6 @@ def pipeline_validate(**params):
     """Validate a pipeline config directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
-    params["dpath_pipeline"] = params.pop("path")
     with handle_exception(PipelineValidateWorkflow(**params)) as workflow:
         workflow.run()
 
