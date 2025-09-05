@@ -1,4 +1,4 @@
-"""Test for the ZenodoUploadWorkflow class."""
+"""Test for the PipelineUploadWorkflow class."""
 
 from contextlib import nullcontext
 
@@ -9,7 +9,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
-    ZenodoUploadWorkflow,
+    PipelineUploadWorkflow,
     _is_same_pipeline,
 )
 from nipoppy.zenodo_api import ZenodoAPIError
@@ -20,14 +20,14 @@ DATASET_PATH = "my_dataset"
 
 @pytest.fixture(scope="function")
 def workflow(mocker: pytest_mock.MockerFixture):
-    workflow = ZenodoUploadWorkflow(
+    workflow = PipelineUploadWorkflow(
         pipeline_dir=TEST_PIPELINE,
         zenodo_api=mocker.MagicMock(),
     )
     return workflow
 
 
-def test_upload(workflow: ZenodoUploadWorkflow, mocker: pytest_mock.MockerFixture):
+def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture):
     get_pipeline_metadata = mocker.patch.object(workflow, "_get_pipeline_metadata")
     validator = mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
@@ -43,7 +43,7 @@ def test_upload(workflow: ZenodoUploadWorkflow, mocker: pytest_mock.MockerFixtur
 
 
 def test_get_pipeline_metadata(
-    workflow: ZenodoUploadWorkflow, datetime_fixture
+    workflow: PipelineUploadWorkflow, datetime_fixture
 ):  # noqa F811
     expected = {
         "metadata": {
@@ -146,7 +146,7 @@ def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
 
 @pytest.mark.parametrize("force", [True, False])
 def test_upload_same_pipeline(
-    workflow: ZenodoUploadWorkflow,
+    workflow: PipelineUploadWorkflow,
     force: bool,
 ):
     workflow.record_id = "1234567"
@@ -177,7 +177,7 @@ def test_upload_same_pipeline(
 
 
 def test_confirm_upload_no(
-    workflow: ZenodoUploadWorkflow,
+    workflow: PipelineUploadWorkflow,
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,
 ):
@@ -209,7 +209,7 @@ def test_confirm_upload_no(
     ],
 )
 def test_upload_duplicate_record(
-    workflow: ZenodoUploadWorkflow,
+    workflow: PipelineUploadWorkflow,
     hits: list,
     potential_duplicates: str,
     caplog: pytest.LogCaptureFixture,
@@ -225,7 +225,7 @@ def test_upload_duplicate_record(
         assert potential_duplicates in caplog.text
 
 
-def test_force_upload_duplicate_record(workflow: ZenodoUploadWorkflow):
+def test_force_upload_duplicate_record(workflow: PipelineUploadWorkflow):
     workflow.assume_yes = True
     workflow.force = True
 

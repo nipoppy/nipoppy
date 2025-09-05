@@ -23,7 +23,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self,
         dpath_root: Path,
         source: StrOrPathLike | str,
-        zenodo_api: ZenodoAPI = None,
+        sandbox: bool = False,
         assume_yes: bool = False,
         force: bool = False,
         fpath_layout: Optional[StrOrPathLike] = None,
@@ -39,10 +39,11 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
         )
         self.source = source
-        self.zenodo_api = zenodo_api or ZenodoAPI()
+        self.sandbox = sandbox
         self.assume_yes = assume_yes
         self.force = force
 
+        self.zenodo_api = ZenodoAPI(sandbox=self.sandbox)
         self.zenodo_api.set_logger(self.logger)
 
         self.dpath_pipeline = None
