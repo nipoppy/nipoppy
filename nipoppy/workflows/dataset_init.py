@@ -14,13 +14,15 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import (
-    DPATH_HPC,
-    FPATH_SAMPLE_CONFIG,
-    FPATH_SAMPLE_MANIFEST,
+from nipoppy.utils.bids import (
     check_participant_id,
     check_session_id,
     session_id_to_bids_session_id,
+)
+from nipoppy.utils.utils import (
+    DPATH_HPC,
+    FPATH_SAMPLE_CONFIG,
+    FPATH_SAMPLE_MANIFEST,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
 

@@ -26,7 +26,11 @@ from nipoppy.tabular.curation_status import (
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils import add_path_timestamp, is_nipoppy_project, process_template_str
+from nipoppy.utils.utils import (
+    add_path_timestamp,
+    is_nipoppy_project,
+    process_template_str,
+)
 
 
 class BaseWorkflow(Base, ABC):

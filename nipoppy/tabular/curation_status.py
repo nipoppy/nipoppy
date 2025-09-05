@@ -13,7 +13,7 @@ from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
-from nipoppy.utils import (
+from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )

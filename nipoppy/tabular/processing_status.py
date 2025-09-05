@@ -5,13 +5,13 @@ from typing import Any, Optional
 from pydantic import Field, field_validator, model_validator
 
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
-from nipoppy.utils import (
-    FIELD_DESCRIPTION_MAP,
+from nipoppy.utils.bids import (
     check_participant_id,
     check_session_id,
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
+from nipoppy.utils.utils import FIELD_DESCRIPTION_MAP
 
 STATUS_SUCCESS = "SUCCESS"
 STATUS_FAIL = "FAIL"

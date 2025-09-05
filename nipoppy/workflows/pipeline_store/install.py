@@ -11,7 +11,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils import apply_substitutions_to_json, process_template_str
+from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 

@@ -15,7 +15,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.utils import apply_substitutions_to_json, load_json
+from nipoppy.utils.utils import apply_substitutions_to_json, load_json
 
 
 class PipelineVariables(BaseModel):

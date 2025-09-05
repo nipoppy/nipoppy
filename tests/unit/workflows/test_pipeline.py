@@ -30,7 +30,7 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     ReturnCode,
 )
-from nipoppy.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
+from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     apply_analysis_level,

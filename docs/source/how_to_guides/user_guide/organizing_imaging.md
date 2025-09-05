@@ -25,7 +25,7 @@ To use Nipoppy to convert imaging data to the {term}`BIDS` standard, the data fi
 ### Commands
 
 - Command-line interface: [`nipoppy reorg`](<project:../../cli_reference/reorg.rst>)
-- Python API: {class}`nipoppy.workflows.DicomReorgWorkflow`
+- Python API: {class}`nipoppy.workflows.dicom_reorg.DicomReorgWorkflow`
 
 ### Workflow
 
@@ -96,14 +96,14 @@ Log files for this command will be written to {{dpath_logs}}`/dicom_reorg`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import DicomReorgWorkflow
+from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
 dpath_root = "."  # replace by path to dataset root directory
 workflow = DicomReorgWorkflow(dpath_root=dpath_root)
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.DicomReorgWorkflow` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/reorg.rst>)).
+See the API reference for {class}`nipoppy.workflows.dicom_reorg.DicomReorgWorkflow` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/reorg.rst>)).
 
 (customizing-dicom-reorg)=
 #### Customizing input and output file paths
@@ -117,9 +117,10 @@ class: no-copybutton
 
 In this case, using a DICOM directory mapping file as described above is not enough, since files from different imaging sessions are in the same directory.
 
-The {class}`nipoppy.workflows.DicomReorgWorkflow` class exposes two functions for finer control of input paths and output filenames:
-- {func}`nipoppy.workflows.DicomReorgWorkflow.get_fpaths_to_reorg` can be overridden to map a participant ID and session ID to a list of absolute filepaths to be reorganized
-- {func}`nipoppy.workflows.DicomReorgWorkflow.apply_fname_mapping` can be overridden to rename output files
+The {class}`nipoppy.workflows.dicom_reorg.DicomReorgWorkflow` class exposes two functions for finer control of input paths and output filenames:
+
+- {func}`nipoppy.workflows.dicom_reorg.DicomReorgWorkflow.get_fpaths_to_reorg` can be overridden to map a participant ID and session ID to a list of absolute filepaths to be reorganized
+- {func}`nipoppy.workflows.dicom_reorg.DicomReorgWorkflow.apply_fname_mapping` can be overridden to rename output files
   - Note: output files will still be in the {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` directory
 
 Here is an example of custom imaging data reorganization script:
