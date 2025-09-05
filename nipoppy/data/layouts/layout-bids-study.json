@@ -1,6 +1,6 @@
 {
     "dpath_bids": {
-        "path": "sourcedata/raw",
+        "path": "sourcedata/imaging/raw",
         "description": "This directory contains the raw dataset converted to the BIDS standard."
     },
     "dpath_derivatives": {
@@ -12,7 +12,7 @@
         "description": "This directory is for the unorganized or arbitrarily organized source data (imaging and tabular)."
     },
     "dpath_src_tabular": {
-        "path": "sourcedata/tabular",
+        "path": "sourcedata/tabular/downloads",
         "description": "This directory is for the unorganized or arbitrarily organized tabular data."
     },
     "dpath_src_imaging": {
@@ -44,7 +44,7 @@
         "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
     },
     "dpath_pipelines": {
-        "path": "code/pipelines",
+        "path": ".nipoppy/pipelines",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
     "dpath_scratch": {
@@ -64,11 +64,11 @@
         "description": "This directory contains log files."
     },
     "dpath_tabular": {
-        "path": "sourcedata/tabular",
+        "path": "sourcedata/tabular/raw",
         "description": "This directory is for tabular/phenotypic data."
     },
     "dpath_assessments": {
-        "path": "sourcedata/tabular/assessments",
+        "path": "sourcedata/tabular/raw/assessments",
         "description": "This directory is for assessments data."
     },
     "fpath_config": {
@@ -88,7 +88,7 @@
         "description": "The processing status file lists availability of derived imaging data and pipeline processing statuses."
     },
     "fpath_demographics": {
-        "path": "sourcedata/tabular/demographics.tsv",
+        "path": "sourcedata/tabular/raw/demographics.tsv",
         "description": "The demographics file contains demographic information for study participants."
     },
     "fpath_bids_dataset_description": {
