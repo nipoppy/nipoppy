@@ -89,24 +89,29 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             variables,
         )
 
-        # log variable details
-        self.logger.warning(
-            f"Adding {len(pipeline_config.VARIABLES)} variable(s) "
-            "to the global config file:"
-        )
-        for (
-            variable_name,
-            variable_description,
-        ) in pipeline_config.VARIABLES.items():
-            self.logger.warning(f"\t{variable_name}\t{variable_description}")
-        self.logger.warning(
-            "You must update the PIPELINE_VARIABLES section in "
-            f"{self.layout.fpath_config} manually before running the pipeline!"
-        )
+        added_variables = [
+            variable_name
+            for variable_name, variable_value in variables.items()
+            if variable_value is None
+        ]
 
-        # save
-        if not self.dry_run:
-            config.save(self.layout.fpath_config)
+        if len(added_variables) > 0:
+            # log variable details
+            self.logger.warning(
+                f"Adding {len(added_variables)} variable(s) "
+                "to the global config file:"
+            )
+            for variable_name in added_variables:
+                variable_description = pipeline_config.VARIABLES[variable_name]
+                self.logger.warning(f"\t{variable_name}\t{variable_description}")
+            self.logger.warning(
+                "You must update the PIPELINE_VARIABLES section in "
+                f"{self.layout.fpath_config} manually before running the pipeline!"
+            )
+
+            # save
+            if not self.dry_run:
+                config.save(self.layout.fpath_config)
 
         return config
 

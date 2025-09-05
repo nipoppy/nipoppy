@@ -186,7 +186,9 @@ def test_update_config_and_save_no_other_change(
 
 
 def test_update_config_and_save_no_overwrite(
-    workflow: PipelineInstallWorkflow, pipeline_config: ProcPipelineConfig
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcPipelineConfig,
+    caplog: pytest.LogCaptureFixture,
 ):
     variable_name = "var1"
     variable_value = "some_value"
@@ -207,6 +209,9 @@ def test_update_config_and_save_no_overwrite(
         pipeline_config.NAME,
         pipeline_config.VERSION,
     ) == {variable_name: variable_value}
+
+    # should not log any warnings about adding variables
+    assert not any([record.levelno == logging.WARNING for record in caplog.records])
 
 
 def test_download_container(
