@@ -178,9 +178,10 @@ class Config(_SchemaWithContainerConfig):
 
     def _check_substitutions(self) -> Self:
         """Check that substitutions do not have empty keys."""
-        for key in self.SUBSTITUTIONS:
+        for key, value in self.SUBSTITUTIONS.items():
             if not key:
                 raise ValueError("Substitutions cannot have empty keys")
+            self.SUBSTITUTIONS[key] = value.strip()
 
         return self
 
