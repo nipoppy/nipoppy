@@ -8,6 +8,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.main import Config
+from nipoppy.exceptions import LayoutError
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
@@ -101,7 +102,7 @@ def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):
 
     # expect layout validation error
     with pytest.raises(
-        FileNotFoundError, match="Dataset does not follow expected directory structure"
+        LayoutError, match="Dataset does not follow expected directory structure"
     ):
         workflow.run_setup()
 

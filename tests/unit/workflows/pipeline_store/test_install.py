@@ -17,6 +17,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     ReturnCode,
 )
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -365,7 +366,7 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
     workflow_zenodo.zenodo_id = "bad_zenodo_id"
 
     with pytest.raises(
-        FileNotFoundError,
+        ConfigError,
         match="Pipeline configuration file not found: .* Make sure the record at",
     ):
         workflow_zenodo.run_main()
@@ -375,7 +376,7 @@ def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
     # create a non-existent path
     workflow.dpath_pipeline = workflow.layout.dpath_pipelines / "non_existent_path"
     with pytest.raises(
-        FileNotFoundError,
+        ConfigError,
         match="Pipeline configuration file not found: .*/config.json$",
     ):
         workflow.run_main()

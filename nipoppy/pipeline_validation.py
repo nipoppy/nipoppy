@@ -18,6 +18,7 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils import load_json
 
@@ -32,23 +33,21 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
-        raise FileNotFoundError(
-            f"Pipeline configuration file not found: {fpath_config}"
-        )
+        raise ConfigError(f"Pipeline configuration file not found: {fpath_config}")
 
     try:
         config_dict = load_json(fpath_config)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
-            f"{exception}"
+            f"{str(exception)}"
         )
 
     try:
         config = BasePipelineConfig(**config_dict)
         config = PIPELINE_TYPE_TO_CLASS[config.PIPELINE_TYPE](**config_dict)
     except ValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Pipeline configuration file {fpath_config} is invalid:\n{exception}"
         )
 
@@ -59,18 +58,18 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
     if not fpath_descriptor.exists():
-        raise FileNotFoundError(f"Descriptor file not found: {fpath_descriptor}")
+        raise ConfigError(f"Descriptor file not found: {fpath_descriptor}")
 
     try:
         descriptor_dict = load_json(fpath_descriptor)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"Descriptor file is not a valid JSON file: {exception}")
+        raise ConfigError(f"Descriptor file is not a valid JSON file: {exception}")
 
     descriptor_str = json.dumps(descriptor_dict)
     try:
         boutiques.validate(descriptor_str)
     except boutiques.DescriptorValidationError as exception:
-        raise RuntimeError(f"Descriptor file {descriptor_str} is invalid:\n{exception}")
+        raise ConfigError(f"Descriptor file {descriptor_str} is invalid:\n{exception}")
     return descriptor_str
 
 
@@ -78,19 +77,19 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     """Validate a Boutiques invocation file."""
     fpath_invocation: Path = Path(fpath_invocation)
     if not fpath_invocation.exists():
-        raise FileNotFoundError(f"Invocation file not found: {fpath_invocation}")
+        raise ConfigError(f"Invocation file not found: {fpath_invocation}")
 
     try:
         invocation_dict = load_json(fpath_invocation)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"Invocation file is not a valid JSON file: {exception}")
+        raise ConfigError(f"Invocation file is not a valid JSON file: {exception}")
 
     try:
         boutiques.invocation(
             "--invocation", json.dumps(invocation_dict), descriptor_str
         )
     except boutiques.InvocationValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Invocation file {fpath_invocation} is invalid:\n{exception}"
         )
 
@@ -99,17 +98,17 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
     """Validate an HPC config file."""
     fpath_hpc_config: Path = Path(fpath_hpc_config)
     if not fpath_hpc_config.exists():
-        raise FileNotFoundError(f"HPC config file not found: {fpath_hpc_config}")
+        raise ConfigError(f"HPC config file not found: {fpath_hpc_config}")
 
     try:
         hpc_config_dict = load_json(fpath_hpc_config)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"HPC config file is not a valid JSON file: {exception}")
+        raise ConfigError(f"HPC config file is not a valid JSON file: {exception}")
 
     try:
         HpcConfig(**hpc_config_dict)
     except ValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"HPC config file {fpath_hpc_config} is invalid:\n{exception}"
         )
 
@@ -118,19 +117,17 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
     """Validate a tracker config file."""
     fpath_tracker_config: Path = Path(fpath_tracker_config)
     if not fpath_tracker_config.exists():
-        raise FileNotFoundError(
-            f"Tracker config file not found: {fpath_tracker_config}"
-        )
+        raise ConfigError(f"Tracker config file not found: {fpath_tracker_config}")
 
     try:
         tracker_config_dict = load_json(fpath_tracker_config)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"Tracker config file is not a valid JSON file: {exception}")
+        raise ConfigError(f"Tracker config file is not a valid JSON file: {exception}")
 
     try:
         TrackerConfig(**tracker_config_dict)
     except ValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Tracker config file {fpath_tracker_config} is invalid:\n{exception}"
         )
 
@@ -139,15 +136,15 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
     """Validate a PyBIDS ignore patterns file."""
     fpath_pybids_ignore: Path = Path(fpath_pybids_ignore)
     if not fpath_pybids_ignore.exists():
-        raise FileNotFoundError(
+        raise ConfigError(
             f"PyBIDS ignore patterns file not found: {fpath_pybids_ignore}"
         )
 
     try:
         load_json(fpath_pybids_ignore)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(
-            "PyBIDS ignore patterns file is not a valid JSON file: " f"{exception}"
+        raise ConfigError(
+            f"PyBIDS ignore patterns file is not a valid JSON file: {exception}"
         )
 
 
@@ -202,7 +199,6 @@ def _check_pipeline_files(
             fpaths.append(fpath_hpc_config)
 
         if isinstance(step, ProcPipelineStepConfig):
-
             if step.TRACKER_CONFIG_FILE is not None:
                 _log(f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}")
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE

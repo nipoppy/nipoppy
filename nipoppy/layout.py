@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
 from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import LayoutError
 from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
@@ -175,7 +176,7 @@ class DatasetLayout(Base):
 
         fpath_config = Path(fpath_config)
         if not fpath_config.exists():
-            raise FileNotFoundError(f"Layout config file not found: {fpath_config}")
+            raise LayoutError(f"Layout config file not found: {fpath_config}")
 
         # load the config
         config = LayoutConfig(**load_json(fpath_config))
@@ -280,7 +281,7 @@ class DatasetLayout(Base):
         """Validate that all the expected paths exist."""
         missing_paths = self._find_missing_paths()
         if len(missing_paths) != 0:
-            raise FileNotFoundError(
+            raise LayoutError(
                 "Dataset does not follow expected directory structure. "
                 f"Missing {len(missing_paths)} paths"
                 f": {[str(path) for path in missing_paths]}"

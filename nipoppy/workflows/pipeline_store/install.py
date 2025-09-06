@@ -10,6 +10,7 @@ from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.exceptions import ConfigError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -198,7 +199,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     + "/records/"
                     + self.zenodo_id
                 )
-                raise FileNotFoundError(
+                raise ConfigError(
                     f"{str(exception)}. Make sure the record at "
                     f"{record_url} contains valid Nipoppy pipeline configuration files."
                 )
