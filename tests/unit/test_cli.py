@@ -21,38 +21,38 @@ runner = CliRunner()
 
 # tuple of command/subcommands -> (module path, workflow class name)
 COMMAND_WORKFLOW_MAP = {
-    ("init",): ("nipoppy.workflows.dataset_init", "InitWorkflow"),
-    ("track-curation",): ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
-    ("reorg",): ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
-    ("bidsify",): ("nipoppy.workflows.bids_conversion", "BidsConversionRunner"),
-    ("process",): ("nipoppy.workflows.runner", "PipelineRunner"),
-    ("track-processing",): ("nipoppy.workflows.tracker", "PipelineTracker"),
-    ("extract",): ("nipoppy.workflows.extractor", "ExtractionRunner"),
-    ("status",): ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
-    (
-        "pipeline",
-        "search",
-    ): ("nipoppy.workflows.pipeline_store.search", "PipelineSearchWorkflow"),
-    (
-        "pipeline",
-        "create",
-    ): ("nipoppy.workflows.pipeline_store.create", "PipelineCreateWorkflow"),
-    (
-        "pipeline",
-        "install",
-    ): ("nipoppy.workflows.pipeline_store.install", "PipelineInstallWorkflow"),
-    ("pipeline", "list"): (
+    "init": ("nipoppy.workflows.dataset_init", "InitWorkflow"),
+    "track-curation": ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
+    "reorg": ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
+    "bidsify": ("nipoppy.workflows.bids_conversion", "BidsConversionRunner"),
+    "process": ("nipoppy.workflows.runner", "PipelineRunner"),
+    "track-processing": ("nipoppy.workflows.tracker", "PipelineTracker"),
+    "extract": ("nipoppy.workflows.extractor", "ExtractionRunner"),
+    "status": ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
+    "pipeline search": (
+        "nipoppy.workflows.pipeline_store.search",
+        "PipelineSearchWorkflow",
+    ),
+    "pipeline create": (
+        "nipoppy.workflows.pipeline_store.create",
+        "PipelineCreateWorkflow",
+    ),
+    "pipeline install": (
+        "nipoppy.workflows.pipeline_store.install",
+        "PipelineInstallWorkflow",
+    ),
+    "pipeline list": (
         "nipoppy.workflows.pipeline_store.list",
         "PipelineListWorkflow",
     ),
-    (
-        "pipeline",
-        "validate",
-    ): ("nipoppy.workflows.pipeline_store.validate", "PipelineValidateWorkflow"),
-    (
-        "pipeline",
-        "upload",
-    ): ("nipoppy.workflows.pipeline_store.upload", "ZenodoUploadWorkflow"),
+    "pipeline validate": (
+        "nipoppy.workflows.pipeline_store.validate",
+        "PipelineValidateWorkflow",
+    ),
+    "pipeline upload": (
+        "nipoppy.workflows.pipeline_store.upload",
+        "ZenodoUploadWorkflow",
+    ),
 }
 
 
@@ -345,12 +345,16 @@ def test_no_duplicated_flag(
     [command for command in list_commands(cli) if command not in ("gui", "pipeline")],
 )
 def test_cli_params_match_workflows(command_name):
+    ignored_params = {
+        "zenodo_api",  # instantiated by the CLI from other params
+        "dpath_pipeline",  # positional arg in CLI
+    }
+
     # get Click Command object
-    command_components = command_name.split(" ")
-    module_path, workflow_name = COMMAND_WORKFLOW_MAP[tuple(command_components)]
+    module_path, workflow_name = COMMAND_WORKFLOW_MAP[command_name]
     command = cli
+    command_components = command_name.split(" ")
     while command_components:
-        print(command_components, command)
         command = command.commands[command_components.pop(0)]
 
     # get workflow class
@@ -360,7 +364,11 @@ def test_cli_params_match_workflows(command_name):
     params_workflow = {
         p.name
         for p in inspect.signature(workflow_class.__init__).parameters.values()
-        if p.name != "self" and not p.name.startswith("_")
+        if (
+            p.name != "self"
+            and not p.name.startswith("_")
+            and p.name not in ignored_params
+        )
     }
     params_command = {p.name for p in command.params}
 
