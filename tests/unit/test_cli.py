@@ -346,6 +346,7 @@ def test_no_duplicated_flag(
 )
 def test_cli_params_match_workflows(command_name):
     ignored_params = {
+        "name",  # not exposed to CLI
         "zenodo_api",  # instantiated by the CLI from other params
         "dpath_pipeline",  # positional arg in CLI
     }

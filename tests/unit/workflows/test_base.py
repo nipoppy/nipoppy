@@ -15,7 +15,7 @@ def workflow():
         def run_main(self):
             pass
 
-    workflow = DummyWorkflow(_name="my_workflow")
+    workflow = DummyWorkflow(name="my_workflow")
 
     return workflow
 

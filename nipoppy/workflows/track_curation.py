@@ -27,7 +27,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         """Initialize the workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            _name="track_curation",
+            name="track_curation",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,

@@ -32,7 +32,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
         self.force = force
 
         super().__init__(
-            _name="pipeline_upload",
+            name="pipeline_upload",
             verbose=verbose,
             dry_run=dry_run,
         )

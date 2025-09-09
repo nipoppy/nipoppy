@@ -27,7 +27,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         """Initialize the workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            _name="status",
+            name="status",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,

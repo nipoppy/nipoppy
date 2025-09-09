@@ -36,7 +36,7 @@ class BidsConversionRunner(PipelineRunner):
     ):
         super().__init__(
             dpath_root=dpath_root,
-            _name="bids_conversion",
+            name="bids_conversion",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,

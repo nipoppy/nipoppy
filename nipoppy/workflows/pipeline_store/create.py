@@ -23,7 +23,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         dry_run=False,
     ):
         super().__init__(
-            _name="pipeline_create",
+            name="pipeline_create",
             verbose=verbose,
             dry_run=dry_run,
         )

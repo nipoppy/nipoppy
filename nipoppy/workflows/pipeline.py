@@ -156,7 +156,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
-        _name: str,
+        name: str,
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
@@ -194,7 +194,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         super().__init__(
             dpath_root=dpath_root,
-            _name=_name,
+            name=name,
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,

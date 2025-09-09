@@ -25,7 +25,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        _name: str = "process",
+        name: str = "process",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
@@ -45,7 +45,7 @@ class PipelineRunner(BasePipelineWorkflow):
         self.tar = tar
         super().__init__(
             dpath_root=dpath_root,
-            _name=_name,
+            name=name,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,

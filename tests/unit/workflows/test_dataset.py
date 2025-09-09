@@ -27,7 +27,7 @@ def workflow(tmp_path: Path):
             pass
 
     dpath_root = tmp_path / "my_dataset"
-    workflow = DummyWorkflow(dpath_root=dpath_root, _name="my_workflow")
+    workflow = DummyWorkflow(dpath_root=dpath_root, name="my_workflow")
     workflow.logger.setLevel(logging.DEBUG)  # capture all logs
 
     create_empty_dataset(workflow.dpath_root)

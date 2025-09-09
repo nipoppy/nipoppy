@@ -18,7 +18,7 @@ class PipelineValidateWorkflow(BaseWorkflow):
         dry_run=False,
     ):
         super().__init__(
-            _name="pipeline_validate",
+            name="pipeline_validate",
             verbose=verbose,
             dry_run=dry_run,
         )

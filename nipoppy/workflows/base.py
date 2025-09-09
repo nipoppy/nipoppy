@@ -36,7 +36,7 @@ class BaseWorkflow(Base, ABC):
     log_prefix_run_stdout = "[RUN STDOUT]"
     log_prefix_run_stderr = "[RUN STDERR]"
 
-    def __init__(self, _name: str, verbose: bool = False, dry_run: bool = False):
+    def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
 
         Parameters
@@ -48,7 +48,7 @@ class BaseWorkflow(Base, ABC):
         dry_run : bool, optional
             If True, print commands without executing them, by default False
         """
-        self.name = _name
+        self.name = name
         self.verbose = verbose
         self.dry_run = dry_run
 
@@ -277,7 +277,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
-        _name: str,
+        name: str,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -290,7 +290,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         ----------
         dpath_root : nipoppy.env.StrOrPathLike
             Path the the root directory of the dataset.
-        _name : str
+        name : str
             Name of the workflow, used for logging.
         fpath_layout : nipoppy.env.StrOrPathLike, optional
             Path to a custom layout file, by default None
@@ -314,7 +314,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             fpath_config=self.fpath_layout,
         )
 
-        super().__init__(_name=_name, verbose=verbose, dry_run=dry_run)
+        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
 
     def generate_fpath_log(
         self,
