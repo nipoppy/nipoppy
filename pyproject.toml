@@ -54,12 +54,13 @@ doc = [
 ]
 dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
-    "nipoppy[gui,parallel]",
     "fids>=0.1.0",
+    "nipoppy[gui,parallel]",
     "packaging",
     "pytest-cov",
     "pytest-httpx",
     "pytest-mock",
+    "pytest-xdist",
     "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
@@ -86,11 +87,14 @@ source = "vcs"
 skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
-addopts = "--color=yes -ra -q -vv"
+addopts = "--color=yes -n auto --dist loadfile -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
-markers = ["api: mark a test as an api test."]
+markers = [
+    "api: mark a test as an api test.",
+    "no_xdist: mark a test that should not be run with xdist in CI.",
+]
 
 [tool.coverage.report]
 # Preserves the "pragma: no cover" and skip functions decorated with "@abstractmethod"
