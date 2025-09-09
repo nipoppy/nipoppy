@@ -52,7 +52,7 @@ COMMAND_WORKFLOW_MAP = {
     (
         "pipeline",
         "upload",
-    ): ("nipoppy.workflows.pipeline_store.upload", "PipelineUploadWorkflow"),
+    ): ("nipoppy.workflows.pipeline_store.upload", "ZenodoUploadWorkflow"),
 }
 
 
@@ -304,7 +304,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--password-file",
                 str(PASSWORD_FILE),
             ],
-            "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
+            "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow",
         ),
     ],
 )
