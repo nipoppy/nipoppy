@@ -89,6 +89,7 @@ def pipeline_search(**params):
         "pipeline config directory."
     ),
 )
+@global_options
 def pipeline_create(**params):
     """Create a template pipeline config directory."""
     from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
@@ -132,6 +133,8 @@ def pipeline_install(**params):
 
 @pipeline.command("list")
 @dataset_option
+@global_options
+@layout_option
 def pipeline_list(**params):
     """List installed pipelines for a dataset."""
     from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
