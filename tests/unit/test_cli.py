@@ -354,9 +354,8 @@ def test_cli_params_match_workflows(command_name):
     # get Click Command object
     module_path, workflow_name = COMMAND_WORKFLOW_MAP[command_name]
     command = cli
-    command_components = command_name.split(" ")
-    while command_components:
-        command = command.commands[command_components.pop(0)]
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
 
     # get workflow class
     module = importlib.import_module(module_path)
