@@ -62,7 +62,24 @@ class StatusWorkflow(BaseDatasetWorkflow):
             [status_col_dict["manifest"]] + curation_cols + processing_cols
         ]
 
-        self.logger.debug(status_df)
+        self.logger.debug(f"curation columns: {curation_cols}")
+        self.logger.debug(f"processing columns: {processing_cols}")
+
+        # check if the number of bids participants match the manifest
+        # note: not checking participant IDs, just the number of participants
+        if curation_cols and status_df[self.curation_status_table.col_in_bids].equals(
+            status_df["in_manifest"]
+        ):
+            self.logger.info(
+                "BIDSification completed: hiding counts for pre- and post-reorg stages."
+            )
+            status_df = status_df.drop(
+                [
+                    self.curation_status_table.col_in_pre_reorg,
+                    self.curation_status_table.col_in_post_reorg,
+                ],
+                axis=1,
+            )
 
         self._df_to_table(status_df, status_col_dict)
 
