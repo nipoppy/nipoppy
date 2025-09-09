@@ -235,19 +235,16 @@ def test_force_upload_duplicate_record(workflow: ZenodoUploadWorkflow):
 
 
 def test_fails_check_pipeline_bundle(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+    workflow: ZenodoUploadWorkflow,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
     mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
         side_effect=Exception("Mocked validation failed"),
     )
 
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,
-        zenodo_api=zenodo_api,
-        assume_yes=True,
-    )
+    workflow.assume_yes = True
 
     with pytest.raises(SystemExit) as exc_info:
         workflow.run_main()
