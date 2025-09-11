@@ -11,7 +11,7 @@ from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.workflows.processing_runner import ProcessingRunner
 from nipoppy.workflows.tracker import PipelineTracker
 from tests.conftest import (
     create_empty_dataset,
@@ -186,7 +186,7 @@ def test_check_status_with_tarball(
 
     # use PipelineRunner to tar the directory
     dpath_to_tar = tracker.dpath_pipeline_output / relative_dpath_to_tar
-    PipelineRunner(
+    ProcessingRunner(
         tracker.dpath_root, tracker.pipeline_name, tracker.pipeline_version
     ).tar_directory(dpath_to_tar)
 
@@ -274,7 +274,7 @@ def test_run_single(
 
     for relative_dpath_to_tar in ["01/ses-1", "02/ses-1"]:
         dpath_to_tar = tracker.dpath_pipeline_output / relative_dpath_to_tar
-        PipelineRunner(
+        ProcessingRunner(
             tracker.dpath_root, tracker.pipeline_name, tracker.pipeline_version
         ).tar_directory(dpath_to_tar)
 

@@ -9,10 +9,10 @@ from typing import Optional
 from nipoppy.config.pipeline import BidsPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
-from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.workflows.runner import Runner
 
 
-class BidsConversionRunner(PipelineRunner):
+class BidsConversionRunner(Runner):
     """Convert data to BIDS."""
 
     _pipeline_type = PipelineTypeEnum.BIDSIFICATION
