@@ -13,10 +13,10 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
-from nipoppy.workflows.processing_runner import ProcessingRunner
+from nipoppy.workflows.runner import Runner
 
 
-class ExtractionRunner(ProcessingRunner):
+class ExtractionRunner(Runner):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
 
     _pipeline_type = PipelineTypeEnum.EXTRACTION
