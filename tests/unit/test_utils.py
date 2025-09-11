@@ -15,6 +15,7 @@ from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
     check_session_id,
+    create_bids_db,
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
@@ -114,8 +115,6 @@ def test_check_session_id(session_id, raise_error, is_valid, expected):
 def test_create_bids_db(
     dpath_pybids_db, ignore_patterns, expected_count, resolve_paths, tmp_path: Path
 ):
-    from nipoppy.utils.bids import create_bids_db
-
     dpath_bids = tmp_path / "bids"
     if dpath_pybids_db is not None:
         dpath_pybids_db: Path = tmp_path / dpath_pybids_db
