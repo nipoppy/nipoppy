@@ -13,11 +13,11 @@ from typing import Iterable, List, Optional, Tuple, Type
 
 import bids
 import pandas as pd
+import rich
 from jinja2 import Environment, meta
 from packaging.version import Version
 from pydantic import ValidationError
 from pysqa import QueueAdapter
-from rich.progress import track
 
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
@@ -670,7 +670,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )(results_generator)
 
         if self._show_progress and n_total != 0:
-            results_generator = track(
+            results_generator = rich.progress.track(
                 results_generator,
                 description=f'{" "*_INDENT}{self.progress_bar_description}',
                 total=n_total,

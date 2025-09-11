@@ -144,6 +144,17 @@ def reimport_joblib(mocker: pytest_mock.MockerFixture):
     # fmt: on
 
 
+def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: str):
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "joblib":
+            raise ImportError(error_message)
+        return real_import(name, *args, **kwargs)
+
+    mocker.patch("builtins.__import__", side_effect=fake_import)
+
+
 def _set_up_hpc_for_testing(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
@@ -185,15 +196,8 @@ def test_joblib_import_fails(
 ):
     """Test that ImportError is propagated if joblib exists but import fails."""
     # pretend that joblib is not installed
-    real_import = builtins.__import__
     error_message = "Unexpected exception during import"
-
-    def fake_import(name, *args, **kwargs):
-        if name == "joblib":
-            raise ImportError(error_message)
-        return real_import(name, *args, **kwargs)
-
-    mocker.patch("builtins.__import__", side_effect=fake_import)
+    _mock_joblib_import_error(mocker, error_message)
 
     # reload the module
     import nipoppy.workflows.pipeline
@@ -985,14 +989,7 @@ def test_get_results_generator_no_joblib(
     participants_sessions = [("01", "1"), ("01", "2"), ("01", "3"), ("02", "1")]
 
     # pretend that joblib is not installed
-    real_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "joblib":
-            raise ImportError(f"No module named '{name}'")
-        return real_import(name, *args, **kwargs)
-
-    mocker.patch("builtins.__import__", side_effect=fake_import)
+    _mock_joblib_import_error(mocker, "No module named 'joblib'")
 
     # also mock joblib.delayed which is not supposed to be called
     # when joblib is not installed
@@ -1022,7 +1019,7 @@ def test_get_results_generator_with_progress_bar(
     workflow._show_progress = True
     participants_sessions = [("001", "1")]
 
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.track")
+    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
 
     workflow._get_results_generator(participants_sessions)
     mocked_track.assert_called_once()
@@ -1039,7 +1036,7 @@ def test_get_results_generator_no_progress_bar(
 ):
     workflow._show_progress = show_progress
 
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.track")
+    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
 
     workflow._get_results_generator(participants_sessions)
     mocked_track.assert_not_called()

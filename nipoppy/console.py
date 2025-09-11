@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 from functools import wraps
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import List, Optional, Tuple
 
 from rich.console import Console, RenderableType, RenderResult
 from rich.padding import Padding
@@ -136,7 +136,7 @@ class _Console(Console):
     @_force_indent_if_internal
     def print(
         self,
-        *renderables: Iterable[RenderableType],
+        *renderables: Tuple[RenderableType],
         with_indent: bool = False,
         **kwargs,
     ) -> None:
