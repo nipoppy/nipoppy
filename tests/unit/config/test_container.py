@@ -10,7 +10,6 @@ from nipoppy.config.container import (
     ContainerConfig,
     ContainerInfo,
     _SchemaWithContainerConfig,
-    add_bind_path_to_args,
     check_container_args,
     prepare_container,
     set_container_env_vars,
@@ -150,47 +149,6 @@ def test_schema_with_container_config():
     assert isinstance(
         ClassWithContainerConfig(a=1, b=2).get_container_config(),
         ContainerConfig,
-    )
-
-
-@pytest.mark.parametrize(
-    "args,path_local,path_inside_container,mode,expected",
-    [
-        (
-            [],
-            "/my/local/path",
-            "my/container/path",
-            "ro",
-            ["--bind", "/my/local/path:my/container/path:ro"],
-        ),
-        (
-            ["other_arg"],
-            "/my/local/path",
-            None,
-            "ro",
-            ["other_arg", "--bind", "/my/local/path"],
-        ),
-        (
-            [],
-            "relative_path",
-            None,
-            "rw",
-            [
-                "--bind",
-                f"{Path('relative_path').resolve()}",
-            ],
-        ),
-    ],
-)
-def test_add_bind_path_to_args(args, path_local, path_inside_container, mode, expected):
-    assert (
-        add_bind_path_to_args(
-            args,
-            path_local=path_local,
-            path_inside_container=path_inside_container,
-            mode=mode,
-        )
-        == expected
     )
 
 

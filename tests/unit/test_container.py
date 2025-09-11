@@ -1,5 +1,6 @@
 """Tests for container option handlers."""
 
+from pathlib import Path
 from typing import Type
 
 import pytest
@@ -56,3 +57,50 @@ def test_check_container_command_error(
     mocker.patch("nipoppy.container.shutil.which", return_value=None)
     with pytest.raises(RuntimeError, match="Container executable not found"):
         handler.check_container_command()
+
+
+@pytest.mark.parametrize(
+    "args,path_local,path_inside_container,mode,expected",
+    [
+        (
+            [],
+            "/my/local/path",
+            "my/container/path",
+            "ro",
+            ["--test-bind-flag", "/my/local/path:my/container/path:ro"],
+        ),
+        (
+            ["other_arg"],
+            "/my/local/path",
+            None,
+            "ro",
+            ["other_arg", "--test-bind-flag", "/my/local/path"],
+        ),
+        (
+            [],
+            "relative_path",
+            None,
+            "rw",
+            [
+                "--test-bind-flag",
+                f"{Path('relative_path').resolve()}",
+            ],
+        ),
+    ],
+)
+def test_add_bind_path(
+    handler: ContainerOptionsHandler,
+    args,
+    path_local,
+    path_inside_container,
+    mode,
+    expected,
+):
+    handler.args = args
+
+    handler.add_bind_path(
+        path_local=path_local,
+        path_inside_container=path_inside_container,
+        mode=mode,
+    )
+    assert handler.args == expected

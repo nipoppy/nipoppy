@@ -2,7 +2,10 @@
 
 import shutil
 from abc import ABC, abstractmethod
-from typing import Iterable
+from pathlib import Path
+from typing import Iterable, Optional
+
+from nipoppy.env import StrOrPathLike
 
 
 class ContainerOptionsHandler(ABC):
@@ -27,7 +30,6 @@ class ContainerOptionsHandler(ABC):
         super().__init__()
         self.args = args or []
 
-    # methods
     def check_container_command(self) -> str:
         """Check that the command is available (i.e. in PATH)."""
         if not shutil.which(self.command):
@@ -37,8 +39,40 @@ class ContainerOptionsHandler(ABC):
             )
         return self.command
 
-    def add_bind_path_to_args(self):
-        """Add a bind path to the container arguments."""
+    def add_bind_path(
+        self,
+        path_local: StrOrPathLike,
+        path_inside_container: Optional[StrOrPathLike] = None,
+        mode: Optional[str] = "rw",
+    ):
+        """Add a bind path to the container options.
+
+        Parameters
+        ----------
+        path_local : nipoppy.env.StrOrPathLike
+            Path on disk. If this is a relative path or contains symlinks,
+            it will be resolved
+        path_inside_container : Optional[nipoppy.env.StrOrPathLike], optional
+            Path inside the container (if None, will be the same as the local path),
+            by default None
+        mode : str, optional
+            Read/write permissions.
+            Only used if path_inside_container is given, by default "rw"
+        """
+        path_local = Path(path_local).resolve()
+
+        bind_spec_components = [str(path_local)]
+        if path_inside_container is not None:
+            bind_spec_components.append(str(path_inside_container))
+            if mode is not None:
+                bind_spec_components.append(mode)
+
+        self.args.extend(
+            [
+                self.bind_flag,
+                self.bind_sep.join(bind_spec_components),
+            ]
+        )
 
     def check_container_args(self):
         """Fix bind flags in args."""
