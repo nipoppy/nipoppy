@@ -177,9 +177,27 @@ def test_launch_boutiques_run(
     [
         (None, ["--no-container"]),
         (
-            ContainerConfig(),
+            ContainerConfig(COMMAND=ContainerCommandEnum.APPTAINER),
             [
                 "--force-singularity",
+                "--no-automount",
+                "--imagepath",
+                "--container-opts",
+            ],
+        ),
+        (
+            ContainerConfig(COMMAND=ContainerCommandEnum.SINGULARITY),
+            [
+                "--force-singularity",
+                "--no-automount",
+                "--imagepath",
+                "--container-opts",
+            ],
+        ),
+        (
+            ContainerConfig(COMMAND=ContainerCommandEnum.DOCKER),
+            [
+                "--force-docker",
                 "--no-automount",
                 "--imagepath",
                 "--container-opts",
@@ -189,7 +207,7 @@ def test_launch_boutiques_run(
 )
 @pytest.mark.parametrize("simulate", [True, False])
 @pytest.mark.parametrize("verbose", [True, False])
-def test_launch_boutiques_run_bosh_container_opts(
+def test_launch_boutiques_run_bosh_opts(
     container_config,
     expected_container_opts,
     simulate,
