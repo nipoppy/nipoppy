@@ -65,7 +65,7 @@ def test_cli_invalid(args):
                 "--write-list",
                 "[tmp_path]/subcohort.txt",
             ],
-            "nipoppy.workflows.runner.PipelineRunner",
+            "nipoppy.workflows.processing_runner.ProcessingRunner",
             (
                 "The --write-list option is deprecated and will be removed in a future "
                 "version. Use --write-subcohort instead."
@@ -181,7 +181,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-version",
                 "1.0",
             ],
-            "nipoppy.workflows.runner.PipelineRunner",
+            "nipoppy.workflows.processing_runner.ProcessingRunner",
         ),
         (
             [

@@ -237,10 +237,10 @@ def bidsify(**params):
 @layout_option
 def process(**params):
     """Run a processing pipeline."""
-    from nipoppy.workflows.runner import PipelineRunner
+    from nipoppy.workflows.processing_runner import ProcessingRunner
 
     params = dep_params(**params)
-    with handle_exception(PipelineRunner(**params)) as workflow:
+    with handle_exception(ProcessingRunner(**params)) as workflow:
         workflow.run()
 
 

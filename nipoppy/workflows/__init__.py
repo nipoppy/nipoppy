@@ -10,6 +10,6 @@ from .pipeline import BasePipelineWorkflow
 from .pipeline_store.install import PipelineInstallWorkflow
 from .pipeline_store.list import PipelineListWorkflow
 from .pipeline_store.validate import PipelineValidateWorkflow
-from .runner import PipelineRunner
+from .processing_runner import ProcessingRunner
 from .track_curation import TrackCurationWorkflow
 from .tracker import PipelineTracker
