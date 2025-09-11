@@ -11,21 +11,24 @@ import pytest
 from fids import fids
 
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import (
-    add_path_suffix,
-    add_path_timestamp,
+from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
-    apply_substitutions_to_json,
     check_participant_id,
     check_session_id,
+    create_bids_db,
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
+from nipoppy.utils.utils import (
+    add_path_suffix,
+    add_path_timestamp,
+    apply_substitutions_to_json,
     get_pipeline_tag,
     is_nipoppy_project,
     load_json,
-    participant_id_to_bids_participant_id,
     process_template_str,
     save_df_with_backup,
     save_json,
-    session_id_to_bids_session_id,
 )
 from tests.conftest import datetime_fixture  # noqa F401
 from tests.conftest import (
@@ -112,8 +115,6 @@ def test_check_session_id(session_id, raise_error, is_valid, expected):
 def test_create_bids_db(
     dpath_pybids_db, ignore_patterns, expected_count, resolve_paths, tmp_path: Path
 ):
-    from nipoppy.utils import create_bids_db
-
     dpath_bids = tmp_path / "bids"
     if dpath_pybids_db is not None:
         dpath_pybids_db: Path = tmp_path / dpath_pybids_db

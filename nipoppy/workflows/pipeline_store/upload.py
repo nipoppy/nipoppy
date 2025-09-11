@@ -7,7 +7,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils import get_today, load_json
+from nipoppy.utils.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
