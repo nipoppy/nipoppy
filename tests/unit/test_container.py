@@ -1,19 +1,42 @@
 """Tests for container option handlers."""
 
+from typing import Type
+
 import pytest
 import pytest_mock
 
-from nipoppy.container import ContainerOptionsHandler
+from nipoppy.container import (
+    ApptainerOptionsHandler,
+    ContainerOptionsHandler,
+    DockerOptionsHandler,
+    SingularityOptionsHandler,
+)
 
 
-class TestOptionsHandler(ContainerOptionsHandler):
+class _TestOptionsHandler(ContainerOptionsHandler):
+    """Class name starts with underscore to avoid Pytest collection."""
+
     command = "test"
     bind_flag = "--test-bind-flag"
 
 
 @pytest.fixture
 def handler() -> ContainerOptionsHandler:
-    return TestOptionsHandler()
+    return _TestOptionsHandler()
+
+
+@pytest.mark.parametrize(
+    "subclass",
+    [ApptainerOptionsHandler, SingularityOptionsHandler, DockerOptionsHandler],
+)
+@pytest.mark.parametrize(
+    "args,expected_args", [(None, []), ([], []), (["--some-arg"], ["--some-arg"])]
+)
+def test_init(subclass: Type[ContainerOptionsHandler], args, expected_args):
+    # try to instantiate subclass
+    handler = subclass(args=args)
+    assert isinstance(handler, ContainerOptionsHandler)
+    assert handler.args == expected_args
 
 
 def test_check_container_command(

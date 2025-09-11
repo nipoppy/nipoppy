@@ -2,6 +2,7 @@
 
 import shutil
 from abc import ABC, abstractmethod
+from typing import Iterable
 
 
 class ContainerOptionsHandler(ABC):
@@ -21,6 +22,10 @@ class ContainerOptionsHandler(ABC):
     def bind_flag(self) -> str:
         """Flag for binding paths."""
         pass
+
+    def __init__(self, args: Iterable[str] = None):
+        super().__init__()
+        self.args = args or []
 
     # methods
     def check_container_command(self) -> str:
