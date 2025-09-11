@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import logging
 import shlex
 from pathlib import Path
@@ -11,11 +13,48 @@ import pytest
 import pytest_mock
 from click.testing import CliRunner
 
+from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
 from nipoppy.env import ReturnCode
 from tests.conftest import PASSWORD_FILE
 
 runner = CliRunner()
+
+# tuple of command/subcommands -> (module path, workflow class name)
+COMMAND_WORKFLOW_MAP = {
+    "init": ("nipoppy.workflows.dataset_init", "InitWorkflow"),
+    "track-curation": ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
+    "reorg": ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
+    "bidsify": ("nipoppy.workflows.bids_conversion", "BidsConversionRunner"),
+    "process": ("nipoppy.workflows.processing_runner", "ProcessingRunner"),
+    "track-processing": ("nipoppy.workflows.tracker", "PipelineTracker"),
+    "extract": ("nipoppy.workflows.extractor", "ExtractionRunner"),
+    "status": ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
+    "pipeline search": (
+        "nipoppy.workflows.pipeline_store.search",
+        "PipelineSearchWorkflow",
+    ),
+    "pipeline create": (
+        "nipoppy.workflows.pipeline_store.create",
+        "PipelineCreateWorkflow",
+    ),
+    "pipeline install": (
+        "nipoppy.workflows.pipeline_store.install",
+        "PipelineInstallWorkflow",
+    ),
+    "pipeline list": (
+        "nipoppy.workflows.pipeline_store.list",
+        "PipelineListWorkflow",
+    ),
+    "pipeline validate": (
+        "nipoppy.workflows.pipeline_store.validate",
+        "PipelineValidateWorkflow",
+    ),
+    "pipeline upload": (
+        "nipoppy.workflows.pipeline_store.upload",
+        "PipelineUploadWorkflow",
+    ),
+}
 
 
 def assert_command_success(args):
@@ -266,7 +305,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--password-file",
                 str(PASSWORD_FILE),
             ],
-            "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow",
+            "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
         ),
     ],
 )
@@ -289,6 +328,47 @@ def test_cli_command(
     assert_command_success(command)
 
 
+def test_context_manager_no_exception(mocker):
+    """Test that the context manager exits with SUCCESS when no exception occurs."""
+    workflow = mocker.Mock()
+    workflow.return_code = ReturnCode.SUCCESS
+    mock_exit = mocker.patch("sys.exit")
+
+    with exception_handler(workflow):
+        pass
+
+    mock_exit.assert_called_once_with(ReturnCode.SUCCESS)
+
+
+@pytest.mark.parametrize(
+    "exception, return_code, expected_return_code",
+    [
+        (SystemExit, ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
+        (RuntimeError, ReturnCode.SUCCESS, ReturnCode.UNKNOWN_FAILURE),
+        (RuntimeError, ReturnCode.PARTIAL_SUCCESS, ReturnCode.PARTIAL_SUCCESS),
+        (ValueError, ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
+    ],
+)
+def test_context_manager_exception(
+    mocker, exception, return_code, expected_return_code
+):
+    """Test that the context manager handles exceptions correctly.
+
+    SystemExit is treated as an unknown failure, while other exceptions
+    are logged and set to UNKNOWN_FAILURE if the workflow exit code is still
+    SUCCESS. Other exit codes are preserved.
+    """
+    workflow = mocker.Mock()
+    workflow.return_code = return_code
+    mock_exit = mocker.patch("sys.exit")
+
+    with exception_handler(workflow):
+        raise exception()
+
+    assert workflow.return_code == expected_return_code
+    mock_exit.assert_called_once_with(expected_return_code)
+
+
 @pytest.mark.parametrize("command", list_commands(cli))
 def test_no_duplicated_flag(
     command: str,
@@ -299,4 +379,43 @@ def test_no_duplicated_flag(
     assert not any(
         "Remove its duplicate as parameters should be unique." in str(warning.message)
         for warning in recwarn
+    )
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    [command for command in list_commands(cli) if command not in ("gui", "pipeline")],
+)
+def test_cli_params_match_workflows(command_name):
+    ignored_params = {
+        "name",  # not exposed to CLI
+        "zenodo_api",  # instantiated by the CLI from other params
+        "dpath_pipeline",  # positional arg in CLI
+    }
+
+    # get Click Command object
+    module_path, workflow_name = COMMAND_WORKFLOW_MAP[command_name]
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    # get workflow class
+    module = importlib.import_module(module_path)
+    workflow_class = getattr(module, workflow_name)
+
+    params_workflow = {
+        p.name
+        for p in inspect.signature(workflow_class.__init__).parameters.values()
+        if (
+            p.name != "self"
+            and not p.name.startswith("_")
+            and p.name not in ignored_params
+        )
+    }
+    params_command = {p.name for p in command.params}
+
+    missing_params = params_workflow - params_command
+    assert len(missing_params) == 0, (
+        f"Command '{command_name}' is missing params {missing_params}"
+        f" expected by {workflow_name}"
     )

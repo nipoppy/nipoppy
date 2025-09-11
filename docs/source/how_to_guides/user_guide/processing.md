@@ -110,7 +110,7 @@ Log files for this command will be written to {{dpath_logs}}`/run`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import PipelineRunner
+from nipoppy.workflows.runner import PipelineRunner
 
 # replace by appropriate values
 dpath_root = "<NIPOPPY_PROJECT_ROOT>"
