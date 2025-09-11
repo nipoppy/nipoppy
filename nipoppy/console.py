@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 from functools import wraps
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from rich.console import Console, RenderableType, RenderResult
 from rich.padding import Padding
@@ -135,12 +135,15 @@ class _Console(Console):
 
     @_force_indent_if_internal
     def print(
-        self, renderable: RenderableType, with_indent: bool = False, **kwargs
+        self,
+        *renderables: Tuple[RenderableType],
+        with_indent: bool = False,
+        **kwargs,
     ) -> None:
         """Print an object with optional indenting."""
-        if with_indent:
-            renderable = Padding.indent(renderable, self.indent)
-        super().print(renderable, **kwargs)
+        if with_indent and len(renderables) == 1:
+            renderables = (Padding.indent(renderables[0], self.indent),)
+        super().print(*renderables, **kwargs)
 
     def status(self, status, **kwargs) -> _Status:
         """Override status to use indenting."""
