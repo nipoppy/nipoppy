@@ -13,7 +13,7 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
+from nipoppy.env import EXT_TAR, PROGRAM_NAME, ContainerCommandEnum, StrOrPathLike
 from nipoppy.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -157,7 +157,6 @@ class PipelineRunner(BasePipelineWorkflow):
             else:
                 bosh_exec_launch_args.extend(
                     [
-                        "--force-singularity",
                         "--no-automount",
                         "--imagepath",
                         str(self.fpath_container),
@@ -165,6 +164,13 @@ class PipelineRunner(BasePipelineWorkflow):
                         shlex.join(container_config.ARGS),
                     ]
                 )
+                if container_config.COMMAND in (
+                    ContainerCommandEnum.SINGULARITY,
+                    ContainerCommandEnum.APPTAINER,
+                ):
+                    bosh_exec_launch_args.append("--force-singularity")
+                elif container_config.COMMAND == ContainerCommandEnum.DOCKER:
+                    bosh_exec_launch_args.append("--force-docker")
 
         # validate the descriptor
         self.logger.debug(f"Descriptor string: {descriptor_str}")
