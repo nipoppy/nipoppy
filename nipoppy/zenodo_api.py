@@ -7,18 +7,15 @@ from typing import Optional, Tuple
 
 import httpx
 
-from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.logger import get_logger
 
-
-class InvalidChecksumError(Exception):
-    """Checksum mismatch between two files."""
+class ChecksumError(Exception):
+    """Exception raised from checksums mismatch."""
 
     pass
 
 
 class ZenodoAPIError(Exception):
-    """Error when interacting with Zenodo API."""
+    """Exception raised for errors related to the Zenodo API."""
 
     pass
 
@@ -35,14 +32,17 @@ class ZenodoAPI:
         sandbox: bool = False,
         password_file: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
+        timeout: float = 10.0,
     ):
         self.sandbox = sandbox
         self.api_endpoint = (
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
+        self.timeout = timeout
 
         if logger is None:
-            self.logger = get_logger(__name__)
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.INFO)
         else:
             self.logger = logger
 
@@ -74,7 +74,7 @@ class ZenodoAPI:
 
         Raises
         ------
-        InvalidChecksumError
+        ChecksumError
             Checksum mismatch between the downloaded file and the expected checksum.
         """
         record_id = record_id.removeprefix("zenodo.")
@@ -108,7 +108,7 @@ class ZenodoAPI:
             # Checksum verification before writing to disk
             content_md5 = hashlib.md5(response.content).hexdigest()
             if content_md5 != checksum:
-                raise InvalidChecksumError(
+                raise ChecksumError(
                     f"Checksum mismatch: '{file}' has invalid checksum {content_md5}"
                     f" (expected: {checksum})"
                 )
@@ -267,7 +267,7 @@ class ZenodoAPI:
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
-            raise ValueError(f"{input_dir} must be a directory.")
+            raise NotADirectoryError(f"{input_dir} must be a directory.")
 
         self._check_authentication()
 
@@ -331,16 +331,15 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
-        with CONSOLE_STDOUT.status("Searching Nipoppy pipelines on Zenodo..."):
-            response = httpx.get(
-                f"{self.api_endpoint}/records",
-                headers=self.headers,
-                params={
-                    "q": full_query,
-                    "size": size,
-                },
-                timeout=10.0,
-            )
+        response = httpx.get(
+            f"{self.api_endpoint}/records",
+            headers=self.headers,
+            params={
+                "q": full_query,
+                "size": size,
+            },
+            timeout=self.timeout,
+        )
         return response.json()["hits"]
 
     def get_record_metadata(self, record_id: str):
