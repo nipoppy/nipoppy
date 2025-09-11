@@ -74,7 +74,7 @@ class ZenodoAPI:
 
         Raises
         ------
-        InvalidChecksumError
+        ChecksumError
             Checksum mismatch between the downloaded file and the expected checksum.
         """
         record_id = record_id.removeprefix("zenodo.")
