@@ -1,4 +1,4 @@
-"""Tests for container configuration and utilities."""
+"""Tests for container configuration."""
 
 import os
 from pathlib import Path
@@ -12,7 +12,6 @@ from nipoppy.config.container import (
     _SchemaWithContainerConfig,
     add_bind_path_to_args,
     check_container_args,
-    check_container_command,
     prepare_container,
     set_container_env_vars,
 )
@@ -239,18 +238,6 @@ def test_check_container_args_missing(tmp_path: Path, caplog: pytest.LogCaptureF
 def test_check_container_args_error():
     with pytest.raises(RuntimeError, match="Error parsing"):
         check_container_args(args=["--bind"])
-
-
-@pytest.mark.parametrize("command", ["echo", "python"])
-def test_check_container_command(command):
-    # should not raise error
-    check_container_command(command=command)
-
-
-@pytest.mark.parametrize("command", ["123", "this_command_probably_does_not_exist123"])
-def test_check_container_command_error(command):
-    with pytest.raises(RuntimeError, match="Container executable not found"):
-        check_container_command(command=command)
 
 
 @pytest.mark.parametrize(
