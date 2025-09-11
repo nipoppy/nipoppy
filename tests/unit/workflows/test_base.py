@@ -16,7 +16,6 @@ def workflow():
             pass
 
     workflow = DummyWorkflow(name="my_workflow")
-    workflow.logger.setLevel(logging.DEBUG)  # capture all logs
 
     return workflow
 
@@ -32,6 +31,7 @@ def test_init(workflow: BaseWorkflow):
     assert isinstance(workflow.logger, logging.Logger)
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["echo x", "echo y"])
 @pytest.mark.parametrize("prefix_run", ["[RUN]", "<run>"])
 def test_log_command(
@@ -46,6 +46,7 @@ def test_log_command(
     assert command in record.message
 
 
+@pytest.mark.no_xdist
 def test_log_command_no_markup(
     workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture
 ):
@@ -84,6 +85,7 @@ def test_run_command_check(workflow: BaseWorkflow):
         workflow.run_command(["which", "probably_fake_command"], check=True)
 
 
+@pytest.mark.no_xdist
 def test_run_command_no_markup(
     workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture, tmp_path: Path
 ):
@@ -97,6 +99,7 @@ def test_run_command_no_markup(
     assert text in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     message = "This should be printed"
     workflow.run_command(["echo", message], quiet=True)

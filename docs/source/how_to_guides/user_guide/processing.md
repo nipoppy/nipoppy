@@ -34,7 +34,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 ### Commands
 
 - Command-line interface: [`nipoppy process`](<project:../../cli_reference/process.rst>)
-- Python API: {class}`nipoppy.workflows.PipelineRunner`
+- Python API: {class}`nipoppy.workflows.runner.PipelineRunner`
 
 ### Workflow
 
@@ -110,7 +110,7 @@ Log files for this command will be written to {{dpath_logs}}`/run`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import PipelineRunner
+from nipoppy.workflows.runner import PipelineRunner
 
 # replace by appropriate values
 dpath_root = "<NIPOPPY_PROJECT_ROOT>"
@@ -123,7 +123,7 @@ workflow = PipelineRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/process.rst>)).
+See the API reference for {class}`nipoppy.workflows.runner.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/process.rst>)).
 
 ## Next steps
 

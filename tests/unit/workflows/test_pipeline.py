@@ -30,7 +30,7 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     ReturnCode,
 )
-from nipoppy.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
+from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     apply_analysis_level,
@@ -1149,7 +1149,6 @@ def test_run_main_write_subcohort(
         assert write_subcohort.read_text().strip() == "01\t1"
     else:
         assert not write_subcohort.exists()
-    assert f"Wrote subcohort to {write_subcohort}" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -1327,6 +1326,19 @@ def test_run_cleanup_hpc(
     workflow.run_cleanup()
 
     assert expected_message in caplog.text
+
+
+def test_run_cleanup_write_subcohort(
+    workflow: PipelineWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    workflow.write_subcohort = tmp_path / "subcohort.tsv"
+
+    workflow.n_success = 0
+    workflow.n_total = 0
+    workflow.run_cleanup()
+
+    assert "No participants or sessions to run" not in caplog.text
+    assert "Wrote subcohort to" in caplog.text
 
 
 @pytest.mark.parametrize(

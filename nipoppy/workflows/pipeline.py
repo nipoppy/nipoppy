@@ -9,9 +9,8 @@ import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
 
-import bids
 import pandas as pd
 import rich
 from jinja2 import Environment, meta
@@ -43,21 +42,25 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import (
-    FPATH_HPC_TEMPLATE,
+from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
-    apply_substitutions_to_json,
     check_participant_id,
     check_session_id,
     create_bids_db,
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
+)
+from nipoppy.utils.utils import (
+    FPATH_HPC_TEMPLATE,
+    apply_substitutions_to_json,
     get_pipeline_tag,
     load_json,
-    participant_id_to_bids_participant_id,
     process_template_str,
-    session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
+if TYPE_CHECKING:
+    import bids
 try:
     from joblib import Parallel, delayed
 
@@ -711,7 +714,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 pd.DataFrame(participants_sessions).to_csv(
                     self.write_subcohort, header=False, index=False, sep="\t"
                 )
-            self.logger.info(f"Wrote subcohort to {self.write_subcohort}")
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
@@ -865,7 +867,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def run_cleanup(self):
         """Log a summary message."""
-        if self.n_total == 0:
+        if self.write_subcohort:
+            self.logger.success(f"Wrote subcohort to {self.write_subcohort}")
+        elif self.n_total == 0:
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, and/or "

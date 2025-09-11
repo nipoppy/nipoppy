@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from nipoppy._version import __version__
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 
 # -- Project information -----------------------------------------------------
@@ -163,6 +164,7 @@ myst_substitutions = {
     "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pipeline_work": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_work('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
+    "fpath_processing_pipeline_config": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_bundle(PipelineTypeEnum.PROCESSING, '<PIPELINE_NAME>', '<PIPELINE_VERSION>')}/{DEFAULT_LAYOUT_INFO.fname_pipeline_config}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "dpath_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_tabular}`",
     "dpath_assessments": f"`{DEFAULT_LAYOUT_INFO.dpath_assessments}`",
