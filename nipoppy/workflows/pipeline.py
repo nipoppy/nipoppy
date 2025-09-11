@@ -686,7 +686,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 pd.DataFrame(participants_sessions).to_csv(
                     self.write_subcohort, header=False, index=False, sep="\t"
                 )
-            self.logger.info(f"Wrote subcohort to {self.write_subcohort}")
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
@@ -849,7 +848,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def run_cleanup(self):
         """Log a summary message."""
-        if self.n_total == 0:
+        if self.write_subcohort:
+            self.logger.success(f"Wrote subcohort to {self.write_subcohort}")
+        elif self.n_total == 0:
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, and/or "
