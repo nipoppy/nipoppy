@@ -1,8 +1,8 @@
-# Adding a pipeline to a dataset
+# Installing a pipeline
 
 This guide shows how to search for and install pipelines that can be run with Nipoppy.
 
-## Find an available pipeline
+## Finding an available pipeline
 
 Nipoppy pipeline configuration files are available on [Zenodo](https://zenodo.org/search?q=metadata.subjects.subject%253A%22Nipoppy%22), a research data repository. You can search for pipelines on the Zenodo website itself, or use the `nipoppy pipeline search` command on the terminal directly.
 
@@ -62,7 +62,7 @@ At the time of writing, the above command prints the following table (trimmed):
             ╵                           ╵
 ```
 
-## Install a pipeline into a Nipoppy dataset
+## Installing a pipeline into a Nipoppy project
 
 Once you know the Zenodo ID of the pipeline we wish to use, you can install it directly from Zenodo using the `nipoppy pipeline install` command. Here we install fMRIPrep version 24.1.1.
 
@@ -86,7 +86,7 @@ Running this command will download all pipeline configuration files for fMRIPrep
 
 <!-- TODO "see this page for the difference between these pipeline types" -->
 
-## Update pipeline variables in the global config file (if needed)
+## Updating pipeline variables in the global config file (if needed)
 
 Some pipelines require user-specified paths to files that Nipoppy is not aware of, for example a FreeSurfer license file or other configuration files. Nipoppy handles these cases through the use of **pipeline variables** and allows users to set them in the global config file. For example, when installing fMRIPRep 24.1.1 (Zenodo ID: 15306677), we see the following output:
 

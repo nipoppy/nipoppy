@@ -1,6 +1,7 @@
 """Tests for PipelineInstallWorkflow class."""
 
 import logging
+import shutil
 import subprocess
 from contextlib import nullcontext
 from pathlib import Path
@@ -18,8 +19,6 @@ from nipoppy.env import (
 )
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
-from nipoppy.zenodo_api import ZenodoAPI
-from tests.conftest import record_id  # noqa: F401
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
 
 
@@ -55,7 +54,7 @@ def workflow(
             / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
             / "my_pipeline-1.0.0"
         ),
-        zenodo_api=ZenodoAPI(sandbox=True),
+        zenodo_api=mocker.MagicMock(),
         assume_yes=True,
     )
     # make the default config have a path placeholder string
@@ -70,9 +69,24 @@ def workflow(
 
 
 @pytest.fixture(scope="function")
-def workflow_zenodo(record_id, workflow: PipelineInstallWorkflow):  # noqa: F811
-    workflow.zenodo_id = record_id
+def workflow_zenodo(workflow: PipelineInstallWorkflow):  # noqa: F811
+    workflow.zenodo_id = "valid_zenodo_id"
     workflow.dpath_pipeline = None
+
+    def _mocked_download_record_files(record_id, output_dir: Path):
+        if record_id == "valid_zenodo_id":
+            # successful download
+            shutil.copytree(TEST_PIPELINE, output_dir, dirs_exist_ok=True)
+        else:
+            # pretend Zenodo record exists but is not a valid Nipoppy pipeline
+            # downloaded bundle is missing config.json file
+            output_dir.mkdir(parents=True, exist_ok=True)
+            (output_dir / f"{record_id}.txt").touch()
+
+    workflow.zenodo_api.download_record_files.side_effect = (
+        _mocked_download_record_files
+    )
+
     return workflow
 
 
@@ -348,9 +362,7 @@ def test_run_main_force(
 
 
 def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow):
-    # https://zenodo.org/records/1482743 is the Boutiques FSL BET descriptor
-    workflow_zenodo.zenodo_id = "1482743"
-    workflow_zenodo.zenodo_api = ZenodoAPI(sandbox=False)
+    workflow_zenodo.zenodo_id = "bad_zenodo_id"
 
     with pytest.raises(
         FileNotFoundError,

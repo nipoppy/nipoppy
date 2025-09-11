@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import logging
 import shlex
 from pathlib import Path
 
+import click
 import pytest
 import pytest_mock
 from click.testing import CliRunner
@@ -16,6 +19,42 @@ from tests.conftest import PASSWORD_FILE
 
 runner = CliRunner()
 
+# tuple of command/subcommands -> (module path, workflow class name)
+COMMAND_WORKFLOW_MAP = {
+    "init": ("nipoppy.workflows.dataset_init", "InitWorkflow"),
+    "track-curation": ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
+    "reorg": ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
+    "bidsify": ("nipoppy.workflows.bids_conversion", "BidsConversionRunner"),
+    "process": ("nipoppy.workflows.runner", "PipelineRunner"),
+    "track-processing": ("nipoppy.workflows.tracker", "PipelineTracker"),
+    "extract": ("nipoppy.workflows.extractor", "ExtractionRunner"),
+    "status": ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
+    "pipeline search": (
+        "nipoppy.workflows.pipeline_store.search",
+        "PipelineSearchWorkflow",
+    ),
+    "pipeline create": (
+        "nipoppy.workflows.pipeline_store.create",
+        "PipelineCreateWorkflow",
+    ),
+    "pipeline install": (
+        "nipoppy.workflows.pipeline_store.install",
+        "PipelineInstallWorkflow",
+    ),
+    "pipeline list": (
+        "nipoppy.workflows.pipeline_store.list",
+        "PipelineListWorkflow",
+    ),
+    "pipeline validate": (
+        "nipoppy.workflows.pipeline_store.validate",
+        "PipelineValidateWorkflow",
+    ),
+    "pipeline upload": (
+        "nipoppy.workflows.pipeline_store.upload",
+        "PipelineUploadWorkflow",
+    ),
+}
+
 
 def assert_command_success(args):
     """Assert that the CLI command runs successfully."""
@@ -23,6 +62,18 @@ def assert_command_success(args):
     assert (
         result.exit_code == ReturnCode.SUCCESS
     ), f"Command failed: {args}\n{result.output}"
+
+
+def list_commands(group: click.Group, prefix=""):
+    commands = []
+    for name, cmd in group.commands.items():
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
+    return commands
 
 
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
@@ -253,7 +304,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--password-file",
                 str(PASSWORD_FILE),
             ],
-            "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow",
+            "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
         ),
     ],
 )
@@ -274,3 +325,55 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     assert_command_success(command)
+
+
+@pytest.mark.parametrize("command", list_commands(cli))
+def test_no_duplicated_flag(
+    command: str,
+    recwarn: pytest.WarningsRecorder,
+):
+    """Test that no duplicated flags are present in the CLI commands."""
+    runner.invoke(cli, f"{command} --help", catch_exceptions=False)
+    assert not any(
+        "Remove its duplicate as parameters should be unique." in str(warning.message)
+        for warning in recwarn
+    )
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    [command for command in list_commands(cli) if command not in ("gui", "pipeline")],
+)
+def test_cli_params_match_workflows(command_name):
+    ignored_params = {
+        "name",  # not exposed to CLI
+        "zenodo_api",  # instantiated by the CLI from other params
+        "dpath_pipeline",  # positional arg in CLI
+    }
+
+    # get Click Command object
+    module_path, workflow_name = COMMAND_WORKFLOW_MAP[command_name]
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    # get workflow class
+    module = importlib.import_module(module_path)
+    workflow_class = getattr(module, workflow_name)
+
+    params_workflow = {
+        p.name
+        for p in inspect.signature(workflow_class.__init__).parameters.values()
+        if (
+            p.name != "self"
+            and not p.name.startswith("_")
+            and p.name not in ignored_params
+        )
+    }
+    params_command = {p.name for p in command.params}
+
+    missing_params = params_workflow - params_command
+    assert len(missing_params) == 0, (
+        f"Command '{command_name}' is missing params {missing_params}"
+        f" expected by {workflow_name}"
+    )

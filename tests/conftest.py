@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -74,17 +75,14 @@ ATTR_TO_FPATH_MAP = {
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
 
 
-@pytest.fixture(scope="function")
-def record_id():
-    """Fixture for Zenodo ID.
+@pytest.fixture(autouse=True)
+def clean_loggers():
+    """Clear handler(s) for every logger."""
+    yield
 
-    The Sandbox can be reset at any time, so the Zenodo ID may change.
-    If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/{record_id}
-
-    The test file is located at TEST_PIPELINE
-    """
-    return "199319"
+    # run after every test
+    for name in logging.Logger.manager.loggerDict:
+        logging.getLogger(name).handlers.clear()
 
 
 @pytest.fixture()

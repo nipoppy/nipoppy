@@ -1,4 +1,4 @@
-"""Test for the ZenodoUploadWorkflow class."""
+"""Test for the PipelineUploadWorkflow class."""
 
 from contextlib import nullcontext
 
@@ -9,55 +9,42 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
-    ZenodoUploadWorkflow,
+    PipelineUploadWorkflow,
     _is_same_pipeline,
 )
-from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
+from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import TEST_PIPELINE
 
 DATASET_PATH = "my_dataset"
 
 
 @pytest.fixture(scope="function")
-def zenodo_api_mocker(mocker: pytest_mock.MockerFixture):
-    mocker.patch(
-        "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
+def workflow(mocker: pytest_mock.MockerFixture):
+    workflow = PipelineUploadWorkflow(
+        dpath_pipeline=TEST_PIPELINE,
+        zenodo_api=mocker.MagicMock(),
     )
-    mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow._get_pipeline_metadata",  # noqa: E501
-    )
-    mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
-    )
-    yield mocker
+    return workflow
 
 
-def test_upload(mocker: pytest_mock.MockerFixture):
-    upload_pipeline = mocker.patch(
-        "nipoppy.zenodo_api.ZenodoAPI.upload_pipeline",
-    )
-    get_pipeline_metadata = mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.ZenodoUploadWorkflow._get_pipeline_metadata",  # noqa: E501
-    )
+def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture):
+    get_pipeline_metadata = mocker.patch.object(workflow, "_get_pipeline_metadata")
     validator = mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
     )
 
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,
-        zenodo_api=zenodo_api,
-        assume_yes=True,
-        force=True,
-    )
+    workflow.assume_yes = True
+    workflow.force = True
     workflow.run_main()
 
-    upload_pipeline.assert_called_once()
+    workflow.zenodo_api.upload_pipeline.assert_called_once()
     get_pipeline_metadata.assert_called_once()
     validator.assert_called_once()
 
 
-def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
+def test_get_pipeline_metadata(
+    workflow: PipelineUploadWorkflow, datetime_fixture
+):  # noqa F811
     expected = {
         "metadata": {
             "title": "Upload test",
@@ -83,12 +70,6 @@ def test_get_pipeline_metadata(datetime_fixture):  # noqa F811
             ],
         }
     }
-
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,
-        zenodo_api=zenodo_api,
-    )
 
     pipeline_config = _load_pipeline_config_file(TEST_PIPELINE / "config.json")
 
@@ -165,23 +146,15 @@ def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
 
 @pytest.mark.parametrize("force", [True, False])
 def test_upload_same_pipeline(
-    force: bool, zenodo_api_mocker: pytest_mock.MockerFixture
+    workflow: PipelineUploadWorkflow,
+    force: bool,
 ):
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
-        zenodo_api=zenodo_api,
-        record_id="1234567",
-        assume_yes=True,
-        force=force,
-    )
+    workflow.record_id = "1234567"
+    workflow.assume_yes = True
+    workflow.force = force
 
     # Mock current pipeline metadata on Zenodo
-    get_record_metadata = zenodo_api_mocker.patch.object(
-        workflow.zenodo_api, "get_record_metadata"
-    )
-    # Mismatched pipeline metadata
-    get_record_metadata.return_value = {
+    workflow.zenodo_api.get_record_metadata.return_value = {
         "keywords": [
             "Nipoppy",
             "pipeline_type:processing",
@@ -204,18 +177,15 @@ def test_upload_same_pipeline(
 
 
 def test_confirm_upload_no(
-    zenodo_api_mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+    workflow: PipelineUploadWorkflow,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
-    zenodo_api_mocker.patch(
+    mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT.confirm",
         return_value=False,
     )
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline="not_used",
-        zenodo_api=zenodo_api,
-        assume_yes=False,
-    )
+    workflow.assume_yes = False
 
     with pytest.raises(SystemExit):
         workflow.run_main()
@@ -239,24 +209,13 @@ def test_confirm_upload_no(
     ],
 )
 def test_upload_duplicate_record(
+    workflow: PipelineUploadWorkflow,
     hits: list,
     potential_duplicates: str,
-    zenodo_api_mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ):
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
-        zenodo_api=zenodo_api,
-        assume_yes=True,
-    )
-
-    search_records = zenodo_api_mocker.patch.object(
-        workflow.zenodo_api, "search_records"
-    )
-    search_records.return_value = {
-        "hits": hits,
-    }
+    workflow.assume_yes = True
+    workflow.zenodo_api.search_records.return_value = {"hits": hits}
 
     with pytest.raises(
         ZenodoAPIError,
@@ -266,20 +225,10 @@ def test_upload_duplicate_record(
         assert potential_duplicates in caplog.text
 
 
-def test_force_upload_duplicate_record(zenodo_api_mocker: pytest_mock.MockerFixture):
-    zenodo_api = ZenodoAPI(sandbox=True)
-    workflow = ZenodoUploadWorkflow(
-        dpath_pipeline=TEST_PIPELINE,  # fMRIprep 24.1.1
-        zenodo_api=zenodo_api,
-        assume_yes=True,
-        force=True,
-    )
+def test_force_upload_duplicate_record(workflow: PipelineUploadWorkflow):
+    workflow.assume_yes = True
+    workflow.force = True
 
-    search_records = zenodo_api_mocker.patch.object(
-        workflow.zenodo_api, "search_records"
-    )
-    search_records.return_value = {
-        "hits": {"doi": "abc.123"},
-    }
+    workflow.zenodo_api.search_records.return_value = {"hits": {"doi": "abc.123"}}
 
     workflow.run()

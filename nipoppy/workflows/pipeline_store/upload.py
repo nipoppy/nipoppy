@@ -12,7 +12,7 @@ from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 
-class ZenodoUploadWorkflow(BaseWorkflow):
+class PipelineUploadWorkflow(BaseWorkflow):
     """Workflow for Zenodo upload."""
 
     def __init__(

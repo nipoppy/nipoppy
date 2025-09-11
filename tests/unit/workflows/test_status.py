@@ -75,6 +75,7 @@ def make_curation_status_table(
     session_ids=("BL", "M12"),
     n_success_percents=(80, 60, 40),
     randomize_counts=False,
+    from_bids=False,
 ) -> CurationStatusTable:
     # reuse manifest generation
     manifest, session_participant_counts_df = make_manifest(
@@ -93,23 +94,30 @@ def make_curation_status_table(
             CurationStatusTable.col_in_bids,
         ]
     ] = False  # sets dtype to bool and avoids pandas warnings
-    table.loc[
-        table[Manifest.col_session_id] == session_ids[0],
-        CurationStatusTable.col_in_pre_reorg,
-    ] = True
-    table.loc[
-        table[Manifest.col_session_id] == session_ids[0],
-        CurationStatusTable.col_in_post_reorg,
-    ] = True
+
     table.loc[
         table[Manifest.col_session_id] == session_ids[0],
         CurationStatusTable.col_in_bids,
     ] = True
 
-    # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
-    participant_counts = [
-        (len(participant_ids), len(participant_ids), len(participant_ids))
-    ]
+    if from_bids:
+        # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
+        participant_counts = [(0, 0, len(participant_ids))]
+    else:
+        table.loc[
+            table[Manifest.col_session_id] == session_ids[0],
+            CurationStatusTable.col_in_pre_reorg,
+        ] = True
+        table.loc[
+            table[Manifest.col_session_id] == session_ids[0],
+            CurationStatusTable.col_in_post_reorg,
+        ] = True
+
+        # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
+        participant_counts = [
+            (len(participant_ids), len(participant_ids), len(participant_ids))
+        ]
+
     # add the rest of the sessions
     for session_id in session_ids[1:]:
         n_session_participants = session_participant_counts_df[
@@ -257,6 +265,9 @@ def test_manifest(
     "n_participants,session_ids,n_success_percents,randomize_counts",
     [
         (10, ["BL", "M06", "M12", "M24"], (80, 60, 40), False),
+        (10, ["BL", "M06", "M12", "M24"], (0, 0, 50), False),
+        (10, ["BL", "M06", "M12", "M24"], (0, 100, 100), False),
+        (10, ["BL", "M06", "M12", "M24"], (100, 0, 100), False),
         (100, ["BL", "M06", "M12", "M24"], (100, 80, 0), True),
     ],
 )
@@ -291,9 +302,43 @@ def test_check_curation_status_table(
         )
     )
 
-    # check manifest status
+    # check curation status
     assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
     assert status_df["curation_counts"].equals(status_df["participant_count"])
+
+
+# Check col_in_pre_reorg and col_in_post_reorg are not shown when all values are False
+@pytest.mark.parametrize(
+    "n_participants,session_ids,n_success_percents,randomize_counts",
+    [
+        (10, ["BL", "M12"], (0, 0, 100), False),
+    ],
+)
+def test_check_curation_status_table_from_bids_init(
+    dpath_root: Path,
+    n_participants: int,
+    session_ids: list,
+    n_success_percents: tuple,
+    randomize_counts: bool,
+):
+    workflow = StatusWorkflow(dpath_root=dpath_root)
+    workflow.manifest = make_manifest(n_participants=10)[0]
+    workflow.curation_status_table, session_participant_counts_df = (
+        make_curation_status_table(
+            n_participants=n_participants,
+            session_ids=session_ids,
+            n_success_percents=n_success_percents,
+            randomize_counts=randomize_counts,
+            from_bids=True,  # Simulate BIDS initialization
+        )
+    )
+
+    status_df = workflow.run_main()
+
+    # Check that col_in_pre_reorg and col_in_post_reorg are not in the status_df
+    assert CurationStatusTable.col_in_pre_reorg not in status_df.columns
+    assert CurationStatusTable.col_in_post_reorg not in status_df.columns
+    assert CurationStatusTable.col_in_bids in status_df.columns
 
 
 @pytest.mark.parametrize(
@@ -370,7 +415,7 @@ def test_check_processing_status_table(
             pipeline_status_col = f"{config[0]}\n{config[1]}\n{config[2]}"
             status_df["processing_status_counts"] += status_df[pipeline_status_col]
 
-        # check manifest status
+        # check processing status
         assert set(status_df[Manifest.col_session_id].unique()) == set(session_ids)
         assert status_df["processing_status_counts"].equals(
             status_df["participant_count"]

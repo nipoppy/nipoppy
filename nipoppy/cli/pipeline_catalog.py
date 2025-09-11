@@ -89,6 +89,7 @@ def pipeline_search(**params):
         "pipeline config directory."
     ),
 )
+@global_options
 def pipeline_create(**params):
     """Create a template pipeline config directory."""
     from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
@@ -132,6 +133,8 @@ def pipeline_install(**params):
 
 @pipeline.command("list")
 @dataset_option
+@global_options
+@layout_option
 def pipeline_list(**params):
     """List installed pipelines for a dataset."""
     from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
@@ -186,12 +189,12 @@ def pipeline_validate(**params):
 @global_options
 def pipeline_upload(**params):
     """Upload a pipeline config directory to Zenodo."""
-    from nipoppy.workflows.pipeline_store.upload import ZenodoUploadWorkflow
+    from nipoppy.workflows.pipeline_store.upload import PipelineUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
         password_file=params.pop("password_file"),
     )
     params["dpath_pipeline"] = params.pop("pipeline_dir")
-    with handle_exception(ZenodoUploadWorkflow(**params)) as workflow:
+    with handle_exception(PipelineUploadWorkflow(**params)) as workflow:
         workflow.run()
