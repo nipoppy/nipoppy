@@ -22,7 +22,7 @@ from nipoppy.env import (
     DEFAULT_PIPELINE_STEP_NAME,
     PipelineTypeEnum,
 )
-from nipoppy.utils import apply_substitutions_to_json
+from nipoppy.utils.utils import apply_substitutions_to_json
 
 
 class PipelineInfo(BaseModel):

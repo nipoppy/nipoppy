@@ -8,7 +8,7 @@ import pytest_mock
 from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils import (
+from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
