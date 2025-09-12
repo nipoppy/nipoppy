@@ -1,5 +1,8 @@
 """Classes for generating container commands."""
 
+import argparse
+import logging
+import shlex
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -26,9 +29,17 @@ class ContainerOptionsHandler(ABC):
         """Flag for binding paths."""
         pass
 
-    def __init__(self, args: Iterable[str] = None):
+    def __init__(
+        self, args: Iterable[str] = None, logger: Optional[logging.Logger] = None
+    ):
         super().__init__()
+
+        if logger is None:
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+
         self.args = args or []
+        self.logger = logger
 
     def check_container_command(self) -> str:
         """Check that the command is available (i.e. in PATH)."""
@@ -76,6 +87,68 @@ class ContainerOptionsHandler(ABC):
 
     def check_container_args(self):
         """Fix bind flags in args."""
+        # use argparse to parse all the bind flags
+        bind_spec_dest = "bind"
+        parser = argparse.ArgumentParser(exit_on_error=False)
+        parser.add_argument(
+            self.bind_flag, dest=bind_spec_dest, action="extend", nargs=1
+        )
+
+        replacement_map = {}
+        try:
+            # get all bind arguments
+            known_args, _ = parser.parse_known_args(self.args)
+            bind_specs = getattr(known_args, bind_spec_dest)
+            if bind_specs is not None:
+                for bind_spec in bind_specs:
+                    # get the local path
+                    bind_spec: str
+                    bind_spec_components = bind_spec.split(self.bind_sep)
+                    path_local = Path(bind_spec_components[0])
+                    path_local_original = path_local
+
+                    self.logger.debug(f"Checking container bind spec: {bind_spec}")
+
+                    # path must be absolute and exist
+                    path_local = path_local.resolve()
+                    if path_local != path_local_original:
+                        path_local = path_local.resolve()
+                        self.logger.debug(
+                            "Resolving path for container"
+                            f": {path_local_original} -> {path_local}"
+                        )
+                    if not path_local.exists():
+                        path_local.mkdir(parents=True)
+                        self.logger.debug(
+                            "Creating missing directory for container bind path"
+                            f": {path_local}"
+                        )
+
+                    # replace bind spec in args
+                    if path_local != path_local_original:
+                        bind_spec_components[0] = str(path_local)
+                        replacement_map[bind_spec] = self.bind_sep.join(
+                            bind_spec_components
+                        )
+
+        except Exception as exception:
+            raise RuntimeError(
+                f"Error parsing {self.bind_flag} flags in container arguments: "
+                f"{self.args}. Make sure each flag is followed by a valid spec (e.g. "
+                f"{self.bind_flag} /path/local{self.bind_sep}/path/container"
+                f"{self.bind_sep}rw). Exact error was: "
+                f"{type(exception).__name__} {exception}"
+            )
+
+        # apply replacements
+        args_str = shlex.join(self.args)
+        for to_replace, replacement in replacement_map.items():
+            args_str = args_str.replace(to_replace, replacement)
+
+        self.args = shlex.split(args_str)
+
+    def set_container_env_vars(self):
+        """Set environment variables for the container."""
 
     def prepare_container(self):
         """Build the command for container."""
