@@ -216,10 +216,10 @@ def test_set_container_env_vars(handler: ContainerOptionsHandler, env_vars: dict
             "singularity exec --cleanenv",
         ),
         (
-            DockerOptionsHandler(args=["-v", "/host/path:/container/path:ro"]),
+            DockerOptionsHandler(args=["--volume", ".:/container/path:ro"]),
             "run",
             {"VAR2": "value"},
-            "docker run -v /host/path:/container/path:ro --env VAR2=value",
+            f"docker run --volume {Path('.').resolve()}:/container/path:ro --env VAR2=value",  # noqa: E501
         ),
     ],
 )
@@ -231,9 +231,10 @@ def test_prepare_container(
     mocker: pytest_mock.MockerFixture,
 ):
     # pretend command exists
-    mocker.patch.object(
+    mocked_check_container_command = mocker.patch.object(
         handler, "check_container_command", return_value=handler.command
     )
     assert (
         handler.prepare_container(subcommand=subcommand, env_vars=env_vars) == expected
     )
+    mocked_check_container_command.assert_called_once()
