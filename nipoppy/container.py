@@ -6,7 +6,7 @@ import shlex
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Mapping, Optional
 
 from nipoppy.env import StrOrPathLike
 
@@ -147,8 +147,10 @@ class ContainerOptionsHandler(ABC):
 
         self.args = shlex.split(args_str)
 
-    def set_container_env_vars(self):
+    def set_container_env_vars(self, env_vars: Mapping[str, str]):
         """Set environment variables for the container."""
+        for key, value in env_vars.items():
+            self.args.extend([self.env_flag, f"{key}={value}"])
 
     def prepare_container(self):
         """Build the command for container."""

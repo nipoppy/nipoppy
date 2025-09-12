@@ -1,6 +1,7 @@
 """Tests for container option handlers."""
 
 import logging
+import shlex
 from pathlib import Path
 from typing import Type
 
@@ -31,7 +32,7 @@ def handler() -> ContainerOptionsHandler:
     "subclass",
     [ApptainerOptionsHandler, SingularityOptionsHandler, DockerOptionsHandler],
 )
-def test_init(subclass: Type[ContainerOptionsHandler]):
+def test_subclass(subclass: Type[ContainerOptionsHandler]):
     # try to instantiate subclass
     handler = subclass()
     assert isinstance(handler, ContainerOptionsHandler)
@@ -182,3 +183,18 @@ def test_check_container_args_error(handler: ContainerOptionsHandler):
     handler.args = ["-B"]
     with pytest.raises(RuntimeError, match="Error parsing"):
         handler.check_container_args()
+
+
+@pytest.mark.parametrize(
+    "env_vars",
+    [
+        {"VAR1": "1"},
+        {"VAR2": "test"},
+        {"VAR3": "123", "VAR4": ""},
+    ],
+)
+def test_set_container_env_vars(handler: ContainerOptionsHandler, env_vars: dict):
+    handler.set_container_env_vars(env_vars)
+    args_str = shlex.join(handler.args)
+    for key, value in env_vars.items():
+        assert f"{handler.env_flag} {key}={value}" in args_str

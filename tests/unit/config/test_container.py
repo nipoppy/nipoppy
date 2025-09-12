@@ -1,7 +1,5 @@
 """Tests for container configuration."""
 
-import os
-
 import pytest
 from pydantic import ValidationError
 
@@ -10,7 +8,6 @@ from nipoppy.config.container import (
     ContainerInfo,
     _SchemaWithContainerConfig,
     prepare_container,
-    set_container_env_vars,
 )
 
 FIELDS_CONTAINER_CONFIG = [
@@ -170,18 +167,3 @@ def test_prepare_container(data, expected):
 def test_prepare_container_error():
     with pytest.raises(ValueError, match="COMMAND cannot be None"):
         prepare_container(ContainerConfig(COMMAND=None), check=False)
-
-
-@pytest.mark.parametrize(
-    "env_vars",
-    [
-        {"VAR1": "1"},
-        {"VAR2": "test"},
-        {"VAR3": "123", "VAR4": ""},
-    ],
-)
-def test_set_container_env_vars(env_vars: dict):
-    set_container_env_vars(env_vars)
-    for key, value in env_vars.items():
-        assert os.environ[f"SINGULARITYENV_{key}"] == value
-        assert os.environ[f"APPTAINERENV_{key}"] == value
