@@ -198,3 +198,42 @@ def test_set_container_env_vars(handler: ContainerOptionsHandler, env_vars: dict
     args_str = shlex.join(handler.args)
     for key, value in env_vars.items():
         assert f"{handler.env_flag} {key}={value}" in args_str
+
+
+@pytest.mark.parametrize(
+    "handler,subcommand,env_vars,expected",
+    [
+        (
+            ApptainerOptionsHandler(args=[]),
+            "run",
+            {"VAR1": "1"},
+            "apptainer run --env VAR1=1",
+        ),
+        (
+            SingularityOptionsHandler(args=["--cleanenv"]),
+            "exec",
+            None,
+            "singularity exec --cleanenv",
+        ),
+        (
+            DockerOptionsHandler(args=["-v", "/host/path:/container/path:ro"]),
+            "run",
+            {"VAR2": "value"},
+            "docker run -v /host/path:/container/path:ro --env VAR2=value",
+        ),
+    ],
+)
+def test_prepare_container(
+    handler: ContainerOptionsHandler,
+    subcommand: str,
+    env_vars: dict,
+    expected: str,
+    mocker: pytest_mock.MockerFixture,
+):
+    # pretend command exists
+    mocker.patch.object(
+        handler, "check_container_command", return_value=handler.command
+    )
+    assert (
+        handler.prepare_container(subcommand=subcommand, env_vars=env_vars) == expected
+    )

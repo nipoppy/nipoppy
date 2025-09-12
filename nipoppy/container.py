@@ -152,8 +152,31 @@ class ContainerOptionsHandler(ABC):
         for key, value in env_vars.items():
             self.args.extend([self.env_flag, f"{key}={value}"])
 
-    def prepare_container(self):
-        """Build the command for container."""
+    def prepare_container(
+        self,
+        subcommand: str = "run",
+        env_vars: Optional[Mapping[str, str]] = None,
+    ):
+        """Build the command for container and set environment variables.
+
+        Parameters
+        ----------
+        subcommand : str, optional
+            Subcommand to use (e.g. "run", "exec"), by default "run"
+        env_vars : Mapping[str, str], optional
+            Environment variables to be added to the container options.
+
+        Returns
+        -------
+        str
+            The command string
+        """
+        if env_vars is None:
+            env_vars = {}
+        self.check_container_command()
+        self.check_container_args()
+        self.set_container_env_vars(env_vars)
+        return shlex.join([self.command, subcommand] + self.args)
 
 
 class ApptainerOptionsHandler(ContainerOptionsHandler):

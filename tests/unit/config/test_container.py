@@ -7,7 +7,6 @@ from nipoppy.config.container import (
     ContainerConfig,
     ContainerInfo,
     _SchemaWithContainerConfig,
-    prepare_container,
 )
 
 FIELDS_CONTAINER_CONFIG = [
@@ -145,25 +144,3 @@ def test_schema_with_container_config():
         ClassWithContainerConfig(a=1, b=2).get_container_config(),
         ContainerConfig,
     )
-
-
-@pytest.mark.parametrize(
-    "data, expected",
-    [
-        ({}, "apptainer run"),
-        (
-            {
-                "COMMAND": "singularity",
-                "ARGS": ["--cleanenv"],
-            },
-            "singularity run --cleanenv",
-        ),
-    ],
-)
-def test_prepare_container(data, expected):
-    assert prepare_container(ContainerConfig(**data), check=False) == expected
-
-
-def test_prepare_container_error():
-    with pytest.raises(ValueError, match="COMMAND cannot be None"):
-        prepare_container(ContainerConfig(COMMAND=None), check=False)
