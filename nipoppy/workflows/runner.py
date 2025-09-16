@@ -138,7 +138,6 @@ class Runner(BasePipelineWorkflow, ABC):
 
         return descriptor_str, invocation_str
 
-    # TODO launch process container config
     def process_container_config(
         self,
         participant_id: str,
@@ -192,5 +191,3 @@ class Runner(BasePipelineWorkflow, ABC):
         )
 
         return container_command, container_config
-
-    ...
