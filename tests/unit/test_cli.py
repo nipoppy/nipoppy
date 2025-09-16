@@ -208,7 +208,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-step",
                 "step1",
             ],
-            "nipoppy.workflows.bids_conversion.BidsConversionRunner",
+            "nipoppy.workflows.bids_conversion.BIDSificationRunner",
         ),
         (
             [
