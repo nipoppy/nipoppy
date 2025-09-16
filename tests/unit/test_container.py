@@ -8,11 +8,13 @@ from typing import Type
 import pytest
 import pytest_mock
 
+from nipoppy.config.container import ContainerConfig
 from nipoppy.container import (
     ApptainerOptionsHandler,
     ContainerOptionsHandler,
     DockerOptionsHandler,
     SingularityOptionsHandler,
+    get_container_options_handler,
 )
 
 
@@ -238,3 +240,50 @@ def test_prepare_container(
         handler.prepare_container(subcommand=subcommand, env_vars=env_vars) == expected
     )
     mocked_check_container_command.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "config,expected",
+    [
+        (
+            ContainerConfig(
+                COMMAND="apptainer",
+                ARGS=["--cleanenv", "--bind", "fake_path"],
+                ENV_VARS={"VAR1": "1"},
+            ),
+            ApptainerOptionsHandler(
+                args=["--cleanenv", "--bind", "fake_path"],
+            ),
+        ),
+        (
+            ContainerConfig(
+                COMMAND="singularity",
+                ARGS=[],
+            ),
+            SingularityOptionsHandler(
+                args=[],
+            ),
+        ),
+        (
+            ContainerConfig(
+                COMMAND="docker",
+                ARGS=["--volume", "path"],
+                ENV_VARS={"VAR3": "123"},
+            ),
+            DockerOptionsHandler(
+                args=["--volume", "path"],
+            ),
+        ),
+    ],
+)
+def test_get_container_options_handler(
+    config: ContainerConfig, expected: ContainerOptionsHandler
+):
+    handler = get_container_options_handler(config)
+    assert isinstance(handler, expected.__class__)
+    assert handler.bind_sep == expected.bind_sep
+    assert handler.env_flag == expected.env_flag
+    assert handler.command == expected.command
+    assert handler.bind_flag == expected.bind_flag
+    assert handler.env_flag == expected.env_flag
+    assert handler.args == expected.args

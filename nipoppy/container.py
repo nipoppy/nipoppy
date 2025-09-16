@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable, Mapping, Optional
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.config.container import ContainerConfig
+from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 
 
 class ContainerOptionsHandler(ABC):
@@ -197,3 +198,17 @@ class DockerOptionsHandler(ContainerOptionsHandler):
 
     command = "docker"
     bind_flag = "--volume"
+
+
+def get_container_options_handler(config: ContainerConfig) -> ContainerOptionsHandler:
+    """Get a container options handler for a given container config."""
+    command_handler_map = {
+        ContainerCommandEnum.APPTAINER: ApptainerOptionsHandler,
+        ContainerCommandEnum.SINGULARITY: SingularityOptionsHandler,
+        ContainerCommandEnum.DOCKER: DockerOptionsHandler,
+    }
+
+    try:
+        return command_handler_map[config.COMMAND](args=config.ARGS)
+    except KeyError:
+        raise ValueError(f"No container options handler for command: {config.COMMAND}")
