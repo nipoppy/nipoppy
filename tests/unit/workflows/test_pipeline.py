@@ -17,9 +17,9 @@ from jinja2 import Environment, meta
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
@@ -295,7 +295,7 @@ def test_pipeline_version_optional():
 def test_pipeline_config(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
     mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
 
-    assert isinstance(workflow.pipeline_config, ProcPipelineConfig)
+    assert isinstance(workflow.pipeline_config, ProcessingPipelineConfig)
 
     # make sure substitutions are processed
     mocked_process_template_json.assert_called_once()
@@ -553,9 +553,9 @@ def test_hpc_config_no_file(workflow: PipelineWorkflow):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
-        ("fmriprep", "23.1.3", "processing", ProcPipelineConfig),
-        ("my_pipeline", "2.0", "processing", ProcPipelineConfig),
-        ("bids_converter", "1.0", "bidsification", BidsPipelineConfig),
+        ("fmriprep", "23.1.3", "processing", ProcessingPipelineConfig),
+        ("my_pipeline", "2.0", "processing", ProcessingPipelineConfig),
+        ("bids_converter", "1.0", "bidsification", BIDSificationPipelineConfig),
         ("extractor1", "0.1.0", "extraction", ExtractionPipelineConfig),
     ],
 )
@@ -609,16 +609,16 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
             dpath_pipeline_bundle,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            pipeline_class=ProcPipelineConfig,
+            pipeline_class=ProcessingPipelineConfig,
         )
 
 
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
-        ("not_a_pipeline", "23.1.3", "processing", ProcPipelineConfig),
-        ("my_pipeline", "not_a_version", "processing", ProcPipelineConfig),
-        ("bids_converter", "2.0", "bidsification", BidsPipelineConfig),
+        ("not_a_pipeline", "23.1.3", "processing", ProcessingPipelineConfig),
+        ("my_pipeline", "not_a_version", "processing", ProcessingPipelineConfig),
+        ("bids_converter", "2.0", "bidsification", BIDSificationPipelineConfig),
         ("bids_converter", "1.0", "extraction", ExtractionPipelineConfig),
     ],
 )

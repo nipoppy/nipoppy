@@ -9,7 +9,7 @@ from typing import Optional
 from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     PipelineInfo,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
@@ -88,7 +88,7 @@ class ExtractionRunner(Runner):
             ),
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
-            pipeline_class=ProcPipelineConfig,
+            pipeline_class=ProcessingPipelineConfig,
         ).get_step_config(step_name=proc_pipeline_info.STEP)
 
         return proc_pipeline_info

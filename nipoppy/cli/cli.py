@@ -214,10 +214,10 @@ def reorg(**params):
 @layout_option
 def bidsify(**params):
     """Run a BIDS conversion pipeline."""
-    from nipoppy.workflows.bids_conversion import BidsConversionRunner
+    from nipoppy.workflows.bids_conversion import BIDSificationRunner
 
     params = dep_params(**params)
-    with exception_handler(BidsConversionRunner(**params)) as workflow:
+    with exception_handler(BIDSificationRunner(**params)) as workflow:
         workflow.run()
 
 

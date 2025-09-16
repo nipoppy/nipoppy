@@ -6,13 +6,13 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.config.pipeline import BidsPipelineConfig
+from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
 from nipoppy.workflows.runner import Runner
 
 
-class BidsConversionRunner(Runner):
+class BIDSificationRunner(Runner):
     """Convert data to BIDS."""
 
     _pipeline_type = PipelineTypeEnum.BIDSIFICATION
@@ -65,7 +65,7 @@ class BidsConversionRunner(Runner):
         return [self.dpath_pipeline_work]
 
     @cached_property
-    def pipeline_config(self) -> BidsPipelineConfig:
+    def pipeline_config(self) -> BIDSificationPipelineConfig:
         """Get the user config object for the BIDS pipeline."""
         return super().pipeline_config
 
