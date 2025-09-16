@@ -8,10 +8,10 @@ from pydantic import BaseModel, ValidationError
 
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
     PipelineInfo,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
@@ -47,12 +47,12 @@ def valid_data() -> dict:
     [
         (BasePipelineConfig, {}, FIELDS_BASE_PIPELINE),
         (
-            BidsPipelineConfig,
+            BIDSificationPipelineConfig,
             {"PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION},
             FIELDS_BIDS_PIPELINE,
         ),
         (
-            ProcPipelineConfig,
+            ProcessingPipelineConfig,
             {"PIPELINE_TYPE": PipelineTypeEnum.PROCESSING},
             FIELDS_PROC_PIPELINE,
         ),
@@ -98,7 +98,12 @@ def test_fields_missing_required(model_class, data):
 
 @pytest.mark.parametrize(
     "model_class",
-    [ProcPipelineConfig, BidsPipelineConfig, ExtractionPipelineConfig, PipelineInfo],
+    [
+        ProcessingPipelineConfig,
+        BIDSificationPipelineConfig,
+        ExtractionPipelineConfig,
+        PipelineInfo,
+    ],
 )
 def test_fields_no_extra(model_class, valid_data):
     with pytest.raises(ValidationError):
@@ -128,12 +133,12 @@ def test_error_no_dependencies(valid_data):
 @pytest.mark.parametrize(
     "extra_data,pipeline_class,valid",
     [
-        ({"PIPELINE_TYPE": "bidsification"}, BidsPipelineConfig, True),
-        ({"PIPELINE_TYPE": "processing"}, BidsPipelineConfig, False),
-        ({"PIPELINE_TYPE": "extraction"}, BidsPipelineConfig, False),
-        ({"PIPELINE_TYPE": "bidsification"}, ProcPipelineConfig, False),
-        ({"PIPELINE_TYPE": "processing"}, ProcPipelineConfig, True),
-        ({"PIPELINE_TYPE": "extraction"}, ProcPipelineConfig, False),
+        ({"PIPELINE_TYPE": "bidsification"}, BIDSificationPipelineConfig, True),
+        ({"PIPELINE_TYPE": "processing"}, BIDSificationPipelineConfig, False),
+        ({"PIPELINE_TYPE": "extraction"}, BIDSificationPipelineConfig, False),
+        ({"PIPELINE_TYPE": "bidsification"}, ProcessingPipelineConfig, False),
+        ({"PIPELINE_TYPE": "processing"}, ProcessingPipelineConfig, True),
+        ({"PIPELINE_TYPE": "extraction"}, ProcessingPipelineConfig, False),
         (
             {
                 "PIPELINE_TYPE": "bidsification",

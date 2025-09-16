@@ -11,9 +11,9 @@ from pydantic_core import ValidationError
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
@@ -22,9 +22,9 @@ from nipoppy.layout import DatasetLayout
 from nipoppy.utils.utils import load_json
 
 PIPELINE_TYPE_TO_CLASS = {
-    PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
+    PipelineTypeEnum.BIDSIFICATION: BIDSificationPipelineConfig,
     PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
-    PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
+    PipelineTypeEnum.PROCESSING: ProcessingPipelineConfig,
 }
 
 
@@ -147,7 +147,7 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
         load_json(fpath_pybids_ignore)
     except json.JSONDecodeError as exception:
         raise RuntimeError(
-            "PyBIDS ignore patterns file is not a valid JSON file: " f"{exception}"
+            f"PyBIDS ignore patterns file is not a valid JSON file: {exception}"
         )
 
 
@@ -202,7 +202,6 @@ def _check_pipeline_files(
             fpaths.append(fpath_hpc_config)
 
         if isinstance(step, ProcPipelineStepConfig):
-
             if step.TRACKER_CONFIG_FILE is not None:
                 _log(f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}")
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE

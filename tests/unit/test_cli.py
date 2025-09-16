@@ -25,8 +25,8 @@ COMMAND_WORKFLOW_MAP = {
     "init": ("nipoppy.workflows.dataset_init", "InitWorkflow"),
     "track-curation": ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
     "reorg": ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
-    "bidsify": ("nipoppy.workflows.bids_conversion", "BidsConversionRunner"),
-    "process": ("nipoppy.workflows.runner", "PipelineRunner"),
+    "bidsify": ("nipoppy.workflows.bids_conversion", "BIDSificationRunner"),
+    "process": ("nipoppy.workflows.processing_runner", "ProcessingRunner"),
     "track-processing": ("nipoppy.workflows.tracker", "PipelineTracker"),
     "extract": ("nipoppy.workflows.extractor", "ExtractionRunner"),
     "status": ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
@@ -104,7 +104,7 @@ def test_cli_invalid(args):
                 "--write-list",
                 "[tmp_path]/subcohort.txt",
             ],
-            "nipoppy.workflows.runner.PipelineRunner",
+            "nipoppy.workflows.processing_runner.ProcessingRunner",
             (
                 "The --write-list option is deprecated and will be removed in a future "
                 "version. Use --write-subcohort instead."
@@ -208,7 +208,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-step",
                 "step1",
             ],
-            "nipoppy.workflows.bids_conversion.BidsConversionRunner",
+            "nipoppy.workflows.bids_conversion.BIDSificationRunner",
         ),
         (
             [
@@ -220,7 +220,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-version",
                 "1.0",
             ],
-            "nipoppy.workflows.runner.PipelineRunner",
+            "nipoppy.workflows.processing_runner.ProcessingRunner",
         ),
         (
             [

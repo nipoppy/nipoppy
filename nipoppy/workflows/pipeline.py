@@ -25,9 +25,9 @@ from nipoppy.config.boutiques import (
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
@@ -152,8 +152,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     _pipeline_type = PipelineTypeEnum.PROCESSING
 
     _pipeline_type_to_pipeline_class_map = {
-        PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
-        PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
+        PipelineTypeEnum.PROCESSING: ProcessingPipelineConfig,
+        PipelineTypeEnum.BIDSIFICATION: BIDSificationPipelineConfig,
         PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
     }
 
@@ -274,7 +274,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         )
 
     @cached_property
-    def pipeline_config(self) -> ProcPipelineConfig:
+    def pipeline_config(self) -> ProcessingPipelineConfig:
         """Get the user config object for the processing pipeline."""
         return self._get_pipeline_config(
             self.dpath_pipeline_bundle,

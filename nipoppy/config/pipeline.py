@@ -171,7 +171,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         )
 
 
-class BidsPipelineConfig(BasePipelineConfig):
+class BIDSificationPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
     _expected_pipeline_type = PipelineTypeEnum.BIDSIFICATION
@@ -183,7 +183,7 @@ class BidsPipelineConfig(BasePipelineConfig):
     model_config = ConfigDict(extra="forbid")
 
 
-class ProcPipelineConfig(BasePipelineConfig):
+class ProcessingPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
     _expected_pipeline_type = PipelineTypeEnum.PROCESSING
