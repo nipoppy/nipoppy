@@ -9,7 +9,7 @@ import pytest
 import pytest_httpx
 import pytest_mock
 
-from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
+from nipoppy.zenodo_api import ChecksumError, ZenodoAPI, ZenodoAPIError
 from tests.conftest import PASSWORD_FILE
 
 
@@ -132,7 +132,7 @@ def test_download_record_files_checksum_mismatch(
     )
 
     with pytest.raises(
-        InvalidChecksumError, match="Checksum mismatch: .* has invalid checksum"
+        ChecksumError, match="Checksum mismatch: .* has invalid checksum"
     ):
         zenodo_api.download_record_files(output_dir=tmp_path, record_id=record_id)
 
@@ -653,7 +653,7 @@ def test_upload_pipeline_dir_not_found(zenodo_api: ZenodoAPI):
 def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     input_path = tmp_path / "file.txt"
     input_path.write_text("this is a file, not a directory")
-    with pytest.raises(ValueError, match=f"{input_path} must be a directory"):
+    with pytest.raises(NotADirectoryError, match=f"{input_path} must be a directory"):
         zenodo_api.upload_pipeline(input_dir=input_path, metadata={})
 
 
