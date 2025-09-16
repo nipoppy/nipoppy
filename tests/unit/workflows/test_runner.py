@@ -17,7 +17,7 @@ from nipoppy.env import ContainerCommandEnum
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.workflows.processing_runner import ProcessingRunner
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
@@ -27,8 +27,8 @@ from tests.conftest import (
 
 
 @pytest.fixture(scope="function")
-def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> PipelineRunner:
-    runner = PipelineRunner(
+def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
+    runner = ProcessingRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
@@ -112,7 +112,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> PipelineRunner:
     return runner
 
 
-def test_run_setup(runner: PipelineRunner, mocker: pytest_mock.MockFixture):
+def test_run_setup(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
     mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
@@ -121,7 +121,7 @@ def test_run_setup(runner: PipelineRunner, mocker: pytest_mock.MockFixture):
 
 
 @pytest.mark.parametrize("keep_workdir", [True, False])
-def test_run_cleanup(runner: PipelineRunner, keep_workdir):
+def test_run_cleanup(runner: ProcessingRunner, keep_workdir):
     runner.keep_workdir = keep_workdir
     dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
     for dpath in dpaths:
@@ -135,7 +135,7 @@ def test_run_cleanup(runner: PipelineRunner, keep_workdir):
 
 
 @pytest.mark.parametrize("n_success", [1, 2])
-def test_run_failed_cleanup(runner: PipelineRunner, n_success):
+def test_run_failed_cleanup(runner: ProcessingRunner, n_success):
     runner.keep_workdir = False
     runner.n_success = n_success
     runner.n_total = 2
@@ -151,7 +151,7 @@ def test_run_failed_cleanup(runner: PipelineRunner, n_success):
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(
-    simulate, runner: PipelineRunner, mocker: pytest_mock.MockFixture
+    simulate, runner: ProcessingRunner, mocker: pytest_mock.MockFixture
 ):
     runner.simulate = simulate
 
@@ -212,7 +212,7 @@ def test_launch_boutiques_run_bosh_opts(
     expected_container_opts,
     simulate,
     verbose,
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -248,7 +248,7 @@ def test_launch_boutiques_run_bosh_opts(
 
 
 def test_launch_boutiques_run_bosh_no_container_image(
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
     runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
@@ -272,7 +272,7 @@ def test_launch_boutiques_run_bosh_no_container_image(
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run_error(
     simulate,
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
     runner.simulate = simulate
@@ -304,7 +304,7 @@ def test_launch_boutiques_run_error(
         runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
-def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
+def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     bind_path = tmp_path / "to_bind"
     container_command, container_config = runner.process_container_config(
         participant_id="01", session_id="BL", bind_paths=[bind_path]
@@ -334,12 +334,12 @@ def test_process_container_config(runner: PipelineRunner, tmp_path: Path):
     assert "--flag3" in container_config.ARGS
 
 
-def test_process_container_config_no_bindpaths(runner: PipelineRunner):
+def test_process_container_config_no_bindpaths(runner: ProcessingRunner):
     # smoke test for no bind paths
     runner.process_container_config(participant_id="01", session_id="BL")
 
 
-def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
+def test_check_tar_conditions_no_tracker_config(runner: ProcessingRunner):
     runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
     with pytest.raises(
@@ -348,7 +348,7 @@ def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
         runner._check_tar_conditions()
 
 
-def test_check_tar_conditions_no_dir(runner: PipelineRunner, tmp_path: Path):
+def test_check_tar_conditions_no_dir(runner: ProcessingRunner, tmp_path: Path):
     runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = tmp_path  # not used
     runner.tracker_config = TrackerConfig(
@@ -361,7 +361,7 @@ def test_check_tar_conditions_no_dir(runner: PipelineRunner, tmp_path: Path):
         runner._check_tar_conditions()
 
 
-def test_check_tar_conditions_no_tar(runner: PipelineRunner):
+def test_check_tar_conditions_no_tar(runner: ProcessingRunner):
     runner.tar = False
     runner._check_tar_conditions()
 
@@ -378,7 +378,7 @@ def test_tar_directory(tmp_path: Path, dpath_type):
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
-    runner = PipelineRunner(
+    runner = ProcessingRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
@@ -399,7 +399,7 @@ def test_tar_directory(tmp_path: Path, dpath_type):
 
 
 def test_tar_directory_failure(
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
     tmp_path: Path,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
@@ -410,7 +410,7 @@ def test_tar_directory_failure(
     fpath_to_tar.touch()
 
     mocked_is_tarfile = mocker.patch(
-        "nipoppy.workflows.runner.is_tarfile", return_value=False
+        "nipoppy.workflows.processing_runner.is_tarfile", return_value=False
     )
 
     fpath_tarred = runner.tar_directory(dpath_to_tar)
@@ -421,12 +421,12 @@ def test_tar_directory_failure(
     assert f"Failed to tar {dpath_to_tar}" in caplog.text
 
 
-def test_tar_directory_warning_not_found(runner: PipelineRunner):
+def test_tar_directory_warning_not_found(runner: ProcessingRunner):
     with pytest.raises(RuntimeError, match="Not tarring .* since it does not exist"):
         runner.tar_directory("invalid_path")
 
 
-def test_tar_directory_warning_not_dir(runner: PipelineRunner, tmp_path: Path):
+def test_tar_directory_warning_not_dir(runner: ProcessingRunner, tmp_path: Path):
     fpath_to_tar = tmp_path / "file.txt"
     fpath_to_tar.touch()
 
@@ -611,7 +611,7 @@ def test_get_participants_sessions_to_run(
     processing_status_data,
     pipeline_step,
     expected,
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
 ):
     participant_id = None
     session_id = None
@@ -655,7 +655,7 @@ def test_get_participants_sessions_to_run(
     ] == expected
 
 
-def test_run_multiple(runner: PipelineRunner):
+def test_run_multiple(runner: ProcessingRunner):
     participant_id = None
     session_id = None
     runner.participant_id = participant_id
@@ -679,7 +679,7 @@ def test_run_multiple(runner: PipelineRunner):
 @pytest.mark.parametrize("generate_pybids_database", [True, False])
 def test_run_single_pybids_db(
     generate_pybids_database: bool,
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
     participant_id = "01"
@@ -712,7 +712,7 @@ def test_run_single_pybids_db(
 @pytest.mark.parametrize("boutiques_success", [True, False])
 def test_run_single_tar(
     tar: bool,
-    runner: PipelineRunner,
+    runner: ProcessingRunner,
     boutiques_success: bool,
     mocker: pytest_mock.MockFixture,
 ):
@@ -757,7 +757,7 @@ def test_run_single_tar(
         mocked_tar_directory.assert_not_called()
 
 
-def test_run_missing_container_raises_error(runner: PipelineRunner):
+def test_run_missing_container_raises_error(runner: ProcessingRunner):
     runner.manifest = Manifest()
 
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
@@ -836,7 +836,7 @@ def test_generate_cli_command_for_hpc(
     mocker: pytest_mock.MockFixture,
 ):
     mocker.patch("nipoppy.workflows.base.DatasetLayout")
-    runner = PipelineRunner(**init_params)
+    runner = ProcessingRunner(**init_params)
     assert (
         runner._generate_cli_command_for_hpc(participant_id, session_id)
         == expected_command

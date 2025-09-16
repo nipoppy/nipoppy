@@ -19,7 +19,7 @@ except ImportError:
 
 
 from nipoppy._version import __version__
-from nipoppy.cli import OrderedAliasedGroup, handle_exception
+from nipoppy.cli import OrderedAliasedGroup, exception_handler
 from nipoppy.cli.options import (
     dataset_option,
     dep_params,
@@ -141,7 +141,7 @@ def init(**params):
     from nipoppy.workflows.dataset_init import InitWorkflow
 
     params = dep_params(**params)
-    with handle_exception(InitWorkflow(**params)) as workflow:
+    with exception_handler(InitWorkflow(**params)) as workflow:
         workflow.run()
 
 
@@ -172,7 +172,7 @@ def track_curation(**params):
     from nipoppy.workflows.track_curation import TrackCurationWorkflow
 
     params = dep_params(**params)
-    with handle_exception(TrackCurationWorkflow(**params)) as workflow:
+    with exception_handler(TrackCurationWorkflow(**params)) as workflow:
         workflow.run()
 
 
@@ -203,7 +203,7 @@ def reorg(**params):
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
     params = dep_params(**params)
-    with handle_exception(DicomReorgWorkflow(**params)) as workflow:
+    with exception_handler(DicomReorgWorkflow(**params)) as workflow:
         workflow.run()
 
 
@@ -214,10 +214,10 @@ def reorg(**params):
 @layout_option
 def bidsify(**params):
     """Run a BIDS conversion pipeline."""
-    from nipoppy.workflows.bids_conversion import BidsConversionRunner
+    from nipoppy.workflows.bids_conversion import BIDSificationRunner
 
     params = dep_params(**params)
-    with handle_exception(BidsConversionRunner(**params)) as workflow:
+    with exception_handler(BIDSificationRunner(**params)) as workflow:
         workflow.run()
 
 
@@ -237,10 +237,10 @@ def bidsify(**params):
 @layout_option
 def process(**params):
     """Run a processing pipeline."""
-    from nipoppy.workflows.runner import PipelineRunner
+    from nipoppy.workflows.processing_runner import ProcessingRunner
 
     params = dep_params(**params)
-    with handle_exception(PipelineRunner(**params)) as workflow:
+    with exception_handler(ProcessingRunner(**params)) as workflow:
         workflow.run()
 
 
@@ -261,7 +261,7 @@ def track_processing(**params):
     from nipoppy.workflows.tracker import PipelineTracker
 
     params = dep_params(**params)
-    with handle_exception(PipelineTracker(**params)) as workflow:
+    with exception_handler(PipelineTracker(**params)) as workflow:
         workflow.run()
 
 
@@ -275,7 +275,7 @@ def extract(**params):
     from nipoppy.workflows.extractor import ExtractionRunner
 
     params = dep_params(**params)
-    with handle_exception(ExtractionRunner(**params)) as workflow:
+    with exception_handler(ExtractionRunner(**params)) as workflow:
         workflow.run()
 
 
@@ -288,7 +288,7 @@ def status(**params):
     from nipoppy.workflows.dataset_status import StatusWorkflow
 
     params = dep_params(**params)
-    with handle_exception(StatusWorkflow(**params)) as workflow:
+    with exception_handler(StatusWorkflow(**params)) as workflow:
         workflow.run()
 
 

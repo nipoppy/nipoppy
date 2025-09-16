@@ -41,7 +41,7 @@ Nipoppy uses the {term}`Boutiques framework <Boutiques>` to run pipelines. Other
 ### Commands
 
 - Command-line interface: [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>)
-- Python API: {class}`nipoppy.workflows.BidsConversionRunner`
+- Python API: {class}`nipoppy.workflows.bids_conversion.BIDSificationRunner`
 
 ### Workflow
 
@@ -119,7 +119,7 @@ Log files for this command will be written to {{dpath_logs}}`/bids_conversion`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import BidsConversionRunner
+from nipoppy.workflows.bids_conversion import BidsConversionRunner
 
 # replace by appropriate values
 dpath_root = "<NIPOPPY_PROJECT_ROOT>"
@@ -134,7 +134,7 @@ workflow = BidsConversionRunner(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.BidsConversionRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/reorg.rst>)).
+See the API reference for {class}`nipoppy.workflows.bids_conversion.BIDSificationRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/reorg.rst>)).
 
 ## Next steps
 
