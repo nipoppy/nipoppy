@@ -25,7 +25,7 @@ COMMAND_WORKFLOW_MAP = {
     "init": ("nipoppy.workflows.dataset_init", "InitWorkflow"),
     "track-curation": ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
     "reorg": ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
-    "bidsify": ("nipoppy.workflows.bids_conversion", "BidsConversionRunner"),
+    "bidsify": ("nipoppy.workflows.bids_conversion", "BIDSificationRunner"),
     "process": ("nipoppy.workflows.processing_runner", "ProcessingRunner"),
     "track-processing": ("nipoppy.workflows.tracker", "PipelineTracker"),
     "extract": ("nipoppy.workflows.extractor", "ExtractionRunner"),
