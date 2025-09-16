@@ -24,6 +24,12 @@ class _TestOptionsHandler(ContainerOptionsHandler):
     command = "test"
     bind_flag = "-B"
 
+    def is_image_downloaded(self, uri, fpath_container):
+        return True
+
+    def get_container_pull_command(self, uri, fpath_container):
+        return "not_used"
+
 
 @pytest.fixture
 def handler() -> ContainerOptionsHandler:
@@ -287,3 +293,94 @@ def test_get_container_options_handler(
     assert handler.bind_flag == expected.bind_flag
     assert handler.env_flag == expected.env_flag
     assert handler.args == expected.args
+
+
+@pytest.mark.parametrize(
+    "uri,fpath_container,exists",
+    [
+        ("docker://test/test:latest", "exists.sif", True),
+        ("docker://test/test:latest", "does_not_exist.sif", False),
+    ],
+)
+@pytest.mark.parametrize(
+    "handler", [ApptainerOptionsHandler(), SingularityOptionsHandler()]
+)
+def test_is_image_downloaded_apptainer_singularity(
+    handler: ContainerOptionsHandler,
+    uri,
+    fpath_container,
+    exists,
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch(
+        "nipoppy.container.Path.exists",
+        autospec=True,
+        side_effect=lambda x: True if x.name == "exists.sif" else False,
+    )
+
+    assert handler.is_image_downloaded(uri, fpath_container) == exists
+
+
+@pytest.mark.parametrize(
+    "uri,exists",
+    [
+        ("docker://test/downloaded_image:latest", True),
+        ("test/downloaded_image:latest", True),
+        ("docker://test/missing_image:latest", False),
+        ("missing_image:latest", False),
+    ],
+)
+def test_is_image_downloaded_docker(
+    uri,
+    exists,
+    mocker: pytest_mock.MockerFixture,
+):
+    handler = DockerOptionsHandler()
+
+    # mock subprocess.run to simulate docker image existing
+    def mock_run(cmd, *args, **kwargs):
+        class MockCompletedProcess:
+            def __init__(self, returncode, stdout):
+                self.returncode = returncode
+                self.stdout = stdout
+
+        if cmd == ["docker", "image", "inspect", "test/downloaded_image:latest"]:
+            return MockCompletedProcess(0, "test/downloaded_image:latest\n")
+        else:
+            return MockCompletedProcess(1, "")
+
+    mocker.patch("nipoppy.container.subprocess.run", side_effect=mock_run)
+
+    assert handler.is_image_downloaded(uri, "not_used") == exists
+
+
+@pytest.mark.parametrize(
+    "handler,uri,expected_command",
+    [
+        (
+            ApptainerOptionsHandler(),
+            "docker://test/test:latest",
+            "apptainer pull path/to/container.sif docker://test/test:latest",
+        ),
+        (
+            SingularityOptionsHandler(),
+            "docker://test/test:latest",
+            "singularity pull path/to/container.sif docker://test/test:latest",
+        ),
+        (
+            DockerOptionsHandler(),
+            "docker://test/test:latest",
+            "docker pull test/test:latest",
+        ),
+        (
+            DockerOptionsHandler(),
+            "test/test:latest",
+            "docker pull test/test:latest",
+        ),
+    ],
+)
+def test_get_container_pull_command(
+    handler: ContainerOptionsHandler, uri, expected_command
+):
+    fpath_container = "path/to/container.sif"
+    assert handler.get_container_pull_command(uri, fpath_container) == expected_command

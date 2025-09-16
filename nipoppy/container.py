@@ -4,6 +4,7 @@ import argparse
 import logging
 import shlex
 import shutil
+import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable, Mapping, Optional
@@ -179,12 +180,84 @@ class ContainerOptionsHandler(ABC):
         self.set_container_env_vars(env_vars)
         return shlex.join([self.command, subcommand] + self.args)
 
+    @abstractmethod
+    def is_image_downloaded(self, uri: str, fpath_container: StrOrPathLike) -> bool:
+        """Check if a container image has been downloaded.
+
+        Parameters
+        ----------
+        uri : str
+            URI of the container image (e.g. docker://...)
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path to the container image
+
+        Returns
+        -------
+        bool
+            True if the container image exists at the specified path
+        """
+
+    @abstractmethod
+    def get_container_pull_command(
+        self, uri: str, fpath_container: StrOrPathLike
+    ) -> str:
+        """Get the command to pull a container image to a specified location.
+
+        Parameters
+        ----------
+        uri : str
+            URI of the container image (e.g. docker://...)
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image should be saved
+
+        Returns
+        -------
+        str
+            The command string
+        """
+
 
 class ApptainerOptionsHandler(ContainerOptionsHandler):
     """Container options handler for Apptainer."""
 
     command = "apptainer"
     bind_flag = "--bind"
+
+    def is_image_downloaded(self, uri: str, fpath_container: StrOrPathLike) -> bool:
+        """Check if a container image has been downloaded.
+
+        Parameters
+        ----------
+        uri : str
+            URI of the container image (e.g. docker://...)
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path to the container image
+
+        Returns
+        -------
+        bool
+            True if the container image exists at the specified path
+        """
+        return Path(fpath_container).exists()
+
+    def get_container_pull_command(
+        self, uri: str, fpath_container: StrOrPathLike
+    ) -> str:
+        """Get the command to pull a container image to a specified location.
+
+        Parameters
+        ----------
+        uri : str
+            URI of the container image (e.g. docker://...)
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image should be saved
+
+        Returns
+        -------
+        str
+            The command string
+        """
+        return f"{self.command} pull {fpath_container} {uri}"
 
 
 class SingularityOptionsHandler(ApptainerOptionsHandler):
@@ -198,6 +271,48 @@ class DockerOptionsHandler(ContainerOptionsHandler):
 
     command = "docker"
     bind_flag = "--volume"
+
+    def _strip_prefix(self, uri: str) -> str:
+        return uri.removeprefix("docker://")
+
+    def is_image_downloaded(self, uri: str, fpath_container: StrOrPathLike) -> bool:
+        """Check if a container image has been downloaded.
+
+        Parameters
+        ----------
+        uri : str
+            URI of the container image (e.g. docker://...)
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path to the container image
+
+        Returns
+        -------
+        bool
+            True if the container image exists at the specified path
+        """
+        uri = self._strip_prefix(uri)
+        result = subprocess.run([self.command, "image", "inspect", uri])
+        return result.returncode == 0
+
+    def get_container_pull_command(
+        self, uri: str, fpath_container: StrOrPathLike
+    ) -> str:
+        """Get the command to pull a container image to a specified location.
+
+        Parameters
+        ----------
+        uri : str
+            URI of the container image (e.g. docker://...)
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image should be saved
+
+        Returns
+        -------
+        str
+            The command string
+        """
+        uri = self._strip_prefix(uri)
+        return f"{self.command} pull {uri}"
 
 
 def get_container_options_handler(config: ContainerConfig) -> ContainerOptionsHandler:
