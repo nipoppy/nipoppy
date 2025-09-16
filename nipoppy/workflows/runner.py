@@ -14,7 +14,7 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
-from nipoppy.utils import TEMPLATE_REPLACE_PATTERN
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 
@@ -357,6 +357,10 @@ class PipelineRunner(BasePipelineWorkflow):
 
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
+        self.logger.info(
+            f"Running for participant {participant_id}, session {session_id}"
+        )
+
         # Access the GENERATE_PYBIDS_DATABASE field
         generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
 

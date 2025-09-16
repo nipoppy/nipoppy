@@ -5,14 +5,14 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import LogColor, ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils import get_today, load_json
+from nipoppy.utils.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 
-class ZenodoUploadWorkflow(BaseWorkflow):
+class PipelineUploadWorkflow(BaseWorkflow):
     """Workflow for Zenodo upload."""
 
     def __init__(
@@ -90,7 +90,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             self.logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"
             )
-            raise SystemExit(1)
+            raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
 
         if self.record_id:
             self.record_id = self.record_id.removeprefix("zenodo.")

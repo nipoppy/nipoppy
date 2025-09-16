@@ -6,7 +6,7 @@ from typing import Optional
 import boutiques as bosh
 
 from nipoppy.env import LogColor, PipelineTypeEnum
-from nipoppy.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
+from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
 
 
