@@ -9,7 +9,7 @@ from typing import Optional
 import rich_click as click
 from rich.logging import RichHandler
 
-from nipoppy.console import _Console
+from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.env import IS_TESTING, LogColor, StrOrPathLike
 
 DATE_FORMAT = "[%Y-%m-%d %X]"
@@ -58,13 +58,13 @@ def get_logger(
     )
 
     # stderr: ERROR and CRITICAL
-    stderr_handler = rich_handler(logging.ERROR, console=_Console(stderr=True))
+    stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
     logger.addHandler(stderr_handler)
 
     # stdout: INFO and WARNING
     # If verbosity is enabled, also display DEBUG
     verbosity = logging.DEBUG if verbose else logging.INFO
-    stdout_handler = rich_handler(verbosity, console=_Console(stderr=False))
+    stdout_handler = rich_handler(verbosity, console=CONSOLE_STDOUT)
     stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
     logger.addHandler(stdout_handler)
 
