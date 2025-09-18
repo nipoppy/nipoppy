@@ -194,7 +194,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # add bind paths
         for bind_path in bind_paths:
-            container_options_handler.add_bind_path(bind_path)
+            container_options_handler.add_bind_path(bind_path, bind_path)
 
         self.logger.debug(f"Using container handler: {container_options_handler}")
 
