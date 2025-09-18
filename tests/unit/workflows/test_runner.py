@@ -320,8 +320,10 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     # check for the container command fails if Singularity/Apptainer is not on the PATH
     root_path = runner.layout.dpath_root.resolve()
     assert container_command.startswith("apptainer exec")
-    assert f"--bind {root_path} " in container_command
-    assert container_command.endswith(f"--bind {bind_path.resolve()}")
+    assert f"--bind {root_path}:{root_path}:rw " in container_command
+    assert container_command.endswith(
+        f"--bind {bind_path.resolve()}:{bind_path.resolve()}:rw"
+    )
 
     # check that the right container config was used
     assert "--flag1" in container_command
@@ -332,8 +334,8 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     assert isinstance(container_handler, ContainerOptionsHandler)
     assert container_handler.command == ContainerCommandEnum.APPTAINER.value
     assert "--bind" in container_handler.args
-    assert str(root_path) in container_handler.args
-    assert str(bind_path.resolve()) in container_handler.args
+    assert f"{root_path}:{root_path}:rw" in container_handler.args
+    assert f"{bind_path.resolve()}:{bind_path.resolve()}:rw" in container_handler.args
     assert "--flag1" in container_handler.args
     assert "--flag2" in container_handler.args
     assert "--flag3" in container_handler.args
@@ -348,7 +350,10 @@ def test_process_container_config_no_bind_cwd(
         participant_id="01", session_id="BL", bind_paths=[bind_path]
     )
 
-    assert f"--bind {bind_path.resolve()}" not in container_command
+    assert (
+        f"--bind {bind_path.resolve()}:{bind_path.resolve()}:rw"
+        not in container_command
+    )
 
 
 def test_process_container_config_no_bindpaths(runner: ProcessingRunner):

@@ -74,12 +74,13 @@ class ContainerOptionsHandler(Base, ABC):
             Only used if path_inside_container is given, by default "rw"
         """
         path_local = Path(path_local).resolve()
+        if path_inside_container is None:
+            path_inside_container = path_local
 
         bind_spec_components = [str(path_local)]
-        if path_inside_container is not None:
-            bind_spec_components.append(str(path_inside_container))
-            if mode is not None:
-                bind_spec_components.append(mode)
+        bind_spec_components.append(str(path_inside_container))
+        if mode is not None:
+            bind_spec_components.append(mode)
 
         self.args.extend(
             [

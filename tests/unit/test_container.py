@@ -94,7 +94,7 @@ def test_check_container_command_error(
             "/my/local/path",
             None,
             "ro",
-            ["other_arg", "-B", "/my/local/path"],
+            ["other_arg", "-B", "/my/local/path:/my/local/path:ro"],
         ),
         (
             [],
@@ -103,7 +103,7 @@ def test_check_container_command_error(
             "rw",
             [
                 "-B",
-                f"{Path('relative_path').resolve()}",
+                f"{Path('relative_path').resolve()}:{Path('relative_path').resolve()}:rw",  # noqa: E501
             ],
         ),
     ],
