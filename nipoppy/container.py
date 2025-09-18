@@ -176,14 +176,16 @@ class ContainerOptionsHandler(Base, ABC):
         return shlex.join([self.command, subcommand] + self.args)
 
     @abstractmethod
-    def is_image_downloaded(self, uri: str, fpath_container: StrOrPathLike) -> bool:
+    def is_image_downloaded(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> bool:
         """Check if a container image has been downloaded.
 
         Parameters
         ----------
-        uri : str
+        uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : Optional[nipoppy.env.StrOrPathLike]
             Path to the container image
 
         Returns
@@ -194,21 +196,21 @@ class ContainerOptionsHandler(Base, ABC):
 
     @abstractmethod
     def get_container_pull_command(
-        self, uri: str, fpath_container: StrOrPathLike
-    ) -> str:
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> list[str]:
         """Get the command to pull a container image to a specified location.
 
         Parameters
         ----------
-        uri : str
+        uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : Optional[nipoppy.env.StrOrPathLike]
             Path where the container image should be saved
 
         Returns
         -------
-        str
-            The command string
+        list[str]
+            The command as a list of strings
         """
 
 
@@ -218,14 +220,16 @@ class ApptainerOptionsHandler(ContainerOptionsHandler):
     command = "apptainer"
     bind_flag = "--bind"
 
-    def is_image_downloaded(self, uri: str, fpath_container: StrOrPathLike) -> bool:
+    def is_image_downloaded(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> bool:
         """Check if a container image has been downloaded.
 
         Parameters
         ----------
-        uri : str
-            URI of the container image (e.g. docker://...)
-        fpath_container : nipoppy.env.StrOrPathLike
+        uri : Optional[str]
+            URI of the container image (e.g. docker://...) (not used)
+        fpath_container : Optional[nipoppy.env.StrOrPathLike]
             Path to the container image
 
         Returns
@@ -233,26 +237,30 @@ class ApptainerOptionsHandler(ContainerOptionsHandler):
         bool
             True if the container image exists at the specified path
         """
+        if fpath_container is None:
+            raise ValueError("Path to container image must be specified")
         return Path(fpath_container).exists()
 
     def get_container_pull_command(
-        self, uri: str, fpath_container: StrOrPathLike
-    ) -> str:
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> list[str]:
         """Get the command to pull a container image to a specified location.
 
         Parameters
         ----------
-        uri : str
+        uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : Optional[nipoppy.env.StrOrPathLike]
             Path where the container image should be saved
 
         Returns
         -------
-        str
-            The command string
+        list[str]
+            The command as a list of strings
         """
-        return f"{self.command} pull {fpath_container} {uri}"
+        if uri is None or fpath_container is None:
+            raise ValueError("Both URI and path to container image must be specified")
+        return [self.command, "pull", str(fpath_container), uri]
 
 
 class SingularityOptionsHandler(ApptainerOptionsHandler):
@@ -270,44 +278,50 @@ class DockerOptionsHandler(ContainerOptionsHandler):
     def _strip_prefix(self, uri: str) -> str:
         return uri.removeprefix("docker://")
 
-    def is_image_downloaded(self, uri: str, fpath_container: StrOrPathLike) -> bool:
+    def is_image_downloaded(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> bool:
         """Check if a container image has been downloaded.
 
         Parameters
         ----------
-        uri : str
+        uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : nipoppy.env.StrOrPathLike
-            Path to the container image
+        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+            Path to the container image (not used)
 
         Returns
         -------
         bool
             True if the container image exists at the specified path
         """
+        if uri is None:
+            raise ValueError("URI must be specified")
         uri = self._strip_prefix(uri)
         result = subprocess.run([self.command, "image", "inspect", uri])
         return result.returncode == 0
 
     def get_container_pull_command(
-        self, uri: str, fpath_container: StrOrPathLike
-    ) -> str:
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> list[str]:
         """Get the command to pull a container image to a specified location.
 
         Parameters
         ----------
-        uri : str
+        uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : Optional[nipoppy.env.StrOrPathLike]
             Path where the container image should be saved
 
         Returns
         -------
-        str
-            The command string
+        list[str]
+            The command as a list of strings
         """
+        if uri is None:
+            raise ValueError("URI must be specified")
         uri = self._strip_prefix(uri)
-        return f"{self.command} pull {uri}"
+        return [self.command, "pull", uri]
 
 
 def get_container_options_handler(

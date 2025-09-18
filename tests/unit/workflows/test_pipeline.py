@@ -390,7 +390,13 @@ def test_fpath_container_custom(workflow: PipelineWorkflow):
 
 def test_fpath_container_not_specified(workflow: PipelineWorkflow):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
-    with pytest.raises(RuntimeError, match="No container image file specified"):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Error in container config for pipeline.*"
+            "Path to container image must be specified"
+        ),
+    ):
         workflow.fpath_container
 
 
@@ -398,8 +404,7 @@ def test_fpath_container_not_specified(workflow: PipelineWorkflow):
 def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
     workflow.pipeline_config.CONTAINER_INFO.URI = container_uri
     error_message = (
-        "No container image file found at "
-        f"{workflow.pipeline_config.CONTAINER_INFO.FILE} for pipeline "
+        "No container image file found for pipeline "
         f"{workflow.pipeline_name} {workflow.pipeline_version}"
     )
     if container_uri is not None:

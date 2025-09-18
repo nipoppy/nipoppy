@@ -205,7 +205,6 @@ def test_launch_boutiques_run(
             [
                 "--force-docker",
                 "--no-automount",
-                "--imagepath",
                 "--container-opts",
             ],
         ),
@@ -764,7 +763,9 @@ def test_run_missing_container_raises_error(runner: ProcessingRunner):
     runner.manifest = Manifest()
 
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
-    with pytest.raises(FileNotFoundError, match="No container image file found at"):
+    with pytest.raises(
+        FileNotFoundError, match="No container image file found for pipeline"
+    ):
         runner.run()
 
 

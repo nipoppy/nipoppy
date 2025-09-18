@@ -318,6 +318,16 @@ def test_is_image_downloaded_apptainer_singularity(
 
 
 @pytest.mark.parametrize(
+    "handler", [ApptainerOptionsHandler(), SingularityOptionsHandler()]
+)
+def test_is_image_downloaded_apptainer_singularity_error(
+    handler: ContainerOptionsHandler,
+):
+    with pytest.raises(ValueError, match="Path to container image must be specified"):
+        handler.is_image_downloaded("ignored", None)
+
+
+@pytest.mark.parametrize(
     "uri,exists",
     [
         ("docker://test/downloaded_image:latest", True),
@@ -356,22 +366,27 @@ def test_is_image_downloaded_docker(
         (
             ApptainerOptionsHandler(),
             "docker://test/test:latest",
-            "apptainer pull path/to/container.sif docker://test/test:latest",
+            ["apptainer", "pull", "path/to/container.sif", "docker://test/test:latest"],
         ),
         (
             SingularityOptionsHandler(),
             "docker://test/test:latest",
-            "singularity pull path/to/container.sif docker://test/test:latest",
+            [
+                "singularity",
+                "pull",
+                "path/to/container.sif",
+                "docker://test/test:latest",
+            ],
         ),
         (
             DockerOptionsHandler(),
             "docker://test/test:latest",
-            "docker pull test/test:latest",
+            ["docker", "pull", "test/test:latest"],
         ),
         (
             DockerOptionsHandler(),
             "test/test:latest",
-            "docker pull test/test:latest",
+            ["docker", "pull", "test/test:latest"],
         ),
     ],
 )
@@ -380,3 +395,45 @@ def test_get_container_pull_command(
 ):
     fpath_container = "path/to/container.sif"
     assert handler.get_container_pull_command(uri, fpath_container) == expected_command
+
+
+@pytest.mark.parametrize(
+    "handler,uri,fpath_container,error_message",
+    [
+        (
+            ApptainerOptionsHandler(),
+            "docker://test/test:latest",
+            None,
+            "Both URI and path to container image must be specified",
+        ),
+        (
+            ApptainerOptionsHandler(),
+            None,
+            "path/to/container.sif",
+            "Both URI and path to container image must be specified",
+        ),
+        (
+            SingularityOptionsHandler(),
+            "docker://test/test:latest",
+            None,
+            "Both URI and path to container image must be specified",
+        ),
+        (
+            SingularityOptionsHandler(),
+            None,
+            "path/to/container.sif",
+            "Both URI and path to container image must be specified",
+        ),
+        (
+            DockerOptionsHandler(),
+            None,
+            "ignored",
+            "URI must be specified",
+        ),
+    ],
+)
+def test_get_container_pull_command_error(
+    handler: ContainerOptionsHandler, uri, fpath_container, error_message
+):
+    with pytest.raises(ValueError, match=error_message):
+        handler.get_container_pull_command(uri, fpath_container)

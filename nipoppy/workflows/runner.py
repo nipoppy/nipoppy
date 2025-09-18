@@ -69,8 +69,6 @@ class Runner(BasePipelineWorkflow, ABC):
                 bosh_exec_launch_args.extend(
                     [
                         "--no-automount",
-                        "--imagepath",
-                        str(self.fpath_container),
                         "--container-opts",
                         shlex.join(container_handler.args),
                     ]
@@ -79,7 +77,13 @@ class Runner(BasePipelineWorkflow, ABC):
                     ContainerCommandEnum.SINGULARITY,
                     ContainerCommandEnum.APPTAINER,
                 ):
-                    bosh_exec_launch_args.append("--force-singularity")
+                    bosh_exec_launch_args.extend(
+                        [
+                            "--imagepath",
+                            str(self.fpath_container),
+                            "--force-singularity",
+                        ]
+                    )
                 elif container_handler.command == ContainerCommandEnum.DOCKER:
                     bosh_exec_launch_args.append("--force-docker")
 

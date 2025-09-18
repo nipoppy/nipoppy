@@ -114,7 +114,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
         fpath_container = Path(
             process_template_str(
-                str(pipeline_config.get_fpath_container()), objs=[self.layout]
+                str(pipeline_config.CONTAINER_INFO.FILE), objs=[self.layout]
             )
         )
 
