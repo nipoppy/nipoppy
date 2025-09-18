@@ -247,16 +247,27 @@ def test_download_container_confirm_true(
         mocked_run_command.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "console,command",
+    [
+        ("CONSOLE_STDERR", ContainerCommandEnum.APPTAINER),
+        ("CONSOLE_STDERR", ContainerCommandEnum.SINGULARITY),
+        ("CONSOLE_STDOUT", ContainerCommandEnum.DOCKER),
+    ],
+)
 def test_download_container_status(
+    console: str,
+    command: ContainerCommandEnum,
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
     mocked_status = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDERR.status",
+        f"nipoppy.workflows.pipeline_store.install.{console}.status",
     )
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 
+    workflow.config.CONTAINER_CONFIG.COMMAND = command
     workflow._download_container(pipeline_config)
 
     mocked_status.assert_called_once_with(

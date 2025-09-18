@@ -315,13 +315,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
             if uri is not None:
-                try:
-                    pull_command = container_handler.get_pull_command(
-                        uri, fpath_container
-                    )
-                except ValueError:
-                    # do not error out if the command cannot be generated
-                    pass
+                pull_command = container_handler.get_pull_command(uri, fpath_container)
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
                     f"the following command:\n\n{shlex.join(pull_command)}"

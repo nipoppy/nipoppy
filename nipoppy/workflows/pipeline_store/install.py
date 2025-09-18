@@ -124,14 +124,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
 
         # container file already exists
-        try:
-            if container_handler.is_image_downloaded(uri, fpath_container):
-                return
-        except ValueError as exception:
-            self.logger.warning(
-                "Error when checking if container image has been downloaded"
-                f": {exception}"
-            )
+        if container_handler.is_image_downloaded(uri, fpath_container):
             return
 
         # prompt user and confirm
