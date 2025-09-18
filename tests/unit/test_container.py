@@ -209,24 +209,23 @@ def test_set_container_env_vars(handler: ContainerOptionsHandler, env_vars: dict
 
 
 @pytest.mark.parametrize(
-    "handler,subcommand,env_vars,expected",
+    "handler,subcommand,expected",
     [
         (
-            ApptainerOptionsHandler(args=[]),
+            ApptainerOptionsHandler(args=["--env", "VAR1=1"]),
             "run",
-            {"VAR1": "1"},
             "apptainer run --env VAR1=1",
         ),
         (
             SingularityOptionsHandler(args=["--cleanenv"]),
             "exec",
-            None,
             "singularity exec --cleanenv",
         ),
         (
-            DockerOptionsHandler(args=["--volume", ".:/container/path:ro"]),
+            DockerOptionsHandler(
+                args=["--volume", ".:/container/path:ro", "--env", "VAR2=value"]
+            ),
             "run",
-            {"VAR2": "value"},
             f"docker run --volume {Path('.').resolve()}:/container/path:ro --env VAR2=value",  # noqa: E501
         ),
     ],
@@ -234,7 +233,6 @@ def test_set_container_env_vars(handler: ContainerOptionsHandler, env_vars: dict
 def test_prepare_container(
     handler: ContainerOptionsHandler,
     subcommand: str,
-    env_vars: dict,
     expected: str,
     mocker: pytest_mock.MockerFixture,
 ):
@@ -242,9 +240,7 @@ def test_prepare_container(
     mocked_check_container_command = mocker.patch.object(
         handler, "check_container_command", return_value=handler.command
     )
-    assert (
-        handler.prepare_container(subcommand=subcommand, env_vars=env_vars) == expected
-    )
+    assert handler.prepare_container(subcommand=subcommand) == expected
     mocked_check_container_command.assert_called_once()
 
 
@@ -258,7 +254,7 @@ def test_prepare_container(
                 ENV_VARS={"VAR1": "1"},
             ),
             ApptainerOptionsHandler(
-                args=["--cleanenv", "--bind", "fake_path"],
+                args=["--cleanenv", "--bind", "fake_path", "--env", "VAR1=1"],
             ),
         ),
         (
@@ -277,7 +273,7 @@ def test_prepare_container(
                 ENV_VARS={"VAR3": "123"},
             ),
             DockerOptionsHandler(
-                args=["--volume", "path"],
+                args=["--volume", "path", "--env", "VAR3=123"],
             ),
         ),
     ],

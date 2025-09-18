@@ -9,7 +9,8 @@ from typing import Optional, Tuple
 from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.container import ContainerConfig, prepare_container
+from nipoppy.config.container import ContainerConfig
+from nipoppy.container import ContainerOptionsHandler, get_container_options_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -35,7 +36,7 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        container_config: Optional[ContainerConfig] = None,
+        container_handler: Optional[ContainerOptionsHandler] = None,
         objs: Optional[list] = None,
         **kwargs,
     ):
@@ -60,7 +61,7 @@ class Runner(BasePipelineWorkflow, ABC):
         else:
             descriptor_str = json.dumps(self.descriptor)
             if (
-                container_config is None
+                container_handler is None
                 or self.descriptor.get("container-image") is None
             ):
                 bosh_exec_launch_args.append("--no-container")
@@ -71,15 +72,15 @@ class Runner(BasePipelineWorkflow, ABC):
                         "--imagepath",
                         str(self.fpath_container),
                         "--container-opts",
-                        shlex.join(container_config.ARGS),
+                        shlex.join(container_handler.args),
                     ]
                 )
-                if container_config.COMMAND in (
+                if container_handler.command in (
                     ContainerCommandEnum.SINGULARITY,
                     ContainerCommandEnum.APPTAINER,
                 ):
                     bosh_exec_launch_args.append("--force-singularity")
-                elif container_config.COMMAND == ContainerCommandEnum.DOCKER:
+                elif container_handler.command == ContainerCommandEnum.DOCKER:
                     bosh_exec_launch_args.append("--force-docker")
 
         # validate the descriptor
@@ -149,7 +150,7 @@ class Runner(BasePipelineWorkflow, ABC):
         participant_id: str,
         session_id: str,
         bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> Tuple[str, ContainerConfig]:
+    ) -> Tuple[str, ContainerOptionsHandler]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
@@ -180,20 +181,21 @@ class Runner(BasePipelineWorkflow, ABC):
         # update container config with additional information from Boutiques config
         self.logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
-            self.logger.info("Updating container config with config from descriptor")
+            self.logger.debug("Updating container config with config from descriptor")
             container_config.merge(boutiques_config.get_container_config())
+
+        container_options_handler = get_container_options_handler(
+            container_config, logger=self.logger
+        )
 
         # add bind paths
         for bind_path in bind_paths:
-            container_config.add_bind_path(bind_path)
+            container_options_handler.add_bind_path(bind_path)
 
-        self.logger.info(f"Using container config: {container_config}")
+        self.logger.debug(f"Using container handler: {container_options_handler}")
 
-        container_command = prepare_container(
-            container_config,
+        container_command = container_options_handler.prepare_container(
             subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
-            check=True,
-            logger=self.logger,
         )
 
-        return container_command, container_config
+        return container_command, container_options_handler

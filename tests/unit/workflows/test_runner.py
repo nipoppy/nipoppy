@@ -11,8 +11,13 @@ import pytest_mock
 from bids import BIDSLayout
 from fids import fids
 
-from nipoppy.config.container import ContainerConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.container import (
+    ApptainerOptionsHandler,
+    ContainerOptionsHandler,
+    DockerOptionsHandler,
+    SingularityOptionsHandler,
+)
 from nipoppy.env import ContainerCommandEnum
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
@@ -44,7 +49,8 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     )
 
     mocker.patch(
-        "nipoppy.config.container.check_container_command", side_effect=(lambda x: x)
+        "nipoppy.container.shutil.which",
+        side_effect=(lambda command: command),
     )
 
     fname_descriptor = "descriptor.json"
@@ -173,11 +179,11 @@ def test_launch_boutiques_run(
 
 
 @pytest.mark.parametrize(
-    "container_config,expected_container_opts",
+    "container_handler,expected_container_opts",
     [
         (None, ["--no-container"]),
         (
-            ContainerConfig(COMMAND=ContainerCommandEnum.APPTAINER),
+            ApptainerOptionsHandler(),
             [
                 "--force-singularity",
                 "--no-automount",
@@ -186,7 +192,7 @@ def test_launch_boutiques_run(
             ],
         ),
         (
-            ContainerConfig(COMMAND=ContainerCommandEnum.SINGULARITY),
+            SingularityOptionsHandler(),
             [
                 "--force-singularity",
                 "--no-automount",
@@ -195,7 +201,7 @@ def test_launch_boutiques_run(
             ],
         ),
         (
-            ContainerConfig(COMMAND=ContainerCommandEnum.DOCKER),
+            DockerOptionsHandler(),
             [
                 "--force-docker",
                 "--no-automount",
@@ -208,7 +214,7 @@ def test_launch_boutiques_run(
 @pytest.mark.parametrize("simulate", [True, False])
 @pytest.mark.parametrize("verbose", [True, False])
 def test_launch_boutiques_run_bosh_opts(
-    container_config,
+    container_handler,
     expected_container_opts,
     simulate,
     verbose,
@@ -228,7 +234,7 @@ def test_launch_boutiques_run_bosh_opts(
     runner.launch_boutiques_run(
         participant_id,
         session_id,
-        container_config=container_config,
+        container_handler=container_handler,
     )
 
     if not simulate:
@@ -262,7 +268,7 @@ def test_launch_boutiques_run_bosh_no_container_image(
     runner.launch_boutiques_run(
         participant_id,
         session_id,
-        container_config=ContainerConfig(),
+        container_handler=None,
     )
 
     container_opts = mocked_run_command.call_args[0][0]  # first positional argument
@@ -306,7 +312,7 @@ def test_launch_boutiques_run_error(
 
 def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     bind_path = tmp_path / "to_bind"
-    container_command, container_config = runner.process_container_config(
+    container_command, container_handler = runner.process_container_config(
         participant_id="01", session_id="BL", bind_paths=[bind_path]
     )
 
@@ -324,14 +330,14 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     assert "--flag3" in container_command
 
     # check that container config object matches command string
-    assert isinstance(container_config, ContainerConfig)
-    assert container_config.COMMAND == ContainerCommandEnum.APPTAINER
-    assert "--bind" in container_config.ARGS
-    assert str(root_path) in container_config.ARGS
-    assert str(bind_path.resolve()) in container_config.ARGS
-    assert "--flag1" in container_config.ARGS
-    assert "--flag2" in container_config.ARGS
-    assert "--flag3" in container_config.ARGS
+    assert isinstance(container_handler, ContainerOptionsHandler)
+    assert container_handler.command == ContainerCommandEnum.APPTAINER.value
+    assert "--bind" in container_handler.args
+    assert str(root_path) in container_handler.args
+    assert str(bind_path.resolve()) in container_handler.args
+    assert "--flag1" in container_handler.args
+    assert "--flag2" in container_handler.args
+    assert "--flag3" in container_handler.args
 
 
 def test_process_container_config_no_bindpaths(runner: ProcessingRunner):
@@ -719,9 +725,6 @@ def test_run_single_tar(
     runner.tar = tar
 
     # mock the parts of run_single that are not relevant for this test
-    mocker.patch(
-        "nipoppy.config.container.check_container_command", return_value="apptainer"
-    )
     mocker.patch.object(runner, "set_up_bids_db")
 
     # mock the Boutiques run outcome

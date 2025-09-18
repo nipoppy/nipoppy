@@ -9,11 +9,12 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable, Mapping, Optional
 
+from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 
 
-class ContainerOptionsHandler(ABC):
+class ContainerOptionsHandler(Base, ABC):
     """Abstract class for container options handlers."""
 
     bind_sep = ":"
@@ -157,27 +158,21 @@ class ContainerOptionsHandler(ABC):
     def prepare_container(
         self,
         subcommand: str = "run",
-        env_vars: Optional[Mapping[str, str]] = None,
     ):
-        """Build the command for container and set environment variables.
+        """Build the command for container.
 
         Parameters
         ----------
         subcommand : str, optional
             Subcommand to use (e.g. "run", "exec"), by default "run"
-        env_vars : Mapping[str, str], optional
-            Environment variables to be added to the container options.
 
         Returns
         -------
         str
             The command string
         """
-        if env_vars is None:
-            env_vars = {}
         self.check_container_command()
         self.check_container_args()
-        self.set_container_env_vars(env_vars)
         return shlex.join([self.command, subcommand] + self.args)
 
     @abstractmethod
@@ -315,7 +310,9 @@ class DockerOptionsHandler(ContainerOptionsHandler):
         return f"{self.command} pull {uri}"
 
 
-def get_container_options_handler(config: ContainerConfig) -> ContainerOptionsHandler:
+def get_container_options_handler(
+    config: ContainerConfig, logger: Optional[logging.Logger] = None
+) -> ContainerOptionsHandler:
     """Get a container options handler for a given container config."""
     command_handler_map = {
         ContainerCommandEnum.APPTAINER: ApptainerOptionsHandler,
@@ -324,6 +321,11 @@ def get_container_options_handler(config: ContainerConfig) -> ContainerOptionsHa
     }
 
     try:
-        return command_handler_map[config.COMMAND](args=config.ARGS)
+        handler_class = command_handler_map[config.COMMAND]
     except KeyError:
         raise ValueError(f"No container options handler for command: {config.COMMAND}")
+
+    handler: ContainerOptionsHandler = handler_class(args=config.ARGS, logger=logger)
+    handler.set_container_env_vars(config.ENV_VARS)
+
+    return handler
