@@ -11,6 +11,7 @@ import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcessingPipelineConfig
+from nipoppy.container import ApptainerOptionsHandler
 from nipoppy.env import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
@@ -192,12 +193,21 @@ def test_download_container(
     pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
-    mocked = mocker.patch.object(workflow, "run_command")
+    mocked_get_container_handler = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.get_container_options_handler",
+        return_value=ApptainerOptionsHandler(),
+    )
+    mocked_run_command = mocker.patch.object(workflow, "run_command")
 
     workflow._download_container(pipeline_config)
 
+    # check that the container handler was created with the correct config
+    mocked_get_container_handler.assert_called_once_with(
+        workflow.config.CONTAINER_CONFIG, logger=workflow.logger
+    )
+
     # check that the container file was downloaded
-    mocked.assert_called_once_with(
+    mocked_run_command.assert_called_once_with(
         [
             "apptainer",
             "pull",
@@ -209,7 +219,7 @@ def test_download_container(
         ]
     )
     # first call, positional arg list, first element
-    assert not isinstance(mocked.call_args[0][0][0], ContainerCommandEnum)
+    assert not isinstance(mocked_run_command.call_args[0][0][0], ContainerCommandEnum)
 
 
 @pytest.mark.parametrize("confirm_download", [True, False])

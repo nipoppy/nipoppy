@@ -23,11 +23,13 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.container import ApptainerOptionsHandler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
+    ContainerCommandEnum,
     ReturnCode,
 )
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
@@ -374,11 +376,20 @@ def test_pipeline_config(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
     mocked_process_template_json.assert_called_once()
 
 
-def test_fpath_container(workflow: PipelineWorkflow):
+def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
     fpath_container = workflow.layout.dpath_containers / "my_container.sif"
     fpath_container.parent.mkdir(parents=True, exist_ok=True)
     fpath_container.touch()
+
+    mocked = mocker.patch(
+        "nipoppy.workflows.pipeline.get_container_options_handler",
+        return_value=ApptainerOptionsHandler(),
+    )
+
     assert isinstance(workflow.fpath_container, Path)
+    mocked.assert_called_once_with(
+        workflow.pipeline_config.CONTAINER_CONFIG, logger=workflow.logger
+    )
 
 
 def test_fpath_container_custom(workflow: PipelineWorkflow):
@@ -388,8 +399,9 @@ def test_fpath_container_custom(workflow: PipelineWorkflow):
     assert isinstance(workflow.fpath_container, Path)
 
 
-def test_fpath_container_not_specified(workflow: PipelineWorkflow):
+def test_fpath_container_not_specified_apptainer(workflow: PipelineWorkflow):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
+    workflow.pipeline_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.APPTAINER
     with pytest.raises(
         ValueError,
         match=(
@@ -398,6 +410,14 @@ def test_fpath_container_not_specified(workflow: PipelineWorkflow):
         ),
     ):
         workflow.fpath_container
+
+
+def test_fpath_container_not_specified_docker(workflow: PipelineWorkflow):
+    workflow.pipeline_config.CONTAINER_INFO.FILE = None
+    workflow.pipeline_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
+
+    # no error expected
+    workflow.fpath_container == workflow.pipeline_config.CONTAINER_INFO.FILE
 
 
 @pytest.mark.parametrize("container_uri", [None, "docker://some/uri:tag"])
