@@ -21,7 +21,7 @@ class _TestHandler(ContainerHandler):
     """Class name starts with underscore to avoid Pytest collection."""
 
     command = "test"
-    bind_flag = "-B"
+    bind_flags = ("-B", "--bind")
 
     def is_image_downloaded(self, uri, fpath_container):
         return True
@@ -43,6 +43,7 @@ def test_subclass(subclass: Type[ContainerHandler]):
     # try to instantiate subclass
     handler = subclass()
     assert isinstance(handler, ContainerHandler)
+    assert len(handler.bind_flags) == 2
 
 
 @pytest.mark.parametrize(
@@ -141,15 +142,16 @@ def test_check_bind_args(args, handler: ContainerHandler, caplog):
     assert handler.args == args
 
 
+@pytest.mark.parametrize("bind_flag", ["-B", "--bind"])
 def test_check_bind_args_relative(
-    handler: ContainerHandler, caplog: pytest.LogCaptureFixture
+    bind_flag, handler: ContainerHandler, caplog: pytest.LogCaptureFixture
 ):
-    handler.args = ["-B", "."]
+    handler.args = [bind_flag, "."]
     caplog.set_level(logging.DEBUG, logger=handler.logger.name)
 
     handler.check_bind_args()
 
-    assert handler.args == ["-B", str(Path(".").resolve())]
+    assert handler.args == [bind_flag, str(Path(".").resolve())]
     assert "Resolving path" in caplog.text
 
 
@@ -423,6 +425,6 @@ def test_get_container_handler(config: ContainerConfig, expected: ContainerHandl
     assert handler.bind_sep == expected.bind_sep
     assert handler.env_flag == expected.env_flag
     assert handler.command == expected.command
-    assert handler.bind_flag == expected.bind_flag
+    assert handler.bind_flags == expected.bind_flags
     assert handler.env_flag == expected.env_flag
     assert handler.args == expected.args

@@ -28,7 +28,7 @@ class ContainerHandler(Base, ABC):
 
     @property
     @abstractmethod
-    def bind_flag(self) -> str:
+    def bind_flags(self) -> tuple[str]:
         """Flag for binding paths."""
         pass
 
@@ -87,7 +87,7 @@ class ContainerHandler(Base, ABC):
 
         self.args.extend(
             [
-                self.bind_flag,
+                self.bind_flags[0],
                 self.bind_sep.join(bind_spec_components),
             ]
         )
@@ -98,7 +98,7 @@ class ContainerHandler(Base, ABC):
         bind_spec_dest = "bind"
         parser = argparse.ArgumentParser(exit_on_error=False)
         parser.add_argument(
-            self.bind_flag, dest=bind_spec_dest, action="extend", nargs=1
+            *self.bind_flags, dest=bind_spec_dest, action="extend", nargs=1
         )
 
         replacement_map = {}
@@ -140,9 +140,9 @@ class ContainerHandler(Base, ABC):
 
         except Exception as exception:
             raise RuntimeError(
-                f"Error parsing {self.bind_flag} flags in container arguments: "
+                f"Error parsing {self.bind_flags} flags in container arguments: "
                 f"{self.args}. Make sure each flag is followed by a valid spec (e.g. "
-                f"{self.bind_flag} /path/local{self.bind_sep}/path/container"
+                f"{self.bind_flags[0]} /path/local{self.bind_sep}/path/container"
                 f"{self.bind_sep}rw). Exact error was: "
                 f"{type(exception).__name__} {exception}"
             )
@@ -221,7 +221,7 @@ class ApptainerHandler(ContainerHandler):
     """Container handler for Apptainer."""
 
     command = "apptainer"
-    bind_flag = "--bind"
+    bind_flags = ("--bind", "-B")
 
     def is_image_downloaded(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
@@ -276,7 +276,7 @@ class DockerHandler(ContainerHandler):
     """Container handler for Docker."""
 
     command = "docker"
-    bind_flag = "--volume"
+    bind_flags = ("--volume", "-v")
 
     def _strip_prefix(self, uri: str) -> str:
         return uri.removeprefix("docker://")
