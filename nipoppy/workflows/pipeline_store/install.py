@@ -10,7 +10,7 @@ from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.container import get_container_options_handler
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -145,11 +145,17 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             pull_command = container_handler.get_container_pull_command(
                 uri, fpath_container
             )
-            try:
+
+            if self.config.CONTAINER_CONFIG.COMMAND == ContainerCommandEnum.DOCKER:
+                console = CONSOLE_STDOUT
+            else:
                 # use stderr for status messages so that the Apptainer/Singularity
                 # output does not break the status display
                 # ("apptainer/singularity pull" seems to only print to stderr)
-                with CONSOLE_STDERR.status(
+                console = CONSOLE_STDERR
+
+            try:
+                with console.status(
                     "Downloading the container, this can take a while..."
                 ):
                     self.run_command(pull_command)
