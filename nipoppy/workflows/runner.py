@@ -189,19 +189,19 @@ class Runner(BasePipelineWorkflow, ABC):
             self.logger.debug("Updating container config with config from descriptor")
             container_config.merge(boutiques_config.get_container_config())
 
-        container_options_handler = get_container_options_handler(
+        container_handler = get_container_options_handler(
             container_config, logger=self.logger
         )
 
         # add bind paths
         for bind_path in bind_paths:
             if Path(bind_path).resolve() != Path.cwd().resolve():
-                container_options_handler.add_bind_path(bind_path)
+                container_handler.add_bind_path(bind_path)
 
-        self.logger.debug(f"Using container handler: {container_options_handler}")
+        self.logger.debug(f"Using container handler: {container_handler}")
 
-        container_command = container_options_handler.prepare_container(
+        container_command = container_handler.prepare_container(
             subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
         )
 
-        return container_command, container_options_handler
+        return container_command, container_handler

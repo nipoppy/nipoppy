@@ -52,6 +52,7 @@ def test_subclass(subclass: Type[ContainerOptionsHandler]):
 def test_init_args(args, expected_args):
     handler = _TestOptionsHandler(args=args)
     assert handler.args == expected_args
+    assert handler.args is not args
 
 
 @pytest.mark.parametrize("logger", [None, logging.getLogger("test_logger")])

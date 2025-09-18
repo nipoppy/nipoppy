@@ -37,11 +37,14 @@ class ContainerOptionsHandler(Base, ABC):
     ):
         super().__init__()
 
+        if args is None:
+            args = []
+
         if logger is None:
             logger = logging.getLogger(__name__)
             logger.setLevel(logging.INFO)
 
-        self.args = args or []
+        self.args = args[:]
         self.logger = logger
 
     def check_container_command(self) -> str:

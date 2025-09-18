@@ -7,11 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from nipoppy.env import ContainerCommandEnum
 
-# Apptainer
-APPTAINER_BIND_FLAG = "--bind"
-APPTAINER_BIND_SEP = ":"
-APPTAINER_ENVVAR_PREFIXES = ["APPTAINERENV_", "SINGULARITYENV_"]
-
 
 class ContainerConfig(BaseModel):
     """
