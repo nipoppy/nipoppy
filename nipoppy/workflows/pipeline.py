@@ -32,7 +32,7 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
-from nipoppy.container import get_container_options_handler
+from nipoppy.container import get_container_handler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -296,7 +296,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Return the full path to the pipeline's container."""
         uri = self.pipeline_config.CONTAINER_INFO.URI
         fpath_container = self.pipeline_config.CONTAINER_INFO.FILE
-        container_handler = get_container_options_handler(
+        container_handler = get_container_handler(
             self.pipeline_step_config.CONTAINER_CONFIG,
             logger=self.logger,
         )
@@ -316,7 +316,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
             if uri is not None:
                 try:
-                    pull_command = container_handler.get_container_pull_command(
+                    pull_command = container_handler.get_pull_command(
                         uri, fpath_container
                     )
                 except ValueError:

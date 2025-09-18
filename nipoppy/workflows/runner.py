@@ -11,7 +11,7 @@ from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
-from nipoppy.container import ContainerOptionsHandler, get_container_options_handler
+from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -37,7 +37,7 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        container_handler: Optional[ContainerOptionsHandler] = None,
+        container_handler: Optional[ContainerHandler] = None,
         objs: Optional[list] = None,
         **kwargs,
     ):
@@ -155,7 +155,7 @@ class Runner(BasePipelineWorkflow, ABC):
         participant_id: str,
         session_id: str,
         bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> Tuple[str, ContainerOptionsHandler]:
+    ) -> Tuple[str, ContainerHandler]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
@@ -189,18 +189,16 @@ class Runner(BasePipelineWorkflow, ABC):
             self.logger.debug("Updating container config with config from descriptor")
             container_config.merge(boutiques_config.get_container_config())
 
-        container_handler = get_container_options_handler(
-            container_config, logger=self.logger
-        )
+        container_handler = get_container_handler(container_config, logger=self.logger)
 
         # add bind paths
         for bind_path in bind_paths:
             if Path(bind_path).resolve() != Path.cwd().resolve():
-                container_handler.add_bind_path(bind_path)
+                container_handler.add_bind_arg(bind_path)
 
         self.logger.debug(f"Using container handler: {container_handler}")
 
-        container_command = container_handler.prepare_container(
+        container_command = container_handler.build_command(
             subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
         )
 

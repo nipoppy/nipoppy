@@ -9,7 +9,7 @@ from typing import Optional
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
-from nipoppy.container import get_container_options_handler
+from nipoppy.container import get_container_handler
 from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
@@ -119,7 +119,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             )
         )
 
-        container_handler = get_container_options_handler(
+        container_handler = get_container_handler(
             self.config.CONTAINER_CONFIG, logger=self.logger
         )
 
@@ -142,9 +142,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             ),
             kwargs_call={"default": True},
         ):
-            pull_command = container_handler.get_container_pull_command(
-                uri, fpath_container
-            )
+            pull_command = container_handler.get_pull_command(uri, fpath_container)
 
             if self.config.CONTAINER_CONFIG.COMMAND == ContainerCommandEnum.DOCKER:
                 console = CONSOLE_STDOUT

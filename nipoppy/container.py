@@ -7,15 +7,15 @@ import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterable, Mapping, Optional
+from typing import Iterable, Optional
 
 from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 
 
-class ContainerOptionsHandler(Base, ABC):
-    """Abstract class for container options handlers."""
+class ContainerHandler(Base, ABC):
+    """Abstract class for container handlers."""
 
     bind_sep = ":"
     env_flag = "--env"
@@ -47,7 +47,7 @@ class ContainerOptionsHandler(Base, ABC):
         self.args = args[:]
         self.logger = logger
 
-    def check_container_command(self) -> str:
+    def check_command(self) -> str:
         """Check that the command is available (i.e. in PATH)."""
         if not shutil.which(self.command):
             raise RuntimeError(
@@ -56,13 +56,13 @@ class ContainerOptionsHandler(Base, ABC):
             )
         return self.command
 
-    def add_bind_path(
+    def add_bind_arg(
         self,
         path_local: StrOrPathLike,
         path_inside_container: Optional[StrOrPathLike] = None,
         mode: Optional[str] = "rw",
     ):
-        """Add a bind path to the container options.
+        """Add a bind path to the container args.
 
         Parameters
         ----------
@@ -92,7 +92,7 @@ class ContainerOptionsHandler(Base, ABC):
             ]
         )
 
-    def check_container_args(self):
+    def check_bind_args(self):
         """Fix bind flags in args."""
         # use argparse to parse all the bind flags
         bind_spec_dest = "bind"
@@ -154,12 +154,11 @@ class ContainerOptionsHandler(Base, ABC):
 
         self.args = shlex.split(args_str)
 
-    def set_container_env_vars(self, env_vars: Mapping[str, str]):
+    def add_env_arg(self, key: str, value: str):
         """Set environment variables for the container."""
-        for key, value in env_vars.items():
-            self.args.extend([self.env_flag, f"{key}={value}"])
+        self.args.extend([self.env_flag, f"{key}={value}"])
 
-    def prepare_container(
+    def build_command(
         self,
         subcommand: str = "run",
     ):
@@ -175,8 +174,8 @@ class ContainerOptionsHandler(Base, ABC):
         str
             The command string
         """
-        self.check_container_command()
-        self.check_container_args()
+        self.check_command()
+        self.check_bind_args()
         return shlex.join([self.command, subcommand] + self.args)
 
     @abstractmethod
@@ -199,7 +198,7 @@ class ContainerOptionsHandler(Base, ABC):
         """
 
     @abstractmethod
-    def get_container_pull_command(
+    def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
     ) -> list[str]:
         """Get the command to pull a container image to a specified location.
@@ -218,8 +217,8 @@ class ContainerOptionsHandler(Base, ABC):
         """
 
 
-class ApptainerOptionsHandler(ContainerOptionsHandler):
-    """Container options handler for Apptainer."""
+class ApptainerHandler(ContainerHandler):
+    """Container handler for Apptainer."""
 
     command = "apptainer"
     bind_flag = "--bind"
@@ -245,7 +244,7 @@ class ApptainerOptionsHandler(ContainerOptionsHandler):
             raise ValueError("Path to container image must be specified")
         return Path(fpath_container).exists()
 
-    def get_container_pull_command(
+    def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
     ) -> list[str]:
         """Get the command to pull a container image to a specified location.
@@ -267,14 +266,14 @@ class ApptainerOptionsHandler(ContainerOptionsHandler):
         return [self.command, "pull", str(fpath_container), uri]
 
 
-class SingularityOptionsHandler(ApptainerOptionsHandler):
-    """Container options handler for Singularity."""
+class SingularityHandler(ApptainerHandler):
+    """Container handler for Singularity."""
 
     command = "singularity"
 
 
-class DockerOptionsHandler(ContainerOptionsHandler):
-    """Container options handler for Docker."""
+class DockerHandler(ContainerHandler):
+    """Container handler for Docker."""
 
     command = "docker"
     bind_flag = "--volume"
@@ -307,7 +306,7 @@ class DockerOptionsHandler(ContainerOptionsHandler):
         )
         return result.returncode == 0
 
-    def get_container_pull_command(
+    def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
     ) -> list[str]:
         """Get the command to pull a container image to a specified location.
@@ -330,22 +329,23 @@ class DockerOptionsHandler(ContainerOptionsHandler):
         return [self.command, "pull", uri]
 
 
-def get_container_options_handler(
+def get_container_handler(
     config: ContainerConfig, logger: Optional[logging.Logger] = None
-) -> ContainerOptionsHandler:
-    """Get a container options handler for a given container config."""
+) -> ContainerHandler:
+    """Get a container handler for a given container config."""
     command_handler_map = {
-        ContainerCommandEnum.APPTAINER: ApptainerOptionsHandler,
-        ContainerCommandEnum.SINGULARITY: SingularityOptionsHandler,
-        ContainerCommandEnum.DOCKER: DockerOptionsHandler,
+        ContainerCommandEnum.APPTAINER: ApptainerHandler,
+        ContainerCommandEnum.SINGULARITY: SingularityHandler,
+        ContainerCommandEnum.DOCKER: DockerHandler,
     }
 
     try:
         handler_class = command_handler_map[config.COMMAND]
     except KeyError:
-        raise ValueError(f"No container options handler for command: {config.COMMAND}")
+        raise ValueError(f"No container handler for command: {config.COMMAND}")
 
-    handler: ContainerOptionsHandler = handler_class(args=config.ARGS, logger=logger)
-    handler.set_container_env_vars(config.ENV_VARS)
+    handler: ContainerHandler = handler_class(args=config.ARGS, logger=logger)
+    for key, value in config.ENV_VARS.items():
+        handler.add_env_arg(key, value)
 
     return handler

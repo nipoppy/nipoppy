@@ -11,7 +11,7 @@ import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcessingPipelineConfig
-from nipoppy.container import ApptainerOptionsHandler
+from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
@@ -194,8 +194,8 @@ def test_download_container(
     mocker: pytest_mock.MockFixture,
 ):
     mocked_get_container_handler = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.get_container_options_handler",
-        return_value=ApptainerOptionsHandler(),
+        "nipoppy.workflows.pipeline_store.install.get_container_handler",
+        return_value=ApptainerHandler(),
     )
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 

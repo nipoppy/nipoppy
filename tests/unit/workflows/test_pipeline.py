@@ -23,7 +23,7 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.container import ApptainerOptionsHandler
+from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     CURRENT_SCHEMA_VERSION,
@@ -383,8 +383,8 @@ def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
     fpath_container.touch()
 
     mocked = mocker.patch(
-        "nipoppy.workflows.pipeline.get_container_options_handler",
-        return_value=ApptainerOptionsHandler(),
+        "nipoppy.workflows.pipeline.get_container_handler",
+        return_value=ApptainerHandler(),
     )
 
     assert workflow.fpath_container == fpath_container
@@ -422,7 +422,7 @@ def test_fpath_container_not_specified_docker(
     workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
 
     mocker.patch(
-        "nipoppy.container.DockerOptionsHandler.is_image_downloaded", return_value=True
+        "nipoppy.container.DockerHandler.is_image_downloaded", return_value=True
     )
 
     # no error expected

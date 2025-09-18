@@ -13,10 +13,10 @@ from fids import fids
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import (
-    ApptainerOptionsHandler,
-    ContainerOptionsHandler,
-    DockerOptionsHandler,
-    SingularityOptionsHandler,
+    ApptainerHandler,
+    ContainerHandler,
+    DockerHandler,
+    SingularityHandler,
 )
 from nipoppy.env import ContainerCommandEnum
 from nipoppy.tabular.curation_status import CurationStatusTable
@@ -183,7 +183,7 @@ def test_launch_boutiques_run(
     [
         (None, ["--no-container"]),
         (
-            ApptainerOptionsHandler(),
+            ApptainerHandler(),
             [
                 "--force-singularity",
                 "--no-automount",
@@ -192,7 +192,7 @@ def test_launch_boutiques_run(
             ],
         ),
         (
-            SingularityOptionsHandler(),
+            SingularityHandler(),
             [
                 "--force-singularity",
                 "--no-automount",
@@ -201,7 +201,7 @@ def test_launch_boutiques_run(
             ],
         ),
         (
-            DockerOptionsHandler(),
+            DockerHandler(),
             [
                 "--force-docker",
                 "--no-automount",
@@ -331,7 +331,7 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     assert "--flag3" in container_command
 
     # check that container config object matches command string
-    assert isinstance(container_handler, ContainerOptionsHandler)
+    assert isinstance(container_handler, ContainerHandler)
     assert container_handler.command == ContainerCommandEnum.APPTAINER.value
     assert "--bind" in container_handler.args
     assert f"{root_path}:{root_path}:rw" in container_handler.args
