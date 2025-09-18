@@ -108,7 +108,8 @@ def workflow(tmp_path: Path):
                 "NAME": "my_pipeline",
                 "VERSION": "1.0",
                 "CONTAINER_INFO": {
-                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif"
+                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif",
+                    "URI": "docker://fake/uri",
                 },
                 "STEPS": [{}],
             },
@@ -386,7 +387,7 @@ def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
         return_value=ApptainerOptionsHandler(),
     )
 
-    assert isinstance(workflow.fpath_container, Path)
+    assert workflow.fpath_container == fpath_container
     mocked.assert_called_once_with(
         workflow.pipeline_config.CONTAINER_CONFIG, logger=workflow.logger
     )
@@ -396,12 +397,14 @@ def test_fpath_container_custom(workflow: PipelineWorkflow):
     fpath_custom = workflow.dpath_root / "my_container.sif"
     workflow.pipeline_config.CONTAINER_INFO.FILE = fpath_custom
     fpath_custom.touch()
-    assert isinstance(workflow.fpath_container, Path)
+    assert workflow.fpath_container == fpath_custom
 
 
 def test_fpath_container_not_specified_apptainer(workflow: PipelineWorkflow):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
-    workflow.pipeline_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.APPTAINER
+    workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = (
+        ContainerCommandEnum.APPTAINER
+    )
     with pytest.raises(
         ValueError,
         match=(
@@ -412,9 +415,15 @@ def test_fpath_container_not_specified_apptainer(workflow: PipelineWorkflow):
         workflow.fpath_container
 
 
-def test_fpath_container_not_specified_docker(workflow: PipelineWorkflow):
+def test_fpath_container_not_specified_docker(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
-    workflow.pipeline_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
+    workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
+
+    mocker.patch(
+        "nipoppy.container.DockerOptionsHandler.is_image_downloaded", return_value=True
+    )
 
     # no error expected
     workflow.fpath_container == workflow.pipeline_config.CONTAINER_INFO.FILE
