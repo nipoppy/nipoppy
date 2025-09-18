@@ -339,6 +339,18 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     assert "--flag3" in container_handler.args
 
 
+def test_process_container_config_no_bind_cwd(
+    runner: ProcessingRunner, tmp_path: Path, mocker: pytest_mock.MockFixture
+):
+    bind_path = tmp_path / "to_bind"
+    mocker.patch("pathlib.Path.cwd", return_value=bind_path)
+    container_command, _ = runner.process_container_config(
+        participant_id="01", session_id="BL", bind_paths=[bind_path]
+    )
+
+    assert f"--bind {bind_path.resolve()}" not in container_command
+
+
 def test_process_container_config_no_bindpaths(runner: ProcessingRunner):
     # smoke test for no bind paths
     runner.process_container_config(participant_id="01", session_id="BL")

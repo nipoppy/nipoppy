@@ -4,6 +4,7 @@ import json
 import shlex
 import subprocess
 from abc import ABC
+from pathlib import Path
 from typing import Optional, Tuple
 
 from boutiques import bosh
@@ -194,7 +195,8 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # add bind paths
         for bind_path in bind_paths:
-            container_options_handler.add_bind_path(bind_path, bind_path)
+            if Path(bind_path).resolve() != Path.cwd().resolve():
+                container_options_handler.add_bind_path(bind_path, bind_path)
 
         self.logger.debug(f"Using container handler: {container_options_handler}")
 
