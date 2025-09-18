@@ -298,7 +298,9 @@ class DockerOptionsHandler(ContainerOptionsHandler):
         if uri is None:
             raise ValueError("URI must be specified")
         uri = self._strip_prefix(uri)
-        result = subprocess.run([self.command, "image", "inspect", uri])
+        result = subprocess.run(
+            [self.command, "image", "inspect", uri], capture_output=True
+        )
         return result.returncode == 0
 
     def get_container_pull_command(
