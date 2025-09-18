@@ -308,6 +308,13 @@ def test_is_image_downloaded_docker(
     assert handler.is_image_downloaded(uri, "not_used") == exists
 
 
+def test_is_image_downloaded_docker_error():
+    handler = DockerHandler()
+
+    with pytest.raises(ValueError, match="URI must be specified"):
+        assert handler.is_image_downloaded(None, "not_used")
+
+
 @pytest.mark.parametrize(
     "handler,uri,expected_command",
     [
@@ -428,3 +435,10 @@ def test_get_container_handler(config: ContainerConfig, expected: ContainerHandl
     assert handler.bind_flags == expected.bind_flags
     assert handler.env_flag == expected.env_flag
     assert handler.args == expected.args
+
+
+def test_get_container_handler_error():
+    config = ContainerConfig()
+    config.COMMAND = "unknown_command"
+    with pytest.raises(ValueError, match="No container handler for command:"):
+        get_container_handler(config)
