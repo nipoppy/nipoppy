@@ -201,7 +201,10 @@ def test_download_container(
         [
             "apptainer",
             "pull",
-            workflow.layout.dpath_containers / pipeline_config.CONTAINER_INFO.FILE.name,
+            str(
+                workflow.layout.dpath_containers
+                / pipeline_config.CONTAINER_INFO.FILE.name
+            ),
             "fake_uri",
         ]
     )

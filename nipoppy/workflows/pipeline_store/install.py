@@ -9,6 +9,7 @@ from typing import Optional
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
+from nipoppy.container import get_container_options_handler
 from nipoppy.env import ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
@@ -103,7 +104,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
     def _download_container(self, pipeline_config: BasePipelineConfig):
         # pipeline is not containerized
-        if pipeline_config.CONTAINER_INFO.URI is None:
+        if (uri := pipeline_config.CONTAINER_INFO.URI) is None:
             return
 
         # apply substitutions
@@ -118,8 +119,19 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             )
         )
 
+        container_handler = get_container_options_handler(
+            self.config.CONTAINER_CONFIG, logger=self.logger
+        )
+
         # container file already exists
-        if fpath_container.exists():
+        try:
+            if container_handler.is_image_downloaded(uri, fpath_container):
+                return
+        except ValueError as exception:
+            self.logger.warning(
+                "Error when checking if container image has been downloaded"
+                f": {exception}"
+            )
             return
 
         # prompt user and confirm
@@ -130,6 +142,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             ),
             kwargs_call={"default": True},
         ):
+            pull_command = container_handler.get_container_pull_command(
+                uri, fpath_container
+            )
             try:
                 # use stderr for status messages so that the Apptainer/Singularity
                 # output does not break the status display
@@ -137,18 +152,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 with CONSOLE_STDERR.status(
                     "Downloading the container, this can take a while..."
                 ):
-                    self.run_command(
-                        [
-                            self.config.CONTAINER_CONFIG.COMMAND.value,
-                            "pull",
-                            fpath_container,
-                            pipeline_config.CONTAINER_INFO.URI,
-                        ]
-                    )
+                    self.run_command(pull_command)
+
             except subprocess.CalledProcessError as exception:
                 self.logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
-                    f" to {fpath_container}: {exception}"
+                    f": {exception}"
                 )
                 raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
 
