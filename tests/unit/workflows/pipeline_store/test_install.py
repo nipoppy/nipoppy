@@ -189,7 +189,7 @@ def test_update_config_and_save_no_other_change(
 
 def test_update_config_and_save_no_overwrite(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     caplog: pytest.LogCaptureFixture,
 ):
     variable_name = "var1"
