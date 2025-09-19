@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC
-from pathlib import Path
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -144,10 +143,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
             )
 
         return self
-
-    def get_fpath_container(self) -> Path:
-        """Return the path to the pipeline's container."""
-        return self.CONTAINER_INFO.FILE
 
     def get_step_config(
         self, step_name: Optional[str] = None
