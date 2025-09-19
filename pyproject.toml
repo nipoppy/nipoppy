@@ -54,8 +54,8 @@ doc = [
 ]
 dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
-    "nipoppy[gui,parallel]",
     "fids>=0.1.0",
+    "nipoppy[gui,parallel]",
     "packaging",
     "pytest-cov",
     "pytest-httpx",
@@ -95,3 +95,8 @@ markers = [
     "api: mark a test as an api test.",
     "no_xdist: mark a test that should not be run with xdist in CI.",
 ]
+
+[tool.coverage.report]
+# Preserves the "pragma: no cover" and skip functions decorated with "@abstractmethod"
+# More info at: https://coverage.readthedocs.io/en/latest/config.html#report-exclude-also
+exclude_also = ["@abstractmethod"]
