@@ -192,7 +192,9 @@ def test_update_config_and_save_no_overwrite(
 ):
     variable_name = "var1"
     variable_value = "some_value"
-    pipeline_config.VARIABLES = {variable_name: "description"}
+    pipeline_config.VARIABLES = {
+        variable_name: "this is a variable that is important for the pipeline",
+    }
     workflow.config.PIPELINE_VARIABLES.set_variables(
         pipeline_config.PIPELINE_TYPE,
         pipeline_config.NAME,
