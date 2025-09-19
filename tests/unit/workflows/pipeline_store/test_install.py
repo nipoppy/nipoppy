@@ -10,7 +10,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.main import Config
-from nipoppy.config.pipeline import ProcPipelineConfig
+from nipoppy.config.pipeline import ProcessingPipelineConfig
 from nipoppy.env import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
@@ -24,7 +24,7 @@ from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_conf
 
 @pytest.fixture(scope="function")
 def pipeline_config():
-    return ProcPipelineConfig(
+    return ProcessingPipelineConfig(
         **{
             "NAME": "my_pipeline",
             "VERSION": "1.0.0",
@@ -40,7 +40,9 @@ def pipeline_config():
 
 @pytest.fixture(scope="function")
 def workflow(
-    tmp_path: Path, pipeline_config: ProcPipelineConfig, mocker: pytest_mock.MockFixture
+    tmp_path: Path,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
 ):
     dpath_root = tmp_path / "my_dataset"
     create_pipeline_config_files(
@@ -116,7 +118,7 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
 @pytest.mark.parametrize("dry_run", [False, True])
 def test_update_config_and_save(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     variables: dict,
     dry_run: bool,
     caplog: pytest.LogCaptureFixture,
@@ -145,7 +147,7 @@ def test_update_config_and_save(
 )
 def test_update_config_and_save_no_write(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     variables: dict,
     dry_run: bool,
     mocker: pytest_mock.MockFixture,
@@ -163,7 +165,7 @@ def test_update_config_and_save_no_write(
 
 
 def test_update_config_and_save_no_other_change(
-    workflow: PipelineInstallWorkflow, pipeline_config: ProcPipelineConfig
+    workflow: PipelineInstallWorkflow, pipeline_config: ProcessingPipelineConfig
 ):
     # cache original config
     original_config = Config.load(
@@ -218,7 +220,7 @@ def test_update_config_and_save_no_overwrite(
 
 def test_download_container(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
     mocked = mocker.patch.object(workflow, "run_command")
@@ -242,7 +244,7 @@ def test_download_container(
 def test_download_container_confirm_true(
     confirm_download: bool,
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
     workflow.assume_yes = False
@@ -265,7 +267,7 @@ def test_download_container_confirm_true(
 
 def test_download_container_status(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
     mocked_status = mocker.patch(
@@ -283,7 +285,7 @@ def test_download_container_status(
 
 def test_download_container_failed(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -307,7 +309,7 @@ def test_download_container_failed(
 
 def test_download_container_no_uri(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
     pipeline_config.CONTAINER_INFO.URI = None
@@ -320,7 +322,7 @@ def test_download_container_no_uri(
 
 def test_download_container_image_exists(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     mocker: pytest_mock.MockFixture,
 ):
     fpath_container = (
@@ -336,7 +338,7 @@ def test_download_container_image_exists(
 
 def test_run_main(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockFixture,
 ):
@@ -370,7 +372,7 @@ def test_run_main(
 @pytest.mark.parametrize("force", [False, True])
 def test_run_main_force(
     workflow: PipelineInstallWorkflow,
-    pipeline_config: ProcPipelineConfig,
+    pipeline_config: ProcessingPipelineConfig,
     force: bool,
 ):
     workflow.force = force

@@ -73,6 +73,10 @@ def test_run_main(
 ):
     df = pd.DataFrame(hits)
 
+    mocked_console_status = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.status",
+    )
+
     # mock search_records and downstream methods
     workflow.zenodo_api.search_records.return_value = {"hits": hits, "total": 2}
     mocked_hits_to_df = mocker.patch.object(workflow, "_hits_to_df", return_value=df)
@@ -88,6 +92,7 @@ def test_run_main(
     mocked_hits_to_df.assert_called_once_with(hits)
     mocked_df_to_table.assert_called_once_with(df)
     assert "Showing 2 of 2 results" in caplog.text
+    mocked_console_status.assert_called_once()
 
 
 def test_run_main_no_results(

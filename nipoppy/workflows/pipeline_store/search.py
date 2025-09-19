@@ -58,11 +58,12 @@ class PipelineSearchWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the workflow."""
-        results = self.zenodo_api.search_records(
-            query=self.query,
-            keywords=["Nipoppy"],
-            size=self.size,
-        )
+        with CONSOLE_STDOUT.status("Searching Nipoppy pipelines on Zenodo..."):
+            results = self.zenodo_api.search_records(
+                query=self.query,
+                keywords=["Nipoppy"],
+                size=self.size,
+            )
         hits = results["hits"]
         n_total = results["total"]
 

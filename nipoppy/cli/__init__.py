@@ -10,7 +10,7 @@ from nipoppy.logger import get_logger
 
 
 @contextmanager
-def handle_exception(workflow):
+def exception_handler(workflow):
     """Handle exceptions raised during workflow execution."""
     try:
         yield workflow

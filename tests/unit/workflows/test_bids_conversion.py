@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import BidsPipelineConfig
+from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.workflows.bids_conversion import BidsConversionRunner
+from nipoppy.workflows.bids_conversion import BIDSificationRunner
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
@@ -16,8 +16,8 @@ from tests.conftest import (
 
 
 @pytest.fixture
-def workflow(tmp_path: Path) -> BidsConversionRunner:
-    workflow = BidsConversionRunner(
+def workflow(tmp_path: Path) -> BIDSificationRunner:
+    workflow = BIDSificationRunner(
         dpath_root=tmp_path / "my_dataset",
         pipeline_name="heudiconv",
         pipeline_version="0.12.2",
@@ -59,7 +59,7 @@ def workflow(tmp_path: Path) -> BidsConversionRunner:
 def test_check_pipeline_version(
     pipeline_name,
     expected_version,
-    workflow: BidsConversionRunner,
+    workflow: BIDSificationRunner,
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = None
@@ -75,21 +75,21 @@ def test_check_pipeline_version(
     ],
 )
 def test_pipeline_config(
-    pipeline_name, pipeline_version, workflow: BidsConversionRunner
+    pipeline_name, pipeline_version, workflow: BIDSificationRunner
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
-    assert isinstance(workflow.pipeline_config, BidsPipelineConfig)
+    assert isinstance(workflow.pipeline_config, BIDSificationPipelineConfig)
 
 
-def test_dpath_pipeline_error(workflow: BidsConversionRunner):
+def test_dpath_pipeline_error(workflow: BIDSificationRunner):
     with pytest.raises(
         RuntimeError, match='"dpath_pipeline" attribute is not available for '
     ):
         workflow.dpath_pipeline
 
 
-def test_setup(workflow: BidsConversionRunner):
+def test_setup(workflow: BIDSificationRunner):
     # check that the working directory is created
     assert not workflow.dpath_pipeline_work.exists()
     workflow.run_setup()
@@ -98,7 +98,7 @@ def test_setup(workflow: BidsConversionRunner):
 
 @pytest.mark.parametrize("update_status", [True, False])
 def test_run_single(
-    update_status, workflow: BidsConversionRunner, mocker: pytest_mock.MockerFixture
+    update_status, workflow: BIDSificationRunner, mocker: pytest_mock.MockerFixture
 ):
     workflow.curation_status_table = CurationStatusTable()
     workflow.pipeline_step_config.UPDATE_STATUS = update_status
@@ -144,7 +144,7 @@ def test_run_single(
         ).validate(),
     ],
 )
-def test_cleanup(table: CurationStatusTable, workflow: BidsConversionRunner):
+def test_cleanup(table: CurationStatusTable, workflow: BIDSificationRunner):
     workflow.pipeline_step = "convert"
     workflow.curation_status_table = table
 
@@ -154,7 +154,7 @@ def test_cleanup(table: CurationStatusTable, workflow: BidsConversionRunner):
     assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(table)
 
 
-def test_cleanup_simulate(workflow: BidsConversionRunner):
+def test_cleanup_simulate(workflow: BIDSificationRunner):
     workflow.pipeline_step = "convert"
     workflow.simulate = True
     workflow.curation_status_table = CurationStatusTable()
@@ -164,7 +164,7 @@ def test_cleanup_simulate(workflow: BidsConversionRunner):
     assert not workflow.layout.fpath_curation_status.exists()
 
 
-def test_cleanup_no_status_update(workflow: BidsConversionRunner):
+def test_cleanup_no_status_update(workflow: BIDSificationRunner):
     workflow.pipeline_step = "prepare"
     workflow.curation_status_table = CurationStatusTable()
 
@@ -199,7 +199,7 @@ def test_cleanup_no_status_update(workflow: BidsConversionRunner):
     ],
 )
 def test_get_participants_sessions_to_run(
-    status_data, participant_id, session_id, expected, workflow: BidsConversionRunner
+    status_data, participant_id, session_id, expected, workflow: BIDSificationRunner
 ):
     workflow.curation_status_table = CurationStatusTable().add_or_update_records(
         records=[
@@ -293,7 +293,7 @@ def test_generate_cli_command_for_hpc(
     mocker: pytest_mock.MockFixture,
 ):
     mocker.patch("nipoppy.workflows.base.DatasetLayout")
-    runner = BidsConversionRunner(**init_params)
+    runner = BIDSificationRunner(**init_params)
     assert (
         runner._generate_cli_command_for_hpc(participant_id, session_id)
         == expected_command
