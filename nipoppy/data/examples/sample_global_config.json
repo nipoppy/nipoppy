@@ -1,6 +1,5 @@
 {
     "SUBSTITUTIONS": {
-        "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
         "[[HPC_ACCOUNT_NAME]]": ""
     },
     "DICOM_DIR_PARTICIPANT_FIRST": true,

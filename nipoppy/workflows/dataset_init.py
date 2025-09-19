@@ -152,7 +152,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         elif self.mode == "move":
             self.movetree(self.bids_source, str(dpath))
         elif self.mode == "symlink":
-            self.create_symlink(self.bids_source, str(dpath), log_level=logging.DEBUG)
+            self.create_symlink(self.bids_source, str(dpath))
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 

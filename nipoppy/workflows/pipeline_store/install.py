@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -121,12 +122,19 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             return
 
         # apply substitutions
-        pipeline_config = BasePipelineConfig(
-            **apply_substitutions_to_json(
-                pipeline_config.model_dump(mode="json"), self.config.SUBSTITUTIONS
+        # Apply substitutions including built-in ones like NIPOPPY_DPATH_CONTAINERS
+        pipeline_config_json = json.loads(
+            process_template_str(
+                json.dumps(pipeline_config.model_dump(mode="json")),
+                objs=[self, self.layout],
             )
         )
-        fpath_container = pipeline_config.get_fpath_container(layout=self.layout)
+        # Also apply user substitutions
+        pipeline_config_json = apply_substitutions_to_json(
+            pipeline_config_json, self.config.SUBSTITUTIONS
+        )
+        pipeline_config = BasePipelineConfig(**pipeline_config_json)
+        fpath_container = pipeline_config.get_fpath_container()
 
         # container file already exists
         if fpath_container.exists():
