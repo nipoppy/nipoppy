@@ -45,7 +45,7 @@ Duration: 6:06m
 
 ## 4. nipoppy bidsify
 
-In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
+In this tutorial we will cover how to bidsify imaging sourcedata. More concretely, we will
 - install the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) pipeline
 - explore the [`nipoppy bidsify`](../../cli_reference/bidsify.rst) command
 - run [`nipoppy bidsify`](../../cli_reference/bidsify.rst) on our imaging sourcedata
