@@ -11,7 +11,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.utils import FPATH_SAMPLE_CONFIG
+from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
 
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
@@ -115,6 +115,35 @@ def test_check_dicom_dir_options(
         else nullcontext()
     ):
         assert isinstance(Config(**valid_config_data), Config)
+
+
+@pytest.mark.parametrize(
+    "substitutions", [{"": "abc"}, {"valid_key": "abc", "": "def"}]
+)
+def test_check_substitutions_empty_key(valid_config_data, substitutions):
+    with pytest.raises(ValueError, match="Substitutions cannot have empty keys"):
+        Config(**valid_config_data, SUBSTITUTIONS=substitutions)
+
+
+def test_check_substitutions_strip_values(valid_config_data):
+    substitutions_before = {
+        "key1": "  value1",
+        "key2": "value2  ",
+        "key3": "  value3  ",
+        "key4": "value4",
+    }
+    substitutions_after = {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3",
+        "key4": "value4",
+    }
+    with pytest.warns(
+        UserWarning,
+        match=r"Substitution value for key '.*' has leading/trailing whitespace: '.*'.",
+    ):
+        config = Config(**valid_config_data, SUBSTITUTIONS=substitutions_before)
+    assert config.SUBSTITUTIONS == substitutions_after
 
 
 @pytest.mark.parametrize(

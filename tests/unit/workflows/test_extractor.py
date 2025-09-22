@@ -5,10 +5,14 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import ExtractionPipelineConfig, PipelineInfo
+from nipoppy.config.pipeline import (
+    ExtractionPipelineConfig,
+    ExtractionPipelineStepConfig,
+    PipelineInfo,
+)
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils import (
+from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
@@ -255,13 +259,15 @@ def test_run_single(
     extractor: ExtractionRunner,
     mocker: pytest_mock.MockerFixture,
 ):
-    mocked_process_container_config = mocker.patch(
-        "nipoppy.workflows.runner.PipelineRunner.process_container_config",
+    mocked_process_container_config = mocker.patch.object(
+        extractor,
+        "process_container_config",
         # usually returns string and config object
         return_value=(None, mocker.MagicMock()),
     )
-    mocked_launch_boutiques_container = mocker.patch(
-        "nipoppy.workflows.runner.PipelineRunner.launch_boutiques_run"
+    mocked_launch_boutiques_container = mocker.patch.object(
+        extractor,
+        "launch_boutiques_run",
     )
 
     extractor.run_single("S01", "BL")
@@ -284,6 +290,10 @@ def test_check_pipeline_version(extractor: ExtractionRunner):
 
 def test_pipeline_config(extractor: ExtractionRunner):
     assert isinstance(extractor.pipeline_config, ExtractionPipelineConfig)
+
+
+def test_pipeline_step_config(extractor: ExtractionRunner):
+    assert isinstance(extractor.pipeline_step_config, ExtractionPipelineStepConfig)
 
 
 @pytest.mark.parametrize(

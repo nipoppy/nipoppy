@@ -8,16 +8,15 @@ import pytest_mock
 from rich.table import Table
 
 from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
-from nipoppy.zenodo_api import ZenodoAPI
 
 
 @pytest.fixture(scope="function")
-def workflow():
+def workflow(mocker: pytest_mock.MockerFixture):
     """Fixture for PipelineSearchWorkflow."""
     # use sandbox because for now there are no Nipoppy records on official Zenodo
     return PipelineSearchWorkflow(
         query="mriqc",
-        zenodo_api=ZenodoAPI(sandbox=True),
+        zenodo_api=mocker.MagicMock(),
         size=1,
     )
 
@@ -73,11 +72,13 @@ def test_run_main(
     caplog: pytest.LogCaptureFixture,
 ):
     df = pd.DataFrame(hits)
-    mocked_search_records = mocker.patch.object(
-        workflow.zenodo_api,
-        "search_records",
-        return_value={"hits": hits, "total": 2},
+
+    mocked_console_status = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.status",
     )
+
+    # mock search_records and downstream methods
+    workflow.zenodo_api.search_records.return_value = {"hits": hits, "total": 2}
     mocked_hits_to_df = mocker.patch.object(workflow, "_hits_to_df", return_value=df)
     mocked_df_to_table = mocker.patch.object(
         workflow, "_df_to_table", return_value=Table()
@@ -85,18 +86,22 @@ def test_run_main(
 
     workflow.run()
 
-    mocked_search_records.assert_called_once_with(
+    workflow.zenodo_api.search_records.assert_called_once_with(
         query=workflow.query, keywords=["Nipoppy"], size=workflow.size
     )
     mocked_hits_to_df.assert_called_once_with(hits)
     mocked_df_to_table.assert_called_once_with(df)
     assert "Showing 2 of 2 results" in caplog.text
+    mocked_console_status.assert_called_once()
 
 
 def test_run_main_no_results(
     workflow: PipelineSearchWorkflow,
     caplog: pytest.LogCaptureFixture,
 ):
+    # mock search results
+    workflow.zenodo_api.search_records.return_value = {"hits": [], "total": 0}
+
     workflow.query = "fake_pipeline_name"
     workflow.run()
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -22,11 +23,11 @@ from nipoppy.env import (
 from nipoppy.layout import DatasetLayout
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import (
+from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
-    save_json,
     session_id_to_bids_session_id,
 )
+from nipoppy.utils.utils import save_json
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
@@ -74,17 +75,14 @@ ATTR_TO_FPATH_MAP = {
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
 
 
-@pytest.fixture(scope="function")
-def record_id():
-    """Fixture for Zenodo ID.
+@pytest.fixture(autouse=True)
+def clean_loggers():
+    """Clear handler(s) for every logger."""
+    yield
 
-    The Sandbox can be reset at any time, so the Zenodo ID may change.
-    If the test fails verify the Zenodo record at:
-    https://sandbox.zenodo.org/records/{record_id}
-
-    The test file is located at TEST_PIPELINE
-    """
-    return "199319"
+    # run after every test
+    for name in logging.Logger.manager.loggerDict:
+        logging.getLogger(name).handlers.clear()
 
 
 @pytest.fixture()
@@ -95,7 +93,7 @@ def datetime_fixture(
 
     See https://stackoverflow.com/a/75591976 for mocking datetime.datetime.now
     """
-    mocked_datetime = mocker.patch("nipoppy.utils.datetime")
+    mocked_datetime = mocker.patch("nipoppy.utils.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
