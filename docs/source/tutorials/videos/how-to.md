@@ -43,6 +43,17 @@ Duration: 6:06m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/udA0FxuMJoc?si=miTxSK9MTpbgvWbl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+## 4. nipoppy bidsify
+
+In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
+- install the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) pipeline
+- explore the [`nipoppy bidsify`](../../cli_reference/bidsify.rst) command
+- run [`nipoppy bidsify`](../../cli_reference/bidsify.rst) on our imaging sourcedata
+
+Duration: 8:31m
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/m0PMMMiKF6w?si=GS6uUiCB9VTWnHQe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ```{attention}
-More videos on `nipoppy bidsify`, `process`, `track-processing` and `extract` are in the making and will be published soon! Stay tuned for updates!
+More videos on `nipoppy process`, `track-processing` and `extract` are in the making and will be published soon! Stay tuned for updates!
 ```
