@@ -30,7 +30,7 @@ def hits():
             "title": "Pipeline 1",
             "stats": {"downloads": 4},
             "metadata": {
-                "description": "<div><p>Description 1: <PIPELINE_NAME></p></div>",
+                "description": "<div><p>\nDescription 1: <PIPELINE_NAME>\n</p></div>",
             },
             "doi_url": "fake_doi_url_12345",
         },

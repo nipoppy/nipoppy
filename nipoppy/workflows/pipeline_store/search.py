@@ -8,6 +8,7 @@ from rich.table import Table
 
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import LogColor
+from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
@@ -40,11 +41,15 @@ class PipelineSearchWorkflow(BaseWorkflow):
     def _hits_to_df(self, hits: list[dict]) -> pd.DataFrame:
         data_for_df = []
         for hit in hits:
+            description = hit.get("metadata", {}).get("description")
+            if description is not None:
+                description = strip_html_tags(description)
+                description = description.strip()
             data_for_df.append(
                 {
                     "Zenodo ID": f'[link={hit.get("doi_url")}]{hit.get("id")}[/link]',
                     "Title": hit.get("title"),
-                    "Description": hit.get("metadata", {}).get("description"),
+                    "Description": description,
                     "Downloads": hit.get("stats", {}).get("downloads"),
                 }
             )
