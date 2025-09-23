@@ -30,7 +30,7 @@ def hits():
             "title": "Pipeline 1",
             "stats": {"downloads": 4},
             "metadata": {
-                "description": "Description 1",
+                "description": "<div><p>Description 1: <PIPELINE_NAME></p></div>",
             },
             "doi_url": "fake_doi_url_12345",
         },
@@ -57,7 +57,7 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
 
     assert df.iloc[1]["Zenodo ID"] == "[link=fake_doi_url_12345]12345[/link]"
     assert df.iloc[1]["Title"] == "Pipeline 1"
-    assert df.iloc[1]["Description"] == "Description 1"
+    assert df.iloc[1]["Description"] == "Description 1: <PIPELINE_NAME>"
     assert df.iloc[1]["Downloads"] == 4
 
 
