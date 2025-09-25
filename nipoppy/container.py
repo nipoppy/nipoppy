@@ -48,7 +48,7 @@ class ContainerHandler(Base, ABC):
         self.args = args[:]
         self.logger = logger
 
-    def check_command_exists(self) -> str:
+    def check_command_exists(self):
         """Check that the command is available (i.e. in PATH)."""
         if not shutil.which(self.command):
             raise RuntimeError(
