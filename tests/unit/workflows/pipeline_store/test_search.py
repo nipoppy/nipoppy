@@ -61,8 +61,23 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     assert df.iloc[1]["Downloads"] == 4
 
 
-def test_df_to_table(workflow: PipelineSearchWorkflow, hits: list[dict]):
-    df_hits = pd.DataFrame(hits)
+def test_df_to_table(workflow: PipelineSearchWorkflow):
+    df_hits = pd.DataFrame(
+        [
+            {
+                "Zenodo ID": "[link=fake_doi_url]12345[/link]",
+                "Title": "Pipeline 1",
+                "Description": "Description 1: <PIPELINE_NAME>",
+                "Downloads": 4,
+            },
+            {
+                "Zenodo ID": "[link=fake_doi_url]67890[/link]",
+                "Title": "Pipeline 2",
+                "Description": None,
+                "Downloads": 100,
+            },
+        ]
+    )
     table = workflow._df_to_table(df_hits)
     assert table.row_count == len(df_hits)
     assert len(table.columns) == len(df_hits.columns)
