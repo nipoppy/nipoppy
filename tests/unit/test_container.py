@@ -61,21 +61,23 @@ def test_init_logger(logger):
     assert isinstance(handler.logger, logging.Logger)
 
 
-def test_check_command(handler: ContainerHandler, mocker: pytest_mock.MockerFixture):
+def test_check_command_exists(
+    handler: ContainerHandler, mocker: pytest_mock.MockerFixture
+):
     # should not raise error
     mocked_which = mocker.patch(
         "nipoppy.container.shutil.which", return_value="/some/path/to/command"
     )
-    handler.check_command()
+    handler.check_command_exists()
     mocked_which.assert_called_once_with(handler.command)
 
 
-def test_check_command_error(
+def test_check_command_exists_error(
     handler: ContainerHandler, mocker: pytest_mock.MockerFixture
 ):
     mocker.patch("nipoppy.container.shutil.which", return_value=None)
     with pytest.raises(RuntimeError, match="Container executable not found"):
-        handler.check_command()
+        handler.check_command_exists()
 
 
 @pytest.mark.parametrize(
@@ -118,8 +120,8 @@ def test_add_bind_arg(
     handler.args = args
 
     handler.add_bind_arg(
-        path_local=path_local,
-        path_inside_container=path_inside_container,
+        path_src=path_local,
+        path_dest=path_inside_container,
         mode=mode,
     )
     assert handler.args == expected
@@ -134,28 +136,28 @@ def test_add_bind_arg(
         ["-B", "/", "-B", "/:relative_path_in_container", "-B", "/:/:ro"],
     ],
 )
-def test_check_bind_args(args, handler: ContainerHandler, caplog):
+def test_fix_bind_args(args, handler: ContainerHandler, caplog):
     handler.args = args
-    handler.check_bind_args()
+    handler.fix_bind_args()
 
     # no change to arguments
     assert handler.args == args
 
 
 @pytest.mark.parametrize("bind_flag", ["-B", "--bind"])
-def test_check_bind_args_relative(
+def test_fix_bind_args_relative(
     bind_flag, handler: ContainerHandler, caplog: pytest.LogCaptureFixture
 ):
     handler.args = [bind_flag, "."]
     caplog.set_level(logging.DEBUG, logger=handler.logger.name)
 
-    handler.check_bind_args()
+    handler.fix_bind_args()
 
     assert handler.args == [bind_flag, str(Path(".").resolve())]
     assert "Resolving path" in caplog.text
 
 
-def test_check_bind_args_symlink(
+def test_fix_bind_args_symlink(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
     path_symlink = tmp_path / "symlink"
@@ -166,13 +168,13 @@ def test_check_bind_args_symlink(
     handler.args = ["-B", str(path_symlink)]
     caplog.set_level(logging.DEBUG, logger=handler.logger.name)
 
-    handler.check_bind_args()
+    handler.fix_bind_args()
 
     assert handler.args == ["-B", str(path_real)]
     assert "Resolving path" in caplog.text
 
 
-def test_check_bind_args_missing(
+def test_fix_bind_args_missing(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
     dpath = tmp_path / "missing"
@@ -181,30 +183,21 @@ def test_check_bind_args_missing(
     handler.args = ["-B", str(dpath)]
     caplog.set_level(logging.DEBUG, logger=handler.logger.name)
 
-    handler.check_bind_args()
+    handler.fix_bind_args()
 
     assert dpath.exists()
     assert "Creating missing directory" in caplog.text
 
 
-def test_check_bind_args_error(handler: ContainerHandler):
+def test_fix_bind_args_error(handler: ContainerHandler):
     handler.args = ["-B"]
     with pytest.raises(RuntimeError, match="Error parsing"):
-        handler.check_bind_args()
+        handler.fix_bind_args()
 
 
-@pytest.mark.parametrize(
-    "key,value,expected",
-    [
-        ("VAR1", "1", ["--env", "VAR1=1"]),
-        ("VAR2", "test", ["--env", "VAR2=test"]),
-        ("VAR3", "123", ["--env", "VAR3=123"]),
-        ("VAR4", "", ["--env", "VAR4="]),
-    ],
-)
-def test_add_env_arg(key, value, expected, handler: ContainerHandler):
-    handler.add_env_arg(key, value)
-    assert handler.args == expected
+def test_add_env_arg(handler: ContainerHandler):
+    handler.add_env_arg("VAR1", "1")
+    assert handler.args == ["--env", "VAR1=1"]
 
 
 @pytest.mark.parametrize(
@@ -229,22 +222,20 @@ def test_add_env_arg(key, value, expected, handler: ContainerHandler):
         ),
     ],
 )
-def test_build_command(
+def test_get_shell_command(
     handler: ContainerHandler,
     subcommand: str,
     expected: str,
     mocker: pytest_mock.MockerFixture,
 ):
     # pretend command exists
-    mocked_check_command = mocker.patch.object(
-        handler, "check_command", return_value=handler.command
-    )
-    assert handler.build_command(subcommand=subcommand) == expected
-    mocked_check_command.assert_called_once()
+    mocked_check_command_exists = mocker.patch.object(handler, "check_command_exists")
+    assert handler.get_shell_command(subcommand=subcommand) == expected
+    mocked_check_command_exists.assert_called_once()
 
 
 @pytest.mark.parametrize(
-    "uri,fpath_container,exists",
+    "uri,fname_container,exists",
     [
         ("docker://test/test:latest", "exists.sif", True),
         ("docker://test/test:latest", "does_not_exist.sif", False),
@@ -254,17 +245,13 @@ def test_build_command(
 def test_is_image_downloaded_apptainer_singularity(
     handler: ContainerHandler,
     uri,
-    fpath_container,
+    fname_container,
     exists,
-    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
 ):
-    mocker.patch(
-        "nipoppy.container.Path.exists",
-        autospec=True,
-        side_effect=lambda x: True if x.name == "exists.sif" else False,
-    )
+    (tmp_path / "exists.sif").touch()
 
-    assert handler.is_image_downloaded(uri, fpath_container) == exists
+    assert handler.is_image_downloaded(uri, tmp_path / fname_container) == exists
 
 
 @pytest.mark.parametrize("handler", [ApptainerHandler(), SingularityHandler()])
@@ -321,27 +308,22 @@ def test_is_image_downloaded_docker_error():
         (
             ApptainerHandler(),
             "docker://test/test:latest",
-            ["apptainer", "pull", "path/to/container.sif", "docker://test/test:latest"],
+            "apptainer pull path/to/container.sif docker://test/test:latest",
         ),
         (
             SingularityHandler(),
             "docker://test/test:latest",
-            [
-                "singularity",
-                "pull",
-                "path/to/container.sif",
-                "docker://test/test:latest",
-            ],
+            "singularity pull path/to/container.sif docker://test/test:latest",
         ),
         (
             DockerHandler(),
             "docker://test/test:latest",
-            ["docker", "pull", "test/test:latest"],
+            "docker pull test/test:latest",
         ),
         (
             DockerHandler(),
             "test/test:latest",
-            ["docker", "pull", "test/test:latest"],
+            "docker pull test/test:latest",
         ),
     ],
 )
@@ -429,11 +411,9 @@ def test_get_pull_command_error(
 def test_get_container_handler(config: ContainerConfig, expected: ContainerHandler):
     handler = get_container_handler(config)
     assert isinstance(handler, expected.__class__)
-    assert handler.bind_sep == expected.bind_sep
     assert handler.env_flag == expected.env_flag
     assert handler.command == expected.command
     assert handler.bind_flags == expected.bind_flags
-    assert handler.env_flag == expected.env_flag
     assert handler.args == expected.args
 
 

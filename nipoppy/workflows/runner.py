@@ -198,7 +198,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
         self.logger.debug(f"Using container handler: {container_handler}")
 
-        container_command = container_handler.build_command(
+        container_command = container_handler.get_shell_command(
             subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
         )
 

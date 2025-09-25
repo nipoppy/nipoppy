@@ -13,11 +13,12 @@ from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 
+BIND_SEP = ":"
+
 
 class ContainerHandler(Base, ABC):
     """Abstract class for container handlers."""
 
-    bind_sep = ":"
     env_flag = "--env"
 
     @property
@@ -47,52 +48,50 @@ class ContainerHandler(Base, ABC):
         self.args = args[:]
         self.logger = logger
 
-    def check_command(self) -> str:
+    def check_command_exists(self) -> str:
         """Check that the command is available (i.e. in PATH)."""
         if not shutil.which(self.command):
             raise RuntimeError(
                 f"Container executable not found: {self.command}"
                 ". Make sure it is installed and in your PATH."
             )
-        return self.command
 
     def add_bind_arg(
         self,
-        path_local: StrOrPathLike,
-        path_inside_container: Optional[StrOrPathLike] = None,
+        path_src: StrOrPathLike,
+        path_dest: Optional[StrOrPathLike] = None,
         mode: Optional[str] = "rw",
     ):
         """Add a bind path to the container args.
 
         Parameters
         ----------
-        path_local : nipoppy.env.StrOrPathLike
+        path_src : nipoppy.env.StrOrPathLike
             Path on disk. If this is a relative path or contains symlinks,
             it will be resolved
-        path_inside_container : Optional[nipoppy.env.StrOrPathLike], optional
+        path_dest : Optional[nipoppy.env.StrOrPathLike], optional
             Path inside the container (if None, will be the same as the local path),
             by default None
         mode : str, optional
-            Read/write permissions.
-            Only used if path_inside_container is given, by default "rw"
+            Read/write permissions, by default "rw"
         """
-        path_local = Path(path_local).resolve()
-        if path_inside_container is None:
-            path_inside_container = path_local
+        path_src = Path(path_src).resolve()
+        if path_dest is None:
+            path_dest = path_src
 
-        bind_spec_components = [str(path_local)]
-        bind_spec_components.append(str(path_inside_container))
+        bind_spec_components = [str(path_src)]
+        bind_spec_components.append(str(path_dest))
         if mode is not None:
             bind_spec_components.append(mode)
 
         self.args.extend(
             [
                 self.bind_flags[0],
-                self.bind_sep.join(bind_spec_components),
+                BIND_SEP.join(bind_spec_components),
             ]
         )
 
-    def check_bind_args(self):
+    def fix_bind_args(self):
         """Fix bind flags in args."""
         # use argparse to parse all the bind flags
         bind_spec_dest = "bind"
@@ -110,7 +109,7 @@ class ContainerHandler(Base, ABC):
                 for bind_spec in bind_specs:
                     # get the local path
                     bind_spec: str
-                    bind_spec_components = bind_spec.split(self.bind_sep)
+                    bind_spec_components = bind_spec.split(BIND_SEP)
                     path_local = Path(bind_spec_components[0])
                     path_local_original = path_local
 
@@ -134,16 +133,14 @@ class ContainerHandler(Base, ABC):
                     # replace bind spec in args
                     if path_local != path_local_original:
                         bind_spec_components[0] = str(path_local)
-                        replacement_map[bind_spec] = self.bind_sep.join(
-                            bind_spec_components
-                        )
+                        replacement_map[bind_spec] = BIND_SEP.join(bind_spec_components)
 
         except Exception as exception:
             raise RuntimeError(
                 f"Error parsing {self.bind_flags} flags in container arguments: "
                 f"{self.args}. Make sure each flag is followed by a valid spec (e.g. "
-                f"{self.bind_flags[0]} /path/local{self.bind_sep}/path/container"
-                f"{self.bind_sep}rw). Exact error was: "
+                f"{self.bind_flags[0]} /path/local{BIND_SEP}/path/container"
+                f"{BIND_SEP}rw). Exact error was: "
                 f"{type(exception).__name__} {exception}"
             )
 
@@ -158,11 +155,11 @@ class ContainerHandler(Base, ABC):
         """Set environment variables for the container."""
         self.args.extend([self.env_flag, f"{key}={value}"])
 
-    def build_command(
+    def get_shell_command(
         self,
         subcommand: str = "run",
     ):
-        """Build the command for container.
+        """Get the shell command for running the container.
 
         Parameters
         ----------
@@ -174,8 +171,8 @@ class ContainerHandler(Base, ABC):
         str
             The command string
         """
-        self.check_command()
-        self.check_bind_args()
+        self.check_command_exists()
+        self.fix_bind_args()
         return shlex.join([self.command, subcommand] + self.args)
 
     @abstractmethod
@@ -200,7 +197,7 @@ class ContainerHandler(Base, ABC):
     @abstractmethod
     def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
-    ) -> list[str]:
+    ) -> str:
         """Get the command to pull a container image to a specified location.
 
         Parameters
@@ -212,8 +209,8 @@ class ContainerHandler(Base, ABC):
 
         Returns
         -------
-        list[str]
-            The command as a list of strings
+        str
+            The command string
         """
 
 
@@ -246,7 +243,7 @@ class ApptainerHandler(ContainerHandler):
 
     def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
-    ) -> list[str]:
+    ) -> str:
         """Get the command to pull a container image to a specified location.
 
         Parameters
@@ -258,12 +255,12 @@ class ApptainerHandler(ContainerHandler):
 
         Returns
         -------
-        list[str]
-            The command as a list of strings
+        str
+            The command string
         """
         if uri is None or fpath_container is None:
             raise ValueError("Both URI and path to container image must be specified")
-        return [self.command, "pull", str(fpath_container), uri]
+        return shlex.join([self.command, "pull", str(fpath_container), uri])
 
 
 class SingularityHandler(ApptainerHandler):
@@ -308,7 +305,7 @@ class DockerHandler(ContainerHandler):
 
     def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
-    ) -> list[str]:
+    ) -> str:
         """Get the command to pull a container image to a specified location.
 
         Parameters
@@ -320,13 +317,13 @@ class DockerHandler(ContainerHandler):
 
         Returns
         -------
-        list[str]
-            The command as a list of strings
+        str
+            The command string
         """
         if uri is None:
             raise ValueError("URI must be specified")
         uri = self._strip_prefix(uri)
-        return [self.command, "pull", uri]
+        return shlex.join([self.command, "pull", uri])
 
 
 def get_container_handler(

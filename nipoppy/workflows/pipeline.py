@@ -318,7 +318,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 pull_command = container_handler.get_pull_command(uri, fpath_container)
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
-                    f"the following command:\n\n{shlex.join(pull_command)}"
+                    f"the following command:\n\n{pull_command}"
                 )
             raise FileNotFoundError(error_message)
 

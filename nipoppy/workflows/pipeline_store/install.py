@@ -103,8 +103,10 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         return config
 
     def _download_container(self, pipeline_config: BasePipelineConfig):
+        uri = pipeline_config.CONTAINER_INFO.URI
+
         # pipeline is not containerized
-        if (uri := pipeline_config.CONTAINER_INFO.URI) is None:
+        if uri is None:
             return
 
         # apply substitutions
