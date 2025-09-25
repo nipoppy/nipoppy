@@ -240,7 +240,7 @@ def test_download_container(
     # check that the container file was downloaded
     mocked_run_command.assert_called_once_with(
         "apptainer pull "
-        f"{workflow.layout.dpath_containers/ pipeline_config.CONTAINER_INFO.FILE.name}"
+        f"{workflow.layout.dpath_containers / pipeline_config.CONTAINER_INFO.FILE.name}"
         " fake_uri",
     )
     # first call, positional arg list, first element
