@@ -116,6 +116,13 @@ class LayoutConfig(BaseModel):
     fpath_demographics: OptionalFpathInfo = Field(
         description="Path to the study's demographics data file"
     )
+    # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
+    # as optional for path validation, not for Pydantic model validation.
+    # Optional[OptionalFpathInfo] with default=None is needed to make the field
+    # truly optional so it can be missing from layout JSON files entirely.
+    fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
+        default=None, description="Path to the BIDS dataset description file"
+    )
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -125,7 +132,11 @@ class LayoutConfig(BaseModel):
     @cached_property
     def path_infos(self) -> list[PathInfo]:
         """Return a list of all PathInfo objects defined in the layout."""
-        return [getattr(self, path_label) for path_label in self.path_labels]
+        return [
+            getattr(self, path_label)
+            for path_label in self.path_labels
+            if getattr(self, path_label) is not None
+        ]
 
     def get_path_info(self, path_label: str) -> PathInfo:
         """Return the PathInfo object associated with the given path label."""
