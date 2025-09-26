@@ -47,8 +47,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         for hit in hits:
             description = hit.get("metadata", {}).get("description")
             if description is not None:
-                description = strip_html_tags(description)
-                description = description.strip()
+                description = strip_html_tags(description).strip()
             zenodo_id_with_link = f'[link={hit.get("doi_url")}]{hit.get("id")}[/link]'
             data_for_df.append(
                 {
@@ -98,7 +97,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         table = self._df_to_table(df_hits)
 
         n_shown = min(len(hits), self.size)
-        message = f"Showing {min(len(hits), self.size)} of {n_total} results"
+        message = f"Showing {n_shown} of {n_total} results"
         if n_shown < n_total:
             message += " (use --size to show more)"
         self.logger.info(message)
