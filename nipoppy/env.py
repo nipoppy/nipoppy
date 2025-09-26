@@ -32,8 +32,9 @@ EXT_LOG = ".log"
 class ContainerCommandEnum(str, Enum):
     """Container commands."""
 
-    SINGULARITY = "singularity"
     APPTAINER = "apptainer"
+    DOCKER = "docker"
+    SINGULARITY = "singularity"
 
 
 class PipelineTypeEnum(str, Enum):

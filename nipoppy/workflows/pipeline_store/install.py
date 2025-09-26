@@ -9,7 +9,8 @@ from typing import Optional
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.container import get_container_handler
+from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -116,8 +117,10 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         return config
 
     def _download_container(self, pipeline_config: BasePipelineConfig):
+        uri = pipeline_config.CONTAINER_INFO.URI
+
         # pipeline is not containerized
-        if pipeline_config.CONTAINER_INFO.URI is None:
+        if uri is None:
             return
 
         # apply substitutions
@@ -128,12 +131,16 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
         fpath_container = Path(
             process_template_str(
-                str(pipeline_config.get_fpath_container()), objs=[self.layout]
+                str(pipeline_config.CONTAINER_INFO.FILE), objs=[self.layout]
             )
         )
 
+        container_handler = get_container_handler(
+            self.config.CONTAINER_CONFIG, logger=self.logger
+        )
+
         # container file already exists
-        if fpath_container.exists():
+        if container_handler.is_image_downloaded(uri, fpath_container):
             return
 
         # prompt user and confirm
@@ -144,25 +151,26 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             ),
             kwargs_call={"default": True},
         ):
-            try:
+            pull_command = container_handler.get_pull_command(uri, fpath_container)
+
+            if self.config.CONTAINER_CONFIG.COMMAND == ContainerCommandEnum.DOCKER:
+                console = CONSOLE_STDOUT
+            else:
                 # use stderr for status messages so that the Apptainer/Singularity
                 # output does not break the status display
                 # ("apptainer/singularity pull" seems to only print to stderr)
-                with CONSOLE_STDERR.status(
+                console = CONSOLE_STDERR
+
+            try:
+                with console.status(
                     "Downloading the container, this can take a while..."
                 ):
-                    self.run_command(
-                        [
-                            self.config.CONTAINER_CONFIG.COMMAND.value,
-                            "pull",
-                            fpath_container,
-                            pipeline_config.CONTAINER_INFO.URI,
-                        ]
-                    )
+                    self.run_command(pull_command)
+
             except subprocess.CalledProcessError as exception:
                 self.logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
-                    f" to {fpath_container}: {exception}"
+                    f": {exception}"
                 )
                 raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
 

@@ -8,7 +8,7 @@ If you already have an existing Python environment setup, you can go directly to
 
 ## Supported operating systems
 
-The Nipoppy tools are intended to be used on Linux operating system, and may not work on other operating systems. All processing pipelines with built-in support in Nipoppy are assumed to use Apptainer (formerly Singularity), which [cannot run natively on Windows or macOS](https://apptainer.org/docs/admin/main/installation.html#installation-on-windows-or-mac). Support for the Docker container platform may eventually be added, though that is not a priority at the moment.
+The Nipoppy tools are primarily intended to be used on Linux operating system and may not work well on other operating systems. The default container platform used is Apptainer (formerly Singularity), which [cannot run natively on Windows or macOS](https://apptainer.org/docs/admin/main/installation.html#installation-on-windows-or-mac). Support for the Docker container platform has been added in 0.4.2, though users may need to change default container arguments that are Apptainer-specific.
 
 (python-env-instructions)=
 ## Setting up a Python environment
