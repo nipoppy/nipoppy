@@ -164,15 +164,9 @@ sub- and ses- prefix added
 $ nipoppy status --dataset <NIPOPPY_PROJECT_ROOT>
 ```
 
-::::{tip} What if the participant IDs in my existing study files are not Nipoppy-compatible?
----
-class: dropdown
----
 The output should list the number of participants that are present in both the `manifest.tsv` file and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`.  
----
-:::
 
-- file organization in {{dpath_pre_reorg}} must follow a subject first-session second manner (see below for a helper script if this is not the case for your data)
+- file organization in {{dpath_pre_reorg}} must follow a subject first-session second manner (see next section for help if this is not the case for your data)
 - the `manifest.tsv` file must list all participants and sessions
 - subject folder and session folder are not allowed to have the BIDS-specific prefixes: subject and session folders need to be named exactly as indicated in the `manifest.tsv` file
 
@@ -191,3 +185,31 @@ You can check the successful reorganization in the {term}`curation status file` 
 ```console
 $ nipoppy status --dataset <NIPOPPY_PROJECT_ROOT>
 ```
+
+### Customizing the `nipoppy reorg` behavior
+
+If the file organization in {{dpath_pre_reorg}} does not follow a subject first-session second manner but vice versa, you can simply set `"DICOM_DIR_PARTICIPANT_FIRST"` to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`. 
+
+(dicom-dir-map-example)=
+If the raw imaging data are not organized in any of these two structures, a custom tab-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_pre_reorg}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
+
+Here is an example file for a dataset that already uses the `ses-` prefix for sessions:
+
+```{csv-table}
+---
+file: ../../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
+header-rows: 1
+delim: tab
+---
+```
+
+````{admonition} Raw content of the example DICOM directory mapping file
+---
+class: dropdown
+---
+```{literalinclude} ../../../../nipoppy/data/examples/sample_dicom_dir_map.tsv
+---
+linenos: True
+---
+```
+````
