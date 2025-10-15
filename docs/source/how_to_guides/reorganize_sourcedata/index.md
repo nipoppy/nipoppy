@@ -164,7 +164,7 @@ sub- and ses- prefix added
 $ nipoppy status --dataset <NIPOPPY_PROJECT_ROOT>
 ```
 
-The output should list the number of participants that are present in both the `manifest.tsv` file and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`.  
+The output should list the number of participants that are present in both the `manifest.tsv` file and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`.
 
 - file organization in {{dpath_pre_reorg}} must follow a subject first-session second manner (see next section for help if this is not the case for your data)
 - the `manifest.tsv` file must list all participants and sessions
@@ -188,7 +188,7 @@ $ nipoppy status --dataset <NIPOPPY_PROJECT_ROOT>
 
 ### Customizing the `nipoppy reorg` behavior
 
-If the file organization in {{dpath_pre_reorg}} does not follow a subject first-session second manner but vice versa, you can simply set `"DICOM_DIR_PARTICIPANT_FIRST"` to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`. 
+If the file organization in {{dpath_pre_reorg}} does not follow a subject first-session second manner but vice versa, you can simply set `"DICOM_DIR_PARTICIPANT_FIRST"` to `"false"` in the {term}`global configuration file <DICOM_DIR_PARTICIPANT_FIRST>`.
 
 (dicom-dir-map-example)=
 If the raw imaging data are not organized in any of these two structures, a custom tab-separated file can be created to map each unique participant-session pair to a directory path (relative to {{dpath_pre_reorg}}). This path to this mapping file must be specified in the `"DICOM_DIR_MAP_FILE"` in the {term}`global configuration file <DICOM_DIR_MAP_FILE>`. See the {ref}`schema reference <dicom-dir-map-schema>` for more information.
