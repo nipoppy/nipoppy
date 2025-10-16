@@ -58,7 +58,7 @@ def assert_layout_creation(workflow, dpath_root):
 
     # check that HPC config files have been copied
     for fname in DPATH_HPC.glob("*"):
-        assert (workflow.layout.dpath_hpc / fname).exists()
+        assert (workflow.layout.dpath_hpc / fname.name).exists()
 
 
 def test_run(dpath_root: Path):
