@@ -6,11 +6,10 @@ from pathlib import Path
 import pytest
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID, NIPOPPY_DIR_NAME
+from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
-from tests.conftest import ATTR_TO_DPATH_MAP, FPATH_CONFIG, FPATH_MANIFEST
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])
@@ -26,18 +25,24 @@ def exist_or_none(o: object, s: str) -> bool:
 
 
 def assert_layout_creation(workflow, dpath_root):
-    # check that all directories have been created
-    for path in ATTR_TO_DPATH_MAP.values():
-        assert Path(dpath_root, path).exists()
-        if path == NIPOPPY_DIR_NAME:
-            # Nipoppy project directory doesn't have a README file.
-            continue
-        else:
-            assert Path(dpath_root, path, "README.md").exists()
+    # check that all directories have been created (using layout-aware paths)
+    for dpath in workflow.layout.get_paths(directory=True, include_optional=True):
+        assert dpath.exists(), f"Expected directory not found: {dpath}"
+        # Check README exists for directories with descriptions (except .nipoppy)
+        if dpath != workflow.layout.dpath_nipoppy:
+            readme_path = dpath / "README.md"
+            # Only check README if this directory has a description in the layout
+            path_info = None
+            for info in workflow.layout.config.path_infos:
+                if workflow.layout.get_full_path(info.path) == dpath:
+                    path_info = info
+                    break
+            if path_info and path_info.description:
+                assert readme_path.exists(), f"Expected README not found: {readme_path}"
 
-    # check that sample config files have been copied
-    assert Path(dpath_root, FPATH_CONFIG).exists()
-    assert Path(dpath_root, FPATH_MANIFEST).exists()
+    # check that required files have been created
+    for fpath in workflow.layout.get_paths(directory=False, include_optional=False):
+        assert fpath.exists(), f"Expected file not found: {fpath}"
 
     # check that no pipeline config files have been copied
     assert (
