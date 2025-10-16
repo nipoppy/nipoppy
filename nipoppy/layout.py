@@ -250,6 +250,11 @@ class DatasetLayout(Base):
         self.fpath_demographics: Path = self.get_full_path(
             self.config.fpath_demographics.path
         )
+        # Optional field - only set if defined in layout
+        if self.config.fpath_bids_dataset_description is not None:
+            self.fpath_bids_dataset_description: Path = self.get_full_path(
+                self.config.fpath_bids_dataset_description.path
+            )
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""

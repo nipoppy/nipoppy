@@ -254,6 +254,17 @@ def test_custom_layout(dpath_root: Path):
     assert (dpath_root / "dicom").exists()
 
 
+def test_bids_dataset_description_created(dpath_root: Path):
+    """Test that dataset_description.json is created with BIDS study layout."""
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
+    )
+    workflow.run()
+
+    # The BIDS study layout includes an optional dataset_description.json file
+    assert (dpath_root / "dataset_description.json").exists()
+
+
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow = InitWorkflow(dpath_root=tmp_path)
     workflow.run_cleanup()
