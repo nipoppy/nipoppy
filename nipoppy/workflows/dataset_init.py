@@ -1,6 +1,5 @@
 """Workflow for init command."""
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -116,7 +115,6 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.copy(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.layout.fpath_bids_dataset_description,
-                log_level=logging.DEBUG,
             )
 
         # copy HPC files
