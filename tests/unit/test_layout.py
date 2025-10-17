@@ -53,6 +53,7 @@ def test_init_default(dpath_root):
         FPATH_DEFAULT_LAYOUT,
         DPATH_LAYOUTS / "layout-0.1.0.json",
         DPATH_LAYOUTS / "layout-0.2.x.json",
+        DPATH_LAYOUTS / "layout-bids-study.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],
