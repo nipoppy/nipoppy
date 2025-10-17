@@ -23,11 +23,13 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
+    ContainerCommandEnum,
     ReturnCode,
 )
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
@@ -106,7 +108,8 @@ def workflow(tmp_path: Path):
                 "NAME": "my_pipeline",
                 "VERSION": "1.0",
                 "CONTAINER_INFO": {
-                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif"
+                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif",
+                    "URI": "docker://fake/uri",
                 },
                 "STEPS": [{}],
             },
@@ -374,32 +377,63 @@ def test_pipeline_config(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
     mocked_process_template_json.assert_called_once()
 
 
-def test_fpath_container(workflow: PipelineWorkflow):
+def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
     fpath_container = workflow.layout.dpath_containers / "my_container.sif"
     fpath_container.parent.mkdir(parents=True, exist_ok=True)
     fpath_container.touch()
-    assert isinstance(workflow.fpath_container, Path)
+
+    mocked = mocker.patch(
+        "nipoppy.workflows.pipeline.get_container_handler",
+        return_value=ApptainerHandler(),
+    )
+
+    assert workflow.fpath_container == fpath_container
+    mocked.assert_called_once_with(
+        workflow.pipeline_config.CONTAINER_CONFIG, logger=workflow.logger
+    )
 
 
 def test_fpath_container_custom(workflow: PipelineWorkflow):
     fpath_custom = workflow.dpath_root / "my_container.sif"
     workflow.pipeline_config.CONTAINER_INFO.FILE = fpath_custom
     fpath_custom.touch()
-    assert isinstance(workflow.fpath_container, Path)
+    assert workflow.fpath_container == fpath_custom
 
 
-def test_fpath_container_not_specified(workflow: PipelineWorkflow):
+def test_fpath_container_not_specified_apptainer(workflow: PipelineWorkflow):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
-    with pytest.raises(RuntimeError, match="No container image file specified"):
+    workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = (
+        ContainerCommandEnum.APPTAINER
+    )
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Error in container config for pipeline.*"
+            "Path to container image must be specified"
+        ),
+    ):
         workflow.fpath_container
+
+
+def test_fpath_container_not_specified_docker(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    workflow.pipeline_config.CONTAINER_INFO.FILE = None
+    workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
+
+    mocker.patch(
+        "nipoppy.container.DockerHandler.is_image_downloaded", return_value=True
+    )
+
+    # no error expected
+    workflow.fpath_container == workflow.pipeline_config.CONTAINER_INFO.FILE
 
 
 @pytest.mark.parametrize("container_uri", [None, "docker://some/uri:tag"])
 def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
     workflow.pipeline_config.CONTAINER_INFO.URI = container_uri
     error_message = (
-        "No container image file found at "
-        f"{workflow.pipeline_config.CONTAINER_INFO.FILE} for pipeline "
+        "No container image file found for pipeline "
         f"{workflow.pipeline_name} {workflow.pipeline_version}"
     )
     if container_uri is not None:
