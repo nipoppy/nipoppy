@@ -70,8 +70,7 @@ class Runner(BasePipelineWorkflow, ABC):
                 bosh_exec_launch_args.extend(
                     [
                         "--no-automount",
-                        "--container-opts",
-                        shlex.join(container_handler.args),
+                        f"--container-opts={shlex.join(container_handler.args)}",
                     ]
                 )
                 if container_handler.command in (

@@ -188,7 +188,7 @@ def test_launch_boutiques_run(
                 "--force-singularity",
                 "--no-automount",
                 "--imagepath",
-                "--container-opts",
+                "--container-opts=",
             ],
         ),
         (
@@ -197,7 +197,7 @@ def test_launch_boutiques_run(
                 "--force-singularity",
                 "--no-automount",
                 "--imagepath",
-                "--container-opts",
+                "--container-opts=",
             ],
         ),
         (
@@ -205,7 +205,7 @@ def test_launch_boutiques_run(
             [
                 "--force-docker",
                 "--no-automount",
-                "--container-opts",
+                "--container-opts=",
             ],
         ),
     ],
