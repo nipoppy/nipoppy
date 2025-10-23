@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import platform
 import shlex
 import shutil
 import subprocess
@@ -323,6 +324,8 @@ class DockerHandler(ContainerHandler):
         if uri is None:
             raise ValueError("URI must be specified")
         uri = self._strip_prefix(uri)
+        if platform.machine() == "amd64":
+            return shlex.join([self.command, "pull", "--platform=linux/amd64", uri])
         return shlex.join([self.command, "pull", uri])
 
 
