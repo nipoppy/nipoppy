@@ -303,31 +303,42 @@ def test_is_image_downloaded_docker_error():
 
 
 @pytest.mark.parametrize(
-    "handler,uri,expected_command",
+    "handler,uri,expected_command,machine",
     [
         (
             ApptainerHandler(),
             "docker://test/test:latest",
             "apptainer pull path/to/container.sif docker://test/test:latest",
+            "not_used",
         ),
         (
             SingularityHandler(),
             "docker://test/test:latest",
             "singularity pull path/to/container.sif docker://test/test:latest",
+            "not_used",
         ),
         (
             DockerHandler(),
             "docker://test/test:latest",
             "docker pull test/test:latest",
+            "x86_64",
         ),
         (
             DockerHandler(),
             "test/test:latest",
-            "docker pull test/test:latest",
+            "docker pull --platform=linux/amd64 test/test:latest",
+            "amd64",
         ),
     ],
 )
-def test_get_pull_command(handler: ContainerHandler, uri, expected_command):
+def test_get_pull_command(
+    handler: ContainerHandler,
+    uri,
+    expected_command,
+    mocker: pytest_mock.MockerFixture,
+    machine,
+):
+    mocker.patch("platform.machine", return_value=machine)
     fpath_container = "path/to/container.sif"
     assert handler.get_pull_command(uri, fpath_container) == expected_command
 
