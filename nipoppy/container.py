@@ -324,9 +324,12 @@ class DockerHandler(ContainerHandler):
         if uri is None:
             raise ValueError("URI must be specified")
         uri = self._strip_prefix(uri)
+
+        cmd = [self.command, "pull"]
         if platform.machine() == "amd64":
-            return shlex.join([self.command, "pull", "--platform=linux/amd64", uri])
-        return shlex.join([self.command, "pull", uri])
+            cmd.append("--platform=linux/amd64")
+        cmd.append(uri)
+        return shlex.join(cmd)
 
 
 def get_container_handler(
