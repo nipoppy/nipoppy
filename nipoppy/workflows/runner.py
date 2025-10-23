@@ -42,7 +42,7 @@ class Runner(BasePipelineWorkflow, ABC):
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
-        bosh_exec_launch_args = []
+        bosh_exec_launch_args = ["--no-pull"]
 
         if self.verbose:
             bosh_exec_launch_args.append("--debug")
