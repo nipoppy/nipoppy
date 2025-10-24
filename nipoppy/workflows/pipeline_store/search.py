@@ -48,7 +48,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             description = hit.get("metadata", {}).get("description")
             if description is not None:
                 description = strip_html_tags(description).strip()
-            zenodo_id_with_link = f'[link={hit.get("doi_url")}]{hit.get("id")}[/link]'
+            zenodo_id_with_link = f"[link={hit.get('doi_url')}]{hit.get('id')}[/link]"
             data_for_df.append(
                 {
                     self.col_zenodo_id: zenodo_id_with_link,
@@ -67,9 +67,16 @@ class PipelineSearchWorkflow(BaseWorkflow):
         table = Table(box=box.MINIMAL_DOUBLE_HEAD)
         table.add_column(self.col_zenodo_id, justify="center")
         table.add_column(self.col_title, justify="left")
-        table.add_column(self.col_description, justify="left", no_wrap=True)
+        table.add_column(
+            self.col_description,
+            justify="left",
+            max_width=80,
+            no_wrap=True,  # Required to make overflow="ellipsis" work
+            overflow="ellipsis",
+        )
         table.add_column(self.col_downloads, justify="right")
         cols = [col.header for col in table.columns]
+
         for _, row in df_hits[cols].iterrows():
             table.add_row(*[str(cell) for cell in row])
         return table
