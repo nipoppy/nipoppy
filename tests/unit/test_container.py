@@ -26,6 +26,9 @@ class _TestHandler(ContainerHandler):
     def is_image_downloaded(self, uri, fpath_container):
         return True
 
+    def get_pull_confirmation_prompt(self):
+        return "not_used"
+
     def get_pull_command(self, uri, fpath_container):
         return "not_used"
 
