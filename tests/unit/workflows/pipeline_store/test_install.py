@@ -261,6 +261,14 @@ def test_download_container_confirm_true(
         return_value=confirm_download,
     )
 
+    mock_handler = mocker.MagicMock()
+    mock_handler.is_image_downloaded.return_value = False
+    mock_handler.get_pull_confirmation_prompt.return_value = "not used"
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.get_container_handler",
+        return_value=mock_handler,
+    )
+
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 
     workflow._download_container(pipeline_config)
@@ -270,6 +278,8 @@ def test_download_container_confirm_true(
         mocked_run_command.assert_called_once()
     else:
         mocked_run_command.assert_not_called()
+
+    mock_handler.get_pull_confirmation_prompt.assert_called_once()
 
 
 @pytest.mark.parametrize(
