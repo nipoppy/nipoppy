@@ -24,7 +24,6 @@ dependencies = [
     "pydantic",
     "pydicom!=3.0.0",
     "pysqa[sge]>=0.2.4",
-    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
