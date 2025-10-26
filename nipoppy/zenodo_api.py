@@ -310,6 +310,7 @@ class ZenodoAPI:
     def search_records(
         self,
         query: str,
+        community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,
     ):
@@ -331,8 +332,15 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
+        print(f"{community_id=}")
+
+        if community_id is not None:
+            api_endpoint = self.api_endpoint + f"/communities/{community_id}"
+        else:
+            api_endpoint = self.api_endpoint
+
         response = httpx.get(
-            f"{self.api_endpoint}/records",
+            f"{api_endpoint}/records",
             headers=self.headers,
             params={
                 "q": full_query,
