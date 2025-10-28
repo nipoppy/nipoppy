@@ -9,6 +9,7 @@ import pytest
 import pytest_httpx
 import pytest_mock
 
+from nipoppy.exceptions import NipoppyExit
 from nipoppy.zenodo_api import ChecksumError, ZenodoAPI, ZenodoAPIError
 from tests.conftest import PASSWORD_FILE
 
@@ -687,7 +688,7 @@ def test_upload_pipeline_delete_draft(
         json={},
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(NipoppyExit):
         zenodo_api.upload_pipeline(
             input_dir=tmp_path,
             metadata={"metadata": {}},
