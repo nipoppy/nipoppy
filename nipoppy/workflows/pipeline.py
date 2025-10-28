@@ -40,6 +40,7 @@ from nipoppy.env import (
     ReturnCode,
     StrOrPathLike,
 )
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.utils import (
@@ -286,7 +287,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Return the full path to the pipeline's container."""
         fpath_container = self.pipeline_config.get_fpath_container()
         if fpath_container is None:
-            raise RuntimeError(
+            raise ConfigError(
                 f"No container image file specified in config for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
@@ -297,6 +298,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
             if self.pipeline_config.CONTAINER_INFO.URI is not None:
+                # TODO modify the message below to use the specified container engine.
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
                     "the following command:"
@@ -311,7 +313,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
         if (fname_descriptor := self.pipeline_step_config.DESCRIPTOR_FILE) is None:
-            raise ValueError(
+            raise ConfigError(
                 "No descriptor file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
@@ -330,7 +332,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
         if (fname_invocation := self.pipeline_step_config.INVOCATION_FILE) is None:
-            raise ValueError(
+            raise ConfigError(
                 "No invocation file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
@@ -352,7 +354,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if (
             fname_tracker_config := self.pipeline_step_config.TRACKER_CONFIG_FILE
         ) is None:
-            raise ValueError(
+            raise ConfigError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
@@ -413,7 +415,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"Error when loading the Boutiques config from descriptor"
                 f": {error_message}"
             )
-        except RuntimeError as exception:
+        except ConfigError as exception:
             self.logger.debug(
                 "Caught exception when trying to load Boutiques config"
                 f": {type(exception).__name__}: {exception}"
@@ -595,7 +597,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self._pipeline_type, self.pipeline_name, self.pipeline_version
         ).items():
             if value is None:
-                raise ValueError(
+                raise ConfigError(
                     f"Variable {name} is not set in the config for pipeline "
                     f"{self.pipeline_name}, version {self.pipeline_version}. You need "
                     "to set it in the PIPELINE_VARIABLES section of the config file at "
@@ -756,7 +758,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         try:
             qa.switch_cluster(self.hpc)
         except KeyError:
-            raise ValueError(
+            raise ConfigError(
                 f"Invalid HPC cluster type: {self.hpc}"
                 f". Available clusters are: {qa.list_clusters()}"
             )

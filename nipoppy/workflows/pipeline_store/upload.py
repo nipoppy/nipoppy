@@ -6,6 +6,7 @@ from typing import Optional
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.exceptions import NipoppyExit
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
@@ -90,7 +91,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             self.logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"
             )
-            raise SystemExit(1)
+            raise NipoppyExit(1)
 
         if self.record_id:
             self.record_id = self.record_id.removeprefix("zenodo.")
@@ -136,7 +137,7 @@ class ZenodoUploadWorkflow(BaseWorkflow):
             )
             if not continue_:
                 self.logger.info("Zenodo upload cancelled.")
-                raise SystemExit(1)
+                raise NipoppyExit(1)
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)

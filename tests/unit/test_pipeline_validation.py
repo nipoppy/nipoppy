@@ -56,7 +56,7 @@ def test_load_pipeline_config_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", ConfigError, "Pipeline configuration file not found"),
+        ("fake_path.json", FileNotFoundError, "Pipeline configuration file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
             ConfigError,
@@ -93,7 +93,7 @@ def test_check_descriptor_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", ConfigError, "Descriptor file not found"),
+        ("fake_path.json", FileNotFoundError, "Descriptor file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
             ConfigError,
@@ -118,7 +118,7 @@ def test_check_invocation_file(descriptor_str):
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", ConfigError, "Invocation file not found"),
+        ("fake_path.json", FileNotFoundError, "Invocation file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
             ConfigError,
@@ -145,7 +145,7 @@ def test_check_hpc_config_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", ConfigError, "HPC config file not found"),
+        ("fake_path.json", FileNotFoundError, "HPC config file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
             ConfigError,
@@ -170,7 +170,7 @@ def test_check_tracker_config_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", ConfigError, "Tracker config file not found"),
+        ("fake_path.json", FileNotFoundError, "Tracker config file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
             ConfigError,
@@ -195,7 +195,7 @@ def test_check_pybids_ignore_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", ConfigError, "PyBIDS ignore patterns file not found"),
+        ("fake_path.json", FileNotFoundError, "PyBIDS ignore patterns file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
             ConfigError,

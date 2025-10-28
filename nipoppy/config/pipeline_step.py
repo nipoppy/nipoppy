@@ -12,6 +12,7 @@ from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.utils import apply_substitutions_to_json
@@ -99,7 +100,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
             self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
         ):
-            raise ValueError(
+            raise ConfigError(
                 "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
                 f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
             )
@@ -154,7 +155,7 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
             self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
             and self.TRACKER_CONFIG_FILE is not None
         ):
-            raise ValueError(
+            raise ConfigError(
                 "TRACKER_CONFIG_FILE cannot be set if ANALYSIS_LEVEL is not "
                 f"{AnalysisLevelType.participant_session}"
             )
@@ -186,7 +187,7 @@ class BidsPipelineStepConfig(BasePipelineStepConfig):
             self.UPDATE_STATUS
             and self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
         ):
-            raise ValueError(
+            raise ConfigError(
                 "UPDATE_STATUS cannot be True if ANALYSIS_LEVEL is not "
                 f"{AnalysisLevelType.participant_session}"
             )

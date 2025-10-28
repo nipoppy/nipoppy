@@ -206,7 +206,7 @@ class BaseWorkflow(Base, ABC):
             if not self.dry_run:
                 dpath.mkdir(**kwargs_to_use)
         elif not dpath.is_dir():
-            raise FileExistsError(
+            raise NotADirectoryError(
                 f"Path already exists but is not a directory: {dpath}"
             )
 

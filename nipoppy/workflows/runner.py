@@ -14,6 +14,7 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig, prepare_container
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
+from nipoppy.exceptions import ConfigError, WorkflowError
 from nipoppy.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -199,9 +200,8 @@ class PipelineRunner(BasePipelineWorkflow):
                         f"Additional launch options: {bosh_exec_launch_args}"
                     )
             except subprocess.CalledProcessError as exception:
-                raise RuntimeError(
-                    "Pipeline simulation failed"
-                    f" (return code: {exception.returncode})"
+                raise WorkflowError(
+                    f"Pipeline simulation failed (return code: {exception.returncode})"
                 )
         else:
             self.logger.info("Running pipeline command")
@@ -221,7 +221,7 @@ class PipelineRunner(BasePipelineWorkflow):
                     quiet=True,
                 )
             except subprocess.CalledProcessError as exception:
-                raise RuntimeError(
+                raise WorkflowError(
                     "Pipeline did not complete successfully"
                     f" (return code: {exception.returncode})"
                     ". Hint: make sure the shell command above is correct."
@@ -239,14 +239,14 @@ class PipelineRunner(BasePipelineWorkflow):
             return
 
         if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
-            raise RuntimeError(
-                "Tarring requested but is no tracker config file. "
+            raise ConfigError(
+                "Tarring requested but there is no tracker config file. "
                 "Specify the TRACKER_CONFIG_FILE field for the pipeline step in "
                 "the global config file, then make sure the PARTICIPANT_SESSION_DIR "
                 "field is specified in the TRACKER_CONFIG_FILE file."
             )
         if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
-            raise RuntimeError(
+            raise ConfigError(
                 "Tarring requested but no participant-session directory specified. "
                 "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
                 "in the tracker config file at "
@@ -257,9 +257,9 @@ class PipelineRunner(BasePipelineWorkflow):
         """Tar a directory and delete it."""
         dpath = Path(dpath)
         if not dpath.exists():
-            raise RuntimeError(f"Not tarring {dpath} since it does not exist")
+            raise FileNotFoundError(f"Not tarring {dpath} since it does not exist")
         if not dpath.is_dir():
-            raise RuntimeError(f"Not tarring {dpath} since it is not a directory")
+            raise NotADirectoryError(f"Not tarring {dpath} since it is not a directory")
 
         tar_flags = "-cvf"
         fpath_tarred = dpath.with_suffix(EXT_TAR)
@@ -348,6 +348,7 @@ class PipelineRunner(BasePipelineWorkflow):
         # and the program will not actually exit
         try:
             self.fpath_container
+        # The two lines below might be redundant ??
         except FileNotFoundError as exception:
             raise exception
         except Exception:

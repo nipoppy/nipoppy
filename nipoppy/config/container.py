@@ -11,6 +11,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import ConfigError
 from nipoppy.logger import get_logger
 
 # Apptainer
@@ -244,7 +245,7 @@ def check_container_args(
                     )
 
     except Exception as exception:
-        raise RuntimeError(
+        raise ValueError(
             f"Error parsing {APPTAINER_BIND_FLAG} flags in container"
             f" arguments: {args}. Make sure each flag is followed by a valid spec"
             f" (e.g. {APPTAINER_BIND_FLAG} /path/local:/path/container:rw)"
@@ -293,7 +294,7 @@ def prepare_container(
         The command string
     """
     if container_config.COMMAND is None:
-        raise ValueError("COMMAND cannot be None in container config")
+        raise ConfigError("COMMAND cannot be None in container config")
 
     command = container_config.COMMAND.value
     args = container_config.ARGS

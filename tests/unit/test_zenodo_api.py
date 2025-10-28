@@ -653,7 +653,7 @@ def test_upload_pipeline_dir_not_found(zenodo_api: ZenodoAPI):
 def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     input_path = tmp_path / "file.txt"
     input_path.write_text("this is a file, not a directory")
-    with pytest.raises(ValueError, match=f"{input_path} must be a directory"):
+    with pytest.raises(NotADirectoryError, match=f"{input_path} must be a directory"):
         zenodo_api.upload_pipeline(input_dir=input_path, metadata={})
 
 

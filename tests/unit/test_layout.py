@@ -75,7 +75,7 @@ def test_init_invalid_layout(dpath_root, fpath_spec):
 
 
 def test_init_config_not_found(dpath_root):
-    with pytest.raises(LayoutError, match="Layout config file not found"):
+    with pytest.raises(FileNotFoundError, match="Layout config file not found"):
         DatasetLayout(dpath_root=dpath_root, fpath_config="fake_path")
 
 

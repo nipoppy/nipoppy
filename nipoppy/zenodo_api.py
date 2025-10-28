@@ -8,6 +8,7 @@ from typing import Optional, Tuple
 import httpx
 
 from nipoppy.console import CONSOLE_STDOUT
+from nipoppy.exceptions import NipoppyExit
 from nipoppy.logger import get_logger
 
 
@@ -267,7 +268,7 @@ class ZenodoAPI:
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
-            raise ValueError(f"{input_dir} must be a directory.")
+            raise NotADirectoryError(f"{input_dir} must be a directory.")
 
         self._check_authentication()
 
@@ -305,7 +306,7 @@ class ZenodoAPI:
                     f"{response.json()}"
                 )
 
-            raise SystemExit(1)
+            raise NipoppyExit(1)
 
     def search_records(
         self,

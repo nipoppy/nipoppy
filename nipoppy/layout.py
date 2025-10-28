@@ -176,7 +176,7 @@ class DatasetLayout(Base):
 
         fpath_config = Path(fpath_config)
         if not fpath_config.exists():
-            raise LayoutError(f"Layout config file not found: {fpath_config}")
+            raise FileNotFoundError(f"Layout config file not found: {fpath_config}")
 
         # load the config
         config = LayoutConfig(**load_json(fpath_config))

@@ -183,8 +183,8 @@ def test_error_schema_version():
 
 
 def test_warning_if_duplicate_dependencies(valid_data):
-    with pytest.warns(
-        UserWarning,
+    with pytest.raises(
+        ValidationError,
         match="PROC_DEPENDENCIES contains duplicate entries for extraction pipeline",
     ):
         ExtractionPipelineConfig(

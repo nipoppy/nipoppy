@@ -30,6 +30,7 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     ReturnCode,
 )
+from nipoppy.exceptions import ConfigError
 from nipoppy.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
@@ -317,7 +318,7 @@ def test_fpath_container_custom(workflow: PipelineWorkflow):
 
 def test_fpath_container_not_specified(workflow: PipelineWorkflow):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
-    with pytest.raises(RuntimeError, match="No container image file specified"):
+    with pytest.raises(ConfigError, match="No container image file specified"):
         workflow.fpath_container
 
 

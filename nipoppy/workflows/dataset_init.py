@@ -67,7 +67,6 @@ class InitWorkflow(BaseDatasetWorkflow):
                 filenames = [
                     f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
                 ]
-
             except NotADirectoryError:
                 raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
 

@@ -237,7 +237,7 @@ def test_check_container_args_missing(tmp_path: Path, caplog: pytest.LogCaptureF
 
 
 def test_check_container_args_error():
-    with pytest.raises(RuntimeError, match="Error parsing"):
+    with pytest.raises(ValueError, match="Error parsing"):
         check_container_args(args=["--bind"])
 
 

@@ -17,7 +17,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     ReturnCode,
 )
-from nipoppy.exceptions import ConfigError
+from nipoppy.exceptions import ConfigError, NipoppyExit
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -264,7 +264,7 @@ def test_download_container_failed(
         side_effect=subprocess.CalledProcessError(1, error_message),
     )
 
-    with pytest.raises(SystemExit, match=f"{ReturnCode.UNKNOWN_FAILURE}"):
+    with pytest.raises(NipoppyExit, match=f"{ReturnCode.UNKNOWN_FAILURE}"):
         workflow._download_container(pipeline_config)
 
     mocked.assert_called_once()
@@ -372,12 +372,18 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
         workflow_zenodo.run_main()
 
 
-def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
+@pytest.mark.parametrize(
+    "zenodo_id,exception", [(None, FileNotFoundError), ("123456", ConfigError)]
+)
+def test_run_main_file_not_found(
+    workflow: PipelineInstallWorkflow, zenodo_id: str | None, exception: Exception
+):
     # create a non-existent path
     workflow.dpath_pipeline = workflow.layout.dpath_pipelines / "non_existent_path"
+    workflow.zenodo_id = zenodo_id
     with pytest.raises(
-        ConfigError,
-        match="Pipeline configuration file not found: .*/config.json$",
+        exception,
+        match="Pipeline configuration file not found: .*/config.json",
     ):
         workflow.run_main()
 

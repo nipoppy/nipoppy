@@ -14,6 +14,7 @@ from fids import fids
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import ContainerCommandEnum
+from nipoppy.exceptions import ConfigError
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -325,7 +326,7 @@ def test_check_tar_conditions_no_tracker_config(runner: PipelineRunner):
     runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
     with pytest.raises(
-        RuntimeError, match="Tarring requested but is no tracker config file"
+        ConfigError, match="Tarring requested but there is no tracker config file"
     ):
         runner._check_tar_conditions()
 
@@ -337,7 +338,7 @@ def test_check_tar_conditions_no_dir(runner: PipelineRunner, tmp_path: Path):
         PATHS=[tmp_path], PARTICIPANT_SESSION_DIR=None
     )
     with pytest.raises(
-        RuntimeError,
+        ConfigError,
         match="Tarring requested but no participant-session directory specified",
     ):
         runner._check_tar_conditions()
@@ -404,7 +405,9 @@ def test_tar_directory_failure(
 
 
 def test_tar_directory_warning_not_found(runner: PipelineRunner):
-    with pytest.raises(RuntimeError, match="Not tarring .* since it does not exist"):
+    with pytest.raises(
+        FileNotFoundError, match="Not tarring .* since it does not exist"
+    ):
         runner.tar_directory("invalid_path")
 
 
@@ -413,7 +416,7 @@ def test_tar_directory_warning_not_dir(runner: PipelineRunner, tmp_path: Path):
     fpath_to_tar.touch()
 
     with pytest.raises(
-        RuntimeError, match="Not tarring .* since it is not a directory"
+        NotADirectoryError, match="Not tarring .* since it is not a directory"
     ):
         runner.tar_directory(fpath_to_tar)
 
