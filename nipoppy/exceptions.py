@@ -6,7 +6,7 @@ from nipoppy.env import ReturnCode
 class NipoppyError(Exception):
     """Base exception class for all nipoppy errors."""
 
-    exit_code = ReturnCode.UNKNOWN_FAILURE
+    code = ReturnCode.UNKNOWN_FAILURE
 
     def __init__(self, message: str):
         super().__init__(message)
@@ -45,4 +45,4 @@ class NipoppyExit(NipoppyError, SystemExit):
 
     def __init__(self, exit_code: int = ReturnCode.UNKNOWN_FAILURE):
         super().__init__(f"Exiting with code {exit_code}")
-        self.exit_code = exit_code
+        self.code = exit_code

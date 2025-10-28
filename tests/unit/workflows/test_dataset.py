@@ -11,7 +11,7 @@ from nipoppy.config.main import Config
 from nipoppy.exceptions import LayoutError
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
+from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from tests.conftest import (
     DPATH_TEST_DATA,

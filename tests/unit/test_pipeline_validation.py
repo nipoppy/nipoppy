@@ -9,9 +9,9 @@ import pytest_mock
 
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
@@ -223,7 +223,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
             },
-            BidsPipelineConfig,
+            BIDSificationPipelineConfig,
             3,
         ),
         (
@@ -239,7 +239,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
             },
-            ProcPipelineConfig,
+            ProcessingPipelineConfig,
             5,
         ),
         (

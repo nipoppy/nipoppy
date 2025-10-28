@@ -6,13 +6,13 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.config.pipeline import BidsPipelineConfig
+from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
-from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.workflows.runner import Runner
 
 
-class BidsConversionRunner(PipelineRunner):
+class BIDSificationRunner(Runner):
     """Convert data to BIDS."""
 
     _pipeline_type = PipelineTypeEnum.BIDSIFICATION
@@ -65,7 +65,7 @@ class BidsConversionRunner(PipelineRunner):
         return [self.dpath_pipeline_work]
 
     @cached_property
-    def pipeline_config(self) -> BidsPipelineConfig:
+    def pipeline_config(self) -> BIDSificationPipelineConfig:
         """Get the user config object for the BIDS pipeline."""
         return super().pipeline_config
 
@@ -128,7 +128,7 @@ class BidsConversionRunner(PipelineRunner):
         # get container command
         launch_boutiques_run_kwargs = {}
         if self.config.CONTAINER_CONFIG.COMMAND is not None:
-            container_command, container_config = self.process_container_config(
+            container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,
                 bind_paths=[
@@ -137,7 +137,7 @@ class BidsConversionRunner(PipelineRunner):
                 ],
             )
             launch_boutiques_run_kwargs["container_command"] = container_command
-            launch_boutiques_run_kwargs["container_config"] = container_config
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(

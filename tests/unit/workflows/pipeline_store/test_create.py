@@ -6,7 +6,7 @@ import pytest
 
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils import TEMPLATE_PIPELINE_PATH, load_json
+from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )

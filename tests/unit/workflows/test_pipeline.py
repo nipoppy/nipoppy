@@ -6,7 +6,7 @@ import json
 import re
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional
+from typing import Generator, Optional
 
 import pandas as pd
 import pytest
@@ -17,21 +17,22 @@ from jinja2 import Environment, meta
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
+    ContainerCommandEnum,
     ReturnCode,
 )
-from nipoppy.exceptions import ConfigError
-from nipoppy.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
+from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     apply_analysis_level,
@@ -107,7 +108,8 @@ def workflow(tmp_path: Path):
                 "NAME": "my_pipeline",
                 "VERSION": "1.0",
                 "CONTAINER_INFO": {
-                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif"
+                    "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/my_container.sif",
+                    "URI": "docker://fake/uri",
                 },
                 "STEPS": [{}],
             },
@@ -126,6 +128,34 @@ def workflow(tmp_path: Path):
         ],
     )
     return workflow
+
+
+@pytest.fixture(scope="function")
+def reimport_joblib(mocker: pytest_mock.MockerFixture):
+    """Fixture for tests where joblib import was manipulated."""
+    yield
+
+    # fmt: off
+    mocker.stopall()
+    import nipoppy.workflows.pipeline
+    importlib.reload(nipoppy.workflows.pipeline)
+    from nipoppy.workflows.pipeline import BasePipelineWorkflow  # noqa F401
+    from nipoppy.workflows.pipeline import (
+        JOBLIB_INSTALLED,
+    )
+    assert JOBLIB_INSTALLED
+    # fmt: on
+
+
+def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: str):
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "joblib":
+            raise ImportError(error_message)
+        return real_import(name, *args, **kwargs)
+
+    mocker.patch("builtins.__import__", side_effect=fake_import)
 
 
 def _set_up_hpc_for_testing(
@@ -162,6 +192,21 @@ def _set_up_substitution_testing(
     return mocker.patch.object(
         workflow, "process_template_json", side_effect=workflow.process_template_json
     )
+
+
+def test_joblib_import_fails(
+    mocker: pytest_mock.MockFixture,
+):
+    """Test that ImportError is propagated if joblib exists but import fails."""
+    # pretend that joblib is not installed
+    error_message = "Unexpected exception during import"
+    _mock_joblib_import_error(mocker, error_message)
+
+    # reload the module
+    import nipoppy.workflows.pipeline
+
+    with pytest.raises(ImportError, match=error_message):
+        importlib.reload(nipoppy.workflows.pipeline)
 
 
 @pytest.mark.parametrize(
@@ -238,7 +283,37 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
-def test_init_errors():
+def test_init_n_jobs_but_no_joblib(
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+    reimport_joblib,
+):
+    """Test that an error is raised when joblib is not installed and n_jobs > 1."""
+    dpath_root = tmp_path / "my_dataset"
+    mocker.patch("nipoppy.workflows.pipeline.JOBLIB_INSTALLED", False)
+    with pytest.raises(SystemExit):
+        PipelineWorkflow(
+            dpath_root=dpath_root,
+            pipeline_name="my_pipeline",
+            n_jobs=2,
+            _skip_logfile=True,
+        )
+
+    assert any(
+        [
+            record.levelname == "ERROR"
+            and (
+                "An additional dependency is required to enable local parallelization "
+                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
+            )
+            in record.message
+            for record in caplog.records
+        ]
+    )
+
+
+def test_init_hpc_write_subcohort():
     args = {
         "dpath_root": "my_dataset",
         "pipeline_name": "my_pipeline",
@@ -296,38 +371,69 @@ def test_pipeline_version_optional():
 def test_pipeline_config(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
     mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
 
-    assert isinstance(workflow.pipeline_config, ProcPipelineConfig)
+    assert isinstance(workflow.pipeline_config, ProcessingPipelineConfig)
 
     # make sure substitutions are processed
     mocked_process_template_json.assert_called_once()
 
 
-def test_fpath_container(workflow: PipelineWorkflow):
+def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
     fpath_container = workflow.layout.dpath_containers / "my_container.sif"
     fpath_container.parent.mkdir(parents=True, exist_ok=True)
     fpath_container.touch()
-    assert isinstance(workflow.fpath_container, Path)
+
+    mocked = mocker.patch(
+        "nipoppy.workflows.pipeline.get_container_handler",
+        return_value=ApptainerHandler(),
+    )
+
+    assert workflow.fpath_container == fpath_container
+    mocked.assert_called_once_with(
+        workflow.pipeline_config.CONTAINER_CONFIG, logger=workflow.logger
+    )
 
 
 def test_fpath_container_custom(workflow: PipelineWorkflow):
     fpath_custom = workflow.dpath_root / "my_container.sif"
     workflow.pipeline_config.CONTAINER_INFO.FILE = fpath_custom
     fpath_custom.touch()
-    assert isinstance(workflow.fpath_container, Path)
+    assert workflow.fpath_container == fpath_custom
 
 
-def test_fpath_container_not_specified(workflow: PipelineWorkflow):
+def test_fpath_container_not_specified_apptainer(workflow: PipelineWorkflow):
     workflow.pipeline_config.CONTAINER_INFO.FILE = None
-    with pytest.raises(ConfigError, match="No container image file specified"):
+    workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = (
+        ContainerCommandEnum.APPTAINER
+    )
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Error in container config for pipeline.*"
+            "Path to container image must be specified"
+        ),
+    ):
         workflow.fpath_container
+
+
+def test_fpath_container_not_specified_docker(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    workflow.pipeline_config.CONTAINER_INFO.FILE = None
+    workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
+
+    mocker.patch(
+        "nipoppy.container.DockerHandler.is_image_downloaded", return_value=True
+    )
+
+    # no error expected
+    workflow.fpath_container == workflow.pipeline_config.CONTAINER_INFO.FILE
 
 
 @pytest.mark.parametrize("container_uri", [None, "docker://some/uri:tag"])
 def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
     workflow.pipeline_config.CONTAINER_INFO.URI = container_uri
     error_message = (
-        "No container image file found at "
-        f"{workflow.pipeline_config.CONTAINER_INFO.FILE} for pipeline "
+        "No container image file found for pipeline "
         f"{workflow.pipeline_name} {workflow.pipeline_version}"
     )
     if container_uri is not None:
@@ -554,9 +660,9 @@ def test_hpc_config_no_file(workflow: PipelineWorkflow):
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
-        ("fmriprep", "23.1.3", "processing", ProcPipelineConfig),
-        ("my_pipeline", "2.0", "processing", ProcPipelineConfig),
-        ("bids_converter", "1.0", "bidsification", BidsPipelineConfig),
+        ("fmriprep", "23.1.3", "processing", ProcessingPipelineConfig),
+        ("my_pipeline", "2.0", "processing", ProcessingPipelineConfig),
+        ("bids_converter", "1.0", "bidsification", BIDSificationPipelineConfig),
         ("extractor1", "0.1.0", "extraction", ExtractionPipelineConfig),
     ],
 )
@@ -610,16 +716,16 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
             dpath_pipeline_bundle,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            pipeline_class=ProcPipelineConfig,
+            pipeline_class=ProcessingPipelineConfig,
         )
 
 
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,dname_pipelines,pipeline_class",
     [
-        ("not_a_pipeline", "23.1.3", "processing", ProcPipelineConfig),
-        ("my_pipeline", "not_a_version", "processing", ProcPipelineConfig),
-        ("bids_converter", "2.0", "bidsification", BidsPipelineConfig),
+        ("not_a_pipeline", "23.1.3", "processing", ProcessingPipelineConfig),
+        ("my_pipeline", "not_a_version", "processing", ProcessingPipelineConfig),
+        ("bids_converter", "2.0", "bidsification", BIDSificationPipelineConfig),
         ("bids_converter", "1.0", "extraction", ExtractionPipelineConfig),
     ],
 )
@@ -905,6 +1011,71 @@ def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool)
     workflow.run_setup()
 
 
+@pytest.mark.parametrize("show_progress", [True, False])
+def test_get_results_generator_no_joblib(
+    workflow: PipelineWorkflow,
+    show_progress: bool,
+    mocker: pytest_mock.MockFixture,
+    reimport_joblib,
+):
+    workflow.n_jobs = 1
+    workflow._show_progress = show_progress
+    participants_sessions = [("01", "1"), ("01", "2"), ("01", "3"), ("02", "1")]
+
+    # pretend that joblib is not installed
+    _mock_joblib_import_error(mocker, "No module named 'joblib'")
+
+    # also mock joblib.delayed which is not supposed to be called
+    # when joblib is not installed
+    mocked_delayed = mocker.patch("nipoppy.workflows.pipeline.delayed")
+
+    # reload the module
+    # fmt: off
+    import nipoppy.workflows.pipeline
+    importlib.reload(nipoppy.workflows.pipeline)
+    # check that mocking/reloading worked
+    from nipoppy.workflows.pipeline import (  # noqa: F401
+        JOBLIB_INSTALLED,
+        BasePipelineWorkflow,
+    )
+    assert not JOBLIB_INSTALLED
+    # fmt: on
+
+    results = workflow._get_results_generator(participants_sessions)
+    mocked_delayed.assert_not_called()
+    assert isinstance(results, Generator)
+    assert len(list(results)) == len(participants_sessions)
+
+
+def test_get_results_generator_with_progress_bar(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    workflow._show_progress = True
+    participants_sessions = [("001", "1")]
+
+    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
+
+    workflow._get_results_generator(participants_sessions)
+    mocked_track.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "show_progress,participants_sessions", [(False, [("001", "1")]), (True, [])]
+)
+def test_get_results_generator_no_progress_bar(
+    workflow: PipelineWorkflow,
+    show_progress,
+    participants_sessions,
+    mocker: pytest_mock.MockFixture,
+):
+    workflow._show_progress = show_progress
+
+    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
+
+    workflow._get_results_generator(participants_sessions)
+    mocked_track.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "participant_id,session_id,expected_count",
     [(None, None, 4), ("01", None, 3), ("01", "2", 1)],
@@ -1109,7 +1280,6 @@ def test_run_main_write_subcohort(
         assert write_subcohort.read_text().strip() == "01\t1"
     else:
         assert not write_subcohort.exists()
-    assert f"Wrote subcohort to {write_subcohort}" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -1287,6 +1457,19 @@ def test_run_cleanup_hpc(
     workflow.run_cleanup()
 
     assert expected_message in caplog.text
+
+
+def test_run_cleanup_write_subcohort(
+    workflow: PipelineWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    workflow.write_subcohort = tmp_path / "subcohort.tsv"
+
+    workflow.n_success = 0
+    workflow.n_total = 0
+    workflow.run_cleanup()
+
+    assert "No participants or sessions to run" not in caplog.text
+    assert "Wrote subcohort to" in caplog.text
 
 
 @pytest.mark.parametrize(

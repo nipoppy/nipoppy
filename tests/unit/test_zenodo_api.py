@@ -9,7 +9,7 @@ import pytest
 import pytest_httpx
 import pytest_mock
 
-from nipoppy.zenodo_api import InvalidChecksumError, ZenodoAPI, ZenodoAPIError
+from nipoppy.zenodo_api import ChecksumError, ZenodoAPI, ZenodoAPIError
 from tests.conftest import PASSWORD_FILE
 
 
@@ -132,7 +132,7 @@ def test_download_record_files_checksum_mismatch(
     )
 
     with pytest.raises(
-        InvalidChecksumError, match="Checksum mismatch: .* has invalid checksum"
+        ChecksumError, match="Checksum mismatch: .* has invalid checksum"
     ):
         zenodo_api.download_record_files(output_dir=tmp_path, record_id=record_id)
 

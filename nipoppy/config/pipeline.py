@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from pathlib import Path
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -22,7 +21,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
 )
 from nipoppy.exceptions import ConfigError
-from nipoppy.utils import apply_substitutions_to_json
+from nipoppy.utils.utils import apply_substitutions_to_json
 
 
 class PipelineInfo(BaseModel):
@@ -145,10 +144,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
 
         return self
 
-    def get_fpath_container(self) -> Path:
-        """Return the path to the pipeline's container."""
-        return self.CONTAINER_INFO.FILE
-
     def get_step_config(
         self, step_name: Optional[str] = None
     ) -> BasePipelineStepConfig:
@@ -171,7 +166,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         )
 
 
-class BidsPipelineConfig(BasePipelineConfig):
+class BIDSificationPipelineConfig(BasePipelineConfig):
     """Schema for BIDS pipeline configuration."""
 
     _expected_pipeline_type = PipelineTypeEnum.BIDSIFICATION
@@ -183,7 +178,7 @@ class BidsPipelineConfig(BasePipelineConfig):
     model_config = ConfigDict(extra="forbid")
 
 
-class ProcPipelineConfig(BasePipelineConfig):
+class ProcessingPipelineConfig(BasePipelineConfig):
     """Schema for processing pipeline configuration."""
 
     _expected_pipeline_type = PipelineTypeEnum.PROCESSING

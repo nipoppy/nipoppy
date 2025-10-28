@@ -15,7 +15,7 @@ from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.utils import apply_substitutions_to_json
+from nipoppy.utils.utils import apply_substitutions_to_json
 
 
 class AnalysisLevelType(str, Enum):

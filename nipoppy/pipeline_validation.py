@@ -11,21 +11,21 @@ from pydantic_core import ValidationError
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, LayoutError
 from nipoppy.layout import DatasetLayout
-from nipoppy.utils import load_json
+from nipoppy.utils.utils import load_json
 
 PIPELINE_TYPE_TO_CLASS = {
-    PipelineTypeEnum.BIDSIFICATION: BidsPipelineConfig,
+    PipelineTypeEnum.BIDSIFICATION: BIDSificationPipelineConfig,
     PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
-    PipelineTypeEnum.PROCESSING: ProcPipelineConfig,
+    PipelineTypeEnum.PROCESSING: ProcessingPipelineConfig,
 }
 
 

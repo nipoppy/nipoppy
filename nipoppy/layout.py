@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from nipoppy.base import Base
 from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import LayoutError
-from nipoppy.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
+from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
 class PathInfo(BaseModel):
