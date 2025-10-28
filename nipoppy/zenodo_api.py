@@ -345,7 +345,7 @@ class ZenodoAPI:
         )
         return response.json()["hits"]
 
-    def _get_api_endpoint(self, community_id: Optional[str]) -> str:
+    def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
         """Get the API endpoint, considering the community if set."""
         if community_id is None or community_id == "":
             return self.api_endpoint + "/records"
