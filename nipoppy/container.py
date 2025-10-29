@@ -196,8 +196,13 @@ class ContainerHandler(Base, ABC):
         """
 
     @abstractmethod
-    def get_pull_confirmation_prompt(self) -> str:
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
         """Get the confirmation prompt for pulling the container image.
+
+        Parameters
+        ----------
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image will be saved
 
         Returns
         -------
