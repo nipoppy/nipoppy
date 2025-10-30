@@ -59,7 +59,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run API tests
-      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.13'
+      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.14'
       run: |
         python -m pytest -m api
       env:
