@@ -6,11 +6,14 @@ import pandas as pd
 from rich import box
 from rich.table import Table
 
-from nipoppy.console import CONSOLE_STDOUT
+from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.env import LogColor
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
+
+CONSOLE_WIDTH = CONSOLE_STDOUT.size.width
+MAX_CONSOLE_WIDTH = min(CONSOLE_WIDTH, 120 - _INDENT)
 
 
 class PipelineSearchWorkflow(BaseWorkflow):
@@ -64,17 +67,30 @@ class PipelineSearchWorkflow(BaseWorkflow):
         )
 
     def _df_to_table(self, df_hits: pd.DataFrame) -> Table:
-        table = Table(box=box.MINIMAL_DOUBLE_HEAD)
-        table.add_column(self.col_zenodo_id, justify="center")
-        table.add_column(self.col_title, justify="left")
-        table.add_column(
-            self.col_description,
-            justify="left",
-            max_width=80,
-            no_wrap=True,  # Required to make overflow="ellipsis" work
-            overflow="ellipsis",
+        width = {
+            "zenodo_id": len(self.col_zenodo_id),
+            "downloads": len(self.col_downloads),
+            "title": 20,
+        }
+
+        width["description"] = min(
+            MAX_CONSOLE_WIDTH, MAX_CONSOLE_WIDTH - sum(width.values(), 10)
         )
-        table.add_column(self.col_downloads, justify="right")
+
+        table = Table(box=box.MINIMAL_DOUBLE_HEAD)
+        table.add_column(self.col_zenodo_id, justify="center", width=width["zenodo_id"])
+        table.add_column(self.col_title, justify="left", min_width=width["title"])
+
+        print(width)
+        if CONSOLE_WIDTH > 80:
+            table.add_column(
+                self.col_description,
+                justify="left",
+                max_width=width["description"],
+                no_wrap=True,  # Required to make overflow="ellipsis" work
+                overflow="ellipsis",
+            )
+        table.add_column(self.col_downloads, justify="right", width=width["downloads"])
         cols = [col.header for col in table.columns]
 
         for _, row in df_hits[cols].iterrows():
