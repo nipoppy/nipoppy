@@ -26,6 +26,9 @@ class _TestHandler(ContainerHandler):
     def is_image_downloaded(self, uri, fpath_container):
         return True
 
+    def get_pull_confirmation_prompt(self):
+        return "not_used"
+
     def get_pull_command(self, uri, fpath_container):
         return "not_used"
 
@@ -433,3 +436,30 @@ def test_get_container_handler_error():
     config.COMMAND = "unknown_command"
     with pytest.raises(ValueError, match="No container handler for command:"):
         get_container_handler(config)
+
+
+@pytest.mark.parametrize(
+    "handler, expected",
+    [
+        (
+            ApptainerHandler(),
+            "This pipeline is containerized: do you want to download the container "
+            "(to [magenta]{fpath_container}[/])?",
+        ),
+        (
+            SingularityHandler(),
+            "This pipeline is containerized: do you want to download the container "
+            "(to [magenta]{fpath_container}[/])?",
+        ),
+        (
+            DockerHandler(),
+            "This pipeline is containerized: do you want to download the container "
+            "locally?",
+        ),
+    ],
+)
+def test_confirmation_prompt(handler: ContainerHandler, expected: str):
+    FPATH_CONTAINER = "test_container.sif"
+    prompt = handler.get_pull_confirmation_prompt(FPATH_CONTAINER)
+    # This is ignored when there is nothing to format
+    assert prompt == expected.format(fpath_container=FPATH_CONTAINER)
