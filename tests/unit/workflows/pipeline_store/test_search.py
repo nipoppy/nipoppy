@@ -61,7 +61,22 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     assert df.iloc[1]["Downloads"] == 4
 
 
-def test_df_to_table(workflow: PipelineSearchWorkflow):
+@pytest.mark.parametrize(
+    "console_width, is_description_hidden",
+    [
+        (80, True),
+        (120, False),
+    ],
+)
+def test_df_to_table(
+    workflow: PipelineSearchWorkflow,
+    console_width: int,
+    is_description_hidden: bool,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import nipoppy.workflows.pipeline_store.search as search_module
+
+    monkeypatch.setattr(search_module, "CONSOLE_WIDTH", console_width)
     df_hits = pd.DataFrame(
         [
             {
@@ -80,7 +95,7 @@ def test_df_to_table(workflow: PipelineSearchWorkflow):
     )
     table = workflow._df_to_table(df_hits)
     assert table.row_count == len(df_hits)
-    assert len(table.columns) == len(df_hits.columns)
+    assert len(table.columns) == (len(df_hits.columns) - is_description_hidden)
 
 
 def test_run_main(
