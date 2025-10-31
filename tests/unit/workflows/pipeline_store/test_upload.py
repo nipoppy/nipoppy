@@ -7,6 +7,7 @@ import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum, ReturnCode
+from nipoppy.exceptions import NipoppyExit
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,
@@ -246,7 +247,7 @@ def test_fails_check_pipeline_bundle(
 
     workflow.assume_yes = True
 
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(NipoppyExit) as exc_info:
         workflow.run_main()
 
     assert exc_info.value.code == ReturnCode.UNKNOWN_FAILURE

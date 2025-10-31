@@ -40,7 +40,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
     ):
         """Create a pipeline bundle."""
         if target.exists():
-            raise IsADirectoryError(
+            raise FileExistsError(
                 f"Target directory {target} already exists. "
                 "Please remove it or choose a different name.",
             )

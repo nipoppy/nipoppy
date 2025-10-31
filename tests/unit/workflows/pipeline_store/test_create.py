@@ -89,7 +89,7 @@ def test_create_already_exists(target: Path):
     target.mkdir(parents=True, exist_ok=True)
     assert target.exists()
 
-    with pytest.raises(IsADirectoryError, match="Target directory .* already exists"):
+    with pytest.raises(FileExistsError, match="Target directory .* already exists"):
         PipelineCreateWorkflow(
             pipeline_dir=target,
             type_=PipelineTypeEnum.PROCESSING,

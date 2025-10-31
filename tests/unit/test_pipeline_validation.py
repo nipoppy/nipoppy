@@ -14,6 +14,7 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.exceptions import ConfigError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
@@ -58,22 +59,22 @@ def test_load_pipeline_config_file():
         ("fake_path.json", FileNotFoundError, "Pipeline configuration file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid1.json",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is invalid",
         ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid2.json",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is invalid",
         ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid3.json",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is invalid",
         ),
     ],
@@ -95,12 +96,12 @@ def test_check_descriptor_file():
         ("fake_path.json", FileNotFoundError, "Descriptor file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Descriptor file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "descriptor-invalid.json",
-            RuntimeError,
+            ConfigError,
             "Descriptor file .* is invalid",
         ),
     ],
@@ -120,12 +121,12 @@ def test_check_invocation_file(descriptor_str):
         ("fake_path.json", FileNotFoundError, "Invocation file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Invocation file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "invocation-invalid.json",
-            RuntimeError,
+            ConfigError,
             "Invocation file .* is invalid",
         ),
     ],
@@ -147,12 +148,12 @@ def test_check_hpc_config_file():
         ("fake_path.json", FileNotFoundError, "HPC config file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "HPC config file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "hpc_config-invalid.json",
-            RuntimeError,
+            ConfigError,
             "HPC config file .* is invalid",
         ),
     ],
@@ -172,12 +173,12 @@ def test_check_tracker_config_file():
         ("fake_path.json", FileNotFoundError, "Tracker config file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Tracker config file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "tracker_config-invalid.json",
-            RuntimeError,
+            ConfigError,
             "Tracker config file .* is invalid",
         ),
     ],
@@ -197,7 +198,7 @@ def test_check_pybids_ignore_file():
         ("fake_path.json", FileNotFoundError, "PyBIDS ignore patterns file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "PyBIDS ignore patterns file is not a valid JSON file",
         ),
     ],

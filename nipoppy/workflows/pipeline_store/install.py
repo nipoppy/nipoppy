@@ -11,6 +11,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.container import get_container_handler
 from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
+from nipoppy.exceptions import ConfigError, NipoppyExit
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -170,7 +171,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
                     f": {exception}"
                 )
-                raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
+                raise NipoppyExit(ReturnCode.UNKNOWN_FAILURE)
 
     def run_main(self):
         """Install a pipeline.
@@ -191,7 +192,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     f"Output directory {dpath_pipeline} already exists."
                     "Use the '--force' flag to overwrite the current content. Aborting."
                 )
-                raise SystemExit(1)
+                raise NipoppyExit(1)
 
             self.logger.debug(
                 f"Downloading pipeline {self.zenodo_id} in {dpath_pipeline}"
@@ -218,7 +219,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     + "/records/"
                     + self.zenodo_id
                 )
-                raise FileNotFoundError(
+                raise ConfigError(
                     f"{str(exception)}. Make sure the record at "
                     f"{record_url} contains valid Nipoppy pipeline configuration files."
                 )
