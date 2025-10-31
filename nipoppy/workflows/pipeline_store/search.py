@@ -7,7 +7,7 @@ from rich import box
 from rich.table import Table
 
 from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.env import LogColor
+from nipoppy.env import ZENODO_COMMUNITY_ID, LogColor
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -26,6 +26,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         self,
         query: str,
         zenodo_api: Optional[ZenodoAPI] = None,
+        community: bool = False,
         size: int = 10,
         verbose: bool = False,
         dry_run: bool = False,
@@ -38,6 +39,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         )
         self.zenodo_api = zenodo_api or ZenodoAPI()
         self.query = query
+        self.community = community
         self.size = size
 
         self.zenodo_api.set_logger(self.logger)
@@ -48,7 +50,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             description = hit.get("metadata", {}).get("description")
             if description is not None:
                 description = strip_html_tags(description).strip()
-            zenodo_id_with_link = f'[link={hit.get("doi_url")}]{hit.get("id")}[/link]'
+            zenodo_id_with_link = f"[link={hit.get('doi_url')}]{hit.get('id')}[/link]"
             data_for_df.append(
                 {
                     self.col_zenodo_id: zenodo_id_with_link,
@@ -81,6 +83,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             # sort by "mostdownloaded" through the API
             results = self.zenodo_api.search_records(
                 query=self.query,
+                community_id=ZENODO_COMMUNITY_ID if self.community else None,
                 keywords=["Nipoppy"],
                 size=self._api_search_size,
             )

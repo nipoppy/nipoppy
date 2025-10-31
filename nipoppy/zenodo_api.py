@@ -310,6 +310,7 @@ class ZenodoAPI:
     def search_records(
         self,
         query: str,
+        community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,
     ):
@@ -331,8 +332,10 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
+
+        api_endpoint = self._get_api_endpoint(community_id)
         response = httpx.get(
-            f"{self.api_endpoint}/records",
+            api_endpoint,
             headers=self.headers,
             params={
                 "q": full_query,
@@ -341,6 +344,13 @@ class ZenodoAPI:
             timeout=self.timeout,
         )
         return response.json()["hits"]
+
+    def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
+        """Get the API endpoint, considering the community if set."""
+        if community_id is None or community_id == "":
+            return self.api_endpoint + "/records"
+        else:
+            return self.api_endpoint + f"/communities/{community_id}/records"
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
