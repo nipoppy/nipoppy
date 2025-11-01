@@ -37,7 +37,7 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: python-package-distributions
         path: dist/
@@ -62,7 +62,7 @@ jobs:
         app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
         private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
     - name: Download all the dists
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: python-package-distributions
         path: dist/
