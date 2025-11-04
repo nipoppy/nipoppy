@@ -76,7 +76,7 @@ def test_df_to_table(
 ):
     import nipoppy.workflows.pipeline_store.search as search_module
 
-    monkeypatch.setattr(search_module, "CONSOLE_WIDTH", console_width)
+    monkeypatch.setattr(search_module, "CURRENT_CONSOLE_WIDTH", console_width)
     df_hits = pd.DataFrame(
         [
             {
