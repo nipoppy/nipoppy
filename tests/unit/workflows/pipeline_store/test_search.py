@@ -95,7 +95,10 @@ def test_df_to_table(
     )
     table = workflow._df_to_table(df_hits)
     assert table.row_count == len(df_hits)
-    assert len(table.columns) == (len(df_hits.columns) - is_description_hidden)
+    if is_description_hidden:
+        assert len(table.columns) == len(df_hits.columns) - 1
+    else:
+        assert len(table.columns) == len(df_hits.columns)
 
 
 def test_run_main(
