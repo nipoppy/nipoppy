@@ -25,7 +25,7 @@ jobs:
       matrix:
         # NOTE: when adding a new version, update the 'if' condition in
         #       the 'Run API tests' step
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     # only trigger on upstream repo
     if: github.repository_owner == 'nipoppy' && github.event.repository.name == 'nipoppy'
@@ -59,7 +59,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run API tests
-      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.13'
+      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.14'
       run: |
         python -m pytest -m api
       env:
