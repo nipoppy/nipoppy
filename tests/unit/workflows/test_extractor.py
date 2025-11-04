@@ -364,7 +364,7 @@ def test_generate_cli_command_for_hpc(
     expected_command,
     mocker: pytest_mock.MockFixture,
 ):
-    mocker.patch("nipoppy.workflows.base.DatasetLayout")
+    mocker.patch("nipoppy.study.DatasetLayout")
     runner = ExtractionRunner(**init_params)
     assert (
         runner._generate_cli_command_for_hpc(participant_id, session_id)

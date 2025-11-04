@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import shlex
@@ -18,6 +17,7 @@ from nipoppy.config.main import Config
 from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
+from nipoppy.study import Study
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
@@ -26,11 +26,7 @@ from nipoppy.tabular.curation_status import (
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils.utils import (
-    add_path_timestamp,
-    is_nipoppy_project,
-    process_template_str,
-)
+from nipoppy.utils.utils import add_path_timestamp, is_nipoppy_project
 
 
 class BaseWorkflow(Base, ABC):
@@ -307,18 +303,21 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         _validate_layout : bool, optional
             If True, validate the layout during setup, by default True
         """
+        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
+
         # `.nipoppy` is not created by default in version 0.3.4 and below
         self.dpath_root = is_nipoppy_project(dpath_root) or Path(dpath_root)
         self.fpath_layout = fpath_layout
         self._skip_logfile = _skip_logfile
         self._validate_layout = _validate_layout
 
-        self.layout = DatasetLayout(
+        self.study = Study(
             dpath_root=self.dpath_root,
-            fpath_config=self.fpath_layout,
+            fpath_layout=self.fpath_layout,
+            logger=self.logger,
         )
 
-        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
+        self.layout: DatasetLayout = self.study.layout
 
     def generate_fpath_log(
         self,
@@ -349,50 +348,13 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
     @cached_property
     def config(self) -> Config:
-        """
-        Load the configuration.
-
-        Raise error if not found.
-        """
-        fpath_config = self.layout.fpath_config
-        try:
-            # load and apply user-defined substitutions
-            self.logger.debug(f"Loading config from {fpath_config}")
-            config = Config.load(fpath_config)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Config file not found: {self.layout.fpath_config}"
-            )
-
-        # replace path placeholders in the config
-        # (except in the user-defined substitutions)
-        user_substitutions = config.SUBSTITUTIONS  # stash original substitutions
-        # this might modify the SUBSTITUTIONS field (which we don't want)
-        config = Config(
-            **json.loads(
-                process_template_str(
-                    config.model_dump_json(),
-                    objs=[self, self.layout],
-                )
-            )
-        )
-        # restore original substitutions
-        config.SUBSTITUTIONS = user_substitutions
-
-        return config
+        """The main configuration object."""
+        return self.study.config
 
     @cached_property
     def manifest(self) -> Manifest:
-        """
-        Load the manifest.
-
-        Raise error if not found.
-        """
-        fpath_manifest = Path(self.layout.fpath_manifest)
-        try:
-            return Manifest.load(fpath_manifest)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
+        """The manifest table."""
+        return self.study.manifest
 
     @cached_property
     def curation_status_table(self) -> CurationStatusTable:
@@ -401,10 +363,9 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
         Otherwise, generate a new one.
         """
-        logger = self.logger
         fpath_table = Path(self.layout.fpath_curation_status)
         try:
-            return CurationStatusTable.load(fpath_table)
+            return self.study.curation_status_table
         except FileNotFoundError:
             self.logger.warning(
                 f"Curation status file not found: {fpath_table}"
@@ -422,12 +383,12 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
             if not self.dry_run:
                 fpath_table_backup = table.save_with_backup(fpath_table)
-                logger.info(
+                self.logger.info(
                     "Saved curation status table to "
                     f"{fpath_table} (-> {fpath_table_backup})"
                 )
             else:
-                logger.info(
+                self.logger.info(
                     "Not writing curation status table to "
                     f"{fpath_table} since this is a dry run"
                 )
@@ -442,7 +403,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         Otherwise, return an empty processing status table.
         """
         try:
-            return ProcessingStatusTable.load(self.layout.fpath_processing_status)
+            return self.study.processing_status_table
         except FileNotFoundError:
             return ProcessingStatusTable()
 
