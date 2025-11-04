@@ -103,5 +103,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         message = f"Showing {n_shown} of {n_total} results"
         if n_shown < n_total:
             message += " (use --size to show more)"
+        if not self.community:
+            message += " (use --community to restrict to Nipoppy community)"
         self.logger.info(message)
         CONSOLE_STDOUT.print(table)
