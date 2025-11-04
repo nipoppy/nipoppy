@@ -49,9 +49,10 @@ click.rich_click.OPTION_GROUPS = {
                 "--size",
                 "--zenodo-id",
                 "--password-file",
-                "--assume-yes",
+                "--assume-yes",  # TODO should we move this to misc. group??
                 "--sandbox",
-                "--force",
+                "--force",  # TODO should we move this to misc. group??
+                "--community",
             ],
         },
         {
