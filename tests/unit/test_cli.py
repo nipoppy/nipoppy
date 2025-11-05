@@ -423,6 +423,25 @@ def test_context_manager_unknown_exception(mocker, exception, return_code):
     mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
 
 
+def test_context_manager_pydantic_failed_validation(mocker):
+    """Test that the context manager handles pydantic ValidationError correctly."""
+    from pydantic import BaseModel
+
+    # Prevent sys.exit from actually exiting the test runner
+    mock_exit = mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+
+    class MockedModel(BaseModel):
+        field: int
+
+    with exception_handler(workflow):
+        MockedModel(field="invalid")  # will raise ValidationError
+
+    assert workflow.return_code == ReturnCode.INVALID_CONFIG
+    mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
+
+
 @pytest.mark.parametrize("command", list_commands(cli))
 def test_no_duplicated_flag(
     command: str,

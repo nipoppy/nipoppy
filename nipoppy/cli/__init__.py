@@ -4,6 +4,7 @@ import sys
 from contextlib import contextmanager
 
 import rich_click as click
+from pydantic_core import ValidationError
 
 from nipoppy.env import PROGRAM_NAME, ReturnCode
 from nipoppy.exceptions import NipoppyError
@@ -19,6 +20,9 @@ def exception_handler(workflow):
         yield workflow
     except NipoppyError as e:
         workflow.return_code = e.code
+        workflow.logger.error(e)
+    except ValidationError as e:
+        workflow.return_code = ReturnCode.INVALID_CONFIG
         workflow.logger.error(e)
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
