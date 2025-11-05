@@ -60,6 +60,7 @@ titlesonly:
 caption: Explanations
 ---
 explanations/manifest
+explanations/study_spec
 ```
 
 ```{toctree}
