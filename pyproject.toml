@@ -32,7 +32,7 @@ description = "Standardized organization and processing of neuroimaging-clinical
 license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]

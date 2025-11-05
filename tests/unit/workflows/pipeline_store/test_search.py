@@ -7,6 +7,7 @@ import pytest
 import pytest_mock
 from rich.table import Table
 
+from nipoppy.env import ZENODO_COMMUNITY_ID
 from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
 
 
@@ -83,8 +84,10 @@ def test_df_to_table(workflow: PipelineSearchWorkflow):
     assert len(table.columns) == len(df_hits.columns)
 
 
+@pytest.mark.parametrize("community", [True, False])
 def test_run_main(
     workflow: PipelineSearchWorkflow,
+    community: bool,
     hits: list[dict],
     mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
@@ -102,10 +105,14 @@ def test_run_main(
         workflow, "_df_to_table", return_value=Table()
     )
 
+    workflow.community = community
     workflow.run()
 
     workflow.zenodo_api.search_records.assert_called_once_with(
-        query=workflow.query, keywords=["Nipoppy"], size=workflow._api_search_size
+        query=workflow.query,
+        keywords=["Nipoppy"],
+        size=workflow._api_search_size,
+        community_id=ZENODO_COMMUNITY_ID if community else None,
     )
     mocked_hits_to_df.assert_called_once_with(hits)
     mocked_df_to_table.assert_called_once_with(df)

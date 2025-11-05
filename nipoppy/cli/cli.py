@@ -49,9 +49,8 @@ click.rich_click.OPTION_GROUPS = {
                 "--size",
                 "--zenodo-id",
                 "--password-file",
-                "--assume-yes",
                 "--sandbox",
-                "--force",
+                "--community",
             ],
         },
         {
@@ -83,6 +82,8 @@ click.rich_click.OPTION_GROUPS = {
             "name": "Miscellaneous",
             "options": [
                 "--layout",
+                "--assume-yes",
+                "--force",
                 "--help",
             ],
         },
