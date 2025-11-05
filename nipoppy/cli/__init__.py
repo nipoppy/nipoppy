@@ -10,6 +10,10 @@ from nipoppy.env import PROGRAM_NAME, ReturnCode
 from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
 
+logger = get_logger(
+    name=f"{PROGRAM_NAME}.{__name__}",
+)
+
 
 # TODO once logger is extracted from the workflows, we could remove the `workflow`
 # parameter and use as a standalone context manager
@@ -30,13 +34,12 @@ def exception_handler(workflow):
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
         workflow.logger.exception("Unexpected error occurred")
+        logger.warning(
+            "You can report this issue on GitHub at https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"  # noqa:E501
+            " or on our Discord server at https://discord.gg/2VMKFRpjkm"
+        )
     finally:
         sys.exit(workflow.return_code)
-
-
-logger = get_logger(
-    name=f"{PROGRAM_NAME}.{__name__}",
-)
 
 
 class OrderedAliasedGroup(click.RichGroup):
