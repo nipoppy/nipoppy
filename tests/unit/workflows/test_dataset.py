@@ -1,16 +1,13 @@
 """Tests for the BaseDatasetWorkflow class."""
 
 import logging
-import shutil
 from pathlib import Path
 
 import pytest
 import pytest_mock
 
-from nipoppy.config.main import Config
+from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from tests.conftest import (
     DPATH_TEST_DATA,
@@ -34,10 +31,10 @@ def workflow(tmp_path: Path):
 
     # save a config but do not set workflow.config yet
     # because some tests check what happens when the config loaded
-    get_config().save(workflow.layout.fpath_config)
+    get_config().save(workflow.study.layout.fpath_config)
 
     manifest = prepare_dataset(participants_and_sessions_manifest={})
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     return workflow
 
 
@@ -57,7 +54,8 @@ def test_generate_fpath_log(
     assert isinstance(fpath_log, Path)
     assert (
         fpath_log
-        == workflow.layout.dpath_logs / "my_workflow/my_workflow-20240404_1234.log"
+        == workflow.study.layout.dpath_logs
+        / "my_workflow/my_workflow-20240404_1234.log"
     )
 
 
@@ -71,7 +69,8 @@ def test_generate_fpath_log_custom(
     assert isinstance(fpath_log, Path)
     assert (
         fpath_log
-        == workflow.layout.dpath_logs / f"my_workflow/{fname_stem}-20240404_1234.log"
+        == workflow.study.layout.dpath_logs
+        / f"my_workflow/{fname_stem}-20240404_1234.log"
     )
 
 
@@ -97,7 +96,7 @@ def test_run_setup_logfile(
 
 def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):
     # delete required directory
-    workflow.layout.dpath_bids.rmdir()
+    workflow.study.layout.dpath_bids.rmdir()
 
     # expect layout validation error
     with pytest.raises(
@@ -106,47 +105,33 @@ def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):
         workflow.run_setup()
 
     # make sure no logfile is created
-    assert list(workflow.layout.dpath_logs.iterdir()) == []
+    assert list(workflow.study.layout.dpath_logs.iterdir()) == []
 
 
-@pytest.mark.parametrize(
-    "fpath_config",
-    [
-        FPATH_SAMPLE_CONFIG,
-        DPATH_TEST_DATA / "config1.json",
-        DPATH_TEST_DATA / "config2.json",
-        DPATH_TEST_DATA / "config3.json",
-    ],
-)
-def test_config(workflow: BaseDatasetWorkflow, fpath_config):
-    workflow.layout.fpath_config.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(fpath_config, workflow.layout.fpath_config)
-    assert isinstance(workflow.config, Config)
-
-
-def test_config_not_found(workflow: BaseDatasetWorkflow):
-    workflow.layout.fpath_config.unlink()
-    with pytest.raises(FileNotFoundError):
-        workflow.config
-
-
-def test_config_replacement(workflow: BaseDatasetWorkflow):
-    # overwrite existing config file
-    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
-    config.save(workflow.layout.fpath_config)
-    assert str(workflow.config.DICOM_DIR_MAP_FILE) == str(workflow.dpath_root)
+def test_config(workflow: BaseDatasetWorkflow):
+    assert id(workflow.config) == id(workflow.study.config)
 
 
 def test_manifest(workflow: BaseDatasetWorkflow):
-    workflow.layout.fpath_manifest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(FPATH_SAMPLE_MANIFEST, workflow.layout.fpath_manifest)
-    assert isinstance(workflow.manifest, Manifest)
+    assert id(workflow.manifest) == id(workflow.study.manifest)
 
 
-def test_manifest_not_found(workflow: BaseDatasetWorkflow):
-    workflow.layout.fpath_manifest.unlink()
-    with pytest.raises(FileNotFoundError):
-        workflow.manifest
+def test_curation_status_file_generated_if_not_found(
+    workflow: BaseDatasetWorkflow, mocker: pytest_mock.MockFixture
+):
+    mocked = mocker.patch(
+        "nipoppy.workflows.base.generate_curation_status_table",
+        return_value=CurationStatusTable(),
+    )
+    assert not workflow.study.layout.fpath_curation_status.exists()
+    _ = workflow.curation_status_table
+    mocked.assert_called_once()
+    assert workflow.study.layout.fpath_curation_status.exists()
+
+
+def test_processing_status_file_empty_if_not_found(workflow: BaseDatasetWorkflow):
+    assert not workflow.study.layout.fpath_processing_status.exists()
+    assert len(workflow.processing_status_table) == 0
 
 
 def test_dicom_dir_map(workflow: BaseDatasetWorkflow):
@@ -162,8 +147,3 @@ def test_dicom_dir_map_not_found(workflow: BaseDatasetWorkflow):
     workflow.config.DICOM_DIR_MAP_FILE = "fake_path"
     with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
         workflow.dicom_dir_map
-
-
-def test_bagel_empty_if_not_found(workflow: BaseDatasetWorkflow):
-    assert not workflow.layout.fpath_curation_status.exists()
-    assert len(workflow.curation_status_table) == 0

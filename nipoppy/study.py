@@ -2,6 +2,7 @@
 
 import json
 from functools import cached_property
+from logging import Logger
 from pathlib import Path
 from typing import Optional
 
@@ -23,9 +24,23 @@ class Study(Base):
         self,
         dpath_root: StrOrPathLike,
         fpath_layout: Optional[StrOrPathLike] = None,
-        logger=None,
+        logger: Optional[Logger] = None,
         verbose: bool = False,
     ):
+        """Representation of a Nipoppy study.
+
+        Parameters
+        ----------
+        dpath_root : StrOrPathLike
+            Path to the root directory.
+        fpath_layout : StrOrPathLike, optional
+            Path to the layout file. If None (default), the default layout will be used.
+        logger : Logger, optional
+            Logger instance. If None (default), a new logger will be created.
+        verbose : bool, optional
+            Whether to enable verbose logging, by default False. Note: this is ignored
+            if a custom logger is provided.
+        """
         super().__init__()
         self.dpath_root = dpath_root
         self.fpath_layout = fpath_layout
