@@ -7,8 +7,8 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError, LayoutError
-from nipoppy.layout import DatasetLayout, PathInfo
+from nipoppy.exceptions import FileOperationError
+from nipoppy.layout import DatasetLayout, LayoutError, PathInfo
 from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,

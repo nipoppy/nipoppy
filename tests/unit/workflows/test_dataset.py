@@ -8,7 +8,8 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.main import Config
-from nipoppy.exceptions import FileOperationError, LayoutError
+from nipoppy.exceptions import FileOperationError
+from nipoppy.layout import LayoutError
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST

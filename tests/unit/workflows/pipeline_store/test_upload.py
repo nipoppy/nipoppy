@@ -7,7 +7,7 @@ import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum, ReturnCode
-from nipoppy.exceptions import WorkflowError
+from nipoppy.exceptions import TerminatedByUserError, WorkflowError
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,
@@ -187,7 +187,7 @@ def test_confirm_upload_no(
     )
     workflow.assume_yes = False
 
-    with pytest.raises(WorkflowError):
+    with pytest.raises(TerminatedByUserError):
         workflow.run_main()
 
     assert "Zenodo upload cancelled." in caplog.text
@@ -249,6 +249,6 @@ def test_fails_check_pipeline_bundle(
     with pytest.raises(WorkflowError) as exc_info:
         workflow.run_main()
 
-    assert exc_info.value.code == ReturnCode.UNKNOWN_FAILURE
+    assert exc_info.value.code == ReturnCode.WORKFLOW_FAILURE
 
     assert "Pipeline validation failed. Please check the pipeline files" in caplog.text

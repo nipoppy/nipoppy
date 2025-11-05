@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.exceptions import WorkflowError
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
+from nipoppy.tabular.exceptions import TabularError
 from tests.conftest import DPATH_TEST_DATA
 
 
@@ -77,7 +77,7 @@ def test_load(fpath, tabular_class: BaseTabular):
 )
 def test_load_error(kwargs):
     fpath_tabular = DPATH_TEST_DATA / "manifest1.tsv"
-    with pytest.raises(WorkflowError, match="This function does not accept"):
+    with pytest.raises(TabularError, match="This function does not accept"):
         Tabular.load(fpath_tabular, **kwargs)
 
 
@@ -86,7 +86,7 @@ def test_load_error_csv(tmp_path: Path):
     fpath_csv = tmp_path / fpath_tsv.with_suffix(".csv").name
     pd.read_csv(fpath_tsv, sep="\t").to_csv(fpath_csv, index=False)
     with pytest.raises(
-        WorkflowError, match="It looks like the file at .* might be a CSV"
+        TabularError, match="It looks like the file at .* might be a CSV"
     ):
         Tabular.load(fpath_csv)
 
@@ -106,7 +106,7 @@ def test_validate(data, is_valid):
     tabular = TabularWithModel(data)
     with (
         pytest.raises(
-            WorkflowError, match="Error when validating the tabular with model file"
+            TabularError, match="Error when validating the tabular with model file"
         )
         if not is_valid
         else nullcontext()
@@ -116,7 +116,7 @@ def test_validate(data, is_valid):
 
 def test_validate_all_required_fields_present():
     tabular = TabularWithModel([{"b": 0}])
-    with pytest.raises(WorkflowError):
+    with pytest.raises(TabularError):
         assert isinstance(tabular.validate(), TabularWithModel)
 
 
@@ -130,7 +130,7 @@ def test_validate_all_required_fields_present():
 )
 def test_validate_duplicate_records(data):
     tabular = TabularWithModel(data)
-    with pytest.raises(WorkflowError, match="Duplicate records"):
+    with pytest.raises(TabularError, match="Duplicate records"):
         assert isinstance(tabular.validate(), TabularWithModel)
 
 
@@ -176,7 +176,7 @@ def test_get_diff_invalid_cols():
     data2 = {"a": ["A"]}
     manifest1 = TabularWithModel(data1)
     manifest2 = TabularWithModel(data2)
-    with pytest.raises(WorkflowError, match="The columns .* are not present"):
+    with pytest.raises(TabularError, match="The columns .* are not present"):
         manifest1.get_diff(manifest2, cols="b")
 
 
@@ -260,7 +260,7 @@ def test_concatenate(data1: list[dict], data2: list[dict]):
 def test_concatenate_error(data1: list[dict], data2: list[dict]):
     tabular1 = TabularWithModel(data1)
     tabular2 = TabularWithModel(data2)
-    with pytest.raises(WorkflowError):
+    with pytest.raises(TabularError):
         tabular1.concatenate(tabular2, validate=True)
 
 

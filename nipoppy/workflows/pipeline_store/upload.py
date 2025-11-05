@@ -6,7 +6,7 @@ from typing import Optional
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import LogColor, StrOrPathLike
-from nipoppy.exceptions import WorkflowError
+from nipoppy.exceptions import TerminatedByUserError, WorkflowError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
@@ -137,7 +137,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             )
             if not continue_:
                 self.logger.warning("Zenodo upload cancelled.")
-                raise WorkflowError(code=0)
+                raise TerminatedByUserError("User cancelled the upload.")
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)

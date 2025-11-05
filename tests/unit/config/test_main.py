@@ -11,7 +11,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.exceptions import ConfigError, WorkflowError
+from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
 
@@ -122,7 +122,7 @@ def test_check_dicom_dir_options(
     "substitutions", [{"": "abc"}, {"valid_key": "abc", "": "def"}]
 )
 def test_check_substitutions_empty_key(valid_config_data, substitutions):
-    with pytest.raises(WorkflowError, match="Substitutions cannot have empty keys"):
+    with pytest.raises(ValueError, match="Substitutions cannot have empty keys"):
         Config(**valid_config_data, SUBSTITUTIONS=substitutions)
 
 

@@ -8,13 +8,14 @@ import pandas as pd
 from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
-from nipoppy.exceptions import WorkflowError
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.utils.bids import (
     check_participant_id,
     check_session_id,
 )
 from nipoppy.utils.utils import FIELD_DESCRIPTION_MAP
+
+from .exceptions import TabularError
 
 
 class ManifestModel(BaseTabularModel):
@@ -45,7 +46,7 @@ class ManifestModel(BaseTabularModel):
             try:
                 data[Manifest.col_datatype] = pd.eval(datatype)
             except Exception as e:
-                raise WorkflowError(
+                raise TabularError(
                     f"Invalid datatype: {datatype} ({type(datatype)}))"
                     ". Must be a list, a string representation of a list"
                     ", or left empty"
@@ -114,7 +115,7 @@ class Manifest(BaseTabular):
         """Check that the column values are in the allowed values."""
         invalid_values = set(self[col]) - set(allowed_values)
         if len(invalid_values) > 0:
-            raise WorkflowError(
+            raise TabularError(
                 f"Invalid values for column {col}: {invalid_values}. "
                 f"Expected only values from : {allowed_values}"
             )

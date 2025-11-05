@@ -13,7 +13,7 @@ from typing_extensions import Self
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
-from nipoppy.exceptions import ConfigError, WorkflowError
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils.utils import apply_substitutions_to_json, load_json
@@ -181,7 +181,7 @@ class Config(_SchemaWithContainerConfig):
         """Check that substitutions do not have empty keys."""
         for key, value in self.SUBSTITUTIONS.items():
             if not key:
-                raise WorkflowError("Substitutions cannot have empty keys")
+                raise ConfigError("Substitutions cannot have empty keys")
 
             if value != (value_stripped := value.strip()):
                 warnings.warn(

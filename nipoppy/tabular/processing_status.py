@@ -4,7 +4,6 @@ from typing import Any, Optional
 
 from pydantic import Field, field_validator, model_validator
 
-from nipoppy.exceptions import WorkflowError
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.utils.bids import (
     check_participant_id,
@@ -13,6 +12,8 @@ from nipoppy.utils.bids import (
     session_id_to_bids_session_id,
 )
 from nipoppy.utils.utils import FIELD_DESCRIPTION_MAP
+
+from .exceptions import TabularError
 
 STATUS_SUCCESS = "SUCCESS"
 STATUS_FAIL = "FAIL"
@@ -62,7 +63,7 @@ class ProcessingStatusModel(BaseTabularModel):
             STATUS_UNAVAILABLE,
         ]
         if value not in valid_statuses:
-            raise WorkflowError(
+            raise TabularError(
                 f"Invalid status '{value}'. Must be one of: {valid_statuses}."
             )
         return value

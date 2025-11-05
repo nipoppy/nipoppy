@@ -6,7 +6,6 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from nipoppy.env import ContainerCommandEnum
-from nipoppy.exceptions import ConfigError
 
 
 class ContainerConfig(BaseModel):
@@ -104,7 +103,7 @@ class ContainerInfo(BaseModel):
         - If URI is specified, FILE must also be specified
         """
         if self.URI is not None and self.FILE is None:
-            raise ConfigError(
+            raise ValueError(
                 f"FILE must be specified if URI is set, got {self.FILE} and "
                 f"{self.URI} respectively"
             )

@@ -16,13 +16,7 @@ from click.testing import CliRunner
 from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
 from nipoppy.env import ReturnCode
-from nipoppy.exceptions import (
-    ConfigError,
-    FileOperationError,
-    LayoutError,
-    NipoppyError,
-    WorkflowError,
-)
+from nipoppy.exceptions import NipoppyError
 from tests.conftest import PASSWORD_FILE
 
 runner = CliRunner()
@@ -377,27 +371,18 @@ def test_context_manager_system_exit_exception(
     mock_exit.assert_called_once_with(expected_return_code)
 
 
-@pytest.mark.parametrize(
-    "return_code, expected_return_code",
-    [
-        (None, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.INVALID_COMMAND, ReturnCode.INVALID_COMMAND),
-    ],
-)
+class MyCustomException(NipoppyError):
+    code = 999
+
+
 @pytest.mark.parametrize(
     "exception",
     [
         NipoppyError,
-        LayoutError,
-        WorkflowError,
-        ConfigError,
-        FileOperationError,
+        MyCustomException,
     ],
 )
-def test_context_manager_nipoppy_exception(
-    mocker, exception, return_code, expected_return_code
-):
+def test_context_manager_nipoppy_exception(mocker, exception):
     """Test that the context manager handles exceptions correctly.
 
     NipoppyError and its subclasses should set the workflow return code to the
@@ -408,13 +393,10 @@ def test_context_manager_nipoppy_exception(
 
     workflow = mocker.Mock()
     with exception_handler(workflow):
-        if return_code is None:
-            raise exception
-        else:
-            raise exception(code=return_code)
+        raise exception
 
-    assert workflow.return_code == expected_return_code
-    mock_exit.assert_called_once_with(expected_return_code)
+    assert workflow.return_code == exception.code
+    mock_exit.assert_called_once_with(exception.code)
 
 
 @pytest.mark.parametrize(

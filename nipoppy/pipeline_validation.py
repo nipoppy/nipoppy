@@ -18,8 +18,8 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
-from nipoppy.exceptions import ConfigError, FileOperationError, LayoutError
-from nipoppy.layout import DatasetLayout
+from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.utils.utils import load_json
 
 PIPELINE_TYPE_TO_CLASS = {
@@ -27,6 +27,9 @@ PIPELINE_TYPE_TO_CLASS = {
     PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
     PipelineTypeEnum.PROCESSING: ProcessingPipelineConfig,
 }
+
+
+class PipelineValidationError(LayoutError): ...  # noqa E701
 
 
 # TODO we should probably refactor the config loaders to extract the check for
@@ -237,7 +240,7 @@ def _check_self_contained(
         )
     for fpath in fpaths:
         if dpath_bundle not in Path(fpath).resolve().parents:
-            raise LayoutError(
+            raise PipelineValidationError(
                 f"Path {fpath} is not within the bundle directory {dpath_bundle}"
             )
 
@@ -255,7 +258,7 @@ def _check_no_subdirectories(
         )
     for path in dpath_bundle.iterdir():
         if path.is_dir():
-            raise LayoutError(
+            raise PipelineValidationError(
                 f"Bundle directory should not contain any subdirectories, found {path}"
             )
 

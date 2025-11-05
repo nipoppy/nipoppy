@@ -366,7 +366,8 @@ def test_check_tar_conditions_no_tracker_config(runner: ProcessingRunner):
     runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
     with pytest.raises(
-        ConfigError, match="Tarring requested but there is no tracker config file"
+        ConfigError,
+        match="Tarring requested but there is no tracker config file",
     ):
         runner._check_tar_conditions()
 

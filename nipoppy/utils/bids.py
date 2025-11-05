@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Sequence
 
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
-from nipoppy.exceptions import WorkflowError
+from nipoppy.exceptions import NipoppyError
 
 if TYPE_CHECKING:
     import bids
@@ -53,14 +53,14 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
 
     Raises
     ------
-    WorkflowError
+    NipoppyError
     """
     if participant_id is None:
         return participant_id
 
     if participant_id.startswith(BIDS_SUBJECT_PREFIX):
         if raise_error:
-            raise WorkflowError(
+            raise NipoppyError(
                 f'Invalid participant ID: should not start with "{BIDS_SUBJECT_PREFIX}"'
                 f", got {participant_id}"
             )
@@ -68,7 +68,7 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
             participant_id = participant_id.removeprefix(BIDS_SUBJECT_PREFIX)
 
     if not participant_id.isalnum():
-        raise WorkflowError(
+        raise NipoppyError(
             f"Invalid participant ID: must only contain alphanumeric characters, "
             f"got {participant_id}"
         )
@@ -99,14 +99,14 @@ def check_session_id(session_id: Optional[str], raise_error=False):
 
     Raises
     ------
-    WorkflowError
+    NipoppyError
     """
     if session_id is None:
         return session_id
 
     if session_id.startswith(BIDS_SESSION_PREFIX):
         if raise_error:
-            raise WorkflowError(
+            raise NipoppyError(
                 f'Invalid session ID: should not start with "{BIDS_SESSION_PREFIX}"'
                 f", got {session_id}"
             )
@@ -114,7 +114,7 @@ def check_session_id(session_id: Optional[str], raise_error=False):
             session_id = session_id.removeprefix(BIDS_SESSION_PREFIX)
 
     if not session_id.isalnum():
-        raise WorkflowError(
+        raise NipoppyError(
             f"Invalid session ID: must only contain alphanumeric characters, "
             f"got {session_id}"
         )

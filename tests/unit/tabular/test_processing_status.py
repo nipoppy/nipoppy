@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.exceptions import WorkflowError
+from nipoppy.tabular.exceptions import TabularError
 from nipoppy.tabular.processing_status import (
     ProcessingStatusModel,
     ProcessingStatusTable,
@@ -85,7 +85,7 @@ def test_model_status(status):
 
 
 def test_model_status_invalid():
-    with pytest.raises(WorkflowError):
+    with pytest.raises(TabularError):
         ProcessingStatusModel(
             participant_id="1",
             session_id="01",
@@ -450,5 +450,5 @@ def test_load(fpath):
     ],
 )
 def test_load_invalid(fname):
-    with pytest.raises(WorkflowError):
+    with pytest.raises(TabularError):
         ProcessingStatusTable.load(DPATH_TEST_DATA / fname)

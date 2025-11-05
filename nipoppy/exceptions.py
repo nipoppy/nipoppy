@@ -6,36 +6,33 @@ from nipoppy.env import ReturnCode
 class NipoppyError(Exception):
     """Base exception class for all nipoppy errors."""
 
-    code = ReturnCode.UNKNOWN_FAILURE
+    code = ReturnCode.KNOWN_FAILURE
 
-    def __init__(self, message: str = "", code: int = ReturnCode.UNKNOWN_FAILURE):
+    def __init__(self, message: str = ""):
         super().__init__(message)
         self.message = message
-        self.code = code
+        super().__init__(self.message)
 
     def __str__(self):
         return self.message
 
 
 class ConfigError(NipoppyError, ValueError):
-    """Exception raised for invalid Nipoppy configuration."""
+    """Exception raised for invalid configuration values."""
 
-    pass
-
-
-class LayoutError(NipoppyError, ValueError):
-    """Exception raised for invalid layout."""
-
-    pass
+    code = ReturnCode.INVALID_CONFIG
 
 
-class FileOperationError(NipoppyError, IOError):
-    """Exception raised for file access errors."""
+class TerminatedByUserError(NipoppyError):
+    """Exception raised when the process is terminated by the user (e.g., Ctrl-C)."""
 
-    pass
+    code = ReturnCode.TERMINATED
+
+
+class FileOperationError(NipoppyError, IOError): ...  # noqa: D101, E701
 
 
 class WorkflowError(NipoppyError, RuntimeError):
-    """Exception raised during a workflow execution."""
+    """Base exception class for workflow-related errors."""
 
-    pass
+    code = ReturnCode.WORKFLOW_FAILURE

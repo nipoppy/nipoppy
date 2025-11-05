@@ -10,7 +10,6 @@ from pydantic import Field
 from typing_extensions import Self
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
-from nipoppy.exceptions import WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
@@ -18,6 +17,8 @@ from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
+
+from .exceptions import TabularError
 
 
 class CurationStatusModel(ManifestModel):
@@ -73,7 +74,7 @@ class CurationStatusTable(Manifest):
     @classmethod
     def _check_status_col(cls, col: str) -> str:
         if col not in cls.status_cols:
-            raise WorkflowError(
+            raise TabularError(
                 f"Invalid status column: {col}. Must be one of {cls.status_cols}"
             )
         return col
@@ -81,7 +82,7 @@ class CurationStatusTable(Manifest):
     @classmethod
     def _check_status_value(cls, value: bool) -> bool:
         if not isinstance(value, bool):
-            raise WorkflowError(f"Invalid status value: {value}. Must be a boolean")
+            raise TabularError(f"Invalid status value: {value}. Must be a boolean")
         return value
 
     def get_status(self, participant_id: str, session_id: str, col: str) -> bool:
