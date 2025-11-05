@@ -150,8 +150,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         # prompt user and confirm
         if self.assume_yes or CONSOLE_STDOUT.confirm(
             (
-                "[yellow]This pipeline is containerized: do you want to download the "
-                f"container (to [magenta]{fpath_container}[/]) now?[/]"
+                f"[yellow]{container_handler.get_pull_confirmation_prompt(fpath_container)}[/]"  # noqa: E501
             ),
             kwargs_call={"default": True},
         ):

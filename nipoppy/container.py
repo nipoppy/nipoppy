@@ -203,6 +203,21 @@ class ContainerHandler(Base, ABC):
         """
 
     @abstractmethod
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
+        """Get the confirmation prompt for pulling the container image.
+
+        Parameters
+        ----------
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image will be saved
+
+        Returns
+        -------
+        str
+            The confirmation prompt string
+        """
+
+    @abstractmethod
     def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
     ) -> str:
@@ -248,6 +263,24 @@ class ApptainerHandler(ContainerHandler):
         if fpath_container is None:
             raise ContainerError("Path to container image must be specified")
         return Path(fpath_container).exists()
+
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
+        """Get the confirmation prompt for pulling the container image.
+
+        Parameters
+        ----------
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image will be saved
+
+        Returns
+        -------
+        str
+            The confirmation prompt string
+        """
+        return (
+            "This pipeline is containerized: do you want to download the "
+            f"container (to [magenta]{fpath_container}[/])?"
+        )
 
     def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
@@ -312,6 +345,21 @@ class DockerHandler(ContainerHandler):
             [self.command, "image", "inspect", uri], capture_output=True
         )
         return result.returncode == 0
+
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
+        """Get the confirmation prompt for pulling the container image.
+
+        Parameters
+        ----------
+        fpath_container : nipoppy.env.StrOrPathLike
+            Path where the container image will be saved
+
+        Returns
+        -------
+        str
+            The confirmation prompt string
+        """
+        return "This pipeline is containerized: do you want to download the container locally?"  # noqa: E501
 
     def get_pull_command(
         self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
