@@ -739,6 +739,20 @@ def test_search_records_wrong_size(zenodo_api: ZenodoAPI):
         zenodo_api.search_records(query="FMRIPREP", size=0)
 
 
+@pytest.mark.parametrize(
+    "community_id,expected_endpoint",
+    [
+        (None, "https://sandbox.zenodo.org/api/records"),
+        ("", "https://sandbox.zenodo.org/api/records"),
+        ("12345", "https://sandbox.zenodo.org/api/communities/12345/records"),
+    ],
+)
+def test_get_api_endpoint(
+    zenodo_api: ZenodoAPI, community_id: str, expected_endpoint: str
+):
+    assert zenodo_api._get_api_endpoint(community_id) == expected_endpoint
+
+
 def test_get_record_metadata(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
     record_id = "123456"
     metadata = {"title": "Test Title"}
