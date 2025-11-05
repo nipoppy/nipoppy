@@ -1,6 +1,6 @@
 # Study specification
 
-Nipoppy provides a specification (i.e. directory layout) for dataset organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/). One can think of this as a "standard" for organizing data belonging to a `study` that supports tabular (e.g., phenotypic) data and imaging derivatives. A standardized directory layout simplifies invocation of processing pipelines and tracking of outputs.
+Nipoppy provides a specification (i.e. directory layout) for dataset organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/). One can think of this as a "standard" for organizing data generated during a lifecycle of a `study` which may include `sourcedata` (e.g. DICOMs), `tabular` (e.g., phenotypic assessments), and imaging `derivatives` (e.g. fmriprep output), in addition to the raw BIDS data. A `study`-level standardized directory layout simplifies curation and processing tasks as well as tracking of outputs. Additionally, the layout consists of directories to store pipeline specifications and custom code used for data processing and wrangling tasks. The complete layout configuration details are provided [here](../schemas/index.rst).
 
 There are on-going efforts to merge this specification as a `study`-level dataset type into the BIDS standard.
 
