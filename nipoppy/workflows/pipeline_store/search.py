@@ -14,7 +14,7 @@ from nipoppy.zenodo_api import ZenodoAPI
 
 CURRENT_CONSOLE_WIDTH = CONSOLE_STDOUT.size.width
 RESIZED_CONSOLE_WIDTH = min(CURRENT_CONSOLE_WIDTH, 120 - _INDENT)
-MAX_CONSOLE_WIDTH = 80
+MINIMIZED_TABLE_MAX_WIDTH = 80
 
 
 class PipelineSearchWorkflow(BaseWorkflow):
@@ -85,7 +85,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             self.col_title, justify="left", min_width=self.widths[self.col_title]
         )
 
-        if CURRENT_CONSOLE_WIDTH > MAX_CONSOLE_WIDTH:
+        if CURRENT_CONSOLE_WIDTH > MINIMIZED_TABLE_MAX_WIDTH:
             table.add_column(
                 self.col_description,
                 justify="left",
