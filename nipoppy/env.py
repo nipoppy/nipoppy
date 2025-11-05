@@ -2,7 +2,7 @@
 
 import os
 import sys
-from enum import IntEnum, StrEnum
+from enum import Enum, IntEnum
 from typing import TypeVar
 
 StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
@@ -30,7 +30,7 @@ EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
 
-class ContainerCommandEnum(StrEnum):
+class ContainerCommandEnum(str, Enum):
     """Container commands."""
 
     APPTAINER = "apptainer"
@@ -38,7 +38,7 @@ class ContainerCommandEnum(StrEnum):
     SINGULARITY = "singularity"
 
 
-class PipelineTypeEnum(StrEnum):
+class PipelineTypeEnum(str, Enum):
     """Pipeline types."""
 
     BIDSIFICATION = "bidsification"
@@ -79,7 +79,8 @@ class ReturnCode(IntEnum):
     # 170-199: reserved for future Nipoppy use
 
 
-class LogColor(StrEnum):
+# TODO when deprecating Python 3.10, replace with StrEnum
+class LogColor:
     """Colors for logging."""
 
     SUCCESS = "green"
