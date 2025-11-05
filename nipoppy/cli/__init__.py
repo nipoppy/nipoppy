@@ -17,11 +17,11 @@ def exception_handler(workflow):
     """Handle exceptions raised during workflow execution."""
     try:
         yield workflow
-    except SystemExit as e:
-        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
-        workflow.logger.error(e)
     except NipoppyError as e:
         workflow.return_code = e.code
+        workflow.logger.error(e)
+    except SystemExit as e:
+        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         workflow.logger.error(e)
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
