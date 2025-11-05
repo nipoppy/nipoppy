@@ -11,6 +11,7 @@ from nipoppy.config.pipeline import (
     PipelineInfo,
 )
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
@@ -113,7 +114,7 @@ def test_proc_pipeline_info_error(extractor: ExtractionRunner):
     bad_version = "invalid_version"
     extractor.pipeline_config.PROC_DEPENDENCIES[0].VERSION = bad_version
     with pytest.raises(
-        FileNotFoundError, match=f"Pipeline config file not found at .* {bad_version}"
+        FileOperationError, match=f"Pipeline config file not found at .* {bad_version}"
     ):
         extractor.proc_pipeline_info
 

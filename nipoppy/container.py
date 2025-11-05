@@ -13,8 +13,13 @@ from typing import Iterable, Optional
 from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import NipoppyError
 
 BIND_SEP = ":"
+
+
+class ContainerError(NipoppyError, RuntimeError):
+    """Exception for container handling errors."""
 
 
 class ContainerHandler(Base, ABC):
@@ -52,7 +57,7 @@ class ContainerHandler(Base, ABC):
     def check_command_exists(self):
         """Check that the command is available (i.e. in PATH)."""
         if not shutil.which(self.command):
-            raise RuntimeError(
+            raise ContainerError(
                 f"Container executable not found: {self.command}"
                 ". Make sure it is installed and in your PATH."
             )
@@ -136,14 +141,14 @@ class ContainerHandler(Base, ABC):
                         bind_spec_components[0] = str(path_local)
                         replacement_map[bind_spec] = BIND_SEP.join(bind_spec_components)
 
-        except Exception as exception:
-            raise RuntimeError(
+        except Exception as e:
+            raise ContainerError(
                 f"Error parsing {self.bind_flags} flags in container arguments: "
                 f"{self.args}. Make sure each flag is followed by a valid spec (e.g. "
                 f"{self.bind_flags[0]} /path/local{BIND_SEP}/path/container"
                 f"{BIND_SEP}rw). Exact error was: "
-                f"{type(exception).__name__} {exception}"
-            )
+                f"{type(e).__name__} {e}"
+            ) from e
 
         # apply replacements
         args_str = shlex.join(self.args)
@@ -239,7 +244,7 @@ class ApptainerHandler(ContainerHandler):
             True if the container image exists at the specified path
         """
         if fpath_container is None:
-            raise ValueError("Path to container image must be specified")
+            raise ContainerError("Path to container image must be specified")
         return Path(fpath_container).exists()
 
     def get_pull_command(
@@ -260,7 +265,9 @@ class ApptainerHandler(ContainerHandler):
             The command string
         """
         if uri is None or fpath_container is None:
-            raise ValueError("Both URI and path to container image must be specified")
+            raise ContainerError(
+                "Both URI and path to container image must be specified"
+            )
         return shlex.join([self.command, "pull", str(fpath_container), uri])
 
 
@@ -297,7 +304,7 @@ class DockerHandler(ContainerHandler):
             True if the container image exists at the specified path
         """
         if uri is None:
-            raise ValueError("URI must be specified")
+            raise ContainerError("URI must be specified")
         uri = self._strip_prefix(uri)
         result = subprocess.run(
             [self.command, "image", "inspect", uri], capture_output=True
@@ -322,7 +329,7 @@ class DockerHandler(ContainerHandler):
             The command string
         """
         if uri is None:
-            raise ValueError("URI must be specified")
+            raise ContainerError("URI must be specified")
         uri = self._strip_prefix(uri)
 
         cmd = [self.command, "pull"]
@@ -344,8 +351,10 @@ def get_container_handler(
 
     try:
         handler_class = command_handler_map[config.COMMAND]
-    except KeyError:
-        raise ValueError(f"No container handler for command: {config.COMMAND}")
+    except KeyError as e:
+        raise ContainerError(
+            f"No container handler for command: {config.COMMAND}"
+        ) from e
 
     handler: ContainerHandler = handler_class(args=config.ARGS, logger=logger)
     for key, value in config.ENV_VARS.items():

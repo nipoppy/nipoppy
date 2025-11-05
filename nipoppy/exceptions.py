@@ -8,16 +8,17 @@ class NipoppyError(Exception):
 
     code = ReturnCode.UNKNOWN_FAILURE
 
-    def __init__(self, message: str):
+    def __init__(self, message: str = "", code: int = ReturnCode.UNKNOWN_FAILURE):
         super().__init__(message)
         self.message = message
+        self.code = code
 
     def __str__(self):
         return self.message
 
 
-class FileOperationError(NipoppyError, OSError):
-    """Exception raised for file operation errors."""
+class ConfigError(NipoppyError, ValueError):
+    """Exception raised for invalid Nipoppy configuration."""
 
     pass
 
@@ -28,21 +29,13 @@ class LayoutError(NipoppyError, ValueError):
     pass
 
 
-class ConfigError(NipoppyError, ValueError):
-    """Exception raised for invalid Nipoppy configuration."""
+class FileOperationError(NipoppyError, IOError):
+    """Exception raised for file access errors."""
 
     pass
 
 
 class WorkflowError(NipoppyError, RuntimeError):
-    """Exception raised while launching or executing a workflow."""
+    """Exception raised during a workflow execution."""
 
     pass
-
-
-class NipoppyExit(NipoppyError, SystemExit):
-    """Exception to raise when exiting the program with a specific exit code."""
-
-    def __init__(self, exit_code: int = ReturnCode.UNKNOWN_FAILURE):
-        super().__init__(f"Exiting with code {exit_code}")
-        self.code = exit_code

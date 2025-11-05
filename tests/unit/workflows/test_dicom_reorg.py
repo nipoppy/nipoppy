@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import ReturnCode
+from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
@@ -95,7 +96,7 @@ def test_get_fpaths_to_reorg_error_not_found(workflow: DicomReorgWorkflow):
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
     )
 
-    with pytest.raises(FileNotFoundError, match="Raw DICOM directory not found"):
+    with pytest.raises(FileOperationError, match="Raw DICOM directory not found"):
         workflow.get_fpaths_to_reorg("XXX", "X")
 
 
@@ -161,7 +162,7 @@ def test_run_single_error_file_exists(workflow: DicomReorgWorkflow):
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
-    with pytest.raises(FileExistsError, match="Cannot move file"):
+    with pytest.raises(FileOperationError, match="Cannot move file"):
         workflow.run_single(participant_id, session_id)
 
 

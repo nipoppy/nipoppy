@@ -7,6 +7,7 @@ from typing import Optional
 import pandas as pd
 import pytest
 
+from nipoppy.exceptions import WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils.utils import (
     add_path_suffix,
@@ -182,7 +183,7 @@ def test_process_template_str_warning():
 
 @pytest.mark.parametrize("template_str", ["[[NIPOPPY_123]]", "[[NIPOPPY_-]]"])
 def test_process_template_str_error_identifier(template_str):
-    with pytest.raises(ValueError, match="Invalid identifier name"):
+    with pytest.raises(WorkflowError, match="Invalid identifier name"):
         process_template_str(template_str)
 
 

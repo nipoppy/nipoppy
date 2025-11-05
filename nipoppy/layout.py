@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
 from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
-from nipoppy.exceptions import LayoutError
+from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
 
@@ -176,7 +176,7 @@ class DatasetLayout(Base):
 
         fpath_config = Path(fpath_config)
         if not fpath_config.exists():
-            raise FileNotFoundError(f"Layout config file not found: {fpath_config}")
+            raise FileOperationError(f"Layout config file not found: {fpath_config}")
 
         # load the config
         config = LayoutConfig(**load_json(fpath_config))

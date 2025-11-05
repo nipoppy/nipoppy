@@ -14,6 +14,7 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
+from nipoppy.exceptions import WorkflowError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -82,9 +83,11 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
     with open(fpath, "r") as file:
         try:
             return json.load(file, **kwargs)
-        except json.JSONDecodeError as exception:
+        except json.JSONDecodeError as e:
             raise json.JSONDecodeError(
-                f"Error loading JSON file at {fpath}", exception.doc, exception.pos
+                f"Error loading JSON file at {fpath}",
+                e.doc,
+                e.pos,
             )
 
 
@@ -223,7 +226,7 @@ def process_template_str(
         replacement_key = match.groups()[0].lower()  # always convert to lowercase
 
         if not str.isidentifier(replacement_key):
-            raise ValueError(
+            raise WorkflowError(
                 f"Invalid identifier name {replacement_key} in {template_str}"
             )
 

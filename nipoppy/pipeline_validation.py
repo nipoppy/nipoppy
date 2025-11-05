@@ -18,7 +18,7 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
-from nipoppy.exceptions import ConfigError, LayoutError
+from nipoppy.exceptions import ConfigError, FileOperationError, LayoutError
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils.utils import load_json
 
@@ -35,7 +35,7 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
-        raise FileNotFoundError(
+        raise FileOperationError(
             f"Pipeline configuration file not found: {fpath_config}"
         )
 
@@ -62,7 +62,7 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
     if not fpath_descriptor.exists():
-        raise FileNotFoundError(f"Descriptor file not found: {fpath_descriptor}")
+        raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
 
     try:
         descriptor_dict = load_json(fpath_descriptor)
@@ -81,7 +81,7 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     """Validate a Boutiques invocation file."""
     fpath_invocation: Path = Path(fpath_invocation)
     if not fpath_invocation.exists():
-        raise FileNotFoundError(f"Invocation file not found: {fpath_invocation}")
+        raise FileOperationError(f"Invocation file not found: {fpath_invocation}")
 
     try:
         invocation_dict = load_json(fpath_invocation)
@@ -102,7 +102,7 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
     """Validate an HPC config file."""
     fpath_hpc_config: Path = Path(fpath_hpc_config)
     if not fpath_hpc_config.exists():
-        raise FileNotFoundError(f"HPC config file not found: {fpath_hpc_config}")
+        raise FileOperationError(f"HPC config file not found: {fpath_hpc_config}")
 
     try:
         hpc_config_dict = load_json(fpath_hpc_config)
@@ -121,7 +121,7 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
     """Validate a tracker config file."""
     fpath_tracker_config: Path = Path(fpath_tracker_config)
     if not fpath_tracker_config.exists():
-        raise FileNotFoundError(
+        raise FileOperationError(
             f"Tracker config file not found: {fpath_tracker_config}"
         )
 
@@ -142,7 +142,7 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
     """Validate a PyBIDS ignore patterns file."""
     fpath_pybids_ignore: Path = Path(fpath_pybids_ignore)
     if not fpath_pybids_ignore.exists():
-        raise FileNotFoundError(
+        raise FileOperationError(
             f"PyBIDS ignore patterns file not found: {fpath_pybids_ignore}"
         )
 

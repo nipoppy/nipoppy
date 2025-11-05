@@ -8,7 +8,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.main import Config
-from nipoppy.exceptions import LayoutError
+from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG, FPATH_SAMPLE_MANIFEST
@@ -127,7 +127,7 @@ def test_config(workflow: BaseDatasetWorkflow, fpath_config):
 
 def test_config_not_found(workflow: BaseDatasetWorkflow):
     workflow.layout.fpath_config.unlink()
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileOperationError):
         workflow.config
 
 
@@ -146,7 +146,7 @@ def test_manifest(workflow: BaseDatasetWorkflow):
 
 def test_manifest_not_found(workflow: BaseDatasetWorkflow):
     workflow.layout.fpath_manifest.unlink()
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileOperationError):
         workflow.manifest
 
 
@@ -161,7 +161,7 @@ def test_dicom_dir_map_custom(workflow: BaseDatasetWorkflow):
 
 def test_dicom_dir_map_not_found(workflow: BaseDatasetWorkflow):
     workflow.config.DICOM_DIR_MAP_FILE = "fake_path"
-    with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
+    with pytest.raises(FileOperationError, match="DICOM directory map file not found"):
         workflow.dicom_dir_map
 
 

@@ -7,8 +7,6 @@ from typing import Optional, Tuple
 
 import httpx
 
-from nipoppy.exceptions import NipoppyExit
-
 
 class ChecksumError(Exception):
     """Exception raised from checksums mismatch."""
@@ -307,7 +305,7 @@ class ZenodoAPI:
                     f"{response.json()}"
                 )
 
-            raise NipoppyExit(1)
+            raise ZenodoAPIError from e
 
     def search_records(
         self,

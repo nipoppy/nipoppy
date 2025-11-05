@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import LayoutError
+from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.layout import DatasetLayout, PathInfo
 from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 from tests.conftest import (
@@ -75,7 +75,7 @@ def test_init_invalid_layout(dpath_root, fpath_spec):
 
 
 def test_init_config_not_found(dpath_root):
-    with pytest.raises(FileNotFoundError, match="Layout config file not found"):
+    with pytest.raises(FileOperationError, match="Layout config file not found"):
         DatasetLayout(dpath_root=dpath_root, fpath_config="fake_path")
 
 

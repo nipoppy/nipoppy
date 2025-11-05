@@ -6,20 +6,26 @@ from contextlib import contextmanager
 import rich_click as click
 
 from nipoppy.env import PROGRAM_NAME, ReturnCode
+from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
 
 
+# TODO once logger is extracted from the workflows, we could remove the `workflow`
+# parameter and use as a standalone context manager
 @contextmanager
 def exception_handler(workflow):
     """Handle exceptions raised during workflow execution."""
     try:
         yield workflow
-    except SystemExit:
-        workflow.return_code = ReturnCode.UNKNOWN_FAILURE
+    except SystemExit as e:
+        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
+        workflow.logger.error(e)
+    except NipoppyError as e:
+        workflow.return_code = e.code
+        workflow.logger.error(e)
     except Exception:
-        workflow.logger.exception("Error while running nipoppy")
-        if workflow.return_code == ReturnCode.SUCCESS:
-            workflow.return_code = ReturnCode.UNKNOWN_FAILURE
+        workflow.return_code = ReturnCode.UNKNOWN_FAILURE
+        workflow.logger.exception("Unexpected error occurred")
     finally:
         sys.exit(workflow.return_code)
 

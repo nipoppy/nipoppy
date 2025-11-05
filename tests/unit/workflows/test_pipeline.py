@@ -32,6 +32,7 @@ from nipoppy.env import (
     ContainerCommandEnum,
     ReturnCode,
 )
+from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
@@ -250,7 +251,7 @@ def test_get_pipeline_version(
 
 
 def test_get_pipeline_version_invalid_name(tmp_path: Path):
-    with pytest.raises(ValueError, match="No config found for pipeline"):
+    with pytest.raises(WorkflowError, match="No config found for pipeline"):
         get_pipeline_version("pipeline1", tmp_path)
 
 
@@ -321,7 +322,7 @@ def test_init_hpc_write_subcohort():
         "write_subcohort": "list.tsv",
     }
     with pytest.raises(
-        ValueError,
+        WorkflowError,
         match="HPC job submission and writing a list of participants and sessions are mutually exclusive.",  # noqa: E501
     ):
         PipelineWorkflow(**args)
@@ -350,7 +351,7 @@ def test_init_participant_session(
 
 def test_init_n_jobs_logfile():
     with pytest.raises(
-        ValueError, match="n_jobs is not supported when _skip_logfile is False."
+        WorkflowError, match="n_jobs is not supported when _skip_logfile is False."
     ):
         PipelineWorkflow(
             dpath_root="my_dataset",
@@ -406,7 +407,7 @@ def test_fpath_container_not_specified_apptainer(workflow: PipelineWorkflow):
         ContainerCommandEnum.APPTAINER
     )
     with pytest.raises(
-        ValueError,
+        WorkflowError,
         match=(
             "Error in container config for pipeline.*"
             "Path to container image must be specified"
@@ -443,7 +444,7 @@ def test_fpath_container_not_found(workflow: PipelineWorkflow, container_uri):
             f"apptainer pull {workflow.pipeline_config.CONTAINER_INFO.FILE}"
             f" {workflow.pipeline_config.CONTAINER_INFO.URI}"
         )
-    with pytest.raises(FileNotFoundError, match=error_message):
+    with pytest.raises(FileOperationError, match=error_message):
         workflow.fpath_container
 
 
@@ -475,7 +476,7 @@ def test_descriptor(
 
 
 def test_descriptor_none(workflow: PipelineWorkflow):
-    with pytest.raises(ValueError, match="No descriptor file specified for pipeline"):
+    with pytest.raises(ConfigError, match="No descriptor file specified for pipeline"):
         workflow.descriptor
 
 
@@ -531,7 +532,7 @@ def test_invocation(
 
 
 def test_invocation_none(workflow: PipelineWorkflow):
-    with pytest.raises(ValueError, match="No invocation file specified for pipeline"):
+    with pytest.raises(ConfigError, match="No invocation file specified for pipeline"):
         workflow.invocation
 
 
@@ -627,7 +628,7 @@ def test_pybids_ignore_patterns_invalid_format(
     fpath_patterns.write_text(json.dumps({"key": "value"}))
     workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
 
-    with pytest.raises(ValueError, match="Expected a list of strings"):
+    with pytest.raises(WorkflowError, match="Expected a list of strings"):
         workflow.pybids_ignore_patterns
 
 
@@ -741,7 +742,7 @@ def test_get_pipeline_config_missing(
         / dname_pipelines
         / f"{pipeline_name}-{pipeline_version}"
     )
-    with pytest.raises(FileNotFoundError, match="Pipeline config file not found at"):
+    with pytest.raises(FileOperationError, match="Pipeline config file not found at"):
         workflow._get_pipeline_config(
             dpath_pipeline_bundle,
             pipeline_name=pipeline_name,
@@ -837,7 +838,7 @@ def test_boutiques_config_invalid(tmp_path: Path):
     )
     workflow.descriptor = {"custom": {"nipoppy": {"INVALID_ARG": "value"}}}
 
-    with pytest.raises(ValueError, match="Error when loading the Boutiques config"):
+    with pytest.raises(WorkflowError, match="Error when loading the Boutiques config"):
         workflow.boutiques_config
 
 
@@ -961,7 +962,7 @@ def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
     with (
         nullcontext()
         if valid
-        else pytest.raises(ValueError, match="Variable .* is not set in the config")
+        else pytest.raises(ConfigError, match="Variable .* is not set in the config")
     ):
         assert workflow._check_pipeline_variables() is None
 
@@ -1246,7 +1247,7 @@ def test_run_main_use_subcohort_not_found(
     )
 
     with pytest.raises(
-        FileNotFoundError,
+        FileOperationError,
         match=f"Subcohort file {fpath_list} not found",
     ):
         workflow.run_main()
@@ -1496,7 +1497,7 @@ def test_submit_hpc_job(
 def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
     assert not workflow.layout.dpath_hpc.exists()
     with pytest.raises(
-        FileNotFoundError,
+        FileOperationError,
         match="The HPC directory with appropriate content needs to exist",
     ):
         workflow._submit_hpc_job([("P1", "1")])
@@ -1508,7 +1509,7 @@ def test_submit_hpc_job_invalid_hpc(
     _set_up_hpc_for_testing(workflow, mocker)
     workflow.hpc = "invalid"
 
-    with pytest.raises(ValueError, match="Invalid HPC cluster type"):
+    with pytest.raises(ConfigError, match="Invalid HPC cluster type"):
         workflow._submit_hpc_job([("P1", "1")])
 
 

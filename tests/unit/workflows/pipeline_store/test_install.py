@@ -17,9 +17,8 @@ from nipoppy.env import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
     PipelineTypeEnum,
-    ReturnCode,
 )
-from nipoppy.exceptions import ConfigError, NipoppyExit
+from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -316,7 +315,7 @@ def test_download_container_failed(
         side_effect=subprocess.CalledProcessError(1, error_message),
     )
 
-    with pytest.raises(NipoppyExit, match=f"{ReturnCode.UNKNOWN_FAILURE}"):
+    with pytest.raises(WorkflowError):
         workflow._download_container(pipeline_config)
 
     mocked.assert_called_once()
@@ -408,7 +407,7 @@ def test_run_main_force(
     with (
         nullcontext()
         if force
-        else pytest.raises(FileExistsError, match="Use --force to overwrite")
+        else pytest.raises(FileOperationError, match="Use --force to overwrite")
     ):
         workflow.run_main()
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
@@ -425,7 +424,7 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
 
 
 @pytest.mark.parametrize(
-    "zenodo_id,exception", [(None, FileNotFoundError), ("123456", ConfigError)]
+    "zenodo_id,exception", [(None, FileOperationError), ("123456", ConfigError)]
 )
 def test_run_main_file_not_found(
     workflow: PipelineInstallWorkflow, zenodo_id: Optional[str], exception: Exception
@@ -463,7 +462,7 @@ def test_download_dir_exist(
     download_dir.mkdir(parents=True, exist_ok=True)
     assert download_dir.exists()
 
-    with pytest.raises(SystemExit) if fails else nullcontext():
+    with pytest.raises(WorkflowError) if fails else nullcontext():
         workflow_zenodo.run_main()
 
 
@@ -481,7 +480,7 @@ def test_download_install_dir_exist(
 
     with (
         pytest.raises(
-            FileExistsError,
+            FileOperationError,
             match="Pipeline directory exists: .* Use --force to overwrite",
         )
         if fails

@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import PipelineTypeEnum
+from nipoppy.exceptions import FileOperationError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.pipeline_store.create import (
@@ -89,7 +90,7 @@ def test_create_already_exists(target: Path):
     target.mkdir(parents=True, exist_ok=True)
     assert target.exists()
 
-    with pytest.raises(FileExistsError, match="Target directory .* already exists"):
+    with pytest.raises(FileOperationError, match="Target directory .* already exists"):
         PipelineCreateWorkflow(
             pipeline_dir=target,
             type_=PipelineTypeEnum.PROCESSING,
