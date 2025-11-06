@@ -6,11 +6,15 @@ import pandas as pd
 from rich import box
 from rich.table import Table
 
-from nipoppy.console import CONSOLE_STDOUT
+from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.env import ZENODO_COMMUNITY_ID, LogColor
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
+
+CURRENT_CONSOLE_WIDTH = CONSOLE_STDOUT.size.width
+RESIZED_CONSOLE_WIDTH = min(CURRENT_CONSOLE_WIDTH, 120 - _INDENT)
+MINIMIZED_TABLE_MAX_WIDTH = 80
 
 
 class PipelineSearchWorkflow(BaseWorkflow):
@@ -21,6 +25,15 @@ class PipelineSearchWorkflow(BaseWorkflow):
     col_title = "Title"
     col_description = "Description"
     col_downloads = "Downloads"
+    widths = {
+        col_zenodo_id: len(col_zenodo_id),
+        col_downloads: len(col_downloads),
+        col_title: 20,
+    }
+    # Add 10 extra spaces for padding and table borders
+    widths[col_description] = min(
+        RESIZED_CONSOLE_WIDTH, RESIZED_CONSOLE_WIDTH - sum(widths.values(), 10)
+    )
 
     def __init__(
         self,
@@ -67,11 +80,26 @@ class PipelineSearchWorkflow(BaseWorkflow):
 
     def _df_to_table(self, df_hits: pd.DataFrame) -> Table:
         table = Table(box=box.MINIMAL_DOUBLE_HEAD)
-        table.add_column(self.col_zenodo_id, justify="center")
-        table.add_column(self.col_title, justify="left")
-        table.add_column(self.col_description, justify="left", no_wrap=True)
-        table.add_column(self.col_downloads, justify="right")
+        table.add_column(
+            self.col_zenodo_id, justify="center", width=self.widths[self.col_zenodo_id]
+        )
+        table.add_column(
+            self.col_title, justify="left", min_width=self.widths[self.col_title]
+        )
+
+        if CURRENT_CONSOLE_WIDTH > MINIMIZED_TABLE_MAX_WIDTH:
+            table.add_column(
+                self.col_description,
+                justify="left",
+                max_width=self.widths[self.col_description],
+                no_wrap=True,  # Required to make overflow="ellipsis" work
+                overflow="ellipsis",
+            )
+        table.add_column(
+            self.col_downloads, justify="right", width=self.widths[self.col_downloads]
+        )
         cols = [col.header for col in table.columns]
+
         for _, row in df_hits[cols].iterrows():
             table.add_row(*[str(cell) for cell in row])
         return table
