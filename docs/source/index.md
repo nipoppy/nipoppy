@@ -59,8 +59,8 @@ includehidden:
 titlesonly:
 caption: Explanations
 ---
-explanations/manifest
 explanations/study_spec
+explanations/manifest
 ```
 
 ```{toctree}

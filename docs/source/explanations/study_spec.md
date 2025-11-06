@@ -4,6 +4,6 @@ Nipoppy provides a specification (i.e. directory layout) for dataset organizatio
 
 There are ongoing efforts to merge this specification with the BIDS standard's study-level dataset type.
 
-The directory tree shown below is generated automatically upon dataset initialization (see [nipoppy init](../how_to_guides/init/index.md)).
+The directory tree shown below is generated automatically upon dataset initialization (see [`nipoppy init`](../cli_reference/init.rst)).
 
 ![Nipoppy specification](../_static/img/nipoppy_specification.jpg)
