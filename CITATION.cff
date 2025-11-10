@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: nipoppy
-version: 0.4.1
+version: 0.4.2
 abstract: A lightweight framework for neuroimaging-clinical data organization/processing.
 message: If you use this software, please cite it as below.
 repository-code: https://github.com/nipoppy/nipoppy.git

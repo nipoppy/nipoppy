@@ -7,6 +7,7 @@ import pytest
 import pytest_mock
 from rich.table import Table
 
+from nipoppy.env import ZENODO_COMMUNITY_ID
 from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
 
 
@@ -61,7 +62,22 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     assert df.iloc[1]["Downloads"] == 4
 
 
-def test_df_to_table(workflow: PipelineSearchWorkflow):
+@pytest.mark.parametrize(
+    "console_width, is_description_hidden",
+    [
+        (80, True),
+        (120, False),
+    ],
+)
+def test_df_to_table(
+    workflow: PipelineSearchWorkflow,
+    console_width: int,
+    is_description_hidden: bool,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import nipoppy.workflows.pipeline_store.search as search_module
+
+    monkeypatch.setattr(search_module, "CURRENT_CONSOLE_WIDTH", console_width)
     df_hits = pd.DataFrame(
         [
             {
@@ -80,11 +96,16 @@ def test_df_to_table(workflow: PipelineSearchWorkflow):
     )
     table = workflow._df_to_table(df_hits)
     assert table.row_count == len(df_hits)
-    assert len(table.columns) == len(df_hits.columns)
+    if is_description_hidden:
+        assert len(table.columns) == len(df_hits.columns) - 1
+    else:
+        assert len(table.columns) == len(df_hits.columns)
 
 
+@pytest.mark.parametrize("community", [True, False])
 def test_run_main(
     workflow: PipelineSearchWorkflow,
+    community: bool,
     hits: list[dict],
     mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
@@ -102,10 +123,14 @@ def test_run_main(
         workflow, "_df_to_table", return_value=Table()
     )
 
+    workflow.community = community
     workflow.run()
 
     workflow.zenodo_api.search_records.assert_called_once_with(
-        query=workflow.query, keywords=["Nipoppy"], size=workflow._api_search_size
+        query=workflow.query,
+        keywords=["Nipoppy"],
+        size=workflow._api_search_size,
+        community_id=ZENODO_COMMUNITY_ID if community else None,
     )
     mocked_hits_to_df.assert_called_once_with(hits)
     mocked_df_to_table.assert_called_once_with(df)
