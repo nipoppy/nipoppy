@@ -1,5 +1,8 @@
 {
-    "Name": "CHANGEME",
+    "Name": "TODO: CHANGEME",
     "BIDSVersion": "1.10.1",
-    "DatasetType": "study"
+    "DatasetType": "study",
+    "Authors": ["TODO"],
+    "Description": "TODO: CHANGEME. This and other fields are described at https://bids-specification.readthedocs.io/en/stable/modality-agnostic-files/dataset-description.html",
+    "Funding": "TODO"
 }
