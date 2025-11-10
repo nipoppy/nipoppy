@@ -15,6 +15,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
+    "bids-validator-deno",
     "boutiques>=0.5.30",
     "click",
     "httpx",

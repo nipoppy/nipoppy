@@ -1,6 +1,8 @@
 """Tests for the dataset init workflow."""
 
 import os
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -282,6 +284,30 @@ def test_bidsignore_created(dpath_root: Path):
     assert "logs" in content
     assert ".nipoppy" in content
     assert "code" in content
+
+
+@pytest.mark.skipif(
+    shutil.which("bids-validator-deno") is None,
+    reason="bids-validator-deno not installed",
+)
+def test_bids_study_layout_passes_validation(dpath_root: Path):
+    """Test that BIDS study layout passes BIDS validation with no errors."""
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
+    )
+    workflow.run()
+
+    # Run BIDS validator
+    result = subprocess.run(
+        ["bids-validator-deno", str(dpath_root), "--datasetTypes", "study"],
+        capture_output=True,
+        text=True,
+    )
+
+    # Check that there are no errors (warnings are OK)
+    assert (
+        "[ERROR]" not in result.stderr
+    ), f"BIDS validation errors found:\n{result.stderr}"
 
 
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
