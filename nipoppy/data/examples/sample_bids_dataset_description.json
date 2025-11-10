@@ -4,5 +4,10 @@
     "DatasetType": "study",
     "Authors": ["TODO"],
     "Description": "TODO: CHANGEME. This and other fields are described at https://bids-specification.readthedocs.io/en/stable/modality-agnostic-files/dataset-description.html",
-    "Funding": "TODO"
+    "Funding": "TODO",
+    "GeneratedBy": [{
+        "Name": "nipoppy",
+        "CodeURL": "https://github.com/nipoppy/nipoppy",
+        "Version": "[[NIPOPPY_VERSION]]"
+    }]
 }

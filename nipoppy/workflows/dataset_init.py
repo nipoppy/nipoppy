@@ -5,6 +5,7 @@ from typing import Optional
 
 import httpx
 
+from nipoppy._version import __version__
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -113,9 +114,10 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # copy dataset description file if specified in layout
         if getattr(self.layout, "fpath_bids_dataset_description", None):
-            self.copy(
+            self.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.layout.fpath_bids_dataset_description,
+                version=__version__,
             )
 
         # copy bidsignore file if specified in layout

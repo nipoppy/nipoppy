@@ -220,6 +220,26 @@ class BaseWorkflow(Base, ABC):
         if not self.dry_run:
             shutil.copy2(src=path_source, dst=path_dest, **kwargs)
 
+    def copy_template(self, path_source, path_dest, **template_kwargs):
+        """Copy a file with template substitution.
+
+        Parameters
+        ----------
+        path_source : path
+            Source template file path
+        path_dest : path
+            Destination file path
+        **template_kwargs : dict
+            Keyword arguments passed to process_template_str for substitution
+        """
+        self.logger.debug(f"Copying template {path_source} to {path_dest}")
+        if not self.dry_run:
+            with open(path_source, "r") as f:
+                content = process_template_str(f.read(), **template_kwargs)
+            self.mkdir(Path(path_dest).parent)
+            with open(path_dest, "w") as f:
+                f.write(content)
+
     def copytree(self, path_source, path_dest, **kwargs):
         """Copy directory tree."""
         self.logger.debug(f"Copying {path_source} to {path_dest}")
