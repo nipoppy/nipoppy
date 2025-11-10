@@ -225,11 +225,11 @@ class BaseWorkflow(Base, ABC):
 
         Parameters
         ----------
-        path_source : path
+        path_source
             Source template file path
-        path_dest : path
+        path_dest
             Destination file path
-        **template_kwargs : dict
+        **template_kwargs
             Keyword arguments passed to process_template_str for substitution
         """
         self.logger.debug(f"Copying template {path_source} to {path_dest}")

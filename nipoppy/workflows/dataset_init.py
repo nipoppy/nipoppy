@@ -5,7 +5,10 @@ from typing import Optional
 
 import httpx
 
-from nipoppy._version import __version__
+try:
+    from nipoppy._version import __version__
+except ImportError:
+    __version__ = "unknown"
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
