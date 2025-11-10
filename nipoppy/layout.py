@@ -123,6 +123,9 @@ class LayoutConfig(BaseModel):
     fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
         default=None, description="Path to the BIDS dataset description file"
     )
+    fpath_bidsignore: Optional[OptionalFpathInfo] = Field(
+        default=None, description="Path to the .bidsignore file"
+    )
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -250,10 +253,14 @@ class DatasetLayout(Base):
         self.fpath_demographics: Path = self.get_full_path(
             self.config.fpath_demographics.path
         )
-        # Optional field - only set if defined in layout
+        # Optional fields - only set if defined in layout
         if self.config.fpath_bids_dataset_description is not None:
             self.fpath_bids_dataset_description: Path = self.get_full_path(
                 self.config.fpath_bids_dataset_description.path
+            )
+        if self.config.fpath_bidsignore is not None:
+            self.fpath_bidsignore: Path = self.get_full_path(
+                self.config.fpath_bidsignore.path
             )
 
     def get_full_path(self, path: StrOrPathLike) -> Path:

@@ -94,5 +94,9 @@
     "fpath_bids_dataset_description": {
         "path": "dataset_description.json",
         "description": "The dataset description file contains metadata about the dataset according to the BIDS specification."
+    },
+    "fpath_bidsignore": {
+        "path": ".bidsignore",
+        "description": "The .bidsignore file lists files and directories to exclude from BIDS validation."
     }
 }

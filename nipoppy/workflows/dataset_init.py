@@ -22,6 +22,7 @@ from nipoppy.utils.bids import (
 from nipoppy.utils.utils import (
     DPATH_HPC,
     FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
+    FPATH_SAMPLE_BIDSIGNORE,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
 )
@@ -115,6 +116,13 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.copy(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.layout.fpath_bids_dataset_description,
+            )
+
+        # copy bidsignore file if specified in layout
+        if getattr(self.layout, "fpath_bidsignore", None):
+            self.copy(
+                FPATH_SAMPLE_BIDSIGNORE,
+                self.layout.fpath_bidsignore,
             )
 
         # copy HPC files

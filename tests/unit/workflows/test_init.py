@@ -265,6 +265,25 @@ def test_bids_dataset_description_created(dpath_root: Path):
     assert (dpath_root / "dataset_description.json").exists()
 
 
+def test_bidsignore_created(dpath_root: Path):
+    """Test that .bidsignore is created with BIDS study layout."""
+    workflow = InitWorkflow(
+        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
+    )
+    workflow.run()
+
+    # The BIDS study layout includes an optional .bidsignore file
+    fpath_bidsignore = dpath_root / ".bidsignore"
+    assert fpath_bidsignore.exists()
+
+    # Verify it contains Nipoppy-specific directories
+    content = fpath_bidsignore.read_text()
+    assert "scratch" in content
+    assert "logs" in content
+    assert ".nipoppy" in content
+    assert "code" in content
+
+
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow = InitWorkflow(dpath_root=tmp_path)
     workflow.run_cleanup()
