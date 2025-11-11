@@ -400,7 +400,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         # validate format
         if not isinstance(patterns, list):
-            raise WorkflowError(
+            raise ConfigError(
                 f"Expected a list of strings in {fpath_pybids_ignore}"
                 f", got {patterns} ({type(patterns)})"
             )
