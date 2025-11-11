@@ -788,7 +788,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         try:
             qa.switch_cluster(self.hpc)
         except KeyError as e:
-            raise ConfigError(
+            raise WorkflowError(
                 f"Invalid HPC cluster type: {self.hpc}"
                 f". Available clusters are: {qa.list_clusters()}"
             ) from e
