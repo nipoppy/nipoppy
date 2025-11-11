@@ -400,7 +400,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         # validate format
         if not isinstance(patterns, list):
-            raise WorkflowError(
+            raise ConfigError(
                 f"Expected a list of strings in {fpath_pybids_ignore}"
                 f", got {patterns} ({type(patterns)})"
             )
@@ -788,7 +788,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         try:
             qa.switch_cluster(self.hpc)
         except KeyError as e:
-            raise ConfigError(
+            raise WorkflowError(
                 f"Invalid HPC cluster type: {self.hpc}"
                 f". Available clusters are: {qa.list_clusters()}"
             ) from e
