@@ -43,7 +43,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
-from nipoppy.layout import DatasetLayout
+from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -778,7 +778,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         # make sure HPC directory exists
         dpath_hpc_configs = self.layout.dpath_hpc
         if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
-            raise FileOperationError(
+            raise LayoutError(
                 "The HPC directory with appropriate content needs to exist at "
                 f"{self.layout.dpath_hpc} if HPC job submission is requested"
             )

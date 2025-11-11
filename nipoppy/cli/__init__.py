@@ -34,7 +34,7 @@ def exception_handler(workflow):
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
         workflow.logger.exception("Unexpected error occurred")
-        logger.warning(
+        workflow.logger.warning(
             "You can report this issue on GitHub at https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"  # noqa:E501
             " or on our Discord server at https://discord.gg/2VMKFRpjkm"
         )
