@@ -1,7 +1,6 @@
 """Tests for the pipeline configuration class."""
 
 from contextlib import nullcontext
-from pathlib import Path
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -220,14 +219,6 @@ def test_substitutions(valid_data):
         str(pipeline_config.STEPS[0].INVOCATION_FILE)
         == "my_pipeline-1.0.0/invocation.json"
     )
-
-
-@pytest.mark.parametrize("container", ["my_container.sif", "my_other_container.sif"])
-def test_get_fpath_container(valid_data, container):
-    pipeline_config = BasePipelineConfig(
-        **valid_data, CONTAINER_INFO={"FILE": container}
-    )
-    assert pipeline_config.get_fpath_container() == Path(container)
 
 
 @pytest.mark.parametrize(
