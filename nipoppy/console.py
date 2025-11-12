@@ -19,8 +19,10 @@ _INDENT = 9  # match Rich logger offset
 _DPATH_PACKAGE_ROOT = Path(__file__).parent.resolve()
 
 
+# TODO possibly refactor this.
+# We could have with_indent: bool = True, by default
+# Then we would set the indent to False when calling from outside the package.
 def _force_indent_if_internal(func):
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         """Set with_indent to True if the caller is from this package."""

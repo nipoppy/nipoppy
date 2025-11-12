@@ -46,6 +46,14 @@ def zenodo_options(func):
     default=10,
     show_default=True,
 )
+@click.option(
+    "--community",
+    is_flag=True,
+    help=(
+        "Filter search results to only include pipelines from the Nipoppy Zenodo"
+        " community."
+    ),
+)
 @zenodo_options
 @global_options
 def pipeline_search(**params):
