@@ -52,10 +52,8 @@ def test_generate_fpath_log(
 ):  # noqa F811
     fpath_log = workflow.generate_fpath_log()
     assert isinstance(fpath_log, Path)
-    assert (
-        fpath_log
-        == workflow.study.layout.dpath_logs
-        / "my_workflow/my_workflow-20240404_1234.log"
+    assert fpath_log == workflow.study.layout.dpath_logs.joinpath(
+        "my_workflow/my_workflow-20240404_1234.log"
     )
 
 
@@ -67,10 +65,8 @@ def test_generate_fpath_log_custom(
 ):
     fpath_log = workflow.generate_fpath_log(fname_stem=fname_stem)
     assert isinstance(fpath_log, Path)
-    assert (
-        fpath_log
-        == workflow.study.layout.dpath_logs
-        / f"my_workflow/{fname_stem}-20240404_1234.log"
+    assert fpath_log == workflow.study.layout.dpath_logs.joinpath(
+        f"my_workflow/{fname_stem}-20240404_1234.log"
     )
 
 
