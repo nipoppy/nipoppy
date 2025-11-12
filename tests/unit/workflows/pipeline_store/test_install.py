@@ -62,7 +62,7 @@ def workflow(
     )
     # make the default config have a path placeholder string
     get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]/my_file.tsv").save(
-        workflow.layout.fpath_config
+        workflow.study.layout.fpath_config
     )
 
     # mock singularity/apptainer pull (this is overridden by some tests)
@@ -170,7 +170,7 @@ def test_update_config_and_save_no_other_change(
 ):
     # cache original config
     original_config = Config.load(
-        workflow.layout.fpath_config  # , apply_substitutions=False
+        workflow.study.layout.fpath_config  # , apply_substitutions=False
     )
 
     # check that placeholder was replaced as expected
@@ -204,11 +204,11 @@ def test_update_config_and_save_no_overwrite(
         pipeline_config.VERSION,
         {variable_name: variable_value},
     )
-    workflow.config.save(workflow.layout.fpath_config)
+    workflow.config.save(workflow.study.layout.fpath_config)
 
     workflow._update_config_and_save(pipeline_config)
 
-    updated_config = workflow.config.load(workflow.layout.fpath_config)
+    updated_config = workflow.config.load(workflow.study.layout.fpath_config)
     assert updated_config.PIPELINE_VARIABLES.get_variables(
         pipeline_config.PIPELINE_TYPE,
         pipeline_config.NAME,
@@ -240,7 +240,7 @@ def test_download_container(
     # check that the container file was downloaded
     mocked_run_command.assert_called_once_with(
         "apptainer pull "
-        f"{workflow.layout.dpath_containers / pipeline_config.CONTAINER_INFO.FILE.name}"
+        f"{workflow.study.layout.dpath_containers / pipeline_config.CONTAINER_INFO.FILE.name}"  # noqa: E501
         " fake_uri",
     )
     # first call, positional arg list, first element
@@ -354,7 +354,8 @@ def test_download_container_image_exists(
     mocker: pytest_mock.MockFixture,
 ):
     fpath_container = (
-        workflow.layout.dpath_containers / pipeline_config.CONTAINER_INFO.FILE.name
+        workflow.study.layout.dpath_containers
+        / pipeline_config.CONTAINER_INFO.FILE.name
     )
     fpath_container.parent.mkdir(parents=True, exist_ok=True)
     fpath_container.touch()
@@ -370,7 +371,7 @@ def test_run_main(
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockFixture,
 ):
-    dpath_installed = workflow.layout.get_dpath_pipeline_bundle(
+    dpath_installed = workflow.study.layout.get_dpath_pipeline_bundle(
         pipeline_config.PIPELINE_TYPE,
         pipeline_config.NAME,
         pipeline_config.VERSION,
@@ -406,7 +407,7 @@ def test_run_main_force(
     workflow.force = force
 
     # create directory where the pipeline is supposed to be installed
-    dpath_installed = workflow.layout.get_dpath_pipeline_bundle(
+    dpath_installed = workflow.study.layout.get_dpath_pipeline_bundle(
         pipeline_config.PIPELINE_TYPE,
         pipeline_config.NAME,
         pipeline_config.VERSION,
@@ -434,7 +435,9 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
 
 def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
     # create a non-existent path
-    workflow.dpath_pipeline = workflow.layout.dpath_pipelines / "non_existent_path"
+    workflow.dpath_pipeline = (
+        workflow.study.layout.dpath_pipelines / "non_existent_path"
+    )
     with pytest.raises(
         FileNotFoundError,
         match="Pipeline configuration file not found: .*/config.json$",
@@ -447,10 +450,10 @@ def test_download(workflow_zenodo: PipelineInstallWorkflow):
 
     # Check that the pipeline was downloaded and moved correctly
     assert not (
-        workflow_zenodo.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+        workflow_zenodo.study.layout.dpath_pipelines / workflow_zenodo.zenodo_id
     ).exists()
     assert (
-        workflow_zenodo.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
+        workflow_zenodo.study.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
     ).exists()
 
 
@@ -461,7 +464,9 @@ def test_download_dir_exist(
     """Test the behavior when the download directory already exists."""
     workflow_zenodo.force = force
 
-    download_dir = workflow_zenodo.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+    download_dir = (
+        workflow_zenodo.study.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+    )
     download_dir.mkdir(parents=True, exist_ok=True)
     assert download_dir.exists()
 
@@ -476,7 +481,7 @@ def test_download_install_dir_exist(
     workflow_zenodo.force = force
 
     download_dir = (
-        workflow_zenodo.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
+        workflow_zenodo.study.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
     )
     download_dir.mkdir(parents=True, exist_ok=True)
     assert download_dir.exists()

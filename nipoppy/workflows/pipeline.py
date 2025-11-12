@@ -233,14 +233,14 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def dpath_pipeline(self) -> Path:
         """Return the path to the pipeline's derivatives directory."""
-        return self.layout.get_dpath_pipeline(
+        return self.study.layout.get_dpath_pipeline(
             pipeline_name=self.pipeline_name, pipeline_version=self.pipeline_version
         )
 
     @cached_property
     def dpath_pipeline_output(self) -> Path:
         """Return the path to the pipeline's output directory."""
-        return self.layout.get_dpath_pipeline_output(
+        return self.study.layout.get_dpath_pipeline_output(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
         )
@@ -248,7 +248,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def dpath_pipeline_work(self) -> Path:
         """Return the path to the pipeline's working directory."""
-        return self.layout.get_dpath_pipeline_work(
+        return self.study.layout.get_dpath_pipeline_work(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             participant_id=self.participant_id,
@@ -258,7 +258,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def dpath_pipeline_bids_db(self) -> Path:
         """Return the path to the pipeline's BIDS database directory."""
-        return self.layout.get_dpath_pybids_db(
+        return self.study.layout.get_dpath_pybids_db(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             participant_id=self.participant_id,
@@ -268,7 +268,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def dpath_pipeline_bundle(self) -> Path:
         """Path to the pipeline bundle directory."""
-        return self.layout.get_dpath_pipeline_bundle(
+        return self.study.layout.get_dpath_pipeline_bundle(
             self._pipeline_type,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
@@ -451,7 +451,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         pipeline_class: Type[BasePipelineConfig],
     ) -> BasePipelineConfig:
         """Get the config for a pipeline."""
-        fpath_config = dpath_pipeline_bundle / self.layout.fname_pipeline_config
+        fpath_config = dpath_pipeline_bundle / self.study.layout.fname_pipeline_config
         if not fpath_config.exists():
             raise FileNotFoundError(
                 f"Pipeline config file not found at {fpath_config} for "
@@ -518,7 +518,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         if objs is None:
             objs = []
-        objs.extend([self, self.layout])
+        objs.extend([self, self.study.layout])
 
         if kwargs:
             self.logger.debug("Available replacement strings: ")
@@ -567,9 +567,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"Overwriting existing BIDS database directory: {dpath_pybids_db}"
             )
 
-        self.logger.debug(f"Path to BIDS data: {self.layout.dpath_bids}")
+        self.logger.debug(f"Path to BIDS data: {self.study.layout.dpath_bids}")
         bids_layout: bids.BIDSLayout = create_bids_db(
-            dpath_bids=self.layout.dpath_bids,
+            dpath_bids=self.study.layout.dpath_bids,
             dpath_pybids_db=dpath_pybids_db,
             ignore_patterns=pybids_ignore_patterns,
             reset_database=True,
@@ -598,7 +598,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if self.pipeline_version is None:
             self.pipeline_version = get_pipeline_version(
                 pipeline_name=self.pipeline_name,
-                dpath_pipelines=self.layout.get_dpath_pipeline_store(
+                dpath_pipelines=self.study.layout.get_dpath_pipeline_store(
                     self._pipeline_type
                 ),
             )
@@ -616,7 +616,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                     f"Variable {name} is not set in the config for pipeline "
                     f"{self.pipeline_name}, version {self.pipeline_version}. You need "
                     "to set it in the PIPELINE_VARIABLES section of the config file at "
-                    f"{self.layout.fpath_config}"
+                    f"{self.study.layout.fpath_config}"
                 )
 
     def check_pipeline_step(self):
@@ -773,14 +773,14 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
         # make sure HPC directory exists
-        dpath_hpc_configs = self.layout.dpath_hpc
+        dpath_hpc_configs = self.study.layout.dpath_hpc
         if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
             raise FileNotFoundError(
                 "The HPC directory with appropriate content needs to exist at "
-                f"{self.layout.dpath_hpc} if HPC job submission is requested"
+                f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
             )
 
-        qa = QueueAdapter(directory=str(self.layout.dpath_hpc))
+        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
 
         try:
             qa.switch_cluster(self.hpc)
@@ -823,7 +823,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         fpath_hpc_error.unlink(missing_ok=True)
 
         # create the HPC logs directory
-        dpath_hpc_logs = self.layout.dpath_logs / self.dname_hpc_logs
+        dpath_hpc_logs = self.study.layout.dpath_logs / self.dname_hpc_logs
         dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
 
         # user-defined args
@@ -841,7 +841,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
                 NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
                 NIPOPPY_COMMANDS=job_array_commands,
-                NIPOPPY_DPATH_ROOT=self.layout.dpath_root,
+                NIPOPPY_DPATH_ROOT=self.study.layout.dpath_root,
                 NIPOPPY_PIPELINE_NAME=self.pipeline_name,
                 NIPOPPY_PIPELINE_VERSION=self.pipeline_version,
                 NIPOPPY_PIPELINE_STEP=self.pipeline_step,
@@ -864,7 +864,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f"\nThe job script can be found at {fpath_job_script}."
                 "\nThis file is auto-generated. To modify it, you will need to "
                 "modify the pipeline's HPC configuration in the config file and/or "
-                f"the template job script in {self.layout.dpath_hpc}."
+                f"the template job script in {self.study.layout.dpath_hpc}."
             )
 
         if job_id is not None:
@@ -881,7 +881,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self.logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, and/or "
-                f"check the curation status file at {self.layout.fpath_curation_status}"
+                "check the curation status file at "
+                f"{self.study.layout.fpath_curation_status}"
             )
             self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:

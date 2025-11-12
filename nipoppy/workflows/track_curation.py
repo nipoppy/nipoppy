@@ -38,10 +38,10 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
 
     def run_main(self):
         """Generate/update the dataset's curation status file."""
-        fpath_table = self.layout.fpath_curation_status
-        dpath_downloaded = self.layout.dpath_pre_reorg
-        dpath_organized = self.layout.dpath_post_reorg
-        dpath_bidsified = self.layout.dpath_bids
+        fpath_table = self.study.layout.fpath_curation_status
+        dpath_downloaded = self.study.layout.dpath_pre_reorg
+        dpath_organized = self.study.layout.dpath_post_reorg
+        dpath_bidsified = self.study.layout.dpath_bids
         empty = self.empty
         logger = self.logger
 

@@ -43,8 +43,8 @@ def assert_layout_creation(workflow, dpath_root):
     assert (
         len(
             list(
-                workflow.layout.dpath_pipelines.glob(
-                    f"**/{workflow.layout.fname_pipeline_config}"
+                workflow.study.layout.dpath_pipelines.glob(
+                    f"**/{workflow.study.layout.fname_pipeline_config}"
                 )
             )
         )
@@ -53,7 +53,7 @@ def assert_layout_creation(workflow, dpath_root):
 
     # check that HPC config files have been copied
     for fname in DPATH_HPC.glob("*"):
-        assert (workflow.layout.dpath_hpc / fname).exists()
+        assert (workflow.study.layout.dpath_hpc / fname).exists()
 
 
 def test_run(dpath_root: Path):

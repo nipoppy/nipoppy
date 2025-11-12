@@ -209,7 +209,7 @@ class ProcessingRunner(Runner):
                 participant_id=participant_id,
                 session_id=session_id,
                 bind_paths=[
-                    self.layout.dpath_bids,
+                    self.study.layout.dpath_bids,
                     self.dpath_pipeline_output,
                     self.dpath_pipeline_work,
                     self.dpath_pipeline_bids_db,

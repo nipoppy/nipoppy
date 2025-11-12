@@ -35,7 +35,7 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
     extractor.config = get_config()
     create_empty_dataset(extractor.dpath_root)
     create_pipeline_config_files(
-        extractor.layout.dpath_pipelines,
+        extractor.study.layout.dpath_pipelines,
         processing_pipelines=[
             {
                 "NAME": "freesurfer",
@@ -99,7 +99,7 @@ def test_setup(extractor: ExtractionRunner):
 def test_dpath_pipeline(extractor: ExtractionRunner):
     assert (
         extractor.dpath_pipeline
-        == extractor.layout.dpath_derivatives / "freesurfer" / "7.3.2"
+        == extractor.study.layout.dpath_derivatives / "freesurfer" / "7.3.2"
     )
 
 

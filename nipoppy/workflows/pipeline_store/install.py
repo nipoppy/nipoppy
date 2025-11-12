@@ -67,7 +67,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self.config object).
         """
         # do not use self.config since it has been changed by substitutions already
-        config = self.config.load(self.layout.fpath_config, apply_substitutions=False)
+        config = self.config.load(
+            self.study.layout.fpath_config, apply_substitutions=False
+        )
 
         if len(pipeline_config.VARIABLES) == 0:
             self.logger.debug("No changes to the global config file.")
@@ -106,12 +108,13 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 self.logger.warning(f"\t{variable_name}\t{variable_description}")
             self.logger.warning(
                 "You must update the PIPELINE_VARIABLES section in "
-                f"{self.layout.fpath_config} manually before running the pipeline!"
+                f"{self.study.layout.fpath_config}"
+                " manually before running the pipeline!"
             )
 
             # save
             if not self.dry_run:
-                config.save(self.layout.fpath_config)
+                config.save(self.study.layout.fpath_config)
 
         return config
 
@@ -130,7 +133,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
         fpath_container = Path(
             process_template_str(
-                str(pipeline_config.CONTAINER_INFO.FILE), objs=[self.layout]
+                str(pipeline_config.CONTAINER_INFO.FILE), objs=[self.study.layout]
             )
         )
 
@@ -185,7 +188,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 + self.zenodo_id
             )
             self.logger.info(f"Installing pipeline from {record_source}")
-            dpath_pipeline = self.layout.dpath_pipelines / self.zenodo_id
+            dpath_pipeline = self.study.layout.dpath_pipelines / self.zenodo_id
             if dpath_pipeline.exists() and not self.force:
                 self.logger.error(
                     f"Output directory {dpath_pipeline} already exists."
@@ -226,7 +229,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 raise exception
 
         # generate destination path
-        dpath_target = self.layout.get_dpath_pipeline_bundle(
+        dpath_target = self.study.layout.get_dpath_pipeline_bundle(
             pipeline_config.PIPELINE_TYPE, pipeline_config.NAME, pipeline_config.VERSION
         )
 

@@ -15,7 +15,6 @@ from typing import Optional, Sequence
 from nipoppy.base import Base
 from nipoppy.config.main import Config
 from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
-from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.study import Study
 from nipoppy.tabular.base import BaseTabular
@@ -317,8 +316,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             logger=self.logger,
         )
 
-        self.layout: DatasetLayout = self.study.layout
-
     def generate_fpath_log(
         self,
         dnames_parent: Optional[str | list[str]] = None,
@@ -331,7 +328,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             dnames_parent = [dnames_parent]
         if fname_stem is None:
             fname_stem = self.name
-        dpath_log = self.layout.dpath_logs / self.name
+        dpath_log = self.study.layout.dpath_logs / self.name
         for dname in dnames_parent:
             dpath_log = dpath_log / dname
         return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")
@@ -339,7 +336,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
     def run_setup(self):
         """Run the setup part of the workflow."""
         if self._validate_layout:
-            self.layout.validate()
+            self.study.layout.validate()
 
         if not self._skip_logfile:
             add_logfile(self.logger, self.generate_fpath_log())
@@ -363,7 +360,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
         Otherwise, generate a new one.
         """
-        fpath_table = Path(self.layout.fpath_curation_status)
+        fpath_table = Path(self.study.layout.fpath_curation_status)
         try:
             return self.study.curation_status_table
         except FileNotFoundError:
@@ -374,9 +371,9 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             table = generate_curation_status_table(
                 manifest=self.manifest,
                 dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=self.layout.dpath_pre_reorg,
-                dpath_organized=self.layout.dpath_post_reorg,
-                dpath_bidsified=self.layout.dpath_bids,
+                dpath_downloaded=self.study.layout.dpath_pre_reorg,
+                dpath_organized=self.study.layout.dpath_post_reorg,
+                dpath_bidsified=self.study.layout.dpath_bids,
                 empty=False,
                 logger=self.logger,
             )

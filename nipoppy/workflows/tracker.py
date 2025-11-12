@@ -47,22 +47,22 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_setup(self):
         """Load/initialize the processing status file."""
         rv = super().run_setup()
-        if self.layout.fpath_processing_status.exists():
+        if self.study.layout.fpath_processing_status.exists():
             try:
                 self.processing_status_table = ProcessingStatusTable.load(
-                    self.layout.fpath_processing_status
+                    self.study.layout.fpath_processing_status
                 )
                 self.logger.info(
                     f"Found existing processing status file with shape"
                     f" {self.processing_status_table.shape}"
-                    f" at {self.layout.fpath_processing_status}"
+                    f" at {self.study.layout.fpath_processing_status}"
                 )
             except ValueError as exception:
                 if "Error when validating the " in str(exception):
                     self.logger.warning(
                         "Failed to load existing processing status file at "
-                        f"{self.layout.fpath_processing_status}. Generating a new "
-                        f"processing status table.\nOriginal error:\n{exception}"
+                        f"{self.study.layout.fpath_processing_status}. Generating a new"
+                        f" processing status table.\nOriginal error:\n{exception}"
                     )
                     self.processing_status_table = ProcessingStatusTable()
         else:
@@ -165,6 +165,6 @@ class PipelineTracker(BasePipelineWorkflow):
             f"{self.processing_status_table.shape}"
         )
         self.save_tabular_file(
-            self.processing_status_table, self.layout.fpath_processing_status
+            self.processing_status_table, self.study.layout.fpath_processing_status
         )
         return super().run_cleanup()
