@@ -17,56 +17,9 @@ The Nipoppy directory tree for the imaging sourcedata looks like the following:
 
 **Example content for the imaging sourcedata directories:**
 
-<html>
-<head><style>
-table {
-	border-collapse:collapse;
-}
-tr {
-	border:none;
-}
-th, td {
-	border-collapse:collapse;
-	border: 1px solid black;
-	padding-top:0;
-	padding-bottom:0;
-}
-.verticalSplitplusBottomLeft {
-    border-top:none;
-    border-bottom:1px solid black;
-    border-left:none;
-}
-.verticalSplitplusBottomRight {
-    border-top:none;
-    border-bottom:1px solid black;
-    border-right:none;
-}
-.verticalSplitplusBottomMiddle {
-    border-top:none;
-    border-bottom:1px solid black;
-}
-.verticalSplit {
-	border-top:none;
-	border-bottom:none;
-}
-.verticalSplit:first-of-type {
-	border-left:none;
-}
-.verticalSplit:last-of-type {
-	border-right:none;
-}
-</style></head>
-<body>
-<table>
-<tr>
-<th class="verticalSplitplusBottomLeft"> <b> <code>downloads </code></b></th> <th class="verticalSplitplusBottomMiddle"> <b><code>pre-reorg</code> </b></th> <th class="verticalSplitplusBottomRight"> <b><code>post-reorg </code></b></th>
-</tr>
-<tr>
-<td class="verticalSplit"> Arbitrarily organized sourcedata downloaded in a compressed or archived file </td> <td class="verticalSplit"> Arbitrarily organized sourcedata in an uncompressed state </td> <td class="verticalSplit"> Organized sourcedata after running <code>nipoppy reorg</code>, ready for BIDSification </td>
-</tr>
-<tr>
-<td class="verticalSplit">
+<table><tr><td valign="top">
 
+**downloads**
 ```
 ├── downloads
 │   ├── example.zip
@@ -89,11 +42,9 @@ or
 │   └── README.md
 ```
 
+</td><td valign="top">
 
-</td>
-<td class="verticalSplit">
-
-
+**pre-reorg**
 ```
 ├── pre_reorg
 │   ├── 01
@@ -119,11 +70,9 @@ or
 │   └── README.md
 ```
 
+</td><td valign="top">
 
-</td>
-<td class="verticalSplit">
-
-
+**post-reorg**
 ```
 ├── post_reorg
 │   ├── sub-01
@@ -148,11 +97,7 @@ or
 sub- and ses- prefix added
 ```
 
-
-</td>
-</table>
-</body>
-</html>
+</td></tr></table>
 
 ## `nipoppy reorg`
 
@@ -164,7 +109,7 @@ sub- and ses- prefix added
 $ nipoppy status --dataset <NIPOPPY_PROJECT_ROOT>
 ```
 
-The output should list the number of participants that are present in both the `manifest.tsv` file and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`.
+The output should list the number of participants that are present in both the `manifest.tsv` file and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`. If you feel like the information of `nipoppy status` is outdated, you can run `nipoppy track-curation --regenerate` to update.
 
 - file organization in {{dpath_pre_reorg}} must follow a subject-first, session-second manner (see next section for help if this is not the case for your data)
 - the `manifest.tsv` file must list all participants and sessions
