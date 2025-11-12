@@ -59,6 +59,7 @@ includehidden:
 titlesonly:
 caption: Explanations
 ---
+explanations/study_spec
 explanations/manifest
 ```
 

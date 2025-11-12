@@ -32,6 +32,7 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
+from nipoppy.container import get_container_handler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -293,27 +294,34 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def fpath_container(self) -> Path:
         """Return the full path to the pipeline's container."""
-        fpath_container = self.pipeline_config.get_fpath_container()
-        if fpath_container is None:
-            raise RuntimeError(
-                f"No container image file specified in config for pipeline"
-                f" {self.pipeline_name} {self.pipeline_version}"
+        uri = self.pipeline_config.CONTAINER_INFO.URI
+        fpath_container = self.pipeline_config.CONTAINER_INFO.FILE
+        container_handler = get_container_handler(
+            self.pipeline_step_config.CONTAINER_CONFIG,
+            logger=self.logger,
+        )
+
+        try:
+            is_downloaded = container_handler.is_image_downloaded(uri, fpath_container)
+        except ValueError as exception:
+            raise ValueError(
+                f"Error in container config for pipeline {self.pipeline_name} "
+                f"{self.pipeline_version}: {exception}"
             )
 
-        elif not fpath_container.exists():
+        if not is_downloaded:
             error_message = (
-                f"No container image file found at {fpath_container} for pipeline"
+                f"No container image file found for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
-            if self.pipeline_config.CONTAINER_INFO.URI is not None:
+            if uri is not None:
+                pull_command = container_handler.get_pull_command(uri, fpath_container)
                 error_message += (
                     ". This file can be downloaded to the appropriate path by running "
-                    "the following command:"
-                    f"\n\n{self.pipeline_step_config.CONTAINER_CONFIG.COMMAND.value} "
-                    f"pull {self.pipeline_config.CONTAINER_INFO.FILE} "
-                    f"{self.pipeline_config.CONTAINER_INFO.URI}"
+                    f"the following command:\n\n{pull_command}"
                 )
             raise FileNotFoundError(error_message)
+
         return fpath_container
 
     @cached_property

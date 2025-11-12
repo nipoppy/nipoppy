@@ -128,7 +128,7 @@ class BIDSificationRunner(Runner):
         # get container command
         launch_boutiques_run_kwargs = {}
         if self.config.CONTAINER_CONFIG.COMMAND is not None:
-            container_command, container_config = self.process_container_config(
+            container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,
                 bind_paths=[
@@ -137,7 +137,7 @@ class BIDSificationRunner(Runner):
                 ],
             )
             launch_boutiques_run_kwargs["container_command"] = container_command
-            launch_boutiques_run_kwargs["container_config"] = container_config
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
