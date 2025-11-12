@@ -113,7 +113,7 @@ def test_config(workflow: BaseDatasetWorkflow):
 
 
 def test_manifest(workflow: BaseDatasetWorkflow):
-    assert id(workflow.manifest) == id(workflow.study.manifest)
+    assert id(workflow.study.manifest) == id(workflow.study.manifest)
 
 
 def test_curation_status_file_generated_if_not_found(

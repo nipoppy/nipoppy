@@ -777,7 +777,7 @@ def test_run_single_tar(
 
 
 def test_run_missing_container_raises_error(runner: ProcessingRunner):
-    runner.manifest = Manifest()
+    runner.study.manifest = Manifest()
 
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
     with pytest.raises(

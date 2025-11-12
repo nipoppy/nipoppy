@@ -52,7 +52,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             )
             table = update_curation_status_table(
                 curation_status_table=old_table,
-                manifest=self.manifest,
+                manifest=self.study.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=dpath_downloaded,
                 dpath_organized=dpath_organized,
@@ -69,7 +69,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
                     f"Did not find existing curation status file at {fpath_table}"
                 )
             table = generate_curation_status_table(
-                manifest=self.manifest,
+                manifest=self.study.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=dpath_downloaded,
                 dpath_organized=dpath_organized,

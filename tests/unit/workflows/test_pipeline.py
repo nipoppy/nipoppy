@@ -1175,7 +1175,7 @@ def test_run_main_write_subcohort(
         participants_and_sessions_bidsified=participants_and_sessions,
         dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    workflow.manifest = manifest
+    workflow.study.manifest = manifest
     workflow.run_main()
 
     if not dry_run:

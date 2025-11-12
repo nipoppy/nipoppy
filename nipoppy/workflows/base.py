@@ -22,7 +22,6 @@ from nipoppy.tabular.curation_status import (
     generate_curation_status_table,
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.utils import add_path_timestamp, is_nipoppy_project
 
@@ -343,11 +342,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         super().run_setup()
 
     @cached_property
-    def manifest(self) -> Manifest:
-        """The manifest table."""
-        return self.study.manifest
-
-    @cached_property
     def curation_status_table(self) -> CurationStatusTable:
         """
         Load the curation status file if it exists.
@@ -363,7 +357,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 ". Generating a new one on-the-fly"
             )
             table = generate_curation_status_table(
-                manifest=self.manifest,
+                manifest=self.study.manifest,
                 dicom_dir_map=self.dicom_dir_map,
                 dpath_downloaded=self.study.layout.dpath_pre_reorg,
                 dpath_organized=self.study.layout.dpath_post_reorg,
@@ -408,7 +402,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             )
 
         return DicomDirMap.load_or_generate(
-            manifest=self.manifest,
+            manifest=self.study.manifest,
             fpath_dicom_dir_map=fpath_dicom_dir_map,
             participant_first=self.study.config.DICOM_DIR_PARTICIPANT_FIRST,
         )

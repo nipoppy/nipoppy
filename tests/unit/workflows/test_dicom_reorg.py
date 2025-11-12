@@ -313,7 +313,7 @@ def test_run_setup(workflow: DicomReorgWorkflow):
         participants_and_sessions_manifest=participants_and_sessions2,
     )
     manifest2.save_with_backup(workflow.study.layout.fpath_manifest)
-    workflow.manifest = manifest2
+    workflow.study.manifest = manifest2
 
     # check that curation status table was regenerated
     workflow.run_setup()

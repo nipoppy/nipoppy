@@ -170,7 +170,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         super().run_setup()
         self.curation_status_table = update_curation_status_table(
             curation_status_table=self.curation_status_table,
-            manifest=self.manifest,
+            manifest=self.study.manifest,
             dicom_dir_map=self.dicom_dir_map,
             dpath_downloaded=self.study.layout.dpath_pre_reorg,
             dpath_organized=self.study.layout.dpath_post_reorg,

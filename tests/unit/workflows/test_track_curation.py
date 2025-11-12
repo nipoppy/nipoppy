@@ -76,7 +76,7 @@ def test_run_main(
         dpath_organized=workflow.study.layout.dpath_post_reorg,
         dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    workflow.manifest = manifest1
+    workflow.study.manifest = manifest1
 
     # generate the curation status table
     workflow.run_main()
@@ -154,7 +154,7 @@ def test_run_main_regenerate(
         dpath_organized=workflow.study.layout.dpath_post_reorg,
         dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    workflow.manifest = manifest
+    workflow.study.manifest = manifest
 
     # to be overwritten
     table_records = []

@@ -243,7 +243,7 @@ def test_manifest(
     dpath_root: Path, n_participants: int, session_ids: list, randomize_counts: bool
 ):
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.manifest, session_participant_counts_df = make_manifest(
+    workflow.study.manifest, session_participant_counts_df = make_manifest(
         n_participants=n_participants,
         session_ids=session_ids,
         randomize_counts=randomize_counts,
@@ -322,7 +322,7 @@ def test_check_curation_status_table_from_bids_init(
     randomize_counts: bool,
 ):
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.manifest = make_manifest(n_participants=10)[0]
+    workflow.study.manifest = make_manifest(n_participants=10)[0]
     workflow.curation_status_table, session_participant_counts_df = (
         make_curation_status_table(
             n_participants=n_participants,
@@ -429,7 +429,7 @@ def test_check_processing_status_table(
 def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.study.config = get_config()
-    workflow.manifest = make_manifest(n_participants=10)[0]
+    workflow.study.manifest = make_manifest(n_participants=10)[0]
     workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
     workflow.processing_status_table = processing_status_table
     status_df = workflow.run_main()
@@ -449,7 +449,7 @@ def test_run_sub_directory(
 
     workflow = StatusWorkflow(dpath_root=derivatives)
     workflow.study.config = get_config()
-    workflow.manifest = make_manifest(n_participants=10)[0]
+    workflow.study.manifest = make_manifest(n_participants=10)[0]
     workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
     workflow.processing_status_table = processing_status_table
     status_df = workflow.run_main()
