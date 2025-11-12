@@ -335,7 +335,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         fpath_descriptor = self.dpath_pipeline_bundle / fname_descriptor
         self.logger.info(f"Loading descriptor from {fpath_descriptor}")
         descriptor = load_json(fpath_descriptor)
-        descriptor = self.config.apply_pipeline_variables(
+        descriptor = self.study.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
             pipeline_name=self.pipeline_config.NAME,
             pipeline_version=self.pipeline_config.VERSION,
@@ -355,7 +355,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
 
-        invocation = self.config.apply_pipeline_variables(
+        invocation = self.study.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
             pipeline_name=self.pipeline_config.NAME,
             pipeline_version=self.pipeline_config.VERSION,
@@ -459,7 +459,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
 
         # NOTE: user-defined substitutions take precedence over the pipeline variables
-        pipeline_config_json = self.config.apply_pipeline_variables(
+        pipeline_config_json = self.study.config.apply_pipeline_variables(
             pipeline_type=self._pipeline_type,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
@@ -481,7 +481,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f'"{pipeline_config.VERSION}" instead'
             )
 
-        return self.config.propagate_container_config_to_pipeline(pipeline_config)
+        return self.study.config.propagate_container_config_to_pipeline(pipeline_config)
 
     def process_template_json(
         self,
@@ -500,7 +500,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             # apply user-defined substitutions to maintain compatibility with older
             # pipeline config files that do not use the new pipeline variables
             template_json = apply_substitutions_to_json(
-                template_json, self.config.SUBSTITUTIONS
+                template_json, self.study.config.SUBSTITUTIONS
             )
         if participant_id is not None:
             if bids_participant_id is None:
@@ -608,7 +608,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def _check_pipeline_variables(self):
         """Check that the pipeline variables are not null in the config."""
-        for name, value in self.config.PIPELINE_VARIABLES.get_variables(
+        for name, value in self.study.config.PIPELINE_VARIABLES.get_variables(
             self._pipeline_type, self.pipeline_name, self.pipeline_version
         ).items():
             if value is None:
@@ -839,7 +839,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 NIPOPPY_HPC=self.hpc,
                 NIPOPPY_JOB_NAME=job_name,
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
-                NIPOPPY_HPC_PREAMBLE_STRINGS=self.config.HPC_PREAMBLE,
+                NIPOPPY_HPC_PREAMBLE_STRINGS=self.study.config.HPC_PREAMBLE,
                 NIPOPPY_COMMANDS=job_array_commands,
                 NIPOPPY_DPATH_ROOT=self.study.layout.dpath_root,
                 NIPOPPY_PIPELINE_NAME=self.pipeline_name,

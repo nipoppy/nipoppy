@@ -174,8 +174,8 @@ def test_update_config_and_save_no_other_change(
     )
 
     # check that placeholder was replaced as expected
-    assert original_config != workflow.config
-    assert workflow.config.DICOM_DIR_MAP_FILE.parent == workflow.dpath_root
+    assert original_config != workflow.study.config
+    assert workflow.study.config.DICOM_DIR_MAP_FILE.parent == workflow.dpath_root
 
     # create new config file with the new pipeline variables
     pipeline_config.VARIABLES = {"var1": "description"}
@@ -198,17 +198,17 @@ def test_update_config_and_save_no_overwrite(
     pipeline_config.VARIABLES = {
         variable_name: "this is a variable that is important for the pipeline",
     }
-    workflow.config.PIPELINE_VARIABLES.set_variables(
+    workflow.study.config.PIPELINE_VARIABLES.set_variables(
         pipeline_config.PIPELINE_TYPE,
         pipeline_config.NAME,
         pipeline_config.VERSION,
         {variable_name: variable_value},
     )
-    workflow.config.save(workflow.study.layout.fpath_config)
+    workflow.study.config.save(workflow.study.layout.fpath_config)
 
     workflow._update_config_and_save(pipeline_config)
 
-    updated_config = workflow.config.load(workflow.study.layout.fpath_config)
+    updated_config = workflow.study.config.load(workflow.study.layout.fpath_config)
     assert updated_config.PIPELINE_VARIABLES.get_variables(
         pipeline_config.PIPELINE_TYPE,
         pipeline_config.NAME,
@@ -234,7 +234,7 @@ def test_download_container(
 
     # check that the container handler was created with the correct config
     mocked_get_container_handler.assert_called_once_with(
-        workflow.config.CONTAINER_CONFIG, logger=workflow.logger
+        workflow.study.config.CONTAINER_CONFIG, logger=workflow.logger
     )
 
     # check that the container file was downloaded
@@ -302,7 +302,7 @@ def test_download_container_status(
     )
     mocked_run_command = mocker.patch.object(workflow, "run_command")
 
-    workflow.config.CONTAINER_CONFIG.COMMAND = command
+    workflow.study.config.CONTAINER_CONFIG.COMMAND = command
     workflow._download_container(pipeline_config)
 
     mocked_status.assert_called_once_with(

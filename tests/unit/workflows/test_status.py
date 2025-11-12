@@ -428,7 +428,7 @@ def test_check_processing_status_table(
 )
 def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.config = get_config()
+    workflow.study.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
     workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
     workflow.processing_status_table = processing_status_table
@@ -448,7 +448,7 @@ def test_run_sub_directory(
     derivatives.mkdir(parents=True, exist_ok=True)
 
     workflow = StatusWorkflow(dpath_root=derivatives)
-    workflow.config = get_config()
+    workflow.study.config = get_config()
     workflow.manifest = make_manifest(n_participants=10)[0]
     workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
     workflow.processing_status_table = processing_status_table

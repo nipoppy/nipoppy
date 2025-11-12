@@ -41,7 +41,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
 
     create_empty_dataset(runner.study.layout.dpath_root)
 
-    runner.config = get_config(
+    runner.study.config = get_config(
         container_config={
             "COMMAND": "apptainer",  # mocked
             "ARGS": ["--flag1"],

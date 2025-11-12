@@ -64,10 +64,11 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         Notes
         -----
         This loads a new Config object (i.e., does not use already-loaded
-        self.config object).
+        self.study.config object).
         """
-        # do not use self.config since it has been changed by substitutions already
-        config = self.config.load(
+        # do not use self.study.config since
+        # it has been changed by substitutions already
+        config = self.study.config.load(
             self.study.layout.fpath_config, apply_substitutions=False
         )
 
@@ -128,7 +129,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         # apply substitutions
         pipeline_config = BasePipelineConfig(
             **apply_substitutions_to_json(
-                pipeline_config.model_dump(mode="json"), self.config.SUBSTITUTIONS
+                pipeline_config.model_dump(mode="json"), self.study.config.SUBSTITUTIONS
             )
         )
         fpath_container = Path(
@@ -138,7 +139,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
 
         container_handler = get_container_handler(
-            self.config.CONTAINER_CONFIG, logger=self.logger
+            self.study.config.CONTAINER_CONFIG, logger=self.logger
         )
 
         # container file already exists
@@ -154,7 +155,10 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         ):
             pull_command = container_handler.get_pull_command(uri, fpath_container)
 
-            if self.config.CONTAINER_CONFIG.COMMAND == ContainerCommandEnum.DOCKER:
+            if (
+                self.study.config.CONTAINER_CONFIG.COMMAND
+                == ContainerCommandEnum.DOCKER
+            ):
                 console = CONSOLE_STDOUT
             else:
                 # use stderr for status messages so that the Apptainer/Singularity

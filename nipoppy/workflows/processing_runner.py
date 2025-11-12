@@ -204,7 +204,7 @@ class ProcessingRunner(Runner):
 
         # get container command
         launch_boutiques_run_kwargs = {}
-        if self.config.CONTAINER_CONFIG.COMMAND is not None:
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
             container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,

@@ -23,7 +23,7 @@ def workflow(tmp_path: Path) -> BIDSificationRunner:
         pipeline_version="0.12.2",
         pipeline_step="prepare",
     )
-    workflow.config = get_config()
+    workflow.study.config = get_config()
     create_empty_dataset(workflow.dpath_root)
     create_pipeline_config_files(
         workflow.study.layout.dpath_pipelines,

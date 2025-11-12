@@ -20,8 +20,8 @@ def workflow(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     create_empty_dataset(dpath_root)
     workflow = TrackCurationWorkflow(dpath_root=dpath_root)
-    workflow.config = get_config()
-    workflow.config.save(workflow.study.layout.fpath_config)
+    workflow.study.config = get_config()
+    workflow.study.config.save(workflow.study.layout.fpath_config)
     return workflow
 
 

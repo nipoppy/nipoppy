@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import Base
-from nipoppy.config.main import Config
 from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.study import Study
@@ -344,11 +343,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         super().run_setup()
 
     @cached_property
-    def config(self) -> Config:
-        """The main configuration object."""
-        return self.study.config
-
-    @cached_property
     def manifest(self) -> Manifest:
         """The manifest table."""
         return self.study.manifest
@@ -407,7 +401,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:
         """Get the DICOM directory mapping."""
-        fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
+        fpath_dicom_dir_map = self.study.config.DICOM_DIR_MAP_FILE
         if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
             raise FileNotFoundError(
                 f"DICOM directory map file not found: {fpath_dicom_dir_map}"
@@ -416,5 +410,5 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         return DicomDirMap.load_or_generate(
             manifest=self.manifest,
             fpath_dicom_dir_map=fpath_dicom_dir_map,
-            participant_first=self.config.DICOM_DIR_PARTICIPANT_FIRST,
+            participant_first=self.study.config.DICOM_DIR_PARTICIPANT_FIRST,
         )

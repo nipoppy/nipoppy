@@ -32,7 +32,7 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
         pipeline_version="2.0.0",
         pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
     )
-    extractor.config = get_config()
+    extractor.study.config = get_config()
     create_empty_dataset(extractor.dpath_root)
     create_pipeline_config_files(
         extractor.study.layout.dpath_pipelines,

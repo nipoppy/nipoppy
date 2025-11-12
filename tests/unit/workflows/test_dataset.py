@@ -29,7 +29,7 @@ def workflow(tmp_path: Path):
 
     create_empty_dataset(workflow.dpath_root)
 
-    # save a config but do not set workflow.config yet
+    # save a config but do not set workflow.study.config yet
     # because some tests check what happens when the config loaded
     get_config().save(workflow.study.layout.fpath_config)
 
@@ -109,7 +109,7 @@ def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):
 
 
 def test_config(workflow: BaseDatasetWorkflow):
-    assert id(workflow.config) == id(workflow.study.config)
+    assert id(workflow.study.config) == id(workflow.study.config)
 
 
 def test_manifest(workflow: BaseDatasetWorkflow):
@@ -139,11 +139,11 @@ def test_dicom_dir_map(workflow: BaseDatasetWorkflow):
 
 
 def test_dicom_dir_map_custom(workflow: BaseDatasetWorkflow):
-    workflow.config.DICOM_DIR_MAP_FILE = DPATH_TEST_DATA / "dicom_dir_map1.tsv"
+    workflow.study.config.DICOM_DIR_MAP_FILE = DPATH_TEST_DATA / "dicom_dir_map1.tsv"
     assert isinstance(workflow.dicom_dir_map, DicomDirMap)
 
 
 def test_dicom_dir_map_not_found(workflow: BaseDatasetWorkflow):
-    workflow.config.DICOM_DIR_MAP_FILE = "fake_path"
+    workflow.study.config.DICOM_DIR_MAP_FILE = "fake_path"
     with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
         workflow.dicom_dir_map

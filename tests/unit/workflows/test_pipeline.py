@@ -490,7 +490,7 @@ def test_descriptor_pipeline_variables(
     tmp_path: Path, workflow: PipelineWorkflow, variables, expected_descriptor
 ):
     # set variables for substitution
-    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+    workflow.study.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
         workflow.pipeline_version
     ] = variables
 
@@ -546,7 +546,7 @@ def test_invocation_pipeline_variables(
     tmp_path: Path, workflow: PipelineWorkflow, variables, expected_invocation
 ):
     # set variables for substitution
-    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+    workflow.study.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
         workflow.pipeline_version
     ] = variables
 
@@ -753,7 +753,7 @@ def test_get_pipeline_config_missing(
 @pytest.mark.parametrize("return_str", [True, False])
 def test_process_template_json(workflow: PipelineWorkflow, return_str):
     # add user-defined substitution variables
-    workflow.config.SUBSTITUTIONS = {
+    workflow.study.config.SUBSTITUTIONS = {
         "USER_SUBSTITUTION": "val1",
         "OTHER_USER_SUBSTITUTION": "val2",
     }
@@ -955,7 +955,7 @@ def test_check_pipeline_version(
     "variables,valid", [({"var1": "val1"}, True), ({"var2": None}, False)]
 )
 def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
-    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+    workflow.study.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
         workflow.pipeline_version
     ] = variables
     with (
@@ -1550,7 +1550,7 @@ def test_submit_hpc_job_pysqa_call(
     workflow.hpc = hpc_type
 
     workflow.hpc_config = HpcConfig(**hpc_config)
-    workflow.config.HPC_PREAMBLE = preamble_list
+    workflow.study.config.HPC_PREAMBLE = preamble_list
 
     participant_ids = ["participant1", "participant2"]
     session_ids = ["session1", "session2"]
