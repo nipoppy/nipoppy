@@ -63,14 +63,9 @@ class Study(Base):
     def config(self) -> Config:
         """The main configuration object."""
         fpath_config = self.layout.fpath_config
-        try:
-            # load and apply user-defined substitutions
-            self.logger.debug(f"Loading config from {fpath_config}")
-            config = Config.load(fpath_config)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Config file not found: {self.layout.fpath_config}"
-            )
+        # load and apply user-defined substitutions
+        self.logger.debug(f"Loading config from {fpath_config}")
+        config = Config.load(fpath_config)
 
         # replace path placeholders in the config
         # (except in the user-defined substitutions)
@@ -93,25 +88,16 @@ class Study(Base):
     def manifest(self) -> Manifest:
         """The manifest table."""
         fpath_manifest = Path(self.layout.fpath_manifest)
-        try:
-            return Manifest.load(fpath_manifest)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
+        return Manifest.load(fpath_manifest)
 
     @cached_property
     def curation_status_table(self) -> CurationStatusTable:
         """The curation status table."""
         fpath_table = self.layout.fpath_curation_status
-        try:
-            return CurationStatusTable.load(fpath_table)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Curation status file not found: {fpath_table}")
+        return CurationStatusTable.load(fpath_table)
 
     @cached_property
     def processing_status_table(self) -> ProcessingStatusTable:
         """The processing status table."""
         fpath_table = self.layout.fpath_processing_status
-        try:
-            return ProcessingStatusTable.load(fpath_table)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Processing status file not found: {fpath_table}")
+        return ProcessingStatusTable.load(fpath_table)

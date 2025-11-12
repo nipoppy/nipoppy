@@ -66,22 +66,22 @@ class NipoppyDataAPI:
         pipeline_version: str,
         filepath_pattern: str,
     ) -> pd.DataFrame:
-        candidate_paths = list(
+        candidate_path = list(
             self.study.layout.get_dpath_pipeline(
                 pipeline_name=pipeline_name, pipeline_version=pipeline_version
-            ).glob(filepath_pattern)
+            ).rglob(filepath_pattern)
         )
-        if len(candidate_paths) == 0:
+        if len(candidate_path) == 0:
             raise FileNotFoundError(
                 f"No file matching {filepath_pattern} for pipeline "
                 f"{pipeline_name}, version {pipeline_version}"
             )
-        elif len(candidate_paths) > 1:
+        elif len(candidate_path) > 1:
             raise RuntimeError(
                 f"Found more than one file matching {filepath_pattern} for pipeline "
-                f"{pipeline_name}, version {pipeline_version}: {candidate_paths}"
+                f"{pipeline_name}, version {pipeline_version}: {candidate_path}"
             )
-        return self._load_tsv(candidate_paths.pop(), index_cols=self.imaging_index_cols)
+        return self._load_tsv(candidate_path.pop(), index_cols=self.imaging_index_cols)
 
     def get_tabular_data(
         self,
@@ -101,7 +101,6 @@ class NipoppyDataAPI:
             A DataFrame containing the requested demographic and derivative data, with
             a MultiIndex of participant IDs and session IDs.
         """
-        # input validation
         if derivatives is None:
             derivatives = []
         # NOTE this will make more sense once demographic data is supported
@@ -109,6 +108,7 @@ class NipoppyDataAPI:
             raise ValueError(
                 "At least one derivative/demographic specification must be defined."
             )
+        self._check_derivatives_arg(derivatives)
 
         dfs = []
         for derivatives_spec in derivatives:
