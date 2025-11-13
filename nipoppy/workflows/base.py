@@ -14,6 +14,7 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.study import Study
 from nipoppy.tabular.base import BaseTabular
@@ -309,9 +310,10 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         self._validate_layout = _validate_layout
 
         self.study = Study(
-            dpath_root=self.dpath_root,
-            fpath_layout=self.fpath_layout,
-            logger=self.logger,
+            DatasetLayout(
+                dpath_root=self.dpath_root,
+                fpath_config=self.fpath_layout,
+            )
         )
 
     def generate_fpath_log(

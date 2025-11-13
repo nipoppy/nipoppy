@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.logger import get_logger
+from nipoppy.layout import DatasetLayout
 from nipoppy.study import Study
 from tests.conftest import get_config
 
@@ -13,40 +13,7 @@ from tests.conftest import get_config
 @pytest.fixture
 def study(tmp_path: Path):
     dpath_root = tmp_path / "my_study"
-    return Study(dpath_root=dpath_root)
-
-
-def test_init_default(tmp_path: Path):
-    custom_logger = get_logger(name="nipoppy.custom_logger", verbose=True)
-    study = Study(dpath_root=tmp_path, logger=custom_logger)
-    assert study.logger == custom_logger
-
-
-@pytest.mark.parametrize("verbose", [True, False])
-def test_init_no_logger(tmp_path: Path, verbose: bool):
-    study = Study(dpath_root=tmp_path, verbose=verbose)
-    assert study.logger.name == "nipoppy.Study"
-
-
-@pytest.mark.parametrize("fname_layout", ["layout1.json", "layout2.json"])
-def test_layout(
-    study: Study,
-    fname_layout,
-    tmp_path: Path,
-    mocker: pytest_mock.MockFixture,
-):
-    fpath_layout = tmp_path / fname_layout
-
-    mocked_layout = mocker.patch("nipoppy.study.DatasetLayout")
-    study.fpath_layout = fpath_layout
-
-    # access the property
-    study.layout
-
-    mocked_layout.assert_called_once_with(
-        dpath_root=study.dpath_root,
-        fpath_config=fpath_layout,
-    )
+    return Study(layout=DatasetLayout(dpath_root=dpath_root))
 
 
 def test_config(study: Study, mocker: pytest_mock.MockFixture):
@@ -59,7 +26,7 @@ def test_config(study: Study, mocker: pytest_mock.MockFixture):
     mocked_load.assert_called_once_with(study.layout.fpath_config)
 
     # test placeholder replacement
-    assert str(processed_config.DICOM_DIR_MAP_FILE) == str(study.dpath_root)
+    assert str(processed_config.DICOM_DIR_MAP_FILE) == str(study.layout.dpath_root)
 
 
 @pytest.mark.parametrize(

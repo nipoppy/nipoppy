@@ -1,6 +1,5 @@
 """Nipoppy data API."""
 
-from functools import cached_property
 from typing import List, Optional, Tuple
 
 import pandas as pd
@@ -15,22 +14,15 @@ class NipoppyDataAPI:
 
     imaging_index_cols = [Manifest.col_participant_id, Manifest.col_session_id]
 
-    def __init__(self, dpath_root: StrOrPathLike):
+    def __init__(self, study: Study):
         """Instantiate a NipoppyDataAPI object.
-
-        Currently, only the default dataset layout is supported.
 
         Parameters
         ----------
-        dpath_root : StrOrPathLike
-            Path to the root directory.
+        study : Study
+            The Nipoppy study object.
         """
-        self.dpath_root = dpath_root
-
-    @cached_property
-    def study(self) -> Study:
-        """The Nipoppy study object for the dataset."""
-        return Study(dpath_root=self.dpath_root)
+        self.study = study
 
     def _load_tsv(self, fpath: StrOrPathLike, index_cols: List[str]) -> pd.DataFrame:
         return pd.read_csv(
@@ -103,11 +95,6 @@ class NipoppyDataAPI:
         """
         if derivatives is None:
             derivatives = []
-        # NOTE this will make more sense once demographic data is supported
-        if not derivatives:
-            raise ValueError(
-                "At least one derivative/demographic specification must be defined."
-            )
         self._check_derivatives_arg(derivatives)
 
         dfs = []

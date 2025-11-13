@@ -7,6 +7,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.data_api import NipoppyDataAPI
+from nipoppy.layout import DatasetLayout
 from nipoppy.study import Study
 from nipoppy.tabular.manifest import Manifest
 
@@ -14,12 +15,7 @@ from nipoppy.tabular.manifest import Manifest
 @pytest.fixture
 def api(tmp_path: Path) -> NipoppyDataAPI:
     dpath_root = tmp_path / "my_study"
-    return NipoppyDataAPI(dpath_root=dpath_root)
-
-
-def test_init(api: NipoppyDataAPI):
-    assert api.dpath_root == api.dpath_root
-    assert isinstance(api.study, Study)
+    return NipoppyDataAPI(study=Study(layout=DatasetLayout(dpath_root=dpath_root)))
 
 
 def test_load_tsv(api: NipoppyDataAPI, tmp_path: Path):
@@ -74,7 +70,7 @@ def test_get_derivatives_table(
     filepath_pattern = "**/idp.tsv"
 
     expected_path = (
-        Path(api.dpath_root)
+        Path(api.study.layout.dpath_root)
         / "derivatives"
         / pipeline_name
         / pipeline_version
@@ -116,7 +112,7 @@ def test_get_derivatives_table_error_multiple_found(
 
     for filepath in ("test1/test2/idp.tsv", "test3/idp.tsv"):
         expected_path = (
-            Path(api.dpath_root)
+            Path(api.study.layout.dpath_root)
             / "derivatives"
             / pipeline_name
             / pipeline_version
