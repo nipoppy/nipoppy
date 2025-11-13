@@ -82,16 +82,19 @@ class Study(Base):
     def manifest(self) -> Manifest:
         """The manifest table."""
         fpath_manifest = Path(self.layout.fpath_manifest)
+        self.logger.debug(f"Loading manifest from {fpath_manifest}")
         return Manifest.load(fpath_manifest)
 
     @cached_property
     def curation_status_table(self) -> CurationStatusTable:
         """The curation status table."""
         fpath_table = self.layout.fpath_curation_status
+        self.logger.debug(f"Loading curation status table from {fpath_table}")
         return CurationStatusTable.load(fpath_table)
 
     @cached_property
     def processing_status_table(self) -> ProcessingStatusTable:
         """The processing status table."""
         fpath_table = self.layout.fpath_processing_status
+        self.logger.debug(f"Loading processing status table from {fpath_table}")
         return ProcessingStatusTable.load(fpath_table)
