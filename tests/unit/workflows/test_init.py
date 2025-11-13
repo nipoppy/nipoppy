@@ -278,12 +278,9 @@ def test_bidsignore_created(dpath_root: Path):
     fpath_bidsignore = dpath_root / ".bidsignore"
     assert fpath_bidsignore.exists()
 
-    # Verify it contains Nipoppy-specific directories
+    # Verify it contains Nipoppy-specific directories that aren't part of BIDS
     content = fpath_bidsignore.read_text()
     assert "scratch" in content
-    assert "logs" in content
-    assert ".nipoppy" in content
-    assert "code" in content
 
 
 @pytest.mark.skipif(
