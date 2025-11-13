@@ -424,12 +424,10 @@ def test_get_pull_command_error(
         (
             ContainerConfig(
                 COMMAND=None,
-                ARGS=["--volume", "path"],
+                ARGS=[],
                 ENV_VARS={"VAR3": "123"},
             ),
-            BareMetalHandler(
-                args=[],
-            ),
+            BareMetalHandler(),
         ),
     ],
 )

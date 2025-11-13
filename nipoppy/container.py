@@ -382,17 +382,10 @@ class DockerHandler(ContainerHandler):
 
 
 class BareMetalHandler(ContainerHandler):
-    """Container handler for baremetal execution (no container)."""
+    """Handler for bare metal execution (no container)."""
 
-    @property
-    def command(self):
-        """Should not be used."""
-        raise NotImplementedError(f"{self.__class__.__name__} does not have a command")
-
-    @property
-    def bind_flags(self) -> tuple[str]:
-        """Should not be used."""
-        raise NotImplementedError(f"{self.__class__.__name__} does not have bind flags")
+    command = NotImplemented
+    bind_flags = NotImplemented
 
     def add_env_arg(self, key: str, value: str):
         """Set environment variable."""
