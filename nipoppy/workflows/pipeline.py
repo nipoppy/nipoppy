@@ -45,10 +45,11 @@ from nipoppy.exceptions import (
     ConfigError,
     ContainerError,
     FileOperationError,
+    LayoutError,
     ReturnCode,
     WorkflowError,
 )
-from nipoppy.layout import DatasetLayout, LayoutError
+from nipoppy.layout import DatasetLayout
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
