@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 import platform
 import shlex
 import shutil
@@ -380,6 +381,47 @@ class DockerHandler(ContainerHandler):
         return shlex.join(cmd)
 
 
+class BareMetalHandler(ContainerHandler):
+    """Container handler for baremetal execution (no container)."""
+
+    @property
+    def command(self):
+        """Should not be used."""
+        raise NotImplementedError(f"{self.__class__.__name__} does not have a command")
+
+    @property
+    def bind_flags(self) -> tuple[str]:
+        """Should not be used."""
+        raise NotImplementedError(f"{self.__class__.__name__} does not have bind flags")
+
+    def add_env_arg(self, key: str, value: str):
+        """Set environment variable."""
+        os.environ[key] = value
+
+    def is_image_downloaded(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> bool:
+        """Check if a container image has been downloaded.
+
+        Always returns True since bare metal execution does not need image.
+        """
+        return True
+
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
+        """Should not be used."""  # noqa D401
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support pulling container images"
+        )
+
+    def get_pull_command(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> str:
+        """Should not be used."""  # noqa D401
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support pulling container images"
+        )
+
+
 def get_container_handler(
     config: ContainerConfig, logger: Optional[logging.Logger] = None
 ) -> ContainerHandler:
@@ -388,6 +430,7 @@ def get_container_handler(
         ContainerCommandEnum.APPTAINER: ApptainerHandler,
         ContainerCommandEnum.SINGULARITY: SingularityHandler,
         ContainerCommandEnum.DOCKER: DockerHandler,
+        None: BareMetalHandler,
     }
 
     try:

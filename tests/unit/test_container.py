@@ -10,6 +10,7 @@ import pytest_mock
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import (
     ApptainerHandler,
+    BareMetalHandler,
     ContainerHandler,
     DockerHandler,
     SingularityHandler,
@@ -418,6 +419,16 @@ def test_get_pull_command_error(
             ),
             DockerHandler(
                 args=["--volume", "path", "--env", "VAR3=123"],
+            ),
+        ),
+        (
+            ContainerConfig(
+                COMMAND=None,
+                ARGS=["--volume", "path"],
+                ENV_VARS={"VAR3": "123"},
+            ),
+            BareMetalHandler(
+                args=[],
             ),
         ),
     ],
