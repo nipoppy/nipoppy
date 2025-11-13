@@ -5,8 +5,10 @@ from contextlib import contextmanager
 
 import rich_click as click
 
-from nipoppy.env import PROGRAM_NAME, ReturnCode
+from nipoppy.env import ReturnCode
 from nipoppy.logger import get_logger
+
+logger = get_logger()
 
 
 @contextmanager
@@ -17,16 +19,11 @@ def exception_handler(workflow):
     except SystemExit:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     except Exception:
-        workflow.logger.exception("Error while running nipoppy")
+        logger.exception("Error while running nipoppy")
         if workflow.return_code == ReturnCode.SUCCESS:
             workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     finally:
         sys.exit(workflow.return_code)
-
-
-logger = get_logger(
-    name=f"{PROGRAM_NAME}.{__name__}",
-)
 
 
 class OrderedAliasedGroup(click.RichGroup):

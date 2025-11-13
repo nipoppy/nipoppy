@@ -1,6 +1,7 @@
 """Tests for env module."""
 
-from nipoppy.env import LogColor, ReturnCode
+from nipoppy.env import ReturnCode
+from nipoppy.logger import LogColor
 
 
 def test_return_code():

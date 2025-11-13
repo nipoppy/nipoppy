@@ -281,35 +281,21 @@ def test_check_config_files(
     assert n_files_expected == len(files)
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [
-        (None, logging.DEBUG),
-        (logging.getLogger("test"), logging.DEBUG),
-        (logging.getLogger("test"), logging.INFO),
-    ],
-)
 def test_check_config_files_logging(
-    logger,
-    log_level,
     valid_config_data,
     caplog: pytest.LogCaptureFixture,
 ):
+    log_level = logging.DEBUG
     caplog.set_level(log_level)
 
     pipeline_config = BasePipelineConfig(
         **valid_config_data,
         STEPS=[{}],
     )
-    _check_pipeline_files(
-        pipeline_config, DPATH_TEST_DATA, logger=logger, log_level=log_level
-    )
+    _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
 
-    if logger is None:
-        assert len(caplog.records) == 0
-    else:
-        assert len(caplog.records) > 0
-        assert all([record.levelno == log_level for record in caplog.records])
+    assert len(caplog.records) > 0
+    assert all([record.levelno == log_level for record in caplog.records])
 
 
 @pytest.mark.parametrize(
@@ -333,28 +319,16 @@ def test_check_self_contained(dpath_bundle, fpaths, valid):
         _check_self_contained(dpath_bundle, fpaths)
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [
-        (None, logging.DEBUG),
-        (logging.getLogger("test"), logging.DEBUG),
-        (logging.getLogger("test"), logging.INFO),
-    ],
-)
-def test_check_self_container_logging(
-    logger, log_level, caplog: pytest.LogCaptureFixture
-):
+def test_check_self_container_logging(caplog: pytest.LogCaptureFixture):
+    log_level = logging.DEBUG
     caplog.set_level(log_level)
 
     dpath_bundle = "bundle_dir"
     fpaths = ["bundle_dir/file1.txt", "bundle_dir/file2.txt"]
-    _check_self_contained(dpath_bundle, fpaths, logger=logger, log_level=log_level)
+    _check_self_contained(dpath_bundle, fpaths)
 
-    if logger is None:
-        assert len(caplog.records) == 0
-    else:
-        assert len(caplog.records) > 0
-        assert all([record.levelno == log_level for record in caplog.records])
+    assert len(caplog.records) > 0
+    assert all([record.levelno == log_level for record in caplog.records])
 
 
 @pytest.mark.parametrize(
@@ -386,28 +360,18 @@ def test_check_no_subdirectories(
         _check_no_subdirectories(dpath_bundle)
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [
-        (None, logging.DEBUG),
-        (logging.getLogger("test"), logging.DEBUG),
-        (logging.getLogger("test"), logging.INFO),
-    ],
-)
 def test_check_no_subdirectories_logging(
-    tmp_path: Path, logger, log_level, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
+    log_level = logging.DEBUG
     caplog.set_level(log_level)
 
     dpath_bundle = tmp_path / "bundle_dir"
     dpath_bundle.mkdir()
-    _check_no_subdirectories(dpath_bundle, logger=logger, log_level=log_level)
+    _check_no_subdirectories(dpath_bundle)
 
-    if logger is None:
-        assert len(caplog.records) == 0
-    else:
-        assert len(caplog.records) > 0
-        assert all([record.levelno == log_level for record in caplog.records])
+    assert len(caplog.records) > 0
+    assert all([record.levelno == log_level for record in caplog.records])
 
 
 @pytest.mark.parametrize(
@@ -436,17 +400,11 @@ def test_check_pipeline_bundle(
         "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
-    check_pipeline_bundle(dpath_bundle, logger=logger, log_level=log_level)
+    check_pipeline_bundle(dpath_bundle)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
         dpath_bundle / "config.json",
     )
-    mocked_check_pipeline_files.assert_called_once_with(
-        config, dpath_bundle, logger=logger, log_level=log_level
-    )
-    mocked_check_self_contained.assert_called_once_with(
-        dpath_bundle, fpaths, logger=logger, log_level=log_level
-    )
-    mocked_check_no_subdirectories.assert_called_once_with(
-        dpath_bundle, logger=logger, log_level=log_level
-    )
+    mocked_check_pipeline_files.assert_called_once_with(config, dpath_bundle)
+    mocked_check_self_contained.assert_called_once_with(dpath_bundle, fpaths)
+    mocked_check_no_subdirectories.assert_called_once_with(dpath_bundle)

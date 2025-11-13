@@ -58,12 +58,6 @@ def test_init_args(args, expected_args):
     assert handler.args is not args
 
 
-@pytest.mark.parametrize("logger", [None, logging.getLogger("test_logger")])
-def test_init_logger(logger):
-    handler = _TestHandler(logger=logger)
-    assert isinstance(handler.logger, logging.Logger)
-
-
 def test_check_command_exists(
     handler: ContainerHandler, mocker: pytest_mock.MockerFixture
 ):
@@ -152,7 +146,7 @@ def test_fix_bind_args_relative(
     bind_flag, handler: ContainerHandler, caplog: pytest.LogCaptureFixture
 ):
     handler.args = [bind_flag, "."]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -169,7 +163,7 @@ def test_fix_bind_args_symlink(
     path_symlink.symlink_to(path_real)
 
     handler.args = ["-B", str(path_symlink)]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -184,7 +178,7 @@ def test_fix_bind_args_missing(
     assert not dpath.exists()
 
     handler.args = ["-B", str(dpath)]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 

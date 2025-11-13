@@ -13,6 +13,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     StrOrPathLike,
 )
+from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import (
     check_participant_id,
@@ -25,6 +26,8 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_MANIFEST,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+logger = get_logger()
 
 
 class InitWorkflow(BaseDatasetWorkflow):
@@ -76,9 +79,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             if len(filenames) > 0:
                 msg = f"Dataset directory is non-empty: {self.dpath_root}"
                 if self.force:
-                    self.logger.warning(
-                        f"{msg} `--force` specified, proceeding anyway."
-                    )
+                    logger.warning(f"{msg} `--force` specified, proceeding anyway.")
                 else:
                     raise FileExistsError(
                         f"{msg}, if this is intended consider using the --force flag."
@@ -117,7 +118,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         )
 
         # inform user to edit the sample files
-        self.logger.warning(
+        logger.warning(
             f"Sample config and manifest files copied to {self.layout.fpath_config}"
             f" and {self.layout.fpath_manifest} respectively. They should be edited"
             " to match your dataset"
@@ -168,7 +169,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 try:
                     fpath_readme.write_text(readme_content)
                 except PermissionError:
-                    self.logger.warning(
+                    logger.warning(
                         f"Permission denied when writing {fpath_readme}. "
                         "Skipping README creation."
                     )
@@ -194,7 +195,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             ]
         )
 
-        self.logger.info("Creating a manifest file from the BIDS dataset content.")
+        logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for bids_participant_id in bids_participant_ids:
             bids_session_ids = sorted(
@@ -207,7 +208,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             if len(bids_session_ids) == 0:
                 # if there are no session folders
                 # we will add a fake session for this participant
-                self.logger.warning(
+                logger.warning(
                     "Could not find session-level folder(s) for participant "
                     f"{bids_participant_id}, using session {FAKE_SESSION_ID} "
                     "in the manifest"
@@ -256,5 +257,5 @@ class InitWorkflow(BaseDatasetWorkflow):
 
     def run_cleanup(self):
         """Log a success message."""
-        self.logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
+        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
         return super().run_cleanup()

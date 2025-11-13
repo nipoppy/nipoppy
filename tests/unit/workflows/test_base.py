@@ -28,7 +28,6 @@ def test_abstract_class():
 def test_init(workflow: BaseWorkflow):
     assert workflow.name == "my_workflow"
     assert workflow.return_code == 0
-    assert isinstance(workflow.logger, logging.Logger)
 
 
 @pytest.mark.no_xdist
