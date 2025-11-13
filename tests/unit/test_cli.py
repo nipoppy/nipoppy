@@ -15,8 +15,7 @@ from click.testing import CliRunner
 
 from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.env import ReturnCode
-from nipoppy.exceptions import NipoppyError
+from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE
 
 runner = CliRunner()

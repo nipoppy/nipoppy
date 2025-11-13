@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
+from nipoppy.exceptions import TabularError
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
-from nipoppy.tabular.exceptions import TabularError
 from tests.conftest import DPATH_TEST_DATA
 
 

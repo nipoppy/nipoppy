@@ -8,14 +8,13 @@ import pandas as pd
 from pydantic import ConfigDict, Field, model_validator
 from typing_extensions import Self
 
+from nipoppy.exceptions import TabularError
 from nipoppy.tabular.base import BaseTabular, BaseTabularModel
 from nipoppy.utils.bids import (
     check_participant_id,
     check_session_id,
 )
 from nipoppy.utils.utils import FIELD_DESCRIPTION_MAP
-
-from .exceptions import TabularError
 
 
 class ManifestModel(BaseTabularModel):

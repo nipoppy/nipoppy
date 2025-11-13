@@ -6,8 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import ReturnCode
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest

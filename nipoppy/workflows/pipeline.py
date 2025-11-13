@@ -32,17 +32,22 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
-from nipoppy.container import ContainerError, get_container_handler
+from nipoppy.container import get_container_handler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     LogColor,
     PipelineTypeEnum,
-    ReturnCode,
     StrOrPathLike,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.exceptions import (
+    ConfigError,
+    ContainerError,
+    FileOperationError,
+    ReturnCode,
+    WorkflowError,
+)
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,

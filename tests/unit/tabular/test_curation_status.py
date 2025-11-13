@@ -7,13 +7,13 @@ import pandas as pd
 import pytest
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
+from nipoppy.exceptions import TabularError
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
     update_curation_status_table,
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.exceptions import TabularError
 from tests.conftest import DPATH_TEST_DATA, check_curation_status_table, prepare_dataset
 
 

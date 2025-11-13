@@ -12,16 +12,10 @@ from typing import Iterable, Optional
 
 from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
-from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
-from nipoppy.exceptions import NipoppyError
+from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import ContainerError
 
 BIND_SEP = ":"
-
-
-class ContainerError(NipoppyError):
-    """Exception for container-related errors."""
-
-    code = ReturnCode.CONTAINER_ERROR
 
 
 class ContainerHandler(Base, ABC):

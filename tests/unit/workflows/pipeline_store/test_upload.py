@@ -6,8 +6,8 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum, ReturnCode
-from nipoppy.exceptions import TerminatedByUserError, WorkflowError
+from nipoppy.env import PipelineTypeEnum
+from nipoppy.exceptions import ReturnCode, TerminatedByUserError, WorkflowError
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,

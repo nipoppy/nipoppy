@@ -12,16 +12,10 @@ from boutiques import bosh
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
-from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
-from nipoppy.exceptions import NipoppyError
+from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import ExecutionError
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
-
-
-class ExecutionError(NipoppyError, RuntimeError):
-    """Exception for pipeline execution errors."""
-
-    code = ReturnCode.PIPELINE_EXECUTION_ERROR
 
 
 class Runner(BasePipelineWorkflow, ABC):

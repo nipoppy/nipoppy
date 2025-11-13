@@ -6,8 +6,8 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.env import ReturnCode, StrOrPathLike
-from nipoppy.exceptions import FileOperationError, WorkflowError
+from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode, WorkflowError
 from nipoppy.tabular.curation_status import update_curation_status_table
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,

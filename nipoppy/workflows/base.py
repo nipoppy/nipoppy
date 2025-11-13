@@ -15,8 +15,8 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
-from nipoppy.exceptions import FileOperationError
+from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.tabular.base import BaseTabular

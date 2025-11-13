@@ -30,9 +30,13 @@ from nipoppy.env import (
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
     ContainerCommandEnum,
-    ReturnCode,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    ReturnCode,
+    WorkflowError,
+)
 from nipoppy.layout import LayoutError
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (

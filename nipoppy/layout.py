@@ -7,15 +7,9 @@ from typing import Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.base import Base
-from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, ReturnCode, StrOrPathLike
-from nipoppy.exceptions import FileOperationError, NipoppyError
+from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
-
-
-class LayoutError(NipoppyError, ValueError):
-    """Exception for layout validation errors."""
-
-    code = ReturnCode.INVALID_LAYOUT
 
 
 class PathInfo(BaseModel):

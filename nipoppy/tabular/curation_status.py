@@ -10,6 +10,7 @@ from pydantic import Field
 from typing_extensions import Self
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
+from nipoppy.exceptions import TabularError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
@@ -17,8 +18,6 @@ from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-
-from .exceptions import TabularError
 
 
 class CurationStatusModel(ManifestModel):

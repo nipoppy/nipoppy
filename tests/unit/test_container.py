@@ -10,12 +10,12 @@ import pytest_mock
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import (
     ApptainerHandler,
-    ContainerError,
     ContainerHandler,
     DockerHandler,
     SingularityHandler,
     get_container_handler,
 )
+from nipoppy.exceptions import ContainerError
 
 
 class _TestHandler(ContainerHandler):
