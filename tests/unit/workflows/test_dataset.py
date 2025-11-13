@@ -1,6 +1,5 @@
 """Tests for the BaseDatasetWorkflow class."""
 
-import logging
 import shutil
 from pathlib import Path
 
@@ -28,7 +27,6 @@ def workflow(tmp_path: Path):
 
     dpath_root = tmp_path / "my_dataset"
     workflow = DummyWorkflow(dpath_root=dpath_root, name="my_workflow")
-    workflow.logger.setLevel(logging.DEBUG)  # capture all logs
 
     create_empty_dataset(workflow.dpath_root)
 
@@ -83,16 +81,18 @@ def test_run_setup_logfile(
     mocked_generate_fpath_log = mocker.patch.object(
         workflow, "generate_fpath_log", return_value=fpath_log
     )
-    mocked_add_logfile = mocker.patch("nipoppy.workflows.base.add_logfile")
+    mocked_add_file_handler = mocker.patch(
+        "nipoppy.workflows.base.logger.add_file_handler"
+    )
     workflow._skip_logfile = skip_logfile
     workflow.run_setup()
 
     if skip_logfile:
         mocked_generate_fpath_log.assert_not_called()
-        mocked_add_logfile.assert_not_called()
+        mocked_add_file_handler.assert_not_called()
     else:
         mocked_generate_fpath_log.assert_called_once()
-        mocked_add_logfile.assert_called_once_with(workflow.logger, fpath_log)
+        mocked_add_file_handler.assert_called_once_with(fpath_log)
 
 
 def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):

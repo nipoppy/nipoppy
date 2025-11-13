@@ -28,7 +28,6 @@ def test_run_main(
 
     mocked.assert_called_once_with(
         workflow.dpath_pipeline,
-        logger=workflow.logger,
         log_level=logging.INFO,
     )
 

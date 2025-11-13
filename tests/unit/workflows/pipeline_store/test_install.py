@@ -234,7 +234,7 @@ def test_download_container(
 
     # check that the container handler was created with the correct config
     mocked_get_container_handler.assert_called_once_with(
-        workflow.config.CONTAINER_CONFIG, logger=workflow.logger
+        workflow.config.CONTAINER_CONFIG
     )
 
     # check that the container file was downloaded

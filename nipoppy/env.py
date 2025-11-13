@@ -55,11 +55,3 @@ class ReturnCode:
     PARTIAL_SUCCESS = 64
     NO_PARTICIPANTS_OR_SESSIONS_TO_RUN = 65
     MISSING_DEPENDENCY = 66
-
-
-class LogColor:
-    """Colors for logging."""
-
-    SUCCESS = "green"
-    PARTIAL_SUCCESS = "yellow"
-    FAILURE = "red"

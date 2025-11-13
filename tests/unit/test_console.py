@@ -52,7 +52,7 @@ def test_console_print(console: _Console, capsys: pytest.CaptureFixture):
 
 
 def test_console_no_indent_in_log(capsys: pytest.CaptureFixture):
-    logger = get_logger("test_logger")
+    logger = get_logger()
     for handler in logger.handlers:
         if isinstance(handler, RichHandler):
             assert isinstance(handler.console, _Console)

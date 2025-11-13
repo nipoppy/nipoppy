@@ -32,6 +32,7 @@ from nipoppy.env import (
     ContainerCommandEnum,
     ReturnCode,
 )
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
@@ -388,9 +389,7 @@ def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
     )
 
     assert workflow.fpath_container == fpath_container
-    mocked.assert_called_once_with(
-        workflow.pipeline_config.CONTAINER_CONFIG, logger=workflow.logger
-    )
+    mocked.assert_called_once_with(workflow.pipeline_config.CONTAINER_CONFIG)
 
 
 def test_fpath_container_custom(workflow: PipelineWorkflow):
@@ -1653,10 +1652,15 @@ def test_submit_hpc_job_job_id(
     caplog: pytest.LogCaptureFixture,
     job_id,
 ):
-    mocked = _set_up_hpc_for_testing(workflow, mocker)
-    mocked.return_value = job_id
+    import logging
 
-    workflow._submit_hpc_job([("P1", "1")])
+    logger = get_logger()
+    print(logger.name)
+    print(logger.handlers)
+    with caplog.at_level(logging.INFO, logger="nipoppy"):
+        mocked = _set_up_hpc_for_testing(workflow, mocker)
+        mocked.return_value = job_id
+        workflow._submit_hpc_job([("P1", "1")])
     if job_id is not None:
         assert f"HPC job ID: {job_id}" in caplog.text
     else:

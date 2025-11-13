@@ -37,12 +37,12 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
-    LogColor,
     PipelineTypeEnum,
     ReturnCode,
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
+from nipoppy.logger import LogColor, get_logger
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -72,6 +72,8 @@ except ImportError as error:
         JOBLIB_INSTALLED = False
     else:
         raise
+
+logger = get_logger()
 
 
 def apply_analysis_level(
@@ -218,7 +220,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.run_single_results = None
 
         if not JOBLIB_INSTALLED and self.n_jobs not in (None, 1):
-            self.logger.error(
+            logger.error(
                 "An additional dependency is required to enable local parallelization "
                 "with --n-jobs. Install it with: pip install nipoppy[parallel]",
                 extra={"markup": False},
@@ -298,7 +300,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         fpath_container = self.pipeline_config.CONTAINER_INFO.FILE
         container_handler = get_container_handler(
             self.pipeline_step_config.CONTAINER_CONFIG,
-            logger=self.logger,
         )
 
         try:
@@ -333,7 +334,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
         fpath_descriptor = self.dpath_pipeline_bundle / fname_descriptor
-        self.logger.info(f"Loading descriptor from {fpath_descriptor}")
+        logger.info(f"Loading descriptor from {fpath_descriptor}")
         descriptor = load_json(fpath_descriptor)
         descriptor = self.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
@@ -352,7 +353,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
         fpath_invocation = self.dpath_pipeline_bundle / fname_invocation
-        self.logger.info(f"Loading invocation from {fpath_invocation}")
+        logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
 
         invocation = self.config.apply_pipeline_variables(
@@ -374,7 +375,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f" {self.pipeline_version}"
             )
         fpath_tracker_config = self.dpath_pipeline_bundle / fname_tracker_config
-        self.logger.info(f"Loading tracker config from {fpath_tracker_config}")
+        logger.info(f"Loading tracker config from {fpath_tracker_config}")
         return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
@@ -394,7 +395,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         fpath_pybids_ignore = self.dpath_pipeline_bundle / fname_pybids_ignore
 
         # load patterns from file
-        self.logger.info(f"Loading PyBIDS ignore patterns from {fpath_pybids_ignore}")
+        logger.info(f"Loading PyBIDS ignore patterns from {fpath_pybids_ignore}")
         patterns = load_json(fpath_pybids_ignore)
 
         # validate format
@@ -413,7 +414,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             data = {}
         else:
             fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
-            self.logger.info(f"Loading HPC config from {fpath_hpc_config}")
+            logger.info(f"Loading HPC config from {fpath_hpc_config}")
             data = self.process_template_json(load_json(fpath_hpc_config))
         return HpcConfig(**data)
 
@@ -431,16 +432,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 f": {error_message}"
             )
         except RuntimeError as exception:
-            self.logger.debug(
+            logger.debug(
                 "Caught exception when trying to load Boutiques config"
                 f": {type(exception).__name__}: {exception}"
             )
-            self.logger.debug(
+            logger.debug(
                 "Assuming Boutiques config is not in descriptor. Using default"
             )
             return BoutiquesConfig()
 
-        self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
+        logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
         return boutiques_config
 
     def _get_pipeline_config(
@@ -521,11 +522,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         objs.extend([self, self.layout])
 
         if kwargs:
-            self.logger.debug("Available replacement strings: ")
+            logger.debug("Available replacement strings: ")
             max_len = max(len(k) for k in kwargs)
             for k, v in kwargs.items():
-                self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
-            self.logger.debug(f"\t+ all attributes in: {objs}")
+                logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
+            logger.debug(f"\t+ all attributes in: {objs}")
 
         template_json_str = process_template_str(
             json.dumps(template_json),
@@ -557,17 +558,17 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 new=f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})",
             )
 
-        self.logger.info(
+        logger.info(
             f"Building BIDSLayout with {len(pybids_ignore_patterns)} ignore "
             f"patterns: {pybids_ignore_patterns}"
         )
 
         if dpath_pybids_db.exists() and list(dpath_pybids_db.iterdir()):
-            self.logger.warning(
+            logger.warning(
                 f"Overwriting existing BIDS database directory: {dpath_pybids_db}"
             )
 
-        self.logger.debug(f"Path to BIDS data: {self.layout.dpath_bids}")
+        logger.debug(f"Path to BIDS data: {self.layout.dpath_bids}")
         bids_layout: bids.BIDSLayout = create_bids_db(
             dpath_bids=self.layout.dpath_bids,
             dpath_pybids_db=dpath_pybids_db,
@@ -579,12 +580,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         # since we are selecting for specific a specific subject and
         # session, there should not be too many files
         filenames = bids_layout.get(return_type="filename")
-        self.logger.debug(f"Found {len(filenames)} files in BIDS database:")
+        logger.debug(f"Found {len(filenames)} files in BIDS database:")
         for filename in filenames:
-            self.logger.debug(filename)
+            logger.debug(filename)
 
         if len(filenames) == 0:
-            self.logger.warning("BIDS database is empty")
+            logger.warning("BIDS database is empty")
 
         return bids_layout
 
@@ -602,7 +603,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                     self._pipeline_type
                 ),
             )
-            self.logger.warning(
+            logger.warning(
                 f"Pipeline version not specified, using version {self.pipeline_version}"
             )
 
@@ -623,7 +624,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Set the pipeline step name based on the config if it is not given."""
         if self.pipeline_step is None:
             self.pipeline_step = self.pipeline_step_config.NAME
-            self.logger.warning(
+            logger.warning(
                 f"Pipeline step not specified, using step {self.pipeline_step}"
             )
 
@@ -651,7 +652,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             # success
             return True, self.run_single(participant_id, session_id)
         except Exception as exception:
-            self.logger.error(
+            logger.error(
                 f"Error running {self.pipeline_name} {self.pipeline_version}"
                 f" on participant {participant_id}, session {session_id}"
                 f": {exception}"
@@ -683,7 +684,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if self._show_progress and n_total != 0:
             results_generator = rich.progress.track(
                 results_generator,
-                description=f'{" "*_INDENT}{self.progress_bar_description}',
+                description=f"{' ' * _INDENT}{self.progress_bar_description}",
                 total=n_total,
                 console=CONSOLE_STDOUT,
             )
@@ -756,13 +757,13 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """
         job_args = self.hpc_config.model_dump()
         if len(job_args) == 0:
-            self.logger.warning("HPC configuration is empty")
+            logger.warning("HPC configuration is empty")
 
         template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
         template_vars = meta.find_undeclared_variables(template_ast)
         missing_vars = set(job_args.keys()) - template_vars
         if len(missing_vars) > 0:
-            self.logger.warning(
+            logger.warning(
                 "Found variables in the HPC config that are not used in the template "
                 f"job script: {missing_vars}. Update the config or modify the template "
                 f"at {FPATH_HPC_TEMPLATE}."
@@ -852,9 +853,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         fpath_job_script = dpath_work / self.fname_job_script
         if fpath_job_script.exists():
-            self.logger.info(f"Job script created at {fpath_job_script}")
+            logger.info(f"Job script created at {fpath_job_script}")
         else:
-            self.logger.warning(f"No job script found at {fpath_job_script}.")
+            logger.warning(f"No job script found at {fpath_job_script}.")
 
         # raise error if an error file was created
         if fpath_hpc_error.exists():
@@ -868,7 +869,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
 
         if job_id is not None:
-            self.logger.info(f"HPC job ID: {job_id}")
+            logger.info(f"HPC job ID: {job_id}")
 
         # for logging in run_cleanup()
         self.n_success += len(job_array_commands)
@@ -876,9 +877,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def run_cleanup(self):
         """Log a summary message."""
         if self.write_subcohort:
-            self.logger.success(f"Wrote subcohort to {self.write_subcohort}")
+            logger.success(f"Wrote subcohort to {self.write_subcohort}")
         elif self.n_total == 0:
-            self.logger.warning(
+            logger.warning(
                 "No participants or sessions to run. Make sure there are no mistakes "
                 "in the input arguments, the dataset's manifest or config file, and/or "
                 f"check the curation status file at {self.layout.fpath_curation_status}"
@@ -886,9 +887,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:
             if self.n_success == 0:
-                self.logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
+                logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
             else:
-                self.logger.info(
+                logger.info(
                     f"[{LogColor.SUCCESS}]Successfully submitted {self.n_success} "
                     "HPC job(s)[/]"
                 )
@@ -902,11 +903,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 )
 
             if self.n_success == 0:
-                self.logger.error(log_msg)
+                logger.error(log_msg)
             elif self.n_success == self.n_total:
-                self.logger.success(log_msg)
+                logger.success(log_msg)
             else:
-                self.logger.warning(log_msg)
+                logger.warning(log_msg)
 
         return super().run_cleanup()
 
