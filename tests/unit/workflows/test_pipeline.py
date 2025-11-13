@@ -33,6 +33,7 @@ from nipoppy.env import (
     ReturnCode,
 )
 from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.layout import LayoutError
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
@@ -628,7 +629,7 @@ def test_pybids_ignore_patterns_invalid_format(
     fpath_patterns.write_text(json.dumps({"key": "value"}))
     workflow.pipeline_step_config.PYBIDS_IGNORE_FILE = fpath_patterns
 
-    with pytest.raises(WorkflowError, match="Expected a list of strings"):
+    with pytest.raises(ConfigError, match="Expected a list of strings"):
         workflow.pybids_ignore_patterns
 
 
@@ -1497,7 +1498,7 @@ def test_submit_hpc_job(
 def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
     assert not workflow.layout.dpath_hpc.exists()
     with pytest.raises(
-        FileOperationError,
+        LayoutError,
         match="The HPC directory with appropriate content needs to exist",
     ):
         workflow._submit_hpc_job([("P1", "1")])
@@ -1509,7 +1510,7 @@ def test_submit_hpc_job_invalid_hpc(
     _set_up_hpc_for_testing(workflow, mocker)
     workflow.hpc = "invalid"
 
-    with pytest.raises(ConfigError, match="Invalid HPC cluster type"):
+    with pytest.raises(WorkflowError, match="Invalid HPC cluster type"):
         workflow._submit_hpc_job([("P1", "1")])
 
 
