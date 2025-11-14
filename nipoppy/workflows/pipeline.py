@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -9,9 +11,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
 
 import pandas as pd
+import rich
 from packaging.version import Version
+from pydantic import ValidationError
 
-from nipoppy.config.boutiques import BoutiquesConfig
+from nipoppy.config.boutiques import (
+    BoutiquesConfig,
+    get_boutiques_config_from_descriptor,
+)
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
@@ -21,6 +28,7 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.container import get_container_handler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -37,25 +45,30 @@ from nipoppy.utils.bids import (
     check_participant_id,
     check_session_id,
     create_bids_db,
+    participant_id_to_bids_participant_id,
+    session_id_to_bids_session_id,
 )
-from nipoppy.utils.utils import get_pipeline_tag, load_json
+from nipoppy.utils.utils import (
+    apply_substitutions_to_json,
+    get_pipeline_tag,
+    load_json,
+    process_template_str,
+)
 from nipoppy.workflows.base import BaseDatasetWorkflow
-from nipoppy.workflows.pipeline_config_loader import PipelineConfigLoader
-from nipoppy.workflows.pipeline_executor import JOBLIB_INSTALLED, PipelineExecutor
-from nipoppy.workflows.pipeline_hpc import PipelineHpcSubmitter
-
-# Re-export for backward compatibility with tests and external code
-try:
-    from joblib import Parallel, delayed
-except ImportError:
-    delayed = None
-    Parallel = None
-
-import rich
-import rich.progress
+from nipoppy.workflows import hpc_helper
 
 if TYPE_CHECKING:
     import bids
+try:
+    from joblib import Parallel, delayed
+
+    JOBLIB_INSTALLED = True
+
+except ImportError as error:
+    if str(error).startswith("No module named 'joblib'"):
+        JOBLIB_INSTALLED = False
+    else:
+        raise
 
 
 def apply_analysis_level(
@@ -128,9 +141,31 @@ def get_pipeline_version(
 
 
 class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
-    """A workflow for a pipeline that has a Boutiques descriptor."""
+    """A workflow for a pipeline that has a Boutiques descriptor.
+    
+    This class manages several key responsibilities:
+    
+    1. **Configuration Management**: Loading and processing pipeline configurations,
+       descriptors, invocations, and related files (see methods with @cached_property)
+    
+    2. **BIDS Database Setup**: Creating and managing PyBIDS databases for pipeline
+       input data (see set_up_bids_db method)
+    
+    3. **Execution Loop**: Managing parallel execution of pipeline runs across
+       participants/sessions (see run_main, _run_single_wrapper, _get_results_generator)
+    
+    4. **HPC Job Submission**: Submitting jobs to HPC clusters (see _submit_hpc_job,
+       _check_hpc_config, _generate_cli_command_for_hpc - implementation in hpc_helper module)
+    
+    5. **Setup and Validation**: Checking pipeline versions, validating configurations,
+       and ensuring directories exist (see run_setup, check_* methods)
+    
+    6. **Cleanup and Reporting**: Logging results and updating status (see run_cleanup)
+    
+    Note: HPC submission logic has been extracted to the hpc_helper module to improve
+    code organization while maintaining the same public API.
+    """
 
-    # Legacy attributes kept for backward compatibility
     dname_hpc_logs = "hpc"
     fname_hpc_error = "pysqa.err"
     fname_job_script = "run_queue.sh"
@@ -210,82 +245,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
             sys.exit(ReturnCode.MISSING_DEPENDENCY)
 
-        # Initialize helper objects (lazy initialization via properties)
-        self._config_loader = None
-        self._executor = None
-        self._hpc_submitter = None
-
-    @property
-    def config_loader(self) -> PipelineConfigLoader:
-        """Get the configuration loader instance."""
-        if self._config_loader is None:
-            self._config_loader = PipelineConfigLoader(
-                layout=self.layout,
-                logger=self.logger,
-                config=self.config,
-                dpath_pipeline_bundle=self.dpath_pipeline_bundle,
-                # Pass a lambda that calls the workflow's process_template_json
-                # This ensures the workflow's method is called (for test mocking)
-                process_template_json_callback=lambda **kwargs: self._process_template_json_impl(**kwargs),
-            )
-        return self._config_loader
-    
-    def _process_template_json_impl(self, template_json, participant_id=None, session_id=None, 
-                                     bids_participant_id=None, bids_session_id=None, 
-                                     objs=None, return_str=False, with_substitutions=True, **kwargs):
-        """Internal implementation of process_template_json."""
-        # This is the actual implementation that was in process_template_json
-        # It's called by the callback
-        if objs is None:
-            objs = []
-        if self not in objs:
-            objs.insert(0, self)
-        
-        # Call the config_loader's process_template_json implementation directly
-        # but disable the callback to avoid recursion
-        saved_callback = self._config_loader._process_template_json_callback
-        self._config_loader._process_template_json_callback = None
-        try:
-            return self._config_loader.process_template_json(
-                template_json=template_json,
-                participant_id=participant_id,
-                session_id=session_id,
-                bids_participant_id=bids_participant_id,
-                bids_session_id=bids_session_id,
-                objs=objs,
-                return_str=return_str,
-                with_substitutions=with_substitutions,
-                **kwargs,
-            )
-        finally:
-            self._config_loader._process_template_json_callback = saved_callback
-
-    @property
-    def executor(self) -> PipelineExecutor:
-        """Get the pipeline executor instance."""
-        if self._executor is None:
-            self._executor = PipelineExecutor(
-                logger=self.logger,
-                pipeline_name=self.pipeline_name,
-                pipeline_version=self.pipeline_version,
-                n_jobs=self.n_jobs,
-                show_progress=self._show_progress,
-                progress_bar_description=self.progress_bar_description,
-            )
-        return self._executor
-
-    @property
-    def hpc_submitter(self) -> PipelineHpcSubmitter:
-        """Get the HPC submitter instance."""
-        if self._hpc_submitter is None:
-            self._hpc_submitter = PipelineHpcSubmitter(
-                layout=self.layout,
-                logger=self.logger,
-                hpc_config=self.hpc_config,
-                hpc_preamble=self.config.HPC_PREAMBLE,
-                dry_run=self.dry_run,
-            )
-        return self._hpc_submitter
+    # =========================================================================
+    # Path Properties
+    # =========================================================================
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -336,13 +298,17 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             pipeline_version=self.pipeline_version,
         )
 
+    # =========================================================================
+    # Configuration Loading Properties
+    # =========================================================================
+
     @cached_property
     def pipeline_config(self) -> ProcessingPipelineConfig:
         """Get the user config object for the processing pipeline."""
-        return self.config_loader.load_pipeline_config(
+        return self._get_pipeline_config(
+            self.dpath_pipeline_bundle,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
-            pipeline_type=self._pipeline_type,
             pipeline_class=self._pipeline_type_to_pipeline_class_map[
                 self._pipeline_type
             ],
@@ -389,31 +355,55 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     @cached_property
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
-        return self.config_loader.load_descriptor(
-            fname_descriptor=self.pipeline_step_config.DESCRIPTOR_FILE,
+        if (fname_descriptor := self.pipeline_step_config.DESCRIPTOR_FILE) is None:
+            raise ValueError(
+                "No descriptor file specified for pipeline"
+                f" {self.pipeline_name} {self.pipeline_version}"
+            )
+        fpath_descriptor = self.dpath_pipeline_bundle / fname_descriptor
+        self.logger.info(f"Loading descriptor from {fpath_descriptor}")
+        descriptor = load_json(fpath_descriptor)
+        descriptor = self.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
             pipeline_name=self.pipeline_config.NAME,
             pipeline_version=self.pipeline_config.VERSION,
+            json_obj=descriptor,
         )
+        return descriptor
 
     @cached_property
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
-        return self.config_loader.load_invocation(
-            fname_invocation=self.pipeline_step_config.INVOCATION_FILE,
+        if (fname_invocation := self.pipeline_step_config.INVOCATION_FILE) is None:
+            raise ValueError(
+                "No invocation file specified for pipeline"
+                f" {self.pipeline_name} {self.pipeline_version}"
+            )
+        fpath_invocation = self.dpath_pipeline_bundle / fname_invocation
+        self.logger.info(f"Loading invocation from {fpath_invocation}")
+        invocation = load_json(fpath_invocation)
+
+        invocation = self.config.apply_pipeline_variables(
             pipeline_type=self.pipeline_config.PIPELINE_TYPE,
             pipeline_name=self.pipeline_config.NAME,
             pipeline_version=self.pipeline_config.VERSION,
+            json_obj=invocation,
         )
+        return invocation
 
     @cached_property
     def tracker_config(self) -> TrackerConfig:
         """Load the pipeline step's tracker configuration."""
-        return self.config_loader.load_tracker_config(
-            fname_tracker_config=self.pipeline_step_config.TRACKER_CONFIG_FILE,
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-        )
+        if (
+            fname_tracker_config := self.pipeline_step_config.TRACKER_CONFIG_FILE
+        ) is None:
+            raise ValueError(
+                f"No tracker config file specified for pipeline {self.pipeline_name}"
+                f" {self.pipeline_version}"
+            )
+        fpath_tracker_config = self.dpath_pipeline_bundle / fname_tracker_config
+        self.logger.info(f"Loading tracker config from {fpath_tracker_config}")
+        return TrackerConfig(**load_json(fpath_tracker_config))
 
     @cached_property
     def pybids_ignore_patterns(self) -> list[str]:
@@ -423,21 +413,67 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         Note: this does not apply any substitutions, since the subject/session
         patterns are always added.
         """
-        return self.config_loader.load_pybids_ignore_patterns(
-            fname_pybids_ignore=self.pipeline_step_config.PYBIDS_IGNORE_FILE
-        )
+        # no file specified
+        if (
+            fname_pybids_ignore := self.pipeline_step_config.PYBIDS_IGNORE_FILE
+        ) is None:
+            return []
+
+        fpath_pybids_ignore = self.dpath_pipeline_bundle / fname_pybids_ignore
+
+        # load patterns from file
+        self.logger.info(f"Loading PyBIDS ignore patterns from {fpath_pybids_ignore}")
+        patterns = load_json(fpath_pybids_ignore)
+
+        # validate format
+        if not isinstance(patterns, list):
+            raise ValueError(
+                f"Expected a list of strings in {fpath_pybids_ignore}"
+                f", got {patterns} ({type(patterns)})"
+            )
+
+        return [re.compile(pattern) for pattern in patterns]
 
     @cached_property
     def hpc_config(self) -> HpcConfig:
         """Load the pipeline step's HPC configuration."""
-        return self.config_loader.load_hpc_config(
-            fname_hpc_config=self.pipeline_step_config.HPC_CONFIG_FILE
-        )
+        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
+            data = {}
+        else:
+            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
+            self.logger.info(f"Loading HPC config from {fpath_hpc_config}")
+            data = self.process_template_json(load_json(fpath_hpc_config))
+        return HpcConfig(**data)
 
     @cached_property
     def boutiques_config(self):
         """Get the Boutiques configuration."""
-        return self.config_loader.load_boutiques_config(self.descriptor)
+        try:
+            boutiques_config = get_boutiques_config_from_descriptor(
+                self.descriptor,
+            )
+        except ValidationError as exception:
+            error_message = str(exception) + str(exception.errors())
+            raise ValueError(
+                f"Error when loading the Boutiques config from descriptor"
+                f": {error_message}"
+            )
+        except RuntimeError as exception:
+            self.logger.debug(
+                "Caught exception when trying to load Boutiques config"
+                f": {type(exception).__name__}: {exception}"
+            )
+            self.logger.debug(
+                "Assuming Boutiques config is not in descriptor. Using default"
+            )
+            return BoutiquesConfig()
+
+        self.logger.info(f"Loaded Boutiques config from descriptor: {boutiques_config}")
+        return boutiques_config
+
+    # =========================================================================
+    # Configuration Processing Methods
+    # =========================================================================
 
     def _get_pipeline_config(
         self,
@@ -446,24 +482,38 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         pipeline_version: str,
         pipeline_class: Type[BasePipelineConfig],
     ) -> BasePipelineConfig:
-        """Get the config for a pipeline.
-        
-        This method is maintained for backward compatibility.
-        It delegates to the config_loader's load_pipeline_config.
-        """
-        # Create a temporary config_loader if needed
-        temp_config_loader = PipelineConfigLoader(
-            layout=self.layout,
-            logger=self.logger,
-            config=self.config,
-            dpath_pipeline_bundle=dpath_pipeline_bundle,
-        )
-        return temp_config_loader.load_pipeline_config(
+        """Get the config for a pipeline."""
+        fpath_config = dpath_pipeline_bundle / self.layout.fname_pipeline_config
+        if not fpath_config.exists():
+            raise FileNotFoundError(
+                f"Pipeline config file not found at {fpath_config} for "
+                f"pipeline: {pipeline_name} {pipeline_version}"
+            )
+
+        # NOTE: user-defined substitutions take precedence over the pipeline variables
+        pipeline_config_json = self.config.apply_pipeline_variables(
+            pipeline_type=self._pipeline_type,
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
-            pipeline_type=self._pipeline_type,
-            pipeline_class=pipeline_class,
+            json_obj=self.process_template_json(
+                load_json(fpath_config),
+            ),
         )
+
+        pipeline_config = pipeline_class(**pipeline_config_json)
+
+        # make sure the config is for the correct pipeline
+        if not (
+            pipeline_config.NAME == pipeline_name
+            and pipeline_config.VERSION == pipeline_version
+        ):
+            raise RuntimeError(
+                f'Expected pipeline config to have NAME="{pipeline_name}" '
+                f'and VERSION="{pipeline_version}", got "{pipeline_config.NAME}" and '
+                f'"{pipeline_config.VERSION}" instead'
+            )
+
+        return self.config.propagate_container_config_to_pipeline(pipeline_config)
 
     def process_template_json(
         self,
@@ -477,21 +527,49 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         with_substitutions: bool = True,
         **kwargs,
     ):
-        """Replace template strings in a JSON object.
-        
-        This is the main public API for template processing.
-        """
-        return self._process_template_json_impl(
-            template_json=template_json,
-            participant_id=participant_id,
-            session_id=session_id,
-            bids_participant_id=bids_participant_id,
-            bids_session_id=bids_session_id,
+        """Replace template strings in a JSON object."""
+        if with_substitutions:
+            # apply user-defined substitutions to maintain compatibility with older
+            # pipeline config files that do not use the new pipeline variables
+            template_json = apply_substitutions_to_json(
+                template_json, self.config.SUBSTITUTIONS
+            )
+        if participant_id is not None:
+            if bids_participant_id is None:
+                bids_participant_id = participant_id_to_bids_participant_id(
+                    participant_id
+                )
+            kwargs["participant_id"] = participant_id
+            kwargs["bids_participant_id"] = bids_participant_id
+
+        if session_id is not None:
+            if bids_session_id is None:
+                bids_session_id = session_id_to_bids_session_id(session_id)
+            kwargs["session_id"] = session_id
+            kwargs["bids_session_id"] = bids_session_id
+
+        if objs is None:
+            objs = []
+        objs.extend([self, self.layout])
+
+        if kwargs:
+            self.logger.debug("Available replacement strings: ")
+            max_len = max(len(k) for k in kwargs)
+            for k, v in kwargs.items():
+                self.logger.debug(f"\t{k}:".ljust(max_len + 3) + v)
+            self.logger.debug(f"\t+ all attributes in: {objs}")
+
+        template_json_str = process_template_str(
+            json.dumps(template_json),
             objs=objs,
-            return_str=return_str,
-            with_substitutions=with_substitutions,
             **kwargs,
         )
+
+        return template_json_str if return_str else json.loads(template_json_str)
+
+    # =========================================================================
+    # BIDS Database Management
+    # =========================================================================
 
     def set_up_bids_db(
         self,
@@ -546,6 +624,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return bids_layout
 
+    # =========================================================================
+    # Setup and Validation Methods
+    # =========================================================================
+
     def check_dir(self, dpath: Path):
         """Create directory if it does not exist."""
         if not dpath.exists():
@@ -598,27 +680,59 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return to_return
 
+    # =========================================================================
+    # Execution Loop and Parallelization
+    # =========================================================================
+
     def _run_single_wrapper(self, participant_id, session_id) -> bool:
         """
         Run a single participant/session and handle exceptions.
 
-        This method is maintained for backward compatibility.
-        It delegates to the executor's run_single_wrapper.
+        This is a helper function for parallelization with joblib.
+        Returns (True, <result>) if the run was successful, (False, None) otherwise.
         """
-        return self.executor.run_single_wrapper(
-            self.run_single, participant_id, session_id
-        )
+        try:
+            # success
+            return True, self.run_single(participant_id, session_id)
+        except Exception as exception:
+            self.logger.error(
+                f"Error running {self.pipeline_name} {self.pipeline_version}"
+                f" on participant {participant_id}, session {session_id}"
+                f": {exception}"
+            )
+
+        # failure
+        return False, None
 
     def _get_results_generator(self, participants_sessions: Iterable[Tuple[str, str]]):
-        """
-        Get a generator for execution results.
+        participants_sessions = list(participants_sessions)
+        n_total = len(participants_sessions)
+        if JOBLIB_INSTALLED:
+            wrapper_func = delayed(self._run_single_wrapper)
+        else:
+            wrapper_func = self._run_single_wrapper
 
-        This method is maintained for backward compatibility.
-        It delegates to the executor's get_results_generator.
-        """
-        return self.executor.get_results_generator(
-            self.run_single, participants_sessions
+        results_generator = (
+            wrapper_func(participant_id, session_id)
+            for participant_id, session_id in participants_sessions
         )
+
+        if JOBLIB_INSTALLED:
+            results_generator = Parallel(
+                n_jobs=self.n_jobs,
+                backend="threading",
+                return_as="generator",
+            )(results_generator)
+
+        if self._show_progress and n_total != 0:
+            results_generator = rich.progress.track(
+                results_generator,
+                description=f'{" "*_INDENT}{self.progress_bar_description}',
+                total=n_total,
+                console=CONSOLE_STDOUT,
+            )
+
+        return results_generator
 
     def run_main(self):
         """Run the pipeline."""
@@ -655,17 +769,25 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
-            n_success, n_total, run_single_results = self.executor.execute_participants_sessions(
-                self.run_single, participants_sessions
-            )
-            
-            self.n_success += n_success
-            self.n_total += n_total
+            results = list(self._get_results_generator(participants_sessions))
+
+            if len(results) == 0:
+                run_statuses = []
+                run_single_results = []
+            else:
+                run_statuses, run_single_results = zip(*results)
+
+            self.n_success += sum(run_statuses)
+            self.n_total += len(run_statuses)
             self.run_single_results = run_single_results
 
             # update return code if needed
             if (self.n_success != self.n_total) and (self.n_total != 0):
                 self.return_code = ReturnCode.PARTIAL_SUCCESS
+
+    # =========================================================================
+    # HPC Job Submission (implementation in hpc_helper module)
+    # =========================================================================
 
     def _generate_cli_command_for_hpc(
         self, participant_id=None, session_id=None
@@ -677,32 +799,40 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """
         Get HPC configuration values to be passed to Jinja template.
 
-        This method is maintained for backward compatibility.
-        It delegates to the hpc_submitter's check_hpc_config.
+        This function logs a warning if the HPC config does not exist (or is empty) or
+        if it contains variables that are not defined in the template job script.
         """
-        return self.hpc_submitter.check_hpc_config()
+        return hpc_helper.check_hpc_config(self.hpc_config, self.logger)
 
     def _submit_hpc_job(self, participants_sessions):
-        """Submit jobs to a HPC cluster for processing.
-        
-        This method is maintained for backward compatibility.
-        It delegates to the hpc_submitter's submit_hpc_job.
-        """
-        n_jobs_submitted = self.hpc_submitter.submit_hpc_job(
+        """Submit jobs to a HPC cluster for processing."""
+        n_jobs = hpc_helper.submit_hpc_job(
+            layout=self.layout,
+            logger=self.logger,
             hpc_type=self.hpc,
+            hpc_config=self.hpc_config,
             participants_sessions=participants_sessions,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             pipeline_step=self.pipeline_step,
-            dpath_work=self.dpath_pipeline_work,
             participant_id=self.participant_id,
             session_id=self.session_id,
+            dpath_work=self.dpath_pipeline_work,
+            hpc_preamble=self.config.HPC_PREAMBLE,
             generate_command_func=self._generate_cli_command_for_hpc,
+            dry_run=self.dry_run,
+            fname_hpc_error=self.fname_hpc_error,
+            fname_job_script=self.fname_job_script,
+            dname_hpc_logs=self.dname_hpc_logs,
         )
         
-        # Update counts for logging in run_cleanup()
-        self.n_total += n_jobs_submitted
-        self.n_success += n_jobs_submitted
+        # Update counters for logging in run_cleanup()
+        self.n_total += n_jobs
+        self.n_success += n_jobs
+
+    # =========================================================================
+    # Cleanup and Reporting
+    # =========================================================================
 
     def run_cleanup(self):
         """Log a summary message."""
@@ -741,6 +871,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return super().run_cleanup()
 
+    # =========================================================================
+    # Abstract Methods (to be implemented by subclasses)
+    # =========================================================================
+
     @abstractmethod
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -758,6 +892,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         This is an abstract method that should be defined explicitly in subclasses.
         """
+
+    # =========================================================================
+    # Logging
+    # =========================================================================
 
     def generate_fpath_log(
         self,
