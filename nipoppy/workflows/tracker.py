@@ -30,7 +30,7 @@ class PipelineTracker(BasePipelineWorkflow):
     ):
         super().__init__(
             dpath_root=dpath_root,
-            name="track_processing",
+            name="nipoppy_track-processing",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,

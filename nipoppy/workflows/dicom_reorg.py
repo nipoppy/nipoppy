@@ -41,7 +41,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         """Initialize the DICOM reorganization workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            name="dicom_reorg",
+            name="nipoppy_reorg",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
