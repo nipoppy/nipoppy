@@ -54,8 +54,8 @@ from nipoppy.utils.utils import (
     load_json,
     process_template_str,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.workflows import hpc_helper
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 if TYPE_CHECKING:
     import bids
@@ -142,26 +142,27 @@ def get_pipeline_version(
 
 class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor.
-    
+
     This class manages several key responsibilities:
-    
+
     1. **Configuration Management**: Loading and processing pipeline configurations,
        descriptors, invocations, and related files (see methods with @cached_property)
-    
+
     2. **BIDS Database Setup**: Creating and managing PyBIDS databases for pipeline
        input data (see set_up_bids_db method)
-    
+
     3. **Execution Loop**: Managing parallel execution of pipeline runs across
        participants/sessions (see run_main, _run_single_wrapper, _get_results_generator)
-    
-    4. **HPC Job Submission**: Submitting jobs to HPC clusters (see _submit_hpc_job,
-       _check_hpc_config, _generate_cli_command_for_hpc - implementation in hpc_helper module)
-    
+
+    4. **HPC Job Submission**: Submitting jobs to HPC clusters (see
+       _submit_hpc_job, _check_hpc_config, _generate_cli_command_for_hpc -
+       implementation in hpc_helper module)
+
     5. **Setup and Validation**: Checking pipeline versions, validating configurations,
        and ensuring directories exist (see run_setup, check_* methods)
-    
+
     6. **Cleanup and Reporting**: Logging results and updating status (see run_cleanup)
-    
+
     Note: HPC submission logic has been extracted to the hpc_helper module to improve
     code organization while maintaining the same public API.
     """
@@ -825,7 +826,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             fname_job_script=self.fname_job_script,
             dname_hpc_logs=self.dname_hpc_logs,
         )
-        
+
         # Update counters for logging in run_cleanup()
         self.n_total += n_jobs
         self.n_success += n_jobs

@@ -153,9 +153,7 @@ def submit_hpc_job(
     participant_ids = []
     session_ids = []
     for part_id, sess_id in participants_sessions:
-        command = generate_command_func(
-            participant_id=part_id, session_id=sess_id
-        )
+        command = generate_command_func(participant_id=part_id, session_id=sess_id)
         job_array_commands.append(shlex.join(command))
         participant_ids.append(part_id)
         session_ids.append(sess_id)
