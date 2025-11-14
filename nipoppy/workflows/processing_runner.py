@@ -17,7 +17,7 @@ class ProcessingRunner(Runner):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        name: str = "nipoppy_process",
+        name: str = "process",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,

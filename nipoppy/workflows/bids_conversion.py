@@ -36,7 +36,7 @@ class BIDSificationRunner(Runner):
     ):
         super().__init__(
             dpath_root=dpath_root,
-            name="nipoppy_bidsify",
+            name="bidsify",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
