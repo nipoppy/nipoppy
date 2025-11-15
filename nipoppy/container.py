@@ -19,14 +19,6 @@ BIND_SEP = ":"
 logger = get_logger()
 
 
-class BaremetalHandler(Base):
-    """Handler for baremetal execution (no container)."""
-
-    def add_env_arg() -> str:
-        """Container executable name."""
-        return "baremetal"
-
-
 class ContainerHandler(Base, ABC):
     """Abstract class for container handlers."""
 
