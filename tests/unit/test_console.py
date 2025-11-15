@@ -23,6 +23,7 @@ def test_global_consoles():
     assert CONSOLE_STDERR.indent == _INDENT
 
 
+@pytest.mark.no_xdist
 def test_console_confirm(console: _Console, capsys: pytest.CaptureFixture):
     # check that no newline is added at the end of the prompt
     message = "test message"
@@ -40,6 +41,7 @@ def test_console_confirm(console: _Console, capsys: pytest.CaptureFixture):
     assert not captured.out.endswith("\n")
 
 
+@pytest.mark.no_xdist
 def test_console_print(console: _Console, capsys: pytest.CaptureFixture):
     table = Table()
     table.add_column("Column 1")
@@ -50,6 +52,7 @@ def test_console_print(console: _Console, capsys: pytest.CaptureFixture):
     assert captured.out.endswith("\n")
 
 
+@pytest.mark.no_xdist
 def test_console_no_indent_in_log(logger, capsys: pytest.CaptureFixture):
     for handler in logger.handlers:
         if isinstance(handler, RichHandler):
@@ -67,6 +70,7 @@ def test_console_status(console: _Console):
     assert isinstance(console.status(""), _Status)
 
 
+@pytest.mark.no_xdist
 def test_status_context_manager(console: _Console, capsys: pytest.CaptureFixture):
     message = "test status"
     with _Status(message, console=console):
@@ -76,6 +80,7 @@ def test_status_context_manager(console: _Console, capsys: pytest.CaptureFixture
     assert f"{' ' * (_INDENT - 2)}{message}" in captured.out
 
 
+@pytest.mark.no_xdist
 def test_status_update(console: _Console, capsys: pytest.CaptureFixture):
     message = "test update"
     with console.status("tmp") as status:

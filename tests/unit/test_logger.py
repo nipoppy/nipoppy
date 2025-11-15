@@ -27,8 +27,8 @@ def test_get_logger(verbose: bool, logger, monkeypatch: pytest.MonkeyPatch):
         assert logger.handlers[1].level == logging.INFO
 
 
-@pytest.mark.no_xdist
 @pytest.mark.parametrize("verbose", [False, True])
+@pytest.mark.no_xdist
 def test_get_logger_capsys(logger, verbose: bool, capsys: pytest.CaptureFixture):
     logger.verbose(verbose)
     logger.debug("debug")
