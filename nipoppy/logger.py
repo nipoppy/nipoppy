@@ -41,20 +41,7 @@ class NipoppyLogger(logging.Logger):
         """Initialize the Nipoppy logger."""
         super().__init__(*args, **kwargs)
         # self.propagate = False
-        print(self.name)
         self.setLevel(logging.DEBUG)
-        self._reset_config()
-
-    def _reset_config(self):
-        """Reset the logger configuration."""
-        self._configure_console()
-        self.verbose(False)
-
-    def _configure_console(self):
-        """Configure console logging."""
-        if hasattr(self, "stderr_handler"):
-            self.stderr_handler.close()
-            self.removeHandler(self.stderr_handler)
         # stderr: ERROR and CRITICAL
         self.stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
         self.addHandler(self.stderr_handler)
@@ -130,13 +117,10 @@ class NipoppyLogger(logging.Logger):
         self.info(f"[{LogColor.SUCCESS}]{message} 🎉🎉🎉[/]")
 
 
-logging.basicConfig()
-
-
-def get_logger() -> NipoppyLogger:
+def get_logger(verbose: bool = False) -> NipoppyLogger:
     """Retrieve the logger."""
     logging.setLoggerClass(NipoppyLogger)
-    logger = logging.getLogger(NipoppyLogger.NAME)
+    logger = logging.getLogger(NipoppyLogger.NAME).verbose(verbose)
 
     # Reset to default logger class
     # Otherwise, external libraries will also use NipoppyLogger

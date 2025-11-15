@@ -78,9 +78,7 @@ MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
 @pytest.fixture()
 def logger() -> Generator[NipoppyLogger]:
     """Fixture for NipoppyLogger instance."""
-    _logger = get_logger()
-    _logger._reset_config()
-    yield _logger
+    return get_logger()
 
 
 @pytest.fixture()

@@ -286,6 +286,7 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
+@pytest.mark.no_xdist
 def test_init_n_jobs_but_no_joblib(
     tmp_path: Path,
     mocker: pytest_mock.MockFixture,
@@ -904,6 +905,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     assert pybids_ignore_patterns == workflow.pybids_ignore_patterns
 
 
+@pytest.mark.no_xdist
 def test_set_up_bids_db_no_session(
     workflow: PipelineWorkflow,
     tmp_path: Path,
@@ -939,6 +941,7 @@ def test_set_up_bids_db_no_session(
     "pipeline_name,expected_version",
     [("fmriprep", "23.1.3"), ("my_pipeline", "2.0")],
 )
+@pytest.mark.no_xdist
 def test_check_pipeline_version(
     pipeline_name,
     expected_version,
@@ -974,6 +977,7 @@ def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
         ("my_pipeline", "1.0", DEFAULT_PIPELINE_STEP_NAME),
     ],
 )
+@pytest.mark.no_xdist
 def test_check_pipeline_step(
     pipeline_name,
     pipeline_version,
@@ -1161,7 +1165,6 @@ def test_run_main_write_subcohort(
     write_subcohort: str,
     dry_run: bool,
     tmp_path: Path,
-    caplog: pytest.LogCaptureFixture,
 ):
     write_subcohort = tmp_path / write_subcohort
 
@@ -1303,6 +1306,7 @@ def test_run_main_use_subcohort_empty_file(
         ),
     ],
 )
+@pytest.mark.no_xdist
 def test_run_cleanup(
     n_success,
     n_total,
@@ -1347,6 +1351,7 @@ def test_run_cleanup_no_participants_warning(
         (2, 2, "[green]Successfully submitted 2 HPC job(s)[/]"),
     ],
 )
+@pytest.mark.no_xdist
 def test_run_cleanup_hpc(
     n_success,
     n_total,
@@ -1423,6 +1428,7 @@ def test_check_hpc_config(hpc_config_data, workflow: PipelineWorkflow):
     assert workflow._check_hpc_config() == hpc_config_data
 
 
+@pytest.mark.no_xdist
 def test_check_hpc_config_empty(
     workflow: PipelineWorkflow,
     caplog: pytest.LogCaptureFixture,
@@ -1443,6 +1449,7 @@ def test_check_hpc_config_empty(
     )
 
 
+@pytest.mark.no_xdist
 def test_check_hpc_config_unused_vars(
     workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
 ):
@@ -1464,6 +1471,7 @@ def test_check_hpc_config_unused_vars(
 
 
 @pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
+@pytest.mark.no_xdist
 def test_submit_hpc_job(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
@@ -1611,6 +1619,7 @@ def test_submit_hpc_job_pysqa_call(
     "write_job_script,expected_message",
     [(True, "Job script created at "), (False, "No job script found at ")],
 )
+@pytest.mark.no_xdist
 def test_submit_hpc_job_job_script(
     write_job_script: bool,
     expected_message,
@@ -1648,6 +1657,7 @@ def test_submit_hpc_job_pysqa_error(
 
 
 @pytest.mark.parametrize("job_id", ["12345", None])
+@pytest.mark.no_xdist
 def test_submit_hpc_job_job_id(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,

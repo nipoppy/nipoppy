@@ -212,6 +212,7 @@ def test_launch_boutiques_run(
 )
 @pytest.mark.parametrize("simulate", [True, False])
 @pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.no_xdist
 def test_launch_boutiques_run_bosh_opts(
     container_handler,
     expected_container_opts,
@@ -420,6 +421,7 @@ def test_tar_directory(tmp_path: Path, dpath_type):
     assert not dpath_to_tar.exists()
 
 
+@pytest.mark.no_xdist
 def test_tar_directory_failure(
     runner: ProcessingRunner,
     tmp_path: Path,

@@ -14,6 +14,7 @@ def workflow(tmp_path):
     return workflow
 
 
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineValidateWorkflow,
     mocker: pytest_mock.MockerFixture,

@@ -133,7 +133,7 @@ def test_add_bind_arg(
         ["-B", "/", "-B", "/:relative_path_in_container", "-B", "/:/:ro"],
     ],
 )
-def test_fix_bind_args(args, handler: ContainerHandler, caplog):
+def test_fix_bind_args(args, handler: ContainerHandler):
     handler.args = args
     handler.fix_bind_args()
 
@@ -141,6 +141,7 @@ def test_fix_bind_args(args, handler: ContainerHandler, caplog):
     assert handler.args == args
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("bind_flag", ["-B", "--bind"])
 def test_fix_bind_args_relative(
     bind_flag, handler: ContainerHandler, caplog: pytest.LogCaptureFixture
@@ -154,6 +155,7 @@ def test_fix_bind_args_relative(
     assert "Resolving path" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_fix_bind_args_symlink(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
@@ -171,6 +173,7 @@ def test_fix_bind_args_symlink(
     assert "Resolving path" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_fix_bind_args_missing(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):

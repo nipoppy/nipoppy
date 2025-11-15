@@ -281,6 +281,7 @@ def test_check_config_files(
     assert n_files_expected == len(files)
 
 
+@pytest.mark.no_xdist
 def test_check_config_files_logging(
     valid_config_data,
     caplog: pytest.LogCaptureFixture,
@@ -319,6 +320,7 @@ def test_check_self_contained(dpath_bundle, fpaths, valid):
         _check_self_contained(dpath_bundle, fpaths)
 
 
+@pytest.mark.no_xdist
 def test_check_self_container_logging(caplog: pytest.LogCaptureFixture):
     log_level = logging.DEBUG
     caplog.set_level(log_level)
@@ -360,6 +362,7 @@ def test_check_no_subdirectories(
         _check_no_subdirectories(dpath_bundle)
 
 
+@pytest.mark.no_xdist
 def test_check_no_subdirectories_logging(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):

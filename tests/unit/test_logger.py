@@ -6,17 +6,17 @@ from pathlib import Path
 import pytest
 import rich.logging
 
-import nipoppy.logger  # for monkeypatching
 from nipoppy.env import PROGRAM_NAME
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("verbose", [False, True])
 def test_get_logger(verbose: bool, logger, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(nipoppy.logger, "IS_TESTING", False)
     logger.verbose(verbose)
     assert logger.name == PROGRAM_NAME
     assert logger.level == logging.DEBUG
 
+    # assert False, logger.handlers
     assert isinstance(logger.handlers[0], rich.logging.RichHandler)
     assert logger.handlers[0].level == logging.ERROR
 
@@ -56,13 +56,15 @@ def test_get_logger_capsys(logger, verbose: bool, capsys: pytest.CaptureFixture)
     assert "critical" in captured.err
 
 
-def test_add_file_handler(tmp_path: Path, logger, caplog: pytest.LogCaptureFixture):
+@pytest.mark.no_xdist
+def test_add_file_handler(tmp_path: Path, logger):
     fpath_log = tmp_path / "log" / "test.log"
     logger.add_file_handler(fpath_log)
     logger.info("Test")
     assert fpath_log.exists()
 
 
+@pytest.mark.no_xdist
 def test_ignore_external_loggers(logger, caplog: pytest.LogCaptureFixture):
     external_logger = logging.getLogger("external_logger")
     external_logger.info("This is an external log message.")

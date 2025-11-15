@@ -117,6 +117,7 @@ def test_get_pipeline_info_map_error(workflow: PipelineListWorkflow):
         PipelineTypeEnum.EXTRACTION,
     ],
 )
+@pytest.mark.no_xdist
 def test_log_pipeline_info(
     pipeline_type: PipelineTypeEnum,
     pipeline_info: dict[str, list[str]],
@@ -141,6 +142,7 @@ def test_log_pipeline_info(
         PipelineTypeEnum.EXTRACTION,
     ],
 )
+@pytest.mark.no_xdist
 def test_log_pipeline_info_empty(
     pipeline_type: PipelineTypeEnum,
     workflow: PipelineListWorkflow,
@@ -153,6 +155,7 @@ def test_log_pipeline_info_empty(
     assert f"No available {pipeline_type.value} pipelines" in caplog.records[0].message
 
 
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineListWorkflow,
     mocker: pytest_mock.MockFixture,
