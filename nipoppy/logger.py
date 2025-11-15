@@ -3,10 +3,10 @@
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Self
 
 import rich_click as click
 from rich.logging import RichHandler
+from typing_extensions import Self
 
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 
