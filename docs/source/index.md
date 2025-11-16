@@ -59,6 +59,7 @@ includehidden:
 titlesonly:
 caption: Explanations
 ---
+explanations/study_spec
 explanations/manifest
 ```
 
@@ -72,6 +73,7 @@ caption: How-to guides
 how_to_guides/user_guide/index
 how_to_guides/init/index
 how_to_guides/manifest/index
+how_to_guides/reorganize_sourcedata/index
 how_to_guides/tabular_data/index
 how_to_guides/pipeline_install/index
 how_to_guides/pipeline_run/index
