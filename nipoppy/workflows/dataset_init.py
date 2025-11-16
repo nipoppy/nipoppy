@@ -13,6 +13,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     StrOrPathLike,
 )
+from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import (
     check_participant_id,
@@ -69,9 +70,10 @@ class InitWorkflow(BaseDatasetWorkflow):
                 filenames = [
                     f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
                 ]
-
             except NotADirectoryError:
-                raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
+                raise FileOperationError(
+                    f"Dataset is an existing file: {self.dpath_root}"
+                )
 
             if len(filenames) > 0:
                 msg = f"Dataset directory is non-empty: {self.dpath_root}"
@@ -80,7 +82,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                         f"{msg} `--force` specified, proceeding anyway."
                     )
                 else:
-                    raise FileExistsError(
+                    raise FileOperationError(
                         f"{msg}, if this is intended consider using the --force flag."
                     )
 
