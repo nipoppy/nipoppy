@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import Base
-from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
+from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import add_logfile, capture_warnings, get_logger
 from nipoppy.study import Study
@@ -149,8 +150,7 @@ class BaseWorkflow(Base, ABC):
                 )
 
             if check and process.returncode != 0:
-                exception = subprocess.CalledProcessError(process.returncode, command)
-                raise exception
+                raise subprocess.CalledProcessError(process.returncode, command)
 
             run_output = process
 
@@ -204,7 +204,7 @@ class BaseWorkflow(Base, ABC):
             if not self.dry_run:
                 dpath.mkdir(**kwargs_to_use)
         elif not dpath.is_dir():
-            raise FileExistsError(
+            raise FileOperationError(
                 f"Path already exists but is not a directory: {dpath}"
             )
 
@@ -399,7 +399,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         """Get the DICOM directory mapping."""
         fpath_dicom_dir_map = self.study.config.DICOM_DIR_MAP_FILE
         if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
-            raise FileNotFoundError(
+            raise FileOperationError(
                 f"DICOM directory map file not found: {fpath_dicom_dir_map}"
             )
 

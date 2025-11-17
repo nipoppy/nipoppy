@@ -7,6 +7,7 @@ import pytest
 from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID, NIPOPPY_DIR_NAME
+from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
@@ -77,7 +78,7 @@ def test_non_empty_dir(dpath_root: Path):
     dpath_root.mkdir(parents=True)
     dpath_root.joinpath("unexepected_file").touch()
 
-    with pytest.raises(FileExistsError, match="Dataset directory is non-empty"):
+    with pytest.raises(FileOperationError, match="Dataset directory is non-empty"):
         workflow = InitWorkflow(dpath_root=dpath_root)
         workflow.run()
 
@@ -233,7 +234,7 @@ def test_remove_existing_broken_symlink(tmp_path: Path):
 def test_is_file(dpath_root: Path):
     dpath_root.touch()
 
-    with pytest.raises(FileExistsError, match="Dataset is an existing file"):
+    with pytest.raises(FileOperationError, match="Dataset is an existing file"):
         workflow = InitWorkflow(dpath_root=dpath_root)
         workflow.run()
 

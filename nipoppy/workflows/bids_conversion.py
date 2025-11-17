@@ -9,6 +9,7 @@ from typing import Optional
 from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import WorkflowError
 from nipoppy.workflows.runner import Runner
 
 
@@ -55,7 +56,7 @@ class BIDSificationRunner(Runner):
     @cached_property
     def dpath_pipeline(self):
         """Not available."""
-        raise RuntimeError(
+        raise WorkflowError(
             f'"dpath_pipeline" attribute is not available for {type(self)}'
         )
 

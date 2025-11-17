@@ -6,6 +6,7 @@ from typing import Optional
 import boutiques as bosh
 
 from nipoppy.env import LogColor, PipelineTypeEnum
+from nipoppy.exceptions import FileOperationError
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -40,7 +41,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
     ):
         """Create a pipeline bundle."""
         if target.exists():
-            raise IsADirectoryError(
+            raise FileOperationError(
                 f"Target directory {target} already exists. "
                 "Please remove it or choose a different name.",
             )

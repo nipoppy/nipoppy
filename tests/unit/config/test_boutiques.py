@@ -7,6 +7,7 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
+from nipoppy.exceptions import ConfigError
 
 FIELDS_BOUTIQUES = ["CONTAINER_CONFIG", "CONTAINER_SUBCOMMAND"]
 
@@ -45,5 +46,5 @@ def test_get_boutiques_config_from_descriptor(descriptor):
     ],
 )
 def test_get_boutiques_config_from_descriptor_error(descriptor):
-    with pytest.raises(RuntimeError, match="The Boutiques descriptor does not have a"):
+    with pytest.raises(ConfigError, match="The Boutiques descriptor does not have a"):
         get_boutiques_config_from_descriptor(descriptor)

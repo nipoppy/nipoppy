@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
+from nipoppy.exceptions import FileOperationError
+from nipoppy.layout import LayoutError
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -96,7 +98,7 @@ def test_run_setup_validation_before_logfile(workflow: BaseDatasetWorkflow):
 
     # expect layout validation error
     with pytest.raises(
-        FileNotFoundError, match="Dataset does not follow expected directory structure"
+        LayoutError, match="Dataset does not follow expected directory structure"
     ):
         workflow.run_setup()
 
@@ -141,5 +143,5 @@ def test_dicom_dir_map_custom(workflow: BaseDatasetWorkflow):
 
 def test_dicom_dir_map_not_found(workflow: BaseDatasetWorkflow):
     workflow.study.config.DICOM_DIR_MAP_FILE = "fake_path"
-    with pytest.raises(FileNotFoundError, match="DICOM directory map file not found"):
+    with pytest.raises(FileOperationError, match="DICOM directory map file not found"):
         workflow.dicom_dir_map

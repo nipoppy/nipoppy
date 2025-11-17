@@ -39,8 +39,15 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     LogColor,
     PipelineTypeEnum,
-    ReturnCode,
     StrOrPathLike,
+)
+from nipoppy.exceptions import (
+    ConfigError,
+    ContainerError,
+    FileOperationError,
+    LayoutError,
+    ReturnCode,
+    WorkflowError,
 )
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils.bids import (
@@ -136,7 +143,7 @@ def get_pipeline_version(
     if pipeline_config_latest is not None:
         return pipeline_config_latest.VERSION
     else:
-        raise ValueError(
+        raise WorkflowError(
             f"No config found for pipeline with NAME={pipeline_name}"
             ". Installed pipelines: "
             + ", ".join(f"{name} {version}" for name, version in installed_pipelines)
@@ -180,13 +187,13 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         _show_progress: bool = False,
     ):
         if hpc and write_subcohort:
-            raise ValueError(
+            raise WorkflowError(
                 "HPC job submission and writing a list of participants and sessions "
                 "are mutually exclusive."
             )
 
         if n_jobs is not None and not _skip_logfile:
-            raise ValueError("n_jobs is not supported when _skip_logfile is False.")
+            raise WorkflowError("n_jobs is not supported when _skip_logfile is False.")
         if n_jobs is None:
             n_jobs = 1
 
@@ -303,11 +310,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         try:
             is_downloaded = container_handler.is_image_downloaded(uri, fpath_container)
-        except ValueError as exception:
-            raise ValueError(
+        except ContainerError as e:
+            raise WorkflowError(
                 f"Error in container config for pipeline {self.pipeline_name} "
-                f"{self.pipeline_version}: {exception}"
-            )
+                f"{self.pipeline_version}: {e}"
+            ) from e
 
         if not is_downloaded:
             error_message = (
@@ -320,7 +327,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                     ". This file can be downloaded to the appropriate path by running "
                     f"the following command:\n\n{pull_command}"
                 )
-            raise FileNotFoundError(error_message)
+            raise FileOperationError(error_message)
 
         return fpath_container
 
@@ -328,7 +335,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def descriptor(self) -> dict:
         """Load the pipeline step's Boutiques descriptor."""
         if (fname_descriptor := self.pipeline_step_config.DESCRIPTOR_FILE) is None:
-            raise ValueError(
+            raise ConfigError(
                 "No descriptor file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
@@ -347,7 +354,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def invocation(self) -> dict:
         """Load the pipeline step's Boutiques invocation."""
         if (fname_invocation := self.pipeline_step_config.INVOCATION_FILE) is None:
-            raise ValueError(
+            raise ConfigError(
                 "No invocation file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
@@ -369,7 +376,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if (
             fname_tracker_config := self.pipeline_step_config.TRACKER_CONFIG_FILE
         ) is None:
-            raise ValueError(
+            raise ConfigError(
                 f"No tracker config file specified for pipeline {self.pipeline_name}"
                 f" {self.pipeline_version}"
             )
@@ -399,7 +406,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         # validate format
         if not isinstance(patterns, list):
-            raise ValueError(
+            raise ConfigError(
                 f"Expected a list of strings in {fpath_pybids_ignore}"
                 f", got {patterns} ({type(patterns)})"
             )
@@ -424,16 +431,16 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             boutiques_config = get_boutiques_config_from_descriptor(
                 self.descriptor,
             )
-        except ValidationError as exception:
-            error_message = str(exception) + str(exception.errors())
-            raise ValueError(
+        except ValidationError as e:
+            error_message = str(e) + str(e.errors())
+            raise WorkflowError(
                 f"Error when loading the Boutiques config from descriptor"
                 f": {error_message}"
-            )
-        except RuntimeError as exception:
+            ) from e
+        except ConfigError as e:
             self.logger.debug(
                 "Caught exception when trying to load Boutiques config"
-                f": {type(exception).__name__}: {exception}"
+                f": {type(e).__name__}: {e}"
             )
             self.logger.debug(
                 "Assuming Boutiques config is not in descriptor. Using default"
@@ -453,7 +460,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Get the config for a pipeline."""
         fpath_config = dpath_pipeline_bundle / self.study.layout.fname_pipeline_config
         if not fpath_config.exists():
-            raise FileNotFoundError(
+            raise FileOperationError(
                 f"Pipeline config file not found at {fpath_config} for "
                 f"pipeline: {pipeline_name} {pipeline_version}"
             )
@@ -475,7 +482,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             pipeline_config.NAME == pipeline_name
             and pipeline_config.VERSION == pipeline_version
         ):
-            raise RuntimeError(
+            raise WorkflowError(
                 f'Expected pipeline config to have NAME="{pipeline_name}" '
                 f'and VERSION="{pipeline_version}", got "{pipeline_config.NAME}" and '
                 f'"{pipeline_config.VERSION}" instead'
@@ -612,7 +619,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self._pipeline_type, self.pipeline_name, self.pipeline_version
         ).items():
             if value is None:
-                raise ValueError(
+                raise ConfigError(
                     f"Variable {name} is not set in the config for pipeline "
                     f"{self.pipeline_name}, version {self.pipeline_version}. You need "
                     "to set it in the PIPELINE_VARIABLES section of the config file at "
@@ -683,7 +690,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if self._show_progress and n_total != 0:
             results_generator = rich.progress.track(
                 results_generator,
-                description=f'{" "*_INDENT}{self.progress_bar_description}',
+                description=f"{' ' * _INDENT}{self.progress_bar_description}",
                 total=n_total,
                 console=CONSOLE_STDOUT,
             )
@@ -701,12 +708,14 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 df_participants_sessions = pd.read_csv(
                     self.use_subcohort, header=None, sep="\t", dtype=str
                 )
-            except FileNotFoundError:
-                raise FileNotFoundError(
+            except FileNotFoundError as e:
+                raise FileOperationError(
                     f"Subcohort file {self.use_subcohort} not found"
-                )
-            except pd.errors.EmptyDataError:
-                raise RuntimeError(f"Subcohort file {self.use_subcohort} is empty")
+                ) from e
+            except pd.errors.EmptyDataError as e:
+                raise WorkflowError(
+                    f"Subcohort file {self.use_subcohort} is empty"
+                ) from e
 
             participants_sessions = set(participants_sessions) & set(
                 df_participants_sessions.itertuples(index=False, name=None)
@@ -775,7 +784,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         # make sure HPC directory exists
         dpath_hpc_configs = self.study.layout.dpath_hpc
         if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
-            raise FileNotFoundError(
+            raise LayoutError(
                 "The HPC directory with appropriate content needs to exist at "
                 f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
             )
@@ -784,11 +793,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         try:
             qa.switch_cluster(self.hpc)
-        except KeyError:
-            raise ValueError(
+        except KeyError as e:
+            raise WorkflowError(
                 f"Invalid HPC cluster type: {self.hpc}"
                 f". Available clusters are: {qa.list_clusters()}"
-            )
+            ) from e
 
         # generate the list of nipoppy commands for a shell array
         job_array_commands = []
@@ -858,7 +867,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         # raise error if an error file was created
         if fpath_hpc_error.exists():
-            raise RuntimeError(
+            raise WorkflowError(
                 "Error occurred while submitting the HPC job:"
                 f"\n{fpath_hpc_error.read_text()}"
                 f"\nThe job script can be found at {fpath_job_script}."

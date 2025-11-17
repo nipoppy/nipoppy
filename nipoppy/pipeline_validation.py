@@ -18,7 +18,8 @@ from nipoppy.config.pipeline import (
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
-from nipoppy.layout import DatasetLayout
+from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.utils.utils import load_json
 
 PIPELINE_TYPE_TO_CLASS = {
@@ -28,27 +29,32 @@ PIPELINE_TYPE_TO_CLASS = {
 }
 
 
+class PipelineValidationError(LayoutError): ...  # noqa E701
+
+
+# TODO we should probably refactor the config loaders to extract the check for
+# file existence and JSON validity into reusable functions
 def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
-        raise FileNotFoundError(
+        raise FileOperationError(
             f"Pipeline configuration file not found: {fpath_config}"
         )
 
     try:
         config_dict = load_json(fpath_config)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
-            f"{exception}"
+            f"{str(exception)}"
         )
 
     try:
         config = BasePipelineConfig(**config_dict)
         config = PIPELINE_TYPE_TO_CLASS[config.PIPELINE_TYPE](**config_dict)
     except ValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Pipeline configuration file {fpath_config} is invalid:\n{exception}"
         )
 
@@ -59,18 +65,18 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
     if not fpath_descriptor.exists():
-        raise FileNotFoundError(f"Descriptor file not found: {fpath_descriptor}")
+        raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
 
     try:
         descriptor_dict = load_json(fpath_descriptor)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"Descriptor file is not a valid JSON file: {exception}")
+        raise ConfigError(f"Descriptor file is not a valid JSON file: {exception}")
 
     descriptor_str = json.dumps(descriptor_dict)
     try:
         boutiques.validate(descriptor_str)
     except boutiques.DescriptorValidationError as exception:
-        raise RuntimeError(f"Descriptor file {descriptor_str} is invalid:\n{exception}")
+        raise ConfigError(f"Descriptor file {descriptor_str} is invalid:\n{exception}")
     return descriptor_str
 
 
@@ -78,19 +84,19 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     """Validate a Boutiques invocation file."""
     fpath_invocation: Path = Path(fpath_invocation)
     if not fpath_invocation.exists():
-        raise FileNotFoundError(f"Invocation file not found: {fpath_invocation}")
+        raise FileOperationError(f"Invocation file not found: {fpath_invocation}")
 
     try:
         invocation_dict = load_json(fpath_invocation)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"Invocation file is not a valid JSON file: {exception}")
+        raise ConfigError(f"Invocation file is not a valid JSON file: {exception}")
 
     try:
         boutiques.invocation(
             "--invocation", json.dumps(invocation_dict), descriptor_str
         )
     except boutiques.InvocationValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Invocation file {fpath_invocation} is invalid:\n{exception}"
         )
 
@@ -99,17 +105,17 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
     """Validate an HPC config file."""
     fpath_hpc_config: Path = Path(fpath_hpc_config)
     if not fpath_hpc_config.exists():
-        raise FileNotFoundError(f"HPC config file not found: {fpath_hpc_config}")
+        raise FileOperationError(f"HPC config file not found: {fpath_hpc_config}")
 
     try:
         hpc_config_dict = load_json(fpath_hpc_config)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"HPC config file is not a valid JSON file: {exception}")
+        raise ConfigError(f"HPC config file is not a valid JSON file: {exception}")
 
     try:
         HpcConfig(**hpc_config_dict)
     except ValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"HPC config file {fpath_hpc_config} is invalid:\n{exception}"
         )
 
@@ -118,19 +124,19 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
     """Validate a tracker config file."""
     fpath_tracker_config: Path = Path(fpath_tracker_config)
     if not fpath_tracker_config.exists():
-        raise FileNotFoundError(
+        raise FileOperationError(
             f"Tracker config file not found: {fpath_tracker_config}"
         )
 
     try:
         tracker_config_dict = load_json(fpath_tracker_config)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(f"Tracker config file is not a valid JSON file: {exception}")
+        raise ConfigError(f"Tracker config file is not a valid JSON file: {exception}")
 
     try:
         TrackerConfig(**tracker_config_dict)
     except ValidationError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"Tracker config file {fpath_tracker_config} is invalid:\n{exception}"
         )
 
@@ -139,14 +145,14 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
     """Validate a PyBIDS ignore patterns file."""
     fpath_pybids_ignore: Path = Path(fpath_pybids_ignore)
     if not fpath_pybids_ignore.exists():
-        raise FileNotFoundError(
+        raise FileOperationError(
             f"PyBIDS ignore patterns file not found: {fpath_pybids_ignore}"
         )
 
     try:
         load_json(fpath_pybids_ignore)
     except json.JSONDecodeError as exception:
-        raise RuntimeError(
+        raise ConfigError(
             f"PyBIDS ignore patterns file is not a valid JSON file: {exception}"
         )
 
@@ -234,7 +240,7 @@ def _check_self_contained(
         )
     for fpath in fpaths:
         if dpath_bundle not in Path(fpath).resolve().parents:
-            raise ValueError(
+            raise PipelineValidationError(
                 f"Path {fpath} is not within the bundle directory {dpath_bundle}"
             )
 
@@ -252,7 +258,7 @@ def _check_no_subdirectories(
         )
     for path in dpath_bundle.iterdir():
         if path.is_dir():
-            raise ValueError(
+            raise PipelineValidationError(
                 f"Bundle directory should not contain any subdirectories, found {path}"
             )
 
