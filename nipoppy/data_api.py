@@ -95,7 +95,7 @@ class NipoppyDataAPI:
         candidate_path = list(
             self.study.layout.get_dpath_pipeline(
                 pipeline_name=pipeline_name, pipeline_version=pipeline_version
-            ).rglob(filepath_pattern)
+            ).glob(filepath_pattern)
         )
         if len(candidate_path) == 0:
             raise FileNotFoundError(
