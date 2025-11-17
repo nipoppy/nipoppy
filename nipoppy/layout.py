@@ -116,6 +116,12 @@ class LayoutConfig(BaseModel):
     fpath_demographics: OptionalFpathInfo = Field(
         description="Path to the study's demographics data file"
     )
+    fpath_harmonized: OptionalFpathInfo = Field(
+        description=(
+            "Path to the study's harmonized phenotypic data file"
+            " (as obtained using the Neurobagel CLI)"
+        )
+    )
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -238,6 +244,9 @@ class DatasetLayout(Base):
         )
         self.fpath_demographics: Path = self.get_full_path(
             self.config.fpath_demographics.path
+        )
+        self.fpath_harmonized: Path = self.get_full_path(
+            self.config.fpath_harmonized.path
         )
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
