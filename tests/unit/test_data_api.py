@@ -36,6 +36,52 @@ def test_load_tsv(api: NipoppyDataAPI, tmp_path: Path):
     assert df_loaded.equals(df_orig)
 
 
+def test_load_tsv_index(api: NipoppyDataAPI, tmp_path: Path):
+    fpath = tmp_path / "test.tsv"
+    df_orig = pd.DataFrame(
+        {
+            "nb:ParticipantID": ["sub-01", "01", "sub-02"],
+            "nb:SessionID": ["ses-A", "ses-B", "A"],
+            "col1": [1, 2, 3],
+        }
+    )
+
+    index_cols = ["nb:ParticipantID", "nb:SessionID"]
+    df_orig = df_orig.set_index(index_cols)
+    df_orig.to_csv(fpath, sep="\t", index=True)
+
+    df_loaded = api._load_tsv(fpath=fpath, index_cols=index_cols)
+    assert df_loaded.index.equals(
+        pd.MultiIndex.from_tuples(
+            [("01", "A"), ("01", "B"), ("02", "A")], names=api.index_cols_output
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "phenotypes",
+    [
+        [],
+        ["nb:Age"],
+        ["nb:Age", "nb:Sex"],
+    ],
+)
+def test_check_phenotypes_arg_valid(api: NipoppyDataAPI, phenotypes):
+    api._check_phenotypes_arg(phenotypes)
+
+
+@pytest.mark.parametrize(
+    "phenotypes,error_message",
+    [
+        (None, "phenotypes must be a list, got"),
+        ([123], "Phenotype must be a string, got"),
+    ],
+)
+def test_check_phenotypes_arg_invalid(api: NipoppyDataAPI, phenotypes, error_message):
+    with pytest.raises(TypeError, match=error_message):
+        api._check_phenotypes_arg(phenotypes)
+
+
 @pytest.mark.parametrize(
     "derivatives",
     [[], [("pipeline1", "v1.0", "*/*/pattern1"), ("pipeline1", "v2.0", "pattern1")]],
@@ -59,6 +105,30 @@ def test_check_derivatives_arg_valid(api: NipoppyDataAPI, derivatives):
 def test_check_derivatives_arg_invalid(api: NipoppyDataAPI, derivatives, error_message):
     with pytest.raises(TypeError, match=error_message):
         api._check_derivatives_arg(derivatives)
+
+
+def test_get_phenotypes_table(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
+    mocked = mocker.patch(
+        "nipoppy.data_api.NipoppyDataAPI._load_tsv",
+        return_value=pd.DataFrame(
+            {
+                "col1": [1, 2, 3],
+                "col2": [4, 5, 6],
+                "col3": [7, 8, 9],
+            },
+            index=pd.MultiIndex.from_tuples(
+                [("01", "A"), ("01", "B"), ("02", "A")],
+                names=["nb:ParticipantID", "nb:SessionID"],
+            ),
+        ),
+    )
+
+    phenotypes = ["col1", "col3"]
+    df_phenotypes = api._get_phenotypes_table(phenotypes=phenotypes)
+    mocked.assert_called_once_with(
+        api.study.layout.fpath_harmonized, index_cols=api.index_cols_phenotypes
+    )
+    assert list(df_phenotypes.columns) == phenotypes
 
 
 def test_get_derivatives_table(
@@ -89,7 +159,7 @@ def test_get_derivatives_table(
         pipeline_version=pipeline_version,
         filepath_pattern=filepath_pattern,
     )
-    mocked.assert_called_once_with(expected_path, index_cols=api.imaging_index_cols)
+    mocked.assert_called_once_with(expected_path, index_cols=api.index_cols_derivatives)
     assert df_derivatives.equals(mocked.return_value)
 
 
@@ -130,6 +200,15 @@ def test_get_derivatives_table_error_multiple_found(
 
 
 def test_get_tabular_data(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
+    def _get_dummy_phenotype_table(phenotypes):
+        return pd.DataFrame(
+            {
+                "participant_id": ["01", "01", "01", "02"],
+                "session_id": ["A", "B", "C", "A"],
+                "nb:Age": [10, 20, 30, 40],
+            }
+        ).set_index(["participant_id", "session_id"])
+
     def _get_dummy_idp_table(pipeline_name, pipeline_version, filepath_pattern):
         return pd.DataFrame(
             {
@@ -143,30 +222,50 @@ def test_get_tabular_data(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
             }
         ).set_index(["participant_id", "session_id"])
 
+    mocked_get_phenotypes_table = mocker.patch(
+        "nipoppy.data_api.NipoppyDataAPI._get_phenotypes_table",
+        side_effect=_get_dummy_phenotype_table,
+    )
     mocked_get_derivatives_table = mocker.patch(
         "nipoppy.data_api.NipoppyDataAPI._get_derivatives_table",
         side_effect=_get_dummy_idp_table,
     )
     api.study.manifest = Manifest().add_or_update_records(
-        {
-            "participant_id": "01",
-            "visit_id": "A",
-            "session_id": "A",
-            "datatype": None,
-        }
-    )
-
-    df_tabular = api.get_tabular_data(
-        derivatives=[
-            ("pipeline1", "v1.0", "pattern1"),
-            ("pipeline2", "v2.0", "pattern2"),
+        [
+            {
+                "participant_id": "01",
+                "visit_id": "A",
+                "session_id": "A",
+                "datatype": None,
+            },
+            {
+                "participant_id": "01",
+                "visit_id": "C",
+                "session_id": "C",
+                "datatype": None,
+            },
         ]
     )
 
+    df_tabular = api.get_tabular_data(
+        phenotypes=["nb:Age"],
+        derivatives=[
+            ("pipeline1", "v1.0", "pattern1"),
+            ("pipeline2", "v2.0", "pattern2"),
+        ],
+    )
+
+    mocked_get_phenotypes_table.assert_called_once_with(["nb:Age"])
     assert mocked_get_derivatives_table.call_count == 2
     assert len(df_tabular) == len(api.study.manifest)
-    assert df_tabular.index.names == api.imaging_index_cols
+    assert df_tabular.index.names == api.index_cols_output
     assert list(df_tabular.columns) == [
+        "nb:Age",
         "pipeline1_v1.0_pattern1",
         "pipeline2_v2.0_pattern2",
     ]
+
+
+def test_get_tabular_data_error_no_measures_requested(api: NipoppyDataAPI):
+    with pytest.raises(ValueError, match="Must request at least one measure"):
+        api.get_tabular_data(phenotypes=None, derivatives=None)
