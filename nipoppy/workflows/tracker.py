@@ -2,8 +2,9 @@
 
 import tarfile
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, List, Optional, Tuple
 
+from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
@@ -129,6 +130,22 @@ class PipelineTracker(BasePipelineWorkflow):
         return self.curation_status_table.get_bidsified_participants_sessions(
             participant_id=participant_id, session_id=session_id
         )
+
+    @staticmethod
+    def apply_analysis_level(
+        participants_sessions: Iterable[str, str],
+        analysis_level: AnalysisLevelType,
+    ) -> List[Tuple[str, str]]:
+        """Tracker: level is always participant-session."""
+        # TODO : test
+        if analysis_level not in list(map(lambda x: x.value, AnalysisLevelType)):
+            # TODO :rq : depends on what is inputted as analysis_level
+            participants = []
+            for participant, _ in participants_sessions:
+                if participant not in participants:
+                    participants.append(participant)
+            return [(participant, None) for participant in participants]
+        return list(participants_sessions)
 
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
