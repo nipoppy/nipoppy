@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import httpx
 import pytest
 import pytest_httpx
 import pytest_mock
@@ -728,6 +729,20 @@ def test_search_records(
         json={"hits": {}},
     )
     zenodo_api.search_records(search_query, keywords=keywords, size=size)
+
+
+def test_search_records_status_raised(
+    zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    # mock the response to have .raise_for_status() raise an error
+    mocked_response = mocker.MagicMock()
+    mocked_response.raise_for_status.side_effect = httpx.HTTPError("Error")
+    mocker.patch.object(httpx, "get", return_value=mocked_response)
+    with pytest.raises(
+        ZenodoAPIError,
+        match="Failed to search records. JSON response:",
+    ):
+        zenodo_api.search_records(query="")
 
 
 def test_search_records_wrong_size(zenodo_api: ZenodoAPI):
