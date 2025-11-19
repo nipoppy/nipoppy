@@ -133,12 +133,12 @@ class NipoppyDataAPI:
             A DataFrame containing the requested phenotypic and derivative data, with
             a MultiIndex of participant IDs and session IDs.
         """
+        if not (phenotypes or derivatives):
+            raise ValueError("Must request at least one measure")
         if phenotypes is None:
             phenotypes = []
         if derivatives is None:
             derivatives = []
-        if not (phenotypes or derivatives):
-            raise ValueError("Must request at least one measure")
         self._check_phenotypes_arg(phenotypes)
         self._check_derivatives_arg(derivatives)
 
