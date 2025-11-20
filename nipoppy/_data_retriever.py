@@ -207,7 +207,7 @@ class NipoppyDataRetriever:
 
         Harmonized phenotypic data is loaded from the TSV file at
         `<NIPOPPY_ROOT>/tabular/harmonized.tsv` and subsetted to include only the
-        requested phenotypic column. This file is expected to have columns
+        requested phenotypic columns. This file is expected to have columns
         "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers.
 
         Derivative data is loaded from the specified pipelines and versions, based on
