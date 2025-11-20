@@ -134,12 +134,13 @@ class NipoppyDataRetriever:
         """Get harmonized phenotypic data from the Nipoppy study.
 
         This function loads the study's harmonized phenotypic TSV file
-        (`<NIPOPPY_ROOT>/tabular/harmonized.tsv`). It then subsets the data to include
+        (``<NIPOPPY_ROOT>/tabular/harmonized.tsv``). It then subsets the data to include
         only the requested phenotypic columns, and filters the rows to include only
         participants and sessions that are present in the study's manifest.
 
         The harmonized phenotypic TSV file is expected to have columns
-        "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers.
+        ``"nb:ParticipantID"`` and ``"nb:SessionID"`` for participant and session
+        identifiers.
 
         Parameters
         ----------
@@ -150,9 +151,25 @@ class NipoppyDataRetriever:
         Returns
         -------
         pd.DataFrame
-            A DataFrame containing the requested phenotypic data, with a MultiIndex of
-            participant IDs and session IDs.
-        """
+            A dataframe containing the requested phenotypic data, with a
+            ``pd.MultiIndex`` of participant IDs and session IDs.
+
+        Examples
+        --------
+        >>> from nipoppy import NipoppyDataRetriever
+        >>> api = NipoppyDataRetriever("/path/to/dataset")
+        >>> df = api.get_phenotypes(
+        ...     [
+        ...         "nb:Age",
+        ...         "nb:Sex",
+        ...         "nb:Diagnosis",
+        ...         "snomed:859351000000102",  # MoCA
+        ...     ],
+        ... )
+                                   nb:Age            nb:Sex     nb:Diagnosis snomed:859351000000102
+        participant_id session_id
+        001            1             70.0  snomed:248153007      ncit:C94342           nb:available
+        """  # noqa E501
         _check_phenotypes_arg(phenotypes)
         df = self._load_tsv(
             self._study.layout.fpath_harmonized, index_cols=self._index_cols_phenotypes
@@ -167,22 +184,36 @@ class NipoppyDataRetriever:
         and versions, based on the provided filepath patterns. It filters the rows to
         include only participants and sessions that are present in the study's manifest.
 
-        The derivatives TSV files are expected to have columns "participant_id" and
-        "session_id" for participant and session identifiers.
+        The derivatives TSV files are expected to have columns ``"participant_id"`` and
+        ``"session_id"`` for participant and session identifiers.
 
         Parameters
         ----------
         derivatives : List[Tuple[str, str, str]]
-            List of (`pipeline_name`, `pipeline_version`, `filepath_pattern`) tuples,
-            for specifying derivative data to retrieve. `filepath_patterrn` may include
-            wildcards as per `pathlib.Path.glob()`.
+            List of (``pipeline_name``, ``pipeline_version``, ``filepath_pattern``)
+            tuples, for specifying derivative data to retrieve. ``filepath_pattern`` may
+            include wildcards as per ``pathlib.Path.glob()``.
 
         Returns
         -------
         pd.DataFrame
-            A DataFrame containing the requested derivative data, with a MultiIndex of
-            participant IDs and session IDs.
-        """
+            A dataframe containing the requested derivative data, with a
+            ``pd.MultiIndex`` of participant IDs and session IDs.
+
+        Examples
+        --------
+        >>> from nipoppy import NipoppyDataRetriever
+        >>> api = NipoppyDataRetriever("/path/to/dataset")
+        >>> df = api.get_derivatives(
+        ...     [
+        ...         ("freesurfer", "6.0.1", "idp/fs_stats-0.2.0/fs6.0.1-aseg-volume.tsv"),
+        ...         ("freesurfer", "6.0.1", "idp/fs_stats-0.2.0/fs6.0.1-aparc.DKTatlas-thickness.tsv"),
+        ...     ],
+        ... )
+                                   Left-Lateral-Ventricle  Left-Inf-Lat-Vent  ...  rh_MeanThickness_thickness  rh_temporalpole_thickness
+        participant_id session_id                                             ...
+        001            1                          17025.9              593.8  ...                     2.40661                   0.000468
+        """  # noqa E501
         _check_derivatives_arg(derivatives)
         dfs = []
         for pipeline_name, pipeline_version, filepath_pattern in derivatives:
@@ -206,16 +237,16 @@ class NipoppyDataRetriever:
         data retrieval.
 
         Harmonized phenotypic data is loaded from the TSV file at
-        `<NIPOPPY_ROOT>/tabular/harmonized.tsv` and subsetted to include only the
+        ``<NIPOPPY_ROOT>/tabular/harmonized.tsv`` and subsetted to include only the
         requested phenotypic columns. This file is expected to have columns
-        "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers.
+        ``"nb:ParticipantID"`` and ``"nb:SessionID"`` for participant and session
+        identifiers.
 
         Derivative data is loaded from the specified pipelines and versions, based on
         the provided filepath patterns. These TSV files are expected to have columns
-        "participant_id" and "session_id" for participant and session identifiers.
-
-        "nb:ParticipantID" and "participant_id" columns are assumed to correspond to
-        each other, as are "nb:SessionID" and "session_id".
+        ``"participant_id"`` and ``"session_id"`` for participant and session
+        identifiers. ``"nb:ParticipantID"`` and ``"participant_id"`` columns are assumed
+        to correspond to each other, as are ``"nb:SessionID"`` and ``"session_id"``.
 
         The output dataframe will only contain participants and sessions that are
         present in the study's manifest.
@@ -226,16 +257,36 @@ class NipoppyDataRetriever:
             List of Neurobagel TermURLs, for specifying phenotypic (demographics,
             assessments, etc.) data to retrieve.
         derivatives : Optional[List[Tuple[str, str, str]]]
-            List of (`pipeline_name`, `pipeline_version`, `filepath_pattern`) tuples,
-            for specifying derivative data to retrieve. `filepath_patterrn` may include
-            wildcards as per `pathlib.Path.glob()`.
+            List of (``pipeline_name``, ``pipeline_version``, ``filepath_pattern``)
+            tuples, for specifying derivative data to retrieve. ``filepath_pattern`` may
+            include wildcards as per ``pathlib.Path.glob()``.
 
         Returns
         -------
         pd.DataFrame
-            A DataFrame containing the requested phenotypic and derivative data, with
-            a MultiIndex of participant IDs and session IDs.
-        """
+            A dataframe containing the requested phenotypic and derivative data, with
+            a ``pd.MultiIndex`` of participant IDs and session IDs.
+
+        Examples
+        --------
+        >>> from nipoppy import NipoppyDataRetriever
+        >>> api = NipoppyDataRetriever("/path/to/dataset")
+        >>> df = api.get_tabular_data(
+        ...     phenotypes=[
+        ...         "nb:Age",
+        ...         "nb:Sex",
+        ...         "nb:Diagnosis",
+        ...         "snomed:859351000000102",  # MoCA
+        ...     ],
+        ...     derivatives=[
+        ...         ("freesurfer", "6.0.1", "idp/fs_stats-0.2.0/fs6.0.1-aseg-volume.tsv"),
+        ...         ("freesurfer", "6.0.1", "idp/fs_stats-0.2.0/fs6.0.1-aparc.DKTatlas-thickness.tsv"),
+        ...     ],
+        ... )
+                                   nb:Age            nb:Sex     nb:Diagnosis  ... rh_insula_thickness  rh_MeanThickness_thickness  rh_temporalpole_thickness
+        participant_id session_id                                             ...
+        001            1             70.0  snomed:248153007      ncit:C94342  ...            2.897977                    2.406614                   0.000468
+        """  # noqa E501
         if not (phenotypes or derivatives):
             raise ValueError("Must request at least one measure")
 
