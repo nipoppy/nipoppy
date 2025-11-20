@@ -1,4 +1,4 @@
-"""Tests for NipoppyDataAPI class."""
+"""Tests for NipoppyDataRetriever class."""
 
 from pathlib import Path
 
@@ -7,7 +7,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.data_api import (
-    NipoppyDataAPI,
+    NipoppyDataRetriever,
     _check_derivatives_arg,
     _check_phenotypes_arg,
 )
@@ -15,49 +15,9 @@ from nipoppy.tabular.manifest import Manifest
 
 
 @pytest.fixture
-def api(tmp_path: Path) -> NipoppyDataAPI:
+def api(tmp_path: Path) -> NipoppyDataRetriever:
     dpath_root = tmp_path / "my_study"
-    return NipoppyDataAPI(path=dpath_root)
-
-
-def test_load_tsv(api: NipoppyDataAPI, tmp_path: Path):
-    fpath = tmp_path / "test.tsv"
-    df_orig = pd.DataFrame(
-        {
-            "participant_id": ["01", "01", "02"],
-            "session_id": ["A", "B", "A"],
-            "col1": [1, 2, 3],
-        }
-    )
-
-    index_cols = ["participant_id", "session_id"]
-    df_orig = df_orig.set_index(index_cols)
-    df_orig.to_csv(fpath, sep="\t", index=True)
-
-    df_loaded = api._load_tsv(fpath=fpath, index_cols=index_cols)
-    assert df_loaded.equals(df_orig)
-
-
-def test_load_tsv_index(api: NipoppyDataAPI, tmp_path: Path):
-    fpath = tmp_path / "test.tsv"
-    df_orig = pd.DataFrame(
-        {
-            "nb:ParticipantID": ["sub-01", "01", "sub-02"],
-            "nb:SessionID": ["ses-A", "ses-B", "A"],
-            "col1": [1, 2, 3],
-        }
-    )
-
-    index_cols = ["nb:ParticipantID", "nb:SessionID"]
-    df_orig = df_orig.set_index(index_cols)
-    df_orig.to_csv(fpath, sep="\t", index=True)
-
-    df_loaded = api._load_tsv(fpath=fpath, index_cols=index_cols)
-    assert df_loaded.index.equals(
-        pd.MultiIndex.from_tuples(
-            [("01", "A"), ("01", "B"), ("02", "A")], names=api._index_cols_output
-        )
-    )
+    return NipoppyDataRetriever(path=dpath_root)
 
 
 @pytest.mark.parametrize(
@@ -118,7 +78,47 @@ def test_check_derivatives_arg_invalid(derivatives, error_type, error_message):
         _check_derivatives_arg(derivatives)
 
 
-def test_find_derivatives_path_valid(api: NipoppyDataAPI):
+def test_load_tsv(api: NipoppyDataRetriever, tmp_path: Path):
+    fpath = tmp_path / "test.tsv"
+    df_orig = pd.DataFrame(
+        {
+            "participant_id": ["01", "01", "02"],
+            "session_id": ["A", "B", "A"],
+            "col1": [1, 2, 3],
+        }
+    )
+
+    index_cols = ["participant_id", "session_id"]
+    df_orig = df_orig.set_index(index_cols)
+    df_orig.to_csv(fpath, sep="\t", index=True)
+
+    df_loaded = api._load_tsv(fpath=fpath, index_cols=index_cols)
+    assert df_loaded.equals(df_orig)
+
+
+def test_load_tsv_index(api: NipoppyDataRetriever, tmp_path: Path):
+    fpath = tmp_path / "test.tsv"
+    df_orig = pd.DataFrame(
+        {
+            "nb:ParticipantID": ["sub-01", "01", "sub-02"],
+            "nb:SessionID": ["ses-A", "ses-B", "A"],
+            "col1": [1, 2, 3],
+        }
+    )
+
+    index_cols = ["nb:ParticipantID", "nb:SessionID"]
+    df_orig = df_orig.set_index(index_cols)
+    df_orig.to_csv(fpath, sep="\t", index=True)
+
+    df_loaded = api._load_tsv(fpath=fpath, index_cols=index_cols)
+    assert df_loaded.index.equals(
+        pd.MultiIndex.from_tuples(
+            [("01", "A"), ("01", "B"), ("02", "A")], names=api._index_cols_output
+        )
+    )
+
+
+def test_find_derivatives_path_valid(api: NipoppyDataRetriever):
     pipeline_name = "pipeline1"
     pipeline_version = "v1.0"
     filepath_pattern = "**/idp.tsv"
@@ -144,7 +144,7 @@ def test_find_derivatives_path_valid(api: NipoppyDataAPI):
     ],
 )
 def test_find_derivatives_path_invalid(
-    api: NipoppyDataAPI, filepath_pattern, error_type, error_message
+    api: NipoppyDataRetriever, filepath_pattern, error_type, error_message
 ):
     pipeline_name = "pipeline1"
     pipeline_version = "v1.0"
@@ -169,7 +169,9 @@ def test_find_derivatives_path_invalid(
         )
 
 
-def test_get_derivatives_table(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
+def test_get_derivatives_table(
+    api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture
+):
     pipeline_name = "pipeline1"
     pipeline_version = "v1.0"
     filepath_pattern = "**/idp.tsv"
@@ -183,7 +185,7 @@ def test_get_derivatives_table(api: NipoppyDataAPI, mocker: pytest_mock.MockFixt
         return_value=expected_path,
     )
     mocked_load_tsv = mocker.patch(
-        "nipoppy.data_api.NipoppyDataAPI._load_tsv",
+        "nipoppy.data_api.NipoppyDataRetriever._load_tsv",
         return_value=pd.DataFrame(),
     )
 
@@ -202,7 +204,7 @@ def test_get_derivatives_table(api: NipoppyDataAPI, mocker: pytest_mock.MockFixt
     assert df_derivatives.equals(mocked_load_tsv.return_value)
 
 
-def test_filter_with_manifest(api: NipoppyDataAPI):
+def test_filter_with_manifest(api: NipoppyDataRetriever):
     api._study.manifest = Manifest().add_or_update_records(
         [
             {
@@ -238,7 +240,7 @@ def test_filter_with_manifest(api: NipoppyDataAPI):
     assert api._filter_with_manifest(df).equals(df_expected)
 
 
-def test_get_phenotypes(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
+def test_get_phenotypes(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture):
     df_harmonized = pd.DataFrame(
         {
             "col1": [1, 2, 3],
@@ -275,7 +277,7 @@ def test_get_phenotypes(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
     assert list(df_phenotypes.columns) == phenotypes
 
 
-def test_get_derivatives(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
+def test_get_derivatives(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture):
     mocked_check_derivatives_arg = mocker.patch(
         "nipoppy.data_api._check_derivatives_arg"
     )
@@ -309,7 +311,7 @@ def test_get_derivatives(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
     assert id(df_derivatives) == id(mocked_filter_with_manifest.return_value)
 
 
-def test_get_tabular_data(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
+def test_get_tabular_data(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture):
     mocked_get_phenotypes_table = mocker.patch.object(
         api, "get_phenotypes", return_value="df_phenotypes"
     )
@@ -350,7 +352,7 @@ def test_get_tabular_data_optional_args(
     derivatives,
     get_phenotypes_called,
     get_derivatives_called,
-    api: NipoppyDataAPI,
+    api: NipoppyDataRetriever,
     mocker: pytest_mock.MockFixture,
 ):
     mocked_get_phenotypes_table = mocker.patch.object(api, "get_phenotypes")
@@ -365,6 +367,6 @@ def test_get_tabular_data_optional_args(
         mocked_get_derivatives_table.assert_called_once_with(derivatives)
 
 
-def test_get_tabular_data_error_no_measures_requested(api: NipoppyDataAPI):
+def test_get_tabular_data_error_no_measures_requested(api: NipoppyDataRetriever):
     with pytest.raises(ValueError, match="Must request at least one measure"):
         api.get_tabular_data(phenotypes=None, derivatives=None)

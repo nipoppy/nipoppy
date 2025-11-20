@@ -49,7 +49,7 @@ def _check_derivatives_arg(derivatives: List[Tuple[str, str, str]]) -> None:
             )
 
 
-class NipoppyDataAPI:
+class NipoppyDataRetriever:
     """API for getting data from a Nipoppy study."""
 
     _index_cols_derivatives = [Manifest.col_participant_id, Manifest.col_session_id]
@@ -57,7 +57,7 @@ class NipoppyDataAPI:
     _index_cols_output = [Manifest.col_participant_id, Manifest.col_session_id]
 
     def __init__(self, path: StrOrPathLike):
-        """Instantiate a NipoppyDataAPI object.
+        """Instantiate a NipoppyDataRetriever object.
 
         Parameters
         ----------
