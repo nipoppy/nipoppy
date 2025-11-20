@@ -341,6 +341,13 @@ class ZenodoAPI:
             },
             timeout=self.timeout,
         )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            raise ZenodoAPIError(
+                f"Failed to search records. JSON response: {response.json()}"
+            ) from e
+
         return response.json()["hits"]
 
     def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
