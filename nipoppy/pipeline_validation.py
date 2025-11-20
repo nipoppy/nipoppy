@@ -1,6 +1,7 @@
 """Pipeline store functions."""
 
 import json
+import logging
 from pathlib import Path
 
 import boutiques
@@ -161,6 +162,8 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
 def _check_pipeline_files(
     pipeline_config: BasePipelineConfig,
     dpath_bundle: StrOrPathLike,
+    *,
+    log_level: int = logging.DEBUG,
 ) -> list[Path]:
     """
     Validate the files that the pipeline config points to.
@@ -181,38 +184,52 @@ def _check_pipeline_files(
     fpaths = []
 
     for step in pipeline_config.STEPS:
-        logger.debug(f"Validating files for step: {step.NAME}")
+        logger.log(level=log_level, msg=f"Validating files for step: {step.NAME}")
 
         if step.DESCRIPTOR_FILE is not None:
-            logger.debug(f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}")
+            logger.log(
+                level=log_level,
+                msg=f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}",
+            )
             fpath_descriptor = dpath_bundle / step.DESCRIPTOR_FILE
             descriptor_str = _check_descriptor_file(fpath_descriptor)
             fpaths.append(fpath_descriptor)
 
             if step.INVOCATION_FILE is not None:
-                logger.debug(f"\tChecking invocation file: {step.INVOCATION_FILE}")
+                logger.log(
+                    level=log_level,
+                    msg=f"\tChecking invocation file: {step.INVOCATION_FILE}",
+                )
                 fpath_invocation = dpath_bundle / step.INVOCATION_FILE
                 _check_invocation_file(fpath_invocation, descriptor_str)
                 fpaths.append(fpath_invocation)
 
         if step.HPC_CONFIG_FILE is not None:
-            logger.debug(f"\tChecking HPC config file: {step.HPC_CONFIG_FILE}")
+            logger.log(
+                level=log_level,
+                msg=f"\tChecking HPC config file: {step.HPC_CONFIG_FILE}",
+            )
             fpath_hpc_config = dpath_bundle / step.HPC_CONFIG_FILE
             _check_hpc_config_file(fpath_hpc_config)
             fpaths.append(fpath_hpc_config)
 
         if isinstance(step, ProcPipelineStepConfig):
             if step.TRACKER_CONFIG_FILE is not None:
-                logger.debug(
-                    f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}"
+                logger.log(
+                    level=log_level,
+                    msg=f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}",
                 )
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE
                 _check_tracker_config_file(fpath_tracker_config)
                 fpaths.append(fpath_tracker_config)
 
             if step.PYBIDS_IGNORE_FILE is not None:
-                logger.debug(
-                    f"\tChecking PyBIDS ignore patterns file: {step.PYBIDS_IGNORE_FILE}"
+                logger.log(
+                    level=log_level,
+                    msg=(
+                        "\tChecking PyBIDS ignore patterns file:",
+                        step.PYBIDS_IGNORE_FILE,
+                    ),
                 )
                 fpath_pybids_ignore = dpath_bundle / step.PYBIDS_IGNORE_FILE
                 _check_pybids_ignore_file(fpath_pybids_ignore)
@@ -247,7 +264,9 @@ def _check_no_subdirectories(dpath_bundle: StrOrPathLike):
             )
 
 
-def check_pipeline_bundle(dpath_bundle: StrOrPathLike) -> BasePipelineConfig:
+def check_pipeline_bundle(
+    dpath_bundle: StrOrPathLike, log_level: int = logging.DEBUG
+) -> BasePipelineConfig:
     """Load a pipeline bundle's main configuration file and validate it."""
     dpath_bundle = Path(dpath_bundle).resolve()
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
@@ -256,7 +275,7 @@ def check_pipeline_bundle(dpath_bundle: StrOrPathLike) -> BasePipelineConfig:
     config = _load_pipeline_config_file(fpath_config)
 
     # core file content validation
-    fpaths = _check_pipeline_files(config, dpath_bundle)
+    fpaths = _check_pipeline_files(config, dpath_bundle, log_level=log_level)
 
     # make sure that all files are within the bundle directory
     _check_self_contained(dpath_bundle, fpaths)

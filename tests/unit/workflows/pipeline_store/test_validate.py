@@ -1,5 +1,7 @@
 """Tests for PipelineValidateWorkflow class."""
 
+import logging
+
 import pytest
 import pytest_mock
 
@@ -25,7 +27,7 @@ def test_run_main(
     )
     workflow.run_main()
 
-    mocked.assert_called_once_with(workflow.dpath_pipeline)
+    mocked.assert_called_once_with(workflow.dpath_pipeline, log_level=logging.INFO)
 
     assert "Validating pipeline at" in caplog.text
     assert "The pipeline files are all valid" in caplog.text

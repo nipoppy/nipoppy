@@ -1,5 +1,6 @@
 """Workflow for pipeline validate command."""
 
+import logging
 from pathlib import Path
 
 from nipoppy.env import StrOrPathLike
@@ -29,6 +30,6 @@ class PipelineValidateWorkflow(BaseWorkflow):
     def run_main(self):
         """Run the main workflow."""
         logger.info(f"Validating pipeline at {self.dpath_pipeline}")
-        check_pipeline_bundle(self.dpath_pipeline)
+        check_pipeline_bundle(self.dpath_pipeline, log_level=logging.INFO)
 
         logger.success("The pipeline files are all valid")

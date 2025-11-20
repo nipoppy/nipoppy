@@ -378,12 +378,9 @@ def test_check_no_subdirectories_logging(
     assert all([record.levelno == log_level for record in caplog.records])
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [(None, logging.DEBUG), (logging.getLogger("test"), logging.INFO)],
-)
+@pytest.mark.parametrize("log_level", [logging.DEBUG, logging.INFO, logging.WARNING])
 def test_check_pipeline_bundle(
-    logger, log_level, valid_config_data, mocker: pytest_mock.MockFixture
+    log_level: int, valid_config_data, mocker: pytest_mock.MockFixture
 ):
     dpath_bundle = Path("bundle_dir").resolve()
     config = BasePipelineConfig(**valid_config_data)
@@ -404,11 +401,13 @@ def test_check_pipeline_bundle(
         "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
-    check_pipeline_bundle(dpath_bundle)
+    check_pipeline_bundle(dpath_bundle, log_level=log_level)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
-        dpath_bundle / "config.json",
+        dpath_bundle / "config.json"
     )
-    mocked_check_pipeline_files.assert_called_once_with(config, dpath_bundle)
+    mocked_check_pipeline_files.assert_called_once_with(
+        config, dpath_bundle, log_level=log_level
+    )
     mocked_check_self_contained.assert_called_once_with(dpath_bundle, fpaths)
     mocked_check_no_subdirectories.assert_called_once_with(dpath_bundle)
