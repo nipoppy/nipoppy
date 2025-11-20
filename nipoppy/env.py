@@ -1,7 +1,6 @@
 """Variable Definitions."""
 
 import os
-import sys
 from enum import Enum
 from typing import TypeVar
 
@@ -21,9 +20,6 @@ FAKE_SESSION_ID = "unnamed"
 
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"
-
-# True when running tests
-IS_TESTING = "pytest" in sys.modules
 
 # file extensions
 EXT_TAR = ".tar"

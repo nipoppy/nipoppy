@@ -6,7 +6,7 @@ from typing import Optional
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import ReturnCode, StrOrPathLike
-from nipoppy.logger import LogColor, get_logger
+from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
@@ -144,9 +144,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         doi = self.zenodo_api.upload_pipeline(
             input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
         )
-        logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline successfully uploaded at {doi}[/]",
-        )
+        logger.success(f"Pipeline successfully uploaded at {doi}")
 
 
 def _is_same_pipeline(

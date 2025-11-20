@@ -42,7 +42,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
-from nipoppy.logger import LogColor, get_logger
+from nipoppy.logger import get_logger
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -887,12 +887,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:
             if self.n_success == 0:
-                logger.error(f"[{LogColor.FAILURE}]Failed to submit HPC jobs[/]")
+                logger.failure("Failed to submit HPC jobs")
             else:
-                logger.info(
-                    f"[{LogColor.SUCCESS}]Successfully submitted {self.n_success} "
-                    "HPC job(s)[/]"
-                )
+                logger.success(f"Successfully submitted {self.n_success} HPC job(s)")
         else:
             if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
                 log_msg = "Ran on the entire study"

@@ -3,6 +3,7 @@
 import logging
 from functools import partial
 from pathlib import Path
+from typing import Optional
 
 import rich_click as click
 from rich.logging import RichHandler
@@ -29,6 +30,7 @@ class LogColor:
 
     SUCCESS = "green"
     PARTIAL_SUCCESS = "yellow"
+    WARNING = "yellow"
     FAILURE = "red"
 
 
@@ -40,48 +42,77 @@ class NipoppyLogger(logging.Logger):
     def __init__(self, *args, **kwargs):
         """Initialize the Nipoppy logger."""
         super().__init__(*args, **kwargs)
-        # self.propagate = False
-        self.setLevel(logging.DEBUG)
+        self._stdout_handler: Optional[RichHandler] = None
+        self._file_handler: Optional[logging.FileHandler] = None
+
+        self.setLevel(logging.DEBUG)  # File logging: DEBUG and above
         # stderr: ERROR and CRITICAL
         self.stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
         self.addHandler(self.stderr_handler)
 
-    def verbose(self, verbosity: bool) -> Self:
-        """Set the verbosity of the logger.
+    def _cleanup_handlers(self, handler: Optional[logging.Handler] = None) -> None:
+        """Close and remove a handler from the logger.
+
+        Parameters
+        ----------
+        handler : logging.Handler
+            The handler to remove.
+        """
+        if handler:
+            handler.close()
+            self.removeHandler(handler)
+
+    def set_verbose(self, verbose: bool) -> Self:
+        """Set the verbose of the logger.
 
         Parameters
         ----------
         verbose : bool
-            If True, set verbosity to DEBUG, else to INFO.
+            If True, set verbose to DEBUG, else to INFO.
 
         Returns
         -------
         Self
             The nipoppy logger
         """
-        if hasattr(self, "stdout_handler"):
-            self.stdout_handler.close()
-            self.removeHandler(self.stdout_handler)
+        # Remove existing stdout handler with previous verbosity level
+        self._cleanup_handlers(self._stdout_handler)
+
         # stdout: INFO and WARNING
-        # If verbosity is enabled, also display DEBUG
-        log_level = logging.DEBUG if verbosity else logging.INFO
-        self.stdout_handler = rich_handler(log_level, console=CONSOLE_STDOUT)
-        self.stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
-        self.addHandler(self.stdout_handler)
+        # If verbose is enabled, also display DEBUG
+        log_level = logging.DEBUG if verbose else logging.INFO
+        self._stdout_handler = rich_handler(log_level, console=CONSOLE_STDOUT)
+        self._stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
+        self.addHandler(self._stdout_handler)
         return self
 
-    def add_file_handler(self, file: Path) -> logging.Handler:
-        """Add a file handler to the logger."""
-        file.parent.mkdir(parents=True, exist_ok=True)
-        handler = logging.FileHandler(file)
-        handler.setFormatter(logging.Formatter(FILE_FORMAT, datefmt=DATE_FORMAT))
-        self.addHandler(handler)
-        self.info(f"Writing the log to {file}")
-        return handler
+    def add_file_handler(self, file: Path) -> Self:
+        """Add a file handler to the logger.
 
-    def capture_warnings(self, capture: bool = True) -> Self:
+        Parameters
+        ----------
+        file : Path
+            The file path to write the log to.
+
+        Returns
+        -------
+        Self
+            The nipoppy logger
         """
-        Capture warnings and log them to the same places as a reference logger.
+        # Only one file handler allowed
+        self._cleanup_handlers(self._file_handler)
+
+        file.parent.mkdir(parents=True, exist_ok=True)
+        self._file_handler = logging.FileHandler(file)
+        self._file_handler.setFormatter(
+            logging.Formatter(FILE_FORMAT, datefmt=DATE_FORMAT)
+        )
+        self.addHandler(self._file_handler)
+        self.info(f"Writing the log to {file}")
+        return self
+
+    def set_capture_warnings(self, capture: bool = True) -> Self:
+        """Configure whether warnings are captured.
 
         Parameters
         ----------
@@ -104,7 +135,7 @@ class NipoppyLogger(logging.Logger):
 
         return self
 
-    def success(self, message, args=None, **kwargs):
+    def success(self, message, args=None, **kwargs) -> None:
         """Log a success message.
 
         Standardize format for success messages.
@@ -116,11 +147,36 @@ class NipoppyLogger(logging.Logger):
         """
         self.info(f"[{LogColor.SUCCESS}]{message} 🎉🎉🎉[/]")
 
+    def failure(self, message, args=None, **kwargs) -> None:
+        """Log a failure message.
+
+        Standardize format for failure messages.
+
+        Parameters
+        ----------
+        message : str
+            The message to log.
+        """
+        self.error(f"[{LogColor.FAILURE}]{message} ❌❌❌[/]")
+
+    def warning(self, message, args=None, **kwargs) -> None:
+        """Log a warning message.
+
+        Standardize format for warning messages.
+
+        Parameters
+        ----------
+        message : str
+            The message to log.
+        """
+        super().warning(f"[{LogColor.WARNING}]{message} ⚠️⚠️⚠️[/]")
+
 
 def get_logger(verbose: bool = False) -> NipoppyLogger:
     """Retrieve the logger."""
     logging.setLoggerClass(NipoppyLogger)
-    logger = logging.getLogger(NipoppyLogger.NAME).verbose(verbose)
+    logger = logging.getLogger(NipoppyLogger.NAME)
+    logger.set_verbose(verbose)
 
     # Reset to default logger class
     # Otherwise, external libraries will also use NipoppyLogger

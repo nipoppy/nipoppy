@@ -5,7 +5,7 @@ from collections import defaultdict
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum
 from nipoppy.layout import DatasetLayout
-from nipoppy.logger import LogColor, get_logger
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import load_json
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
@@ -69,11 +69,7 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
             logger.warning(f"No available {pipeline_type.value} pipelines")
             return
 
-        logger.info(
-            f"[{LogColor.SUCCESS}]"
-            f"Available {pipeline_type.value} pipelines and versions"
-            "[/]"
-        )
+        logger.success(f"Available {pipeline_type.value} pipelines and versions")
 
         # to align the pipeline version substrings
         max_characters = max(len(pipeline_name) for pipeline_name in pipelines.keys())

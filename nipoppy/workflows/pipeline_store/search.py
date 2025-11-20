@@ -8,16 +8,16 @@ from rich.table import Table
 
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.env import ZENODO_COMMUNITY_ID
-from nipoppy.logger import LogColor, get_logger
+from nipoppy.logger import get_logger
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 
-logger = get_logger()
-
 CURRENT_CONSOLE_WIDTH = CONSOLE_STDOUT.size.width
 RESIZED_CONSOLE_WIDTH = min(CURRENT_CONSOLE_WIDTH, 120 - _INDENT)
 MINIMIZED_TABLE_MAX_WIDTH = 80
+
+logger = get_logger()
 
 
 class PipelineSearchWorkflow(BaseWorkflow):
@@ -120,9 +120,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         n_total = results["total"]
 
         if n_total == 0:
-            logger.warning(
-                f'[{LogColor.FAILURE}]No results found for query "{self.query}".[/red]'
-            )
+            logger.warning(f'No results found for query "{self.query}".')
             return
 
         df_hits = self._hits_to_df(hits)

@@ -1347,8 +1347,8 @@ def test_run_cleanup_no_participants_warning(
     "n_success,n_total,expected_message",
     [
         (0, 0, "No participants or sessions to run"),
-        (0, 1, "[red]Failed to submit HPC jobs[/]"),
-        (2, 2, "[green]Successfully submitted 2 HPC job(s)[/]"),
+        (0, 1, "Failed to submit HPC jobs"),
+        (2, 2, "Successfully submitted 2 HPC job(s)"),
     ],
 )
 @pytest.mark.no_xdist

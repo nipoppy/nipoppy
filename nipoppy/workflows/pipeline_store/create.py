@@ -6,7 +6,7 @@ from typing import Optional
 import boutiques as bosh
 
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.logger import LogColor, get_logger
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -92,10 +92,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
             type_=self.type_,
             source_descriptor=self.source_descriptor,
         )
-        logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline bundle successfully created at "
-            f"{self.pipeline_dir}![/]",
-        )
+        logger.success(f"Pipeline bundle successfully created at {self.pipeline_dir}!")
         logger.warning("Edit the files to customize your pipeline.")
         logger.info(
             "You can run [magenta]nipoppy pipeline validate[/] to check your pipeline"
