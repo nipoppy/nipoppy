@@ -1,6 +1,7 @@
 """Classes for generating container commands."""
 
 import argparse
+import os
 import platform
 import shlex
 import shutil
@@ -378,12 +379,47 @@ class DockerHandler(ContainerHandler):
         return shlex.join(cmd)
 
 
+class BareMetalHandler(ContainerHandler):
+    """Handler for bare metal execution (no container)."""
+
+    command = NotImplemented
+    bind_flags = NotImplemented
+
+    def add_env_arg(self, key: str, value: str):
+        """Set environment variable."""
+        os.environ[key] = value
+
+    def is_image_downloaded(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> bool:
+        """Check if a container image has been downloaded.
+
+        Always returns True since bare metal execution does not need image.
+        """
+        return True
+
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
+        """Should not be used."""  # noqa D401
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support pulling container images"
+        )
+
+    def get_pull_command(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> str:
+        """Should not be used."""  # noqa D401
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support pulling container images"
+        )
+
+
 def get_container_handler(config: ContainerConfig) -> ContainerHandler:
     """Get a container handler for a given container config."""
     command_handler_map = {
         ContainerCommandEnum.APPTAINER: ApptainerHandler,
         ContainerCommandEnum.SINGULARITY: SingularityHandler,
         ContainerCommandEnum.DOCKER: DockerHandler,
+        None: BareMetalHandler,
     }
 
     try:
