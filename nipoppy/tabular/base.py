@@ -13,6 +13,7 @@ from pydantic import BaseModel, ValidationError, model_validator
 from typing_extensions import Self
 
 from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import TabularError
 from nipoppy.utils.utils import save_df_with_backup
 
 
@@ -90,12 +91,12 @@ class BaseTabular(pd.DataFrame, ABC):
     def load(cls, fpath: StrOrPathLike, validate=True, **kwargs) -> Self:
         """Load (and optionally validate) a tabular data file."""
         if "dtype" in kwargs:
-            raise ValueError(
+            raise TabularError(
                 "This function does not accept 'dtype' as a keyword argument"
                 ". Everything is read as a string and (optionally) validated later."
             )
         if "sep" in kwargs or "delimiter" in kwargs or "delim_whitespace" in kwargs:
-            raise ValueError(
+            raise TabularError(
                 "This function does not accept 'sep', 'delimiter', or "
                 "'delim_whitespace' as keyword arguments. "
                 f"The separator used is always '{cls.sep}'."
@@ -106,7 +107,7 @@ class BaseTabular(pd.DataFrame, ABC):
         # heuristic to check if file is a CSV
         # because otherwise there would be obscure Pydantic validation errors
         if df.shape[1] == 1 and len(df.columns[0].split(",")) > 1:
-            raise ValueError(
+            raise TabularError(
                 f"It looks like the file at {fpath} might be a CSV instead of a TSV"
                 " -- make sure the columns are separated by tabs, not commas"
             )
@@ -141,14 +142,14 @@ class BaseTabular(pd.DataFrame, ABC):
             error_message = str(exception)
             if isinstance(exception, ValidationError):
                 error_message += str(exception.errors())
-            raise ValueError(
+            raise TabularError(
                 f"Error when validating the {name_processed} file: {error_message}"
             )
 
         if self.index_cols is not None:
             df_duplicated = df_validated.find_duplicates()
             if len(df_duplicated) > 0:
-                raise ValueError(
+                raise TabularError(
                     f"Duplicate records found in the {name_processed} file"
                     f". Columns {self.index_cols} must uniquely identify a record"
                     f". Got duplicates:\n{df_duplicated}"
@@ -175,7 +176,7 @@ class BaseTabular(pd.DataFrame, ABC):
         for df in [self, other]:
             col_diff = set(cols) - set(df.columns)
             if len(col_diff) > 0:
-                raise ValueError(
+                raise TabularError(
                     f"The columns {cols} are not present in the dataframe:\n{df}"
                 )
 
@@ -206,7 +207,6 @@ class BaseTabular(pd.DataFrame, ABC):
 
                 # add/update
                 for col in non_index_cols:
-
                     # need to sort to avoid performance warning
                     self.sort_index(inplace=True)
 

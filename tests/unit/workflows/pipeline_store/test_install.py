@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from contextlib import nullcontext
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import pytest_mock
@@ -16,8 +17,8 @@ from nipoppy.env import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
     PipelineTypeEnum,
-    ReturnCode,
 )
+from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -324,7 +325,7 @@ def test_download_container_failed(
         side_effect=subprocess.CalledProcessError(1, error_message),
     )
 
-    with pytest.raises(SystemExit, match=f"{ReturnCode.UNKNOWN_FAILURE}"):
+    with pytest.raises(WorkflowError):
         workflow._download_container(pipeline_config)
 
     mocked.assert_called_once()
@@ -416,7 +417,7 @@ def test_run_main_force(
     with (
         nullcontext()
         if force
-        else pytest.raises(FileExistsError, match="Use --force to overwrite")
+        else pytest.raises(FileOperationError, match="Use --force to overwrite")
     ):
         workflow.run_main()
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
@@ -426,18 +427,24 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
     workflow_zenodo.zenodo_id = "bad_zenodo_id"
 
     with pytest.raises(
-        FileNotFoundError,
+        ConfigError,
         match="Pipeline configuration file not found: .* Make sure the record at",
     ):
         workflow_zenodo.run_main()
 
 
-def test_run_main_file_not_found(workflow: PipelineInstallWorkflow):
+@pytest.mark.parametrize(
+    "zenodo_id,exception", [(None, FileOperationError), ("123456", ConfigError)]
+)
+def test_run_main_file_not_found(
+    workflow: PipelineInstallWorkflow, zenodo_id: Optional[str], exception: Exception
+):
     # create a non-existent path
     workflow.dpath_pipeline = workflow.layout.dpath_pipelines / "non_existent_path"
+    workflow.zenodo_id = zenodo_id
     with pytest.raises(
-        FileNotFoundError,
-        match="Pipeline configuration file not found: .*/config.json$",
+        exception,
+        match="Pipeline configuration file not found: .*/config.json",
     ):
         workflow.run_main()
 
@@ -465,7 +472,7 @@ def test_download_dir_exist(
     download_dir.mkdir(parents=True, exist_ok=True)
     assert download_dir.exists()
 
-    with pytest.raises(SystemExit) if fails else nullcontext():
+    with pytest.raises(WorkflowError) if fails else nullcontext():
         workflow_zenodo.run_main()
 
 
@@ -483,7 +490,7 @@ def test_download_install_dir_exist(
 
     with (
         pytest.raises(
-            FileExistsError,
+            FileOperationError,
             match="Pipeline directory exists: .* Use --force to overwrite",
         )
         if fails

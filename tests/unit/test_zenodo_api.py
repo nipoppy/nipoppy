@@ -687,7 +687,7 @@ def test_upload_pipeline_delete_draft(
         json={},
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(ZenodoAPIError):
         zenodo_api.upload_pipeline(
             input_dir=tmp_path,
             metadata={"metadata": {}},

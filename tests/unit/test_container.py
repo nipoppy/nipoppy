@@ -16,6 +16,7 @@ from nipoppy.container import (
     SingularityHandler,
     get_container_handler,
 )
+from nipoppy.exceptions import ContainerError
 
 
 class _TestHandler(ContainerHandler):
@@ -80,7 +81,7 @@ def test_check_command_exists_error(
     handler: ContainerHandler, mocker: pytest_mock.MockerFixture
 ):
     mocker.patch("nipoppy.container.shutil.which", return_value=None)
-    with pytest.raises(RuntimeError, match="Container executable not found"):
+    with pytest.raises(ContainerError, match="Container executable not found"):
         handler.check_command_exists()
 
 
@@ -195,7 +196,7 @@ def test_fix_bind_args_missing(
 
 def test_fix_bind_args_error(handler: ContainerHandler):
     handler.args = ["-B"]
-    with pytest.raises(RuntimeError, match="Error parsing"):
+    with pytest.raises(ContainerError, match="Error parsing"):
         handler.fix_bind_args()
 
 
@@ -262,7 +263,9 @@ def test_is_image_downloaded_apptainer_singularity(
 def test_is_image_downloaded_apptainer_singularity_error(
     handler: ContainerHandler,
 ):
-    with pytest.raises(ValueError, match="Path to container image must be specified"):
+    with pytest.raises(
+        ContainerError, match="Path to container image must be specified"
+    ):
         handler.is_image_downloaded("ignored", None)
 
 
@@ -302,7 +305,7 @@ def test_is_image_downloaded_docker(
 def test_is_image_downloaded_docker_error():
     handler = DockerHandler()
 
-    with pytest.raises(ValueError, match="URI must be specified"):
+    with pytest.raises(ContainerError, match="URI must be specified"):
         assert handler.is_image_downloaded(None, "not_used")
 
 
@@ -391,7 +394,7 @@ def test_get_pull_command(
 def test_get_pull_command_error(
     handler: ContainerHandler, uri, fpath_container, error_message
 ):
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(ContainerError, match=error_message):
         handler.get_pull_command(uri, fpath_container)
 
 
@@ -449,7 +452,7 @@ def test_get_container_handler(config: ContainerConfig, expected: ContainerHandl
 def test_get_container_handler_error():
     config = ContainerConfig()
     config.COMMAND = "unknown_command"
-    with pytest.raises(ValueError, match="No container handler for command:"):
+    with pytest.raises(ContainerError, match="No container handler for command:"):
         get_container_handler(config)
 
 

@@ -46,17 +46,7 @@ class PipelineTypeEnum(str, Enum):
     EXTRACTION = "extraction"
 
 
-class ReturnCode:
-    """Return codes used for the CLI commands."""
-
-    SUCCESS = 0
-    UNKNOWN_FAILURE = 1
-    INVALID_COMMAND = 2
-    PARTIAL_SUCCESS = 64
-    NO_PARTICIPANTS_OR_SESSIONS_TO_RUN = 65
-    MISSING_DEPENDENCY = 66
-
-
+# TODO when deprecating Python 3.10, replace with StrEnum
 class LogColor:
     """Colors for logging."""
 
