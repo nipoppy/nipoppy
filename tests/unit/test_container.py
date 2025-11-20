@@ -10,6 +10,7 @@ import pytest_mock
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import (
     ApptainerHandler,
+    BareMetalHandler,
     ContainerHandler,
     DockerHandler,
     SingularityHandler,
@@ -308,6 +309,12 @@ def test_is_image_downloaded_docker_error():
         assert handler.is_image_downloaded(None, "not_used")
 
 
+def test_is_image_downloaded_baremetal():
+    handler = BareMetalHandler()
+
+    assert handler.is_image_downloaded("not_used", "not_used") is True
+
+
 @pytest.mark.parametrize(
     "handler,uri,expected_command,machine",
     [
@@ -422,6 +429,14 @@ def test_get_pull_command_error(
             DockerHandler(
                 args=["--volume", "path", "--env", "VAR3=123"],
             ),
+        ),
+        (
+            ContainerConfig(
+                COMMAND=None,
+                ARGS=[],
+                ENV_VARS={"VAR3": "123"},
+            ),
+            BareMetalHandler(),
         ),
     ],
 )
