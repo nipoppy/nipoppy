@@ -15,6 +15,38 @@ TERMURL_PARTICIPANT_ID = "nb:ParticipantID"
 TERMURL_SESSION_ID = "nb:SessionID"
 
 
+def _check_phenotypes_arg(phenotypes: List[str]) -> None:
+    if not isinstance(phenotypes, List):
+        raise TypeError(f"phenotypes must be a list, got {type(phenotypes)}")
+    if len(phenotypes) == 0:
+        raise ValueError("phenotypes list cannot be empty")
+    for term_url in phenotypes:
+        if not isinstance(term_url, str):
+            raise TypeError(
+                f"Phenotype must be a string, got {type(term_url)} for {term_url}"
+            )
+
+
+def _check_derivatives_arg(derivatives: List[Tuple[str, str, str]]) -> None:
+    if not isinstance(derivatives, List):
+        raise TypeError(
+            f"derivatives must be a list of tuples, got {type(derivatives)}"
+        )
+    if len(derivatives) == 0:
+        raise ValueError("derivatives list cannot be empty")
+    for derivatives_spec in derivatives:
+        if not (
+            isinstance(derivatives_spec, Tuple)
+            and len(derivatives_spec) == 3
+            and all(isinstance(item, str) for item in derivatives_spec)
+        ):
+            raise TypeError(
+                "Each derivative specification must be a tuple containing 3 strings"
+                " (pipeline_name, pipeline_version, filepath_pattern)"
+                f", got invalid specification {derivatives_spec}"
+            )
+
+
 class NipoppyDataAPI:
     """API for getting data from a Nipoppy study."""
 
@@ -49,42 +81,6 @@ class NipoppyDataAPI:
         df.index.names = self.index_cols_output
 
         return df
-
-    def _check_phenotypes_arg(
-        self,
-        phenotypes: List[str],
-    ) -> None:
-        if not isinstance(phenotypes, List):
-            raise TypeError(f"phenotypes must be a list, got {type(phenotypes)}")
-        if len(phenotypes) == 0:
-            raise ValueError("phenotypes list cannot be empty")
-        for term_url in phenotypes:
-            if not isinstance(term_url, str):
-                raise TypeError(
-                    f"Phenotype must be a string, got {type(term_url)} for {term_url}"
-                )
-
-    def _check_derivatives_arg(
-        self,
-        derivatives: List[Tuple[str, str, str]],
-    ) -> None:
-        if not isinstance(derivatives, List):
-            raise TypeError(
-                f"derivatives must be a list of tuples, got {type(derivatives)}"
-            )
-        if len(derivatives) == 0:
-            raise ValueError("derivatives list cannot be empty")
-        for derivatives_spec in derivatives:
-            if not (
-                isinstance(derivatives_spec, Tuple)
-                and len(derivatives_spec) == 3
-                and all(isinstance(item, str) for item in derivatives_spec)
-            ):
-                raise TypeError(
-                    "Each derivative specification must be a tuple containing 3 strings"
-                    " (pipeline_name, pipeline_version, filepath_pattern)"
-                    f", got invalid specification {derivatives_spec}"
-                )
 
     def _find_derivatives_path(
         self,
@@ -150,7 +146,7 @@ class NipoppyDataAPI:
             A DataFrame containing the requested phenotypic data, with a MultiIndex of
             participant IDs and session IDs.
         """
-        self._check_phenotypes_arg(phenotypes)
+        _check_phenotypes_arg(phenotypes)
         df = self._load_tsv(
             self.study.layout.fpath_harmonized, index_cols=self.index_cols_phenotypes
         )
@@ -180,7 +176,7 @@ class NipoppyDataAPI:
             A DataFrame containing the requested derivative data, with a MultiIndex of
             participant IDs and session IDs.
         """
-        self._check_derivatives_arg(derivatives)
+        _check_derivatives_arg(derivatives)
         dfs = []
         for pipeline_name, pipeline_version, filepath_pattern in derivatives:
             dfs.append(

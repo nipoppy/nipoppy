@@ -6,7 +6,11 @@ import pandas as pd
 import pytest
 import pytest_mock
 
-from nipoppy.data_api import NipoppyDataAPI
+from nipoppy.data_api import (
+    NipoppyDataAPI,
+    _check_derivatives_arg,
+    _check_phenotypes_arg,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.study import Study
 from nipoppy.tabular.manifest import Manifest
@@ -65,8 +69,8 @@ def test_load_tsv_index(api: NipoppyDataAPI, tmp_path: Path):
         ["nb:Age", "nb:Sex"],
     ],
 )
-def test_check_phenotypes_arg_valid(api: NipoppyDataAPI, phenotypes):
-    api._check_phenotypes_arg(phenotypes)
+def test_check_phenotypes_arg_valid(phenotypes):
+    _check_phenotypes_arg(phenotypes)
 
 
 @pytest.mark.parametrize(
@@ -77,11 +81,9 @@ def test_check_phenotypes_arg_valid(api: NipoppyDataAPI, phenotypes):
         ([123], TypeError, "Phenotype must be a string, got"),
     ],
 )
-def test_check_phenotypes_arg_invalid(
-    api: NipoppyDataAPI, phenotypes, error_type, error_message
-):
+def test_check_phenotypes_arg_invalid(phenotypes, error_type, error_message):
     with pytest.raises(error_type, match=error_message):
-        api._check_phenotypes_arg(phenotypes)
+        _check_phenotypes_arg(phenotypes)
 
 
 @pytest.mark.parametrize(
@@ -91,8 +93,8 @@ def test_check_phenotypes_arg_invalid(
         [("pipeline1", "v1.0", "*/*/pattern1"), ("pipeline1", "v2.0", "pattern1")],
     ],
 )
-def test_check_derivatives_arg_valid(api: NipoppyDataAPI, derivatives):
-    api._check_derivatives_arg(derivatives)
+def test_check_derivatives_arg_valid(derivatives):
+    _check_derivatives_arg(derivatives)
 
 
 @pytest.mark.parametrize(
@@ -113,11 +115,9 @@ def test_check_derivatives_arg_valid(api: NipoppyDataAPI, derivatives):
         ),
     ],
 )
-def test_check_derivatives_arg_invalid(
-    api: NipoppyDataAPI, derivatives, error_type, error_message
-):
+def test_check_derivatives_arg_invalid(derivatives, error_type, error_message):
     with pytest.raises(error_type, match=error_message):
-        api._check_derivatives_arg(derivatives)
+        _check_derivatives_arg(derivatives)
 
 
 def test_find_derivatives_path_valid(api: NipoppyDataAPI):
@@ -253,7 +253,7 @@ def test_get_phenotypes(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
         ),
     )
 
-    mocked_check_phenotypes_arg = mocker.patch.object(api, "_check_phenotypes_arg")
+    mocked_check_phenotypes_arg = mocker.patch("nipoppy.data_api._check_phenotypes_arg")
     mocked_load_tsv = mocker.patch.object(
         api,
         "_load_tsv",
@@ -278,7 +278,9 @@ def test_get_phenotypes(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
 
 
 def test_get_derivatives(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
-    mocked_check_derivatives_arg = mocker.patch.object(api, "_check_derivatives_arg")
+    mocked_check_derivatives_arg = mocker.patch(
+        "nipoppy.data_api._check_derivatives_arg"
+    )
     mocked_get_derivatives_table = mocker.patch.object(
         api,
         "_get_derivatives_table",
