@@ -1670,12 +1670,9 @@ def test_submit_hpc_job_job_id(
     caplog: pytest.LogCaptureFixture,
     job_id,
 ):
-    import logging
-
-    with caplog.at_level(logging.INFO, logger="nipoppy"):
-        mocked = _set_up_hpc_for_testing(workflow, mocker)
-        mocked.return_value = job_id
-        workflow._submit_hpc_job([("P1", "1")])
+    mocked = _set_up_hpc_for_testing(workflow, mocker)
+    mocked.return_value = job_id
+    workflow._submit_hpc_job([("P1", "1")])
 
     if job_id is not None:
         assert f"HPC job ID: {job_id}" in caplog.text
