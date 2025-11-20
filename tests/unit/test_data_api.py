@@ -11,15 +11,13 @@ from nipoppy.data_api import (
     _check_derivatives_arg,
     _check_phenotypes_arg,
 )
-from nipoppy.layout import DatasetLayout
-from nipoppy.study import Study
 from nipoppy.tabular.manifest import Manifest
 
 
 @pytest.fixture
 def api(tmp_path: Path) -> NipoppyDataAPI:
     dpath_root = tmp_path / "my_study"
-    return NipoppyDataAPI(study=Study(layout=DatasetLayout(dpath_root=dpath_root)))
+    return NipoppyDataAPI(path=dpath_root)
 
 
 def test_load_tsv(api: NipoppyDataAPI, tmp_path: Path):
@@ -57,7 +55,7 @@ def test_load_tsv_index(api: NipoppyDataAPI, tmp_path: Path):
     df_loaded = api._load_tsv(fpath=fpath, index_cols=index_cols)
     assert df_loaded.index.equals(
         pd.MultiIndex.from_tuples(
-            [("01", "A"), ("01", "B"), ("02", "A")], names=api.index_cols_output
+            [("01", "A"), ("01", "B"), ("02", "A")], names=api._index_cols_output
         )
     )
 
@@ -126,7 +124,7 @@ def test_find_derivatives_path_valid(api: NipoppyDataAPI):
     filepath_pattern = "**/idp.tsv"
 
     # setup
-    expected_path = api.study.layout.dpath_root.joinpath(
+    expected_path = api._study.layout.dpath_root.joinpath(
         "derivatives", pipeline_name, pipeline_version, "idp", "idp.tsv"
     )
     expected_path.parent.mkdir(parents=True, exist_ok=True)
@@ -154,7 +152,7 @@ def test_find_derivatives_path_invalid(
     # setup
     for filepath in ("test1/test2/idp.tsv", "test3/idp.tsv"):
         expected_path = (
-            Path(api.study.layout.dpath_root)
+            Path(api._study.layout.dpath_root)
             / "derivatives"
             / pipeline_name
             / pipeline_version
@@ -176,7 +174,7 @@ def test_get_derivatives_table(api: NipoppyDataAPI, mocker: pytest_mock.MockFixt
     pipeline_version = "v1.0"
     filepath_pattern = "**/idp.tsv"
 
-    expected_path = api.study.layout.dpath_root.joinpath(
+    expected_path = api._study.layout.dpath_root.joinpath(
         "derivatives", pipeline_name, pipeline_version, "test1/test2/idp.tsv"
     )
     mocked_find_derivatives_path = mocker.patch.object(
@@ -199,13 +197,13 @@ def test_get_derivatives_table(api: NipoppyDataAPI, mocker: pytest_mock.MockFixt
         pipeline_name, pipeline_version, filepath_pattern
     )
     mocked_load_tsv.assert_called_once_with(
-        expected_path, index_cols=api.index_cols_derivatives
+        expected_path, index_cols=api._index_cols_derivatives
     )
     assert df_derivatives.equals(mocked_load_tsv.return_value)
 
 
 def test_filter_with_manifest(api: NipoppyDataAPI):
-    api.study.manifest = Manifest().add_or_update_records(
+    api._study.manifest = Manifest().add_or_update_records(
         [
             {
                 "participant_id": "01",
@@ -270,7 +268,7 @@ def test_get_phenotypes(api: NipoppyDataAPI, mocker: pytest_mock.MockFixture):
 
     mocked_check_phenotypes_arg.assert_called_once_with(phenotypes)
     mocked_load_tsv.assert_called_once_with(
-        api.study.layout.fpath_harmonized, index_cols=api.index_cols_phenotypes
+        api._study.layout.fpath_harmonized, index_cols=api._index_cols_phenotypes
     )
     mocked_filter_with_manifest.assert_called_once_with(df_harmonized)
 

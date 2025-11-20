@@ -1,11 +1,13 @@
 """Nipoppy data API."""
 
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Tuple
 
 import pandas as pd
 
 from nipoppy.env import StrOrPathLike
+from nipoppy.layout import DatasetLayout
 from nipoppy.study import Study
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import check_participant_id, check_session_id
@@ -50,19 +52,24 @@ def _check_derivatives_arg(derivatives: List[Tuple[str, str, str]]) -> None:
 class NipoppyDataAPI:
     """API for getting data from a Nipoppy study."""
 
-    index_cols_derivatives = [Manifest.col_participant_id, Manifest.col_session_id]
-    index_cols_phenotypes = [TERMURL_PARTICIPANT_ID, TERMURL_SESSION_ID]
-    index_cols_output = [Manifest.col_participant_id, Manifest.col_session_id]
+    _index_cols_derivatives = [Manifest.col_participant_id, Manifest.col_session_id]
+    _index_cols_phenotypes = [TERMURL_PARTICIPANT_ID, TERMURL_SESSION_ID]
+    _index_cols_output = [Manifest.col_participant_id, Manifest.col_session_id]
 
-    def __init__(self, study: Study):
+    def __init__(self, path: StrOrPathLike):
         """Instantiate a NipoppyDataAPI object.
 
         Parameters
         ----------
-        study : Study
-            The Nipoppy study object.
+        path : StrOrPathLike
+            The path to the Nipoppy study root directory.
         """
-        self.study = study
+        self._path = Path(path)
+
+    @cached_property
+    def _study(self) -> Study:
+        """Get the Nipoppy Study object for the study."""
+        return Study(layout=DatasetLayout(dpath_root=self._path))
 
     def _load_tsv(self, fpath: StrOrPathLike, index_cols: List[str]) -> pd.DataFrame:
         df = pd.read_csv(
@@ -78,7 +85,7 @@ class NipoppyDataAPI:
         )
 
         # rename index columns
-        df.index.names = self.index_cols_output
+        df.index.names = self._index_cols_output
 
         return df
 
@@ -89,7 +96,7 @@ class NipoppyDataAPI:
         filepath_pattern: str,
     ) -> Path:
         candidate_paths_list = list(
-            self.study.layout.get_dpath_pipeline(
+            self._study.layout.get_dpath_pipeline(
                 pipeline_name=pipeline_name, pipeline_version=pipeline_version
             ).glob(filepath_pattern)
         )
@@ -115,11 +122,13 @@ class NipoppyDataAPI:
             self._find_derivatives_path(
                 pipeline_name, pipeline_version, filepath_pattern
             ),
-            index_cols=self.index_cols_derivatives,
+            index_cols=self._index_cols_derivatives,
         )
 
     def _filter_with_manifest(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.loc[df.index.isin(self.study.manifest.get_participants_sessions()), :]
+        return df.loc[
+            df.index.isin(self._study.manifest.get_participants_sessions()), :
+        ]
 
     def get_phenotypes(self, phenotypes: List[str]) -> pd.DataFrame:
         """Get harmonized phenotypic data from the Nipoppy study.
@@ -146,7 +155,7 @@ class NipoppyDataAPI:
         """
         _check_phenotypes_arg(phenotypes)
         df = self._load_tsv(
-            self.study.layout.fpath_harmonized, index_cols=self.index_cols_phenotypes
+            self._study.layout.fpath_harmonized, index_cols=self._index_cols_phenotypes
         )
         df = self._filter_with_manifest(df)
         return df.loc[:, phenotypes]
