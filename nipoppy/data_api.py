@@ -125,14 +125,12 @@ class NipoppyDataAPI:
         """Get harmonized phenotypic data from the Nipoppy study.
 
         This function loads the study's harmonized phenotypic TSV file
-        (`<NIPOPPY_ROOT>/tabular/harmonized.tsv` in the default layout). It then subsets
-        the data to include only the requested phenotypic columns, and filters the rows
-        to include only participants and sessions that are present in the study's
-        manifest.
+        (`<NIPOPPY_ROOT>/tabular/harmonized.tsv`). It then subsets the data to include
+        only the requested phenotypic columns, and filters the rows to include only
+        participants and sessions that are present in the study's manifest.
 
         The harmonized phenotypic TSV file is expected to have columns
-        "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers,
-        respectively.
+        "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers.
 
         Parameters
         ----------
@@ -161,7 +159,7 @@ class NipoppyDataAPI:
         include only participants and sessions that are present in the study's manifest.
 
         The derivatives TSV files are expected to have columns "participant_id" and
-        "session_id" for participant and session identifiers, respectively.
+        "session_id" for participant and session identifiers.
 
         Parameters
         ----------
@@ -201,16 +199,14 @@ class NipoppyDataAPI:
         Harmonized phenotypic data is loaded from the TSV file at
         `<NIPOPPY_ROOT>/tabular/harmonized.tsv` and subsetted to include only the
         requested phenotypic column. This file is expected to have columns
-        "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers,
-        respectively.
+        "nb:ParticipantID" and "nb:SessionID" for participant and session identifiers.
 
         Derivative data is loaded from the specified pipelines and versions, based on
         the provided filepath patterns. These TSV files are expected to have columns
-        "participant_id" and "session_id" for participant and session identifiers,
-        respectively.
+        "participant_id" and "session_id" for participant and session identifiers.
 
-        "nb:ParticipantID" and "participant_id" columns are assumed to correspond to are
-        "nb:SessionID" and "session_id".
+        "nb:ParticipantID" and "participant_id" columns are assumed to correspond to
+        each other, as are "nb:SessionID" and "session_id".
 
         The output dataframe will only contain participants and sessions that are
         present in the study's manifest.
