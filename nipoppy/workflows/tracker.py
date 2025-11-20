@@ -6,6 +6,7 @@ from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
+from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -60,12 +61,12 @@ class PipelineTracker(BasePipelineWorkflow):
                     f" {self.processing_status_table.shape}"
                     f" at {self.layout.fpath_processing_status}"
                 )
-            except ValueError as exception:
-                if "Error when validating the " in str(exception):
+            except NipoppyError as e:
+                if "Error when validating the " in str(e):
                     logger.warning(
                         "Failed to load existing processing status file at "
                         f"{self.layout.fpath_processing_status}. Generating a new "
-                        f"processing status table.\nOriginal error:\n{exception}"
+                        f"processing status table.\nOriginal error:\n{e}"
                     )
                     self.processing_status_table = ProcessingStatusTable()
         else:

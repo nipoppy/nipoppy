@@ -11,6 +11,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
 
@@ -388,7 +389,7 @@ def test_pipeline_variables_get_variables(
 def test_pipeline_variables_get_variables_error_pipeline_type(
     pipeline_variables: PipelineVariables,
 ):
-    with pytest.raises(ValueError, match="Invalid pipeline type"):
+    with pytest.raises(ConfigError, match="Invalid pipeline type"):
         pipeline_variables.get_variables("INVALID", "pipeline1", "version1")
 
 
@@ -433,7 +434,7 @@ def test_pipeline_variables_set_variables(
 def test_pipeline_variables_set_variables_error_pipeline_type(
     pipeline_variables: PipelineVariables,
 ):
-    with pytest.raises(ValueError, match="Invalid pipeline type"):
+    with pytest.raises(ConfigError, match="Invalid pipeline type"):
         pipeline_variables.set_variables("INVALID", "pipeline1", "version1", {})
 
 

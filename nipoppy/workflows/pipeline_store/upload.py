@@ -5,12 +5,13 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import TerminatedByUserError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
-from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
+from nipoppy.zenodo_api import ZenodoAPI
 
 logger = get_logger()
 
@@ -91,7 +92,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"
             )
-            raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
+            raise WorkflowError from e
 
         if self.record_id:
             self.record_id = self.record_id.removeprefix("zenodo.")
@@ -99,7 +100,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             if not self.force and not _is_same_pipeline(
                 pipeline_config, current_metadata
             ):
-                raise ZenodoAPIError(
+                raise WorkflowError(
                     "The pipeline metadata does not match the existing record "
                     f"(zenodo.{self.record_id}). Aborting."
                     "\nUse the --force flag to force the update."
@@ -120,7 +121,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 potential_duplicates = [
                     record["links"]["self_html"] for record in records
                 ]
-                raise ZenodoAPIError(
+                raise WorkflowError(
                     "It looks like this pipeline already exists in Zenodo. Aborting."
                     "\nPlease use the --zenodo-id flag to update it or the"
                     " --force flag to force the upload."
@@ -136,8 +137,8 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 " this is a [bold]permanent[/] action, are you sure?",
             )
             if not continue_:
-                logger.info("Zenodo upload cancelled.")
-                raise SystemExit(1)
+                logger.warning("Zenodo upload cancelled.")
+                raise TerminatedByUserError("User cancelled the upload.")
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)

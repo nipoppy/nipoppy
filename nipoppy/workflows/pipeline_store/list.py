@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum
+from nipoppy.exceptions import WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import load_json
@@ -46,11 +47,10 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
             ):
                 try:
                     pipeline_config = BasePipelineConfig(**load_json(fpath_config))
-                except Exception as exception:
-                    raise RuntimeError(
-                        f"Error when loading pipeline config at {fpath_config}"
-                        f": {exception}"
-                    )
+                except Exception as e:
+                    raise WorkflowError(
+                        f"Error when loading pipeline config at {fpath_config}: {e}"
+                    ) from e
 
                 pipeline_names_to_versions_map[pipeline_config.NAME].append(
                     pipeline_config.VERSION

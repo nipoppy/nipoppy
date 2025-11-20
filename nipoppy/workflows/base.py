@@ -15,7 +15,8 @@ from typing import Optional, Sequence
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
-from nipoppy.env import EXT_LOG, ReturnCode, StrOrPathLike
+from nipoppy.env import EXT_LOG, StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.base import BaseTabular
@@ -152,8 +153,7 @@ class BaseWorkflow(Base, ABC):
                 )
 
             if check and process.returncode != 0:
-                exception = subprocess.CalledProcessError(process.returncode, command)
-                raise exception
+                raise subprocess.CalledProcessError(process.returncode, command)
 
             run_output = process
 
@@ -207,7 +207,7 @@ class BaseWorkflow(Base, ABC):
             if not self.dry_run:
                 dpath.mkdir(**kwargs_to_use)
         elif not dpath.is_dir():
-            raise FileExistsError(
+            raise FileOperationError(
                 f"Path already exists but is not a directory: {dpath}"
             )
 
@@ -360,10 +360,10 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             # load and apply user-defined substitutions
             logger.debug(f"Loading config from {fpath_config}")
             config = Config.load(fpath_config)
-        except FileNotFoundError:
-            raise FileNotFoundError(
+        except FileNotFoundError as e:
+            raise FileOperationError(
                 f"Config file not found: {self.layout.fpath_config}"
-            )
+            ) from e
 
         # replace path placeholders in the config
         # (except in the user-defined substitutions)
@@ -392,8 +392,10 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         fpath_manifest = Path(self.layout.fpath_manifest)
         try:
             return Manifest.load(fpath_manifest)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
+        except FileNotFoundError as e:
+            raise FileOperationError(
+                f"Manifest file not found: {fpath_manifest}"
+            ) from e
 
     @cached_property
     def curation_status_table(self) -> CurationStatusTable:
@@ -450,7 +452,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         """Get the DICOM directory mapping."""
         fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
         if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
-            raise FileNotFoundError(
+            raise FileOperationError(
                 f"DICOM directory map file not found: {fpath_dicom_dir_map}"
             )
 

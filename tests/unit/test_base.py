@@ -3,6 +3,7 @@
 import pytest
 
 from nipoppy.base import Base
+from nipoppy.exceptions import NipoppyError
 
 
 class BaseA(Base):
@@ -50,5 +51,5 @@ def test_str_and_repr(base: Base, expected):
 
 
 def test_str_error():
-    with pytest.raises(RuntimeError, match="Failed to build string representation"):
+    with pytest.raises(NipoppyError, match="Failed to build string representation"):
         str(BadBase(1))

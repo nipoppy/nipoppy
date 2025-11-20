@@ -1,7 +1,6 @@
 """Tests for container configuration."""
 
 import pytest
-from pydantic import ValidationError
 
 from nipoppy.config.container import (
     ContainerConfig,
@@ -107,7 +106,7 @@ def test_container_config_merge_error():
 
 
 def test_container_config_no_extra_fields():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         ContainerConfig(not_a_field="a")
 
 
@@ -127,12 +126,12 @@ def test_container_info(data):
 
 
 def test_container_info_no_extra_fields():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         ContainerInfo(not_a_field="a")
 
 
 def test_container_info_file_exists_if_uri_exists():
-    with pytest.raises(ValidationError, match="FILE must be specified if URI is set"):
+    with pytest.raises(ValueError, match="FILE must be specified if URI is set"):
         ContainerInfo(URI="docker://my/container")
 
 

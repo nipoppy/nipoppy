@@ -6,7 +6,8 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.curation_status import update_curation_status_table
 from nipoppy.utils.bids import (
@@ -72,7 +73,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
         # make sure directory exists
         if not dpath_downloaded.exists():
-            raise FileNotFoundError(
+            raise FileOperationError(
                 f"Raw DICOM directory not found for participant {participant_id}"
                 f" session {session_id}: {dpath_downloaded}"
             )
@@ -114,10 +115,10 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 try:
                     if is_derived_dicom(fpath_source):
                         logger.warning(f"Derived DICOM file detected: {fpath_source}")
-                except Exception as exception:
-                    raise RuntimeError(
-                        f"Error checking DICOM file {fpath_source}: {exception}"
-                    )
+                except Exception as e:
+                    raise WorkflowError(
+                        f"Error checking DICOM file {fpath_source}: {e}"
+                    ) from e
 
             # the destination path is under dpath_reorganized
             # resolve the path to avoid issues with symlinks
@@ -130,7 +131,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
             # do not overwrite existing files
             if fpath_dest.exists():
-                raise FileExistsError(
+                raise FileOperationError(
                     f"Cannot move file {fpath_source} to {fpath_dest}"
                     " because it already exists"
                 )

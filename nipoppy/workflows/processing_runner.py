@@ -7,6 +7,7 @@ from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
+from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.logger import get_logger
 from nipoppy.workflows.runner import Runner
 
@@ -72,14 +73,14 @@ class ProcessingRunner(Runner):
             return
 
         if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
-            raise RuntimeError(
-                "Tarring requested but is no tracker config file. "
+            raise ConfigError(
+                "Tarring requested but there is no tracker config file. "
                 "Specify the TRACKER_CONFIG_FILE field for the pipeline step in "
                 "the global config file, then make sure the PARTICIPANT_SESSION_DIR "
                 "field is specified in the TRACKER_CONFIG_FILE file."
             )
         if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
-            raise RuntimeError(
+            raise ConfigError(
                 "Tarring requested but no participant-session directory specified. "
                 "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
                 "in the tracker config file at "
@@ -90,9 +91,9 @@ class ProcessingRunner(Runner):
         """Tar a directory and delete it."""
         dpath = Path(dpath)
         if not dpath.exists():
-            raise RuntimeError(f"Not tarring {dpath} since it does not exist")
+            raise FileOperationError(f"Not tarring {dpath} since it does not exist")
         if not dpath.is_dir():
-            raise RuntimeError(f"Not tarring {dpath} since it is not a directory")
+            raise FileOperationError(f"Not tarring {dpath} since it is not a directory")
 
         tar_flags = "-cvf"
         fpath_tarred = dpath.with_suffix(EXT_TAR)
@@ -181,8 +182,8 @@ class ProcessingRunner(Runner):
         # and the program will not actually exit
         try:
             self.fpath_container
-        except FileNotFoundError as exception:
-            raise exception
+        except FileOperationError:
+            raise
         except Exception:
             pass
 
