@@ -81,6 +81,19 @@ def test_ignore_external_loggers(logger, caplog: pytest.LogCaptureFixture):
     assert len(caplog.records) == 1
 
 
+def test_set_capture_warnings(logger, caplog: pytest.LogCaptureFixture):
+    logger.set_capture_warnings(True)
+    import warnings
+
+    warnings.warn("This is a test warning.")
+    assert len(caplog.records) == 1
+    assert "This is a test warning." in caplog.records[0].message
+
+    logger.set_capture_warnings(False)
+    warnings.warn("This warning should not be captured.")
+    assert len(caplog.records) == 1  # still only one record
+
+
 def test_success_markup(logger, caplog: pytest.LogCaptureFixture):
     # log a success message then check that it contains the success markup
     msg = "Operation completed successfully."
