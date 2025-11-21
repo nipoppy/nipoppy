@@ -81,6 +81,7 @@ def test_ignore_external_loggers(logger, caplog: pytest.LogCaptureFixture):
     assert len(caplog.records) == 1
 
 
+@pytest.mark.no_xdist
 def test_set_capture_warnings(logger, caplog: pytest.LogCaptureFixture):
     logger.set_capture_warnings(True)
     import warnings
@@ -94,6 +95,7 @@ def test_set_capture_warnings(logger, caplog: pytest.LogCaptureFixture):
     assert len(caplog.records) == 1  # still only one record
 
 
+@pytest.mark.no_xdist
 def test_success_markup(logger, caplog: pytest.LogCaptureFixture):
     # log a success message then check that it contains the success markup
     msg = "Operation completed successfully."
@@ -102,6 +104,7 @@ def test_success_markup(logger, caplog: pytest.LogCaptureFixture):
     assert caplog.records[0].levelno == logging.INFO
 
 
+@pytest.mark.no_xdist
 def test_failure_markup(logger, caplog: pytest.LogCaptureFixture):
     # log a failure message then check that it contains the failure markup
     msg = "Operation failed."
@@ -110,6 +113,7 @@ def test_failure_markup(logger, caplog: pytest.LogCaptureFixture):
     assert caplog.records[0].levelno == logging.ERROR
 
 
+@pytest.mark.no_xdist
 def test_warning_markup(logger, caplog: pytest.LogCaptureFixture):
     # log a warning message then check that it contains the warning markup
     msg = "This is a warning."
