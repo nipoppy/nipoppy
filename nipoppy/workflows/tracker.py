@@ -2,7 +2,7 @@
 
 import tarfile
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Union
 
 from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.tracker import TrackerConfig
@@ -133,19 +133,23 @@ class PipelineTracker(BasePipelineWorkflow):
 
     @staticmethod
     def apply_analysis_level(
-        participants_sessions: Iterable[str, str],
+        participants_sessions: Iterable[str],
         analysis_level: AnalysisLevelType,
-    ) -> List[Tuple[str, str]]:
+    ) -> List[Tuple[str, Union[str, None]]]:
         """Tracker: level is always participant-session."""
-        # TODO : test
-        if analysis_level not in list(map(lambda x: x.value, AnalysisLevelType)):
-            # TODO :rq : depends on what is inputted as analysis_level
+        if analysis_level in (
+            AnalysisLevelType.group,
+            AnalysisLevelType.session,
+            AnalysisLevelType.participant,
+        ):
             participants = []
             for participant, _ in participants_sessions:
                 if participant not in participants:
                     participants.append(participant)
             return [(participant, None) for participant in participants]
-        return list(participants_sessions)
+        if analysis_level == AnalysisLevelType.participant_session:
+            return list(participants_sessions)
+        raise ValueError(f"Invalid analysis level : {analysis_level}")
 
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""

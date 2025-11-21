@@ -673,10 +673,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     @staticmethod
     def apply_analysis_level(
-        participants_sessions: Iterable[str, str],
+        participants_sessions: Iterable[str],
         analysis_level: AnalysisLevelType,
     ) -> List[Tuple[str, str]]:
-        # TODO : test
         """Filter participant-session pairs to run based on the analysis level."""
         if analysis_level == AnalysisLevelType.group:
             return [(None, None)]
