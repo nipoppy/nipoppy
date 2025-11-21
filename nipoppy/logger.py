@@ -67,7 +67,7 @@ class NipoppyLogger(logging.Logger):
         self.stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
         self.addHandler(self.stderr_handler)
 
-    def _cleanup_handlers(self, handler: Optional[logging.Handler] = None) -> None:
+    def _cleanup_handler(self, handler: Optional[logging.Handler] = None) -> None:
         """Close and remove a handler from the logger.
 
         Parameters
@@ -93,7 +93,7 @@ class NipoppyLogger(logging.Logger):
             The nipoppy logger
         """
         # Remove existing stdout handler with previous verbosity level
-        self._cleanup_handlers(self._stdout_handler)
+        self._cleanup_handler(self._stdout_handler)
 
         # stdout: INFO and WARNING
         # If verbose is enabled, also display DEBUG
@@ -117,7 +117,7 @@ class NipoppyLogger(logging.Logger):
             The nipoppy logger
         """
         # Only one file handler allowed
-        self._cleanup_handlers(self._file_handler)
+        self._cleanup_handler(self._file_handler)
 
         file.parent.mkdir(parents=True, exist_ok=True)
         self._file_handler = logging.FileHandler(file)

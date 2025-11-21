@@ -54,6 +54,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             dry_run=dry_run,
         )
         self.zenodo_api = zenodo_api or ZenodoAPI()
+        self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.query = query
         self.community = community
         self.size = size

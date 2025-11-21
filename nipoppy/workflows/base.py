@@ -340,13 +340,12 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             self.layout.validate()
 
         if not self._skip_logfile:
-            self._log_handler = logger.add_file_handler(self.generate_fpath_log())
+            logger.add_file_handler(self.generate_fpath_log())
 
         super().run_setup()
 
     def run_cleanup(self):
         """Run the cleanup part of the workflow."""
-        return super().run_cleanup()
 
     @cached_property
     def config(self) -> Config:
