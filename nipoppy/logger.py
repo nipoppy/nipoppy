@@ -66,6 +66,8 @@ class NipoppyLogger(logging.Logger):
         # stderr: ERROR and CRITICAL
         self.stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
         self.addHandler(self.stderr_handler)
+        # stdout: INFO and WARNING by default
+        self.set_verbose(False)
 
     def _cleanup_handler(self, handler: Optional[logging.Handler] = None) -> None:
         """Close and remove a handler from the logger.
@@ -80,7 +82,7 @@ class NipoppyLogger(logging.Logger):
             self.removeHandler(handler)
 
     def set_verbose(self, verbose: bool) -> Self:
-        """Set the verbose of the logger.
+        """Set the logging level for stdout.
 
         Parameters
         ----------
@@ -128,30 +130,6 @@ class NipoppyLogger(logging.Logger):
         self.info(f"Writing the log to {file}")
         return self
 
-    def set_capture_warnings(self, capture: bool = True) -> Self:
-        """Configure whether warnings are captured.
-
-        Parameters
-        ----------
-        capture : bool, optional
-            Whether to capture warnings, by default True
-
-        Returns
-        -------
-        Self
-            The nipoppy logger
-        """
-        if capture:
-            logging.captureWarnings(True)
-            warnings_logger = logging.getLogger("py.warnings")
-            for handler in self.handlers:
-                if handler not in warnings_logger.handlers:
-                    warnings_logger.addHandler(handler)
-        else:
-            logging.captureWarnings(False)
-
-        return self
-
     def success(self, message, args=None, **kwargs) -> None:
         """Log a success message.
 
@@ -194,6 +172,10 @@ def get_logger(verbose: bool = False) -> NipoppyLogger:
     logging.setLoggerClass(NipoppyLogger)
     logger = logging.getLogger(NipoppyLogger.NAME)
     logger.set_verbose(verbose)
+
+    # Capture warnings from the warnings module as logs
+    logging.captureWarnings(True)
+    logging.getLogger("py.warnings").setLevel(logging.WARNING)
 
     # Reset to default logger class
     # Otherwise, external libraries will also use NipoppyLogger

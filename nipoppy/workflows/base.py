@@ -63,7 +63,6 @@ class BaseWorkflow(Base, ABC):
         self.return_code = ReturnCode.SUCCESS
 
         logger.set_verbose(self.verbose)
-        logger.set_capture_warnings(True)
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
