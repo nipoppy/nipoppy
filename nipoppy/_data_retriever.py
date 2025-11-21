@@ -89,7 +89,7 @@ class NipoppyDataRetriever:
 
         return df
 
-    def _find_derivatives_path(
+    def _find_derivative_path(
         self,
         pipeline_name: str,
         pipeline_version: str,
@@ -119,7 +119,7 @@ class NipoppyDataRetriever:
         filepath_pattern: str,
     ) -> pd.DataFrame:
         return self._load_tsv(
-            self._find_derivatives_path(
+            self._find_derivative_path(
                 pipeline_name, pipeline_version, filepath_pattern
             ),
             index_cols=self._index_cols_derivatives,
@@ -228,6 +228,7 @@ class NipoppyDataRetriever:
 
     def get_tabular_data(
         self,
+        *,
         phenotypes: Optional[List[str]] = None,
         derivatives: Optional[List[Tuple[str, str, str]]] = None,
     ) -> pd.DataFrame:

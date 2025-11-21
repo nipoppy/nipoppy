@@ -58,8 +58,16 @@ def test_check_derivatives_arg_valid(derivatives):
 @pytest.mark.parametrize(
     "derivatives,error_type,error_message",
     [
-        (None, TypeError, "derivatives must be a list of tuples, got"),
-        ([], ValueError, "derivatives list cannot be empty"),
+        (
+            None,
+            TypeError,
+            "derivatives must be a list of tuples, got",
+        ),
+        (
+            [],
+            ValueError,
+            "derivatives list cannot be empty",
+        ),
         (
             ["pipeline1"],
             TypeError,
@@ -118,7 +126,7 @@ def test_load_tsv_index(api: NipoppyDataRetriever, tmp_path: Path):
     )
 
 
-def test_find_derivatives_path_valid(api: NipoppyDataRetriever):
+def test_find_derivative_path_valid(api: NipoppyDataRetriever):
     pipeline_name = "pipeline1"
     pipeline_version = "v1.0"
     filepath_pattern = "**/idp.tsv"
@@ -130,7 +138,7 @@ def test_find_derivatives_path_valid(api: NipoppyDataRetriever):
     expected_path.parent.mkdir(parents=True, exist_ok=True)
     expected_path.touch()
 
-    output_path = api._find_derivatives_path(
+    output_path = api._find_derivative_path(
         pipeline_name, pipeline_version, filepath_pattern
     )
     assert output_path == expected_path
@@ -143,7 +151,7 @@ def test_find_derivatives_path_valid(api: NipoppyDataRetriever):
         ("**/idp.tsv", ValueError, "Found more than one file matching"),
     ],
 )
-def test_find_derivatives_path_invalid(
+def test_find_derivative_path_invalid(
     api: NipoppyDataRetriever, filepath_pattern, error_type, error_message
 ):
     pipeline_name = "pipeline1"
@@ -179,9 +187,9 @@ def test_get_derivatives_table(
     expected_path = api._study.layout.dpath_root.joinpath(
         "derivatives", pipeline_name, pipeline_version, "test1/test2/idp.tsv"
     )
-    mocked_find_derivatives_path = mocker.patch.object(
+    mocked_find_derivative_path = mocker.patch.object(
         api,
-        "_find_derivatives_path",
+        "_find_derivative_path",
         return_value=expected_path,
     )
     mocked_load_tsv = mocker.patch(
@@ -195,7 +203,7 @@ def test_get_derivatives_table(
         filepath_pattern=filepath_pattern,
     )
 
-    mocked_find_derivatives_path.assert_called_once_with(
+    mocked_find_derivative_path.assert_called_once_with(
         pipeline_name, pipeline_version, filepath_pattern
     )
     mocked_load_tsv.assert_called_once_with(
@@ -340,7 +348,12 @@ def test_get_tabular_data(api: NipoppyDataRetriever, mocker: pytest_mock.MockFix
 @pytest.mark.parametrize(
     "phenotypes,derivatives,get_phenotypes_called,get_derivatives_called",
     [
-        (["nb:Age"], None, True, False),
+        (
+            ["nb:Age"],
+            None,
+            True,
+            False,
+        ),
         (
             None,
             [("pipeline1", "v1.0", "pattern1")],
