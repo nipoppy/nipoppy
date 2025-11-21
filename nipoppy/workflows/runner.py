@@ -161,7 +161,7 @@ class Runner(BasePipelineWorkflow, ABC):
             bind_paths = []
 
         # always bind the dataset's root directory
-        bind_paths = [self.layout.dpath_root] + bind_paths
+        bind_paths = [self.study.layout.dpath_root] + bind_paths
 
         # get and process container config
         container_config = self.pipeline_step_config.get_container_config()

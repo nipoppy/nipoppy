@@ -69,10 +69,13 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         Notes
         -----
         This loads a new Config object (i.e., does not use already-loaded
-        self.config object).
+        self.study.config object).
         """
-        # do not use self.config since it has been changed by substitutions already
-        config = self.config.load(self.layout.fpath_config, apply_substitutions=False)
+        # do not use self.study.config since
+        # it has been changed by substitutions already
+        config = self.study.config.load(
+            self.study.layout.fpath_config, apply_substitutions=False
+        )
 
         if len(pipeline_config.VARIABLES) == 0:
             self.logger.debug("No changes to the global config file.")
@@ -111,12 +114,13 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 self.logger.warning(f"\t{variable_name}\t{variable_description}")
             self.logger.warning(
                 "You must update the PIPELINE_VARIABLES section in "
-                f"{self.layout.fpath_config} manually before running the pipeline!"
+                f"{self.study.layout.fpath_config}"
+                " manually before running the pipeline!"
             )
 
             # save
             if not self.dry_run:
-                config.save(self.layout.fpath_config)
+                config.save(self.study.layout.fpath_config)
 
         return config
 
@@ -130,17 +134,17 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         # apply substitutions
         pipeline_config = BasePipelineConfig(
             **apply_substitutions_to_json(
-                pipeline_config.model_dump(mode="json"), self.config.SUBSTITUTIONS
+                pipeline_config.model_dump(mode="json"), self.study.config.SUBSTITUTIONS
             )
         )
         fpath_container = Path(
             process_template_str(
-                str(pipeline_config.CONTAINER_INFO.FILE), objs=[self.layout]
+                str(pipeline_config.CONTAINER_INFO.FILE), objs=[self.study.layout]
             )
         )
 
         container_handler = get_container_handler(
-            self.config.CONTAINER_CONFIG, logger=self.logger
+            self.study.config.CONTAINER_CONFIG, logger=self.logger
         )
 
         # container file already exists
@@ -156,7 +160,10 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         ):
             pull_command = container_handler.get_pull_command(uri, fpath_container)
 
-            if self.config.CONTAINER_CONFIG.COMMAND == ContainerCommandEnum.DOCKER:
+            if (
+                self.study.config.CONTAINER_CONFIG.COMMAND
+                == ContainerCommandEnum.DOCKER
+            ):
                 console = CONSOLE_STDOUT
             else:
                 # use stderr for status messages so that the Apptainer/Singularity
@@ -191,7 +198,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 + self.zenodo_id
             )
             self.logger.info(f"Installing pipeline from {record_source}")
-            dpath_pipeline = self.layout.dpath_pipelines / self.zenodo_id
+            dpath_pipeline = self.study.layout.dpath_pipelines / self.zenodo_id
             if dpath_pipeline.exists() and not self.force:
                 self.logger.error(
                     f"Output directory {dpath_pipeline} already exists."
@@ -232,7 +239,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 raise
 
         # generate destination path
-        dpath_target = self.layout.get_dpath_pipeline_bundle(
+        dpath_target = self.study.layout.get_dpath_pipeline_bundle(
             pipeline_config.PIPELINE_TYPE, pipeline_config.NAME, pipeline_config.VERSION
         )
 

@@ -86,12 +86,12 @@ def workflow(tmp_path: Path):
 
     # write config
     config = get_config()
-    config.save(workflow.layout.fpath_config)
+    config.save(workflow.study.layout.fpath_config)
 
-    create_empty_dataset(workflow.layout.dpath_root)
+    create_empty_dataset(workflow.study.layout.dpath_root)
 
     create_pipeline_config_files(
-        workflow.layout.dpath_pipelines,
+        workflow.study.layout.dpath_pipelines,
         bidsification_pipelines=[
             {
                 "NAME": "bids_converter",
@@ -173,7 +173,7 @@ def _set_up_hpc_for_testing(
     workflow.hpc = "slurm"
 
     # copy HPC config files
-    workflow.copytree(DPATH_HPC, workflow.layout.dpath_hpc)
+    workflow.copytree(DPATH_HPC, workflow.study.layout.dpath_hpc)
 
     mocker.patch.object(
         workflow,
@@ -249,7 +249,7 @@ def test_get_pipeline_version(
 ):
     assert (
         get_pipeline_version(
-            pipeline_name, workflow.layout.dpath_pipelines / dname_pipelines
+            pipeline_name, workflow.study.layout.dpath_pipelines / dname_pipelines
         )
         == expected_version
     )
@@ -384,7 +384,7 @@ def test_pipeline_config(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
 
 
 def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture):
-    fpath_container = workflow.layout.dpath_containers / "my_container.sif"
+    fpath_container = workflow.study.layout.dpath_containers / "my_container.sif"
     fpath_container.parent.mkdir(parents=True, exist_ok=True)
     fpath_container.touch()
 
@@ -496,7 +496,7 @@ def test_descriptor_pipeline_variables(
     tmp_path: Path, workflow: PipelineWorkflow, variables, expected_descriptor
 ):
     # set variables for substitution
-    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+    workflow.study.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
         workflow.pipeline_version
     ] = variables
 
@@ -552,7 +552,7 @@ def test_invocation_pipeline_variables(
     tmp_path: Path, workflow: PipelineWorkflow, variables, expected_invocation
 ):
     # set variables for substitution
-    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+    workflow.study.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
         workflow.pipeline_version
     ] = variables
 
@@ -680,7 +680,7 @@ def test_get_pipeline_config(
     workflow: PipelineWorkflow,
 ):
     dpath_pipeline_bundle = (
-        workflow.layout.dpath_pipelines
+        workflow.study.layout.dpath_pipelines
         / dname_pipelines
         / f"{pipeline_name}-{pipeline_version}"
     )
@@ -699,7 +699,7 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
     pipeline_name = "new_pipeline"
     pipeline_version = "1.0.0"
     dpath_pipeline_bundle = (
-        workflow.layout.dpath_pipelines
+        workflow.study.layout.dpath_pipelines
         / "processing"
         / f"{pipeline_name}-{pipeline_version}"
     )
@@ -743,7 +743,7 @@ def test_get_pipeline_config_missing(
     workflow: PipelineWorkflow,
 ):
     dpath_pipeline_bundle = (
-        workflow.layout.dpath_pipelines
+        workflow.study.layout.dpath_pipelines
         / dname_pipelines
         / f"{pipeline_name}-{pipeline_version}"
     )
@@ -759,7 +759,7 @@ def test_get_pipeline_config_missing(
 @pytest.mark.parametrize("return_str", [True, False])
 def test_process_template_json(workflow: PipelineWorkflow, return_str):
     # add user-defined substitution variables
-    workflow.config.SUBSTITUTIONS = {
+    workflow.study.config.SUBSTITUTIONS = {
         "USER_SUBSTITUTION": "val1",
         "OTHER_USER_SUBSTITUTION": "val2",
     }
@@ -869,13 +869,13 @@ def test_set_up_bids_db(
 ):
     dpath_pybids_db = tmp_path / "bids_db"
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_bids,
+        output_dir=workflow.study.layout.dpath_bids,
         subjects="01",
         sessions=["1", "2", "3"],
         datatypes=["anat"],
     )
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_bids,
+        output_dir=workflow.study.layout.dpath_bids,
         subjects="02",
         sessions=["1", "2"],
         datatypes=["anat", "func"],
@@ -895,7 +895,7 @@ def test_set_up_bids_db_ignore_patterns(workflow: PipelineWorkflow, tmp_path: Pa
     session_id = "1"
 
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_bids,
+        output_dir=workflow.study.layout.dpath_bids,
     )
 
     pybids_ignore_patterns = workflow.pybids_ignore_patterns[:]
@@ -925,7 +925,7 @@ def test_set_up_bids_db_no_session(
     session_id = FAKE_SESSION_ID
 
     fids.create_fake_bids_dataset(
-        output_dir=workflow.layout.dpath_bids,
+        output_dir=workflow.study.layout.dpath_bids,
         subjects=participant_id,
         sessions=None,
     )
@@ -961,7 +961,7 @@ def test_check_pipeline_version(
     "variables,valid", [({"var1": "val1"}, True), ({"var2": None}, False)]
 )
 def test_check_pipeline_variables(workflow: PipelineWorkflow, variables, valid):
-    workflow.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
+    workflow.study.config.PIPELINE_VARIABLES.PROCESSING[workflow.pipeline_name][
         workflow.pipeline_version
     ] = variables
     with (
@@ -997,7 +997,7 @@ def test_check_pipeline_step(
 def test_run_setup_pipeline_version_step(workflow: PipelineWorkflow):
     workflow.pipeline_version = None
     workflow.pipeline_step = None
-    create_empty_dataset(workflow.layout.dpath_root)
+    create_empty_dataset(workflow.study.layout.dpath_root)
     workflow.run_setup()
     assert workflow.pipeline_version == "2.0"
     assert workflow.pipeline_step == DEFAULT_PIPELINE_STEP_NAME
@@ -1099,9 +1099,9 @@ def test_run_main(
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
     assert workflow.n_total == expected_count
     assert workflow.n_success == expected_count
@@ -1117,7 +1117,7 @@ def test_run_main_analysis_level(
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
     assert mocked.call_count == 1
 
@@ -1136,9 +1136,9 @@ def test_run_main_n_jobs(workflow: PipelineWorkflow, n_jobs: int):
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
 
 
@@ -1150,9 +1150,9 @@ def test_run_main_catch_errors(workflow: PipelineWorkflow):
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
     assert workflow.n_total == 1
     assert workflow.n_success == 0
@@ -1179,9 +1179,9 @@ def test_run_main_write_subcohort(
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    workflow.manifest = manifest
+    workflow.study.manifest = manifest
     workflow.run_main()
 
     if not dry_run:
@@ -1416,7 +1416,8 @@ def test_generate_fpath_log(
     workflow.session_id = session_id
     fpath_log = workflow.generate_fpath_log()
     assert (
-        fpath_log == workflow.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
+        fpath_log
+        == workflow.study.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
     )
 
 
@@ -1500,7 +1501,7 @@ def test_submit_hpc_job(
 
 
 def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
-    assert not workflow.layout.dpath_hpc.exists()
+    assert not workflow.study.layout.dpath_hpc.exists()
     with pytest.raises(
         LayoutError,
         match="The HPC directory with appropriate content needs to exist",
@@ -1523,7 +1524,7 @@ def test_submit_hpc_job_logs(
 ):
     _set_up_hpc_for_testing(workflow, mocker)
 
-    dpath_logs = workflow.layout.dpath_logs / workflow.dname_hpc_logs
+    dpath_logs = workflow.study.layout.dpath_logs / workflow.dname_hpc_logs
 
     # check that logs directory is created
     assert not (dpath_logs).exists()
@@ -1555,7 +1556,7 @@ def test_submit_hpc_job_pysqa_call(
     workflow.hpc = hpc_type
 
     workflow.hpc_config = HpcConfig(**hpc_config)
-    workflow.config.HPC_PREAMBLE = preamble_list
+    workflow.study.config.HPC_PREAMBLE = preamble_list
 
     participant_ids = ["participant1", "participant2"]
     session_ids = ["session1", "session2"]
@@ -1580,11 +1581,11 @@ def test_submit_hpc_job_pysqa_call(
     )
     assert (
         submit_job_args["NIPOPPY_DPATH_LOGS"]
-        == workflow.layout.dpath_logs / workflow.dname_hpc_logs
+        == workflow.study.layout.dpath_logs / workflow.dname_hpc_logs
     )
     assert submit_job_args["NIPOPPY_HPC_PREAMBLE_STRINGS"] == preamble_list
 
-    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == workflow.layout.dpath_root
+    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == workflow.study.layout.dpath_root
     assert submit_job_args["NIPOPPY_PIPELINE_NAME"] == workflow.pipeline_name
     assert submit_job_args["NIPOPPY_PIPELINE_VERSION"] == workflow.pipeline_version
     assert submit_job_args["NIPOPPY_PIPELINE_STEP"] == workflow.pipeline_step
@@ -1682,9 +1683,9 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflo
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
 
     # Call the run_main method
     workflow.run_main()

@@ -73,12 +73,12 @@ def test_get_pipeline_map_info(
     for pipeline_config_dict in pipeline_config_dicts:
         pipeline_config = BasePipelineConfig(**pipeline_config_dict)
         fpath_config = (
-            workflow.layout.get_dpath_pipeline_bundle(
+            workflow.study.layout.get_dpath_pipeline_bundle(
                 pipeline_config.PIPELINE_TYPE,
                 pipeline_config.NAME,
                 pipeline_config.VERSION,
             )
-            / workflow.layout.fname_pipeline_config
+            / workflow.study.layout.fname_pipeline_config
         )
         fpath_config.parent.mkdir(parents=True, exist_ok=True)
         fpath_config.write_text(pipeline_config.model_dump_json())
@@ -90,10 +90,10 @@ def test_get_pipeline_map_info(
 
 def test_get_pipeline_info_map_error(workflow: PipelineListWorkflow):
     fpath_config = (
-        workflow.layout.get_dpath_pipeline_bundle(
+        workflow.study.layout.get_dpath_pipeline_bundle(
             PipelineTypeEnum.BIDSIFICATION, "pipeline1", "0.0.1"
         )
-        / workflow.layout.fname_pipeline_config
+        / workflow.study.layout.fname_pipeline_config
     )
     fpath_config.parent.mkdir(parents=True, exist_ok=True)
     fpath_config.write_text("invalid json")
@@ -175,7 +175,7 @@ def test_run_main(
 
     assert (
         caplog.records[0].message
-        == f"Checking pipelines installed in {workflow.layout.dpath_pipelines}"
+        == f"Checking pipelines installed in {workflow.study.layout.dpath_pipelines}"
     )
     assert "Pipelines can be installed with the " in caplog.records[-1].message
 

@@ -90,7 +90,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         nipoppy_checkpoint = "in_manifest"
         self.logger.info("Dataset summary (based on the manifest file):")
 
-        manifest = self.manifest
+        manifest = self.study.manifest
 
         # Get the number of participants in the manifest
         participant_ids = manifest[manifest.col_participant_id].unique()
@@ -245,7 +245,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _df_to_table(self, status_df: pd.DataFrame, status_col_dict: dict):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
         df = status_df.copy().reset_index()
-        df = df.sort_values(by=self.manifest.col_session_id)
+        df = df.sort_values(by=self.study.manifest.col_session_id)
 
         # Define the colors for the columns
         column_colors = {

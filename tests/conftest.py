@@ -70,6 +70,7 @@ ATTR_TO_FPATH_MAP = {
     "fpath_curation_status": "sourcedata/imaging/curation_status.tsv",
     "fpath_processing_status": "derivatives/processing_status.tsv",
     "fpath_demographics": "tabular/demographics.tsv",
+    "fpath_harmonized": "tabular/harmonized.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
