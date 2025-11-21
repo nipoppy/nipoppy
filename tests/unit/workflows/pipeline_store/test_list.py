@@ -7,6 +7,7 @@ import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.logger import LogColor
 from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
 from tests.conftest import create_empty_dataset
 
@@ -125,7 +126,10 @@ def test_log_pipeline_info(
     caplog: pytest.LogCaptureFixture,
 ):
     workflow._log_pipeline_info(pipeline_type, pipeline_info)
-    assert f"[green]Available {pipeline_type.value}" in caplog.records[0].message
+    assert (
+        f"[bold {LogColor.EMPHASIZE}]Available {pipeline_type.value}"
+        in caplog.records[0].message
+    )
     for (pipeline_name, versions), log_record in zip(
         pipeline_info.items(), caplog.records[1:]
     ):

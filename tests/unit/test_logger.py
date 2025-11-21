@@ -7,7 +7,7 @@ import pytest
 import rich.logging
 
 from nipoppy.env import PROGRAM_NAME
-from nipoppy.logger import LogColor
+from nipoppy.logger import LogColor, emphasize
 
 
 def test_color():
@@ -93,7 +93,7 @@ def test_failure_markup(logger, caplog: pytest.LogCaptureFixture):
     # log a failure message then check that it contains the failure markup
     msg = "Operation failed."
     logger.failure(msg)
-    assert caplog.records[0].message == f"[red]{msg} ❌❌❌[/]"
+    assert caplog.records[0].message == f"[red]{msg}[/]"
     assert caplog.records[0].levelno == logging.ERROR
 
 
@@ -101,5 +101,11 @@ def test_warning_markup(logger, caplog: pytest.LogCaptureFixture):
     # log a warning message then check that it contains the warning markup
     msg = "This is a warning."
     logger.warning(msg)
-    assert caplog.records[0].message == f"[yellow]{msg} ⚠️⚠️⚠️[/]"
+    assert caplog.records[0].message == f"[yellow]{msg}[/]"
     assert caplog.records[0].levelno == logging.WARNING
+
+
+def test_emphasize():
+    msg = "message to emphasize"
+    emphasized_msg = emphasize(msg)
+    assert emphasized_msg == f"[bold magenta]{msg}[/]"

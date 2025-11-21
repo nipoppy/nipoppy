@@ -32,6 +32,23 @@ class LogColor:
     PARTIAL_SUCCESS = "yellow"
     WARNING = "yellow"
     FAILURE = "red"
+    EMPHASIZE = "magenta"
+
+
+def emphasize(text: str) -> str:
+    """Emphasize text using rich markup.
+
+    Parameters
+    ----------
+    text : str
+        The text to emphasize.
+
+    Returns
+    -------
+    str
+        The emphasized text.
+    """
+    return f"[bold {LogColor.EMPHASIZE}]{text}[/]"
 
 
 class NipoppyLogger(logging.Logger):
@@ -157,7 +174,7 @@ class NipoppyLogger(logging.Logger):
         message : str
             The message to log.
         """
-        self.error(f"[{LogColor.FAILURE}]{message} ❌❌❌[/]")
+        self.error(f"[{LogColor.FAILURE}]{message}[/]")
 
     def warning(self, message, args=None, **kwargs) -> None:
         """Log a warning message.
@@ -169,7 +186,7 @@ class NipoppyLogger(logging.Logger):
         message : str
             The message to log.
         """
-        super().warning(f"[{LogColor.WARNING}]{message} ⚠️⚠️⚠️[/]")
+        super().warning(f"[{LogColor.WARNING}]{message}[/]")
 
 
 def get_logger(verbose: bool = False) -> NipoppyLogger:
