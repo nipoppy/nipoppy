@@ -53,7 +53,7 @@ class ZenodoAPI:
         return self._logger
 
     @logger.setter
-    def logger(self, logger: logging.Logger):
+    def logger(self, logger: logging.Logger | None):
         """Set the logger for the ZenodoAPI instance."""
         if logger is None:
             logger = logging.getLogger(__name__)
