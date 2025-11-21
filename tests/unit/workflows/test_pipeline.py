@@ -21,7 +21,7 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
@@ -214,22 +214,24 @@ def test_joblib_import_fails(
         importlib.reload(nipoppy.workflows.pipeline)
 
 
-# TODO : modify to test method
-# @pytest.mark.parametrize(
-#     "analysis_level,expected",
-#     [
-#         (
-#             AnalysisLevelType.participant_session,
-#             [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")],
-#         ),
-#         (AnalysisLevelType.participant, [("S01", None), ("S02", None)]),
-#         (AnalysisLevelType.session, [(None, "BL"), (None, "FU")]),
-#         (AnalysisLevelType.group, [(None, None)]),
-#     ],
-# )
-# def test_apply_analysis_level(analysis_level, expected):
-#     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
-#     assert apply_analysis_level(participants_sessions, analysis_level) == expected
+@pytest.mark.parametrize(
+    "analysis_level,expected",
+    [
+        (
+            AnalysisLevelType.participant_session,
+            [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")],
+        ),
+        (AnalysisLevelType.participant, [("S01", None), ("S02", None)]),
+        (AnalysisLevelType.session, [(None, "BL"), (None, "FU")]),
+        (AnalysisLevelType.group, [(None, None)]),
+    ],
+)
+def test_apply_analysis_level(analysis_level, expected):
+    participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
+    assert (
+        PipelineWorkflow.apply_analysis_level(participants_sessions, analysis_level)
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -1112,7 +1114,7 @@ def test_run_main_analysis_level(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
 ):
-    mocked = mocker.patch("nipoppy.workflows.pipeline.apply_analysis_level")
+    mocked = mocker.patch.object(PipelineWorkflow, "apply_analysis_level")
     participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions
