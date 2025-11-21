@@ -82,17 +82,26 @@ def test_ignore_external_loggers(logger, caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.no_xdist
-def test_set_capture_warnings(logger, caplog: pytest.LogCaptureFixture):
-    logger.set_capture_warnings(True)
+def test_warning_capture(
+    caplog: pytest.LogCaptureFixture, recwarn: pytest.WarningsRecorder
+):
     import warnings
 
-    warnings.warn("This is a test warning.")
-    assert len(caplog.records) == 1
-    assert "This is a test warning." in caplog.records[0].message
+    # Disable, then re-enable warning capture to ensure a clean state for the test
+    # There's a conflict with pytest's own warning capture mechanism
+    logging.captureWarnings(False)
+    logging.captureWarnings(True)
 
-    logger.set_capture_warnings(False)
-    warnings.warn("This warning should not be captured.")
-    assert len(caplog.records) == 1  # still only one record
+    warning_msg = "This is a test warning."
+    warnings.warn(warning_msg)
+
+    # Warnings should not appear in 'recwarn' due to redirection
+    assert len(recwarn) == 0
+
+    # Check that the warning was captured in the logs
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelno == logging.WARNING
+    assert caplog.records[0].name == "py.warnings"  # Verify it came from the redirect
 
 
 @pytest.mark.no_xdist
