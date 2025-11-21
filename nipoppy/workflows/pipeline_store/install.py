@@ -10,7 +10,12 @@ from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDERR, CONSOLE_STDOUT
 from nipoppy.container import get_container_handler
-from nipoppy.env import ContainerCommandEnum, ReturnCode, StrOrPathLike
+from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    WorkflowError,
+)
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
@@ -165,12 +170,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 ):
                     self.run_command(pull_command)
 
-            except subprocess.CalledProcessError as exception:
+            except subprocess.CalledProcessError as e:
                 self.logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
-                    f": {exception}"
+                    f": {e}"
                 )
-                raise SystemExit(ReturnCode.UNKNOWN_FAILURE)
+                raise WorkflowError from e
 
     def run_main(self):
         """Install a pipeline.
@@ -179,6 +184,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         and any pipeline variables are added to the global config file.
         """
         if self.zenodo_id is not None:
+            # TODO extract the function to the zenodo_api module
             record_source = (
                 self.zenodo_api.api_endpoint.removesuffix("api")
                 + "records/"
@@ -191,7 +197,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     f"Output directory {dpath_pipeline} already exists."
                     "Use the '--force' flag to overwrite the current content. Aborting."
                 )
-                raise SystemExit(1)
+                raise WorkflowError
 
             self.logger.debug(
                 f"Downloading pipeline {self.zenodo_id} in {dpath_pipeline}"
@@ -210,7 +216,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 dpath_pipeline,
                 logger=self.logger,
             )
-        except FileNotFoundError as exception:
+        except FileOperationError as e:
             # if the files were downloaded from Zenodo, point user to the Zenodo record
             if self.zenodo_id is not None:
                 record_url = (
@@ -218,12 +224,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     + "/records/"
                     + self.zenodo_id
                 )
-                raise FileNotFoundError(
-                    f"{str(exception)}. Make sure the record at "
+                raise ConfigError(
+                    f"{str(e)}. Make sure the record at "
                     f"{record_url} contains valid Nipoppy pipeline configuration files."
-                )
+                ) from e
             else:
-                raise exception
+                raise
 
         # generate destination path
         dpath_target = self.layout.get_dpath_pipeline_bundle(
@@ -233,7 +239,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         # check if the target directory already exists
         if dpath_target.exists():
             if not self.force:
-                raise FileExistsError(
+                raise FileOperationError(
                     f"Pipeline directory exists: {dpath_target}"
                     ". Use --force to overwrite",
                 )

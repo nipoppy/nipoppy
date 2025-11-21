@@ -7,6 +7,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from nipoppy.exceptions import ConfigError
+
 
 class TrackerConfig(BaseModel):
     """Schema for tracker configuration."""
@@ -36,7 +38,7 @@ class TrackerConfig(BaseModel):
         - Make sure PATHS is not an empty list
         """
         if len(self.PATHS) == 0:
-            raise ValueError(
+            raise ConfigError(
                 f"The tracker config must contain at least one path, got {self}"
             )
         return self

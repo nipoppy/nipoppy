@@ -8,16 +8,10 @@ from typing import Optional, Tuple
 import httpx
 
 
-class ChecksumError(Exception):
-    """Exception raised from checksums mismatch."""
-
-    pass
+class ChecksumError(Exception): ...  # noqa E701
 
 
-class ZenodoAPIError(Exception):
-    """Exception raised for errors related to the Zenodo API."""
-
-    pass
+class ZenodoAPIError(Exception): ...  # noqa E701
 
 
 class ZenodoAPI:
@@ -305,7 +299,7 @@ class ZenodoAPI:
                     f"{response.json()}"
                 )
 
-            raise SystemExit(1)
+            raise ZenodoAPIError from e
 
     def search_records(
         self,
@@ -343,6 +337,13 @@ class ZenodoAPI:
             },
             timeout=self.timeout,
         )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            raise ZenodoAPIError(
+                f"Failed to search records. JSON response: {response.json()}"
+            ) from e
+
         return response.json()["hits"]
 
     def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:

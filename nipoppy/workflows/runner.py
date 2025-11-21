@@ -13,6 +13,7 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import ExecutionError
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -120,7 +121,7 @@ class Runner(BasePipelineWorkflow, ABC):
                         f"Additional launch options: {bosh_exec_launch_args}"
                     )
             except subprocess.CalledProcessError as exception:
-                raise RuntimeError(
+                raise ExecutionError(
                     f"Pipeline simulation failed (return code: {exception.returncode})"
                 )
         else:
@@ -141,7 +142,7 @@ class Runner(BasePipelineWorkflow, ABC):
                     quiet=True,
                 )
             except subprocess.CalledProcessError as exception:
-                raise RuntimeError(
+                raise ExecutionError(
                     "Pipeline did not complete successfully"
                     f" (return code: {exception.returncode})"
                     ". Hint: make sure the shell command above is correct."

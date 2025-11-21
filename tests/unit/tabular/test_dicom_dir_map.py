@@ -2,6 +2,7 @@
 
 import pytest
 
+from nipoppy.exceptions import TabularError
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import FPATH_SAMPLE_DICOM_DIR_MAP
@@ -30,7 +31,7 @@ def test_load(fpath):
     ],
 )
 def test_load_invalid(fname):
-    with pytest.raises(ValueError):
+    with pytest.raises(TabularError):
         DicomDirMap.load(DPATH_TEST_DATA / fname)
 
 

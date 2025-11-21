@@ -687,7 +687,7 @@ def test_upload_pipeline_delete_draft(
         json={},
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(ZenodoAPIError):
         zenodo_api.upload_pipeline(
             input_dir=tmp_path,
             metadata={"metadata": {}},
@@ -728,6 +728,25 @@ def test_search_records(
         json={"hits": {}},
     )
     zenodo_api.search_records(search_query, keywords=keywords, size=size)
+
+
+def test_search_records_status_raised(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    # mock the response to have .raise_for_status() raise an error
+    query = ""
+    size = 10
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}",
+        method="GET",
+        status_code=500,
+        json={},
+    )
+    with pytest.raises(
+        ZenodoAPIError,
+        match="Failed to search records. JSON response:",
+    ):
+        zenodo_api.search_records(query=query, size=size)
 
 
 def test_search_records_wrong_size(zenodo_api: ZenodoAPI):
