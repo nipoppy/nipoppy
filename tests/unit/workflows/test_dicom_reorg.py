@@ -165,6 +165,7 @@ def test_run_single_error_file_exists(workflow: DicomReorgWorkflow):
         workflow.run_single(participant_id, session_id)
 
 
+@pytest.mark.no_xdist
 def test_run_single_invalid_dicom(
     workflow: DicomReorgWorkflow, caplog: pytest.LogCaptureFixture
 ):
@@ -485,6 +486,7 @@ def test_cleanup_curation_status(
         ),
     ],
 )
+@pytest.mark.no_xdist
 def test_run_cleanup_message(
     workflow: DicomReorgWorkflow,
     n_success,

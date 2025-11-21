@@ -103,6 +103,7 @@ def test_df_to_table(
 
 
 @pytest.mark.parametrize("community", [True, False])
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineSearchWorkflow,
     community: bool,
@@ -139,6 +140,7 @@ def test_run_main(
     mocked_console_status.assert_called_once()
 
 
+@pytest.mark.no_xdist
 def test_run_main_no_results(
     workflow: PipelineSearchWorkflow,
     caplog: pytest.LogCaptureFixture,
@@ -158,6 +160,7 @@ def test_run_main_no_results(
     )
 
 
+@pytest.mark.no_xdist
 def test_run_main_all_results(
     workflow: PipelineSearchWorkflow,
     hits: list[dict],

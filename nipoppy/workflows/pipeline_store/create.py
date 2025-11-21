@@ -5,10 +5,13 @@ from typing import Optional
 
 import boutiques as bosh
 
-from nipoppy.env import LogColor, PipelineTypeEnum
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
+
+logger = get_logger()
 
 
 class PipelineCreateWorkflow(BaseWorkflow):
@@ -84,18 +87,15 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
-        self.logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
+        logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
         self.create_bundle(
             target=self.pipeline_dir,
             type_=self.type_,
             source_descriptor=self.source_descriptor,
         )
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline bundle successfully created at "
-            f"{self.pipeline_dir}![/]",
-        )
-        self.logger.warning("Edit the files to customize your pipeline.")
-        self.logger.info(
+        logger.success(f"Pipeline bundle successfully created at {self.pipeline_dir}!")
+        logger.warning("Edit the files to customize your pipeline.")
+        logger.info(
             "You can run [magenta]nipoppy pipeline validate[/] to check your pipeline"
             " configuration and [magenta]nipoppy pipeline upload[/] to upload it to "
             "Zenodo."

@@ -100,6 +100,7 @@ def test_run_setup_existing_processing_status_file(tracker: PipelineTracker):
     assert tracker.processing_status_table.equals(processing_status_table)
 
 
+@pytest.mark.no_xdist
 def test_run_setup_existing_bad_processing_status_file(
     tracker: PipelineTracker, caplog: pytest.LogCaptureFixture
 ):

@@ -176,6 +176,7 @@ def test_upload_same_pipeline(
         workflow.run()
 
 
+@pytest.mark.no_xdist
 def test_confirm_upload_no(
     workflow: PipelineUploadWorkflow,
     caplog: pytest.LogCaptureFixture,
@@ -208,6 +209,7 @@ def test_confirm_upload_no(
         ]
     ],
 )
+@pytest.mark.no_xdist
 def test_upload_duplicate_record(
     workflow: PipelineUploadWorkflow,
     hits: list,
@@ -234,6 +236,7 @@ def test_force_upload_duplicate_record(workflow: PipelineUploadWorkflow):
     workflow.run()
 
 
+@pytest.mark.no_xdist
 def test_fails_check_pipeline_bundle(
     workflow: PipelineUploadWorkflow,
     caplog: pytest.LogCaptureFixture,

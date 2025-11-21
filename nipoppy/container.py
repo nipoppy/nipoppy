@@ -1,7 +1,6 @@
 """Classes for generating container commands."""
 
 import argparse
-import logging
 import os
 import platform
 import shlex
@@ -15,8 +14,11 @@ from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import ContainerError
+from nipoppy.logger import get_logger
 
 BIND_SEP = ":"
+
+logger = get_logger()
 
 
 class ContainerHandler(Base, ABC):
@@ -36,20 +38,13 @@ class ContainerHandler(Base, ABC):
         """Flag for binding paths."""
         pass
 
-    def __init__(
-        self, args: Iterable[str] = None, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, args: Iterable[str] = None):
         super().__init__()
 
         if args is None:
             args = []
 
-        if logger is None:
-            logger = logging.getLogger(__name__)
-            logger.setLevel(logging.INFO)
-
         self.args = args[:]
-        self.logger = logger
 
     def check_command_exists(self):
         """Check that the command is available (i.e. in PATH)."""
@@ -116,19 +111,19 @@ class ContainerHandler(Base, ABC):
                     path_local = Path(bind_spec_components[0])
                     path_local_original = path_local
 
-                    self.logger.debug(f"Checking container bind spec: {bind_spec}")
+                    logger.debug(f"Checking container bind spec: {bind_spec}")
 
                     # path must be absolute and exist
                     path_local = path_local.resolve()
                     if path_local != path_local_original:
                         path_local = path_local.resolve()
-                        self.logger.debug(
+                        logger.debug(
                             "Resolving path for container"
                             f": {path_local_original} -> {path_local}"
                         )
                     if not path_local.exists():
                         path_local.mkdir(parents=True)
-                        self.logger.debug(
+                        logger.debug(
                             "Creating missing directory for container bind path"
                             f": {path_local}"
                         )
@@ -418,9 +413,7 @@ class BareMetalHandler(ContainerHandler):
         )
 
 
-def get_container_handler(
-    config: ContainerConfig, logger: Optional[logging.Logger] = None
-) -> ContainerHandler:
+def get_container_handler(config: ContainerConfig) -> ContainerHandler:
     """Get a container handler for a given container config."""
     command_handler_map = {
         ContainerCommandEnum.APPTAINER: ApptainerHandler,
@@ -436,7 +429,7 @@ def get_container_handler(
             f"No container handler for command: {config.COMMAND}"
         ) from e
 
-    handler: ContainerHandler = handler_class(args=config.ARGS, logger=logger)
+    handler: ContainerHandler = handler_class(args=config.ARGS)
     for key, value in config.ENV_VARS.items():
         handler.add_env_arg(key, value)
 

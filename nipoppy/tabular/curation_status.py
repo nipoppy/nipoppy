@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -18,6 +17,8 @@ from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
+
+logger = get_logger()
 
 
 class CurationStatusModel(ManifestModel):
@@ -154,7 +155,6 @@ def generate_curation_status_table(
     dpath_organized: Optional[StrOrPathLike] = None,
     dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
-    logger: Optional[logging.Logger] = None,
 ) -> CurationStatusTable:
     """Generate a curation status table."""
 
@@ -174,9 +174,6 @@ def generate_curation_status_table(
                 status = False
             logger.debug(f"Status for {dpath_participant}: {status}")
         return status
-
-    if logger is None:
-        logger = get_logger("generate_curation_status_table")
 
     # get participants/sessions with imaging data
     logger.debug(f"Full manifest:\n{manifest}")
@@ -251,12 +248,8 @@ def update_curation_status_table(
     dpath_organized: Optional[StrOrPathLike] = None,
     dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
-    logger: Optional[logging.Logger] = None,
 ) -> CurationStatusTable:
     """Update an existing curation status file."""
-    if logger is None:
-        logger = get_logger("update_curation_status_table")
-
     logger.debug(f"Original curation status table:\n{curation_status_table}")
     logger.debug(f"Manifest:\n{manifest}")
     manifest_subset = manifest.get_diff(
@@ -275,7 +268,6 @@ def update_curation_status_table(
             dpath_organized=dpath_organized,
             dpath_bidsified=dpath_bidsified,
             empty=empty,
-            logger=logger,
         )
     )
 

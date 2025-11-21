@@ -112,6 +112,7 @@ def test_cli_invalid(args):
         ),
     ],
 )
+@pytest.mark.no_xdist
 def test_dep_params(
     command: str,
     workflow: str,
@@ -133,6 +134,7 @@ def test_dep_params(
     assert result.exit_code == ReturnCode.SUCCESS
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
     assert_command_success(f"{command} -h")

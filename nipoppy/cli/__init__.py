@@ -6,13 +6,10 @@ from contextlib import contextmanager
 import rich_click as click
 from pydantic_core import ValidationError
 
-from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import NipoppyError, ReturnCode
 from nipoppy.logger import get_logger
 
-logger = get_logger(
-    name=f"{PROGRAM_NAME}.{__name__}",
-)
+logger = get_logger()
 
 
 # TODO once logger is extracted from the workflows, we could remove the `workflow`
@@ -24,17 +21,17 @@ def exception_handler(workflow):
         yield workflow
     except NipoppyError as e:
         workflow.return_code = e.code
-        workflow.logger.error(e)
+        logger.error(e)
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
-        workflow.logger.error(e)
+        logger.error(e)
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
-        workflow.logger.error(e)
+        logger.error(e)
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
-        workflow.logger.exception("Unexpected error occurred")
-        workflow.logger.warning(
+        logger.exception("Unexpected error occurred")
+        logger.warning(
             "You can report this issue on GitHub at https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"  # noqa:E501
             " or on our Discord server at https://discord.gg/2VMKFRpjkm"
         )
