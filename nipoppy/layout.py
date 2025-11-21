@@ -117,6 +117,16 @@ class LayoutConfig(BaseModel):
     fpath_demographics: OptionalFpathInfo = Field(
         description="Path to the study's demographics data file"
     )
+    # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
+    # as optional for path validation, not for Pydantic model validation.
+    # Optional[OptionalFpathInfo] with default=None is needed to make the field
+    # truly optional so it can be missing from layout JSON files entirely.
+    fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
+        default=None, description="Path to the BIDS dataset description file"
+    )
+    fpath_bidsignore: Optional[OptionalFpathInfo] = Field(
+        default=None, description="Path to the .bidsignore file"
+    )
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -126,7 +136,11 @@ class LayoutConfig(BaseModel):
     @cached_property
     def path_infos(self) -> list[PathInfo]:
         """Return a list of all PathInfo objects defined in the layout."""
-        return [getattr(self, path_label) for path_label in self.path_labels]
+        return [
+            getattr(self, path_label)
+            for path_label in self.path_labels
+            if getattr(self, path_label) is not None
+        ]
 
     def get_path_info(self, path_label: str) -> PathInfo:
         """Return the PathInfo object associated with the given path label."""
@@ -240,6 +254,15 @@ class DatasetLayout(Base):
         self.fpath_demographics: Path = self.get_full_path(
             self.config.fpath_demographics.path
         )
+        # Optional fields - only set if defined in layout
+        if self.config.fpath_bids_dataset_description is not None:
+            self.fpath_bids_dataset_description: Path = self.get_full_path(
+                self.config.fpath_bids_dataset_description.path
+            )
+        if self.config.fpath_bidsignore is not None:
+            self.fpath_bidsignore: Path = self.get_full_path(
+                self.config.fpath_bidsignore.path
+            )
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""

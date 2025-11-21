@@ -30,6 +30,10 @@ DPATH_EXAMPLES = DPATH_DATA / "examples"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
+FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION = (
+    DPATH_EXAMPLES / "sample_bids_dataset_description.json"
+)
+FPATH_SAMPLE_BIDSIGNORE = DPATH_EXAMPLES / "sample_bidsignore"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 DPATH_HPC = DPATH_DATA / "hpc"
