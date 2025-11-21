@@ -302,9 +302,7 @@ def test_bids_study_layout_passes_validation(dpath_root: Path):
     )
 
     # Check that there are no errors (warnings are OK)
-    assert (
-        "[ERROR]" not in result.stderr
-    ), f"BIDS validation errors found:\n{result.stderr}"
+    assert result.returncode == 0
 
 
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):

@@ -4,7 +4,7 @@
     "DatasetType": "study",
     "Authors": ["Last1, First1", "Last2, First2"],
     "Description": "This is a BIDS study layout for the nipoppy project ... TODO: CHANGEME. This and other fields are described at https://bids-specification.readthedocs.io/en/stable/modality-agnostic-files/dataset-description.html",
-    "Funding": "TODO",
+    "Funding": ["TODO"],
     "GeneratedBy": [{
         "Name": "nipoppy",
         "CodeURL": "https://github.com/nipoppy/nipoppy",
