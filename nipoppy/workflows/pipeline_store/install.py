@@ -49,6 +49,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
         self.source = source
         self.zenodo_api = zenodo_api or ZenodoAPI()
+        self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.assume_yes = assume_yes
         self.force = force
 

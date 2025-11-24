@@ -31,6 +31,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
     ):
         self.dpath_pipeline = dpath_pipeline
         self.zenodo_api = zenodo_api
+        self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.record_id = record_id
         self.assume_yes = assume_yes
         self.force = force
