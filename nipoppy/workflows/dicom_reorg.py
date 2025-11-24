@@ -65,7 +65,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
     ) -> list[Path]:
         """Get file paths to reorganize for a single participant and session."""
         dpath_downloaded = (
-            self.layout.dpath_pre_reorg
+            self.study.layout.dpath_pre_reorg
             / self.dicom_dir_map.get_dicom_dir(
                 participant_id=participant_id, session_id=session_id
             )
@@ -102,7 +102,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         fpaths_to_reorg = self.get_fpaths_to_reorg(participant_id, session_id)
 
         dpath_reorganized: Path = (
-            self.layout.dpath_post_reorg
+            self.study.layout.dpath_post_reorg
             / participant_id_to_bids_participant_id(participant_id)
             / session_id_to_bids_session_id(session_id)
         )
@@ -172,11 +172,11 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         super().run_setup()
         self.curation_status_table = update_curation_status_table(
             curation_status_table=self.curation_status_table,
-            manifest=self.manifest,
+            manifest=self.study.manifest,
             dicom_dir_map=self.dicom_dir_map,
-            dpath_downloaded=self.layout.dpath_pre_reorg,
-            dpath_organized=self.layout.dpath_post_reorg,
-            dpath_bidsified=self.layout.dpath_bids,
+            dpath_downloaded=self.study.layout.dpath_pre_reorg,
+            dpath_organized=self.study.layout.dpath_post_reorg,
+            dpath_bidsified=self.study.layout.dpath_bids,
         )
 
     def run_main(self):
@@ -205,14 +205,14 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         - Log a summary message
         """
         self.save_tabular_file(
-            self.curation_status_table, self.layout.fpath_curation_status
+            self.curation_status_table, self.study.layout.fpath_curation_status
         )
 
         if self.n_total == 0:
             logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
                 "mistakes in the dataset's manifest or config file, and/or check the "
-                f"curation status file at {self.layout.fpath_curation_status}"
+                f"curation status file at {self.study.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was

@@ -81,7 +81,7 @@ class ExtractionRunner(Runner):
         proc_pipeline_info = self.pipeline_config.PROC_DEPENDENCIES[0]
 
         self._get_pipeline_config(
-            self.layout.get_dpath_pipeline_bundle(
+            self.study.layout.get_dpath_pipeline_bundle(
                 PipelineTypeEnum.PROCESSING,
                 proc_pipeline_info.NAME,
                 proc_pipeline_info.VERSION,
@@ -96,7 +96,7 @@ class ExtractionRunner(Runner):
     @cached_property
     def dpath_pipeline(self) -> Path:
         """Get the path to the derivatives directory associated with the extractor."""
-        return self.layout.get_dpath_pipeline(
+        return self.study.layout.get_dpath_pipeline(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
@@ -104,7 +104,7 @@ class ExtractionRunner(Runner):
     @cached_property
     def dpath_pipeline_output(self) -> Path:
         """Return the path to the pipeline's output directory."""
-        return self.layout.get_dpath_pipeline_output(
+        return self.study.layout.get_dpath_pipeline_output(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
@@ -112,7 +112,7 @@ class ExtractionRunner(Runner):
     @cached_property
     def dpath_pipeline_idp(self) -> Path:
         """Return the path to the pipeline's IDP directory."""
-        return self.layout.get_dpath_pipeline_idp(
+        return self.study.layout.get_dpath_pipeline_idp(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
@@ -178,7 +178,7 @@ class ExtractionRunner(Runner):
         """Run extractor on a single participant/session."""
         # get container command
         launch_boutiques_run_kwargs = {}
-        if self.config.CONTAINER_CONFIG.COMMAND is not None:
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
             container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,

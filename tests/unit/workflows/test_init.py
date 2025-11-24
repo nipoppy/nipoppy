@@ -44,8 +44,8 @@ def assert_layout_creation(workflow, dpath_root):
     assert (
         len(
             list(
-                workflow.layout.dpath_pipelines.glob(
-                    f"**/{workflow.layout.fname_pipeline_config}"
+                workflow.study.layout.dpath_pipelines.glob(
+                    f"**/{workflow.study.layout.fname_pipeline_config}"
                 )
             )
         )
@@ -54,7 +54,7 @@ def assert_layout_creation(workflow, dpath_root):
 
     # check that HPC config files have been copied
     for fname in DPATH_HPC.glob("*"):
-        assert (workflow.layout.dpath_hpc / fname).exists()
+        assert (workflow.study.layout.dpath_hpc / fname).exists()
 
 
 def test_run(dpath_root: Path):
@@ -275,11 +275,14 @@ def test_init_bids(tmp_path):
     workflow = InitWorkflow(dpath_root=dpath_root, bids_source=bids_to_copy)
     workflow.run()
 
-    assert isinstance(workflow.manifest, Manifest)
-    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+    assert isinstance(workflow.study.manifest, Manifest)
+    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == [
+        "01",
+        "01",
+    ]
+    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.study.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
         ["anat", "func"],
         ["anat", "func"],
     ]
@@ -320,11 +323,14 @@ def test_init_bids_move_mode(tmp_path):
     )
     workflow.run()
 
-    assert isinstance(workflow.manifest, Manifest)
-    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+    assert isinstance(workflow.study.manifest, Manifest)
+    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == [
+        "01",
+        "01",
+    ]
+    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.study.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
         ["anat", "func"],
         ["anat", "func"],
     ]
@@ -369,11 +375,14 @@ def test_init_bids_symlink_mode(tmp_path):
     )
     workflow.run()
 
-    assert isinstance(workflow.manifest, Manifest)
-    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01", "01"]
-    assert workflow.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    assert workflow.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+    assert isinstance(workflow.study.manifest, Manifest)
+    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == [
+        "01",
+        "01",
+    ]
+    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
+    assert workflow.study.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
+    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
         ["anat", "func"],
         ["anat", "func"],
     ]
@@ -495,10 +504,12 @@ def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture
         in caplog.text
     )
 
-    assert isinstance(workflow.manifest, Manifest)
-    assert workflow.manifest[Manifest.col_participant_id].to_list() == ["01"]
-    assert workflow.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
-    assert workflow.manifest[Manifest.col_session_id].to_list() == [FAKE_SESSION_ID]
-    assert workflow.manifest[Manifest.col_datatype].to_list() == [
+    assert isinstance(workflow.study.manifest, Manifest)
+    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == ["01"]
+    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
+    assert workflow.study.manifest[Manifest.col_session_id].to_list() == [
+        FAKE_SESSION_ID
+    ]
+    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
         ["anat", "func"],
     ]

@@ -39,11 +39,13 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
         for pipeline_type in PipelineTypeEnum:
             pipeline_names_to_versions_map = defaultdict(list)
             dpath_pipeline_bundles = (
-                self.layout.dpath_pipelines
+                self.study.layout.dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
             )
             for fpath_config in sorted(
-                dpath_pipeline_bundles.glob(f"*/{self.layout.fname_pipeline_config}")
+                dpath_pipeline_bundles.glob(
+                    f"*/{self.study.layout.fname_pipeline_config}"
+                )
             ):
                 try:
                     pipeline_config = BasePipelineConfig(**load_json(fpath_config))
@@ -86,7 +88,9 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
         """List the available pipelines in a dataset."""
         pipeline_type_to_info_map = self._get_pipeline_info_map()
 
-        logger.info(f"Checking pipelines installed in {self.layout.dpath_pipelines}")
+        logger.info(
+            f"Checking pipelines installed in {self.study.layout.dpath_pipelines}"
+        )
         for pipeline_type, pipelines in pipeline_type_to_info_map.items():
             self._log_pipeline_info(pipeline_type, pipelines)
 

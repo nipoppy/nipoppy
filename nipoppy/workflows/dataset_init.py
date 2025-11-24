@@ -89,8 +89,8 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # create directories
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
-        for dpath in self.layout.get_paths(directory=True, include_optional=True):
-            if self.bids_source is not None and dpath == self.layout.dpath_bids:
+        for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
+            if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
                 self.handle_bids_source()
             else:
                 self.mkdir(dpath)
@@ -99,31 +99,31 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # create empty pipeline config subdirectories
         for pipeline_type in PipelineTypeEnum:
-            self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
+            self.mkdir(self.study.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
-        self.copy(FPATH_SAMPLE_CONFIG, self.layout.fpath_config)
+        self.copy(FPATH_SAMPLE_CONFIG, self.study.layout.fpath_config)
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
         else:
             self.copy(
                 FPATH_SAMPLE_MANIFEST,
-                self.layout.fpath_manifest,
+                self.study.layout.fpath_manifest,
             )
 
         # copy HPC files
         self.copytree(
             DPATH_HPC,
-            self.layout.dpath_hpc,
+            self.study.layout.dpath_hpc,
             dirs_exist_ok=True,
         )
 
         # inform user to edit the sample files
         logger.warning(
-            f"Sample config and manifest files copied to {self.layout.fpath_config}"
-            f" and {self.layout.fpath_manifest} respectively. They should be edited"
-            " to match your dataset"
+            "Sample config and manifest files copied to "
+            f"{self.study.layout.fpath_config} and {self.study.layout.fpath_manifest} "
+            "respectively. They should be edited to match your dataset"
         )
 
     def handle_bids_source(self) -> None:
@@ -132,7 +132,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         Handles copy/move/symlink modes.
         If --force, attempt to remove the pre-existing conflicting bids source.
         """
-        dpath = self.layout.dpath_bids
+        dpath = self.study.layout.dpath_bids
 
         # Handle edge case where we need to clobber existing data
         if dpath.exists() and self.force:
@@ -151,7 +151,7 @@ class InitWorkflow(BaseDatasetWorkflow):
     def _write_readmes(self) -> None:
         if self.dry_run:
             return None
-        for dpath, description in self.layout.dpath_descriptions:
+        for dpath, description in self.study.layout.dpath_descriptions:
             fpath_readme = dpath / self.fname_readme
             if description is None:
                 continue
@@ -192,7 +192,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         bids_participant_ids = sorted(
             [
                 x.name
-                for x in (self.layout.dpath_bids).iterdir()
+                for x in (self.study.layout.dpath_bids).iterdir()
                 if x.is_dir() and x.name.startswith(BIDS_SUBJECT_PREFIX)
             ]
         )
@@ -203,7 +203,9 @@ class InitWorkflow(BaseDatasetWorkflow):
             bids_session_ids = sorted(
                 [
                     x.name
-                    for x in (self.layout.dpath_bids / bids_participant_id).iterdir()
+                    for x in (
+                        self.study.layout.dpath_bids / bids_participant_id
+                    ).iterdir()
                     if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
@@ -228,7 +230,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                         [
                             x.name
                             for x in (
-                                self.layout.dpath_bids / bids_participant_id
+                                self.study.layout.dpath_bids / bids_participant_id
                             ).iterdir()
                             if x.is_dir()
                         ]
@@ -238,7 +240,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                         [
                             x.name
                             for x in (
-                                self.layout.dpath_bids
+                                self.study.layout.dpath_bids
                                 / bids_participant_id
                                 / bids_session_id
                             ).iterdir()
@@ -255,7 +257,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
-        self.save_tabular_file(manifest, self.layout.fpath_manifest)
+        self.save_tabular_file(manifest, self.study.layout.fpath_manifest)
 
     def run_cleanup(self):
         """Log a success message."""
