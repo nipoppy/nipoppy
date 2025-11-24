@@ -180,6 +180,7 @@ class BaseWorkflow(Base, ABC):
         """Run the main part of the workflow."""
         pass
 
+    @abstractmethod
     def run_cleanup(self):
         """Run the cleanup part of the workflow."""
         pass
@@ -342,9 +343,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             logger.add_file_handler(self.generate_fpath_log())
 
         super().run_setup()
-
-    def run_cleanup(self):
-        """Run the cleanup part of the workflow."""
 
     @cached_property
     def config(self) -> Config:
