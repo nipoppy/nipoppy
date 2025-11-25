@@ -78,28 +78,14 @@ def tracker(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    "analysis_level, expected",
-    [
-        (AnalysisLevelType.participant, [("S01", None), ("S02", None)]),
-        (AnalysisLevelType.session, [("S01", None), ("S02", None)]),
-        (AnalysisLevelType.group, [("S01", None), ("S02", None)]),
-        (
-            AnalysisLevelType.participant_session,
-            [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")],
-        ),
-    ],
+    "analysis_level",
+    enumerate(AnalysisLevelType),
 )
-def test_apply_analysis_level_success(analysis_level, expected):
+def test_apply_analysis_level_success(analysis_level):
     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
-    assert (
-        PipelineTracker.apply_analysis_level(participants_sessions, analysis_level)
-        == expected
-    )
-
-
-def test_apply_analysis_level_error():
-    with pytest.raises(ValueError, match="Invalid analysis level"):
-        PipelineTracker.apply_analysis_level([("S01", "BL"), ("S02", "FU")], "foo")
+    assert PipelineTracker.apply_analysis_level(
+        participants_sessions, analysis_level
+    ) == [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
 
 
 def test_run_setup(tracker: PipelineTracker):

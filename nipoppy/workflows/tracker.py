@@ -137,19 +137,7 @@ class PipelineTracker(BasePipelineWorkflow):
         analysis_level: AnalysisLevelType,
     ) -> List[Tuple[str, Union[str, None]]]:
         """Tracker: level is always participant-session."""
-        if analysis_level in (
-            AnalysisLevelType.group,
-            AnalysisLevelType.session,
-            AnalysisLevelType.participant,
-        ):
-            participants = []
-            for participant, _ in participants_sessions:
-                if participant not in participants:
-                    participants.append(participant)
-            return [(participant, None) for participant in participants]
-        if analysis_level == AnalysisLevelType.participant_session:
-            return list(participants_sessions)
-        raise ValueError(f"Invalid analysis level : {analysis_level}")
+        return list(participants_sessions)
 
     def run_single(self, participant_id: str, session_id: str):
         """Run tracker on a single participant/session."""
