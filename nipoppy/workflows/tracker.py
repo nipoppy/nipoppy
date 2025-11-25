@@ -2,7 +2,7 @@
 
 import tarfile
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple
 
 from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.tracker import TrackerConfig
@@ -135,7 +135,7 @@ class PipelineTracker(BasePipelineWorkflow):
     def apply_analysis_level(
         participants_sessions: Iterable[str],
         analysis_level: AnalysisLevelType,
-    ) -> List[Tuple[str, Union[str, None]]]:
+    ) -> List[Tuple[str]]:
         """Tracker: level is always participant-session."""
         return list(participants_sessions)
 
