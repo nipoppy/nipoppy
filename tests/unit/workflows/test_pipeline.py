@@ -39,6 +39,7 @@ from nipoppy.exceptions import (
 )
 from nipoppy.layout import LayoutError
 from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
@@ -176,7 +177,7 @@ def _set_up_hpc_for_testing(
     workflow.hpc = "slurm"
 
     # copy HPC config files
-    workflow.copytree(DPATH_HPC, workflow.study.layout.dpath_hpc)
+    fileops.copytree(DPATH_HPC, workflow.study.layout.dpath_hpc)
 
     mocker.patch.object(
         workflow,

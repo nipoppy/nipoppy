@@ -50,6 +50,7 @@ from nipoppy.exceptions import (
 )
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -599,7 +600,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def check_dir(self, dpath: Path):
         """Create directory if it does not exist."""
         if not dpath.exists():
-            self.mkdir(dpath)
+            fileops.mkdir(dpath, DRY_RUN=self.dry_run)
 
     def check_pipeline_version(self):
         """Set the pipeline version based on the config if it is not given."""

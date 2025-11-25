@@ -10,6 +10,7 @@ from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import FileOperationError, ReturnCode, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.curation_status import update_curation_status_table
+from nipoppy.utils import fileops
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
@@ -106,7 +107,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             / participant_id_to_bids_participant_id(participant_id)
             / session_id_to_bids_session_id(session_id)
         )
-        self.mkdir(dpath_reorganized)
+        fileops.mkdir(dpath_reorganized, DRY_RUN=self.dry_run)
 
         # do reorg
         for fpath_source in fpaths_to_reorg:
@@ -138,14 +139,15 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
             # either create symlinks or copy original files
             if self.copy_files:
-                self.copy(fpath_source, fpath_dest)
+                fileops.copy(fpath_source, fpath_dest, DRY_RUN=self.dry_run)
             else:
                 fpath_source = os.path.relpath(
                     fpath_source.resolve(), fpath_dest.parent
                 )
-                self.create_symlink(
+                fileops.create_symlink(
                     path_source=fpath_source,
                     path_dest=fpath_dest,
+                    DRY_RUN=self.dry_run,
                 )
 
         # update curation status
