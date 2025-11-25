@@ -14,6 +14,19 @@ logger = get_logger()
 # TODO: Implement a dry-run decorator to avoid repeating DRY_RUN checks
 
 
+def _remove_existing(path: Path, DRY_RUN=False, log_level=logging.INFO):
+    """Remove existing file, directory, or symlink without ignoring errors."""
+    logger.log(level=log_level, msg=f"Removing existing {path}")
+    if not DRY_RUN:
+        path_obj = Path(path)
+        if path_obj.is_symlink():
+            path_obj.unlink()
+        elif path_obj.is_dir():
+            shutil.rmtree(path)
+        else:
+            path_obj.unlink()
+
+
 def mkdir(dpath: Path, DRY_RUN=False, **kwargs):
     """
     Create a directory (by default including parents).
@@ -70,7 +83,7 @@ def movetree(
         Path(path_source).rmdir()
 
 
-def create_symlink(path_source: Path, path_dest: Path, DRY_RUN=False, **kwargs):
+def symlink_to(path_source: Path, path_dest: Path, DRY_RUN=False, **kwargs):
     """Create a symlink to another path."""
     logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
     if not DRY_RUN:
@@ -83,17 +96,7 @@ def rm(path: Path, DRY_RUN=False, **kwargs):
     kwargs_to_use.update(kwargs)
     logger.debug(f"Removing {path}")
     if not DRY_RUN:
-        shutil.rmtree(path, **kwargs_to_use)
-
-
-def _remove_existing(path: Path, DRY_RUN=False, log_level=logging.INFO):
-    """Remove existing file, directory, or symlink without ignoring errors."""
-    logger.log(level=log_level, msg=f"Removing existing {path}")
-    if not DRY_RUN:
-        path_obj = Path(path)
-        if path_obj.is_symlink():
-            path_obj.unlink()
-        elif path_obj.is_dir():
-            shutil.rmtree(path)
+        if Path(path).is_dir():
+            shutil.rmtree(path, **kwargs_to_use)
         else:
-            path_obj.unlink()
+            Path(path).unlink()
