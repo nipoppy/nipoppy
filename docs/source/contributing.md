@@ -99,3 +99,7 @@ $ git push upstream tag <NEW_VERSION>
 ```
 
 This assumes that the Git repository has a remote called `upstream` that is pointing to the [`nipoppy/nipoppy` repository](https://github.com/nipoppy/nipoppy.git).
+
+```{warning}
+A GitHub workflow automatically generates the release notes—do not create it manually. Once created, you can modify them through the GitHub UI.
+```
