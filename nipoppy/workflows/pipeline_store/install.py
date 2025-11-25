@@ -16,10 +16,13 @@ from nipoppy.exceptions import (
     FileOperationError,
     WorkflowError,
 )
+from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
+
+logger = get_logger()
 
 
 class PipelineInstallWorkflow(BaseDatasetWorkflow):
@@ -46,10 +49,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
         self.source = source
         self.zenodo_api = zenodo_api or ZenodoAPI()
+        self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.assume_yes = assume_yes
         self.force = force
-
-        self.zenodo_api.set_logger(self.logger)
 
         self.dpath_pipeline = None
         self.zenodo_id = None
@@ -58,9 +60,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         elif source.removeprefix("zenodo.").isnumeric():
             self.zenodo_id = source
         else:
-            self.logger.warning(
-                f"{source} does not seem like a valid path or Zenodo ID"
-            )
+            logger.warning(f"{source} does not seem like a valid path or Zenodo ID")
 
     def _update_config_and_save(self, pipeline_config: BasePipelineConfig) -> Config:
         """
@@ -78,7 +78,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         )
 
         if len(pipeline_config.VARIABLES) == 0:
-            self.logger.debug("No changes to the global config file.")
+            logger.debug("No changes to the global config file.")
             return config
 
         # update config
@@ -106,13 +106,13 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         if len(added_variables) > 0:
             # log variable details
-            self.logger.warning(
+            logger.warning(
                 f"Adding {len(added_variables)} variable(s) to the global config file:"
             )
             for variable_name in added_variables:
                 variable_description = pipeline_config.VARIABLES[variable_name]
-                self.logger.warning(f"\t{variable_name}\t{variable_description}")
-            self.logger.warning(
+                logger.warning(f"\t{variable_name}\t{variable_description}")
+            logger.warning(
                 "You must update the PIPELINE_VARIABLES section in "
                 f"{self.study.layout.fpath_config}"
                 " manually before running the pipeline!"
@@ -143,9 +143,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             )
         )
 
-        container_handler = get_container_handler(
-            self.study.config.CONTAINER_CONFIG, logger=self.logger
-        )
+        container_handler = get_container_handler(self.study.config.CONTAINER_CONFIG)
 
         # container file already exists
         if container_handler.is_image_downloaded(uri, fpath_container):
@@ -178,7 +176,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     self.run_command(pull_command)
 
             except subprocess.CalledProcessError as e:
-                self.logger.error(
+                logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
                     f": {e}"
                 )
@@ -197,32 +195,27 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 + "records/"
                 + self.zenodo_id
             )
-            self.logger.info(f"Installing pipeline from {record_source}")
+            logger.info(f"Installing pipeline from {record_source}")
             dpath_pipeline = self.study.layout.dpath_pipelines / self.zenodo_id
             if dpath_pipeline.exists() and not self.force:
-                self.logger.error(
+                logger.error(
                     f"Output directory {dpath_pipeline} already exists."
                     "Use the '--force' flag to overwrite the current content. Aborting."
                 )
                 raise WorkflowError
 
-            self.logger.debug(
-                f"Downloading pipeline {self.zenodo_id} in {dpath_pipeline}"
-            )
+            logger.debug(f"Downloading pipeline {self.zenodo_id} in {dpath_pipeline}")
             self.zenodo_api.download_record_files(
                 record_id=self.zenodo_id, output_dir=dpath_pipeline
             )
-            self.logger.success("Pipeline successfully downloaded")
+            logger.success("Pipeline successfully downloaded")
         else:
-            self.logger.info(f"Installing pipeline from {self.source}")
+            logger.info(f"Installing pipeline from {self.source}")
             dpath_pipeline = self.dpath_pipeline
 
         # load the config and validate file contents (including file paths)
         try:
-            pipeline_config = check_pipeline_bundle(
-                dpath_pipeline,
-                logger=self.logger,
-            )
+            pipeline_config = check_pipeline_bundle(dpath_pipeline)
         except FileOperationError as e:
             # if the files were downloaded from Zenodo, point user to the Zenodo record
             if self.zenodo_id is not None:
@@ -272,7 +265,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         # download container if it is specified
         self._download_container(pipeline_config)
 
-        self.logger.success(
+        logger.success(
             "Successfully installed pipeline "
             f"{pipeline_config.NAME}, version {pipeline_config.VERSION} at "
             f"{dpath_target}"

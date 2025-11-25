@@ -199,6 +199,7 @@ def test_run_main_regenerate(
     )
 
 
+@pytest.mark.no_xdist
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     TrackCurationWorkflow(dpath_root=tmp_path).run_cleanup()
     assert (

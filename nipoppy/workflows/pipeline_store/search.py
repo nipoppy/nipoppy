@@ -7,7 +7,8 @@ from rich import box
 from rich.table import Table
 
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
-from nipoppy.env import ZENODO_COMMUNITY_ID, LogColor
+from nipoppy.env import ZENODO_COMMUNITY_ID
+from nipoppy.logger import get_logger
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -15,6 +16,8 @@ from nipoppy.zenodo_api import ZenodoAPI
 CURRENT_CONSOLE_WIDTH = CONSOLE_STDOUT.size.width
 RESIZED_CONSOLE_WIDTH = min(CURRENT_CONSOLE_WIDTH, 120 - _INDENT)
 MINIMIZED_TABLE_MAX_WIDTH = 80
+
+logger = get_logger()
 
 
 class PipelineSearchWorkflow(BaseWorkflow):
@@ -51,11 +54,10 @@ class PipelineSearchWorkflow(BaseWorkflow):
             dry_run=dry_run,
         )
         self.zenodo_api = zenodo_api or ZenodoAPI()
+        self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.query = query
         self.community = community
         self.size = size
-
-        self.zenodo_api.set_logger(self.logger)
 
     def _hits_to_df(self, hits: list[dict]) -> pd.DataFrame:
         data_for_df = []
@@ -120,9 +122,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         n_total = results["total"]
 
         if n_total == 0:
-            self.logger.warning(
-                f'[{LogColor.FAILURE}]No results found for query "{self.query}".[/red]'
-            )
+            logger.warning(f'No results found for query "{self.query}".')
             return
 
         df_hits = self._hits_to_df(hits)
@@ -134,5 +134,5 @@ class PipelineSearchWorkflow(BaseWorkflow):
             message += " (use --size to show more)"
         if not self.community:
             message += " (use --community to restrict to Nipoppy community)"
-        self.logger.info(message)
+        logger.info(message)
         CONSOLE_STDOUT.print(table)

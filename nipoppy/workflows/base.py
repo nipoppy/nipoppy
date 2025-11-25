@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import Base
-from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
+from nipoppy.env import EXT_LOG, StrOrPathLike
 from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
-from nipoppy.logger import add_logfile, capture_warnings, get_logger
+from nipoppy.logger import get_logger
 from nipoppy.study import Study
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
@@ -26,6 +26,8 @@ from nipoppy.tabular.curation_status import (
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.utils import add_path_timestamp, is_nipoppy_project
+
+logger = get_logger()
 
 
 class BaseWorkflow(Base, ABC):
@@ -48,25 +50,19 @@ class BaseWorkflow(Base, ABC):
             If True, print commands without executing them, by default False
         """
         self.name = name
-        self.verbose = verbose
         self.dry_run = dry_run
+        self.verbose = verbose
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
-        # set up logging
-        self.logger = get_logger(
-            name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
-            verbose=verbose,
-        )
-        logging.captureWarnings(True)
-        capture_warnings(self.logger)
+        logger.set_verbose(self.verbose)
 
     def log_command(self, command: str):
         """Write a command to the log with a special prefix."""
         # using extra={"markup": False} in case the command contains substrings
         # that would be interpreted as closing tags by the RichHandler
-        self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
+        logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
         self,
@@ -107,7 +103,7 @@ class BaseWorkflow(Base, ABC):
                 line = line.strip("\n")
                 # using extra={"markup": False} in case the output contains substrings
                 # that would be interpreted as closing tags by the RichHandler
-                self.logger.log(
+                logger.log(
                     level=log_level,
                     msg=f"{log_prefix} {line}",
                     extra={"markup": False},
@@ -163,15 +159,15 @@ class BaseWorkflow(Base, ABC):
         """Save a tabular file."""
         fpath_backup = tabular.save_with_backup(fpath, dry_run=self.dry_run)
         if fpath_backup is not None:
-            self.logger.info(f"Saved to {fpath} (-> {fpath_backup})")
+            logger.info(f"Saved to {fpath} (-> {fpath_backup})")
         else:
-            self.logger.info(f"No changes to file at {fpath}")
+            logger.info(f"No changes to file at {fpath}")
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        self.logger.debug(self)
+        logger.debug(self)
         if self.dry_run:
-            self.logger.info("Doing a dry run")
+            logger.info("Doing a dry run")
 
     @abstractmethod
     def run_main(self):
@@ -200,7 +196,7 @@ class BaseWorkflow(Base, ABC):
         dpath = Path(dpath)
 
         if not dpath.exists():
-            self.logger.debug(f"Creating directory {dpath}")
+            logger.debug(f"Creating directory {dpath}")
             if not self.dry_run:
                 dpath.mkdir(**kwargs_to_use)
         elif not dpath.is_dir():
@@ -210,13 +206,13 @@ class BaseWorkflow(Base, ABC):
 
     def copy(self, path_source, path_dest, **kwargs):
         """Copy a file or directory."""
-        self.logger.debug(f"Copying {path_source} to {path_dest}")
+        logger.debug(f"Copying {path_source} to {path_dest}")
         if not self.dry_run:
             shutil.copy2(src=path_source, dst=path_dest, **kwargs)
 
     def copytree(self, path_source, path_dest, **kwargs):
         """Copy directory tree."""
-        self.logger.debug(f"Copying {path_source} to {path_dest}")
+        logger.debug(f"Copying {path_source} to {path_dest}")
         if not self.dry_run:
             shutil.copytree(src=path_source, dst=path_dest, **kwargs)
 
@@ -230,7 +226,7 @@ class BaseWorkflow(Base, ABC):
         """Move directory tree."""
         kwargs_mkdir = kwargs_mkdir or {}
         kwargs_move = kwargs_move or {}
-        self.logger.debug(f"Moving {path_source} to {path_dest}")
+        logger.debug(f"Moving {path_source} to {path_dest}")
         if not self.dry_run:
             self.mkdir(path_dest, **kwargs_mkdir)
             file_names = os.listdir(path_source)
@@ -244,7 +240,7 @@ class BaseWorkflow(Base, ABC):
 
     def create_symlink(self, path_source, path_dest, **kwargs):
         """Create a symlink to another path."""
-        self.logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
+        logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
         if not self.dry_run:
             os.symlink(path_source, path_dest, **kwargs)
 
@@ -252,13 +248,13 @@ class BaseWorkflow(Base, ABC):
         """Remove a file or directory."""
         kwargs_to_use = {"ignore_errors": True}
         kwargs_to_use.update(kwargs)
-        self.logger.debug(f"Removing {path}")
+        logger.debug(f"Removing {path}")
         if not self.dry_run:
             shutil.rmtree(path, **kwargs_to_use)
 
     def _remove_existing(self, path, log_level=logging.INFO):
         """Remove existing file, directory, or symlink without ignoring errors."""
-        self.logger.log(level=log_level, msg=f"Removing existing {path}")
+        logger.log(level=log_level, msg=f"Removing existing {path}")
         if not self.dry_run:
             path_obj = Path(path)
             if path_obj.is_symlink():
@@ -339,7 +335,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             self.study.layout.validate()
 
         if not self._skip_logfile:
-            add_logfile(self.logger, self.generate_fpath_log())
+            logger.add_file_handler(self.generate_fpath_log())
 
         super().run_setup()
 
@@ -354,7 +350,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         try:
             return self.study.curation_status_table
         except FileNotFoundError:
-            self.logger.warning(
+            logger.warning(
                 f"Curation status file not found: {fpath_table}"
                 ". Generating a new one on-the-fly"
             )
@@ -365,17 +361,16 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 dpath_organized=self.study.layout.dpath_post_reorg,
                 dpath_bidsified=self.study.layout.dpath_bids,
                 empty=False,
-                logger=self.logger,
             )
 
             if not self.dry_run:
                 fpath_table_backup = table.save_with_backup(fpath_table)
-                self.logger.info(
+                logger.info(
                     "Saved curation status table to "
                     f"{fpath_table} (-> {fpath_table_backup})"
                 )
             else:
-                self.logger.info(
+                logger.info(
                     "Not writing curation status table to "
                     f"{fpath_table} since this is a dry run"
                 )

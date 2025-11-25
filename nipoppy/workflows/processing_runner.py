@@ -8,7 +8,10 @@ from typing import Optional
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.logger import get_logger
 from nipoppy.workflows.runner import Runner
+
+logger = get_logger()
 
 
 class ProcessingRunner(Runner):
@@ -104,7 +107,7 @@ class ProcessingRunner(Runner):
         if fpath_tarred.exists() and is_tarfile(fpath_tarred):
             self.rm(dpath)
         else:
-            self.logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
+            logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
 
         return fpath_tarred
 
@@ -188,9 +191,7 @@ class ProcessingRunner(Runner):
 
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
-        self.logger.info(
-            f"Running for participant {participant_id}, session {session_id}"
-        )
+        logger.info(f"Running for participant {participant_id}, session {session_id}")
 
         # Access the GENERATE_PYBIDS_DATABASE field
         generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
@@ -248,9 +249,9 @@ class ProcessingRunner(Runner):
                     if dpath.exists():
                         self.rm(dpath)
             else:
-                self.logger.info("Keeping working / intermediary files.")
+                logger.info("Keeping working / intermediary files.")
         else:
-            self.logger.info(
+            logger.info(
                 "Some pipeline segments failed. Keeping working / intermediary files."
             )
         return super().run_cleanup()

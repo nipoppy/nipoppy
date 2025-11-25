@@ -8,12 +8,15 @@ import pydicom
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import FileOperationError, ReturnCode, WorkflowError
+from nipoppy.logger import get_logger
 from nipoppy.tabular.curation_status import update_curation_status_table
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+logger = get_logger()
 
 
 def is_derived_dicom(fpath: Path) -> bool:
@@ -111,9 +114,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             if self.check_dicoms:
                 try:
                     if is_derived_dicom(fpath_source):
-                        self.logger.warning(
-                            f"Derived DICOM file detected: {fpath_source}"
-                        )
+                        logger.warning(f"Derived DICOM file detected: {fpath_source}")
                 except Exception as e:
                     raise WorkflowError(
                         f"Error checking DICOM file {fpath_source}: {e}"
@@ -176,7 +177,6 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             dpath_downloaded=self.study.layout.dpath_pre_reorg,
             dpath_organized=self.study.layout.dpath_post_reorg,
             dpath_bidsified=self.study.layout.dpath_bids,
-            logger=self.logger,
         )
 
     def run_main(self):
@@ -191,7 +191,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 self.n_success += 1
             except Exception as exception:
                 self.return_code = ReturnCode.PARTIAL_SUCCESS
-                self.logger.error(
+                logger.error(
                     "Error reorganizing DICOM files for participant "
                     f"{participant_id} session {session_id}: {exception}"
                 )
@@ -209,7 +209,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         )
 
         if self.n_total == 0:
-            self.logger.warning(
+            logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
                 "mistakes in the dataset's manifest or config file, and/or check the "
                 f"curation status file at {self.study.layout.fpath_curation_status}"
@@ -221,10 +221,10 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 f"{self.n_total} participant-session pairs."
             )
             if self.n_success == 0:
-                self.logger.error(log_msg)
+                logger.error(log_msg)
             elif self.n_success == self.n_total:
-                self.logger.success(log_msg)
+                logger.success(log_msg)
             else:
-                self.logger.warning(log_msg)
+                logger.warning(log_msg)
 
         return super().run_cleanup()

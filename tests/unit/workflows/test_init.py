@@ -250,6 +250,7 @@ def test_custom_layout(dpath_root: Path):
     assert (dpath_root / "dicom").exists()
 
 
+@pytest.mark.no_xdist
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     workflow = InitWorkflow(dpath_root=tmp_path)
     workflow.run_cleanup()
@@ -479,6 +480,7 @@ def test_init_bids_dry_run(tmp_path):
     assert not dpath_root.exists()
 
 
+@pytest.mark.no_xdist
 def test_init_bids_warning_no_session(tmp_path, caplog: pytest.LogCaptureFixture):
     """Create dummy BIDS dataset with no session to use during init.
 

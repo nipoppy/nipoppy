@@ -102,6 +102,7 @@ def _assert_files_copied(dpath_source, dpath_dest):
     assert paths_source == paths_dest
 
 
+@pytest.mark.no_xdist
 def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     PipelineInstallWorkflow(
         dpath_root=(tmp_path / "my_dataset"),
@@ -118,6 +119,7 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
 
 @pytest.mark.parametrize("variables", [{}, {"var1": "description"}])
 @pytest.mark.parametrize("dry_run", [False, True])
+@pytest.mark.no_xdist
 def test_update_config_and_save(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,
@@ -189,6 +191,7 @@ def test_update_config_and_save_no_other_change(
     ) == original_config.model_dump(exclude="PIPELINE_VARIABLES")
 
 
+@pytest.mark.no_xdist
 def test_update_config_and_save_no_overwrite(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,
@@ -235,7 +238,7 @@ def test_download_container(
 
     # check that the container handler was created with the correct config
     mocked_get_container_handler.assert_called_once_with(
-        workflow.study.config.CONTAINER_CONFIG, logger=workflow.logger
+        workflow.study.config.CONTAINER_CONFIG
     )
 
     # check that the container file was downloaded
@@ -312,6 +315,7 @@ def test_download_container_status(
     mocked_run_command.assert_called_once()
 
 
+@pytest.mark.no_xdist
 def test_download_container_failed(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,
@@ -366,6 +370,7 @@ def test_download_container_image_exists(
     mocked.assert_not_called()
 
 
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,

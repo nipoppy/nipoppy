@@ -661,6 +661,7 @@ def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     "delete_request_status_code,expected_log_message",
     [(204, "Record creation reverted"), (500, "Failed to revert record")],
 )
+@pytest.mark.no_xdist
 def test_upload_pipeline_delete_draft(
     delete_request_status_code: int,
     expected_log_message: str,
