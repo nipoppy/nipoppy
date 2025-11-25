@@ -10,6 +10,7 @@ import pytest_mock
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import (
     ApptainerHandler,
+    BareMetalHandler,
     ContainerHandler,
     DockerHandler,
     SingularityHandler,
@@ -57,12 +58,6 @@ def test_init_args(args, expected_args):
     handler = _TestHandler(args=args)
     assert handler.args == expected_args
     assert handler.args is not args
-
-
-@pytest.mark.parametrize("logger", [None, logging.getLogger("test_logger")])
-def test_init_logger(logger):
-    handler = _TestHandler(logger=logger)
-    assert isinstance(handler.logger, logging.Logger)
 
 
 def test_check_command_exists(
@@ -140,7 +135,7 @@ def test_add_bind_arg(
         ["-B", "/", "-B", "/:relative_path_in_container", "-B", "/:/:ro"],
     ],
 )
-def test_fix_bind_args(args, handler: ContainerHandler, caplog):
+def test_fix_bind_args(args, handler: ContainerHandler):
     handler.args = args
     handler.fix_bind_args()
 
@@ -148,12 +143,13 @@ def test_fix_bind_args(args, handler: ContainerHandler, caplog):
     assert handler.args == args
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("bind_flag", ["-B", "--bind"])
 def test_fix_bind_args_relative(
     bind_flag, handler: ContainerHandler, caplog: pytest.LogCaptureFixture
 ):
     handler.args = [bind_flag, "."]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -161,6 +157,7 @@ def test_fix_bind_args_relative(
     assert "Resolving path" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_fix_bind_args_symlink(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
@@ -170,7 +167,7 @@ def test_fix_bind_args_symlink(
     path_symlink.symlink_to(path_real)
 
     handler.args = ["-B", str(path_symlink)]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -178,6 +175,7 @@ def test_fix_bind_args_symlink(
     assert "Resolving path" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_fix_bind_args_missing(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
@@ -185,7 +183,7 @@ def test_fix_bind_args_missing(
     assert not dpath.exists()
 
     handler.args = ["-B", str(dpath)]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -308,6 +306,12 @@ def test_is_image_downloaded_docker_error():
         assert handler.is_image_downloaded(None, "not_used")
 
 
+def test_is_image_downloaded_baremetal():
+    handler = BareMetalHandler()
+
+    assert handler.is_image_downloaded("not_used", "not_used") is True
+
+
 @pytest.mark.parametrize(
     "handler,uri,expected_command,machine",
     [
@@ -422,6 +426,14 @@ def test_get_pull_command_error(
             DockerHandler(
                 args=["--volume", "path", "--env", "VAR3=123"],
             ),
+        ),
+        (
+            ContainerConfig(
+                COMMAND=None,
+                ARGS=[],
+                ENV_VARS={"VAR3": "123"},
+            ),
+            BareMetalHandler(),
         ),
     ],
 )

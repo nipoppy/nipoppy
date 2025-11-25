@@ -10,8 +10,11 @@ from rich.table import Table
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
+from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import STATUS_SUCCESS
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+logger = get_logger()
 
 
 class StatusWorkflow(BaseDatasetWorkflow):
@@ -62,15 +65,15 @@ class StatusWorkflow(BaseDatasetWorkflow):
             [status_col_dict["manifest"]] + curation_cols + processing_cols
         ]
 
-        self.logger.debug(f"curation columns: {curation_cols}")
-        self.logger.debug(f"processing columns: {processing_cols}")
+        logger.debug(f"curation columns: {curation_cols}")
+        logger.debug(f"processing columns: {processing_cols}")
 
         # check if the number of bids participants match the manifest
         # note: not checking participant IDs, just the number of participants
         if curation_cols and status_df[self.curation_status_table.col_in_bids].equals(
             status_df["in_manifest"]
         ):
-            self.logger.info(
+            logger.info(
                 "BIDSification completed: hiding counts for pre- and post-reorg stages."
             )
             status_df = status_df.drop(
@@ -88,9 +91,9 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        self.logger.info("Dataset summary (based on the manifest file):")
+        logger.info("Dataset summary (based on the manifest file):")
 
-        manifest = self.manifest
+        manifest = self.study.manifest
 
         # Get the number of participants in the manifest
         participant_ids = manifest[manifest.col_participant_id].unique()
@@ -107,25 +110,25 @@ class StatusWorkflow(BaseDatasetWorkflow):
         # Get the number of imaging sessions in the manifest
         session_ids = sorted(imaging_manifest[manifest.col_session_id].unique())
 
-        self.logger.info(
+        logger.info(
             f"\tNumber of participants (imaging and non-imaging): "
             f"{len(participant_ids)}"
         )
-        self.logger.info(
+        logger.info(
             f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
         )
-        self.logger.info(
+        logger.info(
             f"\tNumber of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
         )
-        self.logger.info(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
+        logger.info(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
 
         manifest_status_df = imaging_manifest.groupby(
             [imaging_manifest.col_session_id]
         ).count()[[imaging_manifest.col_participant_id]]
         manifest_status_df.columns = [nipoppy_checkpoint]
 
-        self.logger.debug(f"manifest_status_df:\n{manifest_status_df}")
+        logger.debug(f"manifest_status_df:\n{manifest_status_df}")
         status_df = pd.concat([status_df, manifest_status_df], axis=1)
         return status_df
 
@@ -133,11 +136,11 @@ class StatusWorkflow(BaseDatasetWorkflow):
         """Check the curation status file (if exists)."""
         nipoppy_checkpoint = "in_curation_status_table"
 
-        self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
+        logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
         table = self.curation_status_table
 
         if table.empty:
-            self.logger.warning("No curation status file found.")
+            logger.warning("No curation status file found.")
             return status_df, []
 
         curation_cols = [
@@ -150,14 +153,14 @@ class StatusWorkflow(BaseDatasetWorkflow):
         participant_ids = table[table.col_participant_id].unique()
         session_ids = table[table.col_session_id].unique()
 
-        self.logger.debug(
+        logger.debug(
             f"\tNumber of participants in curation status file: {len(participant_ids)}"
         )
-        self.logger.debug(f"\tAvailable sessions (n={len(session_ids)}): {session_ids}")
+        logger.debug(f"\tAvailable sessions (n={len(session_ids)}): {session_ids}")
 
         curation_status_df = table.groupby([table.col_session_id]).sum()[curation_cols]
 
-        self.logger.debug(f"curation_status_df: {curation_status_df}")
+        logger.debug(f"curation_status_df: {curation_status_df}")
         status_df = pd.concat([status_df, curation_status_df], axis=1)
         return status_df, curation_cols
 
@@ -165,11 +168,11 @@ class StatusWorkflow(BaseDatasetWorkflow):
         """Check the processing status file (if exists)."""
         nipoppy_checkpoint = "in_processing_status_table"
 
-        self.logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
+        logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
         table = self.processing_status_table
 
         if table.empty:
-            self.logger.warning(
+            logger.warning(
                 "No imaging processing status file found. Run "
                 "'nipoppy track-processing' to generate a processing status file"
             )
@@ -180,16 +183,16 @@ class StatusWorkflow(BaseDatasetWorkflow):
         session_ids = table[table.col_session_id].unique()
         pipelines = table[table.col_pipeline_name].unique()
 
-        self.logger.debug(
+        logger.debug(
             "\tNumber of participants in processing status file: "
             f"{len(participant_ids)}"
         )
-        self.logger.debug(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
-        self.logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
+        logger.debug(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
+        logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
         # Check if at least successful run exists
         if table[table[table.col_status] == STATUS_SUCCESS].empty:
-            self.logger.warning(
+            logger.warning(
                 "The processing status file exists, but no successful run was found in"
                 f" the imaging processing status file for pipeline(s): {pipelines}."
                 " If you have run a pipeline followed by 'nipoppy track-processing', it"
@@ -235,7 +238,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             [table.col_session_id]
         ).count()
 
-        self.logger.debug(f"processing_status_df: {processing_status_df}")
+        logger.debug(f"processing_status_df: {processing_status_df}")
 
         status_df = pd.concat([status_df, processing_status_df], axis=1)
 
@@ -245,7 +248,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _df_to_table(self, status_df: pd.DataFrame, status_col_dict: dict):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
         df = status_df.copy().reset_index()
-        df = df.sort_values(by=self.manifest.col_session_id)
+        df = df.sort_values(by=self.study.manifest.col_session_id)
 
         # Define the colors for the columns
         column_colors = {

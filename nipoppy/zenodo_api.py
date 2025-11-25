@@ -33,12 +33,7 @@ class ZenodoAPI:
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
         self.timeout = timeout
-
-        if logger is None:
-            self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger = logger
+        self.logger = logger
 
         # Access token is required for uploading files
         self.password_file = password_file
@@ -52,9 +47,18 @@ class ZenodoAPI:
         """Set the headers for the ZenodoAPI instance."""
         self.headers.update({"Authorization": f"Bearer {access_token}"})
 
-    def set_logger(self, logger: logging.Logger):
+    @property
+    def logger(self) -> logging.Logger:
+        """Get the logger for the ZenodoAPI instance."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: logging.Logger | None):
         """Set the logger for the ZenodoAPI instance."""
-        self.logger = logger
+        if logger is None:
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+        self._logger = logger
 
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
@@ -337,6 +341,13 @@ class ZenodoAPI:
             },
             timeout=self.timeout,
         )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            raise ZenodoAPIError(
+                f"Failed to search records. JSON response: {response.json()}"
+            ) from e
+
         return response.json()["hits"]
 
     def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:

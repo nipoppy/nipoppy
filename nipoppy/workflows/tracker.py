@@ -8,8 +8,11 @@ from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
+from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
+
+logger = get_logger()
 
 
 class PipelineTracker(BasePipelineWorkflow):
@@ -49,27 +52,27 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_setup(self):
         """Load/initialize the processing status file."""
         rv = super().run_setup()
-        if self.layout.fpath_processing_status.exists():
+        if self.study.layout.fpath_processing_status.exists():
             try:
                 self.processing_status_table = ProcessingStatusTable.load(
-                    self.layout.fpath_processing_status
+                    self.study.layout.fpath_processing_status
                 )
-                self.logger.info(
+                logger.info(
                     f"Found existing processing status file with shape"
                     f" {self.processing_status_table.shape}"
-                    f" at {self.layout.fpath_processing_status}"
+                    f" at {self.study.layout.fpath_processing_status}"
                 )
             except NipoppyError as e:
                 if "Error when validating the " in str(e):
-                    self.logger.warning(
+                    logger.warning(
                         "Failed to load existing processing status file at "
-                        f"{self.layout.fpath_processing_status}. Generating a new "
-                        f"processing status table.\nOriginal error:\n{e}"
+                        f"{self.study.layout.fpath_processing_status}. Generating a new"
+                        f" processing status table.\nOriginal error:\n{e}"
                     )
                     self.processing_status_table = ProcessingStatusTable()
         else:
             self.processing_status_table = ProcessingStatusTable()
-            self.logger.info("Initialized empty processing status table")
+            logger.info("Initialized empty processing status table")
         return rv
 
     def check_status(
@@ -90,12 +93,10 @@ class PipelineTracker(BasePipelineWorkflow):
 
         for relative_path in relative_paths:
             relative_path = Path(relative_path)
-            self.logger.debug(
-                f"Checking path {self.dpath_pipeline_output / relative_path}"
-            )
+            logger.debug(f"Checking path {self.dpath_pipeline_output / relative_path}")
 
             matches_glob = list(self.dpath_pipeline_output.glob(str(relative_path)))
-            self.logger.debug(f"Matches: {matches_glob}")
+            logger.debug(f"Matches: {matches_glob}")
 
             # also check tarball paths if applicable/needed
             if (not matches_glob) and (relative_dpath_tarred is not None):
@@ -114,7 +115,7 @@ class PipelineTracker(BasePipelineWorkflow):
                         ),
                     )
                 ]
-                self.logger.debug(f"Matches in tarball: {matches_tarred}")
+                logger.debug(f"Matches in tarball: {matches_tarred}")
             else:
                 matches_tarred = []
 
@@ -154,7 +155,7 @@ class PipelineTracker(BasePipelineWorkflow):
         status = self.check_status(
             tracker_config.PATHS, tracker_config.PARTICIPANT_SESSION_DIR
         )
-        self.logger.debug(f"Status: {status}")
+        logger.debug(f"Status: {status}")
         processing_status_record = {
             ProcessingStatusTable.col_participant_id: participant_id,
             ProcessingStatusTable.col_session_id: session_id,
@@ -170,11 +171,11 @@ class PipelineTracker(BasePipelineWorkflow):
         self.processing_status_table = (
             self.processing_status_table.add_or_update_records(self.run_single_results)
         )
-        self.logger.info(
+        logger.info(
             "New/updated processing status table shape: "
             f"{self.processing_status_table.shape}"
         )
         self.save_tabular_file(
-            self.processing_status_table, self.layout.fpath_processing_status
+            self.processing_status_table, self.study.layout.fpath_processing_status
         )
         return super().run_cleanup()

@@ -42,13 +42,13 @@ def tracker(tmp_path: Path):
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
     )
-    manifest.save_with_backup(tracker.layout.fpath_manifest)
+    manifest.save_with_backup(tracker.study.layout.fpath_manifest)
 
-    tracker.config = get_config()
+    tracker.study.config = get_config()
 
     fname_tracker_config = "tracker_config.json"
     create_pipeline_config_files(
-        tracker.layout.dpath_pipelines,
+        tracker.study.layout.dpath_pipelines,
         processing_pipelines=[
             {
                 "NAME": tracker.pipeline_name,
@@ -105,20 +105,23 @@ def test_run_setup_existing_processing_status_file(tracker: PipelineTracker):
             ProcessingStatusTable.col_status: [ProcessingStatusTable.status_success],
         }
     ).validate()
-    processing_status_table.save_with_backup(tracker.layout.fpath_processing_status)
+    processing_status_table.save_with_backup(
+        tracker.study.layout.fpath_processing_status
+    )
 
     tracker.run_setup()
 
     assert tracker.processing_status_table.equals(processing_status_table)
 
 
+@pytest.mark.no_xdist
 def test_run_setup_existing_bad_processing_status_file(
     tracker: PipelineTracker, caplog: pytest.LogCaptureFixture
 ):
     # processing status file with wrong columns
     bad_processing_status_table = pd.DataFrame([{"col1": "val1"}])
     bad_processing_status_table.to_csv(
-        tracker.layout.fpath_processing_status, index=False
+        tracker.study.layout.fpath_processing_status, index=False
     )
 
     tracker.run_setup()
@@ -341,10 +344,10 @@ def test_run_cleanup(
     tracker.run_single_results = records
     tracker.run_cleanup()
 
-    assert tracker.layout.fpath_processing_status.exists()
-    assert ProcessingStatusTable.load(tracker.layout.fpath_processing_status).equals(
-        expected_processing_status_table
-    )
+    assert tracker.study.layout.fpath_processing_status.exists()
+    assert ProcessingStatusTable.load(
+        tracker.study.layout.fpath_processing_status
+    ).equals(expected_processing_status_table)
 
 
 def test_run_no_create_work_directory(tracker: PipelineTracker):
