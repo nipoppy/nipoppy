@@ -1,8 +1,6 @@
 """File operations utility functions."""
 
-import logging
 import os
-import os.path
 import shutil
 from pathlib import Path
 
@@ -12,18 +10,6 @@ from nipoppy.logger import get_logger
 logger = get_logger()
 
 # TODO: Implement a dry-run decorator to avoid repeating DRY_RUN checks
-
-
-def _remove_existing(path: Path, DRY_RUN=False, log_level=logging.INFO):
-    """Remove existing file, directory, or symlink without ignoring errors."""
-    logger.log(level=log_level, msg=f"Removing existing {path}")
-    if not DRY_RUN:
-        if path.is_symlink():
-            path.unlink()
-        elif path.is_dir():
-            shutil.rmtree(path)
-        else:
-            path.unlink()
 
 
 def mkdir(dpath: Path, DRY_RUN=False, parents=True, exist_ok=True, mode=511):
@@ -74,10 +60,12 @@ def symlink_to(source: Path, target: Path, DRY_RUN=False):
 
 
 def rm(path: Path, DRY_RUN=False):
-    """Remove a file or directory."""
+    """Remove a file, directory, or symlink."""
     logger.debug(f"Removing {path}")
     if not DRY_RUN:
-        if path.is_dir():
+        if path.is_symlink():
+            path.unlink()
+        elif path.is_dir():
             shutil.rmtree(path)
         else:
             path.unlink()

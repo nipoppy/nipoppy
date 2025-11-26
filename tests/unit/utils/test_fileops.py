@@ -25,50 +25,50 @@ def check_dummy_directory_structure(base_path: Path):
     assert (base_path / "subdir2" / "file3.txt").read_text() == "This is file 3."
 
 
-class TestRemoveExistingPath:
+class TestRemovePath:
     def test_rm_file(self, tmp_path: Path):
-        """Test _remove_existing removes regular files."""
+        """Test removing regular files."""
         test_file = tmp_path / "test_file.txt"
         test_file.write_text("content")
-        fileops._remove_existing(test_file)
+        fileops.rm(test_file)
         assert not test_file.exists()
 
     def test_rm_directory(self, tmp_path: Path):
-        """Test _remove_existing removes directories."""
+        """Test removing directories."""
         test_dir = tmp_path / "test_dir"
         test_dir.mkdir()
         (test_dir / "nested_file.txt").write_text("content")
-        fileops._remove_existing(test_dir)
+        fileops.rm(test_dir)
         assert not test_dir.exists()
 
     def test_rm_symlink_to_file(self, tmp_path: Path):
-        """Test _remove_existing removes symlinks to files."""
+        """Test removing symlinks to files."""
         target_file = tmp_path / "target.txt"
         target_file.write_text("content")
 
         symlink = tmp_path / "link_to_file"
         symlink.symlink_to(target_file)
 
-        fileops._remove_existing(symlink)
+        fileops.rm(symlink)
 
         assert not symlink.exists()
         assert target_file.exists()  # Target should remain
 
     def test_rm_symlink_to_directory(self, tmp_path: Path):
-        """Test _remove_existing removes symlinks to directories."""
+        """Test removing symlinks to directories."""
         target_dir = tmp_path / "target_dir"
         target_dir.mkdir()
 
         symlink = tmp_path / "link_to_dir"
         symlink.symlink_to(target_dir)
 
-        fileops._remove_existing(symlink)
+        fileops.rm(symlink)
 
         assert not symlink.exists()
         assert target_dir.exists()  # Target should remain
 
     def test_rm_surfaces_permission_error(self, tmp_path: Path):
-        """Test _remove_existing surfaces permission errors instead of ignoring them."""
+        """Test surfaings permission errors instead of ignoring them."""
         # Create a directory with a file, then make it read-only
         test_dir = tmp_path / "readonly_dir"
         test_dir.mkdir()
@@ -79,13 +79,13 @@ class TestRemoveExistingPath:
 
         try:
             with pytest.raises(PermissionError):
-                fileops._remove_existing(test_dir)
+                fileops.rm(test_dir)
         finally:
             # Cleanup: restore permissions so test cleanup works
             test_dir.chmod(0o755)
 
     def test_rm_broken_symlink(self, tmp_path: Path):
-        """Test _remove_existing handles broken symlinks."""
+        """Test handling broken symlinks."""
         nonexistent_target = tmp_path / "does_not_exist.txt"
         broken_symlink = tmp_path / "broken_link"
         broken_symlink.symlink_to(nonexistent_target)
@@ -94,7 +94,7 @@ class TestRemoveExistingPath:
         assert broken_symlink.is_symlink()
         assert not broken_symlink.exists()
 
-        fileops._remove_existing(broken_symlink)
+        fileops.rm(broken_symlink)
 
         assert not broken_symlink.is_symlink()
         assert not broken_symlink.exists()
@@ -195,19 +195,3 @@ class TestSymlinkTo:
 
         assert symlink.is_symlink()
         assert symlink.read_text() == EXPECTED_CONTENT
-
-
-class TestRemove:
-    def test_rm_file(self, tmp_path: Path):
-        """Test removing a file."""
-        test_file = tmp_path / "test_file.txt"
-        test_file.write_text("content")
-        fileops.rm(test_file)
-        assert not test_file.exists()
-
-    def test_rm_directory(self, tmp_path: Path):
-        """Test removing a directory."""
-        test_dir = tmp_path / "test_dir"
-        create_dummy_directory_structure(test_dir)
-        fileops.rm(test_dir)
-        assert not test_dir.exists()

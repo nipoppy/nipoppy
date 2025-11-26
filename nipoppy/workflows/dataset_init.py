@@ -144,7 +144,7 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # Handle edge case where we need to clobber existing data
         if dpath.exists() and self.force:
-            fileops._remove_existing(dpath, DRY_RUN=self.dry_run)
+            fileops.rm(dpath, DRY_RUN=self.dry_run)
 
         if self.mode == "copy":
             fileops.copy(self.bids_source, dpath, DRY_RUN=self.dry_run)
