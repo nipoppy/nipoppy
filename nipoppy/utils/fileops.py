@@ -13,8 +13,7 @@ logger = get_logger()
 
 
 def mkdir(dpath: Path, DRY_RUN=False, parents=True, exist_ok=True, mode=511):
-    """
-    Create a directory (by default including parents).
+    """Create a directory (by default including parents).
 
     Do nothing if the directory already exists.
     """
@@ -28,9 +27,10 @@ def mkdir(dpath: Path, DRY_RUN=False, parents=True, exist_ok=True, mode=511):
 
 def copy(source: Path, target: Path, DRY_RUN=False, exist_ok: bool = False):
     """Copy a file or directory."""
-    logger.debug(f"Copying {source} to {target}")
     if target.exists() and not exist_ok:
         raise FileOperationError(f"Target already exists: {target}")
+
+    logger.debug(f"Copying {source} to {target}")
     if not DRY_RUN:
         if source.is_file():
             shutil.copy2(src=source, dst=target)
@@ -38,11 +38,7 @@ def copy(source: Path, target: Path, DRY_RUN=False, exist_ok: bool = False):
             shutil.copytree(src=source, dst=target, dirs_exist_ok=exist_ok)
 
 
-def movetree(
-    source: Path,
-    target: Path,
-    DRY_RUN=False,
-):
+def movetree(source: Path, target: Path, DRY_RUN=False):
     """Move directory tree."""
     logger.debug(f"Moving {source} to {target}")
     if not DRY_RUN:
