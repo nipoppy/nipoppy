@@ -11,7 +11,7 @@ logger = get_logger()
 # TODO: Implement a dry-run decorator to avoid repeating DRY_RUN checks
 
 
-def mkdir(dpath: Path, DRY_RUN=False, parents=True, exist_ok=True, mode=511):
+def mkdir(dpath: Path, DRY_RUN=False):
     """Create a directory (by default including parents).
 
     Do nothing if the directory already exists.
@@ -19,7 +19,7 @@ def mkdir(dpath: Path, DRY_RUN=False, parents=True, exist_ok=True, mode=511):
     if not dpath.exists():
         logger.debug(f"Creating directory {dpath}")
         if not DRY_RUN:
-            dpath.mkdir(parents=parents, exist_ok=exist_ok, mode=mode)
+            dpath.mkdir(parents=True)
     elif not dpath.is_dir():
         raise FileOperationError(f"Path already exists but is not a directory: {dpath}")
 
