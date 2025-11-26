@@ -5,6 +5,24 @@ import pytest
 from nipoppy.utils import fileops
 
 
+def create_dummy_directory_structure(base_path: Path):
+    """Create a dummy directory structure for testing."""
+    (base_path / "subdir1").mkdir(parents=True)
+    (base_path / "subdir1" / "file1.txt").write_text("This is file 1.")
+    (base_path / "subdir1" / "file2.txt").write_text("This is file 2.")
+    (base_path / "subdir2").mkdir(parents=True)
+    (base_path / "subdir2" / "file3.txt").write_text("This is file 3.")
+
+
+def check_dummy_directory_structure(base_path: Path):
+    """Check the dummy directory structure for testing."""
+    assert (base_path / "subdir1").is_dir()
+    assert (base_path / "subdir1" / "file1.txt").read_text() == "This is file 1."
+    assert (base_path / "subdir1" / "file2.txt").read_text() == "This is file 2."
+    assert (base_path / "subdir2").is_dir()
+    assert (base_path / "subdir2" / "file3.txt").read_text() == "This is file 3."
+
+
 class TestRemoveExistingPath:
     def test_rm_file(self, tmp_path: Path):
         """Test _remove_existing removes regular files."""
@@ -103,7 +121,7 @@ class TestMakeDir:
 
 
 class TestCopy:
-    def test_copy_file(self, tmp_path: Path):
+    def test_cp_file(self, tmp_path: Path):
         """Test copying a file."""
         source_file = tmp_path / "source.txt"
         EXPECTED_CONTENT = "content"
@@ -115,37 +133,35 @@ class TestCopy:
         assert dest_file.is_file()
         assert dest_file.read_text() == EXPECTED_CONTENT
 
-    def test_copy_directory(self, tmp_path: Path):
+    def test_cp_directory(self, tmp_path: Path):
         """Test copying a directory."""
         source_dir = tmp_path / "source_dir"
-        source_dir.mkdir()
-        (source_dir / "file1.txt").write_text("file1 content")
-        (source_dir / "file2.txt").write_text("file2 content")
-
         dest_dir = tmp_path / "dest_dir"
+        create_dummy_directory_structure(source_dir)
 
         fileops.copy(source_dir, dest_dir)
+        check_dummy_directory_structure(dest_dir)
 
-        assert dest_dir.is_dir()
-        assert (dest_dir / "file1.txt").read_text() == "file1 content"
-        assert (dest_dir / "file2.txt").read_text() == "file2 content"
+    def test_cp_directory_exist_ok(self, tmp_path: Path):
+        """Test copying a directory with exist_ok=True."""
+        source_dir = tmp_path / "source_dir"
+        dest_dir = tmp_path / "dest_dir"
+        create_dummy_directory_structure(source_dir)
+        create_dummy_directory_structure(dest_dir)
+
+        fileops.copy(source_dir, dest_dir, exist_ok=True)
+        check_dummy_directory_structure(dest_dir)
 
 
 class TestMoveTree:
-    def test_movetree_directory(self, tmp_path: Path):
+    def test_mv_directory(self, tmp_path: Path):
         """Test moving a directory tree."""
         source_dir = tmp_path / "source_dir"
-        source_dir.mkdir()
-        (source_dir / "file1.txt").write_text("file1 content")
-        (source_dir / "file2.txt").write_text("file2 content")
-
         dest_dir = tmp_path / "dest_dir"
+        create_dummy_directory_structure(source_dir)
 
         fileops.movetree(source_dir, dest_dir)
-
-        assert dest_dir.is_dir()
-        assert (dest_dir / "file1.txt").read_text() == "file1 content"
-        assert (dest_dir / "file2.txt").read_text() == "file2 content"
+        check_dummy_directory_structure(dest_dir)
         assert not source_dir.exists()
 
 
@@ -175,7 +191,6 @@ class TestRemove:
     def test_rm_directory(self, tmp_path: Path):
         """Test removing a directory."""
         test_dir = tmp_path / "test_dir"
-        test_dir.mkdir()
-        (test_dir / "nested_file.txt").write_text("content")
+        create_dummy_directory_structure(test_dir)
         fileops.rm(test_dir)
         assert not test_dir.exists()
