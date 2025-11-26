@@ -249,16 +249,16 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         # copy the directory
         if self.dpath_pipeline is not None:
-            fileops.copytree(
-                path_source=dpath_pipeline,
-                path_dest=dpath_target,
+            fileops.copy(
+                source=dpath_pipeline,
+                target=dpath_target,
                 DRY_RUN=self.dry_run,
             )
         else:
             # if the pipeline was downloaded from Zenodo, move it to the target location
             fileops.movetree(
-                path_source=dpath_pipeline,
-                path_dest=dpath_target,
+                source=dpath_pipeline,
+                target=dpath_target,
                 DRY_RUN=self.dry_run,
             )
 

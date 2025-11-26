@@ -18,85 +18,66 @@ def _remove_existing(path: Path, DRY_RUN=False, log_level=logging.INFO):
     """Remove existing file, directory, or symlink without ignoring errors."""
     logger.log(level=log_level, msg=f"Removing existing {path}")
     if not DRY_RUN:
-        path_obj = Path(path)
-        if path_obj.is_symlink():
-            path_obj.unlink()
-        elif path_obj.is_dir():
+        if path.is_symlink():
+            path.unlink()
+        elif path.is_dir():
             shutil.rmtree(path)
         else:
-            path_obj.unlink()
+            path.unlink()
 
 
-def mkdir(dpath: Path, DRY_RUN=False, **kwargs):
+def mkdir(dpath: Path, DRY_RUN=False, parents=True, exist_ok=True, mode=511):
     """
     Create a directory (by default including parents).
 
     Do nothing if the directory already exists.
     """
-    kwargs_to_use = {"parents": True, "exist_ok": True}
-    kwargs_to_use.update(kwargs)
-
-    dpath = Path(dpath)
-
     if not dpath.exists():
         logger.debug(f"Creating directory {dpath}")
         if not DRY_RUN:
-            dpath.mkdir(**kwargs_to_use)
+            dpath.mkdir(parents=parents, exist_ok=exist_ok, mode=mode)
     elif not dpath.is_dir():
         raise FileOperationError(f"Path already exists but is not a directory: {dpath}")
 
 
-def copy(path_source: Path, path_dest: Path, DRY_RUN=False, **kwargs):
+def copy(source: Path, target: Path, DRY_RUN=False, exist_ok: bool = False):
     """Copy a file or directory."""
-    logger.debug(f"Copying {path_source} to {path_dest}")
+    logger.debug(f"Copying {source} to {target}")
+    if target.exists() and not exist_ok:
+        raise FileOperationError(f"Target already exists: {target}")
     if not DRY_RUN:
-        shutil.copy2(src=path_source, dst=path_dest, **kwargs)
-
-
-def copytree(path_source: Path, path_dest: Path, DRY_RUN=False, **kwargs):
-    """Copy directory tree."""
-    logger.debug(f"Copying {path_source} to {path_dest}")
-    if not DRY_RUN:
-        shutil.copytree(src=path_source, dst=path_dest, **kwargs)
+        if source.is_file():
+            shutil.copy2(src=source, dst=target)
+        else:
+            shutil.copytree(src=source, dst=target, dirs_exist_ok=exist_ok)
 
 
 def movetree(
-    path_source: Path,
-    path_dest: Path,
+    source: Path,
+    target: Path,
     DRY_RUN=False,
-    kwargs_mkdir=None,
-    kwargs_move=None,
 ):
     """Move directory tree."""
-    kwargs_mkdir = kwargs_mkdir or {}
-    kwargs_move = kwargs_move or {}
-    logger.debug(f"Moving {path_source} to {path_dest}")
+    logger.debug(f"Moving {source} to {target}")
     if not DRY_RUN:
-        mkdir(path_dest, **kwargs_mkdir)
-        file_names = os.listdir(path_source)
-        for file_name in file_names:
-            shutil.move(
-                src=os.path.join(path_source, file_name),  # Path.joinpath()
-                dst=path_dest,
-                **kwargs_move,
-            )
-        Path(path_source).rmdir()
+        mkdir(target)
+        for file_path in source.iterdir():
+            shutil.move(src=file_path, dst=target)
+        source.rmdir()
 
 
-def symlink_to(path_source: Path, path_dest: Path, DRY_RUN=False, **kwargs):
+def symlink_to(source: Path, target: Path, DRY_RUN=False):
     """Create a symlink to another path."""
-    logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
+    logger.debug(f"Creating a symlink from {source} to {target}")
     if not DRY_RUN:
-        os.symlink(path_source, path_dest, **kwargs)  # Path.symlink_to()
+        os.symlink(source, target)
 
 
-def rm(path: Path, DRY_RUN=False, **kwargs):
+def rm(path: Path, DRY_RUN=False):
     """Remove a file or directory."""
-    kwargs_to_use = {"ignore_errors": True}
-    kwargs_to_use.update(kwargs)
     logger.debug(f"Removing {path}")
     if not DRY_RUN:
-        if Path(path).is_dir():
-            shutil.rmtree(path, **kwargs_to_use)
+        if path.is_dir():
+            shutil.rmtree(path)
         else:
-            Path(path).unlink()
+            path.unlink()

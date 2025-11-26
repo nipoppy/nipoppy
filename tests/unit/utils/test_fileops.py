@@ -115,8 +115,8 @@ class TestCopy:
         assert dest_file.is_file()
         assert dest_file.read_text() == EXPECTED_CONTENT
 
-    def test_copytree_directory(self, tmp_path: Path):
-        """Test copying a directory tree."""
+    def test_copy_directory(self, tmp_path: Path):
+        """Test copying a directory."""
         source_dir = tmp_path / "source_dir"
         source_dir.mkdir()
         (source_dir / "file1.txt").write_text("file1 content")
@@ -124,7 +124,7 @@ class TestCopy:
 
         dest_dir = tmp_path / "dest_dir"
 
-        fileops.copytree(source_dir, dest_dir)
+        fileops.copy(source_dir, dest_dir)
 
         assert dest_dir.is_dir()
         assert (dest_dir / "file1.txt").read_text() == "file1 content"

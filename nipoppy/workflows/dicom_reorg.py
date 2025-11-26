@@ -145,8 +145,8 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                     fpath_source.resolve(), fpath_dest.parent
                 )
                 fileops.symlink_to(
-                    path_source=fpath_source,
-                    path_dest=fpath_dest,
+                    source=fpath_source,
+                    target=fpath_dest,
                     DRY_RUN=self.dry_run,
                 )
 

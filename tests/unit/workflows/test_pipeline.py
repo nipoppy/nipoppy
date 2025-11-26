@@ -177,7 +177,7 @@ def _set_up_hpc_for_testing(
     workflow.hpc = "slurm"
 
     # copy HPC config files
-    fileops.copytree(DPATH_HPC, workflow.study.layout.dpath_hpc)
+    fileops.copy(DPATH_HPC, workflow.study.layout.dpath_hpc)
 
     mocker.patch.object(
         workflow,

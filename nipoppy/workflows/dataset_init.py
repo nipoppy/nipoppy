@@ -120,10 +120,10 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy HPC files
-        fileops.copytree(
+        fileops.copy(
             DPATH_HPC,
             self.study.layout.dpath_hpc,
-            dirs_exist_ok=True,
+            exist_ok=True,
             DRY_RUN=self.dry_run,
         )
 
@@ -147,12 +147,12 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops._remove_existing(dpath, DRY_RUN=self.dry_run)
 
         if self.mode == "copy":
-            fileops.copytree(self.bids_source, str(dpath), DRY_RUN=self.dry_run)
+            fileops.copy(self.bids_source, dpath, DRY_RUN=self.dry_run)
         elif self.mode == "move":
-            fileops.movetree(self.bids_source, str(dpath), DRY_RUN=self.dry_run)
+            fileops.movetree(self.bids_source, dpath, DRY_RUN=self.dry_run)
         elif self.mode == "symlink":
             fileops.mkdir(self.dpath_root, DRY_RUN=self.dry_run)
-            fileops.symlink_to(self.bids_source, str(dpath), DRY_RUN=self.dry_run)
+            fileops.symlink_to(self.bids_source, dpath, DRY_RUN=self.dry_run)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 
