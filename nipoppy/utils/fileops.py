@@ -16,12 +16,15 @@ def mkdir(dpath: Path, DRY_RUN=False):
 
     Do nothing if the directory already exists.
     """
-    if not dpath.exists():
-        logger.debug(f"Creating directory {dpath}")
-        if not DRY_RUN:
-            dpath.mkdir(parents=True)
-    elif not dpath.is_dir():
-        raise FileOperationError(f"Path already exists but is not a directory: {dpath}")
+    if dpath.is_dir():
+        return  # Directory already exists
+
+    if dpath.exists():
+        raise FileOperationError(f"Path already exists and is not a directory: {dpath}")
+
+    logger.debug(f"Creating directory {dpath}")
+    if not DRY_RUN:
+        dpath.mkdir(parents=True, exist_ok=True)
 
 
 def copy(source: Path, target: Path, DRY_RUN=False, exist_ok: bool = False):
