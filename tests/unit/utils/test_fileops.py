@@ -1,7 +1,9 @@
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
 
+from nipoppy.exceptions import FileOperationError
 from nipoppy.utils import fileops
 
 
@@ -121,39 +123,53 @@ class TestMakeDir:
 
 
 class TestCopy:
-    def test_cp_file(self, tmp_path: Path):
+    @pytest.mark.parametrize(
+        "exist_ok, raises_error, final_content",
+        [
+            (True, False, "content"),
+            (False, True, "old content"),
+        ],
+    )
+    def test_cp_file(self, tmp_path: Path, exist_ok, raises_error, final_content):
         """Test copying a file."""
         source_file = tmp_path / "source.txt"
-        EXPECTED_CONTENT = "content"
-        source_file.write_text(EXPECTED_CONTENT)
-        dest_file = tmp_path / "dest.txt"
+        source_file.write_text("content")
 
-        fileops.copy(source_file, dest_file)
+        dest_file = tmp_path / "dest.txt"
+        dest_file.write_text("old content")
+
+        with pytest.raises(FileOperationError) if raises_error else nullcontext():
+            fileops.copy(source_file, dest_file, exist_ok=exist_ok)
 
         assert dest_file.is_file()
-        assert dest_file.read_text() == EXPECTED_CONTENT
+        assert dest_file.read_text() == final_content
 
-    def test_cp_directory(self, tmp_path: Path):
+    @pytest.mark.parametrize(
+        "exist_ok, raises_error, dest_should_be_empty",
+        [
+            (True, False, False),
+            (False, True, True),
+        ],
+    )
+    def test_cp_dir(self, tmp_path: Path, exist_ok, raises_error, dest_should_be_empty):
         """Test copying a directory."""
         source_dir = tmp_path / "source_dir"
         dest_dir = tmp_path / "dest_dir"
         create_dummy_directory_structure(source_dir)
+        dest_dir.mkdir()  # Pre-create destination directory
 
-        fileops.copy(source_dir, dest_dir)
-        check_dummy_directory_structure(dest_dir)
+        with pytest.raises(FileOperationError) if raises_error else nullcontext():
+            fileops.copy(source_dir, dest_dir, exist_ok=exist_ok)
 
-    def test_cp_directory_exist_ok(self, tmp_path: Path):
-        """Test copying a directory with exist_ok=True."""
-        source_dir = tmp_path / "source_dir"
-        dest_dir = tmp_path / "dest_dir"
-        create_dummy_directory_structure(source_dir)
-        create_dummy_directory_structure(dest_dir)
-
-        fileops.copy(source_dir, dest_dir, exist_ok=True)
-        check_dummy_directory_structure(dest_dir)
+        if dest_should_be_empty:
+            # Ensure destination directory is unchanged (empty)
+            assert not any(dest_dir.iterdir())
+        else:
+            check_dummy_directory_structure(dest_dir)
 
 
 class TestMoveTree:
+    # Should we add an exist_ok test here too?
     def test_mv_directory(self, tmp_path: Path):
         """Test moving a directory tree."""
         source_dir = tmp_path / "source_dir"
@@ -166,6 +182,7 @@ class TestMoveTree:
 
 
 class TestSymlinkTo:
+    # Should we add an exist_ok test here too?
     def test_symlink_to(self, tmp_path: Path):
         """Test creating a symlink to a file."""
         target_file = tmp_path / "target.txt"
