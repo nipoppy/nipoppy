@@ -1,6 +1,5 @@
 """File operations utility functions."""
 
-import os
 import shutil
 from pathlib import Path
 
@@ -48,11 +47,11 @@ def movetree(source: Path, target: Path, DRY_RUN=False):
         source.rmdir()
 
 
-def symlink_to(source: Path, target: Path, DRY_RUN=False):
+def symlink(source: Path, target: Path, DRY_RUN=False):
     """Create a symlink to another path."""
     logger.debug(f"Creating a symlink from {source} to {target}")
     if not DRY_RUN:
-        os.symlink(source, target)
+        target.symlink_to(source)
 
 
 def rm(path: Path, DRY_RUN=False):

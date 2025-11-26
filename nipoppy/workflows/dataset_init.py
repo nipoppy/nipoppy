@@ -152,7 +152,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.movetree(self.bids_source, dpath, DRY_RUN=self.dry_run)
         elif self.mode == "symlink":
             fileops.mkdir(self.dpath_root, DRY_RUN=self.dry_run)
-            fileops.symlink_to(self.bids_source, dpath, DRY_RUN=self.dry_run)
+            fileops.symlink(self.bids_source, dpath, DRY_RUN=self.dry_run)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 

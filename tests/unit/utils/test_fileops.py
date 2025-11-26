@@ -181,17 +181,17 @@ class TestMoveTree:
         assert not source_dir.exists()
 
 
-class TestSymlinkTo:
+class TestSymlink:
     # Should we add an exist_ok test here too?
-    def test_symlink_to(self, tmp_path: Path):
+    def test_symlink(self, tmp_path: Path):
         """Test creating a symlink to a file."""
-        target_file = tmp_path / "target.txt"
+        source_file = tmp_path / "target.txt"
         EXPECTED_CONTENT = "target content"
-        target_file.write_text(EXPECTED_CONTENT)
+        source_file.write_text(EXPECTED_CONTENT)
 
         symlink = tmp_path / "symlink_to_target"
 
-        fileops.symlink_to(target_file, symlink)
+        fileops.symlink(source=source_file, target=symlink)
 
         assert symlink.is_symlink()
         assert symlink.read_text() == EXPECTED_CONTENT
