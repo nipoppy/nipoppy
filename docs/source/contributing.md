@@ -94,8 +94,20 @@ Then open the `build/html/index.html` file in a browser.
 
 Inside the repository, run:
 ```{code-block} console
+$ git fetch upstream
+$ git checkout upstream/main
 $ git tag <NEW_VERSION>
 $ git push upstream tag <NEW_VERSION>
 ```
 
 This assumes that the Git repository has a remote called `upstream` that is pointing to the [`nipoppy/nipoppy` repository](https://github.com/nipoppy/nipoppy.git).
+
+```{warning}
+A GitHub workflow automatically generates the release notes—do not create it manually. Once created, you can modify them through the GitHub UI.
+```
+
+### Extra steps after the release
+
+Add a summary message to release notes and share on Discord
+
+Rebuild docs for newly released version to update the "What's new" section.
