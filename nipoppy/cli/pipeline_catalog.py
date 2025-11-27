@@ -55,6 +55,7 @@ def zenodo_options(func):
         " community."
     ),
 )
+@password_file_option(required=False)
 @zenodo_options
 @global_options
 def pipeline_search(**params):
@@ -63,6 +64,7 @@ def pipeline_search(**params):
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
+        password_file=params.pop("password_file", None),
     )
     with exception_handler(PipelineSearchWorkflow(**params)) as workflow:
         workflow.run()
@@ -123,6 +125,7 @@ def pipeline_create(**params):
 )
 @global_options
 @layout_option
+@password_file_option(required=False)
 @assume_yes_option
 def pipeline_install(**params):
     """
@@ -135,6 +138,7 @@ def pipeline_install(**params):
     params = dep_params(**params)
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
+        password_file=params.pop("password_file", None),
     )
     with exception_handler(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
