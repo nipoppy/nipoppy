@@ -597,11 +597,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return bids_layout
 
-    def check_dir(self, dpath: Path):
-        """Create directory if it does not exist."""
-        if not dpath.exists():
-            fileops.mkdir(dpath, DRY_RUN=self.dry_run)
-
     def check_pipeline_version(self):
         """Set the pipeline version based on the config if it is not given."""
         if self.pipeline_version is None:
@@ -645,7 +640,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
-            self.check_dir(dpath)
+            fileops.mkdir(dpath, DRY_RUN=self.dry_run)
 
         return to_return
 
