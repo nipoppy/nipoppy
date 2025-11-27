@@ -745,7 +745,7 @@ def test_search_records_status_raised(
     )
     with pytest.raises(
         ZenodoAPIError,
-        match="Failed to search records. JSON response:",
+        match="Failed to search records. Request: .*. JSON response:",
     ):
         zenodo_api.search_records(query=query, size=size)
 
