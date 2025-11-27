@@ -83,9 +83,10 @@ def tracker(tmp_path: Path):
 )
 def test_apply_analysis_level_success(analysis_level):
     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
-    assert PipelineTracker.apply_analysis_level(
-        participants_sessions, analysis_level
-    ) == [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
+    assert (
+        PipelineTracker.apply_analysis_level(participants_sessions, analysis_level)
+        == participants_sessions
+    )
 
 
 def test_run_setup(tracker: PipelineTracker):
