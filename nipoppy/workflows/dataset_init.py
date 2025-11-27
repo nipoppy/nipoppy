@@ -119,6 +119,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_MANIFEST,
                 self.study.layout.fpath_manifest,
+                exist_ok=True,
                 dry_run=self.dry_run,
             )
 
