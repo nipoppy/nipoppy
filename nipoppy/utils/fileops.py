@@ -30,7 +30,7 @@ def mkdir(dpath: Path, DRY_RUN=False):
 def copy(source: Path, target: Path, DRY_RUN=False, exist_ok: bool = False):
     """
     Copy a file or directory.
-    
+
     Raise an error by default if the target path already exists.
     """
     if target.exists() and not exist_ok:
