@@ -699,18 +699,20 @@ def test_upload_pipeline_delete_draft(
 
 
 @pytest.mark.parametrize(
-    "search_query,keywords,size,final_query",
+    "search_query,keywords,size,sort,final_query",
     [
         (
             "FMRIPREP",
             None,
             100,
+            "mostviewed",
             "%2AFMRIPREP%2A&size=100",
         ),
         (
             "fmriprep AND nipoppy",
             ["Nipoppy"],
             1,
+            "mostdownloaded",
             "fmriprep+AND+nipoppy+AND+metadata.subjects.subject%3A%22Nipoppy%22&size=1",
         ),
     ],
@@ -719,16 +721,17 @@ def test_search_records(
     search_query,
     keywords,
     size,
+    sort,
     final_query,
     zenodo_api: ZenodoAPI,
     httpx_mock: pytest_httpx.HTTPXMock,
 ):
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records?q={final_query}",
+        url=f"{zenodo_api.api_endpoint}/records?q={final_query}&sort={sort}",
         method="GET",
         json={"hits": {}},
     )
-    zenodo_api.search_records(search_query, keywords=keywords, size=size)
+    zenodo_api.search_records(search_query, keywords=keywords, size=size, sort=sort)
 
 
 def test_search_records_status_raised(
@@ -738,7 +741,7 @@ def test_search_records_status_raised(
     query = ""
     size = 10
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}",
+        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}&sort=mostdownloaded",  # noqa: E501
         method="GET",
         status_code=500,
         json={},

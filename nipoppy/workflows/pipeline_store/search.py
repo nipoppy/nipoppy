@@ -23,7 +23,6 @@ logger = get_logger()
 class PipelineSearchWorkflow(BaseWorkflow):
     """Search Zenodo for existing pipeline configurations and print results table."""
 
-    _api_search_size = 100  # Page size cannot be greater than 100.
     col_zenodo_id = "Zenodo ID"
     col_title = "Title"
     col_description = "Description"
@@ -115,7 +114,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
                 query=self.query,
                 community_id=ZENODO_COMMUNITY_ID if self.community else None,
                 keywords=["Nipoppy"],
-                size=self._api_search_size,
+                size=self.size,
             )
 
         hits = results["hits"]

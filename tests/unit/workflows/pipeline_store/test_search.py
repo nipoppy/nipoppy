@@ -130,7 +130,7 @@ def test_run_main(
     workflow.zenodo_api.search_records.assert_called_once_with(
         query=workflow.query,
         keywords=["Nipoppy"],
-        size=workflow._api_search_size,
+        size=workflow.size,
         community_id=ZENODO_COMMUNITY_ID if community else None,
     )
     mocked_hits_to_df.assert_called_once_with(hits)

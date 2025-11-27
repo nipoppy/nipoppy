@@ -43,7 +43,6 @@ from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
-    apply_analysis_level,
     get_pipeline_version,
 )
 from tests.conftest import datetime_fixture  # noqa F401
@@ -233,7 +232,10 @@ def test_joblib_import_fails(
 )
 def test_apply_analysis_level(analysis_level, expected):
     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]
-    assert apply_analysis_level(participants_sessions, analysis_level) == expected
+    assert (
+        PipelineWorkflow.apply_analysis_level(participants_sessions, analysis_level)
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -1118,7 +1120,7 @@ def test_run_main_analysis_level(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
 ):
-    mocked = mocker.patch("nipoppy.workflows.pipeline.apply_analysis_level")
+    mocked = mocker.patch.object(PipelineWorkflow, "apply_analysis_level")
     participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions

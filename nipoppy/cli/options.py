@@ -195,3 +195,23 @@ def assume_yes_option(func):
         help="Assume yes to all questions.",
     )(func)
     return func
+
+
+def password_file_option(required: bool):
+    """
+    Define password file option for the CLI.
+
+    Note: This is a decorator factory that returns a decorator.
+    """
+
+    def decorator(func):
+        return click.option(
+            "--password-file",
+            type=click.Path(
+                exists=True, path_type=Path, resolve_path=True, dir_okay=False
+            ),
+            required=required,
+            help="Path to file containing Zenodo access token (and nothing else)",
+        )(func)
+
+    return decorator

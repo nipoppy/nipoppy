@@ -84,32 +84,6 @@ except ImportError as error:
 logger = get_logger()
 
 
-def apply_analysis_level(
-    participants_sessions: Iterable[str, str],
-    analysis_level: AnalysisLevelType,
-) -> List[Tuple[str, str]]:
-    """Filter participant-session pairs to run based on the analysis level."""
-    if analysis_level == AnalysisLevelType.group:
-        return [(None, None)]
-
-    elif analysis_level == AnalysisLevelType.participant:
-        participants = []
-        for participant, _ in participants_sessions:
-            if participant not in participants:
-                participants.append(participant)
-        return [(participant, None) for participant in participants]
-
-    elif analysis_level == AnalysisLevelType.session:
-        sessions = []
-        for _, session in participants_sessions:
-            if session not in sessions:
-                sessions.append(session)
-        return [(None, session) for session in sessions]
-
-    else:
-        return list(participants_sessions)
-
-
 def get_pipeline_version(
     pipeline_name: str,
     dpath_pipelines: StrOrPathLike,
@@ -694,6 +668,31 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return results_generator
 
+    @staticmethod
+    def apply_analysis_level(
+        participants_sessions: Iterable[str],
+        analysis_level: AnalysisLevelType,
+    ) -> List[Tuple[str, str]]:
+        """Filter participant-session pairs to run based on the analysis level."""
+        if analysis_level == AnalysisLevelType.group:
+            return [(None, None)]
+
+        if analysis_level == AnalysisLevelType.participant:
+            participants = []
+            for participant, _ in participants_sessions:
+                if participant not in participants:
+                    participants.append(participant)
+            return [(participant, None) for participant in participants]
+
+        if analysis_level == AnalysisLevelType.session:
+            sessions = []
+            for _, session in participants_sessions:
+                if session not in sessions:
+                    sessions.append(session)
+            return [(None, session) for session in sessions]
+
+        return list(participants_sessions)
+
     def run_main(self):
         """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
@@ -718,7 +717,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 df_participants_sessions.itertuples(index=False, name=None)
             )
 
-        participants_sessions = apply_analysis_level(
+        participants_sessions = self.apply_analysis_level(
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )

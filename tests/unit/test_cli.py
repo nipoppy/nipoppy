@@ -267,6 +267,15 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "pipeline",
+                "search",
+                "--password-file",
+                str(PASSWORD_FILE),
+            ],
+            "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
+        ),
+        (
+            [
+                "pipeline",
                 "create",
                 "--type",
                 "processing",
@@ -281,6 +290,18 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--dataset",
                 "[mocked_dir]",
                 "zenodo.123456",
+            ],
+            "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "install",
+                "--dataset",
+                "[mocked_dir]",
+                "zenodo.123456",
+                "--password-file",
+                str(PASSWORD_FILE),
             ],
             "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
         ),
