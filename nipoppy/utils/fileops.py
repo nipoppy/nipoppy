@@ -51,7 +51,7 @@ def movetree(source: Path, target: Path, DRY_RUN=False):
 
 
 def symlink(source: Path, target: Path, DRY_RUN=False):
-    """Create a symlink to another path."""
+    """Create a symlink: target -> source."""
     logger.debug(f"Creating a symlink from {source} to {target}")
     if not DRY_RUN:
         target.symlink_to(source)
