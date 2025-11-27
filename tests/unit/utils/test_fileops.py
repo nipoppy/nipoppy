@@ -68,7 +68,7 @@ class TestRemovePath:
         assert target_dir.exists()  # Target should remain
 
     def test_rm_surfaces_permission_error(self, tmp_path: Path):
-        """Test surfaings permission errors instead of ignoring them."""
+        """Test surfacing permission errors instead of ignoring them."""
         # Create a directory with a file, then make it read-only
         test_dir = tmp_path / "readonly_dir"
         test_dir.mkdir()
