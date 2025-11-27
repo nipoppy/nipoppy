@@ -22,8 +22,8 @@ def test_search_size_exceeds_max(zenodo_api: ZenodoAPI):
     workflow = PipelineSearchWorkflow(
         query="",
         zenodo_api=zenodo_api,
+        size=26,  # exceeds max size of 25
     )
-    workflow._api_search_size += 1
     with pytest.raises(
         ZenodoAPIError,
         match="Failed to search records. JSON response:",
