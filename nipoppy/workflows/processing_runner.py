@@ -106,7 +106,7 @@ class ProcessingRunner(Runner):
         # make sure that the tarfile was created successfully before removing
         # original directory
         if fpath_tarred.exists() and is_tarfile(fpath_tarred):
-            fileops.rm(dpath, DRY_RUN=self.dry_run)
+            fileops.rm(dpath, dry_run=self.dry_run)
         else:
             logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
 
@@ -248,7 +248,7 @@ class ProcessingRunner(Runner):
             if not self.keep_workdir:
                 for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
                     if dpath.exists():
-                        fileops.rm(dpath, DRY_RUN=self.dry_run)
+                        fileops.rm(dpath, dry_run=self.dry_run)
             else:
                 logger.info("Keeping working / intermediary files.")
         else:

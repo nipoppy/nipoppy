@@ -640,7 +640,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.check_pipeline_step()
 
         for dpath in self.dpaths_to_check:
-            fileops.mkdir(dpath, DRY_RUN=self.dry_run)
+            fileops.mkdir(dpath, dry_run=self.dry_run)
 
         return to_return
 

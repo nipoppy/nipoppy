@@ -245,21 +245,21 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     ". Use --force to overwrite",
                 )
             else:
-                fileops.rm(dpath_target, DRY_RUN=self.dry_run)
+                fileops.rm(dpath_target, dry_run=self.dry_run)
 
         # copy the directory
         if self.dpath_pipeline is not None:
             fileops.copy(
                 source=dpath_pipeline,
                 target=dpath_target,
-                DRY_RUN=self.dry_run,
+                dry_run=self.dry_run,
             )
         else:
             # if the pipeline was downloaded from Zenodo, move it to the target location
             fileops.movetree(
                 source=dpath_pipeline,
                 target=dpath_target,
-                DRY_RUN=self.dry_run,
+                dry_run=self.dry_run,
             )
 
         # update global config with new pipeline variables

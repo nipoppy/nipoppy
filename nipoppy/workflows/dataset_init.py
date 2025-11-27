@@ -89,12 +89,12 @@ class InitWorkflow(BaseDatasetWorkflow):
                     )
 
         # create directories
-        fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, DRY_RUN=self.dry_run)
+        fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
         for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
             if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
                 self.handle_bids_source()
             else:
-                fileops.mkdir(dpath, DRY_RUN=self.dry_run)
+                fileops.mkdir(dpath, dry_run=self.dry_run)
 
         self._write_readmes()
 
@@ -102,12 +102,12 @@ class InitWorkflow(BaseDatasetWorkflow):
         for pipeline_type in PipelineTypeEnum:
             fileops.mkdir(
                 self.study.layout.get_dpath_pipeline_store(pipeline_type),
-                DRY_RUN=self.dry_run,
+                dry_run=self.dry_run,
             )
 
         # copy sample config and manifest files
         fileops.copy(
-            FPATH_SAMPLE_CONFIG, self.study.layout.fpath_config, DRY_RUN=self.dry_run
+            FPATH_SAMPLE_CONFIG, self.study.layout.fpath_config, dry_run=self.dry_run
         )
 
         if self.bids_source is not None:
@@ -116,7 +116,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_MANIFEST,
                 self.study.layout.fpath_manifest,
-                DRY_RUN=self.dry_run,
+                dry_run=self.dry_run,
             )
 
         # copy HPC files
@@ -124,7 +124,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             DPATH_HPC,
             self.study.layout.dpath_hpc,
             exist_ok=True,
-            DRY_RUN=self.dry_run,
+            dry_run=self.dry_run,
         )
 
         # inform user to edit the sample files
@@ -144,15 +144,15 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # Handle edge case where we need to clobber existing data
         if dpath.exists() and self.force:
-            fileops.rm(dpath, DRY_RUN=self.dry_run)
+            fileops.rm(dpath, dry_run=self.dry_run)
 
         if self.mode == "copy":
-            fileops.copy(self.bids_source, dpath, DRY_RUN=self.dry_run)
+            fileops.copy(self.bids_source, dpath, dry_run=self.dry_run)
         elif self.mode == "move":
-            fileops.movetree(self.bids_source, dpath, DRY_RUN=self.dry_run)
+            fileops.movetree(self.bids_source, dpath, dry_run=self.dry_run)
         elif self.mode == "symlink":
-            fileops.mkdir(self.dpath_root, DRY_RUN=self.dry_run)
-            fileops.symlink(self.bids_source, dpath, DRY_RUN=self.dry_run)
+            fileops.mkdir(self.dpath_root, dry_run=self.dry_run)
+            fileops.symlink(self.bids_source, dpath, dry_run=self.dry_run)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 

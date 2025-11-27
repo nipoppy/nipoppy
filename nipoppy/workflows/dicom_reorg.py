@@ -107,7 +107,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             / participant_id_to_bids_participant_id(participant_id)
             / session_id_to_bids_session_id(session_id)
         )
-        fileops.mkdir(dpath_reorganized, DRY_RUN=self.dry_run)
+        fileops.mkdir(dpath_reorganized, dry_run=self.dry_run)
 
         # do reorg
         for fpath_source in fpaths_to_reorg:
@@ -139,7 +139,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
             # either create symlinks or copy original files
             if self.copy_files:
-                fileops.copy(fpath_source, fpath_dest, DRY_RUN=self.dry_run)
+                fileops.copy(fpath_source, fpath_dest, dry_run=self.dry_run)
             else:
                 fpath_source = os.path.relpath(
                     fpath_source.resolve(), fpath_dest.parent
@@ -147,7 +147,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 fileops.symlink(
                     source=fpath_source,
                     target=fpath_dest,
-                    DRY_RUN=self.dry_run,
+                    dry_run=self.dry_run,
                 )
 
         # update curation status

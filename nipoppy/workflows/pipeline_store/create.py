@@ -54,7 +54,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         descriptor_path = target / "descriptor.json"
         if source_descriptor:
-            fileops.copy(source_descriptor, descriptor_path, DRY_RUN=self.dry_run)
+            fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
             bosh.create(descriptor_path.as_posix())
 
@@ -64,7 +64,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         fileops.copy(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
             target.joinpath("hpc.json"),
-            DRY_RUN=self.dry_run,
+            dry_run=self.dry_run,
         )
 
         # Populate the config.json using descriptor information
@@ -81,12 +81,12 @@ class PipelineCreateWorkflow(BaseWorkflow):
             fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
                 target.joinpath("tracker.json"),
-                DRY_RUN=self.dry_run,
+                dry_run=self.dry_run,
             )
             fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("pybids_ignore.json"),
                 target.joinpath("pybids_ignore.json"),
-                DRY_RUN=self.dry_run,
+                dry_run=self.dry_run,
             )
 
     def run_main(self):
