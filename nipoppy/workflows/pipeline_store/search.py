@@ -8,6 +8,7 @@ from rich.table import Table
 
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.env import ZENODO_COMMUNITY_ID
+from nipoppy.exceptions import ConfigError
 from nipoppy.logger import get_logger
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
@@ -23,7 +24,7 @@ logger = get_logger()
 class PipelineSearchWorkflow(BaseWorkflow):
     """Search Zenodo for existing pipeline configurations and print results table."""
 
-    _api_search_size = 100  # Page size cannot be greater than 100.
+    _api_search_size = 25  # Page size cannot be greater than 25.
     col_zenodo_id = "Zenodo ID"
     col_title = "Title"
     col_description = "Description"
@@ -111,11 +112,16 @@ class PipelineSearchWorkflow(BaseWorkflow):
         with CONSOLE_STDOUT.status("Searching Nipoppy pipelines on Zenodo..."):
             # we get all results and sort/slice them ourselves since we cannot currently
             # sort by "mostdownloaded" through the API
+            if self.size > self._api_search_size:
+                raise ConfigError(
+                    f"Provided search size ({self.size}) is larger "
+                    f"than allowed by api ({self._api_search_size})."
+                )
             results = self.zenodo_api.search_records(
                 query=self.query,
                 community_id=ZENODO_COMMUNITY_ID if self.community else None,
                 keywords=["Nipoppy"],
-                size=self._api_search_size,
+                size=self.size,
             )
 
         hits = results["hits"]

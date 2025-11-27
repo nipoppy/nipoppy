@@ -345,7 +345,8 @@ class ZenodoAPI:
             response.raise_for_status()
         except httpx.HTTPError as e:
             raise ZenodoAPIError(
-                f"Failed to search records. JSON response: {response.json()}"
+                f"Failed to search records. Request: {response.request.url}. "
+                f"JSON response: {response.json()} "
             ) from e
 
         return response.json()["hits"]
