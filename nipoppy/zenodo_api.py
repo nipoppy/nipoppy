@@ -308,7 +308,7 @@ class ZenodoAPI:
     def search_records(
         self,
         query: str,
-        sort: str = "mostviewed",
+        sort: str = "mostdownloaded",
         community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,

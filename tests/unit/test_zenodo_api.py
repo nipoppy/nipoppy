@@ -741,7 +741,7 @@ def test_search_records_status_raised(
     query = ""
     size = 10
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}&sort=mostviewed",
+        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}&sort=mostdownloaded",  # noqa: E501
         method="GET",
         status_code=500,
         json={},
