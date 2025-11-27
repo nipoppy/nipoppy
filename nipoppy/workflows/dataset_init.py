@@ -107,7 +107,10 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # copy sample config and manifest files
         fileops.copy(
-            FPATH_SAMPLE_CONFIG, self.study.layout.fpath_config, dry_run=self.dry_run
+            FPATH_SAMPLE_CONFIG,
+            self.study.layout.fpath_config,
+            exist_ok=True,
+            DRY_RUN=self.dry_run,
         )
 
         if self.bids_source is not None:
