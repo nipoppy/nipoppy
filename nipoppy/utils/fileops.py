@@ -12,7 +12,7 @@ logger = get_logger()
 
 
 def mkdir(dpath: Path, DRY_RUN=False):
-    """Create a directory (by default including parents).
+    """Create a directory (including parents).
 
     Do nothing if the directory already exists.
     """
