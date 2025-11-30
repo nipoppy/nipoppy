@@ -1,4 +1,7 @@
 {
     "projectName": "nipoppy",
-    "projectOwner": "nipoppy"
+    "projectOwner": "nipoppy",
+    "files": [
+        "docs/source/team.md"
+    ]
 }
