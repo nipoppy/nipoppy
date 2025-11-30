@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/nipoppy/nipoppy/graph/badge.svg?token=SN38ITRO4M)](https://codecov.io/gh/nipoppy/nipoppy)
 [![https://github.com/psf/black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://black.readthedocs.io/en/stable/)
 [![Documentation Status](https://readthedocs.org/projects/nipoppy/badge/?version=latest)](https://nipoppy.readthedocs.io/en/latest/?badge=latest)
-[![All Contributors](https://img.shields.io/github/all-contributors/nipoppy/nipoppy?color=ee8449)](#contributors)
+[![All Contributors](https://img.shields.io/github/all-contributors/nipoppy/nipoppy?color=ee8449)](docs/source/team.md#contributors)
 
 <img alt="Nipoppy logo" src="https://raw.githubusercontent.com/nipoppy/nipoppy/refs/heads/main/logo/logo_square.svg" width=100px style="float:right">
 
