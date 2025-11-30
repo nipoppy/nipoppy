@@ -7,19 +7,11 @@ from typing import Optional, Tuple
 
 import httpx
 
-from nipoppy.logger import get_logger
+
+class ChecksumError(Exception): ...  # noqa E701
 
 
-class InvalidChecksumError(Exception):
-    """Checksum mismatch between two files."""
-
-    pass
-
-
-class ZenodoAPIError(Exception):
-    """Error when interacting with Zenodo API."""
-
-    pass
+class ZenodoAPIError(Exception): ...  # noqa E701
 
 
 class ZenodoAPI:
@@ -34,16 +26,14 @@ class ZenodoAPI:
         sandbox: bool = False,
         password_file: Optional[Path] = None,
         logger: Optional[logging.Logger] = None,
+        timeout: float = 10.0,
     ):
         self.sandbox = sandbox
         self.api_endpoint = (
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
-
-        if logger is None:
-            self.logger = get_logger(__name__)
-        else:
-            self.logger = logger
+        self.timeout = timeout
+        self.logger = logger
 
         # Access token is required for uploading files
         self.password_file = password_file
@@ -57,9 +47,18 @@ class ZenodoAPI:
         """Set the headers for the ZenodoAPI instance."""
         self.headers.update({"Authorization": f"Bearer {access_token}"})
 
-    def set_logger(self, logger: logging.Logger):
+    @property
+    def logger(self) -> logging.Logger:
+        """Get the logger for the ZenodoAPI instance."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: logging.Logger | None):
         """Set the logger for the ZenodoAPI instance."""
-        self.logger = logger
+        if logger is None:
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+        self._logger = logger
 
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
@@ -73,7 +72,7 @@ class ZenodoAPI:
 
         Raises
         ------
-        InvalidChecksumError
+        ChecksumError
             Checksum mismatch between the downloaded file and the expected checksum.
         """
         record_id = record_id.removeprefix("zenodo.")
@@ -107,8 +106,9 @@ class ZenodoAPI:
             # Checksum verification before writing to disk
             content_md5 = hashlib.md5(response.content).hexdigest()
             if content_md5 != checksum:
-                raise InvalidChecksumError(
-                    "Checksum mismatch: " f"'{file}' has invalid checksum {content_md5}"
+                raise ChecksumError(
+                    f"Checksum mismatch: '{file}' has invalid checksum {content_md5}"
+                    f" (expected: {checksum})"
                 )
 
             output_dir.joinpath(file).write_bytes(response.content)
@@ -163,14 +163,14 @@ class ZenodoAPI:
         # extract creator name
         # use username (always defined) as fallback
         response_json = response.json()
-        if (creator_name := response_json["profile"]["full_name"]) == "":
+        if not (creator_name := response_json["profile"].get("full_name")):
             creator_name = response_json["username"]
             self.logger.warning(
                 f"User {owner_id} has no full name in Zenodo profile, "
                 f'using username ("{creator_name}") instead'
             )
         # also get affiliation and ORCID (may be empty)
-        affiliation = response_json["profile"]["affiliations"]
+        affiliation = response_json["profile"].get("affiliations")
         orcid = response_json["identities"].get("orcid")
 
         # update metadata with new creator information
@@ -230,7 +230,7 @@ class ZenodoAPI:
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
-                    f"Failed to commit the file file for zenodo.{record_id}: {file}"
+                    f"Failed to commit file for zenodo.{record_id}: {file}"
                     f"\n{response.json()}"
                 )
 
@@ -265,7 +265,7 @@ class ZenodoAPI:
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
-            raise ValueError(f"{input_dir} must be a directory.")
+            raise NotADirectoryError(f"{input_dir} must be a directory.")
 
         self._check_authentication()
 
@@ -280,7 +280,7 @@ class ZenodoAPI:
             if not metadata["metadata"].get("creators"):
                 self._update_creators(record_id, owner_id, metadata)
 
-            files = list(input_dir.iterdir())
+            files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
             doi = self._publish(record_id)
             return doi
@@ -303,11 +303,13 @@ class ZenodoAPI:
                     f"{response.json()}"
                 )
 
-            raise SystemExit(1)
+            raise ZenodoAPIError from e
 
     def search_records(
         self,
         query: str,
+        sort: str = "mostdownloaded",
+        community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,
     ):
@@ -318,6 +320,10 @@ class ZenodoAPI:
         if keywords is None:
             keywords = []
 
+        # Fuzzy search when the query is a single word
+        if len(query.split()) == 1:
+            query = f"*{query}*"
+
         full_query = query
         for keyword in keywords:
             full_query += f' AND metadata.subjects.subject:"{keyword}"'
@@ -325,15 +331,33 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
+
+        api_endpoint = self._get_api_endpoint(community_id)
         response = httpx.get(
-            f"{self.api_endpoint}/records",
+            api_endpoint,
             headers=self.headers,
             params={
                 "q": full_query,
                 "size": size,
+                "sort": sort,
             },
+            timeout=self.timeout,
         )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            raise ZenodoAPIError(
+                f"Failed to search records. JSON response: {response.json()}"
+            ) from e
+
         return response.json()["hits"]
+
+    def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
+        """Get the API endpoint, considering the community if set."""
+        if community_id is None or community_id == "":
+            return self.api_endpoint + "/records"
+        else:
+            return self.api_endpoint + f"/communities/{community_id}/records"
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""

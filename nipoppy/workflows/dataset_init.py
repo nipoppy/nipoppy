@@ -1,6 +1,5 @@
 """Workflow for init command."""
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -11,20 +10,25 @@ from nipoppy.env import (
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
     NIPOPPY_DIR_NAME,
-    LogColor,
     PipelineTypeEnum,
     StrOrPathLike,
 )
+from nipoppy.exceptions import FileOperationError
+from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils import (
-    DPATH_HPC,
-    FPATH_SAMPLE_CONFIG,
-    FPATH_SAMPLE_MANIFEST,
+from nipoppy.utils.bids import (
     check_participant_id,
     check_session_id,
     session_id_to_bids_session_id,
 )
+from nipoppy.utils.utils import (
+    DPATH_HPC,
+    FPATH_SAMPLE_CONFIG,
+    FPATH_SAMPLE_MANIFEST,
+)
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+logger = get_logger()
 
 
 class InitWorkflow(BaseDatasetWorkflow):
@@ -35,6 +39,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         dpath_root: Path,
         bids_source=None,
         mode="symlink",
+        force=False,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -52,6 +57,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.fname_readme = "README.md"
         self.bids_source = bids_source
         self.mode = mode
+        self.force = force
 
     def run_main(self):
         """Create dataset directory structure.
@@ -67,31 +73,25 @@ class InitWorkflow(BaseDatasetWorkflow):
                 filenames = [
                     f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
                 ]
-
             except NotADirectoryError:
-                raise FileExistsError(f"Dataset is an existing file: {self.dpath_root}")
+                raise FileOperationError(
+                    f"Dataset is an existing file: {self.dpath_root}"
+                )
 
             if len(filenames) > 0:
-                raise FileExistsError(
-                    f"Dataset directory is non-empty: {self.dpath_root}"
-                )
+                msg = f"Dataset directory is non-empty: {self.dpath_root}"
+                if self.force:
+                    logger.warning(f"{msg} `--force` specified, proceeding anyway.")
+                else:
+                    raise FileOperationError(
+                        f"{msg}, if this is intended consider using the --force flag."
+                    )
 
         # create directories
         self.mkdir(self.dpath_root / NIPOPPY_DIR_NAME)
-        for dpath in self.layout.get_paths(directory=True, include_optional=True):
-            # If a bids_source is passed it means datalad is installed.
-            if self.bids_source is not None and dpath.stem == "bids":
-                if self.mode == "copy":
-                    self.copytree(self.bids_source, str(dpath), log_level=logging.DEBUG)
-                elif self.mode == "move":
-                    self.movetree(self.bids_source, str(dpath), log_level=logging.DEBUG)
-                elif self.mode == "symlink":
-                    self.mkdir(self.dpath_root)
-                    self.create_symlink(
-                        self.bids_source, str(dpath), log_level=logging.DEBUG
-                    )
-                else:
-                    raise ValueError(f"Invalid mode: {self.mode}")
+        for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
+            if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
+                self.handle_bids_source()
             else:
                 self.mkdir(dpath)
 
@@ -99,41 +99,59 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # create empty pipeline config subdirectories
         for pipeline_type in PipelineTypeEnum:
-            self.mkdir(self.layout.get_dpath_pipeline_store(pipeline_type))
+            self.mkdir(self.study.layout.get_dpath_pipeline_store(pipeline_type))
 
         # copy sample config and manifest files
-        self.copy(
-            FPATH_SAMPLE_CONFIG, self.layout.fpath_config, log_level=logging.DEBUG
-        )
+        self.copy(FPATH_SAMPLE_CONFIG, self.study.layout.fpath_config)
 
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
         else:
             self.copy(
                 FPATH_SAMPLE_MANIFEST,
-                self.layout.fpath_manifest,
-                log_level=logging.DEBUG,
+                self.study.layout.fpath_manifest,
             )
 
         # copy HPC files
         self.copytree(
             DPATH_HPC,
-            self.layout.dpath_hpc,
+            self.study.layout.dpath_hpc,
             dirs_exist_ok=True,
-            log_level=logging.DEBUG,
         )
 
         # inform user to edit the sample files
-        self.logger.warning(
-            f"Sample config and manifest files copied to {self.layout.fpath_config}"
-            f" and {self.layout.fpath_manifest} respectively. They should be edited"
-            " to match your dataset"
+        logger.warning(
+            "Sample config and manifest files copied to "
+            f"{self.study.layout.fpath_config} and {self.study.layout.fpath_manifest} "
+            "respectively. They should be edited to match your dataset"
         )
+
+    def handle_bids_source(self) -> None:
+        """Create bids source directory.
+
+        Handles copy/move/symlink modes.
+        If --force, attempt to remove the pre-existing conflicting bids source.
+        """
+        dpath = self.study.layout.dpath_bids
+
+        # Handle edge case where we need to clobber existing data
+        if dpath.exists() and self.force:
+            self._remove_existing(dpath)
+
+        if self.mode == "copy":
+            self.copytree(self.bids_source, str(dpath))
+        elif self.mode == "move":
+            self.movetree(self.bids_source, str(dpath))
+        elif self.mode == "symlink":
+            self.mkdir(self.dpath_root)
+            self.create_symlink(self.bids_source, str(dpath))
+        else:
+            raise ValueError(f"Invalid mode: {self.mode}")
 
     def _write_readmes(self) -> None:
         if self.dry_run:
             return None
-        for dpath, description in self.layout.dpath_descriptions:
+        for dpath, description in self.study.layout.dpath_descriptions:
             fpath_readme = dpath / self.fname_readme
             if description is None:
                 continue
@@ -153,7 +171,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 try:
                     fpath_readme.write_text(readme_content)
                 except PermissionError:
-                    self.logger.warning(
+                    logger.warning(
                         f"Permission denied when writing {fpath_readme}. "
                         "Skipping README creation."
                     )
@@ -174,25 +192,27 @@ class InitWorkflow(BaseDatasetWorkflow):
         bids_participant_ids = sorted(
             [
                 x.name
-                for x in (self.layout.dpath_bids).iterdir()
+                for x in (self.study.layout.dpath_bids).iterdir()
                 if x.is_dir() and x.name.startswith(BIDS_SUBJECT_PREFIX)
             ]
         )
 
-        self.logger.info("Creating a manifest file from the BIDS dataset content.")
+        logger.info("Creating a manifest file from the BIDS dataset content.")
 
         for bids_participant_id in bids_participant_ids:
             bids_session_ids = sorted(
                 [
                     x.name
-                    for x in (self.layout.dpath_bids / bids_participant_id).iterdir()
+                    for x in (
+                        self.study.layout.dpath_bids / bids_participant_id
+                    ).iterdir()
                     if x.is_dir() and x.name.startswith(BIDS_SESSION_PREFIX)
                 ]
             )
             if len(bids_session_ids) == 0:
                 # if there are no session folders
                 # we will add a fake session for this participant
-                self.logger.warning(
+                logger.warning(
                     "Could not find session-level folder(s) for participant "
                     f"{bids_participant_id}, using session {FAKE_SESSION_ID} "
                     "in the manifest"
@@ -210,7 +230,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                         [
                             x.name
                             for x in (
-                                self.layout.dpath_bids / bids_participant_id
+                                self.study.layout.dpath_bids / bids_participant_id
                             ).iterdir()
                             if x.is_dir()
                         ]
@@ -220,7 +240,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                         [
                             x.name
                             for x in (
-                                self.layout.dpath_bids
+                                self.study.layout.dpath_bids
                                 / bids_participant_id
                                 / bids_session_id
                             ).iterdir()
@@ -237,12 +257,9 @@ class InitWorkflow(BaseDatasetWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
-        self.save_tabular_file(manifest, self.layout.fpath_manifest)
+        self.save_tabular_file(manifest, self.study.layout.fpath_manifest)
 
     def run_cleanup(self):
         """Log a success message."""
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Successfully initialized a dataset "
-            f"at {self.dpath_root}![/]"
-        )
+        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
         return super().run_cleanup()

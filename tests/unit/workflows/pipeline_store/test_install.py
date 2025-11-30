@@ -1,0 +1,509 @@
+"""Tests for PipelineInstallWorkflow class."""
+
+import logging
+import shutil
+import subprocess
+from contextlib import nullcontext
+from pathlib import Path
+from typing import Optional
+
+import pytest
+import pytest_mock
+
+from nipoppy.config.main import Config
+from nipoppy.config.pipeline import ProcessingPipelineConfig
+from nipoppy.container import ApptainerHandler
+from nipoppy.env import (
+    CURRENT_SCHEMA_VERSION,
+    ContainerCommandEnum,
+    PipelineTypeEnum,
+)
+from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.layout import DatasetLayout
+from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
+
+
+@pytest.fixture(scope="function")
+def pipeline_config():
+    return ProcessingPipelineConfig(
+        **{
+            "NAME": "my_pipeline",
+            "VERSION": "1.0.0",
+            "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
+            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "CONTAINER_INFO": {
+                "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/container.sif",
+                "URI": "fake_uri",
+            },
+        }
+    )
+
+
+@pytest.fixture(scope="function")
+def workflow(
+    tmp_path: Path,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    dpath_root = tmp_path / "my_dataset"
+    create_pipeline_config_files(
+        tmp_path,
+        processing_pipelines=[pipeline_config.model_dump(mode="json")],
+    )
+    workflow = PipelineInstallWorkflow(
+        dpath_root=dpath_root,
+        source=(
+            tmp_path
+            / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
+            / "my_pipeline-1.0.0"
+        ),
+        zenodo_api=mocker.MagicMock(),
+        assume_yes=True,
+    )
+    # make the default config have a path placeholder string
+    get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]/my_file.tsv").save(
+        workflow.study.layout.fpath_config
+    )
+
+    # mock singularity/apptainer pull (this is overridden by some tests)
+    mocker.patch.object(workflow, "run_command")
+
+    return workflow
+
+
+@pytest.fixture(scope="function")
+def workflow_zenodo(workflow: PipelineInstallWorkflow):  # noqa: F811
+    workflow.zenodo_id = "valid_zenodo_id"
+    workflow.dpath_pipeline = None
+
+    def _mocked_download_record_files(record_id, output_dir: Path):
+        if record_id == "valid_zenodo_id":
+            # successful download
+            shutil.copytree(TEST_PIPELINE, output_dir, dirs_exist_ok=True)
+        else:
+            # pretend Zenodo record exists but is not a valid Nipoppy pipeline
+            # downloaded bundle is missing config.json file
+            output_dir.mkdir(parents=True, exist_ok=True)
+            (output_dir / f"{record_id}.txt").touch()
+
+    workflow.zenodo_api.download_record_files.side_effect = (
+        _mocked_download_record_files
+    )
+
+    return workflow
+
+
+def _assert_files_copied(dpath_source, dpath_dest):
+    paths_source = set(
+        path.relative_to(dpath_source) for path in dpath_source.rglob("*")
+    )
+    paths_dest = set(path.relative_to(dpath_dest) for path in dpath_dest.rglob("*"))
+    assert paths_source == paths_dest
+
+
+@pytest.mark.no_xdist
+def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    PipelineInstallWorkflow(
+        dpath_root=(tmp_path / "my_dataset"),
+        source="not_a_path",
+    )
+    assert any(
+        [
+            "does not seem like a valid path or Zenodo ID" in record.message
+            and record.levelno == logging.WARNING
+            for record in caplog.records
+        ]
+    )
+
+
+@pytest.mark.parametrize("variables", [{}, {"var1": "description"}])
+@pytest.mark.parametrize("dry_run", [False, True])
+@pytest.mark.no_xdist
+def test_update_config_and_save(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    variables: dict,
+    dry_run: bool,
+    caplog: pytest.LogCaptureFixture,
+):
+    pipeline_config.VARIABLES = variables
+    workflow.dry_run = dry_run
+
+    new_config = workflow._update_config_and_save(pipeline_config)
+
+    # check that the variables were added to the config file
+    assert new_config.PIPELINE_VARIABLES.PROCESSING[pipeline_config.NAME][
+        pipeline_config.VERSION
+    ] == {variable_name: None for variable_name in variables}
+
+    # check logs
+    if variables:
+        assert "Adding" in caplog.text
+        assert "You must update" in caplog.text
+    else:
+        assert "Adding" not in caplog.text
+        assert "You must update" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "variables,dry_run", [({}, False), ({"var1": "description"}, True)]
+)
+def test_update_config_and_save_no_write(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    variables: dict,
+    dry_run: bool,
+    mocker: pytest_mock.MockFixture,
+):
+    pipeline_config.VARIABLES = variables
+    workflow.dry_run = dry_run
+
+    mocked = mocker.patch.object(Config, "save")
+
+    assert isinstance(workflow._update_config_and_save(pipeline_config), Config)
+
+    # should not update the config file if dry_run is True
+    # or if there were no variables to add
+    mocked.assert_not_called()
+
+
+def test_update_config_and_save_no_other_change(
+    workflow: PipelineInstallWorkflow, pipeline_config: ProcessingPipelineConfig
+):
+    # cache original config
+    original_config = Config.load(
+        workflow.study.layout.fpath_config  # , apply_substitutions=False
+    )
+
+    # check that placeholder was replaced as expected
+    assert original_config != workflow.study.config
+    assert workflow.study.config.DICOM_DIR_MAP_FILE.parent == workflow.dpath_root
+
+    # create new config file with the new pipeline variables
+    pipeline_config.VARIABLES = {"var1": "description"}
+    new_config = workflow._update_config_and_save(pipeline_config)
+
+    # check that the new config file is identical to the old one except for
+    # the pipeline variables
+    assert new_config.model_dump(
+        exclude="PIPELINE_VARIABLES"
+    ) == original_config.model_dump(exclude="PIPELINE_VARIABLES")
+
+
+@pytest.mark.no_xdist
+def test_update_config_and_save_no_overwrite(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    caplog: pytest.LogCaptureFixture,
+):
+    variable_name = "var1"
+    variable_value = "some_value"
+    pipeline_config.VARIABLES = {
+        variable_name: "this is a variable that is important for the pipeline",
+    }
+    workflow.study.config.PIPELINE_VARIABLES.set_variables(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+        {variable_name: variable_value},
+    )
+    workflow.study.config.save(workflow.study.layout.fpath_config)
+
+    workflow._update_config_and_save(pipeline_config)
+
+    updated_config = workflow.study.config.load(workflow.study.layout.fpath_config)
+    assert updated_config.PIPELINE_VARIABLES.get_variables(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+    ) == {variable_name: variable_value}
+
+    # should not log any warnings about adding variables
+    assert not any([record.levelno == logging.WARNING for record in caplog.records])
+
+
+def test_download_container(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    mocked_get_container_handler = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.get_container_handler",
+        return_value=ApptainerHandler(),
+    )
+    mocked_run_command = mocker.patch.object(workflow, "run_command")
+
+    workflow._download_container(pipeline_config)
+
+    # check that the container handler was created with the correct config
+    mocked_get_container_handler.assert_called_once_with(
+        workflow.study.config.CONTAINER_CONFIG
+    )
+
+    # check that the container file was downloaded
+    mocked_run_command.assert_called_once_with(
+        "apptainer pull "
+        f"{workflow.study.layout.dpath_containers / pipeline_config.CONTAINER_INFO.FILE.name}"  # noqa: E501
+        " fake_uri",
+    )
+    # first call, positional arg list, first element
+    assert not isinstance(mocked_run_command.call_args[0][0][0], ContainerCommandEnum)
+
+
+@pytest.mark.parametrize("confirm_download", [True, False])
+def test_download_container_confirm_true(
+    confirm_download: bool,
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    workflow.assume_yes = False
+
+    mocked_confirm_ask = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.confirm",
+        return_value=confirm_download,
+    )
+
+    mock_handler = mocker.MagicMock()
+    mock_handler.is_image_downloaded.return_value = False
+    mock_handler.get_pull_confirmation_prompt.return_value = "not used"
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.install.get_container_handler",
+        return_value=mock_handler,
+    )
+
+    mocked_run_command = mocker.patch.object(workflow, "run_command")
+
+    workflow._download_container(pipeline_config)
+    mocked_confirm_ask.assert_called_once()
+
+    if confirm_download:
+        mocked_run_command.assert_called_once()
+    else:
+        mocked_run_command.assert_not_called()
+
+    mock_handler.get_pull_confirmation_prompt.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "console,command",
+    [
+        ("CONSOLE_STDERR", ContainerCommandEnum.APPTAINER),
+        ("CONSOLE_STDERR", ContainerCommandEnum.SINGULARITY),
+        ("CONSOLE_STDOUT", ContainerCommandEnum.DOCKER),
+    ],
+)
+def test_download_container_status(
+    console: str,
+    command: ContainerCommandEnum,
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    mocked_status = mocker.patch(
+        f"nipoppy.workflows.pipeline_store.install.{console}.status",
+    )
+    mocked_run_command = mocker.patch.object(workflow, "run_command")
+
+    workflow.study.config.CONTAINER_CONFIG.COMMAND = command
+    workflow._download_container(pipeline_config)
+
+    mocked_status.assert_called_once_with(
+        "Downloading the container, this can take a while..."
+    )
+    mocked_run_command.assert_called_once()
+
+
+@pytest.mark.no_xdist
+def test_download_container_failed(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    error_message = "Download failed"
+    mocked = mocker.patch.object(
+        workflow,
+        "run_command",
+        side_effect=subprocess.CalledProcessError(1, error_message),
+    )
+
+    with pytest.raises(WorkflowError):
+        workflow._download_container(pipeline_config)
+
+    mocked.assert_called_once()
+
+    last_record = caplog.records[-1]
+    assert last_record.levelno == logging.ERROR
+    assert "Failed to download container" in last_record.message
+    assert error_message in last_record.message
+
+
+def test_download_container_no_uri(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    pipeline_config.CONTAINER_INFO.URI = None
+    mocked = mocker.patch.object(workflow, "run_command")
+
+    workflow._download_container(pipeline_config)
+
+    mocked.assert_not_called()
+
+
+def test_download_container_image_exists(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    fpath_container = (
+        workflow.study.layout.dpath_containers
+        / pipeline_config.CONTAINER_INFO.FILE.name
+    )
+    fpath_container.parent.mkdir(parents=True, exist_ok=True)
+    fpath_container.touch()
+    mocked = mocker.patch.object(workflow, "run_command")
+
+    workflow._download_container(pipeline_config)
+    mocked.assert_not_called()
+
+
+@pytest.mark.no_xdist
+def test_run_main(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockFixture,
+):
+    dpath_installed = workflow.study.layout.get_dpath_pipeline_bundle(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+    )
+
+    # make sure directory does not already exist
+    # also check that the parent directory will be created without error
+    assert not dpath_installed.exists()
+    assert not dpath_installed.parent.exists()
+
+    # mock
+    mocked_update_config_and_save = mocker.patch.object(
+        workflow, "_update_config_and_save"
+    )
+    mocked_download_container = mocker.patch.object(workflow, "_download_container")
+
+    workflow.run_main()
+    _assert_files_copied(
+        workflow.dpath_pipeline,
+        dpath_installed,
+    )
+    mocked_update_config_and_save.assert_called_once_with(pipeline_config)
+    mocked_download_container.assert_called_once_with(pipeline_config)
+    assert "Successfully installed pipeline" in caplog.text
+
+
+@pytest.mark.parametrize("force", [False, True])
+def test_run_main_force(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    force: bool,
+):
+    workflow.force = force
+
+    # create directory where the pipeline is supposed to be installed
+    dpath_installed = workflow.study.layout.get_dpath_pipeline_bundle(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+    )
+    dpath_installed.mkdir(parents=True)
+
+    with (
+        nullcontext()
+        if force
+        else pytest.raises(FileOperationError, match="Use --force to overwrite")
+    ):
+        workflow.run_main()
+        _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
+
+
+def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow):
+    workflow_zenodo.zenodo_id = "bad_zenodo_id"
+
+    with pytest.raises(
+        ConfigError,
+        match="Pipeline configuration file not found: .* Make sure the record at",
+    ):
+        workflow_zenodo.run_main()
+
+
+@pytest.mark.parametrize(
+    "zenodo_id,exception", [(None, FileOperationError), ("123456", ConfigError)]
+)
+def test_run_main_file_not_found(
+    workflow: PipelineInstallWorkflow, zenodo_id: Optional[str], exception: Exception
+):
+    # create a non-existent path
+    workflow.dpath_pipeline = (
+        workflow.study.layout.dpath_pipelines / "non_existent_path"
+    )
+    workflow.zenodo_id = zenodo_id
+    with pytest.raises(
+        exception,
+        match="Pipeline configuration file not found: .*/config.json",
+    ):
+        workflow.run_main()
+
+
+def test_download(workflow_zenodo: PipelineInstallWorkflow):
+    workflow_zenodo.run_main()
+
+    # Check that the pipeline was downloaded and moved correctly
+    assert not (
+        workflow_zenodo.study.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+    ).exists()
+    assert (
+        workflow_zenodo.study.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
+    ).exists()
+
+
+@pytest.mark.parametrize("force, fails", [(True, False), (False, True)])
+def test_download_dir_exist(
+    workflow_zenodo: PipelineInstallWorkflow, force: bool, fails: bool
+):
+    """Test the behavior when the download directory already exists."""
+    workflow_zenodo.force = force
+
+    download_dir = (
+        workflow_zenodo.study.layout.dpath_pipelines / workflow_zenodo.zenodo_id
+    )
+    download_dir.mkdir(parents=True, exist_ok=True)
+    assert download_dir.exists()
+
+    with pytest.raises(WorkflowError) if fails else nullcontext():
+        workflow_zenodo.run_main()
+
+
+@pytest.mark.parametrize("force, fails", [(True, False), (False, True)])
+def test_download_install_dir_exist(
+    workflow_zenodo: PipelineInstallWorkflow, force: bool, fails: bool
+):
+    workflow_zenodo.force = force
+
+    download_dir = (
+        workflow_zenodo.study.layout.dpath_pipelines / "processing" / TEST_PIPELINE.name
+    )
+    download_dir.mkdir(parents=True, exist_ok=True)
+    assert download_dir.exists()
+
+    with (
+        pytest.raises(
+            FileOperationError,
+            match="Pipeline directory exists: .* Use --force to overwrite",
+        )
+        if fails
+        else nullcontext()
+    ):
+        workflow_zenodo.run_main()

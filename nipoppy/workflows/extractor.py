@@ -9,14 +9,14 @@ from typing import Optional
 from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     PipelineInfo,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ExtractionPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
-from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.workflows.runner import Runner
 
 
-class ExtractionRunner(PipelineRunner):
+class ExtractionRunner(Runner):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
 
     _pipeline_type = PipelineTypeEnum.EXTRACTION
@@ -29,10 +29,11 @@ class ExtractionRunner(PipelineRunner):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        use_subcohort: Optional[StrOrPathLike] = None,
         simulate: bool = False,
         keep_workdir: bool = False,
         hpc: Optional[str] = None,
-        write_list: Optional[StrOrPathLike] = None,
+        write_subcohort: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -45,10 +46,11 @@ class ExtractionRunner(PipelineRunner):
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
+            use_subcohort=use_subcohort,
             simulate=simulate,
             keep_workdir=keep_workdir,
             hpc=hpc,
-            write_list=write_list,
+            write_subcohort=write_subcohort,
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
@@ -79,14 +81,14 @@ class ExtractionRunner(PipelineRunner):
         proc_pipeline_info = self.pipeline_config.PROC_DEPENDENCIES[0]
 
         self._get_pipeline_config(
-            self.layout.get_dpath_pipeline_bundle(
+            self.study.layout.get_dpath_pipeline_bundle(
                 PipelineTypeEnum.PROCESSING,
                 proc_pipeline_info.NAME,
                 proc_pipeline_info.VERSION,
             ),
             pipeline_name=proc_pipeline_info.NAME,
             pipeline_version=proc_pipeline_info.VERSION,
-            pipeline_class=ProcPipelineConfig,
+            pipeline_class=ProcessingPipelineConfig,
         ).get_step_config(step_name=proc_pipeline_info.STEP)
 
         return proc_pipeline_info
@@ -94,7 +96,7 @@ class ExtractionRunner(PipelineRunner):
     @cached_property
     def dpath_pipeline(self) -> Path:
         """Get the path to the derivatives directory associated with the extractor."""
-        return self.layout.get_dpath_pipeline(
+        return self.study.layout.get_dpath_pipeline(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
@@ -102,7 +104,7 @@ class ExtractionRunner(PipelineRunner):
     @cached_property
     def dpath_pipeline_output(self) -> Path:
         """Return the path to the pipeline's output directory."""
-        return self.layout.get_dpath_pipeline_output(
+        return self.study.layout.get_dpath_pipeline_output(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
@@ -110,7 +112,7 @@ class ExtractionRunner(PipelineRunner):
     @cached_property
     def dpath_pipeline_idp(self) -> Path:
         """Return the path to the pipeline's IDP directory."""
-        return self.layout.get_dpath_pipeline_idp(
+        return self.study.layout.get_dpath_pipeline_idp(
             pipeline_name=self.proc_pipeline_info.NAME,
             pipeline_version=self.proc_pipeline_info.VERSION,
         )
@@ -175,18 +177,24 @@ class ExtractionRunner(PipelineRunner):
     def run_single(self, participant_id: str, session_id: str):
         """Run extractor on a single participant/session."""
         # get container command
-        container_command = self.process_container_config(
-            participant_id=participant_id,
-            session_id=session_id,
-            bind_paths=[
-                self.dpath_pipeline_idp,
-                self.dpath_pipeline_output,
-            ],
-        )
+        launch_boutiques_run_kwargs = {}
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_handler = self.process_container_config(
+                participant_id=participant_id,
+                session_id=session_id,
+                bind_paths=[
+                    self.dpath_pipeline_idp,
+                    self.dpath_pipeline_output,
+                ],
+            )
+            launch_boutiques_run_kwargs["container_command"] = container_command
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
-            participant_id, session_id, container_command=container_command
+            participant_id,
+            session_id,
+            **launch_boutiques_run_kwargs,
         )
 
         return invocation_and_descriptor

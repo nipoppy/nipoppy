@@ -6,13 +6,14 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.config.pipeline import BidsPipelineConfig
+from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
-from nipoppy.workflows.runner import PipelineRunner
+from nipoppy.exceptions import WorkflowError
+from nipoppy.workflows.runner import Runner
 
 
-class BidsConversionRunner(PipelineRunner):
+class BIDSificationRunner(Runner):
     """Convert data to BIDS."""
 
     _pipeline_type = PipelineTypeEnum.BIDSIFICATION
@@ -25,10 +26,11 @@ class BidsConversionRunner(PipelineRunner):
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
         session_id: str = None,
+        use_subcohort: Optional[StrOrPathLike] = None,
         simulate: bool = False,
         keep_workdir: bool = False,
         hpc: Optional[str] = None,
-        write_list: Optional[StrOrPathLike] = None,
+        write_subcohort: Optional[StrOrPathLike] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -41,10 +43,11 @@ class BidsConversionRunner(PipelineRunner):
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
+            use_subcohort=use_subcohort,
             simulate=simulate,
             keep_workdir=keep_workdir,
             hpc=hpc,
-            write_list=write_list,
+            write_subcohort=write_subcohort,
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
@@ -53,7 +56,7 @@ class BidsConversionRunner(PipelineRunner):
     @cached_property
     def dpath_pipeline(self):
         """Not available."""
-        raise RuntimeError(
+        raise WorkflowError(
             f'"dpath_pipeline" attribute is not available for {type(self)}'
         )
 
@@ -63,7 +66,7 @@ class BidsConversionRunner(PipelineRunner):
         return [self.dpath_pipeline_work]
 
     @cached_property
-    def pipeline_config(self) -> BidsPipelineConfig:
+    def pipeline_config(self) -> BIDSificationPipelineConfig:
         """Get the user config object for the BIDS pipeline."""
         return super().pipeline_config
 
@@ -124,18 +127,24 @@ class BidsConversionRunner(PipelineRunner):
     def run_single(self, participant_id: str, session_id: str):
         """Run BIDS conversion on a single participant/session."""
         # get container command
-        container_command = self.process_container_config(
-            participant_id=participant_id,
-            session_id=session_id,
-            bind_paths=[
-                self.layout.dpath_post_reorg,
-                self.layout.dpath_bids,
-            ],
-        )
+        launch_boutiques_run_kwargs = {}
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_handler = self.process_container_config(
+                participant_id=participant_id,
+                session_id=session_id,
+                bind_paths=[
+                    self.study.layout.dpath_post_reorg,
+                    self.study.layout.dpath_bids,
+                ],
+            )
+            launch_boutiques_run_kwargs["container_command"] = container_command
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
-            participant_id, session_id, container_command=container_command
+            participant_id,
+            session_id,
+            **launch_boutiques_run_kwargs,
         )
 
         # update status
@@ -159,6 +168,6 @@ class BidsConversionRunner(PipelineRunner):
         """
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.save_tabular_file(
-                self.curation_status_table, self.layout.fpath_curation_status
+                self.curation_status_table, self.study.layout.fpath_curation_status
             )
         return super().run_cleanup(**kwargs)

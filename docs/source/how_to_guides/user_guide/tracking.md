@@ -11,7 +11,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Processed imaging data the {{dpath_pipeline_output}} directory
     - See <project:processing.md> for expected subdirectory structure
 
@@ -25,7 +25,7 @@ Nipoppy trackers search for expected file paths or patterns in pipeline output f
 ### Commands
 
 - Command-line interface: [`nipoppy track-processing`](<project:../../cli_reference/track_processing.rst>)
-- Python API: {class}`nipoppy.workflows.PipelineTracker`
+- Python API: {class}`nipoppy.workflows.tracker.PipelineTracker`
 
 ### Workflow
 
@@ -84,7 +84,7 @@ The `pipeline_complete` column can have the following values:
 To track all available participants and sessions, run:
 ```console
 $ nipoppy track-processing \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -96,7 +96,7 @@ If there are multiple versions or steps for the same pipeline in the global conf
 The tracker can also be run on a single participant and/or session at a time:
 ```console
 $ nipoppy track-processing \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
@@ -111,10 +111,10 @@ Log files for this command will be written to {{dpath_logs}}`/track`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import PipelineTracker
+from nipoppy.workflows.tracker import PipelineTracker
 
 # replace by appropriate values
-dpath_root = "<DATASET_ROOT>"
+dpath_root = "<NIPOPPY_PROJECT_ROOT>"
 pipeline_name = "<PIPELINE_NAME>"
 
 workflow = PipelineTracker(
@@ -124,7 +124,7 @@ workflow = PipelineTracker(
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track_processing.rst>)).
+See the API reference for {class}`nipoppy.workflows.tracker.PipelineTracker` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/track_processing.rst>)).
 
 ## Next steps
 

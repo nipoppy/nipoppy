@@ -17,7 +17,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 ### Prerequisites
 
 - A Nipoppy dataset with a valid global configuration file and an accurate manifest
-    - See the [Quickstart guide](../../overview/quickstart.md) for instructions on how to set up a new dataset
+    - See the [Quickstart guide](../../overview/quickstart/index.md) for instructions on how to set up a new dataset
 - Raw imaging data organized according to the {term}`BIDS` standard in the {{dpath_bids}} directory
     - See <project:bids_conversion.md>
 
@@ -34,7 +34,7 @@ Although fMRIPrep and MRIQC are both [BIDS Apps](https://bids.neuroimaging.io/to
 ### Commands
 
 - Command-line interface: [`nipoppy process`](<project:../../cli_reference/process.rst>)
-- Python API: {class}`nipoppy.workflows.PipelineRunner`
+- Python API: {class}`nipoppy.workflows.processing_runner.ProcessingRunner`
 
 ### Workflow
 
@@ -77,7 +77,7 @@ Pipeline step configurations also have a `DESCRIPTOR_FILE` field, which points t
 To process all participants and sessions in a dataset (sequentially), run:
 ```console
 $ nipoppy process \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME>
 ```
 where `<PIPELINE_NAME>` correspond to the pipeline name as specified in the global configuration file.
@@ -91,7 +91,7 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 The pipeline can also be run on a single participant and/or session (useful for batching on clusters and testing pipelines/configurations):
 ```console
 $ nipoppy process \
-    --dataset <DATASET_ROOT> \
+    --dataset <NIPOPPY_PROJECT_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
@@ -110,20 +110,20 @@ Log files for this command will be written to {{dpath_logs}}`/run`
 ### Using the Python API
 
 ```python
-from nipoppy.workflows import PipelineRunner
+from nipoppy.workflows.runner import Runner
 
 # replace by appropriate values
-dpath_root = "<DATASET_ROOT>"
+dpath_root = "<NIPOPPY_PROJECT_ROOT>"
 pipeline_name = "<PIPELINE_NAME>"
 
-workflow = PipelineRunner(
+workflow = Runner(
     dpath_root=dpath_root,
     pipeline_name=pipeline_name,
 )
 workflow.run()
 ```
 
-See the API reference for {class}`nipoppy.workflows.PipelineRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/process.rst>)).
+See the API reference for {class}`nipoppy.workflows.processing_runner.ProcessingRunner` for more information on optional arguments (they correspond to the ones for the [CLI](<project:../../cli_reference/process.rst>)).
 
 ## Next steps
 

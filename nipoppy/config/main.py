@@ -13,9 +13,10 @@ from typing_extensions import Self
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.utils import apply_substitutions_to_json, load_json
+from nipoppy.utils.utils import apply_substitutions_to_json, load_json
 
 
 class PipelineVariables(BaseModel):
@@ -60,11 +61,11 @@ class PipelineVariables(BaseModel):
         """Get the variables for a specific pipeline."""
         try:
             key = self._pipeline_type_to_key[pipeline_type]
-        except KeyError:
-            raise ValueError(
+        except KeyError as e:
+            raise ConfigError(
                 f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
                 f"{self._pipeline_type_to_key.keys()}"
-            )
+            ) from e
 
         return getattr(self, key)[pipeline_name][pipeline_version]
 
@@ -78,11 +79,11 @@ class PipelineVariables(BaseModel):
         """Set the variables for a specific pipeline."""
         try:
             key = self._pipeline_type_to_key[pipeline_type]
-        except KeyError:
-            raise ValueError(
+        except KeyError as e:
+            raise ConfigError(
                 f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
                 f"{self._pipeline_type_to_key.keys()}"
-            )
+            ) from e
 
         pipeline_variables = getattr(self, key)
         pipeline_variables[pipeline_name][pipeline_version] = variables
@@ -168,11 +169,29 @@ class Config(_SchemaWithContainerConfig):
             self.DICOM_DIR_MAP_FILE is not None
             and self.DICOM_DIR_PARTICIPANT_FIRST is not None
         ):
-            raise ValueError(
+            raise ConfigError(
                 "Cannot specify both DICOM_DIR_MAP_FILE and DICOM_DIR_PARTICIPANT_FIRST"
                 f". Got DICOM_DIR_MAP_FILE={self.DICOM_DIR_MAP_FILE} and "
                 f"DICOM_DIR_PARTICIPANT_FIRST={self.DICOM_DIR_PARTICIPANT_FIRST}"
             )
+
+        return self
+
+    def _check_substitutions(self) -> Self:
+        """Check that substitutions do not have empty keys."""
+        for key, value in self.SUBSTITUTIONS.items():
+            if not key:
+                raise ConfigError("Substitutions cannot have empty keys")
+
+            if value != (value_stripped := value.strip()):
+                warnings.warn(
+                    (
+                        f"Substitution value for key '{key}' has leading/trailing "
+                        f"whitespace: '{value}'. Stripping it."
+                    ),
+                    UserWarning,
+                )
+                self.SUBSTITUTIONS[key] = value_stripped
 
         return self
 
@@ -227,6 +246,7 @@ class Config(_SchemaWithContainerConfig):
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
         self._check_dicom_dir_options()
+        self._check_substitutions()
 
         return self
 
@@ -269,9 +289,7 @@ class Config(_SchemaWithContainerConfig):
         substitutions = config_dict.get(substitutions_key, {})
         if apply_substitutions and substitutions:
             # apply user-defined substitutions to all fields except SUBSTITUTIONS itself
-            config = cls(**apply_substitutions_to_json(config_dict, substitutions))
-            config.SUBSTITUTIONS = substitutions
-        else:
-            config = cls(**config_dict)
-
+            config_dict = apply_substitutions_to_json(config_dict, substitutions)
+            config_dict[substitutions_key] = substitutions
+        config = cls(**config_dict)
         return config

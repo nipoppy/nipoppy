@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "boutiques",
+    "boutiques>=0.5.31",
     "click",
     "httpx",
     "jinja2",
@@ -24,7 +24,6 @@ dependencies = [
     "pydantic",
     "pydicom!=3.0.0",
     "pysqa[sge]>=0.2.4",
-    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
@@ -33,10 +32,11 @@ description = "Standardized organization and processing of neuroimaging-clinical
 license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]
+parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -51,18 +51,24 @@ doc = [
     "sphinx-togglebutton",
     "sphinx_design",
 ]
-dev = ["nipoppy[doc]", "nipoppy[test]", "pre-commit"]
+dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
     "fids>=0.1.0",
+    "nipoppy[gui,parallel]",
     "packaging",
     "pytest-cov",
+    "pytest-httpx",
     "pytest-mock",
+    "pytest-xdist",
     "pytest>=6.0.0",
 ]
 tests = ["nipoppy[test]"] # alias in case of typo
+tui = ["trogon"]
+gui = ["nipoppy[tui]"] # alias for TUI
 
 [project.scripts]
-nipoppy = "nipoppy.cli:cli"
+nipoppy = "nipoppy.cli.cli:cli"
+nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
@@ -80,7 +86,16 @@ source = "vcs"
 skip = '.git,.github,pyproject.toml'
 
 [tool.pytest.ini_options]
-addopts = "-ra -q -vv"
+addopts = "--color=yes -n auto --dist loadfile -ra -q -vv"
 testpaths = ["tests/"]
 minversion = "6.0"
 xfail_strict = true
+markers = [
+    "api: mark a test as an api test.",
+    "no_xdist: mark a test that should not be run with xdist in CI.",
+]
+
+[tool.coverage.report]
+# Preserves the "pragma: no cover" and skip functions decorated with "@abstractmethod"
+# More info at: https://coverage.readthedocs.io/en/latest/config.html#report-exclude-also
+exclude_also = ["@abstractmethod"]

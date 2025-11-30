@@ -8,9 +8,9 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import (
-    BidsPipelineConfig,
+    BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
-    ProcPipelineConfig,
+    ProcessingPipelineConfig,
 )
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.layout import LayoutConfig
@@ -25,8 +25,8 @@ MODEL_FILENAME_MAP = {
     BoutiquesConfig: "boutiques.json",
     Config: "config.json",
     LayoutConfig: "layout.json",
-    BidsPipelineConfig: "bids_pipeline.json",
-    ProcPipelineConfig: "proc_pipeline.json",
+    BIDSificationPipelineConfig: "bids_pipeline.json",
+    ProcessingPipelineConfig: "proc_pipeline.json",
     ExtractionPipelineConfig: "extraction_pipeline.json",
     HpcConfig: "hpc.json",
     TrackerConfig: "tracker.json",

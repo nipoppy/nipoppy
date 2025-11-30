@@ -2,7 +2,7 @@
 ===================
 
 .. note::
-   This command calls the :py:class:`nipoppy.workflows.runner.PipelineRunner` class from the Python :term:`API` internally.
+   This command calls the :py:class:`nipoppy.workflows.processing_runner.ProcessingRunner` class from the Python :term:`API` internally.
 
-.. click:: nipoppy.cli:process
+.. click:: nipoppy.cli.cli:process
    :prog: nipoppy process

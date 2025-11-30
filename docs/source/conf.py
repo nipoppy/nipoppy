@@ -5,15 +5,19 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import os
+import re
+from datetime import datetime
+from pathlib import Path
 
 from nipoppy._version import __version__
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Nipoppy"
-copyright = "2024, NeuroDataScience-ORIGAMI Lab"
+copyright = f"{datetime.today().year}, NeuroDataScience-ORIGAMI Lab"
 author = "NeuroDataScience-ORIGAMI Lab"
 
 # The version info for the project you're documenting, acts as replacement
@@ -154,12 +158,16 @@ myst_substitutions = {
     "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
     "dpath_post_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_post_reorg}`",
     "dpath_logs": f"`{DEFAULT_LAYOUT_INFO.dpath_logs}`",
+    "dpath_hpc": f"`{DEFAULT_LAYOUT_INFO.dpath_hpc}`",
     "dpath_bids": f"`{DEFAULT_LAYOUT_INFO.dpath_bids}`",
     "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
     "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
+    "dpath_pipeline_work": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_work('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
+    "fpath_processing_pipeline_config": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_bundle(PipelineTypeEnum.PROCESSING, '<PIPELINE_NAME>', '<PIPELINE_VERSION>')}/{DEFAULT_LAYOUT_INFO.fname_pipeline_config}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "dpath_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_tabular}`",
+    "dpath_assessments": f"`{DEFAULT_LAYOUT_INFO.dpath_assessments}`",
     "fpath_curation_status": f"`{DEFAULT_LAYOUT_INFO.fpath_curation_status}`",
     "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
@@ -189,7 +197,7 @@ myst_substitutions = {
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]
-autoapi_ignore = ["*_version*", "**/cli.py", "**/nipoppy/data"]
+autoapi_ignore = ["*_version*", "**/cli.py", "**/tui.py", "**/nipoppy/data"]
 autoapi_options = [
     "members",
     "undoc-members",
@@ -242,6 +250,13 @@ jsonschema_options = {
 # -- Hoverxref configuration ---------------------------------------------------
 hoverxref_roles = [
     "term",
+]
+
+# -- Linkcheck configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-the-linkcheck-builder
+# Ignore links are defined in `./ignored_links.txt`
+linkcheck_ignore = [
+    re.escape(link) for link in Path("ignored_links.txt").read_text().splitlines()
 ]
 
 # # TODO
