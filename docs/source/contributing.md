@@ -108,6 +108,6 @@ A GitHub workflow automatically generates the release notes—do not create it m
 
 ### Extra steps after the release
 
-Add a summary message to release notes and share on Discord
+Add a summary message to release notes and share on Discord.
 
 Rebuild docs for newly released version to update the "What's new" section.
