@@ -54,6 +54,17 @@ Duration: 8:31m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/m0PMMMiKF6w?si=GS6uUiCB9VTWnHQe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+## 5. nipoppy process
+
+In this tutorial we will cover how to run processing pipelines on imaging data. More concretely, we will
+- check the prerequisites to run [mriqc](https://mriqc.readthedocs.io/en/stable/index.html) on our dataset
+- execute the [`nipoppy process`](../../cli_reference/process.rst) command
+- explore the created output
+
+Duration: 5:26m
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9FDdf1BHz0w?si=HK5wj1zQe8GfRsgj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ```{attention}
-More videos on `nipoppy process`, `track-processing` and `extract` are in the making and will be published soon! Stay tuned for updates!
+More videos on `track-processing` and `extract` are in the making and will be published soon! Stay tuned for updates!
 ```
