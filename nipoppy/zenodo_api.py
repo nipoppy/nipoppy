@@ -308,6 +308,7 @@ class ZenodoAPI:
     def search_records(
         self,
         query: str,
+        sort: str = "mostdownloaded",
         community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,
@@ -338,6 +339,7 @@ class ZenodoAPI:
             params={
                 "q": full_query,
                 "size": size,
+                "sort": sort,
             },
             timeout=self.timeout,
         )
