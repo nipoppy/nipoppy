@@ -97,7 +97,7 @@ Then open the `build/html/index.html` file in a browser.
     1. (Recommended) Add a summary to the release description.
 1. Publish the release.
 
-```{info}
+```{note}
 This will trigger the GitHub workflow for publishing the package to PyPi.
 ```
 
