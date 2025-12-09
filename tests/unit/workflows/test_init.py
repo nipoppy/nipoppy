@@ -29,22 +29,24 @@ def exist_or_none(o: object, s: str) -> bool:
 
 def assert_layout_creation(workflow, dpath_root):
     # check that all directories have been created (using layout-aware paths)
-    for dpath in workflow.layout.get_paths(directory=True, include_optional=True):
+    for dpath in workflow.study.layout.get_paths(directory=True, include_optional=True):
         assert dpath.exists(), f"Expected directory not found: {dpath}"
         # Check README exists for directories with descriptions (except .nipoppy)
-        if dpath != workflow.layout.dpath_nipoppy:
+        if dpath != workflow.study.layout.dpath_nipoppy:
             readme_path = dpath / "README.md"
             # Only check README if this directory has a description in the layout
             path_info = None
-            for info in workflow.layout.config.path_infos:
-                if workflow.layout.get_full_path(info.path) == dpath:
+            for info in workflow.study.layout.config.path_infos:
+                if workflow.study.layout.get_full_path(info.path) == dpath:
                     path_info = info
                     break
             if path_info and path_info.description:
                 assert readme_path.exists(), f"Expected README not found: {readme_path}"
 
     # check that required files have been created
-    for fpath in workflow.layout.get_paths(directory=False, include_optional=False):
+    for fpath in workflow.study.layout.get_paths(
+        directory=False, include_optional=False
+    ):
         assert fpath.exists(), f"Expected file not found: {fpath}"
 
     # check that no pipeline config files have been copied
@@ -61,7 +63,7 @@ def assert_layout_creation(workflow, dpath_root):
 
     # check that HPC config files have been copied
     for fname in DPATH_HPC.glob("*"):
-        assert (workflow.layout.dpath_hpc / fname.name).exists()
+        assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
 def test_run(dpath_root: Path):

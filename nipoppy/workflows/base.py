@@ -226,7 +226,7 @@ class BaseWorkflow(Base, ABC):
         **template_kwargs
             Keyword arguments passed to process_template_str for substitution
         """
-        self.logger.debug(f"Copying template {path_source} to {path_dest}")
+        logger.debug(f"Copying template {path_source} to {path_dest}")
         if not self.dry_run:
             with open(path_source, "r") as f:
                 content = process_template_str(f.read(), **template_kwargs)

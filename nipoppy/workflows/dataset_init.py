@@ -119,18 +119,18 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy dataset description file if specified in layout
-        if getattr(self.layout, "fpath_bids_dataset_description", None):
+        if getattr(self.study.layout, "fpath_bids_dataset_description", None):
             self.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
-                self.layout.fpath_bids_dataset_description,
+                self.study.layout.fpath_bids_dataset_description,
                 version=__version__,
             )
 
         # copy bidsignore file if specified in layout
-        if getattr(self.layout, "fpath_bidsignore", None):
+        if getattr(self.study.layout, "fpath_bidsignore", None):
             self.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
-                self.layout.fpath_bidsignore,
+                self.study.layout.fpath_bidsignore,
             )
 
         # copy HPC files
