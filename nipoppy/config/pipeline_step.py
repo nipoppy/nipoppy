@@ -120,7 +120,8 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
     TRACKER_CONFIG_FILE: Optional[Path] = Field(
         default=None,
         description=(
-            "Path to the tracker configuration file associated with the pipeline step"
+            "Path to the tracker configuration file associated with the pipeline step."
+            "Tracking will always be done at a participant-session level."
         ),
     )
     PYBIDS_IGNORE_FILE: Optional[Path] = Field(
@@ -138,28 +139,6 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         ),
     )
     model_config = ConfigDict(extra="forbid")
-
-    @model_validator(mode="after")
-    def validate_after(self):
-        """
-        Validate the processing pipeline step configuration after creation.
-
-        Specifically:
-
-        - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
-          "participant_session"
-        """
-        super().validate_after()
-
-        if (
-            self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
-            and self.TRACKER_CONFIG_FILE is not None
-        ):
-            raise ConfigError(
-                "TRACKER_CONFIG_FILE cannot be set if ANALYSIS_LEVEL is not "
-                f"{AnalysisLevelType.participant_session}"
-            )
-        return self
 
 
 class BidsPipelineStepConfig(BasePipelineStepConfig):

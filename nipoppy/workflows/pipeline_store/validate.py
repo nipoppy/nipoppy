@@ -4,8 +4,11 @@ import logging
 from pathlib import Path
 
 from nipoppy.env import StrOrPathLike
+from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.workflows.base import BaseWorkflow
+
+logger = get_logger()
 
 
 class PipelineValidateWorkflow(BaseWorkflow):
@@ -26,9 +29,7 @@ class PipelineValidateWorkflow(BaseWorkflow):
 
     def run_main(self):
         """Run the main workflow."""
-        self.logger.info(f"Validating pipeline at {self.dpath_pipeline}")
-        check_pipeline_bundle(
-            self.dpath_pipeline, logger=self.logger, log_level=logging.INFO
-        )
+        logger.info(f"Validating pipeline at {self.dpath_pipeline}")
+        check_pipeline_bundle(self.dpath_pipeline, log_level=logging.INFO)
 
-        self.logger.success("The pipeline files are all valid")
+        logger.success("The pipeline files are all valid")

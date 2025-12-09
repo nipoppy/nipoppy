@@ -128,13 +128,13 @@ class BIDSificationRunner(Runner):
         """Run BIDS conversion on a single participant/session."""
         # get container command
         launch_boutiques_run_kwargs = {}
-        if self.config.CONTAINER_CONFIG.COMMAND is not None:
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
             container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,
                 bind_paths=[
-                    self.layout.dpath_post_reorg,
-                    self.layout.dpath_bids,
+                    self.study.layout.dpath_post_reorg,
+                    self.study.layout.dpath_bids,
                 ],
             )
             launch_boutiques_run_kwargs["container_command"] = container_command
@@ -168,6 +168,6 @@ class BIDSificationRunner(Runner):
         """
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.save_tabular_file(
-                self.curation_status_table, self.layout.fpath_curation_status
+                self.curation_status_table, self.study.layout.fpath_curation_status
             )
         return super().run_cleanup(**kwargs)

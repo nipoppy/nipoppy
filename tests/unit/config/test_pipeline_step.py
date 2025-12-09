@@ -185,33 +185,6 @@ def test_absolute_paths(data, pipeline_class, expect_error):
 
 
 @pytest.mark.parametrize(
-    "analysis_level,expect_error",
-    [
-        (AnalysisLevelType.participant_session, False),
-        (AnalysisLevelType.participant, True),
-        (AnalysisLevelType.session, True),
-        (AnalysisLevelType.group, True),
-    ],
-)
-def test_tracker_config_analysis_level(analysis_level, expect_error):
-    with (
-        pytest.raises(
-            ValueError,
-            match=(
-                "cannot be set if ANALYSIS_LEVEL is not "
-                f"{AnalysisLevelType.participant_session}"
-            ),
-        )
-        if expect_error
-        else nullcontext()
-    ):
-        ProcPipelineStepConfig(
-            TRACKER_CONFIG_FILE="tracker_config.json",
-            ANALYSIS_LEVEL=analysis_level,
-        )
-
-
-@pytest.mark.parametrize(
     "update_status,analysis_level,expect_error",
     [
         (True, AnalysisLevelType.participant_session, False),

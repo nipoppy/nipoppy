@@ -17,9 +17,11 @@ class CustomDicomReorgWorkflow(DicomReorgWorkflow):
         Here we return a list with only a single path, but more than one path
         can be specified.
         """
-        # self.layout.dpath_raw_dicom will dynamically generate the path to the
+        # self.study.layout.dpath_raw_dicom will dynamically generate the path to the
         # dataset's (unorganized) raw imaging data
-        return [self.layout.dpath_pre_reorg / participant_id / f"{session_id}.tar.gz"]
+        return [
+            self.study.layout.dpath_pre_reorg / participant_id / f"{session_id}.tar.gz"
+        ]
 
     def apply_fname_mapping(
         self, fname_source: str, participant_id: str, session_id: str

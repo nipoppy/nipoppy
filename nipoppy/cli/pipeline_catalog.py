@@ -11,6 +11,7 @@ from nipoppy.cli.options import (
     dep_params,
     global_options,
     layout_option,
+    password_file_option,
 )
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.zenodo_api import ZenodoAPI
@@ -54,6 +55,7 @@ def zenodo_options(func):
         " community."
     ),
 )
+@password_file_option(required=False)
 @zenodo_options
 @global_options
 def pipeline_search(**params):
@@ -62,6 +64,7 @@ def pipeline_search(**params):
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
+        password_file=params.pop("password_file", None),
     )
     with exception_handler(PipelineSearchWorkflow(**params)) as workflow:
         workflow.run()
@@ -122,6 +125,7 @@ def pipeline_create(**params):
 )
 @global_options
 @layout_option
+@password_file_option(required=False)
 @assume_yes_option
 def pipeline_install(**params):
     """
@@ -134,6 +138,7 @@ def pipeline_install(**params):
     params = dep_params(**params)
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
+        password_file=params.pop("password_file", None),
     )
     with exception_handler(PipelineInstallWorkflow(**params)) as workflow:
         workflow.run()
@@ -181,12 +186,7 @@ def pipeline_validate(**params):
     help="To update an existing pipeline, provide the Zenodo ID.",
 )
 @assume_yes_option
-@click.option(
-    "--password-file",
-    type=click.Path(exists=True, path_type=Path, resolve_path=True, dir_okay=False),
-    required=True,
-    help="Path to file containing Zenodo access token (and nothing else)",
-)
+@password_file_option(required=True)
 @click.option(
     "--force",
     "-f",

@@ -40,9 +40,9 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
         pipeline_version="1.0.0",
     )
 
-    create_empty_dataset(runner.layout.dpath_root)
+    create_empty_dataset(runner.study.layout.dpath_root)
 
-    runner.config = get_config(
+    runner.study.config = get_config(
         container_config={
             "COMMAND": "apptainer",  # mocked
             "ARGS": ["--flag1"],
@@ -61,7 +61,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     fpath_container.touch()
 
     create_pipeline_config_files(
-        runner.layout.dpath_pipelines,
+        runner.study.layout.dpath_pipelines,
         processing_pipelines=[
             {
                 "NAME": "dummy_pipeline",
@@ -213,6 +213,7 @@ def test_launch_boutiques_run(
 )
 @pytest.mark.parametrize("simulate", [True, False])
 @pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.no_xdist
 def test_launch_boutiques_run_bosh_opts(
     container_handler,
     expected_container_opts,
@@ -287,7 +288,7 @@ def test_launch_boutiques_run_error(
     session_id = "BL"
 
     fids.create_fake_bids_dataset(
-        runner.layout.dpath_bids,
+        runner.study.layout.dpath_bids,
         subjects=participant_id,
         sessions=session_id,
     )
@@ -319,7 +320,7 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     # check that the subcommand 'exec' from the Boutiques container config is used
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
-    root_path = runner.layout.dpath_root.resolve()
+    root_path = runner.study.layout.dpath_root.resolve()
     assert container_command.startswith("apptainer exec")
     assert f"--bind {root_path}:{root_path}:rw " in container_command
     assert container_command.endswith(
@@ -422,6 +423,7 @@ def test_tar_directory(tmp_path: Path, dpath_type):
     assert not dpath_to_tar.exists()
 
 
+@pytest.mark.no_xdist
 def test_tar_directory_failure(
     runner: ProcessingRunner,
     tmp_path: Path,
@@ -671,7 +673,7 @@ def test_get_participants_sessions_to_run(
                 ProcessingStatusTable.col_pipeline_step,
                 ProcessingStatusTable.col_status,
             ],
-        ).validate().save_with_backup(runner.layout.fpath_processing_status)
+        ).validate().save_with_backup(runner.study.layout.fpath_processing_status)
 
     assert [
         tuple(x)
@@ -688,13 +690,13 @@ def test_run_multiple(runner: ProcessingRunner):
     runner.session_id = session_id
 
     participants_and_sessions = {"01": ["1"], "02": ["2"]}
-    create_empty_dataset(runner.layout.dpath_root)
+    create_empty_dataset(runner.study.layout.dpath_root)
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.layout.dpath_bids,
+        dpath_bidsified=runner.study.layout.dpath_bids,
     )
-    manifest.save_with_backup(runner.layout.fpath_manifest)
+    manifest.save_with_backup(runner.study.layout.fpath_manifest)
     runner.run_setup()
     runner.run_main()
 
@@ -781,7 +783,7 @@ def test_run_single_tar(
 
 
 def test_run_missing_container_raises_error(runner: ProcessingRunner):
-    runner.manifest = Manifest()
+    runner.study.manifest = Manifest()
 
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
     with pytest.raises(

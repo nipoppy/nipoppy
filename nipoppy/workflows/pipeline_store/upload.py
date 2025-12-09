@@ -5,12 +5,15 @@ from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.env import LogColor, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import TerminatedByUserError, WorkflowError
+from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
 from nipoppy.workflows.base import BaseWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
+
+logger = get_logger()
 
 
 class PipelineUploadWorkflow(BaseWorkflow):
@@ -28,6 +31,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
     ):
         self.dpath_pipeline = dpath_pipeline
         self.zenodo_api = zenodo_api
+        self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.record_id = record_id
         self.assume_yes = assume_yes
         self.force = force
@@ -37,8 +41,6 @@ class PipelineUploadWorkflow(BaseWorkflow):
             verbose=verbose,
             dry_run=dry_run,
         )
-
-        self.zenodo_api.set_logger(self.logger)
 
     def _get_pipeline_metadata(
         self, zenodo_metadata_file: Path, pipeline_config: BasePipelineConfig
@@ -60,7 +62,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         }
 
         if zenodo_metadata_file.exists():
-            self.logger.info(f"Loading metadata from {zenodo_metadata_file}")
+            logger.info(f"Loading metadata from {zenodo_metadata_file}")
             pipeline_metadata = load_json(zenodo_metadata_file)
             metadata["metadata"].update(pipeline_metadata)
 
@@ -82,13 +84,13 @@ class PipelineUploadWorkflow(BaseWorkflow):
     def run_main(self):
         """Run the main workflow."""
         pipeline_dir = Path(self.dpath_pipeline)
-        self.logger.info(f"Uploading pipeline from {pipeline_dir}")
+        logger.info(f"Uploading pipeline from {pipeline_dir}")
 
         # Safeguard before uploading
         try:
-            pipeline_config = check_pipeline_bundle(pipeline_dir, logger=self.logger)
+            pipeline_config = check_pipeline_bundle(pipeline_dir)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"
             )
             raise WorkflowError from e
@@ -136,7 +138,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 " this is a [bold]permanent[/] action, are you sure?",
             )
             if not continue_:
-                self.logger.warning("Zenodo upload cancelled.")
+                logger.warning("Zenodo upload cancelled.")
                 raise TerminatedByUserError("User cancelled the upload.")
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
@@ -144,9 +146,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         doi = self.zenodo_api.upload_pipeline(
             input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
         )
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline successfully uploaded at {doi}[/]",
-        )
+        logger.success(f"Pipeline successfully uploaded at {doi}")
 
 
 def _is_same_pipeline(

@@ -3,7 +3,6 @@
 import json
 import logging
 from pathlib import Path
-from typing import Optional
 
 import boutiques
 from pydantic_core import ValidationError
@@ -20,7 +19,10 @@ from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.layout import DatasetLayout, LayoutError
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import load_json
+
+logger = get_logger()
 
 PIPELINE_TYPE_TO_CLASS = {
     PipelineTypeEnum.BIDSIFICATION: BIDSificationPipelineConfig,
@@ -160,8 +162,8 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
 def _check_pipeline_files(
     pipeline_config: BasePipelineConfig,
     dpath_bundle: StrOrPathLike,
-    logger: Optional[logging.Logger] = None,
-    log_level=logging.DEBUG,
+    *,
+    log_level: int = logging.DEBUG,
 ) -> list[Path]:
     """
     Validate the files that the pipeline config points to.
@@ -176,47 +178,58 @@ def _check_pipeline_files(
 
     Also, collect all file paths for these files for further checks.
     """
-
-    def _log(msg: str) -> None:
-        if logger is not None:
-            logger.log(level=log_level, msg=msg)
-
     dpath_bundle = Path(dpath_bundle)
 
     # collect paths
     fpaths = []
 
     for step in pipeline_config.STEPS:
-        _log(f"Validating files for step: {step.NAME}")
+        logger.log(level=log_level, msg=f"Validating files for step: {step.NAME}")
 
         if step.DESCRIPTOR_FILE is not None:
-            _log(f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}")
+            logger.log(
+                level=log_level,
+                msg=f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}",
+            )
             fpath_descriptor = dpath_bundle / step.DESCRIPTOR_FILE
             descriptor_str = _check_descriptor_file(fpath_descriptor)
             fpaths.append(fpath_descriptor)
 
             if step.INVOCATION_FILE is not None:
-                _log(f"\tChecking invocation file: {step.INVOCATION_FILE}")
+                logger.log(
+                    level=log_level,
+                    msg=f"\tChecking invocation file: {step.INVOCATION_FILE}",
+                )
                 fpath_invocation = dpath_bundle / step.INVOCATION_FILE
                 _check_invocation_file(fpath_invocation, descriptor_str)
                 fpaths.append(fpath_invocation)
 
         if step.HPC_CONFIG_FILE is not None:
-            _log(f"\tChecking HPC config file: {step.HPC_CONFIG_FILE}")
+            logger.log(
+                level=log_level,
+                msg=f"\tChecking HPC config file: {step.HPC_CONFIG_FILE}",
+            )
             fpath_hpc_config = dpath_bundle / step.HPC_CONFIG_FILE
             _check_hpc_config_file(fpath_hpc_config)
             fpaths.append(fpath_hpc_config)
 
         if isinstance(step, ProcPipelineStepConfig):
             if step.TRACKER_CONFIG_FILE is not None:
-                _log(f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}")
+                logger.log(
+                    level=log_level,
+                    msg=f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}",
+                )
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE
                 _check_tracker_config_file(fpath_tracker_config)
                 fpaths.append(fpath_tracker_config)
 
             if step.PYBIDS_IGNORE_FILE is not None:
-                _log(
-                    f"\tChecking PyBIDS ignore patterns file: {step.PYBIDS_IGNORE_FILE}"
+                logger.log(
+                    level=log_level,
+                    msg=(
+                        "\tChecking PyBIDS ignore patterns file:",
+                        step.PYBIDS_IGNORE_FILE,
+                    ),
                 )
                 fpath_pybids_ignore = dpath_bundle / step.PYBIDS_IGNORE_FILE
                 _check_pybids_ignore_file(fpath_pybids_ignore)
@@ -228,16 +241,10 @@ def _check_pipeline_files(
 def _check_self_contained(
     dpath_bundle: StrOrPathLike,
     fpaths: list[StrOrPathLike],
-    logger: Optional[logging.Logger] = None,
-    log_level=logging.DEBUG,
 ) -> None:
     """Check that all files are within the bundle directory."""
     dpath_bundle: Path = Path(dpath_bundle).resolve()
-    if logger is not None:
-        logger.log(
-            level=log_level,
-            msg="Checking that all files are within the bundle directory",
-        )
+    logger.debug("Checking that all files are within the bundle directory")
     for fpath in fpaths:
         if dpath_bundle not in Path(fpath).resolve().parents:
             raise PipelineValidationError(
@@ -245,17 +252,11 @@ def _check_self_contained(
             )
 
 
-def _check_no_subdirectories(
-    dpath_bundle: StrOrPathLike,
-    logger: Optional[logging.Logger] = None,
-    log_level=logging.DEBUG,
-):
+def _check_no_subdirectories(dpath_bundle: StrOrPathLike):
     dpath_bundle: Path = Path(dpath_bundle)
-    if logger is not None:
-        logger.log(
-            level=log_level,
-            msg="Checking that there are no subdirectories inside the bundle directory",
-        )
+    logger.debug(
+        "Checking that there are no subdirectories inside the bundle directory"
+    )
     for path in dpath_bundle.iterdir():
         if path.is_dir():
             raise PipelineValidationError(
@@ -264,9 +265,7 @@ def _check_no_subdirectories(
 
 
 def check_pipeline_bundle(
-    dpath_bundle: StrOrPathLike,
-    logger: Optional[logging.Logger] = None,
-    log_level=logging.DEBUG,
+    dpath_bundle: StrOrPathLike, log_level: int = logging.DEBUG
 ) -> BasePipelineConfig:
     """Load a pipeline bundle's main configuration file and validate it."""
     dpath_bundle = Path(dpath_bundle).resolve()
@@ -276,14 +275,12 @@ def check_pipeline_bundle(
     config = _load_pipeline_config_file(fpath_config)
 
     # core file content validation
-    fpaths = _check_pipeline_files(
-        config, dpath_bundle, logger=logger, log_level=log_level
-    )
+    fpaths = _check_pipeline_files(config, dpath_bundle, log_level=log_level)
 
     # make sure that all files are within the bundle directory
-    _check_self_contained(dpath_bundle, fpaths, logger=logger, log_level=log_level)
+    _check_self_contained(dpath_bundle, fpaths)
 
     # make sure that there are no subdirectories inside the bundle directory
-    _check_no_subdirectories(dpath_bundle, logger=logger, log_level=log_level)
+    _check_no_subdirectories(dpath_bundle)
 
     return config

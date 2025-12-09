@@ -117,6 +117,12 @@ class LayoutConfig(BaseModel):
     fpath_demographics: OptionalFpathInfo = Field(
         description="Path to the study's demographics data file"
     )
+    fpath_harmonized: OptionalFpathInfo = Field(
+        description=(
+            "Path to the study's harmonized phenotypic data file"
+            " (as obtained using the Neurobagel CLI)"
+        )
+    )
     # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
     # as optional for path validation, not for Pydantic model validation.
     # Optional[OptionalFpathInfo] with default=None is needed to make the field
@@ -253,6 +259,9 @@ class DatasetLayout(Base):
         )
         self.fpath_demographics: Path = self.get_full_path(
             self.config.fpath_demographics.path
+        )
+        self.fpath_harmonized: Path = self.get_full_path(
+            self.config.fpath_harmonized.path
         )
         # Optional fields - only set if defined in layout
         if self.config.fpath_bids_dataset_description is not None:
