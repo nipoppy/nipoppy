@@ -5,6 +5,10 @@ from typing import Optional
 
 import httpx
 
+try:
+    from nipoppy._version import __version__
+except ImportError:
+    __version__ = "unknown"
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -23,6 +27,8 @@ from nipoppy.utils.bids import (
 )
 from nipoppy.utils.utils import (
     DPATH_HPC,
+    FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
+    FPATH_SAMPLE_BIDSIGNORE,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
 )
@@ -112,6 +118,21 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.study.layout.fpath_manifest,
             )
 
+        # copy dataset description file if specified in layout
+        if getattr(self.study.layout, "fpath_bids_dataset_description", None):
+            self.copy_template(
+                FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
+                self.study.layout.fpath_bids_dataset_description,
+                version=__version__,
+            )
+
+        # copy bidsignore file if specified in layout
+        if getattr(self.study.layout, "fpath_bidsignore", None):
+            self.copy(
+                FPATH_SAMPLE_BIDSIGNORE,
+                self.study.layout.fpath_bidsignore,
+            )
+
         # copy HPC files
         self.copytree(
             DPATH_HPC,
@@ -138,12 +159,13 @@ class InitWorkflow(BaseDatasetWorkflow):
         if dpath.exists() and self.force:
             self._remove_existing(dpath)
 
+        self.mkdir(dpath.parent)
+
         if self.mode == "copy":
             self.copytree(self.bids_source, str(dpath))
         elif self.mode == "move":
             self.movetree(self.bids_source, str(dpath))
         elif self.mode == "symlink":
-            self.mkdir(self.dpath_root)
             self.create_symlink(self.bids_source, str(dpath))
         else:
             raise ValueError(f"Invalid mode: {self.mode}")

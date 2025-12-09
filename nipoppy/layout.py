@@ -123,6 +123,16 @@ class LayoutConfig(BaseModel):
             " (as obtained using the Neurobagel CLI)"
         )
     )
+    # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
+    # as optional for path validation, not for Pydantic model validation.
+    # Optional[OptionalFpathInfo] with default=None is needed to make the field
+    # truly optional so it can be missing from layout JSON files entirely.
+    fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
+        default=None, description="Path to the BIDS dataset description file"
+    )
+    fpath_bidsignore: Optional[OptionalFpathInfo] = Field(
+        default=None, description="Path to the .bidsignore file"
+    )
 
     @cached_property
     def path_labels(self) -> list[str]:
@@ -131,8 +141,12 @@ class LayoutConfig(BaseModel):
 
     @cached_property
     def path_infos(self) -> list[PathInfo]:
-        """Return a list of all PathInfo objects defined in the layout."""
-        return [getattr(self, path_label) for path_label in self.path_labels]
+        """Return all PathInfo objects in layout (excludes unset optional fields)."""
+        return [
+            getattr(self, path_label)
+            for path_label in self.path_labels
+            if isinstance(getattr(self, path_label), PathInfo)
+        ]
 
     def get_path_info(self, path_label: str) -> PathInfo:
         """Return the PathInfo object associated with the given path label."""
@@ -249,6 +263,15 @@ class DatasetLayout(Base):
         self.fpath_harmonized: Path = self.get_full_path(
             self.config.fpath_harmonized.path
         )
+        # Optional fields - only set if defined in layout
+        if self.config.fpath_bids_dataset_description is not None:
+            self.fpath_bids_dataset_description: Path = self.get_full_path(
+                self.config.fpath_bids_dataset_description.path
+            )
+        if self.config.fpath_bidsignore is not None:
+            self.fpath_bidsignore: Path = self.get_full_path(
+                self.config.fpath_bidsignore.path
+            )
 
     def get_full_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
