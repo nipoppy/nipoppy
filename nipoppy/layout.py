@@ -135,11 +135,11 @@ class LayoutConfig(BaseModel):
 
     @cached_property
     def path_infos(self) -> list[PathInfo]:
-        """Return a list of all PathInfo objects defined in the layout."""
+        """Return all PathInfo objects in layout (excludes unset optional fields)."""
         return [
             getattr(self, path_label)
             for path_label in self.path_labels
-            if getattr(self, path_label) is not None
+            if isinstance(getattr(self, path_label), PathInfo)
         ]
 
     def get_path_info(self, path_label: str) -> PathInfo:
