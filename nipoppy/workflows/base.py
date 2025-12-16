@@ -23,6 +23,7 @@ from nipoppy.tabular.curation_status import (
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
@@ -202,7 +203,7 @@ class BaseWorkflow(Base, ABC):
         if not self.dry_run:
             with open(path_source, "r") as f:
                 content = process_template_str(f.read(), **template_kwargs)
-            self.mkdir(Path(path_dest).parent)
+            fileops.mkdir(Path(path_dest).parent, dry_run=self.dry_run)
             with open(path_dest, "w") as f:
                 f.write(content)
 
