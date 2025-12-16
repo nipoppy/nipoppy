@@ -53,6 +53,7 @@ doc = [
 ]
 dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
+    "bids-validator-deno",
     "fids>=0.1.0",
     "nipoppy[gui,parallel]",
     "packaging",

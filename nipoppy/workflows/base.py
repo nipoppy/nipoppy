@@ -23,7 +23,12 @@ from nipoppy.tabular.curation_status import (
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils.utils import add_path_timestamp, is_nipoppy_project
+from nipoppy.utils import fileops
+from nipoppy.utils.utils import (
+    add_path_timestamp,
+    is_nipoppy_project,
+    process_template_str,
+)
 
 logger = get_logger()
 
@@ -181,6 +186,26 @@ class BaseWorkflow(Base, ABC):
         self.run_setup()
         self.run_main()
         self.run_cleanup()
+
+    def copy_template(self, path_source, path_dest, **template_kwargs):
+        """Copy a file with template substitution.
+
+        Parameters
+        ----------
+        path_source
+            Source template file path
+        path_dest
+            Destination file path
+        **template_kwargs
+            Keyword arguments passed to process_template_str for substitution
+        """
+        logger.debug(f"Copying template {path_source} to {path_dest}")
+        if not self.dry_run:
+            with open(path_source, "r") as f:
+                content = process_template_str(f.read(), **template_kwargs)
+            fileops.mkdir(Path(path_dest).parent, dry_run=self.dry_run)
+            with open(path_dest, "w") as f:
+                f.write(content)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):

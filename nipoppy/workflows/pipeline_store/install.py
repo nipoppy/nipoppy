@@ -133,7 +133,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             return
 
         # apply substitutions
-        pipeline_config = BasePipelineConfig(
+        pipeline_config = type(pipeline_config)(
             **apply_substitutions_to_json(
                 pipeline_config.model_dump(mode="json"), self.study.config.SUBSTITUTIONS
             )
