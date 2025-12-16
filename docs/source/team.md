@@ -3,6 +3,7 @@
 ## Core team
 
 🧑‍🍳 _Core maintainer_
+
 🧑‍🔬 _Principal Investigator_
 
 <table>
