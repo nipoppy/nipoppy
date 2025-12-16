@@ -186,12 +186,12 @@ class TestSymlink:
     def test_symlink(self, tmp_path: Path):
         """Test creating a symlink to a file."""
         source_file = tmp_path / "target.txt"
-        EXPECTED_CONTENT = "target content"
-        source_file.write_text(EXPECTED_CONTENT)
+        expected_content = "target content"
+        source_file.write_text(expected_content)
 
         symlink = tmp_path / "symlink_to_target"
 
         fileops.symlink(source=source_file, target=symlink)
 
         assert symlink.is_symlink()
-        assert symlink.read_text() == EXPECTED_CONTENT
+        assert symlink.read_text() == expected_content
