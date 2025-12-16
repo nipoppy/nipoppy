@@ -9,6 +9,7 @@ from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.workflows.runner import Runner
 
 logger = get_logger()
@@ -105,7 +106,7 @@ class ProcessingRunner(Runner):
         # make sure that the tarfile was created successfully before removing
         # original directory
         if fpath_tarred.exists() and is_tarfile(fpath_tarred):
-            self.rm(dpath)
+            fileops.rm(dpath, dry_run=self.dry_run)
         else:
             logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
 
@@ -247,7 +248,7 @@ class ProcessingRunner(Runner):
             if not self.keep_workdir:
                 for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
                     if dpath.exists():
-                        self.rm(dpath)
+                        fileops.rm(dpath, dry_run=self.dry_run)
             else:
                 logger.info("Keeping working / intermediary files.")
         else:

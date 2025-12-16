@@ -8,6 +8,7 @@ import boutiques as bosh
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError
 from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -53,16 +54,17 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         descriptor_path = target / "descriptor.json"
         if source_descriptor:
-            self.copy(source_descriptor, descriptor_path)
+            fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
             bosh.create(descriptor_path.as_posix())
 
         target.joinpath("invocation.json").write_text(
             bosh.example(descriptor_path.as_posix())
         )
-        self.copy(
+        fileops.copy(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
             target.joinpath("hpc.json"),
+            dry_run=self.dry_run,
         )
 
         # Populate the config.json using descriptor information
@@ -76,13 +78,15 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
-            self.copy(
+            fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
                 target.joinpath("tracker.json"),
+                dry_run=self.dry_run,
             )
-            self.copy(
+            fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("pybids_ignore.json"),
                 target.joinpath("pybids_ignore.json"),
+                dry_run=self.dry_run,
             )
 
     def run_main(self):

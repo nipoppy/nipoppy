@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-import os
 import shlex
-import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -188,32 +186,6 @@ class BaseWorkflow(Base, ABC):
         self.run_main()
         self.run_cleanup()
 
-    def mkdir(self, dpath, **kwargs):
-        """
-        Create a directory (by default including parents).
-
-        Do nothing if the directory already exists.
-        """
-        kwargs_to_use = {"parents": True, "exist_ok": True}
-        kwargs_to_use.update(kwargs)
-
-        dpath = Path(dpath)
-
-        if not dpath.exists():
-            logger.debug(f"Creating directory {dpath}")
-            if not self.dry_run:
-                dpath.mkdir(**kwargs_to_use)
-        elif not dpath.is_dir():
-            raise FileOperationError(
-                f"Path already exists but is not a directory: {dpath}"
-            )
-
-    def copy(self, path_source, path_dest, **kwargs):
-        """Copy a file or directory."""
-        logger.debug(f"Copying {path_source} to {path_dest}")
-        if not self.dry_run:
-            shutil.copy2(src=path_source, dst=path_dest, **kwargs)
-
     def copy_template(self, path_source, path_dest, **template_kwargs):
         """Copy a file with template substitution.
 
@@ -233,60 +205,6 @@ class BaseWorkflow(Base, ABC):
             self.mkdir(Path(path_dest).parent)
             with open(path_dest, "w") as f:
                 f.write(content)
-
-    def copytree(self, path_source, path_dest, **kwargs):
-        """Copy directory tree."""
-        logger.debug(f"Copying {path_source} to {path_dest}")
-        if not self.dry_run:
-            shutil.copytree(src=path_source, dst=path_dest, **kwargs)
-
-    def movetree(
-        self,
-        path_source,
-        path_dest,
-        kwargs_mkdir=None,
-        kwargs_move=None,
-    ):
-        """Move directory tree."""
-        kwargs_mkdir = kwargs_mkdir or {}
-        kwargs_move = kwargs_move or {}
-        logger.debug(f"Moving {path_source} to {path_dest}")
-        if not self.dry_run:
-            self.mkdir(path_dest, **kwargs_mkdir)
-            file_names = os.listdir(path_source)
-            for file_name in file_names:
-                shutil.move(
-                    src=os.path.join(path_source, file_name),
-                    dst=path_dest,
-                    **kwargs_move,
-                )
-            Path(path_source).rmdir()
-
-    def create_symlink(self, path_source, path_dest, **kwargs):
-        """Create a symlink to another path."""
-        logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
-        if not self.dry_run:
-            os.symlink(path_source, path_dest, **kwargs)
-
-    def rm(self, path, **kwargs):
-        """Remove a file or directory."""
-        kwargs_to_use = {"ignore_errors": True}
-        kwargs_to_use.update(kwargs)
-        logger.debug(f"Removing {path}")
-        if not self.dry_run:
-            shutil.rmtree(path, **kwargs_to_use)
-
-    def _remove_existing(self, path, log_level=logging.INFO):
-        """Remove existing file, directory, or symlink without ignoring errors."""
-        logger.log(level=log_level, msg=f"Removing existing {path}")
-        if not self.dry_run:
-            path_obj = Path(path)
-            if path_obj.is_symlink():
-                path_obj.unlink()
-            elif path_obj.is_dir():
-                shutil.rmtree(path)
-            else:
-                path_obj.unlink()
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
