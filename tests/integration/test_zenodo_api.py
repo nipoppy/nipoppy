@@ -153,11 +153,21 @@ def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     assert results["total"] > 0
 
 
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_ID")),
+    reason="Requires Zenodo record ID",
+)
 def test_get_latest_version_id(zenodo_api: ZenodoAPI):
     record_id = os.environ["ZENODO_ID"]
     assert zenodo_api.get_latest_version_id(record_id) != record_id
 
 
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_ID")),
+    reason="Requires Zenodo record ID",
+)
 def test_get_latest_version_id_invalid(zenodo_api: ZenodoAPI):
     record_id = "0"
 
