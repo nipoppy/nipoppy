@@ -395,10 +395,11 @@ class ZenodoAPI:
             f"{self.api_endpoint}/records/{record_id}/versions/latest",
             follow_redirects=True,
             headers=self.headers,
+            timeout=self.timeout,
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
                 f"Failed to get latest version for zenodo.{record_id}: {response.json()}"  # noqa E501
             )
 
-        return response.json()["id"]
+        return str(response.json()["id"])

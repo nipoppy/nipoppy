@@ -12,6 +12,7 @@ from pathlib import Path
 from nipoppy._version import __version__
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
+from nipoppy.zenodo_api import ZenodoAPI
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -46,6 +47,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx_design",
+    "sphinx_substitution_extensions",
 ]
 
 templates_path = ["_templates"]
@@ -55,6 +57,8 @@ exclude_patterns = [
 ]
 
 nitpicky = True
+
+substitutions_default_enabled = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -148,6 +152,7 @@ template_strings_proc_runner = template_strings_bids_runner[:-1] + [
     "```",
 ]
 
+zenodo_api = ZenodoAPI(timeout=30)  # for getting the latest Zenodo IDs
 myst_substitutions = {
     "dpath_root": f"`{DEFAULT_LAYOUT_INFO.dpath_root}`",
     "dpath_containers": f"`{DEFAULT_LAYOUT_INFO.dpath_containers}`",
@@ -190,6 +195,8 @@ myst_substitutions = {
     ),
     "template_strings_bids_runner": "\n".join(template_strings_bids_runner),
     "template_strings_proc_runner": "\n".join(template_strings_proc_runner),
+    "zenodo_id_dcm2bids_3_2_0": zenodo_api.get_latest_version_id("16876754"),
+    "zenodo_id_mriqc_23_1_0": zenodo_api.get_latest_version_id("15427844"),
 }
 
 # -- Autodoc/AutoAPI configuration ----------------------------------------------------

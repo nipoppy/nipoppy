@@ -134,9 +134,9 @@ INFO     No available processing pipelines
 INFO     No available extraction pipelines
 ```
 
-That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for MRIQC](https://zenodo.org/records/15427844) can be downloaded by running the following:
-```console
-$ nipoppy pipeline install --dataset nipoppy_study 15427844
+That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The {{ '[configuration files for MRIQC](https://zenodo.org/records/{})'.format(zenodo_id_mriqc_23_1_0) }} can be downloaded by running the following:
+```{code-block} console
+$ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_mriqc_23_1_0}}
 ```
 
 When running `nipoppy pipeline install`, you will be asked if you would like to download the MRIQC container. Type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. The container image will be downloaded as `mriqc_23.1.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file).
