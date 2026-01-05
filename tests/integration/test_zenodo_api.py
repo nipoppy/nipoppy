@@ -151,3 +151,21 @@ def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     results = zenodo_api.search_records(query, keywords=keywords)
     assert len(results["hits"]) > 0
     assert results["total"] > 0
+
+
+def test_get_latest_version_id(zenodo_api: ZenodoAPI):
+    record_id = os.environ["ZENODO_ID"]
+    assert zenodo_api.get_latest_version_id(record_id) != record_id
+
+
+def test_get_latest_version_id_invalid(zenodo_api: ZenodoAPI):
+    record_id = "0"
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=(
+            f"Failed to get latest version for zenodo.{record_id}: "
+            "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
+        ),
+    ):
+        zenodo_api.get_latest_version_id(record_id)

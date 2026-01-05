@@ -60,6 +60,10 @@ class ZenodoAPI:
             logger.setLevel(logging.INFO)
         self._logger = logger
 
+    def _process_record_id(self, record_id: str | None) -> str:
+        """Process the record ID to remove the 'zenodo.' prefix if present."""
+        return record_id.removeprefix("zenodo.") if record_id else None
+
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
 
@@ -75,7 +79,7 @@ class ZenodoAPI:
         ChecksumError
             Checksum mismatch between the downloaded file and the expected checksum.
         """
-        record_id = record_id.removeprefix("zenodo.")
+        record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
         response = httpx.get(
@@ -261,7 +265,7 @@ class ZenodoAPI:
         record_id: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
-        record_id = record_id.removeprefix("zenodo.") if record_id else None
+        record_id = self._process_record_id(record_id)
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
@@ -361,7 +365,7 @@ class ZenodoAPI:
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
-        record_id = record_id.removeprefix("zenodo.")
+        record_id = self._process_record_id(record_id)
         response = httpx.get(
             f"{self.api_endpoint}/records/{record_id}",
             headers=self.headers,
@@ -372,3 +376,29 @@ class ZenodoAPI:
             )
 
         return response.json()["metadata"]
+
+    def get_latest_version_id(self, record_id: str) -> str:
+        """Get the ID of the latest version of a Zenodo record.
+
+        Parameters
+        ----------
+        record_id : str
+            Record ID to query.
+
+        Returns
+        -------
+        str
+            ID of the latest version of the record.
+        """
+        record_id = self._process_record_id(record_id)
+        response = httpx.get(
+            f"{self.api_endpoint}/records/{record_id}/versions/latest",
+            follow_redirects=True,
+            headers=self.headers,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get latest version for zenodo.{record_id}: {response.json()}"  # noqa E501
+            )
+
+        return response.json()["id"]
