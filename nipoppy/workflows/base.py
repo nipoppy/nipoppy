@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-import os
 import shlex
-import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -25,7 +23,12 @@ from nipoppy.tabular.curation_status import (
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils.utils import add_path_timestamp, is_nipoppy_project
+from nipoppy.utils import fileops
+from nipoppy.utils.utils import (
+    add_path_timestamp,
+    is_nipoppy_project,
+    process_template_str,
+)
 
 logger = get_logger()
 
@@ -184,85 +187,25 @@ class BaseWorkflow(Base, ABC):
         self.run_main()
         self.run_cleanup()
 
-    def mkdir(self, dpath, **kwargs):
+    def copy_template(self, path_source, path_dest, **template_kwargs):
+        """Copy a file with template substitution.
+
+        Parameters
+        ----------
+        path_source
+            Source template file path
+        path_dest
+            Destination file path
+        **template_kwargs
+            Keyword arguments passed to process_template_str for substitution
         """
-        Create a directory (by default including parents).
-
-        Do nothing if the directory already exists.
-        """
-        kwargs_to_use = {"parents": True, "exist_ok": True}
-        kwargs_to_use.update(kwargs)
-
-        dpath = Path(dpath)
-
-        if not dpath.exists():
-            logger.debug(f"Creating directory {dpath}")
-            if not self.dry_run:
-                dpath.mkdir(**kwargs_to_use)
-        elif not dpath.is_dir():
-            raise FileOperationError(
-                f"Path already exists but is not a directory: {dpath}"
-            )
-
-    def copy(self, path_source, path_dest, **kwargs):
-        """Copy a file or directory."""
-        logger.debug(f"Copying {path_source} to {path_dest}")
+        logger.debug(f"Copying template {path_source} to {path_dest}")
         if not self.dry_run:
-            shutil.copy2(src=path_source, dst=path_dest, **kwargs)
-
-    def copytree(self, path_source, path_dest, **kwargs):
-        """Copy directory tree."""
-        logger.debug(f"Copying {path_source} to {path_dest}")
-        if not self.dry_run:
-            shutil.copytree(src=path_source, dst=path_dest, **kwargs)
-
-    def movetree(
-        self,
-        path_source,
-        path_dest,
-        kwargs_mkdir=None,
-        kwargs_move=None,
-    ):
-        """Move directory tree."""
-        kwargs_mkdir = kwargs_mkdir or {}
-        kwargs_move = kwargs_move or {}
-        logger.debug(f"Moving {path_source} to {path_dest}")
-        if not self.dry_run:
-            self.mkdir(path_dest, **kwargs_mkdir)
-            file_names = os.listdir(path_source)
-            for file_name in file_names:
-                shutil.move(
-                    src=os.path.join(path_source, file_name),
-                    dst=path_dest,
-                    **kwargs_move,
-                )
-            Path(path_source).rmdir()
-
-    def create_symlink(self, path_source, path_dest, **kwargs):
-        """Create a symlink to another path."""
-        logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
-        if not self.dry_run:
-            os.symlink(path_source, path_dest, **kwargs)
-
-    def rm(self, path, **kwargs):
-        """Remove a file or directory."""
-        kwargs_to_use = {"ignore_errors": True}
-        kwargs_to_use.update(kwargs)
-        logger.debug(f"Removing {path}")
-        if not self.dry_run:
-            shutil.rmtree(path, **kwargs_to_use)
-
-    def _remove_existing(self, path, log_level=logging.INFO):
-        """Remove existing file, directory, or symlink without ignoring errors."""
-        logger.log(level=log_level, msg=f"Removing existing {path}")
-        if not self.dry_run:
-            path_obj = Path(path)
-            if path_obj.is_symlink():
-                path_obj.unlink()
-            elif path_obj.is_dir():
-                shutil.rmtree(path)
-            else:
-                path_obj.unlink()
+            with open(path_source, "r") as f:
+                content = process_template_str(f.read(), **template_kwargs)
+            fileops.mkdir(Path(path_dest).parent, dry_run=self.dry_run)
+            with open(path_dest, "w") as f:
+                f.write(content)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):

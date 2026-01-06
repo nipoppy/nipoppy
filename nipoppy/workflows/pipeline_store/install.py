@@ -18,6 +18,7 @@ from nipoppy.exceptions import (
 )
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -132,7 +133,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             return
 
         # apply substitutions
-        pipeline_config = BasePipelineConfig(
+        pipeline_config = type(pipeline_config)(
             **apply_substitutions_to_json(
                 pipeline_config.model_dump(mode="json"), self.study.config.SUBSTITUTIONS
             )
@@ -244,19 +245,21 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                     ". Use --force to overwrite",
                 )
             else:
-                self.rm(dpath_target)
+                fileops.rm(dpath_target, dry_run=self.dry_run)
 
         # copy the directory
         if self.dpath_pipeline is not None:
-            self.copytree(
-                path_source=dpath_pipeline,
-                path_dest=dpath_target,
+            fileops.copy(
+                source=dpath_pipeline,
+                target=dpath_target,
+                dry_run=self.dry_run,
             )
         else:
             # if the pipeline was downloaded from Zenodo, move it to the target location
-            self.movetree(
-                path_source=dpath_pipeline,
-                path_dest=dpath_target,
+            fileops.movetree(
+                source=dpath_pipeline,
+                target=dpath_target,
+                dry_run=self.dry_run,
             )
 
         # update global config with new pipeline variables
