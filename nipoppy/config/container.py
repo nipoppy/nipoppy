@@ -22,17 +22,21 @@ class ContainerConfig(BaseModel):
             "container (e.g., baremetal installations)."
         ),
     )
-    ARGS: list[str] = Field(
-        default=[],
-        description=(
-            "Arguments for Apptainer/Singularity call"
-            " (to be appended after the subcommand)"
-        ),
+    BIND_PATHS: list[Path] = Field(
+        default=[], description="Paths to bind inside the container"
     )
     ENV_VARS: dict[str, str] = Field(
         default={},
         description=(
             "Environment variables that should be available inside the container"
+        ),
+    )
+    ARGS: list[str] = Field(
+        default=[],
+        description=(
+            "Additional arguments for Apptainer/Singularity/Docker call"
+            ". Note: bind paths and environment variables should be specified using "
+            "BIND_PATHS and ENV_VARS respectively."
         ),
     )
     INHERIT: bool = Field(

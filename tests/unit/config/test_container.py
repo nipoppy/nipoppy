@@ -11,6 +11,7 @@ from nipoppy.config.container import (
 FIELDS_CONTAINER_CONFIG = [
     "COMMAND",
     "ARGS",
+    "BIND_PATHS",
     "ENV_VARS",
     "INHERIT",
 ]
