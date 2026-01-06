@@ -1,5 +1,6 @@
 """File operations utility functions."""
 
+import errno
 import shutil
 from pathlib import Path
 
@@ -61,6 +62,14 @@ def symlink(source: Path, target: Path, dry_run=False):
         target.symlink_to(source)
 
 
+def _ignore_oserror_empty_dir(function, path, excinfo):
+    """Ignore OSError 'Directory not empty'."""
+    exception: BaseException = excinfo[1]
+    if isinstance(exception, OSError) and exception.errno == errno.ENOTEMPTY:
+        return
+    raise exception
+
+
 def rm(path: Path, dry_run=False):
     """Remove a file, directory, or symlink."""
     logger.debug(f"Removing {path}")
@@ -68,6 +77,6 @@ def rm(path: Path, dry_run=False):
         if path.is_symlink():
             path.unlink()
         elif path.is_dir():
-            shutil.rmtree(path, ignore_errors=True)
+            shutil.rmtree(path, onerror=_ignore_oserror_empty_dir)
         else:
             path.unlink()
