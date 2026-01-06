@@ -1,7 +1,9 @@
+import errno
 from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from nipoppy.exceptions import FileOperationError
 from nipoppy.utils import fileops
@@ -98,6 +100,27 @@ class TestRemovePath:
 
         assert not broken_symlink.is_symlink()
         assert not broken_symlink.exists()
+
+    def test_rm_ignores_not_empty_directory(
+        self, tmp_path: Path, mocker: pytest_mock.MockerFixture
+    ):
+        """Test that OSError 'Directory not empty' is ignored."""
+        # os.rmdir is called by shutil.rmtree internally when removing directories
+        mocked_rmdir = mocker.patch(
+            "os.rmdir",
+            side_effect=OSError(errno.ENOTEMPTY, errno.errorcode[errno.ENOTEMPTY]),
+        )
+
+        test_dir = tmp_path / "test_dir"
+        test_dir.mkdir()
+        (test_dir / "file.txt").write_text("content")
+
+        # should not raise error
+        fileops.rm(test_dir)
+
+        mocked_rmdir.assert_called_once()
+        assert next(test_dir.iterdir(), None) is None  # file was removed
+        assert test_dir.exists()  # directory was not removed
 
 
 class TestMakeDir:
