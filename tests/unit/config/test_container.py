@@ -68,6 +68,16 @@ def test_container_config(data):
             {"ENV_VARS": {"VAR1": "1"}},
             {"ENV_VARS": {"VAR1": "1"}},
         ),
+        (
+            {"BIND_PATHS": ["/a/path"]},
+            {"BIND_PATHS": ["/another/path"]},
+            {"BIND_PATHS": ["/a/path", "/another/path"]},
+        ),
+        (
+            {"BIND_PATHS": ["/a/path", "/another/path"]},
+            {"BIND_PATHS": ["/another/path", "/a/third/path"]},
+            {"BIND_PATHS": ["/a/path", "/another/path", "/a/third/path"]},
+        ),
     ],
 )
 def test_container_config_merge(data1, data2, data_expected):

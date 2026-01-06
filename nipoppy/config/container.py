@@ -73,6 +73,10 @@ class ContainerConfig(BaseModel):
         if self.ARGS != other.ARGS:
             self.ARGS.extend(other.ARGS)
 
+        for bind_path in other.BIND_PATHS:
+            if bind_path not in self.BIND_PATHS:
+                self.BIND_PATHS.append(bind_path)
+
         for env_var, value in other.ENV_VARS.items():
             if env_var not in self.ENV_VARS:
                 self.ENV_VARS[env_var] = value
