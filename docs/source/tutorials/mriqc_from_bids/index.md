@@ -117,7 +117,14 @@ emphasize-lines: 4,9
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
 - If you are on a system that still uses Singularity (which has been renamed to Apptainer), you will need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
-- If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory.
+- If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
+    ```json
+    "SUBSTITUTIONS": {
+        "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
+        "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_SHARED_DIRECTORY>",
+        "[[HPC_ACCOUNT_NAME]]": ""
+    },
+    ```
     - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted) (recommended).
 
 ## Step 3: Install the MRIQC pipeline into the dataset
