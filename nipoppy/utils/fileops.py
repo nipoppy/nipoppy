@@ -68,6 +68,6 @@ def rm(path: Path, dry_run=False):
         if path.is_symlink():
             path.unlink()
         elif path.is_dir():
-            shutil.rmtree(path)
+            shutil.rmtree(path, ignore_errors=True)
         else:
             path.unlink()
