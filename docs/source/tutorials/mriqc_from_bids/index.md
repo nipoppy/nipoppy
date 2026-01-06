@@ -111,7 +111,7 @@ The `nipoppy init` command created the configuration file at `nipoppy_study/glob
 ---
 linenos: True
 language: json
-emphasize-lines: 3,8
+emphasize-lines: 4,9
 ---
 ```
 
