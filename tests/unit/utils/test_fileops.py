@@ -101,7 +101,7 @@ class TestRemovePath:
         assert not broken_symlink.is_symlink()
         assert not broken_symlink.exists()
 
-    def test_rm_ignores_not_empty_directory(
+    def test_rm_ignores_non_empty_directory_error(
         self, tmp_path: Path, mocker: pytest_mock.MockerFixture
     ):
         """Test that OSError 'Directory not empty' is ignored."""
@@ -121,6 +121,17 @@ class TestRemovePath:
         mocked_rmdir.assert_called_once()
         assert next(test_dir.iterdir(), None) is None  # file was removed
         assert test_dir.exists()  # directory was not removed
+
+    def test_rm_non_empty_directory(self, tmp_path: Path):
+        """Test that non-empty directories are removed successfully."""
+        test_dir = tmp_path / "test_dir"
+        test_dir.mkdir()
+        (test_dir / "file.txt").write_text("content")
+
+        # should not raise error
+        fileops.rm(test_dir)
+
+        assert not test_dir.exists()
 
 
 class TestMakeDir:
