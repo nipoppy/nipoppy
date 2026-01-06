@@ -22,8 +22,11 @@ class ContainerConfig(BaseModel):
             "container (e.g., baremetal installations)."
         ),
     )
-    BIND_PATHS: list[Path] = Field(
-        default=[], description="Paths to bind inside the container"
+    BIND_PATHS: list[str] = Field(
+        default=[],
+        description=(
+            "Bind path specifications, with format LOCAL_PATH[:CONTAINER_PATH[:MODE]]"
+        ),
     )
     ENV_VARS: dict[str, str] = Field(
         default={},
