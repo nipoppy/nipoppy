@@ -30,6 +30,28 @@ from nipoppy.cli.options import (
 )
 from nipoppy.cli.pipeline_catalog import pipeline
 
+# === PRESENTATION MARKER: CLIENT-SIDE Telemetry Imports ===
+# Optional imports - gracefully handle missing dependencies
+try:
+    from nipoppy.telemetry import (
+        track_command,
+        initialize_telemetry,
+        save_country_to_config,
+        record_location,
+    )
+    _TELEMETRY_AVAILABLE = True
+except ImportError:
+    _TELEMETRY_AVAILABLE = False
+    # Create no-op decorator when telemetry unavailable
+    def track_command(name):
+        return lambda f: f
+
+
+# === PRESENTATION MARKER: Telemetry Initialization ===
+# Initialize once on module load
+if _TELEMETRY_AVAILABLE:
+    initialize_telemetry()
+
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
         {
@@ -137,6 +159,7 @@ if cli.commands.get("gui"):
 )
 @global_options
 @layout_option
+@track_command("init")  # ← CLIENT-SIDE: Track init command
 def init(**params):
     """Initialize a new dataset."""
     from nipoppy.workflows.dataset_init import InitWorkflow
@@ -144,6 +167,11 @@ def init(**params):
     params = dep_params(**params)
     with exception_handler(InitWorkflow(**params)) as workflow:
         workflow.run()
+
+    # === CLIENT-SIDE: Save location and record metric (separate from command tracking) ===
+    if _TELEMETRY_AVAILABLE:
+        save_country_to_config(params)
+        record_location(params)
 
 
 @cli.command()
@@ -168,6 +196,7 @@ def init(**params):
 )
 @global_options
 @layout_option
+@track_command("track_curation")  # ← CLIENT-SIDE: Track command
 def track_curation(**params):
     """Create or update a dataset's curation status file."""
     from nipoppy.workflows.track_curation import TrackCurationWorkflow
@@ -195,6 +224,7 @@ def track_curation(**params):
 )
 @global_options
 @layout_option
+@track_command("reorg")  # ← CLIENT-SIDE: Track command
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
@@ -213,6 +243,7 @@ def reorg(**params):
 @runners_options
 @global_options
 @layout_option
+@track_command("bidsify")  # ← CLIENT-SIDE: Track command
 def bidsify(**params):
     """Run a BIDS conversion pipeline."""
     from nipoppy.workflows.bids_conversion import BIDSificationRunner
@@ -236,6 +267,7 @@ def bidsify(**params):
 )
 @global_options
 @layout_option
+@track_command("process")  # ← CLIENT-SIDE: Track command
 def process(**params):
     """Run a processing pipeline."""
     from nipoppy.workflows.processing_runner import ProcessingRunner
@@ -257,6 +289,7 @@ def process(**params):
 )
 @global_options
 @layout_option
+@track_command("track_processing")  # ← CLIENT-SIDE: Track command
 def track_processing(**params):
     """Track the processing status of a pipeline."""
     from nipoppy.workflows.tracker import PipelineTracker
@@ -271,6 +304,7 @@ def track_processing(**params):
 @runners_options
 @global_options
 @layout_option
+@track_command("extract")  # ← CLIENT-SIDE: Track command
 def extract(**params):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
     from nipoppy.workflows.extractor import ExtractionRunner
@@ -284,6 +318,7 @@ def extract(**params):
 @dataset_option
 @global_options
 @layout_option
+@track_command("status")  # ← CLIENT-SIDE: Track command
 def status(**params):
     """Print a summary of the dataset."""
     from nipoppy.workflows.dataset_status import StatusWorkflow

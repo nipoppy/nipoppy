@@ -27,6 +27,13 @@ dependencies = [
     "rich",
     "rich-click",
     "typing-extensions",
+    # OpenTelemetry for metrics (optional - gracefully handled if missing)
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20.0",
+    # GeoIP for location tracking (optional)
+    "geoip2",
+    "requests",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }
