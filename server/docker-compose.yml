@@ -1,0 +1,89 @@
+# === SERVER-SIDE: Nipoppy Telemetry Infrastructure ===
+# Docker Compose configuration for OpenTelemetry observability stack
+#
+# Architecture:
+#   CLIENT (nipoppy CLI) → COLLECTOR → PROMETHEUS → GRAFANA
+#
+# Metrics tracked:
+#   1. Command execution (nipoppy.commands.executed)
+#   2. Geographic distribution (nipoppy.location.by_country)
+#
+# DEMO: Optimized for live presentations with ~5 second latency
+# PRODUCTION: See comments below for production settings
+
+networks:
+  nipoppy-otel-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+services:
+  # === PRESENTATION MARKER: OpenTelemetry Collector (Receives from CLIENT) ===
+  # Receives metrics from nipoppy CLI via OTLP/gRPC on port 4317
+  # Batches metrics and exports to Prometheus on port 8889
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    container_name: nipoppy-otel-collector
+    hostname: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./configs/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "8889:8889"   # Prometheus exporter endpoint
+    networks:
+      - nipoppy-otel-network
+    restart: unless-stopped
+
+  # === PRESENTATION MARKER: Prometheus (Stores Metrics) ===
+  # Scrapes metrics from OTel Collector every 5s (DEMO) or 15s (PRODUCTION)
+  # Provides PromQL query interface for Grafana
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: nipoppy-prometheus
+    hostname: prometheus
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - nipoppy-otel-network
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  # === PRESENTATION MARKER: Grafana (Visualizes Metrics) ===
+  # Dashboard UI: http://localhost:3000 (admin/admin)
+  # Auto-loads Nipoppy telemetry dashboard with 5s refresh
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: nipoppy-grafana
+    hostname: grafana
+    volumes:
+      - ./configs/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./configs/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - nipoppy-otel-network
+    depends_on:
+      - prometheus
+    environment:
+      # Default credentials (change in production!)
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      # Auto-open nipoppy dashboard on startup
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/nipoppy-init.json
+      # Disable analytics
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+    restart: unless-stopped

@@ -1,0 +1,62 @@
+# === SERVER-SIDE: OpenTelemetry Collector Configuration ===
+# Receives metrics from CLIENT (nipoppy CLI) and exports to Prometheus
+#
+# Pipeline: CLIENT → OTLP Receiver → Batch Processor → Prometheus Exporter
+#
+# DEMO: Fast batching (500ms) for live presentations
+# PRODUCTION: See comments below for production settings
+
+receivers:
+  # === PRESENTATION MARKER: Receiving Metrics from CLIENT ===
+  # Listens for OTLP/gRPC metrics from nipoppy CLI on port 4317
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # Batch processor to aggregate metrics before export
+  batch:
+    timeout: 500ms        # DEMO: Fast forwarding (Production: 5s)
+    send_batch_size: 10   # DEMO: Small batches (Production: 100)
+    # PRODUCTION SETTINGS (uncomment for production use):
+    # timeout: 5s
+    # send_batch_size: 100
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+
+exporters:
+  # === PRESENTATION MARKER: Exporting to Prometheus (SERVER) ===
+  # Prometheus scrapes metrics from this endpoint (port 8889)
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: nipoppy          # Prefix for all metrics: nipoppy_*
+    send_timestamps: true       # Include timestamps in metrics
+    metric_expiration: 5m       # Keep metrics for 5 minutes
+    resource_to_telemetry_conversion:
+      enabled: true             # Convert resource attributes to labels
+
+  # Debug exporter for troubleshooting (optional)
+  debug:
+    verbosity: basic
+    # Set to 'detailed' for full metric payloads during debugging
+
+service:
+  # Telemetry about the collector itself
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      level: basic
+      address: 0.0.0.0:8888
+
+  pipelines:
+    # === PRESENTATION MARKER: Metrics Pipeline Flow ===
+    # CLIENT → OTLP Receiver → Memory Limiter → Batch Processor → Prometheus Exporter → SERVER
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]

@@ -1,0 +1,16 @@
+# Grafana Dashboard Provisioning Configuration
+# Auto-loads dashboard JSON files from this directory
+
+apiVersion: 1
+
+providers:
+  - name: 'Nipoppy Dashboards'
+    orgId: 1
+    folder: ''               # Root folder (no subfolder)
+    type: file
+    disableDeletion: false   # Allow deletion from UI
+    updateIntervalSeconds: 10
+    allowUiUpdates: true     # Allow editing in UI
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

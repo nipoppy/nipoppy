@@ -1,0 +1,18 @@
+# Grafana Datasource Configuration
+# Auto-provisions Prometheus datasource on Grafana startup
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+    jsonData:
+      timeInterval: "5s"     # Match Prometheus scrape interval
+      httpMethod: POST       # Use POST for better query performance
+      manageAlerts: false
+      queryTimeout: "60s"
+    editable: false          # Prevent accidental modification in UI
