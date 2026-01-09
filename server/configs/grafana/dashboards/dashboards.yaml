@@ -1,5 +1,9 @@
-# Grafana Dashboard Provisioning Configuration
+# === SERVER-SIDE: Grafana Dashboard Provisioning ===
 # Auto-loads dashboard JSON files from this directory
+#
+# Dashboards:
+# - nipoppy-telemetry.json: Main dashboard with separated command/location sections
+# - nipoppy-init.json: Legacy dashboard (can be removed)
 
 apiVersion: 1
 
