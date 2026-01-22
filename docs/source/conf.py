@@ -41,7 +41,7 @@ extensions = [
     "sphinx_github_changelog",
     "sphinx-jsonschema",
     "sphinx_togglebutton",
-    "sphinx.ext.autodoc.typehints",
+    "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx_design",
