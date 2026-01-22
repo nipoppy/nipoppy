@@ -113,7 +113,7 @@ class TestRemovePath:
 
         test_dir = tmp_path / "test_dir"
         test_dir.mkdir()
-        (test_dir / "file.txt").write_text("content")
+        (test_dir / "file.txt").touch()
 
         # should not raise error
         fileops.rm(test_dir)
