@@ -6,7 +6,8 @@ import contextlib
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from types import NoneType
+from typing import Any, Optional, Sequence, Union, get_args, get_origin
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -122,9 +123,23 @@ class BaseTabular(pd.DataFrame, ABC):
 
         # set column names if the dataframe is empty
         if self.empty and len(self.columns) == 0:
-            for col in self.model.model_fields.keys():
+            for col, field_info in self.model.model_fields.items():
                 self[col] = None
-                self[col] = self[col].astype(str)
+
+                # set dtype based on model field annotation
+                # if the type is Optional (i.e. Union[X, NoneType]), use X
+                # fall back on object if the type is not supported by pandas
+                if (
+                    get_origin(field_info.annotation) == Union
+                    and (args := get_args(field_info.annotation))[1] == NoneType
+                ):
+                    col_dtype = args[0]
+                else:
+                    col_dtype = field_info.annotation
+                try:
+                    self[col] = self[col].astype(col_dtype)
+                except TypeError:
+                    self[col] = self[col].astype(object)
 
     def validate(self) -> Self:
         """Validate the dataframe based on the model."""
