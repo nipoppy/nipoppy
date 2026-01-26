@@ -53,7 +53,7 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     # order is switched because of sorting by downloads
     assert df.iloc[0]["Zenodo ID"] == "[link=fake_doi_url_67890]67890[/link]"
     assert df.iloc[0]["Title"] == "Pipeline 2"
-    assert df.iloc[0]["Description"] is None
+    assert pd.isna(df.iloc[0]["Description"])
     assert df.iloc[0]["Downloads"] == 100
 
     assert df.iloc[1]["Zenodo ID"] == "[link=fake_doi_url_12345]12345[/link]"

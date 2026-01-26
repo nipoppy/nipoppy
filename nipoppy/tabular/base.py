@@ -124,6 +124,7 @@ class BaseTabular(pd.DataFrame, ABC):
         if self.empty and len(self.columns) == 0:
             for col in self.model.model_fields.keys():
                 self[col] = None
+                self[col] = self[col].astype(str)
 
     def validate(self) -> Self:
         """Validate the dataframe based on the model."""
