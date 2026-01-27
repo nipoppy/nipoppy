@@ -10,7 +10,7 @@ from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.env import ZENODO_COMMUNITY_ID
 from nipoppy.logger import get_logger
 from nipoppy.utils.html import strip_html_tags
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import Workflow
 from nipoppy.zenodo_api import ZenodoAPI
 
 CURRENT_CONSOLE_WIDTH = CONSOLE_STDOUT.size.width
@@ -20,7 +20,7 @@ MINIMIZED_TABLE_MAX_WIDTH = 80
 logger = get_logger()
 
 
-class PipelineSearchWorkflow(BaseWorkflow):
+class PipelineSearchWorkflow(Workflow):
     """Search Zenodo for existing pipeline configurations and print results table."""
 
     col_zenodo_id = "Zenodo ID"

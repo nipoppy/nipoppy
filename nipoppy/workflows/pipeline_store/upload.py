@@ -10,13 +10,13 @@ from nipoppy.exceptions import TerminatedByUserError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import Workflow
 from nipoppy.zenodo_api import ZenodoAPI
 
 logger = get_logger()
 
 
-class PipelineUploadWorkflow(BaseWorkflow):
+class PipelineUploadWorkflow(Workflow):
     """Workflow for Zenodo upload."""
 
     def __init__(

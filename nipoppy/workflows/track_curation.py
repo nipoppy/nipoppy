@@ -10,7 +10,7 @@ from nipoppy.tabular.curation_status import (
     generate_curation_status_table,
     update_curation_status_table,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow, save_tabular_file
 
 logger = get_logger()
 
@@ -79,7 +79,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             )
 
         logger.info(f"New/updated curation status table shape: {table.shape}")
-        self.save_tabular_file(table, fpath_table)
+        save_tabular_file(table, fpath_table)
 
     def run_cleanup(self):
         """Log a success message."""

@@ -16,6 +16,7 @@ from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
+from nipoppy.workflows.base import run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 logger = get_logger()
@@ -115,9 +116,10 @@ class Runner(BasePipelineWorkflow, ABC):
         if self.simulate:
             logger.info("Simulating pipeline command")
             try:
-                self.run_command(
+                run_command(
                     ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
                     quiet=True,
+                    dry_run=self.dry_run,
                 )
                 if bosh_exec_launch_args:
                     logger.info(f"Additional launch options: {bosh_exec_launch_args}")
@@ -128,7 +130,7 @@ class Runner(BasePipelineWorkflow, ABC):
         else:
             logger.info("Running pipeline command")
             try:
-                self.run_command(
+                run_command(
                     (
                         [
                             "bosh",
@@ -141,6 +143,7 @@ class Runner(BasePipelineWorkflow, ABC):
                         + bosh_exec_launch_args
                     ),
                     quiet=True,
+                    dry_run=self.dry_run,
                 )
             except subprocess.CalledProcessError as exception:
                 raise ExecutionError(
