@@ -25,6 +25,13 @@
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jbpoline"><img src="https://avatars.githubusercontent.com/u/275048?v=4?s=100" width="100px;" alt="Jean-Baptiste Poline"/><br /><sub><b>Jean-Baptiste Poline</b></sub></a><br /><a href="#doc-jbpoline" title="Documentation">📖</a> <a href="#design-jbpoline" title="Design">🎨</a> <a href="#ideas-jbpoline" title="Ideas, Planning, & Feedback">🤔</a> <a href="#financial-jbpoline" title="Financial">💵</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
