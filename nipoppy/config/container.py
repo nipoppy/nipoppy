@@ -37,8 +37,8 @@ class ContainerConfig(BaseModel):
     ARGS: list[str] = Field(
         default=[],
         description=(
-            "Additional arguments for Apptainer/Singularity/Docker call"
-            ". Note: bind paths and environment variables should be specified using "
+            "Additional arguments for Apptainer/Singularity/Docker call. "
+            "Note: bind paths and environment variables should be specified using "
             "BIND_PATHS and ENV_VARS respectively."
         ),
     )
