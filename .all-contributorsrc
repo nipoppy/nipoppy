@@ -1,7 +1,30 @@
 {
-    "projectName": "nipoppy",
-    "projectOwner": "nipoppy",
-    "files": [
-        "docs/source/team.md"
-    ]
+  "projectName": "nipoppy",
+  "projectOwner": "nipoppy",
+  "files": [
+    "docs/source/team.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "nikhil153",
+      "name": "Nikhil Bhagwat",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7978607?v=4",
+      "profile": "https://nikhil153.github.io/",
+      "contributions": [
+        "code",
+        "bug",
+        "doc",
+        "design",
+        "ideas",
+        "maintenance",
+        "question",
+        "review",
+        "test",
+        "tutorial"
+      ]
+    }
+  ]
 }
