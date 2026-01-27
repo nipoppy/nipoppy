@@ -25,6 +25,13 @@
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://nikhil153.github.io/"><img src="https://avatars.githubusercontent.com/u/7978607?v=4?s=100" width="100px;" alt="Nikhil Bhagwat"/><br /><sub><b>Nikhil Bhagwat</b></sub></a><br /><a href="#code-nikhil153" title="Code">💻</a> <a href="#bug-nikhil153" title="Bug reports">🐛</a> <a href="#doc-nikhil153" title="Documentation">📖</a> <a href="#design-nikhil153" title="Design">🎨</a> <a href="#ideas-nikhil153" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-nikhil153" title="Maintenance">🚧</a> <a href="#question-nikhil153" title="Answering Questions">💬</a> <a href="#review-nikhil153" title="Reviewed Pull Requests">👀</a> <a href="#test-nikhil153" title="Tests">⚠️</a> <a href="#tutorial-nikhil153" title="Tutorials">✅</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
