@@ -13,7 +13,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1302022?v=4",
       "profile": "https://github.com/surchs",
       "contributions": [
-        "doc"
+        "doc",
+        "ideas",
+        "review"
       ]
     },
     {
@@ -22,7 +24,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/11001776?v=4",
       "profile": "https://github.com/Vincent-wq",
       "contributions": [
-        "code"
+        "code",
+        "ideas"
       ]
     },
     {
@@ -31,7 +34,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/275048?v=4",
       "profile": "https://github.com/jbpoline",
       "contributions": [
-        "doc"
+        "doc",
+        "design",
+        "ideas",
+        "financial"
       ]
     },
     {
@@ -40,7 +46,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/7978607?v=4",
       "profile": "https://nikhil153.github.io/",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "doc",
+        "design",
+        "ideas",
+        "maintenance",
+        "question",
+        "review",
+        "test",
+        "tutorial"
       ]
     },
     {
@@ -58,7 +73,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/29051929?v=4",
       "profile": "https://michellewang.github.io/",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "doc",
+        "design",
+        "ideas",
+        "maintenance",
+        "question",
+        "review",
+        "test",
+        "tutorial"
       ]
     },
     {
@@ -67,7 +91,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/13921277?v=4",
       "profile": "https://github.com/bcmcpher",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "ideas",
+        "review"
       ]
     },
     {
@@ -76,7 +103,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/6961185?v=4",
       "profile": "https://remi-gau.github.io/",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "ideas",
+        "review",
+        "test"
       ]
     },
     {
@@ -94,7 +125,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/50081943?v=4",
       "profile": "https://github.com/danyluik",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "ideas",
+        "userTesting"
       ]
     },
     {
@@ -130,7 +164,15 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/16450132?v=4",
       "profile": "https://github.com/mathdugre",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "doc",
+        "design",
+        "ideas",
+        "maintenance",
+        "question",
+        "review",
+        "test"
       ]
     },
     {
@@ -139,7 +181,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/47538991?v=4",
       "profile": "https://www.linkedin.com/in/jacobsanz/",
       "contributions": [
-        "code"
+        "code",
+        "review",
+        "test"
       ]
     },
     {
@@ -148,7 +192,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/72619172?v=4",
       "profile": "https://github.com/mtorabi59",
       "contributions": [
-        "code"
+        "code",
+        "test"
       ]
     },
     {
@@ -157,7 +202,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/111446107?v=4",
       "profile": "https://github.com/julia-pfarr",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "doc",
+        "ideas",
+        "review",
+        "tutorial",
+        "video"
       ]
     },
     {
@@ -175,7 +226,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1028657?v=4",
       "profile": "https://github.com/asmacdo",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "ideas",
+        "tutorial"
       ]
     },
     {
@@ -184,7 +238,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/158147135?v=4",
       "profile": "https://github.com/AliceJoubert",
       "contributions": [
-        "code"
+        "code",
+        "ideas"
       ]
     },
     {
@@ -194,6 +249,15 @@
       "profile": "https://github.com/m2march",
       "contributions": [
         "bug"
+      ]
+    },
+    {
+      "login": "CMonnin",
+      "name": "Cian Monnin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/113541912?v=4",
+      "profile": "https://www.cianmonnin.dev/",
+      "contributions": [
+        "doc"
       ]
     }
   ]
