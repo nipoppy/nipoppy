@@ -31,6 +31,21 @@ from nipoppy.utils.utils import (
 logger = get_logger()
 
 
+class LOG_PREFIX:
+    """Prefixes for logging subprocess output."""
+
+    RUN = "[RUN]"
+    RUN_STDOUT = "[RUN STDOUT]"
+    RUN_STDERR = "[RUN STDERR]"
+
+
+def log_command(command: str):
+    """Write a command to the log with a special prefix."""
+    # using extra={"markup": False} in case the command contains substrings
+    # that would be interpreted as closing tags by the RichHandler
+    logger.info(f"{LOG_PREFIX.RUN} {command}", extra={"markup": False})
+
+
 def save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
     """Save a tabular file."""
     fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
@@ -42,10 +57,6 @@ def save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
 
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
-
-    log_prefix_run = "[RUN]"
-    log_prefix_run_stdout = "[RUN STDOUT]"
-    log_prefix_run_stderr = "[RUN STDERR]"
 
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
@@ -67,12 +78,6 @@ class BaseWorkflow(Base, ABC):
         self.return_code = ReturnCode.SUCCESS
 
         logger.set_verbose(self.verbose)
-
-    def log_command(self, command: str):
-        """Write a command to the log with a special prefix."""
-        # using extra={"markup": False} in case the command contains substrings
-        # that would be interpreted as closing tags by the RichHandler
-        logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
 
     def run_command(
         self,
@@ -132,7 +137,7 @@ class BaseWorkflow(Base, ABC):
             command_or_args = args
 
         if not quiet:
-            self.log_command(command)
+            log_command(command)
 
         if not self.dry_run:
             process = subprocess.Popen(
@@ -146,12 +151,12 @@ class BaseWorkflow(Base, ABC):
             while process.poll() is None:
                 process_output(
                     process.stdout,
-                    self.log_prefix_run_stdout,
+                    LOG_PREFIX.RUN_STDOUT,
                 )
 
                 process_output(
                     process.stderr,
-                    self.log_prefix_run_stderr,
+                    LOG_PREFIX.RUN_STDERR,
                     log_level=logging.ERROR,
                 )
 

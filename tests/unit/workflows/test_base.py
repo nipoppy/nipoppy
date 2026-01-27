@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import LOG_PREFIX, BaseWorkflow, log_command
 
 
 @pytest.fixture()
@@ -31,17 +31,13 @@ def test_init(workflow: BaseWorkflow):
 
 
 @pytest.mark.parametrize("command", ["echo x", "echo y"])
-@pytest.mark.parametrize("prefix_run", ["[RUN]", "<run>"])
 @pytest.mark.no_xdist
-def test_log_command(
-    workflow: BaseWorkflow, command, prefix_run, caplog: pytest.LogCaptureFixture
-):
-    workflow.log_prefix_run = prefix_run
-    workflow.log_command(command)
+def test_log_command(command, caplog: pytest.LogCaptureFixture):
+    log_command(command)
     assert caplog.records
     record = caplog.records[-1]
     assert record.levelno == logging.INFO
-    assert record.message.startswith(prefix_run)
+    assert record.message.startswith(LOG_PREFIX.RUN)
     assert command in record.message
 
 
@@ -102,7 +98,7 @@ def test_run_command_no_markup(
 def test_run_command_quiet(workflow: BaseWorkflow, caplog: pytest.LogCaptureFixture):
     message = "This should be printed"
     workflow.run_command(["echo", message], quiet=True)
-    assert workflow.log_prefix_run not in caplog.text
+    assert LOG_PREFIX.RUN not in caplog.text
     assert message in caplog.text
 
 
