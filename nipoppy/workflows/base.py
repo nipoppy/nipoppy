@@ -46,6 +46,99 @@ def log_command(command: str):
     logger.info(f"{LOG_PREFIX.RUN} {command}", extra={"markup": False})
 
 
+def run_command(
+    command_or_args: Sequence[str] | str,
+    *,
+    check: bool = True,
+    quiet: bool = False,
+    dry_run: bool = False,
+    **kwargs,
+) -> subprocess.Popen | str:
+    """Run a command in a subprocess.
+
+    The command's stdout and stderr outputs are written to the log
+    with special prefixes.
+
+    If in "dry run" mode, the command is not executed, and the method returns
+    the command string. Otherwise, the subprocess.Popen object is returned
+    unless capture_output is True.
+
+    Parameters
+    ----------
+    command_or_args : Sequence[str]  |  str
+        The command to run.
+    check : bool, optional
+        If True, raise an error if the process exits with a non-zero code,
+        by default True
+    quiet : bool, optional
+        If True, do not log the command, by default False
+    **kwargs
+        Passed to `subprocess.Popen`.
+
+    Returns
+    -------
+    subprocess.Popen or str
+    """
+
+    def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+        """Consume lines from an IO stream and log them."""
+        for line in output_source:
+            line = line.strip("\n")
+            # using extra={"markup": False} in case the output contains substrings
+            # that would be interpreted as closing tags by the RichHandler
+            logger.log(
+                level=log_level,
+                msg=f"{log_prefix} {line}",
+                extra={"markup": False},
+            )
+
+    # build command string
+    if not isinstance(command_or_args, str):
+        args = [str(arg) for arg in command_or_args]
+        command = shlex.join(args)
+    else:
+        command = command_or_args
+        args = shlex.split(command)
+
+    # only pass a single string if shell is True
+    if not kwargs.get("shell"):
+        command_or_args = args
+
+    if not quiet:
+        log_command(command)
+
+    if not dry_run:
+        process = subprocess.Popen(
+            command_or_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            **kwargs,
+        )
+
+        while process.poll() is None:
+            process_output(
+                process.stdout,
+                LOG_PREFIX.RUN_STDOUT,
+            )
+
+            process_output(
+                process.stderr,
+                LOG_PREFIX.RUN_STDERR,
+                log_level=logging.ERROR,
+            )
+
+        if check and process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, command)
+
+        run_output = process
+
+    else:
+        run_output = command
+
+    return run_output
+
+
 def save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
     """Save a tabular file."""
     fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
@@ -55,7 +148,7 @@ def save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
         logger.info(f"No changes to file at {fpath}")
 
 
-class BaseWorkflow(Base, ABC):
+class Workflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
@@ -79,97 +172,6 @@ class BaseWorkflow(Base, ABC):
 
         logger.set_verbose(self.verbose)
 
-    def run_command(
-        self,
-        command_or_args: Sequence[str] | str,
-        check=True,
-        quiet=False,
-        **kwargs,
-    ) -> subprocess.Popen | str:
-        """Run a command in a subprocess.
-
-        The command's stdout and stderr outputs are written to the log
-        with special prefixes.
-
-        If in "dry run" mode, the command is not executed, and the method returns
-        the command string. Otherwise, the subprocess.Popen object is returned
-        unless capture_output is True.
-
-        Parameters
-        ----------
-        command_or_args : Sequence[str]  |  str
-            The command to run.
-        check : bool, optional
-            If True, raise an error if the process exits with a non-zero code,
-            by default True
-        quiet : bool, optional
-            If True, do not log the command, by default False
-        **kwargs
-            Passed to `subprocess.Popen`.
-
-        Returns
-        -------
-        subprocess.Popen or str
-        """
-
-        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
-            """Consume lines from an IO stream and log them."""
-            for line in output_source:
-                line = line.strip("\n")
-                # using extra={"markup": False} in case the output contains substrings
-                # that would be interpreted as closing tags by the RichHandler
-                logger.log(
-                    level=log_level,
-                    msg=f"{log_prefix} {line}",
-                    extra={"markup": False},
-                )
-
-        # build command string
-        if not isinstance(command_or_args, str):
-            args = [str(arg) for arg in command_or_args]
-            command = shlex.join(args)
-        else:
-            command = command_or_args
-            args = shlex.split(command)
-
-        # only pass a single string if shell is True
-        if not kwargs.get("shell"):
-            command_or_args = args
-
-        if not quiet:
-            log_command(command)
-
-        if not self.dry_run:
-            process = subprocess.Popen(
-                command_or_args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                **kwargs,
-            )
-
-            while process.poll() is None:
-                process_output(
-                    process.stdout,
-                    LOG_PREFIX.RUN_STDOUT,
-                )
-
-                process_output(
-                    process.stderr,
-                    LOG_PREFIX.RUN_STDERR,
-                    log_level=logging.ERROR,
-                )
-
-            if check and process.returncode != 0:
-                raise subprocess.CalledProcessError(process.returncode, command)
-
-            run_output = process
-
-        else:
-            run_output = command
-
-        return run_output
-
     def run_setup(self):
         """Run the setup part of the workflow."""
         logger.debug(self)
@@ -192,7 +194,7 @@ class BaseWorkflow(Base, ABC):
         self.run_cleanup()
 
 
-class BaseDatasetWorkflow(BaseWorkflow, ABC):
+class BaseDatasetWorkflow(Workflow, ABC):
     """Base workflow class with awareness of dataset layout and components."""
 
     def __init__(

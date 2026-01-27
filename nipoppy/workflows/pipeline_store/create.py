@@ -10,12 +10,12 @@ from nipoppy.exceptions import FileOperationError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
-from nipoppy.workflows.base import BaseWorkflow
+from nipoppy.workflows.base import Workflow
 
 logger = get_logger()
 
 
-class PipelineCreateWorkflow(BaseWorkflow):
+class PipelineCreateWorkflow(Workflow):
     """Workflow for pipeline validate command."""
 
     def __init__(
