@@ -1,7 +1,22 @@
 {
-    "projectName": "nipoppy",
-    "projectOwner": "nipoppy",
-    "files": [
-        "docs/source/team.md"
-    ]
+  "projectName": "nipoppy",
+  "projectOwner": "nipoppy",
+  "files": [
+    "docs/source/team.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "Vincent-wq",
+      "name": "Wang Qing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11001776?v=4",
+      "profile": "https://github.com/Vincent-wq",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    }
+  ]
 }
