@@ -1,7 +1,23 @@
 {
-    "projectName": "nipoppy",
-    "projectOwner": "nipoppy",
-    "files": [
-        "docs/source/team.md"
-    ]
+  "projectName": "nipoppy",
+  "projectOwner": "nipoppy",
+  "files": [
+    "docs/source/team.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "surchs",
+      "name": "Sebastian Urchs",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1302022?v=4",
+      "profile": "https://github.com/surchs",
+      "contributions": [
+        "doc",
+        "ideas",
+        "review"
+      ]
+    }
+  ]
 }
