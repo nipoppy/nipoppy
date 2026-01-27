@@ -37,7 +37,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         self.force = force
 
         super().__init__(
-            name="pipeline_upload",
+            name="nipoppy_pipeline_upload",
             verbose=verbose,
             dry_run=dry_run,
         )

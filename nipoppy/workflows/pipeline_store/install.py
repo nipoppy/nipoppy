@@ -43,7 +43,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         """Initialize the workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            name="pipeline_install",
+            name="nipoppy_pipeline_install",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
