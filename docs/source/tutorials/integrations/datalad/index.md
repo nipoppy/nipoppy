@@ -39,9 +39,9 @@ $ datalad save -m "Update nipoppy config"
 
 Now we install the pipeline from the {doc}`main tutorial Step 3 <../../mriqc_from_bids/index>`
 
-```console
+```{code-block} console
 $ datalad run -m "Install pipeline" \
-    nipoppy pipeline install 15427844
+    nipoppy pipeline install {{zenodo_id_mriqc_23_1_0}}
 ```
 
 Then manually update the `TEMPLATEFLOW_HOME` in `global_config.json` as described in the main tutorial, and save the change:
@@ -83,7 +83,7 @@ Now we can see the advantage of using `datalad run` with Nipoppy, the exact comm
 $ git log
 ```
 
-```
+```{code-block}
 commit 6cc7cd3ad9ba21886f69124daed73907078022cd
 Author: Austin Macdonald <austin@dartmouth.edu>
 Date:   Fri Jul 11 12:43:47 2025 -0500
@@ -137,7 +137,7 @@ Date:   Fri Jul 11 12:28:22 2025 -0500
     === Do not change lines below ===
     {
      "chain": [],
-     "cmd": "nipoppy pipeline install 15427844",
+     "cmd": "nipoppy pipeline install {{zenodo_id_mriqc_23_1_0}}",
      "dsid": "880521ec-8d70-4fdf-85db-b9cafe4fec2f",
      "exit": 0,
      "extra_inputs": [],
