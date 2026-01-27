@@ -55,7 +55,7 @@
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/m2march"><img src="https://avatars.githubusercontent.com/u/733834?v=4?s=100" width="100px;" alt="March"/><br /><sub><b>March</b></sub></a><br /><a href="https://github.com/nipoppy/nipoppy/issues?q=author%3Am2march" title="Bug reports">🐛</a></td>
     </tr>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://www.cianmonnin.dev/"><img src="https://avatars.githubusercontent.com/u/113541912?v=4?s=100" width="100px;" alt="Cian Monnin"/><br /><sub><b>Cian Monnin</b></sub></a><br /><a href="https://github.com/nipoppy/nipoppy/commits?author=CMonnin" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.cianmonnin.dev/"><img src="https://avatars.githubusercontent.com/u/113541912?v=4?s=100" width="100px;" alt="Cian Monnin"/><br /><sub><b>Cian Monnin</b></sub></a><br /><a href="https://github.com/nipoppy/nipoppy/commits?author=CMonnin" title="Documentation">📖</a> <a href="https://github.com/nipoppy/nipoppy/issues?q=author%3ACMonnin" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>
