@@ -103,6 +103,7 @@ titlesonly:
 caption: Other
 ---
 changelog
+team
 contributing
 glossary
 ```
