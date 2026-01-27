@@ -10,6 +10,7 @@ from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import ProcessingStatusTable
+from nipoppy.workflows.base import save_tabular_file
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 logger = get_logger()
@@ -175,7 +176,7 @@ class PipelineTracker(BasePipelineWorkflow):
             "New/updated processing status table shape: "
             f"{self.processing_status_table.shape}"
         )
-        self.save_tabular_file(
+        save_tabular_file(
             self.processing_status_table, self.study.layout.fpath_processing_status
         )
         return super().run_cleanup()

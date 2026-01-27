@@ -34,7 +34,7 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_MANIFEST,
     process_template_str,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow, save_tabular_file
 
 logger = get_logger()
 
@@ -320,7 +320,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
-        self.save_tabular_file(manifest, self.study.layout.fpath_manifest)
+        save_tabular_file(manifest, self.study.layout.fpath_manifest)
 
     def run_cleanup(self):
         """Log a success message."""

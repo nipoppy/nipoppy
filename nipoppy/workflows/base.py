@@ -31,6 +31,15 @@ from nipoppy.utils.utils import (
 logger = get_logger()
 
 
+def save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
+    """Save a tabular file."""
+    fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
+    if fpath_backup is not None:
+        logger.info(f"Saved to {fpath} (-> {fpath_backup})")
+    else:
+        logger.info(f"No changes to file at {fpath}")
+
+
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
@@ -155,14 +164,6 @@ class BaseWorkflow(Base, ABC):
             run_output = command
 
         return run_output
-
-    def save_tabular_file(self, tabular: BaseTabular, fpath: Path):
-        """Save a tabular file."""
-        fpath_backup = tabular.save_with_backup(fpath, dry_run=self.dry_run)
-        if fpath_backup is not None:
-            logger.info(f"Saved to {fpath} (-> {fpath_backup})")
-        else:
-            logger.info(f"No changes to file at {fpath}")
 
     def run_setup(self):
         """Run the setup part of the workflow."""
