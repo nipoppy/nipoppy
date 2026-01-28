@@ -2,7 +2,9 @@
 
 name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
 
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -26,7 +28,6 @@ jobs:
 
   publish-to-pypi:
     name: Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
     needs:
     - build
     runs-on: ubuntu-latest
@@ -72,14 +73,6 @@ jobs:
         inputs: >-
           ./dist/*.tar.gz
           ./dist/*.whl
-    - name: Create GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-      run: >-
-        gh release create
-        '${{ github.ref_name }}'
-        --repo '${{ github.repository }}'
-        --generate-notes
     - name: Upload artifact signatures to GitHub Release
       env:
         GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
