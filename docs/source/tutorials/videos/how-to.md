@@ -65,6 +65,21 @@ Duration: 5:26m
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/9FDdf1BHz0w?si=HK5wj1zQe8GfRsgj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-```{attention}
-More videos on `track-processing` and `extract` are in the making and will be published soon! Stay tuned for updates!
-```
+## 6. nipoppy track-processing
+
+In this tutorial we will cover how to track the processing status of our imaging data with Nipoppy. More concretely, we will
+- run the [`nipoppy track-processing`](../../cli_reference/track_processing.rst) command
+- get to know the [`processing_status.tsv`](../../glossary.md) file
+- and explore the [Neurobagel digest dashboard](https://digest.neurobagel.org/)
+
+Duration: 4:21m
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9lEsoZrcthU?si=wLno8A99295H-lNc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## 7. nipoppy extract
+
+In this tutorial we will cover how to extract imaging-derived phenotypes (IDPs) from our imaging data by running the [`nipoppy extract`](../../cli_reference/extract.rst) command.
+
+Duration: 3:55m
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/MR42po3pr8w?si=NFRnPXRn0Uovp8Ss" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
