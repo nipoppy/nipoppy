@@ -6,13 +6,18 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.env import ReturnCode, StrOrPathLike
+from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode, WorkflowError
+from nipoppy.logger import get_logger
 from nipoppy.tabular.curation_status import update_curation_status_table
+from nipoppy.utils import fileops
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+
+logger = get_logger()
 
 
 def is_derived_dicom(fpath: Path) -> bool:
@@ -61,7 +66,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
     ) -> list[Path]:
         """Get file paths to reorganize for a single participant and session."""
         dpath_downloaded = (
-            self.layout.dpath_pre_reorg
+            self.study.layout.dpath_pre_reorg
             / self.dicom_dir_map.get_dicom_dir(
                 participant_id=participant_id, session_id=session_id
             )
@@ -69,7 +74,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
         # make sure directory exists
         if not dpath_downloaded.exists():
-            raise FileNotFoundError(
+            raise FileOperationError(
                 f"Raw DICOM directory not found for participant {participant_id}"
                 f" session {session_id}: {dpath_downloaded}"
             )
@@ -98,11 +103,11 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         fpaths_to_reorg = self.get_fpaths_to_reorg(participant_id, session_id)
 
         dpath_reorganized: Path = (
-            self.layout.dpath_post_reorg
+            self.study.layout.dpath_post_reorg
             / participant_id_to_bids_participant_id(participant_id)
             / session_id_to_bids_session_id(session_id)
         )
-        self.mkdir(dpath_reorganized)
+        fileops.mkdir(dpath_reorganized, dry_run=self.dry_run)
 
         # do reorg
         for fpath_source in fpaths_to_reorg:
@@ -110,13 +115,11 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             if self.check_dicoms:
                 try:
                     if is_derived_dicom(fpath_source):
-                        self.logger.warning(
-                            f"Derived DICOM file detected: {fpath_source}"
-                        )
-                except Exception as exception:
-                    raise RuntimeError(
-                        f"Error checking DICOM file {fpath_source}: {exception}"
-                    )
+                        logger.warning(f"Derived DICOM file detected: {fpath_source}")
+                except Exception as e:
+                    raise WorkflowError(
+                        f"Error checking DICOM file {fpath_source}: {e}"
+                    ) from e
 
             # the destination path is under dpath_reorganized
             # resolve the path to avoid issues with symlinks
@@ -129,21 +132,22 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
 
             # do not overwrite existing files
             if fpath_dest.exists():
-                raise FileExistsError(
+                raise FileOperationError(
                     f"Cannot move file {fpath_source} to {fpath_dest}"
                     " because it already exists"
                 )
 
             # either create symlinks or copy original files
             if self.copy_files:
-                self.copy(fpath_source, fpath_dest)
+                fileops.copy(fpath_source, fpath_dest, dry_run=self.dry_run)
             else:
                 fpath_source = os.path.relpath(
                     fpath_source.resolve(), fpath_dest.parent
                 )
-                self.create_symlink(
-                    path_source=fpath_source,
-                    path_dest=fpath_dest,
+                fileops.symlink(
+                    source=fpath_source,
+                    target=fpath_dest,
+                    dry_run=self.dry_run,
                 )
 
         # update curation status
@@ -170,12 +174,11 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         super().run_setup()
         self.curation_status_table = update_curation_status_table(
             curation_status_table=self.curation_status_table,
-            manifest=self.manifest,
+            manifest=self.study.manifest,
             dicom_dir_map=self.dicom_dir_map,
-            dpath_downloaded=self.layout.dpath_pre_reorg,
-            dpath_organized=self.layout.dpath_post_reorg,
-            dpath_bidsified=self.layout.dpath_bids,
-            logger=self.logger,
+            dpath_downloaded=self.study.layout.dpath_pre_reorg,
+            dpath_organized=self.study.layout.dpath_post_reorg,
+            dpath_bidsified=self.study.layout.dpath_bids,
         )
 
     def run_main(self):
@@ -190,7 +193,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 self.n_success += 1
             except Exception as exception:
                 self.return_code = ReturnCode.PARTIAL_SUCCESS
-                self.logger.error(
+                logger.error(
                     "Error reorganizing DICOM files for participant "
                     f"{participant_id} session {session_id}: {exception}"
                 )
@@ -204,14 +207,14 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         - Log a summary message
         """
         self.save_tabular_file(
-            self.curation_status_table, self.layout.fpath_curation_status
+            self.curation_status_table, self.study.layout.fpath_curation_status
         )
 
         if self.n_total == 0:
-            self.logger.warning(
+            logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
                 "mistakes in the dataset's manifest or config file, and/or check the "
-                f"curation status file at {self.layout.fpath_curation_status}"
+                f"curation status file at {self.study.layout.fpath_curation_status}"
             )
         else:
             # change the message depending on how successful the run was
@@ -220,10 +223,10 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 f"{self.n_total} participant-session pairs."
             )
             if self.n_success == 0:
-                self.logger.error(log_msg)
+                logger.error(log_msg)
             elif self.n_success == self.n_total:
-                self.logger.success(log_msg)
+                logger.success(log_msg)
             else:
-                self.logger.warning(log_msg)
+                logger.warning(log_msg)
 
         return super().run_cleanup()

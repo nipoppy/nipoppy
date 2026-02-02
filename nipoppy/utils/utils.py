@@ -14,6 +14,7 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
+from nipoppy.exceptions import NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -29,6 +30,10 @@ DPATH_EXAMPLES = DPATH_DATA / "examples"
 FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
+FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION = (
+    DPATH_EXAMPLES / "sample_bids_dataset_description.json"
+)
+FPATH_SAMPLE_BIDSIGNORE = DPATH_EXAMPLES / "sample_bidsignore"
 DPATH_LAYOUTS = DPATH_DATA / "layouts"
 FPATH_DEFAULT_LAYOUT = DPATH_LAYOUTS / "layout-default.json"
 DPATH_HPC = DPATH_DATA / "hpc"
@@ -82,9 +87,11 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
     with open(fpath, "r") as file:
         try:
             return json.load(file, **kwargs)
-        except json.JSONDecodeError as exception:
+        except json.JSONDecodeError as e:
             raise json.JSONDecodeError(
-                f"Error loading JSON file at {fpath}", exception.doc, exception.pos
+                f"Error loading JSON file at {fpath}",
+                e.doc,
+                e.pos,
             )
 
 
@@ -223,7 +230,7 @@ def process_template_str(
         replacement_key = match.groups()[0].lower()  # always convert to lowercase
 
         if not str.isidentifier(replacement_key):
-            raise ValueError(
+            raise NipoppyError(
                 f"Invalid identifier name {replacement_key} in {template_str}"
             )
 

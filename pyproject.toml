@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "boutiques>=0.5.30",
+    "boutiques>=0.5.31",
     "click",
     "httpx",
     "jinja2",
@@ -24,7 +24,6 @@ dependencies = [
     "pydantic",
     "pydicom!=3.0.0",
     "pysqa[sge]>=0.2.4",
-    "requests",
     "rich",
     "rich-click",
     "typing-extensions",
@@ -33,7 +32,7 @@ description = "Standardized organization and processing of neuroimaging-clinical
 license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -47,13 +46,14 @@ doc = [
     "sphinx-click",
     "sphinx-copybutton",
     "sphinx-github-changelog",
-    "sphinx-hoverxref",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
     "sphinx_design",
+    "Sphinx-Substitution-Extensions",
 ]
 dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
+    "bids-validator-deno",
     "fids>=0.1.0",
     "nipoppy[gui,parallel]",
     "packaging",

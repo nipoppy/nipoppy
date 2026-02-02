@@ -1,0 +1,32 @@
+---
+name: Check documentation links
+
+on:
+  pull_request:
+    branches: ['main']
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday at 00:00 UTC
+  workflow_dispatch:
+
+jobs:
+  linkcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.11"
+
+    - name: Install package with doc dependencies
+      run: |
+        pip install -U pip
+        pip install .[doc]
+
+    - name: Generate JSON schemas for docs
+      run: |
+        python docs/scripts/pydantic_to_jsonschema.py
+
+    - name: Run linkcheck
+      run: |
+        python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/_build/linkcheck

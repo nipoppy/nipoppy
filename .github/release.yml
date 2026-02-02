@@ -1,6 +1,7 @@
 changelog:
   exclude:
     authors:
+      - allcontributors
       - dependabot
       - nipoppy-bot
       - pre-commit-ci

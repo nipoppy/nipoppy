@@ -661,6 +661,7 @@ def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     "delete_request_status_code,expected_log_message",
     [(204, "Record creation reverted"), (500, "Failed to revert record")],
 )
+@pytest.mark.no_xdist
 def test_upload_pipeline_delete_draft(
     delete_request_status_code: int,
     expected_log_message: str,
@@ -687,7 +688,7 @@ def test_upload_pipeline_delete_draft(
         json={},
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(ZenodoAPIError):
         zenodo_api.upload_pipeline(
             input_dir=tmp_path,
             metadata={"metadata": {}},
@@ -698,18 +699,20 @@ def test_upload_pipeline_delete_draft(
 
 
 @pytest.mark.parametrize(
-    "search_query,keywords,size,final_query",
+    "search_query,keywords,size,sort,final_query",
     [
         (
             "FMRIPREP",
             None,
             100,
+            "mostviewed",
             "%2AFMRIPREP%2A&size=100",
         ),
         (
             "fmriprep AND nipoppy",
             ["Nipoppy"],
             1,
+            "mostdownloaded",
             "fmriprep+AND+nipoppy+AND+metadata.subjects.subject%3A%22Nipoppy%22&size=1",
         ),
     ],
@@ -718,16 +721,36 @@ def test_search_records(
     search_query,
     keywords,
     size,
+    sort,
     final_query,
     zenodo_api: ZenodoAPI,
     httpx_mock: pytest_httpx.HTTPXMock,
 ):
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records?q={final_query}",
+        url=f"{zenodo_api.api_endpoint}/records?q={final_query}&sort={sort}",
         method="GET",
         json={"hits": {}},
     )
-    zenodo_api.search_records(search_query, keywords=keywords, size=size)
+    zenodo_api.search_records(search_query, keywords=keywords, size=size, sort=sort)
+
+
+def test_search_records_status_raised(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    # mock the response to have .raise_for_status() raise an error
+    query = ""
+    size = 10
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}&sort=mostdownloaded",  # noqa: E501
+        method="GET",
+        status_code=500,
+        json={},
+    )
+    with pytest.raises(
+        ZenodoAPIError,
+        match="Failed to search records. JSON response:",
+    ):
+        zenodo_api.search_records(query=query, size=size)
 
 
 def test_search_records_wrong_size(zenodo_api: ZenodoAPI):
@@ -737,6 +760,20 @@ def test_search_records_wrong_size(zenodo_api: ZenodoAPI):
     ):
         # exits before actually making the API call
         zenodo_api.search_records(query="FMRIPREP", size=0)
+
+
+@pytest.mark.parametrize(
+    "community_id,expected_endpoint",
+    [
+        (None, "https://sandbox.zenodo.org/api/records"),
+        ("", "https://sandbox.zenodo.org/api/records"),
+        ("12345", "https://sandbox.zenodo.org/api/communities/12345/records"),
+    ],
+)
+def test_get_api_endpoint(
+    zenodo_api: ZenodoAPI, community_id: str, expected_endpoint: str
+):
+    assert zenodo_api._get_api_endpoint(community_id) == expected_endpoint
 
 
 def test_get_record_metadata(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
@@ -768,3 +805,36 @@ def test_get_record_metadata_fails(
         ZenodoAPIError, match=f"Failed to get metadata for zenodo.{record_id}"
     ):
         zenodo_api.get_record_metadata(record_id=record_id)
+
+
+def test_get_latest_version_id(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "123456"
+    latest_record_id = "654321"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions/latest",
+        method="GET",
+        json={"id": latest_record_id},
+    )
+
+    assert zenodo_api.get_latest_version_id(record_id) == latest_record_id
+
+
+def test_get_latest_version_id_invalid(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "0"
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions/latest",
+        method="GET",
+        status_code=404,
+        json={"message": "The persistent identifier does not exist."},
+    )
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=f"Failed to get latest version for zenodo.{record_id}:",
+    ):
+        zenodo_api.get_latest_version_id(record_id)

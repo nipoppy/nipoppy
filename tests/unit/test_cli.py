@@ -15,7 +15,7 @@ from click.testing import CliRunner
 
 from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.env import ReturnCode
+from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE
 
 runner = CliRunner()
@@ -112,6 +112,7 @@ def test_cli_invalid(args):
         ),
     ],
 )
+@pytest.mark.no_xdist
 def test_dep_params(
     command: str,
     workflow: str,
@@ -133,6 +134,7 @@ def test_dep_params(
     assert result.exit_code == ReturnCode.SUCCESS
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
     assert_command_success(f"{command} -h")
@@ -265,6 +267,15 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "pipeline",
+                "search",
+                "--password-file",
+                str(PASSWORD_FILE),
+            ],
+            "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
+        ),
+        (
+            [
+                "pipeline",
                 "create",
                 "--type",
                 "processing",
@@ -279,6 +290,18 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--dataset",
                 "[mocked_dir]",
                 "zenodo.123456",
+            ],
+            "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "install",
+                "--dataset",
+                "[mocked_dir]",
+                "zenodo.123456",
+                "--password-file",
+                str(PASSWORD_FILE),
             ],
             "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
         ),
@@ -341,32 +364,104 @@ def test_context_manager_no_exception(mocker):
 
 
 @pytest.mark.parametrize(
-    "exception, return_code, expected_return_code",
+    "return_code, expected_return_code",
     [
-        (SystemExit, ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-        (RuntimeError, ReturnCode.SUCCESS, ReturnCode.UNKNOWN_FAILURE),
-        (RuntimeError, ReturnCode.PARTIAL_SUCCESS, ReturnCode.PARTIAL_SUCCESS),
-        (ValueError, ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
+        (None, ReturnCode.UNKNOWN_FAILURE),
+        (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
+        (ReturnCode.INVALID_COMMAND, ReturnCode.INVALID_COMMAND),
     ],
 )
-def test_context_manager_exception(
-    mocker, exception, return_code, expected_return_code
+def test_context_manager_system_exit_exception(
+    mocker, return_code, expected_return_code, caplog
 ):
     """Test that the context manager handles exceptions correctly.
 
-    SystemExit is treated as an unknown failure, while other exceptions
-    are logged and set to UNKNOWN_FAILURE if the workflow exit code is still
-    SUCCESS. Other exit codes are preserved.
+    SystemExit should set the workflow return code to the
+    exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
     """
-    workflow = mocker.Mock()
-    workflow.return_code = return_code
+    # Prevent sys.exit from actually exiting the test runner
     mock_exit = mocker.patch("sys.exit")
 
+    workflow = mocker.Mock()
     with exception_handler(workflow):
-        raise exception()
+        if return_code is None:
+            raise SystemExit
+        else:
+            raise SystemExit(return_code)
 
     assert workflow.return_code == expected_return_code
     mock_exit.assert_called_once_with(expected_return_code)
+
+
+class MyCustomException(NipoppyError):
+    code = 999
+
+
+@pytest.mark.parametrize(
+    "exception",
+    [
+        NipoppyError,
+        MyCustomException,
+    ],
+)
+def test_context_manager_nipoppy_exception(mocker, exception):
+    """Test that the context manager handles exceptions correctly.
+
+    NipoppyError and its subclasses should set the workflow return code to the
+    exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
+    """
+    # Prevent sys.exit from actually exiting the test runner
+    mock_exit = mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    with exception_handler(workflow):
+        raise exception
+
+    assert workflow.return_code == exception.code
+    mock_exit.assert_called_once_with(exception.code)
+
+
+@pytest.mark.parametrize(
+    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_COMMAND)]
+)
+@pytest.mark.parametrize("exception", [Exception, RuntimeError])
+def test_context_manager_unknown_exception(mocker, exception, return_code):
+    """Test that the context manager handles exceptions correctly.
+
+    Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
+    """
+    # Prevent sys.exit from actually exiting the test runner
+    mock_exit = mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    with exception_handler(workflow):
+        if return_code is None:
+            raise exception
+        else:
+            raise exception(code=return_code)
+
+    # Exit code is always set to UNKNOWN_FAILURE for unknown exceptions
+    assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
+    mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
+
+
+def test_context_manager_pydantic_failed_validation(mocker):
+    """Test that the context manager handles pydantic ValidationError correctly."""
+    from pydantic import BaseModel
+
+    # Prevent sys.exit from actually exiting the test runner
+    mock_exit = mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+
+    class MockedModel(BaseModel):
+        field: int
+
+    with exception_handler(workflow):
+        MockedModel(field="invalid")  # will raise ValidationError
+
+    assert workflow.return_code == ReturnCode.INVALID_CONFIG
+    mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
 
 
 @pytest.mark.parametrize("command", list_commands(cli))

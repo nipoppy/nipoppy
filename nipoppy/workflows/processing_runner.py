@@ -7,7 +7,12 @@ from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
+from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.workflows.runner import Runner
+
+logger = get_logger()
 
 
 class ProcessingRunner(Runner):
@@ -69,14 +74,14 @@ class ProcessingRunner(Runner):
             return
 
         if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
-            raise RuntimeError(
-                "Tarring requested but is no tracker config file. "
+            raise ConfigError(
+                "Tarring requested but there is no tracker config file. "
                 "Specify the TRACKER_CONFIG_FILE field for the pipeline step in "
                 "the global config file, then make sure the PARTICIPANT_SESSION_DIR "
                 "field is specified in the TRACKER_CONFIG_FILE file."
             )
         if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
-            raise RuntimeError(
+            raise ConfigError(
                 "Tarring requested but no participant-session directory specified. "
                 "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
                 "in the tracker config file at "
@@ -87,9 +92,9 @@ class ProcessingRunner(Runner):
         """Tar a directory and delete it."""
         dpath = Path(dpath)
         if not dpath.exists():
-            raise RuntimeError(f"Not tarring {dpath} since it does not exist")
+            raise FileOperationError(f"Not tarring {dpath} since it does not exist")
         if not dpath.is_dir():
-            raise RuntimeError(f"Not tarring {dpath} since it is not a directory")
+            raise FileOperationError(f"Not tarring {dpath} since it is not a directory")
 
         tar_flags = "-cvf"
         fpath_tarred = dpath.with_suffix(EXT_TAR)
@@ -101,9 +106,9 @@ class ProcessingRunner(Runner):
         # make sure that the tarfile was created successfully before removing
         # original directory
         if fpath_tarred.exists() and is_tarfile(fpath_tarred):
-            self.rm(dpath)
+            fileops.rm(dpath, dry_run=self.dry_run)
         else:
-            self.logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
+            logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
 
         return fpath_tarred
 
@@ -178,8 +183,8 @@ class ProcessingRunner(Runner):
         # and the program will not actually exit
         try:
             self.fpath_container
-        except FileNotFoundError as exception:
-            raise exception
+        except FileOperationError:
+            raise
         except Exception:
             pass
 
@@ -187,9 +192,7 @@ class ProcessingRunner(Runner):
 
     def run_single(self, participant_id: str, session_id: str):
         """Run pipeline on a single participant/session."""
-        self.logger.info(
-            f"Running for participant {participant_id}, session {session_id}"
-        )
+        logger.info(f"Running for participant {participant_id}, session {session_id}")
 
         # Access the GENERATE_PYBIDS_DATABASE field
         generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
@@ -204,19 +207,19 @@ class ProcessingRunner(Runner):
 
         # get container command
         launch_boutiques_run_kwargs = {}
-        if self.config.CONTAINER_CONFIG.COMMAND is not None:
-            container_command, container_config = self.process_container_config(
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,
                 bind_paths=[
-                    self.layout.dpath_bids,
+                    self.study.layout.dpath_bids,
                     self.dpath_pipeline_output,
                     self.dpath_pipeline_work,
                     self.dpath_pipeline_bids_db,
                 ],
             )
             launch_boutiques_run_kwargs["container_command"] = container_command
-            launch_boutiques_run_kwargs["container_config"] = container_config
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
@@ -245,11 +248,11 @@ class ProcessingRunner(Runner):
             if not self.keep_workdir:
                 for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
                     if dpath.exists():
-                        self.rm(dpath)
+                        fileops.rm(dpath, dry_run=self.dry_run)
             else:
-                self.logger.info("Keeping working / intermediary files.")
+                logger.info("Keeping working / intermediary files.")
         else:
-            self.logger.info(
+            logger.info(
                 "Some pipeline segments failed. Keeping working / intermediary files."
             )
         return super().run_cleanup()

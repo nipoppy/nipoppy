@@ -111,13 +111,20 @@ The `nipoppy init` command created the configuration file at `nipoppy_study/glob
 ---
 linenos: True
 language: json
-emphasize-lines: 3,8
+emphasize-lines: 4,9
 ---
 ```
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
 - If you are on a system that still uses Singularity (which has been renamed to Apptainer), you will need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
-- If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_ROOT]]/containers"` by the full path to that shared directory.
+- If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
+    ```json
+    "SUBSTITUTIONS": {
+        "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
+        "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_SHARED_DIRECTORY>",
+        "[[HPC_ACCOUNT_NAME]]": ""
+    },
+    ```
     - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted) (recommended).
 
 ## Step 3: Install the MRIQC pipeline into the dataset
@@ -134,9 +141,9 @@ INFO     No available processing pipelines
 INFO     No available extraction pipelines
 ```
 
-That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for MRIQC](https://zenodo.org/records/15427844) can be downloaded by running the following:
-```console
-$ nipoppy pipeline install --dataset nipoppy_study 15427844
+That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The {{ '[configuration files for MRIQC](https://zenodo.org/records/{})'.format(zenodo_id_mriqc_23_1_0) }} can be downloaded by running the following:
+```{code-block} console
+$ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_mriqc_23_1_0}}
 ```
 
 When running `nipoppy pipeline install`, you will be asked if you would like to download the MRIQC container. Type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. The container image will be downloaded as `mriqc_23.1.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file).

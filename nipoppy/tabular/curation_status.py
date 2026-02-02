@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -10,6 +9,7 @@ from pydantic import Field
 from typing_extensions import Self
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
+from nipoppy.exceptions import TabularError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest, ManifestModel
@@ -17,6 +17,8 @@ from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
+
+logger = get_logger()
 
 
 class CurationStatusModel(ManifestModel):
@@ -72,7 +74,7 @@ class CurationStatusTable(Manifest):
     @classmethod
     def _check_status_col(cls, col: str) -> str:
         if col not in cls.status_cols:
-            raise ValueError(
+            raise TabularError(
                 f"Invalid status column: {col}. Must be one of {cls.status_cols}"
             )
         return col
@@ -80,7 +82,7 @@ class CurationStatusTable(Manifest):
     @classmethod
     def _check_status_value(cls, value: bool) -> bool:
         if not isinstance(value, bool):
-            raise ValueError(f"Invalid status value: {value}. Must be a boolean")
+            raise TabularError(f"Invalid status value: {value}. Must be a boolean")
         return value
 
     def get_status(self, participant_id: str, session_id: str, col: str) -> bool:
@@ -153,7 +155,6 @@ def generate_curation_status_table(
     dpath_organized: Optional[StrOrPathLike] = None,
     dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
-    logger: Optional[logging.Logger] = None,
 ) -> CurationStatusTable:
     """Generate a curation status table."""
 
@@ -173,9 +174,6 @@ def generate_curation_status_table(
                 status = False
             logger.debug(f"Status for {dpath_participant}: {status}")
         return status
-
-    if logger is None:
-        logger = get_logger("generate_curation_status_table")
 
     # get participants/sessions with imaging data
     logger.debug(f"Full manifest:\n{manifest}")
@@ -250,12 +248,8 @@ def update_curation_status_table(
     dpath_organized: Optional[StrOrPathLike] = None,
     dpath_bidsified: Optional[StrOrPathLike] = None,
     empty=False,
-    logger: Optional[logging.Logger] = None,
 ) -> CurationStatusTable:
     """Update an existing curation status file."""
-    if logger is None:
-        logger = get_logger("update_curation_status_table")
-
     logger.debug(f"Original curation status table:\n{curation_status_table}")
     logger.debug(f"Manifest:\n{manifest}")
     manifest_subset = manifest.get_diff(
@@ -274,7 +268,6 @@ def update_curation_status_table(
             dpath_organized=dpath_organized,
             dpath_bidsified=dpath_bidsified,
             empty=empty,
-            logger=logger,
         )
     )
 

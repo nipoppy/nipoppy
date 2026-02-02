@@ -9,6 +9,7 @@ from typing import Optional
 from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import WorkflowError
 from nipoppy.workflows.runner import Runner
 
 
@@ -55,7 +56,7 @@ class BIDSificationRunner(Runner):
     @cached_property
     def dpath_pipeline(self):
         """Not available."""
-        raise RuntimeError(
+        raise WorkflowError(
             f'"dpath_pipeline" attribute is not available for {type(self)}'
         )
 
@@ -127,17 +128,17 @@ class BIDSificationRunner(Runner):
         """Run BIDS conversion on a single participant/session."""
         # get container command
         launch_boutiques_run_kwargs = {}
-        if self.config.CONTAINER_CONFIG.COMMAND is not None:
-            container_command, container_config = self.process_container_config(
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
                 session_id=session_id,
                 bind_paths=[
-                    self.layout.dpath_post_reorg,
-                    self.layout.dpath_bids,
+                    self.study.layout.dpath_post_reorg,
+                    self.study.layout.dpath_bids,
                 ],
             )
             launch_boutiques_run_kwargs["container_command"] = container_command
-            launch_boutiques_run_kwargs["container_config"] = container_config
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
 
         # run pipeline with Boutiques
         invocation_and_descriptor = self.launch_boutiques_run(
@@ -167,6 +168,6 @@ class BIDSificationRunner(Runner):
         """
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.save_tabular_file(
-                self.curation_status_table, self.layout.fpath_curation_status
+                self.curation_status_table, self.study.layout.fpath_curation_status
             )
         return super().run_cleanup(**kwargs)

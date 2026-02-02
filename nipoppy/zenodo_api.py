@@ -8,16 +8,10 @@ from typing import Optional, Tuple
 import httpx
 
 
-class ChecksumError(Exception):
-    """Exception raised from checksums mismatch."""
-
-    pass
+class ChecksumError(Exception): ...  # noqa E701
 
 
-class ZenodoAPIError(Exception):
-    """Exception raised for errors related to the Zenodo API."""
-
-    pass
+class ZenodoAPIError(Exception): ...  # noqa E701
 
 
 class ZenodoAPI:
@@ -39,12 +33,7 @@ class ZenodoAPI:
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
         self.timeout = timeout
-
-        if logger is None:
-            self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger = logger
+        self.logger = logger
 
         # Access token is required for uploading files
         self.password_file = password_file
@@ -58,9 +47,22 @@ class ZenodoAPI:
         """Set the headers for the ZenodoAPI instance."""
         self.headers.update({"Authorization": f"Bearer {access_token}"})
 
-    def set_logger(self, logger: logging.Logger):
+    @property
+    def logger(self) -> logging.Logger:
+        """Get the logger for the ZenodoAPI instance."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: logging.Logger | None):
         """Set the logger for the ZenodoAPI instance."""
-        self.logger = logger
+        if logger is None:
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+        self._logger = logger
+
+    def _process_record_id(self, record_id: str | None) -> str:
+        """Process the record ID to remove the 'zenodo.' prefix if present."""
+        return record_id.removeprefix("zenodo.") if record_id else None
 
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
@@ -77,7 +79,7 @@ class ZenodoAPI:
         ChecksumError
             Checksum mismatch between the downloaded file and the expected checksum.
         """
-        record_id = record_id.removeprefix("zenodo.")
+        record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
         response = httpx.get(
@@ -263,7 +265,7 @@ class ZenodoAPI:
         record_id: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
-        record_id = record_id.removeprefix("zenodo.") if record_id else None
+        record_id = self._process_record_id(record_id)
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
@@ -305,11 +307,13 @@ class ZenodoAPI:
                     f"{response.json()}"
                 )
 
-            raise SystemExit(1)
+            raise ZenodoAPIError from e
 
     def search_records(
         self,
         query: str,
+        sort: str = "mostdownloaded",
+        community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,
     ):
@@ -331,20 +335,37 @@ class ZenodoAPI:
         full_query = full_query.strip().removeprefix("AND ")
 
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
+
+        api_endpoint = self._get_api_endpoint(community_id)
         response = httpx.get(
-            f"{self.api_endpoint}/records",
+            api_endpoint,
             headers=self.headers,
             params={
                 "q": full_query,
                 "size": size,
+                "sort": sort,
             },
             timeout=self.timeout,
         )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            raise ZenodoAPIError(
+                f"Failed to search records. JSON response: {response.json()}"
+            ) from e
+
         return response.json()["hits"]
+
+    def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
+        """Get the API endpoint, considering the community if set."""
+        if community_id is None or community_id == "":
+            return self.api_endpoint + "/records"
+        else:
+            return self.api_endpoint + f"/communities/{community_id}/records"
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
-        record_id = record_id.removeprefix("zenodo.")
+        record_id = self._process_record_id(record_id)
         response = httpx.get(
             f"{self.api_endpoint}/records/{record_id}",
             headers=self.headers,
@@ -355,3 +376,30 @@ class ZenodoAPI:
             )
 
         return response.json()["metadata"]
+
+    def get_latest_version_id(self, record_id: str) -> str:
+        """Get the ID of the latest version of a Zenodo record.
+
+        Parameters
+        ----------
+        record_id : str
+            Record ID to query.
+
+        Returns
+        -------
+        str
+            ID of the latest version of the record.
+        """
+        record_id = self._process_record_id(record_id)
+        response = httpx.get(
+            f"{self.api_endpoint}/records/{record_id}/versions/latest",
+            follow_redirects=True,
+            headers=self.headers,
+            timeout=self.timeout,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get latest version for zenodo.{record_id}: {response.json()}"  # noqa E501
+            )
+
+        return str(response.json()["id"])

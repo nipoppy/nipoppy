@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC
-from pathlib import Path
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -22,6 +20,7 @@ from nipoppy.env import (
     DEFAULT_PIPELINE_STEP_NAME,
     PipelineTypeEnum,
 )
+from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import apply_substitutions_to_json
 
 
@@ -113,14 +112,14 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
             step_names = []
             for step in self.STEPS:
                 if step.NAME is None:
-                    raise ValueError(
+                    raise ConfigError(
                         "Found at least one step with undefined NAME field"
                         f" for pipeline {self.NAME} {self.VERSION}"
                         ". Pipeline steps must have names except "
                         "if there is only one step"
                     )
                 if step.NAME in step_names:
-                    raise ValueError(
+                    raise ConfigError(
                         f'Found at least two steps with NAME "{step.NAME}"'
                         f" for pipeline {self.NAME} {self.VERSION}"
                         ". Step names must be unique"
@@ -130,24 +129,20 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         if (self._expected_pipeline_type is not None) and (
             self.PIPELINE_TYPE != self._expected_pipeline_type
         ):
-            raise ValueError(
+            raise ConfigError(
                 f"Expected pipeline type {self._expected_pipeline_type}"
                 f" but got {self.PIPELINE_TYPE=} for pipeline "
                 f"{self.NAME} {self.VERSION}"
             )
 
         if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION:
-            raise ValueError(
+            raise ConfigError(
                 f"Pipeline {self.NAME} {self.VERSION} uses schema version "
                 f"{self.SCHEMA_VERSION}, which is incompatible with the current version"
                 f" of Nipoppy (expected schema version: {CURRENT_SCHEMA_VERSION})"
             )
 
         return self
-
-    def get_fpath_container(self) -> Path:
-        """Return the path to the pipeline's container."""
-        return self.CONTAINER_INFO.FILE
 
     def get_step_config(
         self, step_name: Optional[str] = None
@@ -158,7 +153,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         If step_name is None, return the configuration for the first step.
         """
         if len(self.STEPS) == 0:
-            raise ValueError(
+            raise ConfigError(
                 f"No steps specified for pipeline {self.NAME} {self.VERSION}"
             )
         elif step_name is None:
@@ -166,7 +161,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         for step in self.STEPS:
             if step.NAME == step_name:
                 return step
-        raise ValueError(
+        raise ConfigError(
             f"Step {step_name} not found in pipeline {self.NAME} {self.VERSION}"
         )
 
@@ -222,12 +217,12 @@ class ExtractionPipelineConfig(BasePipelineConfig):
         """
         super().validate_after()
         if len(self.PROC_DEPENDENCIES) == 0:
-            raise ValueError(
+            raise ConfigError(
                 "PROC_DEPENDENCIES is an empty list for extraction pipeline "
                 f"{self.NAME} {self.VERSION}. Must have at least one dependency"
             )
         if len(set(self.PROC_DEPENDENCIES)) != len(self.PROC_DEPENDENCIES):
-            warnings.warn(
+            raise ConfigError(
                 "PROC_DEPENDENCIES contains duplicate entries for extraction pipeline "
                 f"{self.NAME} {self.VERSION}"
             )

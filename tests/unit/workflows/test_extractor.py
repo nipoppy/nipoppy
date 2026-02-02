@@ -11,6 +11,7 @@ from nipoppy.config.pipeline import (
     PipelineInfo,
 )
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
@@ -32,10 +33,10 @@ def extractor(tmp_path: Path) -> ExtractionRunner:
         pipeline_version="2.0.0",
         pipeline_step=DEFAULT_PIPELINE_STEP_NAME,
     )
-    extractor.config = get_config()
+    extractor.study.config = get_config()
     create_empty_dataset(extractor.dpath_root)
     create_pipeline_config_files(
-        extractor.layout.dpath_pipelines,
+        extractor.study.layout.dpath_pipelines,
         processing_pipelines=[
             {
                 "NAME": "freesurfer",
@@ -99,7 +100,7 @@ def test_setup(extractor: ExtractionRunner):
 def test_dpath_pipeline(extractor: ExtractionRunner):
     assert (
         extractor.dpath_pipeline
-        == extractor.layout.dpath_derivatives / "freesurfer" / "7.3.2"
+        == extractor.study.layout.dpath_derivatives / "freesurfer" / "7.3.2"
     )
 
 
@@ -113,7 +114,7 @@ def test_proc_pipeline_info_error(extractor: ExtractionRunner):
     bad_version = "invalid_version"
     extractor.pipeline_config.PROC_DEPENDENCIES[0].VERSION = bad_version
     with pytest.raises(
-        FileNotFoundError, match=f"Pipeline config file not found at .* {bad_version}"
+        FileOperationError, match=f"Pipeline config file not found at .* {bad_version}"
     ):
         extractor.proc_pipeline_info
 

@@ -6,13 +6,13 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum, ReturnCode
+from nipoppy.env import PipelineTypeEnum
+from nipoppy.exceptions import ReturnCode, TerminatedByUserError, WorkflowError
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,
     _is_same_pipeline,
 )
-from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import TEST_PIPELINE
 
 DATASET_PATH = "my_dataset"
@@ -169,13 +169,14 @@ def test_upload_same_pipeline(
         nullcontext()
         if force
         else pytest.raises(
-            ZenodoAPIError,
+            WorkflowError,
             match="The pipeline metadata does not match the existing record",
         )
     ):
         workflow.run()
 
 
+@pytest.mark.no_xdist
 def test_confirm_upload_no(
     workflow: PipelineUploadWorkflow,
     caplog: pytest.LogCaptureFixture,
@@ -187,7 +188,7 @@ def test_confirm_upload_no(
     )
     workflow.assume_yes = False
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(TerminatedByUserError):
         workflow.run_main()
 
     assert "Zenodo upload cancelled." in caplog.text
@@ -208,6 +209,7 @@ def test_confirm_upload_no(
         ]
     ],
 )
+@pytest.mark.no_xdist
 def test_upload_duplicate_record(
     workflow: PipelineUploadWorkflow,
     hits: list,
@@ -218,7 +220,7 @@ def test_upload_duplicate_record(
     workflow.zenodo_api.search_records.return_value = {"hits": hits}
 
     with pytest.raises(
-        ZenodoAPIError,
+        WorkflowError,
         match="It looks like this pipeline already exists in Zenodo. Aborting.",
     ):
         workflow.run()
@@ -234,6 +236,7 @@ def test_force_upload_duplicate_record(workflow: PipelineUploadWorkflow):
     workflow.run()
 
 
+@pytest.mark.no_xdist
 def test_fails_check_pipeline_bundle(
     workflow: PipelineUploadWorkflow,
     caplog: pytest.LogCaptureFixture,
@@ -246,9 +249,9 @@ def test_fails_check_pipeline_bundle(
 
     workflow.assume_yes = True
 
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(WorkflowError) as exc_info:
         workflow.run_main()
 
-    assert exc_info.value.code == ReturnCode.UNKNOWN_FAILURE
+    assert exc_info.value.code == ReturnCode.WORKFLOW_FAILURE
 
     assert "Pipeline validation failed. Please check the pipeline files" in caplog.text

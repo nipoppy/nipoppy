@@ -5,6 +5,7 @@ from contextlib import nullcontext
 import pandas as pd
 import pytest
 
+from nipoppy.exceptions import TabularError
 from nipoppy.tabular.manifest import Manifest
 from tests.conftest import DPATH_TEST_DATA
 
@@ -48,7 +49,7 @@ def test_load_keep_extra_cols():
 )
 def test_validate(fpath, is_valid):
     manifest = Manifest.load(fpath, validate=False)
-    with pytest.raises(ValueError) if not is_valid else nullcontext():
+    with pytest.raises(TabularError) if not is_valid else nullcontext():
         assert isinstance(manifest.validate(), Manifest)
 
 
@@ -68,7 +69,7 @@ def test_validate_sessions_visits(session_ids, visit_ids, is_valid):
         visit_ids=visit_ids,
         validate=False,
     )
-    with pytest.raises(ValueError) if not is_valid else nullcontext():
+    with pytest.raises(TabularError) if not is_valid else nullcontext():
         assert isinstance(Manifest.validate(manifest), Manifest)
 
 

@@ -1,11 +1,13 @@
 # Nipoppy
 
+[![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/2VMKFRpjkm?style=flat)](https://discord.gg/2VMKFRpjkm)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8084759.svg)](https://doi.org/10.5281/zenodo.8084759)
 [![PyPI - Version](https://img.shields.io/pypi/v/nipoppy)](https://pypi.org/project/nipoppy/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit)
 [![codecov](https://codecov.io/gh/nipoppy/nipoppy/graph/badge.svg?token=SN38ITRO4M)](https://codecov.io/gh/nipoppy/nipoppy)
 [![https://github.com/psf/black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://black.readthedocs.io/en/stable/)
 [![Documentation Status](https://readthedocs.org/projects/nipoppy/badge/?version=latest)](https://nipoppy.readthedocs.io/en/latest/?badge=latest)
+[![All Contributors](https://img.shields.io/github/all-contributors/nipoppy/nipoppy?color=ee8449)](docs/source/team.md#contributors)
 
 <img alt="Nipoppy logo" src="https://raw.githubusercontent.com/nipoppy/nipoppy/refs/heads/main/logo/logo_square.svg" width=100px style="float:right">
 

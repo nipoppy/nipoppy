@@ -28,12 +28,11 @@ def test_abstract_class():
 def test_init(workflow: BaseWorkflow):
     assert workflow.name == "my_workflow"
     assert workflow.return_code == 0
-    assert isinstance(workflow.logger, logging.Logger)
 
 
-@pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["echo x", "echo y"])
 @pytest.mark.parametrize("prefix_run", ["[RUN]", "<run>"])
+@pytest.mark.no_xdist
 def test_log_command(
     workflow: BaseWorkflow, command, prefix_run, caplog: pytest.LogCaptureFixture
 ):
