@@ -2,7 +2,7 @@
 
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 import pytest
@@ -22,6 +22,7 @@ class TabularWithModel(BaseTabular):
         a: str
         b: Optional[int] = 0
         c: list = []
+        d: Union[list, str] = []
 
     model: BaseTabularModel = _Model
     index_cols = ["b"]
@@ -37,9 +38,15 @@ class TabularWithModelNoList(BaseTabular):
     index_cols = ["b"]
 
 
-def test_empty_has_columns():
+def test_init_empty_has_columns():
     tabular = TabularWithModel()
     assert set(tabular.columns) == set(TabularWithModel.model.model_fields.keys())
+
+
+def test_init_dtypes():
+    tabular1 = TabularWithModel()
+    tabular2 = TabularWithModel([{"a": "A", "b": 1, "c": [], "d": None}])
+    assert tabular1.dtypes.equals(tabular2.dtypes)
 
 
 def test_sort_index_does_not_change_columns():

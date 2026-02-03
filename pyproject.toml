@@ -46,10 +46,10 @@ doc = [
     "sphinx-click",
     "sphinx-copybutton",
     "sphinx-github-changelog",
-    "sphinx-hoverxref",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
     "sphinx_design",
+    "Sphinx-Substitution-Extensions",
 ]
 dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
