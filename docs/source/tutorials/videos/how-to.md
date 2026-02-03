@@ -37,7 +37,7 @@ Duration: 6:31m
 In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
 - explore the sourcedata directory
 - run the [`nipoppy reorg`](../../cli_reference/reorg.rst) command
-- and look at the [`curation_status.tsv`](../../glossary.md) file
+- and look at the {term}`curation_status.tsv <curation status file>` file
 
 Duration: 6:06m
 
@@ -69,7 +69,7 @@ Duration: 5:26m
 
 In this tutorial we will cover how to track the processing status of our imaging data with Nipoppy. More concretely, we will
 - run the [`nipoppy track-processing`](../../cli_reference/track_processing.rst) command
-- get to know the [`processing_status.tsv`](../../glossary.md) file
+- get to know the {term}`processing_status.tsv <processing status file>`
 - and explore the [Neurobagel digest dashboard](https://digest.neurobagel.org/)
 
 Duration: 4:21m
