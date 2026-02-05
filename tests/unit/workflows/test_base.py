@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.workflows.base import LOG_PREFIX, Workflow, _log_command, _run_command
+from nipoppy.workflows.base import LogPrefix, Workflow, _log_command, _run_command
 
 
 @pytest.fixture()
@@ -37,7 +37,7 @@ def test_log_command(command, caplog: pytest.LogCaptureFixture):
     assert caplog.records
     record = caplog.records[-1]
     assert record.levelno == logging.INFO
-    assert record.message.startswith(LOG_PREFIX.RUN)
+    assert record.message.startswith(LogPrefix.RUN)
     assert command in record.message
 
 
@@ -100,5 +100,5 @@ def test_run_command_no_markup(caplog: pytest.LogCaptureFixture, tmp_path: Path)
 def test_run_command_quiet(caplog: pytest.LogCaptureFixture):
     message = "This should be printed"
     _run_command(["echo", message], quiet=True)
-    assert LOG_PREFIX.RUN not in caplog.text
+    assert LogPrefix.RUN not in caplog.text
     assert message in caplog.text
