@@ -79,7 +79,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             )
 
         logger.info(f"New/updated curation status table shape: {table.shape}")
-        save_tabular_file(table, fpath_table)
+        save_tabular_file(table, fpath_table, dry_run=self.dry_run)
 
     def run_cleanup(self):
         """Log a success message."""

@@ -177,6 +177,8 @@ class PipelineTracker(BasePipelineWorkflow):
             f"{self.processing_status_table.shape}"
         )
         save_tabular_file(
-            self.processing_status_table, self.study.layout.fpath_processing_status
+            self.processing_status_table,
+            self.study.layout.fpath_processing_status,
+            dry_run=self.dry_run,
         )
         return super().run_cleanup()

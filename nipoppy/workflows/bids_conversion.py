@@ -169,6 +169,8 @@ class BIDSificationRunner(Runner):
         """
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             save_tabular_file(
-                self.curation_status_table, self.study.layout.fpath_curation_status
+                self.curation_status_table,
+                self.study.layout.fpath_curation_status,
+                dry_run=self.dry_run,
             )
         return super().run_cleanup(**kwargs)

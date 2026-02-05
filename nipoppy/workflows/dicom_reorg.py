@@ -207,7 +207,9 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         - Log a summary message
         """
         save_tabular_file(
-            self.curation_status_table, self.study.layout.fpath_curation_status
+            self.curation_status_table,
+            self.study.layout.fpath_curation_status,
+            dry_run=self.dry_run,
         )
 
         if self.n_total == 0:

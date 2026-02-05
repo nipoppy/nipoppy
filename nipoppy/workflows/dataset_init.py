@@ -320,7 +320,9 @@ class InitWorkflow(BaseDatasetWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
-        save_tabular_file(manifest, self.study.layout.fpath_manifest)
+        save_tabular_file(
+            manifest, self.study.layout.fpath_manifest, dry_run=self.dry_run
+        )
 
     def run_cleanup(self):
         """Log a success message."""
