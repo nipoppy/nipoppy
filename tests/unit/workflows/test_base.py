@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.workflows.base import LogPrefix, Workflow, _log_command, _run_command
+from nipoppy.workflows.base import BaseWorkflow, LogPrefix, _log_command, _run_command
 
 
 @pytest.fixture()
 def workflow():
-    class DummyWorkflow(Workflow):
+    class DummyWorkflow(BaseWorkflow):
         def run_main(self):
             pass
 
@@ -22,10 +22,10 @@ def workflow():
 
 def test_abstract_class():
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        Workflow(None, None)
+        BaseWorkflow(None, None)
 
 
-def test_init(workflow: Workflow):
+def test_init(workflow: BaseWorkflow):
     assert workflow.name == "my_workflow"
     assert workflow.return_code == 0
 
@@ -41,7 +41,7 @@ def test_log_command(command, caplog: pytest.LogCaptureFixture):
     assert command in record.message
 
 
-def test_run(workflow: Workflow):
+def test_run(workflow: BaseWorkflow):
     assert workflow.run() is None
 
 

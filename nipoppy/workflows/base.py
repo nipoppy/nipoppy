@@ -148,7 +148,7 @@ def _save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False)
         logger.info(f"No changes to file at {fpath}")
 
 
-class Workflow(Base, ABC):
+class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
@@ -194,7 +194,7 @@ class Workflow(Base, ABC):
         self.run_cleanup()
 
 
-class BaseDatasetWorkflow(Workflow, ABC):
+class BaseDatasetWorkflow(BaseWorkflow, ABC):
     """Base workflow class with awareness of dataset layout and components."""
 
     def __init__(

@@ -6,12 +6,12 @@ from pathlib import Path
 from nipoppy.env import StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.workflows.base import Workflow
+from nipoppy.workflows.base import BaseWorkflow
 
 logger = get_logger()
 
 
-class PipelineValidateWorkflow(Workflow):
+class PipelineValidateWorkflow(BaseWorkflow):
     """Workflow for pipeline validate command."""
 
     def __init__(
