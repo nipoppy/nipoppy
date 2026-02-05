@@ -385,6 +385,19 @@ class BareMetalHandler(ContainerHandler):
     command = NotImplemented
     bind_flags = NotImplemented
 
+    def add_bind_arg(
+        self,
+        path_src: StrOrPathLike,
+        path_dest: Optional[StrOrPathLike] = None,
+        mode: Optional[str] = "rw",
+    ):
+        """
+        Add a bind path to the container args.
+
+        Does not do anything since this is bare metal execution.
+        """
+        pass
+
     def add_env_arg(self, key: str, value: str):
         """Set environment variable."""
         os.environ[key] = value
@@ -430,6 +443,8 @@ def get_container_handler(config: ContainerConfig) -> ContainerHandler:
         ) from e
 
     handler: ContainerHandler = handler_class(args=config.ARGS)
+    for bind_path in config.BIND_PATHS:
+        handler.add_bind_arg(*bind_path.split(BIND_SEP))
     for key, value in config.ENV_VARS.items():
         handler.add_env_arg(key, value)
 

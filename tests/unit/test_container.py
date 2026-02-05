@@ -402,10 +402,19 @@ def test_get_pull_command_error(
             ContainerConfig(
                 COMMAND="apptainer",
                 ARGS=["--cleanenv", "--bind", "fake_path"],
+                BIND_PATHS=["/other_path"],
                 ENV_VARS={"VAR1": "1"},
             ),
             ApptainerHandler(
-                args=["--cleanenv", "--bind", "fake_path", "--env", "VAR1=1"],
+                args=[
+                    "--cleanenv",
+                    "--bind",
+                    "fake_path",
+                    "--bind",
+                    "/other_path:/other_path:rw",
+                    "--env",
+                    "VAR1=1",
+                ],
             ),
         ),
         (
@@ -421,16 +430,25 @@ def test_get_pull_command_error(
             ContainerConfig(
                 COMMAND="docker",
                 ARGS=["--volume", "path"],
+                BIND_PATHS=["/path2:/inside_container:ro"],
                 ENV_VARS={"VAR3": "123"},
             ),
             DockerHandler(
-                args=["--volume", "path", "--env", "VAR3=123"],
+                args=[
+                    "--volume",
+                    "path",
+                    "--volume",
+                    "/path2:/inside_container:ro",
+                    "--env",
+                    "VAR3=123",
+                ],
             ),
         ),
         (
             ContainerConfig(
                 COMMAND=None,
                 ARGS=[],
+                BIND_PATHS=["ignored"],
                 ENV_VARS={"VAR3": "123"},
             ),
             BareMetalHandler(),
