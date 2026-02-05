@@ -11,6 +11,7 @@ from nipoppy.config.container import (
 FIELDS_CONTAINER_CONFIG = [
     "COMMAND",
     "ARGS",
+    "BIND_PATHS",
     "ENV_VARS",
     "INHERIT",
 ]
@@ -66,6 +67,16 @@ def test_container_config(data):
             {"ENV_VARS": {"VAR1": "1"}},
             {"ENV_VARS": {"VAR1": "1"}},
             {"ENV_VARS": {"VAR1": "1"}},
+        ),
+        (
+            {"BIND_PATHS": ["/a/path"]},
+            {"BIND_PATHS": ["/another/path"]},
+            {"BIND_PATHS": ["/a/path", "/another/path"]},
+        ),
+        (
+            {"BIND_PATHS": ["/a/path", "/another/path"]},
+            {"BIND_PATHS": ["/another/path", "/a/third/path"]},
+            {"BIND_PATHS": ["/a/path", "/another/path", "/a/third/path"]},
         ),
     ],
 )
