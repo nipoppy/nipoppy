@@ -39,14 +39,14 @@ class LOG_PREFIX:
     RUN_STDERR = "[RUN STDERR]"
 
 
-def log_command(command: str):
+def _log_command(command: str):
     """Write a command to the log with a special prefix."""
     # using extra={"markup": False} in case the command contains substrings
     # that would be interpreted as closing tags by the RichHandler
     logger.info(f"{LOG_PREFIX.RUN} {command}", extra={"markup": False})
 
 
-def run_command(
+def _run_command(
     command_or_args: Sequence[str] | str,
     *,
     check: bool = True,
@@ -105,7 +105,7 @@ def run_command(
         command_or_args = args
 
     if not quiet:
-        log_command(command)
+        _log_command(command)
 
     if not dry_run:
         process = subprocess.Popen(
@@ -139,7 +139,7 @@ def run_command(
     return run_output
 
 
-def save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
+def _save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
     """Save a tabular file."""
     fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
     if fpath_backup is not None:

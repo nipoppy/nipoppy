@@ -16,7 +16,7 @@ from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
-from nipoppy.workflows.base import run_command
+from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 logger = get_logger()
@@ -116,7 +116,7 @@ class Runner(BasePipelineWorkflow, ABC):
         if self.simulate:
             logger.info("Simulating pipeline command")
             try:
-                run_command(
+                _run_command(
                     ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
                     quiet=True,
                     dry_run=self.dry_run,
@@ -130,7 +130,7 @@ class Runner(BasePipelineWorkflow, ABC):
         else:
             logger.info("Running pipeline command")
             try:
-                run_command(
+                _run_command(
                     (
                         [
                             "bosh",

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.workflows.base import LOG_PREFIX, Workflow, log_command, run_command
+from nipoppy.workflows.base import LOG_PREFIX, Workflow, _log_command, _run_command
 
 
 @pytest.fixture()
@@ -33,7 +33,7 @@ def test_init(workflow: Workflow):
 @pytest.mark.parametrize("command", ["echo x", "echo y"])
 @pytest.mark.no_xdist
 def test_log_command(command, caplog: pytest.LogCaptureFixture):
-    log_command(command)
+    _log_command(command)
     assert caplog.records
     record = caplog.records[-1]
     assert record.levelno == logging.INFO
@@ -54,34 +54,34 @@ def test_log_command_no_markup(caplog: pytest.LogCaptureFixture):
     message = "[/]"
 
     # this should not raise a rich markup error
-    run_command(["echo", message])
+    _run_command(["echo", message])
     assert message in caplog.text
 
 
 def test_run_command(tmp_path: Path):
     fpath = tmp_path / "test.txt"
-    process = run_command(["touch", fpath])
+    process = _run_command(["touch", fpath])
     assert process.returncode == 0
     assert fpath.exists()
 
 
 def test_run_command_single_string(tmp_path: Path):
     fpath = tmp_path / "test.txt"
-    process = run_command(f"touch {fpath}", shell=True)
+    process = _run_command(f"touch {fpath}", shell=True)
     assert process.returncode == 0
     assert fpath.exists()
 
 
 def test_run_command_dry_run(tmp_path: Path):
     fpath = tmp_path / "test.txt"
-    command = run_command(["touch", fpath], dry_run=True)
+    command = _run_command(["touch", fpath], dry_run=True)
     assert command == f"touch {fpath}"
     assert not fpath.exists()
 
 
 def test_run_command_check():
     with pytest.raises(subprocess.CalledProcessError):
-        run_command(["which", "probably_fake_command"], check=True)
+        _run_command(["which", "probably_fake_command"], check=True)
 
 
 @pytest.mark.no_xdist
@@ -92,13 +92,13 @@ def test_run_command_no_markup(caplog: pytest.LogCaptureFixture, tmp_path: Path)
     # this should not raise a rich markup error
     fpath_txt = tmp_path / "test.txt"
     fpath_txt.write_text(text)
-    run_command(["cat", fpath_txt])
+    _run_command(["cat", fpath_txt])
     assert text in caplog.text
 
 
 @pytest.mark.no_xdist
 def test_run_command_quiet(caplog: pytest.LogCaptureFixture):
     message = "This should be printed"
-    run_command(["echo", message], quiet=True)
+    _run_command(["echo", message], quiet=True)
     assert LOG_PREFIX.RUN not in caplog.text
     assert message in caplog.text

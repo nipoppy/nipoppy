@@ -10,7 +10,7 @@ from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
-from nipoppy.workflows.base import run_command
+from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.runner import Runner
 
 logger = get_logger()
@@ -100,7 +100,7 @@ class ProcessingRunner(Runner):
         tar_flags = "-cvf"
         fpath_tarred = dpath.with_suffix(EXT_TAR)
 
-        run_command(
+        _run_command(
             f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}",
             dry_run=self.dry_run,
         )
