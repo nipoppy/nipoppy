@@ -139,7 +139,16 @@ def _create_metric_instruments(meter: metrics.Meter) -> Dict:
             unit="commands",
         ),
 
-        # === METRIC 2: Location Tracking (ADDITIONAL FEATURE) ===
+        # === METRIC 2: Command Completion Status ===
+        # Purpose: Track command outcomes (success, partial, failure)
+        # Attributes: command, status, return_code
+        "commands_completed": meter.create_counter(
+            name="nipoppy.commands.completed",
+            description="Number of Nipoppy commands completed with status",
+            unit="commands",
+        ),
+
+        # === METRIC 3: Location Tracking (ADDITIONAL FEATURE) ===
         # Purpose: Track geographic distribution of installations
         # Attributes: country (US, CA, IN, etc.)
         # Note: Using UpDownCounter as gauge-like metric for current state
