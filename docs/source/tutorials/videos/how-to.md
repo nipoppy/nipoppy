@@ -69,7 +69,7 @@ Duration: 5:26m
 
 In this tutorial we will cover how to track the processing status of our imaging data with Nipoppy. More concretely, we will
 - run the [`nipoppy track-processing`](../../cli_reference/track_processing.rst) command
-- get to know the {term}`processing_status.tsv <processing status file>`
+- get to know the {term}`processing_status.tsv <processing status file>` file
 - and explore the [Neurobagel digest dashboard](https://digest.neurobagel.org/)
 
 Duration: 4:21m
