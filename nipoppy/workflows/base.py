@@ -23,22 +23,133 @@ from nipoppy.tabular.curation_status import (
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils import fileops
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
-    process_template_str,
 )
 
 logger = get_logger()
 
 
+class LogPrefix:
+    """Prefixes for logging subprocess output."""
+
+    RUN = "[RUN]"
+    RUN_STDOUT = "[RUN STDOUT]"
+    RUN_STDERR = "[RUN STDERR]"
+
+
+def _log_command(command: str):
+    """Write a command to the log with a special prefix."""
+    # using extra={"markup": False} in case the command contains substrings
+    # that would be interpreted as closing tags by the RichHandler
+    logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
+
+
+def _run_command(
+    command_or_args: Sequence[str] | str,
+    *,
+    check: bool = True,
+    quiet: bool = False,
+    dry_run: bool = False,
+    **kwargs,
+) -> subprocess.Popen | str:
+    """Run a command in a subprocess.
+
+    The command's stdout and stderr outputs are written to the log
+    with special prefixes.
+
+    If in "dry run" mode, the command is not executed, and the method returns
+    the command string. Otherwise, the subprocess.Popen object is returned
+    unless capture_output is True.
+
+    Parameters
+    ----------
+    command_or_args : Sequence[str]  |  str
+        The command to run.
+    check : bool, optional
+        If True, raise an error if the process exits with a non-zero code,
+        by default True
+    quiet : bool, optional
+        If True, do not log the command, by default False
+    **kwargs
+        Passed to `subprocess.Popen`.
+
+    Returns
+    -------
+    subprocess.Popen or str
+    """
+
+    def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+        """Consume lines from an IO stream and log them."""
+        for line in output_source:
+            line = line.strip("\n")
+            # using extra={"markup": False} in case the output contains substrings
+            # that would be interpreted as closing tags by the RichHandler
+            logger.log(
+                level=log_level,
+                msg=f"{log_prefix} {line}",
+                extra={"markup": False},
+            )
+
+    # build command string
+    if not isinstance(command_or_args, str):
+        args = [str(arg) for arg in command_or_args]
+        command = shlex.join(args)
+    else:
+        command = command_or_args
+        args = shlex.split(command)
+
+    # only pass a single string if shell is True
+    if not kwargs.get("shell"):
+        command_or_args = args
+
+    if not quiet:
+        _log_command(command)
+
+    if not dry_run:
+        process = subprocess.Popen(
+            command_or_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            **kwargs,
+        )
+
+        while process.poll() is None:
+            process_output(
+                process.stdout,
+                LogPrefix.RUN_STDOUT,
+            )
+
+            process_output(
+                process.stderr,
+                LogPrefix.RUN_STDERR,
+                log_level=logging.ERROR,
+            )
+
+        if check and process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, command)
+
+        run_output = process
+
+    else:
+        run_output = command
+
+    return run_output
+
+
+def _save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
+    """Save a tabular file."""
+    fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
+    if fpath_backup is not None:
+        logger.info(f"Saved to {fpath} (-> {fpath_backup})")
+    else:
+        logger.info(f"No changes to file at {fpath}")
+
+
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
-
-    log_prefix_run = "[RUN]"
-    log_prefix_run_stdout = "[RUN STDOUT]"
-    log_prefix_run_stderr = "[RUN STDERR]"
 
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
@@ -61,111 +172,6 @@ class BaseWorkflow(Base, ABC):
 
         logger.set_verbose(self.verbose)
 
-    def log_command(self, command: str):
-        """Write a command to the log with a special prefix."""
-        # using extra={"markup": False} in case the command contains substrings
-        # that would be interpreted as closing tags by the RichHandler
-        logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
-
-    def run_command(
-        self,
-        command_or_args: Sequence[str] | str,
-        check=True,
-        quiet=False,
-        **kwargs,
-    ) -> subprocess.Popen | str:
-        """Run a command in a subprocess.
-
-        The command's stdout and stderr outputs are written to the log
-        with special prefixes.
-
-        If in "dry run" mode, the command is not executed, and the method returns
-        the command string. Otherwise, the subprocess.Popen object is returned
-        unless capture_output is True.
-
-        Parameters
-        ----------
-        command_or_args : Sequence[str]  |  str
-            The command to run.
-        check : bool, optional
-            If True, raise an error if the process exits with a non-zero code,
-            by default True
-        quiet : bool, optional
-            If True, do not log the command, by default False
-        **kwargs
-            Passed to `subprocess.Popen`.
-
-        Returns
-        -------
-        subprocess.Popen or str
-        """
-
-        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
-            """Consume lines from an IO stream and log them."""
-            for line in output_source:
-                line = line.strip("\n")
-                # using extra={"markup": False} in case the output contains substrings
-                # that would be interpreted as closing tags by the RichHandler
-                logger.log(
-                    level=log_level,
-                    msg=f"{log_prefix} {line}",
-                    extra={"markup": False},
-                )
-
-        # build command string
-        if not isinstance(command_or_args, str):
-            args = [str(arg) for arg in command_or_args]
-            command = shlex.join(args)
-        else:
-            command = command_or_args
-            args = shlex.split(command)
-
-        # only pass a single string if shell is True
-        if not kwargs.get("shell"):
-            command_or_args = args
-
-        if not quiet:
-            self.log_command(command)
-
-        if not self.dry_run:
-            process = subprocess.Popen(
-                command_or_args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                **kwargs,
-            )
-
-            while process.poll() is None:
-                process_output(
-                    process.stdout,
-                    self.log_prefix_run_stdout,
-                )
-
-                process_output(
-                    process.stderr,
-                    self.log_prefix_run_stderr,
-                    log_level=logging.ERROR,
-                )
-
-            if check and process.returncode != 0:
-                raise subprocess.CalledProcessError(process.returncode, command)
-
-            run_output = process
-
-        else:
-            run_output = command
-
-        return run_output
-
-    def save_tabular_file(self, tabular: BaseTabular, fpath: Path):
-        """Save a tabular file."""
-        fpath_backup = tabular.save_with_backup(fpath, dry_run=self.dry_run)
-        if fpath_backup is not None:
-            logger.info(f"Saved to {fpath} (-> {fpath_backup})")
-        else:
-            logger.info(f"No changes to file at {fpath}")
-
     def run_setup(self):
         """Run the setup part of the workflow."""
         logger.debug(self)
@@ -186,26 +192,6 @@ class BaseWorkflow(Base, ABC):
         self.run_setup()
         self.run_main()
         self.run_cleanup()
-
-    def copy_template(self, path_source, path_dest, **template_kwargs):
-        """Copy a file with template substitution.
-
-        Parameters
-        ----------
-        path_source
-            Source template file path
-        path_dest
-            Destination file path
-        **template_kwargs
-            Keyword arguments passed to process_template_str for substitution
-        """
-        logger.debug(f"Copying template {path_source} to {path_dest}")
-        if not self.dry_run:
-            with open(path_source, "r") as f:
-                content = process_template_str(f.read(), **template_kwargs)
-            fileops.mkdir(Path(path_dest).parent, dry_run=self.dry_run)
-            with open(path_dest, "w") as f:
-                f.write(content)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):

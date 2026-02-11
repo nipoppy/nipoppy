@@ -20,7 +20,7 @@ from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow, _run_command
 from nipoppy.zenodo_api import ZenodoAPI
 
 logger = get_logger()
@@ -174,8 +174,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 with console.status(
                     "Downloading the container, this can take a while..."
                 ):
-                    self.run_command(pull_command)
-
+                    _run_command(pull_command, dry_run=self.dry_run)
             except subprocess.CalledProcessError as e:
                 logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
