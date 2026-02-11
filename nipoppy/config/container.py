@@ -22,17 +22,24 @@ class ContainerConfig(BaseModel):
             "container (e.g., baremetal installations)."
         ),
     )
-    ARGS: list[str] = Field(
+    BIND_PATHS: list[str] = Field(
         default=[],
         description=(
-            "Arguments for Apptainer/Singularity call"
-            " (to be appended after the subcommand)"
+            "Bind path specifications, with format LOCAL_PATH[:CONTAINER_PATH[:MODE]]"
         ),
     )
     ENV_VARS: dict[str, str] = Field(
         default={},
         description=(
             "Environment variables that should be available inside the container"
+        ),
+    )
+    ARGS: list[str] = Field(
+        default=[],
+        description=(
+            "Additional arguments for Apptainer/Singularity/Docker call. "
+            "Note: bind paths and environment variables should be specified using "
+            "BIND_PATHS and ENV_VARS respectively."
         ),
     )
     INHERIT: bool = Field(
@@ -68,6 +75,10 @@ class ContainerConfig(BaseModel):
 
         if self.ARGS != other.ARGS:
             self.ARGS.extend(other.ARGS)
+
+        for bind_path in other.BIND_PATHS:
+            if bind_path not in self.BIND_PATHS:
+                self.BIND_PATHS.append(bind_path)
 
         for env_var, value in other.ENV_VARS.items():
             if env_var not in self.ENV_VARS:
