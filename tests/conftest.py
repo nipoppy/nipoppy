@@ -100,12 +100,18 @@ def datetime_fixture(
 def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
     """List all CLI commands recursively.
 
-    Args:
-        group: The Click group to list commands from.
-        prefix: Prefix to add to command names (used for recursion).
-        include_hidden: Whether to include hidden commands. Defaults to True.
+    Parameters
+    ----------
+    group : click.Group
+        The Click group to list commands from.
+    prefix : str, optional
+        Prefix to add to command names (used for recursion), by default ""
+    include_hidden : bool, optional
+        Whether to include hidden commands, by default True
 
-    Returns:
+    Returns
+    -------
+    list of str
         List of command names.
     """
     commands = []
@@ -120,7 +126,9 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
         # If the command is itself a group, recurse
         if isinstance(cmd, click.Group):
             commands.extend(
-                list_cli_commands(cmd, prefix=f"{full_name} ", include_hidden=include_hidden)
+                list_cli_commands(
+                    cmd, prefix=f"{full_name} ", include_hidden=include_hidden
+                )
             )
     return commands
 
