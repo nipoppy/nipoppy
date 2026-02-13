@@ -16,7 +16,7 @@ from click.testing import CliRunner
 from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
 from nipoppy.exceptions import NipoppyError, ReturnCode
-from tests.conftest import PASSWORD_FILE
+from tests.conftest import PASSWORD_FILE, list_commands
 
 runner = CliRunner()
 
@@ -63,18 +63,6 @@ def assert_command_success(args):
     assert (
         result.exit_code == ReturnCode.SUCCESS
     ), f"Command failed: {args}\n{result.output}"
-
-
-def list_commands(group: click.Group, prefix=""):
-    commands = []
-    for name, cmd in group.commands.items():
-        full_name = f"{prefix}{name}"
-        commands.append(full_name)
-
-        # If the command is itself a group, recurse
-        if isinstance(cmd, click.Group):
-            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
-    return commands
 
 
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])

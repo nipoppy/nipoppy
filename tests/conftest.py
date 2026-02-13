@@ -6,6 +6,7 @@ import datetime
 from pathlib import Path
 from typing import Generator, Optional
 
+import click
 import numpy as np
 import pandas as pd
 import pytest
@@ -74,6 +75,23 @@ ATTR_TO_FPATH_MAP = {
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
+
+
+def list_commands(group: click.Group, prefix=""):
+    """List all CLI commands recursively."""
+    commands = []
+    for name, cmd in group.commands.items():
+        # Skip hidden commands like 'gui'
+        if hasattr(cmd, "hidden") and cmd.hidden:
+            continue
+
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(list_commands(cmd, prefix=f"{full_name} "))
+    return commands
 
 
 @pytest.fixture()

@@ -14,6 +14,7 @@ Command-line interface
    process.rst
    track_processing.rst
    extract.rst
+   pipeline.rst
    pipeline_search.rst
    pipeline_create.rst
    pipeline_install.rst
