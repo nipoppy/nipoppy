@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.cli.cli import cli
-from tests.conftest import list_commands
+from tests.conftest import list_cli_commands
 
 
 def get_doc_filename(command_name):
@@ -14,7 +14,7 @@ def get_doc_filename(command_name):
     return command_name.replace(" ", "_").replace("-", "_") + ".rst"
 
 
-@pytest.mark.parametrize("command", list_commands(cli))
+@pytest.mark.parametrize("command", list_cli_commands(cli, include_hidden=False))
 def test_cli_command_has_documentation(command: str):
     """Test that each CLI command has a corresponding documentation page.
 
