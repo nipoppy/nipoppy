@@ -8,7 +8,6 @@ import logging
 import shlex
 from pathlib import Path
 
-import click
 import pytest
 import pytest_mock
 from click.testing import CliRunner
