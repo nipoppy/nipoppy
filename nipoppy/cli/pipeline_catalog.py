@@ -16,6 +16,12 @@ from nipoppy.cli.options import (
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.zenodo_api import ZenodoAPI
 
+try:
+    from nipoppy.telemetry import track_command
+except ImportError:
+    def track_command(name):
+        return lambda f: f
+
 
 @click.group(
     cls=OrderedAliasedGroup, context_settings={"help_option_names": ["-h", "--help"]}
@@ -58,6 +64,7 @@ def zenodo_options(func):
 @password_file_option(required=False)
 @zenodo_options
 @global_options
+@track_command("pipeline_search")
 def pipeline_search(**params):
     """Search for available pipelines on Zenodo."""
     from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
@@ -101,6 +108,7 @@ def pipeline_search(**params):
     ),
 )
 @global_options
+@track_command("pipeline_create")
 def pipeline_create(**params):
     """Create a template pipeline config directory."""
     from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
@@ -127,6 +135,7 @@ def pipeline_create(**params):
 @layout_option
 @password_file_option(required=False)
 @assume_yes_option
+@track_command("pipeline_install")
 def pipeline_install(**params):
     """
     Install a new pipeline into a dataset.
@@ -148,6 +157,7 @@ def pipeline_install(**params):
 @dataset_option
 @global_options
 @layout_option
+@track_command("pipeline_list")
 def pipeline_list(**params):
     """List installed pipelines for a dataset."""
     from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
@@ -164,6 +174,7 @@ def pipeline_list(**params):
     type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
 @global_options
+@track_command("pipeline_validate")
 def pipeline_validate(**params):
     """Validate a pipeline config directory."""
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
@@ -195,6 +206,7 @@ def pipeline_validate(**params):
 )
 @zenodo_options
 @global_options
+@track_command("pipeline_upload")
 def pipeline_upload(**params):
     """Upload a pipeline config directory to Zenodo."""
     from nipoppy.workflows.pipeline_store.upload import PipelineUploadWorkflow
