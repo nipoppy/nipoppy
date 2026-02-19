@@ -39,9 +39,14 @@ def get_user_country() -> str:
 
     try:
         # === PRESENTATION MARKER: Country Lookup via db-ip.com ===
-        # Single API call - returns JSON with countryCode based on caller's IP
-        # Example response: {"countryCode": "US", "countryName": "United States", ...}
-        response = requests.get('https://db-ip.com/api/free.php', timeout=5)
+        # Step 1: Get public IP (plain text response)
+        ip_response = requests.get('https://api.ipify.org', timeout=5)
+        ip_response.raise_for_status()
+        public_ip = ip_response.text.strip()
+
+        # Step 2: Query db-ip.com with the IP
+        # Example response: {"countryCode": "IN", "countryName": "India", ...}
+        response = requests.get(f'http://api.db-ip.com/v2/free/{public_ip}', timeout=5)
         response.raise_for_status()
         data = response.json()
 
