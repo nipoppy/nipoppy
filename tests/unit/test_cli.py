@@ -466,7 +466,11 @@ def test_no_duplicated_flag(
 
 @pytest.mark.parametrize(
     "command_name",
-    [command for command in list_cli_commands(cli) if command not in ("gui", "pipeline")],  # fmt: skip  # noqa: E501
+    [
+        command
+        for command in list_cli_commands(cli)
+        if command not in ("gui", "pipeline")
+    ],
 )
 def test_cli_params_match_workflows(command_name):
     ignored_params = {
