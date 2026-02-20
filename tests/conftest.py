@@ -6,6 +6,7 @@ import datetime
 from pathlib import Path
 from typing import Generator, Optional
 
+import click
 import numpy as np
 import pandas as pd
 import pytest
@@ -94,6 +95,42 @@ def datetime_fixture(
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
+
+
+def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
+    """List all CLI commands recursively.
+
+    Parameters
+    ----------
+    group : click.Group
+        The Click group to list commands from.
+    prefix : str, optional
+        Prefix to add to command names (used for recursion), by default ""
+    include_hidden : bool, optional
+        Whether to include hidden commands, by default True
+
+    Returns
+    -------
+    list of str
+        List of command names.
+    """
+    commands = []
+    for name, cmd in group.commands.items():
+        # Skip hidden commands like 'gui' if include_hidden is False
+        if not include_hidden and hasattr(cmd, "hidden") and cmd.hidden:
+            continue
+
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(
+                list_cli_commands(
+                    cmd, prefix=f"{full_name} ", include_hidden=include_hidden
+                )
+            )
+    return commands
 
 
 def get_config(
