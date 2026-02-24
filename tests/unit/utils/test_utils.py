@@ -86,6 +86,12 @@ def test_save_json(tmp_path: Path):
             "-",
             Path("file_without_extension-suffix"),
         ),
+        (
+            "archive.tar.gz",
+            "backup",
+            "-",
+            Path("archive.tar-backup.gz"),
+        ),
     ],
 )
 def test_add_path_suffix(path, suffix, sep, expected):
@@ -143,6 +149,7 @@ def test_save_df_with_backup_broken_symlink(tmp_path: Path):
 @pytest.mark.parametrize(
     "template_str,resolve_paths,objs,kwargs,expected",
     [
+        ("", False, None, {}, ""),
         ("no_replace", False, None, {}, "no_replace"),
         (
             "[[NIPOPPY_DPATH_ROOT]]",
@@ -164,6 +171,13 @@ def test_save_df_with_backup_broken_symlink(tmp_path: Path):
             [],
             {"some_kwarg_path": Path("a_path")},
             str(Path("a_path").resolve()),
+        ),
+        (
+            "[[NIPOPPY_DPATH_ROOT]]/sub/[[NIPOPPY_DPATH_ROOT]]",
+            False,
+            [DatasetLayout("my_dataset")],
+            {},
+            "my_dataset/sub/my_dataset",
         ),
     ],
 )
@@ -198,6 +212,12 @@ def test_process_template_str_error_replace():
         ({"key1": "TO_REPLACE"}, {"TO_REPLACE": "value1"}, {"key1": "value1"}),
         ({"key1": ["TO_REPLACE"]}, {"TO_REPLACE": "value1"}, {"key1": ["value1"]}),
         ([{"key1": "TO_REPLACE"}], {"TO_REPLACE": "value1"}, [{"key1": "value1"}]),
+        ({"key1": "value1"}, {}, {"key1": "value1"}),
+        (
+            {"key1": "A_B_A"},
+            {"A": "X"},
+            {"key1": "X_B_X"},
+        ),
     ],
 )
 def test_apply_substitutions_to_json(json_obj, substitutions, expected_output):
