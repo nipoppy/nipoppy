@@ -256,7 +256,7 @@ class ZenodoAPI:
         if response.status_code != 200:
             raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
 
-    def upload_pipeline(
+    def upload_record(
         self,
         input_dir: Path,
         metadata: dict,

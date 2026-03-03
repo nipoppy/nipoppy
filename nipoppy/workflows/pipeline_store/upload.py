@@ -143,7 +143,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
-        doi = self.zenodo_api.upload_pipeline(
+        doi = self.zenodo_api.upload_record(
             input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
         )
         logger.success(f"Pipeline successfully uploaded at {doi}")

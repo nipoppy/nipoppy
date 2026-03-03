@@ -84,7 +84,7 @@ def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
 )
 def test_create_new_version(zenodo_api: ZenodoAPI, metadata: dict):
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-    zenodo_api.upload_pipeline(
+    zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
         record_id=os.environ["ZENODO_ID"],
@@ -107,7 +107,7 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
             "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
         ),
     ):
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=TEST_PIPELINE,
             metadata=metadata,
             record_id=record_id,
@@ -121,7 +121,7 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
 )
 def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-    zenodo_api.upload_pipeline(
+    zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
     )
@@ -138,7 +138,7 @@ def test_create_new_record_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
             "{'status': 403, 'message': 'Permission denied.'}"
         ),
     ):
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=TEST_PIPELINE,
             metadata=metadata,
         )

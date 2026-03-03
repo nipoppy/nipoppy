@@ -547,7 +547,7 @@ def test_check_authentication_fails(
         (None, "_create_draft"),
     ],
 )
-def test_upload_pipeline(
+def test_upload_record(
     record_id: str | None,
     create_method_name: str,
     tmp_path: Path,
@@ -578,7 +578,7 @@ def test_upload_pipeline(
     mocked_publish = mocker.patch.object(zenodo_api, "_publish", return_value=doi)
 
     assert (
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=tmp_path, metadata=metadata, record_id=record_id
         )
         == doi
@@ -594,7 +594,7 @@ def test_upload_pipeline(
     mocked_publish.assert_called_once_with(new_record_id)
 
 
-def test_upload_pipeline_custom_creators(
+def test_upload_record_custom_creators(
     tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
 ):
     mocker.patch.object(zenodo_api, "_check_authentication")
@@ -606,7 +606,7 @@ def test_upload_pipeline_custom_creators(
     mocker.patch.object(zenodo_api, "_update_metadata")
     mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
 
-    zenodo_api.upload_pipeline(
+    zenodo_api.upload_record(
         input_dir=tmp_path,
         metadata={
             "metadata": {
@@ -625,16 +625,16 @@ def test_upload_pipeline_custom_creators(
     mocked_add_creators_to_metadata.assert_not_called()
 
 
-def test_upload_pipeline_dir_not_found(zenodo_api: ZenodoAPI):
+def test_upload_record_dir_not_found(zenodo_api: ZenodoAPI):
     with pytest.raises(FileNotFoundError):
-        zenodo_api.upload_pipeline(input_dir=Path("fake_path"), metadata={})
+        zenodo_api.upload_record(input_dir=Path("fake_path"), metadata={})
 
 
-def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
+def test_upload_record_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     input_path = tmp_path / "file.txt"
     input_path.write_text("this is a file, not a directory")
     with pytest.raises(NotADirectoryError, match=f"{input_path} must be a directory"):
-        zenodo_api.upload_pipeline(input_dir=input_path, metadata={})
+        zenodo_api.upload_record(input_dir=input_path, metadata={})
 
 
 @pytest.mark.parametrize(
@@ -642,7 +642,7 @@ def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     [(204, "Record creation reverted"), (500, "Failed to revert record")],
 )
 @pytest.mark.no_xdist
-def test_upload_pipeline_delete_draft(
+def test_upload_record_delete_draft(
     delete_request_status_code: int,
     expected_log_message: str,
     tmp_path: Path,
@@ -669,7 +669,7 @@ def test_upload_pipeline_delete_draft(
     )
 
     with pytest.raises(ZenodoAPIError):
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=tmp_path,
             metadata={"metadata": {}},
         )

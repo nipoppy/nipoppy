@@ -37,7 +37,7 @@ def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixt
     workflow.force = True
     workflow.run_main()
 
-    workflow.zenodo_api.upload_pipeline.assert_called_once()
+    workflow.zenodo_api.upload_record.assert_called_once()
     get_pipeline_metadata.assert_called_once()
     validator.assert_called_once()
 
