@@ -61,3 +61,19 @@ def test_hpc_runner_submit(workflow_context, hpc_config, mocker):
 
     assert job_id == "12345"
     mock_submit.assert_called_once()
+
+    # Verify the argument passed to _submit_to_scheduler is the generated script
+    expected_script = runner.generate_script(job_params)
+    mock_submit.assert_called_with(expected_script)
+
+
+def test_hpc_runner_isolated_dependencies():
+    """Verify that HPCRunner does not import Boutiques or specific dataset layouts."""
+    import sys
+
+    # Just checking the module's imports to ensure no tight coupling
+    hpc_module = sys.modules["nipoppy.workflows.services.hpc"]
+    assert not hasattr(hpc_module, "bosh"), "HPCRunner should not depend on Boutiques"
+    assert "DatasetLayout" not in dir(
+        hpc_module
+    ), "HPCRunner should not depend directly on layout details beyond Context"
