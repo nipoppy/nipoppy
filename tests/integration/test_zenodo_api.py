@@ -103,7 +103,7 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
     with pytest.raises(
         ZenodoAPIError,
         match=(
-            f"Failed to create a new version for zenodo.{record_id}: "
+            f"Failed to get latest version for zenodo.{record_id}: "
             "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
         ),
     ):
