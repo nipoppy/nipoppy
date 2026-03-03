@@ -29,6 +29,10 @@ from nipoppy.utils.utils import (
     is_nipoppy_project,
     process_template_str,
 )
+from nipoppy.workflows.services.container import ContainerRunner
+from nipoppy.workflows.services.context import WorkflowContext
+from nipoppy.workflows.services.hpc import HPCRunner
+from nipoppy.workflows.services.tabular import TabularDataHandler
 
 logger = get_logger()
 
@@ -254,6 +258,20 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 fpath_config=self.fpath_layout,
             )
         )
+
+    @cached_property
+    def workflow_context(self) -> WorkflowContext:
+        """Get the workflow context."""
+        return WorkflowContext(
+            layout=self.study.layout,
+            logger=logger,
+            config=self.study.config,
+        )
+
+    @cached_property
+    def tabular_handler(self) -> TabularDataHandler:
+        """Get the tabular data handler."""
+        return TabularDataHandler(context=self.workflow_context)
 
     def generate_fpath_log(
         self,

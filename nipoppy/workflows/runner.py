@@ -4,6 +4,7 @@ import json
 import shlex
 import subprocess
 from abc import ABC
+from functools import cached_property
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -17,6 +18,8 @@ from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
+from nipoppy.workflows.services.container import ContainerRunner
+from nipoppy.workflows.services.hpc import HPCRunner
 
 logger = get_logger()
 
@@ -36,6 +39,20 @@ class Runner(BasePipelineWorkflow, ABC):
         super().__init__(*args, **kwargs)
         self.simulate = simulate
         self.keep_workdir = keep_workdir
+
+    @cached_property
+    def container_runner(self) -> ContainerRunner:
+        return ContainerRunner(
+            context=self.workflow_context,
+            descriptor=self.descriptor,
+        )
+
+    @cached_property
+    def hpc_runner(self) -> HPCRunner:
+        return HPCRunner(
+            context=self.workflow_context,
+            hpc_config=self.study.config.get_hpc_config(self.hpc) if self.hpc else None,
+        )
 
     def launch_boutiques_run(
         self,
