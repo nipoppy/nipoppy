@@ -117,7 +117,18 @@ class ZenodoAPI:
 
             output_dir.joinpath(file).write_bytes(response.content)
 
-    def _create_new_version(self, record_id: str, metadata: dict) -> Tuple[str, str]:
+    def _update_metadata(self, record_id: str, metadata: dict):
+        response = httpx.put(
+            f"{self.api_endpoint}/records/{record_id}/draft",
+            headers=self.headers,
+            json=metadata,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
+            )
+
+    def _create_new_version(self, record_id: str) -> Tuple[str, str]:
         response = httpx.post(
             f"{self.api_endpoint}/records/{record_id}/versions",
             headers=self.headers,
@@ -129,32 +140,19 @@ class ZenodoAPI:
             )
         new_record_id = response.json()["id"]
         owner_id = response.json()["owners"][0]["id"]
-
-        # Required to update the metadata to include the new publication date
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{new_record_id}/draft",
-            headers=self.headers,
-            json=metadata,
-        )
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
-            )
-
         return new_record_id, owner_id
 
-    def _create_draft(self, metadata: dict) -> Tuple[str, str]:
+    def _create_draft(self) -> Tuple[str, str]:
         response = httpx.post(
             f"{self.api_endpoint}/records",
             headers=self.headers | {"Content-Type": "application/json"},
-            json=metadata,
         )
         if response.status_code != 201:
             raise ZenodoAPIError(f"Failed to create a draft record: {response.json()}")
 
         return response.json()["id"], response.json()["owners"][0]["id"]
 
-    def _update_creators(self, record_id: str, owner_id: str, metadata: dict):
+    def _add_creators_to_metadata(self, owner_id: str, metadata: dict) -> dict:
         # get user profile info
         response = httpx.get(
             f"{self.api_endpoint}/users/{owner_id}", headers=self.headers
@@ -190,15 +188,7 @@ class ZenodoAPI:
                 "affiliations": [{"name": affiliation}] if affiliation else [],
             }
         ]
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{record_id}/draft",
-            headers=self.headers,
-            json=metadata,
-        )
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
-            )
+        return metadata
 
     def _upload_files(self, files: list[Path], record_id: str):
         metadata = [{"key": file.name} for file in files]
@@ -238,6 +228,14 @@ class ZenodoAPI:
                     f"\n{response.json()}"
                 )
 
+    def _add_default_preview_to_metadata(self, metadata: dict, file_name: str) -> dict:
+        """Set the default preview file.
+
+        Note: the metadata update must be done after the files are uploaded.
+        """
+        metadata["files"] = {"default_preview": file_name}
+        return metadata
+
     def _publish(self, record_id: str) -> str:
         response = httpx.post(
             f"{self.api_endpoint}/records/{record_id}/draft/actions/publish",
@@ -263,6 +261,7 @@ class ZenodoAPI:
         input_dir: Path,
         metadata: dict,
         record_id: Optional[str] = None,
+        default_preview_filename: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
         record_id = self._process_record_id(record_id)
@@ -274,18 +273,27 @@ class ZenodoAPI:
         self._check_authentication()
 
         if record_id:
-            record_id, owner_id = self._create_new_version(record_id, metadata)
+            record_id, owner_id = self._create_new_version(
+                self.get_latest_version_id(record_id)
+            )
             action = "update"
         else:
-            record_id, owner_id = self._create_draft(metadata)
+            record_id, owner_id = self._create_draft()
             action = "creation"
 
         try:
             if not metadata["metadata"].get("creators"):
-                self._update_creators(record_id, owner_id, metadata)
+                metadata = self._add_creators_to_metadata(owner_id, metadata)
 
             files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
+
+            if default_preview_filename is not None:
+                metadata = self._add_default_preview_to_metadata(
+                    metadata, default_preview_filename
+                )
+
+            self._update_metadata(record_id, metadata)
             doi = self._publish(record_id)
             return doi
 
