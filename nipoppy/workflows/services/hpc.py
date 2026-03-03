@@ -1,12 +1,23 @@
 """HPC runner service."""
 
+from pathlib import Path
+from typing import Optional
+
+from jinja2 import Environment, meta
+from pysqa import QueueAdapter
+
 from nipoppy.config.hpc import HpcConfig
+from nipoppy.exceptions import LayoutError, WorkflowError
+from nipoppy.logger import get_logger
+from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
 from nipoppy.workflows.services.context import WorkflowContext
+
+logger = get_logger()
 
 
 class HPCRunner:
     """
-    Service for generating and submitting HPC jobs.
+    Service for generating and submitting HPC jobs via PySQA.
 
     Parameters
     ----------
@@ -16,55 +27,120 @@ class HPCRunner:
         The HPC-specific configuration.
     """
 
-    def __init__(self, context: WorkflowContext, hpc_config: HpcConfig):
+    def __init__(
+        self, context: WorkflowContext, hpc_config: Optional[HpcConfig] = None
+    ):
         self.context = context
         self.hpc_config = hpc_config
 
-    def generate_script(self, job_params: dict) -> str:
+    def _check_hpc_config(self) -> dict:
         """
-        Generate a submission script for the HPC scheduler.
+        Get HPC configuration values to be passed to Jinja template.
 
-        Parameters
-        ----------
-        job_params : dict
-            The parameters for the job (e.g., command, resources).
-
-        Returns
-        -------
-        str
-            The generated submission script.
+        This function logs a warning if the HPC config does not exist (or is empty) or
+        if it contains variables that are not defined in the template job script.
         """
-        # Basic implementation for testing
-        script = "#!/bin/bash\n"
-        if hasattr(self.hpc_config, "account"):
-            script += f"#SBATCH --account={self.hpc_config.account}\n"
-        if "command" in job_params:
-            script += f"\n{job_params['command']}\n"
-        return script
+        if not self.hpc_config:
+            logger.warning("HPC configuration is empty")
+            return {}
 
-    def submit(self, job_params: dict) -> str:
-        """
-        Submit a job to the HPC scheduler.
+        job_args = self.hpc_config.model_dump()
+        if len(job_args) == 0:
+            logger.warning("HPC configuration is empty")
 
-        Parameters
-        ----------
-        job_params : dict
-            The parameters for the job (e.g., command, resources).
+        template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
+        template_vars = meta.find_undeclared_variables(template_ast)
+        missing_vars = set(job_args.keys()) - template_vars
+        if len(missing_vars) > 0:
+            logger.warning(
+                "Found variables in the HPC config that are not used in the template "
+                f"job script: {missing_vars}. Update the config or modify the template "
+                f"at {FPATH_HPC_TEMPLATE}."
+            )
 
-        Returns
-        -------
-        str
-            The job ID returned by the scheduler.
-        """
-        # In a real implementation, this would write the script to a file
-        # and call the scheduler (e.g., via pysqa or subprocess)
-        script = self.generate_script(job_params)
-        return self._submit_to_scheduler(script)
+        return job_args
 
-    def _submit_to_scheduler(self, script: str) -> str:
-        """Submit a script to the scheduler.
+    def submit(
+        self,
+        hpc_cluster: str,
+        job_name: str,
+        job_array_commands: list,
+        participant_ids: list,
+        session_ids: list,
+        dpath_work: Path,
+        dpath_hpc_logs: Path,
+        fname_hpc_error: str,
+        fname_job_script: str,
+        pipeline_name: str,
+        pipeline_version: str,
+        pipeline_step: str,
+        dry_run: bool = False,
+    ) -> Optional[int]:
+        """Submit a job to the HPC scheduler."""
+        dpath_hpc_configs = self.context.layout.dpath_hpc
+        if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
+            raise LayoutError(
+                "The HPC directory with appropriate content needs to exist at "
+                f"{self.context.layout.dpath_hpc} if HPC job submission is requested"
+            )
 
-        This is separated to allow easy mocking in tests.
-        """
-        # Placeholder for actual submission logic
-        return "dummy_job_id"
+        qa = QueueAdapter(directory=str(self.context.layout.dpath_hpc))
+
+        try:
+            qa.switch_cluster(hpc_cluster)
+        except KeyError as e:
+            raise WorkflowError(
+                f"Invalid HPC cluster type: {hpc_cluster}"
+                f". Available clusters are: {qa.list_clusters()}"
+            ) from e
+
+        # this is the file that will be created by PySQA
+        # if the job submission command fails
+        fpath_hpc_error = dpath_work / fname_hpc_error
+        fpath_hpc_error.unlink(missing_ok=True)
+
+        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
+
+        job_args = self._check_hpc_config()
+
+        job_id = None
+        if not dry_run:
+            job_id = qa.submit_job(
+                queue=hpc_cluster,
+                working_directory=str(dpath_work),
+                command="",  # not used in default template but cannot be None
+                cores=0,  # not used in default template but cannot be None
+                NIPOPPY_HPC=hpc_cluster,
+                NIPOPPY_JOB_NAME=job_name,
+                NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
+                NIPOPPY_HPC_PREAMBLE_STRINGS=self.context.config.HPC_PREAMBLE,
+                NIPOPPY_COMMANDS=job_array_commands,
+                NIPOPPY_DPATH_ROOT=self.context.layout.dpath_root,
+                NIPOPPY_PIPELINE_NAME=pipeline_name,
+                NIPOPPY_PIPELINE_VERSION=pipeline_version,
+                NIPOPPY_PIPELINE_STEP=pipeline_step,
+                NIPOPPY_PARTICIPANT_IDS=participant_ids,
+                NIPOPPY_SESSION_IDS=session_ids,
+                **job_args,
+            )
+
+        fpath_job_script = dpath_work / fname_job_script
+        if fpath_job_script.exists():
+            logger.info(f"Job script created at {fpath_job_script}")
+        else:
+            logger.warning(f"No job script found at {fpath_job_script}.")
+
+        if fpath_hpc_error.exists():
+            raise WorkflowError(
+                "Error occurred while submitting the HPC job:"
+                f"\n{fpath_hpc_error.read_text()}"
+                f"\nThe job script can be found at {fpath_job_script}."
+                "\nThis file is auto-generated. To modify it, you will need to "
+                "modify the pipeline's HPC configuration in the config file and/or "
+                f"the template job script in {self.context.layout.dpath_hpc}."
+            )
+
+        if job_id is not None:
+            logger.info(f"HPC job ID: {job_id}")
+
+        return job_id

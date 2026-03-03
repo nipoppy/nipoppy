@@ -2,7 +2,6 @@
 
 import json
 import shlex
-import subprocess
 from abc import ABC
 from functools import cached_property
 from pathlib import Path
@@ -14,7 +13,6 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
-from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -42,6 +40,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
     @cached_property
     def container_runner(self) -> ContainerRunner:
+        """Get the container runner service."""
         return ContainerRunner(
             context=self.workflow_context,
             descriptor=self.descriptor,
@@ -49,9 +48,10 @@ class Runner(BasePipelineWorkflow, ABC):
 
     @cached_property
     def hpc_runner(self) -> HPCRunner:
+        """Get the HPC runner service."""
         return HPCRunner(
             context=self.workflow_context,
-            hpc_config=self.study.config.get_hpc_config(self.hpc) if self.hpc else None,
+            hpc_config=self.hpc_config if self.hpc else None,
         )
 
     def launch_boutiques_run(
@@ -129,42 +129,13 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # run as a subprocess so that stdout/error are captured in the log
         # by default, this will raise an exception if the command fails
-        if self.simulate:
-            logger.info("Simulating pipeline command")
-            try:
-                self.run_command(
-                    ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
-                    quiet=True,
-                )
-                if bosh_exec_launch_args:
-                    logger.info(f"Additional launch options: {bosh_exec_launch_args}")
-            except subprocess.CalledProcessError as exception:
-                raise ExecutionError(
-                    f"Pipeline simulation failed (return code: {exception.returncode})"
-                )
-        else:
-            logger.info("Running pipeline command")
-            try:
-                self.run_command(
-                    (
-                        [
-                            "bosh",
-                            "exec",
-                            "launch",
-                            "--stream",
-                            descriptor_str,
-                            invocation_str,
-                        ]
-                        + bosh_exec_launch_args
-                    ),
-                    quiet=True,
-                )
-            except subprocess.CalledProcessError as exception:
-                raise ExecutionError(
-                    "Pipeline did not complete successfully"
-                    f" (return code: {exception.returncode})"
-                    ". Hint: make sure the shell command above is correct."
-                )
+        self.container_runner.run(
+            invocation_str=invocation_str,
+            descriptor_str=descriptor_str,
+            simulate=self.simulate,
+            bosh_exec_launch_args=bosh_exec_launch_args,
+            run_command=self.run_command,
+        )
 
         return descriptor_str, invocation_str
 

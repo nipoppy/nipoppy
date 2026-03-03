@@ -45,16 +45,18 @@ def test_container_runner_initialization(workflow_context, container_descriptor)
 
 def test_container_runner_run(workflow_context, container_descriptor, mocker):
     """Test that ContainerRunner can execute a container."""
+    import json
+
     runner = ContainerRunner(context=workflow_context, descriptor=container_descriptor)
     invocation = {"input_file": "/path/to/input.txt"}
 
-    # Mock the Boutiques execution
-    mock_bosh = mocker.patch(
-        "nipoppy.workflows.services.container.bosh",
-        return_value=mocker.Mock(exit_code=0),
+    mock_run_command = mocker.Mock()
+
+    exit_code = runner.run(
+        invocation_str=json.dumps(invocation),
+        descriptor_str=json.dumps(container_descriptor),
+        run_command=mock_run_command,
     )
 
-    exit_code = runner.run(invocation)
-
     assert exit_code == 0
-    assert mock_bosh.call_count == 3  # validate, invocation, exec launch
+    mock_run_command.assert_called_once()

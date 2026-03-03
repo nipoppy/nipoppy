@@ -29,9 +29,7 @@ from nipoppy.utils.utils import (
     is_nipoppy_project,
     process_template_str,
 )
-from nipoppy.workflows.services.container import ContainerRunner
 from nipoppy.workflows.services.context import WorkflowContext
-from nipoppy.workflows.services.hpc import HPCRunner
 from nipoppy.workflows.services.tabular import TabularDataHandler
 
 logger = get_logger()

@@ -1,9 +1,5 @@
 """Container runner service."""
 
-import json
-
-from boutiques import bosh
-
 from nipoppy.workflows.services.context import WorkflowContext
 
 
@@ -23,44 +19,80 @@ class ContainerRunner:
         self.context = context
         self.descriptor = descriptor
 
-    def run(self, invocation: dict) -> int:
+    def run(
+        self,
+        invocation_str: str,
+        descriptor_str: str,
+        simulate: bool = False,
+        bosh_exec_launch_args: list | None = None,
+        run_command=None,
+    ) -> int:
         """
-        Execute the container with the given invocation.
+        Execute the container with the given invocation string and descriptor string.
 
         Parameters
         ----------
-        invocation : dict
-            The Boutiques invocation parameters.
+        invocation_str : str
+            The Boutiques invocation as a JSON string.
+        descriptor_str : str
+            The Boutiques descriptor as a JSON string.
+        simulate : bool, optional
+            Whether to simulate the execution instead of running it.
+        bosh_exec_launch_args : list, optional
+            Additional arguments for bosh exec launch.
+        run_command : callable, optional
+            A function to execute the command. Should act like subprocess.run
+            or runner.run_command.
 
         Returns
         -------
         int
             The exit code of the container execution.
         """
-        # Basic implementation for testing
-        # In a real implementation, this would use the Boutiques API
-        # to execute the container with the given descriptor and invocation
-        descriptor_str = json.dumps(self.descriptor)
-        invocation_str = json.dumps(invocation)
+        import subprocess
 
-        # Validate descriptor and invocation
-        bosh(["validate", descriptor_str])
-        bosh(["invocation", "-i", invocation_str, descriptor_str])
+        from nipoppy.exceptions import ExecutionError
+        from nipoppy.logger import get_logger
 
-        # Execute the container
-        # Note: bosh() returns a list of results or a single result depending on the command  # noqa: E501
-        # For 'exec launch', it returns an object with an exit_code attribute
-        result = bosh(
-            [
+        logger = get_logger()
+
+        if bosh_exec_launch_args is None:
+            bosh_exec_launch_args = []
+
+        if simulate:
+            logger.info("Simulating pipeline command")
+            command = ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
+            try:
+                if run_command:
+                    run_command(command, quiet=True)
+                else:
+                    subprocess.run(command, check=True)
+                if bosh_exec_launch_args:
+                    logger.info(f"Additional launch options: {bosh_exec_launch_args}")
+                return 0
+            except subprocess.CalledProcessError as exception:
+                raise ExecutionError(
+                    f"Pipeline simulation failed (return code: {exception.returncode})"
+                )
+        else:
+            logger.info("Running pipeline command")
+            command = [
+                "bosh",
                 "exec",
                 "launch",
-                "-i",
-                invocation_str,
+                "--stream",
                 descriptor_str,
-            ]
-        )
-
-        # Handle the result which might be a list or a single object
-        if isinstance(result, list) and len(result) > 0:
-            return getattr(result[0], "exit_code", 0)
-        return getattr(result, "exit_code", 0)
+                invocation_str,
+            ] + bosh_exec_launch_args
+            try:
+                if run_command:
+                    run_command(command, quiet=True)
+                else:
+                    subprocess.run(command, check=True)
+                return 0
+            except subprocess.CalledProcessError as exception:
+                raise ExecutionError(
+                    "Pipeline did not complete successfully"
+                    f" (return code: {exception.returncode})"
+                    ". Hint: make sure the shell command above is correct."
+                )
