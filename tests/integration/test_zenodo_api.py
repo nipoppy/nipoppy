@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import httpx
 import pytest
 
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
@@ -120,11 +121,21 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
     reason="Requires Zenodo token",
 )
 def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
+    default_preview = "config.json"
+
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-    zenodo_api.upload_record(
+    doi = zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
+        default_preview_filename=default_preview,
     )
+
+    # extract the new record ID from the DOI (e.g. 10.5072/zenodo.123456)
+    new_record_id = doi.split("/")[-1].removeprefix("zenodo.")
+
+    # verify that the default preview file is set correctly
+    response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
+    assert response.json()["default_preview"] == default_preview
 
 
 @pytest.mark.api
