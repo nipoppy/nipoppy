@@ -1,9 +1,15 @@
 """Container runner service."""
 
+import subprocess
+
+from nipoppy.exceptions import ExecutionError
+from nipoppy.logger import get_logger
 from nipoppy.workflows.services.context import WorkflowContext
 
+logger = get_logger()
 
-class ContainerRunner:
+
+class BoshRunner:
     """
     Service for executing containerized applications via Boutiques.
 
@@ -27,8 +33,7 @@ class ContainerRunner:
         bosh_exec_launch_args: list | None = None,
         run_command=None,
     ) -> int:
-        """
-        Execute the container with the given invocation string and descriptor string.
+        """Execute the container with the given invocation string and descriptor string.
 
         Parameters
         ----------
@@ -49,13 +54,6 @@ class ContainerRunner:
         int
             The exit code of the container execution.
         """
-        import subprocess
-
-        from nipoppy.exceptions import ExecutionError
-        from nipoppy.logger import get_logger
-
-        logger = get_logger()
-
         if bosh_exec_launch_args is None:
             bosh_exec_launch_args = []
 

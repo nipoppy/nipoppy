@@ -1,11 +1,11 @@
-"""Unit tests for ContainerRunner."""
+"""Unit tests for BoshRunner."""
 
 import pytest
 
 from nipoppy.config.main import Config
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
-from nipoppy.workflows.services.container import ContainerRunner
+from nipoppy.workflows.services.boutiques import BoshRunner
 from nipoppy.workflows.services.context import WorkflowContext
 
 
@@ -19,7 +19,7 @@ def workflow_context(tmp_path):
 
 
 @pytest.fixture
-def container_descriptor():
+def bosh_descriptor():
     """Fixture for a Boutiques descriptor."""
     return {
         "name": "test_app",
@@ -36,25 +36,25 @@ def container_descriptor():
     }
 
 
-def test_container_runner_initialization(workflow_context, container_descriptor):
-    """Test that ContainerRunner can be initialized."""
-    runner = ContainerRunner(context=workflow_context, descriptor=container_descriptor)
+def test_bosh_runner_initialization(workflow_context, bosh_descriptor):
+    """Test that boshRunner can be initialized."""
+    runner = BoshRunner(context=workflow_context, descriptor=bosh_descriptor)
     assert runner.context is workflow_context
-    assert runner.descriptor is container_descriptor
+    assert runner.descriptor is bosh_descriptor
 
 
-def test_container_runner_run(workflow_context, container_descriptor, mocker):
-    """Test that ContainerRunner can execute a container."""
+def test_bosh_runner_run(workflow_context, bosh_descriptor, mocker):
+    """Test that boshRunner can execute a bosh."""
     import json
 
-    runner = ContainerRunner(context=workflow_context, descriptor=container_descriptor)
+    runner = BoshRunner(context=workflow_context, descriptor=bosh_descriptor)
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()
 
     exit_code = runner.run(
         invocation_str=json.dumps(invocation),
-        descriptor_str=json.dumps(container_descriptor),
+        descriptor_str=json.dumps(bosh_descriptor),
         run_command=mock_run_command,
     )
 
