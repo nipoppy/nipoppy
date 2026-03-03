@@ -47,3 +47,10 @@ nipoppy_env/
 
 # Logs
 *.log
+
+# Agents
+.github/copilot-instructions.md
+.github/agents
+.github/prompts
+.specify
+specs
