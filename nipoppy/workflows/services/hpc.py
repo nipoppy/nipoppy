@@ -76,7 +76,43 @@ class HPCRunner:
         pipeline_step: str,
         dry_run: bool = False,
     ) -> Optional[int]:
-        """Submit a job to the HPC scheduler."""
+        """
+        Submit a job to the HPC scheduler.
+
+        Parameters
+        ----------
+        hpc_cluster : str
+            The name of the HPC cluster configuration to use.
+        job_name : str
+            Name of the job to submit.
+        job_array_commands : list
+            List of commands to run.
+        participant_ids : list
+            List of participant IDs associated with the job.
+        session_ids : list
+            List of session IDs associated with the job.
+        dpath_work : Path
+            Working directory for the job.
+        dpath_hpc_logs : Path
+            Directory where HPC logs will be saved.
+        fname_hpc_error : str
+            Filename of the HPC error log.
+        fname_job_script : str
+            Filename of the job script to generate.
+        pipeline_name : str
+            Name of the pipeline being run.
+        pipeline_version : str
+            Version of the pipeline being run.
+        pipeline_step : str
+            Step of the pipeline being run.
+        dry_run : bool, optional
+            Whether to only generate the script without submitting, by default False.
+
+        Returns
+        -------
+        int or None
+            The job ID if submitted successfully, else None.
+        """
         dpath_hpc_configs = self.context.layout.dpath_hpc
         if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
             raise LayoutError(
