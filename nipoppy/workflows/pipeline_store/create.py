@@ -83,11 +83,6 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 target.joinpath("tracker.json"),
                 dry_run=self.dry_run,
             )
-            fileops.copy(
-                TEMPLATE_PIPELINE_PATH.joinpath("pybids_ignore.json"),
-                target.joinpath("pybids_ignore.json"),
-                dry_run=self.dry_run,
-            )
 
     def run_main(self):
         """Run the main workflow."""
