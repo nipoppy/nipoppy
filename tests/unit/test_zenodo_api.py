@@ -805,3 +805,30 @@ def test_get_record_metadata_fails(
         ZenodoAPIError, match=f"Failed to get metadata for zenodo.{record_id}"
     ):
         zenodo_api.get_record_metadata(record_id=record_id)
+
+
+def test_close(zenodo_api: ZenodoAPI):
+    """Test that close() shuts down the underlying HTTP client."""
+    zenodo_api.close()
+    assert zenodo_api.client.is_closed
+
+
+def test_close_idempotent(zenodo_api: ZenodoAPI):
+    """Test that calling close() twice does not raise."""
+    zenodo_api.close()
+    zenodo_api.close()  # must not raise
+    assert zenodo_api.client.is_closed
+
+
+def test_context_manager():
+    """Test that ZenodoAPI can be used as a context manager."""
+    with ZenodoAPI(sandbox=True, password_file=PASSWORD_FILE) as api:
+        assert not api.client.is_closed
+    assert api.client.is_closed
+
+
+def test_set_authorization_updates_client(zenodo_api: ZenodoAPI):
+    """Test that set_authorization propagates the token to the live client."""
+    new_token = "new-token"
+    zenodo_api.set_authorization(new_token)
+    assert zenodo_api.client.headers.get("authorization") == f"Bearer {new_token}"

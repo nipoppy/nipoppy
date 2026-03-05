@@ -3,7 +3,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import httpx
 
@@ -19,6 +19,11 @@ class ZenodoAPI:
 
     Zenodo uses the InvenioRDM API, which is documented at:
     https://inveniordm.docs.cern.ch/reference/rest_api_index/
+
+    This class manages a persistent :class:`httpx.Client` session for all
+    HTTP communication. It supports use as a context manager (``with``
+    statement) for automatic resource cleanup, and exposes an explicit
+    :meth:`close` method for manual cleanup.
     """
 
     def __init__(
@@ -52,6 +57,25 @@ class ZenodoAPI:
     def set_authorization(self, access_token: str):
         """Set the headers for the ZenodoAPI instance."""
         self.headers.update({"Authorization": f"Bearer {access_token}"})
+        if hasattr(self, "client"):
+            self.client.headers.update(self.headers)
+
+    def close(self) -> None:
+        """Close the underlying HTTP client and release connections."""
+        self.client.close()
+
+    def __enter__(self) -> "ZenodoAPI":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        try:
+            if hasattr(self, "client"):
+                self.client.close()
+        except Exception:
+            pass
 
     @property
     def logger(self) -> logging.Logger:
@@ -325,15 +349,13 @@ class ZenodoAPI:
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
 
         api_endpoint = self._get_api_endpoint(community_id)
-        response = httpx.get(
+        response = self.client.get(
             api_endpoint,
-            headers=self.headers,
             params={
                 "q": full_query,
                 "size": size,
                 "sort": sort,
             },
-            timeout=self.timeout,
         )
         try:
             response.raise_for_status()
@@ -354,9 +376,8 @@ class ZenodoAPI:
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
         record_id = record_id.removeprefix("zenodo.")
-        response = httpx.get(
-            f"{self.api_endpoint}/records/{record_id}",
-            headers=self.headers,
+        response = self.client.get(
+            f"/records/{record_id}",
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
