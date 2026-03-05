@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
@@ -32,7 +33,7 @@ class BoshRunner:
         invocation_str: str,
         descriptor_str: str,
         bosh_exec_launch_args: list[str] | None = None,
-        run_command: subprocess.run | None = None,
+        run_command: Callable | None = None,
         dry_run: bool = False,
     ) -> int:
         """Execute the container with the given invocation string and descriptor string.
@@ -47,7 +48,7 @@ class BoshRunner:
             Whether to simulate the execution instead of running it.
         bosh_exec_launch_args : list of str, optional
             Additional arguments for bosh exec launch.
-        run_command : callable, optional
+        run_command : Callable, optional
             A function to execute the command. Should act like subprocess.run
             or runner.run_command.
         dry_run : bool, optional
