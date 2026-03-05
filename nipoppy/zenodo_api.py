@@ -43,6 +43,12 @@ class ZenodoAPI:
             self.access_token = self.password_file.read_text().strip()
             self.set_authorization(self.access_token)
 
+        self.client = httpx.Client(
+            base_url=self.api_endpoint,
+            headers=self.headers,
+            timeout=self.timeout,
+        )
+
     def set_authorization(self, access_token: str):
         """Set the headers for the ZenodoAPI instance."""
         self.headers.update({"Authorization": f"Bearer {access_token}"})
