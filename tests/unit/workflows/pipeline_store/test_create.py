@@ -116,3 +116,7 @@ def test_create_from_descriptor(target: Path):
     config = load_json(target.joinpath("config.json"))
     assert config["NAME"] == descriptor["name"]
     assert config["VERSION"] == descriptor["tool-version"]
+    assert (
+        config["CONTAINER_INFO"]["URI"]
+        == "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+    )

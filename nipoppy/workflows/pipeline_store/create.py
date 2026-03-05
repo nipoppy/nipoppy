@@ -74,6 +74,22 @@ class PipelineCreateWorkflow(BaseWorkflow):
         descriptor = load_json(descriptor_path)
         config["NAME"] = descriptor["name"]
         config["VERSION"] = descriptor["tool-version"]
+        if (
+            "container-image" in descriptor
+            and descriptor["container-image"].get("image") != "user/image"
+        ):
+            config["CONTAINER_INFO"][
+                "URI"
+            ] = f"docker://{descriptor['container-image']['image']}"
+
+            # replace the pipeline name/version with placeholders
+            # to avoid users forgetting to update them when copy-pasting
+            config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"]["URI"].replace(
+                descriptor["name"], "[[PIPELINE_NAME]]"
+            )
+            config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"]["URI"].replace(
+                descriptor["tool-version"], "[[PIPELINE_VERSION]]"
+            )
         save_json(config, target.joinpath("config.json"))
 
         # Only PROCESSING pipelines have a tracker.json file
