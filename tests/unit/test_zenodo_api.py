@@ -574,6 +574,9 @@ def test_upload_record(
         zenodo_api, "_add_creators_to_metadata", return_value=metadata
     )
     mocked_upload_files = mocker.patch.object(zenodo_api, "_upload_files")
+    mocked_add_default_preview_to_metadata = mocker.patch.object(
+        zenodo_api, "_add_default_preview_to_metadata", return_value=metadata
+    )
     mocked_update_metadata = mocker.patch.object(zenodo_api, "_update_metadata")
     mocked_publish = mocker.patch.object(zenodo_api, "_publish", return_value=doi)
 
@@ -590,6 +593,7 @@ def test_upload_record(
     mocked_upload_files.assert_called_once_with(
         [tmp_path / fname for fname in fnames], new_record_id
     )
+    mocked_add_default_preview_to_metadata.assert_not_called()
     mocked_update_metadata.assert_called_once_with(new_record_id, metadata)
     mocked_publish.assert_called_once_with(new_record_id)
 
@@ -623,6 +627,32 @@ def test_upload_record_custom_creators(
         },
     )
     mocked_add_creators_to_metadata.assert_not_called()
+
+
+def test_upload_record_default_preview(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    metadata = {"metadata": {}}
+    fnames = ["abc.txt", "def.txt"]
+    for fname in fnames:
+        (tmp_path / fname).write_text(fname)
+
+    mocker.patch.object(zenodo_api, "_check_authentication")
+    mocker.patch.object(zenodo_api, "_create_draft", return_value=("654321", "888888"))
+    mocker.patch.object(zenodo_api, "_add_creators_to_metadata", return_value=metadata)
+    mocker.patch.object(zenodo_api, "_upload_files")
+    mocked_add_default_preview_to_metadata = mocker.patch.object(
+        zenodo_api, "_add_default_preview_to_metadata", return_value=metadata
+    )
+    mocker.patch.object(zenodo_api, "_update_metadata")
+    mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
+
+    zenodo_api.upload_record(
+        input_dir=tmp_path,
+        metadata=metadata,
+        default_preview_filename=fnames[-1],
+    )
+    mocked_add_default_preview_to_metadata.assert_called_once_with(metadata, fnames[-1])
 
 
 def test_upload_record_dir_not_found(zenodo_api: ZenodoAPI):
