@@ -233,7 +233,9 @@ class ZenodoAPI:
 
         Note: the metadata update must be done after the files are uploaded.
         """
-        metadata["files"] = {"default_preview": file_name}
+        if "files" not in metadata:
+            metadata["files"] = {}
+        metadata["files"]["default_preview"] = file_name
         return metadata
 
     def _publish(self, record_id: str) -> str:

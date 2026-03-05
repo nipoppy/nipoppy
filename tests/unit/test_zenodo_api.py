@@ -477,10 +477,24 @@ def test_upload_files_commit_fails(
         zenodo_api._upload_files(files=[tmp_path / filename], record_id=record_id)
 
 
-@pytest.mark.parametrize("filename", ["abc.txt", "def.txt"])
-def test_add_default_preview_to_metadata(zenodo_api: ZenodoAPI, filename: str):
-    updated_metadata = zenodo_api._add_default_preview_to_metadata({}, filename)
-    assert updated_metadata["files"]["default_preview"] == filename
+@pytest.mark.parametrize(
+    "input_metadata,filename,expected_output",
+    [
+        (
+            {"files": {"existing_field": "value"}},
+            "abc.txt",
+            {"files": {"existing_field": "value", "default_preview": "abc.txt"}},
+        ),
+        ({}, "def.txt", {"files": {"default_preview": "def.txt"}}),
+    ],
+)
+def test_add_default_preview_to_metadata(
+    zenodo_api: ZenodoAPI, input_metadata: dict, filename: str, expected_output: dict
+):
+    updated_metadata = zenodo_api._add_default_preview_to_metadata(
+        input_metadata, filename
+    )
+    assert updated_metadata == expected_output
 
 
 def test_publish(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
