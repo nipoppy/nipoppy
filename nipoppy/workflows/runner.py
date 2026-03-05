@@ -15,6 +15,7 @@ from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
+from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import BoshRunner
 from nipoppy.workflows.services.hpc import HPCRunner
@@ -134,7 +135,8 @@ class Runner(BasePipelineWorkflow, ABC):
             descriptor_str=descriptor_str,
             simulate=self.simulate,
             bosh_exec_launch_args=bosh_exec_launch_args,
-            run_command=self.run_command,
+            run_command=_run_command,
+            dry_run=self.dry_run,
         )
 
         return descriptor_str, invocation_str

@@ -805,3 +805,36 @@ def test_get_record_metadata_fails(
         ZenodoAPIError, match=f"Failed to get metadata for zenodo.{record_id}"
     ):
         zenodo_api.get_record_metadata(record_id=record_id)
+
+
+def test_get_latest_version_id(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "123456"
+    latest_record_id = "654321"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions/latest",
+        method="GET",
+        json={"id": latest_record_id},
+    )
+
+    assert zenodo_api.get_latest_version_id(record_id) == latest_record_id
+
+
+def test_get_latest_version_id_invalid(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "0"
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions/latest",
+        method="GET",
+        status_code=404,
+        json={"message": "The persistent identifier does not exist."},
+    )
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=f"Failed to get latest version for zenodo.{record_id}:",
+    ):
+        zenodo_api.get_latest_version_id(record_id)

@@ -32,6 +32,7 @@ class BoshRunner:
         simulate: bool = False,
         bosh_exec_launch_args: list | None = None,
         run_command=None,
+        dry_run: bool = False,
     ) -> int:
         """Execute the container with the given invocation string and descriptor string.
 
@@ -62,8 +63,8 @@ class BoshRunner:
             command = ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str]
             try:
                 if run_command:
-                    run_command(command, quiet=True)
-                else:
+                    run_command(command, quiet=True, dry_run=dry_run)
+                elif not dry_run:
                     subprocess.run(command, check=True)
                 if bosh_exec_launch_args:
                     logger.info(f"Additional launch options: {bosh_exec_launch_args}")
@@ -84,8 +85,10 @@ class BoshRunner:
             ] + bosh_exec_launch_args
             try:
                 if run_command:
-                    run_command(command, quiet=True)
-                else:
+                    run_command(command, quiet=True, dry_run=dry_run)
+                elif dry_run:
+                    logger.info("Dry run enabled, skipping command execution")
+                elif not dry_run:
                     subprocess.run(command, check=True)
                 return 0
             except subprocess.CalledProcessError as exception:
