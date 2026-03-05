@@ -7,6 +7,7 @@ from jinja2 import Environment, meta
 from pysqa import QueueAdapter
 
 from nipoppy.config.hpc import HpcConfig
+from nipoppy.env import PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import LayoutError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
@@ -32,6 +33,82 @@ class HPCRunner:
     ):
         self.context = context
         self.hpc_config = hpc_config
+
+    @staticmethod
+    def generate_cli_command(
+        subcommand: str,
+        dpath_root: StrOrPathLike,
+        pipeline_name: str,
+        pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        keep_workdir: bool = False,
+        extra_flags: Optional[list[str]] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
+        verbose: bool = False,
+    ) -> list[str]:
+        """
+        Generate the CLI command to be run on the HPC cluster for a participant/session.
+
+        Skips the --simulate, --hpc, --write-list and --dry-run options.
+
+        Parameters
+        ----------
+        subcommand : str
+            The nipoppy CLI subcommand (e.g. "bidsify", "process", "extract").
+        dpath_root : StrOrPathLike
+            Path to the dataset root directory.
+        pipeline_name : str
+            Name of the pipeline to run.
+        pipeline_version : str, optional
+            Version of the pipeline.
+        pipeline_step : str, optional
+            Step of the pipeline.
+        participant_id : str, optional
+            Participant ID to run on.
+        session_id : str, optional
+            Session ID to run on.
+        keep_workdir : bool, optional
+            Whether to keep the working directory after the run.
+        extra_flags : list[str], optional
+            Additional CLI flags to append after ``--keep-workdir`` and before
+            ``--layout``.
+        fpath_layout : StrOrPathLike, optional
+            Path to a custom layout file.
+        verbose : bool, optional
+            Whether to enable verbose output.
+
+        Returns
+        -------
+        list[str]
+            The CLI command as a list of string tokens.
+        """
+        command = [
+            PROGRAM_NAME,
+            subcommand,
+            "--dataset",
+            dpath_root,
+            "--pipeline",
+            pipeline_name,
+        ]
+        if pipeline_version is not None:
+            command.extend(["--pipeline-version", pipeline_version])
+        if pipeline_step is not None:
+            command.extend(["--pipeline-step", pipeline_step])
+        if participant_id is not None:
+            command.extend(["--participant-id", participant_id])
+        if session_id is not None:
+            command.extend(["--session-id", session_id])
+        if keep_workdir:
+            command.append("--keep-workdir")
+        if extra_flags:
+            command.extend(extra_flags)
+        if fpath_layout:
+            command.extend(["--layout", fpath_layout])
+        if verbose:
+            command.append("--verbose")
+        return [str(c) for c in command]
 
     def _check_hpc_config(self) -> dict:
         """

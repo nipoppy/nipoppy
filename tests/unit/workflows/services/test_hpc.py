@@ -4,6 +4,7 @@ import pytest
 
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.main import Config
+from nipoppy.env import PROGRAM_NAME
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.workflows.services.context import WorkflowContext
@@ -111,3 +112,34 @@ def test_hpc_runner_isolated_dependencies():
     assert "DatasetLayout" not in dir(
         hpc_module
     ), "HPCRunner should not depend directly on layout details beyond Context"
+
+
+@pytest.mark.parametrize(
+    "kwargs,expected_command",
+    [
+        (
+            dict(
+                subcommand="bidsify",
+                dpath_root="/path/to/root",
+                pipeline_name="my_pipeline",
+                participant_id="P01",
+                session_id="1",
+            ),
+            [
+                PROGRAM_NAME,
+                "bidsify",
+                "--dataset",
+                "/path/to/root",
+                "--pipeline",
+                "my_pipeline",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+            ],
+        ),
+    ],
+)
+def test_generate_cli_command(kwargs: dict, expected_command: list[str]) -> None:
+    """Test HPCRunner.generate_cli_command produces correct CLI tokens."""
+    assert HPCRunner.generate_cli_command(**kwargs) == expected_command

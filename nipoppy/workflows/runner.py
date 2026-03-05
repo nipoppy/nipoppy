@@ -60,6 +60,23 @@ class Runner(BasePipelineWorkflow, ABC):
             hpc_config=self.hpc_config if self.hpc else None,
         )
 
+    def _generate_cli_command_for_hpc(
+        self, participant_id=None, session_id=None
+    ) -> list[str]:
+        """Generate the CLI command to be run on the HPC cluster."""
+        return HPCRunner.generate_cli_command(
+            subcommand=self.name,
+            dpath_root=self.dpath_root,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            participant_id=participant_id,
+            session_id=session_id,
+            keep_workdir=self.keep_workdir,
+            fpath_layout=self.fpath_layout,
+            verbose=self.verbose,
+        )
+
     def launch_boutiques_run(
         self,
         participant_id: str,
