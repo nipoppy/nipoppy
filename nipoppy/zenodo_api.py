@@ -43,22 +43,20 @@ class ZenodoAPI:
         # Access token is required for uploading files
         self.password_file = password_file
         self.access_token = None
-        self.headers: dict[str, str] = dict()
+        initial_headers: dict[str, str] = {}
         if self.password_file is not None:
             self.access_token = self.password_file.read_text().strip()
-            self.set_authorization(self.access_token)
+            initial_headers["Authorization"] = f"Bearer {self.access_token}"
 
         self.client = httpx.Client(
             base_url=self.api_endpoint,
-            headers=self.headers,
+            headers=initial_headers,
             timeout=self.timeout,
         )
 
     def set_authorization(self, access_token: str):
         """Set the headers for the ZenodoAPI instance."""
-        self.headers.update({"Authorization": f"Bearer {access_token}"})
-        if hasattr(self, "client"):
-            self.client.headers.update(self.headers)
+        self.client.headers.update({"Authorization": f"Bearer {access_token}"})
 
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
