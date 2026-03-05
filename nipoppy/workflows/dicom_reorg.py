@@ -15,7 +15,7 @@ from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow, _save_tabular_file
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
 
@@ -206,8 +206,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         - Write updated curation status file
         - Log a summary message
         """
-        _save_tabular_file(
-            self.curation_status_table,
+        self.curation_status_table.save_with_backup(
             self.study.layout.fpath_curation_status,
             dry_run=self.dry_run,
         )

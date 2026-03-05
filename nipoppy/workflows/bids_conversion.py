@@ -10,7 +10,6 @@ from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import WorkflowError
-from nipoppy.workflows.base import _save_tabular_file
 from nipoppy.workflows.runner import Runner
 
 
@@ -136,8 +135,7 @@ class BIDSificationRunner(Runner):
         - Write updated curation status file
         """
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
-            _save_tabular_file(
-                self.curation_status_table,
+            self.curation_status_table.save_with_backup(
                 self.study.layout.fpath_curation_status,
                 dry_run=self.dry_run,
             )
