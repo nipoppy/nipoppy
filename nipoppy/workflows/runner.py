@@ -17,7 +17,7 @@ from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
-from nipoppy.workflows.services.boutiques import BoshRunner
+from nipoppy.workflows.services.boutiques import BoshRunner, BoshSimulate
 from nipoppy.workflows.services.hpc import HPCRunner
 
 logger = get_logger()
@@ -42,6 +42,11 @@ class Runner(BasePipelineWorkflow, ABC):
     @cached_property
     def container_runner(self) -> BoshRunner:
         """Get the container runner service."""
+        if self.simulate:
+            return BoshSimulate(
+                context=self.workflow_context,
+                descriptor=self.descriptor,
+            )
         return BoshRunner(
             context=self.workflow_context,
             descriptor=self.descriptor,
@@ -133,7 +138,6 @@ class Runner(BasePipelineWorkflow, ABC):
         self.container_runner.run(
             invocation_str=invocation_str,
             descriptor_str=descriptor_str,
-            simulate=self.simulate,
             bosh_exec_launch_args=bosh_exec_launch_args,
             run_command=_run_command,
             dry_run=self.dry_run,
