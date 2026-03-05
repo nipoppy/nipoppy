@@ -27,7 +27,6 @@ from nipoppy.utils.utils import (
     is_nipoppy_project,
 )
 from nipoppy.workflows.services.context import WorkflowContext
-from nipoppy.workflows.services.tabular import TabularDataHandler
 
 logger = get_logger()
 
@@ -241,11 +240,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             logger=logger,
             config=self.study.config,
         )
-
-    @cached_property
-    def tabular_handler(self) -> TabularDataHandler:
-        """Get the tabular data handler."""
-        return TabularDataHandler(context=self.workflow_context)
 
     def generate_fpath_log(
         self,
