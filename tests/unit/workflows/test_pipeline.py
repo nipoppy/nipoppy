@@ -1430,56 +1430,6 @@ def test_generate_fpath_log(
     )
 
 
-@pytest.mark.parametrize(
-    "hpc_config_data", [{"CORES": "8", "MEMORY": "32G"}, {"ACCOUNT": "my_account"}]
-)
-def test_check_hpc_config(hpc_config_data, workflow: PipelineWorkflow):
-    workflow.hpc_config = HpcConfig(**hpc_config_data)
-    assert workflow._check_hpc_config() == hpc_config_data
-
-
-@pytest.mark.no_xdist
-def test_check_hpc_config_empty(
-    workflow: PipelineWorkflow,
-    caplog: pytest.LogCaptureFixture,
-):
-    workflow.hpc_config = HpcConfig()
-    workflow._check_hpc_config()
-    assert (
-        sum(
-            [
-                (
-                    "HPC configuration is empty" in record.message
-                    and record.levelname == "WARNING"
-                )
-                for record in caplog.records
-            ]
-        )
-        == 1
-    )
-
-
-@pytest.mark.no_xdist
-def test_check_hpc_config_unused_vars(
-    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
-):
-    workflow.hpc_config = HpcConfig(CORES="8", RANDOM_VAR="value")
-    workflow._check_hpc_config()
-    assert sum(
-        [
-            (
-                (
-                    "Found variables in the HPC config that are not used"
-                    in record.message
-                )
-                and ("RANDOM_VAR" in record.message)
-                and record.levelname == "WARNING"
-            )
-            for record in caplog.records
-        ]
-    )
-
-
 @pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
 @pytest.mark.no_xdist
 def test_submit_hpc_job(
@@ -1497,7 +1447,10 @@ def test_submit_hpc_job(
     _set_up_hpc_for_testing(workflow, mocker, mock_pysqa=False)
     workflow.hpc = hpc_type
 
-    mocker.patch.object(workflow, "_check_hpc_config", return_value=hpc_config)
+    mocker.patch(
+        "nipoppy.workflows.services.hpc.HPCRunner._check_hpc_config",
+        return_value=hpc_config,
+    )
     mocked_check_output = mocker.patch(
         "pysqa.base.core.subprocess.check_output", return_value=job_id
     )
@@ -1512,7 +1465,17 @@ def test_submit_hpc_job(
     assert f"HPC job ID: {job_id}" in caplog.text
 
 
-def test_submit_hpc_job_no_dir(workflow: PipelineWorkflow):
+def test_submit_hpc_job_no_dir(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    _set_up_hpc_for_testing(workflow, mocker)
+
+    # remove the directory created by _set_up_hpc_for_testing
+    import shutil
+
+    if workflow.study.layout.dpath_hpc.exists():
+        shutil.rmtree(workflow.study.layout.dpath_hpc)
+
     assert not workflow.study.layout.dpath_hpc.exists()
     with pytest.raises(
         LayoutError,

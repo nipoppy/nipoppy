@@ -13,10 +13,8 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
 
 import pandas as pd
 import rich
-from jinja2 import Environment, meta
 from packaging.version import Version
 from pydantic import ValidationError
-from pysqa import QueueAdapter
 
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
@@ -44,7 +42,6 @@ from nipoppy.exceptions import (
     ConfigError,
     ContainerError,
     FileOperationError,
-    LayoutError,
     ReturnCode,
     WorkflowError,
 )
@@ -60,7 +57,6 @@ from nipoppy.utils.bids import (
     session_id_to_bids_session_id,
 )
 from nipoppy.utils.utils import (
-    FPATH_HPC_TEMPLATE,
     apply_substitutions_to_json,
     get_pipeline_tag,
     load_json,
@@ -752,49 +748,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Generate the CLI command to be run on the HPC cluster."""
         raise NotImplementedError("This method should be implemented in a subclass")
 
-    def _check_hpc_config(self) -> dict:
-        """
-        Get HPC configuration values to be passed to Jinja template.
-
-        This function logs a warning if the HPC config does not exist (or is empty) or
-        if it contains variables that are not defined in the template job script.
-        """
-        job_args = self.hpc_config.model_dump()
-        if len(job_args) == 0:
-            logger.warning("HPC configuration is empty")
-
-        template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
-        template_vars = meta.find_undeclared_variables(template_ast)
-        missing_vars = set(job_args.keys()) - template_vars
-        if len(missing_vars) > 0:
-            logger.warning(
-                "Found variables in the HPC config that are not used in the template "
-                f"job script: {missing_vars}. Update the config or modify the template "
-                f"at {FPATH_HPC_TEMPLATE}."
-            )
-
-        return job_args
-
     def _submit_hpc_job(self, participants_sessions):
         """Submit jobs to a HPC cluster for processing."""
-        # make sure HPC directory exists
-        dpath_hpc_configs = self.study.layout.dpath_hpc
-        if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
-            raise LayoutError(
-                "The HPC directory with appropriate content needs to exist at "
-                f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
-            )
-
-        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
-
-        try:
-            qa.switch_cluster(self.hpc)
-        except KeyError as e:
-            raise WorkflowError(
-                f"Invalid HPC cluster type: {self.hpc}"
-                f". Available clusters are: {qa.list_clusters()}"
-            ) from e
-
         # generate the list of nipoppy commands for a shell array
         job_array_commands = []
         participant_ids = []
@@ -819,61 +774,34 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             participant_id=self.participant_id,
             session_id=self.session_id,
         )
-        dpath_work = self.dpath_pipeline_work
 
-        # this is the file that will be created by PySQA
-        # if the job submission command fails
-        # first we delete it to make sure it is not already there
-        fpath_hpc_error = dpath_work / self.fname_hpc_error
-        fpath_hpc_error.unlink(missing_ok=True)
+        from nipoppy.workflows.services.hpc import HPCRunner
 
-        # create the HPC logs directory
-        dpath_hpc_logs = self.study.layout.dpath_logs / self.dname_hpc_logs
-        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
-
-        # user-defined args
-        job_args = self._check_hpc_config()
-
-        job_id = None
-        if not self.dry_run:
-            job_id = qa.submit_job(
-                queue=self.hpc,
-                working_directory=str(dpath_work),
-                command="",  # not used in default template but cannot be None
-                cores=0,  # not used in default template but cannot be None
-                NIPOPPY_HPC=self.hpc,
-                NIPOPPY_JOB_NAME=job_name,
-                NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
-                NIPOPPY_HPC_PREAMBLE_STRINGS=self.study.config.HPC_PREAMBLE,
-                NIPOPPY_COMMANDS=job_array_commands,
-                NIPOPPY_DPATH_ROOT=self.study.layout.dpath_root,
-                NIPOPPY_PIPELINE_NAME=self.pipeline_name,
-                NIPOPPY_PIPELINE_VERSION=self.pipeline_version,
-                NIPOPPY_PIPELINE_STEP=self.pipeline_step,
-                NIPOPPY_PARTICIPANT_IDS=participant_ids,
-                NIPOPPY_SESSION_IDS=session_ids,
-                **job_args,
+        # We temporarily initialize here if it doesn't exist, but runner.py has it!
+        # BasePipelineWorkflow doesn't have self.hpc_runner natively instantiated but
+        # let's just make one or use self.hpc_runner if available.
+        hpc_runner = getattr(self, "hpc_runner", None)
+        if not hpc_runner:
+            hpc_runner = HPCRunner(
+                context=getattr(self, "workflow_context", None),
+                hpc_config=self.hpc_config if self.hpc else None,
             )
 
-        fpath_job_script = dpath_work / self.fname_job_script
-        if fpath_job_script.exists():
-            logger.info(f"Job script created at {fpath_job_script}")
-        else:
-            logger.warning(f"No job script found at {fpath_job_script}.")
-
-        # raise error if an error file was created
-        if fpath_hpc_error.exists():
-            raise WorkflowError(
-                "Error occurred while submitting the HPC job:"
-                f"\n{fpath_hpc_error.read_text()}"
-                f"\nThe job script can be found at {fpath_job_script}."
-                "\nThis file is auto-generated. To modify it, you will need to "
-                "modify the pipeline's HPC configuration in the config file and/or "
-                f"the template job script in {self.study.layout.dpath_hpc}."
-            )
-
-        if job_id is not None:
-            logger.info(f"HPC job ID: {job_id}")
+        hpc_runner.submit(
+            hpc_cluster=self.hpc,
+            job_name=job_name,
+            job_array_commands=job_array_commands,
+            participant_ids=participant_ids,
+            session_ids=session_ids,
+            dpath_work=self.dpath_pipeline_work,
+            dpath_hpc_logs=self.study.layout.dpath_logs / self.dname_hpc_logs,
+            fname_hpc_error=self.fname_hpc_error,
+            fname_job_script=self.fname_job_script,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            dry_run=self.dry_run,
+        )
 
         # for logging in run_cleanup()
         self.n_success += len(job_array_commands)

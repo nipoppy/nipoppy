@@ -16,7 +16,6 @@ from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
-from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
@@ -27,6 +26,7 @@ from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
 )
+from nipoppy.workflows.services.context import WorkflowContext
 
 logger = get_logger()
 
@@ -139,15 +139,6 @@ def _run_command(
     return run_output
 
 
-def _save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
-    """Save a tabular file."""
-    fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
-    if fpath_backup is not None:
-        logger.info(f"Saved to {fpath} (-> {fpath_backup})")
-    else:
-        logger.info(f"No changes to file at {fpath}")
-
-
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
@@ -241,6 +232,15 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             )
         )
 
+    @cached_property
+    def workflow_context(self) -> WorkflowContext:
+        """Get the workflow context."""
+        return WorkflowContext(
+            layout=self.study.layout,
+            logger=logger,
+            config=self.study.config,
+        )
+
     def generate_fpath_log(
         self,
         dnames_parent: Optional[str | list[str]] = None,
@@ -293,11 +293,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             )
 
             if not self.dry_run:
-                fpath_table_backup = table.save_with_backup(fpath_table)
-                logger.info(
-                    "Saved curation status table to "
-                    f"{fpath_table} (-> {fpath_table_backup})"
-                )
+                table.save_with_backup(fpath_table)
             else:
                 logger.info(
                     "Not writing curation status table to "

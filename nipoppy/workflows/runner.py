@@ -2,8 +2,8 @@
 
 import json
 import shlex
-import subprocess
 from abc import ABC
+from functools import cached_property
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -13,11 +13,12 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
-from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
+from nipoppy.workflows.services.boutiques import BoshRunner, BoshSimulate
+from nipoppy.workflows.services.hpc import HPCRunner
 
 logger = get_logger()
 
@@ -37,6 +38,44 @@ class Runner(BasePipelineWorkflow, ABC):
         super().__init__(*args, **kwargs)
         self.simulate = simulate
         self.keep_workdir = keep_workdir
+
+    @cached_property
+    def container_runner(self) -> BoshRunner:
+        """Get the container runner service."""
+        if self.simulate:
+            return BoshSimulate(
+                context=self.workflow_context,
+                descriptor=self.descriptor,
+            )
+        return BoshRunner(
+            context=self.workflow_context,
+            descriptor=self.descriptor,
+        )
+
+    @cached_property
+    def hpc_runner(self) -> HPCRunner:
+        """Get the HPC runner service."""
+        return HPCRunner(
+            context=self.workflow_context,
+            hpc_config=self.hpc_config if self.hpc else None,
+        )
+
+    def _generate_cli_command_for_hpc(
+        self, participant_id=None, session_id=None
+    ) -> list[str]:
+        """Generate the CLI command to be run on the HPC cluster."""
+        return HPCRunner.generate_cli_command(
+            subcommand=self.name,
+            dpath_root=self.dpath_root,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            participant_id=participant_id,
+            session_id=session_id,
+            keep_workdir=self.keep_workdir,
+            fpath_layout=self.fpath_layout,
+            verbose=self.verbose,
+        )
 
     def launch_boutiques_run(
         self,
@@ -113,44 +152,13 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # run as a subprocess so that stdout/error are captured in the log
         # by default, this will raise an exception if the command fails
-        if self.simulate:
-            logger.info("Simulating pipeline command")
-            try:
-                _run_command(
-                    ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
-                    quiet=True,
-                    dry_run=self.dry_run,
-                )
-                if bosh_exec_launch_args:
-                    logger.info(f"Additional launch options: {bosh_exec_launch_args}")
-            except subprocess.CalledProcessError as exception:
-                raise ExecutionError(
-                    f"Pipeline simulation failed (return code: {exception.returncode})"
-                )
-        else:
-            logger.info("Running pipeline command")
-            try:
-                _run_command(
-                    (
-                        [
-                            "bosh",
-                            "exec",
-                            "launch",
-                            "--stream",
-                            descriptor_str,
-                            invocation_str,
-                        ]
-                        + bosh_exec_launch_args
-                    ),
-                    quiet=True,
-                    dry_run=self.dry_run,
-                )
-            except subprocess.CalledProcessError as exception:
-                raise ExecutionError(
-                    "Pipeline did not complete successfully"
-                    f" (return code: {exception.returncode})"
-                    ". Hint: make sure the shell command above is correct."
-                )
+        self.container_runner.run(
+            invocation_str=invocation_str,
+            descriptor_str=descriptor_str,
+            bosh_exec_launch_args=bosh_exec_launch_args,
+            run_command=_run_command,
+            dry_run=self.dry_run,
+        )
 
         return descriptor_str, invocation_str
 
