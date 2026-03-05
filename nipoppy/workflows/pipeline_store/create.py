@@ -68,29 +68,28 @@ class PipelineCreateWorkflow(BaseWorkflow):
         )
 
         # Populate the config.json using descriptor information
-        config = load_json(
-            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
-        )
-        descriptor = load_json(descriptor_path)
-        config["NAME"] = descriptor["name"]
-        config["VERSION"] = descriptor["tool-version"]
-        if (
-            "container-image" in descriptor
-            and descriptor["container-image"].get("image") != "user/image"
-        ):
-            config["CONTAINER_INFO"][
-                "URI"
-            ] = f"docker://{descriptor['container-image']['image']}"
+        if source_descriptor is not None:
 
-            # replace the pipeline name/version with placeholders
-            # to avoid users forgetting to update them when copy-pasting
-            config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"]["URI"].replace(
-                descriptor["name"], "[[PIPELINE_NAME]]"
+            config = load_json(
+                TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
             )
-            config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"]["URI"].replace(
-                descriptor["tool-version"], "[[PIPELINE_VERSION]]"
-            )
-        save_json(config, target.joinpath("config.json"))
+            descriptor = load_json(descriptor_path)
+            config["NAME"] = descriptor["name"]
+            config["VERSION"] = descriptor["tool-version"]
+            if "container-image" in descriptor:
+                config["CONTAINER_INFO"][
+                    "URI"
+                ] = f"docker://{descriptor['container-image']['image']}"
+
+                # replace the pipeline name/version with placeholders
+                # to avoid users forgetting to update them when copy-pasting
+                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
+                    "URI"
+                ].replace(descriptor["name"], "[[PIPELINE_NAME]]")
+                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
+                    "URI"
+                ].replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+            save_json(config, target.joinpath("config.json"))
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
