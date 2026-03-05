@@ -84,10 +84,7 @@ class ZenodoAPI:
         record_id = record_id.removeprefix("zenodo.")
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        response = httpx.get(
-            f"{self.api_endpoint}/records/{record_id}/files",
-            headers=self.headers,
-        )
+        response = self.client.get(f"/records/{record_id}/files")
         if response.status_code != 200:
             raise ZenodoAPIError(
                 f"Failed to get files for zenodo.{record_id}: {response.json()}"
@@ -99,10 +96,7 @@ class ZenodoAPI:
             for entry in response.json()["entries"]
         }
         for file, checksum in files.items():
-            response = httpx.get(
-                f"{self.api_endpoint}/records/{record_id}/files/{file}/content",  # noqa E501
-                headers=self.headers,
-            )
+            response = self.client.get(f"/records/{record_id}/files/{file}/content")
             if response.status_code != 200:
                 raise ZenodoAPIError(
                     f"Failed to download file for zenodo.{record_id}: {file}"
@@ -120,9 +114,8 @@ class ZenodoAPI:
             output_dir.joinpath(file).write_bytes(response.content)
 
     def _create_new_version(self, record_id: str, metadata: dict) -> Tuple[str, str]:
-        response = httpx.post(
-            f"{self.api_endpoint}/records/{record_id}/versions",
-            headers=self.headers,
+        response = self.client.post(
+            f"/records/{record_id}/versions",
         )
         if response.status_code != 201:
             raise ZenodoAPIError(
@@ -133,9 +126,8 @@ class ZenodoAPI:
         owner_id = response.json()["owners"][0]["id"]
 
         # Required to update the metadata to include the new publication date
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{new_record_id}/draft",
-            headers=self.headers,
+        response = self.client.put(
+            f"/records/{new_record_id}/draft",
             json=metadata,
         )
         if response.status_code != 200:
@@ -146,9 +138,9 @@ class ZenodoAPI:
         return new_record_id, owner_id
 
     def _create_draft(self, metadata: dict) -> Tuple[str, str]:
-        response = httpx.post(
-            f"{self.api_endpoint}/records",
-            headers=self.headers | {"Content-Type": "application/json"},
+        response = self.client.post(
+            "/records",
+            headers={"Content-Type": "application/json"},
             json=metadata,
         )
         if response.status_code != 201:
@@ -158,9 +150,7 @@ class ZenodoAPI:
 
     def _update_creators(self, record_id: str, owner_id: str, metadata: dict):
         # get user profile info
-        response = httpx.get(
-            f"{self.api_endpoint}/users/{owner_id}", headers=self.headers
-        )
+        response = self.client.get(f"/users/{owner_id}")
         if response.status_code != 200:
             raise ZenodoAPIError(
                 f"Failed to get information for user {owner_id}: {response.json()}"
@@ -192,9 +182,8 @@ class ZenodoAPI:
                 "affiliations": [{"name": affiliation}] if affiliation else [],
             }
         ]
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{record_id}/draft",
-            headers=self.headers,
+        response = self.client.put(
+            f"/records/{record_id}/draft",
             json=metadata,
         )
         if response.status_code != 200:
@@ -204,9 +193,9 @@ class ZenodoAPI:
 
     def _upload_files(self, files: list[Path], record_id: str):
         metadata = [{"key": file.name} for file in files]
-        response = httpx.post(
-            f"{self.api_endpoint}/records/{record_id}/draft/files",
-            headers=self.headers | {"Content-Type": "application/json"},
+        response = self.client.post(
+            f"/records/{record_id}/draft/files",
+            headers={"Content-Type": "application/json"},
             json=metadata,
         )
         if response.status_code != 201:
@@ -218,9 +207,9 @@ class ZenodoAPI:
         for file in files:
             # Upload the file content
             with file.open("rb") as f:
-                response = httpx.put(
-                    f"{self.api_endpoint}/records/{record_id}/draft/files/{file.name}/content",  # noqa E501
-                    headers=self.headers | {"Content-Type": "application/octet-stream"},
+                response = self.client.put(
+                    f"/records/{record_id}/draft/files/{file.name}/content",  # noqa E501
+                    headers={"Content-Type": "application/octet-stream"},
                     content=f,
                 )
                 if response.status_code != 200:
@@ -230,9 +219,8 @@ class ZenodoAPI:
                     )
 
             # Commit the uploaded file
-            response = httpx.post(
-                f"{self.api_endpoint}/records/{record_id}/draft/files/{file.name}/commit",  # noqa E501
-                headers=self.headers,
+            response = self.client.post(
+                f"/records/{record_id}/draft/files/{file.name}/commit",  # noqa E501
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
@@ -241,9 +229,8 @@ class ZenodoAPI:
                 )
 
     def _publish(self, record_id: str) -> str:
-        response = httpx.post(
-            f"{self.api_endpoint}/records/{record_id}/draft/actions/publish",
-            headers=self.headers,
+        response = self.client.post(
+            f"/records/{record_id}/draft/actions/publish",
         )
         if response.status_code != 202:
             raise ZenodoAPIError(
@@ -253,9 +240,9 @@ class ZenodoAPI:
         return response.json()["links"]["self_doi"]
 
     def _check_authentication(self) -> None:
-        response = httpx.get(
-            f"{self.api_endpoint}/user/records",
-            headers=self.headers | {"Content-Type": "application/json"},
+        response = self.client.get(
+            "/user/records",
+            headers={"Content-Type": "application/json"},
         )
         if response.status_code != 200:
             raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
@@ -297,9 +284,8 @@ class ZenodoAPI:
             self.logger.info(
                 f"Reverting record {action} for zenodo.{record_id} due to error: {e}"
             )
-            response = httpx.delete(
-                f"{self.api_endpoint}/records/{record_id}/draft",
-                headers=self.headers,
+            response = self.client.delete(
+                f"/records/{record_id}/draft",
             )
             if response.status_code == 204:
                 self.logger.info(f"Record {action} reverted")
