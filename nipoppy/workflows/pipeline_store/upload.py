@@ -7,6 +7,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import TerminatedByUserError, WorkflowError
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
@@ -143,8 +144,11 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
-        doi = self.zenodo_api.upload_pipeline(
-            input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
+        doi = self.zenodo_api.upload_record(
+            input_dir=pipeline_dir,
+            record_id=self.record_id,
+            metadata=metadata,
+            default_preview_filename=DatasetLayout.fname_pipeline_config,
         )
         logger.success(f"Pipeline successfully uploaded at {doi}")
 
