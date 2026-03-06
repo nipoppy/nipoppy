@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.pipeline_store.create import (
@@ -120,3 +120,25 @@ def test_create_from_descriptor(target: Path):
         config["CONTAINER_INFO"]["URI"]
         == "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
     )
+
+
+@pytest.mark.parametrize(
+    "file_content,exception_message",
+    [
+        ("", "Error validating the descriptor file .*:"),
+        ("{}", "Descriptor file .* is invalid:"),
+    ],
+)
+def test_create_invalid_descriptor(
+    tmp_path: Path, target: Path, file_content: str, exception_message: str
+):
+    """Test the behavior when the source descriptor is invalid."""
+    source_descriptor = tmp_path / "bad_descriptor.json"
+    source_descriptor.write_text(file_content)
+
+    with pytest.raises(WorkflowError, match=exception_message):
+        PipelineCreateWorkflow(
+            pipeline_dir=target,
+            type_=PipelineTypeEnum.PROCESSING,
+            source_descriptor=source_descriptor,
+        ).run_main()
