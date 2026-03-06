@@ -55,10 +55,11 @@ def test_download_record_files(
     record_id = record_id_prefix + os.environ["ZENODO_ID"]
     zenodo_api.download_record_files(record_id, tmp_path)
 
-    assert len(list(tmp_path.iterdir())) == 6
+    expected_files = list(TEST_PIPELINE.iterdir())
+    assert len(list(tmp_path.iterdir())) == len(expected_files)
 
     # Verify the content of the downloaded files
-    for file in TEST_PIPELINE.iterdir():
+    for file in expected_files:
         assert tmp_path.joinpath(file.name).exists()
         assert tmp_path.joinpath(file.name).read_text() == file.read_text()
 
