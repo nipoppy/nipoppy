@@ -3,10 +3,11 @@
 from pathlib import Path
 from typing import Optional
 
-import boutiques as bosh
+import boutiques
 
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
@@ -54,12 +55,23 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         descriptor_path = target / "descriptor.json"
         if source_descriptor:
+            try:
+                boutiques.validate(source_descriptor.as_posix())
+            except boutiques.DescriptorValidationError as exception:
+                raise WorkflowError(
+                    f"Descriptor file {source_descriptor} is invalid:\n{exception}"
+                )
+            except ValueError as exception:  # catches simplejson.errors.JSONDecodeError
+                raise WorkflowError(
+                    "Error validating the descriptor file "
+                    f"{source_descriptor}:\n{exception}"
+                )
             fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
-            bosh.create(descriptor_path.as_posix())
+            boutiques.create(descriptor_path.as_posix())
 
         target.joinpath("invocation.json").write_text(
-            bosh.example(descriptor_path.as_posix())
+            boutiques.example(descriptor_path.as_posix())
         )
         fileops.copy(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
@@ -67,25 +79,37 @@ class PipelineCreateWorkflow(BaseWorkflow):
             dry_run=self.dry_run,
         )
 
-        # Populate the config.json using descriptor information
         config = load_json(
             TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
         )
-        descriptor = load_json(descriptor_path)
-        config["NAME"] = descriptor["name"]
-        config["VERSION"] = descriptor["tool-version"]
-        save_json(config, target.joinpath("config.json"))
+
+        # Populate the config.json using descriptor information
+        if source_descriptor is not None:
+
+            descriptor = load_json(descriptor_path)
+            config["NAME"] = descriptor["name"]
+            config["VERSION"] = descriptor["tool-version"]
+            if "container-image" in descriptor:
+                config["CONTAINER_INFO"][
+                    "URI"
+                ] = f"docker://{descriptor['container-image']['image']}"
+
+                # replace the pipeline name/version with placeholders
+                # to avoid users forgetting to update them when copy-pasting
+                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
+                    "URI"
+                ].replace(descriptor["name"], "[[PIPELINE_NAME]]")
+                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
+                    "URI"
+                ].replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+
+        save_json(config, target.joinpath(DatasetLayout.fname_pipeline_config))
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
             fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
                 target.joinpath("tracker.json"),
-                dry_run=self.dry_run,
-            )
-            fileops.copy(
-                TEMPLATE_PIPELINE_PATH.joinpath("pybids_ignore.json"),
-                target.joinpath("pybids_ignore.json"),
                 dry_run=self.dry_run,
             )
 
