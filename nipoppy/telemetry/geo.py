@@ -161,6 +161,5 @@ def record_location(params: dict) -> None:
                 1,
                 attributes={"country": country_code}
             )
-    except Exception:
-        # Silent failure - never crash user's command
-        pass
+    except Exception as e:
+        print(f"⚠ Warning: Could not record location: {e}")

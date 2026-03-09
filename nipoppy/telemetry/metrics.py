@@ -7,7 +7,12 @@ This module handles:
 - Providing thread-safe access to metrics
 """
 
+# Shutdown pattern reference:
+# https://oneuptime.com/blog/post/2026-02-06-otel-sdk-shutdown-python-atexit-sigterm/view
+import atexit
 import os
+import signal
+import sys
 from typing import Optional, Dict
 
 from opentelemetry import metrics
@@ -20,6 +25,18 @@ from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 # Module-level state (initialized once)
 _METER: Optional[metrics.Meter] = None
 _METRICS: Optional[Dict] = None
+_PROVIDER: Optional[MeterProvider] = None
+_SHUTDOWN_CALLED: bool = False
+
+
+def _shutdown_provider() -> None:
+    """Flush and shut down the meter provider. Safe to call multiple times."""
+    global _SHUTDOWN_CALLED
+    if _SHUTDOWN_CALLED:
+        return
+    _SHUTDOWN_CALLED = True
+    if _PROVIDER is not None:
+        _PROVIDER.shutdown()
 
 
 def initialize_telemetry(
@@ -44,9 +61,9 @@ def initialize_telemetry(
     Returns:
         True if initialized successfully, False otherwise
     """
-    global _METER, _METRICS
+    global _METER, _METRICS, _PROVIDER
 
-    if _METER is not None:
+    if _PROVIDER is not None:
         return True
 
     if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
@@ -89,8 +106,23 @@ def initialize_telemetry(
         )
         metrics.set_meter_provider(provider)
 
+        _PROVIDER = provider
         _METER = metrics.get_meter(__name__)
         _METRICS = _create_metric_instruments(_METER)
+
+        # Flush and export all pending metrics on exit (normal exit, Ctrl+C, or SIGTERM)
+        atexit.register(_shutdown_provider)
+
+        original_sigterm = signal.getsignal(signal.SIGTERM)
+
+        def _sigterm_handler(signum, frame):
+            _shutdown_provider()
+            if callable(original_sigterm):
+                original_sigterm(signum, frame)
+            else:
+                sys.exit(0)
+
+        signal.signal(signal.SIGTERM, _sigterm_handler)
 
         print(f"✓ Telemetry enabled → {otlp_endpoint}")
         return True
