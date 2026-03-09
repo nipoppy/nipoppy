@@ -30,25 +30,19 @@ from nipoppy.cli.options import (
 )
 from nipoppy.cli.pipeline_catalog import pipeline
 
-# === PRESENTATION MARKER: CLIENT-SIDE Telemetry Imports ===
-# Optional imports - gracefully handle missing dependencies
 try:
     from nipoppy.telemetry import (
         track_command,
         initialize_telemetry,
-        save_country_to_config,
         record_location,
     )
     _TELEMETRY_AVAILABLE = True
 except ImportError:
     _TELEMETRY_AVAILABLE = False
-    # Create no-op decorator when telemetry unavailable
     def track_command(name):
         return lambda f: f
 
 
-# === PRESENTATION MARKER: Telemetry Initialization ===
-# Initialize once on module load
 if _TELEMETRY_AVAILABLE:
     initialize_telemetry()
 
@@ -168,10 +162,8 @@ def init(**params):
     with exception_handler(InitWorkflow(**params)) as workflow:
         workflow.run()
 
-    # === CLIENT-SIDE: Save location and record metric (separate from command tracking) ===
     if _TELEMETRY_AVAILABLE:
-        save_country_to_config(params)
-        record_location(params)
+        record_location()
 
 
 @cli.command()

@@ -294,32 +294,3 @@ class Config(_SchemaWithContainerConfig):
         config = cls(**config_dict)
         return config
 
-    def get_telemetry_country_code(self) -> Optional[str]:
-        """Get the stored country code from telemetry preferences.
-
-        Returns:
-            Country code from config, or None if not set
-        """
-        return self.CUSTOM.get("TELEMETRY", {}).get("COUNTRY_CODE")
-
-    def set_telemetry_preferences(
-        self,
-        country_code: str,
-        send_telemetry: bool = True
-    ) -> Self:
-        """Set telemetry preferences in the CUSTOM field.
-
-        Args:
-            country_code: User's country code from GeoIP lookup
-            send_telemetry: Whether telemetry is enabled (default: True)
-
-        Returns:
-            Self for method chaining
-        """
-        if "TELEMETRY" not in self.CUSTOM:
-            self.CUSTOM["TELEMETRY"] = {}
-
-        self.CUSTOM["TELEMETRY"]["SEND_TELEMETRY"] = send_telemetry
-        self.CUSTOM["TELEMETRY"]["COUNTRY_CODE"] = country_code
-
-        return self
