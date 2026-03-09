@@ -20,7 +20,7 @@
   "graphTooltip": 0,
   "id": null,
   "links": [],
-  "liveNow": true,
+  "liveNow": false,
   "panels": [
     {
       "datasource": {
@@ -42,11 +42,11 @@
               },
               {
                 "color": "yellow",
-                "value": 10
+                "value": 25
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 100
               }
             ]
           },
@@ -83,7 +83,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "count_over_time(nipoppy_nipoppy_commands_executed_total{command=\"init\"}[$__range]) or vector(0)",
+          "expr": "sum(count_over_time(nipoppy_commands_executed_total{command=\"init\"}[$__range]))",
           "legendFormat": "Total Init Commands",
           "range": true,
           "refId": "A"
@@ -123,7 +123,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -176,13 +176,13 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "count_over_time(nipoppy_nipoppy_commands_executed_total{command=\"init\"}[5m])",
-          "legendFormat": "Cumulative init commands",
+          "expr": "increase(nipoppy_commands_executed_total{command=\"init\"}[$__rate_interval])",
+          "legendFormat": "Init commands",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Cumulative Init Commands Over Time",
+      "title": "Init Commands Over Time",
       "type": "timeseries"
     },
     {
@@ -278,7 +278,8 @@
               }
             },
             "location": {
-              "mode": "auto"
+              "mode": "lookup",
+              "lookup": "country"
             },
             "name": "Layer 1",
             "tooltip": true,
@@ -304,10 +305,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (country) (count_over_time(nipoppy_nipoppy_commands_executed_total{command=\"init\"}[5m]))",
+          "expr": "sum by (country) (nipoppy_location_by_country)",
           "format": "table",
           "legendFormat": "{{country}}",
-          "range": true,
+          "instant": true,
           "refId": "A"
         }
       ],
@@ -329,21 +330,8 @@
             },
             "indexByName": {},
             "renameByName": {
-              "Value": "Count",
-              "country": "Country Code"
+              "Value": "Count"
             }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "destinationType": "string",
-                "targetField": "country"
-              }
-            ],
-            "fields": {}
           }
         }
       ],
@@ -404,9 +392,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (country) (count_over_time(nipoppy_nipoppy_commands_executed_total{command=\"init\"}[5m]))",
+          "expr": "sum by (country) (nipoppy_location_by_country)",
           "legendFormat": "{{country}}",
-          "range": true,
           "refId": "A"
         }
       ],
@@ -483,7 +470,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "nipoppy_nipoppy_commands_executed_total",
+          "expr": "nipoppy_commands_executed_total",
           "format": "table",
           "legendFormat": "__auto",
           "range": true,
@@ -517,7 +504,7 @@
       "type": "table"
     }
   ],
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
@@ -529,7 +516,7 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-30d",
     "to": "now"
   },
   "timepicker": {},

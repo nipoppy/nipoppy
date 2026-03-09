@@ -1,9 +1,9 @@
 """
-CLIENT-SIDE: Metric definitions and OpenTelemetry setup
+Metric definitions and OpenTelemetry setup.
 
 This module handles:
 - Setting up OpenTelemetry meter provider
-- Creating metric instruments (two separate metrics for separation of concerns)
+- Creating metric instruments
 - Providing thread-safe access to metrics
 """
 
@@ -17,7 +17,6 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExp
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 
 
-# === PRESENTATION MARKER: Global State ===
 # Module-level state (initialized once)
 _METER: Optional[metrics.Meter] = None
 _METRICS: Optional[Dict] = None
@@ -27,50 +26,45 @@ def initialize_telemetry(
     service_name: str = "nipoppy",
     service_version: str = "1.0.0",
     otlp_endpoint: Optional[str] = None,
-    export_interval_millis: int = 1000,  # DEMO: 1s | PRODUCTION: 10000 (10s)
+    export_interval_millis: int = 10000,
 ) -> bool:
     """
-    CLIENT-SIDE: Initialize OpenTelemetry metrics
+    Initialize OpenTelemetry metrics.
 
-    Sets up meter provider, creates metric instruments.
+    Sets up meter provider and creates metric instruments.
     Safe to call multiple times (only initializes once).
-    Fail-safe: Returns False if initialization fails, never crashes.
+    Returns False if initialization fails, never raises.
 
     Args:
         service_name: Service name for metrics (default: "nipoppy")
         service_version: Version tag (default: "1.0.0")
         otlp_endpoint: Collector endpoint (default: localhost:4317)
-        export_interval_millis: Export frequency (demo: 1s, prod: 10s)
+        export_interval_millis: Export frequency in milliseconds (default: 10000)
 
     Returns:
         True if initialized successfully, False otherwise
     """
     global _METER, _METRICS
 
-    # Already initialized
     if _METER is not None:
         return True
 
-    # Check if disabled via environment variable
     if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
         return False
 
     try:
-        # === PRESENTATION MARKER: OTLP Endpoint Configuration ===
         if otlp_endpoint is None:
             otlp_endpoint = os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
                 "http://localhost:4317"
             )
 
-        # Strip http:// or https:// prefix for gRPC
+        # Strip http(s):// prefix for gRPC
         if otlp_endpoint.startswith("http://"):
             otlp_endpoint = otlp_endpoint.replace("http://", "")
         elif otlp_endpoint.startswith("https://"):
             otlp_endpoint = otlp_endpoint.replace("https://", "")
 
-        # === PRESENTATION MARKER: Resource Attributes ===
-        # Metadata attached to all metrics from this service
         resource = Resource(
             attributes={
                 SERVICE_NAME: service_name,
@@ -79,31 +73,23 @@ def initialize_telemetry(
             }
         )
 
-        # === PRESENTATION MARKER: OTLP Exporter (CLIENT sends to SERVER) ===
         otlp_exporter = OTLPMetricExporter(
             endpoint=otlp_endpoint,
-            insecure=True,  # For local demo (use TLS in production)
+            insecure=True,  # Use TLS in production
         )
 
-        # === PRESENTATION MARKER: Export Interval ===
-        # DEMO: 1 second for live presentations
-        # PRODUCTION: 10 seconds to reduce overhead
         metric_reader = PeriodicExportingMetricReader(
             otlp_exporter,
             export_interval_millis=export_interval_millis,
         )
 
-        # Create provider and set as global
         provider = MeterProvider(
             resource=resource,
             metric_readers=[metric_reader],
         )
         metrics.set_meter_provider(provider)
 
-        # Create meter
         _METER = metrics.get_meter(__name__)
-
-        # === PRESENTATION MARKER: Create Metric Instruments ===
         _METRICS = _create_metric_instruments(_METER)
 
         print(f"✓ Telemetry enabled → {otlp_endpoint}")
@@ -117,11 +103,7 @@ def initialize_telemetry(
 
 def _create_metric_instruments(meter: metrics.Meter) -> Dict:
     """
-    CLIENT-SIDE: Create Nipoppy metric instruments
-
-    Two metrics for separation of concerns:
-    1. Command tracking (core) - which commands are used
-    2. Location tracking (additional) - geographic distribution
+    Create Nipoppy metric instruments.
 
     Args:
         meter: Meter instance from OpenTelemetry
@@ -130,31 +112,27 @@ def _create_metric_instruments(meter: metrics.Meter) -> Dict:
         Dictionary of metric instruments
     """
     return {
-        # === METRIC 1: Command Tracking (CORE FEATURE) ===
-        # Purpose: Track which commands are executed and how often
+        # Track which commands are executed and how often
         # Attributes: command (init, reorg, bidsify, process, etc.)
         "commands_executed": meter.create_counter(
-            name="nipoppy.commands.executed",
+            name="commands.executed",
             description="Number of Nipoppy commands executed",
             unit="commands",
         ),
 
-        # === METRIC 2: Command Completion Status ===
-        # Purpose: Track command outcomes (success, partial, failure)
+        # Track command outcomes (success, partial, failure)
         # Attributes: command, status, return_code
         "commands_completed": meter.create_counter(
-            name="nipoppy.commands.completed",
+            name="commands.completed",
             description="Number of Nipoppy commands completed with status",
             unit="commands",
         ),
 
-        # === METRIC 3: Location Tracking (ADDITIONAL FEATURE) ===
-        # Purpose: Track geographic distribution of installations
+        # Track geographic distribution of installations
         # Attributes: country (US, CA, IN, etc.)
-        # Note: Using UpDownCounter as gauge-like metric for current state
-        "location_by_country": meter.create_up_down_counter(
-            name="nipoppy.location.by_country",
-            description="Number of active installations per country",
+        "location_by_country": meter.create_counter(
+            name="location.by_country",
+            description="Number of installations per country",
             unit="installations",
         ),
     }
@@ -162,7 +140,7 @@ def _create_metric_instruments(meter: metrics.Meter) -> Dict:
 
 def get_metrics() -> Optional[Dict]:
     """
-    CLIENT-SIDE: Get metric instruments (thread-safe)
+    Get metric instruments.
 
     Returns:
         Dictionary of metric instruments, or None if not initialized
@@ -172,7 +150,7 @@ def get_metrics() -> Optional[Dict]:
 
 def is_telemetry_enabled() -> bool:
     """
-    Check if telemetry is enabled and initialized
+    Check if telemetry is enabled and initialized.
 
     Returns:
         True if telemetry is active, False otherwise

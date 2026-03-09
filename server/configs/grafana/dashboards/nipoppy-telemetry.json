@@ -44,11 +44,11 @@
               },
               {
                 "color": "yellow",
-                "value": 10
+                "value": 100
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 500
               }
             ]
           },
@@ -84,7 +84,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(nipoppy_nipoppy_commands_executed_total)",
+          "expr": "sum(nipoppy_commands_executed_total)",
           "refId": "A"
         }
       ],
@@ -122,7 +122,7 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -171,12 +171,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (command) (rate(nipoppy_nipoppy_commands_executed_total[5m]))",
+          "expr": "sum by (command) (rate(nipoppy_commands_executed_total[1h]))",
           "legendFormat": "{{command}}",
           "refId": "A"
         }
       ],
-      "title": "Commands Over Time (Rate per 5min)",
+      "title": "Commands Over Time (Rate per 1h)",
       "type": "timeseries"
     },
     {
@@ -237,7 +237,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (command) (nipoppy_nipoppy_commands_executed_total))",
+          "expr": "topk(10, sum by (command) (nipoppy_commands_executed_total))",
           "legendFormat": "{{command}}",
           "refId": "A"
         }
@@ -280,11 +280,11 @@
               },
               {
                 "color": "yellow",
-                "value": 5
+                "value": 10
               },
               {
                 "color": "red",
-                "value": 10
+                "value": 25
               }
             ]
           },
@@ -320,7 +320,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(nipoppy_nipoppy_location_by_country)",
+          "expr": "count(nipoppy_location_by_country)",
           "refId": "A"
         }
       ],
@@ -414,7 +414,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (country) (nipoppy_nipoppy_location_by_country))",
+          "expr": "topk(10, sum by (country) (nipoppy_location_by_country))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -499,7 +499,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (country) (nipoppy_nipoppy_location_by_country))",
+          "expr": "topk(10, sum by (country) (nipoppy_location_by_country))",
           "legendFormat": "{{country}}",
           "refId": "A"
         }
@@ -582,7 +582,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * sum(nipoppy_nipoppy_commands_completed_total{status=\"success\"}) / sum(nipoppy_nipoppy_commands_completed_total)",
+          "expr": "100 * sum(nipoppy_commands_completed_total{status=\"success\"}) / sum(nipoppy_commands_completed_total)",
           "refId": "A"
         }
       ],
@@ -694,7 +694,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (status) (nipoppy_nipoppy_commands_completed_total)",
+          "expr": "sum by (status) (nipoppy_commands_completed_total)",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -828,16 +828,252 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (status) (rate(nipoppy_nipoppy_commands_completed_total[5m]))",
+          "expr": "sum by (status) (rate(nipoppy_commands_completed_total[1h]))",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
       ],
-      "title": "Completion Status Over Time",
+      "title": "Completion Status Over Time (Rate per 1h)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 400,
+      "title": "SECTION 4: PIPELINE COMMANDS",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 28
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(nipoppy_commands_executed_total{command=~\"pipeline_.*\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Pipeline Commands Executed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 28
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (command) (rate(nipoppy_commands_executed_total{command=~\"pipeline_.*\"}[1h]))",
+          "legendFormat": "{{command}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Pipeline Commands Over Time (Rate per 1h)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 32
+      },
+      "id": 12,
+      "options": {
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": []
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (command) (nipoppy_commands_executed_total{command=~\"pipeline_.*\"})",
+          "legendFormat": "{{command}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Pipeline Command Distribution",
+      "type": "piechart"
     }
   ],
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
@@ -848,7 +1084,7 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-7d",
     "to": "now"
   },
   "timepicker": {},
