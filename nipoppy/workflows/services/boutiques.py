@@ -21,7 +21,7 @@ class BoshRunner:
     context : WorkflowContext
         The shared workflow context.
     descriptor : dict
-        The Boutiques descriptor for the container.
+        The Boutiques descriptor for the tool.
     """
 
     def __init__(self, context: WorkflowContext, descriptor: dict):
