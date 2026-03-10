@@ -78,7 +78,9 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
     try:
         boutiques.validate(descriptor_str)
     except boutiques.DescriptorValidationError as exception:
-        raise ConfigError(f"Descriptor file {descriptor_str} is invalid:\n{exception}")
+        raise ConfigError(
+            f"Descriptor file {fpath_descriptor} is invalid:\n{exception}"
+        )
     return descriptor_str
 
 
