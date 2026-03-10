@@ -53,7 +53,7 @@ jobs:
     - publish-to-pypi
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      contents: write  # IMPORTANT: mandatory for updating GitHub Releases
       id-token: write  # IMPORTANT: mandatory for sigstore
     steps:
     - name: Generate a token
