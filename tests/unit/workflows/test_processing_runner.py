@@ -276,9 +276,16 @@ def test_launch_boutiques_run_bosh_no_container_image(
     assert "--no-container" in container_opts
 
 
-@pytest.mark.parametrize("simulate", [True, False])
+@pytest.mark.parametrize(
+    "simulate, expected_message",
+    [
+        (True, "Pipeline simulation failed (return code: 1)"),
+        (False, "Pipeline execution failed (return code: 1)"),
+    ],
+)
 def test_launch_boutiques_run_error(
-    simulate,
+    simulate: bool,
+    expected_message: str,
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
@@ -300,11 +307,6 @@ def test_launch_boutiques_run_error(
         "nipoppy.workflows.runner._run_command",
         side_effect=subprocess.CalledProcessError(1, "run_command failed"),
     )
-
-    if simulate:
-        expected_message = "Pipeline simulation failed (return code: 1)"
-    else:
-        expected_message = "Pipeline did not complete successfully (return code: 1)"
 
     with pytest.raises(RuntimeError, match=re.escape(expected_message)):
         runner.launch_boutiques_run(participant_id, session_id, container_command="")
