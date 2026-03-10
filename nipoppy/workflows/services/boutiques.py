@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+from abc import abstractmethod
 from collections.abc import Callable
 
 from nipoppy.exceptions import ExecutionError
@@ -11,7 +12,7 @@ from nipoppy.logger import get_logger
 logger = get_logger()
 
 
-class BoshLaunch:
+class BoshRunner:
     """
     Service for executing containerized applications via Boutiques.
 
@@ -22,9 +23,6 @@ class BoshLaunch:
     descriptor : dict
         The Boutiques descriptor for the container.
     """
-
-    def __init__(self, descriptor: dict):
-        self.descriptor = descriptor
 
     def run(
         self,
@@ -75,11 +73,40 @@ class BoshLaunch:
                 f"{error_message} (return code: {exception.returncode})"
             )
 
-        if self.mode == "Simulating" and bosh_exec_launch_args:
-            logger.info(f"Additional launch options: {bosh_exec_launch_args}")
-
         return 0
 
+    def _execute(
+        self,
+        command: list[str],
+        run_command: subprocess.run | None,
+        dry_run: bool,
+    ) -> None:
+        """Execute or delegate the command."""
+        if run_command:
+            run_command(command, quiet=True, dry_run=dry_run)
+        elif dry_run:
+            logger.info("Dry run enabled, skipping command execution")
+        else:
+            subprocess.run(command, check=True)
+
+    @property
+    @abstractmethod
+    def mode(self) -> str: ...
+
+    @abstractmethod
+    def _build_command(
+        self,
+        invocation_str: str,
+        descriptor_str: str,
+        *,
+        bosh_exec_launch_args: list[str],
+    ) -> list[str]: ...
+
+    @abstractmethod
+    def _get_error_message(self, exit_code: int) -> str: ...
+
+
+class BoshLaunch(BoshRunner):
     @property
     def mode(self) -> str:
         """Return the execution mode."""
@@ -101,20 +128,6 @@ class BoshLaunch:
             descriptor_str,
             invocation_str,
         ] + bosh_exec_launch_args
-
-    def _execute(
-        self,
-        command: list[str],
-        run_command: subprocess.run | None,
-        dry_run: bool,
-    ) -> None:
-        """Execute or delegate the command."""
-        if run_command:
-            run_command(command, quiet=True, dry_run=dry_run)
-        elif dry_run:
-            logger.info("Dry run enabled, skipping command execution")
-        else:
-            subprocess.run(command, check=True)
 
     def _get_error_message(self, exit_code: int) -> str:
         """Return the appropriate error message."""
@@ -145,3 +158,22 @@ class BoshSimulate(BoshLaunch):
     def _get_error_message(self, exit_code: int) -> str:
         """Return the appropriate error message."""
         return f"Pipeline simulation failed (return code: {exit_code})"
+
+    def run(
+        self,
+        invocation_str: str,
+        descriptor_str: str,
+        bosh_exec_launch_args: list[str] | None = None,
+        run_command: Callable | None = None,
+        dry_run: bool = False,
+    ) -> int:
+        # TODO ensure the parent's doc is used
+        rv = super().run(
+            invocation_str=invocation_str,
+            descriptor_str=descriptor_str,
+            bosh_exec_launch_args=bosh_exec_launch_args,
+            run_command=run_command,
+            dry_run=dry_run,
+        )
+        logger.info(f"Additional launch options: {bosh_exec_launch_args}")
+        return rv

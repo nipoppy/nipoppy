@@ -25,15 +25,15 @@ def bosh_descriptor():
 
 def test_bosh_runner_initialization(bosh_descriptor):
     """Test that boshRunner can be initialized."""
-    runner = BoshLaunch(descriptor=bosh_descriptor)
-    assert runner.descriptor is bosh_descriptor
+    runner = BoshLaunch()
+    assert runner.mode == "Running"
 
 
 def test_bosh_runner_run(bosh_descriptor, mocker):
     """Test that boshRunner can execute a bosh."""
     import json
 
-    runner = BoshLaunch(descriptor=bosh_descriptor)
+    runner = BoshLaunch()
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()
@@ -53,8 +53,7 @@ def test_bosh_runner_run(bosh_descriptor, mocker):
 
 def test_bosh_simulate_initialization(bosh_descriptor):
     """Test that BoshSimulate can be initialized."""
-    runner = BoshSimulate(descriptor=bosh_descriptor)
-    assert runner.descriptor is bosh_descriptor
+    runner = BoshSimulate()
     assert runner.mode == "Simulating"
 
 
@@ -62,7 +61,7 @@ def test_bosh_simulate_run(bosh_descriptor, mocker):
     """Test that BoshSimulate can execute a bosh simulate command."""
     import json
 
-    runner = BoshSimulate(descriptor=bosh_descriptor)
+    runner = BoshSimulate()
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()

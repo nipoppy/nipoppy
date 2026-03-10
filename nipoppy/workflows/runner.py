@@ -43,12 +43,8 @@ class Runner(BasePipelineWorkflow, ABC):
     def container_runner(self) -> BoshLaunch:
         """Get the container runner service."""
         if self.simulate:
-            return BoshSimulate(
-                descriptor=self.descriptor,
-            )
-        return BoshLaunch(
-            descriptor=self.descriptor,
-        )
+            return BoshSimulate()
+        return BoshLaunch()
 
     @cached_property
     def hpc_runner(self) -> HPCRunner:
