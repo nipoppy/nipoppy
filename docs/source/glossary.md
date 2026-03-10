@@ -44,6 +44,9 @@ Visit ID
 
 ```{glossary}
 
+Apptainer
+    Formerly known as Singularity. A system for building and running containerized applications on Linux. Requires less system permissions than {term}`Docker`. See the [website](https://apptainer.org/) for more information.
+
 API
     Application Programming Interface, how software interacts with other software.
 
@@ -58,6 +61,9 @@ CLI
 
 `conda`
     An package and environment manager for Python (and other) environments. See the [`conda` website](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) for more information.
+
+Docker
+    A platform for building, sharing and running containerized applications on Linux, macOS or Windows. See the [website](https://www.docker.com/) for more information.
 
 HPC
     High-perfomance computing system, i.e. a compute cluster or supercomputer.
