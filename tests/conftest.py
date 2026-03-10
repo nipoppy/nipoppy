@@ -21,6 +21,7 @@ from nipoppy.env import (
 )
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import NipoppyLogger, get_logger
+from nipoppy.study import Study
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import (
@@ -395,3 +396,20 @@ def check_curation_status_table(
                         participant_id in participants_and_sessions_true
                         and session_id in participants_and_sessions_true[participant_id]
                     )
+
+
+@pytest.fixture
+def study(tmp_path: Path) -> Study:
+    """Create a fixture Study instance to use in tests."""
+    dpath_root = tmp_path / "my_study"
+    return Study(layout=DatasetLayout(dpath_root=dpath_root))
+
+
+def mocked_study_config(mocker: pytest_mock.MockerFixture) -> pytest_mock.MockerFixture:
+    """Mock the study config loading during tests.
+
+    This is needed as the config file doesn't actually exist for the test Study
+    instances.
+    """
+    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
+    return mocker.patch("nipoppy.study.Config.load", return_value=config)

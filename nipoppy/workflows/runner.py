@@ -44,11 +44,11 @@ class Runner(BasePipelineWorkflow, ABC):
         """Get the container runner service."""
         if self.simulate:
             return BoshSimulate(
-                context=self.workflow_context,
+                context=self.study,
                 descriptor=self.descriptor,
             )
         return BoshRunner(
-            context=self.workflow_context,
+            context=self.study,
             descriptor=self.descriptor,
         )
 
@@ -56,7 +56,7 @@ class Runner(BasePipelineWorkflow, ABC):
     def hpc_runner(self) -> HPCRunner:
         """Get the HPC runner service."""
         return HPCRunner(
-            context=self.workflow_context,
+            context=self.study,
             hpc_config=self.hpc_config if self.hpc else None,
         )
 

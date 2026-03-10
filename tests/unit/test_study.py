@@ -1,24 +1,14 @@
 """Tests for the Study class."""
 
-from pathlib import Path
-
 import pytest
 import pytest_mock
 
-from nipoppy.layout import DatasetLayout
 from nipoppy.study import Study
-from tests.conftest import get_config
-
-
-@pytest.fixture
-def study(tmp_path: Path):
-    dpath_root = tmp_path / "my_study"
-    return Study(layout=DatasetLayout(dpath_root=dpath_root))
+from tests.conftest import mocked_study_config
 
 
 def test_config(study: Study, mocker: pytest_mock.MockFixture):
-    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
-    mocked_load = mocker.patch("nipoppy.study.Config.load", return_value=config)
+    mocked_load = mocked_study_config(mocker)
 
     processed_config = study.config
 

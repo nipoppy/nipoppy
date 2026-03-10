@@ -26,7 +26,6 @@ from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
 )
-from nipoppy.workflows.services.context import WorkflowContext
 
 logger = get_logger()
 
@@ -230,15 +229,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 dpath_root=self.dpath_root,
                 fpath_config=self.fpath_layout,
             )
-        )
-
-    @cached_property
-    def workflow_context(self) -> WorkflowContext:
-        """Get the workflow context."""
-        return WorkflowContext(
-            layout=self.study.layout,
-            logger=logger,
-            config=self.study.config,
         )
 
     def generate_fpath_log(

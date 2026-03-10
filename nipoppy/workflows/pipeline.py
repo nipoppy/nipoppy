@@ -783,7 +783,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         hpc_runner = getattr(self, "hpc_runner", None)
         if not hpc_runner:
             hpc_runner = HPCRunner(
-                context=getattr(self, "workflow_context", None),
+                context=self.study,
                 hpc_config=self.hpc_config if self.hpc else None,
             )
 

@@ -1,7 +1,9 @@
 """HPC runner service."""
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from jinja2 import Environment, meta
 from pysqa import QueueAdapter
@@ -11,7 +13,9 @@ from nipoppy.env import PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import LayoutError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
-from nipoppy.workflows.services.context import WorkflowContext
+
+if TYPE_CHECKING:
+    from nipoppy.study import Study
 
 logger = get_logger()
 
@@ -22,15 +26,13 @@ class HPCRunner:
 
     Parameters
     ----------
-    context : WorkflowContext
+    context : Study
         The shared workflow context containing layout, logger, and config.
     hpc_config : HpcConfig
         The HPC-specific configuration.
     """
 
-    def __init__(
-        self, context: WorkflowContext, hpc_config: Optional[HpcConfig] = None
-    ):
+    def __init__(self, context: Study, hpc_config: Optional[HpcConfig] = None):
         self.context = context
         self.hpc_config = hpc_config
 

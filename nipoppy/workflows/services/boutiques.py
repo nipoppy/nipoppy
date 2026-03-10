@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import subprocess
+from typing import TYPE_CHECKING
 
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
-from nipoppy.workflows.services.context import WorkflowContext
+
+if TYPE_CHECKING:
+    from nipoppy.study import Study
 
 logger = get_logger()
 
@@ -17,13 +20,13 @@ class BoshRunner:
 
     Parameters
     ----------
-    context : WorkflowContext
+    context : Study
         The shared workflow context.
     descriptor : dict
         The Boutiques descriptor for the container.
     """
 
-    def __init__(self, context: WorkflowContext, descriptor: dict):
+    def __init__(self, context: Study, descriptor: dict):
         self.context = context
         self.descriptor = descriptor
 

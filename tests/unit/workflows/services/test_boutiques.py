@@ -2,20 +2,7 @@
 
 import pytest
 
-from nipoppy.config.main import Config
-from nipoppy.layout import DatasetLayout
-from nipoppy.logger import get_logger
 from nipoppy.workflows.services.boutiques import BoshRunner, BoshSimulate
-from nipoppy.workflows.services.context import WorkflowContext
-
-
-@pytest.fixture
-def workflow_context(tmp_path):
-    """Fixture for WorkflowContext."""
-    layout = DatasetLayout(tmp_path)
-    logger = get_logger("test_logger")
-    config = Config()
-    return WorkflowContext(layout=layout, logger=logger, config=config)
 
 
 @pytest.fixture
@@ -36,18 +23,18 @@ def bosh_descriptor():
     }
 
 
-def test_bosh_runner_initialization(workflow_context, bosh_descriptor):
+def test_bosh_runner_initialization(study, bosh_descriptor):
     """Test that boshRunner can be initialized."""
-    runner = BoshRunner(context=workflow_context, descriptor=bosh_descriptor)
-    assert runner.context is workflow_context
+    runner = BoshRunner(context=study, descriptor=bosh_descriptor)
+    assert runner.context is study
     assert runner.descriptor is bosh_descriptor
 
 
-def test_bosh_runner_run(workflow_context, bosh_descriptor, mocker):
+def test_bosh_runner_run(study, bosh_descriptor, mocker):
     """Test that boshRunner can execute a bosh."""
     import json
 
-    runner = BoshRunner(context=workflow_context, descriptor=bosh_descriptor)
+    runner = BoshRunner(context=study, descriptor=bosh_descriptor)
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()
@@ -65,19 +52,19 @@ def test_bosh_runner_run(workflow_context, bosh_descriptor, mocker):
     assert "launch" in command
 
 
-def test_bosh_simulate_initialization(workflow_context, bosh_descriptor):
+def test_bosh_simulate_initialization(study, bosh_descriptor):
     """Test that BoshSimulate can be initialized."""
-    runner = BoshSimulate(context=workflow_context, descriptor=bosh_descriptor)
-    assert runner.context is workflow_context
+    runner = BoshSimulate(context=study, descriptor=bosh_descriptor)
+    assert runner.context is study
     assert runner.descriptor is bosh_descriptor
     assert runner.mode == "Simulating"
 
 
-def test_bosh_simulate_run(workflow_context, bosh_descriptor, mocker):
+def test_bosh_simulate_run(study, bosh_descriptor, mocker):
     """Test that BoshSimulate can execute a bosh simulate command."""
     import json
 
-    runner = BoshSimulate(context=workflow_context, descriptor=bosh_descriptor)
+    runner = BoshSimulate(context=study, descriptor=bosh_descriptor)
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()
