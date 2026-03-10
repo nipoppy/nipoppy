@@ -14,7 +14,7 @@ logger = get_logger()
 
 class BoshRunner:
     """
-    Service for executing containerized applications via Boutiques.
+    Service for executing tools described with Boutiques.
 
     Parameters
     ----------
