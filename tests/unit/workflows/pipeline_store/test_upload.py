@@ -8,6 +8,7 @@ import pytest_mock
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import ReturnCode, TerminatedByUserError, WorkflowError
+from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,
@@ -28,7 +29,10 @@ def workflow(mocker: pytest_mock.MockerFixture):
 
 
 def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture):
-    get_pipeline_metadata = mocker.patch.object(workflow, "_get_pipeline_metadata")
+    metadata = {"metadata": {}}
+    get_pipeline_metadata = mocker.patch.object(
+        workflow, "_get_pipeline_metadata", return_value=metadata
+    )
     validator = mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
     )
@@ -37,7 +41,12 @@ def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixt
     workflow.force = True
     workflow.run_main()
 
-    workflow.zenodo_api.upload_pipeline.assert_called_once()
+    workflow.zenodo_api.upload_record.assert_called_once_with(
+        input_dir=TEST_PIPELINE,
+        record_id=None,
+        metadata=metadata,
+        default_preview_filename=DatasetLayout.fname_pipeline_config,
+    )
     get_pipeline_metadata.assert_called_once()
     validator.assert_called_once()
 
