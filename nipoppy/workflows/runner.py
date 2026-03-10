@@ -3,6 +3,7 @@
 import json
 import shlex
 from abc import ABC
+from collections.abc import Callable
 from functools import cached_property
 from pathlib import Path
 from typing import Optional, Tuple
@@ -17,7 +18,7 @@ from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
-from nipoppy.workflows.services.boutiques import BoshLaunch, BoshSimulate
+from nipoppy.workflows.services.boutiques import run_bosh_launch, run_bosh_simulate
 from nipoppy.workflows.services.hpc import HPCRunner
 
 logger = get_logger()
@@ -40,11 +41,11 @@ class Runner(BasePipelineWorkflow, ABC):
         self.keep_workdir = keep_workdir
 
     @cached_property
-    def container_runner(self) -> BoshLaunch:
+    def bosh_runner(self) -> Callable[..., int]:
         """Get the container runner service."""
         if self.simulate:
-            return BoshSimulate()
-        return BoshLaunch()
+            return run_bosh_simulate
+        return run_bosh_launch
 
     @cached_property
     def hpc_runner(self) -> HPCRunner:
@@ -146,7 +147,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # run as a subprocess so that stdout/error are captured in the log
         # by default, this will raise an exception if the command fails
-        self.container_runner.run(
+        self.bosh_runner(
             invocation_str=invocation_str,
             descriptor_str=descriptor_str,
             bosh_exec_launch_args=bosh_exec_launch_args,

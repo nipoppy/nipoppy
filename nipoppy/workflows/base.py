@@ -8,7 +8,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Protocol, Sequence
 
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, StrOrPathLike
@@ -45,14 +45,33 @@ def _log_command(command: str):
     logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
 
 
+class CommandRunner(Protocol):
+    """Protocol for functions that run commands, used for dependency injection."""
+
+    def __call__(
+        self,
+        command_or_args: Sequence[str] | str,
+        /,
+        *,
+        check: bool,
+        quiet: bool,
+        dry_run: bool,
+    ) -> subprocess.Popen[str] | str:
+        # flake8: noqa
+        # flake8: qa
+        # We disable the flake8 to prevent it from complaining about missing DocString.
+        ...
+
+
 def _run_command(
     command_or_args: Sequence[str] | str,
+    /,
     *,
     check: bool = True,
     quiet: bool = False,
     dry_run: bool = False,
     **kwargs,
-) -> subprocess.Popen | str:
+) -> subprocess.Popen[str] | str:
     """Run a command in a subprocess.
 
     The command's stdout and stderr outputs are written to the log
@@ -107,7 +126,7 @@ def _run_command(
         _log_command(command)
 
     if not dry_run:
-        process = subprocess.Popen(
+        process: subprocess.Popen[str] = subprocess.Popen(
             command_or_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

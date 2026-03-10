@@ -1,8 +1,8 @@
-"""Unit tests for BoshRunner."""
+"""Unit tests for Boutiques runner functions."""
 
 import pytest
 
-from nipoppy.workflows.services.boutiques import BoshLaunch, BoshSimulate
+from nipoppy.workflows.services.boutiques import run_bosh_launch, run_bosh_simulate
 
 
 @pytest.fixture
@@ -23,22 +23,15 @@ def bosh_descriptor():
     }
 
 
-def test_bosh_runner_initialization(bosh_descriptor):
-    """Test that boshRunner can be initialized."""
-    runner = BoshLaunch()
-    assert runner.mode == "Running"
-
-
-def test_bosh_runner_run(bosh_descriptor, mocker):
-    """Test that boshRunner can execute a bosh."""
+def test_run_bosh_launch(bosh_descriptor, mocker):
+    """Test that a Boutiques launch command can be executed."""
     import json
 
-    runner = BoshLaunch()
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()
 
-    exit_code = runner.run(
+    exit_code = run_bosh_launch(
         invocation_str=json.dumps(invocation),
         descriptor_str=json.dumps(bosh_descriptor),
         run_command=mock_run_command,
@@ -51,22 +44,15 @@ def test_bosh_runner_run(bosh_descriptor, mocker):
     assert "launch" in command
 
 
-def test_bosh_simulate_initialization(bosh_descriptor):
-    """Test that BoshSimulate can be initialized."""
-    runner = BoshSimulate()
-    assert runner.mode == "Simulating"
-
-
-def test_bosh_simulate_run(bosh_descriptor, mocker):
+def test_run_bosh_simulate(bosh_descriptor, mocker):
     """Test that BoshSimulate can execute a bosh simulate command."""
     import json
 
-    runner = BoshSimulate()
     invocation = {"input_file": "/path/to/input.txt"}
 
     mock_run_command = mocker.Mock()
 
-    exit_code = runner.run(
+    exit_code = run_bosh_simulate(
         invocation_str=json.dumps(invocation),
         descriptor_str=json.dumps(bosh_descriptor),
         run_command=mock_run_command,
