@@ -1,20 +1,17 @@
-"""Container runner service."""
+"""Boutiques runner service."""
 
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
 
-if TYPE_CHECKING:
-    from nipoppy.study import Study
-
 logger = get_logger()
 
 
-class BoshRunner:
+class BoshLaunch:
     """
     Service for executing containerized applications via Boutiques.
 
@@ -26,8 +23,7 @@ class BoshRunner:
         The Boutiques descriptor for the container.
     """
 
-    def __init__(self, context: Study, descriptor: dict):
-        self.context = context
+    def __init__(self, descriptor: dict):
         self.descriptor = descriptor
 
     def run(
@@ -35,7 +31,7 @@ class BoshRunner:
         invocation_str: str,
         descriptor_str: str,
         bosh_exec_launch_args: list[str] | None = None,
-        run_command: subprocess.run | None = None,
+        run_command: Callable | None = None,
         dry_run: bool = False,
     ) -> int:
         """Execute the container with the given invocation string and descriptor string.
@@ -46,15 +42,15 @@ class BoshRunner:
             The Boutiques invocation as a JSON string.
         descriptor_str : str
             The Boutiques descriptor as a JSON string.
-        simulate : bool, optional
-            Whether to simulate the execution instead of running it.
         bosh_exec_launch_args : list of str, optional
-            Additional arguments for bosh exec launch.
-        run_command : callable, optional
-            A function to execute the command. Should act like subprocess.run
-            or runner.run_command.
+            Additional arguments for ``bosh exec launch``.
+        run_command : Callable, optional
+            A function to execute the command. Should act like ``subprocess.run``
+            or ``runner.run_command``.
         dry_run : bool, optional
-            Whether to skip actual execution.
+            If True, build and log the command but skip actual execution.
+            Simulation of the pipeline itself is controlled by using
+            :class:`BoshSimulate` instead of :class:`BoshRunner`.
 
         Returns
         -------
@@ -128,7 +124,7 @@ class BoshRunner:
         )
 
 
-class BoshSimulate(BoshRunner):
+class BoshSimulate(BoshLaunch):
     """Service for simulating container execution via Boutiques."""
 
     @property
