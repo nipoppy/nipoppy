@@ -44,15 +44,15 @@ class BoshRunner:
             The Boutiques invocation as a JSON string.
         descriptor_str : str
             The Boutiques descriptor as a JSON string.
-        simulate : bool, optional
-            Whether to simulate the execution instead of running it.
         bosh_exec_launch_args : list of str, optional
-            Additional arguments for bosh exec launch.
+            Additional arguments for ``bosh exec launch``.
         run_command : Callable, optional
-            A function to execute the command. Should act like subprocess.run
-            or runner.run_command.
+            A function to execute the command. Should act like ``subprocess.run``
+            or ``runner.run_command``.
         dry_run : bool, optional
-            Whether to skip actual execution.
+            If True, build and log the command but skip actual execution.
+            Simulation of the pipeline itself is controlled by using
+            :class:`BoshSimulate` instead of :class:`BoshRunner`.
 
         Returns
         -------
