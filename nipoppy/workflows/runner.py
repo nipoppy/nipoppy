@@ -45,7 +45,8 @@ class Runner(BasePipelineWorkflow, ABC):
         """Get the container runner service."""
         if self.simulate:
             return run_bosh_simulate
-        return run_bosh_launch
+        else:
+            return run_bosh_launch
 
     @cached_property
     def hpc_runner(self) -> HPCRunner:

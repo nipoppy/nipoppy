@@ -51,8 +51,7 @@ def _run_bosh_command(
     try:
         _execute_bosh_command(command, run_command, dry_run)
     except subprocess.CalledProcessError as exception:
-        error_message = error_message_builder(exception.returncode)
-        raise ExecutionError(f"{error_message} (return code: {exception.returncode})")
+        raise ExecutionError(error_message_builder(exception.returncode))
 
     return 0
 
