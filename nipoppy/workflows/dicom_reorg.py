@@ -86,16 +86,14 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         return fpaths
 
     def apply_fname_mapping(
-        self, fpath_source: StrOrPathLike, participant_id: str, session_id: str
+        self, fpath_source: Path, participant_id: str, session_id: str
     ) -> str:
         """
-        Apply a mapping from the original (full) file path to destination file name.
+        Append the parent directory name to the DICOM files.
 
-        This method does not change the file name by default, but it can be overridden
-        if the file names need to be changed during reorganization (e.g. for easier
-        BIDS conversion).
+        This helps to avoid filename collisions across DICOM series.
         """
-        return Path(fpath_source).name
+        return f"{fpath_source.parent.name}_{fpath_source.name}"
 
     def run_single(self, participant_id: str, session_id: str):
         """Reorganize downloaded DICOM files for a single participant and session."""
