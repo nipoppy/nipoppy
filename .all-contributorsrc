@@ -260,6 +260,17 @@
         "doc",
         "bug"
       ]
+    },
+    {
+      "login": "Arshitha",
+      "name": "Arshitha Basavaraj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10297203?v=4",
+      "profile": "https://github.com/Arshitha",
+      "contributions": [
+        "bug"
+      ]
     }
-  ]
+  ],
+  "commitType": "docs",
+  "contributorsPerLine": 7
 }
