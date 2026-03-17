@@ -10,6 +10,7 @@ from ..conftest import datetime_fixture  # noqa F401
 from ..conftest import TEST_PIPELINE
 
 ZENODO_SANDBOX = True
+DEFAULT_PREVIEW = "config.json"
 
 
 @pytest.fixture(scope="function")
@@ -55,10 +56,11 @@ def test_download_record_files(
     record_id = record_id_prefix + os.environ["ZENODO_ID"]
     zenodo_api.download_record_files(record_id, tmp_path)
 
-    assert len(list(tmp_path.iterdir())) == 6
+    expected_files = list(TEST_PIPELINE.iterdir())
+    assert len(list(tmp_path.iterdir())) == len(expected_files)
 
     # Verify the content of the downloaded files
-    for file in TEST_PIPELINE.iterdir():
+    for file in expected_files:
         assert tmp_path.joinpath(file.name).exists()
         assert tmp_path.joinpath(file.name).read_text() == file.read_text()
 
@@ -89,6 +91,7 @@ def test_create_new_version(zenodo_api: ZenodoAPI, metadata: dict):
         input_dir=TEST_PIPELINE,
         metadata=metadata,
         record_id=os.environ["ZENODO_ID"],
+        default_preview_filename=DEFAULT_PREVIEW,
     )
 
 
@@ -121,13 +124,12 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
     reason="Requires Zenodo token",
 )
 def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
-    default_preview = "config.json"
 
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
     doi = zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
-        default_preview_filename=default_preview,
+        default_preview_filename=DEFAULT_PREVIEW,
     )
 
     # extract the new record ID from the DOI (e.g. 10.5072/zenodo.123456)
@@ -135,7 +137,7 @@ def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
 
     # verify that the default preview file is set correctly
     response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
-    assert response.json()["default_preview"] == default_preview
+    assert response.json()["default_preview"] == DEFAULT_PREVIEW
 
 
 @pytest.mark.api
