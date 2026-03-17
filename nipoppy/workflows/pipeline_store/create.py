@@ -56,7 +56,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         descriptor_path = target / "descriptor.json"
         if source_descriptor:
             try:
-                boutiques.validate(source_descriptor.as_posix())
+                boutiques.validate(str(source_descriptor))
             except boutiques.DescriptorValidationError as exception:
                 raise WorkflowError(
                     f"Descriptor file {source_descriptor} is invalid:\n{exception}"
@@ -68,10 +68,10 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 )
             fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
-            boutiques.create(descriptor_path.as_posix())
+            boutiques.create(str(descriptor_path))
 
         target.joinpath("invocation.json").write_text(
-            boutiques.example(descriptor_path.as_posix())
+            boutiques.example(str(descriptor_path))
         )
         fileops.copy(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
