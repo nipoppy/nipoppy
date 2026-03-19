@@ -15,7 +15,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
-from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import run_bosh_launch, run_bosh_simulate
@@ -41,37 +41,83 @@ class Runner(BasePipelineWorkflow, ABC):
         self.keep_workdir = keep_workdir
 
     @cached_property
+    def hpc_runner(self) -> HPCRunner:
+        """Get the HPC runner service."""
+        return HPCRunner(
+            context=self.study,
+            subcommand=self.name,
+            dpath_root=self.dpath_root,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            keep_workdir=self.keep_workdir,
+            fpath_layout=self.fpath_layout,
+            verbose=self.verbose,
+            hpc_config=self.hpc_config if self.hpc else None,
+        )
+
+    def _generate_cli_command_for_hpc(
+        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+    ) -> list[str]:
+        """Generate the CLI command to be run on the HPC cluster."""
+        return self.hpc_runner.generate_cli_command(
+            participant_id=participant_id,
+            session_id=session_id,
+        )
+
+    def _submit_hpc_job(self, participants_sessions):
+        """Submit jobs to a HPC cluster for processing."""
+        # generate the list of nipoppy commands for a shell array
+        job_array_commands = []
+        participant_ids = []
+        session_ids = []
+        for participant_id, session_id in participants_sessions:
+            command = self._generate_cli_command_for_hpc(
+                participant_id=participant_id, session_id=session_id
+            )
+            job_array_commands.append(shlex.join(command))
+            participant_ids.append(participant_id)
+            session_ids.append(session_id)
+            self.n_total += 1  # for logging in run_cleanup()
+
+        # skip if there are no jobs to submit
+        if len(job_array_commands) == 0:
+            return
+
+        job_name = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            participant_id=self.participant_id,
+            session_id=self.session_id,
+        )
+
+        self.hpc_runner.submit(
+            hpc_cluster=self.hpc,
+            job_name=job_name,
+            job_array_commands=job_array_commands,
+            participant_ids=participant_ids,
+            session_ids=session_ids,
+            dpath_work=self.dpath_pipeline_work,
+            dpath_hpc_logs=self.study.layout.dpath_logs / self.dname_hpc_logs,
+            fname_hpc_error=self.fname_hpc_error,
+            fname_job_script=self.fname_job_script,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            dry_run=self.dry_run,
+        )
+
+        # for logging in run_cleanup()
+        self.n_success += len(job_array_commands)
+
+    @cached_property
     def bosh_runner(self) -> Callable[..., int]:
         """Get the container runner service."""
         if self.simulate:
             return run_bosh_simulate
         else:
             return run_bosh_launch
-
-    @cached_property
-    def hpc_runner(self) -> HPCRunner:
-        """Get the HPC runner service."""
-        return HPCRunner(
-            context=self.study,
-            hpc_config=self.hpc_config if self.hpc else None,
-        )
-
-    def _generate_cli_command_for_hpc(
-        self, participant_id=None, session_id=None
-    ) -> list[str]:
-        """Generate the CLI command to be run on the HPC cluster."""
-        return HPCRunner.generate_cli_command(
-            subcommand=self.name,
-            dpath_root=self.dpath_root,
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-            participant_id=participant_id,
-            session_id=session_id,
-            keep_workdir=self.keep_workdir,
-            fpath_layout=self.fpath_layout,
-            verbose=self.verbose,
-        )
 
     def launch_boutiques_run(
         self,
@@ -211,3 +257,14 @@ class Runner(BasePipelineWorkflow, ABC):
         )
 
         return container_command, container_handler
+
+    def run_main(self):
+        """Run the pipeline."""
+        participants_sessions = self._prepare_participants_sessions()
+
+        if self.write_subcohort is not None:
+            self._handle_write_subcohort(participants_sessions)
+        elif self.hpc:
+            self._submit_hpc_job(participants_sessions)
+        else:
+            self._run_locally(participants_sessions)

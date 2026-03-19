@@ -142,23 +142,13 @@ class ProcessingRunner(Runner):
                 yield participant_session
 
     def _generate_cli_command_for_hpc(
-        self, participant_id=None, session_id=None
+        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
     ) -> list[str]:
         """Generate the CLI command to be run on the HPC cluster."""
-        from nipoppy.workflows.services.hpc import HPCRunner
-
-        return HPCRunner.generate_cli_command(
-            subcommand=self.name,
-            dpath_root=self.dpath_root,
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
+        return self.hpc_runner.generate_cli_command(
             participant_id=participant_id,
             session_id=session_id,
-            keep_workdir=self.keep_workdir,
             extra_flags=["--tar"] if self.tar else None,
-            fpath_layout=self.fpath_layout,
-            verbose=self.verbose,
         )
 
     def run_setup(self):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from jinja2 import Environment, meta
 from pysqa import QueueAdapter
@@ -32,23 +32,36 @@ class HPCRunner:
         The HPC-specific configuration.
     """
 
-    def __init__(self, context: Study, hpc_config: Optional[HpcConfig] = None):
-        self.context = context
-        self.hpc_config = hpc_config
-
-    @staticmethod
-    def generate_cli_command(
+    def __init__(
+        self,
+        context: Study,
         subcommand: str,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
         keep_workdir: bool = False,
-        extra_flags: Optional[list[str]] = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
+        hpc_config: Optional[HpcConfig] = None,
+    ):
+        self.context = context
+        self.subcommand = subcommand
+        self.dpath_root = dpath_root
+        self.pipeline_name = pipeline_name
+        self.pipeline_version = pipeline_version
+        self.pipeline_step = pipeline_step
+        self.keep_workdir = keep_workdir
+        self.fpath_layout = fpath_layout
+        self.verbose = verbose
+        self.hpc_config = hpc_config
+
+    def generate_cli_command(
+        self,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        extra_flags: Optional[list[str]] = None,
+        extra_options: Optional[dict[str, Any]] = None,
     ) -> list[str]:
         """
         Generate the CLI command to be run on the HPC cluster for a participant/session.
@@ -86,30 +99,43 @@ class HPCRunner:
         list[str]
             The CLI command as a list of string tokens.
         """
-        command = [
+        command: list[str] = [
             PROGRAM_NAME,
-            subcommand,
+            self.subcommand,
             "--dataset",
-            dpath_root,
+            str(self.dpath_root),
             "--pipeline",
-            pipeline_name,
+            self.pipeline_name,
         ]
-        if pipeline_version is not None:
-            command.extend(["--pipeline-version", pipeline_version])
-        if pipeline_step is not None:
-            command.extend(["--pipeline-step", pipeline_step])
-        if participant_id is not None:
-            command.extend(["--participant-id", participant_id])
-        if session_id is not None:
-            command.extend(["--session-id", session_id])
-        if keep_workdir:
+        default_options: dict[str, Any] = {
+            "--pipeline-version": self.pipeline_version,
+            "--pipeline-step": self.pipeline_step,
+            "--layout": self.fpath_layout,
+            "--participant-id": participant_id,
+            "--session-id": session_id,
+        }
+        for option, value in default_options.items():
+            if value is not None:
+                command.extend([option, str(value)])
+
+        if self.keep_workdir:
             command.append("--keep-workdir")
-        if extra_flags:
-            command.extend(extra_flags)
-        if fpath_layout:
-            command.extend(["--layout", fpath_layout])
-        if verbose:
+        if self.verbose:
             command.append("--verbose")
+
+        extra_options = extra_options or {}
+        for option, value in extra_options.items():
+            if option in default_options:
+                raise ValueError(
+                    f"Option {option} is already set by the default options and cannot "
+                    "be overridden via extra_options."
+                )
+            command.extend([option, str(value)])
+
+        extra_flags = extra_flags or []
+        for flag in extra_flags:
+            command.append(flag)
+
         return [str(c) for c in command]
 
     def _check_hpc_config(self) -> dict:

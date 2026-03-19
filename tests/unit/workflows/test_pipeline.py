@@ -12,10 +12,8 @@ import pandas as pd
 import pytest
 import pytest_mock
 from fids import fids
-from jinja2 import Environment, meta
 
 from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
@@ -37,16 +35,14 @@ from nipoppy.exceptions import (
     ReturnCode,
     WorkflowError,
 )
-from nipoppy.layout import LayoutError
 from nipoppy.logger import get_logger
-from nipoppy.utils import fileops
-from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     get_pipeline_version,
 )
 from tests.conftest import datetime_fixture  # noqa F401
 from tests.conftest import (
+    _set_up_substitution_testing,
     create_empty_dataset,
     create_pipeline_config_files,
     get_config,
@@ -165,42 +161,6 @@ def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: 
         return real_import(name, *args, **kwargs)
 
     mocker.patch("builtins.__import__", side_effect=fake_import)
-
-
-def _set_up_hpc_for_testing(
-    workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
-    mock_pysqa=True,
-):
-    # set HPC attribute to something valid
-    workflow.hpc = "slurm"
-
-    # copy HPC config files
-    fileops.copy(DPATH_HPC, workflow.study.layout.dpath_hpc)
-
-    mocker.patch.object(
-        workflow,
-        "_generate_cli_command_for_hpc",
-        side_effect=(
-            lambda participant_id, session_id: [
-                "echo",
-                f"{participant_id}, {session_id}",
-            ]
-        ),
-    )
-
-    # mock PySQA job submission function
-    if mock_pysqa:
-        mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
-        return mock_submit_job
-
-
-def _set_up_substitution_testing(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockerFixture
-):
-    return mocker.patch.object(
-        workflow, "process_template_json", side_effect=workflow.process_template_json
-    )
 
 
 def test_joblib_import_fails(
@@ -640,32 +600,6 @@ def test_pybids_ignore_patterns_invalid_format(
 
     with pytest.raises(ConfigError, match="Expected a list of strings"):
         workflow.pybids_ignore_patterns
-
-
-@pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])
-def test_hpc_config(
-    hpc_config_data: dict,
-    workflow: PipelineWorkflow,
-    tmp_path: Path,
-    mocker: pytest_mock.MockFixture,
-):
-    fpath_hpc_config = tmp_path / "hpc_config.json"
-    fpath_hpc_config.write_text(json.dumps(hpc_config_data))
-
-    workflow.pipeline_step_config.HPC_CONFIG_FILE = fpath_hpc_config.name
-    workflow.dpath_pipeline_bundle = fpath_hpc_config.parent
-
-    mocked_process_template_json = _set_up_substitution_testing(workflow, mocker)
-
-    assert isinstance(workflow.hpc_config, HpcConfig)
-
-    # make sure substitutions are processed
-    mocked_process_template_json.assert_called_once()
-
-
-def test_hpc_config_no_file(workflow: PipelineWorkflow):
-    workflow.pipeline_step_config.HPC_CONFIG_FILE = None
-    assert workflow.hpc_config == HpcConfig()
 
 
 @pytest.mark.parametrize(
@@ -1428,259 +1362,3 @@ def test_generate_fpath_log(
         fpath_log
         == workflow.study.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
     )
-
-
-@pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
-@pytest.mark.no_xdist
-def test_submit_hpc_job(
-    workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    hpc_type: str,
-    hpc_command: str,
-):
-    job_id = "12345"
-    hpc_config = {
-        "CORES": "8",
-        "MEMORY": "32G",
-    }
-    _set_up_hpc_for_testing(workflow, mocker, mock_pysqa=False)
-    workflow.hpc = hpc_type
-
-    mocker.patch(
-        "nipoppy.workflows.services.hpc.HPCRunner._check_hpc_config",
-        return_value=hpc_config,
-    )
-    mocked_check_output = mocker.patch(
-        "pysqa.base.core.subprocess.check_output", return_value=job_id
-    )
-    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
-
-    workflow._submit_hpc_job(participants_sessions)
-
-    mocked_check_output.assert_called_once()
-    # positional arguments, index 0, first element of the list
-    assert mocked_check_output.call_args[0][0][0] == hpc_command
-
-    assert f"HPC job ID: {job_id}" in caplog.text
-
-
-def test_submit_hpc_job_no_dir(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    _set_up_hpc_for_testing(workflow, mocker)
-
-    # remove the directory created by _set_up_hpc_for_testing
-    import shutil
-
-    if workflow.study.layout.dpath_hpc.exists():
-        shutil.rmtree(workflow.study.layout.dpath_hpc)
-
-    assert not workflow.study.layout.dpath_hpc.exists()
-    with pytest.raises(
-        LayoutError,
-        match="The HPC directory with appropriate content needs to exist",
-    ):
-        workflow._submit_hpc_job([("P1", "1")])
-
-
-def test_submit_hpc_job_invalid_hpc(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    _set_up_hpc_for_testing(workflow, mocker)
-    workflow.hpc = "invalid"
-
-    with pytest.raises(WorkflowError, match="Invalid HPC cluster type"):
-        workflow._submit_hpc_job([("P1", "1")])
-
-
-def test_submit_hpc_job_logs(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    _set_up_hpc_for_testing(workflow, mocker)
-
-    dpath_logs = workflow.study.layout.dpath_logs / workflow.dname_hpc_logs
-
-    # check that logs directory is created
-    assert not (dpath_logs).exists()
-    workflow._submit_hpc_job([("P1", "1")])
-    assert dpath_logs.exists()
-
-
-def test_submit_hpc_job_no_jobs(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    mocked = _set_up_hpc_for_testing(workflow, mocker)
-    workflow._submit_hpc_job([])
-    assert not mocked.called
-
-
-@pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
-def test_submit_hpc_job_pysqa_call(
-    workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
-    hpc_type,
-):
-    preamble_list = ["module load some module"]
-    hpc_config = {
-        "CORES": "8",
-        "MEMORY": "32G",
-    }
-
-    mocked_submit_job = _set_up_hpc_for_testing(workflow, mocker)
-    workflow.hpc = hpc_type
-
-    workflow.hpc_config = HpcConfig(**hpc_config)
-    workflow.study.config.HPC_PREAMBLE = preamble_list
-
-    participant_ids = ["participant1", "participant2"]
-    session_ids = ["session1", "session2"]
-    participants_sessions = list(zip(participant_ids, session_ids))
-
-    # Call the function we're testing
-    workflow._submit_hpc_job(participants_sessions)
-
-    # Extract the arguments passed to submit_job
-    submit_job_args = mocked_submit_job.call_args[1]
-
-    # Verify args
-    assert submit_job_args["queue"] == hpc_type
-    assert submit_job_args["working_directory"] == str(workflow.dpath_pipeline_work)
-    assert submit_job_args["NIPOPPY_HPC"] == hpc_type
-    assert submit_job_args["NIPOPPY_JOB_NAME"] == get_pipeline_tag(
-        workflow.pipeline_name,
-        workflow.pipeline_version,
-        workflow.pipeline_step,
-        workflow.participant_id,
-        workflow.session_id,
-    )
-    assert (
-        submit_job_args["NIPOPPY_DPATH_LOGS"]
-        == workflow.study.layout.dpath_logs / workflow.dname_hpc_logs
-    )
-    assert submit_job_args["NIPOPPY_HPC_PREAMBLE_STRINGS"] == preamble_list
-
-    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == workflow.study.layout.dpath_root
-    assert submit_job_args["NIPOPPY_PIPELINE_NAME"] == workflow.pipeline_name
-    assert submit_job_args["NIPOPPY_PIPELINE_VERSION"] == workflow.pipeline_version
-    assert submit_job_args["NIPOPPY_PIPELINE_STEP"] == workflow.pipeline_step
-
-    submitted_participant_ids = submit_job_args["NIPOPPY_PARTICIPANT_IDS"]
-    submitted_session_ids = submit_job_args["NIPOPPY_SESSION_IDS"]
-    assert submitted_participant_ids == participant_ids
-    assert submitted_session_ids == session_ids
-
-    command_list = submit_job_args["NIPOPPY_COMMANDS"]
-    assert len(command_list) == len(participants_sessions)
-    for participant_id, session_id in participants_sessions:
-        assert (f"echo '{participant_id}, {session_id}'") in command_list
-
-    for key, value in hpc_config.items():
-        assert submit_job_args.get(key) == value
-
-    template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
-    template_vars = meta.find_undeclared_variables(template_ast)
-    nipoppy_args = [arg for arg in submit_job_args.keys() if arg.startswith("NIPOPPY_")]
-    for arg in nipoppy_args:
-        assert arg in template_vars, f"Variable {arg} not found in the template"
-
-    assert workflow.n_success == 2
-    assert workflow.n_total == 2
-
-
-@pytest.mark.parametrize(
-    "write_job_script,expected_message",
-    [(True, "Job script created at "), (False, "No job script found at ")],
-)
-@pytest.mark.no_xdist
-def test_submit_hpc_job_job_script(
-    write_job_script: bool,
-    expected_message,
-    workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-):
-    def touch_job_script(*args, **kwargs):
-        fpath_script = workflow.dpath_pipeline_work / "run_queue.sh"
-        fpath_script.parent.mkdir(parents=True, exist_ok=True)
-        fpath_script.touch()
-
-    mocked = _set_up_hpc_for_testing(workflow, mocker)
-    if write_job_script:
-        mocked.side_effect = touch_job_script
-
-    workflow._submit_hpc_job([("P1", "1")])
-    assert expected_message in caplog.text
-
-
-def test_submit_hpc_job_pysqa_error(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    def write_error_file(*args, **kwargs):
-        fpath_error = workflow.dpath_pipeline_work / workflow.fname_hpc_error
-        fpath_error.parent.mkdir(parents=True, exist_ok=True)
-        fpath_error.write_text("PYSQA ERROR\n")
-
-    mocked = _set_up_hpc_for_testing(workflow, mocker)
-    mocked.side_effect = write_error_file
-    with pytest.raises(
-        RuntimeError, match="Error occurred while submitting the HPC job:\nPYSQA ERROR"
-    ):
-        workflow._submit_hpc_job([("P1", "1")])
-
-
-@pytest.mark.parametrize("job_id", ["12345", None])
-@pytest.mark.no_xdist
-def test_submit_hpc_job_job_id(
-    workflow: PipelineWorkflow,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    job_id,
-):
-    mocked = _set_up_hpc_for_testing(workflow, mocker)
-    mocked.return_value = job_id
-    workflow._submit_hpc_job([("P1", "1")])
-
-    if job_id is not None:
-        assert f"HPC job ID: {job_id}" in caplog.text
-    else:
-        assert "HPC job ID" not in caplog.text
-
-
-def test_run_main_hpc(mocker: pytest_mock.MockFixture, workflow: PipelineWorkflow):
-    # Mock the _submit_hpc_job method
-    mocker.patch("os.makedirs", mocker.MagicMock())
-    mocked_submit_hpc_job = mocker.patch.object(workflow, "_submit_hpc_job")
-
-    # Set the hpc attribute to "exists" to simulate that the HPC is available
-    workflow.hpc = "exists"
-
-    # Create test manifest and BIDS data
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-
-    # Call the run_main method
-    workflow.run_main()
-
-    # Assert that the _submit_hpc_job method was called
-    mocked_submit_hpc_job.assert_called_once()
-
-    # Check "participants_sessions" positional argument
-    assert list(mocked_submit_hpc_job.call_args[0][0]) == [
-        ("01", "1"),
-        ("01", "2"),
-        ("01", "3"),
-        ("02", "1"),
-    ]
-
-
-def test_generate_cli_command_for_hpc(workflow: PipelineWorkflow):
-    with pytest.raises(
-        NotImplementedError, match="This method should be implemented in a subclass"
-    ):
-        workflow._generate_cli_command_for_hpc()

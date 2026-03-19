@@ -19,46 +19,46 @@ def hpc_config():
     )
 
 
-def test_hpc_runner_initialization(study, hpc_config):
+@pytest.fixture(scope="function")
+def hpc_runner(study, hpc_config):
+    """Fixture for HpcConfig."""
+    return HPCRunner(
+        context=study,
+        hpc_config=hpc_config,
+        subcommand="test",
+        dpath_root="test",
+        pipeline_name="test",
+    )
+
+
+def test_hpc_runner_initialization(study, hpc_runner: HPCRunner, hpc_config: HpcConfig):
     """Test that HPCRunner can be initialized."""
-    runner = HPCRunner(context=study, hpc_config=hpc_config)
-    assert runner.context is study
-    assert runner.hpc_config is hpc_config
+    assert hpc_runner.context is study
+    assert hpc_runner.hpc_config is hpc_config
 
 
-def test_hpc_runner_check_hpc_config(study):
+def test_hpc_runner_check_hpc_config(hpc_runner: HPCRunner):
     """Test that HPCRunner can check HPC config correctly."""
-    hpc_config = HpcConfig(CORES="8", MEMORY="32G")
-    runner = HPCRunner(context=study, hpc_config=hpc_config)
-    assert runner._check_hpc_config() == {"CORES": "8", "MEMORY": "32G"}
+    hpc_runner.hpc_config = HpcConfig(CORES="8", MEMORY="32G")
+    assert hpc_runner._check_hpc_config() == {"CORES": "8", "MEMORY": "32G"}
 
 
+@pytest.mark.parametrize("hpc_config", [HpcConfig(), None])
 @pytest.mark.no_xdist
-def test_hpc_runner_check_hpc_config_empty(study, caplog):
+def test_hpc_runner_check_hpc_config_empty(
+    hpc_runner: HPCRunner, hpc_config: HpcConfig, caplog
+):
     """Test empty hpc config."""
-    runner = HPCRunner(context=study, hpc_config=HpcConfig())
-    runner._check_hpc_config()
+    hpc_runner.hpc_config = hpc_config
+    hpc_runner._check_hpc_config()
     assert (
         sum("HPC configuration is empty" in record.message for record in caplog.records)
         == 1
     )
 
 
-@pytest.mark.no_xdist
-def test_hpc_runner_check_hpc_config_none(study, caplog):
-    """Test None hpc config."""
-    runner = HPCRunner(context=study, hpc_config=None)
-    runner._check_hpc_config()
-    assert (
-        sum("HPC configuration is empty" in record.message for record in caplog.records)
-        == 1
-    )
-
-
-def test_hpc_runner_submit(study, hpc_config, mocker):
+def test_hpc_runner_submit(hpc_runner: HPCRunner, study, mocker):
     """Test that HPCRunner can submit a job."""
-    runner = HPCRunner(context=study, hpc_config=hpc_config)
-
     # Mock the study config to
     mocked_study_config(mocker)
 
@@ -71,7 +71,7 @@ def test_hpc_runner_submit(study, hpc_config, mocker):
     dpath_work = study.layout.dpath_hpc / "work"
     dpath_hpc_logs = study.layout.dpath_hpc / "logs"
 
-    job_id = runner.submit(
+    job_id = hpc_runner.submit(
         hpc_cluster="slurm",
         job_name="my-job",
         job_array_commands=["echo test"],
@@ -110,19 +110,16 @@ def test_hpc_runner_isolated_dependencies():
     [
         (
             dict(
-                subcommand="bidsify",
-                dpath_root="/path/to/root",
-                pipeline_name="my_pipeline",
                 participant_id="P01",
                 session_id="1",
             ),
             [
                 PROGRAM_NAME,
-                "bidsify",
+                "test",
                 "--dataset",
-                "/path/to/root",
+                "test",
                 "--pipeline",
-                "my_pipeline",
+                "test",
                 "--participant-id",
                 "P01",
                 "--session-id",
@@ -131,6 +128,8 @@ def test_hpc_runner_isolated_dependencies():
         ),
     ],
 )
-def test_generate_cli_command(kwargs: dict, expected_command: list[str]) -> None:
+def test_generate_cli_command(
+    hpc_runner: HPCRunner, kwargs: dict, expected_command: list[str]
+) -> None:
     """Test HPCRunner.generate_cli_command produces correct CLI tokens."""
-    assert HPCRunner.generate_cli_command(**kwargs) == expected_command
+    assert hpc_runner.generate_cli_command(**kwargs) == expected_command

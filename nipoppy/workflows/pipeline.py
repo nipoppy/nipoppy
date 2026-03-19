@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import shlex
 import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -691,120 +690,70 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def run_main(self):
         """Run the pipeline."""
+        participants_sessions = self._prepare_participants_sessions()
+
+        if self.write_subcohort is not None:
+            self._handle_write_subcohort(participants_sessions)
+        else:
+            self._run_locally(participants_sessions)
+
+    def _prepare_participants_sessions(self) -> list:
+        """Load and filter participants/sessions to run."""
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
 
         if self.use_subcohort is not None:
-            try:
-                df_participants_sessions = pd.read_csv(
-                    self.use_subcohort, header=None, sep="\t", dtype=str
-                )
-            except FileNotFoundError as e:
-                raise FileOperationError(
-                    f"Subcohort file {self.use_subcohort} not found"
-                ) from e
-            except pd.errors.EmptyDataError as e:
-                raise WorkflowError(
-                    f"Subcohort file {self.use_subcohort} is empty"
-                ) from e
-
-            participants_sessions = set(participants_sessions) & set(
-                df_participants_sessions.itertuples(index=False, name=None)
-            )
+            participants_sessions = self._filter_by_subcohort(participants_sessions)
 
         participants_sessions = self.apply_analysis_level(
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
 
-        if self.write_subcohort is not None:
-            if not self.dry_run:
-                pd.DataFrame(participants_sessions).to_csv(
-                    self.write_subcohort, header=False, index=False, sep="\t"
-                )
-        elif self.hpc:
-            self._submit_hpc_job(participants_sessions)
+        return participants_sessions
+
+    def _filter_by_subcohort(self, participants_sessions: Iterable) -> set:
+        """Filter participants/sessions by subcohort file."""
+        try:
+            df_participants_sessions = pd.read_csv(
+                self.use_subcohort, header=None, sep="\t", dtype=str
+            )
+        except FileNotFoundError as e:
+            raise FileOperationError(
+                f"Subcohort file {self.use_subcohort} not found"
+            ) from e
+        except pd.errors.EmptyDataError as e:
+            raise WorkflowError(f"Subcohort file {self.use_subcohort} is empty") from e
+
+        return set(participants_sessions) & set(
+            df_participants_sessions.itertuples(index=False, name=None)
+        )
+
+    def _handle_write_subcohort(self, participants_sessions: list) -> None:
+        """Write participants/sessions to file."""
+        if not self.dry_run:
+            pd.DataFrame(participants_sessions).to_csv(
+                self.write_subcohort, header=False, index=False, sep="\t"
+            )
+
+    def _run_locally(self, participants_sessions: list) -> None:
+        """Run pipeline locally and collect results."""
+        results = list(self._get_results_generator(participants_sessions))
+
+        if len(results) == 0:
+            run_statuses = []
+            run_single_results = []
         else:
-            results = list(self._get_results_generator(participants_sessions))
+            run_statuses, run_single_results = zip(*results)
 
-            if len(results) == 0:
-                run_statuses = []
-                run_single_results = []
-            else:
-                run_statuses, run_single_results = zip(*results)
+        self.n_success += sum(run_statuses)
+        self.n_total += len(run_statuses)
+        self.run_single_results = run_single_results
 
-            self.n_success += sum(run_statuses)
-            self.n_total += len(run_statuses)
-            self.run_single_results = run_single_results
-
-            # update return code if needed
-            if (self.n_success != self.n_total) and (self.n_total != 0):
-                self.return_code = ReturnCode.PARTIAL_SUCCESS
-
-    def _generate_cli_command_for_hpc(
-        self, participant_id=None, session_id=None
-    ) -> list[str]:
-        """Generate the CLI command to be run on the HPC cluster."""
-        raise NotImplementedError("This method should be implemented in a subclass")
-
-    def _submit_hpc_job(self, participants_sessions):
-        """Submit jobs to a HPC cluster for processing."""
-        # generate the list of nipoppy commands for a shell array
-        job_array_commands = []
-        participant_ids = []
-        session_ids = []
-        for participant_id, session_id in participants_sessions:
-            command = self._generate_cli_command_for_hpc(
-                participant_id=participant_id, session_id=session_id
-            )
-            job_array_commands.append(shlex.join(command))
-            participant_ids.append(participant_id)
-            session_ids.append(session_id)
-            self.n_total += 1  # for logging in run_cleanup()
-
-        # skip if there are no jobs to submit
-        if len(job_array_commands) == 0:
-            return
-
-        job_name = get_pipeline_tag(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-            participant_id=self.participant_id,
-            session_id=self.session_id,
-        )
-
-        from nipoppy.workflows.services.hpc import HPCRunner
-
-        # We temporarily initialize here if it doesn't exist, but runner.py has it!
-        # BasePipelineWorkflow doesn't have self.hpc_runner natively instantiated but
-        # let's just make one or use self.hpc_runner if available.
-        hpc_runner = getattr(self, "hpc_runner", None)
-        if not hpc_runner:
-            hpc_runner = HPCRunner(
-                context=self.study,
-                hpc_config=self.hpc_config if self.hpc else None,
-            )
-
-        hpc_runner.submit(
-            hpc_cluster=self.hpc,
-            job_name=job_name,
-            job_array_commands=job_array_commands,
-            participant_ids=participant_ids,
-            session_ids=session_ids,
-            dpath_work=self.dpath_pipeline_work,
-            dpath_hpc_logs=self.study.layout.dpath_logs / self.dname_hpc_logs,
-            fname_hpc_error=self.fname_hpc_error,
-            fname_job_script=self.fname_job_script,
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-            dry_run=self.dry_run,
-        )
-
-        # for logging in run_cleanup()
-        self.n_success += len(job_array_commands)
+        # update return code if needed
+        if (self.n_success != self.n_total) and (self.n_total != 0):
+            self.return_code = ReturnCode.PARTIAL_SUCCESS
 
     def run_cleanup(self):
         """Log a summary message."""
