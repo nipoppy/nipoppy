@@ -3,21 +3,51 @@
 from __future__ import annotations
 
 import subprocess
-from collections.abc import Callable
+from typing import Protocol, Sequence
 
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
-from nipoppy.workflows.base import CommandRunner
 
 logger = get_logger()
 
 
-def _execute_bosh_command(
+class CommandRunner(Protocol):
+    """Protocol for functions that run commands, used for dependency injection."""
+
+    def __call__(
+        self,
+        command_or_args: Sequence[str] | str,
+        /,
+        *,
+        check: bool,
+        quiet: bool,
+        dry_run: bool,
+    ) -> subprocess.Popen[str] | str:
+        # flake8: noqa
+        # flake8: qa
+        # We disable the flake8 to prevent it from complaining about missing DocString.
+        ...
+
+
+class CommandBuilder(Protocol):
+    def __call__(
+        self,
+        invocation: str,
+        descriptor: str,
+        args: list[str],
+    ) -> list[str]: ...
+
+
+class ErrorBuilder(Protocol):
+    def __call__(self, exit_code: int) -> str: ...
+
+
+def _run_command(
     command: list[str],
     run_command: CommandRunner | None,
     dry_run: bool,
 ) -> None:
-    """Execute or delegate the command."""
+    """Run or delegate the command."""
     if run_command:
         run_command(command, quiet=True, dry_run=dry_run)
     elif dry_run:
@@ -34,10 +64,18 @@ def _run_bosh_command(
     dry_run: bool = False,
     *,
     mode: str,
-    command_builder: Callable[[str, str, list[str]], list[str]],
-    error_message_builder: Callable[[int], str],
+    command_builder: CommandBuilder,
+    error_message_builder: ErrorBuilder,
 ) -> int:
-    """Execute a Boutiques command with shared error handling."""
+    """Execute a Boutiques command with shared error handling.
+
+    Parameters
+    ----------
+    command_builder : CommandBuilder
+        A function that builds the command to run based on the invocation, descriptor, and additional args. Returns a list of command arguments.
+    error_message_builder : ErrorBuilder
+        A function that builds an error message based on the exit code of a failed command.
+    """
     if bosh_exec_launch_args is None:
         bosh_exec_launch_args = []
 
@@ -49,7 +87,7 @@ def _run_bosh_command(
     logger.info(f"{mode} pipeline command")
 
     try:
-        _execute_bosh_command(command, run_command, dry_run)
+        _run_command(command, run_command, dry_run)
     except subprocess.CalledProcessError as exception:
         raise ExecutionError(error_message_builder(exception.returncode))
 
@@ -122,7 +160,7 @@ def run_bosh_simulate(
 ) -> int:
     """Execute a Boutiques simulate command."""
 
-    def command_builder(invocation: str, descriptor: str, _: list[str]) -> list[str]:
+    def command_builder(invocation: str, descriptor: str, args: list[str]) -> list[str]:
         return [
             "bosh",
             "exec",
@@ -135,6 +173,7 @@ def run_bosh_simulate(
     def error_message_builder(exit_code: int) -> str:
         return f"Pipeline simulation failed (return code: {exit_code})"
 
+    logger.info(f"Additional launch options: {bosh_exec_launch_args}")
     rv = _run_bosh_command(
         invocation_str=invocation_str,
         descriptor_str=descriptor_str,
@@ -145,5 +184,4 @@ def run_bosh_simulate(
         command_builder=command_builder,
         error_message_builder=error_message_builder,
     )
-    logger.info(f"Additional launch options: {bosh_exec_launch_args}")
     return rv

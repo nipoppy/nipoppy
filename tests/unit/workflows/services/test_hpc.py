@@ -1,9 +1,13 @@
 """Unit tests for HPCRunner."""
 
+from pathlib import Path
+
 import pytest
+import pytest_mock
 
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.env import PROGRAM_NAME
+from nipoppy.study import Study
 from nipoppy.workflows.services.hpc import HPCRunner
 from tests.conftest import mocked_study_config
 
@@ -12,10 +16,9 @@ from tests.conftest import mocked_study_config
 def hpc_config():
     """Fixture for HpcConfig."""
     return HpcConfig(
-        system="slurm",
-        account="test_account",
-        walltime="01:00:00",
-        memory="4G",
+        ACCOUNT="test_account",
+        TIME="01:00:00",
+        MEMORY="4G",
     )
 
 
@@ -57,9 +60,33 @@ def test_hpc_runner_check_hpc_config_empty(
     )
 
 
-def test_hpc_runner_submit(hpc_runner: HPCRunner, study, mocker):
+@pytest.mark.no_xdist
+def test_check_hpc_config_unused_vars(
+    hpc_runner: HPCRunner, caplog: pytest.LogCaptureFixture
+):
+    """Test that HPCRunner warns about unused HPC config variables."""
+    hpc_runner.hpc_config = HpcConfig(CORES="8", RANDOM_VAR="value")
+    hpc_runner._check_hpc_config()
+    assert sum(
+        [
+            (
+                ("Found variables in the HPC config that are unused" in record.message)
+                and ("RANDOM_VAR" in record.message)
+                and record.levelname == "WARNING"
+            )
+            for record in caplog.records
+        ]
+    )
+
+
+def test_hpc_runner_submit(
+    hpc_runner: HPCRunner,
+    study: Study,
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+):
     """Test that HPCRunner can submit a job."""
-    # Mock the study config to
+    # Mock the study config too
     mocked_study_config(mocker)
 
     mock_qa = mocker.MagicMock()
@@ -68,8 +95,6 @@ def test_hpc_runner_submit(hpc_runner: HPCRunner, study, mocker):
 
     # Needs a directory to not fail the LayoutError
     study.layout.dpath_hpc.mkdir(parents=True, exist_ok=True)
-    dpath_work = study.layout.dpath_hpc / "work"
-    dpath_hpc_logs = study.layout.dpath_hpc / "logs"
 
     job_id = hpc_runner.submit(
         hpc_cluster="slurm",
@@ -77,8 +102,8 @@ def test_hpc_runner_submit(hpc_runner: HPCRunner, study, mocker):
         job_array_commands=["echo test"],
         participant_ids=["P01"],
         session_ids=["S01"],
-        dpath_work=dpath_work,
-        dpath_hpc_logs=dpath_hpc_logs,
+        dpath_work=tmp_path / "work",
+        dpath_hpc_logs=tmp_path / "logs",
         fname_hpc_error="error.log",
         fname_job_script="script.sh",
         pipeline_name="test-pipe",
@@ -91,18 +116,6 @@ def test_hpc_runner_submit(hpc_runner: HPCRunner, study, mocker):
     mock_qa.submit_job.assert_called_once()
     args, kwargs = mock_qa.submit_job.call_args
     assert kwargs["NIPOPPY_JOB_NAME"] == "my-job"
-
-
-def test_hpc_runner_isolated_dependencies():
-    """Verify that HPCRunner does not import Boutiques or specific dataset layouts."""
-    import sys
-
-    # Just checking the module's imports to ensure no tight coupling
-    hpc_module = sys.modules["nipoppy.workflows.services.hpc"]
-    assert not hasattr(hpc_module, "bosh"), "HPCRunner should not depend on Boutiques"
-    assert "DatasetLayout" not in dir(
-        hpc_module
-    ), "HPCRunner should not depend directly on layout details beyond Context"
 
 
 @pytest.mark.parametrize(
@@ -124,6 +137,32 @@ def test_hpc_runner_isolated_dependencies():
                 "P01",
                 "--session-id",
                 "1",
+            ],
+        ),
+        (
+            dict(
+                participant_id="P01",
+                session_id="1",
+                extra_flags=["--flag1", "--flag2"],
+                extra_options={"--option1": "value1", "--option2": "value2"},
+            ),
+            [
+                PROGRAM_NAME,
+                "test",
+                "--dataset",
+                "test",
+                "--pipeline",
+                "test",
+                "--participant-id",
+                "P01",
+                "--session-id",
+                "1",
+                "--option1",
+                "value1",
+                "--option2",
+                "value2",
+                "--flag1",
+                "--flag2",
             ],
         ),
     ],

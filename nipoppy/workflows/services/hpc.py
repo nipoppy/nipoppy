@@ -58,8 +58,9 @@ class HPCRunner:
 
     def generate_cli_command(
         self,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str,
+        session_id: str,
+        *,
         extra_flags: Optional[list[str]] = None,
         extra_options: Optional[dict[str, Any]] = None,
     ) -> list[str]:
@@ -155,11 +156,11 @@ class HPCRunner:
 
         template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
         template_vars = meta.find_undeclared_variables(template_ast)
-        missing_vars = set(job_args.keys()) - template_vars
-        if len(missing_vars) > 0:
+        unused_vars = set(job_args.keys()) - template_vars
+        if len(unused_vars) > 0:
             logger.warning(
-                "Found variables in the HPC config that are not used in the template "
-                f"job script: {missing_vars}. Update the config or modify the template "
+                "Found variables in the HPC config that are unused in the template "
+                f"job script: {unused_vars}. Update the config or modify the template "
                 f"at {FPATH_HPC_TEMPLATE}."
             )
 
