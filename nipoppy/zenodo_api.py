@@ -60,7 +60,8 @@ class ZenodoAPI:
 
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
-        self.client.close()
+        if hasattr(self, "client") and not self.client.is_closed:
+            self.client.close()
 
     def __enter__(self) -> "ZenodoAPI":
         return self
@@ -70,8 +71,7 @@ class ZenodoAPI:
 
     def __del__(self) -> None:
         try:
-            if hasattr(self, "client"):
-                self.client.close()
+            self.close()
         except Exception:
             pass
 
