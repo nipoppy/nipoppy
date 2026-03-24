@@ -837,7 +837,7 @@ def test_close(zenodo_api: ZenodoAPI):
     assert zenodo_api.client.is_closed
 
 
-def test_close_idempotent(zenodo_api: ZenodoAPI):
+def test_close_twice(zenodo_api: ZenodoAPI):
     """Test that calling close() twice does not raise."""
     zenodo_api.close()
     zenodo_api.close()  # must not raise
