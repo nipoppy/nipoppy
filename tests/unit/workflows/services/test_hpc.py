@@ -26,7 +26,7 @@ def hpc_config():
 def hpc_runner(study, hpc_config):
     """Fixture for HpcConfig."""
     return HPCRunner(
-        context=study,
+        study=study,
         hpc_config=hpc_config,
         subcommand="test",
         dpath_root="test",
@@ -36,7 +36,7 @@ def hpc_runner(study, hpc_config):
 
 def test_hpc_runner_initialization(study, hpc_runner: HPCRunner, hpc_config: HpcConfig):
     """Test that HPCRunner can be initialized."""
-    assert hpc_runner.context is study
+    assert hpc_runner.study is study
     assert hpc_runner.hpc_config is hpc_config
 
 

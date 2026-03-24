@@ -50,3 +50,8 @@ nipoppy_env/
 
 # all-contributors CLI
 node_modules
+
+# Agentic workflows
+speckit*.md
+.specify
+specs/

@@ -26,15 +26,15 @@ class HPCRunner:
 
     Parameters
     ----------
-    context : Study
-        The shared workflow context containing layout, logger, and config.
+    study : Study
+        The shared workflow study containing layout, logger, and config.
     hpc_config : HpcConfig
         The HPC-specific configuration.
     """
 
     def __init__(
         self,
-        context: Study,
+        study: Study,
         subcommand: str,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
@@ -45,7 +45,7 @@ class HPCRunner:
         verbose: bool = False,
         hpc_config: Optional[HpcConfig] = None,
     ):
-        self.context = context
+        self.study = study
         self.subcommand = subcommand
         self.dpath_root = dpath_root
         self.pipeline_name = pipeline_name
@@ -219,14 +219,14 @@ class HPCRunner:
         int or None
             The job ID if submitted successfully, else None.
         """
-        dpath_hpc_configs = self.context.layout.dpath_hpc
+        dpath_hpc_configs = self.study.layout.dpath_hpc
         if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
             raise LayoutError(
                 "The HPC directory with appropriate content needs to exist at "
-                f"{self.context.layout.dpath_hpc} if HPC job submission is requested"
+                f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
             )
 
-        qa = QueueAdapter(directory=str(self.context.layout.dpath_hpc))
+        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
 
         try:
             qa.switch_cluster(hpc_cluster)
@@ -255,9 +255,9 @@ class HPCRunner:
                 NIPOPPY_HPC=hpc_cluster,
                 NIPOPPY_JOB_NAME=job_name,
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
-                NIPOPPY_HPC_PREAMBLE_STRINGS=self.context.config.HPC_PREAMBLE,
+                NIPOPPY_HPC_PREAMBLE_STRINGS=self.study.config.HPC_PREAMBLE,
                 NIPOPPY_COMMANDS=job_array_commands,
-                NIPOPPY_DPATH_ROOT=self.context.layout.dpath_root,
+                NIPOPPY_DPATH_ROOT=self.study.layout.dpath_root,
                 NIPOPPY_PIPELINE_NAME=pipeline_name,
                 NIPOPPY_PIPELINE_VERSION=pipeline_version,
                 NIPOPPY_PIPELINE_STEP=pipeline_step,
@@ -279,7 +279,7 @@ class HPCRunner:
                 f"\nThe job script can be found at {fpath_job_script}."
                 "\nThis file is auto-generated. To modify it, you will need to "
                 "modify the pipeline's HPC configuration in the config file and/or "
-                f"the template job script in {self.context.layout.dpath_hpc}."
+                f"the template job script in {self.study.layout.dpath_hpc}."
             )
 
         if job_id is not None:

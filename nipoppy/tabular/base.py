@@ -261,6 +261,7 @@ class BaseTabular(pd.DataFrame, ABC):
                 if sort:
                     tabular_old = tabular_old.sort_values()
                 if tabular_new.equals(tabular_old):
+                    logger.info(f"No changes to file at {fpath_symlink}")
                     return None
 
         fpath_backup = save_df_with_backup(
