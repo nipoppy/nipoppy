@@ -2,7 +2,6 @@
 
 import tarfile
 from pathlib import Path
-from typing import List, Optional, Tuple
 from collections.abc import Iterable
 
 from nipoppy.config.pipeline_step import AnalysisLevelType

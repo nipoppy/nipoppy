@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import Optional
 from collections.abc import Generator
 
 import click

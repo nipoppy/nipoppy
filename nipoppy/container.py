@@ -8,7 +8,6 @@ import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
 from collections.abc import Iterable
 
 from nipoppy.base import Base

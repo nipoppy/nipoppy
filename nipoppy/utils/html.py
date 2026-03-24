@@ -1,7 +1,6 @@
 """Utilities for processing HTML strings."""
 
 from html.parser import HTMLParser
-from typing import Optional
 from collections.abc import Iterable
 
 COMMON_HTML_TAGS = {

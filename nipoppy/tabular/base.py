@@ -7,7 +7,7 @@ import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from types import NoneType
-from typing import Any, Optional, Union, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
 from collections.abc import Sequence
 
 import pandas as pd

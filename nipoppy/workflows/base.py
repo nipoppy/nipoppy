@@ -8,7 +8,6 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
 from collections.abc import Sequence
 
 from nipoppy.base import Base

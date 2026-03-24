@@ -9,7 +9,7 @@ import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING
 from collections.abc import Iterable
 
 import pandas as pd

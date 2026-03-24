@@ -2,7 +2,6 @@
 
 import inspect
 from abc import ABC
-from typing import Optional
 from collections.abc import Sequence
 
 from nipoppy.exceptions import NipoppyError

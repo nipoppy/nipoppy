@@ -6,7 +6,6 @@ import json
 import re
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional
 from collections.abc import Generator
 
 import pandas as pd
