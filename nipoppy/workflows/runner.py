@@ -113,7 +113,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
     @cached_property
     def bosh_runner(self) -> Callable[..., int]:
-        """Get the container runner service."""
+        """Get the bosh exec command."""
         if self.simulate:
             return run_bosh_simulate
         else:

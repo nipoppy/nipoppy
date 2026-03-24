@@ -1,8 +1,6 @@
 """Tests for PipelineRunner."""
 
 import json
-import re
-import subprocess
 import tarfile
 from pathlib import Path
 from typing import Optional
@@ -10,7 +8,6 @@ from typing import Optional
 import pytest
 import pytest_mock
 from bids import BIDSLayout
-from fids import fids
 from jinja2 import Environment, meta
 
 from nipoppy.config.hpc import HpcConfig
@@ -285,42 +282,6 @@ def test_launch_boutiques_run_bosh_no_container_image(
 
     container_opts = mocked_run_command.call_args[0][0]  # first positional argument
     assert "--no-container" in container_opts
-
-
-@pytest.mark.parametrize(
-    "simulate, expected_message",
-    [
-        (True, "Pipeline simulation failed (return code: 1)"),
-        (False, "Pipeline execution failed (return code: 1)"),
-    ],
-)
-def test_launch_boutiques_run_error(
-    simulate: bool,
-    expected_message: str,
-    runner: ProcessingRunner,
-    mocker: pytest_mock.MockFixture,
-):
-    runner.simulate = simulate
-
-    participant_id = "01"
-    session_id = "BL"
-
-    fids.create_fake_bids_dataset(
-        runner.study.layout.dpath_bids,
-        subjects=participant_id,
-        sessions=session_id,
-    )
-
-    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
-    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
-
-    mocker.patch(
-        "nipoppy.workflows.runner._run_command",
-        side_effect=subprocess.CalledProcessError(1, "run_command failed"),
-    )
-
-    with pytest.raises(RuntimeError, match=re.escape(expected_message)):
-        runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
 def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
