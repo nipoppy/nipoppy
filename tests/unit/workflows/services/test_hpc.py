@@ -9,7 +9,7 @@ from nipoppy.config.hpc import HpcConfig
 from nipoppy.env import PROGRAM_NAME
 from nipoppy.study import Study
 from nipoppy.workflows.services.hpc import HPCRunner
-from tests.conftest import mocked_study_config
+from tests.conftest import get_config
 
 
 @pytest.fixture
@@ -87,7 +87,8 @@ def test_hpc_runner_submit(
 ):
     """Test that HPCRunner can submit a job."""
     # Mock the study config too
-    mocked_study_config(mocker)
+    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
+    mocker.patch("nipoppy.study.Config.load", return_value=config)
 
     mock_qa = mocker.MagicMock()
     mock_qa.submit_job.return_value = 12345

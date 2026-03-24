@@ -4,11 +4,12 @@ import pytest
 import pytest_mock
 
 from nipoppy.study import Study
-from tests.conftest import mocked_study_config
+from tests.conftest import get_config
 
 
 def test_config(study: Study, mocker: pytest_mock.MockFixture):
-    mocked_load = mocked_study_config(mocker)
+    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
+    mocked_load = mocker.patch("nipoppy.study.Config.load", return_value=config)
 
     processed_config = study.config
 

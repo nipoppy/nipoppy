@@ -405,16 +405,6 @@ def study(tmp_path: Path) -> Study:
     return Study(layout=DatasetLayout(dpath_root=dpath_root))
 
 
-def mocked_study_config(mocker: pytest_mock.MockerFixture) -> pytest_mock.MockerFixture:
-    """Mock the study config loading during tests.
-
-    This is needed as the config file doesn't actually exist for the test Study
-    instances.
-    """
-    config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
-    return mocker.patch("nipoppy.study.Config.load", return_value=config)
-
-
 def _set_up_substitution_testing(_object, mocker: pytest_mock.MockerFixture):
     return mocker.patch.object(
         _object, "process_template_json", side_effect=_object.process_template_json
