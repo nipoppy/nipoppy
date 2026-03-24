@@ -1,5 +1,6 @@
 """DICOM file organization."""
 
+import hashlib
 import os
 from pathlib import Path
 from typing import Optional
@@ -86,14 +87,22 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         return fpaths
 
     def apply_fname_mapping(
-        self, fpath_source: Path, participant_id: str, session_id: str
+        self, fpath_source: StrOrPathLike, participant_id: str, session_id: str
     ) -> str:
         """
-        Append the parent directory name to the DICOM files.
+        Apply a mapping from the original (full) file path to destination file name.
 
-        This helps to avoid filename collisions across DICOM series.
+        Prepend a short hash of the path to avoid filename collisions across
+        DICOM series, while ensuring short filenames in nested directory structures.
         """
-        return f"{fpath_source.parent.name}_{fpath_source.name}"
+        fpath_source = Path(fpath_source)
+
+        HASH_LENGTH = 7
+        hash_prefix = hashlib.md5(str(fpath_source).encode("UTF-8")).hexdigest()[
+            :HASH_LENGTH
+        ]
+
+        return f"{hash_prefix}_{fpath_source.name}"
 
     def run_single(self, participant_id: str, session_id: str):
         """Reorganize downloaded DICOM files for a single participant and session."""

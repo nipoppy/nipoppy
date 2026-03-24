@@ -123,9 +123,10 @@ def test_apply_fname_mapping(workflow: DicomReorgWorkflow, mapping_func, expecte
 @pytest.mark.parametrize(
     "fpath_source,expected",
     [
-        (Path("123456.dcm"), "_123456.dcm"),
-        (Path("dirA", "123456.dcm"), "dirA_123456.dcm"),
-        (Path("123", "dicoms.tar.gz"), "123_dicoms.tar.gz"),
+        (Path("123456.dcm"), "5cafb34_123456.dcm"),
+        (Path("dirA", "123456.dcm"), "149e6e5_123456.dcm"),
+        (Path("123", "dicoms.tar.gz"), "18ce098_dicoms.tar.gz"),
+        (Path("123", "456", "dicoms.tar.gz"), "353a687_dicoms.tar.gz"),
     ],
 )
 def test_apply_fname_mapping_default(
@@ -149,14 +150,16 @@ def test_run_single_error_file_exists(workflow: DicomReorgWorkflow):
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
     )
 
-    # create the same file in both the downloaded and organized directories
-    fname = "test.dcm"
+    # create a collision
+    fpath_source = (
+        workflow.study.layout.dpath_pre_reorg / participant_id / session_id / "test.dcm"
+    )
     for fpath in [
-        workflow.study.layout.dpath_pre_reorg / participant_id / session_id / fname,
+        fpath_source,
         workflow.study.layout.dpath_post_reorg
         / participant_id_to_bids_participant_id(participant_id)
         / session_id_to_bids_session_id(session_id)
-        / fname,
+        / workflow.apply_fname_mapping(fpath_source, participant_id, session_id),
     ]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
