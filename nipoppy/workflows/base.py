@@ -192,8 +192,8 @@ class BaseWorkflow(Base, ABC):
         try:
             self.run_setup()
             self.run_main()
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
         finally:
             self.run_cleanup()
 

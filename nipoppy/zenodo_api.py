@@ -3,7 +3,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Self, Tuple
 
 import httpx
 
@@ -58,10 +58,9 @@ class ZenodoAPI:
 
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
-        if hasattr(self, "client") and not self.client.is_closed:
-            self.client.close()
+        self.client.close()
 
-    def __enter__(self) -> "ZenodoAPI":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *args: Any) -> None:
