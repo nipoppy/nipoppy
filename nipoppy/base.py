@@ -2,7 +2,8 @@
 
 import inspect
 from abc import ABC
-from typing import Optional, Sequence
+from typing import Optional
+from collections.abc import Sequence
 
 from nipoppy.exceptions import NipoppyError
 
@@ -12,8 +13,8 @@ class Base(ABC):
 
     def _str_helper(
         self,
-        components: Optional[Sequence] = None,
-        names: Optional[Sequence[str]] = None,
+        components: Sequence | None = None,
+        names: Sequence[str] | None = None,
         sep=", ",
     ) -> str:
         """Generate a custom string representation of an object.

@@ -95,10 +95,10 @@ def workflow_zenodo(workflow: PipelineInstallWorkflow):  # noqa: F811
 
 
 def _assert_files_copied(dpath_source, dpath_dest):
-    paths_source = set(
+    paths_source = {
         path.relative_to(dpath_source) for path in dpath_source.rglob("*")
-    )
-    paths_dest = set(path.relative_to(dpath_dest) for path in dpath_dest.rglob("*"))
+    }
+    paths_dest = {path.relative_to(dpath_dest) for path in dpath_dest.rglob("*")}
     assert paths_source == paths_dest
 
 
@@ -449,7 +449,7 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
     "zenodo_id,exception", [(None, FileOperationError), ("123456", ConfigError)]
 )
 def test_run_main_file_not_found(
-    workflow: PipelineInstallWorkflow, zenodo_id: Optional[str], exception: Exception
+    workflow: PipelineInstallWorkflow, zenodo_id: str | None, exception: Exception
 ):
     # create a non-existent path
     workflow.dpath_pipeline = (

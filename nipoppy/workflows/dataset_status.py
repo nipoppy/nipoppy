@@ -23,7 +23,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

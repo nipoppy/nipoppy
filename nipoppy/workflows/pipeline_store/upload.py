@@ -24,7 +24,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         self,
         dpath_pipeline: StrOrPathLike,
         zenodo_api: ZenodoAPI,
-        record_id: Optional[str] = None,
+        record_id: str | None = None,
         assume_yes: bool = False,
         force: bool = False,
         verbose=False,

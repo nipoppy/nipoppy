@@ -62,7 +62,7 @@ class _Confirm(Confirm):
         indent: int = _INDENT,
         console: Console | None = None,
         password: bool = False,
-        choices: List[str] | None = None,
+        choices: list[str] | None = None,
         show_default: bool = True,
         show_choices: bool = True,
     ):
@@ -120,8 +120,8 @@ class _Console(Console):
     def confirm(
         self,
         prompt: str,
-        kwargs_init: Optional[dict] = None,
-        kwargs_call: Optional[dict] = None,
+        kwargs_init: dict | None = None,
+        kwargs_call: dict | None = None,
     ) -> bool:
         """
         Prompt for confirmation with indenting.
@@ -138,7 +138,7 @@ class _Console(Console):
     @_force_indent_if_internal
     def print(
         self,
-        *renderables: Tuple[RenderableType],
+        *renderables: tuple[RenderableType],
         with_indent: bool = False,
         **kwargs,
     ) -> None:

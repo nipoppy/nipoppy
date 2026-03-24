@@ -53,9 +53,9 @@ FIELD_DESCRIPTION_MAP = {
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
-    pipeline_step: Optional[str] = None,
-    participant_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    pipeline_step: str | None = None,
+    participant_id: str | None = None,
+    session_id: str | None = None,
     sep="-",
 ):
     """Generate a tag for a pipeline."""
@@ -84,7 +84,7 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
     dict
         The JSON object.
     """
-    with open(fpath, "r") as file:
+    with open(fpath) as file:
         try:
             return json.load(file, **kwargs)
         except json.JSONDecodeError as e:
@@ -134,7 +134,7 @@ def add_path_timestamp(
 def save_df_with_backup(
     df: pd.DataFrame,
     fpath_symlink: StrOrPathLike,
-    dname_backups: Optional[str] = None,
+    dname_backups: str | None = None,
     use_relative_path=True,
     dry_run=False,
     **kwargs,

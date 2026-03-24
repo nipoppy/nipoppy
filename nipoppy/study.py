@@ -30,7 +30,7 @@ class Study(Base):
     def __init__(
         self,
         layout: DatasetLayout,
-        logger: Optional[Logger] = None,
+        logger: Logger | None = None,
         verbose: bool = False,
     ):
         """Representation of a Nipoppy study.

@@ -59,7 +59,7 @@ def copy_template(
     """
     logger.debug(f"Copying template {path_source} to {path_dest}")
     if not dry_run:
-        with open(path_source, "r") as f:
+        with open(path_source) as f:
             content = process_template_str(f.read(), **template_kwargs)
         fileops.mkdir(Path(path_dest).parent, dry_run=dry_run)
         with open(path_dest, "w") as f:
@@ -75,7 +75,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         bids_source=None,
         mode="symlink",
         force=False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

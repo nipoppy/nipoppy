@@ -2,7 +2,8 @@
 
 import tarfile
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
+from typing import List, Optional, Tuple
+from collections.abc import Iterable
 
 from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.tracker import TrackerConfig
@@ -25,12 +26,12 @@ class PipelineTracker(BasePipelineWorkflow):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         participant_id: str = None,
         session_id: str = None,
         n_jobs: int = 1,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):
@@ -79,7 +80,7 @@ class PipelineTracker(BasePipelineWorkflow):
     def check_status(
         self,
         relative_paths: StrOrPathLike,
-        relative_dpath_tarred: Optional[StrOrPathLike] = None,
+        relative_dpath_tarred: StrOrPathLike | None = None,
     ):
         """Check the processing status based on a list of expected paths."""
         # collect list of paths in tarball if it exists
@@ -126,7 +127,7 @@ class PipelineTracker(BasePipelineWorkflow):
         return ProcessingStatusTable.status_success
 
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """Get participant-session pairs with BIDS data to run the tracker on."""
         return self.curation_status_table.get_bidsified_participants_sessions(
@@ -137,7 +138,7 @@ class PipelineTracker(BasePipelineWorkflow):
     def apply_analysis_level(
         participants_sessions: Iterable[str],
         analysis_level: AnalysisLevelType,
-    ) -> List[Tuple[str]]:
+    ) -> list[tuple[str]]:
         """Tracker: level is always participant-session."""
         return list(participants_sessions)
 

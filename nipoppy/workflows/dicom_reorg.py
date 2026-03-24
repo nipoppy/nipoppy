@@ -39,7 +39,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         dpath_root: StrOrPathLike,
         copy_files: bool = False,
         check_dicoms: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

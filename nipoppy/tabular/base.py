@@ -7,7 +7,8 @@ import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from types import NoneType
-from typing import Any, Optional, Sequence, Union, get_args, get_origin
+from typing import Any, Optional, Union, get_args, get_origin
+from collections.abc import Sequence
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -245,7 +246,7 @@ class BaseTabular(pd.DataFrame, ABC):
     def save_with_backup(
         self,
         fpath_symlink: StrOrPathLike,
-        dname_backups: Optional[str] = None,
+        dname_backups: str | None = None,
         use_relative_path=True,
         sort=True,
         dry_run=False,

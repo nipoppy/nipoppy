@@ -24,19 +24,19 @@ class ProcessingRunner(Runner):
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         name: str = "process",
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         participant_id: str = None,
         session_id: str = None,
-        use_subcohort: Optional[StrOrPathLike] = None,
+        use_subcohort: StrOrPathLike | None = None,
         simulate: bool = False,
         keep_workdir: bool = False,
         tar: bool = False,
-        write_subcohort: Optional[StrOrPathLike] = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        write_subcohort: StrOrPathLike | None = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
-        hpc: Optional[str] = None,
+        hpc: str | None = None,
     ):
         super().__init__(
             dpath_root=dpath_root,
@@ -115,7 +115,7 @@ class ProcessingRunner(Runner):
         return fpath_tarred
 
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """Generate a list of participant and session IDs to run.
 
