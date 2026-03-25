@@ -123,10 +123,12 @@ def test_apply_fname_mapping(workflow: DicomReorgWorkflow, mapping_func, expecte
 @pytest.mark.parametrize(
     "fpath_source,expected",
     [
-        (Path("123456.dcm"), "5cafb34_123456.dcm"),
-        (Path("dirA", "123456.dcm"), "149e6e5_123456.dcm"),
-        (Path("123", "dicoms.tar.gz"), "18ce098_dicoms.tar.gz"),
-        (Path("123", "456", "dicoms.tar.gz"), "353a687_dicoms.tar.gz"),
+        ("123456.dcm", "5058f1a_123456.dcm"),
+        (Path("dirA", "123456.dcm"), "b0b339e_123456.dcm"),
+        (Path("dirA", "654321.dcm"), "b0b339e_654321.dcm"),
+        (Path("123", "dicoms.tar.gz"), "202cb96_dicoms.tar.gz"),
+        (Path("123", "456", "dicoms.tar.gz"), "206d81c_dicoms.tar.gz"),
+        (Path("321", "456", "dicoms.tar.gz"), "7a3d02b_dicoms.tar.gz"),
     ],
 )
 def test_apply_fname_mapping_default(

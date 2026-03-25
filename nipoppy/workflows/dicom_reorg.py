@@ -18,6 +18,8 @@ from nipoppy.utils.bids import (
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow, _save_tabular_file
 
+HASH_LENGTH = 7
+
 logger = get_logger()
 
 
@@ -96,9 +98,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         DICOM series, while ensuring short filenames in nested directory structures.
         """
         fpath_source = Path(fpath_source)
-
-        HASH_LENGTH = 7
-        hash_prefix = hashlib.md5(str(fpath_source).encode("UTF-8")).hexdigest()[
+        hash_prefix = hashlib.md5(str(fpath_source.parent).encode("UTF-8")).hexdigest()[
             :HASH_LENGTH
         ]
 
