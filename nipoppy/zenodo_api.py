@@ -1,5 +1,7 @@
 """Client for Zenodo API."""
 
+from __future__ import annotations
+
 import hashlib
 import logging
 from pathlib import Path
