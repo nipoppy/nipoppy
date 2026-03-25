@@ -1066,6 +1066,30 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: ProcessingRunner)
     ]
 
 
+def test_run_main_write_subcohort(
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+    tmp_path: Path,
+):
+    mocker.patch("os.makedirs", mocker.MagicMock())
+    mocked_handle_write_subcohort = mocker.patch.object(
+        runner, "_handle_write_subcohort"
+    )
+    runner.write_subcohort = tmp_path / "mocked"
+
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=runner.study.layout.dpath_bids,
+    )
+    manifest.save_with_backup(runner.study.layout.fpath_manifest)
+
+    runner.run_main()
+
+    mocked_handle_write_subcohort.assert_called_once()
+
+
 @pytest.mark.parametrize(
     "tar, extra_flags",
     [
