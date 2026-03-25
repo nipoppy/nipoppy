@@ -1,13 +1,12 @@
 """Client for Zenodo API."""
 
-from __future__ import annotations
-
 import hashlib
 import logging
 from pathlib import Path
-from typing import Any, Optional, Self, Tuple
+from typing import Any, Optional, Tuple
 
 import httpx
+from typing_extensions import Self
 
 
 class ChecksumError(Exception): ...  # noqa E701
