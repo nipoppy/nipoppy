@@ -124,6 +124,15 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     }
     (runner.dpath_pipeline_bundle / fname_descriptor).write_text(json.dumps(descriptor))
     (runner.dpath_pipeline_bundle / fname_invocation).write_text(json.dumps(invocation))
+
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
+    create_empty_dataset(runner.study.layout.dpath_root)
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=runner.study.layout.dpath_bids,
+    )
+    manifest.save_with_backup(runner.study.layout.fpath_manifest)
     return runner
 
 
@@ -662,14 +671,6 @@ def test_run_multiple(runner: ProcessingRunner):
     runner.participant_id = participant_id
     runner.session_id = session_id
 
-    participants_and_sessions = {"01": ["1"], "02": ["2"]}
-    create_empty_dataset(runner.study.layout.dpath_root)
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(runner.study.layout.fpath_manifest)
     runner.run_setup()
     runner.run_main()
 
@@ -1035,29 +1036,15 @@ def test_submit_hpc_job_job_id(
 
 
 def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: ProcessingRunner):
-    # Mock the _submit_hpc_job method
     mocker.patch("os.makedirs", mocker.MagicMock())
     mocked_submit_hpc_job = mocker.patch.object(runner, "_submit_hpc_job")
 
-    # Set the hpc attribute to "exists" to simulate that the HPC is available
     runner.hpc = "exists"
 
-    # Create test manifest and BIDS data
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(runner.study.layout.fpath_manifest)
-
-    # Call the run_main method
     runner.run_main()
 
-    # Assert that the _submit_hpc_job method was called
     mocked_submit_hpc_job.assert_called_once()
 
-    # Check "participants_sessions" positional argument
     assert list(mocked_submit_hpc_job.call_args[0][0]) == [
         ("01", "1"),
         ("01", "2"),
@@ -1071,19 +1058,10 @@ def test_run_main_write_subcohort(
     mocker: pytest_mock.MockFixture,
     tmp_path: Path,
 ):
-    mocker.patch("os.makedirs", mocker.MagicMock())
     mocked_handle_write_subcohort = mocker.patch.object(
         runner, "_handle_write_subcohort"
     )
     runner.write_subcohort = tmp_path / "mocked"
-
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(runner.study.layout.fpath_manifest)
 
     runner.run_main()
 
