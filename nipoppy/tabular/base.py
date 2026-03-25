@@ -273,11 +273,7 @@ class BaseTabular(pd.DataFrame, ABC):
             sep=self.sep,
         )
 
-        if fpath_backup is not None:
-            logger.info(f"Saved to {fpath_symlink} (-> {fpath_backup})")
-        else:
-            logger.info(f"No changes to file at {fpath_symlink}")
-
+        logger.info(f"Saved to {fpath_symlink} (-> {fpath_backup})")
         return fpath_backup
 
     def equals(self, other: object) -> bool:
