@@ -29,4 +29,4 @@ jobs:
 
     - name: Run linkcheck
       run: |
-        python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/_build/linkcheck
+        python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
