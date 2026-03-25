@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import httpx
 import pytest
 
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
@@ -9,6 +10,7 @@ from ..conftest import datetime_fixture  # noqa F401
 from ..conftest import TEST_PIPELINE
 
 ZENODO_SANDBOX = True
+DEFAULT_PREVIEW = "config.json"
 
 
 @pytest.fixture(scope="function")
@@ -54,10 +56,11 @@ def test_download_record_files(
     record_id = record_id_prefix + os.environ["ZENODO_ID"]
     zenodo_api.download_record_files(record_id, tmp_path)
 
-    assert len(list(tmp_path.iterdir())) == 6
+    expected_files = list(TEST_PIPELINE.iterdir())
+    assert len(list(tmp_path.iterdir())) == len(expected_files)
 
     # Verify the content of the downloaded files
-    for file in TEST_PIPELINE.iterdir():
+    for file in expected_files:
         assert tmp_path.joinpath(file.name).exists()
         assert tmp_path.joinpath(file.name).read_text() == file.read_text()
 
@@ -84,10 +87,11 @@ def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
 )
 def test_create_new_version(zenodo_api: ZenodoAPI, metadata: dict):
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-    zenodo_api.upload_pipeline(
+    zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
         record_id=os.environ["ZENODO_ID"],
+        default_preview_filename=DEFAULT_PREVIEW,
     )
 
 
@@ -103,11 +107,11 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
     with pytest.raises(
         ZenodoAPIError,
         match=(
-            f"Failed to create a new version for zenodo.{record_id}: "
+            f"Failed to get latest version for zenodo.{record_id}: "
             "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
         ),
     ):
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=TEST_PIPELINE,
             metadata=metadata,
             record_id=record_id,
@@ -120,11 +124,20 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
     reason="Requires Zenodo token",
 )
 def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
+
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-    zenodo_api.upload_pipeline(
+    doi = zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
         metadata=metadata,
+        default_preview_filename=DEFAULT_PREVIEW,
     )
+
+    # extract the new record ID from the DOI (e.g. 10.5072/zenodo.123456)
+    new_record_id = doi.split("/")[-1].removeprefix("zenodo.")
+
+    # verify that the default preview file is set correctly
+    response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
+    assert response.json()["default_preview"] == DEFAULT_PREVIEW
 
 
 @pytest.mark.api
@@ -138,7 +151,7 @@ def test_create_new_record_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
             "{'status': 403, 'message': 'Permission denied.'}"
         ),
     ):
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=TEST_PIPELINE,
             metadata=metadata,
         )
@@ -151,3 +164,31 @@ def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     results = zenodo_api.search_records(query, keywords=keywords)
     assert len(results["hits"]) > 0
     assert results["total"] > 0
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_ID")),
+    reason="Requires Zenodo record ID",
+)
+def test_get_latest_version_id(zenodo_api: ZenodoAPI):
+    record_id = os.environ["ZENODO_ID"]
+    assert zenodo_api.get_latest_version_id(record_id) != record_id
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_ID")),
+    reason="Requires Zenodo record ID",
+)
+def test_get_latest_version_id_invalid(zenodo_api: ZenodoAPI):
+    record_id = "0"
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=(
+            f"Failed to get latest version for zenodo.{record_id}: "
+            "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
+        ),
+    ):
+        zenodo_api.get_latest_version_id(record_id)
