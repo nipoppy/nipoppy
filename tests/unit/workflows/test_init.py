@@ -38,6 +38,28 @@ def fake_bids_root(tmp_path: Path) -> Path:
     return bids_dir_path
 
 
+def _assert_manifest_creation(
+    workflow: InitWorkflow,
+    participant_ids: list[str] | None = None,
+    session_ids: list[str] | None = None,
+):
+    # default is for the fake BIDS dataset created in the fixture
+    if participant_ids is None:
+        participant_ids = ["01", "01"]
+    if session_ids is None:
+        session_ids = ["1", "2"]
+    datatypes = [["anat", "func"] for _ in participant_ids]
+
+    assert isinstance(workflow.study.manifest, Manifest)
+    assert (
+        workflow.study.manifest[Manifest.col_participant_id].to_list()
+        == participant_ids
+    )
+    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == session_ids
+    assert workflow.study.manifest[Manifest.col_session_id].to_list() == session_ids
+    assert workflow.study.manifest[Manifest.col_datatype].to_list() == datatypes
+
+
 def exist_or_none(o: object, s: str) -> bool:
     # walrus operator ":=" does assignment inside the "if" statement
     if attr := getattr(o, s, None):
@@ -255,17 +277,7 @@ def test_init_bids(workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path)
     workflow.bids_source = fake_bids_root
     workflow.run()
 
-    assert isinstance(workflow.study.manifest, Manifest)
-    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == [
-        "01",
-        "01",
-    ]
-    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    assert workflow.study.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
-        ["anat", "func"],
-        ["anat", "func"],
-    ]
+    _assert_manifest_creation(workflow)
 
     source_files = [x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")]
     target_files = [
@@ -297,17 +309,7 @@ def test_init_bids_move_mode(
     workflow.mode = "move"
     workflow.run()
 
-    assert isinstance(workflow.study.manifest, Manifest)
-    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == [
-        "01",
-        "01",
-    ]
-    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    assert workflow.study.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
-        ["anat", "func"],
-        ["anat", "func"],
-    ]
+    _assert_manifest_creation(workflow)
 
     source_files_after_init = [
         x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
@@ -343,17 +345,7 @@ def test_init_bids_symlink_mode(
     workflow.mode = "symlink"
     workflow.run()
 
-    assert isinstance(workflow.study.manifest, Manifest)
-    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == [
-        "01",
-        "01",
-    ]
-    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == ["1", "2"]
-    assert workflow.study.manifest[Manifest.col_session_id].to_list() == ["1", "2"]
-    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
-        ["anat", "func"],
-        ["anat", "func"],
-    ]
+    _assert_manifest_creation(workflow)
 
     source_files_after_init = [
         x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
@@ -453,12 +445,6 @@ def test_init_bids_warning_no_session(
         in caplog.text
     )
 
-    assert isinstance(workflow.study.manifest, Manifest)
-    assert workflow.study.manifest[Manifest.col_participant_id].to_list() == ["01"]
-    assert workflow.study.manifest[Manifest.col_visit_id].to_list() == [FAKE_SESSION_ID]
-    assert workflow.study.manifest[Manifest.col_session_id].to_list() == [
-        FAKE_SESSION_ID
-    ]
-    assert workflow.study.manifest[Manifest.col_datatype].to_list() == [
-        ["anat", "func"],
-    ]
+    _assert_manifest_creation(
+        workflow, participant_ids=["01"], session_ids=[FAKE_SESSION_ID]
+    )
