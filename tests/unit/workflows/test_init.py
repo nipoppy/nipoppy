@@ -170,6 +170,10 @@ def test_custom_layout(dpath_root: Path):
     assert (dpath_root / "proc").exists()
     assert (dpath_root / "dicom").exists()
 
+    # check that BIDS-specific files are not created (not part of custom layout)
+    assert not (dpath_root / "dataset_description.json").exists()
+    assert not (dpath_root / ".bidsignore").exists()
+
 
 def test_bids_dataset_description_created(dpath_root: Path):
     """Test that dataset_description.json is created with BIDS study layout."""
@@ -198,7 +202,7 @@ def test_bidsignore_created(dpath_root: Path):
     shutil.which("bids-validator-deno") is None,
     reason="bids-validator-deno not installed",
 )
-def test_bids_study_layout_passes_validation(dpath_root: Path):
+def test_default_layout_passes_bids_validation(dpath_root: Path):
     """Test that BIDS study layout passes BIDS validation with no errors."""
     workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
