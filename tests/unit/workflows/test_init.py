@@ -138,6 +138,17 @@ def test_non_empty_dir_forced(workflow: InitWorkflow, dpath_root: Path):
     workflow.run()
 
 
+def test_init_twice_force(workflow: InitWorkflow):
+    # run once
+    workflow.run()
+
+    # run again with force=True, should succeed and not raise an error
+    workflow.force = True
+    workflow.run()
+
+    assert_layout_creation(workflow, dpath_root)
+
+
 def test_handle_bids_source_force(
     workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
 ):
