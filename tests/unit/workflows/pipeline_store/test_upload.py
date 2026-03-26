@@ -212,9 +212,11 @@ def test_confirm_upload_no(
                 {"links": {"self_html": "https://zenodo.org/records/123456"}},
                 {"links": {"self_html": "https://zenodo.org/records/123456"}},
             ],
-            # TODO: This should be a list of URLs, not a single string
-            # We can handle the conversion in the test itself
-            "https://zenodo.org/records/123456, https://zenodo.org/records/123456, https://zenodo.org/records/123456",  # noqa: E501
+            [
+                "https://zenodo.org/records/123456",
+                "https://zenodo.org/records/123456",
+                "https://zenodo.org/records/123456",
+            ],
         ]
     ],
 )
@@ -222,7 +224,7 @@ def test_confirm_upload_no(
 def test_upload_duplicate_record(
     workflow: PipelineUploadWorkflow,
     hits: list,
-    potential_duplicates: str,
+    potential_duplicates: list[str],
     caplog: pytest.LogCaptureFixture,
 ):
     workflow.assume_yes = True
@@ -233,7 +235,7 @@ def test_upload_duplicate_record(
         match="It looks like this pipeline already exists in Zenodo. Aborting.",
     ):
         workflow.run()
-        assert potential_duplicates in caplog.text
+        assert ", ".join(potential_duplicates) in caplog.text
 
 
 def test_force_upload_duplicate_record(workflow: PipelineUploadWorkflow):
