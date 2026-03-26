@@ -25,6 +25,19 @@ def workflow(dpath_root: Path) -> InitWorkflow:
     return InitWorkflow(dpath_root=dpath_root)
 
 
+@pytest.fixture
+def fake_bids_root(tmp_path: Path) -> Path:
+    """Create a fake BIDS dataset (with session folders) for testing."""
+    bids_dir_path = tmp_path / "bids"
+    fids.create_fake_bids_dataset(
+        output_dir=bids_dir_path,
+        subjects=["01"],
+        sessions=["1", "2"],
+        datatypes=["anat", "func"],
+    )
+    return bids_dir_path
+
+
 def exist_or_none(o: object, s: str) -> bool:
     # walrus operator ":=" does assignment inside the "if" statement
     if attr := getattr(o, s, None):
@@ -231,7 +244,7 @@ def test_run_cleanup(
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
 
-def test_init_bids(workflow: InitWorkflow, tmp_path: Path):
+def test_init_bids(workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path):
     """Create dummy BIDS dataset to use during init.
 
     Make sure:
@@ -239,14 +252,7 @@ def test_init_bids(workflow: InitWorkflow, tmp_path: Path):
     - all the files are there after init (by default the copy mode is used).
     """
     dpath_root = workflow.study.layout.dpath_root
-    bids_to_copy = tmp_path / "bids"
-    fids.create_fake_bids_dataset(
-        output_dir=bids_to_copy,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat", "func"],
-    )
-    workflow.bids_source = bids_to_copy
+    workflow.bids_source = fake_bids_root
     workflow.run()
 
     assert isinstance(workflow.study.manifest, Manifest)
@@ -261,7 +267,7 @@ def test_init_bids(workflow: InitWorkflow, tmp_path: Path):
         ["anat", "func"],
     ]
 
-    source_files = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
+    source_files = [x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")]
     target_files = [
         x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
     ]
@@ -272,7 +278,9 @@ def test_init_bids(workflow: InitWorkflow, tmp_path: Path):
     assert (dpath_root / "bids" / "README.md").exists()
 
 
-def test_init_bids_move_mode(workflow: InitWorkflow, tmp_path: Path):
+def test_init_bids_move_mode(
+    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
+):
     """Create dummy BIDS dataset to use during init and use move mode.
 
     Make sure:
@@ -280,19 +288,12 @@ def test_init_bids_move_mode(workflow: InitWorkflow, tmp_path: Path):
     - all the files are moved after init and the source is empty.
     """
     dpath_root = workflow.study.layout.dpath_root
-    bids_to_copy = tmp_path / "bids"
-    fids.create_fake_bids_dataset(
-        output_dir=bids_to_copy,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat", "func"],
-    )
 
     source_files_before_init = [
-        x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
 
-    workflow.bids_source = bids_to_copy
+    workflow.bids_source = fake_bids_root
     workflow.mode = "move"
     workflow.run()
 
@@ -309,7 +310,7 @@ def test_init_bids_move_mode(workflow: InitWorkflow, tmp_path: Path):
     ]
 
     source_files_after_init = [
-        x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
     target_files = [
         x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
@@ -323,7 +324,9 @@ def test_init_bids_move_mode(workflow: InitWorkflow, tmp_path: Path):
     assert (dpath_root / "bids" / "README.md").exists()
 
 
-def test_init_bids_symlink_mode(workflow: InitWorkflow, tmp_path: Path):
+def test_init_bids_symlink_mode(
+    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
+):
     """Create dummy BIDS dataset to use during init and use move symlink.
 
     Make sure:
@@ -331,19 +334,12 @@ def test_init_bids_symlink_mode(workflow: InitWorkflow, tmp_path: Path):
     - all the files are linked after init to the source.
     """
     dpath_root = workflow.study.layout.dpath_root
-    bids_to_link = tmp_path / "bids"
-    fids.create_fake_bids_dataset(
-        output_dir=bids_to_link,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat", "func"],
-    )
 
     source_files_before_init = [
-        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
 
-    workflow.bids_source = bids_to_link
+    workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
     workflow.run()
 
@@ -360,7 +356,7 @@ def test_init_bids_symlink_mode(workflow: InitWorkflow, tmp_path: Path):
     ]
 
     source_files_after_init = [
-        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
 
     for f in source_files_before_init:
@@ -369,13 +365,15 @@ def test_init_bids_symlink_mode(workflow: InitWorkflow, tmp_path: Path):
     assert (dpath_root / "bids").is_symlink()
     # only the directory is linked, not the files within
 
-    assert (dpath_root / "bids").readlink() == bids_to_link
+    assert (dpath_root / "bids").readlink() == fake_bids_root
 
     assert len(source_files_after_init) == 25
     assert (dpath_root / "bids" / "README.md").exists()
 
 
-def test_init_bids_symlink_readonly(workflow: InitWorkflow, tmp_path: Path):
+def test_init_bids_symlink_readonly(
+    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
+):
     """Create dummy BIDS dataset to use during init and use move symlink.
 
     The BIDS dataset is read-only on disk w/o a README.
@@ -383,65 +381,45 @@ def test_init_bids_symlink_readonly(workflow: InitWorkflow, tmp_path: Path):
     - InitWorkflow succeeds while warning no README could be created.
     """
     dpath_root = workflow.study.layout.dpath_root
-    bids_to_link = tmp_path / "bids"
-    fids.create_fake_bids_dataset(
-        output_dir=bids_to_link,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat", "func"],
-    )
 
     source_files_before_init = [
-        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
 
     # make the source is read-only
-    os.chmod(bids_to_link, 0o555)  # +rx
+    os.chmod(fake_bids_root, 0o555)  # +rx
 
-    workflow.bids_source = bids_to_link
+    workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
     workflow.run()
 
     source_files_after_init = [
-        x.relative_to(bids_to_link) for x in bids_to_link.glob("**/*")
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
 
     assert len(source_files_after_init) == len(source_files_before_init)
     assert not (dpath_root / "bids" / "README.md").exists()
 
 
-def test_init_bids_invalid_mode(workflow: InitWorkflow, tmp_path: Path):
+def test_init_bids_invalid_mode(workflow: InitWorkflow, fake_bids_root: Path):
     """Create dummy BIDS dataset and pass an invalid mode.
 
     Make sure:
     - An error is raised when an invalid mode is used.
     """
-    bids_to_copy = tmp_path / "bids"
-    fids.create_fake_bids_dataset(
-        output_dir=bids_to_copy,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat", "func"],
-    )
-
     # mode is invalid, should raise an error
-    workflow.bids_source = bids_to_copy
+    workflow.bids_source = fake_bids_root
     workflow.mode = "something"
     with pytest.raises(ValueError, match="Invalid mode: something"):
         workflow.run()
 
 
-def test_init_bids_dry_run(workflow: InitWorkflow, tmp_path: Path):
+def test_init_bids_dry_run(
+    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
+):
     """Copy no file when running in dry mode."""
     dpath_root = workflow.study.layout.dpath_root
-    bids_to_copy = tmp_path / "bids"
-    fids.create_fake_bids_dataset(
-        output_dir=bids_to_copy,
-        subjects=["01"],
-        sessions=["1", "2"],
-        datatypes=["anat", "func"],
-    )
-    workflow.bids_source = bids_to_copy
+    workflow.bids_source = fake_bids_root
     workflow.dry_run = True
     workflow.run()
 
@@ -450,7 +428,9 @@ def test_init_bids_dry_run(workflow: InitWorkflow, tmp_path: Path):
 
 @pytest.mark.no_xdist
 def test_init_bids_warning_no_session(
-    workflow: InitWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ):
     """Create dummy BIDS dataset with no session to use during init.
 
@@ -463,7 +443,7 @@ def test_init_bids_warning_no_session(
     fids.create_fake_bids_dataset(
         output_dir=bids_to_copy,
         subjects=["01"],
-        sessions=None,
+        sessions=None,  # no session-level folders
         datatypes=["anat", "func"],
     )
     workflow.bids_source = bids_to_copy
