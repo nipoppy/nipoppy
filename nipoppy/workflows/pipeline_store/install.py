@@ -233,9 +233,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         # generate destination path
         dpath_target = self.study.layout.get_dpath_pipeline_bundle(
-            pipeline_config.PIPELINE_TYPE,
-            pipeline_config.NAME,
-            pipeline_config.VERSION,
+            pipeline_config.PIPELINE_TYPE, pipeline_config.NAME, pipeline_config.VERSION
         )
 
         # check if the target directory already exists
@@ -274,7 +272,3 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             f"{pipeline_config.NAME}, version {pipeline_config.VERSION} at "
             f"{dpath_target}"
         )
-
-    def run_cleanup(self):
-        """Close resources used by the workflow."""
-        self.zenodo_api.close()

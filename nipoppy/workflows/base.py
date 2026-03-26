@@ -189,13 +189,9 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        try:
-            self.run_setup()
-            self.run_main()
-        except Exception:
-            raise
-        finally:
-            self.run_cleanup()
+        self.run_setup()
+        self.run_main()
+        self.run_cleanup()
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
