@@ -138,38 +138,30 @@ def test_non_empty_dir_forced(workflow: InitWorkflow, dpath_root: Path):
     workflow.run()
 
 
-def test_force_with_bids_source_existing_bids_dir(
-    workflow: InitWorkflow, dpath_root: Path, tmp_path: Path
+def test_handle_bids_source_force(
+    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
 ):
     """Test --force with --bids-source when BIDS directory already exists."""
-    # Create a source BIDS dataset
-    bids_source = tmp_path / "source_bids"
-    bids_source.mkdir()
-
     # Create target with existing bids directory
     existing_bids = workflow.study.layout.dpath_bids
     existing_bids.mkdir(parents=True)
     (existing_bids / "old_file.txt").write_text("old content")
 
     # Test with force=True - should succeed
-    workflow.bids_source = bids_source
+    workflow.bids_source = fake_bids_root
     workflow.mode = "copy"
     workflow.force = True
-    workflow.run()
+    workflow.handle_bids_source()
 
     # Verify old content was replaced
     assert existing_bids.exists()
     assert not (existing_bids / "old_file.txt").exists()
 
 
-def test_force_with_bids_source_existing_bids_symlink(
-    workflow: InitWorkflow, dpath_root: Path, tmp_path: Path
+def test_handle_bids_source_force_symlink(
+    workflow: InitWorkflow, fake_bids_root: Path, dpath_root: Path, tmp_path: Path
 ):
     """Test --force with --bids-source when BIDS symlink already exists."""
-    # Create a source BIDS dataset
-    bids_source = tmp_path / "source_bids"
-    bids_source.mkdir()
-
     # Create another target for the old symlink
     old_target = tmp_path / "old_bids"
     old_target.mkdir()
@@ -181,14 +173,14 @@ def test_force_with_bids_source_existing_bids_symlink(
     existing_bids_symlink.symlink_to(old_target)
 
     # Test with force=True - should succeed
-    workflow.bids_source = bids_source
+    workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
     workflow.force = True
-    workflow.run()
+    workflow.handle_bids_source()
 
     # Verify old symlink was replaced
     assert existing_bids_symlink.is_symlink()
-    assert existing_bids_symlink.resolve() == bids_source.resolve()
+    assert existing_bids_symlink.resolve() == fake_bids_root.resolve()
     assert old_target.exists()  # Old target should remain
 
 
@@ -267,7 +259,6 @@ def test_run_cleanup(workflow: InitWorkflow, caplog: pytest.LogCaptureFixture):
 
 def test_init_bids(
     workflow: InitWorkflow,
-    mode: str,
     fake_bids_root: Path,
     mocker: pytest_mock.MockerFixture,
 ):
@@ -278,9 +269,7 @@ def test_init_bids(
     - handle_bids_source is called
     - README has been created
     """
-    dpath_root = workflow.study.layout.dpath_root
     workflow.bids_source = fake_bids_root
-    workflow.mode = mode
 
     mocked_handle_bids_source = mocker.patch.object(
         workflow, "handle_bids_source", wraps=workflow.handle_bids_source
@@ -288,9 +277,9 @@ def test_init_bids(
 
     workflow.run()
 
+    assert_layout_creation(workflow, workflow.study.layout.dpath_root)
     _assert_manifest_creation(workflow)
     mocked_handle_bids_source.assert_called_once()
-    assert (dpath_root / "bids" / "README.md").exists()
 
 
 def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root: Path):
@@ -369,30 +358,25 @@ def test_handle_bids_source_symlink(workflow: InitWorkflow, fake_bids_root: Path
     assert (dpath_root / "bids").readlink() == fake_bids_root
 
 
-def test_init_bids_symlink_readonly(workflow: InitWorkflow, fake_bids_root: Path):
+def test_init_bids_readonly(
+    workflow: InitWorkflow, fake_bids_root: Path, caplog: pytest.LogCaptureFixture
+):
     """
-    Test init from an existing BIDS dataset that is read-only and has no README.
+    Test with an existing BIDS dataset that is read-only and has no README.
 
     No README should be created.
     """
     dpath_root = workflow.study.layout.dpath_root
 
-    source_files_before_init = [
-        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
-    ]
-
-    # make the source is read-only
+    # make the source read-only
     os.chmod(fake_bids_root, 0o555)  # +rx
 
     workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
+
     workflow.run()
 
-    source_files_after_init = [
-        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
-    ]
-
-    assert len(source_files_after_init) == len(source_files_before_init)
+    assert "Skipping README creation" in caplog.text
     assert not (dpath_root / "bids" / "README.md").exists()
 
 
@@ -409,17 +393,16 @@ def test_init_bids_dry_run(
 
 
 @pytest.mark.no_xdist
-def test_init_bids_warning_no_session(
+def test_manifest_from_bids_dataset_no_sessions(
     workflow: InitWorkflow,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ):
-    """Create dummy BIDS dataset with no session to use during init.
+    """Test manifest creation from a BIDS dataset with no session-level folders.
 
     Make sure:
     - raise a warning if subject has no session.
     - manifest is created with the right content
-    - all the files are there after init.
     """
     bids_to_copy = tmp_path / "bids"
     fids.create_fake_bids_dataset(
@@ -429,7 +412,9 @@ def test_init_bids_warning_no_session(
         datatypes=["anat", "func"],
     )
     workflow.bids_source = bids_to_copy
-    workflow.run()
+    workflow.handle_bids_source()
+    workflow._init_manifest_from_bids_dataset()
+
     assert (
         f"Could not find session-level folder(s) for participant sub-01, using session {FAKE_SESSION_ID} in the manifest"
         in caplog.text
