@@ -48,8 +48,8 @@ titlesonly:
 caption: Tutorials
 ---
 tutorials/mriqc_from_bids/index
+Video series<tutorials/videos/index>
 tutorials/integrations/index
-tutorials/videos/index
 ```
 
 ```{toctree}
