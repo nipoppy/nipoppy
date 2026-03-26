@@ -1,6 +1,6 @@
 {
     "dpath_bids": {
-        "path": "bids",
+        "path": "sourcedata/imaging/raw",
         "description": "This directory contains the raw dataset converted to the BIDS standard."
     },
     "dpath_derivatives": {
@@ -12,7 +12,7 @@
         "description": "This directory is for the unorganized or arbitrarily organized source data (imaging and tabular)."
     },
     "dpath_src_tabular": {
-        "path": "sourcedata/tabular",
+        "path": "sourcedata/tabular/downloads",
         "description": "This directory is for the unorganized or arbitrarily organized tabular data."
     },
     "dpath_src_imaging": {
@@ -33,18 +33,18 @@
     },
     "dpath_code": {
         "path": "code",
-        "description": "This directory is for custom code."
+        "description": "This directory is for custom code at the study level."
     },
     "dpath_hpc": {
         "path": "code/hpc",
         "description": "This directory is for HPC job submission templates. It can be deleted if HPC job submission is not needed."
     },
     "dpath_containers": {
-        "path": "containers",
+        "path": "code/containers",
         "description": "This directory is for storing the container image files for the BIDS conversion/processing pipelines."
     },
     "dpath_pipelines": {
-        "path": "pipelines",
+        "path": ".nipoppy/pipelines",
         "description": "This directory is for storing the Nipoppy configuration information and custom code."
     },
     "dpath_scratch": {
@@ -64,23 +64,23 @@
         "description": "This directory contains log files."
     },
     "dpath_tabular": {
-        "path": "tabular",
+        "path": "sourcedata/tabular/raw",
         "description": "This directory is for tabular/phenotypic data."
     },
     "dpath_assessments": {
-        "path": "tabular/assessments",
+        "path": "sourcedata/tabular/raw/assessments",
         "description": "This directory is for assessments data."
     },
     "fpath_config": {
-        "path": "global_config.json",
-        "description": "The configuration file for a dataset is where all data processing is configured."
+        "path": ".nipoppy/config.json",
+        "description": "The configuration file for the study/dataset where all data processing is configured."
     },
     "fpath_curation_status": {
         "path": "sourcedata/imaging/curation_status.tsv",
         "description": "The curation status file is generated/updated internally and is used to keep track of the raw data organization and BIDSification process."
     },
     "fpath_manifest": {
-        "path": "manifest.tsv",
+        "path": ".nipoppy/manifest.tsv",
         "description": "The manifest file lists all expected study participants and visits."
     },
     "fpath_processing_status": {
@@ -88,11 +88,19 @@
         "description": "The processing status file lists availability of derived imaging data and pipeline processing statuses."
     },
     "fpath_demographics": {
-        "path": "tabular/demographics.tsv",
+        "path": "sourcedata/tabular/raw/demographics.tsv",
         "description": "The demographics file contains demographic information for study participants."
     },
     "fpath_harmonized": {
-        "path": "tabular/harmonized.tsv",
+        "path": "sourcedata/tabular/raw/harmonized.tsv",
         "description": "The harmonized phenotypic data file can be obtained using the Neurobagel CLI."
+    },
+    "fpath_bids_dataset_description": {
+        "path": "dataset_description.json",
+        "description": "The dataset description file contains metadata about the dataset according to the BIDS specification."
+    },
+    "fpath_bidsignore": {
+        "path": ".bidsignore",
+        "description": "The .bidsignore file lists files and directories to exclude from BIDS validation."
     }
 }
