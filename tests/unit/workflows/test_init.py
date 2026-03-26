@@ -106,15 +106,16 @@ def test_force_with_bids_source_existing_bids_dir(dpath_root: Path, tmp_path: Pa
     bids_source = tmp_path / "source_bids"
     bids_source.mkdir()
 
-    # Create target with existing bids directory
-    existing_bids = dpath_root / "bids"
-    existing_bids.mkdir(parents=True)
-    (existing_bids / "old_file.txt").write_text("old content")
-
     # Test with force=True - should succeed
     workflow = InitWorkflow(
         dpath_root=dpath_root, bids_source=bids_source, mode="copy", force=True
     )
+
+    # Create target with existing bids directory
+    existing_bids = workflow.study.layout.dpath_bids
+    existing_bids.mkdir(parents=True)
+    (existing_bids / "old_file.txt").write_text("old content")
+
     workflow.run()
 
     # Verify old content was replaced
@@ -133,15 +134,16 @@ def test_force_with_bids_source_existing_bids_symlink(dpath_root: Path, tmp_path
     old_target.mkdir()
     (old_target / "old_file.txt").write_text("old content")
 
-    # Create target with existing bids symlink
-    dpath_root.mkdir(parents=True)
-    existing_bids_symlink = dpath_root / "bids"
-    existing_bids_symlink.symlink_to(old_target)
-
     # Test with force=True - should succeed
     workflow = InitWorkflow(
         dpath_root=dpath_root, bids_source=bids_source, mode="symlink", force=True
     )
+
+    # Create target with existing bids symlink
+    dpath_root.mkdir(parents=True)
+    existing_bids_symlink = workflow.study.layout.dpath_bids
+    existing_bids_symlink.symlink_to(old_target)
+
     workflow.run()
 
     # Verify old symlink was replaced
@@ -171,9 +173,7 @@ def test_custom_layout(dpath_root: Path):
 
 def test_bids_dataset_description_created(dpath_root: Path):
     """Test that dataset_description.json is created with BIDS study layout."""
-    workflow = InitWorkflow(
-        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
-    )
+    workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
     # The BIDS study layout includes an optional dataset_description.json file
@@ -182,9 +182,7 @@ def test_bids_dataset_description_created(dpath_root: Path):
 
 def test_bidsignore_created(dpath_root: Path):
     """Test that .bidsignore is created with BIDS study layout."""
-    workflow = InitWorkflow(
-        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
-    )
+    workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
     # The BIDS study layout includes an optional .bidsignore file
@@ -202,9 +200,7 @@ def test_bidsignore_created(dpath_root: Path):
 )
 def test_bids_study_layout_passes_validation(dpath_root: Path):
     """Test that BIDS study layout passes BIDS validation with no errors."""
-    workflow = InitWorkflow(
-        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
-    )
+    workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
     # Run BIDS validator
@@ -215,7 +211,7 @@ def test_bids_study_layout_passes_validation(dpath_root: Path):
     )
 
     # Check that there are no errors (warnings are OK)
-    assert result.returncode == 0
+    assert result.returncode == 0, "BIDS validation failed"
 
 
 @pytest.mark.no_xdist
@@ -255,15 +251,16 @@ def test_init_bids(tmp_path):
         ["anat", "func"],
     ]
 
+    nipoppy_bids_root = workflow.study.layout.dpath_bids
     source_files = [x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")]
     target_files = [
-        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
+        x.relative_to(nipoppy_bids_root) for x in nipoppy_bids_root.glob("**/*")
     ]
 
     for f in source_files:
         assert f in target_files
 
-    assert (dpath_root / "bids" / "README.md").exists()
+    assert (nipoppy_bids_root / "README.md").exists()
 
 
 def test_init_bids_move_mode(tmp_path):
@@ -303,11 +300,12 @@ def test_init_bids_move_mode(tmp_path):
         ["anat", "func"],
     ]
 
+    nipoppy_bids_root = workflow.study.layout.dpath_bids
     source_files_after_init = [
         x.relative_to(bids_to_copy) for x in bids_to_copy.glob("**/*")
     ]
     target_files = [
-        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
+        x.relative_to(nipoppy_bids_root) for x in nipoppy_bids_root.glob("**/*")
     ]
 
     for f in source_files_before_init:
@@ -315,7 +313,7 @@ def test_init_bids_move_mode(tmp_path):
 
     assert len(source_files_after_init) == 0
 
-    assert (dpath_root / "bids" / "README.md").exists()
+    assert (nipoppy_bids_root / "README.md").exists()
 
 
 def test_init_bids_symlink_mode(tmp_path):
@@ -362,13 +360,14 @@ def test_init_bids_symlink_mode(tmp_path):
     for f in source_files_before_init:
         assert f in source_files_after_init
 
-    assert (dpath_root / "bids").is_symlink()
+    nipoppy_bids_root = workflow.study.layout.dpath_bids
+    assert (nipoppy_bids_root).is_symlink()
     # only the directory is linked, not the files within
 
-    assert (dpath_root / "bids").readlink() == bids_to_link
+    assert (nipoppy_bids_root).readlink() == bids_to_link
 
     assert len(source_files_after_init) == 25
-    assert (dpath_root / "bids" / "README.md").exists()
+    assert (nipoppy_bids_root / "README.md").exists()
 
 
 def test_init_bids_symlink_readonly(tmp_path):
@@ -404,7 +403,7 @@ def test_init_bids_symlink_readonly(tmp_path):
     ]
 
     assert len(source_files_after_init) == len(source_files_before_init)
-    assert not (dpath_root / "bids" / "README.md").exists()
+    assert not (workflow.bids_source / "README.md").exists()
 
 
 def test_init_bids_invalid_mode(tmp_path):

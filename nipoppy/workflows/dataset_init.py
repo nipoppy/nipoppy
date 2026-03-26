@@ -171,6 +171,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
+                dry_run=self.dry_run,
             )
 
         # copy HPC files
@@ -218,7 +219,10 @@ class InitWorkflow(BaseDatasetWorkflow):
             fpath_readme = dpath / self.fname_readme
             if description is None:
                 continue
-            if dpath.stem != "bids" or self.bids_source is None:
+            if (
+                dpath.stem != self.study.layout.dpath_bids.stem
+                or self.bids_source is None
+            ):
                 fpath_readme.write_text(f"{description}\n")
             elif self.bids_source is not None and not fpath_readme.exists():
                 gh_org = "bids-standard"
