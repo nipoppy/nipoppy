@@ -2,7 +2,7 @@
 name: "Close stale issues and PRs"
 on:
   schedule:
-    - cron: "30 1 * * *"
+    - cron: "0 11 * * *" # Every day at 11:00 UTC
 
 permissions:
   actions: write
