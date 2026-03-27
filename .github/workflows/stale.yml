@@ -21,6 +21,6 @@ jobs:
           close-issue-message: "This issue was closed because it has been stalled for 3 months with no activity."
           close-pr-message: "This PR was closed because it has been stalled for 20 days with no activity."
           days-before-issue-stale: 150 # ~5 months
-          days-before-issue-close: 90 # ~3 months
+          days-before-issue-close: -1 # never
           days-before-pr-stale: 45
-          days-before-pr-close: 20
+          days-before-pr-close: -1 # never
