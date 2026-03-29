@@ -103,7 +103,7 @@ Then open the `build/html/index.html` file in a browser.
 1. Make a post in the Discord server in the `#announcement` channel about the release and the summarized changes.
 
 ```{note}
-This will trigger the GitHub workflow for publishing the package to PyPi.
+This will trigger the GitHub workflow for publishing the package to PyPI.
 ```
 ```{warning}
 If you edit the release notes afterwards, make sure to rebuild the docs for that release to update the "What's new" section of the documentation.
