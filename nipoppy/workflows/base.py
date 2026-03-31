@@ -8,7 +8,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Protocol, Sequence
 
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, StrOrPathLike
@@ -43,6 +43,24 @@ def _log_command(command: str):
     # using extra={"markup": False} in case the command contains substrings
     # that would be interpreted as closing tags by the RichHandler
     logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
+
+
+class CommandRunner(Protocol):
+    """Protocol for functions that run commands, used for dependency injection."""
+
+    def __call__(
+        self,
+        command_or_args: Sequence[str] | str,
+        /,
+        *,
+        check: bool = True,
+        quiet: bool = False,
+        dry_run: bool = False,
+    ) -> subprocess.Popen[str] | str:
+        # flake8: noqa
+        # flake8: qa
+        # We disable the flake8 to prevent it from complaining about missing DocString.
+        ...
 
 
 def _run_command(

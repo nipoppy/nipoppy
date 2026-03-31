@@ -3,33 +3,37 @@
 from __future__ import annotations
 
 import subprocess
-from typing import Protocol, Sequence
+from typing import Protocol
 
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
+from nipoppy.workflows.base import CommandRunner
 
 logger = get_logger()
 
 
-class CommandRunner(Protocol):
-    """Protocol for functions that run commands, used for dependency injection."""
+class BoshRunnerCallable(Protocol):
+    """Protocol for the bosh runner callable."""
 
     def __call__(
         self,
-        command_or_args: Sequence[str] | str,
-        /,
-        *,
-        check: bool,
-        quiet: bool,
+        invocation_str: str,
+        descriptor_str: str,
+        bosh_exec_launch_args: list[str],
+        run_command: CommandRunner | None,
         dry_run: bool,
-    ) -> subprocess.Popen[str] | str:
-        # flake8: noqa
-        # flake8: qa
-        # We disable the flake8 to prevent it from complaining about missing DocString.
-        ...
+    ) -> int: ...
+
+    # flake8: noqa
 
 
 class CommandBuilder(Protocol):
+    """Protocol for a function that builds a command ro run.
+
+    It takes the invocation, descriptor, and additional args and returns a list of
+    command arguments.
+    """
+
     def __call__(
         self,
         invocation: str,
@@ -37,30 +41,22 @@ class CommandBuilder(Protocol):
         args: list[str],
     ) -> list[str]: ...
 
+    # flake8: noqa
+
 
 class ErrorBuilder(Protocol):
+    """Protocol for a function that builds an error message based on the exit code."""
+
     def __call__(self, exit_code: int) -> str: ...
 
-
-def _run_command(
-    command: list[str],
-    run_command: CommandRunner | None,
-    dry_run: bool,
-) -> None:
-    """Run or delegate the command."""
-    if run_command:
-        run_command(command, quiet=True, dry_run=dry_run)
-    elif dry_run:
-        logger.info("Dry run enabled, skipping command execution")
-    else:
-        subprocess.run(command, check=True)
+    # flake8: noqa
 
 
 def _run_bosh_command(
     invocation_str: str,
     descriptor_str: str,
+    run_command: CommandRunner,
     bosh_exec_launch_args: list[str] | None = None,
-    run_command: CommandRunner | None = None,
     dry_run: bool = False,
     *,
     mode: str,
@@ -72,9 +68,11 @@ def _run_bosh_command(
     Parameters
     ----------
     command_builder : CommandBuilder
-        A function that builds the command to run based on the invocation, descriptor, and additional args. Returns a list of command arguments.
+        A function that builds the command to run based on the invocation, descriptor,
+        and additional args. Returns a list of command arguments.
     error_message_builder : ErrorBuilder
-        A function that builds an error message based on the exit code of a failed command.
+        A function that builds an error message based on the exit code of a failed
+        command.
     """
     if bosh_exec_launch_args is None:
         bosh_exec_launch_args = []
@@ -87,7 +85,7 @@ def _run_bosh_command(
     logger.info(f"{mode} pipeline command")
 
     try:
-        _run_command(command, run_command, dry_run)
+        run_command(command, quiet=True, dry_run=dry_run)
     except subprocess.CalledProcessError as exception:
         raise ExecutionError(error_message_builder(exception.returncode))
 
@@ -97,8 +95,8 @@ def _run_bosh_command(
 def run_bosh_launch(
     invocation_str: str,
     descriptor_str: str,
+    run_command: CommandRunner,
     bosh_exec_launch_args: list[str] | None = None,
-    run_command: CommandRunner | None = None,
     dry_run: bool = False,
 ) -> int:
     """Execute a Boutiques launch command.
@@ -154,8 +152,8 @@ def run_bosh_launch(
 def run_bosh_simulate(
     invocation_str: str,
     descriptor_str: str,
+    run_command: CommandRunner,
     bosh_exec_launch_args: list[str] | None = None,
-    run_command: CommandRunner | None = None,
     dry_run: bool = False,
 ) -> int:
     """Execute a Boutiques simulate command."""

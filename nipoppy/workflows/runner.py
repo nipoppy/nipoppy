@@ -3,10 +3,9 @@
 import json
 import shlex
 from abc import ABC
-from collections.abc import Callable
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, override
 
 from boutiques import bosh
 
@@ -18,7 +17,11 @@ from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
-from nipoppy.workflows.services.boutiques import run_bosh_launch, run_bosh_simulate
+from nipoppy.workflows.services.boutiques import (
+    BoshRunnerCallable,
+    run_bosh_launch,
+    run_bosh_simulate,
+)
 from nipoppy.workflows.services.hpc import HPCRunner
 
 logger = get_logger()
@@ -112,7 +115,7 @@ class Runner(BasePipelineWorkflow, ABC):
         self.n_success += len(job_array_commands)
 
     @cached_property
-    def bosh_runner(self) -> Callable[..., int]:
+    def bosh_runner(self) -> BoshRunnerCallable:
         """Get the bosh exec command."""
         if self.simulate:
             return run_bosh_simulate
@@ -258,8 +261,12 @@ class Runner(BasePipelineWorkflow, ABC):
 
         return container_command, container_handler
 
+    @override
     def run_main(self):
-        """Run the pipeline."""
+        """Run the pipeline.
+
+        Same as the parent, with additional handling of HPC submission.
+        """
         participants_sessions = self._prepare_participants_sessions()
 
         if self.write_subcohort is not None:

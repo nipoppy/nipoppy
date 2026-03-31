@@ -38,12 +38,12 @@ class HPCRunner:
         subcommand: str,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         keep_workdir: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
-        hpc_config: Optional[HpcConfig] = None,
+        hpc_config: HpcConfig | None = None,
     ):
         self.study = study
         self.subcommand = subcommand
@@ -61,39 +61,23 @@ class HPCRunner:
         participant_id: str,
         session_id: str,
         *,
-        extra_flags: Optional[list[str]] = None,
-        extra_options: Optional[dict[str, Any]] = None,
+        extra_flags: list[str] | None = None,
+        extra_options: dict[str, Any] | None = None,
     ) -> list[str]:
-        """
-        Generate the CLI command to be run on the HPC cluster for a participant/session.
+        """Generate the CLI command for a participant-session combination.
 
         Skips the --simulate, --hpc, --write-list and --dry-run options.
 
         Parameters
         ----------
-        subcommand : str
-            The nipoppy CLI subcommand (e.g. "bidsify", "process", "extract").
-        dpath_root : StrOrPathLike
-            Path to the dataset root directory.
-        pipeline_name : str
-            Name of the pipeline to run.
-        pipeline_version : str, optional
-            Version of the pipeline.
-        pipeline_step : str, optional
-            Step of the pipeline.
         participant_id : str, optional
             Participant ID to run on.
         session_id : str, optional
             Session ID to run on.
-        keep_workdir : bool, optional
-            Whether to keep the working directory after the run.
         extra_flags : list[str], optional
-            Additional CLI flags to append after ``--keep-workdir`` and before
-            ``--layout``.
-        fpath_layout : StrOrPathLike, optional
-            Path to a custom layout file.
-        verbose : bool, optional
-            Whether to enable verbose output.
+            Additional CLI flags to append.
+        extra_options : dict[str, Any], optional
+            Additional CLI options to append.
 
         Returns
         -------
@@ -135,6 +119,11 @@ class HPCRunner:
 
         extra_flags = extra_flags or []
         for flag in extra_flags:
+            if flag in command:
+                raise ValueError(
+                    f"Flag {flag} is already in the command and cannot be overridden "
+                    "via extra_flags."
+                )
             command.append(flag)
 
         return [str(c) for c in command]

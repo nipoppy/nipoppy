@@ -142,7 +142,7 @@ class ProcessingRunner(Runner):
                 yield participant_session
 
     def _generate_cli_command_for_hpc(
-        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+        self, participant_id: str | None = None, session_id: str | None = None
     ) -> list[str]:
         """Generate the CLI command to be run on the HPC cluster."""
         return self.hpc_runner.generate_cli_command(

@@ -41,7 +41,7 @@ def invocation():
         (run_bosh_simulate, "simulate"),
     ],
 )
-def test_run_bosh_launch(
+def test_run_bosh(
     bosh_func,
     subcommand,
     bosh_descriptor,
@@ -71,7 +71,7 @@ def test_run_bosh_launch(
         (run_bosh_simulate, "Pipeline simulation failed"),
     ],
 )
-def test_bosh_launch_capture_error(
+def test_run_bosh_func_capture_error(
     bosh_func,
     error_msg,
     bosh_descriptor,
