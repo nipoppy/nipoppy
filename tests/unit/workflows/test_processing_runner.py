@@ -763,11 +763,11 @@ def test_run_main_write_subcohort(
     mocker: pytest_mock.MockFixture,
     tmp_path: Path,
 ):
-    mocked_handle_write_subcohort = mocker.patch.object(
-        runner, "_handle_write_subcohort"
+    mocked_write_subcohort_to_file = mocker.patch.object(
+        runner, "_write_subcohort_to_file"
     )
     runner.write_subcohort = tmp_path / "mocked"
 
     runner.run_main()
 
-    mocked_handle_write_subcohort.assert_called_once()
+    mocked_write_subcohort_to_file.assert_called_once()
