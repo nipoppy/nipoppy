@@ -688,17 +688,15 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return list(participants_sessions)
 
-    def run_main(self):
-        """Run the pipeline."""
-        participants_sessions = self._prepare_participants_sessions()
-
+    def _handle_execution_strategy(self, participants_sessions):
+        """Handle the execution strategy based on the workflow configuration."""
         if self.write_subcohort is not None:
-            self._handle_write_subcohort(participants_sessions)
+            self._write_subcohort_to_file(participants_sessions)
         else:
             self._run_locally(participants_sessions)
 
-    def _prepare_participants_sessions(self) -> list:
-        """Load and filter participants/sessions to run."""
+    def run_main(self):
+        """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
         )
@@ -710,8 +708,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
-
-        return participants_sessions
+        self._handle_execution_strategy(participants_sessions)
 
     def _filter_by_subcohort(self, participants_sessions: Iterable) -> set:
         """Filter participants/sessions by subcohort file."""
@@ -730,7 +727,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             df_participants_sessions.itertuples(index=False, name=None)
         )
 
-    def _handle_write_subcohort(self, participants_sessions: list) -> None:
+    def _write_subcohort_to_file(self, participants_sessions: list) -> None:
         """Write participants/sessions to file."""
         if not self.dry_run:
             pd.DataFrame(participants_sessions).to_csv(

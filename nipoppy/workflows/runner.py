@@ -262,15 +262,13 @@ class Runner(BasePipelineWorkflow, ABC):
         return container_command, container_handler
 
     @override
-    def run_main(self):
-        """Run the pipeline.
+    def _handle_execution_strategy(self, participants_sessions):
+        """Handle the execution strategy based on the workflow configuration.
 
-        Same as the parent, with additional handling of HPC submission.
+        Same as the parent, with HPC submission added as an option if configured.
         """
-        participants_sessions = self._prepare_participants_sessions()
-
         if self.write_subcohort is not None:
-            self._handle_write_subcohort(participants_sessions)
+            self._write_subcohort_to_file(participants_sessions)
         elif self.hpc:
             self._submit_hpc_job(participants_sessions)
         else:
