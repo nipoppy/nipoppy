@@ -106,7 +106,7 @@ def cli():
     pass
 
 
-if cli.commands.get("gui"):
+if cli.commands.get("gui") is not None:
     cli.commands["gui"].hidden = True
 
 

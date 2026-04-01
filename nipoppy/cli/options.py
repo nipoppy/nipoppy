@@ -30,7 +30,7 @@ def dataset_option(func):
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path().cwd(),
-        show_default=(False if os.environ.get("READTHEDOCS") else True),
+        show_default=(False if os.environ.get("READTHEDOCS") is not None else True),
         help=(
             "Path to the root of the dataset (default is current working directory)."
         ),

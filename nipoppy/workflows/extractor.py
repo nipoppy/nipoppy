@@ -143,7 +143,7 @@ class ExtractionRunner(Runner):
             command.extend(["--session-id", session_id])
         if self.keep_workdir:
             command.append("--keep-workdir")
-        if self.fpath_layout:
+        if self.fpath_layout is not None:
             command.extend(["--layout", self.fpath_layout])
         if self.verbose:
             command.append("--verbose")

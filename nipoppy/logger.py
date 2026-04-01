@@ -77,7 +77,7 @@ class NipoppyLogger(logging.Logger):
         handler : logging.Handler
             The handler to remove.
         """
-        if handler:
+        if handler is not None:
             handler.close()
             self.removeHandler(handler)
 
