@@ -50,8 +50,8 @@ class ZenodoAPI:
         )
 
         if self.password_file is not None:
-            self.access_token = self.password_file.read_text().strip()
-            self.set_authorization(self.access_token)
+            access_token = self.password_file.read_text().strip()
+            self.set_authorization(access_token)
 
     def set_authorization(self, access_token: str):
         """Set the headers for the ZenodoAPI instance."""
@@ -66,12 +66,6 @@ class ZenodoAPI:
 
     def __exit__(self, *args: Any) -> None:
         self.close()
-
-    def __del__(self) -> None:
-        try:
-            self.close()
-        except Exception:
-            pass
 
     @property
     def logger(self) -> logging.Logger:
