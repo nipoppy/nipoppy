@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -27,7 +28,7 @@ def workflow(dpath_root: Path) -> InitWorkflow:
 
 
 @pytest.fixture
-def fake_bids_root(tmp_path: Path) -> Path:
+def fake_bids_root(tmp_path: Path) -> Generator[Path, None, None]:
     """Create a fake BIDS dataset (with session folders) for testing."""
     bids_dir_path = tmp_path / "bids"
     fids.create_fake_bids_dataset(
@@ -36,7 +37,35 @@ def fake_bids_root(tmp_path: Path) -> Path:
         sessions=["1", "2"],
         datatypes=["anat", "func"],
     )
-    return bids_dir_path
+
+    yield bids_dir_path
+
+    # restore write permission for user
+    # u=rwx, g=rx, o=rx
+    if bids_dir_path.exists():
+        os.chmod(bids_dir_path, 0o755)
+
+
+def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode: str):
+    dpath_root = workflow.study.layout.dpath_root
+
+    source_files_before_init = [
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
+    ]
+
+    workflow.bids_source = fake_bids_root
+    workflow.mode = mode
+
+    workflow.handle_bids_source()
+
+    source_files_after_init = [
+        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
+    ]
+    target_files = [
+        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
+    ]
+
+    return source_files_before_init, source_files_after_init, target_files
 
 
 def _assert_manifest_creation(
@@ -124,7 +153,7 @@ def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
 
 def test_non_empty_dir(workflow: InitWorkflow, dpath_root: Path):
     dpath_root.mkdir(parents=True)
-    dpath_root.joinpath("unexepected_file").touch()
+    dpath_root.joinpath("unexpected_file").touch()
 
     with pytest.raises(FileOperationError, match="Dataset directory is non-empty"):
         workflow.run()
@@ -132,7 +161,7 @@ def test_non_empty_dir(workflow: InitWorkflow, dpath_root: Path):
 
 def test_non_empty_dir_forced(workflow: InitWorkflow, dpath_root: Path):
     dpath_root.mkdir(parents=True)
-    dpath_root.joinpath("unexepected_file").touch()
+    dpath_root.joinpath("unexpected_file").touch()
 
     workflow.force = True
     workflow.run()
@@ -149,9 +178,7 @@ def test_init_twice_force(workflow: InitWorkflow):
     assert_layout_creation(workflow, dpath_root)
 
 
-def test_handle_bids_source_force(
-    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
-):
+def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
     """Test --force with --bids-source when BIDS directory already exists."""
     # Create target with existing bids directory
     existing_bids = workflow.study.layout.dpath_bids
@@ -296,46 +323,26 @@ def test_init_bids(
 def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root: Path):
     # mode is invalid, should raise an error
     workflow.bids_source = fake_bids_root
-    workflow.mode = "something"
-    with pytest.raises(ValueError, match="Invalid mode: something"):
+    workflow.mode = "invalid"
+    with pytest.raises(ValueError, match="Invalid mode: invalid"):
         workflow.handle_bids_source()
 
 
 def test_handle_bids_source_copy(workflow: InitWorkflow, fake_bids_root: Path):
     """Check that all the new files match those in the source directory."""
-    dpath_root = workflow.study.layout.dpath_root
+    _, source_files_after_init, target_files = _setup_handle_bids_source(
+        workflow, fake_bids_root, mode="copy"
+    )
 
-    workflow.bids_source = fake_bids_root
-    workflow.mode = "copy"
-    workflow.handle_bids_source()
-
-    source_files = [x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")]
-    target_files = [
-        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
-    ]
-
-    for f in source_files:
+    for f in source_files_after_init:
         assert f in target_files
 
 
 def test_handle_bids_source_move(workflow: InitWorkflow, fake_bids_root: Path):
     """Check that all the files are moved and the source is empty."""
-    dpath_root = workflow.study.layout.dpath_root
-
-    source_files_before_init = [
-        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
-    ]
-
-    workflow.bids_source = fake_bids_root
-    workflow.mode = "move"
-    workflow.handle_bids_source()
-
-    source_files_after_init = [
-        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
-    ]
-    target_files = [
-        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
-    ]
+    source_files_before_init, source_files_after_init, target_files = (
+        _setup_handle_bids_source(workflow, fake_bids_root, mode="move")
+    )
 
     for f in source_files_before_init:
         assert f in target_files
@@ -347,19 +354,9 @@ def test_handle_bids_source_symlink(workflow: InitWorkflow, fake_bids_root: Path
     """Check that all the files are linked to the source files."""
     dpath_root = workflow.study.layout.dpath_root
 
-    source_files_before_init = [
-        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
-    ]
-
-    workflow.bids_source = fake_bids_root
-    workflow.mode = "symlink"
-    workflow.run()
-
-    _assert_manifest_creation(workflow)
-
-    source_files_after_init = [
-        x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
-    ]
+    source_files_before_init, source_files_after_init, _ = _setup_handle_bids_source(
+        workflow, fake_bids_root, mode="symlink"
+    )
 
     for f in source_files_before_init:
         assert f in source_files_after_init
@@ -372,28 +369,23 @@ def test_handle_bids_source_symlink(workflow: InitWorkflow, fake_bids_root: Path
 def test_init_bids_readonly(
     workflow: InitWorkflow, fake_bids_root: Path, caplog: pytest.LogCaptureFixture
 ):
-    """
-    Test with an existing BIDS dataset that is read-only and has no README.
-
-    No README should be created.
-    """
-    dpath_root = workflow.study.layout.dpath_root
-
-    # make the source read-only
-    os.chmod(fake_bids_root, 0o555)  # +rx
-
+    """Test with an existing BIDS dataset that is read-only and has no README."""
+    # The default behaviour is to add a README in the BIDS directory is none exists, but
+    # this can fail if --bids-source is read-only and the mode is "symlink", so in those
+    # cases, no README should be created
     workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
+
+    # u=r-x, g=r-x, o=r-x
+    os.chmod(fake_bids_root, 0o555)
 
     workflow.run()
 
     assert "Skipping README creation" in caplog.text
-    assert not (dpath_root / "bids" / "README.md").exists()
+    assert not (workflow.study.layout.dpath_bids / "README.md").exists()
 
 
-def test_init_bids_dry_run(
-    workflow: InitWorkflow, fake_bids_root: Path, tmp_path: Path
-):
+def test_init_bids_dry_run(workflow: InitWorkflow, fake_bids_root: Path):
     """Copy no file when running in dry mode."""
     dpath_root = workflow.study.layout.dpath_root
     workflow.bids_source = fake_bids_root
