@@ -1,5 +1,6 @@
 """Workflow for pipeline search command."""
 
+import os
 from typing import Optional
 
 import pandas as pd
@@ -24,11 +25,13 @@ class PipelineSearchWorkflow(BaseWorkflow):
     """Search Zenodo for existing pipeline configurations and print results table."""
 
     col_zenodo_id = "Zenodo ID"
+    col_community = "Community"
     col_title = "Title"
     col_description = "Description"
     col_downloads = "Downloads"
     widths = {
         col_zenodo_id: len(col_zenodo_id),
+        col_community: 10,
         col_downloads: len(col_downloads),
         col_title: 20,
     }
@@ -65,9 +68,12 @@ class PipelineSearchWorkflow(BaseWorkflow):
             if description is not None:
                 description = strip_html_tags(description).strip()
             zenodo_id_with_link = f"[link={hit.get('doi_url')}]{hit.get('id')}[/link]"
+            communities = hit.get("metadata", {}).get("communities", [])
+            community_names = os.linesep.join(c.get("id", "") for c in communities)
             data_for_df.append(
                 {
                     self.col_zenodo_id: zenodo_id_with_link,
+                    self.col_community: community_names or "-",
                     self.col_title: hit.get("title"),
                     self.col_description: description,
                     self.col_downloads: hit.get("stats", {}).get("downloads"),
@@ -83,6 +89,9 @@ class PipelineSearchWorkflow(BaseWorkflow):
         table = Table(box=box.MINIMAL_DOUBLE_HEAD)
         table.add_column(
             self.col_zenodo_id, justify="center", width=self.widths[self.col_zenodo_id]
+        )
+        table.add_column(
+            self.col_community, justify="center", width=self.widths[self.col_community]
         )
         table.add_column(
             self.col_title, justify="left", min_width=self.widths[self.col_title]
