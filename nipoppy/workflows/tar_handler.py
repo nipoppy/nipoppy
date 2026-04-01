@@ -40,8 +40,8 @@ class TarHandler:
         if participant_session_dir is None:
             raise ConfigError(
                 "Tarring requested but no participant-session directory specified. "
-                "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
-                "in the tracker config file at "
+                "The PARTICIPANT_SESSION_DIR field must be set in the tracker config "
+                "file at "
                 f"{tracker_config_file}"
             )
 
