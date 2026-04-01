@@ -100,7 +100,7 @@ Then open the `build/html/index.html` file in a browser.
 1. Create a new tag against `main` and use the "Generate release notes" feature.
     1. (Recommended) Add a summary to the release description.
 1. Publish the release.
-1. Make a post in the Discord server in the `#announcement` channel about the release and the summarized changes.
+1. Make a post in the Discord server in the `#announcements` channel about the release and the summarized changes.
 
 ```{note}
 This will trigger the GitHub workflow for publishing the package to PyPI.
