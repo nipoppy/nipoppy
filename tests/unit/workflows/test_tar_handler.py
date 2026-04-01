@@ -50,7 +50,7 @@ def test_validate_preconditions_no_tar_requested(tar_handler: TarHandler):
 
 
 @pytest.mark.parametrize("dpath_type", [Path, str])
-def test_tar_directory(tmp_path: Path, dpath_type):
+def test_tar_directory(tar_handler: TarHandler, tmp_path: Path, dpath_type):
     dpath_to_tar = tmp_path / "my_data"
     fpaths_to_tar = [
         dpath_to_tar / "dir1" / "file1.txt",
@@ -60,7 +60,7 @@ def test_tar_directory(tmp_path: Path, dpath_type):
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
-    fpath_tarred = TarHandler().tar_directory(dpath_type(dpath_to_tar))
+    fpath_tarred = tar_handler.tar_directory(dpath_type(dpath_to_tar))
 
     assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
     assert fpath_tarred.exists()
