@@ -23,7 +23,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_pipeline: StrOrPathLike,
-        zenodo_api: Optional[ZenodoAPI] = None,
+        zenodo_api: ZenodoAPI | None = None,
         record_id: Optional[str] = None,
         assume_yes: bool = False,
         force: bool = False,
