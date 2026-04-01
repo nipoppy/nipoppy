@@ -435,7 +435,7 @@ def test_tar_directory_failure(
     fpath_to_tar.touch()
 
     mocked_is_tarfile = mocker.patch(
-        "nipoppy.workflows.processing_runner.is_tarfile", return_value=False
+        "nipoppy.workflows.tar_handler.is_tarfile", return_value=False
     )
 
     fpath_tarred = runner.tar_directory(dpath_to_tar)
