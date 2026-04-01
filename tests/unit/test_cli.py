@@ -338,6 +338,48 @@ def test_cli_command(
     assert_command_success(command)
 
 
+@pytest.mark.parametrize(
+    "layout_file",
+    [
+        "layout-default.json",
+        "layout-bids-study.json",
+    ],
+)
+def test_cli_layout_envvar(
+    layout_file: str,
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+):
+    """Test that the layout can be passed via the NIPOPPY_LAYOUT env var."""
+    fpath_layout = (
+        Path(__file__).parents[2] / "nipoppy" / "data" / "layouts" / layout_file
+    )
+
+    mocked_dir = tmp_path / "mocked_dir"
+    mocked_dir.mkdir()
+
+    mock_workflow = mocker.MagicMock()
+    mock_workflow.return_code = ReturnCode.SUCCESS
+    mocker.patch(
+        "nipoppy.workflows.dataset_init.InitWorkflow",
+        return_value=mock_workflow,
+    )
+
+    result = runner.invoke(
+        cli,
+        ["init", "--dataset", str(mocked_dir)],
+        env={"NIPOPPY_LAYOUT": str(fpath_layout)},
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS, f"Command failed:\n{result.output}"
+
+    # Verify fpath_layout was passed to the workflow constructor
+    from nipoppy.workflows.dataset_init import InitWorkflow
+
+    _, kwargs = InitWorkflow.call_args
+    assert kwargs["fpath_layout"] == fpath_layout
+
+
 def test_context_manager_no_exception(mocker):
     """Test that the context manager exits with SUCCESS when no exception occurs."""
     workflow = mocker.Mock()
