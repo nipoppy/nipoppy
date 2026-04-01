@@ -28,7 +28,7 @@ def workflow(dpath_root: Path) -> InitWorkflow:
 
 
 @pytest.fixture
-def fake_bids_root(tmp_path: Path) -> Generator[Path, None, None]:
+def fake_bids_root(tmp_path: Path) -> Generator[Path]:
     """Create a fake BIDS dataset (with session folders) for testing."""
     bids_dir_path = tmp_path / "bids"
     fids.create_fake_bids_dataset(
