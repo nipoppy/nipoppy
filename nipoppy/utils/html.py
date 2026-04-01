@@ -1,7 +1,7 @@
 """Utilities for processing HTML strings."""
 
 from html.parser import HTMLParser
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 COMMON_HTML_TAGS = {
     "html",
@@ -79,7 +79,7 @@ class SelectiveHTMLStripper(HTMLParser):
         return "".join(self.fed)
 
 
-def strip_html_tags(html: str, tags: Optional[Iterable] = None):
+def strip_html_tags(html: str, tags: Iterable | None = None):
     """Strip specified HTML tags from a string."""
     s = SelectiveHTMLStripper(tags=tags)
     s.feed(html)

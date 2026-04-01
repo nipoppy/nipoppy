@@ -98,7 +98,7 @@ def test_analysis_level_invalid():
     "step_class",
     [ProcPipelineStepConfig, BidsPipelineStepConfig, ExtractionPipelineStepConfig],
 )
-def test_substitutions(step_class: Type[BasePipelineStepConfig]):
+def test_substitutions(step_class: type[BasePipelineStepConfig]):
     step_config = step_class(
         NAME="step_name",
         DESCRIPTOR_FILE="descriptor-[[STEP_NAME]].json",

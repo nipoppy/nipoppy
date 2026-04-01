@@ -8,7 +8,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, StrOrPathLike
@@ -201,7 +201,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         self,
         dpath_root: StrOrPathLike,
         name: str,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
         _skip_logfile: bool = False,
@@ -243,8 +243,8 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
+        dnames_parent: str | list[str] | None = None,
+        fname_stem: str | None = None,
     ) -> Path:
         """Generate a log file path."""
         if dnames_parent is None:

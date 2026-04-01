@@ -29,8 +29,8 @@ class ManifestModel(BaseTabularModel):
         title="Participant ID", description=FIELD_DESCRIPTION_MAP["participant_id"]
     )
     visit_id: str = Field(description=FIELD_DESCRIPTION_MAP["visit_id"])
-    session_id: Optional[str] = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
-    datatype: Optional[list[str]] = Field(
+    session_id: str | None = Field(description=FIELD_DESCRIPTION_MAP["session_id"])
+    datatype: list[str] | None = Field(
         description=(
             "Imaging datatype, as recognized by BIDS (see "
             "https://bids-specification.readthedocs.io/en/stable/common-principles.html)"  # noqa E501
@@ -120,7 +120,7 @@ class Manifest(BaseTabular):
             )
         return self
 
-    def get_imaging_subset(self, session_id: Optional[str] = None):
+    def get_imaging_subset(self, session_id: str | None = None):
         """Get records with imaging data."""
         manifest = self[self[self.col_session_id].notna()]
         if session_id is not None:
@@ -128,7 +128,7 @@ class Manifest(BaseTabular):
         return manifest
 
     def get_participants_sessions(
-        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+        self, participant_id: str | None = None, session_id: str | None = None
     ):
         """Get participant IDs and session IDs."""
         if participant_id is None:

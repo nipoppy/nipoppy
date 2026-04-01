@@ -44,7 +44,7 @@ def handler() -> ContainerHandler:
     "subclass",
     [ApptainerHandler, SingularityHandler, DockerHandler],
 )
-def test_subclass(subclass: Type[ContainerHandler]):
+def test_subclass(subclass: type[ContainerHandler]):
     # try to instantiate subclass
     handler = subclass()
     assert isinstance(handler, ContainerHandler)

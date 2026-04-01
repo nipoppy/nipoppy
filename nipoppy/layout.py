@@ -19,7 +19,7 @@ class PathInfo(BaseModel):
     _is_required: bool = True
 
     path: Path = Field(description="Relative path to the file or directory")
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         description="Description of the function of the file or directory",
     )
@@ -125,12 +125,12 @@ class LayoutConfig(BaseModel):
     )
     # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
     # as optional for path validation, not for Pydantic model validation.
-    # Optional[OptionalFpathInfo] with default=None is needed to make the field
+    # OptionalFpathInfo | None with default=None is needed to make the field
     # truly optional so it can be missing from layout JSON files entirely.
-    fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
+    fpath_bids_dataset_description: OptionalFpathInfo | None = Field(
         default=None, description="Path to the BIDS dataset description file"
     )
-    fpath_bidsignore: Optional[OptionalFpathInfo] = Field(
+    fpath_bidsignore: OptionalFpathInfo | None = Field(
         default=None, description="Path to the .bidsignore file"
     )
 
@@ -173,7 +173,7 @@ class DatasetLayout(Base):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
-        fpath_config: Optional[StrOrPathLike] = None,
+        fpath_config: StrOrPathLike | None = None,
     ):
         """Initialize the object.
 
@@ -288,7 +288,7 @@ class DatasetLayout(Base):
         return paths
 
     @cached_property
-    def dpath_descriptions(self) -> list[Tuple[Path, str]]:
+    def dpath_descriptions(self) -> list[tuple[Path, str]]:
         """Return a list of directory paths and associated description strings."""
         info_list = [
             (self.get_full_path(path_info.path), path_info.description)
@@ -328,8 +328,8 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
@@ -373,8 +373,8 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> Path:
         """Return the path to a pipeline's BIDS database directory."""
         dname = get_pipeline_tag(

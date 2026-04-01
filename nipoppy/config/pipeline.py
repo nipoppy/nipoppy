@@ -44,11 +44,11 @@ class PipelineInfo(BaseModel):
 class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     """Base schema for processing/BIDS pipeline configuration."""
 
-    _expected_pipeline_type: Optional[PipelineTypeEnum] = None
+    _expected_pipeline_type: PipelineTypeEnum | None = None
 
     NAME: str = Field(description="Name of the pipeline")
     VERSION: str = Field(description="Version of the pipeline")
-    DESCRIPTION: Optional[str] = Field(
+    DESCRIPTION: str | None = Field(
         default=None, description="Free description field"
     )
     CONTAINER_INFO: ContainerInfo = Field(
@@ -56,9 +56,9 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         description="Information about the container image file",
     )
     STEPS: list[
-        Union[
-            BidsPipelineStepConfig, ProcPipelineStepConfig, ExtractionPipelineStepConfig
-        ]
+        (
+            BidsPipelineStepConfig | ProcPipelineStepConfig | ExtractionPipelineStepConfig
+        )
     ] = Field(
         default=[],
         description="List of pipeline step configurations",
@@ -72,7 +72,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
             ' For example: {{"REQUIRED_FILE": "This file is for running the pipeline"}}'
         ),
     )
-    PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
+    PIPELINE_TYPE: PipelineTypeEnum | None = None
     SCHEMA_VERSION: str = Field(
         description=(
             "Version of the schema used for this pipeline configuration. The current "
@@ -145,7 +145,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         return self
 
     def get_step_config(
-        self, step_name: Optional[str] = None
+        self, step_name: str | None = None
     ) -> BasePipelineStepConfig:
         """
         Return the configuration for the given step.

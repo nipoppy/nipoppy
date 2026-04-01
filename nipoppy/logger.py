@@ -59,8 +59,8 @@ class NipoppyLogger(logging.Logger):
     def __init__(self, *args, **kwargs):
         """Initialize the Nipoppy logger."""
         super().__init__(*args, **kwargs)
-        self._stdout_handler: Optional[RichHandler] = None
-        self._file_handler: Optional[logging.FileHandler] = None
+        self._stdout_handler: RichHandler | None = None
+        self._file_handler: logging.FileHandler | None = None
 
         self.setLevel(logging.DEBUG)  # File logging: DEBUG and above
         # stderr: ERROR and CRITICAL
@@ -69,7 +69,7 @@ class NipoppyLogger(logging.Logger):
         # stdout: INFO and WARNING by default
         self.set_verbose(False)
 
-    def _cleanup_handler(self, handler: Optional[logging.Handler] = None) -> None:
+    def _cleanup_handler(self, handler: logging.Handler | None = None) -> None:
         """Close and remove a handler from the logger.
 
         Parameters

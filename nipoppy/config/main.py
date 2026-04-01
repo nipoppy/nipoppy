@@ -28,7 +28,7 @@ class PipelineVariables(BaseModel):
         PipelineTypeEnum.EXTRACTION: "EXTRACTION",
     }
 
-    BIDSIFICATION: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+    BIDSIFICATION: dict[str, dict[str, dict[str, str | None]]] = Field(
         default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the BIDSification pipelines. This should be a nested "
@@ -36,7 +36,7 @@ class PipelineVariables(BaseModel):
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
-    PROCESSING: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+    PROCESSING: dict[str, dict[str, dict[str, str | None]]] = Field(
         default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the processing pipelines. This should be a nested "
@@ -44,7 +44,7 @@ class PipelineVariables(BaseModel):
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
-    EXTRACTION: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+    EXTRACTION: dict[str, dict[str, dict[str, str | None]]] = Field(
         default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the extraction pipelines. This should be a nested "
@@ -74,7 +74,7 @@ class PipelineVariables(BaseModel):
         pipeline_type: PipelineTypeEnum,
         pipeline_name: str,
         pipeline_version: str,
-        variables: dict[str, Optional[str]],
+        variables: dict[str, str | None],
     ) -> Self:
         """Set the variables for a specific pipeline."""
         try:
@@ -121,7 +121,7 @@ class Config(_SchemaWithContainerConfig):
             "with Nipoppy installed, and setting up job-specific variables."
         ),
     )
-    DICOM_DIR_MAP_FILE: Optional[Path] = Field(
+    DICOM_DIR_MAP_FILE: Path | None = Field(
         default=None,
         description=(
             "Path to a TSV file mapping participant IDs to DICOM directories"
@@ -132,7 +132,7 @@ class Config(_SchemaWithContainerConfig):
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),
     )
-    DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
+    DICOM_DIR_PARTICIPANT_FIRST: bool | None = Field(
         default=None,
         description=(
             f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "

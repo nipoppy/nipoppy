@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Sequence
+from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
@@ -18,7 +19,7 @@ def participant_id_to_bids_participant_id(participant_id: str) -> str:
     return f"{BIDS_SUBJECT_PREFIX}{participant_id}"
 
 
-def session_id_to_bids_session_id(session_id: Optional[str]) -> str:
+def session_id_to_bids_session_id(session_id: str | None) -> str:
     """
     Add the BIDS prefix to a session ID.
 
@@ -30,7 +31,7 @@ def session_id_to_bids_session_id(session_id: Optional[str]) -> str:
     return f"{BIDS_SESSION_PREFIX}{session_id}"
 
 
-def check_participant_id(participant_id: Optional[str], raise_error=False):
+def check_participant_id(participant_id: str | None, raise_error=False):
     """Make sure a participant ID is valid.
 
     Specifically:
@@ -76,7 +77,7 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
     return participant_id
 
 
-def check_session_id(session_id: Optional[str], raise_error=False):
+def check_session_id(session_id: str | None, raise_error=False):
     """Make sure a session ID is valid.
 
     Specifically:
@@ -124,10 +125,10 @@ def check_session_id(session_id: Optional[str], raise_error=False):
 
 def create_bids_db(
     dpath_bids: StrOrPathLike,
-    dpath_pybids_db: Optional[StrOrPathLike] = None,
+    dpath_pybids_db: StrOrPathLike | None = None,
     validate=False,
     reset_database=True,
-    ignore_patterns: Optional[list[str | re.Pattern] | str | re.Pattern] = None,
+    ignore_patterns: list[str | re.Pattern] | str | re.Pattern | None = None,
     resolve_paths=True,
 ) -> bids.BIDSLayout:
     """Create a BIDSLayout using an indexer."""
@@ -155,7 +156,7 @@ def create_bids_db(
 
 
 def add_pybids_ignore_patterns(
-    current: List[re.Pattern],
+    current: list[re.Pattern],
     new: Sequence[str | re.Pattern] | str | re.Pattern,
 ):
     """Add pattern(s) to ignore for PyBIDS."""

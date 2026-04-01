@@ -42,8 +42,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        container_handler: Optional[ContainerHandler] = None,
-        objs: Optional[list] = None,
+        container_handler: ContainerHandler | None = None,
+        objs: list | None = None,
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
@@ -158,8 +158,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> Tuple[str, ContainerHandler]:
+        bind_paths: list[StrOrPathLike] | None = None,
+    ) -> tuple[str, ContainerHandler]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []

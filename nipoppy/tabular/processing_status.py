@@ -148,8 +148,8 @@ class ProcessingStatusTable(BaseTabular):
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ):
         """
         Get participant-session pairs that have successfully completed a pipeline run.

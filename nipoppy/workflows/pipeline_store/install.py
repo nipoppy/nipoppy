@@ -36,7 +36,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         zenodo_api: ZenodoAPI = None,
         assume_yes: bool = False,
         force: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

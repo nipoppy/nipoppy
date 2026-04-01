@@ -17,8 +17,8 @@ TERMURL_PARTICIPANT_ID = "nb:ParticipantID"
 TERMURL_SESSION_ID = "nb:SessionID"
 
 
-def _check_phenotypes_arg(phenotypes: List[str]) -> None:
-    if not isinstance(phenotypes, List):
+def _check_phenotypes_arg(phenotypes: list[str]) -> None:
+    if not isinstance(phenotypes, list):
         raise TypeError(f"phenotypes must be a list, got {type(phenotypes)}")
     if len(phenotypes) == 0:
         raise ValueError("phenotypes list cannot be empty")
@@ -29,8 +29,8 @@ def _check_phenotypes_arg(phenotypes: List[str]) -> None:
             )
 
 
-def _check_derivatives_arg(derivatives: List[Tuple[str, str, str]]) -> None:
-    if not isinstance(derivatives, List):
+def _check_derivatives_arg(derivatives: list[tuple[str, str, str]]) -> None:
+    if not isinstance(derivatives, list):
         raise TypeError(
             f"derivatives must be a list of tuples, got {type(derivatives)}"
         )
@@ -38,7 +38,7 @@ def _check_derivatives_arg(derivatives: List[Tuple[str, str, str]]) -> None:
         raise ValueError("derivatives list cannot be empty")
     for derivatives_spec in derivatives:
         if not (
-            isinstance(derivatives_spec, Tuple)
+            isinstance(derivatives_spec, tuple)
             and len(derivatives_spec) == 3
             and all(isinstance(item, str) for item in derivatives_spec)
         ):
@@ -71,7 +71,7 @@ class NipoppyDataRetriever:
         """Get the Nipoppy Study object for the study."""
         return Study(layout=DatasetLayout(dpath_root=self._path))
 
-    def _load_tsv(self, fpath: StrOrPathLike, index_cols: List[str]) -> pd.DataFrame:
+    def _load_tsv(self, fpath: StrOrPathLike, index_cols: list[str]) -> pd.DataFrame:
         df = pd.read_csv(
             fpath,
             sep="\t",
@@ -130,7 +130,7 @@ class NipoppyDataRetriever:
             df.index.isin(self._study.manifest.get_participants_sessions()), :
         ]
 
-    def get_phenotypes(self, phenotypes: List[str]) -> pd.DataFrame:
+    def get_phenotypes(self, phenotypes: list[str]) -> pd.DataFrame:
         """Get harmonized phenotypic data from the Nipoppy study.
 
         This function loads the study's harmonized phenotypic TSV file
@@ -177,7 +177,7 @@ class NipoppyDataRetriever:
         df = self._filter_with_manifest(df)
         return df.loc[:, phenotypes]
 
-    def get_derivatives(self, derivatives: List[Tuple[str, str, str]]) -> pd.DataFrame:
+    def get_derivatives(self, derivatives: list[tuple[str, str, str]]) -> pd.DataFrame:
         """Get derivative data from the Nipoppy study.
 
         This functions loads and combines derivative TSV files from specified pipelines
@@ -229,8 +229,8 @@ class NipoppyDataRetriever:
     def get_tabular_data(
         self,
         *,
-        phenotypes: Optional[List[str]] = None,
-        derivatives: Optional[List[Tuple[str, str, str]]] = None,
+        phenotypes: list[str] | None = None,
+        derivatives: list[tuple[str, str, str]] | None = None,
     ) -> pd.DataFrame:
         """Get harmonized tabular data from the Nipoppy study.
 

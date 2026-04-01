@@ -20,7 +20,7 @@ class TrackerConfig(BaseModel):
         ),
     )
 
-    PARTICIPANT_SESSION_DIR: Optional[Path] = Field(
+    PARTICIPANT_SESSION_DIR: Path | None = Field(
         default=None,
         description=(
             "Path to the directory where participant-session results are expected"
