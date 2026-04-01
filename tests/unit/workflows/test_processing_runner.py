@@ -3,7 +3,6 @@
 import json
 import re
 import subprocess
-import tarfile
 from pathlib import Path
 
 import pytest
@@ -19,7 +18,7 @@ from nipoppy.container import (
     SingularityHandler,
 )
 from nipoppy.env import ContainerCommandEnum
-from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -120,11 +119,17 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
 
 
 def test_run_setup(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
-    mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
+    mocked_validate_preconditions = mocker.patch.object(
+        runner._tar_handler, "validate_preconditions"
+    )
     runner.run_setup()
     assert runner.dpath_pipeline_output.exists()
     assert runner.dpath_pipeline_work.exists()
-    mocked_check_tar_conditions.assert_called_once()
+    mocked_validate_preconditions.assert_called_once_with(
+        tar_requested=runner.tar,
+        tracker_config_file=runner.pipeline_step_config.TRACKER_CONFIG_FILE,
+        participant_session_dir=None,
+    )
 
 
 @pytest.mark.parametrize("keep_workdir", [True, False])
@@ -360,107 +365,6 @@ def test_process_container_config_no_bind_cwd(
 def test_process_container_config_no_bindpaths(runner: ProcessingRunner):
     # smoke test for no bind paths
     runner.process_container_config(participant_id="01", session_id="BL")
-
-
-def test_check_tar_conditions_no_tracker_config(runner: ProcessingRunner):
-    runner.tar = True
-    runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
-    with pytest.raises(
-        ConfigError,
-        match="Tarring requested but there is no tracker config file",
-    ):
-        runner._check_tar_conditions()
-
-
-def test_check_tar_conditions_no_dir(runner: ProcessingRunner, tmp_path: Path):
-    runner.tar = True
-    runner.pipeline_step_config.TRACKER_CONFIG_FILE = tmp_path  # not used
-    runner.tracker_config = TrackerConfig(
-        PATHS=[tmp_path], PARTICIPANT_SESSION_DIR=None
-    )
-    with pytest.raises(
-        ConfigError,
-        match="Tarring requested but no participant-session directory specified",
-    ):
-        runner._check_tar_conditions()
-
-
-def test_check_tar_conditions_no_tar(runner: ProcessingRunner):
-    runner.tar = False
-    runner._check_tar_conditions()
-
-
-@pytest.mark.parametrize("dpath_type", [Path, str])
-def test_tar_directory(tmp_path: Path, dpath_type):
-    # create dummy files to tar
-    dpath_to_tar = tmp_path / "my_data"
-    fpaths_to_tar = [
-        dpath_to_tar / "dir1" / "file1.txt",
-        dpath_to_tar / "file2.txt",
-    ]
-    for fpath in fpaths_to_tar:
-        fpath.parent.mkdir(parents=True, exist_ok=True)
-        fpath.touch()
-
-    runner = ProcessingRunner(
-        dpath_root=tmp_path / "my_dataset",
-        pipeline_name="dummy_pipeline",
-        pipeline_version="1.0.0",
-    )
-    fpath_tarred = runner.tar_directory(dpath_type(dpath_to_tar))
-
-    assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
-    assert fpath_tarred.exists()
-    assert fpath_tarred.is_file()
-
-    with tarfile.open(fpath_tarred, "r") as tar:
-        tarred_files = {
-            tmp_path / tarred.name for tarred in tar.getmembers() if tarred.isfile()
-        }
-    assert tarred_files == set(fpaths_to_tar)
-
-    assert not dpath_to_tar.exists()
-
-
-@pytest.mark.no_xdist
-def test_tar_directory_failure(
-    runner: ProcessingRunner,
-    tmp_path: Path,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-):
-    dpath_to_tar = tmp_path / "my_data"
-    fpath_to_tar = dpath_to_tar / "file.txt"
-    fpath_to_tar.parent.mkdir(parents=True)
-    fpath_to_tar.touch()
-
-    mocked_is_tarfile = mocker.patch(
-        "nipoppy.workflows.tar_handler.is_tarfile", return_value=False
-    )
-
-    fpath_tarred = runner.tar_directory(dpath_to_tar)
-
-    assert fpath_tarred.exists()
-    mocked_is_tarfile.assert_called_once()
-
-    assert f"Failed to tar {dpath_to_tar}" in caplog.text
-
-
-def test_tar_directory_warning_not_found(runner: ProcessingRunner):
-    with pytest.raises(
-        FileOperationError, match="Not tarring .* since it does not exist"
-    ):
-        runner.tar_directory("invalid_path")
-
-
-def test_tar_directory_warning_not_dir(runner: ProcessingRunner, tmp_path: Path):
-    fpath_to_tar = tmp_path / "file.txt"
-    fpath_to_tar.touch()
-
-    with pytest.raises(
-        FileOperationError, match="Not tarring .* since it is not a directory"
-    ):
-        runner.tar_directory(fpath_to_tar)
 
 
 @pytest.mark.parametrize(
@@ -756,8 +660,10 @@ def test_run_single_tar(
         side_effect=None if boutiques_success else RuntimeError(exception_message),
     )
 
-    # mock tar_directory method (will check if/how this is called)
-    mocked_tar_directory = mocker.patch.object(runner, "tar_directory")
+    # mock TarHandler method to verify tar_directory delegation path
+    mocked_tar_handler_tar_directory = mocker.patch.object(
+        runner._tar_handler, "tar_directory"
+    )
 
     participant_id = "01"
     session_id = "1"
@@ -774,11 +680,11 @@ def test_run_single_tar(
             raise exception
 
     if tar and boutiques_success:
-        mocked_tar_directory.assert_called_once_with(
+        mocked_tar_handler_tar_directory.assert_called_once_with(
             runner.dpath_pipeline_output / f"{participant_id}_ses-{session_id}"
         )
     else:
-        mocked_tar_directory.assert_not_called()
+        mocked_tar_handler_tar_directory.assert_not_called()
 
 
 def test_run_missing_container_raises_error(runner: ProcessingRunner):
