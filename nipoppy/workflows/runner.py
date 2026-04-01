@@ -5,9 +5,10 @@ import shlex
 from abc import ABC
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple, override
+from typing import Optional, Tuple
 
 from boutiques import bosh
+from typing_extensions import override
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
