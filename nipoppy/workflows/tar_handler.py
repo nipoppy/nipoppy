@@ -23,7 +23,7 @@ class TarHandler:
         self,
         tar_requested: bool,
         tracker_config_file: Optional[StrOrPathLike],
-        participant_session_dir: Optional[str] = None,
+        participant_session_dir: Optional[StrOrPathLike] = None,
     ):
         """Validate TAR-related configuration requirements."""
         if not tar_requested:
