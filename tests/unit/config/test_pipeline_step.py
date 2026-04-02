@@ -4,7 +4,7 @@ from contextlib import nullcontext
 from typing import Type
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from nipoppy.config.pipeline_step import (
     AnalysisLevelType,
@@ -78,7 +78,7 @@ def test_field_base(step_class: type[BaseModel], fields, data_list):
     [ProcPipelineStepConfig, BidsPipelineStepConfig, ExtractionPipelineStepConfig],
 )
 def test_no_extra_field(model_class):
-    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+    with pytest.raises(ValueError, match="Extra inputs are not permitted"):
         model_class(not_a_field="a")
 
 
@@ -90,7 +90,7 @@ def test_analysis_level(analysis_level):
 
 
 def test_analysis_level_invalid():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         BasePipelineStepConfig(ANALYSIS_LEVEL="invalid")
 
 
@@ -120,7 +120,7 @@ def test_substitutions(step_class: Type[BasePipelineStepConfig]):
 def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_error):
     with (
         pytest.raises(
-            ValidationError,
+            ValueError,
             match=(
                 "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined "
                 "or both be None, "
@@ -177,38 +177,11 @@ def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_e
 )
 def test_absolute_paths(data, pipeline_class, expect_error):
     with (
-        pytest.raises(ValidationError, match=".* must be a relative path, got")
+        pytest.raises(ValueError, match=".* must be a relative path, got")
         if expect_error
         else nullcontext()
     ):
         pipeline_class(**data)
-
-
-@pytest.mark.parametrize(
-    "analysis_level,expect_error",
-    [
-        (AnalysisLevelType.participant_session, False),
-        (AnalysisLevelType.participant, True),
-        (AnalysisLevelType.session, True),
-        (AnalysisLevelType.group, True),
-    ],
-)
-def test_tracker_config_analysis_level(analysis_level, expect_error):
-    with (
-        pytest.raises(
-            ValidationError,
-            match=(
-                "cannot be set if ANALYSIS_LEVEL is not "
-                f"{AnalysisLevelType.participant_session}"
-            ),
-        )
-        if expect_error
-        else nullcontext()
-    ):
-        ProcPipelineStepConfig(
-            TRACKER_CONFIG_FILE="tracker_config.json",
-            ANALYSIS_LEVEL=analysis_level,
-        )
 
 
 @pytest.mark.parametrize(
@@ -227,7 +200,7 @@ def test_tracker_config_analysis_level(analysis_level, expect_error):
 def test_update_status_analysis_level(update_status, analysis_level, expect_error):
     with (
         pytest.raises(
-            ValidationError,
+            ValueError,
             match=(
                 "cannot be True if ANALYSIS_LEVEL is not "
                 f"{AnalysisLevelType.participant_session}"

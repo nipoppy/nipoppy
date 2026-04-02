@@ -90,5 +90,9 @@
     "fpath_demographics": {
         "path": "tabular/demographics.tsv",
         "description": "The demographics file contains demographic information for study participants."
+    },
+    "fpath_harmonized": {
+        "path": "tabular/harmonized.tsv",
+        "description": "The harmonized phenotypic data file can be obtained using the Neurobagel CLI."
     }
 }

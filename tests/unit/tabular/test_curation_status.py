@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from nipoppy.env import FAKE_SESSION_ID, StrOrPathLike
+from nipoppy.exceptions import TabularError
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
@@ -55,7 +56,7 @@ def test_load(fpath, validate):
 )
 def test_validate(fpath, is_valid):
     table = CurationStatusTable.load(fpath, validate=False)
-    with pytest.raises(ValueError) if not is_valid else nullcontext():
+    with pytest.raises(TabularError) if not is_valid else nullcontext():
         assert isinstance(CurationStatusTable.validate(table), CurationStatusTable)
 
 
@@ -72,7 +73,7 @@ def test_check_status_col(col):
 
 
 def test_check_status_col_invalid():
-    with pytest.raises(ValueError, match="Invalid status column"):
+    with pytest.raises(TabularError, match="Invalid status column"):
         CurationStatusTable._check_status_col("invalid_col")
 
 
@@ -82,7 +83,7 @@ def test_check_status_value(value):
 
 
 def test_check_status_value_invalid():
-    with pytest.raises(ValueError, match="Invalid status value"):
+    with pytest.raises(TabularError, match="Invalid status value"):
         assert CurationStatusTable._check_status_value("123")
 
 
@@ -128,7 +129,7 @@ def test_set_status(data, participant_id, session_id, col, status):
 
 def test_set_status_index_reset(data):
     table = CurationStatusTable(data)
-    with pytest.raises(ValueError):
+    with pytest.raises(TabularError):
         table.set_status("01", "BL", "bad_col", True)
 
     assert set(table.columns) == set(CurationStatusTable().columns)

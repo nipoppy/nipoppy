@@ -3,6 +3,7 @@
 from pydantic import ConfigDict, Field
 
 from nipoppy.config.container import _SchemaWithContainerConfig
+from nipoppy.exceptions import ConfigError
 
 BOUTIQUES_CUSTOM_KEY = "custom"  # as defined by Boutiques schema
 BOUTIQUES_CONFIG_KEY = "nipoppy"
@@ -26,7 +27,7 @@ def get_boutiques_config_from_descriptor(descriptor: dict) -> BoutiquesConfig:
     try:
         data = descriptor[BOUTIQUES_CUSTOM_KEY][BOUTIQUES_CONFIG_KEY]
     except Exception:
-        raise RuntimeError(
+        raise ConfigError(
             "The Boutiques descriptor does not have a"
             f" {BOUTIQUES_CUSTOM_KEY}/{BOUTIQUES_CONFIG_KEY} field: {descriptor}"
         )

@@ -48,8 +48,8 @@ titlesonly:
 caption: Tutorials
 ---
 tutorials/mriqc_from_bids/index
+Video series<tutorials/videos/index>
 tutorials/integrations/index
-tutorials/videos/index
 ```
 
 ```{toctree}
@@ -74,7 +74,9 @@ caption: How-to guides
 how_to_guides/user_guide/index
 how_to_guides/init/index
 how_to_guides/manifest/index
+how_to_guides/reorganize_sourcedata/index
 how_to_guides/tabular_data/index
+how_to_guides/docker/index
 how_to_guides/pipeline_install/index
 how_to_guides/pipeline_run/index
 how_to_guides/tracking/index
@@ -103,6 +105,7 @@ titlesonly:
 caption: Other
 ---
 changelog
+team
 contributing
 glossary
 ```

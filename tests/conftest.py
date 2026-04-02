@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import datetime
-import logging
 from pathlib import Path
-from typing import Optional
+from typing import Generator, Optional
 
+import click
 import numpy as np
 import pandas as pd
 import pytest
@@ -21,6 +21,7 @@ from nipoppy.env import (
     StrOrPathLike,
 )
 from nipoppy.layout import DatasetLayout
+from nipoppy.logger import NipoppyLogger, get_logger
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import (
@@ -70,19 +71,16 @@ ATTR_TO_FPATH_MAP = {
     "fpath_curation_status": "sourcedata/imaging/curation_status.tsv",
     "fpath_processing_status": "derivatives/processing_status.tsv",
     "fpath_demographics": "tabular/demographics.tsv",
+    "fpath_harmonized": "tabular/harmonized.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
 
 
-@pytest.fixture(autouse=True)
-def clean_loggers():
-    """Clear handler(s) for every logger."""
-    yield
-
-    # run after every test
-    for name in logging.Logger.manager.loggerDict:
-        logging.getLogger(name).handlers.clear()
+@pytest.fixture()
+def logger() -> Generator[NipoppyLogger]:
+    """Fixture for NipoppyLogger instance."""
+    return get_logger()
 
 
 @pytest.fixture()
@@ -97,6 +95,42 @@ def datetime_fixture(
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
+
+
+def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
+    """List all CLI commands recursively.
+
+    Parameters
+    ----------
+    group : click.Group
+        The Click group to list commands from.
+    prefix : str, optional
+        Prefix to add to command names (used for recursion), by default ""
+    include_hidden : bool, optional
+        Whether to include hidden commands, by default True
+
+    Returns
+    -------
+    list of str
+        List of command names.
+    """
+    commands = []
+    for name, cmd in group.commands.items():
+        # Skip hidden commands like 'gui' if include_hidden is False
+        if not include_hidden and hasattr(cmd, "hidden") and cmd.hidden:
+            continue
+
+        full_name = f"{prefix}{name}"
+        commands.append(full_name)
+
+        # If the command is itself a group, recurse
+        if isinstance(cmd, click.Group):
+            commands.extend(
+                list_cli_commands(
+                    cmd, prefix=f"{full_name} ", include_hidden=include_hidden
+                )
+            )
+    return commands
 
 
 def get_config(

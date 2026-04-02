@@ -1,7 +1,7 @@
 """Classes for generating container commands."""
 
 import argparse
-import logging
+import os
 import platform
 import shlex
 import shutil
@@ -13,8 +13,12 @@ from typing import Iterable, Optional
 from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import ContainerError
+from nipoppy.logger import get_logger
 
 BIND_SEP = ":"
+
+logger = get_logger()
 
 
 class ContainerHandler(Base, ABC):
@@ -34,25 +38,18 @@ class ContainerHandler(Base, ABC):
         """Flag for binding paths."""
         pass
 
-    def __init__(
-        self, args: Iterable[str] = None, logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, args: Iterable[str] = None):
         super().__init__()
 
         if args is None:
             args = []
 
-        if logger is None:
-            logger = logging.getLogger(__name__)
-            logger.setLevel(logging.INFO)
-
         self.args = args[:]
-        self.logger = logger
 
     def check_command_exists(self):
         """Check that the command is available (i.e. in PATH)."""
         if not shutil.which(self.command):
-            raise RuntimeError(
+            raise ContainerError(
                 f"Container executable not found: {self.command}"
                 ". Make sure it is installed and in your PATH."
             )
@@ -114,19 +111,19 @@ class ContainerHandler(Base, ABC):
                     path_local = Path(bind_spec_components[0])
                     path_local_original = path_local
 
-                    self.logger.debug(f"Checking container bind spec: {bind_spec}")
+                    logger.debug(f"Checking container bind spec: {bind_spec}")
 
                     # path must be absolute and exist
                     path_local = path_local.resolve()
                     if path_local != path_local_original:
                         path_local = path_local.resolve()
-                        self.logger.debug(
+                        logger.debug(
                             "Resolving path for container"
                             f": {path_local_original} -> {path_local}"
                         )
                     if not path_local.exists():
                         path_local.mkdir(parents=True)
-                        self.logger.debug(
+                        logger.debug(
                             "Creating missing directory for container bind path"
                             f": {path_local}"
                         )
@@ -136,14 +133,14 @@ class ContainerHandler(Base, ABC):
                         bind_spec_components[0] = str(path_local)
                         replacement_map[bind_spec] = BIND_SEP.join(bind_spec_components)
 
-        except Exception as exception:
-            raise RuntimeError(
+        except Exception as e:
+            raise ContainerError(
                 f"Error parsing {self.bind_flags} flags in container arguments: "
                 f"{self.args}. Make sure each flag is followed by a valid spec (e.g. "
                 f"{self.bind_flags[0]} /path/local{BIND_SEP}/path/container"
                 f"{BIND_SEP}rw). Exact error was: "
-                f"{type(exception).__name__} {exception}"
-            )
+                f"{type(e).__name__} {e}"
+            ) from e
 
         # apply replacements
         args_str = shlex.join(self.args)
@@ -254,7 +251,7 @@ class ApptainerHandler(ContainerHandler):
             True if the container image exists at the specified path
         """
         if fpath_container is None:
-            raise ValueError("Path to container image must be specified")
+            raise ContainerError("Path to container image must be specified")
         return Path(fpath_container).exists()
 
     def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
@@ -293,7 +290,9 @@ class ApptainerHandler(ContainerHandler):
             The command string
         """
         if uri is None or fpath_container is None:
-            raise ValueError("Both URI and path to container image must be specified")
+            raise ContainerError(
+                "Both URI and path to container image must be specified"
+            )
         return shlex.join([self.command, "pull", str(fpath_container), uri])
 
 
@@ -330,7 +329,7 @@ class DockerHandler(ContainerHandler):
             True if the container image exists at the specified path
         """
         if uri is None:
-            raise ValueError("URI must be specified")
+            raise ContainerError("URI must be specified")
         uri = self._strip_prefix(uri)
         result = subprocess.run(
             [self.command, "image", "inspect", uri], capture_output=True
@@ -370,7 +369,7 @@ class DockerHandler(ContainerHandler):
             The command string
         """
         if uri is None:
-            raise ValueError("URI must be specified")
+            raise ContainerError("URI must be specified")
         uri = self._strip_prefix(uri)
 
         cmd = [self.command, "pull"]
@@ -380,22 +379,72 @@ class DockerHandler(ContainerHandler):
         return shlex.join(cmd)
 
 
-def get_container_handler(
-    config: ContainerConfig, logger: Optional[logging.Logger] = None
-) -> ContainerHandler:
+class BareMetalHandler(ContainerHandler):
+    """Handler for bare metal execution (no container)."""
+
+    command = NotImplemented
+    bind_flags = NotImplemented
+
+    def add_bind_arg(
+        self,
+        path_src: StrOrPathLike,
+        path_dest: Optional[StrOrPathLike] = None,
+        mode: Optional[str] = "rw",
+    ):
+        """
+        Add a bind path to the container args.
+
+        Does not do anything since this is bare metal execution.
+        """
+        pass
+
+    def add_env_arg(self, key: str, value: str):
+        """Set environment variable."""
+        os.environ[key] = value
+
+    def is_image_downloaded(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> bool:
+        """Check if a container image has been downloaded.
+
+        Always returns True since bare metal execution does not need image.
+        """
+        return True
+
+    def get_pull_confirmation_prompt(self, fpath_container: StrOrPathLike) -> str:
+        """Should not be used."""  # noqa D401
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support pulling container images"
+        )
+
+    def get_pull_command(
+        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+    ) -> str:
+        """Should not be used."""  # noqa D401
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support pulling container images"
+        )
+
+
+def get_container_handler(config: ContainerConfig) -> ContainerHandler:
     """Get a container handler for a given container config."""
     command_handler_map = {
         ContainerCommandEnum.APPTAINER: ApptainerHandler,
         ContainerCommandEnum.SINGULARITY: SingularityHandler,
         ContainerCommandEnum.DOCKER: DockerHandler,
+        None: BareMetalHandler,
     }
 
     try:
         handler_class = command_handler_map[config.COMMAND]
-    except KeyError:
-        raise ValueError(f"No container handler for command: {config.COMMAND}")
+    except KeyError as e:
+        raise ContainerError(
+            f"No container handler for command: {config.COMMAND}"
+        ) from e
 
-    handler: ContainerHandler = handler_class(args=config.ARGS, logger=logger)
+    handler: ContainerHandler = handler_class(args=config.ARGS)
+    for bind_path in config.BIND_PATHS:
+        handler.add_bind_arg(*bind_path.split(BIND_SEP))
     for key, value in config.ENV_VARS.items():
         handler.add_env_arg(key, value)
 

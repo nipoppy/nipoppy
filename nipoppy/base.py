@@ -4,6 +4,8 @@ import inspect
 from abc import ABC
 from typing import Optional, Sequence
 
+from nipoppy.exceptions import NipoppyError
+
 
 class Base(ABC):
     """Base class with utilities for pretty string representations."""
@@ -59,13 +61,13 @@ class Base(ABC):
         ]
         try:
             return self._str_helper(names=names)
-        except AttributeError:
-            raise RuntimeError(
+        except AttributeError as e:
+            raise NipoppyError(
                 f"The __init__ method of the {type(self)} class has positional and/or"
                 " keyword arguments that are not set as attributes of the object"
                 ". Failed to build string representation: need to override the"
                 " __str__ method"
-            )
+            ) from e
 
     def __repr__(self) -> str:
         return self.__str__()

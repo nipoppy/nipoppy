@@ -5,6 +5,8 @@ from typing import ClassVar
 from pydantic import BaseModel, ConfigDict, model_validator
 from typing_extensions import Self
 
+from nipoppy.exceptions import ConfigError
+
 
 class HpcConfig(BaseModel):
     r"""
@@ -37,7 +39,7 @@ class HpcConfig(BaseModel):
         """
         for key, value in self.model_dump().items():
             if key in self._reserved_keys or key.startswith(self._reserved_prefix):
-                raise ValueError(
+                raise ConfigError(
                     f"Reserved key {key} found in HPC configuration"
                     f". Any key is allowed except for {self._reserved_keys}"
                     f" as well as keys starting with '{self._reserved_prefix}'"

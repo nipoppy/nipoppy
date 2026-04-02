@@ -23,10 +23,10 @@ def workflow(tmp_path: Path) -> BIDSificationRunner:
         pipeline_version="0.12.2",
         pipeline_step="prepare",
     )
-    workflow.config = get_config()
+    workflow.study.config = get_config()
     create_empty_dataset(workflow.dpath_root)
     create_pipeline_config_files(
-        workflow.layout.dpath_pipelines,
+        workflow.study.layout.dpath_pipelines,
         bidsification_pipelines=[
             {
                 "NAME": "heudiconv",
@@ -150,8 +150,10 @@ def test_cleanup(table: CurationStatusTable, workflow: BIDSificationRunner):
 
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_curation_status.exists()
-    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(table)
+    assert workflow.study.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.study.layout.fpath_curation_status).equals(
+        table
+    )
 
 
 def test_cleanup_simulate(workflow: BIDSificationRunner):
@@ -161,7 +163,7 @@ def test_cleanup_simulate(workflow: BIDSificationRunner):
 
     workflow.run_cleanup()
 
-    assert not workflow.layout.fpath_curation_status.exists()
+    assert not workflow.study.layout.fpath_curation_status.exists()
 
 
 def test_cleanup_no_status_update(workflow: BIDSificationRunner):
@@ -170,7 +172,7 @@ def test_cleanup_no_status_update(workflow: BIDSificationRunner):
 
     workflow.run_cleanup()
 
-    assert not workflow.layout.fpath_curation_status.exists()
+    assert not workflow.study.layout.fpath_curation_status.exists()
 
 
 @pytest.mark.parametrize(

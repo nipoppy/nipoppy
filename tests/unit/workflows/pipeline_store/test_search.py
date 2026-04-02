@@ -53,7 +53,7 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     # order is switched because of sorting by downloads
     assert df.iloc[0]["Zenodo ID"] == "[link=fake_doi_url_67890]67890[/link]"
     assert df.iloc[0]["Title"] == "Pipeline 2"
-    assert df.iloc[0]["Description"] is None
+    assert pd.isna(df.iloc[0]["Description"])
     assert df.iloc[0]["Downloads"] == 100
 
     assert df.iloc[1]["Zenodo ID"] == "[link=fake_doi_url_12345]12345[/link]"
@@ -103,6 +103,7 @@ def test_df_to_table(
 
 
 @pytest.mark.parametrize("community", [True, False])
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineSearchWorkflow,
     community: bool,
@@ -129,7 +130,7 @@ def test_run_main(
     workflow.zenodo_api.search_records.assert_called_once_with(
         query=workflow.query,
         keywords=["Nipoppy"],
-        size=workflow._api_search_size,
+        size=workflow.size,
         community_id=ZENODO_COMMUNITY_ID if community else None,
     )
     mocked_hits_to_df.assert_called_once_with(hits)
@@ -139,6 +140,7 @@ def test_run_main(
     mocked_console_status.assert_called_once()
 
 
+@pytest.mark.no_xdist
 def test_run_main_no_results(
     workflow: PipelineSearchWorkflow,
     caplog: pytest.LogCaptureFixture,
@@ -158,6 +160,7 @@ def test_run_main_no_results(
     )
 
 
+@pytest.mark.no_xdist
 def test_run_main_all_results(
     workflow: PipelineSearchWorkflow,
     hits: list[dict],

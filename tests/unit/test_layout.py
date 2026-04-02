@@ -7,6 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from nipoppy.env import PipelineTypeEnum
+from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.layout import DatasetLayout, PathInfo
 from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 from tests.conftest import (
@@ -53,6 +54,7 @@ def test_init_default(dpath_root):
         FPATH_DEFAULT_LAYOUT,
         DPATH_LAYOUTS / "layout-0.1.0.json",
         DPATH_LAYOUTS / "layout-0.2.x.json",
+        DPATH_LAYOUTS / "layout-bids-study.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],
@@ -74,7 +76,7 @@ def test_init_invalid_layout(dpath_root, fpath_spec):
 
 
 def test_init_config_not_found(dpath_root):
-    with pytest.raises(FileNotFoundError, match="Layout config file not found"):
+    with pytest.raises(FileOperationError, match="Layout config file not found"):
         DatasetLayout(dpath_root=dpath_root, fpath_config="fake_path")
 
 
@@ -154,7 +156,7 @@ def test_dpath_descriptions():
 def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
     create_invalid_dataset(dpath_root, paths_to_delete)
     layout = DatasetLayout(dpath_root=dpath_root)
-    with pytest.raises(FileNotFoundError, match="Missing"):
+    with pytest.raises(LayoutError, match="Missing"):
         layout.validate()
 
 

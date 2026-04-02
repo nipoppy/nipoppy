@@ -7,6 +7,7 @@ import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.logger import LogColor
 from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
 from tests.conftest import create_empty_dataset
 
@@ -73,12 +74,12 @@ def test_get_pipeline_map_info(
     for pipeline_config_dict in pipeline_config_dicts:
         pipeline_config = BasePipelineConfig(**pipeline_config_dict)
         fpath_config = (
-            workflow.layout.get_dpath_pipeline_bundle(
+            workflow.study.layout.get_dpath_pipeline_bundle(
                 pipeline_config.PIPELINE_TYPE,
                 pipeline_config.NAME,
                 pipeline_config.VERSION,
             )
-            / workflow.layout.fname_pipeline_config
+            / workflow.study.layout.fname_pipeline_config
         )
         fpath_config.parent.mkdir(parents=True, exist_ok=True)
         fpath_config.write_text(pipeline_config.model_dump_json())
@@ -90,10 +91,10 @@ def test_get_pipeline_map_info(
 
 def test_get_pipeline_info_map_error(workflow: PipelineListWorkflow):
     fpath_config = (
-        workflow.layout.get_dpath_pipeline_bundle(
+        workflow.study.layout.get_dpath_pipeline_bundle(
             PipelineTypeEnum.BIDSIFICATION, "pipeline1", "0.0.1"
         )
-        / workflow.layout.fname_pipeline_config
+        / workflow.study.layout.fname_pipeline_config
     )
     fpath_config.parent.mkdir(parents=True, exist_ok=True)
     fpath_config.write_text("invalid json")
@@ -117,6 +118,7 @@ def test_get_pipeline_info_map_error(workflow: PipelineListWorkflow):
         PipelineTypeEnum.EXTRACTION,
     ],
 )
+@pytest.mark.no_xdist
 def test_log_pipeline_info(
     pipeline_type: PipelineTypeEnum,
     pipeline_info: dict[str, list[str]],
@@ -124,7 +126,10 @@ def test_log_pipeline_info(
     caplog: pytest.LogCaptureFixture,
 ):
     workflow._log_pipeline_info(pipeline_type, pipeline_info)
-    assert f"[green]Available {pipeline_type.value}" in caplog.records[0].message
+    assert (
+        f"[bold {LogColor.EMPHASIZE}]Available {pipeline_type.value}"
+        in caplog.records[0].message
+    )
     for (pipeline_name, versions), log_record in zip(
         pipeline_info.items(), caplog.records[1:]
     ):
@@ -141,6 +146,7 @@ def test_log_pipeline_info(
         PipelineTypeEnum.EXTRACTION,
     ],
 )
+@pytest.mark.no_xdist
 def test_log_pipeline_info_empty(
     pipeline_type: PipelineTypeEnum,
     workflow: PipelineListWorkflow,
@@ -153,6 +159,7 @@ def test_log_pipeline_info_empty(
     assert f"No available {pipeline_type.value} pipelines" in caplog.records[0].message
 
 
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineListWorkflow,
     mocker: pytest_mock.MockFixture,
@@ -175,7 +182,7 @@ def test_run_main(
 
     assert (
         caplog.records[0].message
-        == f"Checking pipelines installed in {workflow.layout.dpath_pipelines}"
+        == f"Checking pipelines installed in {workflow.study.layout.dpath_pipelines}"
     )
     assert "Pipelines can be installed with the " in caplog.records[-1].message
 

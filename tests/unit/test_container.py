@@ -10,11 +10,13 @@ import pytest_mock
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import (
     ApptainerHandler,
+    BareMetalHandler,
     ContainerHandler,
     DockerHandler,
     SingularityHandler,
     get_container_handler,
 )
+from nipoppy.exceptions import ContainerError
 
 
 class _TestHandler(ContainerHandler):
@@ -58,12 +60,6 @@ def test_init_args(args, expected_args):
     assert handler.args is not args
 
 
-@pytest.mark.parametrize("logger", [None, logging.getLogger("test_logger")])
-def test_init_logger(logger):
-    handler = _TestHandler(logger=logger)
-    assert isinstance(handler.logger, logging.Logger)
-
-
 def test_check_command_exists(
     handler: ContainerHandler, mocker: pytest_mock.MockerFixture
 ):
@@ -79,7 +75,7 @@ def test_check_command_exists_error(
     handler: ContainerHandler, mocker: pytest_mock.MockerFixture
 ):
     mocker.patch("nipoppy.container.shutil.which", return_value=None)
-    with pytest.raises(RuntimeError, match="Container executable not found"):
+    with pytest.raises(ContainerError, match="Container executable not found"):
         handler.check_command_exists()
 
 
@@ -139,7 +135,7 @@ def test_add_bind_arg(
         ["-B", "/", "-B", "/:relative_path_in_container", "-B", "/:/:ro"],
     ],
 )
-def test_fix_bind_args(args, handler: ContainerHandler, caplog):
+def test_fix_bind_args(args, handler: ContainerHandler):
     handler.args = args
     handler.fix_bind_args()
 
@@ -147,12 +143,13 @@ def test_fix_bind_args(args, handler: ContainerHandler, caplog):
     assert handler.args == args
 
 
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("bind_flag", ["-B", "--bind"])
 def test_fix_bind_args_relative(
     bind_flag, handler: ContainerHandler, caplog: pytest.LogCaptureFixture
 ):
     handler.args = [bind_flag, "."]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -160,6 +157,7 @@ def test_fix_bind_args_relative(
     assert "Resolving path" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_fix_bind_args_symlink(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
@@ -169,7 +167,7 @@ def test_fix_bind_args_symlink(
     path_symlink.symlink_to(path_real)
 
     handler.args = ["-B", str(path_symlink)]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -177,6 +175,7 @@ def test_fix_bind_args_symlink(
     assert "Resolving path" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_fix_bind_args_missing(
     handler: ContainerHandler, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
@@ -184,7 +183,7 @@ def test_fix_bind_args_missing(
     assert not dpath.exists()
 
     handler.args = ["-B", str(dpath)]
-    caplog.set_level(logging.DEBUG, logger=handler.logger.name)
+    caplog.set_level(logging.DEBUG)
 
     handler.fix_bind_args()
 
@@ -194,7 +193,7 @@ def test_fix_bind_args_missing(
 
 def test_fix_bind_args_error(handler: ContainerHandler):
     handler.args = ["-B"]
-    with pytest.raises(RuntimeError, match="Error parsing"):
+    with pytest.raises(ContainerError, match="Error parsing"):
         handler.fix_bind_args()
 
 
@@ -261,7 +260,9 @@ def test_is_image_downloaded_apptainer_singularity(
 def test_is_image_downloaded_apptainer_singularity_error(
     handler: ContainerHandler,
 ):
-    with pytest.raises(ValueError, match="Path to container image must be specified"):
+    with pytest.raises(
+        ContainerError, match="Path to container image must be specified"
+    ):
         handler.is_image_downloaded("ignored", None)
 
 
@@ -301,8 +302,14 @@ def test_is_image_downloaded_docker(
 def test_is_image_downloaded_docker_error():
     handler = DockerHandler()
 
-    with pytest.raises(ValueError, match="URI must be specified"):
+    with pytest.raises(ContainerError, match="URI must be specified"):
         assert handler.is_image_downloaded(None, "not_used")
+
+
+def test_is_image_downloaded_baremetal():
+    handler = BareMetalHandler()
+
+    assert handler.is_image_downloaded("not_used", "not_used") is True
 
 
 @pytest.mark.parametrize(
@@ -384,7 +391,7 @@ def test_get_pull_command(
 def test_get_pull_command_error(
     handler: ContainerHandler, uri, fpath_container, error_message
 ):
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(ContainerError, match=error_message):
         handler.get_pull_command(uri, fpath_container)
 
 
@@ -395,10 +402,19 @@ def test_get_pull_command_error(
             ContainerConfig(
                 COMMAND="apptainer",
                 ARGS=["--cleanenv", "--bind", "fake_path"],
+                BIND_PATHS=["/other_path"],
                 ENV_VARS={"VAR1": "1"},
             ),
             ApptainerHandler(
-                args=["--cleanenv", "--bind", "fake_path", "--env", "VAR1=1"],
+                args=[
+                    "--cleanenv",
+                    "--bind",
+                    "fake_path",
+                    "--bind",
+                    "/other_path:/other_path:rw",
+                    "--env",
+                    "VAR1=1",
+                ],
             ),
         ),
         (
@@ -414,11 +430,28 @@ def test_get_pull_command_error(
             ContainerConfig(
                 COMMAND="docker",
                 ARGS=["--volume", "path"],
+                BIND_PATHS=["/path2:/inside_container:ro"],
                 ENV_VARS={"VAR3": "123"},
             ),
             DockerHandler(
-                args=["--volume", "path", "--env", "VAR3=123"],
+                args=[
+                    "--volume",
+                    "path",
+                    "--volume",
+                    "/path2:/inside_container:ro",
+                    "--env",
+                    "VAR3=123",
+                ],
             ),
+        ),
+        (
+            ContainerConfig(
+                COMMAND=None,
+                ARGS=[],
+                BIND_PATHS=["ignored"],
+                ENV_VARS={"VAR3": "123"},
+            ),
+            BareMetalHandler(),
         ),
     ],
 )
@@ -434,7 +467,7 @@ def test_get_container_handler(config: ContainerConfig, expected: ContainerHandl
 def test_get_container_handler_error():
     config = ContainerConfig()
     config.COMMAND = "unknown_command"
-    with pytest.raises(ValueError, match="No container handler for command:"):
+    with pytest.raises(ContainerError, match="No container handler for command:"):
         get_container_handler(config)
 
 

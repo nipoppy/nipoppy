@@ -3,11 +3,17 @@
 from pathlib import Path
 from typing import Optional
 
-import boutiques as bosh
+import boutiques
 
-from nipoppy.env import LogColor, PipelineTypeEnum
+from nipoppy.env import PipelineTypeEnum
+from nipoppy.exceptions import FileOperationError, WorkflowError
+from nipoppy.layout import DatasetLayout
+from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
 from nipoppy.workflows.base import BaseWorkflow
+
+logger = get_logger()
 
 
 class PipelineCreateWorkflow(BaseWorkflow):
@@ -40,7 +46,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
     ):
         """Create a pipeline bundle."""
         if target.exists():
-            raise IsADirectoryError(
+            raise FileOperationError(
                 f"Target directory {target} already exists. "
                 "Please remove it or choose a different name.",
             )
@@ -49,52 +55,75 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         descriptor_path = target / "descriptor.json"
         if source_descriptor:
-            self.copy(source_descriptor, descriptor_path)
+            try:
+                boutiques.validate(str(source_descriptor))
+            except boutiques.DescriptorValidationError as exception:
+                raise WorkflowError(
+                    f"Descriptor file {source_descriptor} is invalid:\n{exception}"
+                )
+            except ValueError as exception:  # catches simplejson.errors.JSONDecodeError
+                raise WorkflowError(
+                    "Error validating the descriptor file "
+                    f"{source_descriptor}:\n{exception}"
+                )
+            fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
-            bosh.create(descriptor_path.as_posix())
+            boutiques.create(str(descriptor_path))
 
         target.joinpath("invocation.json").write_text(
-            bosh.example(descriptor_path.as_posix())
+            boutiques.example(str(descriptor_path))
         )
-        self.copy(
+        fileops.copy(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
             target.joinpath("hpc.json"),
+            dry_run=self.dry_run,
         )
 
-        # Populate the config.json using descriptor information
         config = load_json(
             TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
         )
-        descriptor = load_json(descriptor_path)
-        config["NAME"] = descriptor["name"]
-        config["VERSION"] = descriptor["tool-version"]
-        save_json(config, target.joinpath("config.json"))
+
+        # Populate the config.json using descriptor information
+        if source_descriptor is not None:
+
+            descriptor = load_json(descriptor_path)
+            config["NAME"] = descriptor["name"]
+            config["VERSION"] = descriptor["tool-version"]
+            if "container-image" in descriptor:
+                config["CONTAINER_INFO"][
+                    "URI"
+                ] = f"docker://{descriptor['container-image']['image']}"
+
+                # replace the pipeline name/version with placeholders
+                # to avoid users forgetting to update them when copy-pasting
+                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
+                    "URI"
+                ].replace(descriptor["name"], "[[PIPELINE_NAME]]")
+                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
+                    "URI"
+                ].replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+
+        save_json(config, target.joinpath(DatasetLayout.fname_pipeline_config))
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
-            self.copy(
+            fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
                 target.joinpath("tracker.json"),
-            )
-            self.copy(
-                TEMPLATE_PIPELINE_PATH.joinpath("pybids_ignore.json"),
-                target.joinpath("pybids_ignore.json"),
+                dry_run=self.dry_run,
             )
 
     def run_main(self):
         """Run the main workflow."""
-        self.logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
+        logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
         self.create_bundle(
             target=self.pipeline_dir,
             type_=self.type_,
             source_descriptor=self.source_descriptor,
         )
-        self.logger.info(
-            f"[{LogColor.SUCCESS}]Pipeline bundle successfully created at "
-            f"{self.pipeline_dir}![/]",
-        )
-        self.logger.warning("Edit the files to customize your pipeline.")
-        self.logger.info(
+        logger.success(f"Pipeline bundle successfully created at {self.pipeline_dir}!")
+        logger.warning("Edit the files to customize your pipeline.")
+        logger.info(
             "You can run [magenta]nipoppy pipeline validate[/] to check your pipeline"
             " configuration and [magenta]nipoppy pipeline upload[/] to upload it to "
             "Zenodo."

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import ReturnCode
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.manifest import Manifest
@@ -27,8 +27,8 @@ from tests.conftest import (
 def workflow(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     workflow = DicomReorgWorkflow(dpath_root=dpath_root)
-    workflow.config = get_config()
-    workflow.config.save(workflow.layout.fpath_config)
+    workflow.study.config = get_config()
+    workflow.study.config.save(workflow.study.layout.fpath_config)
     return workflow
 
 
@@ -73,7 +73,7 @@ def test_get_fpaths_to_reorg(
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=participant_first
     )
     for fpath in fpaths:
-        fpath_full: Path = workflow.layout.dpath_pre_reorg / fpath
+        fpath_full: Path = workflow.study.layout.dpath_pre_reorg / fpath
         fpath_full.parent.mkdir(parents=True, exist_ok=True)
         fpath_full.touch()
 
@@ -95,7 +95,7 @@ def test_get_fpaths_to_reorg_error_not_found(workflow: DicomReorgWorkflow):
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
     )
 
-    with pytest.raises(FileNotFoundError, match="Raw DICOM directory not found"):
+    with pytest.raises(FileOperationError, match="Raw DICOM directory not found"):
         workflow.get_fpaths_to_reorg("XXX", "X")
 
 
@@ -123,9 +123,12 @@ def test_apply_fname_mapping(workflow: DicomReorgWorkflow, mapping_func, expecte
 @pytest.mark.parametrize(
     "fpath_source,expected",
     [
-        ("123456.dcm", "123456.dcm"),
-        (Path("dirA", "123456.dcm"), "123456.dcm"),
-        ("123/dicoms.tar.gz", "dicoms.tar.gz"),
+        ("123456.dcm", "5058f1a_123456.dcm"),
+        (Path("dirA", "123456.dcm"), "b0b339e_123456.dcm"),
+        (Path("dirA", "654321.dcm"), "b0b339e_654321.dcm"),
+        (Path("123", "dicoms.tar.gz"), "202cb96_dicoms.tar.gz"),
+        (Path("123", "456", "dicoms.tar.gz"), "206d81c_dicoms.tar.gz"),
+        (Path("321", "456", "dicoms.tar.gz"), "7a3d02b_dicoms.tar.gz"),
     ],
 )
 def test_apply_fname_mapping_default(
@@ -149,22 +152,25 @@ def test_run_single_error_file_exists(workflow: DicomReorgWorkflow):
         manifest=manifest, fpath_dicom_dir_map=None, participant_first=True
     )
 
-    # create the same file in both the downloaded and organized directories
-    fname = "test.dcm"
+    # create a collision
+    fpath_source = (
+        workflow.study.layout.dpath_pre_reorg / participant_id / session_id / "test.dcm"
+    )
     for fpath in [
-        workflow.layout.dpath_pre_reorg / participant_id / session_id / fname,
-        workflow.layout.dpath_post_reorg
+        fpath_source,
+        workflow.study.layout.dpath_post_reorg
         / participant_id_to_bids_participant_id(participant_id)
         / session_id_to_bids_session_id(session_id)
-        / fname,
+        / workflow.apply_fname_mapping(fpath_source, participant_id, session_id),
     ]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.touch()
 
-    with pytest.raises(FileExistsError, match="Cannot move file"):
+    with pytest.raises(FileOperationError, match="Cannot move file"):
         workflow.run_single(participant_id, session_id)
 
 
+@pytest.mark.no_xdist
 def test_run_single_invalid_dicom(
     workflow: DicomReorgWorkflow, caplog: pytest.LogCaptureFixture
 ):
@@ -181,7 +187,7 @@ def test_run_single_invalid_dicom(
 
     # use derived DICOM file
     fpath_dicom = (
-        workflow.layout.dpath_pre_reorg / participant_id / session_id / "test.dcm"
+        workflow.study.layout.dpath_pre_reorg / participant_id / session_id / "test.dcm"
     )
     fpath_dicom.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(DPATH_TEST_DATA / "dicom-derived.dcm", fpath_dicom)
@@ -214,7 +220,7 @@ def test_run_single_error_dicom_read(workflow: DicomReorgWorkflow):
 
     # create an invalid DICOM file
     fname = "test.dcm"
-    fpath = workflow.layout.dpath_pre_reorg / participant_id / session_id / fname
+    fpath = workflow.study.layout.dpath_pre_reorg / participant_id / session_id / fname
     fpath.parent.mkdir(parents=True, exist_ok=True)
     fpath.touch()
 
@@ -278,16 +284,16 @@ def test_get_participants_sessions_to_run(
         "S02": ["1", "2", "3"],
         "S03": ["1", "2", "3"],
     }
-    create_empty_dataset(workflow.layout.dpath_root)
+    create_empty_dataset(workflow.study.layout.dpath_root)
 
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
-        dpath_downloaded=workflow.layout.dpath_pre_reorg,
-        dpath_organized=workflow.layout.dpath_post_reorg,
+        dpath_downloaded=workflow.study.layout.dpath_pre_reorg,
+        dpath_organized=workflow.study.layout.dpath_post_reorg,
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
 
     assert [tuple(x) for x in workflow.get_participants_sessions_to_run()] == expected
 
@@ -296,12 +302,12 @@ def test_run_setup(workflow: DicomReorgWorkflow):
     participants_and_sessions1 = {"01": ["1"]}
     participants_and_sessions2 = {"01": ["1", "2"], "02": ["1"]}
 
-    create_empty_dataset(workflow.layout.dpath_root)
+    create_empty_dataset(workflow.study.layout.dpath_root)
 
     manifest1 = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions1,
     )
-    manifest1.save_with_backup(workflow.layout.fpath_manifest)
+    manifest1.save_with_backup(workflow.study.layout.fpath_manifest)
 
     # generate first curation status table with the smaller manifest
     curation_status_table1 = DicomReorgWorkflow(
@@ -312,8 +318,8 @@ def test_run_setup(workflow: DicomReorgWorkflow):
     manifest2 = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions2,
     )
-    manifest2.save_with_backup(workflow.layout.fpath_manifest)
-    workflow.manifest = manifest2
+    manifest2.save_with_backup(workflow.study.layout.fpath_manifest)
+    workflow.study.manifest = manifest2
 
     # check that curation status table was regenerated
     workflow.run_setup()
@@ -363,16 +369,16 @@ def test_run_main(
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions_manifest,
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
-        dpath_downloaded=workflow.layout.dpath_pre_reorg,
+        dpath_downloaded=workflow.study.layout.dpath_pre_reorg,
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
 
     workflow.run_main()
 
     for participant_id, session_ids in participants_and_sessions_manifest.items():
         for session_id in session_ids:
             dpath_to_check: Path = (
-                workflow.layout.dpath_post_reorg
+                workflow.study.layout.dpath_post_reorg
                 / participant_id_to_bids_participant_id(participant_id)
                 / session_id_to_bids_session_id(session_id)
             )
@@ -410,7 +416,7 @@ def test_run_main(
 
 
 def test_run_main_error(workflow: DicomReorgWorkflow):
-    create_empty_dataset(workflow.layout.dpath_root)
+    create_empty_dataset(workflow.study.layout.dpath_root)
 
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest={
@@ -419,7 +425,7 @@ def test_run_main_error(workflow: DicomReorgWorkflow):
             "S03": ["1", "2", "3"],
         },
     )
-    manifest.save_with_backup(workflow.layout.fpath_manifest)
+    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
 
     # will cause the workflow to fail because the directories cannot be found
     workflow.curation_status_table[workflow.curation_status_table.col_in_pre_reorg] = (
@@ -458,8 +464,8 @@ def test_cleanup_curation_status(
     workflow.curation_status_table = curation_status_table
     workflow.run_cleanup()
 
-    assert workflow.layout.fpath_curation_status.exists()
-    assert CurationStatusTable.load(workflow.layout.fpath_curation_status).equals(
+    assert workflow.study.layout.fpath_curation_status.exists()
+    assert CurationStatusTable.load(workflow.study.layout.fpath_curation_status).equals(
         curation_status_table
     )
 
@@ -485,6 +491,7 @@ def test_cleanup_curation_status(
         ),
     ],
 )
+@pytest.mark.no_xdist
 def test_run_cleanup_message(
     workflow: DicomReorgWorkflow,
     n_success,

@@ -47,3 +47,6 @@ nipoppy_env/
 
 # Logs
 *.log
+
+# all-contributors CLI
+node_modules

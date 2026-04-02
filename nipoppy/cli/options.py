@@ -5,8 +5,10 @@ from pathlib import Path
 
 import rich_click as click
 
-from nipoppy.cli import logger
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+from nipoppy.logger import get_logger
+
+logger = get_logger()
 
 
 def dataset_option(func):
@@ -193,3 +195,23 @@ def assume_yes_option(func):
         help="Assume yes to all questions.",
     )(func)
     return func
+
+
+def password_file_option(required: bool):
+    """
+    Define password file option for the CLI.
+
+    Note: This is a decorator factory that returns a decorator.
+    """
+
+    def decorator(func):
+        return click.option(
+            "--password-file",
+            type=click.Path(
+                exists=True, path_type=Path, resolve_path=True, dir_okay=False
+            ),
+            required=required,
+            help="Path to file containing Zenodo access token (and nothing else)",
+        )(func)
+
+    return decorator

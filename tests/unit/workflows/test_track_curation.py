@@ -20,8 +20,8 @@ def workflow(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     create_empty_dataset(dpath_root)
     workflow = TrackCurationWorkflow(dpath_root=dpath_root)
-    workflow.config = get_config()
-    workflow.config.save(workflow.layout.fpath_config)
+    workflow.study.config = get_config()
+    workflow.study.config.save(workflow.study.layout.fpath_config)
     return workflow
 
 
@@ -72,15 +72,15 @@ def test_run_main(
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        dpath_downloaded=workflow.layout.dpath_pre_reorg,
-        dpath_organized=workflow.layout.dpath_post_reorg,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_downloaded=workflow.study.layout.dpath_pre_reorg,
+        dpath_organized=workflow.study.layout.dpath_post_reorg,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    workflow.manifest = manifest1
+    workflow.study.manifest = manifest1
 
     # generate the curation status table
     workflow.run_main()
-    table1 = CurationStatusTable.load(workflow.layout.fpath_curation_status)
+    table1 = CurationStatusTable.load(workflow.study.layout.fpath_curation_status)
 
     assert len(table1) == len(manifest1)
     check_curation_status_table(
@@ -94,11 +94,11 @@ def test_run_main(
 
     # update the manifest (add rows)
     manifest2 = prepare_dataset(participants_and_sessions_manifest2)
-    manifest2.save_with_backup(workflow.layout.fpath_manifest)
+    manifest2.save_with_backup(workflow.study.layout.fpath_manifest)
 
     # update the curation status table
     TrackCurationWorkflow(dpath_root=workflow.dpath_root, empty=empty).run()
-    table2 = CurationStatusTable.load(workflow.layout.fpath_curation_status)
+    table2 = CurationStatusTable.load(workflow.study.layout.fpath_curation_status)
 
     assert len(table2) == len(manifest2)
     check_curation_status_table(
@@ -150,11 +150,11 @@ def test_run_main_regenerate(
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        dpath_downloaded=workflow.layout.dpath_pre_reorg,
-        dpath_organized=workflow.layout.dpath_post_reorg,
-        dpath_bidsified=workflow.layout.dpath_bids,
+        dpath_downloaded=workflow.study.layout.dpath_pre_reorg,
+        dpath_organized=workflow.study.layout.dpath_post_reorg,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
     )
-    workflow.manifest = manifest
+    workflow.study.manifest = manifest
 
     # to be overwritten
     table_records = []
@@ -179,11 +179,14 @@ def test_run_main_regenerate(
             }
         )
     table_old = CurationStatusTable(table_records)
-    assert table_old.save_with_backup(workflow.layout.fpath_curation_status) is not None
+    assert (
+        table_old.save_with_backup(workflow.study.layout.fpath_curation_status)
+        is not None
+    )
 
     # regenerate the table
     workflow.run_main()
-    table = CurationStatusTable.load(workflow.layout.fpath_curation_status)
+    table = CurationStatusTable.load(workflow.study.layout.fpath_curation_status)
 
     assert len(table) == len(manifest)
     check_curation_status_table(
@@ -196,6 +199,7 @@ def test_run_main_regenerate(
     )
 
 
+@pytest.mark.no_xdist
 def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     TrackCurationWorkflow(dpath_root=tmp_path).run_cleanup()
     assert (

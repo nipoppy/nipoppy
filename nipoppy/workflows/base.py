@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 import shlex
-import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -14,31 +11,145 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from nipoppy.base import Base
-from nipoppy.config.main import Config
-from nipoppy.env import EXT_LOG, PROGRAM_NAME, ReturnCode, StrOrPathLike
+from nipoppy.env import EXT_LOG, StrOrPathLike
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
-from nipoppy.logger import add_logfile, capture_warnings, get_logger
+from nipoppy.logger import get_logger
+from nipoppy.study import Study
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
-    process_template_str,
 )
+
+logger = get_logger()
+
+
+class LogPrefix:
+    """Prefixes for logging subprocess output."""
+
+    RUN = "[RUN]"
+    RUN_STDOUT = "[RUN STDOUT]"
+    RUN_STDERR = "[RUN STDERR]"
+
+
+def _log_command(command: str):
+    """Write a command to the log with a special prefix."""
+    # using extra={"markup": False} in case the command contains substrings
+    # that would be interpreted as closing tags by the RichHandler
+    logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
+
+
+def _run_command(
+    command_or_args: Sequence[str] | str,
+    *,
+    check: bool = True,
+    quiet: bool = False,
+    dry_run: bool = False,
+    **kwargs,
+) -> subprocess.Popen | str:
+    """Run a command in a subprocess.
+
+    The command's stdout and stderr outputs are written to the log
+    with special prefixes.
+
+    If in "dry run" mode, the command is not executed, and the method returns
+    the command string. Otherwise, the subprocess.Popen object is returned
+    unless capture_output is True.
+
+    Parameters
+    ----------
+    command_or_args : Sequence[str]  |  str
+        The command to run.
+    check : bool, optional
+        If True, raise an error if the process exits with a non-zero code,
+        by default True
+    quiet : bool, optional
+        If True, do not log the command, by default False
+    **kwargs
+        Passed to `subprocess.Popen`.
+
+    Returns
+    -------
+    subprocess.Popen or str
+    """
+
+    def process_output(output_source, log_prefix: str, log_level=logging.INFO):
+        """Consume lines from an IO stream and log them."""
+        for line in output_source:
+            line = line.strip("\n")
+            # using extra={"markup": False} in case the output contains substrings
+            # that would be interpreted as closing tags by the RichHandler
+            logger.log(
+                level=log_level,
+                msg=f"{log_prefix} {line}",
+                extra={"markup": False},
+            )
+
+    # build command string
+    if not isinstance(command_or_args, str):
+        args = [str(arg) for arg in command_or_args]
+        command = shlex.join(args)
+    else:
+        command = command_or_args
+        args = shlex.split(command)
+
+    # only pass a single string if shell is True
+    if not kwargs.get("shell"):
+        command_or_args = args
+
+    if not quiet:
+        _log_command(command)
+
+    if not dry_run:
+        process = subprocess.Popen(
+            command_or_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            **kwargs,
+        )
+
+        while process.poll() is None:
+            process_output(
+                process.stdout,
+                LogPrefix.RUN_STDOUT,
+            )
+
+            process_output(
+                process.stderr,
+                LogPrefix.RUN_STDERR,
+                log_level=logging.ERROR,
+            )
+
+        if check and process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, command)
+
+        run_output = process
+
+    else:
+        run_output = command
+
+    return run_output
+
+
+def _save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
+    """Save a tabular file."""
+    fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
+    if fpath_backup is not None:
+        logger.info(f"Saved to {fpath} (-> {fpath_backup})")
+    else:
+        logger.info(f"No changes to file at {fpath}")
 
 
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
-
-    log_prefix_run = "[RUN]"
-    log_prefix_run_stdout = "[RUN STDOUT]"
-    log_prefix_run_stderr = "[RUN STDERR]"
 
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
@@ -53,131 +164,19 @@ class BaseWorkflow(Base, ABC):
             If True, print commands without executing them, by default False
         """
         self.name = name
-        self.verbose = verbose
         self.dry_run = dry_run
+        self.verbose = verbose
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
-        # set up logging
-        self.logger = get_logger(
-            name=f"{PROGRAM_NAME}.{self.__class__.__name__}",
-            verbose=verbose,
-        )
-        logging.captureWarnings(True)
-        capture_warnings(self.logger)
-
-    def log_command(self, command: str):
-        """Write a command to the log with a special prefix."""
-        # using extra={"markup": False} in case the command contains substrings
-        # that would be interpreted as closing tags by the RichHandler
-        self.logger.info(f"{self.log_prefix_run} {command}", extra={"markup": False})
-
-    def run_command(
-        self,
-        command_or_args: Sequence[str] | str,
-        check=True,
-        quiet=False,
-        **kwargs,
-    ) -> subprocess.Popen | str:
-        """Run a command in a subprocess.
-
-        The command's stdout and stderr outputs are written to the log
-        with special prefixes.
-
-        If in "dry run" mode, the command is not executed, and the method returns
-        the command string. Otherwise, the subprocess.Popen object is returned
-        unless capture_output is True.
-
-        Parameters
-        ----------
-        command_or_args : Sequence[str]  |  str
-            The command to run.
-        check : bool, optional
-            If True, raise an error if the process exits with a non-zero code,
-            by default True
-        quiet : bool, optional
-            If True, do not log the command, by default False
-        **kwargs
-            Passed to `subprocess.Popen`.
-
-        Returns
-        -------
-        subprocess.Popen or str
-        """
-
-        def process_output(output_source, log_prefix: str, log_level=logging.INFO):
-            """Consume lines from an IO stream and log them."""
-            for line in output_source:
-                line = line.strip("\n")
-                # using extra={"markup": False} in case the output contains substrings
-                # that would be interpreted as closing tags by the RichHandler
-                self.logger.log(
-                    level=log_level,
-                    msg=f"{log_prefix} {line}",
-                    extra={"markup": False},
-                )
-
-        # build command string
-        if not isinstance(command_or_args, str):
-            args = [str(arg) for arg in command_or_args]
-            command = shlex.join(args)
-        else:
-            command = command_or_args
-            args = shlex.split(command)
-
-        # only pass a single string if shell is True
-        if not kwargs.get("shell"):
-            command_or_args = args
-
-        if not quiet:
-            self.log_command(command)
-
-        if not self.dry_run:
-            process = subprocess.Popen(
-                command_or_args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                **kwargs,
-            )
-
-            while process.poll() is None:
-                process_output(
-                    process.stdout,
-                    self.log_prefix_run_stdout,
-                )
-
-                process_output(
-                    process.stderr,
-                    self.log_prefix_run_stderr,
-                    log_level=logging.ERROR,
-                )
-
-            if check and process.returncode != 0:
-                exception = subprocess.CalledProcessError(process.returncode, command)
-                raise exception
-
-            run_output = process
-
-        else:
-            run_output = command
-
-        return run_output
-
-    def save_tabular_file(self, tabular: BaseTabular, fpath: Path):
-        """Save a tabular file."""
-        fpath_backup = tabular.save_with_backup(fpath, dry_run=self.dry_run)
-        if fpath_backup is not None:
-            self.logger.info(f"Saved to {fpath} (-> {fpath_backup})")
-        else:
-            self.logger.info(f"No changes to file at {fpath}")
+        logger.set_verbose(self.verbose)
 
     def run_setup(self):
         """Run the setup part of the workflow."""
-        self.logger.debug(self)
+        logger.debug(self)
         if self.dry_run:
-            self.logger.info("Doing a dry run")
+            logger.info("Doing a dry run")
 
     @abstractmethod
     def run_main(self):
@@ -193,86 +192,6 @@ class BaseWorkflow(Base, ABC):
         self.run_setup()
         self.run_main()
         self.run_cleanup()
-
-    def mkdir(self, dpath, **kwargs):
-        """
-        Create a directory (by default including parents).
-
-        Do nothing if the directory already exists.
-        """
-        kwargs_to_use = {"parents": True, "exist_ok": True}
-        kwargs_to_use.update(kwargs)
-
-        dpath = Path(dpath)
-
-        if not dpath.exists():
-            self.logger.debug(f"Creating directory {dpath}")
-            if not self.dry_run:
-                dpath.mkdir(**kwargs_to_use)
-        elif not dpath.is_dir():
-            raise FileExistsError(
-                f"Path already exists but is not a directory: {dpath}"
-            )
-
-    def copy(self, path_source, path_dest, **kwargs):
-        """Copy a file or directory."""
-        self.logger.debug(f"Copying {path_source} to {path_dest}")
-        if not self.dry_run:
-            shutil.copy2(src=path_source, dst=path_dest, **kwargs)
-
-    def copytree(self, path_source, path_dest, **kwargs):
-        """Copy directory tree."""
-        self.logger.debug(f"Copying {path_source} to {path_dest}")
-        if not self.dry_run:
-            shutil.copytree(src=path_source, dst=path_dest, **kwargs)
-
-    def movetree(
-        self,
-        path_source,
-        path_dest,
-        kwargs_mkdir=None,
-        kwargs_move=None,
-    ):
-        """Move directory tree."""
-        kwargs_mkdir = kwargs_mkdir or {}
-        kwargs_move = kwargs_move or {}
-        self.logger.debug(f"Moving {path_source} to {path_dest}")
-        if not self.dry_run:
-            self.mkdir(path_dest, **kwargs_mkdir)
-            file_names = os.listdir(path_source)
-            for file_name in file_names:
-                shutil.move(
-                    src=os.path.join(path_source, file_name),
-                    dst=path_dest,
-                    **kwargs_move,
-                )
-            Path(path_source).rmdir()
-
-    def create_symlink(self, path_source, path_dest, **kwargs):
-        """Create a symlink to another path."""
-        self.logger.debug(f"Creating a symlink from {path_source} to {path_dest}")
-        if not self.dry_run:
-            os.symlink(path_source, path_dest, **kwargs)
-
-    def rm(self, path, **kwargs):
-        """Remove a file or directory."""
-        kwargs_to_use = {"ignore_errors": True}
-        kwargs_to_use.update(kwargs)
-        self.logger.debug(f"Removing {path}")
-        if not self.dry_run:
-            shutil.rmtree(path, **kwargs_to_use)
-
-    def _remove_existing(self, path, log_level=logging.INFO):
-        """Remove existing file, directory, or symlink without ignoring errors."""
-        self.logger.log(level=log_level, msg=f"Removing existing {path}")
-        if not self.dry_run:
-            path_obj = Path(path)
-            if path_obj.is_symlink():
-                path_obj.unlink()
-            elif path_obj.is_dir():
-                shutil.rmtree(path)
-            else:
-                path_obj.unlink()
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
@@ -307,18 +226,20 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         _validate_layout : bool, optional
             If True, validate the layout during setup, by default True
         """
+        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
+
         # `.nipoppy` is not created by default in version 0.3.4 and below
         self.dpath_root = is_nipoppy_project(dpath_root) or Path(dpath_root)
         self.fpath_layout = fpath_layout
         self._skip_logfile = _skip_logfile
         self._validate_layout = _validate_layout
 
-        self.layout = DatasetLayout(
-            dpath_root=self.dpath_root,
-            fpath_config=self.fpath_layout,
+        self.study = Study(
+            DatasetLayout(
+                dpath_root=self.dpath_root,
+                fpath_config=self.fpath_layout,
+            )
         )
-
-        super().__init__(name=name, verbose=verbose, dry_run=dry_run)
 
     def generate_fpath_log(
         self,
@@ -332,7 +253,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             dnames_parent = [dnames_parent]
         if fname_stem is None:
             fname_stem = self.name
-        dpath_log = self.layout.dpath_logs / self.name
+        dpath_log = self.study.layout.dpath_logs / self.name
         for dname in dnames_parent:
             dpath_log = dpath_log / dname
         return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")
@@ -340,59 +261,12 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
     def run_setup(self):
         """Run the setup part of the workflow."""
         if self._validate_layout:
-            self.layout.validate()
+            self.study.layout.validate()
 
         if not self._skip_logfile:
-            add_logfile(self.logger, self.generate_fpath_log())
+            logger.add_file_handler(self.generate_fpath_log())
 
         super().run_setup()
-
-    @cached_property
-    def config(self) -> Config:
-        """
-        Load the configuration.
-
-        Raise error if not found.
-        """
-        fpath_config = self.layout.fpath_config
-        try:
-            # load and apply user-defined substitutions
-            self.logger.debug(f"Loading config from {fpath_config}")
-            config = Config.load(fpath_config)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Config file not found: {self.layout.fpath_config}"
-            )
-
-        # replace path placeholders in the config
-        # (except in the user-defined substitutions)
-        user_substitutions = config.SUBSTITUTIONS  # stash original substitutions
-        # this might modify the SUBSTITUTIONS field (which we don't want)
-        config = Config(
-            **json.loads(
-                process_template_str(
-                    config.model_dump_json(),
-                    objs=[self, self.layout],
-                )
-            )
-        )
-        # restore original substitutions
-        config.SUBSTITUTIONS = user_substitutions
-
-        return config
-
-    @cached_property
-    def manifest(self) -> Manifest:
-        """
-        Load the manifest.
-
-        Raise error if not found.
-        """
-        fpath_manifest = Path(self.layout.fpath_manifest)
-        try:
-            return Manifest.load(fpath_manifest)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Manifest file not found: {fpath_manifest}")
 
     @cached_property
     def curation_status_table(self) -> CurationStatusTable:
@@ -401,23 +275,21 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
         Otherwise, generate a new one.
         """
-        logger = self.logger
-        fpath_table = Path(self.layout.fpath_curation_status)
+        fpath_table = Path(self.study.layout.fpath_curation_status)
         try:
-            return CurationStatusTable.load(fpath_table)
+            return self.study.curation_status_table
         except FileNotFoundError:
-            self.logger.warning(
+            logger.warning(
                 f"Curation status file not found: {fpath_table}"
                 ". Generating a new one on-the-fly"
             )
             table = generate_curation_status_table(
-                manifest=self.manifest,
+                manifest=self.study.manifest,
                 dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=self.layout.dpath_pre_reorg,
-                dpath_organized=self.layout.dpath_post_reorg,
-                dpath_bidsified=self.layout.dpath_bids,
+                dpath_downloaded=self.study.layout.dpath_pre_reorg,
+                dpath_organized=self.study.layout.dpath_post_reorg,
+                dpath_bidsified=self.study.layout.dpath_bids,
                 empty=False,
-                logger=self.logger,
             )
 
             if not self.dry_run:
@@ -442,21 +314,21 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         Otherwise, return an empty processing status table.
         """
         try:
-            return ProcessingStatusTable.load(self.layout.fpath_processing_status)
+            return self.study.processing_status_table
         except FileNotFoundError:
             return ProcessingStatusTable()
 
     @cached_property
     def dicom_dir_map(self) -> DicomDirMap:
         """Get the DICOM directory mapping."""
-        fpath_dicom_dir_map = self.config.DICOM_DIR_MAP_FILE
+        fpath_dicom_dir_map = self.study.config.DICOM_DIR_MAP_FILE
         if fpath_dicom_dir_map is not None and not Path(fpath_dicom_dir_map).exists():
-            raise FileNotFoundError(
+            raise FileOperationError(
                 f"DICOM directory map file not found: {fpath_dicom_dir_map}"
             )
 
         return DicomDirMap.load_or_generate(
-            manifest=self.manifest,
+            manifest=self.study.manifest,
             fpath_dicom_dir_map=fpath_dicom_dir_map,
-            participant_first=self.config.DICOM_DIR_PARTICIPANT_FIRST,
+            participant_first=self.study.config.DICOM_DIR_PARTICIPANT_FIRST,
         )

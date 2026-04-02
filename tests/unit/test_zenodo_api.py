@@ -137,14 +137,60 @@ def test_download_record_files_checksum_mismatch(
         zenodo_api.download_record_files(output_dir=tmp_path, record_id=record_id)
 
 
-def test_create_new_version(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
+def test_update_metadata(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
+    record_id = "123456"
+    headers = {
+        "Authorization": "Bearer mocked_api",
+    }
+    metadata = {"metadata": {}}
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
+        method="PUT",
+        status_code=200,
+        json={},
+        match_headers=headers,
+        match_json=metadata,
+    )
+
+    zenodo_api._update_metadata(record_id=record_id, metadata=metadata)
+
+
+def test_update_metadata_fails(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "123456"
+    headers = {
+        "Authorization": "Bearer mocked_api",
+    }
+    metadata = {"metadata": {}}
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
+        method="PUT",
+        status_code=500,
+        json={},
+        match_headers=headers,
+        match_json=metadata,
+    )
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=f"Failed to update metadata for zenodo.{record_id}",
+    ):
+        zenodo_api._update_metadata(record_id=record_id, metadata=metadata)
+
+
+def test_create_new_version(
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+):
     record_id = "123456"
     new_record_id = "654321"
     owner_id = "888888"
     headers = {
         "Authorization": "Bearer mocked_api",
     }
-    metadata = {"metadata": {}}
 
     httpx_mock.add_response(
         url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions",
@@ -153,27 +199,21 @@ def test_create_new_version(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTP
         json={"id": new_record_id, "owners": [{"id": owner_id}]},
         match_headers=headers,
     )
-    httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{new_record_id}/draft",
-        method="PUT",
-        match_headers=headers,
-        match_json=metadata,
-    )
 
-    assert zenodo_api._create_new_version(record_id=record_id, metadata=metadata) == (
+    assert zenodo_api._create_new_version(record_id=record_id) == (
         new_record_id,
         owner_id,
     )
 
 
 def test_create_new_version_fails(
-    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
 ):
     record_id = "123456"
     headers = {
         "Authorization": "Bearer mocked_api",
     }
-    metadata = {"metadata": {}}
 
     httpx_mock.add_response(
         url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions",
@@ -186,46 +226,11 @@ def test_create_new_version_fails(
     with pytest.raises(
         ZenodoAPIError, match=f"Failed to create a new version for zenodo.{record_id}"
     ):
-        zenodo_api._create_new_version(record_id=record_id, metadata=metadata)
-
-
-def test_create_new_version_metadata_update_fails(
-    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
-):
-    record_id = "123456"
-    new_record_id = "654321"
-    owner_id = "888888"
-    headers = {
-        "Authorization": "Bearer mocked_api",
-    }
-    metadata = {"metadata": {}}
-
-    httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions",
-        method="POST",
-        status_code=201,
-        json={"id": new_record_id, "owners": [{"id": owner_id}]},
-        match_headers=headers,
-    )
-    httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{new_record_id}/draft",
-        method="PUT",
-        status_code=500,
-        json={},
-        match_headers=headers,
-        match_json=metadata,
-    )
-
-    with pytest.raises(
-        ZenodoAPIError,
-        match=f"Failed to update metadata for zenodo.{record_id}",
-    ):
-        zenodo_api._create_new_version(record_id=record_id, metadata=metadata)
+        zenodo_api._create_new_version(record_id=record_id)
 
 
 def test_create_draft(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
     # Set mock response
-    metadata = {"metadata": dict()}
     httpx_mock.add_response(
         url=f"{zenodo_api.api_endpoint}/records",
         status_code=201,
@@ -235,17 +240,15 @@ def test_create_draft(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock)
             "Authorization": "Bearer mocked_api",
             "Content-Type": "application/json",
         },
-        match_json=metadata,
     )
 
     # Assertions
-    result = zenodo_api._create_draft(metadata)
+    result = zenodo_api._create_draft()
     assert result == ("123456", "987")
 
 
 def test_create_draft_fails(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
     # Set mock response
-    metadata = {"metadata": dict()}
     httpx_mock.add_response(
         url=f"{zenodo_api.api_endpoint}/records",
         method="POST",
@@ -259,7 +262,7 @@ def test_create_draft_fails(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTP
 
     # Assertions
     with pytest.raises(ZenodoAPIError, match="Failed to create a draft record:"):
-        zenodo_api._create_draft(metadata)
+        zenodo_api._create_draft()
 
 
 @pytest.mark.parametrize(
@@ -302,13 +305,12 @@ def test_create_draft_fails(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTP
         ),
     ],
 )
-def test_update_creators(
+def test_add_creators_to_metadata(
     json_response,
     expected_creators,
     zenodo_api: ZenodoAPI,
     httpx_mock: pytest_httpx.HTTPXMock,
 ):
-    record_id = "123456"
     owner_id = "888888"
     metadata = {"metadata": {}}
 
@@ -318,20 +320,15 @@ def test_update_creators(
         url=f"{zenodo_api.api_endpoint}/users/{owner_id}",
         json=json_response,
     )
-    httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
-        method="PUT",
-        match_json={"metadata": {"creators": expected_creators}},
-    )
 
-    zenodo_api._update_creators(record_id, owner_id, metadata)
+    updated_metadata = zenodo_api._add_creators_to_metadata(owner_id, metadata)
+    assert updated_metadata["metadata"]["creators"] == expected_creators
 
 
-def test_update_creators_invalid_id(
+def test_add_creators_to_metadata_invalid_id(
     zenodo_api: ZenodoAPI,
     httpx_mock: pytest_httpx.HTTPXMock,
 ):
-    record_id = "123456"
     owner_id = "888888"
     metadata = {"metadata": {}}
 
@@ -347,35 +344,7 @@ def test_update_creators_invalid_id(
         ZenodoAPIError,
         match=f"Failed to get information for user {owner_id}",
     ):
-        zenodo_api._update_creators(record_id, owner_id, metadata)
-
-
-def test_update_creators_metadata_update_fails(
-    zenodo_api: ZenodoAPI,
-    httpx_mock: pytest_httpx.HTTPXMock,
-):
-    record_id = "123456"
-    owner_id = "888888"
-    metadata = {"metadata": {}}
-
-    # mock the API
-    httpx_mock.add_response(
-        method="GET",
-        url=f"{zenodo_api.api_endpoint}/users/{owner_id}",
-        json={"profile": {}, "identities": {}, "username": "fake_user"},
-    )
-    httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
-        method="PUT",
-        status_code=500,
-        json={},
-    )
-
-    with pytest.raises(
-        ZenodoAPIError,
-        match=f"Failed to update metadata for zenodo.{record_id}",
-    ):
-        zenodo_api._update_creators(record_id, owner_id, metadata)
+        zenodo_api._add_creators_to_metadata(owner_id, metadata)
 
 
 @pytest.mark.parametrize(
@@ -508,6 +477,26 @@ def test_upload_files_commit_fails(
         zenodo_api._upload_files(files=[tmp_path / filename], record_id=record_id)
 
 
+@pytest.mark.parametrize(
+    "input_metadata,filename,expected_output",
+    [
+        (
+            {"files": {"existing_field": "value"}},
+            "abc.txt",
+            {"files": {"existing_field": "value", "default_preview": "abc.txt"}},
+        ),
+        ({}, "def.txt", {"files": {"default_preview": "def.txt"}}),
+    ],
+)
+def test_add_default_preview_to_metadata(
+    zenodo_api: ZenodoAPI, input_metadata: dict, filename: str, expected_output: dict
+):
+    updated_metadata = zenodo_api._add_default_preview_to_metadata(
+        input_metadata, filename
+    )
+    assert updated_metadata == expected_output
+
+
 def test_publish(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
     record_id = "123456"
     doi = "fake_doi"
@@ -572,7 +561,7 @@ def test_check_authentication_fails(
         (None, "_create_draft"),
     ],
 )
-def test_upload_pipeline(
+def test_upload_record(
     record_id: str | None,
     create_method_name: str,
     tmp_path: Path,
@@ -591,15 +580,22 @@ def test_upload_pipeline(
     mocked_check_authentication = mocker.patch.object(
         zenodo_api, "_check_authentication"
     )
+    mocker.patch.object(zenodo_api, "get_latest_version_id", return_value=record_id)
     mocked_create = mocker.patch.object(
         zenodo_api, create_method_name, return_value=(new_record_id, owner_id)
     )
-    mocked_update_creators = mocker.patch.object(zenodo_api, "_update_creators")
+    mocked_add_creators_to_metadata = mocker.patch.object(
+        zenodo_api, "_add_creators_to_metadata", return_value=metadata
+    )
     mocked_upload_files = mocker.patch.object(zenodo_api, "_upload_files")
+    mocked_add_default_preview_to_metadata = mocker.patch.object(
+        zenodo_api, "_add_default_preview_to_metadata", return_value=metadata
+    )
+    mocked_update_metadata = mocker.patch.object(zenodo_api, "_update_metadata")
     mocked_publish = mocker.patch.object(zenodo_api, "_publish", return_value=doi)
 
     assert (
-        zenodo_api.upload_pipeline(
+        zenodo_api.upload_record(
             input_dir=tmp_path, metadata=metadata, record_id=record_id
         )
         == doi
@@ -607,26 +603,28 @@ def test_upload_pipeline(
 
     mocked_check_authentication.assert_called_once()
     mocked_create.assert_called_once()
-    mocked_update_creators.assert_called_once_with(new_record_id, owner_id, metadata)
+    mocked_add_creators_to_metadata.assert_called_once_with(owner_id, metadata)
     mocked_upload_files.assert_called_once_with(
         [tmp_path / fname for fname in fnames], new_record_id
     )
+    mocked_add_default_preview_to_metadata.assert_not_called()
+    mocked_update_metadata.assert_called_once_with(new_record_id, metadata)
     mocked_publish.assert_called_once_with(new_record_id)
 
-    # last positional argument is metadata
-    assert mocked_create.call_args[0][-1] == metadata
 
-
-def test_upload_pipeline_custom_creators(
+def test_upload_record_custom_creators(
     tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
 ):
     mocker.patch.object(zenodo_api, "_check_authentication")
     mocker.patch.object(zenodo_api, "_create_draft", return_value=("654321", "888888"))
-    mocked_update_creators = mocker.patch.object(zenodo_api, "_update_creators")
+    mocked_add_creators_to_metadata = mocker.patch.object(
+        zenodo_api, "_add_creators_to_metadata"
+    )
     mocker.patch.object(zenodo_api, "_upload_files")
+    mocker.patch.object(zenodo_api, "_update_metadata")
     mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
 
-    zenodo_api.upload_pipeline(
+    zenodo_api.upload_record(
         input_dir=tmp_path,
         metadata={
             "metadata": {
@@ -642,26 +640,53 @@ def test_upload_pipeline_custom_creators(
             }
         },
     )
-    mocked_update_creators.assert_not_called()
+    mocked_add_creators_to_metadata.assert_not_called()
 
 
-def test_upload_pipeline_dir_not_found(zenodo_api: ZenodoAPI):
+def test_upload_record_default_preview(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    metadata = {"metadata": {}}
+    fnames = ["abc.txt", "def.txt"]
+    for fname in fnames:
+        (tmp_path / fname).write_text(fname)
+
+    mocker.patch.object(zenodo_api, "_check_authentication")
+    mocker.patch.object(zenodo_api, "_create_draft", return_value=("654321", "888888"))
+    mocker.patch.object(zenodo_api, "_add_creators_to_metadata", return_value=metadata)
+    mocker.patch.object(zenodo_api, "_upload_files")
+    mocked_add_default_preview_to_metadata = mocker.patch.object(
+        zenodo_api, "_add_default_preview_to_metadata", return_value=metadata
+    )
+    mocker.patch.object(zenodo_api, "_update_metadata")
+    mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
+
+    zenodo_api.upload_record(
+        input_dir=tmp_path,
+        metadata=metadata,
+        default_preview_filename=fnames[-1],
+    )
+    mocked_add_default_preview_to_metadata.assert_called_once_with(metadata, fnames[-1])
+
+
+def test_upload_record_dir_not_found(zenodo_api: ZenodoAPI):
     with pytest.raises(FileNotFoundError):
-        zenodo_api.upload_pipeline(input_dir=Path("fake_path"), metadata={})
+        zenodo_api.upload_record(input_dir=Path("fake_path"), metadata={})
 
 
-def test_upload_pipeline_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
+def test_upload_record_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
     input_path = tmp_path / "file.txt"
     input_path.write_text("this is a file, not a directory")
     with pytest.raises(NotADirectoryError, match=f"{input_path} must be a directory"):
-        zenodo_api.upload_pipeline(input_dir=input_path, metadata={})
+        zenodo_api.upload_record(input_dir=input_path, metadata={})
 
 
 @pytest.mark.parametrize(
     "delete_request_status_code,expected_log_message",
     [(204, "Record creation reverted"), (500, "Failed to revert record")],
 )
-def test_upload_pipeline_delete_draft(
+@pytest.mark.no_xdist
+def test_upload_record_delete_draft(
     delete_request_status_code: int,
     expected_log_message: str,
     tmp_path: Path,
@@ -675,7 +700,7 @@ def test_upload_pipeline_delete_draft(
     # mock functions/API calls
     mocker.patch.object(zenodo_api, "_check_authentication")
     mocker.patch.object(zenodo_api, "_create_draft", return_value=(record_id, "888888"))
-    mocker.patch.object(zenodo_api, "_update_creators")
+    mocker.patch.object(zenodo_api, "_add_creators_to_metadata")
     mocker.patch.object(zenodo_api, "_upload_files")
     mocker.patch.object(
         zenodo_api, "_publish", side_effect=ZenodoAPIError("Publish failed")
@@ -687,8 +712,8 @@ def test_upload_pipeline_delete_draft(
         json={},
     )
 
-    with pytest.raises(SystemExit):
-        zenodo_api.upload_pipeline(
+    with pytest.raises(ZenodoAPIError):
+        zenodo_api.upload_record(
             input_dir=tmp_path,
             metadata={"metadata": {}},
         )
@@ -698,18 +723,20 @@ def test_upload_pipeline_delete_draft(
 
 
 @pytest.mark.parametrize(
-    "search_query,keywords,size,final_query",
+    "search_query,keywords,size,sort,final_query",
     [
         (
             "FMRIPREP",
             None,
             100,
+            "mostviewed",
             "%2AFMRIPREP%2A&size=100",
         ),
         (
             "fmriprep AND nipoppy",
             ["Nipoppy"],
             1,
+            "mostdownloaded",
             "fmriprep+AND+nipoppy+AND+metadata.subjects.subject%3A%22Nipoppy%22&size=1",
         ),
     ],
@@ -718,16 +745,36 @@ def test_search_records(
     search_query,
     keywords,
     size,
+    sort,
     final_query,
     zenodo_api: ZenodoAPI,
     httpx_mock: pytest_httpx.HTTPXMock,
 ):
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records?q={final_query}",
+        url=f"{zenodo_api.api_endpoint}/records?q={final_query}&sort={sort}",
         method="GET",
         json={"hits": {}},
     )
-    zenodo_api.search_records(search_query, keywords=keywords, size=size)
+    zenodo_api.search_records(search_query, keywords=keywords, size=size, sort=sort)
+
+
+def test_search_records_status_raised(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    # mock the response to have .raise_for_status() raise an error
+    query = ""
+    size = 10
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records?q={query}&size={size}&sort=mostdownloaded",  # noqa: E501
+        method="GET",
+        status_code=500,
+        json={},
+    )
+    with pytest.raises(
+        ZenodoAPIError,
+        match="Failed to search records. JSON response:",
+    ):
+        zenodo_api.search_records(query=query, size=size)
 
 
 def test_search_records_wrong_size(zenodo_api: ZenodoAPI):
@@ -782,3 +829,36 @@ def test_get_record_metadata_fails(
         ZenodoAPIError, match=f"Failed to get metadata for zenodo.{record_id}"
     ):
         zenodo_api.get_record_metadata(record_id=record_id)
+
+
+def test_get_latest_version_id(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "123456"
+    latest_record_id = "654321"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions/latest",
+        method="GET",
+        json={"id": latest_record_id},
+    )
+
+    assert zenodo_api.get_latest_version_id(record_id) == latest_record_id
+
+
+def test_get_latest_version_id_invalid(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "0"
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/versions/latest",
+        method="GET",
+        status_code=404,
+        json={"message": "The persistent identifier does not exist."},
+    )
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=f"Failed to get latest version for zenodo.{record_id}:",
+    ):
+        zenodo_api.get_latest_version_id(record_id)

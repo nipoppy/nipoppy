@@ -1,7 +1,6 @@
 """Tests for container configuration."""
 
 import pytest
-from pydantic import ValidationError
 
 from nipoppy.config.container import (
     ContainerConfig,
@@ -12,6 +11,7 @@ from nipoppy.config.container import (
 FIELDS_CONTAINER_CONFIG = [
     "COMMAND",
     "ARGS",
+    "BIND_PATHS",
     "ENV_VARS",
     "INHERIT",
 ]
@@ -68,6 +68,16 @@ def test_container_config(data):
             {"ENV_VARS": {"VAR1": "1"}},
             {"ENV_VARS": {"VAR1": "1"}},
         ),
+        (
+            {"BIND_PATHS": ["/a/path"]},
+            {"BIND_PATHS": ["/another/path"]},
+            {"BIND_PATHS": ["/a/path", "/another/path"]},
+        ),
+        (
+            {"BIND_PATHS": ["/a/path", "/another/path"]},
+            {"BIND_PATHS": ["/another/path", "/a/third/path"]},
+            {"BIND_PATHS": ["/a/path", "/another/path", "/a/third/path"]},
+        ),
     ],
 )
 def test_container_config_merge(data1, data2, data_expected):
@@ -107,7 +117,7 @@ def test_container_config_merge_error():
 
 
 def test_container_config_no_extra_fields():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         ContainerConfig(not_a_field="a")
 
 
@@ -127,12 +137,12 @@ def test_container_info(data):
 
 
 def test_container_info_no_extra_fields():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         ContainerInfo(not_a_field="a")
 
 
 def test_container_info_file_exists_if_uri_exists():
-    with pytest.raises(ValidationError, match="FILE must be specified if URI is set"):
+    with pytest.raises(ValueError, match="FILE must be specified if URI is set"):
         ContainerInfo(URI="docker://my/container")
 
 

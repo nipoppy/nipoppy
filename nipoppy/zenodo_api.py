@@ -8,16 +8,10 @@ from typing import Optional, Tuple
 import httpx
 
 
-class ChecksumError(Exception):
-    """Exception raised from checksums mismatch."""
-
-    pass
+class ChecksumError(Exception): ...  # noqa E701
 
 
-class ZenodoAPIError(Exception):
-    """Exception raised for errors related to the Zenodo API."""
-
-    pass
+class ZenodoAPIError(Exception): ...  # noqa E701
 
 
 class ZenodoAPI:
@@ -39,12 +33,7 @@ class ZenodoAPI:
             "https://sandbox.zenodo.org/api" if sandbox else "https://zenodo.org/api"
         )
         self.timeout = timeout
-
-        if logger is None:
-            self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger = logger
+        self.logger = logger
 
         # Access token is required for uploading files
         self.password_file = password_file
@@ -58,9 +47,22 @@ class ZenodoAPI:
         """Set the headers for the ZenodoAPI instance."""
         self.headers.update({"Authorization": f"Bearer {access_token}"})
 
-    def set_logger(self, logger: logging.Logger):
+    @property
+    def logger(self) -> logging.Logger:
+        """Get the logger for the ZenodoAPI instance."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: logging.Logger | None):
         """Set the logger for the ZenodoAPI instance."""
-        self.logger = logger
+        if logger is None:
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+        self._logger = logger
+
+    def _process_record_id(self, record_id: str | None) -> str:
+        """Process the record ID to remove the 'zenodo.' prefix if present."""
+        return record_id.removeprefix("zenodo.") if record_id else None
 
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
@@ -77,7 +79,7 @@ class ZenodoAPI:
         ChecksumError
             Checksum mismatch between the downloaded file and the expected checksum.
         """
-        record_id = record_id.removeprefix("zenodo.")
+        record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
         response = httpx.get(
@@ -115,7 +117,18 @@ class ZenodoAPI:
 
             output_dir.joinpath(file).write_bytes(response.content)
 
-    def _create_new_version(self, record_id: str, metadata: dict) -> Tuple[str, str]:
+    def _update_metadata(self, record_id: str, metadata: dict):
+        response = httpx.put(
+            f"{self.api_endpoint}/records/{record_id}/draft",
+            headers=self.headers,
+            json=metadata,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
+            )
+
+    def _create_new_version(self, record_id: str) -> Tuple[str, str]:
         response = httpx.post(
             f"{self.api_endpoint}/records/{record_id}/versions",
             headers=self.headers,
@@ -127,32 +140,19 @@ class ZenodoAPI:
             )
         new_record_id = response.json()["id"]
         owner_id = response.json()["owners"][0]["id"]
-
-        # Required to update the metadata to include the new publication date
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{new_record_id}/draft",
-            headers=self.headers,
-            json=metadata,
-        )
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
-            )
-
         return new_record_id, owner_id
 
-    def _create_draft(self, metadata: dict) -> Tuple[str, str]:
+    def _create_draft(self) -> Tuple[str, str]:
         response = httpx.post(
             f"{self.api_endpoint}/records",
             headers=self.headers | {"Content-Type": "application/json"},
-            json=metadata,
         )
         if response.status_code != 201:
             raise ZenodoAPIError(f"Failed to create a draft record: {response.json()}")
 
         return response.json()["id"], response.json()["owners"][0]["id"]
 
-    def _update_creators(self, record_id: str, owner_id: str, metadata: dict):
+    def _add_creators_to_metadata(self, owner_id: str, metadata: dict) -> dict:
         # get user profile info
         response = httpx.get(
             f"{self.api_endpoint}/users/{owner_id}", headers=self.headers
@@ -188,15 +188,7 @@ class ZenodoAPI:
                 "affiliations": [{"name": affiliation}] if affiliation else [],
             }
         ]
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{record_id}/draft",
-            headers=self.headers,
-            json=metadata,
-        )
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
-            )
+        return metadata
 
     def _upload_files(self, files: list[Path], record_id: str):
         metadata = [{"key": file.name} for file in files]
@@ -236,6 +228,16 @@ class ZenodoAPI:
                     f"\n{response.json()}"
                 )
 
+    def _add_default_preview_to_metadata(self, metadata: dict, file_name: str) -> dict:
+        """Set the default preview file.
+
+        Note: the metadata update must be done after the files are uploaded.
+        """
+        if "files" not in metadata:
+            metadata["files"] = {}
+        metadata["files"]["default_preview"] = file_name
+        return metadata
+
     def _publish(self, record_id: str) -> str:
         response = httpx.post(
             f"{self.api_endpoint}/records/{record_id}/draft/actions/publish",
@@ -256,14 +258,15 @@ class ZenodoAPI:
         if response.status_code != 200:
             raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
 
-    def upload_pipeline(
+    def upload_record(
         self,
         input_dir: Path,
         metadata: dict,
         record_id: Optional[str] = None,
+        default_preview_filename: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
-        record_id = record_id.removeprefix("zenodo.") if record_id else None
+        record_id = self._process_record_id(record_id)
         if not input_dir.exists():
             raise FileNotFoundError(input_dir)
         if not input_dir.is_dir():
@@ -272,18 +275,27 @@ class ZenodoAPI:
         self._check_authentication()
 
         if record_id:
-            record_id, owner_id = self._create_new_version(record_id, metadata)
+            record_id, owner_id = self._create_new_version(
+                self.get_latest_version_id(record_id)
+            )
             action = "update"
         else:
-            record_id, owner_id = self._create_draft(metadata)
+            record_id, owner_id = self._create_draft()
             action = "creation"
 
         try:
             if not metadata["metadata"].get("creators"):
-                self._update_creators(record_id, owner_id, metadata)
+                metadata = self._add_creators_to_metadata(owner_id, metadata)
 
             files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
+
+            if default_preview_filename is not None:
+                metadata = self._add_default_preview_to_metadata(
+                    metadata, default_preview_filename
+                )
+
+            self._update_metadata(record_id, metadata)
             doi = self._publish(record_id)
             return doi
 
@@ -305,11 +317,12 @@ class ZenodoAPI:
                     f"{response.json()}"
                 )
 
-            raise SystemExit(1)
+            raise ZenodoAPIError from e
 
     def search_records(
         self,
         query: str,
+        sort: str = "mostdownloaded",
         community_id: Optional[str] = None,
         keywords: Optional[list[str]] = None,
         size: int = 10,
@@ -340,9 +353,17 @@ class ZenodoAPI:
             params={
                 "q": full_query,
                 "size": size,
+                "sort": sort,
             },
             timeout=self.timeout,
         )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            raise ZenodoAPIError(
+                f"Failed to search records. JSON response: {response.json()}"
+            ) from e
+
         return response.json()["hits"]
 
     def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
@@ -354,7 +375,7 @@ class ZenodoAPI:
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
-        record_id = record_id.removeprefix("zenodo.")
+        record_id = self._process_record_id(record_id)
         response = httpx.get(
             f"{self.api_endpoint}/records/{record_id}",
             headers=self.headers,
@@ -365,3 +386,30 @@ class ZenodoAPI:
             )
 
         return response.json()["metadata"]
+
+    def get_latest_version_id(self, record_id: str) -> str:
+        """Get the ID of the latest version of a Zenodo record.
+
+        Parameters
+        ----------
+        record_id : str
+            Record ID to query.
+
+        Returns
+        -------
+        str
+            ID of the latest version of the record.
+        """
+        record_id = self._process_record_id(record_id)
+        response = httpx.get(
+            f"{self.api_endpoint}/records/{record_id}/versions/latest",
+            follow_redirects=True,
+            headers=self.headers,
+            timeout=self.timeout,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get latest version for zenodo.{record_id}: {response.json()}"  # noqa E501
+            )
+
+        return str(response.json()["id"])

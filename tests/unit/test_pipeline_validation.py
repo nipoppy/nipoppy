@@ -14,6 +14,7 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
@@ -55,25 +56,25 @@ def test_load_pipeline_config_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileNotFoundError, "Pipeline configuration file not found"),
+        ("fake_path.json", FileOperationError, "Pipeline configuration file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid1.json",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is invalid",
         ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid2.json",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is invalid",
         ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid3.json",
-            RuntimeError,
+            ConfigError,
             "Pipeline configuration file .* is invalid",
         ),
     ],
@@ -92,15 +93,15 @@ def test_check_descriptor_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileNotFoundError, "Descriptor file not found"),
+        ("fake_path.json", FileOperationError, "Descriptor file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Descriptor file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "descriptor-invalid.json",
-            RuntimeError,
+            ConfigError,
             "Descriptor file .* is invalid",
         ),
     ],
@@ -117,15 +118,15 @@ def test_check_invocation_file(descriptor_str):
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileNotFoundError, "Invocation file not found"),
+        ("fake_path.json", FileOperationError, "Invocation file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Invocation file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "invocation-invalid.json",
-            RuntimeError,
+            ConfigError,
             "Invocation file .* is invalid",
         ),
     ],
@@ -144,15 +145,15 @@ def test_check_hpc_config_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileNotFoundError, "HPC config file not found"),
+        ("fake_path.json", FileOperationError, "HPC config file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "HPC config file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "hpc_config-invalid.json",
-            RuntimeError,
+            ConfigError,
             "HPC config file .* is invalid",
         ),
     ],
@@ -169,15 +170,15 @@ def test_check_tracker_config_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileNotFoundError, "Tracker config file not found"),
+        ("fake_path.json", FileOperationError, "Tracker config file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "Tracker config file is not a valid JSON file",
         ),
         (
             DPATH_TEST_DATA / "tracker_config-invalid.json",
-            RuntimeError,
+            ConfigError,
             "Tracker config file .* is invalid",
         ),
     ],
@@ -194,10 +195,10 @@ def test_check_pybids_ignore_file():
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileNotFoundError, "PyBIDS ignore patterns file not found"),
+        ("fake_path.json", FileOperationError, "PyBIDS ignore patterns file not found"),
         (
             DPATH_TEST_DATA / "empty_file.txt",
-            RuntimeError,
+            ConfigError,
             "PyBIDS ignore patterns file is not a valid JSON file",
         ),
     ],
@@ -281,35 +282,22 @@ def test_check_config_files(
     assert n_files_expected == len(files)
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [
-        (None, logging.DEBUG),
-        (logging.getLogger("test"), logging.DEBUG),
-        (logging.getLogger("test"), logging.INFO),
-    ],
-)
+@pytest.mark.no_xdist
 def test_check_config_files_logging(
-    logger,
-    log_level,
     valid_config_data,
     caplog: pytest.LogCaptureFixture,
 ):
+    log_level = logging.DEBUG
     caplog.set_level(log_level)
 
     pipeline_config = BasePipelineConfig(
         **valid_config_data,
         STEPS=[{}],
     )
-    _check_pipeline_files(
-        pipeline_config, DPATH_TEST_DATA, logger=logger, log_level=log_level
-    )
+    _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
 
-    if logger is None:
-        assert len(caplog.records) == 0
-    else:
-        assert len(caplog.records) > 0
-        assert all([record.levelno == log_level for record in caplog.records])
+    assert len(caplog.records) > 0
+    assert all([record.levelno == log_level for record in caplog.records])
 
 
 @pytest.mark.parametrize(
@@ -333,28 +321,17 @@ def test_check_self_contained(dpath_bundle, fpaths, valid):
         _check_self_contained(dpath_bundle, fpaths)
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [
-        (None, logging.DEBUG),
-        (logging.getLogger("test"), logging.DEBUG),
-        (logging.getLogger("test"), logging.INFO),
-    ],
-)
-def test_check_self_container_logging(
-    logger, log_level, caplog: pytest.LogCaptureFixture
-):
+@pytest.mark.no_xdist
+def test_check_self_container_logging(caplog: pytest.LogCaptureFixture):
+    log_level = logging.DEBUG
     caplog.set_level(log_level)
 
     dpath_bundle = "bundle_dir"
     fpaths = ["bundle_dir/file1.txt", "bundle_dir/file2.txt"]
-    _check_self_contained(dpath_bundle, fpaths, logger=logger, log_level=log_level)
+    _check_self_contained(dpath_bundle, fpaths)
 
-    if logger is None:
-        assert len(caplog.records) == 0
-    else:
-        assert len(caplog.records) > 0
-        assert all([record.levelno == log_level for record in caplog.records])
+    assert len(caplog.records) > 0
+    assert all([record.levelno == log_level for record in caplog.records])
 
 
 @pytest.mark.parametrize(
@@ -386,36 +363,24 @@ def test_check_no_subdirectories(
         _check_no_subdirectories(dpath_bundle)
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [
-        (None, logging.DEBUG),
-        (logging.getLogger("test"), logging.DEBUG),
-        (logging.getLogger("test"), logging.INFO),
-    ],
-)
+@pytest.mark.no_xdist
 def test_check_no_subdirectories_logging(
-    tmp_path: Path, logger, log_level, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
+    log_level = logging.DEBUG
     caplog.set_level(log_level)
 
     dpath_bundle = tmp_path / "bundle_dir"
     dpath_bundle.mkdir()
-    _check_no_subdirectories(dpath_bundle, logger=logger, log_level=log_level)
+    _check_no_subdirectories(dpath_bundle)
 
-    if logger is None:
-        assert len(caplog.records) == 0
-    else:
-        assert len(caplog.records) > 0
-        assert all([record.levelno == log_level for record in caplog.records])
+    assert len(caplog.records) > 0
+    assert all([record.levelno == log_level for record in caplog.records])
 
 
-@pytest.mark.parametrize(
-    "logger,log_level",
-    [(None, logging.DEBUG), (logging.getLogger("test"), logging.INFO)],
-)
+@pytest.mark.parametrize("log_level", [logging.DEBUG, logging.INFO, logging.WARNING])
 def test_check_pipeline_bundle(
-    logger, log_level, valid_config_data, mocker: pytest_mock.MockFixture
+    log_level: int, valid_config_data, mocker: pytest_mock.MockFixture
 ):
     dpath_bundle = Path("bundle_dir").resolve()
     config = BasePipelineConfig(**valid_config_data)
@@ -436,17 +401,13 @@ def test_check_pipeline_bundle(
         "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
-    check_pipeline_bundle(dpath_bundle, logger=logger, log_level=log_level)
+    check_pipeline_bundle(dpath_bundle, log_level=log_level)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
-        dpath_bundle / "config.json",
+        dpath_bundle / "config.json"
     )
     mocked_check_pipeline_files.assert_called_once_with(
-        config, dpath_bundle, logger=logger, log_level=log_level
+        config, dpath_bundle, log_level=log_level
     )
-    mocked_check_self_contained.assert_called_once_with(
-        dpath_bundle, fpaths, logger=logger, log_level=log_level
-    )
-    mocked_check_no_subdirectories.assert_called_once_with(
-        dpath_bundle, logger=logger, log_level=log_level
-    )
+    mocked_check_self_contained.assert_called_once_with(dpath_bundle, fpaths)
+    mocked_check_no_subdirectories.assert_called_once_with(dpath_bundle)

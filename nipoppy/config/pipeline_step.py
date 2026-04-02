@@ -12,6 +12,7 @@ from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.utils.utils import apply_substitutions_to_json
@@ -99,7 +100,7 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
         if (self.DESCRIPTOR_FILE is not None and self.INVOCATION_FILE is None) or (
             self.DESCRIPTOR_FILE is None and self.INVOCATION_FILE is not None
         ):
-            raise ValueError(
+            raise ConfigError(
                 "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
                 f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
             )
@@ -119,7 +120,8 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
     TRACKER_CONFIG_FILE: Optional[Path] = Field(
         default=None,
         description=(
-            "Path to the tracker configuration file associated with the pipeline step"
+            "Path to the tracker configuration file associated with the pipeline step."
+            "Tracking will always be done at a participant-session level."
         ),
     )
     PYBIDS_IGNORE_FILE: Optional[Path] = Field(
@@ -137,28 +139,6 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         ),
     )
     model_config = ConfigDict(extra="forbid")
-
-    @model_validator(mode="after")
-    def validate_after(self):
-        """
-        Validate the processing pipeline step configuration after creation.
-
-        Specifically:
-
-        - Make sure that TRACKER_CONFIG_FILE is not set if the analysis level is not
-          "participant_session"
-        """
-        super().validate_after()
-
-        if (
-            self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
-            and self.TRACKER_CONFIG_FILE is not None
-        ):
-            raise ValueError(
-                "TRACKER_CONFIG_FILE cannot be set if ANALYSIS_LEVEL is not "
-                f"{AnalysisLevelType.participant_session}"
-            )
-        return self
 
 
 class BidsPipelineStepConfig(BasePipelineStepConfig):
@@ -186,7 +166,7 @@ class BidsPipelineStepConfig(BasePipelineStepConfig):
             self.UPDATE_STATUS
             and self.ANALYSIS_LEVEL != AnalysisLevelType.participant_session
         ):
-            raise ValueError(
+            raise ConfigError(
                 "UPDATE_STATUS cannot be True if ANALYSIS_LEVEL is not "
                 f"{AnalysisLevelType.participant_session}"
             )

@@ -19,6 +19,7 @@ from nipoppy.container import (
     SingularityHandler,
 )
 from nipoppy.env import ContainerCommandEnum
+from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -39,9 +40,9 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
         pipeline_version="1.0.0",
     )
 
-    create_empty_dataset(runner.layout.dpath_root)
+    create_empty_dataset(runner.study.layout.dpath_root)
 
-    runner.config = get_config(
+    runner.study.config = get_config(
         container_config={
             "COMMAND": "apptainer",  # mocked
             "ARGS": ["--flag1"],
@@ -60,7 +61,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     fpath_container.touch()
 
     create_pipeline_config_files(
-        runner.layout.dpath_pipelines,
+        runner.study.layout.dpath_pipelines,
         processing_pipelines=[
             {
                 "NAME": "dummy_pipeline",
@@ -164,7 +165,7 @@ def test_launch_boutiques_run(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch.object(runner, "run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
 
     descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id
@@ -212,6 +213,7 @@ def test_launch_boutiques_run(
 )
 @pytest.mark.parametrize("simulate", [True, False])
 @pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.no_xdist
 def test_launch_boutiques_run_bosh_opts(
     container_handler,
     expected_container_opts,
@@ -228,7 +230,7 @@ def test_launch_boutiques_run_bosh_opts(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch.object(runner, "run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
 
     runner.launch_boutiques_run(
         participant_id,
@@ -262,7 +264,7 @@ def test_launch_boutiques_run_bosh_no_container_image(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch.object(runner, "run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
 
     runner.launch_boutiques_run(
         participant_id,
@@ -286,7 +288,7 @@ def test_launch_boutiques_run_error(
     session_id = "BL"
 
     fids.create_fake_bids_dataset(
-        runner.layout.dpath_bids,
+        runner.study.layout.dpath_bids,
         subjects=participant_id,
         sessions=session_id,
     )
@@ -294,9 +296,8 @@ def test_launch_boutiques_run_error(
     runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
     runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
 
-    mocker.patch.object(
-        runner,
-        "run_command",
+    mocker.patch(
+        "nipoppy.workflows.runner._run_command",
         side_effect=subprocess.CalledProcessError(1, "run_command failed"),
     )
 
@@ -318,7 +319,7 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
     # check that the subcommand 'exec' from the Boutiques container config is used
     # note: the container command in the config is "echo" because otherwise the
     # check for the container command fails if Singularity/Apptainer is not on the PATH
-    root_path = runner.layout.dpath_root.resolve()
+    root_path = runner.study.layout.dpath_root.resolve()
     assert container_command.startswith("apptainer exec")
     assert f"--bind {root_path}:{root_path}:rw " in container_command
     assert container_command.endswith(
@@ -365,7 +366,8 @@ def test_check_tar_conditions_no_tracker_config(runner: ProcessingRunner):
     runner.tar = True
     runner.pipeline_step_config.TRACKER_CONFIG_FILE = None
     with pytest.raises(
-        RuntimeError, match="Tarring requested but is no tracker config file"
+        ConfigError,
+        match="Tarring requested but there is no tracker config file",
     ):
         runner._check_tar_conditions()
 
@@ -377,7 +379,7 @@ def test_check_tar_conditions_no_dir(runner: ProcessingRunner, tmp_path: Path):
         PATHS=[tmp_path], PARTICIPANT_SESSION_DIR=None
     )
     with pytest.raises(
-        RuntimeError,
+        ConfigError,
         match="Tarring requested but no participant-session directory specified",
     ):
         runner._check_tar_conditions()
@@ -420,6 +422,7 @@ def test_tar_directory(tmp_path: Path, dpath_type):
     assert not dpath_to_tar.exists()
 
 
+@pytest.mark.no_xdist
 def test_tar_directory_failure(
     runner: ProcessingRunner,
     tmp_path: Path,
@@ -444,7 +447,9 @@ def test_tar_directory_failure(
 
 
 def test_tar_directory_warning_not_found(runner: ProcessingRunner):
-    with pytest.raises(RuntimeError, match="Not tarring .* since it does not exist"):
+    with pytest.raises(
+        FileOperationError, match="Not tarring .* since it does not exist"
+    ):
         runner.tar_directory("invalid_path")
 
 
@@ -453,7 +458,7 @@ def test_tar_directory_warning_not_dir(runner: ProcessingRunner, tmp_path: Path)
     fpath_to_tar.touch()
 
     with pytest.raises(
-        RuntimeError, match="Not tarring .* since it is not a directory"
+        FileOperationError, match="Not tarring .* since it is not a directory"
     ):
         runner.tar_directory(fpath_to_tar)
 
@@ -667,7 +672,7 @@ def test_get_participants_sessions_to_run(
                 ProcessingStatusTable.col_pipeline_step,
                 ProcessingStatusTable.col_status,
             ],
-        ).validate().save_with_backup(runner.layout.fpath_processing_status)
+        ).validate().save_with_backup(runner.study.layout.fpath_processing_status)
 
     assert [
         tuple(x)
@@ -684,13 +689,13 @@ def test_run_multiple(runner: ProcessingRunner):
     runner.session_id = session_id
 
     participants_and_sessions = {"01": ["1"], "02": ["2"]}
-    create_empty_dataset(runner.layout.dpath_root)
+    create_empty_dataset(runner.study.layout.dpath_root)
     manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.layout.dpath_bids,
+        dpath_bidsified=runner.study.layout.dpath_bids,
     )
-    manifest.save_with_backup(runner.layout.fpath_manifest)
+    manifest.save_with_backup(runner.study.layout.fpath_manifest)
     runner.run_setup()
     runner.run_main()
 
@@ -777,11 +782,11 @@ def test_run_single_tar(
 
 
 def test_run_missing_container_raises_error(runner: ProcessingRunner):
-    runner.manifest = Manifest()
+    runner.study.manifest = Manifest()
 
     runner.pipeline_config.CONTAINER_INFO.FILE = Path("does_not_exist.sif")
     with pytest.raises(
-        FileNotFoundError, match="No container image file found for pipeline"
+        FileOperationError, match="No container image file found for pipeline"
     ):
         runner.run()
 

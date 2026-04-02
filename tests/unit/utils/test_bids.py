@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from fids import fids
 
+from nipoppy.exceptions import NipoppyError
 from nipoppy.utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
@@ -47,7 +48,7 @@ def test_session_id_to_bids_session_id(session, expected):
 )
 def test_check_participant_id(participant_id, raise_error, is_valid, expected):
     with (
-        pytest.raises(ValueError, match="Invalid participant ID")
+        pytest.raises(NipoppyError, match="Invalid participant ID")
         if not is_valid
         else nullcontext()
     ):
@@ -71,7 +72,7 @@ def test_check_participant_id(participant_id, raise_error, is_valid, expected):
 )
 def test_check_session_id(session_id, raise_error, is_valid, expected):
     with (
-        pytest.raises(ValueError, match="Invalid session ID")
+        pytest.raises(NipoppyError, match="Invalid session ID")
         if not is_valid
         else nullcontext()
     ):

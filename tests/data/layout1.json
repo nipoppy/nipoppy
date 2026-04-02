@@ -68,5 +68,8 @@
     },
     "fpath_demographics": {
         "path": "tabular/demographics.tsv"
+    },
+    "fpath_harmonized": {
+        "path": "tabular/harmonized.tsv"
     }
 }

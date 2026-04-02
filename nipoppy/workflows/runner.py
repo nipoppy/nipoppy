@@ -13,8 +13,13 @@ from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.exceptions import ExecutionError
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
+from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
+
+logger = get_logger()
 
 
 class Runner(BasePipelineWorkflow, ABC):
@@ -50,7 +55,7 @@ class Runner(BasePipelineWorkflow, ABC):
         # process the descriptor if it containers Nipoppy-specific placeholder
         # expressions (legacy behaviour)
         if TEMPLATE_REPLACE_PATTERN.search(self.descriptor["command-line"]):
-            self.logger.info("Processing the JSON descriptor")
+            logger.info("Processing the JSON descriptor")
             descriptor_str = self.process_template_json(
                 self.descriptor,
                 participant_id=participant_id,
@@ -88,12 +93,12 @@ class Runner(BasePipelineWorkflow, ABC):
                     bosh_exec_launch_args.append("--force-docker")
 
         # validate the descriptor
-        self.logger.debug(f"Descriptor string: {descriptor_str}")
-        self.logger.info("Validating the JSON descriptor")
+        logger.debug(f"Descriptor string: {descriptor_str}")
+        logger.info("Validating the JSON descriptor")
         bosh(["validate", descriptor_str])
 
         # process and validate the invocation
-        self.logger.info("Processing the JSON invocation")
+        logger.info("Processing the JSON invocation")
         invocation_str = self.process_template_json(
             self.invocation,
             participant_id=participant_id,
@@ -102,31 +107,30 @@ class Runner(BasePipelineWorkflow, ABC):
             **kwargs,
             return_str=True,
         )
-        self.logger.debug(f"Invocation string: {invocation_str}")
-        self.logger.info("Validating the JSON invocation")
+        logger.debug(f"Invocation string: {invocation_str}")
+        logger.info("Validating the JSON invocation")
         bosh(["invocation", "-i", invocation_str, descriptor_str])
 
         # run as a subprocess so that stdout/error are captured in the log
         # by default, this will raise an exception if the command fails
         if self.simulate:
-            self.logger.info("Simulating pipeline command")
+            logger.info("Simulating pipeline command")
             try:
-                self.run_command(
+                _run_command(
                     ["bosh", "exec", "simulate", "-i", invocation_str, descriptor_str],
                     quiet=True,
+                    dry_run=self.dry_run,
                 )
                 if bosh_exec_launch_args:
-                    self.logger.info(
-                        f"Additional launch options: {bosh_exec_launch_args}"
-                    )
+                    logger.info(f"Additional launch options: {bosh_exec_launch_args}")
             except subprocess.CalledProcessError as exception:
-                raise RuntimeError(
+                raise ExecutionError(
                     f"Pipeline simulation failed (return code: {exception.returncode})"
                 )
         else:
-            self.logger.info("Running pipeline command")
+            logger.info("Running pipeline command")
             try:
-                self.run_command(
+                _run_command(
                     (
                         [
                             "bosh",
@@ -139,9 +143,10 @@ class Runner(BasePipelineWorkflow, ABC):
                         + bosh_exec_launch_args
                     ),
                     quiet=True,
+                    dry_run=self.dry_run,
                 )
             except subprocess.CalledProcessError as exception:
-                raise RuntimeError(
+                raise ExecutionError(
                     "Pipeline did not complete successfully"
                     f" (return code: {exception.returncode})"
                     ". Hint: make sure the shell command above is correct."
@@ -160,7 +165,7 @@ class Runner(BasePipelineWorkflow, ABC):
             bind_paths = []
 
         # always bind the dataset's root directory
-        bind_paths = [self.layout.dpath_root] + bind_paths
+        bind_paths = [self.study.layout.dpath_root] + bind_paths
 
         # get and process container config
         container_config = self.pipeline_step_config.get_container_config()
@@ -171,7 +176,7 @@ class Runner(BasePipelineWorkflow, ABC):
                 session_id=session_id,
             )
         )
-        self.logger.debug(f"Initial container config: {container_config}")
+        logger.debug(f"Initial container config: {container_config}")
 
         # get and process Boutiques config
         boutiques_config = BoutiquesConfig(
@@ -183,19 +188,19 @@ class Runner(BasePipelineWorkflow, ABC):
         )
 
         # update container config with additional information from Boutiques config
-        self.logger.debug(f"Boutiques config: {boutiques_config}")
+        logger.debug(f"Boutiques config: {boutiques_config}")
         if boutiques_config != BoutiquesConfig():
-            self.logger.debug("Updating container config with config from descriptor")
+            logger.debug("Updating container config with config from descriptor")
             container_config.merge(boutiques_config.get_container_config())
 
-        container_handler = get_container_handler(container_config, logger=self.logger)
+        container_handler = get_container_handler(container_config)
 
         # add bind paths
         for bind_path in bind_paths:
             if Path(bind_path).resolve() != Path.cwd().resolve():
                 container_handler.add_bind_arg(bind_path)
 
-        self.logger.debug(f"Using container handler: {container_handler}")
+        logger.debug(f"Using container handler: {container_handler}")
 
         container_command = container_handler.get_shell_command(
             subcommand=boutiques_config.CONTAINER_SUBCOMMAND,

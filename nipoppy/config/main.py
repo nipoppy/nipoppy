@@ -13,6 +13,7 @@ from typing_extensions import Self
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.utils.utils import apply_substitutions_to_json, load_json
@@ -60,11 +61,11 @@ class PipelineVariables(BaseModel):
         """Get the variables for a specific pipeline."""
         try:
             key = self._pipeline_type_to_key[pipeline_type]
-        except KeyError:
-            raise ValueError(
+        except KeyError as e:
+            raise ConfigError(
                 f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
                 f"{self._pipeline_type_to_key.keys()}"
-            )
+            ) from e
 
         return getattr(self, key)[pipeline_name][pipeline_version]
 
@@ -78,11 +79,11 @@ class PipelineVariables(BaseModel):
         """Set the variables for a specific pipeline."""
         try:
             key = self._pipeline_type_to_key[pipeline_type]
-        except KeyError:
-            raise ValueError(
+        except KeyError as e:
+            raise ConfigError(
                 f"Invalid pipeline type: {pipeline_type}. Must be an enum and one of "
                 f"{self._pipeline_type_to_key.keys()}"
-            )
+            ) from e
 
         pipeline_variables = getattr(self, key)
         pipeline_variables[pipeline_name][pipeline_version] = variables
@@ -168,7 +169,7 @@ class Config(_SchemaWithContainerConfig):
             self.DICOM_DIR_MAP_FILE is not None
             and self.DICOM_DIR_PARTICIPANT_FIRST is not None
         ):
-            raise ValueError(
+            raise ConfigError(
                 "Cannot specify both DICOM_DIR_MAP_FILE and DICOM_DIR_PARTICIPANT_FIRST"
                 f". Got DICOM_DIR_MAP_FILE={self.DICOM_DIR_MAP_FILE} and "
                 f"DICOM_DIR_PARTICIPANT_FIRST={self.DICOM_DIR_PARTICIPANT_FIRST}"
@@ -180,7 +181,7 @@ class Config(_SchemaWithContainerConfig):
         """Check that substitutions do not have empty keys."""
         for key, value in self.SUBSTITUTIONS.items():
             if not key:
-                raise ValueError("Substitutions cannot have empty keys")
+                raise ConfigError("Substitutions cannot have empty keys")
 
             if value != (value_stripped := value.strip()):
                 warnings.warn(
