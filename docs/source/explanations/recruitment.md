@@ -11,7 +11,7 @@ The `participant_id` needs to comply with BIDS specification which only allows a
 - Use zero-padding for numerical labels to ensure correct alphabetical sorting (e.g., 01 instead of 1).
 ```
 
-This TSV file can also include `participant_dicom_dir` column listing the relative DICOM directory path to handle cases where DICOMs and participant IDs are not the same (see [dicom_reorg](./../how_to_guides/user_guide/organizing_imaging/#organizing-raw-imaging-data.md) section for details). Note that the `participant_dicom_dir` mapping can also be specified in a separate `dicom_dir_map.tsv` in cases where this recruitment file is not needed.
+This TSV file can also include `participant_dicom_dir` column listing the relative DICOM directory path to handle cases where DICOMs and participant IDs are not the same (see [dicom_reorg](<project:../how_to_guides/user_guide/organizing_imaging.md#organizing-raw-imaging-data>) section for details). Note that the `participant_dicom_dir` mapping can also be specified in a separate `dicom_dir_map.tsv` in cases where this recruitment file is not needed.
 
 For sanity checks, this file can also used to list the larger cohort of originally recruited participants. This can help avoid possible confusion created by drop outs or exclusions during the subsequent study stages (i.e. curation, processing, extraction, and analysis).
 
