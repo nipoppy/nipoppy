@@ -57,9 +57,7 @@ class CommandRunner(Protocol):
         quiet: bool = False,
         dry_run: bool = False,
     ) -> subprocess.Popen[str] | str:
-        # flake8: noqa
-        # flake8: qa
-        # We disable the flake8 to prevent it from complaining about missing DocString.
+        """Run a command in a subprocess, with logging and dry-run support."""
         ...
 
 

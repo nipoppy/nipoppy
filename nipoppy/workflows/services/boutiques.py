@@ -22,9 +22,9 @@ class BoshRunnerCallable(Protocol):
         bosh_exec_launch_args: list[str],
         run_command: CommandRunner | None,
         dry_run: bool,
-    ) -> int: ...
-
-    # flake8: noqa
+    ) -> int:
+        """Run the bosh command with the given arguments."""
+        ...
 
 
 class CommandBuilder(Protocol):
@@ -39,17 +39,17 @@ class CommandBuilder(Protocol):
         invocation: str,
         descriptor: str,
         args: list[str],
-    ) -> list[str]: ...
-
-    # flake8: noqa
+    ) -> list[str]:
+        """Build command from invocation, descriptor, and extra args."""
+        ...
 
 
 class ErrorBuilder(Protocol):
     """Protocol for a function that builds an error message based on the exit code."""
 
-    def __call__(self, exit_code: int) -> str: ...
-
-    # flake8: noqa
+    def __call__(self, exit_code: int) -> str:
+        """Build error message based on the exit code."""
+        ...
 
 
 def _run_bosh_command(
