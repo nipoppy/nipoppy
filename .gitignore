@@ -47,4 +47,6 @@ nipoppy_env/
 
 # Logs
 *.log
-.claude/settings.local.json
+
+# all-contributors CLI
+node_modules
