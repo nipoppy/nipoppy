@@ -1,32 +1,22 @@
 # === SERVER-SIDE: Prometheus Configuration ===
-# Scrapes metrics from OpenTelemetry Collector and stores time-series data
-# Provides PromQL query interface for Grafana dashboards
+# Scrapes the OTel Collector's Prometheus exporter endpoint.
+# The collector's deltatocumulative processor accumulates DELTA metrics from
+# short-lived CLI processes into a running CUMULATIVE total.
 #
-# DEMO: 5-second scrape interval for fast dashboard updates
-# PRODUCTION: See comments below for production settings (15s)
+# Architecture:
+#   nipoppy CLI → OTel Collector (OTLP/gRPC 4317) → deltatocumulative → Prometheus exporter (8889)
+#   Prometheus scrapes :8889 every 15s
 
 global:
-  scrape_interval: 5s        # DEMO: Fast updates (Production: 15s)
-  evaluation_interval: 5s    # How often to evaluate recording rules
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-    cluster: 'nipoppy-local'
-    environment: 'demo'
+    cluster: 'nipoppy-telemetry'
 
-  # PRODUCTION SETTINGS (uncomment for production use):
-  # scrape_interval: 15s
-  # evaluation_interval: 15s
-
-# === PRESENTATION MARKER: Scrape Configuration ===
-# Defines where Prometheus collects metrics from
 scrape_configs:
-  # Scrapes metrics from OTel Collector's Prometheus exporter (port 8889)
   - job_name: 'otel-collector'
     static_configs:
       - targets: ['otel-collector:8889']
-    scrape_interval: 5s      # DEMO: Fast scraping (Production: 15s)
-    scrape_timeout: 4s       # Must be less than scrape_interval
-    metrics_path: '/metrics' # Default Prometheus exporter path
-
-    # PRODUCTION SETTINGS (uncomment for production use):
-    # scrape_interval: 15s
-    # scrape_timeout: 10s
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'

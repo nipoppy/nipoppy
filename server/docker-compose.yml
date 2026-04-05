@@ -24,7 +24,7 @@ services:
   # Receives metrics from nipoppy CLI via OTLP/gRPC on port 4317
   # Batches metrics and exports to Prometheus on port 8889
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.91.0
+    image: otel/opentelemetry-collector-contrib:latest
     container_name: nipoppy-otel-collector
     hostname: otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
@@ -32,7 +32,7 @@ services:
       - ./configs/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
     ports:
       - "4317:4317"   # OTLP gRPC receiver
-      - "8889:8889"   # Prometheus exporter endpoint
+      - "8889:8889"   # Prometheus exporter (scraped by Prometheus)
     networks:
       - nipoppy-otel-network
     restart: unless-stopped
@@ -82,7 +82,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
       # Auto-open nipoppy dashboard on startup
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/nipoppy-init.json
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/nipoppy-telemetry.json
       # Disable analytics
       - GF_ANALYTICS_REPORTING_ENABLED=false
       - GF_ANALYTICS_CHECK_FOR_UPDATES=false

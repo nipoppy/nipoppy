@@ -1,399 +1,132 @@
-# Nipoppy Telemetry Server
+# Nipoppy Telemetry — Running Guide
 
-SERVER-SIDE observability stack for collecting and visualizing Nipoppy metrics.
+Quick reference for running the telemetry stack locally or against the shared server.
 
-## Architecture
+---
 
-```
-┌──────────────┐      OTLP/gRPC      ┌─────────────────┐
-│  Nipoppy CLI │ ──────────────────► │ OTel Collector  │
-│  (CLIENT)    │    port 4317        │    (SERVER)     │
-└──────────────┘                     └────────┬────────┘
-                                              │
-                                   Prometheus Exporter
-                                        port 8889
-                                              │
-                                              ▼
-                                     ┌─────────────────┐
-                                     │   Prometheus    │
-                                     │    (SERVER)     │
-                                     └────────┬────────┘
-                                              │
-                                        PromQL queries
-                                              │
-                                              ▼
-                                     ┌─────────────────┐
-                                     │     Grafana     │
-                                     │    (SERVER)     │
-                                     │   port 3000     │
-                                     └─────────────────┘
-```
+## Prerequisites
 
-## Quick Start
+- Python ≥ 3.10 (any environment — conda, venv, or system Python)
+- Docker and Docker Compose (only needed if running the local stack)
 
-### 1. Start the Server Stack
+Install nipoppy from the repo root — this pulls in all OTel dependencies automatically:
 
 ```bash
-cd server
-docker-compose up -d
+cd /path/to/nipoppy-otel
+pip install -e .
 ```
 
-### 2. Verify Services
+---
+
+## Option A — Local Stack
+
+Run everything on your laptop. Good for development and testing.
+
+### 1. Start the stack
 
 ```bash
-docker-compose ps
+cd server/
+docker compose up -d
+docker compose ps   # all three containers should show "Up"
 ```
 
-All three services should show "Up" status:
-- `nipoppy-otel-collector`
-- `nipoppy-prometheus`
-- `nipoppy-grafana`
-
-### 3. Access Dashboards
-
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
-
-### 4. Configure Client
-
-Set environment variable on client machines:
+### 2. Point nipoppy at the local collector
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 ```
 
-Or for remote server:
+### 3. Run nipoppy commands
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=your-server.example.com:4317
+nipoppy status --dataset /path/to/dataset
+nipoppy init   --dataset /path/to/dataset
+# etc.
 ```
 
-### 5. Run Nipoppy Commands
+### 4. View the dashboard
+
+Open **http://localhost:3000** — credentials `admin / admin`
+
+---
+
+## Option B — Pavot Server (206.12.94.146)
+
+The server is already running the stack. You only need to point your nipoppy at it and open an SSH tunnel to see the dashboard.
+
+### 1. Point nipoppy at the server
 
 ```bash
-nipoppy init /tmp/test-dataset
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://206.12.94.146:4317
 ```
 
-Metrics will appear in Grafana within ~5 seconds.
+### 2. Run nipoppy commands — metrics go directly to the server
 
-## Metrics Collected
-
-### 1. Command Execution (Core Feature)
-- **Name**: `nipoppy_commands_executed_total`
-- **Type**: Counter
-- **Labels**: `command` (init, bidsify, process, etc.)
-- **Purpose**: Track which commands are used and how often
-
-### 2. Geographic Distribution (Additional Feature)
-- **Name**: `nipoppy_location_by_country`
-- **Type**: Gauge
-- **Labels**: `country` (ISO country code)
-- **Purpose**: Track where installations are located
-
-## Configuration
-
-### Demo Settings (Current)
-
-Optimized for live presentations with ~5 second latency:
-
-| Component | Setting | Value |
-|-----------|---------|-------|
-| CLI export interval | `export_interval_millis` | 1000ms (1s) |
-| Collector batch timeout | `timeout` | 500ms |
-| Collector batch size | `send_batch_size` | 10 |
-| Prometheus scrape | `scrape_interval` | 5s |
-| Grafana refresh | `refresh` | 5s |
-
-**Total latency**: ~5-6 seconds from command to dashboard
-
-### Production Settings
-
-For production deployments, update the following:
-
-**1. Client (`nipoppy/telemetry/metrics.py`)**:
-```python
-initialize_telemetry(
-    export_interval_millis=10000,  # 10 seconds
-)
+```bash
+nipoppy status --dataset /path/to/dataset
+nipoppy init   --dataset /path/to/dataset
 ```
 
-**2. Collector (`configs/otel-collector-config.yaml`)**:
-```yaml
-processors:
-  batch:
-    timeout: 5s          # Uncomment production settings
-    send_batch_size: 100
+### 3. Open SSH tunnel to view Grafana
+
+Grafana (port 3000) is not exposed to the internet. Forward it locally:
+
+```bash
+ssh -L 3000:localhost:3000 pavot
 ```
 
-**3. Prometheus (`configs/prometheus.yml`)**:
-```yaml
-global:
-  scrape_interval: 15s   # Uncomment production settings
+Then open **http://localhost:3000** — credentials `admin / admin`
+
+You can also forward Prometheus if you want to run PromQL queries directly:
+
+```bash
+ssh -L 3000:localhost:3000 -L 9090:localhost:9090 pavot
 ```
 
-## Directory Structure
+---
 
-```
-server/
-├── docker-compose.yml         # Service orchestration
-├── .env.example              # Environment variables template
-├── README.md                 # This file
-└── configs/
-    ├── otel-collector-config.yaml   # Collector pipeline config
-    ├── prometheus.yml               # Prometheus scrape config
-    └── grafana/
-        ├── datasources.yaml         # Prometheus datasource
-        └── dashboards/
-            ├── dashboards.yaml      # Dashboard provisioning
-            ├── nipoppy-telemetry.json   # Main dashboard (NEW)
-            └── nipoppy-init.json        # Legacy dashboard
+## Starting From Scratch
+
+If the dashboard shows stale data or the stack is in a bad state, wipe everything and restart:
+
+### Local
+
+```bash
+cd server/
+docker compose down -v          # removes containers AND data volumes
+docker compose up -d            # fresh start
 ```
 
-## Dashboard Panels
+### Server (SSH in first)
 
-### Section 1: Command Usage
+```bash
+ssh pavot
+cd ~/server
+docker compose down -v
+docker compose up -d
+docker compose ps               # confirm all three are Up
+```
 
-1. **Total Commands Executed** (Stat)
-   - Query: `sum(nipoppy_commands_executed_total)`
-   - Shows cumulative command count
+After a fresh start the dashboard panels will show "No data" until nipoppy commands are run.
 
-2. **Commands Over Time** (Time series)
-   - Query: `sum by (command) (rate(nipoppy_commands_executed_total[5m]))`
-   - Shows command frequency trends
+---
 
-3. **Command Distribution** (Pie chart)
-   - Query: `topk(10, sum by (command) (nipoppy_commands_executed_total))`
-   - Shows which commands are most popular
 
-### Section 2: Geographic Distribution
+## Opting Out
 
-4. **Total Countries** (Stat)
-   - Query: `count(nipoppy_location_by_country)`
-   - Shows number of unique countries
+```bash
+export OTEL_SDK_DISABLED=true
+```
 
-5. **Top Countries by Installations** (Table)
-   - Query: `topk(10, sum by (country) (nipoppy_location_by_country))`
-   - Ranked list of countries
+nipoppy will run normally with no metrics sent.
 
-6. **Country Distribution** (Pie chart)
-   - Query: `topk(10, sum by (country) (nipoppy_location_by_country))`
-   - Percentage breakdown by country
+---
 
 ## Troubleshooting
 
-### Metrics Not Appearing?
-
-**1. Check collector logs:**
-```bash
-docker-compose logs otel-collector
-```
-
-Look for errors or "Exporting metrics" messages.
-
-**2. Check collector endpoint:**
-```bash
-curl http://localhost:8889/metrics | grep nipoppy
-```
-
-Should show `nipoppy_*` metrics.
-
-**3. Check Prometheus targets:**
-
-Open http://localhost:9090/targets
-
-The `otel-collector` target should be "UP".
-
-**4. Check Prometheus metrics:**
-```bash
-curl http://localhost:9090/api/v1/label/__name__/values | grep nipoppy
-```
-
-Should list `nipoppy_commands_executed_total` and `nipoppy_location_by_country`.
-
-### Dashboard Showing "No Data"?
-
-1. **Wait 10 seconds** for initial scrape
-2. **Check time range**: Default is "Last 15 minutes"
-3. **Run a nipoppy command** to generate metrics:
-   ```bash
-   nipoppy init /tmp/test
-   ```
-4. **Check query in Explore**: http://localhost:9090/graph
-
-### Collector Not Starting?
-
-Check configuration syntax:
-```bash
-docker-compose config
-```
-
-Check port conflicts:
-```bash
-netstat -an | grep -E '4317|8889|9090|3000'
-```
-
-## Production Deployment
-
-### Security Checklist
-
-- [ ] Enable TLS for OTLP endpoint
-  - Update `insecure: true` in `otel-collector-config.yaml`
-
-- [ ] Set strong Grafana password
-  - Change `GF_SECURITY_ADMIN_PASSWORD` in `docker-compose.yml`
-
-- [ ] Configure firewall rules
-  - Allow: 4317 (OTLP), 3000 (Grafana)
-  - Block: 8889 (collector metrics), 9090 (Prometheus)
-
-- [ ] Set up authentication for Prometheus
-  - Add basic auth or use reverse proxy
-
-- [ ] Enable HTTPS for Grafana
-  - Use reverse proxy (nginx, traefik) or Grafana TLS config
-
-- [ ] Review data retention policies
-  - Prometheus: `--storage.tsdb.retention.time`
-  - Collector: `metric_expiration`
-
-### Scaling
-
-For high-traffic deployments:
-
-**1. Add collector replicas:**
-```yaml
-otel-collector:
-  deploy:
-    replicas: 3
-```
-
-Add load balancer (HAProxy, nginx) in front.
-
-**2. Configure Prometheus remote write:**
-```yaml
-remote_write:
-  - url: "https://your-remote-storage.example.com/write"
-```
-
-**3. Use Grafana Cloud or hosted solution**
-
-**4. Implement metric aggregation:**
-```yaml
-processors:
-  cumulativetodelta:
-    include:
-      match_type: strict
-      metrics: ["nipoppy.commands.executed"]
-```
-
-## Monitoring the Monitor
-
-### Collector Metrics
-
-Collector exposes its own metrics on port 8888:
-```bash
-curl http://localhost:8888/metrics
-```
-
-Key metrics:
-- `otelcol_receiver_accepted_metric_points`
-- `otelcol_exporter_sent_metric_points`
-- `otelcol_processor_batch_batch_send_size_bucket`
-
-### Prometheus Metrics
-
-```bash
-curl http://localhost:9090/metrics
-```
-
-Key metrics:
-- `prometheus_tsdb_head_samples`
-- `prometheus_tsdb_compaction_duration_seconds`
-
-## Backup and Recovery
-
-### Backup Prometheus Data
-
-```bash
-docker-compose stop prometheus
-tar czf prometheus-backup-$(date +%Y%m%d).tar.gz \
-  -C /var/lib/docker/volumes/ prometheus-data
-docker-compose start prometheus
-```
-
-### Backup Grafana Dashboards
-
-```bash
-docker-compose stop grafana
-tar czf grafana-backup-$(date +%Y%m%d).tar.gz \
-  -C /var/lib/docker/volumes/ grafana-data
-docker-compose start grafana
-```
-
-Or export dashboards via API:
-```bash
-curl -u admin:admin http://localhost:3000/api/dashboards/uid/nipoppy-telemetry \
-  > dashboard-backup.json
-```
-
-## Logs
-
-### View logs for all services:
-```bash
-docker-compose logs -f
-```
-
-### View logs for specific service:
-```bash
-docker-compose logs -f otel-collector
-docker-compose logs -f prometheus
-docker-compose logs -f grafana
-```
-
-## Stopping the Stack
-
-### Stop services (preserve data):
-```bash
-docker-compose stop
-```
-
-### Stop and remove containers (preserve volumes):
-```bash
-docker-compose down
-```
-
-### Remove everything including data:
-```bash
-docker-compose down -v
-```
-
-## Performance Tuning
-
-### Collector
-
-```yaml
-processors:
-  memory_limiter:
-    limit_mib: 512      # Increase for high traffic
-    spike_limit_mib: 128
-
-  batch:
-    timeout: 5s
-    send_batch_size: 1000  # Larger batches for efficiency
-```
-
-### Prometheus
-
-```yaml
-storage:
-  tsdb:
-    retention.time: 30d      # Adjust retention
-    retention.size: 10GB     # Limit storage size
-```
-
-## Further Reading
-
-- [OpenTelemetry Collector Documentation](https://opentelemetry.io/docs/collector/)
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Grafana Documentation](https://grafana.com/docs/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
+| Symptom | Fix |
+|---------|-----|
+| Counter stuck at 1 | Check `OTEL_EXPORTER_OTLP_ENDPOINT` has `http://` scheme |
+| Grafana unreachable on server | Open SSH tunnel: `ssh -L 3000:localhost:3000 pavot` |
+| Collector crash-loop on server | `docker compose down && docker compose up -d` (no `-v`) |
+| Want to reset all counts | `docker compose down -v && docker compose up -d` |

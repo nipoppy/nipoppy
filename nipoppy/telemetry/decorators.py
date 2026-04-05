@@ -62,6 +62,11 @@ def track_command(command_name: str) -> Callable:
                 return_code = e.code if isinstance(e.code, int) else ReturnCode.UNKNOWN_FAILURE
                 status = _return_code_to_status(return_code)
                 raise
+            except Exception:
+                # Fallback: exception escaped before exception_handler could convert it
+                status = "failure"
+                return_code = ReturnCode.UNKNOWN_FAILURE
+                raise
             finally:
                 _record_completion_metric(command_name, status, return_code)
 

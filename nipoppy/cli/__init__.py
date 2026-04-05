@@ -26,7 +26,7 @@ def exception_handler(workflow):
         workflow.return_code = ReturnCode.INVALID_CONFIG
         logger.error(e)
     except SystemExit as e:
-        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
+        workflow.return_code = e.code if e.code is not None else ReturnCode.UNKNOWN_FAILURE
         logger.error(e)
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE

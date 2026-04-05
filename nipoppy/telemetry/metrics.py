@@ -76,11 +76,13 @@ def initialize_telemetry(
                 "http://localhost:4317"
             )
 
-        # Strip http(s):// prefix for gRPC
-        if otlp_endpoint.startswith("http://"):
-            otlp_endpoint = otlp_endpoint.replace("http://", "")
-        elif otlp_endpoint.startswith("https://"):
-            otlp_endpoint = otlp_endpoint.replace("https://", "")
+        # Strip scheme prefix for gRPC; track whether to use TLS
+        insecure = True
+        if otlp_endpoint.startswith("https://"):
+            otlp_endpoint = otlp_endpoint[len("https://"):]
+            insecure = False
+        elif otlp_endpoint.startswith("http://"):
+            otlp_endpoint = otlp_endpoint[len("http://"):]
 
         resource = Resource(
             attributes={
@@ -90,14 +92,21 @@ def initialize_telemetry(
             }
         )
 
+        # Force DELTA temporality so the collector's deltatocumulative processor
+        # can accumulate across short-lived process runs. Without this the
+        # OTLPMetricExporter defaults to CUMULATIVE, sending value=1 every time.
+        os.environ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = "delta"
         otlp_exporter = OTLPMetricExporter(
             endpoint=otlp_endpoint,
-            insecure=True,  # Use TLS in production
+            insecure=insecure,
         )
 
+        # Short export interval so the gRPC connection is established before shutdown.
+        # For CLI tools the periodic export rarely fires, but the shutdown flush reuses
+        # the already-open connection — making export reliable even for 2s commands.
         metric_reader = PeriodicExportingMetricReader(
             otlp_exporter,
-            export_interval_millis=export_interval_millis,
+            export_interval_millis=min(export_interval_millis, 2000),
         )
 
         provider = MeterProvider(
@@ -124,7 +133,6 @@ def initialize_telemetry(
 
         signal.signal(signal.SIGTERM, _sigterm_handler)
 
-        print(f"✓ Telemetry enabled → {otlp_endpoint}")
         return True
 
     except Exception as e:

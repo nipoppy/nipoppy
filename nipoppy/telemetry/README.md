@@ -146,6 +146,14 @@ nipoppy_location_by_country{country="CA"} 8
 - `ENVIRONMENT`: Deployment environment tag (default: `"development"`)
 - `GEOIP_DB_PATH`: Path to MaxMind GeoLite2 database (optional)
 
+#### Pointing to the Nipoppy telemetry server
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=206.12.94.146:4317
+```
+
+Add this to your `~/.zshrc` or `~/.bashrc` to make it permanent. Once set, all `nipoppy` commands will send telemetry to the central server automatically.
+
 ### Dataset Config
 
 Telemetry preferences stored in `global_config.json`:

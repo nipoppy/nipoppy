@@ -11,7 +11,7 @@ datasources:
     access: proxy
     isDefault: true
     jsonData:
-      timeInterval: "5s"     # Match Prometheus scrape interval
+      timeInterval: "15s"    # Match Prometheus evaluation interval
       httpMethod: POST       # Use POST for better query performance
       manageAlerts: false
       queryTimeout: "60s"

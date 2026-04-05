@@ -44,7 +44,7 @@ except ImportError:
 
 
 if _TELEMETRY_AVAILABLE:
-    initialize_telemetry()
+    initialize_telemetry(service_version=__version__)
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
@@ -161,9 +161,8 @@ def init(**params):
     params = dep_params(**params)
     with exception_handler(InitWorkflow(**params)) as workflow:
         workflow.run()
-
-    if _TELEMETRY_AVAILABLE:
-        record_location()
+        if _TELEMETRY_AVAILABLE:
+            record_location()
 
 
 @cli.command()

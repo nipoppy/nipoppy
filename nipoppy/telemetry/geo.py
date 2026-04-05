@@ -30,7 +30,7 @@ def get_user_country() -> str:
 
         # Step 2: Resolve country via db-ip.com
         # Example response: {"countryCode": "IN", "countryName": "India", ...}
-        response = requests.get(f'http://api.db-ip.com/v2/free/{public_ip}', timeout=5)
+        response = requests.get(f'https://api.db-ip.com/v2/free/{public_ip}', timeout=5)
         response.raise_for_status()
         data = response.json()
 
@@ -60,6 +60,5 @@ def record_location() -> None:
                 1,
                 attributes={"country": country_code}
             )
-            print(f"✓ Location recorded: {country_code}")
-    except Exception as e:
-        print(f"⚠ Warning: Could not record location: {e}")
+    except Exception:
+        pass
