@@ -10,6 +10,7 @@
         "ARGS": [
             "--cleanenv"
         ],
+        "BIND_PATHS": [],
         "ENV_VARS": {
             "PYTHONUNBUFFERED": "1"
         }
@@ -29,12 +30,5 @@
         "PROCESSING": {},
         "EXTRACTION": {}
     },
-    "CUSTOM": {
-        "_comment": "Free field for custom configuration",
-        "TELEMETRY": {
-            "_comment": "Telemetry preferences (auto-populated during 'nipoppy init')",
-            "SEND_TELEMETRY": true,
-            "COUNTRY_CODE": "UNKNOWN"
-        }
-    }
+    "CUSTOM": {}
 }
