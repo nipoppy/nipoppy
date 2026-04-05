@@ -2,27 +2,42 @@
 
 CLIENT-SIDE instrumentation for tracking command usage and geographic distribution.
 
-## Architecture: Separation of Concerns
+## Architecture
 
-This telemetry system tracks **two independent features**:
+```
+nipoppy CLI (DELTA=1/run)
+  └─► OTel Collector :4317
+        └─► deltatocumulative processor  (accumulates 1+1+1 → cumulative 3)
+              └─► Prometheus exporter :8889
+                    └─► Prometheus → Grafana
+```
 
-### 1. Command Tracking (Core Feature)
-- **Metric**: `nipoppy.commands.executed` (Counter)
-- **Attributes**: `command` (e.g., "init", "bidsify", "process")
-- **Purpose**: Track which commands are used and how often
-- **Implementation**: `@track_command` decorator
+### Why deltatocumulative?
 
-### 2. Location Tracking (Additional Feature)
-- **Metric**: `nipoppy.location.by_country` (Gauge)
-- **Attributes**: `country` (ISO country code: "US", "CA", etc.)
-- **Purpose**: Track geographic distribution of installations
-- **Implementation**: Separate functions in `geo.py`
+Each `nipoppy` run is a short-lived process. Its counter starts at 0 and adds 1 before
+the process exits — so each run sends `DELTA = 1`. Without accumulation the collector
+would forward that raw `1` to Prometheus every time and `sum()` would always return `1`.
 
-**Why Separate?**
-- **Modularity**: Enable/disable features independently
-- **Clarity**: Each metric has a single, clear purpose
-- **Privacy**: Users can opt out of location while keeping command stats
-- **Presentation**: Easy to explain "we track commands AND locations"
+The `deltatocumulative` processor keeps a running total in memory:
+run 1 → 1, run 2 → 2, run 3 → 3. Prometheus then scrapes the growing cumulative value
+and `sum()` returns the correct all-time total.
+
+See: https://oneuptime.com/blog/post/2026-02-06-delta-to-cumulative-processor-opentelemetry-collector/view
+
+---
+
+## What Gets Tracked
+
+| Metric | Type | Recorded when |
+|--------|------|---------------|
+| `nipoppy_commands_executed_total{command}` | Counter | Any command starts |
+| `nipoppy_commands_completed_total{command, status, return_code}` | Counter | Any command exits |
+| `nipoppy_location_by_country_installations_total{country}` | Counter | `nipoppy init` only |
+
+`status` is one of `success`, `partial`, or `failure`.  
+`country` is a two-letter ISO code (e.g. `CA`, `US`) resolved via GeoIP on `nipoppy init`.
+
+---
 
 ## Module Structure
 
@@ -30,244 +45,115 @@ This telemetry system tracks **two independent features**:
 nipoppy/telemetry/
 ├── __init__.py       # Public API exports
 ├── decorators.py     # @track_command decorator
-├── metrics.py        # Metric definitions and OpenTelemetry setup
-├── geo.py            # GeoIP location tracking
+├── metrics.py        # OTel provider setup and metric instruments
+├── geo.py            # GeoIP location lookup (nipoppy init only)
 └── README.md         # This file
 ```
 
+---
+
 ## Usage
 
-### Basic Usage (Commands)
+### Any command
 
 ```python
-from nipoppy.telemetry import track_command, initialize_telemetry
+from nipoppy.telemetry import track_command
 
-# Initialize once at startup
-initialize_telemetry()
-
-# Decorate commands
 @track_command("bidsify")
 def bidsify(**params):
-    # Command logic here
     ...
 ```
 
-### Init Command (Command + Location)
+### Init command (also records location)
 
 ```python
-from nipoppy.telemetry import (
-    track_command,
-    save_country_to_config,
-    record_location,
-)
+from nipoppy.telemetry import track_command
+from nipoppy.telemetry.geo import record_location
 
 @track_command("init")
 def init(**params):
-    # Initialize dataset
     workflow.run()
-
-    # Save location and record metric (separate from command)
-    save_country_to_config(params)  # One-time GeoIP lookup
-    record_location(params)         # Record location metric
+    record_location()   # one-time GeoIP lookup, recorded as a metric
 ```
+
+---
 
 ## Key Design Principles
 
-### 1. Fail-Safe
-All telemetry operations are wrapped in try-except blocks. Commands **always execute**, even if telemetry fails.
+### 1. Fail-safe
 
-```python
-def _record_command_metric(command_name: str):
-    try:
-        metrics = get_metrics()
-        if metrics:
-            metrics["commands_executed"].add(1, {"command": command_name})
-    except Exception:
-        pass  # Silent failure - never crash user's command
-```
+All telemetry is wrapped in try-except. Commands always execute even if telemetry fails.
 
-### 2. Optional Dependencies
-Telemetry gracefully handles missing dependencies:
+### 2. DELTA temporality forced in code
 
-```python
-try:
-    from nipoppy.telemetry import track_command
-    _TELEMETRY_AVAILABLE = True
-except ImportError:
-    _TELEMETRY_AVAILABLE = False
-    def track_command(name):
-        return lambda f: f  # No-op decorator
-```
+`metrics.py` sets `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta` before
+creating the exporter. Without this the `OTLPMetricExporter` defaults to CUMULATIVE,
+sending `value=1` on every run with no accumulation across process runs.
 
-### 3. Minimal Footprint
-CLI integration requires only:
-- Import statements (~5 lines)
-- Initialization call (~3 lines)
-- One decorator per command (~1 line each)
+### 3. Minimal footprint
 
-**Total**: ~30 lines of telemetry code in `cli.py` (down from ~340 in previous designs)
+CLI integration is one decorator per command and a single `initialize_telemetry()` call
+at startup.
 
-## Metrics Details
-
-### Metric 1: Command Execution
-
-```python
-name: "nipoppy.commands.executed"
-type: Counter
-unit: "commands"
-attributes:
-  - command: str  # e.g., "init", "bidsify", "process"
-
-# Example data
-nipoppy_commands_executed_total{command="init"} 45
-nipoppy_commands_executed_total{command="bidsify"} 32
-```
-
-### Metric 2: Location Distribution
-
-```python
-name: "nipoppy.location.by_country"
-type: UpDownCounter (gauge-like)
-unit: "installations"
-attributes:
-  - country: str  # ISO 3166-1 alpha-2 (e.g., "US", "CA")
-
-# Example data
-nipoppy_location_by_country{country="US"} 12
-nipoppy_location_by_country{country="CA"} 8
-```
+---
 
 ## Configuration
 
-### Environment Variables
+### Environment variables
 
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: Collector address (default: `localhost:4317`)
-- `OTEL_SDK_DISABLED`: Set to `"true"` to disable telemetry
-- `ENVIRONMENT`: Deployment environment tag (default: `"development"`)
-- `GEOIP_DB_PATH`: Path to MaxMind GeoLite2 database (optional)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | Collector address |
+| `OTEL_SDK_DISABLED` | `false` | Set to `true` to disable all telemetry |
+| `ENVIRONMENT` | `development` | Tag applied to all metrics |
 
-#### Pointing to the Nipoppy telemetry server
+### Pointing to the shared server
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=206.12.94.146:4317
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://206.12.94.146:4317
 ```
 
-Add this to your `~/.zshrc` or `~/.bashrc` to make it permanent. Once set, all `nipoppy` commands will send telemetry to the central server automatically.
+Add to `~/.zshrc` or `~/.bashrc` to make it permanent.
 
-### Dataset Config
+### Opting out
 
-Telemetry preferences stored in `global_config.json`:
-
-```json
-{
-  "CUSTOM": {
-    "TELEMETRY": {
-      "SEND_TELEMETRY": true,
-      "COUNTRY_CODE": "US"
-    }
-  }
-}
+```bash
+export OTEL_SDK_DISABLED=true
 ```
+
+---
 
 ## GeoIP Lookup
 
-**When**: Called **once** during `nipoppy init`
+**When**: once during `nipoppy init`, never on subsequent commands.  
 **How**:
 1. Fetches public IP from `https://api.ipify.org`
-2. Looks up country in MaxMind GeoLite2-Country database
-3. Stores result in dataset config
+2. Resolves country via `https://api.db-ip.com/v2/free/{ip}` (free tier, 1,000 req/day)
+3. Records `country` attribute on the `nipoppy_location_by_country_installations_total` metric
 
-**Subsequent commands**: Read country from config (no repeated API calls)
+Falls back to `country="UNKNOWN"` on any failure (timeout, rate limit, no network).
 
-## Presentation Guide
-
-### Demo Flow (5 minutes)
-
-1. **Show empty dashboard**
-   - Open Grafana: http://localhost:3000
-
-2. **Run init command**
-   ```bash
-   nipoppy init /tmp/demo1
-   ```
-   - Watch "Total Commands" increment (~5 seconds)
-   - See country appear in location table
-
-3. **Run other commands**
-   ```bash
-   nipoppy bidsify --dataset /tmp/demo1
-   nipoppy process --dataset /tmp/demo1
-   ```
-   - Watch command breakdown chart update
-
-4. **Explain separation**
-   - Point to Section 1: Command Usage (core)
-   - Point to Section 2: Geographic Distribution (additional)
-
-### Key Files to Show
-
-1. **`decorators.py`** (~30 lines)
-   - Show `@track_command` decorator
-   - Highlight fail-safe design
-
-2. **`metrics.py`** (~10 lines of metric definitions)
-   - Show two separate metrics
-   - Explain separation of concerns
-
-3. **`cli.py`** (~1 line per command)
-   - Show decorator usage: `@track_command("bidsify")`
-   - Emphasize minimal footprint
+---
 
 ## Troubleshooting
 
-### Telemetry not working
+**Counter stuck at 1**
+- Confirm `OTEL_EXPORTER_OTLP_ENDPOINT` includes the `http://` scheme
+- Confirm the collector has `deltatocumulative` in its processor pipeline
 
-1. Check if telemetry is disabled:
-   ```bash
-   echo $OTEL_SDK_DISABLED  # Should be empty or "false"
-   ```
-
-2. Check if collector is running:
-   ```bash
-   cd server && docker-compose ps
-   ```
-
-3. Check CLI startup message:
-   ```
-   ✓ Telemetry enabled → localhost:4317
-   ```
-
-### GeoIP lookup fails
-
-- Country defaults to "UNKNOWN"
-- Check `GEOIP_DB_PATH` environment variable
-- Download GeoLite2-Country database from MaxMind
-- Commands still work normally (fail-safe)
-
-## Production Deployment
-
-### Security Checklist
-
-- [ ] Enable TLS for OTLP endpoint (change `insecure: true`)
-- [ ] Set strong collector authentication
-- [ ] Review data retention policies
-- [ ] Consider privacy regulations (GDPR, etc.)
-
-### Performance Settings
-
-Change in `metrics.py`:
-```python
-initialize_telemetry(
-    export_interval_millis=10000,  # 10 seconds (was 1s for demo)
-)
+**Telemetry disabled unintentionally**
+```bash
+echo $OTEL_SDK_DISABLED   # should be empty or "false"
 ```
 
-Change in `server/configs/`:
-- Collector batch timeout: 5s (was 500ms)
-- Prometheus scrape: 15s (was 5s)
+**GeoIP returns UNKNOWN**
+- No network access, or db-ip.com free-tier rate limit hit (shared egress IP on HPC)
+- Commands still run normally — location just records as `UNKNOWN`
+
+---
 
 ## Further Reading
 
+- [deltatocumulative processor](https://oneuptime.com/blog/post/2026-02-06-delta-to-cumulative-processor-opentelemetry-collector/view)
 - [OpenTelemetry Metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/)
 - [OpenTelemetry Python SDK](https://opentelemetry-python.readthedocs.io/)
-- [Grafana Dashboards](https://grafana.com/docs/grafana/latest/dashboards/)
