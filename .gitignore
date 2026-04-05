@@ -47,3 +47,4 @@ nipoppy_env/
 
 # Logs
 *.log
+.claude/settings.local.json
