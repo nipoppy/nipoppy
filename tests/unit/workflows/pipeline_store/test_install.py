@@ -21,6 +21,7 @@ from nipoppy.env import (
 from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+from nipoppy.zenodo_api import ZenodoAPI
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
 
 
@@ -115,6 +116,13 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
             for record in caplog.records
         ]
     )
+
+
+def test_run_cleanup(workflow: PipelineInstallWorkflow):
+    workflow.zenodo_api = ZenodoAPI()
+    assert workflow.zenodo_api.client.is_closed is False
+    workflow.run_cleanup()
+    assert workflow.zenodo_api.client.is_closed is True
 
 
 @pytest.mark.parametrize("variables", [{}, {"var1": "description"}])
