@@ -12,7 +12,7 @@ env:
   PYTHON_VERSION: "3.11"
 
 jobs:
-  linkcheck:
+  sphinx:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -34,7 +34,7 @@ jobs:
       run: |
         python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
 
-  pytest-linkcheck:
+  pytest:
     runs-on: ubuntu-latest
     permissions:
       contents: read
