@@ -52,7 +52,7 @@ jobs:
         python -m pytest -m "not api and not no_xdist" --cov=nipoppy --cov-report=xml --cov-append
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         files: ./coverage.xml
         name: codecov-umbrella
