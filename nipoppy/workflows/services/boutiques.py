@@ -107,6 +107,8 @@ def run_bosh_launch(
         The Boutiques invocation as a JSON string.
     descriptor_str : str
         The Boutiques descriptor as a JSON string.
+    run_command : CommandRunner, optional
+        A function to execute the command. Should act like ``runner.run_command``.
     bosh_exec_launch_args : list of str, optional
         Additional arguments for ``bosh exec launch``.
     run_command : CommandRunner, optional
@@ -155,7 +157,26 @@ def run_bosh_simulate(
     bosh_exec_launch_args: list[str] | None = None,
     dry_run: bool = False,
 ) -> int:
-    """Execute a Boutiques simulate command."""
+    """Execute a Boutiques simulate command.
+
+    Parameters
+    ----------
+    invocation_str : str
+        The Boutiques invocation as a JSON string.
+    descriptor_str : str
+        The Boutiques descriptor as a JSON string.
+    run_command : CommandRunner, optional
+        A function to execute the command. Should act like ``runner.run_command``.
+    bosh_exec_launch_args : list of str, optional
+        Additional arguments for ``bosh exec launch``.
+    dry_run : bool, optional
+        If True, build and log the command but skip actual execution.
+
+    Returns
+    -------
+    int
+        The exit code of the container execution.
+    """
 
     def command_builder(invocation: str, descriptor: str, args: list[str]) -> list[str]:
         return [

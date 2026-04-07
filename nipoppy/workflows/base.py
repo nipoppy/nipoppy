@@ -46,7 +46,7 @@ def _log_command(command: str):
 
 
 class CommandRunner(Protocol):
-    """Protocol for functions that run commands, used for dependency injection."""
+    """Protocol for functions that run commands, used for strategy injection."""
 
     def __call__(
         self,
