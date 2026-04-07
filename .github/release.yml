@@ -1,10 +1,12 @@
 changelog:
   exclude:
+    labels:
+      - bot
     authors:
-      - allcontributors
-      - dependabot
-      - nipoppy-bot
-      - pre-commit-ci
+      - allcontributors[bot]
+      - dependabot[bot]
+      - nipoppy-bot[bot]
+      - pre-commit-ci[bot]
   categories:
     - title: Breaking Changes
       labels:
