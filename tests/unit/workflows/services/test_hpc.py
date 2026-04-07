@@ -173,3 +173,45 @@ def test_generate_cli_command(
 ) -> None:
     """Test HPCRunner.generate_cli_command produces correct CLI tokens."""
     assert hpc_runner.generate_cli_command(**kwargs) == expected_command
+
+
+def test_generate_cli_keep_workdir(hpc_runner: HPCRunner):
+    """Test that --keep-workdir flag is included when keep_workdir is True."""
+    hpc_runner.keep_workdir = True
+    command = hpc_runner.generate_cli_command(participant_id="P01", session_id="1")
+    assert "--keep-workdir" in command
+
+
+def test_generate_cli_verbose(hpc_runner: HPCRunner):
+    """Test that --verbose flag is included when verbose is True."""
+    hpc_runner.verbose = True
+    command = hpc_runner.generate_cli_command(participant_id="P01", session_id="1")
+    assert "--verbose" in command
+
+
+def test_generate_cli_fails_duplicate_options(hpc_runner: HPCRunner):
+    """Test an error is raised when extra_options contains duplicate keys."""
+    with pytest.raises(
+        ValueError,
+        match="Option .* is already set by the default options",
+    ):
+        hpc_runner.generate_cli_command(
+            participant_id="P01",
+            session_id="1",
+            extra_options={"--participant-id": "P02"},
+        )
+
+
+def test_generate_cli_fails_duplicate_flags(hpc_runner: HPCRunner):
+    """Test an error is raised when extra_flags would add a duplicate flag."""
+    hpc_runner.keep_workdir = True  # This sets the --keep-workdir
+    duplicate_flag = "--keep-workdir"
+    with pytest.raises(
+        ValueError,
+        match="Flag .* is already in the command",
+    ):
+        hpc_runner.generate_cli_command(
+            participant_id="P01",
+            session_id="1",
+            extra_flags=[duplicate_flag],
+        )
