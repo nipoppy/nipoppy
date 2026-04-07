@@ -24,14 +24,14 @@ class PipelineSearchWorkflow(BaseWorkflow):
     """Search Zenodo for existing pipeline configurations and print results table."""
 
     col_zenodo_id = "Zenodo ID"
-    col_title = "Title"
     col_community = "Community"
+    col_title = "Title"
     col_description = "Description"
     col_downloads = "Downloads"
     widths = {
         col_zenodo_id: len(col_zenodo_id),
-        col_title: 20,
         col_community: 10,
+        col_title: 20,
         col_downloads: len(col_downloads),
     }
     # Add 10 extra spaces for padding and table borders
