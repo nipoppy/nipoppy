@@ -68,7 +68,9 @@ class PipelineSearchWorkflow(BaseWorkflow):
                 description = strip_html_tags(description).strip()
             zenodo_id_with_link = f"[link={hit.get('doi_url')}]{hit.get('id')}[/link]"
             communities = hit.get("metadata", {}).get("communities", [])
-            community_names = "\n".join(c.get("id", "") for c in communities)
+            community_names = "\n".join(
+                rv for c in communities if (rv := c.get("id")) is not None
+            )
             data_for_df.append(
                 {
                     self.col_zenodo_id: zenodo_id_with_link,
