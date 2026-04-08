@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 from collections.abc import Generator
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,13 @@ def fake_bids_root(tmp_path: Path) -> Generator[Path]:
         os.chmod(bids_dir_path, 0o755)
 
 
+@dataclass
+class _HandleBIDSSourceResult:
+    source_files_before_init: list[Path]
+    source_files_after_init: list[Path]
+    target_files: list[Path]
+
+
 def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode: str):
     dpath_root = workflow.study.layout.dpath_root
 
@@ -65,7 +73,11 @@ def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode
         x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
     ]
 
-    return source_files_before_init, source_files_after_init, target_files
+    return _HandleBIDSSourceResult(
+        source_files_before_init=source_files_before_init,
+        source_files_after_init=source_files_after_init,
+        target_files=target_files,
+    )
 
 
 def _assert_manifest_creation(
@@ -330,36 +342,30 @@ def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root:
 
 def test_handle_bids_source_copy(workflow: InitWorkflow, fake_bids_root: Path):
     """Check that all the new files match those in the source directory."""
-    _, source_files_after_init, target_files = _setup_handle_bids_source(
-        workflow, fake_bids_root, mode="copy"
-    )
+    files = _setup_handle_bids_source(workflow, fake_bids_root, mode="copy")
 
-    for f in source_files_after_init:
-        assert f in target_files
+    for f in files.source_files_after_init:
+        assert f in files.target_files
 
 
 def test_handle_bids_source_move(workflow: InitWorkflow, fake_bids_root: Path):
     """Check that all the files are moved and the source is empty."""
-    source_files_before_init, source_files_after_init, target_files = (
-        _setup_handle_bids_source(workflow, fake_bids_root, mode="move")
-    )
+    files = _setup_handle_bids_source(workflow, fake_bids_root, mode="move")
 
-    for f in source_files_before_init:
-        assert f in target_files
+    for f in files.source_files_before_init:
+        assert f in files.target_files
 
-    assert len(source_files_after_init) == 0
+    assert len(files.source_files_after_init) == 0
 
 
 def test_handle_bids_source_symlink(workflow: InitWorkflow, fake_bids_root: Path):
     """Check that all the files are linked to the source files."""
     dpath_root = workflow.study.layout.dpath_root
 
-    source_files_before_init, source_files_after_init, _ = _setup_handle_bids_source(
-        workflow, fake_bids_root, mode="symlink"
-    )
+    files = _setup_handle_bids_source(workflow, fake_bids_root, mode="symlink")
 
-    for f in source_files_before_init:
-        assert f in source_files_after_init
+    for f in files.source_files_before_init:
+        assert f in files.source_files_after_init
 
     # only the directory is linked, not the files within
     assert (dpath_root / "bids").is_symlink()
