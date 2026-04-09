@@ -148,3 +148,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             message += " (use --community to restrict to Nipoppy community)"
         logger.info(message)
         CONSOLE_STDOUT.print(table)
+
+    def run_cleanup(self):
+        """Close resources used by the workflow."""
+        self.zenodo_api.close()
