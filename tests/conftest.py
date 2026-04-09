@@ -22,6 +22,7 @@ from nipoppy.env import (
 )
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import NipoppyLogger, get_logger
+from nipoppy.study import Study
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import (
@@ -432,3 +433,16 @@ def check_curation_status_table(
                         participant_id in participants_and_sessions_true
                         and session_id in participants_and_sessions_true[participant_id]
                     )
+
+
+@pytest.fixture
+def study(tmp_path: Path) -> Study:
+    """Create a fixture Study instance to use in tests."""
+    dpath_root = tmp_path / "my_study"
+    return Study(layout=DatasetLayout(dpath_root=dpath_root))
+
+
+def _set_up_substitution_testing(_object, mocker: pytest_mock.MockerFixture):
+    return mocker.patch.object(
+        _object, "process_template_json", side_effect=_object.process_template_json
+    )
