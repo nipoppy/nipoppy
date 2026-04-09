@@ -2,16 +2,15 @@
 
 from functools import cached_property
 from pathlib import Path
-from tarfile import is_tarfile
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
-from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.env import PROGRAM_NAME, StrOrPathLike
+from nipoppy.exceptions import FileOperationError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
-from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.runner import Runner
+from nipoppy.workflows.tar_handler import TarHandler
 
 logger = get_logger()
 
@@ -56,6 +55,7 @@ class ProcessingRunner(Runner):
             keep_workdir=keep_workdir,
         )
         self.tar = tar
+        self._tar_handler = TarHandler(dry_run=self.dry_run)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -71,48 +71,22 @@ class ProcessingRunner(Runner):
 
         Specifically, check that dpath to tar is specified in the tracker config
         """
-        if not self.tar:
-            return
-
-        if self.pipeline_step_config.TRACKER_CONFIG_FILE is None:
-            raise ConfigError(
-                "Tarring requested but there is no tracker config file. "
-                "Specify the TRACKER_CONFIG_FILE field for the pipeline step in "
-                "the global config file, then make sure the PARTICIPANT_SESSION_DIR "
-                "field is specified in the TRACKER_CONFIG_FILE file."
-            )
-        if self.tracker_config.PARTICIPANT_SESSION_DIR is None:
-            raise ConfigError(
-                "Tarring requested but no participant-session directory specified. "
-                "The PARTICIPANT_SESSION_DIR field in the tracker config must set "
-                "in the tracker config file at "
-                f"{self.pipeline_step_config.TRACKER_CONFIG_FILE}"
-            )
+        tracker_config_file = self.pipeline_step_config.TRACKER_CONFIG_FILE
+        participant_session_dir = (
+            self.tracker_config.PARTICIPANT_SESSION_DIR
+            if self.tar and tracker_config_file is not None
+            else None
+        )
+        self._tar_handler.validate_preconditions(
+            tar_requested=self.tar,
+            tracker_config_file=tracker_config_file,
+            participant_session_dir=participant_session_dir,
+        )
 
     def tar_directory(self, dpath: StrOrPathLike) -> Path:
         """Tar a directory and delete it."""
-        dpath = Path(dpath)
-        if not dpath.exists():
-            raise FileOperationError(f"Not tarring {dpath} since it does not exist")
-        if not dpath.is_dir():
-            raise FileOperationError(f"Not tarring {dpath} since it is not a directory")
-
-        tar_flags = "-cvf"
-        fpath_tarred = dpath.with_suffix(EXT_TAR)
-
-        _run_command(
-            f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}",
-            dry_run=self.dry_run,
-        )
-
-        # make sure that the tarfile was created successfully before removing
-        # original directory
-        if fpath_tarred.exists() and is_tarfile(fpath_tarred):
-            fileops.rm(dpath, dry_run=self.dry_run)
-        else:
-            logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
-
-        return fpath_tarred
+        self._tar_handler.dry_run = self.dry_run
+        return self._tar_handler.tar_directory(dpath)
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
