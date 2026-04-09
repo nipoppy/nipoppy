@@ -107,7 +107,9 @@ def get_pipeline_version(
     for fpath_pipeline_config in Path(dpath_pipelines).glob(
         f"*/{DatasetLayout.fname_pipeline_config}"
     ):
-        pipeline_config = BasePipelineConfig(**load_json(fpath_pipeline_config))
+        pipeline_config = BasePipelineConfig(
+            **load_json(fpath_pipeline_config, allow_json5=True)
+        )
         if pipeline_config.NAME == pipeline_name:
             if pipeline_config_latest is None:
                 pipeline_config_latest = pipeline_config
@@ -358,7 +360,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
         fpath_tracker_config = self.dpath_pipeline_bundle / fname_tracker_config
         logger.info(f"Loading tracker config from {fpath_tracker_config}")
-        return TrackerConfig(**load_json(fpath_tracker_config))
+        return TrackerConfig(**load_json(fpath_tracker_config, allow_json5=True))
 
     @cached_property
     def pybids_ignore_patterns(self) -> list[str]:
@@ -378,7 +380,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         # load patterns from file
         logger.info(f"Loading PyBIDS ignore patterns from {fpath_pybids_ignore}")
-        patterns = load_json(fpath_pybids_ignore)
+        patterns = load_json(fpath_pybids_ignore, allow_json5=True)
 
         # validate format
         if not isinstance(patterns, list):
@@ -397,7 +399,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         else:
             fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
             logger.info(f"Loading HPC config from {fpath_hpc_config}")
-            data = self.process_template_json(load_json(fpath_hpc_config))
+            data = self.process_template_json(
+                load_json(fpath_hpc_config, allow_json5=True)
+            )
         return HpcConfig(**data)
 
     @cached_property
@@ -447,7 +451,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             json_obj=self.process_template_json(
-                load_json(fpath_config),
+                load_json(fpath_config, allow_json5=True),
             ),
         )
 

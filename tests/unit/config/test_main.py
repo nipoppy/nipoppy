@@ -242,6 +242,22 @@ def test_load(path):
         assert hasattr(config, field)
 
 
+def test_load_json5_with_comments_and_trailing_commas(tmp_path: Path):
+    fpath_config = tmp_path / "global_config.json"
+    fpath_config.write_text("""
+{
+  // Comments and trailing commasshould be supported
+  "HPC_PREAMBLE": [
+    "module load apptainer",
+  ],
+}
+""".strip())
+
+    config = Config.load(fpath_config)
+    assert isinstance(config, Config)
+    assert config.HPC_PREAMBLE == ["module load apptainer"]
+
+
 @pytest.mark.parametrize(
     "path",
     [

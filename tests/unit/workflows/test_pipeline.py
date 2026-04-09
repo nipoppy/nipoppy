@@ -700,6 +700,29 @@ def test_get_pipeline_config(
     )
 
 
+def test_get_pipeline_config_json5(workflow: PipelineWorkflow, tmp_path: Path):
+    (tmp_path / "config.json").write_text(f"""
+{{
+  // Comments and trailing commas should be supported
+  "NAME": "{workflow.pipeline_name}",
+  "VERSION": "{workflow.pipeline_version}",
+  "PIPELINE_TYPE": "processing",
+  "SCHEMA_VERSION": "{CURRENT_SCHEMA_VERSION}",
+  "STEPS": [
+    {{}},
+  ],
+}}
+""".strip())
+
+    config = workflow._get_pipeline_config(
+        tmp_path,
+        pipeline_name=workflow.pipeline_name,
+        pipeline_version=workflow.pipeline_version,
+        pipeline_class=ProcessingPipelineConfig,
+    )
+    assert isinstance(config, ProcessingPipelineConfig)
+
+
 def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
     pipeline_name = "new_pipeline"
     pipeline_version = "1.0.0"
