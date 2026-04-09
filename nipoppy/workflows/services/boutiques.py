@@ -111,8 +111,6 @@ def run_bosh_launch(
         A function to execute the command. Should act like ``runner.run_command``.
     bosh_exec_launch_args : list of str, optional
         Additional arguments for ``bosh exec launch``.
-    run_command : CommandRunner, optional
-        A function to execute the command. Should act like ```runner.run_command``.
     dry_run : bool, optional
         If True, build and log the command but skip actual execution.
 
