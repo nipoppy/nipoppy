@@ -3,9 +3,10 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import httpx
+from typing_extensions import Self
 
 
 class ChecksumError(Exception): ...  # noqa E701
@@ -19,6 +20,11 @@ class ZenodoAPI:
 
     Zenodo uses the InvenioRDM API, which is documented at:
     https://inveniordm.docs.cern.ch/reference/rest_api_index/
+
+    This class manages a persistent :class:`httpx.Client` session for all
+    HTTP communication. It supports use as a context manager (``with``
+    statement) for automatic resource cleanup, and exposes an explicit
+    :meth:`close` method for manual cleanup.
     """
 
     def __init__(
@@ -37,15 +43,29 @@ class ZenodoAPI:
 
         # Access token is required for uploading files
         self.password_file = password_file
-        self.access_token = None
-        self.headers: dict[str, str] = dict()
+
+        self.client = httpx.Client(
+            base_url=self.api_endpoint,
+            timeout=self.timeout,
+        )
+
         if self.password_file is not None:
-            self.access_token = self.password_file.read_text().strip()
-            self.set_authorization(self.access_token)
+            access_token = self.password_file.read_text().strip()
+            self.set_authorization(access_token)
 
     def set_authorization(self, access_token: str):
         """Set the headers for the ZenodoAPI instance."""
-        self.headers.update({"Authorization": f"Bearer {access_token}"})
+        self.client.headers.update({"Authorization": f"Bearer {access_token}"})
+
+    def close(self) -> None:
+        """Close the underlying HTTP client and release connections."""
+        self.client.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.close()
 
     @property
     def logger(self) -> logging.Logger:
@@ -82,10 +102,7 @@ class ZenodoAPI:
         record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        response = httpx.get(
-            f"{self.api_endpoint}/records/{record_id}/files",
-            headers=self.headers,
-        )
+        response = self.client.get(f"/records/{record_id}/files")
         if response.status_code != 200:
             raise ZenodoAPIError(
                 f"Failed to get files for zenodo.{record_id}: {response.json()}"
@@ -97,10 +114,7 @@ class ZenodoAPI:
             for entry in response.json()["entries"]
         }
         for file, checksum in files.items():
-            response = httpx.get(
-                f"{self.api_endpoint}/records/{record_id}/files/{file}/content",  # noqa E501
-                headers=self.headers,
-            )
+            response = self.client.get(f"/records/{record_id}/files/{file}/content")
             if response.status_code != 200:
                 raise ZenodoAPIError(
                     f"Failed to download file for zenodo.{record_id}: {file}"
@@ -117,10 +131,19 @@ class ZenodoAPI:
 
             output_dir.joinpath(file).write_bytes(response.content)
 
-    def _create_new_version(self, record_id: str, metadata: dict) -> Tuple[str, str]:
-        response = httpx.post(
+    def _update_metadata(self, record_id: str, metadata: dict):
+        response = self.client.put(
+            f"{self.api_endpoint}/records/{record_id}/draft",
+            json=metadata,
+        )
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
+            )
+
+    def _create_new_version(self, record_id: str) -> Tuple[str, str]:
+        response = self.client.post(
             f"{self.api_endpoint}/records/{record_id}/versions",
-            headers=self.headers,
         )
         if response.status_code != 201:
             raise ZenodoAPIError(
@@ -129,36 +152,21 @@ class ZenodoAPI:
             )
         new_record_id = response.json()["id"]
         owner_id = response.json()["owners"][0]["id"]
-
-        # Required to update the metadata to include the new publication date
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{new_record_id}/draft",
-            headers=self.headers,
-            json=metadata,
-        )
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
-            )
-
         return new_record_id, owner_id
 
-    def _create_draft(self, metadata: dict) -> Tuple[str, str]:
-        response = httpx.post(
+    def _create_draft(self) -> Tuple[str, str]:
+        response = self.client.post(
             f"{self.api_endpoint}/records",
-            headers=self.headers | {"Content-Type": "application/json"},
-            json=metadata,
+            headers={"Content-Type": "application/json"},
         )
         if response.status_code != 201:
             raise ZenodoAPIError(f"Failed to create a draft record: {response.json()}")
 
         return response.json()["id"], response.json()["owners"][0]["id"]
 
-    def _update_creators(self, record_id: str, owner_id: str, metadata: dict):
+    def _add_creators_to_metadata(self, owner_id: str, metadata: dict) -> dict:
         # get user profile info
-        response = httpx.get(
-            f"{self.api_endpoint}/users/{owner_id}", headers=self.headers
-        )
+        response = self.client.get(f"/users/{owner_id}")
         if response.status_code != 200:
             raise ZenodoAPIError(
                 f"Failed to get information for user {owner_id}: {response.json()}"
@@ -190,21 +198,13 @@ class ZenodoAPI:
                 "affiliations": [{"name": affiliation}] if affiliation else [],
             }
         ]
-        response = httpx.put(
-            f"{self.api_endpoint}/records/{record_id}/draft",
-            headers=self.headers,
-            json=metadata,
-        )
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
-            )
+        return metadata
 
     def _upload_files(self, files: list[Path], record_id: str):
         metadata = [{"key": file.name} for file in files]
-        response = httpx.post(
-            f"{self.api_endpoint}/records/{record_id}/draft/files",
-            headers=self.headers | {"Content-Type": "application/json"},
+        response = self.client.post(
+            f"/records/{record_id}/draft/files",
+            headers={"Content-Type": "application/json"},
             json=metadata,
         )
         if response.status_code != 201:
@@ -216,9 +216,9 @@ class ZenodoAPI:
         for file in files:
             # Upload the file content
             with file.open("rb") as f:
-                response = httpx.put(
-                    f"{self.api_endpoint}/records/{record_id}/draft/files/{file.name}/content",  # noqa E501
-                    headers=self.headers | {"Content-Type": "application/octet-stream"},
+                response = self.client.put(
+                    f"/records/{record_id}/draft/files/{file.name}/content",  # noqa E501
+                    headers={"Content-Type": "application/octet-stream"},
                     content=f,
                 )
                 if response.status_code != 200:
@@ -228,9 +228,8 @@ class ZenodoAPI:
                     )
 
             # Commit the uploaded file
-            response = httpx.post(
-                f"{self.api_endpoint}/records/{record_id}/draft/files/{file.name}/commit",  # noqa E501
-                headers=self.headers,
+            response = self.client.post(
+                f"/records/{record_id}/draft/files/{file.name}/commit",  # noqa E501
             )
             if response.status_code != 200:
                 raise ZenodoAPIError(
@@ -238,10 +237,19 @@ class ZenodoAPI:
                     f"\n{response.json()}"
                 )
 
+    def _add_default_preview_to_metadata(self, metadata: dict, file_name: str) -> dict:
+        """Set the default preview file.
+
+        Note: the metadata update must be done after the files are uploaded.
+        """
+        if "files" not in metadata:
+            metadata["files"] = {}
+        metadata["files"]["default_preview"] = file_name
+        return metadata
+
     def _publish(self, record_id: str) -> str:
-        response = httpx.post(
-            f"{self.api_endpoint}/records/{record_id}/draft/actions/publish",
-            headers=self.headers,
+        response = self.client.post(
+            f"/records/{record_id}/draft/actions/publish",
         )
         if response.status_code != 202:
             raise ZenodoAPIError(
@@ -251,18 +259,19 @@ class ZenodoAPI:
         return response.json()["links"]["self_doi"]
 
     def _check_authentication(self) -> None:
-        response = httpx.get(
-            f"{self.api_endpoint}/user/records",
-            headers=self.headers | {"Content-Type": "application/json"},
+        response = self.client.get(
+            "/user/records",
+            headers={"Content-Type": "application/json"},
         )
         if response.status_code != 200:
             raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
 
-    def upload_pipeline(
+    def upload_record(
         self,
         input_dir: Path,
         metadata: dict,
         record_id: Optional[str] = None,
+        default_preview_filename: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
         record_id = self._process_record_id(record_id)
@@ -274,18 +283,27 @@ class ZenodoAPI:
         self._check_authentication()
 
         if record_id:
-            record_id, owner_id = self._create_new_version(record_id, metadata)
+            record_id, owner_id = self._create_new_version(
+                self.get_latest_version_id(record_id)
+            )
             action = "update"
         else:
-            record_id, owner_id = self._create_draft(metadata)
+            record_id, owner_id = self._create_draft()
             action = "creation"
 
         try:
             if not metadata["metadata"].get("creators"):
-                self._update_creators(record_id, owner_id, metadata)
+                metadata = self._add_creators_to_metadata(owner_id, metadata)
 
             files = sorted(input_dir.iterdir())
             self._upload_files(files, record_id)
+
+            if default_preview_filename is not None:
+                metadata = self._add_default_preview_to_metadata(
+                    metadata, default_preview_filename
+                )
+
+            self._update_metadata(record_id, metadata)
             doi = self._publish(record_id)
             return doi
 
@@ -295,9 +313,8 @@ class ZenodoAPI:
             self.logger.info(
                 f"Reverting record {action} for zenodo.{record_id} due to error: {e}"
             )
-            response = httpx.delete(
-                f"{self.api_endpoint}/records/{record_id}/draft",
-                headers=self.headers,
+            response = self.client.delete(
+                f"/records/{record_id}/draft",
             )
             if response.status_code == 204:
                 self.logger.info(f"Record {action} reverted")
@@ -337,15 +354,13 @@ class ZenodoAPI:
         self.logger.debug(f'Using Zenodo query string: "{full_query}"')
 
         api_endpoint = self._get_api_endpoint(community_id)
-        response = httpx.get(
+        response = self.client.get(
             api_endpoint,
-            headers=self.headers,
             params={
                 "q": full_query,
                 "size": size,
                 "sort": sort,
             },
-            timeout=self.timeout,
         )
         try:
             response.raise_for_status()
@@ -366,9 +381,8 @@ class ZenodoAPI:
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
         record_id = self._process_record_id(record_id)
-        response = httpx.get(
+        response = self.client.get(
             f"{self.api_endpoint}/records/{record_id}",
-            headers=self.headers,
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
@@ -391,10 +405,9 @@ class ZenodoAPI:
             ID of the latest version of the record.
         """
         record_id = self._process_record_id(record_id)
-        response = httpx.get(
+        response = self.client.get(
             f"{self.api_endpoint}/records/{record_id}/versions/latest",
             follow_redirects=True,
-            headers=self.headers,
             timeout=self.timeout,
         )
         if response.status_code != 200:

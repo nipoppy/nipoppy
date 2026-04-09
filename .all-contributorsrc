@@ -260,6 +260,27 @@
         "doc",
         "bug"
       ]
+    },
+    {
+      "login": "Arshitha",
+      "name": "Arshitha Basavaraj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10297203?v=4",
+      "profile": "https://github.com/Arshitha",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "mibur1",
+      "name": "Micha Burkhardt",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61502279?v=4",
+      "profile": "https://github.com/mibur1",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
-  ]
+  ],
+  "commitType": "docs",
+  "contributorsPerLine": 7
 }

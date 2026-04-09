@@ -22,7 +22,7 @@
 
 ## Contributors
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -58,6 +58,8 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.cianmonnin.dev/"><img src="https://avatars.githubusercontent.com/u/113541912?v=4?s=100" width="100px;" alt="Cian Monnin"/><br /><sub><b>Cian Monnin</b></sub></a><br /><a href="https://github.com/nipoppy/nipoppy/commits?author=CMonnin" title="Documentation">📖</a> <a href="https://github.com/nipoppy/nipoppy/issues?q=author%3ACMonnin" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Arshitha"><img src="https://avatars.githubusercontent.com/u/10297203?v=4?s=100" width="100px;" alt="Arshitha Basavaraj"/><br /><sub><b>Arshitha Basavaraj</b></sub></a><br /><a href="https://github.com/nipoppy/nipoppy/issues?q=author%3AArshitha" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mibur1"><img src="https://avatars.githubusercontent.com/u/61502279?v=4?s=100" width="100px;" alt="Micha Burkhardt"/><br /><sub><b>Micha Burkhardt</b></sub></a><br /><a href="https://github.com/nipoppy/nipoppy/issues?q=author%3Amibur1" title="Bug reports">🐛</a> <a href="https://github.com/nipoppy/nipoppy/commits?author=mibur1" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
