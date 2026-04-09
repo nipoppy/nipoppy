@@ -117,7 +117,7 @@ def run_bosh_launch(
     Returns
     -------
     int
-        The exit code of the container execution.
+        The return code.
     """
 
     def command_builder(invocation: str, descriptor: str, args: list[str]) -> list[str]:
@@ -173,7 +173,7 @@ def run_bosh_simulate(
     Returns
     -------
     int
-        The exit code of the container execution.
+        The return code.
     """
 
     def command_builder(invocation: str, descriptor: str, args: list[str]) -> list[str]:
