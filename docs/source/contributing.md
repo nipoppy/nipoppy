@@ -96,10 +96,15 @@ Then open the `build/html/index.html` file in a browser.
 
 ## Making a release
 
-Inside the repository, run:
-```{code-block} console
-$ git tag <NEW_VERSION>
-$ git push upstream tag <NEW_VERSION>
-```
+1. Visit the [Draft a new release](https://github.com/nipoppy/nipoppy/releases/new) page.
+1. Create a new tag against `main` and use the "Generate release notes" feature.
+    1. (Recommended) Add a summary to the release description.
+1. Publish the release.
+1. Make a post in the Discord server in the `#announcements` channel about the release and the summarized changes.
 
-This assumes that the Git repository has a remote called `upstream` that is pointing to the [`nipoppy/nipoppy` repository](https://github.com/nipoppy/nipoppy.git).
+```{note}
+This will trigger the GitHub workflow for publishing the package to PyPI.
+```
+```{warning}
+If you edit the release notes afterwards, make sure to rebuild the docs for that release to update the "What's new" section of the documentation.
+```

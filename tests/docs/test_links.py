@@ -6,6 +6,7 @@ import httpx
 import pytest
 
 
+@pytest.mark.linkcheck
 @pytest.mark.parametrize(
     "link",
     (

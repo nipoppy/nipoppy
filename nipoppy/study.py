@@ -2,9 +2,7 @@
 
 import json
 from functools import cached_property
-from logging import Logger
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
@@ -30,7 +28,6 @@ class Study(Base):
     def __init__(
         self,
         layout: DatasetLayout,
-        logger: Optional[Logger] = None,
         verbose: bool = False,
     ):
         """Representation of a Nipoppy study.
@@ -39,8 +36,6 @@ class Study(Base):
         ----------
         layout : DatasetLayout
             The dataset layout object.
-        logger : Logger, optional
-            Logger instance. If None (default), a new logger will be created.
         verbose : bool, optional
             Whether to enable verbose logging, by default False. Note: this is ignored
             if a custom logger is provided.
