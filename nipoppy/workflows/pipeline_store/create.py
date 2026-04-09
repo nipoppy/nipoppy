@@ -54,7 +54,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
             target.mkdir(parents=True, exist_ok=True)
 
         descriptor_path = target / "descriptor.json"
-        if source_descriptor:
+        if source_descriptor is not None:
             try:
                 boutiques.validate(str(source_descriptor))
             except boutiques.DescriptorValidationError as exception:

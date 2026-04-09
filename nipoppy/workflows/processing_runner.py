@@ -169,7 +169,7 @@ class ProcessingRunner(Runner):
             command.append("--keep-workdir")
         if self.tar:
             command.append("--tar")
-        if self.fpath_layout:
+        if self.fpath_layout is not None:
             command.extend(["--layout", self.fpath_layout])
         if self.verbose:
             command.append("--verbose")

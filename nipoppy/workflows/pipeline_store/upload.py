@@ -96,7 +96,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             )
             raise WorkflowError from e
 
-        if self.record_id:
+        if self.record_id is not None:
             self.record_id = self.record_id.removeprefix("zenodo.")
             current_metadata = self.zenodo_api.get_record_metadata(self.record_id)
             if not self.force and not _is_same_pipeline(

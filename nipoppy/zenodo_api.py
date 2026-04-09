@@ -62,7 +62,7 @@ class ZenodoAPI:
 
     def _process_record_id(self, record_id: str | None) -> str:
         """Process the record ID to remove the 'zenodo.' prefix if present."""
-        return record_id.removeprefix("zenodo.") if record_id else None
+        return record_id.removeprefix("zenodo.") if record_id is not None else None
 
     def download_record_files(self, record_id: str, output_dir: Path):
         """Download the files of a Zenodo record in the `output_dir` directory.
@@ -181,11 +181,15 @@ class ZenodoAPI:
                 "person_or_org": {
                     "family_name": creator_name,
                     "identifiers": (
-                        [{"identifier": orcid, "scheme": "orcid"}] if orcid else []
+                        [{"identifier": orcid, "scheme": "orcid"}]
+                        if orcid is not None
+                        else []
                     ),
                     "type": "personal",
                 },
-                "affiliations": [{"name": affiliation}] if affiliation else [],
+                "affiliations": (
+                    [{"name": affiliation}] if affiliation is not None else []
+                ),
             }
         ]
         return metadata
@@ -274,7 +278,7 @@ class ZenodoAPI:
 
         self._check_authentication()
 
-        if record_id:
+        if record_id is not None:
             record_id, owner_id = self._create_new_version(
                 self.get_latest_version_id(record_id)
             )
