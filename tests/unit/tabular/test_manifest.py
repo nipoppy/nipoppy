@@ -123,6 +123,23 @@ def test_get_imaging_subset(data, session_id, expected_count):
 
 
 @pytest.mark.parametrize(
+    "participant_ids",
+    [
+        ["01", "01", "01", "02", "02", "03", "04"],
+    ],
+)
+def test_get_participants(participant_ids):
+    data = {
+        "participant_id": participant_ids,
+        "visit": [str(i) for i in range(len(participant_ids))],
+        "session_id": [str(i) for i in range(len(participant_ids))],
+        "datatype": [["anat"] for _ in participant_ids],
+    }
+    manifest = Manifest(data)
+    assert manifest.get_participants() == participant_ids
+
+
+@pytest.mark.parametrize(
     "participant_id,session_id,expected_count",
     [
         (None, None, 6),
