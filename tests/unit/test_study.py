@@ -4,13 +4,19 @@ import pytest
 import pytest_mock
 
 from nipoppy.study import Study
-from tests.conftest import get_config
+from nipoppy.tabular.manifest import Manifest
+from tests.conftest import DPATH_TEST_DATA, get_config
 
 
 def test_len(study: Study, mocker: pytest_mock.MockFixture):
     study.manifest = mocker.MagicMock()
     study.manifest.__len__.return_value = 5
     assert len(study) == 5
+
+
+def test_get_n_unique_participants(study: Study):
+    study.manifest = Manifest.load(DPATH_TEST_DATA / "manifest1.tsv")
+    assert study.get_n_unique_participants() == 2
 
 
 def test_config(study: Study, mocker: pytest_mock.MockFixture):
