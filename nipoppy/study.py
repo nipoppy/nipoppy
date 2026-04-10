@@ -44,6 +44,10 @@ class Study(Base):
         self.layout = layout
         self.verbose = verbose
 
+    def __len__(self):
+        """Get the number of unique participant-visit combinations in the study."""
+        return len(self.manifest)
+
     @cached_property
     def config(self) -> Config:
         """The main configuration object."""

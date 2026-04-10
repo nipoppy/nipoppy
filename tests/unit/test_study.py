@@ -7,6 +7,12 @@ from nipoppy.study import Study
 from tests.conftest import get_config
 
 
+def test_len(study: Study, mocker: pytest_mock.MockFixture):
+    study.manifest = mocker.MagicMock()
+    study.manifest.__len__.return_value = 5
+    assert len(study) == 5
+
+
 def test_config(study: Study, mocker: pytest_mock.MockFixture):
     config = get_config(dicom_dir_map_file="[[NIPOPPY_DPATH_ROOT]]")
     mocked_load = mocker.patch("nipoppy.study.Config.load", return_value=config)
