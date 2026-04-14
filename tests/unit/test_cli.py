@@ -12,9 +12,9 @@ import pytest
 import pytest_mock
 from click.testing import CliRunner
 
-from nipoppy.cli import exception_handler
+from nipoppy.cli import BUG_REPORT_URL, DISCORD_URL, exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.exceptions import NipoppyError, ReturnCode
+from nipoppy.exceptions import ConfigError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -408,11 +408,27 @@ def test_context_manager_nipoppy_exception(mocker, exception):
     mock_exit.assert_called_once_with(exception.code)
 
 
+def test_context_manager_nipoppy_exception_logs_actionable_hint(mocker, caplog):
+    """Known NipoppyError should emit actionable troubleshooting guidance."""
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    with exception_handler(workflow):
+        raise ConfigError("Invalid project config")
+
+    assert any(
+        "Suggested fix:" in record.message
+        and "Review your configuration files and CLI options for missing fields"
+        in record.message
+        for record in caplog.records
+    )
+
+
 @pytest.mark.parametrize(
     "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_COMMAND)]
 )
 @pytest.mark.parametrize("exception", [Exception, RuntimeError])
-def test_context_manager_unknown_exception(mocker, exception, return_code):
+def test_context_manager_unknown_exception(mocker, exception, return_code, caplog):
     """Test that the context manager handles exceptions correctly.
 
     Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
@@ -430,9 +446,11 @@ def test_context_manager_unknown_exception(mocker, exception, return_code):
     # Exit code is always set to UNKNOWN_FAILURE for unknown exceptions
     assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
     mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
+    assert any(BUG_REPORT_URL in record.message for record in caplog.records)
+    assert any(DISCORD_URL in record.message for record in caplog.records)
 
 
-def test_context_manager_pydantic_failed_validation(mocker):
+def test_context_manager_pydantic_failed_validation(mocker, caplog):
     """Test that the context manager handles pydantic ValidationError correctly."""
     from pydantic import BaseModel
 
@@ -449,6 +467,11 @@ def test_context_manager_pydantic_failed_validation(mocker):
 
     assert workflow.return_code == ReturnCode.INVALID_CONFIG
     mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
+    assert any(
+        "Suggested fix:" in record.message
+        and "Review your configuration fields and value types" in record.message
+        for record in caplog.records
+    )
 
 
 @pytest.mark.parametrize("command", list_cli_commands(cli))
