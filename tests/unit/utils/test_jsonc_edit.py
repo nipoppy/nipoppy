@@ -65,8 +65,8 @@ def test_update_jsonc_text_replaces_non_object_with_object_for_nested_path():
     assert json5.loads(updated_text) == {"A": {"B": "x"}}
 
 
-def test_update_jsonc_text_raises_on_empty_path():
-    with pytest.raises(ValueError, match="Path cannot be empty"):
+def test_update_jsonc_text_raises_on_empty_key_path():
+    with pytest.raises(ValueError, match="Key path cannot be empty"):
         update_jsonc_text('{"A": 1}', [([], "x")])
 
 

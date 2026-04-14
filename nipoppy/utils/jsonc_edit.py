@@ -221,12 +221,12 @@ def _insert_member(
     return text[: obj_end - 1] + insertion + text[obj_end - 1 :]
 
 
-def _find_member_at_path(text: str, path: list[str]) -> _ObjectMember | None:
+def _find_member_at_key_path(text: str, key_path: list[str]) -> _ObjectMember | None:
     obj_start, obj_end = _find_root_object_span(text)
     members = _parse_object_members(text, obj_start, obj_end)
     member: _ObjectMember | None = None
 
-    for key in path:
+    for key in key_path:
         member = next((item for item in members if item.key == key), None)
         if member is None:
             return None
@@ -241,28 +241,39 @@ def _find_member_at_path(text: str, path: list[str]) -> _ObjectMember | None:
     return member
 
 
-def _set_key_in_object(text: str, object_path: list[str], key: str, value: Any) -> str:
+def _set_key_in_object(
+    text: str,
+    parent_key_path: list[str],
+    key: str,
+    value: Any,
+) -> str:
     obj_start, obj_end = _find_root_object_span(text)
-    traversed_path: list[str] = []
+    traversed_key_path: list[str] = []
 
-    for segment in object_path:
+    for segment in parent_key_path:
         members = _parse_object_members(text, obj_start, obj_end)
         member = next((item for item in members if item.key == segment), None)
         if member is None:
             text = _insert_member(text, obj_start, obj_end, members, segment, {})
-            member = _find_member_at_path(text, traversed_path + [segment])
+            member = _find_member_at_key_path(
+                text,
+                traversed_key_path + [segment],
+            )
             if member is None:
                 raise ValueError(f"Could not find newly inserted key: {segment}")
             value_idx = _skip_ws_and_comments(text, member.value_start)
             obj_start = value_idx
             obj_end = _find_matching_bracket(text, obj_start, "{", "}") + 1
-            traversed_path.append(segment)
+            traversed_key_path.append(segment)
             continue
 
         value_idx = _skip_ws_and_comments(text, member.value_start)
         if text[value_idx] != "{":
             text = text[: member.value_start] + "{}" + text[member.value_end :]
-            parent_member = _find_member_at_path(text, traversed_path + [segment])
+            parent_member = _find_member_at_key_path(
+                text,
+                traversed_key_path + [segment],
+            )
             if parent_member is None:
                 raise ValueError(f"Could not find updated key: {segment}")
             member = parent_member
@@ -270,7 +281,7 @@ def _set_key_in_object(text: str, object_path: list[str], key: str, value: Any) 
 
         obj_start = value_idx
         obj_end = _find_matching_bracket(text, obj_start, "{", "}") + 1
-        traversed_path.append(segment)
+        traversed_key_path.append(segment)
 
     members = _parse_object_members(text, obj_start, obj_end)
     existing_member = next((item for item in members if item.key == key), None)
@@ -290,17 +301,27 @@ def update_jsonc_text(
     text: str,
     updates: Iterable[tuple[list[str], Any]],
 ) -> str:
-    """Apply updates to JSONC text while preserving comments and formatting."""
+    """Apply updates to JSONC text while preserving comments and formatting.
+
+    Parameters
+    ----------
+    text : str
+        JSONC/JSON5 text to update.
+    updates : Iterable[tuple[list[str], Any]]
+        Iterable of ``(key_path, value)`` tuples.
+        For each update, the key path is a list of nested keys where the final
+        key is set to ``value``.
+    """
     json5.loads(text)
 
     updated_text = text
-    for path, value in updates:
-        if len(path) == 0:
-            raise ValueError("Path cannot be empty")
+    for key_path, value in updates:
+        if len(key_path) == 0:
+            raise ValueError("Key path cannot be empty")
         updated_text = _set_key_in_object(
             updated_text,
-            object_path=path[:-1],
-            key=path[-1],
+            parent_key_path=key_path[:-1],
+            key=key_path[-1],
             value=value,
         )
 
@@ -312,8 +333,8 @@ def update_jsonc_file(
     fpath: StrOrPathLike,
     updates: Iterable[tuple[list[str], Any]],
 ) -> None:
-    """Apply updates to a JSONC file in place."""
-    path = Path(fpath)
-    text = path.read_text()
+    """Apply ``(key_path, value)`` updates to a JSONC file in place."""
+    file_path = Path(fpath)
+    text = file_path.read_text()
     updated_text = update_jsonc_text(text, updates)
-    path.write_text(updated_text)
+    file_path.write_text(updated_text)
