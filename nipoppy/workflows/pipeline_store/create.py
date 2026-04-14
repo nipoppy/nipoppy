@@ -10,7 +10,8 @@ from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
-from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
+from nipoppy.utils.jsonc_edit import update_jsonc_file
+from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.base import BaseWorkflow
 
 logger = get_logger()
@@ -79,31 +80,32 @@ class PipelineCreateWorkflow(BaseWorkflow):
             dry_run=self.dry_run,
         )
 
-        config = load_json(
-            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
+        fpath_config = target.joinpath(DatasetLayout.fname_pipeline_config)
+        fileops.copy(
+            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
+            fpath_config,
+            dry_run=self.dry_run,
         )
 
         # Populate the config.json using descriptor information
         if source_descriptor is not None:
+            descriptor = load_json(source_descriptor)
+            updates = [
+                (["NAME"], descriptor["name"]),
+                (["VERSION"], descriptor["tool-version"]),
+            ]
 
-            descriptor = load_json(descriptor_path)
-            config["NAME"] = descriptor["name"]
-            config["VERSION"] = descriptor["tool-version"]
             if "container-image" in descriptor:
-                config["CONTAINER_INFO"][
-                    "URI"
-                ] = f"docker://{descriptor['container-image']['image']}"
+                uri = f"docker://{descriptor['container-image']['image']}"
 
                 # replace the pipeline name/version with placeholders
                 # to avoid users forgetting to update them when copy-pasting
-                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
-                    "URI"
-                ].replace(descriptor["name"], "[[PIPELINE_NAME]]")
-                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
-                    "URI"
-                ].replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+                uri = uri.replace(descriptor["name"], "[[PIPELINE_NAME]]")
+                uri = uri.replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+                updates.append((["CONTAINER_INFO", "URI"], uri))
 
-        save_json(config, target.joinpath(DatasetLayout.fname_pipeline_config))
+            if not self.dry_run:
+                update_jsonc_file(fpath_config, updates)
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:

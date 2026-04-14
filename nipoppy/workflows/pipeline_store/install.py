@@ -19,6 +19,7 @@ from nipoppy.exceptions import (
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
+from nipoppy.utils.jsonc_edit import update_jsonc_file
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow, _run_command
 from nipoppy.zenodo_api import ZenodoAPI
@@ -121,7 +122,26 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
             # save
             if not self.dry_run:
-                config.save(self.study.layout.fpath_config)
+                pipeline_variables_key = (
+                    config.PIPELINE_VARIABLES._pipeline_type_to_key[
+                        pipeline_config.PIPELINE_TYPE
+                    ]
+                )
+                updates = []
+                for variable_name, variable_value in variables.items():
+                    updates.append(
+                        (
+                            [
+                                "PIPELINE_VARIABLES",
+                                pipeline_variables_key,
+                                pipeline_config.NAME,
+                                pipeline_config.VERSION,
+                                variable_name,
+                            ],
+                            variable_value,
+                        )
+                    )
+                update_jsonc_file(self.study.layout.fpath_config, updates)
 
         return config
 

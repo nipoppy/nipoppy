@@ -246,7 +246,7 @@ def test_load_json5_with_comments_and_trailing_commas(tmp_path: Path):
     fpath_config = tmp_path / "global_config.json"
     fpath_config.write_text("""
 {
-  // Comments and trailing commasshould be supported
+  // Comments and trailing commas should be supported
   "HPC_PREAMBLE": [
     "module load apptainer",
   ],
