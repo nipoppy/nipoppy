@@ -14,9 +14,9 @@ def test_len(study: Study, mocker: pytest_mock.MockFixture):
     assert len(study) == 5
 
 
-def test_get_n_participants(study: Study):
+def test_n_unique_participants(study: Study):
     study.manifest = Manifest.load(DPATH_TEST_DATA / "manifest1.tsv")
-    assert study.get_n_participants() == 2
+    assert study.n_unique_participants == 2
 
 
 def test_config(study: Study, mocker: pytest_mock.MockFixture):

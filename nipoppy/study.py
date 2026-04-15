@@ -40,7 +40,8 @@ class Study(Base):
         """Get the number of unique participant-visit combinations in the study."""
         return len(self.manifest)
 
-    def get_n_participants(self) -> int:
+    @property
+    def n_unique_participants(self) -> int:
         """Get the number of unique participants in the study."""
         return len(set(self.manifest.get_participants()))
 
