@@ -127,9 +127,9 @@ class Manifest(BaseTabular):
             return manifest[manifest[self.col_session_id] == session_id]
         return manifest
 
-    def get_participants(self) -> list[str]:
-        """Get participant IDs."""
-        return self.loc[:, self.col_participant_id].to_list()
+    def get_unique_participants(self) -> list[str]:
+        """Get unique participant IDs."""
+        return self.loc[:, self.col_participant_id].drop_duplicates().tolist()
 
     def get_participants_sessions(
         self, participant_id: Optional[str] = None, session_id: Optional[str] = None
