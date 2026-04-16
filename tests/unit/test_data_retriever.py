@@ -20,6 +20,21 @@ def api(tmp_path: Path) -> NipoppyDataRetriever:
     return NipoppyDataRetriever(path=dpath_root)
 
 
+@pytest.fixture
+def df_harmonized() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": [4, 5, 6],
+            "col3": [7, 8, 9],
+        },
+        index=pd.MultiIndex.from_tuples(
+            [("01", "A"), ("01", "B"), ("02", "A")],
+            names=["nb:ParticipantID", "nb:SessionID"],
+        ),
+    )
+
+
 @pytest.mark.parametrize(
     "phenotypes",
     [
@@ -248,19 +263,37 @@ def test_filter_with_manifest(api: NipoppyDataRetriever):
     assert api._filter_with_manifest(df).equals(df_expected)
 
 
-def test_get_phenotypes(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture):
-    df_harmonized = pd.DataFrame(
-        {
-            "col1": [1, 2, 3],
-            "col2": [4, 5, 6],
-            "col3": [7, 8, 9],
-        },
-        index=pd.MultiIndex.from_tuples(
-            [("01", "A"), ("01", "B"), ("02", "A")],
-            names=["nb:ParticipantID", "nb:SessionID"],
-        ),
+def test_get_all_phenotypes(
+    api: NipoppyDataRetriever,
+    df_harmonized: pd.DataFrame,
+    mocker: pytest_mock.MockFixture,
+):
+    mocked_load_tsv = mocker.patch.object(
+        api,
+        "_load_tsv",
+        return_value=df_harmonized,
+    )
+    mocked_filter_with_manifest = mocker.patch.object(
+        api,
+        "_filter_with_manifest",
+        return_value=df_harmonized,
     )
 
+    df_phenotypes = api.get_all_phenotypes()
+
+    mocked_load_tsv.assert_called_once_with(
+        api._study.layout.fpath_harmonized, index_cols=api._index_cols_phenotypes
+    )
+    mocked_filter_with_manifest.assert_called_once_with(df_harmonized)
+
+    assert df_phenotypes.equals(df_harmonized)
+
+
+def test_get_phenotypes(
+    api: NipoppyDataRetriever,
+    df_harmonized: pd.DataFrame,
+    mocker: pytest_mock.MockFixture,
+):
     mocked_check_phenotypes_arg = mocker.patch(
         "nipoppy._data_retriever._check_phenotypes_arg"
     )
