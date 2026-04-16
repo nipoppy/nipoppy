@@ -40,11 +40,6 @@ class Study(Base):
         """Get the number of unique participant-visit combinations in the study."""
         return len(self.manifest)
 
-    @property
-    def n_unique_participants(self) -> int:
-        """Get the number of unique participants in the study."""
-        return len(self.manifest.get_unique_participants())
-
     @cached_property
     def config(self) -> Config:
         """The main configuration object."""
