@@ -144,7 +144,7 @@ class NipoppyDataRetriever:
         Returns
         -------
         pd.DataFrame
-            A dataframe containing the all phenotypic data, with a
+            A dataframe containing all the phenotypic data, with a
             ``pd.MultiIndex`` of participant IDs and session IDs.
 
         Examples
