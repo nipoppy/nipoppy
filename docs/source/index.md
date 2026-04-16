@@ -60,6 +60,7 @@ titlesonly:
 caption: Explanations
 ---
 explanations/study_spec
+explanations/recruitment
 explanations/manifest
 ```
 
