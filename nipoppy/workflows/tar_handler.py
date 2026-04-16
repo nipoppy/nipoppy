@@ -14,7 +14,7 @@ logger = get_logger()
 
 
 class TarHandler:
-    """Handle TAR validation and directory archiving."""
+    """Handle tar validation and directory archiving."""
 
     def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
