@@ -297,14 +297,9 @@ def test_get_phenotypes(
     mocked_check_phenotypes_arg = mocker.patch(
         "nipoppy._data_retriever._check_phenotypes_arg"
     )
-    mocked_load_tsv = mocker.patch.object(
+    mocked_get_all_phenotypes = mocker.patch.object(
         api,
-        "_load_tsv",
-        return_value=df_harmonized,
-    )
-    mocked_filter_with_manifest = mocker.patch.object(
-        api,
-        "_filter_with_manifest",
+        "get_all_phenotypes",
         return_value=df_harmonized,
     )
 
@@ -312,10 +307,7 @@ def test_get_phenotypes(
     df_phenotypes = api.get_phenotypes(phenotypes=phenotypes)
 
     mocked_check_phenotypes_arg.assert_called_once_with(phenotypes)
-    mocked_load_tsv.assert_called_once_with(
-        api._study.layout.fpath_harmonized, index_cols=api._index_cols_phenotypes
-    )
-    mocked_filter_with_manifest.assert_called_once_with(df_harmonized)
+    mocked_get_all_phenotypes.assert_called_once_with()
 
     assert list(df_phenotypes.columns) == phenotypes
 

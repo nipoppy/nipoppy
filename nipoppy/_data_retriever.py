@@ -203,10 +203,7 @@ class NipoppyDataRetriever:
         001            1             70.0  snomed:248153007      ncit:C94342           nb:available
         """  # noqa E501
         _check_phenotypes_arg(phenotypes)
-        df = self._load_tsv(
-            self._study.layout.fpath_harmonized, index_cols=self._index_cols_phenotypes
-        )
-        df = self._filter_with_manifest(df)
+        df = self.get_all_phenotypes()
         return df.loc[:, phenotypes]
 
     def get_derivatives(self, derivatives: List[Tuple[str, str, str]]) -> pd.DataFrame:
