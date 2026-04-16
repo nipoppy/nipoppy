@@ -170,7 +170,7 @@ def test_find_derivative_path_invalid(
         expected_path.touch()
 
     with pytest.raises(error_type, match=error_message):
-        api._get_derivatives_table(
+        api._find_derivative_path(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             filepath_pattern=filepath_pattern,
