@@ -11,6 +11,38 @@ from nipoppy.logger import get_logger
 
 logger = get_logger()
 
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
+
+def _log_known_error(exception: NipoppyError) -> None:
+    """Log known Nipoppy errors with actionable guidance."""
+    logger.error(exception)
+    hint = exception.troubleshooting_hint
+    if hint:
+        logger.warning(f"Suggested fix: {hint}")
+
+
+def _log_validation_error(exception: ValidationError) -> None:
+    """Log pydantic validation errors with actionable guidance."""
+    logger.error(exception)
+    logger.warning(
+        "Suggested fix: Review your configuration fields and value types, then "
+        "rerun once all validation errors are resolved."
+    )
+
+
+def _log_unexpected_error() -> None:
+    """Log unexpected errors and direct users to support channels."""
+    logger.exception("Unexpected error occurred")
+    logger.warning(
+        "This failure was unexpected. Please report it with the command you ran "
+        f"and relevant logs on GitHub: {BUG_REPORT_URL} or ask on Discord: "
+        f"{DISCORD_URL}"
+    )
+
 
 # TODO once logger is extracted from the workflows, we could remove the `workflow`
 # parameter and use as a standalone context manager
@@ -21,20 +53,16 @@ def exception_handler(workflow):
         yield workflow
     except NipoppyError as e:
         workflow.return_code = e.code
-        logger.error(e)
+        _log_known_error(e)
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
-        logger.error(e)
+        _log_validation_error(e)
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
-        logger.exception("Unexpected error occurred")
-        logger.warning(
-            "You can report this issue on GitHub at https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"  # noqa:E501
-            " or on our Discord server at https://discord.gg/2VMKFRpjkm"
-        )
+        _log_unexpected_error()
     finally:
         sys.exit(workflow.return_code)
 
