@@ -57,7 +57,14 @@ class TarHandler:
         fpath_tarred = dpath.with_suffix(EXT_TAR)
 
         _run_command(
-            f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}",
+            [
+                "tar",
+                tar_flags,
+                str(fpath_tarred),
+                "-C",
+                str(dpath.parent),
+                dpath.name,
+            ],
             dry_run=self.dry_run,
         )
 
