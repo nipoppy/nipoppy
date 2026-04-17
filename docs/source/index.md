@@ -61,6 +61,7 @@ caption: Explanations
 ---
 explanations/study_spec
 explanations/manifest
+explanations/idp_spec
 ```
 
 ```{toctree}
