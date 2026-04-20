@@ -1,13 +1,13 @@
 # Convert MRI sourcedata to BIDS
 
-In this tutorial, you will learn how to use Nipoppy and the BIDS app [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) to convert your imaging sourcedata to BIDS.
+In this tutorial, you will learn how to use Nipoppy and the BIDS converter [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) to convert your imaging sourcedata to {term}`BIDS`.
 
 Concretely, we will:
 1. Initialize a Nipoppy dataset
-2. Reorganize dicom sourcedata
+2. Reorganize DICOM sourcedata
 3. Install and set up the dcm2bids pipeline
-4. Extract dicom header information to create the `decm2bids_config.json`
-5. Convert the dicom sourcedata to nifti BIDS raw data
+4. Extract DICOM header information to create the `dcm2bids_config.json` file
+5. Convert the DICOM sourcedata to NIfTI BIDS raw data
 6. Track the output files to check if the conversion was successful
 
 ```{note}
@@ -20,25 +20,25 @@ This tutorial assumes that [Apptainer](https://apptainer.org) (or Singularity) i
 
 ## Step 0: Download the tutorial dataset
 
-We will use the [tutorial dataset](https://github.com/nipoppy/tutorial-dataset) provided on the Nipoppy GitHub, which includes dicom data of different modalities for 4 subjects (*Note: Data of one subject was copied in order to create multiple subjects with different modalities for training purposes. Hence, all data stems from one subject*).
+We will use the [tutorial dataset](https://github.com/nipoppy/tutorial-dataset) provided on the Nipoppy GitHub, which includes DICOM data of different modalities for 4 subjects (*Note: Data of one subject was copied in order to create multiple subjects with different modalities for training purposes. Hence, all data stems from one subject*).
 
 There are multiple ways of downloading the dataset:
 
 **1. via `git clone`**
 
-ssh: `git clone git@github.com:nipoppy/tutorial-dataset.git`
+SSH: `git clone git@github.com:nipoppy/tutorial-dataset.git`
 
-https: `git clone https://github.com/nipoppy/tutorial-dataset.git`
+HTTPS: `git clone https://github.com/nipoppy/tutorial-dataset.git`
 
 **2. via the browser:**
 
 - Go to [https://github.com/nipoppy/tutorial-dataset](https://github.com/nipoppy/tutorial-dataset)
-- Click on the green button "Code" on the right upper corner on the repo site and select "Download Zip"
+- Click on the green button "Code" on the right upper corner on the repo site and select "Download ZIP"
 
 **3. via the command line:**
 
 ```
-wget -O tutorial-dataset.zip https://github.com/nipoppy/tutorial-datset/archive/refs/heads/main.zip
+wget -O tutorial-dataset.zip https://github.com/nipoppy/tutorial-dataset/archive/refs/heads/main.zip
 ```
 Unzip once downloaded.
 
@@ -74,7 +74,7 @@ nipoppy_study/
 
 **1.2.** Please replace the `manifest.tsv` in `nipoppy_study` with the `manifest.tsv` provided in the tutorial dataset. This file is considered the ground truth for which participants and sessions are available for processing.
 
-## Step 2: Reorganize the dicom sourcedata
+## Step 2: Reorganize the DICOM sourcedata
 
 **Why reorganization?:** Usually, there is a gap between data state out of scanner vs. ready for bidsification. Source data is often messy in different ways, making it hard to use BIDSification tools directly. Nipoppy provides a unified way to deal with DICOM vs. Nifti sourcedata which simplifies BIDSification. It also helps fixing issues related to file naming which often appear in chaotic data dumps or due to typos. Additionally, the organization simplifies taring the DICOMs after bidsification. All this is implemented in one simple command, namely [`nipoppy reorg`](../../cli_reference/reorg.rst).
 
@@ -181,9 +181,10 @@ When running `nipoppy pipeline install`, you will be asked if you would like to 
     },
 ```
 
-## Step 4: Extract dicom header information to create the `decm2bids_config.json`
+## Step 4: Extract DICOM header information to create the `dcm2bids_config.json`
 
-When we look at the bidsify command options with `nipoppy bidsify -h`, we see that this command can be run with different steps.  Those steps are “prepare” and “convert”. The “prepare” step will help you to get the information you need to later pass to the “convert” step, namely the content for the `dcm2bids_config.json`. This said content holds information to determine which sequences  from the entire MRI acquisition protocol will be converted to NIfTIs, and how they will be named based on BIDS standard. The information for this config file will be extracted from one participant’s dicom images’ headers, which we obtain from the nipoppy bidsify prepare step. The output will be saved under `scratch/dcm2bids_helper`. From this output, we can create the `dcm2bids_config.json`.
+dcm2bids is a multi-step pipeline in Nipoppy. The steps are detailed in {{dpath_pipelines}}`/bidsification/dcm2bids-3.2.0/config.json`:
+
 
 **4.1.** We run
 ```console
@@ -204,9 +205,9 @@ scratch/
 │   └── 018_post_reorg_restingstate_20180706110327.nii.gz
 ```
 
-The dcm2bids_helper command which is used by the nipoppy bidsify prepare step turned one participant's DICOMS into NIfTI files with their accompanying json metadata files. Our task is now to find unique metadata or descriptions in each modalitie's json file, so that dcm2bids knows how to group a set of acquisitions and how to label them according to BIDS, meaning we need to link the metadata to BIDS specific vocabulary.
+The "prepare" step uses the `dcm2bids_helper` command to turn one participant's DICOMs into NIfTI files with their accompanying JSON metadata files. Our task is now to find unique metadata or descriptions in each modality's JSON file, so that dcm2bids knows how to group a set of acquisitions and how to label them according to {term}`BIDS`. In other words, we need to link the metadata to BIDS-specific vocabulary.
 
-Unique entries in the json files can be `SeriesDescription`, `EchoTime`, `ProtocolName`, `ImageType` etc. Whatever makes the files acquired under one condition different from other files acquired under different conditions. Also, we need to tell dcm2bids to which BIDS datatype this acquisition refers to and which BIDS suffix this file is going to have, so you need some knowledge of the [BIDS specification](https://bids-specification.readthedocs.io/en/stable/) for this task.
+Unique entries in the JSON files can be `SeriesDescription`, `EchoTime`, `ProtocolName`, `ImageType` etc. Whatever makes the files acquired under one condition different from other files acquired under different conditions. Also, we need to tell dcm2bids to which BIDS datatype this acquisition refers to and which BIDS suffix this file is going to have, so you need some knowledge of the [BIDS specification](https://bids-specification.readthedocs.io/en/stable/) for this task.
 
 In our case, the `dcm2bids_config.json` can look like this:
 
@@ -244,7 +245,7 @@ In our case, the `dcm2bids_config.json` can look like this:
 
 **4.2.** We create a `dcm2bids_config.json` with the above content and place it in the `code` directory in our `nipoppy_study`dataset.
 
-**4.3.** We open Nipoppy's `global_config.json` and replace the `null` behind the `dcm2bids_config_file` with the right directory:
+**4.3.** We open Nipoppy's `global_config.json` and replace the `null` next to the `DCM2BIDS_CONFIG_FILE` field with the right file path:
 
 ```{code-block} json
 :emphasize-lines: 5
@@ -252,7 +253,7 @@ In our case, the `dcm2bids_config.json` can look like this:
         "BIDSIFICATION": {
             "dcm2bids": {
                 "3.2.0": {
-                    "DCM2BIDS_CONFIG_FILE": "code/dcm2bids_config.json"
+                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_CODE]]/dcm2bids_config.json"
                 }
             }
         },
@@ -261,9 +262,9 @@ In our case, the `dcm2bids_config.json` can look like this:
     },
 ```
 
-## Step 5: Convert the dicom sourcedata to nifti BIDS raw data
+## Step 5: Convert the DICOM sourcedata to NIfTI BIDS raw data
 
-**5.1.** We are now ready to run
+**5.1.** We are now ready to run the "convert" step
 
 ```console
 nipoppy bidsify --dataset nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step convert
