@@ -8,14 +8,9 @@ Concretely, we will:
 3. Install and set up the dcm2bids pipeline
 4. Extract DICOM header information to create the `dcm2bids_config.json` file
 5. Convert the DICOM sourcedata to NIfTI BIDS raw data
-6. Track the output files to check if the conversion was successful
 
 ```{note}
 If you have not installed Nipoppy yet, instructions are available [here](../../overview/installation).
-```
-
-```{attention}
-This tutorial assumes that [Apptainer](https://apptainer.org) (or Singularity) is installed on your system. If that is not the case, then you will not be able to run dcm2bids with Nipoppy.
 ```
 
 ## Step 0: Download the tutorial dataset
@@ -76,7 +71,10 @@ nipoppy_study/
 
 ## Step 2: Reorganize the DICOM sourcedata
 
-**Why reorganization?:** Usually, there is a gap between data state out of scanner vs. ready for bidsification. Source data is often messy in different ways, making it hard to use BIDSification tools directly. Nipoppy provides a unified way to deal with DICOM vs. Nifti sourcedata which simplifies BIDSification. It also helps fixing issues related to file naming which often appear in chaotic data dumps or due to typos. Additionally, the organization simplifies taring the DICOMs after bidsification. All this is implemented in one simple command, namely [`nipoppy reorg`](../../cli_reference/reorg.rst).
+:::{dropdown} Good to know: why reorganization?
+Usually, there is a gap between data state out of scanner vs. ready for bidsification. Source data is often messy in different ways, making it hard to use BIDSification tools directly. Nipoppy provides a unified way to deal with DICOM vs. Nifti sourcedata which simplifies BIDSification. It also helps fixing issues related to file naming which often appear in chaotic data dumps or due to typos. Additionally, the organization simplifies taring the DICOMs after bidsification. All this is implemented in one simple command, namely [`nipoppy reorg`](../../cli_reference/reorg.rst).
+:::
+
 
 **2.1.** We need to move the **content** of the `tutorial-dataset/reorg` directory to the `sourcedata/imaging/pre_reorg` directory of our `nipoppy_study` dataset, i.e.:
 
@@ -84,16 +82,35 @@ nipoppy_study/
 mv tutorial-dataset/reorg/* nipoppy_study/sourcedata/imaging/pre_reorg
 ```
 
-Running
+Running `tree nipoppy_study/sourcedata/imaging/pre_reorg/ | head` we can see come of the content of the `pre_reorg` folder:
+
+```
+├── ED01
+│   └── BL
+│       ├── DTI_30_DIRs_AP_15
+│       │   ├── IM-0003-0001.dcm
+│       │   ├── IM-0003-0002.dcm
+│       │   ├── IM-0003-0003.dcm
+│       │   ├── IM-0003-0004.dcm
+│       │   ├── IM-0003-0005.dcm
+│       │   ├── IM-0003-0006.dcm
+...
+```
+
+We need to track this modification in our dataset by running
+
+```console
+nipoppy track-curation --dataset nipoppy_study
+```
+
+before we can have an overview of the dataset status with
 
 ```console
 nipoppy status --dataset nipoppy_study
 ```
 
-should give us the following output:
-
 ```{code-block}
-:caption: Output
+:caption: Partial output
      Participant counts by session at each Nipoppy checkpoint
             ╷             ╷
  session_id │ in_manifest │ in_pre_reorg
@@ -108,10 +125,29 @@ should give us the following output:
 nipoppy reorg --dataset nipoppy_study
 ```
 
-Our data was symlinked and reorganized into the `post_reorg` directory. We can see so by running `nipoppy status`:
+Our data was symlinked and reorganized into the `post_reorg` directory. We can see so by running
+
+```console
+tree nipoppy_study/sourcedata/imaging/post_reorg/ | head
+```
 
 ```{code-block}
 :caption: Output
+├── README.md
+├── sub-ED01
+│   └── ses-BL
+│       ├── 82519e8_IM-0003-0001.dcm -> ../../../pre_reorg/ED01/BL/DTI_30_DIRs_AP_15/IM-0003-0001.dcm
+│       ├── 82519e8_IM-0003-0002.dcm -> ../../../pre_reorg/ED01/BL/DTI_30_DIRs_AP_15/IM-0003-0002.dcm
+│       ├── 82519e8_IM-0003-0003.dcm -> ../../../pre_reorg/ED01/BL/DTI_30_DIRs_AP_15/IM-0003-0003.dcm
+│       ├── 82519e8_IM-0003-0004.dcm -> ../../../pre_reorg/ED01/BL/DTI_30_DIRs_AP_15/IM-0003-0004.dcm
+│       ├── 82519e8_IM-0003-0005.dcm -> ../../../pre_reorg/ED01/BL/DTI_30_DIRs_AP_15/IM-0003-0005.dcm
+│       ├── 82519e8_IM-0003-0006.dcm -> ../../../pre_reorg/ED01/BL/DTI_30_DIRs_AP_15/IM-0003-0006.dcm
+```
+
+and by running `nipoppy status`:
+
+```{code-block}
+:caption: Partial output
      Participant counts by session at each Nipoppy checkpoint
             ╷             ╷
  session_id │ in_manifest │ in_post_reorg
@@ -133,7 +169,10 @@ emphasize-lines: 4,9
 ```
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
-- If you are on a system that still uses Singularity (which has been renamed to Apptainer), you will need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
+- Depending on your choice of installation system, you will need to change `CONTAINER_CONFIG` -> `COMMAND` to
+    - `"singularity"`
+    - `"docker"`
+    - `"null"`, for baremetal option (you need to have dcm2bids installed locally)
 - If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
     ```json
     "SUBSTITUTIONS": {
@@ -179,6 +218,27 @@ When running `nipoppy pipeline install`, you will be asked if you would like to 
         "PROCESSING": {},
         "EXTRACTION": {}
     },
+```
+
+We need to replace the `null` next to the `DCM2BIDS_CONFIG_FILE` field with file path to the `dcm2bids_config.json` file that we will create in the next step. We recommend to keep this file in the `code` directory in your nipoppy dataset, like so:
+
+```{code-block} json
+:emphasize-lines: 5
+    "PIPELINE_VARIABLES": {
+        "BIDSIFICATION": {
+            "dcm2bids": {
+                "3.2.0": {
+                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_CODE]]/dcm2bids_config.json"
+                }
+            }
+        },
+        "PROCESSING": {},
+        "EXTRACTION": {}
+    },
+```
+
+```{note}
+Without setting this path now, the next `nipoppy bidsify prepare` step will crash.
 ```
 
 ## Step 4: Extract DICOM header information to create the `dcm2bids_config.json`
@@ -245,23 +305,6 @@ In our case, the `dcm2bids_config.json` can look like this:
 
 **4.2.** We create a `dcm2bids_config.json` with the above content and place it in the `code` directory in our `nipoppy_study`dataset.
 
-**4.3.** We open Nipoppy's `global_config.json` and replace the `null` next to the `DCM2BIDS_CONFIG_FILE` field with the right file path:
-
-```{code-block} json
-:emphasize-lines: 5
-    "PIPELINE_VARIABLES": {
-        "BIDSIFICATION": {
-            "dcm2bids": {
-                "3.2.0": {
-                    "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_CODE]]/dcm2bids_config.json"
-                }
-            }
-        },
-        "PROCESSING": {},
-        "EXTRACTION": {}
-    },
-```
-
 ## Step 5: Convert the DICOM sourcedata to NIfTI BIDS raw data
 
 **5.1.** We are now ready to run the "convert" step
@@ -270,10 +313,10 @@ In our case, the `dcm2bids_config.json` can look like this:
 nipoppy bidsify --dataset nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step convert
 ```
 
-After successful conversion, the output of `nipoppy status` should look like this now:
+After successful conversion, the output of `nipoppy status` should tell us that we have all our participants `in_bids`:
 
 ```{code-block}
-:caption: Output
+:caption: Partial output
      Participant counts by session at each Nipoppy checkpoint
             ╷             ╷
  session_id │ in_manifest │ in_bids
