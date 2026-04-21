@@ -8,7 +8,7 @@ It is meant to help standardize the output of extraction pipelines in the Nipopp
 This specification currently only covers tabular measures. It may be extended in the future to support measures that cannot easily be aggregated into a single tabular file.
 ```
 
-The Nipoppy framework recommends that tabular IDP files follow the following specification:
+The Nipoppy framework recommends that tabular IDP files follow this specification:
 1. File format: tab-separated file (TSV)
 2. The file name should be informative and may contain the name and version of the extraction pipeline and/or the parent processing pipeline(s), e.g. `<parent_pipeline_name>-<parent_pipeline_version>-<measure>.tsv`
 3. Index columns:
@@ -21,4 +21,4 @@ The Nipoppy framework recommends that tabular IDP files follow the following spe
 6. IDP files must be stored within the {{dpath_pipeline_idp}} directory associated with the relevant upstream processing pipeline
 7. It is recommended for IDP files to be accompanied by a JSON data dictionary file describing their columns. The name of the JSON file must be the same as the TSV file, but with a `.json` extension instead of `.tsv`.
 
-IDP files that comply with the above specification can be used with the {py:class}`nipoppy.NipoppyDataRetriever` API, which can combine multiple IDP files with harmonized phenotypic data into a single {py:class}`pandas.DataFrame` ready for analysis.
+IDP files that comply with the above specification can be used with the {class}`nipoppy.NipoppyDataRetriever` API, which can combine multiple IDP files with harmonized phenotypic data into a single {class}`pandas.DataFrame` ready for analysis.
