@@ -21,7 +21,7 @@ The default global configuration file has two {term}`HPC`-related fields that sh
 ---
 linenos: True
 language: json
-emphasize-lines: 4,16-25
+emphasize-lines: 5,18-27
 ---
 ```
 
@@ -70,7 +70,7 @@ You will also need to add an `"HPC_CONFIG_FILE"` field for each step in pipeline
 linenos: True
 language: json
 lines: 12-18
-emphasize-lines: 5
+emphasize-lines: 6
 ---
 ```
 ````
