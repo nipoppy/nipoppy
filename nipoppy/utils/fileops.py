@@ -108,7 +108,7 @@ def tar_directory(dpath: Path, dry_run: bool = False) -> Path:
             check=True,
         )
         if not (fpath_tarred.exists() and is_tarfile(fpath_tarred)):
-            logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
+            raise FileOperationError(f"Failed to tar {dpath} to {fpath_tarred}")
 
     return fpath_tarred
 
