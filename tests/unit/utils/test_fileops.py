@@ -236,7 +236,8 @@ class TestSymlink:
 def dpath_to_tar(tmp_path: Path) -> Path:
     """Return a temporary directory with nested files, ready to be tarred."""
     dpath = tmp_path / "my_data"
-    (dpath / "dir1" / "file1.txt").mkdir(parents=True)
+    (dpath / "dir1").mkdir(parents=True)
+    (dpath / "dir1" / "file1.txt").touch()
     (dpath / "file2.txt").touch()
     return dpath
 

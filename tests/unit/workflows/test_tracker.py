@@ -202,7 +202,9 @@ def test_check_status_with_tarball(
 
     dpath_to_tar = tracker.dpath_pipeline_output / relative_dpath_to_tar
     fileops.tar_directory(dpath_to_tar)
+    fileops.rm(dpath_to_tar)
 
+    assert not dpath_to_tar.exists(), "Tarball should have been removed for the test"
     assert (
         tracker.check_status(relative_paths, relative_dpath_to_tar) == expected_status
     )
@@ -287,6 +289,10 @@ def test_run_single(
     for relative_dpath_to_tar in ["01/ses-1", "02/ses-1"]:
         dpath_to_tar = tracker.dpath_pipeline_output / relative_dpath_to_tar
         fileops.tar_directory(dpath_to_tar)
+        fileops.rm(dpath_to_tar)
+        assert (
+            not dpath_to_tar.exists()
+        ), "Tarball should have been removed for the test"
 
     assert (
         tracker.run_single(participant_id, session_id)[ProcessingStatusTable.col_status]
