@@ -53,6 +53,22 @@ def test_load_pipeline_config_file():
     )
 
 
+def test_load_pipeline_config_file_json5(tmp_path: Path):
+    fpath = tmp_path / "pipeline_config.json"
+    fpath.write_text("""
+{
+  // comments and trailing commas should be accepted
+  "NAME": "test_pipeline",
+  "VERSION": "test_version",
+  "SCHEMA_VERSION": "1",
+  "PIPELINE_TYPE": "processing",
+}
+""".strip())
+
+    config = _load_pipeline_config_file(fpath)
+    assert isinstance(config, BasePipelineConfig)
+
+
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
@@ -90,6 +106,14 @@ def test_check_descriptor_file():
     )
 
 
+def test_check_descriptor_file_remains_strict_json(tmp_path: Path):
+    fpath = tmp_path / "descriptor.json"
+    fpath.write_text('{"name": "x",}')  # trailing comma makes it invalid JSON
+
+    with pytest.raises(ConfigError, match="Descriptor file is not a valid JSON file"):
+        _check_descriptor_file(fpath)
+
+
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
@@ -113,6 +137,20 @@ def test_check_descriptor_file_invalid(fpath, exception_class, exception_message
 
 def test_check_invocation_file(descriptor_str):
     _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json", descriptor_str)
+
+
+def test_check_invocation_file_remains_strict_json(
+    tmp_path: Path,
+    descriptor_str: str,
+):
+    fpath = tmp_path / "invocation.json"
+    fpath.write_text('{"flag": true,}')  # trailing comma makes it invalid JSON
+
+    with pytest.raises(
+        ConfigError,
+        match="Invocation file is not a valid JSON file",
+    ):
+        _check_invocation_file(fpath, descriptor_str)
 
 
 @pytest.mark.parametrize(
@@ -142,6 +180,18 @@ def test_check_hpc_config_file():
     _check_hpc_config_file(DPATH_TEST_DATA / "hpc_config-valid.json")
 
 
+def test_check_hpc_config_file_json5(tmp_path: Path):
+    fpath = tmp_path / "hpc_config.json"
+    fpath.write_text("""
+{
+  // comments and trailing commas should be accepted
+  "walltime": "00:10:00",
+}
+""".strip())
+
+    _check_hpc_config_file(fpath)
+
+
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
@@ -167,6 +217,20 @@ def test_check_tracker_config_file():
     _check_tracker_config_file(DPATH_TEST_DATA / "tracker_config-valid.json")
 
 
+def test_check_tracker_config_file_json5(tmp_path: Path):
+    fpath = tmp_path / "tracker_config.json"
+    fpath.write_text("""
+{
+  // comments and trailing commas should be accepted
+  "PATHS": [
+    "output/sub-[[NIPOPPY_PARTICIPANT_ID]]",
+  ],
+}
+""".strip())
+
+    _check_tracker_config_file(fpath)
+
+
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
@@ -190,6 +254,18 @@ def test_check_tracker_config_file_invalid(fpath, exception_class, exception_mes
 
 def test_check_pybids_ignore_file():
     _check_pybids_ignore_file(DPATH_TEST_DATA / "pybids_ignore-valid.json")
+
+
+def test_check_pybids_ignore_file_json5(tmp_path: Path):
+    fpath = tmp_path / "pybids_ignore.json"
+    fpath.write_text("""
+[
+  // comments and trailing commas should be accepted
+  "^/code",
+]
+""".strip())
+
+    _check_pybids_ignore_file(fpath)
 
 
 @pytest.mark.parametrize(
