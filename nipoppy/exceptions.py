@@ -40,13 +40,20 @@ class NipoppyError(Exception):
     """Base exception class for all nipoppy errors."""
 
     code = ReturnCode.KNOWN_FAILURE
+    default_hint = ""
 
-    def __init__(self, message: str = ""):
+    def __init__(self, message: str = "", hint: str | None = None):
         self.message = message
+        self.hint = hint
         super().__init__(self.message)
 
     def __str__(self):
         return self.message
+
+    @property
+    def troubleshooting_hint(self) -> str:
+        """Return the troubleshooting hint attached to this error."""
+        return self.hint or self.default_hint
 
 
 ###########
@@ -56,6 +63,10 @@ class ConfigError(NipoppyError, ValueError):
     """Exception raised for invalid configuration values."""
 
     code = ReturnCode.INVALID_CONFIG
+    default_hint = (
+        "Review your configuration files and CLI options for missing fields, "
+        "invalid values, or type mismatches."
+    )
 
 
 class TerminatedByUserError(NipoppyError):
@@ -64,13 +75,23 @@ class TerminatedByUserError(NipoppyError):
     code = ReturnCode.TERMINATED
 
 
-class FileOperationError(NipoppyError, IOError): ...  # noqa: D101, E701
+class FileOperationError(NipoppyError, IOError):
+    """Exception raised for file system operations that fail."""
+
+    default_hint = (
+        "Confirm all input/output paths exist and you have the required file "
+        "permissions."
+    )
 
 
 class WorkflowError(NipoppyError, RuntimeError):
     """Base exception class for workflow-related errors."""
 
     code = ReturnCode.WORKFLOW_FAILURE
+    default_hint = (
+        "Check the workflow arguments and dataset state, then rerun the command "
+        "with --verbose for additional context."
+    )
 
 
 ####################
@@ -80,21 +101,37 @@ class ContainerError(NipoppyError):
     """Exception for container-related errors."""
 
     code = ReturnCode.CONTAINER_ERROR
+    default_hint = (
+        "Verify the container engine is installed and running, and confirm image "
+        "paths or URIs are valid."
+    )
 
 
 class ExecutionError(NipoppyError, RuntimeError):
     """Exception for pipeline execution errors."""
 
     code = ReturnCode.PIPELINE_EXECUTION_ERROR
+    default_hint = (
+        "Inspect the pipeline logs to locate the failed step, then rerun after "
+        "fixing the reported command or input."
+    )
 
 
 class LayoutError(NipoppyError, ValueError):
     """Exception for layout validation errors."""
 
     code = ReturnCode.INVALID_LAYOUT
+    default_hint = (
+        "Check the dataset structure and required Nipoppy layout files, then "
+        "rerun the command."
+    )
 
 
 class TabularError(NipoppyError):
     """Base exception class for tabular-related errors."""
 
     code = ReturnCode.INVALID_TABULAR_DATA
+    default_hint = (
+        "Verify your tabular files include expected columns and valid values, and "
+        "fix formatting issues before rerunning."
+    )
