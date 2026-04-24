@@ -60,16 +60,7 @@ A unique identifier for a participant in the study. Must be present in every row
 class: dropdown
 ---
 In those situations, you should still make sure that `participant_id` values in the Nipoppy manifest do not contain non-alphanumeric characters.
-To keep track of the mapping between the Nipoppy `participant_id`s and the original study's IDs (which we will refer to as `recruitment_id`), you should create a `recruitment.tsv` file, like so:
-:::{csv-table}
----
-file: ./inserts/recruitment.tsv
-header-rows: 1
-delim: tab
----
-:::
-
-This file should be placed in {{dpath_tabular}}.
+To keep track of the mapping between the Nipoppy `participant_id`s and the original study's IDs (also referred to as `recruitment_id`s), you should create a [recruitment.tsv](../../explanations/recruitment.md) file.
 
 Note that existing/original study files *do not* have to be manually updated to use the Nipoppy `participant_id`s. The same goes for file/directory names in the imaging source data (e.g. DICOM directories) -- it is possible to configure the behaviour of some Nipoppy operations to account for the presence of `recruitment_id`s instead of `participant_id`s in file/directory names.
 ::::
