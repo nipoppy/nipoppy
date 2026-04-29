@@ -4,7 +4,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parents[2]
 SOURCE = REPO_ROOT / "nipoppy" / "data" / "examples" / "sample_global_config.json"
-SNAPSHOT = Path(__file__).parent / "sample_global_config.snapshot.json"
+SNAPSHOT = Path(__file__).parent / "sample_global_config-snapshot.json"
 
 
 def test_sample_global_config_snapshot_matches():
