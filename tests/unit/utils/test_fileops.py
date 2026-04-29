@@ -1,4 +1,5 @@
 import errno
+import tarfile
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -229,3 +230,71 @@ class TestSymlink:
 
         assert symlink.is_symlink()
         assert symlink.read_text() == expected_content
+
+
+@pytest.fixture
+def dpath_to_tar(tmp_path: Path) -> Path:
+    """Return a temporary directory with nested files, ready to be tarred."""
+    dpath = tmp_path / "my_data"
+    (dpath / "dir1").mkdir(parents=True)
+    (dpath / "dir1" / "file1.txt").touch()
+    (dpath / "file2.txt").touch()
+    return dpath
+
+
+class TestTarDirectory:
+    def test_tar_directory(self, dpath_to_tar: Path):
+        """Tarball is created with correct contents; source directory is left intact."""
+        fpath_tarred = fileops.tar_directory(dpath_to_tar)
+
+        assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
+        assert fpath_tarred.is_file()
+
+        with tarfile.open(fpath_tarred) as tar:
+            assert set(tar.getnames()) == {
+                dpath_to_tar.name,
+                f"{dpath_to_tar.name}/file2.txt",
+                f"{dpath_to_tar.name}/dir1",
+                f"{dpath_to_tar.name}/dir1/file1.txt",
+            }
+
+    @pytest.mark.no_xdist
+    def test_tar_directory_failure(
+        self,
+        dpath_to_tar: Path,
+        mocker: pytest_mock.MockerFixture,
+    ):
+        """Raise a FileOperationError when the tarball cannot be validated."""
+        # Mock is_tarfile to return False to simulate a failure in tarball creation
+        mocker.patch("nipoppy.utils.fileops.is_tarfile", return_value=False)
+
+        with pytest.raises(FileOperationError, match=f"Failed to tar {dpath_to_tar}"):
+            fileops.tar_directory(dpath_to_tar)
+
+    @pytest.mark.parametrize(
+        "make_path,match",
+        [
+            (lambda p: p / "nonexistent", "Dir does not exist:"),
+            (
+                lambda p: (p / "file.txt").touch() or p / "file.txt",
+                "Cannot tar non-directory:",
+            ),
+        ],
+    )
+    def test_tar_directory_invalid_input(self, tmp_path: Path, make_path, match):
+        """Ensure FileOperationError is raised for invalid paths."""
+        with pytest.raises(FileOperationError, match=match):
+            fileops.tar_directory(make_path(tmp_path))
+
+    def test_tar_directory_dry_run(
+        self, dpath_to_tar: Path, mocker: pytest_mock.MockerFixture
+    ):
+        """`run_command` is invoked with dry_run=True and no tarball is created."""
+        mocked_run = mocker.patch("nipoppy.utils.fileops.run_command")
+
+        fpath_tarred = fileops.tar_directory(dpath_to_tar, dry_run=True)
+
+        mocked_run.assert_called_once()
+        assert mocked_run.call_args.kwargs.get("dry_run") is True
+        assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
+        assert not fpath_tarred.exists()
