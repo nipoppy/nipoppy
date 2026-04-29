@@ -104,44 +104,46 @@ def run_command(
             log_level=logging.ERROR,
         )
 
-    # build command string
-    if not isinstance(command_or_args, str):
-        args = [str(arg) for arg in command_or_args]
-        command = shlex.join(args)
-    else:
-        command = command_or_args
-        args = shlex.split(command)
+    def build_cmd(command_or_args: Sequence[str] | str) -> tuple[str, list[str]]:
+        # build command string
+        if isinstance(command_or_args, str):
+            command = command_or_args
+            args = shlex.split(command)
+        else:
+            args = [str(arg) for arg in command_or_args]
+            command = shlex.join(args)
+
+        return command, args
+
+    command, args = build_cmd(command_or_args)
+
+    if not quiet:
+        _log_command(command)
+
+    if dry_run:
+        return command
 
     # only pass a single string if shell is True
     if not kwargs.get("shell"):
         command_or_args = args
 
-    if not quiet:
-        _log_command(command)
+    process: subprocess.Popen[str] = subprocess.Popen(
+        command_or_args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        **kwargs,
+    )
 
-    if not dry_run:
-        process: subprocess.Popen[str] = subprocess.Popen(
-            command_or_args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            **kwargs,
-        )
-
-        while process.poll() is None:
-            drain_process(process)
-
-        # final drain: the poll() loop can exit before the last lines written
-        # just prior to process termination are read, so flush any remaining
-        # buffered output now that the process has exited.
+    while process.poll() is None:
         drain_process(process)
 
-        if check and process.returncode != 0:
-            raise subprocess.CalledProcessError(process.returncode, command)
+    # final drain: the poll() loop can exit before the last lines written
+    # just prior to process termination are read, so flush any remaining
+    # buffered output now that the process has exited.
+    drain_process(process)
 
-        run_output = process
+    if check and process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, command)
 
-    else:
-        run_output = command
-
-    return run_output
+    return process
