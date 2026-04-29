@@ -173,7 +173,7 @@ def test_launch_boutiques_run(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows.runner.run_command")
 
     descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id
@@ -238,7 +238,7 @@ def test_launch_boutiques_run_bosh_opts(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows.runner.run_command")
 
     runner.launch_boutiques_run(
         participant_id,
@@ -272,7 +272,7 @@ def test_launch_boutiques_run_bosh_no_container_image(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows.runner.run_command")
 
     runner.launch_boutiques_run(
         participant_id,

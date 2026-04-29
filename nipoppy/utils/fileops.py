@@ -2,13 +2,13 @@
 
 import errno
 import shutil
-import subprocess
 from pathlib import Path
 from tarfile import is_tarfile
 
 from nipoppy.env import EXT_TAR
 from nipoppy.exceptions import FileOperationError
 from nipoppy.logger import get_logger
+from nipoppy.utils.subprocess_runner import run_command
 
 logger = get_logger()
 
@@ -102,11 +102,12 @@ def tar_directory(dpath: Path, dry_run: bool = False) -> Path:
 
     fpath_tarred = dpath.with_suffix(EXT_TAR)
     logger.debug(f"Tarring {dpath} to {fpath_tarred}")
+    run_command(
+        ["tar", "-cvf", str(fpath_tarred), "-C", str(dpath.parent), dpath.name],
+        check=True,
+        dry_run=dry_run,
+    )
     if not dry_run:
-        subprocess.run(
-            ["tar", "-cvf", str(fpath_tarred), "-C", str(dpath.parent), dpath.name],
-            check=True,
-        )
         if not (fpath_tarred.exists() and is_tarfile(fpath_tarred)):
             raise FileOperationError(f"Failed to tar {dpath} to {fpath_tarred}")
 

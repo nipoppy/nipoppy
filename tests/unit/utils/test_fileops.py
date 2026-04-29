@@ -263,17 +263,13 @@ class TestTarDirectory:
         self,
         dpath_to_tar: Path,
         mocker: pytest_mock.MockerFixture,
-        caplog: pytest.LogCaptureFixture,
     ):
-        """An error is logged when the tarball cannot be validated."""
+        """Raise a FileOperationError when the tarball cannot be validated."""
         # Mock is_tarfile to return False to simulate a failure in tarball creation
         mocker.patch("nipoppy.utils.fileops.is_tarfile", return_value=False)
 
-        fpath_tarred = fileops.tar_directory(dpath_to_tar)
-
-        assert fpath_tarred.exists()
-        assert dpath_to_tar.exists()
-        assert f"Failed to tar {dpath_to_tar}" in caplog.text
+        with pytest.raises(FileOperationError, match=f"Failed to tar {dpath_to_tar}"):
+            fileops.tar_directory(dpath_to_tar)
 
     @pytest.mark.parametrize(
         "make_path,match",
@@ -293,11 +289,12 @@ class TestTarDirectory:
     def test_tar_directory_dry_run(
         self, dpath_to_tar: Path, mocker: pytest_mock.MockerFixture
     ):
-        """No subprocess call and no tarball created in dry-run mode."""
-        mocked_run = mocker.patch("nipoppy.utils.fileops.subprocess.run")
+        """`run_command` is invoked with dry_run=True and no tarball is created."""
+        mocked_run = mocker.patch("nipoppy.utils.fileops.run_command")
 
         fpath_tarred = fileops.tar_directory(dpath_to_tar, dry_run=True)
 
-        mocked_run.assert_not_called()
+        mocked_run.assert_called_once()
+        assert mocked_run.call_args.kwargs.get("dry_run") is True
         assert fpath_tarred == dpath_to_tar.with_suffix(".tar")
         assert not fpath_tarred.exists()
