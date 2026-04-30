@@ -179,10 +179,7 @@ class Runner(BasePipelineWorkflow, ABC):
                     )
 
             descriptor_str = json.dumps(descriptor)
-            if (
-                container_handler is None
-                or descriptor.get("container-image") is None
-            ):
+            if container_handler is None or descriptor.get("container-image") is None:
                 bosh_exec_launch_args.append("--no-container")
             else:
                 bosh_exec_launch_args.extend(
