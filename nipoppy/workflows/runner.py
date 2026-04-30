@@ -1,5 +1,6 @@
 """Abstract class for workflow runners and runner utilities."""
 
+import copy
 import json
 import shlex
 from abc import ABC
@@ -150,11 +151,35 @@ class Runner(BasePipelineWorkflow, ABC):
                 return_str=True,
             )
         else:
-            descriptor_str = json.dumps(self.descriptor)
+            descriptor = copy.deepcopy(self.descriptor)
+
+            # if the descriptor is missing "container-image" but
+            # CONTAINER_INFO.URI is set in the pipeline config, inject
+            # "container-image" so that Boutiques can handle the container
             if (
-                container_handler is None
-                or self.descriptor.get("container-image") is None
+                descriptor.get("container-image") is None
+                and self.pipeline_config.CONTAINER_INFO.URI is not None
             ):
+                uri = self.pipeline_config.CONTAINER_INFO.URI
+                scheme, sep, image = uri.partition("://")
+                if not sep:
+                    logger.warning(
+                        f"CONTAINER_INFO.URI has unexpected format (missing '://'): "
+                        f"{uri!r}. Skipping container-image injection."
+                    )
+                else:
+                    container_type = "docker" if scheme == "docker" else "singularity"
+                    descriptor["container-image"] = {
+                        "image": image,
+                        "type": container_type,
+                    }
+                    logger.info(
+                        "Injecting container-image into descriptor from"
+                        f" CONTAINER_INFO.URI: {uri}"
+                    )
+
+            descriptor_str = json.dumps(descriptor)
+            if container_handler is None or descriptor.get("container-image") is None:
                 bosh_exec_launch_args.append("--no-container")
             else:
                 bosh_exec_launch_args.extend(
