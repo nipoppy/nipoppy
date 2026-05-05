@@ -106,6 +106,6 @@ caption: Other
 ---
 changelog
 team
-contributing
+contributing/index
 glossary
 ```
