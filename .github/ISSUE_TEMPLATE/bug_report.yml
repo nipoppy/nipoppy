@@ -1,7 +1,7 @@
 name: Bug report
 
-# See the json schema to help you create / update this form
-# https://json.schemastore.org/github-issue-forms.json
+# See the GitHub documentation to help you create / update this form
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
 
 description: Fill in this template to report a bug
 
