@@ -370,7 +370,7 @@ def test_launch_boutiques_run_no_inject_if_uri_invalid_format(
 
     descriptor = json.loads(descriptor_str)
     assert "container-image" not in descriptor
-    assert "unexpected format" in caplog.text
+    assert "Failed to parse CONTAINER_INFO.URI" in caplog.text
 
 
 def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
