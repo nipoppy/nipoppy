@@ -47,6 +47,7 @@ includehidden:
 titlesonly:
 caption: Tutorials
 ---
+tutorials/dcm2bids/index
 tutorials/mriqc_from_bids/index
 Video series<tutorials/videos/index>
 tutorials/integrations/index
