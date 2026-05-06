@@ -116,7 +116,10 @@ emphasize-lines: 4,9
 ```
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
-- If you are on a system that still uses Singularity (which has been renamed to Apptainer), you will need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
+- If Apptainer is not available on your system, you will need to change `CONTAINER_CONFIG` -> `COMMAND` to
+    - `"singularity"` if you have Singularity installed
+    - `"docker"` if you have Docker installed
+    - `"null"` if you have dcm2bids installed locally ("baremetal" install)
 - If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
     ```json
     "SUBSTITUTIONS": {
@@ -146,7 +149,7 @@ That is because a newly initialized Nipoppy dataset does not contain any pipelin
 $ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_mriqc_23_1_0}}
 ```
 
-When running `nipoppy pipeline install`, you will be asked if you would like to download the MRIQC container. Type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. The container image will be downloaded as `mriqc_23.1.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file).
+When running `nipoppy pipeline install`, if using a container engine, you will be asked if you would like to download the dcm2bids container. If you do not already have a download of the container, type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. Apptainer or Singularity container images will be downloaded as `mriqc_23.1.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file). Docker images are managed centrally and so will not be downloaded to the dataset.
 
 The pipeline installation process will add a `TEMPLATEFLOW_HOME` pipeline variable to the `nipoppy_study/global_config.json` file:
 
