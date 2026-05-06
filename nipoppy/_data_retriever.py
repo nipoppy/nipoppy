@@ -194,13 +194,12 @@ class NipoppyDataRetriever:
         ...     [
         ...         "nb:Age",
         ...         "nb:Sex",
-        ...         "nb:Diagnosis",
         ...         "snomed:859351000000102",  # MoCA
         ...     ],
         ... )
-                                   nb:Age            nb:Sex     nb:Diagnosis snomed:859351000000102
+                                   nb:Age            nb:Sex   snomed:859351000000102
         participant_id session_id
-        001            1             70.0  snomed:248153007      ncit:C94342           nb:available
+        001            1             70.0  snomed:248153007             nb:available
         """  # noqa E501
         _check_phenotypes_arg(phenotypes)
         df = self.get_all_phenotypes()
