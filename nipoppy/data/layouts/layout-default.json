@@ -80,7 +80,7 @@
         "description": "The curation status file is generated/updated internally and is used to keep track of the raw data organization and BIDSification process."
     },
     "fpath_manifest": {
-        "path": ".nipoppy/manifest.tsv",
+        "path": "manifest.tsv",
         "description": "The manifest file lists all expected study participants and visits."
     },
     "fpath_processing_status": {

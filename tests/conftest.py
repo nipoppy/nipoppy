@@ -32,7 +32,7 @@ from nipoppy.utils.bids import (
 from nipoppy.utils.utils import save_json
 
 FPATH_CONFIG = ".nipoppy/config.json"
-FPATH_MANIFEST = ".nipoppy/manifest.tsv"
+FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 TEST_PIPELINE = DPATH_TEST_DATA / "fmriprep-24.1.1"
 PASSWORD_FILE = DPATH_TEST_DATA / "zenodo_password.txt"

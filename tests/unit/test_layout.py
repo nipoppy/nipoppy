@@ -112,7 +112,7 @@ def test_get_full_path(dpath_root: Path, path, expected):
         ],
         [
             "phenotype",
-            ".nipoppy/manifest.tsv",
+            "manifest.tsv",
             "phenotype/assessments",
         ],
     ],
