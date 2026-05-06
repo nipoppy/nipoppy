@@ -5,18 +5,21 @@ on:
   pull_request:
     branches: ['main']
   schedule:
-    - cron: '0 0 * * 0' # Weekly on Sunday at 00:00 UTC
+    - cron: '0 11 * * 0' # Weekly on Sunday at 11:00 UTC
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: "3.11"
+
 jobs:
-  linkcheck:
+  sphinx:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
 
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.11"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install package with doc dependencies
       run: |
@@ -30,3 +33,23 @@ jobs:
     - name: Run linkcheck
       run: |
         python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
+
+  pytest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install package with test dependencies
+      run: |
+        pip install -U pip
+        pip install .[tests]
+
+    - name: Run pytest linkcheck tests
+      run: |
+        python -m pytest -m linkcheck

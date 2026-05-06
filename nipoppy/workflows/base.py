@@ -8,7 +8,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Protocol, Sequence
 
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, StrOrPathLike
@@ -16,7 +16,6 @@ from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
-from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
@@ -46,14 +45,31 @@ def _log_command(command: str):
     logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
 
 
+class CommandRunner(Protocol):
+    """Protocol for functions that run commands, used for strategy injection."""
+
+    def __call__(
+        self,
+        command_or_args: Sequence[str] | str,
+        /,
+        *,
+        check: bool = True,
+        quiet: bool = False,
+        dry_run: bool = False,
+    ) -> subprocess.Popen[str] | str:
+        """Run a command in a subprocess, with logging and dry-run support."""
+        ...
+
+
 def _run_command(
     command_or_args: Sequence[str] | str,
+    /,
     *,
     check: bool = True,
     quiet: bool = False,
     dry_run: bool = False,
     **kwargs,
-) -> subprocess.Popen | str:
+) -> subprocess.Popen[str] | str:
     """Run a command in a subprocess.
 
     The command's stdout and stderr outputs are written to the log
@@ -108,7 +124,7 @@ def _run_command(
         _log_command(command)
 
     if not dry_run:
-        process = subprocess.Popen(
+        process: subprocess.Popen[str] = subprocess.Popen(
             command_or_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -137,15 +153,6 @@ def _run_command(
         run_output = command
 
     return run_output
-
-
-def _save_tabular_file(tabular: BaseTabular, fpath: Path, dry_run: bool = False):
-    """Save a tabular file."""
-    fpath_backup = tabular.save_with_backup(fpath, dry_run=dry_run)
-    if fpath_backup is not None:
-        logger.info(f"Saved to {fpath} (-> {fpath_backup})")
-    else:
-        logger.info(f"No changes to file at {fpath}")
 
 
 class BaseWorkflow(Base, ABC):
@@ -189,9 +196,13 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        self.run_setup()
-        self.run_main()
-        self.run_cleanup()
+        try:
+            self.run_setup()
+            self.run_main()
+        except Exception:
+            raise
+        finally:
+            self.run_cleanup()
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
@@ -293,11 +304,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             )
 
             if not self.dry_run:
-                fpath_table_backup = table.save_with_backup(fpath_table)
-                logger.info(
-                    "Saved curation status table to "
-                    f"{fpath_table} (-> {fpath_table_backup})"
-                )
+                table.save_with_backup(fpath_table)
             else:
                 logger.info(
                     "Not writing curation status table to "
