@@ -1,5 +1,6 @@
 """Tests for PipelineRunner."""
 
+import copy
 import json
 import tarfile
 from pathlib import Path
@@ -165,6 +166,34 @@ def test_run_failed_cleanup(runner: ProcessingRunner, n_success):
         assert dpath.exists()
 
 
+@pytest.mark.parametrize(
+    "uri,expected_image,expected_type",
+    [
+        ("docker://owner/project:1.0.0", "owner/project:1.0.0", "docker"),
+        ("shub://owner/project:1.0.0", "owner/project:1.0.0", "singularity"),
+        ("library://owner/project:1.0.0", "owner/project:1.0.0", "singularity"),
+    ],
+)
+def test_set_container_image(
+    runner: ProcessingRunner,
+    uri: str,
+    expected_image: str,
+    expected_type: str,
+):
+    descriptor = runner._set_container_image(descriptor=runner.descriptor, uri=uri)
+    assert "container-image" in descriptor
+    assert descriptor["container-image"]["image"] == expected_image
+    assert descriptor["container-image"]["type"] == expected_type
+
+
+def test_set_container_image_invalid_uri(
+    runner: ProcessingRunner,
+    caplog: pytest.LogCaptureFixture,
+):
+    runner._set_container_image(descriptor=runner.descriptor, uri="invalid_uri")
+    assert "Failed to parse CONTAINER_INFO.URI" in caplog.text
+
+
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(
     simulate, runner: ProcessingRunner, mocker: pytest_mock.MockFixture
@@ -286,91 +315,55 @@ def test_launch_boutiques_run_bosh_no_container_image(
     assert "--no-container" in container_opts
 
 
-@pytest.mark.parametrize(
-    "uri,expected_image,expected_type",
-    [
-        ("docker://owner/project:1.0.0", "owner/project:1.0.0", "docker"),
-        ("shub://owner/project:1.0.0", "owner/project:1.0.0", "singularity"),
-        ("library://owner/project:1.0.0", "owner/project:1.0.0", "singularity"),
-    ],
-)
-def test_launch_boutiques_run_inject_container_image_from_uri(
-    uri: str,
-    expected_image: str,
-    expected_type: str,
+def test_launch_boutiques_run_container_image(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
-    """Test that container-image is injected from CONTAINER_INFO.URI when missing."""
-    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
-    runner.descriptor.pop("container-image")
-    runner.pipeline_config.CONTAINER_INFO.URI = uri
-
     participant_id = "01"
     session_id = "BL"
 
-    mocker.patch("nipoppy.workflows.runner._run_command")
+    # remove [[NIPOPPY_DPATH_BIDS]]
+    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
 
-    descriptor_str, _ = runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-        container_handler=None,
+    del runner.descriptor["container-image"]
+
+    original_descriptor = copy.deepcopy(runner.descriptor)
+
+    mocked_set_container_image = mocker.patch.object(
+        runner, "_set_container_image", wraps=runner._set_container_image
     )
 
-    descriptor = json.loads(descriptor_str)
-    assert "container-image" in descriptor
-    assert descriptor["container-image"]["image"] == expected_image
-    assert descriptor["container-image"]["type"] == expected_type
+    runner.launch_boutiques_run(
+        participant_id,
+        session_id,
+    )
+
+    mocked_set_container_image.assert_called_with(
+        original_descriptor,
+        runner.pipeline_config.CONTAINER_INFO.URI,
+    )
 
 
-def test_launch_boutiques_run_no_inject_if_container_image_present(
+def test_launch_boutiques_run_no_container_image(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
-    """Test that container-image is NOT overwritten when already in the descriptor."""
-    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
-    original_container_image = runner.descriptor["container-image"]
-    runner.pipeline_config.CONTAINER_INFO.URI = "docker://other/image:2.0.0"
-
     participant_id = "01"
     session_id = "BL"
 
-    mocker.patch("nipoppy.workflows.runner._run_command")
-
-    descriptor_str, _ = runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-        container_handler=None,
-    )
-
-    descriptor = json.loads(descriptor_str)
-    assert descriptor["container-image"] == original_container_image
-
-
-def test_launch_boutiques_run_no_inject_if_uri_invalid_format(
-    runner: ProcessingRunner,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-):
-    """Test that injection is skipped with a warning when URI has no '://'."""
+    # remove [[NIPOPPY_DPATH_BIDS]]
     runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
-    runner.descriptor.pop("container-image")
-    runner.pipeline_config.CONTAINER_INFO.URI = "invalid-uri-no-scheme"
 
-    participant_id = "01"
-    session_id = "BL"
-
-    mocker.patch("nipoppy.workflows.runner._run_command")
-
-    descriptor_str, _ = runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-        container_handler=None,
+    mocked_set_container_image = mocker.patch.object(
+        runner, "_set_container_image", wraps=runner._set_container_image
     )
 
-    descriptor = json.loads(descriptor_str)
-    assert "container-image" not in descriptor
-    assert "Failed to parse CONTAINER_INFO.URI" in caplog.text
+    runner.launch_boutiques_run(
+        participant_id,
+        session_id,
+    )
+
+    mocked_set_container_image.assert_not_called()
 
 
 def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):

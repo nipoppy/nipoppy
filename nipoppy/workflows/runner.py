@@ -125,6 +125,7 @@ class Runner(BasePipelineWorkflow, ABC):
             return run_bosh_launch
 
     def _set_container_image(self, descriptor: dict, uri: str) -> dict:
+        descriptor = copy.deepcopy(descriptor)
         scheme, sep, image = uri.partition("://")
         if not sep:
             logger.error(f"Failed to parse CONTAINER_INFO.URI {uri}.")
@@ -134,6 +135,7 @@ class Runner(BasePipelineWorkflow, ABC):
                 "image": image,
                 "type": container_type,
             }
+        return descriptor
 
     def launch_boutiques_run(
         self,
@@ -162,7 +164,7 @@ class Runner(BasePipelineWorkflow, ABC):
                 return_str=True,
             )
         else:
-            descriptor = copy.deepcopy(self.descriptor)
+            descriptor = self.descriptor
 
             # if the descriptor is missing "container-image" but CONTAINER_INFO.URI is
             # set in the pipeline config, inject "container-image" so that the pipeline
@@ -175,6 +177,7 @@ class Runner(BasePipelineWorkflow, ABC):
                     "Descriptor is missing a 'container-image' field"
                     ". Using information from CONTAINER_INFO.URI instead."
                 )
+
                 descriptor = self._set_container_image(
                     descriptor, self.pipeline_config.CONTAINER_INFO.URI
                 )
