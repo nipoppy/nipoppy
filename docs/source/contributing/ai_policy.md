@@ -1,4 +1,4 @@
-# AI-Generated Code
+# Use of generative AI
 
 This document describes the policy for using AI tools in the Nipoppy project. The goal is to prevent maintenance burden and ensure that the codebase remains clean and maintainable.
 
