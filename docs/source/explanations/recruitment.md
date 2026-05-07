@@ -15,7 +15,7 @@ This TSV file can also include a `participant_dicom_dir` column listing the rela
 
 For sanity checks, this file can also be used to list the larger cohort of originally recruited participants. This can help avoid possible confusion created by drop-outs or exclusions during the subsequent study stages (i.e. curation, processing, extraction, and analysis).
 
-The recommended location for the `recruitment.tsv` is {{dpath_src_tabular}} directory.
+The recommended location for the `recruitment.tsv` is {{dpath_sourcedata}} directory.
 
 Here is an example recruitment file:
 
