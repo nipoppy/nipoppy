@@ -54,7 +54,8 @@ def test_init_default(dpath_root):
         FPATH_DEFAULT_LAYOUT,
         DPATH_LAYOUTS / "layout-0.1.0.json",
         DPATH_LAYOUTS / "layout-0.2.x.json",
-        DPATH_LAYOUTS / "layout-bids-study.json",
+        DPATH_LAYOUTS / "layout-0.3.x.json",
+        DPATH_LAYOUTS / "layout-0.4.x.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
     ],
@@ -99,9 +100,9 @@ def test_get_full_path(dpath_root: Path, path, expected):
     [
         [],
         ["sourcedata/imaging/post_reorg", "sourcedata/imaging/downloads"],
-        ["bids", "derivatives"],
+        ["rawbids", "derivatives"],
         [
-            "pipelines",
+            ".nipoppy/pipelines",
         ],
         [
             "scratch",
@@ -110,9 +111,9 @@ def test_get_full_path(dpath_root: Path, path, expected):
             "logs",
         ],
         [
-            "tabular",
+            "phenotype",
             "manifest.tsv",
-            "tabular/assessments",
+            "phenotype/assessments",
         ],
     ],
 )
@@ -148,9 +149,9 @@ def test_dpath_descriptions():
     "paths_to_delete",
     [
         ["sourcedata", "downloads"],
-        ["bids", "derivatives"],
-        ["pipelines"],
-        ["tabular"],
+        ["rawbids", "derivatives"],
+        [".nipoppy/pipelines"],
+        ["phenotype"],
     ],
 )
 def test_validate_error(dpath_root: Path, paths_to_delete: list[str]):
@@ -305,9 +306,9 @@ def test_get_dpath_pybids_db(
 @pytest.mark.parametrize(
     "pipeline_type,expected_path_relative",
     [
-        (PipelineTypeEnum.BIDSIFICATION, "pipelines/bidsification"),
-        (PipelineTypeEnum.PROCESSING, "pipelines/processing"),
-        (PipelineTypeEnum.EXTRACTION, "pipelines/extraction"),
+        (PipelineTypeEnum.BIDSIFICATION, ".nipoppy/pipelines/bidsification"),
+        (PipelineTypeEnum.PROCESSING, ".nipoppy/pipelines/processing"),
+        (PipelineTypeEnum.EXTRACTION, ".nipoppy/pipelines/extraction"),
     ],
 )
 def test_get_dpath_pipeline_store(dpath_root, pipeline_type, expected_path_relative):
@@ -321,9 +322,24 @@ def test_get_dpath_pipeline_store(dpath_root, pipeline_type, expected_path_relat
 @pytest.mark.parametrize(
     "pipeline_type,pipeline_name,pipeline_version,expected_path_relative",
     [
-        (PipelineTypeEnum.BIDSIFICATION, "A", "1.0", "pipelines/bidsification/A-1.0"),
-        (PipelineTypeEnum.PROCESSING, "B", "0.2", "pipelines/processing/B-0.2"),
-        (PipelineTypeEnum.EXTRACTION, "C", "0.0.1", "pipelines/extraction/C-0.0.1"),
+        (
+            PipelineTypeEnum.BIDSIFICATION,
+            "A",
+            "1.0",
+            ".nipoppy/pipelines/bidsification/A-1.0",
+        ),
+        (
+            PipelineTypeEnum.PROCESSING,
+            "B",
+            "0.2",
+            ".nipoppy/pipelines/processing/B-0.2",
+        ),
+        (
+            PipelineTypeEnum.EXTRACTION,
+            "C",
+            "0.0.1",
+            ".nipoppy/pipelines/extraction/C-0.0.1",
+        ),
     ],
 )
 def test_get_dpath_pipeline_bundle(

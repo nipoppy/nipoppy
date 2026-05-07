@@ -31,14 +31,14 @@ from nipoppy.utils.bids import (
 )
 from nipoppy.utils.utils import save_json
 
-FPATH_CONFIG = "global_config.json"
+FPATH_CONFIG = ".nipoppy/config.json"
 FPATH_MANIFEST = "manifest.tsv"
 DPATH_TEST_DATA = Path(__file__).parent / "data"
 TEST_PIPELINE = DPATH_TEST_DATA / "fmriprep-24.1.1"
 PASSWORD_FILE = DPATH_TEST_DATA / "zenodo_password.txt"
 
 ATTR_TO_REQUIRED_DPATH_MAP = {
-    "dpath_bids": "bids",
+    "dpath_bids": "rawbids",
     "dpath_derivatives": "derivatives",
     "dpath_sourcedata": "sourcedata",
     "dpath_src_tabular": "sourcedata/tabular",
@@ -46,14 +46,14 @@ ATTR_TO_REQUIRED_DPATH_MAP = {
     "dpath_pre_reorg": "sourcedata/imaging/pre_reorg",
     "dpath_downloads": "sourcedata/imaging/downloads",
     "dpath_code": "code",
-    "dpath_pipelines": "pipelines",
-    "dpath_containers": "containers",
+    "dpath_pipelines": ".nipoppy/pipelines",
+    "dpath_containers": "code/containers",
     "dpath_scratch": "scratch",
     "dpath_pybids_db": "scratch/pybids_db",
     "dpath_work": "scratch/work",
     "dpath_logs": "logs",
-    "dpath_tabular": "tabular",
-    "dpath_assessments": "tabular/assessments",
+    "dpath_tabular": "phenotype",
+    "dpath_assessments": "phenotype/assessments",
 }
 
 ATTR_TO_DPATH_MAP = {
@@ -71,8 +71,8 @@ ATTR_TO_FPATH_MAP = {
     **ATTR_TO_REQUIRED_FPATH_MAP,
     "fpath_curation_status": "sourcedata/imaging/curation_status.tsv",
     "fpath_processing_status": "derivatives/processing_status.tsv",
-    "fpath_demographics": "tabular/demographics.tsv",
-    "fpath_harmonized": "tabular/harmonized.tsv",
+    "fpath_demographics": "phenotype/demographics.tsv",
+    "fpath_harmonized": "phenotype/harmonized.tsv",
 }
 
 MOCKED_DATETIME = datetime.datetime(2024, 4, 4, 12, 34, 56, 789000)
