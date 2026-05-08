@@ -20,7 +20,7 @@ body:
 
   - type: textarea
     attributes:
-      label: Missing or unclear documentation
+      label: Missing, unclear, or incorrect documentation
       description: |
         Something is missing / unclear about **X**.
 
