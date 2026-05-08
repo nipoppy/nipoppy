@@ -14,9 +14,12 @@ body:
     attributes:
       label: Is there an existing issue for this?
       description:
-        Please search to see if a similar already exists.
+        Please search to see if a similar issue already exists.
       options:
         - label: I have searched the existing issues
+        - 
+      validations:
+          required: true
 
   - type: textarea
     attributes:
@@ -31,4 +34,4 @@ body:
         That means that we can improve the code or the documentation.
       placeholder: Tell us more.
     validations:
-      required: false
+      required: true

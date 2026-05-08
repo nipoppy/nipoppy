@@ -18,11 +18,12 @@ body:
         want.
       options:
         - label: I have searched the existing issues
+      validations:
+          required: true
 
   - type: textarea
     attributes:
       label: New feature
-      description: Rationale for this feature
-      placeholder: Describe the feature you want and why you think it is useful.
+      description: Describe the feature you want and why you think it is useful.
     validations:
       required: true
