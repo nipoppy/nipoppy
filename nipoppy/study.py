@@ -25,24 +25,20 @@ class Study(Base):
     files.
     """
 
-    def __init__(
-        self,
-        layout: DatasetLayout,
-        verbose: bool = False,
-    ):
+    def __init__(self, layout: DatasetLayout):
         """Representation of a Nipoppy study.
 
         Parameters
         ----------
         layout : DatasetLayout
             The dataset layout object.
-        verbose : bool, optional
-            Whether to enable verbose logging, by default False. Note: this is ignored
-            if a custom logger is provided.
         """
         super().__init__()
         self.layout = layout
-        self.verbose = verbose
+
+    def __len__(self):
+        """Get the number of unique participant-visit combinations in the study."""
+        return len(self.manifest)
 
     @cached_property
     def config(self) -> Config:

@@ -23,7 +23,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_pipeline: StrOrPathLike,
-        zenodo_api: ZenodoAPI,
+        zenodo_api: ZenodoAPI | None = None,
         record_id: Optional[str] = None,
         assume_yes: bool = False,
         force: bool = False,
@@ -31,7 +31,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         dry_run=False,
     ):
         self.dpath_pipeline = dpath_pipeline
-        self.zenodo_api = zenodo_api
+        self.zenodo_api = zenodo_api or ZenodoAPI()
         self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.record_id = record_id
         self.assume_yes = assume_yes
@@ -151,6 +151,10 @@ class PipelineUploadWorkflow(BaseWorkflow):
             default_preview_filename=DatasetLayout.fname_pipeline_config,
         )
         logger.success(f"Pipeline successfully uploaded at {doi}")
+
+    def run_cleanup(self):
+        """Close resources used by the workflow."""
+        self.zenodo_api.close()
 
 
 def _is_same_pipeline(

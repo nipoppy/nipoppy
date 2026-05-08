@@ -297,77 +297,16 @@ def test_pipeline_step_config(extractor: ExtractionRunner):
     assert isinstance(extractor.pipeline_step_config, ExtractionPipelineStepConfig)
 
 
-@pytest.mark.parametrize(
-    "init_params,participant_id,session_id,expected_command",
-    [
-        (
-            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
-            "P01",
-            "1",
-            [
-                "nipoppy",
-                "extract",
-                "--dataset",
-                "/path/to/root",
-                "--pipeline",
-                "my_pipeline",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-            ],
-        ),
-        (
-            {
-                "dpath_root": "/path/to/other/root",
-                "pipeline_name": "other_pipeline",
-                "pipeline_version": "1.0.0",
-                "pipeline_step": "step1",
-                "participant_id": "ShouldNotBeUsed",  # should be skipped
-                "session_id": "ShouldNotBeUsed",  # should be skipped
-                "simulate": True,  # should be skipped
-                "keep_workdir": True,
-                "hpc": "slurm",  # should be skipped
-                "use_subcohort": "/path/to/list",  # should be skipped
-                "fpath_layout": "/path/to/layout",
-                "dry_run": True,  # should be skipped
-                "verbose": True,
-            },
-            "P01",
-            "1",
-            [
-                "nipoppy",
-                "extract",
-                "--dataset",
-                "/path/to/other/root",
-                "--pipeline",
-                "other_pipeline",
-                "--pipeline-version",
-                "1.0.0",
-                "--pipeline-step",
-                "step1",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-                "--keep-workdir",
-                "--layout",
-                "/path/to/layout",
-                "--verbose",
-            ],
-        ),
-    ],
-)
 def test_generate_cli_command_for_hpc(
-    init_params,
-    participant_id,
-    session_id,
-    expected_command,
+    extractor: ExtractionRunner,
     mocker: pytest_mock.MockFixture,
 ):
-    mocker.patch("nipoppy.workflows.base.DatasetLayout")
-    runner = ExtractionRunner(**init_params)
-    assert (
-        runner._generate_cli_command_for_hpc(participant_id, session_id)
-        == expected_command
+    mocked_generate_cli_command = mocker.patch.object(
+        extractor.hpc_runner,
+        "generate_cli_command",
+    )
+    extractor._generate_cli_command_for_hpc("p01", "s01")
+    mocked_generate_cli_command.assert_called_once_with(
+        participant_id="p01",
+        session_id="s01",
     )
