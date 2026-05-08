@@ -1,0 +1,29 @@
+# See https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+name: Documentation issue
+
+description: Report an issue or suggest improvements to the documentation
+
+title: "[DOC] "
+
+labels: ["T.3 - Documentation"]
+
+type: "Documentation"
+
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description:
+        Please search to see if a similar issue already exists.
+      options:
+        - label: I have searched the existing issues
+      validations:
+          required: true
+
+  - type: textarea
+    attributes:
+      label: documentation
+      description: Missing or unclear documentation
+      placeholder: Tell us more.
+    validations:
+      required: true
