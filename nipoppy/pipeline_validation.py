@@ -20,7 +20,7 @@ from nipoppy.env import PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
-from nipoppy.utils.utils import load_json
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, load_json
 
 logger = get_logger()
 
@@ -81,6 +81,14 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
         raise ConfigError(
             f"Descriptor file {fpath_descriptor} is invalid:\n{exception}"
         )
+
+    if TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is not None:
+        logger.warning(
+            f"Descriptor file {fpath_descriptor} contains Nipoppy-specific template "
+            "variables. Consider updating this file as this will no longer be "
+            "supported in future versions."
+        )
+
     return descriptor_str
 
 

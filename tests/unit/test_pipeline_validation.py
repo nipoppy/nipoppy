@@ -84,9 +84,23 @@ def test_load_pipeline_config_file_invalid(fpath, exception_class, exception_mes
         _load_pipeline_config_file(fpath)
 
 
-def test_check_descriptor_file():
+def test_check_descriptor_file(caplog: pytest.LogCaptureFixture):
     assert isinstance(
         _check_descriptor_file(DPATH_TEST_DATA / "descriptor-valid.json"), str
+    )
+    assert len(caplog.records) == 0
+
+
+def test_check_descriptor_file_warning(caplog: pytest.LogCaptureFixture):
+
+    _check_descriptor_file(DPATH_TEST_DATA / "descriptor-deprecated.json")
+
+    assert any(
+        [
+            record.levelno == logging.WARNING
+            and "no longer be supported" in record.message
+            for record in caplog.records
+        ]
     )
 
 
