@@ -189,7 +189,7 @@ Assuming a participant ID `001` and session ID `A`, the template strings will re
 - `[[NIPOPPY_BIDS_SESSION_ID]]`: `ses-A`
 :::
 
-## Uploading to the Nipoppy pipeline store
+## Upload to the Nipoppy pipeline store (optional)
 
 Nipoppy provides an easy way to upload and install [community-developed pipelines](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) via Zenodo.
 
