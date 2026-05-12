@@ -18,6 +18,7 @@ body:
         want.
       options:
         - label: I have searched the existing issues
+          required: true
     validations:
       required: true
 
