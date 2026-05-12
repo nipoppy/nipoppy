@@ -85,7 +85,6 @@ pipelines/howto
 ├── descriptor.json
 ├── hpc.json
 ├── invocation.json
-├── pybids_ignore.json
 └── tracker.json
 ```
 
@@ -179,7 +178,7 @@ See [here](#how-to-track-processing) for more information about pipeline trackin
 :::{note}
 Tracking is always done at the participant-session level, no matter the value of `"ANALYSIS_LEVEL"` in `config.json`.
 
-The tracked paths are expected to be relative to {{dpath_pipeline_output}}.'
+The tracked paths are expected to be relative to {{dpath_pipeline_output}}.
 
 Assuming a participant ID `001` and session ID `A`, the template strings will resolve to:
 

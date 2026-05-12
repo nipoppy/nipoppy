@@ -42,11 +42,11 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
             "Analysis level of the pipeline step. This controls the granularity of "
             "the loop over subjects and sessions during pipeline runs. "
             "By default, pipeline runners will "
-            "loop over all subjects and sessions, but this field field can be set to "
-            f'"{AnalysisLevelType.participant}" to loop over subjects only, '
-            f'"{AnalysisLevelType.session}" to loop over sessions only, '
-            f"and {AnalysisLevelType.group} to only run the pipeline a single time. "
-            "Note: for processing pipelines, this does not control the level at which "
+            "loop over all subjects and sessions, but this field can be set to "
+            f'"{AnalysisLevelType.participant.value}" to loop over subjects only, '
+            f'"{AnalysisLevelType.session.value}" to loop over sessions only, and '
+            f'"{AnalysisLevelType.group.value}" to only run the pipeline a single time.'
+            " Note: for processing pipelines, this does not control the level at which "
             "tracking is done; "
             "tracking will always be done at the participant-session level."
         ),
