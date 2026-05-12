@@ -1,5 +1,5 @@
 # See https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
-name: Documentation issue
+name: Documentation
 
 description: Report an issue or suggest improvements to the documentation
 
@@ -22,8 +22,8 @@ body:
 
   - type: textarea
     attributes:
-      label: documentation
-      description: Missing or unclear documentation
+      label: Documentation
+      description: Detail the missing or unclear documentation.
       placeholder: Tell us more.
     validations:
       required: true
