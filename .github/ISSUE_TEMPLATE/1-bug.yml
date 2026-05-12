@@ -1,0 +1,49 @@
+name: Bug report
+
+# See the GitHub documentation to help you create / update this form
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+
+description: Fill in this template to report a bug
+
+title: "[BUG] "
+
+labels: ["T.0 - Bug"]
+
+type: "Bug"
+
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description:
+        Please search to see if an issue already exists for the bug you
+        encountered.
+      options:
+        - label: I have searched the existing issues
+      validations:
+        required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: |
+        A clear and concise description of what the bug is.
+
+        Attach screenshots or log files if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: To reproduce
+      description: Steps to reproduce the behavior
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Environment"
+      placeholder: |
+        - Nipoppy version:
+        - Operating system:
+        - Python version:
