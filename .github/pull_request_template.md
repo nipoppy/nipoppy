@@ -2,6 +2,7 @@
 
 <!-- Add issue number -->
 - Closes #
+<!-- - Related to # -->
 
 <!-- Summarize proposed changes below -->
 ## Changes
