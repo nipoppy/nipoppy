@@ -17,33 +17,6 @@ BUG_REPORT_URL = (
 DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
 
 
-def _log_known_error(exception: NipoppyError) -> None:
-    """Log known Nipoppy errors with actionable guidance."""
-    logger.error(exception)
-    hint = exception.troubleshooting_hint
-    if hint:
-        logger.warning(f"Suggested fix: {hint}")
-
-
-def _log_validation_error(exception: ValidationError) -> None:
-    """Log pydantic validation errors with actionable guidance."""
-    logger.error(exception)
-    logger.warning(
-        "Suggested fix: Review your configuration fields and value types, then "
-        "rerun once all validation errors are resolved."
-    )
-
-
-def _log_unexpected_error() -> None:
-    """Log unexpected errors and direct users to support channels."""
-    logger.exception("Unexpected error occurred")
-    logger.warning(
-        "This failure was unexpected. Please report it with the command you ran "
-        f"and relevant logs on GitHub: {BUG_REPORT_URL} or ask on Discord: "
-        f"{DISCORD_URL}"
-    )
-
-
 # TODO once logger is extracted from the workflows, we could remove the `workflow`
 # parameter and use as a standalone context manager
 @contextmanager
@@ -53,16 +26,28 @@ def exception_handler(workflow):
         yield workflow
     except NipoppyError as e:
         workflow.return_code = e.code
-        _log_known_error(e)
+        logger.error(e)
+        hint = e.troubleshooting_hint
+        if hint:
+            logger.info(f"Suggested fix: {hint}")
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
-        _log_validation_error(e)
+        logger.error(e)
+        logger.info(
+            "Suggested fix: Review your configuration fields and value types, then "
+            "rerun once all validation errors are resolved."
+        )
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
-        _log_unexpected_error()
+        logger.exception("Unexpected error occurred")
+        logger.info(
+            "This failure was unexpected. Please report it with the command you ran "
+            f"and relevant logs on GitHub: {BUG_REPORT_URL} or ask on Discord: "
+            f"{DISCORD_URL}"
+        )
     finally:
         sys.exit(workflow.return_code)
 
