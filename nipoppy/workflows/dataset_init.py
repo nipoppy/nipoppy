@@ -34,7 +34,7 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_MANIFEST,
     process_template_str,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow, _save_tabular_file
+from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
 
@@ -320,8 +320,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
-        _save_tabular_file(
-            manifest, self.study.layout.fpath_manifest, dry_run=self.dry_run
+        manifest.save_with_backup(
+            self.study.layout.fpath_manifest, dry_run=self.dry_run
         )
 
     def run_cleanup(self):

@@ -47,9 +47,10 @@ includehidden:
 titlesonly:
 caption: Tutorials
 ---
+tutorials/dcm2bids/index
 tutorials/mriqc_from_bids/index
+Video series<tutorials/videos/index>
 tutorials/integrations/index
-tutorials/videos/index
 ```
 
 ```{toctree}
@@ -60,7 +61,9 @@ titlesonly:
 caption: Explanations
 ---
 explanations/study_spec
+explanations/recruitment
 explanations/manifest
+explanations/idp_spec
 ```
 
 ```{toctree}

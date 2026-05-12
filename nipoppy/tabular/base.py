@@ -15,7 +15,10 @@ from typing_extensions import Self
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import TabularError
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import save_df_with_backup
+
+logger = get_logger()
 
 
 class BaseTabularModel(BaseModel):
@@ -258,8 +261,10 @@ class BaseTabular(pd.DataFrame, ABC):
                 if sort:
                     tabular_old = tabular_old.sort_values()
                 if tabular_new.equals(tabular_old):
+                    logger.info(f"No changes to file at {fpath_symlink}")
                     return None
-        return save_df_with_backup(
+
+        fpath_backup = save_df_with_backup(
             tabular_new,
             fpath_symlink=fpath_symlink,
             dname_backups=dname_backups,
@@ -267,6 +272,9 @@ class BaseTabular(pd.DataFrame, ABC):
             dry_run=dry_run,
             sep=self.sep,
         )
+
+        logger.info(f"Saved to {fpath_symlink} (-> {fpath_backup})")
+        return fpath_backup
 
     def equals(self, other: object) -> bool:
         """Check if two dataframes are equal."""

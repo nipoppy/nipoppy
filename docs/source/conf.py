@@ -158,6 +158,7 @@ myst_substitutions = {
     "dpath_containers": f"`{DEFAULT_LAYOUT_INFO.dpath_containers}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
+    "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
     "dpath_src_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_src_tabular}`",
     "dpath_src_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_src_imaging}`",
     "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
@@ -233,6 +234,7 @@ nitpick_ignore = [
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
+    ("py:class", "httpx.Client"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------

@@ -1,5 +1,6 @@
 """DICOM file organization."""
 
+import hashlib
 import os
 from pathlib import Path
 from typing import Optional
@@ -15,7 +16,9 @@ from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow, _save_tabular_file
+from nipoppy.workflows.base import BaseDatasetWorkflow
+
+HASH_LENGTH = 7
 
 logger = get_logger()
 
@@ -91,11 +94,15 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         """
         Apply a mapping from the original (full) file path to destination file name.
 
-        This method does not change the file name by default, but it can be overridden
-        if the file names need to be changed during reorganization (e.g. for easier
-        BIDS conversion).
+        Prepend a short hash of the path to avoid filename collisions across
+        DICOM series, while ensuring short filenames in nested directory structures.
         """
-        return Path(fpath_source).name
+        fpath_source = Path(fpath_source)
+        hash_prefix = hashlib.md5(str(fpath_source.parent).encode("UTF-8")).hexdigest()[
+            :HASH_LENGTH
+        ]
+
+        return f"{hash_prefix}_{fpath_source.name}"
 
     def run_single(self, participant_id: str, session_id: str):
         """Reorganize downloaded DICOM files for a single participant and session."""
@@ -206,8 +213,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         - Write updated curation status file
         - Log a summary message
         """
-        _save_tabular_file(
-            self.curation_status_table,
+        self.curation_status_table.save_with_backup(
             self.study.layout.fpath_curation_status,
             dry_run=self.dry_run,
         )
