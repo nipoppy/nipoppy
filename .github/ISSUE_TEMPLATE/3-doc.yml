@@ -17,8 +17,8 @@ body:
         Please search to see if a similar issue already exists.
       options:
         - label: I have searched the existing issues
-      validations:
-          required: true
+    validations:
+      required: true
 
   - type: textarea
     attributes:
