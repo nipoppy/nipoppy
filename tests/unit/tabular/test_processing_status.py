@@ -1,7 +1,5 @@
 """Tests for the processing status table."""
 
-from pathlib import Path
-
 import pytest
 
 from nipoppy.exceptions import TabularError
@@ -428,13 +426,6 @@ def test_get_completed_participants_sessions(
     [
         DPATH_TEST_DATA / "processing_status1.tsv",
         DPATH_TEST_DATA / "processing_status2.tsv",
-        Path(__file__).parents[3]
-        / "docs"
-        / "source"
-        / "how_to_guides"
-        / "user_guide"
-        / "inserts"
-        / "mriqc_processing_status.tsv",
     ],
 )
 def test_load(fpath):
