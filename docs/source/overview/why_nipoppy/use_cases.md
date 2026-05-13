@@ -19,7 +19,7 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
 
 | Task | Starting point | End goal | Related resources |
 |:-------|:------------------------------------------------------------------------|:--|:--|
-| Standardize acquired imaging scans | Source images (e.g. DICOMs) with an expected list of participants | Curate BIDSified dataset and assert multimodal data availability | [BIDS](https://bids.neuroimaging.io/) and [BIDSification tools](../../how_to_guides/user_guide/bids_conversion.md) |
+| Standardize acquired imaging scans | Source images (e.g. DICOMs) with an expected list of participants | Curate BIDSified dataset and assert multimodal data availability | [BIDS](https://bids.neuroimaging.io/) and BIDSification tools |
 
 **Tabular Data Curation** (_under development_)
 
