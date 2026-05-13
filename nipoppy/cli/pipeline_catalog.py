@@ -16,11 +16,7 @@ from nipoppy.cli.options import (
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.zenodo_api import ZenodoAPI
 
-try:
-    from nipoppy.telemetry import track_command
-except ImportError:
-    def track_command(name):
-        return lambda f: f
+from nipoppy.telemetry import track_command
 
 
 @click.group(

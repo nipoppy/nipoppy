@@ -293,4 +293,3 @@ class Config(_SchemaWithContainerConfig):
             config_dict[substitutions_key] = substitutions
         config = cls(**config_dict)
         return config
-
