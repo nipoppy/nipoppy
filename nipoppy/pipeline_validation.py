@@ -182,6 +182,7 @@ def _check_pipeline_files(
     pipeline_config: BasePipelineConfig,
     dpath_bundle: StrOrPathLike,
     *,
+    strict: bool = False,
     log_level: int = logging.DEBUG,
 ) -> list[Path]:
     """
@@ -194,6 +195,8 @@ def _check_pipeline_files(
     - the HPC config file (if present)
     - the tracker config file (if present and pipeline is a processing pipeline)
     - the PyBIDS ignore patterns file (if present and pipeline is a processing pipeline)
+
+    If strict is True, raise error instead of warning in descriptor check.
 
     Also, collect all file paths for these files for further checks.
     """
@@ -211,7 +214,7 @@ def _check_pipeline_files(
                 msg=f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}",
             )
             fpath_descriptor = dpath_bundle / step.DESCRIPTOR_FILE
-            descriptor_str = _check_descriptor_file(fpath_descriptor)
+            descriptor_str = _check_descriptor_file(fpath_descriptor, strict=strict)
             fpaths.append(fpath_descriptor)
 
             if step.INVOCATION_FILE is not None:
@@ -284,9 +287,13 @@ def _check_no_subdirectories(dpath_bundle: StrOrPathLike):
 
 
 def check_pipeline_bundle(
-    dpath_bundle: StrOrPathLike, log_level: int = logging.DEBUG
+    dpath_bundle: StrOrPathLike, log_level: int = logging.DEBUG, strict: bool = False
 ) -> BasePipelineConfig:
-    """Load a pipeline bundle's main configuration file and validate it."""
+    """
+    Load a pipeline bundle's main configuration file and validate it.
+
+    If strict is True, raise error instead of warning in descriptor check.
+    """
     dpath_bundle = Path(dpath_bundle).resolve()
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
 
@@ -294,7 +301,9 @@ def check_pipeline_bundle(
     config = _load_pipeline_config_file(fpath_config)
 
     # core file content validation
-    fpaths = _check_pipeline_files(config, dpath_bundle, log_level=log_level)
+    fpaths = _check_pipeline_files(
+        config, dpath_bundle, log_level=log_level, strict=strict
+    )
 
     # make sure that all files are within the bundle directory
     _check_self_contained(dpath_bundle, fpaths)
