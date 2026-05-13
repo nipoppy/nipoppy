@@ -27,17 +27,23 @@ Pipeline configuration files
 
 Here are the schemas for the ``config.json`` files in pipeline configuration directories.
 
+.. _bidsification-pipeline-config-schema:
+
 BIDSification pipelines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. jsonschema:: bids_pipeline.json
     :lift_title: False
 
+.. _processing-pipeline-config-schema:
+
 Processing pipelines
 ~~~~~~~~~~~~~~~~~~~~
 
 .. jsonschema:: proc_pipeline.json
     :lift_title: False
+
+.. _extraction-pipeline-config-schema:
 
 Extraction pipelines
 ~~~~~~~~~~~~~~~~~~~~
