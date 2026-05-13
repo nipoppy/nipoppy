@@ -63,7 +63,9 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
     return config
 
 
-def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
+def _check_descriptor_file(
+    fpath_descriptor: StrOrPathLike, strict: bool = False
+) -> None:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
     if not fpath_descriptor.exists():
@@ -83,11 +85,18 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
         )
 
     if TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is not None:
-        logger.warning(
-            f"Descriptor file {fpath_descriptor} contains Nipoppy-specific template "
-            "variables. Consider updating this file as this will no longer be "
-            "supported in future versions."
-        )
+        error_message = f"Descriptor file {fpath_descriptor} contains Nipoppy-specific template variables. "  # noqa E501
+        if strict:
+            raise ConfigError(
+                error_message
+                + 'Please remove these variables, add a "container-image" field, and update "command-line" to include the pipeline executable. '  # noqa E501
+                + "See example here: https://zenodo.org/records/16876772?preview_file=descriptor.json."  # noqa E501
+            )
+        else:
+            logger.warning(
+                error_message
+                + "Consider updating this file as it will no longer be supported in a future version of Nipoppy."  # noqa E501
+            )
 
     return descriptor_str
 

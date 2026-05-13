@@ -91,7 +91,7 @@ def test_check_descriptor_file(caplog: pytest.LogCaptureFixture):
     assert len(caplog.records) == 0
 
 
-def test_check_descriptor_file_warning(caplog: pytest.LogCaptureFixture):
+def test_check_descriptor_file_deprecation_warning(caplog: pytest.LogCaptureFixture):
 
     _check_descriptor_file(DPATH_TEST_DATA / "descriptor-deprecated.json")
 
@@ -102,6 +102,17 @@ def test_check_descriptor_file_warning(caplog: pytest.LogCaptureFixture):
             for record in caplog.records
         ]
     )
+
+
+def test_check_descriptor_file_deprecation_error():
+
+    with pytest.raises(
+        ConfigError,
+        match="Descriptor file .* contains Nipoppy-specific template variables",
+    ):
+        _check_descriptor_file(
+            DPATH_TEST_DATA / "descriptor-deprecated.json", strict=True
+        )
 
 
 @pytest.mark.parametrize(
