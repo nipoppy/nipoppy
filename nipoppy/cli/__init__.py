@@ -11,6 +11,11 @@ from nipoppy.logger import get_logger
 
 logger = get_logger()
 
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
 
 # TODO once logger is extracted from the workflows, we could remove the `workflow`
 # parameter and use as a standalone context manager
@@ -22,18 +27,26 @@ def exception_handler(workflow):
     except NipoppyError as e:
         workflow.return_code = e.code
         logger.error(e)
+        hint = e.troubleshooting_hint
+        if hint:
+            logger.info(f"Suggested fix: {hint}")
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
         logger.error(e)
+        logger.info(
+            "Suggested fix: Review your configuration fields and value types, then "
+            "rerun once all validation errors are resolved."
+        )
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
         logger.exception("Unexpected error occurred")
-        logger.warning(
-            "You can report this issue on GitHub at https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"  # noqa:E501
-            " or on our Discord server at https://discord.gg/2VMKFRpjkm"
+        logger.info(
+            "This failure was unexpected. Please report it with the command you ran "
+            f"and relevant logs on GitHub: {BUG_REPORT_URL} or ask on Discord: "
+            f"{DISCORD_URL}"
         )
     finally:
         sys.exit(workflow.return_code)
