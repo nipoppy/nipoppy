@@ -28,7 +28,7 @@ def workflow(mocker: pytest_mock.MockerFixture):
     return workflow
 
 
-def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture):
+def test_run_main(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture):
     metadata = {"metadata": {}}
     get_pipeline_metadata = mocker.patch.object(
         workflow, "_get_pipeline_metadata", return_value=metadata
@@ -48,7 +48,7 @@ def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixt
         default_preview_filename=DatasetLayout.fname_pipeline_config,
     )
     get_pipeline_metadata.assert_called_once()
-    validator.assert_called_once()
+    validator.assert_called_once_with(TEST_PIPELINE, strict=True)
 
 
 def test_get_pipeline_metadata(

@@ -89,7 +89,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         # Safeguard before uploading
         try:
-            pipeline_config = check_pipeline_bundle(pipeline_dir)
+            pipeline_config = check_pipeline_bundle(pipeline_dir, strict=True)
         except Exception as e:
             logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"
