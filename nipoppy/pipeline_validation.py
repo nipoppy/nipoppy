@@ -65,7 +65,7 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
 
 def _check_descriptor_file(
     fpath_descriptor: StrOrPathLike, strict: bool = False
-) -> None:
+) -> str:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
     if not fpath_descriptor.exists():
