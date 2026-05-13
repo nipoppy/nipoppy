@@ -21,6 +21,8 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 
+from nipoppy.exceptions import ReturnCode
+
 
 # Module-level state (initialized once)
 _METER: Optional[metrics.Meter] = None
@@ -152,14 +154,6 @@ def _create_metric_instruments(meter: metrics.Meter) -> Dict:
         Dictionary of metric instruments
     """
     return {
-        # Track which commands are executed and how often
-        # Attributes: command (init, reorg, bidsify, process, etc.)
-        "commands_executed": meter.create_counter(
-            name="commands.executed",
-            description="Number of Nipoppy commands executed",
-            unit="commands",
-        ),
-
         # Track command outcomes (success, partial, failure)
         # Attributes: command, status, return_code
         "commands_completed": meter.create_counter(
@@ -196,3 +190,30 @@ def is_telemetry_enabled() -> bool:
         True if telemetry is active, False otherwise
     """
     return _METRICS is not None
+
+
+def record_command_completion(command_name: str, return_code: int) -> None:
+    """Emit a commands_completed metric. Fail-safe — never raises."""
+    try:
+        metrics_dict = get_metrics()
+        if metrics_dict is None:
+            return
+        if return_code == ReturnCode.SUCCESS:
+            status = "success"
+        elif return_code in (
+            ReturnCode.PARTIAL_SUCCESS,
+            ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN,
+        ):
+            status = "partial"
+        else:
+            status = "failure"
+        metrics_dict["commands_completed"].add(
+            1,
+            attributes={
+                "command": command_name,
+                "status": status,
+                "return_code": str(int(return_code)),
+            },
+        )
+    except Exception:
+        pass

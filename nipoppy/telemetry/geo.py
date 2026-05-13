@@ -1,36 +1,25 @@
 """
 Geographic location tracking.
 
-Performs a one-time GeoIP lookup during `nipoppy init` and records the
-country code as a telemetry metric.
+Performs a GeoIP lookup and records the country code as a telemetry metric.
 """
 
-try:
-    import requests
-    _REQUESTS_AVAILABLE = True
-except ImportError:
-    _REQUESTS_AVAILABLE = False
+import httpx
 
 
 def get_user_country() -> str:
     """
     Get the user's country code from their public IP address.
 
-    Called once during dataset initialization. Returns a two-letter ISO
-    country code (e.g. "US", "CA", "IN") or "UNKNOWN" on any failure.
+    Returns a two-letter ISO country code (e.g. "US", "CA", "IN") or
+    "UNKNOWN" on any failure.
     """
-    if not _REQUESTS_AVAILABLE:
-        return "UNKNOWN"
-
     try:
-        # Step 1: Get public IP
-        ip_response = requests.get('https://api.ipify.org', timeout=5)
+        ip_response = httpx.get('https://api.ipify.org', timeout=5)
         ip_response.raise_for_status()
         public_ip = ip_response.text.strip()
 
-        # Step 2: Resolve country via db-ip.com
-        # Example response: {"countryCode": "IN", "countryName": "India", ...}
-        response = requests.get(f'https://api.db-ip.com/v2/free/{public_ip}', timeout=5)
+        response = httpx.get(f'https://api.db-ip.com/v2/free/{public_ip}', timeout=5)
         response.raise_for_status()
         data = response.json()
 

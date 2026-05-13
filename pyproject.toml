@@ -31,8 +31,7 @@ dependencies = [
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.20.0",
-    # GeoIP for location tracking (optional)
-    "requests",
+
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }

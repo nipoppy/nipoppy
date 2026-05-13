@@ -10,12 +10,14 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional, Sequence
 
+from nipoppy._version import __version__
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, StrOrPathLike
 from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
+from nipoppy.telemetry.metrics import initialize_telemetry, record_command_completion
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
@@ -183,9 +185,16 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        self.run_setup()
-        self.run_main()
-        self.run_cleanup()
+        initialize_telemetry(service_version=__version__)
+        try:
+            self.run_setup()
+            self.run_main()
+            self.run_cleanup()
+        except Exception:
+            self.return_code = ReturnCode.UNKNOWN_FAILURE
+            raise
+        finally:
+            record_command_completion(self.name, self.return_code)
 
     def copy_template(self, path_source, path_dest, **template_kwargs):
         """Copy a file with template substitution.

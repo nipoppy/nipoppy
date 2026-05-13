@@ -12,6 +12,7 @@
 # Prometheus scrapes the CUMULATIVE value and sum() gives the correct total.
 # State is in-memory in the collector (resets on collector restart).
 
+#ref: https://oneuptime.com/blog/post/2026-02-06-delta-to-cumulative-processor-opentelemetry-collector/view
 receivers:
   otlp:
     protocols:
