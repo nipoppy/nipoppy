@@ -1,29 +1,10 @@
-```{attention}
-This is the **legacy** user guide and may contain information that is out-of-date.
-```
+# The global configuration file
 
-# Understanding the global configuration file
-
-This guide goes over [required/optional fields](#fields-in-the-global-configuration-file) in the global configuration file. It also includes some notes on [substitution and template string replacement logic](#substitutions-and-template-string-replacements) in {term}`JSON` configuration files.
+This guide goes over required/optional fields in the global configuration file. It also includes some notes on [substitution and template string replacement logic](#substitutions-and-template-string-replacements) in {term}`JSON` configuration files.
 
 See {ref}`here<config-schema>` for the auto-generated schema for the global configuration file.
 
 ## Fields in the global configuration file
-
-### Dataset information
-
-Fields containing general information about the dataset.
-
-```{glossary}
-`DATASET_NAME`
-    **Required** -- The name of the dataset, for documentation purposes.
-
-`VISITS`
-    **Required** -- List of unique {term}`visit IDs <Visit ID>` in the manifest. The Nipoppy CLI will raise an error if the manifest contains visits that are not in this list.
-
-`SESSIONS`
-    List of unique BIDS-compliant {term}`session IDs <Session ID>` (labels) in the manifest. If not specified, this will be inferred to be the same as the visits. The Nipoppy CLI will raise an error if the manifest contains sessions that are not in this list.
-```
 
 ### Imaging data organization
 
@@ -35,7 +16,7 @@ By default, BIDS prefixes (i.e., `sub-` and `ses-`) are not expected in {{dpath_
 
 ```{glossary}
 `DICOM_DIR_PARTICIPANT_FIRST`
-    Can be set to `false` to indicate that the data is organized in subdirectories following the {{dpath_pre_reorg}}`/<SESSION_ID>/<PARTICIPANT_ID>` pattern. Otherwise, setting to `true` is equivalent to the default (files in `{{dpath_pre_reorg}}/<PARTICIPANT_ID>/<SESSION_ID>` directories).
+    Can be set to `false` to indicate that the data is organized in subdirectories following the {{dpath_pre_reorg}}`/<SESSION_ID>/<PARTICIPANT_ID>` pattern. Otherwise, setting to `true` is equivalent to the default (files in {{dpath_pre_reorg}}`/<PARTICIPANT_ID>/<SESSION_ID>` directories).
 
 `DICOM_DIR_MAP_FILE`
     Explicit mapping file for more custom directory names. See {ref}`here <dicom-dir-map-example>` for an example and {ref}`here <dicom-dir-map-schema>` for the auto-generated schema.
@@ -43,7 +24,7 @@ By default, BIDS prefixes (i.e., `sub-` and `ses-`) are not expected in {{dpath_
 
 ### Imaging data processing
 
-Fields for configuring image processing pipelines and container runtimes.
+Fields for configuring image processing pipelines, container runtimes and high-performance computing jobs.
 
 ```{glossary}
 `CONTAINER_CONFIG`
@@ -51,15 +32,11 @@ Fields for configuring image processing pipelines and container runtimes.
 
     The configuration options include the command to call the container executable, command-line arguments, and environment variables. See [here](<config-schema>) for the auto-generated schema.
 
-`PROC_PIPELINES`
-    **Required** -- A list of configurations for the pipelines to be run on the dataset. See the [auto-generated schemas](<config-schema>) for pipeline configurations and pipeline step configurations for more information.
+`HPC_PREAMBLE`
+    Command(s) to include at the top of the {term}`HPC` job submission file
 
-    Each pipeline must be uniquely identifiable by its name-version combination. Each pipeline is typically associated with a container image file. A pipeline can have multiple steps, each with its own Boutiques descriptor and invocation files (which are still using the same container).
-
-    Both pipeline configurations and pipeline step configurations can have their own container configuration, similar to the {term}`root-level container configuration <CONTAINER_CONFIG>`. By default, these container configurations will be propagated (root -> pipeline -> pipeline step), but this can be disabled by setting `INHERIT` to `false` in a child container configuration.
-
-`BIDS_PIPELINES`
-    A list of pipeline configurations for the BIDS converters to be run on the dataset. Note that these have exactly the same fields as the configurations in {term}`PROC_PIPELINES`, though not all fields are relevant for BIDS conversion (e.g., `PYBIDS_IGNORE_FILE` can be set but will never be used).
+`PIPELINE_VARIABLES`
+    Dataset-specific configurations for individual pipelines. This section is populated as needed when new pipelines are installed.
 ```
 
 ### Other
