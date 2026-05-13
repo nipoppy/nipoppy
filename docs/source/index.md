@@ -93,6 +93,7 @@ includehidden:
 titlesonly:
 caption: Reference
 ---
+config
 cli_reference/index
 autoapi/index
 schemas/index
