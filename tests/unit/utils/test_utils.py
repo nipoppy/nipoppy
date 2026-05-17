@@ -7,7 +7,7 @@ from typing import Optional
 import pandas as pd
 import pytest
 
-from nipoppy.exceptions import NipoppyError
+from nipoppy.exceptions import ConfigError, NipoppyError
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils.utils import (
     add_path_suffix,
@@ -202,6 +202,11 @@ def test_process_template_str_error_replace():
 )
 def test_apply_substitutions_to_json(json_obj, substitutions, expected_output):
     assert apply_substitutions_to_json(json_obj, substitutions) == expected_output
+
+
+def test_apply_substitutions_to_json_invalid_value():
+    with pytest.raises(ConfigError, match="Substitution target must be a string"):
+        apply_substitutions_to_json({"key1": "TO_REPLACE"}, {"TO_REPLACE": None})
 
 
 @pytest.mark.parametrize(
