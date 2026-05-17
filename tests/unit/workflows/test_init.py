@@ -192,12 +192,14 @@ def test_init_twice_force(workflow: InitWorkflow):
 
 def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
     workflow.container_store = tmp_path / "container_store"
+    workflow.container_store.mkdir()
+    workflow.dpath_root.mkdir()
     workflow._handle_container_store()
 
     assert workflow.study.layout.dpath_containers.is_symlink()
     assert (
         workflow.study.layout.dpath_containers.resolve()
-        == workflow.containers_dir.resolve()
+        == workflow.container_store.resolve()
     )
 
 
