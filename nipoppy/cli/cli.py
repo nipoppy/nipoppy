@@ -41,6 +41,8 @@ click.rich_click.OPTION_GROUPS = {
                 "--pipeline-step",
                 "--bids-source",
                 "--mode",
+                "--container-store",
+                "--force",
                 "--empty",
                 "--copy-files",
                 "--check-dicoms",
@@ -118,21 +120,27 @@ if cli.commands.get("gui"):
     help="Path to a BIDS dataset to initialize the layout with.",
 )
 @click.option(
-    "--force",
-    "-f",
-    is_flag=True,
-    help=(
-        "Create a nipoppy dataset even if there are already files present"
-        " (may clobber existing files)."
-    ),
-)
-@click.option(
     "--mode",
     type=click.Choice(["copy", "move", "symlink"]),
     default="symlink",
     show_default=True,
     help=(
         "If using a BIDS source, specify whether to copy, move, or symlink the files."
+    ),
+)
+@click.option(
+    "--container-store",
+    type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
+    help="Path to an existing (shared) directory for container image files.",
+    envvar="NIPOPPY_CONTAINER_STORE",
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help=(
+        "Create the dataset even if there are already files present"
+        " (may clobber existing files)."
     ),
 )
 @global_options
