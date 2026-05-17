@@ -12,7 +12,7 @@ import pytest_mock
 from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
@@ -399,6 +399,21 @@ def test_init_bids_dry_run(workflow: InitWorkflow, fake_bids_root: Path):
     workflow.run()
 
     assert not dpath_root.exists()
+
+
+def test_manifest_from_bids_dataset_empty_source_raises_workflow_error(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+):
+    """Empty BIDS source should fail instead of writing an empty manifest."""
+    bids_to_copy = tmp_path / "bids"
+    bids_to_copy.mkdir()
+
+    workflow.bids_source = bids_to_copy
+    workflow.handle_bids_source()
+
+    with pytest.raises(WorkflowError, match="No subjects found in the BIDS source"):
+        workflow._init_manifest_from_bids_dataset()
 
 
 @pytest.mark.no_xdist
