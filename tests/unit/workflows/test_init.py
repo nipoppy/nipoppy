@@ -183,6 +183,19 @@ def test_init_twice_force(workflow: InitWorkflow):
     _assert_layout_creation(workflow)
 
 
+def test_run_main_container_store(
+    workflow: InitWorkflow, tmp_path: Path, mocker: pytest_mock.MockerFixture
+):
+    workflow.container_store = tmp_path / "container_store"
+
+    mocked = mocker.patch.object(
+        workflow, "_handle_container_store", wraps=workflow._handle_container_store
+    )
+
+    workflow.run_main()
+    mocked.assert_called_once()
+
+
 def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
     workflow.container_store = tmp_path / "container_store"
     workflow.container_store.mkdir()
