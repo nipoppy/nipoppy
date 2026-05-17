@@ -104,25 +104,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         Copy default config files.
         Copy HPC config files.
         """
-        # dataset must not already exist
         if self.dpath_root.exists():
-            try:
-                filenames = [
-                    f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
-                ]
-            except NotADirectoryError:
-                raise FileOperationError(
-                    f"Dataset is an existing file: {self.dpath_root}"
-                )
-
-            if len(filenames) > 0:
-                msg = f"Dataset directory is non-empty: {self.dpath_root}"
-                if self.force:
-                    logger.warning(f"{msg} `--force` specified, proceeding anyway.")
-                else:
-                    raise FileOperationError(
-                        f"{msg}, if this is intended consider using the --force flag."
-                    )
+            self._check_if_existing_root_is_allowed()
 
         # create directories
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
@@ -194,6 +177,23 @@ class InitWorkflow(BaseDatasetWorkflow):
             f"{self.study.layout.fpath_config} and {self.study.layout.fpath_manifest} "
             "respectively. They should be edited to match your dataset"
         )
+
+    def _check_if_existing_root_is_allowed(self) -> None:
+        try:
+            filenames = [f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"]
+        except NotADirectoryError:
+            raise FileOperationError(
+                f"Study root path is an existing file: {self.dpath_root}"
+            )
+
+        if len(filenames) > 0:
+            msg = f"Study root directory is non-empty: {self.dpath_root}"
+            if self.force:
+                logger.warning(f"{msg} `--force` specified, proceeding anyway.")
+            else:
+                raise FileOperationError(
+                    f"{msg}. If this is intended, consider using the --force flag."
+                )
 
     def handle_bids_source(self) -> None:
         """Create bids source directory.
