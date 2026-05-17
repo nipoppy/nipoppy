@@ -205,7 +205,7 @@ def test_apply_substitutions_to_json(json_obj, substitutions, expected_output):
 
 
 def test_apply_substitutions_to_json_invalid_value():
-    with pytest.raises(ConfigError, match="Substitution target must be a string"):
+    with pytest.raises(ConfigError, match="Substitution value must be a string"):
         apply_substitutions_to_json({"key1": "TO_REPLACE"}, {"TO_REPLACE": None})
 
 

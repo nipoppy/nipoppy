@@ -251,7 +251,7 @@ def apply_substitutions_to_json(
     for key, value in substitutions.items():
         if not isinstance(value, str):
             raise ConfigError(
-                f"Substitution target must be a string, got {type(value)} for key '{key}'"  # noqa: E501
+                f"Substitution value must be a string, got {type(value)} for key '{key}'"  # noqa: E501
             )
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
