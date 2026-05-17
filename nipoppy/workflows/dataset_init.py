@@ -75,6 +75,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         bids_source=None,
         mode="symlink",
         force=False,
+        container_store: StrOrPathLike | None = None,
         fpath_layout: Optional[StrOrPathLike] = None,
         verbose: bool = False,
         dry_run: bool = False,
@@ -93,6 +94,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.bids_source = bids_source
         self.mode = mode
         self.force = force
+        self.container_store = container_store
 
     def run_main(self):
         """Create dataset directory structure.
@@ -127,6 +129,11 @@ class InitWorkflow(BaseDatasetWorkflow):
         for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
             if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
                 self.handle_bids_source()
+            elif (
+                self.container_store is not None
+                and dpath == self.study.layout.dpath_containers
+            ):
+                self._handle_container_store()
             else:
                 fileops.mkdir(dpath, dry_run=self.dry_run)
 
@@ -210,6 +217,13 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.symlink(self.bids_source, dpath, dry_run=self.dry_run)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
+
+    def _handle_container_store(self) -> None:
+        fileops.symlink(
+            self.container_store,
+            self.study.layout.dpath_containers,
+            dry_run=self.dry_run,
+        )
 
     def _write_readmes(self) -> None:
         if self.dry_run:

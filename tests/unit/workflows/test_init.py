@@ -190,6 +190,17 @@ def test_init_twice_force(workflow: InitWorkflow):
     assert_layout_creation(workflow, dpath_root)
 
 
+def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
+    workflow.container_store = tmp_path / "container_store"
+    workflow._handle_container_store()
+
+    assert workflow.study.layout.dpath_containers.is_symlink()
+    assert (
+        workflow.study.layout.dpath_containers.resolve()
+        == workflow.containers_dir.resolve()
+    )
+
+
 def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
     """Test --force with --bids-source when BIDS directory already exists."""
     # Create target with existing bids directory
