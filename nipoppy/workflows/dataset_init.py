@@ -264,7 +264,8 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         if not bids_participant_ids:
             raise WorkflowError(
-                "No subjects found in the BIDS source; generated manifest would be empty."
+                "No subjects found in the BIDS source; "
+                "generated manifest would be empty."
             )
 
         for bids_participant_id in bids_participant_ids:
