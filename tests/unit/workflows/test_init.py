@@ -102,14 +102,7 @@ def _assert_manifest_creation(
     assert workflow.study.manifest[Manifest.col_datatype].to_list() == datatypes
 
 
-def exist_or_none(o: object, s: str) -> bool:
-    # walrus operator ":=" does assignment inside the "if" statement
-    if attr := getattr(o, s, None):
-        return attr.exists()
-    return True
-
-
-def assert_layout_creation(workflow):
+def _assert_layout_creation(workflow):
     # check that all directories have been created (using layout-aware paths)
     for dpath in workflow.study.layout.get_paths(directory=True, include_optional=True):
         assert dpath.exists(), f"Expected directory not found: {dpath}"
@@ -151,7 +144,7 @@ def assert_layout_creation(workflow):
 def test_run(workflow: InitWorkflow):
     workflow.run()
 
-    assert_layout_creation(workflow)
+    _assert_layout_creation(workflow)
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
@@ -160,7 +153,7 @@ def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
 
     workflow.run()
 
-    assert_layout_creation(workflow)
+    _assert_layout_creation(workflow)
 
 
 def test_non_empty_dir(workflow: InitWorkflow, dpath_root: Path):
@@ -187,7 +180,7 @@ def test_init_twice_force(workflow: InitWorkflow):
     workflow.force = True
     workflow.run()
 
-    assert_layout_creation(workflow)
+    _assert_layout_creation(workflow)
 
 
 def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
@@ -340,7 +333,7 @@ def test_init_bids(
 
     workflow.run()
 
-    assert_layout_creation(workflow)
+    _assert_layout_creation(workflow)
     _assert_manifest_creation(workflow)
     mocked_handle_bids_source.assert_called_once()
 
