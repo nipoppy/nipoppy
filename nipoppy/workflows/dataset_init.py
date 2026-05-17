@@ -111,7 +111,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
         for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
             if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
-                self.handle_bids_source()
+                self._handle_bids_source()
             elif (
                 self.container_store is not None
                 and dpath == self.study.layout.dpath_containers
@@ -195,7 +195,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                     f"{msg}. If this is intended, consider using the --force flag."
                 )
 
-    def handle_bids_source(self) -> None:
+    def _handle_bids_source(self) -> None:
         """Create bids source directory.
 
         Handles copy/move/symlink modes.

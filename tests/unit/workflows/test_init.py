@@ -64,7 +64,7 @@ def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode
     workflow.bids_source = fake_bids_root
     workflow.mode = mode
 
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
 
     source_files_after_init = [
         x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
@@ -212,7 +212,7 @@ def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
     workflow.bids_source = fake_bids_root
     workflow.mode = "copy"
     workflow.force = True
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
 
     # Verify old content was replaced
     assert existing_bids.exists()
@@ -237,7 +237,7 @@ def test_handle_bids_source_force_symlink(
     workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
     workflow.force = True
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
 
     # Verify old symlink was replaced
     assert existing_bids_symlink.is_symlink()
@@ -333,7 +333,7 @@ def test_init_bids(
     workflow.bids_source = fake_bids_root
 
     mocked_handle_bids_source = mocker.patch.object(
-        workflow, "handle_bids_source", wraps=workflow.handle_bids_source
+        workflow, "handle_bids_source", wraps=workflow._handle_bids_source
     )
 
     workflow.run()
@@ -348,7 +348,7 @@ def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root:
     workflow.bids_source = fake_bids_root
     workflow.mode = "invalid"
     with pytest.raises(ValueError, match="Invalid mode: invalid"):
-        workflow.handle_bids_source()
+        workflow._handle_bids_source()
 
 
 def test_handle_bids_source_copy(workflow: InitWorkflow, fake_bids_root: Path):
@@ -432,7 +432,7 @@ def test_manifest_from_bids_dataset_no_sessions(
         datatypes=["anat", "func"],
     )
     workflow.bids_source = bids_to_copy
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
     workflow._init_manifest_from_bids_dataset()
 
     assert (
