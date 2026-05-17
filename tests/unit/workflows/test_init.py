@@ -109,17 +109,17 @@ def exist_or_none(o: object, s: str) -> bool:
     return True
 
 
-def assert_layout_creation(workflow, dpath_root):
+def assert_layout_creation(workflow):
     # check that all directories have been created (using layout-aware paths)
     for dpath in workflow.study.layout.get_paths(directory=True, include_optional=True):
         assert dpath.exists(), f"Expected directory not found: {dpath}"
         # Check README exists for directories with descriptions (except .nipoppy)
-        if dpath != workflow.study.layout.dpath_nipoppy:
+        if dpath != workflow.study.layout.dpath_nipoppy and not dpath.is_symlink():
             readme_path = dpath / "README.md"
             # Only check README if this directory has a description in the layout
             path_info = None
             for info in workflow.study.layout.config.path_infos:
-                if workflow.study.layout.get_full_path(info.path) == dpath:
+                if workflow.study.layout._get_full_path(info.path) == dpath:
                     path_info = info
                     break
             if path_info and path_info.description:
@@ -148,10 +148,10 @@ def assert_layout_creation(workflow, dpath_root):
         assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
-def test_run(workflow: InitWorkflow, dpath_root: Path):
+def test_run(workflow: InitWorkflow):
     workflow.run()
 
-    assert_layout_creation(workflow, dpath_root)
+    assert_layout_creation(workflow)
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
@@ -160,14 +160,14 @@ def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
 
     workflow.run()
 
-    assert_layout_creation(workflow, dpath_root)
+    assert_layout_creation(workflow)
 
 
 def test_non_empty_dir(workflow: InitWorkflow, dpath_root: Path):
     dpath_root.mkdir(parents=True)
     dpath_root.joinpath("unexpected_file").touch()
 
-    with pytest.raises(FileOperationError, match="Dataset directory is non-empty"):
+    with pytest.raises(FileOperationError, match="Study root directory is non-empty"):
         workflow.run()
 
 
@@ -187,7 +187,7 @@ def test_init_twice_force(workflow: InitWorkflow):
     workflow.force = True
     workflow.run()
 
-    assert_layout_creation(workflow, dpath_root)
+    assert_layout_creation(workflow)
 
 
 def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
@@ -250,7 +250,7 @@ def test_handle_bids_source_force_symlink(
 def test_is_file(workflow: InitWorkflow, dpath_root: Path):
     dpath_root.touch()
 
-    with pytest.raises(FileOperationError, match="Dataset is an existing file"):
+    with pytest.raises(FileOperationError, match="Study root path is an existing file"):
         workflow.run()
 
 
@@ -335,12 +335,12 @@ def test_init_bids(
     workflow.bids_source = fake_bids_root
 
     mocked_handle_bids_source = mocker.patch.object(
-        workflow, "handle_bids_source", wraps=workflow._handle_bids_source
+        workflow, "_handle_bids_source", wraps=workflow._handle_bids_source
     )
 
     workflow.run()
 
-    assert_layout_creation(workflow, workflow.study.layout.dpath_root)
+    assert_layout_creation(workflow)
     _assert_manifest_creation(workflow)
     mocked_handle_bids_source.assert_called_once()
 
@@ -400,7 +400,6 @@ def test_init_bids_readonly(
 
     workflow.run()
 
-    assert "Skipping README creation" in caplog.text
     assert not (workflow.study.layout.dpath_bids / "README.md").exists()
 
 

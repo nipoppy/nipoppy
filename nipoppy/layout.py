@@ -277,7 +277,7 @@ class DatasetLayout(Base):
         """Build a full path from a relative path."""
         return self.dpath_root / path
 
-    def _get_paths(self, directory=True, include_optional=False) -> list[Path]:
+    def get_paths(self, directory=True, include_optional=False) -> list[Path]:
         """Return a list of all directory or file paths."""
         paths = [
             self._get_full_path(path_info.path)
@@ -301,10 +301,10 @@ class DatasetLayout(Base):
         """Return a list of missing paths."""
         missing = [
             dpath
-            for dpath in self._get_paths(directory=True, include_optional=False)
+            for dpath in self.get_paths(directory=True, include_optional=False)
             if not dpath.exists()
         ]
-        for fpath in self._get_paths(directory=False, include_optional=False):
+        for fpath in self.get_paths(directory=False, include_optional=False):
             if not fpath.exists():
                 missing.append(fpath)
         return missing

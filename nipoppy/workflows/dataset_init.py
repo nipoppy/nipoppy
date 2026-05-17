@@ -107,9 +107,7 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # create directories
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
-        for dpath in self.study.layout._get_paths(
-            directory=True, include_optional=True
-        ):
+        for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
             if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
                 self._handle_bids_source()
             elif (
@@ -120,7 +118,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             else:
                 fileops.mkdir(dpath, dry_run=self.dry_run)
                 self._write_readme(
-                    dpath, self.study.layout._dpath_descriptions[str(dpath)]
+                    dpath, self.study.layout._dpath_descriptions.get(str(dpath))
                 )
 
         # create empty pipeline config subdirectories

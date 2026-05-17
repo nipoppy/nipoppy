@@ -141,7 +141,7 @@ def test_validate_no_status_file(dpath_root: Path):
 def test_dpath_descriptions():
     fpath_spec = DPATH_TEST_DATA / "layout1.json"
     layout = DatasetLayout(dpath_root="my_dataset", fpath_config=fpath_spec)
-    assert layout._dpath_descriptions == [(Path("my_dataset/bids"), "BIDS data")]
+    assert layout._dpath_descriptions == {"my_dataset/bids": "BIDS data"}
 
 
 @pytest.mark.parametrize(
