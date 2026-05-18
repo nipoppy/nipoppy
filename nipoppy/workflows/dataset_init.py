@@ -218,11 +218,13 @@ class InitWorkflow(BaseDatasetWorkflow):
             raise ValueError(f"Invalid mode: {self.mode}")
 
     def _handle_container_store(self) -> None:
-        fileops.symlink(
-            self.container_store,
-            self.study.layout.dpath_containers,
-            dry_run=self.dry_run,
-        )
+        dpath = self.study.layout.dpath_containers
+
+        # delete existing if needed
+        if dpath.exists() and self.force:
+            fileops.rm(dpath, dry_run=self.dry_run)
+
+        fileops.symlink(self.container_store, dpath, dry_run=self.dry_run)
 
     def _write_readme(self, dpath, description) -> None:
         if self.dry_run or description is None:

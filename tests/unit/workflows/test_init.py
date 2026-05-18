@@ -209,6 +209,17 @@ def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
     )
 
 
+def test_handle_container_store_force(workflow: InitWorkflow, tmp_path: Path):
+    workflow.container_store = tmp_path / "container_store"
+    workflow.container_store.mkdir()
+    workflow.dpath_root.mkdir()
+
+    workflow.force = True
+    workflow.study.layout.dpath_containers.mkdir()
+
+    workflow._handle_container_store()
+
+
 def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
     """Test --force with --bids-source when BIDS directory already exists."""
     # Create target with existing bids directory
