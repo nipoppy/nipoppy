@@ -15,6 +15,8 @@ Nipoppy is a lightweight framework for standardized organization and processing 
 [FAIR](https://www.go-fair.org/fair-principles/) principles
 and improve the reproducibility of studies.
 
+> MCP PR probe: this branch was created by Hermes to verify GitHub MCP branch+file+PR publishing.
+
 The framework includes three components:
 
 1. A protocol for data organization, curation and processing, with steps that include the following:
