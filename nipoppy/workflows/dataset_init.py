@@ -224,6 +224,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         if dpath.exists() and self.force:
             fileops.rm(dpath, dry_run=self.dry_run)
 
+        fileops.mkdir(dpath.parent, dry_run=self.dry_run)
         fileops.symlink(self.container_store, dpath, dry_run=self.dry_run)
 
     def _write_readme(self, dpath, description) -> None:

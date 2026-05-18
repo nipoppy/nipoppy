@@ -219,6 +219,12 @@ def test_handle_container_store_force(workflow: InitWorkflow, tmp_path: Path):
 
     workflow._handle_container_store()
 
+    assert workflow.study.layout.dpath_containers.is_symlink()
+    assert (
+        workflow.study.layout.dpath_containers.resolve()
+        == workflow.container_store.resolve()
+    )
+
 
 def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
     """Test --force with --bids-source when BIDS directory already exists."""

@@ -42,7 +42,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--bids-source",
                 "--mode",
                 "--container-store",
-                "--force",
                 "--empty",
                 "--copy-files",
                 "--check-dicoms",
@@ -83,9 +82,9 @@ click.rich_click.OPTION_GROUPS = {
         {
             "name": "Miscellaneous",
             "options": [
-                "--layout",
-                "--assume-yes",
                 "--force",
+                "--assume-yes",
+                "--layout",
                 "--help",
             ],
         },
