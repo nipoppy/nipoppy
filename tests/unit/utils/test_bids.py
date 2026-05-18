@@ -1,6 +1,7 @@
 """Tests for the utils.bids module."""
 
 import re
+import warnings
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -55,6 +56,22 @@ def test_check_participant_id(participant_id, raise_error, is_valid, expected):
         output = check_participant_id(participant_id, raise_error=raise_error)
         if is_valid:
             assert output == expected
+
+
+@pytest.mark.parametrize(
+    "participant_id,expected",
+    [("sub-sub123", "sub123"), ("sub123", "sub123"), ("SUB01", "SUB01")],
+)
+def test_check_participant_id_warns_on_sub_prefix(participant_id, expected):
+    with pytest.warns(UserWarning, match="still start with 'sub'"):
+        assert check_participant_id(participant_id) == expected
+
+
+@pytest.mark.parametrize("participant_id", ["01", "sub-01", "P01", None])
+def test_check_participant_id_no_warning(participant_id):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        check_participant_id(participant_id)
 
 
 @pytest.mark.parametrize(
