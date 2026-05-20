@@ -38,7 +38,7 @@ def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> A
     fpaths_dotenv_str = os.environ.get("NIPOPPY_ENV_PATHS", DEFAULT_DOTENV_PATHS)
     fpaths_dotenv_str = process_template_str(fpaths_dotenv_str, dpath_root=dpath_root)
 
-    for fpath_dotenv in fpaths_dotenv_str.split(os.pathsep):
+    for fpath_dotenv in reversed(fpaths_dotenv_str.split(os.pathsep)):
         fpath_dotenv = Path(fpath_dotenv).expanduser()
         if fpath_dotenv.is_file():
             # the logger only logs at INFO or higher at this point
