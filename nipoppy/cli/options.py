@@ -32,6 +32,8 @@ def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> A
     dpath_root = ctx.params.get("dataset_argument") or ctx.params.get("dpath_root")
     if dpath_root is not None:
         dpath_root = is_nipoppy_project(dpath_root) or dpath_root
+    else:
+        dpath_root = Path.cwd()
 
     fpaths_dotenv_str = os.environ.get("NIPOPPY_ENV_PATHS", DEFAULT_DOTENV_PATHS)
     fpaths_dotenv_str = process_template_str(fpaths_dotenv_str, dpath_root=dpath_root)
