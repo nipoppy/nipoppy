@@ -2,13 +2,51 @@
 
 import os
 from pathlib import Path
+from typing import Any
 
 import rich_click as click
+from dotenv import load_dotenv
 
 from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 from nipoppy.logger import get_logger
+from nipoppy.utils.utils import is_nipoppy_project, process_template_str
 
 logger = get_logger()
+
+DEFAULT_DOTENV_PATHS = (
+    "/etc/nipoppy/.env:~/.nipoppy/.env:[[NIPOPPY_DPATH_ROOT]]/.nipoppy/.env"
+)
+
+
+def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> Any:
+    """Load environment variable files specified by NIPOPPY_ENV_PATHS.
+
+    This callback function should be used with a hidden and eager Click option.
+    """
+    if not param.value_is_missing(value):
+        raise ctx.fail(
+            f"The {param.opts[0]} option exists for internal reasons and should never be used on the command-line."  # noqa: E501
+        )
+
+    # Nipoppy root directory
+    dpath_root = ctx.params.get("dataset_argument") or ctx.params.get("dpath_root")
+    if dpath_root is not None:
+        dpath_root = is_nipoppy_project(dpath_root) or dpath_root
+
+    fpaths_dotenv_str = os.environ.get("NIPOPPY_ENV_PATHS", DEFAULT_DOTENV_PATHS)
+    fpaths_dotenv_str = process_template_str(fpaths_dotenv_str, dpath_root=dpath_root)
+
+    for fpath_dotenv in fpaths_dotenv_str.split(os.pathsep):
+        fpath_dotenv = Path(fpath_dotenv).expanduser()
+        if fpath_dotenv.is_file():
+            # the logger only logs at INFO or higher at this point
+            logger.info(f"Loading environment variables from {fpath_dotenv}")
+
+            # load_dotenv logs warnings instead of raising exceptions
+            # so no need to catch them
+            load_dotenv(fpath_dotenv, override=False)
+
+    return value
 
 
 def dataset_option(func):
@@ -31,9 +69,8 @@ def dataset_option(func):
         required=False,
         default=Path().cwd(),
         show_default=(False if os.environ.get("READTHEDOCS") else True),
-        help=(
-            "Path to the root of the dataset (default is current working directory)."
-        ),
+        help="Path to the root of the dataset. ??",
+        is_eager=True,
     )(func)
 
 
@@ -63,7 +100,7 @@ def dep_params(**params):
 
 
 def global_options(func):
-    """Define global options (no layout) for the CLI."""
+    """Define global options for the CLI."""
     func = click.option(
         "--verbose",
         "-v",
@@ -74,6 +111,13 @@ def global_options(func):
         "--dry-run",
         is_flag=True,
         help="Print commands but do not execute them.",
+    )(func)
+    func = click.option(
+        "--_env",
+        help="This option exists solely to trigger the loading of environment variable files and should never be used directly.",  # noqa: E501
+        expose_value=False,
+        is_eager=True,
+        callback=_load_env_files,
     )(func)
     return func
 
@@ -89,6 +133,7 @@ def layout_option(func):
             " to be used instead of the default layout."
         ),
         envvar="NIPOPPY_LAYOUT",
+        show_envvar=True,
     )(func)
     return func
 
