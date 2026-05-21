@@ -586,3 +586,26 @@ def test_env_var(
     parsed_param = results.stdout.split()[-1].strip()
 
     assert parsed_param == expected_parsed_param
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    [
+        command
+        for command in list_cli_commands(cli)
+        if command not in ("gui", "pipeline")
+    ],
+)
+def test_cli_show_envvar(command_name):
+    # get Click Command object
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    for param in command.params:
+        if param.envvar is not None:
+            assert param.show_envvar, (
+                f"Parameter '{param.name}' in subcommand '{command_name}' has envvar "
+                f"'{param.envvar}' but show_envvar is False. Set show_envvar to True "
+                f"to display the env var in the help message."
+            )
