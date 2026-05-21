@@ -53,7 +53,7 @@ class NipoppyError(Exception):
     @property
     def troubleshooting_hint(self) -> str:
         """Return the troubleshooting hint attached to this error."""
-        return self.hint or self.default_hint
+        return self.default_hint if self.hint is None else self.hint
 
 
 ###########
