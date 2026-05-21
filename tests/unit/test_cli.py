@@ -5,15 +5,18 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
+import os
 import shlex
 from pathlib import Path
 
 import pytest
 import pytest_mock
+import rich_click as click
 from click.testing import CliRunner
 
-from nipoppy.cli import exception_handler
+from nipoppy.cli import OrderedAliasedGroup, exception_handler
 from nipoppy.cli.cli import cli
+from nipoppy.cli.options import DOTENV_PATHS_VAR, global_options
 from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
@@ -56,7 +59,7 @@ COMMAND_WORKFLOW_MAP = {
 }
 
 
-def assert_command_success(args):
+def _assert_command_success(args):
     """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
     assert (
@@ -124,7 +127,7 @@ def test_dep_params(
 @pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
-    assert_command_success(f"{command} -h")
+    _assert_command_success(f"{command} -h")
     assert any(
         [
             (record.levelno == logging.WARNING and "is deprecated" in record.message)
@@ -335,7 +338,7 @@ def test_cli_command(
 
     if workflow:
         mocker.patch(f"{workflow}.run")
-    assert_command_success(command)
+    _assert_command_success(command)
 
 
 def test_context_manager_no_exception(mocker):
@@ -505,3 +508,81 @@ def test_cli_params_match_workflows(command_name):
         f"Command '{command_name}' is missing params {missing_params}"
         f" expected by {workflow_name}"
     )
+
+
+@pytest.mark.parametrize(
+    "dotenv_global_content,dotenv_local_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
+    [
+        (
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",
+            {"TEST_PARAM": "env_var"},
+            ["--test-param", "cli_arg"],
+            "cli_arg",
+        ),
+        (
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",
+            {"TEST_PARAM": "env_var"},
+            [],
+            "env_var",
+        ),
+        (
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",
+            {},
+            [],
+            "dotenv_local",
+        ),
+        ("TEST_PARAM='dotenv_global'", "", {}, [], "dotenv_global"),
+        ("TEST_PARAM='dotenv_global'", None, {}, [], "dotenv_global"),
+        ("", None, {}, [], "default"),
+        (None, None, {}, [], "default"),
+    ],
+)
+def test_env_var(
+    dotenv_global_content,
+    dotenv_local_content,
+    env_vars,
+    cli_args,
+    expected_parsed_param: str,
+    tmp_path: Path,
+):
+    # define a dummy CLI for testing
+    @click.group(cls=OrderedAliasedGroup)
+    def test_cli():
+        pass
+
+    # subcommand for the dummy CLI
+    @test_cli.command()
+    @global_options
+    @click.option("--test-param", default="default", envvar="TEST_PARAM")
+    def test_subcommand(**params):
+        print(params["test_param"])
+
+    # start from blank state
+    if "TEST_PARAM" in os.environ:
+        del os.environ["TEST_PARAM"]
+
+    fpath_dotenv_global = tmp_path / "dotenv_global.env"
+    fpath_dotenv_local = tmp_path / "dotenv_local.env"
+
+    if dotenv_global_content is not None:
+        fpath_dotenv_global.write_text(dotenv_global_content)
+
+    if dotenv_local_content is not None:
+        fpath_dotenv_local.write_text(dotenv_local_content)
+
+    # local dotenv has higher priority than global dotenv
+    env_vars[DOTENV_PATHS_VAR] = (
+        f"{fpath_dotenv_local}{os.pathsep}{fpath_dotenv_global}"
+    )
+
+    results = runner.invoke(
+        test_cli, ["test-subcommand"] + cli_args, env=env_vars, catch_exceptions=False
+    )
+
+    # get the last printed line which should be the parsed parameter value
+    parsed_param = results.stdout.split()[-1].strip()
+
+    assert parsed_param == expected_parsed_param

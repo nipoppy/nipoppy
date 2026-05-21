@@ -13,9 +13,15 @@ from nipoppy.utils.utils import is_nipoppy_project, process_template_str
 
 logger = get_logger()
 
-DEFAULT_DOTENV_PATHS = (
-    "/etc/nipoppy/.env:~/.nipoppy/.env:[[NIPOPPY_DPATH_ROOT]]/.nipoppy/.env"
-)
+# from highest to lowest priority
+DEFAULT_DOTENV_PATHS_LIST = [
+    "[[NIPOPPY_DPATH_ROOT]]/.env",
+    "~/.nipoppy/.env",
+    "/etc/nipoppy/.env",
+]
+
+DOTENV_PATHS_VAR = "NIPOPPY_ENV_PATHS"
+DEFAULT_DOTENV_PATHS = os.pathsep.join(DEFAULT_DOTENV_PATHS_LIST)
 
 
 def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> Any:
@@ -35,10 +41,10 @@ def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> A
     else:
         dpath_root = Path.cwd()
 
-    fpaths_dotenv_str = os.environ.get("NIPOPPY_ENV_PATHS", DEFAULT_DOTENV_PATHS)
+    fpaths_dotenv_str = os.environ.get(DOTENV_PATHS_VAR, DEFAULT_DOTENV_PATHS)
     fpaths_dotenv_str = process_template_str(fpaths_dotenv_str, dpath_root=dpath_root)
 
-    for fpath_dotenv in reversed(fpaths_dotenv_str.split(os.pathsep)):
+    for fpath_dotenv in fpaths_dotenv_str.split(os.pathsep):
         fpath_dotenv = Path(fpath_dotenv).expanduser()
         if fpath_dotenv.is_file():
             # the logger only logs at INFO or higher at this point
@@ -69,9 +75,9 @@ def dataset_option(func):
         "dpath_root",
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
-        default=Path().cwd(),
+        default=Path.cwd(),
         show_default=(False if os.environ.get("READTHEDOCS") else True),
-        help="Path to the root of the dataset. ??",
+        help="Path to the root of the dataset. Default: current working directory or the closest parent directory that contains a .nipoppy directory.",  # noqa: E501
         is_eager=True,
     )(func)
 
