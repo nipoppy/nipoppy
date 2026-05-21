@@ -28,7 +28,7 @@ def exception_handler(workflow):
         workflow.return_code = e.code
         logger.error(e)
         hint = e.troubleshooting_hint
-        if hint:
+        if hint is not None:
             logger.info(f"Suggested fix: {hint}")
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
