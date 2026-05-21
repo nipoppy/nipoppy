@@ -123,6 +123,7 @@ def global_options(func):
     func = click.option(
         "--_env",
         help="This option exists solely to trigger the loading of environment variable files and should never be used directly.",  # noqa: E501
+        hidden=True,
         expose_value=False,
         is_eager=True,
         callback=_load_env_files,
