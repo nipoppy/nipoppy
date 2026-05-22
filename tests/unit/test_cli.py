@@ -6,6 +6,7 @@ import importlib
 import inspect
 import logging
 import os
+import re
 import shlex
 from pathlib import Path
 
@@ -21,6 +22,8 @@ from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
+
+RE_ANSI = re.compile(r"\033\[[;?0-9]*[a-zA-Z]")
 
 # tuple of command/subcommands -> (module path, workflow class name)
 COMMAND_WORKFLOW_MAP = {
@@ -598,7 +601,7 @@ def test_env_flag_not_allowed(dummy_cli: click.Group):
     assert result.exit_code == 2
     assert (
         "The --_env option exists for internal reasons and should never be used on the command-line."  # noqa: E501
-        in result.output
+        in re.sub(RE_ANSI, "", result.output)
     )
 
 
