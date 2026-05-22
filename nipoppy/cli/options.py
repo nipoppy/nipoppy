@@ -27,9 +27,9 @@ DEFAULT_DOTENV_PATHS = os.pathsep.join(DEFAULT_DOTENV_PATHS_LIST)
 def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> Any:
     """Load environment variable files specified by NIPOPPY_ENV_PATHS.
 
-    This callback function should be used with a hidden and eager Click option.
+    This callback function should be used with a hidden and eager Click flag option.
     """
-    if not param.value_is_missing(value):
+    if value is True:
         ctx.fail(
             f"The {param.opts[0]} option exists for internal reasons and should never be used on the command-line."  # noqa: E501
         )
@@ -123,6 +123,7 @@ def global_options(func):
     func = click.option(
         "--_env",
         help="This option exists solely to trigger the loading of environment variable files and should never be used directly.",  # noqa: E501
+        is_flag=True,
         hidden=True,
         expose_value=False,
         is_eager=True,
