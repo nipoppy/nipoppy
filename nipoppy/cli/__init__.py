@@ -12,7 +12,7 @@ from nipoppy.logger import get_logger
 logger = get_logger()
 
 BUG_REPORT_URL = (
-    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=bug_report.yml"
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
 )
 DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
 
