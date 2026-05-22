@@ -5,8 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.logger import LogColor
 from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
 from tests.conftest import create_empty_dataset
@@ -18,89 +17,6 @@ def workflow(tmp_path: Path):
     workflow = PipelineListWorkflow(dpath_root)
     create_empty_dataset(dpath_root)
     return workflow
-
-
-@pytest.mark.parametrize(
-    "pipeline_config_dicts,expected_pipeline_info",
-    [
-        (
-            [],
-            {
-                PipelineTypeEnum.BIDSIFICATION: {},
-                PipelineTypeEnum.PROCESSING: {},
-                PipelineTypeEnum.EXTRACTION: {},
-            },
-        ),
-        (
-            [
-                {
-                    "NAME": "pipeline1",
-                    "VERSION": "0.0.1",
-                    "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
-                },
-                {
-                    "NAME": "pipeline1",
-                    "VERSION": "0.0.2",
-                    "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
-                },
-                {
-                    "NAME": "pipeline2",
-                    "VERSION": "0.1.0",
-                    "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
-                },
-                {
-                    "NAME": "pipeline3",
-                    "VERSION": "1.0.0",
-                    "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
-                },
-            ],
-            {
-                PipelineTypeEnum.BIDSIFICATION: {"pipeline1": ["0.0.1", "0.0.2"]},
-                PipelineTypeEnum.PROCESSING: {"pipeline2": ["0.1.0"]},
-                PipelineTypeEnum.EXTRACTION: {"pipeline3": ["1.0.0"]},
-            },
-        ),
-    ],
-)
-def test_get_pipeline_map_info(
-    pipeline_config_dicts: list[dict],
-    expected_pipeline_info: dict[str, list[str]],
-    workflow: PipelineListWorkflow,
-):
-    for pipeline_config_dict in pipeline_config_dicts:
-        pipeline_config = BasePipelineConfig(**pipeline_config_dict)
-        fpath_config = (
-            workflow.study.layout.get_dpath_pipeline_bundle(
-                pipeline_config.PIPELINE_TYPE,
-                pipeline_config.NAME,
-                pipeline_config.VERSION,
-            )
-            / workflow.study.layout.fname_pipeline_config
-        )
-        fpath_config.parent.mkdir(parents=True, exist_ok=True)
-        fpath_config.write_text(pipeline_config.model_dump_json())
-
-    pipeline_info = workflow._get_pipeline_info_map()
-
-    assert pipeline_info == expected_pipeline_info
-
-
-def test_get_pipeline_info_map_error(workflow: PipelineListWorkflow):
-    fpath_config = (
-        workflow.study.layout.get_dpath_pipeline_bundle(
-            PipelineTypeEnum.BIDSIFICATION, "pipeline1", "0.0.1"
-        )
-        / workflow.study.layout.fname_pipeline_config
-    )
-    fpath_config.parent.mkdir(parents=True, exist_ok=True)
-    fpath_config.write_text("invalid json")
-
-    with pytest.raises(RuntimeError, match="Error when loading pipeline config"):
-        workflow._get_pipeline_info_map()
 
 
 @pytest.mark.parametrize(
@@ -174,7 +90,7 @@ def test_run_main(
         PipelineTypeEnum.EXTRACTION: {},
     }
     mocked_get_pipeline_info_map = mocker.patch.object(
-        workflow, "_get_pipeline_info_map", return_value=pipeline_info_map
+        workflow.study, "_get_pipeline_info_map", return_value=pipeline_info_map
     )
     mocked_log_pipeline_info = mocker.patch.object(workflow, "_log_pipeline_info")
 

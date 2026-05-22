@@ -1,17 +1,21 @@
 """Study class."""
 
 import json
+from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
+from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.env import PipelineTypeEnum
+from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils.utils import process_template_str
+from nipoppy.utils.utils import load_json, process_template_str
 
 logger = get_logger()
 
@@ -85,3 +89,31 @@ class Study(Base):
         fpath_table = self.layout.fpath_processing_status
         logger.debug(f"Loading processing status table from {fpath_table}")
         return ProcessingStatusTable.load(fpath_table)
+
+    def _get_pipeline_info_map(
+        self,
+    ) -> dict[PipelineTypeEnum, dict[str, list[str]]]:
+        pipeline_type_to_info_map = {}
+        for pipeline_type in PipelineTypeEnum:
+            pipeline_names_to_versions_map = defaultdict(list)
+            dpath_pipeline_bundles = (
+                self.layout.dpath_pipelines
+                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
+            )
+            for fpath_config in sorted(
+                dpath_pipeline_bundles.glob(f"*/{self.layout.fname_pipeline_config}")
+            ):
+                try:
+                    pipeline_config = BasePipelineConfig(**load_json(fpath_config))
+                except Exception as e:
+                    raise ConfigError(
+                        f"Error when loading pipeline config at {fpath_config}: {e}"
+                    ) from e
+
+                pipeline_names_to_versions_map[pipeline_config.NAME].append(
+                    pipeline_config.VERSION
+                )
+
+            pipeline_type_to_info_map[pipeline_type] = pipeline_names_to_versions_map
+
+        return pipeline_type_to_info_map
