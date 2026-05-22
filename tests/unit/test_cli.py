@@ -600,8 +600,9 @@ def test_env_flag_not_allowed(dummy_cli: click.Group):
     result = runner.invoke(dummy_cli, ["test-dotenv", "--_env"], catch_exceptions=False)
     assert result.exit_code == 2
     assert (
-        "The --_env option exists for internal reasons and should never be used on the command-line."  # noqa: E501
-        in re.sub(RE_ANSI, "", result.output)
+        # need to take into account ANSI escape codes and terminal max width
+        "The --_env option exists for internal reasons and should never be used"
+        in RE_ANSI.sub("", result.output)
     )
 
 
