@@ -14,7 +14,7 @@ from click.testing import CliRunner
 
 from nipoppy.cli import BUG_REPORT_URL, DISCORD_URL, exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.exceptions import ConfigError, NipoppyError, ReturnCode
+from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -414,7 +414,7 @@ def test_context_manager_nipoppy_exception_logs_actionable_hint(mocker, caplog):
 
     workflow = mocker.Mock()
     with exception_handler(workflow):
-        raise ConfigError("Invalid project config")
+        raise NipoppyError("Invalid project config")
 
     assert any(
         "Suggested fix:" in record.message
