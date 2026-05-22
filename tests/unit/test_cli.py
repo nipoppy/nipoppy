@@ -59,6 +59,22 @@ COMMAND_WORKFLOW_MAP = {
 }
 
 
+@pytest.fixture
+def dummy_cli():
+    @click.group(cls=OrderedAliasedGroup)
+    def cli():
+        pass
+
+    # subcommand for the dummy CLI
+    @cli.command()
+    @global_options
+    @click.option("--test-param", default="default", envvar="TEST_PARAM")
+    def test_dotenv(**params):
+        print(params["test_param"])
+
+    return cli
+
+
 def _assert_command_success(args):
     """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
@@ -541,6 +557,7 @@ def test_cli_params_match_workflows(command_name):
     ],
 )
 def test_env_var(
+    dummy_cli: click.Group,
     dotenv_global_content,
     dotenv_local_content,
     env_vars,
@@ -548,18 +565,6 @@ def test_env_var(
     expected_parsed_param: str,
     tmp_path: Path,
 ):
-    # define a dummy CLI for testing
-    @click.group(cls=OrderedAliasedGroup)
-    def test_cli():
-        pass
-
-    # subcommand for the dummy CLI
-    @test_cli.command()
-    @global_options
-    @click.option("--test-param", default="default", envvar="TEST_PARAM")
-    def test_subcommand(**params):
-        print(params["test_param"])
-
     # start from blank state
     if "TEST_PARAM" in os.environ:
         del os.environ["TEST_PARAM"]
@@ -579,13 +584,22 @@ def test_env_var(
     )
 
     results = runner.invoke(
-        test_cli, ["test-subcommand"] + cli_args, env=env_vars, catch_exceptions=False
+        dummy_cli, ["test-dotenv"] + cli_args, env=env_vars, catch_exceptions=False
     )
 
     # get the last printed line which should be the parsed parameter value
     parsed_param = results.stdout.split()[-1].strip()
 
     assert parsed_param == expected_parsed_param
+
+
+def test_env_flag_not_allowed(dummy_cli: click.Group):
+    result = runner.invoke(dummy_cli, ["test-dotenv", "--_env"], catch_exceptions=False)
+    assert result.exit_code == 2
+    assert (
+        "The --_env option exists for internal reasons and should never be used on the command-line."  # noqa: E501
+        in result.output
+    )
 
 
 @pytest.mark.parametrize(
