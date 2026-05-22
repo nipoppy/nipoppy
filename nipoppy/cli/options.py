@@ -30,7 +30,7 @@ def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> A
     This callback function should be used with a hidden and eager Click option.
     """
     if not param.value_is_missing(value):
-        raise ctx.fail(
+        ctx.fail(
             f"The {param.opts[0]} option exists for internal reasons and should never be used on the command-line."  # noqa: E501
         )
 
