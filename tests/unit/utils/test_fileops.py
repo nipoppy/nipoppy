@@ -217,15 +217,32 @@ class TestMoveTree:
 
 class TestSymlink:
     # Should we add an exist_ok test here too?
-    def test_symlink(self, tmp_path: Path):
+    @pytest.mark.parametrize(
+        "target_path_relative", ["symlink_to_target", "parent_dir/symlink_to_target"]
+    )
+    def test_symlink(self, target_path_relative: str, tmp_path: Path):
         """Test creating a symlink to a file."""
-        source_file = tmp_path / "target.txt"
-        expected_content = "target content"
+        source_file = tmp_path / "source.txt"
+        expected_content = "source content"
         source_file.write_text(expected_content)
 
-        symlink = tmp_path / "symlink_to_target"
+        symlink = tmp_path / target_path_relative
 
         fileops.symlink(source=source_file, target=symlink)
 
         assert symlink.is_symlink()
         assert symlink.read_text() == expected_content
+
+    def test_symlink_force(self, tmp_path: Path):
+        """Test that force option allows overwriting existing paths."""
+        source_file = tmp_path / "new.txt"
+        source_file.write_text("new content")
+
+        existing_file = tmp_path / "existing.txt"
+        existing_file.write_text("old content")
+
+        fileops.symlink(source=source_file, target=existing_file, force=True)
+
+        assert existing_file.is_symlink()
+        assert existing_file.resolve() == source_file.resolve()
+        assert existing_file.read_text() == "new content"

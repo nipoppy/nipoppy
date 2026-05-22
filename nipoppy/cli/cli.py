@@ -130,8 +130,9 @@ if cli.commands.get("gui"):
 @click.option(
     "--container-store",
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
-    help="Path to an existing (shared) directory for container image files.",
+    help="Path to an existing (shared) directory for container images.",
     envvar="NIPOPPY_CONTAINER_STORE",
+    show_envvar=True,
 )
 @click.option(
     "--force",

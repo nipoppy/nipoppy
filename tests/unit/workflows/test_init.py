@@ -14,6 +14,7 @@ from fids import fids
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
 
@@ -188,41 +189,14 @@ def test_run_main_container_store(
 ):
     workflow.container_store = tmp_path / "container_store"
 
-    mocked = mocker.patch.object(
-        workflow, "_handle_container_store", wraps=workflow._handle_container_store
-    )
+    mocked = mocker.patch.object(fileops, "symlink", wraps=fileops.symlink)
 
     workflow.run_main()
-    mocked.assert_called_once()
-
-
-def test_handle_container_store(workflow: InitWorkflow, tmp_path: Path):
-    workflow.container_store = tmp_path / "container_store"
-    workflow.container_store.mkdir()
-    workflow.dpath_root.mkdir()
-    workflow._handle_container_store()
-
-    assert workflow.study.layout.dpath_containers.is_symlink()
-    assert (
-        workflow.study.layout.dpath_containers.resolve()
-        == workflow.container_store.resolve()
-    )
-
-
-def test_handle_container_store_force(workflow: InitWorkflow, tmp_path: Path):
-    workflow.container_store = tmp_path / "container_store"
-    workflow.container_store.mkdir()
-    workflow.dpath_root.mkdir()
-
-    workflow.force = True
-    workflow.study.layout.dpath_containers.mkdir()
-
-    workflow._handle_container_store()
-
-    assert workflow.study.layout.dpath_containers.is_symlink()
-    assert (
-        workflow.study.layout.dpath_containers.resolve()
-        == workflow.container_store.resolve()
+    mocked.assert_called_once_with(
+        workflow.container_store,
+        workflow.study.layout.dpath_containers,
+        force=workflow.force,
+        dry_run=workflow.dry_run,
     )
 
 

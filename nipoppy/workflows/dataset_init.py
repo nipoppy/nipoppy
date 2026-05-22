@@ -102,8 +102,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         Copy default config files.
         Copy HPC config files.
         """
-        if self.dpath_root.exists():
-            self._check_if_existing_root_is_allowed()
+        self._raise_on_invalid_existing_root_dir()
 
         # create directories
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
@@ -114,7 +113,9 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.container_store is not None
                 and dpath == self.study.layout.dpath_containers
             ):
-                self._handle_container_store()
+                fileops.symlink(
+                    self.container_store, dpath, force=self.force, dry_run=self.dry_run
+                )
             else:
                 fileops.mkdir(dpath, dry_run=self.dry_run)
                 self._write_readme(
@@ -177,7 +178,9 @@ class InitWorkflow(BaseDatasetWorkflow):
             "respectively. They should be edited to match your dataset"
         )
 
-    def _check_if_existing_root_is_allowed(self) -> None:
+    def _raise_on_invalid_existing_root_dir(self) -> None:
+        if not self.dpath_root.exists():
+            return
         try:
             filenames = [f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"]
         except NotADirectoryError:
@@ -216,16 +219,6 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.symlink(self.bids_source, dpath, dry_run=self.dry_run)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
-
-    def _handle_container_store(self) -> None:
-        dpath = self.study.layout.dpath_containers
-
-        # delete existing if needed
-        if dpath.exists() and self.force:
-            fileops.rm(dpath, dry_run=self.dry_run)
-
-        fileops.mkdir(dpath.parent, dry_run=self.dry_run)
-        fileops.symlink(self.container_store, dpath, dry_run=self.dry_run)
 
     def _write_readme(self, dpath, description) -> None:
         if self.dry_run or description is None:
