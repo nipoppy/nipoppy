@@ -258,7 +258,7 @@ def get_today():
     return datetime.datetime.today().strftime("%Y-%m-%d")
 
 
-def is_nipoppy_project(cwd: StrOrPathLike | None = None) -> Path | False:
+def is_nipoppy_project(cwd: StrOrPathLike | None = None) -> Path | bool:
     """Verify if the current directory is a nipoppy project.
 
     This is done by checking if the `.nipoppy` directory exists in the
