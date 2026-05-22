@@ -84,6 +84,7 @@ how_to_guides/pipeline_run/index
 how_to_guides/tracking/index
 how_to_guides/parallelization/index
 how_to_guides/pipeline_create/index
+how_to_guides/configuration/index
 ```
 
 
