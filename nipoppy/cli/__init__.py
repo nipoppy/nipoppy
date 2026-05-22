@@ -6,15 +6,11 @@ from contextlib import contextmanager
 import rich_click as click
 from pydantic_core import ValidationError
 
+from nipoppy.env import BUG_REPORT_URL, DISCORD_URL
 from nipoppy.exceptions import NipoppyError, ReturnCode
 from nipoppy.logger import get_logger
 
 logger = get_logger()
-
-BUG_REPORT_URL = (
-    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
-)
-DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
 
 
 # TODO once logger is extracted from the workflows, we could remove the `workflow`
