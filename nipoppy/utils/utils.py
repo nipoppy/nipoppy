@@ -14,7 +14,7 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import NipoppyError
+from nipoppy.exceptions import ConfigError, NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -249,6 +249,10 @@ def apply_substitutions_to_json(
     # convert json_obj to string
     json_text = json.dumps(json_obj)
     for key, value in substitutions.items():
+        if not isinstance(value, str):
+            raise ConfigError(
+                f"Substitution value must be a string, got {type(value)} for key '{key}'"  # noqa: E501
+            )
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
 
