@@ -78,20 +78,14 @@ class TerminatedByUserError(NipoppyError):
 class FileOperationError(NipoppyError, IOError):
     """Exception raised for file system operations that fail."""
 
-    default_hint = (
-        "Confirm all input/output paths exist and you have the required file "
-        "permissions."
-    )
+    default_hint = "Confirm all input/output paths are correct."
 
 
 class WorkflowError(NipoppyError, RuntimeError):
     """Base exception class for workflow-related errors."""
 
     code = ReturnCode.WORKFLOW_FAILURE
-    default_hint = (
-        "Check the workflow arguments and dataset state, then rerun the command "
-        "with --verbose for additional context."
-    )
+    default_hint = "Rerun with --verbose for additional context."
 
 
 ####################
@@ -111,20 +105,14 @@ class ExecutionError(NipoppyError, RuntimeError):
     """Exception for pipeline execution errors."""
 
     code = ReturnCode.PIPELINE_EXECUTION_ERROR
-    default_hint = (
-        "Inspect the pipeline logs to locate the failed step, then rerun after "
-        "fixing the reported command or input."
-    )
+    default_hint = "Inspect the pipeline logs to locate the failed step"
 
 
 class LayoutError(NipoppyError, ValueError):
     """Exception for layout validation errors."""
 
     code = ReturnCode.INVALID_LAYOUT
-    default_hint = (
-        "Check the dataset structure and required Nipoppy layout files, then "
-        "rerun the command."
-    )
+    default_hint = "Make sure this command is being run on a valid Nipoppy study."
 
 
 class TabularError(NipoppyError):

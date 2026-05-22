@@ -29,10 +29,7 @@ def exception_handler(workflow):
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
         logger.error(e)
-        logger.info(
-            "Suggested fix: Review your configuration fields and value types, then "
-            "rerun once all validation errors are resolved."
-        )
+        logger.info("Suggested fix: Review your configuration fields and value types.")
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)
