@@ -84,7 +84,8 @@ def test_model_status(status):
     assert model.status == status
 
 
-def test_model_status_invalid():
+@pytest.mark.parametrize("status", ["BAD_STATUS", "", "success"])
+def test_model_status_invalid(status):
     with pytest.raises(TabularError):
         ProcessingStatusModel(
             participant_id="1",
@@ -92,7 +93,7 @@ def test_model_status_invalid():
             pipeline_name="my_pipeline",
             pipeline_version="1.0",
             pipeline_step="step1",
-            status="BAD_STATUS",
+            status=status,
         )
 
 
