@@ -12,7 +12,7 @@ import pytest_mock
 from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
 from nipoppy.workflows.dataset_init import InitWorkflow
@@ -320,6 +320,9 @@ def test_init_bids(
     - README has been created
     """
     workflow.bids_source = fake_bids_root
+    mocker.patch("nipoppy.workflows.dataset_init.httpx.get").return_value.content = (
+        b"README from test\n"
+    )
 
     mocked_handle_bids_source = mocker.patch.object(
         workflow, "handle_bids_source", wraps=workflow.handle_bids_source
@@ -373,7 +376,10 @@ def test_handle_bids_source_symlink(workflow: InitWorkflow, fake_bids_root: Path
 
 
 def test_init_bids_readonly(
-    workflow: InitWorkflow, fake_bids_root: Path, caplog: pytest.LogCaptureFixture
+    workflow: InitWorkflow,
+    fake_bids_root: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
     """Test with an existing BIDS dataset that is read-only and has no README."""
     # The default behaviour is to add a README in the BIDS directory is none exists, but
@@ -381,6 +387,9 @@ def test_init_bids_readonly(
     # cases, no README should be created
     workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
+    mocker.patch("nipoppy.workflows.dataset_init.httpx.get").return_value.content = (
+        b"README from test\n"
+    )
 
     # u=r-x, g=r-x, o=r-x
     os.chmod(fake_bids_root, 0o555)
@@ -399,6 +408,21 @@ def test_init_bids_dry_run(workflow: InitWorkflow, fake_bids_root: Path):
     workflow.run()
 
     assert not dpath_root.exists()
+
+
+def test_manifest_from_bids_dataset_empty_source_raises_workflow_error(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+):
+    """Empty BIDS source should fail instead of writing an empty manifest."""
+    bids_to_copy = tmp_path / "bids"
+    bids_to_copy.mkdir()
+
+    workflow.bids_source = bids_to_copy
+    workflow.handle_bids_source()
+
+    with pytest.raises(WorkflowError, match="No subjects found in the BIDS source"):
+        workflow._init_manifest_from_bids_dataset()
 
 
 @pytest.mark.no_xdist

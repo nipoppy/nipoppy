@@ -17,7 +17,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     StrOrPathLike,
 )
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import fileops
@@ -261,6 +261,12 @@ class InitWorkflow(BaseDatasetWorkflow):
         )
 
         logger.info("Creating a manifest file from the BIDS dataset content.")
+
+        if not bids_participant_ids:
+            raise WorkflowError(
+                "No subjects found in the BIDS source; "
+                "generated manifest would be empty."
+            )
 
         for bids_participant_id in bids_participant_ids:
             bids_session_ids = sorted(
