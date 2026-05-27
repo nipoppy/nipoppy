@@ -3,17 +3,37 @@
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, StrOrPathLike
-from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.env import BIDS_PATH_INJECTION_PREFIX, EXT_TAR, StrOrPathLike
+from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.runner import Runner
 
+if TYPE_CHECKING:
+    import bids
+
 logger = get_logger()
+
+
+def _get_bids_paths_to_inject(
+    bids_layout: bids.BIDSLayout, injection_map: dict[str, dict]
+) -> dict[str, str]:
+    bids_paths = {}
+    for key, kwargs in injection_map.items():
+        bids_path = bids_layout.get(**kwargs, return_type="filename")
+        if len(bids_path) != 1:
+            raise WorkflowError(
+                f"Expected exactly one file to match criteria {kwargs}, got: {bids_path}"  # noqa: E501
+            )
+
+        bids_path = bids_path[0]
+        bids_paths[f"{BIDS_PATH_INJECTION_PREFIX}{key}".lower()] = bids_path
+
+    return bids_paths
 
 
 class ProcessingRunner(Runner):
@@ -172,19 +192,24 @@ class ProcessingRunner(Runner):
         """Run pipeline on a single participant/session."""
         logger.info(f"Running for participant {participant_id}, session {session_id}")
 
-        # Access the GENERATE_PYBIDS_DATABASE field
-        generate_bids_db = self.pipeline_step_config.GENERATE_PYBIDS_DATABASE
+        launch_boutiques_run_kwargs = {}
 
         # Conditionally set up PyBIDS database
-        if generate_bids_db:
-            self.set_up_bids_db(
+        if self.pipeline_step_config.GENERATE_PYBIDS_DATABASE:
+            bids_layout = self.set_up_bids_db(
                 dpath_pybids_db=self.dpath_pipeline_bids_db,
                 participant_id=participant_id,
                 session_id=session_id,
             )
 
+            launch_boutiques_run_kwargs.update(
+                _get_bids_paths_to_inject(
+                    bids_layout=bids_layout,
+                    injection_map=self.pipeline_config.BIDS_PATH_INJECTION_MAP,
+                )
+            )
+
         # get container command
-        launch_boutiques_run_kwargs = {}
         if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
             container_command, container_handler = self.process_container_config(
                 participant_id=participant_id,
