@@ -1,12 +1,16 @@
 # Contributing
 
+```{warning}
+Ensure you read [our AI-generated policy](#use-of-generative-ai).
+```
+
 Nipoppy is under active development, and we welcome outside contributions!
 
 Below are some guidelines that could be helpful for potential contributors.
 
 ## All contributors
 
-This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [Team](../team.md#contributors) page. The `all-contributors` bot can be used to update the list of contributors -- instructions can be found [here](https://allcontributors.org/en/bot/usage/).
+This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [Team](team.md#contributors) page. The `all-contributors` bot can be used to update the list of contributors -- instructions can be found [here](https://allcontributors.org/en/bot/usage/).
 
 ## Contributing through GitHub
 
@@ -73,6 +77,17 @@ Nipoppy PR reviews may use the following emoji signifiers:
 - 🍒: Some optional/suggested changes that could be nice to have but are not required to merge
 
 If (required) changes are requested, please re-request a review from the reviewer once the comments have been addressed.
+
+## Use of generative AI
+
+The Nipoppy project follows the AI-generated policy to prevent maintenance burden and ensure that the codebase and documentation remain clean and maintainable.
+
+Failure to abide by the following guidelines will result in the contribution being rejected.
+
+- Declare AI use in the commit message or pull request description.
+- Strictly follow the PR template without omitting any sections.
+- Review all AI-generated content before requesting a review; i.e., do not blindly accept AI suggestions without understanding them.
+- Take full responsibility for the contribution.
 
 ## Running the test suite locally
 

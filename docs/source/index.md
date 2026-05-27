@@ -108,6 +108,6 @@ caption: Other
 ---
 changelog
 team
-contributing/index
+contributing
 glossary
 ```
