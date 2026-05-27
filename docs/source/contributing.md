@@ -49,15 +49,15 @@ First, [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-r
 Then, in a Terminal window, clone the repository and **install it with `dev` dependencies**:
 
 ```{code-block} console
-git clone https://github.com/nipoppy/nipoppy.git
-cd nipoppy
-pip install -e ".[dev]"
+$ git clone https://github.com/nipoppy/nipoppy.git
+$ cd nipoppy
+$ pip install -e ".[dev]"
 ```
 
 Set up [`pre-commit`](https://pre-commit.com/) to apply automatic formatting/linting/etc. when making a new commit:
 
 ```{code-block} console
-pre-commit install
+$ pre-commit install
 ```
 
 It is a good idea to create a new branch when you start working on a new issue. Branches can be created [through GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository) or with the `git` command-line in the Terminal.
@@ -94,7 +94,7 @@ Failure to abide by the following guidelines will result in the contribution bei
 Whenever a pull request is created or updated, the entire test suite is run for all supported Python versions. The test suite can also be run locally by navigating to the root directory of the repo and running:
 
 ```{code-block} console
-pytest
+$ pytest
 ```
 
 This will run the entire test suite, but it is also possible to only run a subset of tests. See the [pytest documentation](https://docs.pytest.org/en/latest/how-to/usage.html) for more information.
@@ -104,13 +104,13 @@ This will run the entire test suite, but it is also possible to only run a subse
 We use the [Sphinx framework](https://www.sphinx-doc.org/en/master/) for our documentation. To build the documentation locally, move into the `docs` directory:
 
 ```{code-block} console
-cd docs
+$ cd docs
 ```
 
 Then run:
 
 ```{code-block} console
-make html
+$ make html
 ```
 
 Then open the `build/html/index.html` file in a browser.
