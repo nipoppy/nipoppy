@@ -4,6 +4,7 @@ import json
 from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 from nipoppy.base import Base
 from nipoppy.config.main import Config
@@ -92,7 +93,7 @@ class Study(Base):
 
     def _get_pipeline_info_map(
         self,
-    ) -> dict[PipelineTypeEnum, dict[str, list[str]]]:
+    ) -> dict[PipelineTypeEnum, defaultdict[str, list[str]]]:
         pipeline_type_to_info_map = {}
         for pipeline_type in PipelineTypeEnum:
             pipeline_names_to_versions_map = defaultdict(list)
@@ -117,3 +118,27 @@ class Study(Base):
             pipeline_type_to_info_map[pipeline_type] = pipeline_names_to_versions_map
 
         return pipeline_type_to_info_map
+
+    def get_installed_pipelines(
+        self, pipeline_type: Literal["bidsification", "processing", "extraction"]
+    ) -> dict[str, list[str]]:
+        """Get the name and version of installed pipelines.
+
+        Parameters
+        ----------
+        pipeline_type : Literal["bidsification", "processing", "extraction"]
+
+        Returns
+        -------
+        dict[str, list[str]]
+            Dictionary mapping pipeline names to lists of available versions
+            for the specified pipeline type.
+        """
+        try:
+            pipeline_type_enum = PipelineTypeEnum(pipeline_type)
+        except ValueError as exception:
+            raise ValueError(
+                f"Invalid pipeline type: {pipeline_type}. Must be one of: {[enum.value for enum in PipelineTypeEnum]}"  # noqa: E501
+            ) from exception
+        pipeline_type_to_info_map = self._get_pipeline_info_map()
+        return dict(pipeline_type_to_info_map[pipeline_type_enum])
