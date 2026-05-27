@@ -79,7 +79,7 @@ If (required) changes are requested, please re-request a review from the reviewe
 
 ## Use of generative AI
 
-The Nipoppy project follows the AI-generated policy to prevent maintenance burden and ensure that the codebase and documentation remain clean and maintainable.
+The Nipoppy project follows this policy on AI-generated content to prevent maintenance burden and ensure that the codebase and documentation remain clean and maintainable.
 
 Failure to abide by the following guidelines will result in the contribution being rejected.
 
