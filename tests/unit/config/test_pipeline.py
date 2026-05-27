@@ -27,7 +27,7 @@ FIELDS_BASE_PIPELINE = [
     "SCHEMA_VERSION",
 ]
 FIELDS_BIDS_PIPELINE = FIELDS_BASE_PIPELINE
-FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE
+FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE + ["BIDS_PATH_INJECTION_MAP"]
 FIELDS_EXTRACTION_PIPELINE = FIELDS_BASE_PIPELINE + ["PROC_DEPENDENCIES"]
 FIELDS_PIPELINE_INFO = ["NAME", "VERSION", "STEP"]
 
@@ -52,7 +52,12 @@ def valid_data() -> dict:
         ),
         (
             ProcessingPipelineConfig,
-            {"PIPELINE_TYPE": PipelineTypeEnum.PROCESSING},
+            {
+                "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
+                "BIDS_PATH_INJECTION_MAP": {
+                    "KEY1": {"extension": "nii.gz", "suffix": "T1w"}
+                },
+            },
             FIELDS_PROC_PIPELINE,
         ),
         (

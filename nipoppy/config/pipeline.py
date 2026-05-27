@@ -16,6 +16,7 @@ from nipoppy.config.pipeline_step import (
     ProcPipelineStepConfig,
 )
 from nipoppy.env import (
+    BIDS_PATH_INJECTION_PREFIX,
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     PipelineTypeEnum,
@@ -187,6 +188,19 @@ class ProcessingPipelineConfig(BasePipelineConfig):
         default=[],
         description="List of pipeline step configurations",
     )
+
+    BIDS_PATH_INJECTION_MAP: dict[str, dict] = Field(
+        default={},
+        description=(
+            "Filters for selecting paths to individual BIDS files to inject into the invocation file."  # noqa: E501
+            " This should be a dictionary where keys correspond to placeholders in the invocation file and values are keyword arguments to be passed to PyBIDS' bids.layout.BIDSLayout.get()."  # noqa: E501
+            f' For example, if the invocation file has a placeholder [[NIPOPPY_{BIDS_PATH_INJECTION_PREFIX}KEY1]] and the BIDS_PATH_INJECTION_MAP has entry {{"KEY1": {{"extension": "nii.gz", "suffix": "T1w"}}}},'  # noqa: E501
+            f" then [[NIPOPPY_{BIDS_PATH_INJECTION_PREFIX}KEY1]] will be replaced with the path to a T1w NIfTI file (provided there is only one match)."  # noqa: E501
+            " This can be useful for pipelines that are not BIDS Apps and that take as input specific files rather than the root directory of the BIDS dataset."  # noqa: E501
+            " Note: this map is only used for pipeline steps that have GENERATE_PYBIDS_DATABASE set to true."  # noqa: E501
+        ),
+    )
+
     model_config = ConfigDict(extra="forbid")
 
 
