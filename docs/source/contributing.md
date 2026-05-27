@@ -1,8 +1,7 @@
 # Contributing
 
-```{warning}
-Ensure you read [our AI-generated policy](#use-of-generative-ai).
-```
+> [!WARNING]
+> Ensure you read [our policy on AI-generated content](#use-of-generative-ai).
 
 Nipoppy is under active development, and we welcome outside contributions!
 
