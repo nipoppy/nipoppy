@@ -61,6 +61,8 @@ COMMAND_WORKFLOW_MAP = {
     ),
 }
 
+DEFAULT_VALUE_DUMMY_CLI = "default"
+
 
 @pytest.fixture
 def dummy_cli():
@@ -71,7 +73,7 @@ def dummy_cli():
     # subcommand for the dummy CLI
     @cli.command()
     @global_options
-    @click.option("--test-param", default="default", envvar="TEST_PARAM")
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
     def test_dotenv(**params):
         print(params["test_param"])
 
@@ -488,11 +490,7 @@ def test_no_duplicated_flag(
 
 @pytest.mark.parametrize(
     "command_name",
-    [
-        command
-        for command in list_cli_commands(cli)
-        if command not in ("gui", "pipeline")
-    ],
+    list_cli_commands(cli, include_hidden=False, include_group=False),
 )
 def test_cli_params_match_workflows(command_name):
     ignored_params = {
@@ -555,8 +553,8 @@ def test_cli_params_match_workflows(command_name):
         ),
         ("TEST_PARAM='dotenv_global'", "", {}, [], "dotenv_global"),
         ("TEST_PARAM='dotenv_global'", None, {}, [], "dotenv_global"),
-        ("", None, {}, [], "default"),
-        (None, None, {}, [], "default"),
+        ("", None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        (None, None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
     ],
 )
 def test_env_var(
@@ -608,11 +606,7 @@ def test_env_flag_not_allowed(dummy_cli: click.Group):
 
 @pytest.mark.parametrize(
     "command_name",
-    [
-        command
-        for command in list_cli_commands(cli)
-        if command not in ("gui", "pipeline")
-    ],
+    list_cli_commands(cli, include_hidden=False, include_group=False),
 )
 def test_cli_show_envvar(command_name):
     # get Click Command object

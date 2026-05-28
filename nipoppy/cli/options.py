@@ -7,21 +7,16 @@ from typing import Any
 import rich_click as click
 from dotenv import load_dotenv
 
-from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
+from nipoppy.env import (
+    BIDS_SESSION_PREFIX,
+    BIDS_SUBJECT_PREFIX,
+    DEFAULT_DOTENV_PATHS,
+    DOTENV_PATHS_VAR,
+)
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import is_nipoppy_project, process_template_str
 
 logger = get_logger()
-
-# from highest to lowest priority
-DEFAULT_DOTENV_PATHS_LIST = [
-    "[[NIPOPPY_DPATH_ROOT]]/.env",
-    "~/.nipoppy/.env",
-    "/etc/nipoppy/.env",
-]
-
-DOTENV_PATHS_VAR = "NIPOPPY_ENV_PATHS"
-DEFAULT_DOTENV_PATHS = os.pathsep.join(DEFAULT_DOTENV_PATHS_LIST)
 
 
 def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> Any:
