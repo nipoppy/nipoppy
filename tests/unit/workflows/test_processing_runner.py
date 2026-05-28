@@ -15,15 +15,19 @@ from nipoppy.container import (
     DockerHandler,
     SingularityHandler,
 )
-from nipoppy.env import ContainerCommandEnum
+from nipoppy.env import BIDS_PATH_INJECTION_PREFIX, ContainerCommandEnum
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    WorkflowError,
 )
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.processing_runner import ProcessingRunner
+from nipoppy.workflows.processing_runner import (
+    ProcessingRunner,
+    _get_bids_paths_to_inject,
+)
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
@@ -126,6 +130,63 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     )
     manifest.save_with_backup(runner.study.layout.fpath_manifest)
     return runner
+
+
+def test_get_bids_paths_to_inject(mocker: pytest_mock.MockFixture):
+    def mocked_get(**kwargs):
+        if kwargs == {
+            "extension": "nii.gz",
+            "suffix": "T1w",
+            "return_type": "filename",
+        }:
+            return ["sub-1_ses-A_T1w.nii.gz"]
+        elif kwargs == {
+            "extension": "nii.gz",
+            "suffix": "T2w",
+            "return_type": "filename",
+        }:
+            return ["sub-1_ses-A_T2w.nii.gz"]
+        elif kwargs == {
+            "extension": "json",
+            "suffix": "T2w",
+            "return_type": "filename",
+        }:
+            return ["sub-1_ses-A_T2w.json"]
+
+    mocked_layout = mocker.Mock()
+    mocked_layout.get.side_effect = mocked_get
+
+    injection_map = {
+        "T1w": {"extension": "nii.gz", "suffix": "T1w"},
+        "T2w": {"extension": "nii.gz", "suffix": "T2w"},
+        "T2w_json": {"extension": "json", "suffix": "T2w"},
+    }
+    expected = {
+        f"{BIDS_PATH_INJECTION_PREFIX}t1w".lower(): "sub-1_ses-A_T1w.nii.gz",
+        f"{BIDS_PATH_INJECTION_PREFIX}t2w".lower(): "sub-1_ses-A_T2w.nii.gz",
+        f"{BIDS_PATH_INJECTION_PREFIX}t2w_json".lower(): "sub-1_ses-A_T2w.json",
+    }
+
+    result = _get_bids_paths_to_inject(
+        bids_layout=mocked_layout,
+        injection_map=injection_map,
+    )
+    assert result == expected
+
+
+@pytest.mark.parametrize("returned_filenames", [[], ["file1.nii.gz", "file2.nii.gz"]])
+def test_get_bids_paths_to_inject_error(
+    returned_filenames, mocker: pytest_mock.MockFixture
+):
+    mocked_layout = mocker.Mock()
+    mocked_layout.get.return_value = returned_filenames
+    with pytest.raises(
+        WorkflowError, match="Expected exactly one file to match criteria"
+    ):
+        _get_bids_paths_to_inject(
+            bids_layout=mocked_layout,
+            injection_map={"TEST": {"subject": "01"}},
+        )
 
 
 def test_run_setup(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
@@ -700,6 +761,44 @@ def test_run_single_pybids_db(
         )
     else:
         mocked_set_up_bids_db.assert_not_called()
+
+
+@pytest.mark.parametrize("generate_pybids_database", [True, False])
+def test_run_single_bids_path_injection(
+    generate_pybids_database: bool,
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
+
+    mocked_bids_layout = mocker.Mock()
+    mocker.patch.object(runner, "set_up_bids_db", return_value=mocked_bids_layout)
+
+    mocked_get_bids_paths_to_inject = mocker.patch(
+        "nipoppy.workflows.processing_runner._get_bids_paths_to_inject",
+        return_value={"key1": "path1", "key2": "path2"},
+    )
+
+    # mock the Boutiques run outcome
+    mocked_launch_boutiques_run = mocker.patch.object(runner, "launch_boutiques_run")
+
+    participant_id = "01"
+    session_id = "1"
+
+    runner.run_single(participant_id=participant_id, session_id=session_id)
+
+    if generate_pybids_database:
+        mocked_get_bids_paths_to_inject.assert_called_once_with(
+            bids_layout=mocked_bids_layout,
+            injection_map=runner.pipeline_config.BIDS_PATH_INJECTION_MAP,
+        )
+
+        launch_boutiques_run_kwargs = mocked_launch_boutiques_run.call_args[1]
+        for key, value in mocked_get_bids_paths_to_inject.return_value.items():
+            assert key in launch_boutiques_run_kwargs
+            assert launch_boutiques_run_kwargs[key] == value
+    else:
+        mocked_get_bids_paths_to_inject.assert_not_called()
 
 
 @pytest.mark.parametrize("tar", [True, False])

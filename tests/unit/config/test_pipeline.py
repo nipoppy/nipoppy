@@ -27,7 +27,7 @@ FIELDS_BASE_PIPELINE = [
     "SCHEMA_VERSION",
 ]
 FIELDS_BIDS_PIPELINE = FIELDS_BASE_PIPELINE
-FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE
+FIELDS_PROC_PIPELINE = FIELDS_BASE_PIPELINE + ["BIDS_PATH_INJECTION_MAP"]
 FIELDS_EXTRACTION_PIPELINE = FIELDS_BASE_PIPELINE + ["PROC_DEPENDENCIES"]
 FIELDS_PIPELINE_INFO = ["NAME", "VERSION", "STEP"]
 
@@ -52,7 +52,12 @@ def valid_data() -> dict:
         ),
         (
             ProcessingPipelineConfig,
-            {"PIPELINE_TYPE": PipelineTypeEnum.PROCESSING},
+            {
+                "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
+                "BIDS_PATH_INJECTION_MAP": {
+                    "KEY1": {"extension": "nii.gz", "suffix": "T1w"}
+                },
+            },
             FIELDS_PROC_PIPELINE,
         ),
         (
@@ -183,6 +188,30 @@ def test_error_schema_version():
             NAME="my_pipeline",
             VERSION="1.0.0",
             SCHEMA_VERSION="invalid_version",
+        )
+
+
+@pytest.mark.parametrize(
+    "injection_map,error_message",
+    [
+        (
+            {"KEY1": {"return_value": "test"}},
+            'Invalid entry for key "KEY1" in BIDS_PATH_INJECTION_MAP: "return_value" is a reserved keyword argument and cannot be set externally.',  # noqa: E501
+        ),
+        (
+            {"123": {"extension": "nii.gz", "suffix": "T1w"}},
+            'Invalid key "123" in BIDS_PATH_INJECTION_MAP: keys must be valid Python identifiers.',  # noqa: E501
+        ),
+    ],
+)
+def test_errors_bids_path_injection_map_reserved_keyword(
+    injection_map, error_message, valid_data
+):
+    with pytest.raises(ValidationError, match=error_message):
+        ProcessingPipelineConfig(
+            **valid_data,
+            PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
+            BIDS_PATH_INJECTION_MAP=injection_map,
         )
 
 

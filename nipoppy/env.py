@@ -18,6 +18,9 @@ BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
 FAKE_SESSION_ID = "unnamed"
 
+# substitutions
+BIDS_PATH_INJECTION_PREFIX = "BIDS_PATH_INJECTION_"
+
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"
 
