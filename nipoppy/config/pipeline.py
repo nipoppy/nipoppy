@@ -201,6 +201,29 @@ class ProcessingPipelineConfig(BasePipelineConfig):
         ),
     )
 
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the pipeline config after instantiation.
+
+        Specifically:
+        - Make sure that BIDS_PATH_INJECTION_MAP entries have valid keys and do not
+          use reserved keywords
+        """
+        super().validate_after()
+        for key, kwargs in self.BIDS_PATH_INJECTION_MAP.items():
+            if not key.isidentifier():
+                raise ConfigError(
+                    f'Invalid key "{key}" in BIDS_PATH_INJECTION_MAP: '
+                    "keys must be valid Python identifiers."
+                )
+            if "return_value" in kwargs:
+                raise ConfigError(
+                    f'Invalid entry for key "{key}" in BIDS_PATH_INJECTION_MAP: '
+                    '"return_value" is a reserved keyword argument and cannot be set externally.'  # noqa: E501
+                )
+        return self
+
     model_config = ConfigDict(extra="forbid")
 
 

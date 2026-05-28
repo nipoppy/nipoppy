@@ -191,6 +191,30 @@ def test_error_schema_version():
         )
 
 
+@pytest.mark.parametrize(
+    "injection_map,error_message",
+    [
+        (
+            {"KEY1": {"return_value": "test"}},
+            'Invalid entry for key "KEY1" in BIDS_PATH_INJECTION_MAP: "return_value" is a reserved keyword argument and cannot be set externally.',  # noqa: E501
+        ),
+        (
+            {"123": {"extension": "nii.gz", "suffix": "T1w"}},
+            'Invalid key "123" in BIDS_PATH_INJECTION_MAP: keys must be valid Python identifiers.',  # noqa: E501
+        ),
+    ],
+)
+def test_errors_bids_path_injection_map_reserved_keyword(
+    injection_map, error_message, valid_data
+):
+    with pytest.raises(ValidationError, match=error_message):
+        ProcessingPipelineConfig(
+            **valid_data,
+            PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
+            BIDS_PATH_INJECTION_MAP=injection_map,
+        )
+
+
 def test_warning_if_duplicate_dependencies(valid_data):
     with pytest.raises(
         ValidationError,

@@ -763,6 +763,44 @@ def test_run_single_pybids_db(
         mocked_set_up_bids_db.assert_not_called()
 
 
+@pytest.mark.parametrize("generate_pybids_database", [True, False])
+def test_run_single_bids_path_injection(
+    generate_pybids_database: bool,
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = generate_pybids_database
+
+    mocked_bids_layout = mocker.Mock()
+    mocker.patch.object(runner, "set_up_bids_db", return_value=mocked_bids_layout)
+
+    mocked_get_bids_paths_to_inject = mocker.patch(
+        "nipoppy.workflows.processing_runner._get_bids_paths_to_inject",
+        return_value={"key1": "path1", "key2": "path2"},
+    )
+
+    # mock the Boutiques run outcome
+    mocked_launch_boutiques_run = mocker.patch.object(runner, "launch_boutiques_run")
+
+    participant_id = "01"
+    session_id = "1"
+
+    runner.run_single(participant_id=participant_id, session_id=session_id)
+
+    if generate_pybids_database:
+        mocked_get_bids_paths_to_inject.assert_called_once_with(
+            bids_layout=mocked_bids_layout,
+            injection_map=runner.pipeline_config.BIDS_PATH_INJECTION_MAP,
+        )
+
+        launch_boutiques_run_kwargs = mocked_launch_boutiques_run.call_args[1]
+        for key, value in mocked_get_bids_paths_to_inject.return_value.items():
+            assert key in launch_boutiques_run_kwargs
+            assert launch_boutiques_run_kwargs[key] == value
+    else:
+        mocked_get_bids_paths_to_inject.assert_not_called()
+
+
 @pytest.mark.parametrize("tar", [True, False])
 @pytest.mark.parametrize("boutiques_success", [True, False])
 def test_run_single_tar(
