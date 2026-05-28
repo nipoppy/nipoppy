@@ -95,7 +95,7 @@ def _check_descriptor_file(
         else:
             logger.warning(
                 error_message
-                + "Consider updating this file as it will no longer be supported in a future version of Nipoppy."  # noqa E501
+                + "You should update this file as it will no longer be supported in a future version of Nipoppy."  # noqa E501
             )
 
     return descriptor_str
