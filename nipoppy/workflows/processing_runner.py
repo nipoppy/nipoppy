@@ -1,5 +1,7 @@
 """PipelineRunner workflow."""
 
+from __future__ import annotations
+
 from functools import cached_property
 from pathlib import Path
 from tarfile import is_tarfile
