@@ -125,7 +125,7 @@ intersphinx_mapping = {
 
 # -- MyST configuration -------------------------------------------------------
 
-myst_enable_extensions = ["fieldlist", "substitution", "colon_fence"]
+myst_enable_extensions = ["fieldlist", "substitution", "colon_fence", "alert"]
 
 myst_heading_anchors = 5
 

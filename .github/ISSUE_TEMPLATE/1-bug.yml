@@ -20,8 +20,9 @@ body:
         encountered.
       options:
         - label: I have searched the existing issues
-      validations:
-        required: true
+          required: true
+    validations:
+      required: true
 
   - type: textarea
     attributes:
