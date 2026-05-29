@@ -1,6 +1,9 @@
 """Custom exception hierarchy for nipoppy."""
 
+import json
 from enum import IntEnum
+
+from nipoppy.env import StrOrPathLike
 
 
 class ReturnCode(IntEnum):
@@ -45,7 +48,7 @@ class NipoppyError(Exception):
     def __init__(self, message: str = "", hint: str | None = None):
         self.message = message
         self.hint = hint
-        super().__init__(self.message)
+        Exception.__init__(self, self.message)
 
     def __str__(self):
         return self.message
@@ -54,6 +57,23 @@ class NipoppyError(Exception):
     def troubleshooting_hint(self) -> str:
         """Return the troubleshooting hint attached to this error."""
         return self.default_hint if self.hint is None else self.hint
+
+
+class JSONError(NipoppyError, json.JSONDecodeError):
+    """Exception raised for JSON parsing errors, with context about the file path."""
+
+    def __init__(
+        self,
+        e: json.JSONDecodeError,
+        *,
+        fpath: StrOrPathLike,
+        hint: str | None = None,
+    ):
+        e.msg += f": {fpath}"
+        json.JSONDecodeError.__init__(self, e.msg, e.doc, e.pos)
+
+        # self.args[0] is the JSONDecodeError error message
+        NipoppyError.__init__(self, self.args[0], hint)
 
 
 ###########

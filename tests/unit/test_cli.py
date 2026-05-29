@@ -408,18 +408,54 @@ def test_context_manager_nipoppy_exception(mocker, exception):
     mock_exit.assert_called_once_with(exception.code)
 
 
-def test_context_manager_nipoppy_exception_logs_actionable_hint(mocker, caplog):
-    """Known NipoppyError should emit actionable troubleshooting guidance."""
+@pytest.mark.parametrize("hint", ["", "This is a hint."])
+def test_context_manager_nipoppy_exception_logs_custom_hint(hint, mocker, caplog):
+    """Known NipoppyError should emit custom hint when provided."""
     mocker.patch("sys.exit")
 
     workflow = mocker.Mock()
     with exception_handler(workflow):
-        raise NipoppyError("Invalid project config")
+        raise NipoppyError("Invalid project config", hint=hint)
 
     assert any(
-        "Suggested fix:" in record.message
-        and "Review your configuration files and CLI options for missing fields"
-        in record.message
+        "Suggested fix:" in record.message and hint in record.message
+        for record in caplog.records
+    )
+
+
+def test_context_manager_nipoppy_exception_logs_default_hint(mocker, caplog):
+    """Known NipoppyError should emit default hint when none provided."""
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    default_hint = "This is a default hint."
+    with exception_handler(workflow):
+        e = NipoppyError("Invalid project config", hint=None)
+        e.default_hint = default_hint
+        raise e
+
+    assert any(
+        f"Suggested fix: {default_hint}" in record.message for record in caplog.records
+    )
+
+
+def test_context_manager_json_error(mocker, caplog):
+    """Test that JSONError includes the file path in the error message."""
+    import json
+
+    from nipoppy.exceptions import JSONError
+
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    fpath = "invalid.json"
+    with exception_handler(workflow):
+        raise JSONError(
+            json.JSONDecodeError("Invalid JSON", "{}", 10),
+            fpath=Path(fpath),
+        )
+    assert any(
+        f"Invalid JSON: {fpath}: line 1 column 11 (char 10)" in record.message
         for record in caplog.records
     )
 
