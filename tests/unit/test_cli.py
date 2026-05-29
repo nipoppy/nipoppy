@@ -392,7 +392,9 @@ class MyCustomException(NipoppyError):
         MyCustomException,
     ],
 )
-def test_context_manager_nipoppy_exception(mocker: pytest_mock.MockerFixture, exception):
+def test_context_manager_nipoppy_exception(
+    mocker: pytest_mock.MockerFixture, exception
+):
     """Test that the context manager handles exceptions correctly.
 
     NipoppyError and its subclasses should set the workflow return code to the
@@ -410,7 +412,9 @@ def test_context_manager_nipoppy_exception(mocker: pytest_mock.MockerFixture, ex
 
 
 @pytest.mark.parametrize("hint", ["", "This is a hint."])
-def test_context_manager_nipoppy_exception_logs_custom_hint(hint, mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture):
+def test_context_manager_nipoppy_exception_logs_custom_hint(
+    hint, mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
     """Known NipoppyError should emit custom hint when provided."""
     mocker.patch("sys.exit")
 
@@ -424,7 +428,9 @@ def test_context_manager_nipoppy_exception_logs_custom_hint(hint, mocker: pytest
     )
 
 
-def test_context_manager_nipoppy_exception_logs_default_hint(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture):
+def test_context_manager_nipoppy_exception_logs_default_hint(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
     """Known NipoppyError should emit default hint when none provided."""
     mocker.patch("sys.exit")
 
@@ -441,7 +447,9 @@ def test_context_manager_nipoppy_exception_logs_default_hint(mocker: pytest_mock
     )
 
 
-def test_context_manager_json_error(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture):
+def test_context_manager_json_error(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
     """Test that JSONError includes the file path in the error message."""
     mocker.patch("sys.exit")
 
@@ -462,7 +470,12 @@ def test_context_manager_json_error(mocker: pytest_mock.MockerFixture, caplog: p
     "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_COMMAND)]
 )
 @pytest.mark.parametrize("exception", [Exception, RuntimeError])
-def test_context_manager_unknown_exception(mocker: pytest_mock.MockerFixture, exception, return_code, caplog: pytest.LogCaptureFixture):
+def test_context_manager_unknown_exception(
+    mocker: pytest_mock.MockerFixture,
+    exception,
+    return_code,
+    caplog: pytest.LogCaptureFixture,
+):
     """Test that the context manager handles exceptions correctly.
 
     Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
@@ -484,7 +497,9 @@ def test_context_manager_unknown_exception(mocker: pytest_mock.MockerFixture, ex
     assert any(DISCORD_URL in record.message for record in caplog.records)
 
 
-def test_context_manager_pydantic_failed_validation(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture):
+def test_context_manager_pydantic_failed_validation(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
     """Test that the context manager handles pydantic ValidationError correctly."""
     from pydantic import BaseModel
 
