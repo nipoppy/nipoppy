@@ -25,11 +25,13 @@ def exception_handler(workflow):
         logger.error(e)
         hint = e.troubleshooting_hint
         if hint is not None:
-            logger.info(f"Suggested fix: {hint}")
+            logger.info(f"Troubleshooting: {hint}")
     except ValidationError as e:
         workflow.return_code = ReturnCode.INVALID_CONFIG
         logger.error(e)
-        logger.info("Suggested fix: Review your configuration fields and value types.")
+        logger.info(
+            "Troubleshooting: Review your configuration fields and value types."
+        )
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)

@@ -58,11 +58,6 @@ def test_load_pipeline_config_file():
     [
         ("fake_path.json", FileOperationError, "Pipeline configuration file not found"),
         (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Pipeline configuration file .* is not a valid JSON file",
-        ),
-        (
             DPATH_TEST_DATA / "pipeline_config-invalid1.json",
             ConfigError,
             "Pipeline configuration file .* is invalid",
@@ -95,11 +90,6 @@ def test_check_descriptor_file():
     [
         ("fake_path.json", FileOperationError, "Descriptor file not found"),
         (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Descriptor file is not a valid JSON file",
-        ),
-        (
             DPATH_TEST_DATA / "descriptor-invalid.json",
             ConfigError,
             "Descriptor file .* is invalid",
@@ -119,11 +109,6 @@ def test_check_invocation_file(descriptor_str):
     "fpath,exception_class,exception_message",
     [
         ("fake_path.json", FileOperationError, "Invocation file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Invocation file is not a valid JSON file",
-        ),
         (
             DPATH_TEST_DATA / "invocation-invalid.json",
             ConfigError,
@@ -147,11 +132,6 @@ def test_check_hpc_config_file():
     [
         ("fake_path.json", FileOperationError, "HPC config file not found"),
         (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "HPC config file is not a valid JSON file",
-        ),
-        (
             DPATH_TEST_DATA / "hpc_config-invalid.json",
             ConfigError,
             "HPC config file .* is invalid",
@@ -172,11 +152,6 @@ def test_check_tracker_config_file():
     [
         ("fake_path.json", FileOperationError, "Tracker config file not found"),
         (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Tracker config file is not a valid JSON file",
-        ),
-        (
             DPATH_TEST_DATA / "tracker_config-invalid.json",
             ConfigError,
             "Tracker config file .* is invalid",
@@ -194,14 +169,7 @@ def test_check_pybids_ignore_file():
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
-    [
-        ("fake_path.json", FileOperationError, "PyBIDS ignore patterns file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "PyBIDS ignore patterns file is not a valid JSON file",
-        ),
-    ],
+    [("fake_path.json", FileOperationError, "PyBIDS ignore patterns file not found")],
 )
 def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_message):
     with pytest.raises(exception_class, match=exception_message):

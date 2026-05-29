@@ -419,7 +419,7 @@ def test_context_manager_nipoppy_exception_logs_custom_hint(hint, mocker, caplog
         raise NipoppyError("Invalid project config", hint=hint)
 
     assert any(
-        "Suggested fix:" in record.message and hint in record.message
+        "Troubleshooting:" in record.message and hint in record.message
         for record in caplog.records
     )
 
@@ -436,7 +436,8 @@ def test_context_manager_nipoppy_exception_logs_default_hint(mocker, caplog):
         raise e
 
     assert any(
-        f"Suggested fix: {default_hint}" in record.message for record in caplog.records
+        f"Troubleshooting: {default_hint}" in record.message
+        for record in caplog.records
     )
 
 
@@ -501,7 +502,7 @@ def test_context_manager_pydantic_failed_validation(mocker, caplog):
     assert workflow.return_code == ReturnCode.INVALID_CONFIG
     mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
     assert any(
-        "Suggested fix:" in record.message
+        "Troubleshooting:" in record.message
         and "Review your configuration fields and value types" in record.message
         for record in caplog.records
     )
