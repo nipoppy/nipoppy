@@ -8,6 +8,7 @@ from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
+from nipoppy.workflows.pipeline_store import create as create_module
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )
@@ -124,6 +125,55 @@ def test_create_from_descriptor(workflow: PipelineCreateWorkflow):
         config["CONTAINER_INFO"]["URI"]
         == "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
     )
+
+
+def test_create_from_descriptor_preserves_jsonc(
+    tmp_path: Path,
+    workflow: PipelineCreateWorkflow,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    dpath_template = tmp_path / "template_pipeline"
+    dpath_template.mkdir(parents=True)
+
+    (dpath_template / "config-processing.json").write_text("""
+{
+  // keep this comment
+  "NAME": "tool name",
+  "VERSION": "v0.1.0",
+  "CONTAINER_INFO": {
+    "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]",
+  },
+  "CONTAINER_CONFIG": {
+    "ENV_VARS": {},
+    "ARGS": [],
+  },
+  "STEPS": [
+    {
+      "INVOCATION_FILE": "invocation.json",
+      "DESCRIPTOR_FILE": "descriptor.json",
+      "ANALYSIS_LEVEL": "participant_session",
+      "TRACKER_CONFIG_FILE": "tracker.json",
+      "HPC_CONFIG_FILE": "hpc.json",
+      "GENERATE_PYBIDS_DATABASE": false,
+      "PYBIDS_IGNORE_FILE": null,
+    },
+  ],
+  "PIPELINE_TYPE": "processing",
+  "SCHEMA_VERSION": "1",
+}
+""".strip())
+    (dpath_template / "hpc.json").write_text("{}")
+    (dpath_template / "tracker.json").write_text("{}")
+
+    monkeypatch.setattr(create_module, "TEMPLATE_PIPELINE_PATH", dpath_template)
+
+    workflow.source_descriptor = TEST_PIPELINE / "descriptor.json"
+    workflow.run_main()
+
+    config_text = workflow.pipeline_dir.joinpath("config.json").read_text()
+    assert "// keep this comment" in config_text
+    assert '"NAME": "fmriprep"' in config_text
+    assert '"VERSION": "24.1.1"' in config_text
 
 
 @pytest.mark.parametrize(

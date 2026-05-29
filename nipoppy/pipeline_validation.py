@@ -45,7 +45,7 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
         )
 
     try:
-        config_dict = load_json(fpath_config)
+        config_dict = load_json(fpath_config, allow_json5=True)
     except json.JSONDecodeError as exception:
         raise ConfigError(
             f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
@@ -129,7 +129,7 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
         raise FileOperationError(f"HPC config file not found: {fpath_hpc_config}")
 
     try:
-        hpc_config_dict = load_json(fpath_hpc_config)
+        hpc_config_dict = load_json(fpath_hpc_config, allow_json5=True)
     except json.JSONDecodeError as exception:
         raise ConfigError(f"HPC config file is not a valid JSON file: {exception}")
 
@@ -150,7 +150,7 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
         )
 
     try:
-        tracker_config_dict = load_json(fpath_tracker_config)
+        tracker_config_dict = load_json(fpath_tracker_config, allow_json5=True)
     except json.JSONDecodeError as exception:
         raise ConfigError(f"Tracker config file is not a valid JSON file: {exception}")
 
@@ -171,7 +171,7 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
         )
 
     try:
-        load_json(fpath_pybids_ignore)
+        load_json(fpath_pybids_ignore, allow_json5=True)
     except json.JSONDecodeError as exception:
         raise ConfigError(
             f"PyBIDS ignore patterns file is not a valid JSON file: {exception}"
