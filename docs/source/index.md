@@ -64,6 +64,7 @@ explanations/study_spec
 explanations/recruitment
 explanations/manifest
 explanations/idp_spec
+explanations/string_replacement
 ```
 
 ```{toctree}
