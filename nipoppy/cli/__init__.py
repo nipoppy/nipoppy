@@ -1,6 +1,5 @@
 """Define a custom Click group that supports command aliases and preserves order."""
 
-import json
 import sys
 from contextlib import contextmanager
 
@@ -8,7 +7,7 @@ import rich_click as click
 from pydantic_core import ValidationError
 
 from nipoppy.env import BUG_REPORT_URL, DISCORD_URL
-from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
+from nipoppy.exceptions import NipoppyError, ReturnCode
 from nipoppy.logger import get_logger
 
 logger = get_logger()
@@ -31,12 +30,6 @@ def exception_handler(workflow):
         workflow.return_code = ReturnCode.INVALID_CONFIG
         logger.error(e)
         logger.info("Suggested fix: Review your configuration fields and value types.")
-    except JSONError as e:
-        workflow.return_code = ReturnCode.UNKNOWN_FAILURE
-        logger.error(e)
-        logger.info(
-            "Suggested fix: Check the JSON file for syntax errors, such as missing commas or mismatched brackets."  # noqa:E501
-        )
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)

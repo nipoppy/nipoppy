@@ -62,6 +62,9 @@ class NipoppyError(Exception):
 class JSONError(NipoppyError, json.JSONDecodeError):
     """Exception raised for JSON parsing errors, with context about the file path."""
 
+    code = ReturnCode.UNKNOWN_FAILURE
+    default_hint = "Suggested fix: Check the JSON file for syntax errors, such as missing commas or mismatched brackets."  # noqa:E501
+
     def __init__(
         self,
         e: json.JSONDecodeError,
@@ -73,7 +76,7 @@ class JSONError(NipoppyError, json.JSONDecodeError):
         json.JSONDecodeError.__init__(self, e.msg, e.doc, e.pos)
 
         # self.args[0] is the JSONDecodeError error message
-        NipoppyError.__init__(self, self.args[0], hint)
+        NipoppyError.__init__(self, self.args[0], hint=hint)
 
 
 ###########

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import json
 import logging
 import shlex
 from pathlib import Path
@@ -14,7 +15,7 @@ from click.testing import CliRunner
 
 from nipoppy.cli import BUG_REPORT_URL, DISCORD_URL, exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.exceptions import NipoppyError, ReturnCode
+from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -441,10 +442,6 @@ def test_context_manager_nipoppy_exception_logs_default_hint(mocker, caplog):
 
 def test_context_manager_json_error(mocker, caplog):
     """Test that JSONError includes the file path in the error message."""
-    import json
-
-    from nipoppy.exceptions import JSONError
-
     mocker.patch("sys.exit")
 
     workflow = mocker.Mock()
