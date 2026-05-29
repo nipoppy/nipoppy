@@ -1,15 +1,24 @@
-# Template strings and other replacement mechanisms
+# String substitutions
 
-This page explains the multiple string replacement mechanisms used when Nipoppy configuration files are loaded.
+Nipoppy allows string substitutions when loading configuration files.
+These serve two purposes:
+- Dynamically resolving values that are unknown prior to runtime (e.g., directory path, pipeline name, participant ID)
+- Avoiding duplication and manual user errors from copy-pasting
 
-## Template string replacement
+## User-defined substitutions
 
-The global configuration and pipeline configuration files may contain strings or substrings surrounded by double square brackets and starting with the `NIPOPPY_` prefix (e.g., `[[NIPOPPY_PIPELINE_NAME]]`).
-These are special *template strings* that are dynamically replaced by Nipoppy at runtime, usually with values that are specific to the dataset and pipeline run (e.g., directory path, pipeline name, participant ID).
+Custom substitutions can be defined via the {term}`SUBSTITUTIONS` field in the global configuration file.
+They are applied to the global configuration file itself and are propagated to pipeline configuration files.
 
-### Common template strings
+```{attention}
+User-defined substitutions are applied before the predefined substitutions listed below.
+```
 
-These template strings are available for **all configuration files**:
+## Predefined substitutions
+
+### Common substitutions
+
+These substitutions are available for **all configuration files**:
 
 - `[[NIPOPPY_DPATH_ROOT]]`: path to the root directory of the Nipoppy study
 - `[[NIPOPPY_DPATH_BIDS]]`: path to the directory containing raw BIDS data
@@ -29,7 +38,7 @@ These template strings are available for **all configuration files**:
 
 ### Pipeline configuration files
 
-These configuration files also have additional utility template strings (note that they are **not** prefixed with `NIPOPPY_`):
+These configuration files also have additional utility substitutions (note that they are **not** prefixed with `NIPOPPY_`):
 
 - `[[PIPELINE_NAME]]`: name of the pipeline
 - `[[PIPELINE_VERSION]]`: version of the pipeline
@@ -37,7 +46,7 @@ These configuration files also have additional utility template strings (note th
 
 ### BIDSification pipeline invocation files
 
-Additional recognized template strings:
+Additional substitutions:
 
 - `[[NIPOPPY_PARTICIPANT_ID]]`: the participant ID *without* the `sub-` prefix
 - `[[NIPOPPY_SESSION_ID]]`: the session ID *without* the `ses-` prefix
@@ -46,7 +55,7 @@ Additional recognized template strings:
 
 ### Processing pipeline invocation files
 
-Additional recognized template strings:
+Additional substitutions:
 
 - `[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]`: the output directory for this pipeline, i.e. {{dpath_pipeline_output}}
 - `[[NIPOPPY_DPATH_PIPELINE_WORK]]`: the working directory for this pipeline run, which will be a subdirectory of {{dpath_pipeline_work}}
@@ -57,7 +66,7 @@ Additional recognized template strings:
 
 ### Extraction pipeline invocation files
 
-Additional recognized template strings:
+Additional substitutions:
 
 - `[[NIPOPPY_DPATH_PIPELINE_IDP]]`: the IDP directory for this pipeline, i.e. {{dpath_pipeline_idp}}
 - `[[NIPOPPY_DPATH_PIPELINE_WORK]]`: the working directory for this pipeline run, which will be a subdirectory of {{dpath_pipeline_work}}
@@ -68,7 +77,7 @@ Additional recognized template strings:
 
 ### Tracker configuration files
 
-Additional recognized template strings:
+Additional substitutions:
 
 - `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: the participant ID *with* the `sub-` prefix
 - `[[NIPOPPY_BIDS_SESSION_ID]]`: the session ID *with* the `ses-` prefix
@@ -76,10 +85,3 @@ Additional recognized template strings:
 - `[[NIPOPPY_DPATH_PIPELINE_IDP]]`: the IDP directory for this pipeline, i.e. {{dpath_pipeline_idp}}
 - `[[NIPOPPY_PARTICIPANT_ID]]`: the participant ID *without* the `sub-` prefix
 - `[[NIPOPPY_SESSION_ID]]`: the session ID *without* the `ses-` prefix
-
-## Optional user-defined substitutions
-
-Substitutions are a mechanism through which users can minimize the number of times the same value (e.g., file or directory path) is copied within the global configuration file.
-They can also be used to set specific optional configurations, such as the {term}`HPC` account name.
-Substitutions are static and are applied before any template string replacement.
-Users can define substitutions using the {term}`SUBSTITUTIONS` field in the global configuration file.

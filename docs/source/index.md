@@ -64,7 +64,6 @@ explanations/study_spec
 explanations/recruitment
 explanations/manifest
 explanations/idp_spec
-explanations/string_replacement
 ```
 
 ```{toctree}
@@ -95,6 +94,7 @@ titlesonly:
 caption: Reference
 ---
 config
+substitutions
 cli_reference/index
 autoapi/index
 schemas/index
