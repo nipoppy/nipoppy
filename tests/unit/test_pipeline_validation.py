@@ -98,7 +98,7 @@ def test_check_descriptor_file_deprecation_warning(caplog: pytest.LogCaptureFixt
     assert any(
         [
             record.levelno == logging.WARNING
-            and "no longer be supported" in record.message
+            and "This will be deprecated in the future" in record.message
             for record in caplog.records
         ]
     )
