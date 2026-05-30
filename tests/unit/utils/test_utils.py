@@ -7,7 +7,7 @@ from typing import Optional
 import pandas as pd
 import pytest
 
-from nipoppy.exceptions import ConfigError, NipoppyError
+from nipoppy.exceptions import ConfigError, JSONError, NipoppyError
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils.utils import (
     add_path_suffix,
@@ -56,7 +56,7 @@ def test_load_json():
 def test_load_json_invalid(tmp_path: Path):
     fpath_invalid = tmp_path / "invalid.json"
     fpath_invalid.write_text("invalid")
-    with pytest.raises(json.JSONDecodeError, match="Error loading JSON file"):
+    with pytest.raises(JSONError):
         load_json(fpath_invalid)
 
 
