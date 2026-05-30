@@ -79,10 +79,35 @@ def test_load_pipeline_config_file_invalid(fpath, exception_class, exception_mes
         _load_pipeline_config_file(fpath)
 
 
-def test_check_descriptor_file():
+def test_check_descriptor_file(caplog: pytest.LogCaptureFixture):
     assert isinstance(
         _check_descriptor_file(DPATH_TEST_DATA / "descriptor-valid.json"), str
     )
+    assert len(caplog.records) == 0
+
+
+def test_check_descriptor_file_deprecation_warning(caplog: pytest.LogCaptureFixture):
+
+    _check_descriptor_file(DPATH_TEST_DATA / "descriptor-deprecated.json")
+
+    assert any(
+        [
+            record.levelno == logging.WARNING
+            and "This will be deprecated in the future" in record.message
+            for record in caplog.records
+        ]
+    )
+
+
+def test_check_descriptor_file_deprecation_error():
+
+    with pytest.raises(
+        ConfigError,
+        match="Descriptor file .* contains Nipoppy-specific template variables",
+    ):
+        _check_descriptor_file(
+            DPATH_TEST_DATA / "descriptor-deprecated.json", strict=True
+        )
 
 
 @pytest.mark.parametrize(
@@ -177,9 +202,9 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
 
 
 @pytest.mark.parametrize(
-    "pipeline_config_data,pipeline_class,n_files_expected",
+    "pipeline_config_data,pipeline_class,n_files_expected,strict",
     [
-        ({"STEPS": [{}]}, BasePipelineConfig, 0),
+        ({"STEPS": [{}]}, BasePipelineConfig, 0, False),
         (
             {
                 "STEPS": [
@@ -193,6 +218,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             },
             BIDSificationPipelineConfig,
             3,
+            False,
         ),
         (
             {
@@ -209,6 +235,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             },
             ProcessingPipelineConfig,
             5,
+            True,
         ),
         (
             {
@@ -236,22 +263,37 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             },
             ExtractionPipelineConfig,
             8,
+            True,
         ),
     ],
 )
-def test_check_config_files(
-    pipeline_config_data, pipeline_class, n_files_expected, valid_config_data
+def test_check_pipeline_files(
+    pipeline_config_data,
+    pipeline_class,
+    n_files_expected,
+    valid_config_data,
+    strict,
+    mocker: pytest_mock.MockFixture,
 ):
+    mocked_check_descriptor_file = mocker.patch(
+        "nipoppy.pipeline_validation._check_descriptor_file",
+        wraps=_check_descriptor_file,
+    )
+
     pipeline_config = pipeline_class(**pipeline_config_data, **valid_config_data)
-    files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
+    files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA, strict=strict)
 
     # check that the function returns the expected number of files
     assert isinstance(files, list)
     assert n_files_expected == len(files)
 
+    if n_files_expected > 0:
+        mocked_check_descriptor_file.assert_called()
+        assert mocked_check_descriptor_file.call_args[1].get("strict") == strict
+
 
 @pytest.mark.no_xdist
-def test_check_config_files_logging(
+def test_check_pipeline_files_logging(
     valid_config_data,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -346,9 +388,12 @@ def test_check_no_subdirectories_logging(
     assert all([record.levelno == log_level for record in caplog.records])
 
 
-@pytest.mark.parametrize("log_level", [logging.DEBUG, logging.INFO, logging.WARNING])
+@pytest.mark.parametrize(
+    "log_level,strict",
+    [(logging.DEBUG, False), (logging.INFO, True), (logging.WARNING, False)],
+)
 def test_check_pipeline_bundle(
-    log_level: int, valid_config_data, mocker: pytest_mock.MockFixture
+    log_level: int, strict: bool, valid_config_data, mocker: pytest_mock.MockFixture
 ):
     dpath_bundle = Path("bundle_dir").resolve()
     config = BasePipelineConfig(**valid_config_data)
@@ -369,13 +414,13 @@ def test_check_pipeline_bundle(
         "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
-    check_pipeline_bundle(dpath_bundle, log_level=log_level)
+    check_pipeline_bundle(dpath_bundle, log_level=log_level, strict=strict)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
         dpath_bundle / "config.json"
     )
     mocked_check_pipeline_files.assert_called_once_with(
-        config, dpath_bundle, log_level=log_level
+        config, dpath_bundle, log_level=log_level, strict=strict
     )
     mocked_check_self_contained.assert_called_once_with(dpath_bundle, fpaths)
     mocked_check_no_subdirectories.assert_called_once_with(dpath_bundle)
