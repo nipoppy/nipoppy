@@ -14,7 +14,7 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import ConfigError, NipoppyError
+from nipoppy.exceptions import ConfigError, JSONError, NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -88,11 +88,7 @@ def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
         try:
             return json.load(file, **kwargs)
         except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(
-                f"Error loading JSON file at {fpath}",
-                e.doc,
-                e.pos,
-            )
+            raise JSONError(e, fpath=Path(fpath)) from e
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):

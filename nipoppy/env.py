@@ -10,6 +10,11 @@ PROGRAM_NAME = "nipoppy"
 NIPOPPY_DIR_NAME = ".nipoppy"
 ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
 # pipeline config schema version
 CURRENT_SCHEMA_VERSION = "1"
 
