@@ -14,7 +14,7 @@ By default, Nipoppy searches the following locations (in order of decreasing pri
 3. `/etc/nipoppy/.env`: system-level
 
 The search paths can be overridden by setting the `NIPOPPY_ENV_PATHS` environment variable with paths separated by the platform path separator
-(e.g., `export NIPOPPY_ENV_PATHS="[[NIPOPPY_DPATH_ROOT]]/.env:~/.nipoppy/.env:/etc/nipoppy/.env` for the default paths).
+(e.g., `export NIPOPPY_ENV_PATHS="[[NIPOPPY_DPATH_ROOT]]/.env:~/.nipoppy/.env:/etc/nipoppy/.env"` for the default paths).
 Only the `[[NIPOPPY_DPATH_ROOT]]` substitution is allowed here.
 
 The overall order for determining the value of options is as follows (highest to lowest priority):
