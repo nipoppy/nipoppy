@@ -6,6 +6,7 @@ import importlib
 import inspect
 import logging
 import os
+import re
 import shlex
 from pathlib import Path
 
@@ -26,6 +27,8 @@ from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
+
+RE_ANSI = re.compile(r"\033\[[;?0-9]*[a-zA-Z]")
 
 # tuple of command/subcommands -> (module path, workflow class name)
 COMMAND_WORKFLOW_MAP = {
@@ -662,6 +665,24 @@ def test_all_groups_have_dotenv_decorator(command_name: str | None):
         assert (
             "_load_dotenv_files" in source
         ), f"Group command '{command_name}' is missing the @_load_dotenv_files decorator."  # noqa: E501
+
+
+def test_dataset_arg_and_option_not_allowed(tmp_path: Path):
+    command = [
+        "init",
+        f"{tmp_path}/nipoppy_study",
+        "--dataset",
+        f"{tmp_path}/nipoppy_study",
+    ]
+    result = runner.invoke(cli, command, catch_exceptions=False)
+
+    assert (
+        # need to take into account ANSI escape codes and terminal max width
+        "Cannot provide both the dataset argument and the --dataset option."
+        in RE_ANSI.sub("", result.output)
+    )
+
+    assert result.exit_code == ReturnCode.INVALID_COMMAND
 
 
 @pytest.mark.parametrize(

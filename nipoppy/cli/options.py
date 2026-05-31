@@ -79,16 +79,35 @@ def _delayed_load_env_files(
     ctx: click.Context, param: click.Parameter, value: Any
 ) -> Any:
     """
-    Load environment variable files after parsing the dataset root arg and option.
+    Load environment variable files after parsing the dataset root arg or option.
 
     This is a Click parameter callback function.
     """
     dotenv_manager: DotenvFileManager = ctx.ensure_object(DotenvFileManager)
 
-    dpath_root = is_nipoppy_project(value) or value
-    dotenv_manager.apply_substitutions(dpath_root=dpath_root)
+    # the dataset arg and --dataset option cannot be used together
+    # TODO once the dataset arg is deprecated, remove all "if" statements
+    if dotenv_manager.loaded:
+        if (
+            param.name == "dataset_argument"
+            and value is not None
+            and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
+        ) or (
+            param.name == "dpath_root"
+            and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
+            and ctx.params.get("dataset_argument") is not None
+        ):
+            raise click.UsageError(
+                "Cannot provide both the dataset argument and the --dataset option."
+            )
 
-    dotenv_manager.load()
+    if (param.name == "dataset_argument" and value is not None) or (
+        param.name == "dpath_root" and ctx.params.get("dataset_argument") is None
+    ):
+        dpath_root = is_nipoppy_project(value) or value
+        dotenv_manager.apply_substitutions(dpath_root=dpath_root)
+
+        dotenv_manager.load()
 
     return value
 
@@ -105,6 +124,7 @@ def dataset_option(func):
         required=False,
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         is_eager=True,
+        callback=_delayed_load_env_files,
     )(func)
     return click.option(
         "--dataset",
@@ -122,14 +142,15 @@ def dataset_option(func):
 def dep_params(**params):
     """Handle deprecated parameters."""
     # Verify either the dataset option or argument is provided, but not both.
-    if "dpath_root" in params and (_dep_dpath_root := params.pop("dataset_argument")):
+    _dep_dpath_root = params.pop("dataset_argument")
+    if _dep_dpath_root is not None:
         logger.warning(
             (
                 "Giving the dataset path without --dataset is deprecated and will "
                 "cause an error in a future version."
             ),
         )
-        params["dpath_root"] = _dep_dpath_root or params.get("dpath_root")
+        params["dpath_root"] = _dep_dpath_root
 
     # --write-list is deprecated by --write-subcohort
     if "write_subcohort" in params and (
