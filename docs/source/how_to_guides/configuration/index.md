@@ -1,4 +1,4 @@
-# Configuring projects
+# Advanced configuration
 
 This guide describes advanced configuration methods.
 
@@ -15,9 +15,10 @@ By default, Nipoppy searches the following locations (in order of decreasing pri
 
 The search paths can be overridden by setting the `NIPOPPY_ENV_PATHS` environment variable with paths separated by the platform path separator
 (e.g., `export NIPOPPY_ENV_PATHS="[[NIPOPPY_DPATH_ROOT]]/.env:~/.nipoppy/.env:/etc/nipoppy/.env` for the default paths).
+Only the `[[NIPOPPY_DPATH_ROOT]]` substitution is allowed here.
 
 The overall order for determining the value of options is as follows (highest to lowest priority):
 1. Command-line options that are explicitly passed when calling the command
 2. Environment variables that are already defined at runtime
-3. `.env` file content (see above)
+3. Environment variables loaded from `.env` file(s) (see above)
 4. CLI default values
