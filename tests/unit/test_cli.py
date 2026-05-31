@@ -6,7 +6,6 @@ import importlib
 import inspect
 import logging
 import os
-import re
 import shlex
 from pathlib import Path
 
@@ -17,13 +16,16 @@ from click.testing import CliRunner
 
 from nipoppy.cli import OrderedAliasedGroup, exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.cli.options import DOTENV_PATHS_VAR, global_options
+from nipoppy.cli.options import (
+    DOTENV_PATHS_VAR,
+    DotenvFileManager,
+    _load_dotenv_files,
+    dataset_option,
+)
 from nipoppy.exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
-
-RE_ANSI = re.compile(r"\033\[[;?0-9]*[a-zA-Z]")
 
 # tuple of command/subcommands -> (module path, workflow class name)
 COMMAND_WORKFLOW_MAP = {
@@ -67,15 +69,27 @@ DEFAULT_VALUE_DUMMY_CLI = "default"
 @pytest.fixture
 def dummy_cli():
     @click.group(cls=OrderedAliasedGroup)
+    @_load_dotenv_files
     def cli():
         pass
 
-    # subcommand for the dummy CLI
     @cli.command()
-    @global_options
     @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
-    def test_dotenv(**params):
+    def subcommand_without_dataset(**params):
         print(params["test_param"])
+
+    @cli.command()
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
+    @dataset_option
+    def subcommand_with_dataset(**params):
+        print(params["test_param"])
+
+    @cli.command()
+    @dataset_option
+    @click.pass_context
+    def subcommand_double_load(ctx: click.Context, **params):
+        dotenv_manager = ctx.ensure_object(DotenvFileManager)
+        dotenv_manager.load()
 
     return cli
 
@@ -528,9 +542,10 @@ def test_cli_params_match_workflows(command_name):
 
 
 @pytest.mark.parametrize(
-    "dotenv_global_content,dotenv_local_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
+    "subcommand,dotenv_global_content,dotenv_local_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
     [
         (
+            "subcommand-with-dataset",
             "TEST_PARAM='dotenv_global'",
             "TEST_PARAM='dotenv_local'",
             {"TEST_PARAM": "env_var"},
@@ -538,6 +553,7 @@ def test_cli_params_match_workflows(command_name):
             "cli_arg",
         ),
         (
+            "subcommand-with-dataset",
             "TEST_PARAM='dotenv_global'",
             "TEST_PARAM='dotenv_local'",
             {"TEST_PARAM": "env_var"},
@@ -545,20 +561,44 @@ def test_cli_params_match_workflows(command_name):
             "env_var",
         ),
         (
+            "subcommand-with-dataset",
             "TEST_PARAM='dotenv_global'",
             "TEST_PARAM='dotenv_local'",
             {},
             [],
             "dotenv_local",
         ),
-        ("TEST_PARAM='dotenv_global'", "", {}, [], "dotenv_global"),
-        ("TEST_PARAM='dotenv_global'", None, {}, [], "dotenv_global"),
-        ("", None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
-        (None, None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "",
+            {},
+            [],
+            "dotenv_global",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            None,
+            {},
+            [],
+            "dotenv_global",
+        ),
+        ("subcommand-with-dataset", "", None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        ("subcommand-with-dataset", None, None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        (
+            "subcommand-without-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",  # ignored
+            {},
+            [],
+            "dotenv_global",
+        ),
     ],
 )
 def test_env_var(
     dummy_cli: click.Group,
+    subcommand: str,
     dotenv_global_content,
     dotenv_local_content,
     env_vars,
@@ -570,22 +610,28 @@ def test_env_var(
     if "TEST_PARAM" in os.environ:
         del os.environ["TEST_PARAM"]
 
+    dpath_root = tmp_path / "nipoppy_root"
+
     fpath_dotenv_global = tmp_path / "dotenv_global.env"
-    fpath_dotenv_local = tmp_path / "dotenv_local.env"
+    fpath_dotenv_local = dpath_root / "dotenv_local.env"
+    fpath_dotenv_local_template = "[[NIPOPPY_DPATH_ROOT]]/dotenv_local.env"
 
     if dotenv_global_content is not None:
         fpath_dotenv_global.write_text(dotenv_global_content)
 
     if dotenv_local_content is not None:
+        fpath_dotenv_local.parent.mkdir(parents=True, exist_ok=True)
         fpath_dotenv_local.write_text(dotenv_local_content)
 
     # local dotenv has higher priority than global dotenv
-    env_vars[DOTENV_PATHS_VAR] = (
-        f"{fpath_dotenv_local}{os.pathsep}{fpath_dotenv_global}"
+    env_vars[DOTENV_PATHS_VAR] = os.pathsep.join(
+        [str(fpath_dotenv_local_template), str(fpath_dotenv_global)]
     )
 
+    if subcommand == "subcommand-with-dataset":
+        cli_args += ["--dataset", str(dpath_root)]
     results = runner.invoke(
-        dummy_cli, ["test-dotenv"] + cli_args, env=env_vars, catch_exceptions=False
+        dummy_cli, [subcommand] + cli_args, env=env_vars, catch_exceptions=False
     )
 
     # get the last printed line which should be the parsed parameter value
@@ -594,21 +640,35 @@ def test_env_var(
     assert parsed_param == expected_parsed_param
 
 
-def test_env_flag_not_allowed(dummy_cli: click.Group):
-    result = runner.invoke(dummy_cli, ["test-dotenv", "--_env"], catch_exceptions=False)
-    assert result.exit_code == 2
-    assert (
-        # need to take into account ANSI escape codes and terminal max width
-        "The --_env option exists for internal reasons and should never be used"
-        in RE_ANSI.sub("", result.output)
-    )
+def test_env_var_error_on_double_load(dummy_cli: click.Group):
+    with pytest.raises(
+        RuntimeError, match="Environment variables have already been loaded"
+    ):
+        runner.invoke(dummy_cli, ["subcommand-double-load"], catch_exceptions=False)
+
+
+@pytest.mark.parametrize(
+    "command_name", [None] + list_cli_commands(cli, include_hidden=False)
+)
+def test_all_groups_have_dotenv_decorator(command_name: str | None):
+    command = cli
+    if command_name is not None:
+        for command_component in command_name.split(" "):
+            command = command.get_command(None, command_component)
+
+    if isinstance(command, click.Group):
+        callback = command.callback
+        source = inspect.getsource(callback)
+        assert (
+            "_load_dotenv_files" in source
+        ), f"Group command '{command_name}' is missing the @_load_dotenv_files decorator."  # noqa: E501
 
 
 @pytest.mark.parametrize(
     "command_name",
     list_cli_commands(cli, include_hidden=False, include_group=False),
 )
-def test_cli_show_envvar(command_name):
+def test_cli_show_envvar(command_name: str):
     # get Click Command object
     command = cli
     for command_component in command_name.split(" "):

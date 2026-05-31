@@ -1,6 +1,7 @@
 """Define shared Click options for the Nipoppy CLI."""
 
 import os
+from functools import update_wrapper
 from pathlib import Path
 from typing import Any
 
@@ -19,35 +20,75 @@ from nipoppy.utils.utils import is_nipoppy_project, process_template_str
 logger = get_logger()
 
 
-def _load_env_files(ctx: click.Context, param: click.Parameter, value: Any) -> Any:
-    """Load environment variable files specified by NIPOPPY_ENV_PATHS.
+class DotenvFileManager:
+    """Utility for .env files."""
 
-    This callback function should be used with a hidden and eager Click flag option.
+    def __init__(self):
+        self.fpaths_dotenv_str = os.environ.get(DOTENV_PATHS_VAR, DEFAULT_DOTENV_PATHS)
+        self.loaded = False
+
+    def apply_substitutions(self, **kwargs):
+        """Apply substitutions to the .env file paths."""
+        self.fpaths_dotenv_str = process_template_str(self.fpaths_dotenv_str, **kwargs)
+
+    def load(self):
+        """Load .env files."""
+        if self.loaded:
+            raise RuntimeError(
+                "Environment variables have already been loaded."
+                " This is not supposed to happen."
+            )
+
+        for fpath_dotenv in self.fpaths_dotenv_str.split(os.pathsep):
+            fpath_dotenv = Path(fpath_dotenv).expanduser()
+            if fpath_dotenv.is_file():
+                # the logger only logs at INFO or higher at this point
+                logger.info(f"Loading environment variables from {fpath_dotenv}")
+
+                # load_dotenv logs warnings instead of raising exceptions
+                # so no need to catch them
+                load_dotenv(fpath_dotenv, override=False)
+
+        self.loaded = True
+
+
+def _load_dotenv_files(func):
     """
-    if value is True:
-        ctx.fail(
-            f"The {param.opts[0]} option exists for internal reasons and should never be used on the command-line."  # noqa: E501
-        )
+    Wrap Click group callback to load .env files.
 
-    # Nipoppy root directory
-    dpath_root = ctx.params.get("dataset_argument") or ctx.params.get("dpath_root")
-    if dpath_root is not None:
-        dpath_root = is_nipoppy_project(dpath_root) or dpath_root
-    else:
-        dpath_root = Path.cwd()
+    This should be used as a decorator for Click groups.
+    """
 
-    fpaths_dotenv_str = os.environ.get(DOTENV_PATHS_VAR, DEFAULT_DOTENV_PATHS)
-    fpaths_dotenv_str = process_template_str(fpaths_dotenv_str, dpath_root=dpath_root)
+    @click.pass_context
+    def wrapper(ctx: click.Context, *args, **kwargs):
+        """Load environment variable files unless it should be delayed."""
+        dotenv_manager: DotenvFileManager = ctx.ensure_object(DotenvFileManager)
+        subcommand = ctx.command.get_command(ctx, ctx.invoked_subcommand)
+        if not isinstance(subcommand, click.Group) and not any(
+            param.callback == _delayed_load_env_files
+            for param in subcommand.get_params(ctx)
+        ):
+            # load dotenv files immediately
+            dotenv_manager.load()
+        return ctx.invoke(func, *args, **kwargs)
 
-    for fpath_dotenv in fpaths_dotenv_str.split(os.pathsep):
-        fpath_dotenv = Path(fpath_dotenv).expanduser()
-        if fpath_dotenv.is_file():
-            # the logger only logs at INFO or higher at this point
-            logger.info(f"Loading environment variables from {fpath_dotenv}")
+    return update_wrapper(wrapper, func)
 
-            # load_dotenv logs warnings instead of raising exceptions
-            # so no need to catch them
-            load_dotenv(fpath_dotenv, override=False)
+
+def _delayed_load_env_files(
+    ctx: click.Context, param: click.Parameter, value: Any
+) -> Any:
+    """
+    Load environment variable files after parsing the dataset root arg and option.
+
+    This is a Click parameter callback function.
+    """
+    dotenv_manager: DotenvFileManager = ctx.ensure_object(DotenvFileManager)
+
+    dpath_root = is_nipoppy_project(value) or value
+    dotenv_manager.apply_substitutions(dpath_root=dpath_root)
+
+    dotenv_manager.load()
 
     return value
 
@@ -74,6 +115,7 @@ def dataset_option(func):
         show_default=(False if os.environ.get("READTHEDOCS") else True),
         help="Path to the root of the dataset. Default: current working directory or the closest parent directory that contains a .nipoppy directory.",  # noqa: E501
         is_eager=True,
+        callback=_delayed_load_env_files,
     )(func)
 
 
@@ -114,15 +156,6 @@ def global_options(func):
         "--dry-run",
         is_flag=True,
         help="Print commands but do not execute them.",
-    )(func)
-    func = click.option(
-        "--_env",
-        help="This option exists solely to trigger the loading of environment variable files and should never be used directly.",  # noqa: E501
-        is_flag=True,
-        hidden=True,
-        expose_value=False,
-        is_eager=True,
-        callback=_load_env_files,
     )(func)
     return func
 

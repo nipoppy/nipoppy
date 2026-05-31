@@ -21,6 +21,7 @@ except ImportError:
 from nipoppy._version import __version__
 from nipoppy.cli import OrderedAliasedGroup, exception_handler
 from nipoppy.cli.options import (
+    _load_dotenv_files,
     dataset_option,
     dep_params,
     global_options,
@@ -101,6 +102,7 @@ click.rich_click.OPTION_GROUPS = {
     ),
 )
 @click.version_option(version=__version__)
+@_load_dotenv_files
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
     pass
