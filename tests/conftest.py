@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from pathlib import Path
 from typing import Generator, Optional
 
@@ -96,6 +97,15 @@ def datetime_fixture(
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
+
+
+@pytest.fixture()
+def restore_environment():
+    """Fixture to restore environment variables after a test."""
+    environment_to_restore = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(environment_to_restore)
 
 
 def list_cli_commands(

@@ -685,11 +685,8 @@ def test_param_source_priority(
     cli_args,
     expected_parsed_param: str,
     tmp_path: Path,
+    restore_environment,
 ):
-    # start from blank state
-    if "TEST_PARAM" in os.environ:
-        del os.environ["TEST_PARAM"]
-
     dpath_root = tmp_path / "nipoppy_root"
 
     fpath_dotenv_global = tmp_path / "dotenv_global.env"
