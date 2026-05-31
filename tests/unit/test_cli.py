@@ -599,7 +599,7 @@ def test_cli_params_match_workflows(command_name):
         ),
     ],
 )
-def test_env_var(
+def test_param_source_priority(
     dummy_cli: click.Group,
     subcommand: str,
     dotenv_global_content,
@@ -643,7 +643,7 @@ def test_env_var(
     assert parsed_param == expected_parsed_param
 
 
-def test_env_var_error_on_double_load(dummy_cli: click.Group):
+def test_error_on_double_load_dotenv(dummy_cli: click.Group):
     with pytest.raises(
         RuntimeError, match="Environment variables have already been loaded"
     ):
