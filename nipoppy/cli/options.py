@@ -141,7 +141,7 @@ def dataset_option(func):
 
 def dep_params(**params):
     """Handle deprecated parameters."""
-    # Verify either the dataset option or argument is provided, but not both.
+    # use the (soon-to-be deprecated) dataset argument if it is provided
     _dep_dpath_root = params.pop("dataset_argument")
     if _dep_dpath_root is not None:
         logger.warning(
