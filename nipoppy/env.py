@@ -14,10 +14,10 @@ ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 class CURRENT_SCHEMA_VERSION(str, Enum):
     """Current schema versions for Nipoppy configuration files."""
 
-    STUDY = "1"
-    PIPELINE = "1"
-    TRACKER = "1"
-    LAYOUT = "1"
+    STUDY = "1.0.0"
+    PIPELINE = "1.0.0"
+    TRACKER = "1.0.0"
+    LAYOUT = "1.0.0"
 
 
 # BIDS
