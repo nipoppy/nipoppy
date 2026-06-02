@@ -184,7 +184,7 @@ def create_pipeline_config_files(
             continue
         for pipeline_config in pipeline_config_list:
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
-            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION
+            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION.PIPELINE.value
             fpath_config = (
                 dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]

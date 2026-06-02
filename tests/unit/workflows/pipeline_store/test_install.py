@@ -32,7 +32,7 @@ def pipeline_config():
             "NAME": "my_pipeline",
             "VERSION": "1.0.0",
             "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/container.sif",
                 "URI": "fake_uri",

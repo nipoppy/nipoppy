@@ -646,7 +646,7 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
         "NAME": pipeline_name,
         "VERSION": "2.0.0",  # different version
         "PIPELINE_TYPE": "processing",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
     }
     dpath_pipeline_bundle.mkdir(parents=True)
     (dpath_pipeline_bundle / "config.json").write_text(json.dumps(config_dict))

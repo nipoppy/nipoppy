@@ -10,8 +10,15 @@ PROGRAM_NAME = "nipoppy"
 NIPOPPY_DIR_NAME = ".nipoppy"
 ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 
-# pipeline config schema version
-CURRENT_SCHEMA_VERSION = "1"
+
+class CURRENT_SCHEMA_VERSION(str, Enum):
+    """Current schema versions for Nipoppy configuration files."""
+
+    STUDY = "1"
+    PIPELINE = "1"
+    TRACKER = "1"
+    LAYOUT = "1"
+
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"

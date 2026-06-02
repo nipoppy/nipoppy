@@ -42,7 +42,7 @@ def valid_config_data():
     return {
         "NAME": "test_pipeline",
         "VERSION": "test_version",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
     }
 
 

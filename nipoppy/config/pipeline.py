@@ -76,7 +76,7 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     SCHEMA_VERSION: str = Field(
         description=(
             "Version of the schema used for this pipeline configuration. The current "
-            f"latest version is {CURRENT_SCHEMA_VERSION}"
+            f"latest version is {CURRENT_SCHEMA_VERSION.PIPELINE.value}"
         ),
     )
 
@@ -135,11 +135,12 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
                 f"{self.NAME} {self.VERSION}"
             )
 
-        if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION:
+        if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION.PIPELINE.value:
             raise ConfigError(
                 f"Pipeline {self.NAME} {self.VERSION} uses schema version "
                 f"{self.SCHEMA_VERSION}, which is incompatible with the current version"
-                f" of Nipoppy (expected schema version: {CURRENT_SCHEMA_VERSION})"
+                " of Nipoppy (expected schema version: "
+                f"{CURRENT_SCHEMA_VERSION.PIPELINE.value})"
             )
 
         return self

@@ -37,7 +37,7 @@ def valid_data() -> dict:
     return {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
     }
 
 

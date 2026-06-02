@@ -207,7 +207,7 @@ def test_propagate_container_config(
             "VERSION": pipeline_version,
             container_config_key: data_pipeline,
             "STEPS": [{"NAME": step_name, container_config_key: data_step}],
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
         }
     )
 
