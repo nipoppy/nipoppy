@@ -12,7 +12,8 @@ from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION, check_schema_version
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
@@ -112,6 +113,13 @@ class PipelineVariables(BaseModel):
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
+    SCHEMA_VERSION: str = Field(
+        default=DEFAULT_SCHEMA_VERSION,
+        description=(
+            "Version of the schema used for this study configuration. The current "
+            f"latest version is {CURRENT_SCHEMA_VERSION.STUDY.value}"
+        ),
+    )
     HPC_PREAMBLE: list[str] = Field(
         default=[],
         description=(
@@ -245,6 +253,10 @@ class Config(_SchemaWithContainerConfig):
     @model_validator(mode="after")
     def validate_and_process(self) -> Self:
         """Validate and process the configuration."""
+        check_schema_version(
+            schema_version=self.SCHEMA_VERSION,
+            current_version=CURRENT_SCHEMA_VERSION.STUDY,
+        )
         self._check_dicom_dir_options()
         self._check_substitutions()
 

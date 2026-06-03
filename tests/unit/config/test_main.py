@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION
 from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
@@ -18,6 +19,7 @@ from tests.conftest import DPATH_TEST_DATA
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
 REQUIRED_FIELDS_CONFIG = []
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
+    "SCHEMA_VERSION",
     "SUBSTITUTIONS",
     "CUSTOM",
     "CONTAINER_CONFIG",
@@ -76,6 +78,16 @@ def test_fields(valid_config_data: dict):
 def test_no_extra_fields(valid_config_data):
     with pytest.raises(ValidationError):
         Config(**valid_config_data, NOT_A_FIELD="x")
+
+
+def test_schema_version_default(valid_config_data):
+    config = Config(**valid_config_data)
+    assert config.SCHEMA_VERSION == DEFAULT_SCHEMA_VERSION
+
+
+def test_schema_version_newer(valid_config_data):
+    with pytest.raises(ValidationError, match="newer than the schema version"):
+        Config(**valid_config_data, SCHEMA_VERSION="999.0.0")
 
 
 @pytest.mark.parametrize(

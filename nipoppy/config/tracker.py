@@ -7,12 +7,21 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION, check_schema_version
+from nipoppy.env import CURRENT_SCHEMA_VERSION
 from nipoppy.exceptions import ConfigError
 
 
 class TrackerConfig(BaseModel):
     """Schema for tracker configuration."""
 
+    SCHEMA_VERSION: str = Field(
+        default=DEFAULT_SCHEMA_VERSION,
+        description=(
+            "Version of the schema used for this tracker configuration. The current "
+            f"latest version is {CURRENT_SCHEMA_VERSION.TRACKER.value}"
+        ),
+    )
     PATHS: list[Path] = Field(
         description=(
             "List of at least one path to track. A path can include template "
@@ -35,8 +44,13 @@ class TrackerConfig(BaseModel):
         Validate the configuration after instantiation.
 
         Specifically:
+        - Check schema version compatibility.
         - Make sure PATHS is not an empty list
         """
+        check_schema_version(
+            schema_version=self.SCHEMA_VERSION,
+            current_version=CURRENT_SCHEMA_VERSION.TRACKER,
+        )
         if len(self.PATHS) == 0:
             raise ConfigError(
                 f"The tracker config must contain at least one path, got {self}"

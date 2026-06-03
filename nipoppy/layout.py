@@ -4,10 +4,16 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from nipoppy.base import Base
-from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION, check_schema_version
+from nipoppy.env import (
+    CURRENT_SCHEMA_VERSION,
+    NIPOPPY_DIR_NAME,
+    PipelineTypeEnum,
+    StrOrPathLike,
+)
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
@@ -53,6 +59,13 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
+    SCHEMA_VERSION: str = Field(
+        default=DEFAULT_SCHEMA_VERSION,
+        description=(
+            "Version of the schema used for this layout configuration. The current "
+            f"latest version is {CURRENT_SCHEMA_VERSION.LAYOUT.value}"
+        ),
+    )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
@@ -152,6 +165,15 @@ class LayoutConfig(BaseModel):
         """Return the PathInfo object associated with the given path label."""
         return getattr(self, path_label)
 
+    @model_validator(mode="after")
+    def validate_after(self):
+        """Validate the layout configuration after instantiation."""
+        check_schema_version(
+            schema_version=self.SCHEMA_VERSION,
+            current_version=CURRENT_SCHEMA_VERSION.LAYOUT,
+        )
+        return self
+
 
 class DatasetLayout(Base):
     """File/directory structure for a specific dataset."""
@@ -200,6 +222,7 @@ class DatasetLayout(Base):
 
         # load the config
         config = LayoutConfig(**load_json(fpath_config))
+        self.SCHEMA_VERSION = config.SCHEMA_VERSION
 
         self.dpath_root = Path(dpath_root)
         self.fpath_spec = Path(fpath_config)
