@@ -1,4 +1,5 @@
 {
+    "SCHEMA_VERSION": "1.0.0",
     "SUBSTITUTIONS": {
         "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
         "[[NIPOPPY_DPATH_CONTAINERS]]": "[[NIPOPPY_DPATH_CONTAINERS]]",
