@@ -15,8 +15,9 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.config.schema import SCHEMA_VERSION_FIELD
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
@@ -34,9 +35,38 @@ PIPELINE_TYPE_TO_CLASS = {
 class PipelineValidationError(LayoutError): ...  # noqa E701
 
 
+def check_schema_version_exist(
+    config: dict, fpath_config: Path, strict: bool = False
+) -> None:
+    """Check if the current schema version for pipelines exists."""
+    if SCHEMA_VERSION_FIELD in config:
+        return
+
+    # SCHEMA_VERSION_FIELD is missing
+    if strict:
+        raise ConfigError(
+            f"Pipeline configuration file {fpath_config} must include "
+            f"{SCHEMA_VERSION_FIELD} field with an explicit version, but it is missing"
+        )
+    else:
+        logger.warning(
+            f"Pipeline configuration file {fpath_config} is missing "
+            f"{SCHEMA_VERSION_FIELD} field. Assuming version "
+            f"{CURRENT_SCHEMA_VERSION.PIPELINE.value}, but this will raise an error in "
+            "a future version of Nipoppy. To fix this warning, please add the following"
+            " field to your pipeline configuration file:\n"
+            f'"{SCHEMA_VERSION_FIELD}": "{CURRENT_SCHEMA_VERSION.PIPELINE.value}"'
+        )
+        config[SCHEMA_VERSION_FIELD] = CURRENT_SCHEMA_VERSION.PIPELINE.value
+
+
 # TODO we should probably refactor the config loaders to extract the check for
 # file existence and JSON validity into reusable functions
-def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
+def _load_pipeline_config_file(
+    fpath_config: Path,
+    *,
+    require_explicit_schema_version: bool = False,
+) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
@@ -51,6 +81,10 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
             f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
             f"{str(exception)}"
         )
+
+    check_schema_version_exist(
+        config_dict, fpath_config, strict=require_explicit_schema_version
+    )
 
     try:
         config = BasePipelineConfig(**config_dict)
@@ -267,14 +301,20 @@ def _check_no_subdirectories(dpath_bundle: StrOrPathLike):
 
 
 def check_pipeline_bundle(
-    dpath_bundle: StrOrPathLike, log_level: int = logging.DEBUG
+    dpath_bundle: StrOrPathLike,
+    log_level: int = logging.DEBUG,
+    *,
+    require_explicit_schema_version: bool = False,
 ) -> BasePipelineConfig:
     """Load a pipeline bundle's main configuration file and validate it."""
     dpath_bundle = Path(dpath_bundle).resolve()
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
 
     # try to load the configuration file
-    config = _load_pipeline_config_file(fpath_config)
+    config = _load_pipeline_config_file(
+        fpath_config,
+        require_explicit_schema_version=require_explicit_schema_version,
+    )
 
     # core file content validation
     fpaths = _check_pipeline_files(config, dpath_bundle, log_level=log_level)

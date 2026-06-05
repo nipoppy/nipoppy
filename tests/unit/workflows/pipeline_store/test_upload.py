@@ -48,7 +48,10 @@ def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixt
         default_preview_filename=DatasetLayout.fname_pipeline_config,
     )
     get_pipeline_metadata.assert_called_once()
-    validator.assert_called_once()
+    validator.assert_called_once_with(
+        TEST_PIPELINE,
+        require_explicit_schema_version=True,
+    )
 
 
 def test_get_pipeline_metadata(

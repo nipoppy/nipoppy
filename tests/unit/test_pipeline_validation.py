@@ -53,6 +53,31 @@ def test_load_pipeline_config_file():
     )
 
 
+def test_load_pipeline_config_file_requires_schema_version():
+    fpath_config = DPATH_TEST_DATA / "pipeline_config-no-schema-version.json"
+
+    with pytest.raises(ConfigError, match="must include SCHEMA_VERSION"):
+        _load_pipeline_config_file(
+            fpath_config,
+            require_explicit_schema_version=True,
+        )
+
+
+def test_load_pipeline_config_file_warns_no_schema_version(
+    valid_config_data: dict, caplog: pytest.LogCaptureFixture
+):
+    fpath_config = DPATH_TEST_DATA / "pipeline_config-no-schema-version.json"
+
+    _load_pipeline_config_file(
+        fpath_config,
+        require_explicit_schema_version=False,
+    )
+
+    assert any(
+        "is missing SCHEMA_VERSION field" in record.message for record in caplog.records
+    )
+
+
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
@@ -404,7 +429,7 @@ def test_check_pipeline_bundle(
     check_pipeline_bundle(dpath_bundle, log_level=log_level)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
-        dpath_bundle / "config.json"
+        dpath_bundle / "config.json", require_explicit_schema_version=False
     )
     mocked_check_pipeline_files.assert_called_once_with(
         config, dpath_bundle, log_level=log_level
