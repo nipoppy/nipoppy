@@ -85,7 +85,11 @@ class OrderedAliasedGroupWithDotenv(OrderedAliasedGroup):
 
     def make_context(self, info_name, args, *remaining_args, **kwargs):
         """Load .env files."""
-        dummy_ctx = self._dummy_cli.make_context("dataset_retriever", args[:])
+        dummy_ctx = self._dummy_cli.make_context(
+            "dataset_retriever",
+            args[:],
+            resilient_parsing=True,
+        )
         dpath_root = dummy_ctx.params.get("dpath_root")
 
         _load_dotenv_files(dpath_root)
