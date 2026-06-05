@@ -40,7 +40,7 @@ def dep_params(**params):
         and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
     ):
         raise click.UsageError(
-            "Giving both the dataset argument and the --dataset option is not allowed."
+            "Giving both the dataset argument and the --dataset option is not allowed."
         )
 
     # use the (soon-to-be deprecated) dataset argument if it is provided
