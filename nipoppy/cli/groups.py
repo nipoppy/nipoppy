@@ -74,10 +74,7 @@ class OrderedAliasedGroup(click.RichGroup):
 class OrderedAliasedGroupWithDotenv(OrderedAliasedGroup):
     """OrderedAliasedGroup that also loads .env files before executing any command."""
 
-    @click.command(
-        context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-        add_help_option=False,
-    )
+    @click.command()
     @dataset_option
     def _dummy_cli(**params):
         """Define a dummy CLI for dataset path retrieval."""
