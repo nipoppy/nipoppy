@@ -7,7 +7,6 @@ import inspect
 import json
 import logging
 import os
-import re
 import shlex
 from pathlib import Path
 
@@ -19,22 +18,16 @@ from click.testing import CliRunner
 from nipoppy.cli import (
     BUG_REPORT_URL,
     DISCORD_URL,
-    OrderedAliasedGroup,
     exception_handler,
 )
 from nipoppy.cli.cli import cli
-from nipoppy.cli.options import (
-    DOTENV_PATHS_VAR,
-    DotenvFileManager,
-    _load_dotenv_files,
-    dataset_option,
-)
+from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
+from nipoppy.cli.options import dataset_option
+from nipoppy.env import DOTENV_PATHS_VAR
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
-
-RE_ANSI = re.compile(r"\033\[[;?0-9]*[a-zA-Z]")
 
 # tuple of command/subcommands -> (module path, workflow class name)
 COMMAND_WORKFLOW_MAP = {
@@ -77,8 +70,7 @@ DEFAULT_VALUE_DUMMY_CLI = "default"
 
 @pytest.fixture
 def dummy_cli():
-    @click.group(cls=OrderedAliasedGroup)
-    @_load_dotenv_files
+    @click.group(cls=OrderedAliasedGroupWithDotenv)
     def cli():
         pass
 
@@ -92,13 +84,6 @@ def dummy_cli():
     @dataset_option
     def subcommand_with_dataset(**params):
         print(params["test_param"])
-
-    @cli.command()
-    @dataset_option
-    @click.pass_context
-    def subcommand_double_load(ctx: click.Context, **params):
-        dotenv_manager = ctx.ensure_object(DotenvFileManager)
-        dotenv_manager.load()
 
     return cli
 
@@ -707,6 +692,7 @@ def test_param_source_priority(
 
     if subcommand == "subcommand-with-dataset":
         cli_args += ["--dataset", str(dpath_root)]
+
     results = runner.invoke(
         dummy_cli, [subcommand] + cli_args, env=env_vars, catch_exceptions=False
     )
@@ -715,48 +701,6 @@ def test_param_source_priority(
     parsed_param = results.stdout.split()[-1].strip()
 
     assert parsed_param == expected_parsed_param
-
-
-def test_error_on_double_load_dotenv(dummy_cli: click.Group):
-    with pytest.raises(
-        RuntimeError, match="Environment variables have already been loaded"
-    ):
-        runner.invoke(dummy_cli, ["subcommand-double-load"], catch_exceptions=False)
-
-
-@pytest.mark.parametrize(
-    "command_name", [None] + list_cli_commands(cli, include_hidden=False)
-)
-def test_all_groups_have_dotenv_decorator(command_name: str | None):
-    command = cli
-    if command_name is not None:
-        for command_component in command_name.split(" "):
-            command = command.get_command(None, command_component)
-
-    if isinstance(command, click.Group):
-        callback = command.callback
-        source = inspect.getsource(callback)
-        assert (
-            "_load_dotenv_files" in source
-        ), f"Group command '{command_name}' is missing the @_load_dotenv_files decorator."  # noqa: E501
-
-
-def test_dataset_arg_and_option_not_allowed(tmp_path: Path):
-    command = [
-        "init",
-        f"{tmp_path}/nipoppy_study",
-        "--dataset",
-        f"{tmp_path}/nipoppy_study",
-    ]
-    result = runner.invoke(cli, command, catch_exceptions=False)
-
-    assert (
-        # need to take into account ANSI escape codes and terminal max width
-        "Cannot provide both the dataset argument and the --dataset option."
-        in RE_ANSI.sub("", result.output)
-    )
-
-    assert result.exit_code == ReturnCode.INVALID_COMMAND
 
 
 @pytest.mark.parametrize(

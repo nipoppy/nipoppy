@@ -19,9 +19,9 @@ except ImportError:
 
 
 from nipoppy._version import __version__
-from nipoppy.cli import OrderedAliasedGroup, exception_handler
+from nipoppy.cli import exception_handler
+from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
-    _load_dotenv_files,
     dataset_option,
     dep_params,
     global_options,
@@ -94,7 +94,7 @@ click.rich_click.OPTION_GROUPS = {
 
 @tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
-    cls=OrderedAliasedGroup,
+    cls=OrderedAliasedGroupWithDotenv,
     context_settings={"help_option_names": ["-h", "--help"], "show_default": True},
     epilog=(
         "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
@@ -102,7 +102,6 @@ click.rich_click.OPTION_GROUPS = {
     ),
 )
 @click.version_option(version=__version__)
-@_load_dotenv_files
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
     pass

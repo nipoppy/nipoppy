@@ -4,9 +4,9 @@ from pathlib import Path
 
 import rich_click as click
 
-from nipoppy.cli import OrderedAliasedGroup, exception_handler
+from nipoppy.cli import exception_handler
+from nipoppy.cli.groups import OrderedAliasedGroup
 from nipoppy.cli.options import (
-    _load_dotenv_files,
     assume_yes_option,
     dataset_option,
     dep_params,
@@ -21,7 +21,6 @@ from nipoppy.zenodo_api import ZenodoAPI
 @click.group(
     cls=OrderedAliasedGroup, context_settings={"help_option_names": ["-h", "--help"]}
 )
-@_load_dotenv_files
 def pipeline():
     """Pipeline store operations."""
     pass

@@ -1,130 +1,24 @@
 """Define shared Click options for the Nipoppy CLI."""
 
 import os
-from functools import update_wrapper
 from pathlib import Path
-from typing import Any
 
 import rich_click as click
-from dotenv import load_dotenv
 
-from nipoppy.env import (
-    BIDS_SESSION_PREFIX,
-    BIDS_SUBJECT_PREFIX,
-    DEFAULT_DOTENV_PATHS,
-    DOTENV_PATHS_VAR,
-)
+from nipoppy.env import BIDS_SESSION_PREFIX, BIDS_SUBJECT_PREFIX
 from nipoppy.logger import get_logger
-from nipoppy.utils.utils import is_nipoppy_project, process_template_str
 
 logger = get_logger()
 
 
-class DotenvFileManager:
-    """Utility for .env files."""
-
-    def __init__(self):
-        self.fpaths_dotenv_str = os.environ.get(DOTENV_PATHS_VAR, DEFAULT_DOTENV_PATHS)
-        self.loaded = False
-
-    def apply_substitutions(self, **kwargs):
-        """Apply substitutions to the .env file paths."""
-        self.fpaths_dotenv_str = process_template_str(self.fpaths_dotenv_str, **kwargs)
-
-    def load(self):
-        """Load .env files."""
-        if self.loaded:
-            raise RuntimeError(
-                "Environment variables have already been loaded."
-                " This is not supposed to happen."
-            )
-
-        for fpath_dotenv in self.fpaths_dotenv_str.split(os.pathsep):
-            fpath_dotenv = Path(fpath_dotenv).expanduser()
-            if fpath_dotenv.is_file():
-                # the logger only logs at INFO or higher at this point
-                logger.info(f"Loading environment variables from {fpath_dotenv}")
-
-                # load_dotenv logs warnings instead of raising exceptions
-                # so no need to catch them
-                load_dotenv(fpath_dotenv, override=False)
-
-        self.loaded = True
-
-
-def _load_dotenv_files(func):
-    """
-    Wrap Click group callback to load .env files.
-
-    This should be used as a decorator for Click groups.
-    """
-
-    @click.pass_context
-    def wrapper(ctx: click.Context, *args, **kwargs):
-        """Load environment variable files unless it should be delayed."""
-        dotenv_manager: DotenvFileManager = ctx.ensure_object(DotenvFileManager)
-        subcommand = ctx.command.get_command(ctx, ctx.invoked_subcommand)
-        if not isinstance(subcommand, click.Group) and not any(
-            param.callback == _delayed_load_env_files
-            for param in subcommand.get_params(ctx)
-        ):
-            # load dotenv files immediately
-            dotenv_manager.load()
-        return ctx.invoke(func, *args, **kwargs)
-
-    return update_wrapper(wrapper, func)
-
-
-def _delayed_load_env_files(
-    ctx: click.Context, param: click.Parameter, value: Any
-) -> Any:
-    """
-    Load environment variable files after parsing the dataset root arg or option.
-
-    This is a Click parameter callback function.
-    """
-    dotenv_manager: DotenvFileManager = ctx.ensure_object(DotenvFileManager)
-
-    # the dataset arg and --dataset option cannot be used together
-    # TODO once the dataset arg is deprecated, remove all "if" statements
-    if dotenv_manager.loaded:
-        if (
-            param.name == "dataset_argument"
-            and value is not None
-            and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
-        ) or (
-            param.name == "dpath_root"
-            and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
-            and ctx.params.get("dataset_argument") is not None
-        ):
-            raise click.UsageError(
-                "Cannot provide both the dataset argument and the --dataset option."
-            )
-
-    if (param.name == "dataset_argument" and value is not None) or (
-        param.name == "dpath_root" and ctx.params.get("dataset_argument") is None
-    ):
-        dpath_root = is_nipoppy_project(value) or value
-        dotenv_manager.apply_substitutions(dpath_root=dpath_root)
-
-        dotenv_manager.load()
-
-    return value
-
-
 def dataset_option(func):
-    """Define dataset options for the CLI.
-
-    It is separated from global_options to allow for a different ordering when printing
-    the `--help`.
-    """
+    """Define dataset options for the CLI."""
     # The dataset argument is deprecated, but we keep it for backward compatibility.
     func = click.argument(
         "dataset_argument",
         required=False,
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         is_eager=True,
-        callback=_delayed_load_env_files,
     )(func)
     return click.option(
         "--dataset",
@@ -134,13 +28,21 @@ def dataset_option(func):
         default=Path.cwd(),
         show_default=(False if os.environ.get("READTHEDOCS") else True),
         help="Path to the root of the dataset. Default: current working directory or the closest parent directory that contains a .nipoppy directory.",  # noqa: E501
-        is_eager=True,
-        callback=_delayed_load_env_files,
     )(func)
 
 
 def dep_params(**params):
     """Handle deprecated parameters."""
+    # error if both the dataset argument and the --dataset option are given
+    ctx = click.get_current_context()
+    if (
+        ctx.get_parameter_source("dataset_argument") != click.ParameterSource.DEFAULT
+        and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
+    ):
+        raise click.UsageError(
+            "Giving both the dataset argument and the --dataset option is not allowed."
+        )
+
     # use the (soon-to-be deprecated) dataset argument if it is provided
     _dep_dpath_root = params.pop("dataset_argument")
     if _dep_dpath_root is not None:
