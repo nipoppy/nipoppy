@@ -55,9 +55,13 @@ def movetree(source: Path, target: Path, dry_run=False):
         source.rmdir()
 
 
-def symlink(source: Path, target: Path, dry_run=False):
-    """Create a symlink: target -> source."""
-    logger.debug(f"Creating a symlink from {source} to {target}")
+def symlink(source: Path, target: Path, force: bool = False, dry_run=False):
+    """Create a symlink: target (symlink) -> source."""
+    if target.exists() and force:
+        rm(target, dry_run=dry_run)
+
+    logger.debug(f"Creating a symlink from {target} to {source}")
+    mkdir(target.parent, dry_run=dry_run)
     if not dry_run:
         target.symlink_to(source)
 
