@@ -14,12 +14,6 @@ logger = get_logger()
 def dataset_option(func):
     """Define dataset options for the CLI."""
     # The dataset argument is deprecated, but we keep it for backward compatibility.
-    func = click.argument(
-        "dataset_argument",
-        required=False,
-        type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
-        is_eager=True,
-    )(func)
     return click.option(
         "--dataset",
         "dpath_root",
@@ -33,27 +27,6 @@ def dataset_option(func):
 
 def dep_params(**params):
     """Handle deprecated parameters."""
-    # error if both the dataset argument and the --dataset option are given
-    ctx = click.get_current_context()
-    if (
-        ctx.get_parameter_source("dataset_argument") != click.ParameterSource.DEFAULT
-        and ctx.get_parameter_source("dpath_root") != click.ParameterSource.DEFAULT
-    ):
-        raise click.UsageError(
-            "Giving both the dataset argument and the --dataset option is not allowed."
-        )
-
-    # use the (soon-to-be deprecated) dataset argument if it is provided
-    _dep_dpath_root = params.pop("dataset_argument")
-    if _dep_dpath_root is not None:
-        logger.warning(
-            (
-                "Giving the dataset path without --dataset is deprecated and will "
-                "cause an error in a future version."
-            ),
-        )
-        params["dpath_root"] = _dep_dpath_root
-
     # --write-list is deprecated by --write-subcohort
     if "write_subcohort" in params and (
         _dep_write_subcohort := params.pop("write_list")

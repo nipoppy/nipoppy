@@ -109,11 +109,6 @@ def test_cli_invalid(args):
     "command,workflow,expected_warning",
     [
         (
-            ["init", "[tmp_path]/nipoppy_study"],
-            "nipoppy.workflows.dataset_init.InitWorkflow",
-            "Giving the dataset path without --dataset is deprecated",
-        ),
-        (
             [
                 "process",
                 "--dataset",
