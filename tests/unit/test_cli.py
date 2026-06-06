@@ -6,15 +6,24 @@ import importlib
 import inspect
 import json
 import logging
+import os
 import shlex
 from pathlib import Path
 
 import pytest
 import pytest_mock
+import rich_click as click
 from click.testing import CliRunner
 
-from nipoppy.cli import BUG_REPORT_URL, DISCORD_URL, exception_handler
+from nipoppy.cli import (
+    BUG_REPORT_URL,
+    DISCORD_URL,
+    exception_handler,
+)
 from nipoppy.cli.cli import cli
+from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
+from nipoppy.cli.options import dataset_option
+from nipoppy.env import DOTENV_PATHS_VAR
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
@@ -56,8 +65,30 @@ COMMAND_WORKFLOW_MAP = {
     ),
 }
 
+DEFAULT_VALUE_DUMMY_CLI = "default"
 
-def assert_command_success(args):
+
+@pytest.fixture
+def dummy_cli():
+    @click.group(cls=OrderedAliasedGroupWithDotenv)
+    def cli():
+        pass
+
+    @cli.command()
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
+    def subcommand_without_dataset(**params):
+        print(params["test_param"])
+
+    @cli.command()
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
+    @dataset_option
+    def subcommand_with_dataset(**params):
+        print(params["test_param"])
+
+    return cli
+
+
+def _assert_command_success(args):
     """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
     assert (
@@ -77,11 +108,6 @@ def test_cli_invalid(args):
 @pytest.mark.parametrize(
     "command,workflow,expected_warning",
     [
-        (
-            ["init", "[tmp_path]/nipoppy_study"],
-            "nipoppy.workflows.dataset_init.InitWorkflow",
-            "Giving the dataset path without --dataset is deprecated",
-        ),
         (
             [
                 "process",
@@ -125,7 +151,7 @@ def test_dep_params(
 @pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
-    assert_command_success(f"{command} -h")
+    _assert_command_success(f"{command} -h")
     assert any(
         [
             (record.levelno == logging.WARNING and "is deprecated" in record.message)
@@ -336,7 +362,7 @@ def test_cli_command(
 
     if workflow:
         mocker.patch(f"{workflow}.run")
-    assert_command_success(command)
+    _assert_command_success(command)
 
 
 def test_context_manager_no_exception(mocker):
@@ -538,11 +564,7 @@ def test_no_duplicated_flag(
 
 @pytest.mark.parametrize(
     "command_name",
-    [
-        command
-        for command in list_cli_commands(cli)
-        if command not in ("gui", "pipeline")
-    ],
+    list_cli_commands(cli, include_hidden=False, include_group=False),
 )
 def test_cli_params_match_workflows(command_name):
     ignored_params = {
@@ -577,3 +599,119 @@ def test_cli_params_match_workflows(command_name):
         f"Command '{command_name}' is missing params {missing_params}"
         f" expected by {workflow_name}"
     )
+
+
+@pytest.mark.parametrize(
+    "subcommand,dotenv_global_content,dotenv_local_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
+    [
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",
+            {"TEST_PARAM": "env_var"},
+            ["--test-param", "cli_arg"],
+            "cli_arg",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",
+            {"TEST_PARAM": "env_var"},
+            [],
+            "env_var",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",
+            {},
+            [],
+            "dotenv_local",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "",
+            {},
+            [],
+            "dotenv_global",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='dotenv_global'",
+            None,
+            {},
+            [],
+            "dotenv_global",
+        ),
+        ("subcommand-with-dataset", "", None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        ("subcommand-with-dataset", None, None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        (
+            "subcommand-without-dataset",
+            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='dotenv_local'",  # ignored
+            {},
+            [],
+            "dotenv_global",
+        ),
+    ],
+)
+def test_param_source_priority(
+    dummy_cli: click.Group,
+    subcommand: str,
+    dotenv_global_content,
+    dotenv_local_content,
+    env_vars,
+    cli_args,
+    expected_parsed_param: str,
+    tmp_path: Path,
+    restore_environment,
+):
+    dpath_root = tmp_path / "nipoppy_root"
+
+    fpath_dotenv_global = tmp_path / "dotenv_global.env"
+    fpath_dotenv_local = dpath_root / "dotenv_local.env"
+    fpath_dotenv_local_template = "[[NIPOPPY_DPATH_ROOT]]/dotenv_local.env"
+
+    if dotenv_global_content is not None:
+        fpath_dotenv_global.write_text(dotenv_global_content)
+
+    if dotenv_local_content is not None:
+        fpath_dotenv_local.parent.mkdir(parents=True, exist_ok=True)
+        fpath_dotenv_local.write_text(dotenv_local_content)
+
+    # local dotenv has higher priority than global dotenv
+    env_vars[DOTENV_PATHS_VAR] = os.pathsep.join(
+        [str(fpath_dotenv_local_template), str(fpath_dotenv_global)]
+    )
+
+    if subcommand == "subcommand-with-dataset":
+        cli_args += ["--dataset", str(dpath_root)]
+
+    results = runner.invoke(
+        dummy_cli, [subcommand] + cli_args, env=env_vars, catch_exceptions=False
+    )
+
+    # get the last printed line which should be the parsed parameter value
+    parsed_param = results.stdout.split()[-1].strip()
+
+    assert parsed_param == expected_parsed_param
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    list_cli_commands(cli, include_hidden=False, include_group=False),
+)
+def test_cli_show_envvar(command_name: str):
+    # get Click Command object
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    for param in command.params:
+        if param.envvar is not None:
+            assert param.show_envvar, (
+                f"Parameter '{param.name}' in subcommand '{command_name}' has envvar "
+                f"'{param.envvar}' but show_envvar is False. Set show_envvar to True "
+                f"to display the env var in the help message."
+            )
