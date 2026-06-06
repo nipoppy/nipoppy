@@ -15,7 +15,13 @@ def check_schema_version(
     schema_version: str,
     current_version: CURRENT_SCHEMA_VERSION,
 ) -> None:
-    """Validate SCHEMA_VERSION after model validation."""
+    """Validate schema version is supported by this version of Nipoppy.
+
+    Raises
+    ------
+    ConfigError
+        If schema version is newer than the one supported by this version of Nipoppy.
+    """
     if Version(schema_version) > Version(current_version.value):  # noqa: E501
         raise ConfigError(
             f"{current_version.name} config uses schema version {schema_version}, which"
