@@ -604,53 +604,53 @@ def test_cli_params_match_workflows(command_name):
     [
         (
             "subcommand-with-dataset",
-            "TEST_PARAM='dotenv_global'",
-            "TEST_PARAM='dotenv_local'",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",
             {"TEST_PARAM": "env_var"},
             ["--test-param", "cli_arg"],
             "cli_arg",
         ),
         (
             "subcommand-with-dataset",
-            "TEST_PARAM='dotenv_global'",
-            "TEST_PARAM='dotenv_local'",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",
             {"TEST_PARAM": "env_var"},
             [],
             "env_var",
         ),
         (
             "subcommand-with-dataset",
-            "TEST_PARAM='dotenv_global'",
-            "TEST_PARAM='dotenv_local'",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",
             {},
             [],
-            "dotenv_local",
+            "study_dotenv",
         ),
         (
             "subcommand-with-dataset",
-            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='user_dotenv'",
             "",
             {},
             [],
-            "dotenv_global",
+            "user_dotenv",
         ),
         (
             "subcommand-with-dataset",
-            "TEST_PARAM='dotenv_global'",
+            "TEST_PARAM='user_dotenv'",
             None,
             {},
             [],
-            "dotenv_global",
+            "user_dotenv",
         ),
         ("subcommand-with-dataset", "", None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
         ("subcommand-with-dataset", None, None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
         (
             "subcommand-without-dataset",
-            "TEST_PARAM='dotenv_global'",
-            "TEST_PARAM='dotenv_local'",  # ignored
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",  # ignored
             {},
             [],
-            "dotenv_global",
+            "user_dotenv",
         ),
     ],
 )
@@ -670,18 +670,18 @@ def test_param_source_priority(
 
     # user-level dotenv at ~/.nipoppy/.env
     dpath_home = tmp_path / "home"
-    fpath_dotenv_global = dpath_home / ".nipoppy" / ".env"
+    fpath_user_dotenv = dpath_home / ".nipoppy" / ".env"
 
     # study-level dotenv at [[NIPOPPY_DPATH_ROOT]]/.env
-    fpath_dotenv_local = dpath_root / ".env"
+    fpath_study_dotenv = dpath_root / ".env"
 
     if user_dotenv_content is not None:
-        fpath_dotenv_global.parent.mkdir(parents=True, exist_ok=True)
-        fpath_dotenv_global.write_text(user_dotenv_content)
+        fpath_user_dotenv.parent.mkdir(parents=True, exist_ok=True)
+        fpath_user_dotenv.write_text(user_dotenv_content)
 
     if study_dotenv_content is not None:
-        fpath_dotenv_local.parent.mkdir(parents=True, exist_ok=True)
-        fpath_dotenv_local.write_text(study_dotenv_content)
+        fpath_study_dotenv.parent.mkdir(parents=True, exist_ok=True)
+        fpath_study_dotenv.write_text(study_dotenv_content)
 
     # set HOME so ~ expands to the test home directory
     monkeypatch.setenv("HOME", str(dpath_home))
