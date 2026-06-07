@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import httpx
+from pydantic import ValidationError
 
 try:
     from nipoppy._version import __version__
@@ -219,13 +220,16 @@ class InitWorkflow(BaseDatasetWorkflow):
         """Write the study's config file."""
         fpath_user_config = Path(fpath_user_config).expanduser()
 
+        fpath_config_to_copy = fpath_default_config
         if not self.default_config and fpath_user_config.is_file():
-            fpath_config_to_copy = fpath_user_config
-        else:
-            fpath_config_to_copy = fpath_default_config
-
-        # validate the config file before copying
-        Config.load(fpath_config_to_copy)
+            try:
+                Config.load(fpath_user_config)
+                fpath_config_to_copy = fpath_user_config
+            except ValidationError as exception:
+                logger.warning(
+                    f"{fpath_user_config} is invalid:\n{exception}."
+                    "\nFalling back to the default config file."
+                )
 
         fileops.mkdir(self.study.layout.fpath_config.parent, dry_run=self.dry_run)
         fileops.copy(

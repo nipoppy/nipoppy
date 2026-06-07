@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 import pytest_mock
 from fids import fids
-from pydantic import ValidationError
 
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.exceptions import FileOperationError
@@ -193,14 +192,17 @@ def test_create_config_file_default_config_ignores_user_config(
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
 
 
-def test_create_config_file_validates_config(workflow: InitWorkflow, tmp_path: Path):
+def test_create_config_file_warns_and_falls_back_for_invalid_user_config(
+    workflow: InitWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"NOT_A_CONFIG_FIELD": "config"}\n')
 
-    with pytest.raises(ValidationError):
-        workflow._create_config_file(fpath_user_config=fpath_user_config)
+    workflow._create_config_file(fpath_user_config=fpath_user_config)
 
-    assert not workflow.study.layout.fpath_config.exists()
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert f"{fpath_user_config} is invalid" in caplog.text
+    assert "Falling back to the default config file" in caplog.text
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
