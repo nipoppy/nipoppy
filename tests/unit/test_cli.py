@@ -6,7 +6,6 @@ import importlib
 import inspect
 import json
 import logging
-import os
 import shlex
 from pathlib import Path
 
@@ -23,7 +22,6 @@ from nipoppy.cli import (
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import dataset_option
-from nipoppy.env import DOTENV_PATHS_VAR
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
@@ -602,7 +600,7 @@ def test_cli_params_match_workflows(command_name):
 
 
 @pytest.mark.parametrize(
-    "subcommand,dotenv_global_content,dotenv_local_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
+    "subcommand,user_dotenv_content,study_dotenv_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
     [
         (
             "subcommand-with-dataset",
@@ -659,31 +657,34 @@ def test_cli_params_match_workflows(command_name):
 def test_param_source_priority(
     dummy_cli: click.Group,
     subcommand: str,
-    dotenv_global_content,
-    dotenv_local_content,
+    user_dotenv_content,
+    study_dotenv_content,
     env_vars,
     cli_args,
     expected_parsed_param: str,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
     restore_environment,
 ):
     dpath_root = tmp_path / "nipoppy_root"
 
-    fpath_dotenv_global = tmp_path / "dotenv_global.env"
-    fpath_dotenv_local = dpath_root / "dotenv_local.env"
-    fpath_dotenv_local_template = "[[NIPOPPY_DPATH_ROOT]]/dotenv_local.env"
+    # user-level dotenv at ~/.nipoppy/.env
+    dpath_home = tmp_path / "home"
+    fpath_dotenv_global = dpath_home / ".nipoppy" / ".env"
 
-    if dotenv_global_content is not None:
-        fpath_dotenv_global.write_text(dotenv_global_content)
+    # study-level dotenv at [[NIPOPPY_DPATH_ROOT]]/.env
+    fpath_dotenv_local = dpath_root / ".env"
 
-    if dotenv_local_content is not None:
+    if user_dotenv_content is not None:
+        fpath_dotenv_global.parent.mkdir(parents=True, exist_ok=True)
+        fpath_dotenv_global.write_text(user_dotenv_content)
+
+    if study_dotenv_content is not None:
         fpath_dotenv_local.parent.mkdir(parents=True, exist_ok=True)
-        fpath_dotenv_local.write_text(dotenv_local_content)
+        fpath_dotenv_local.write_text(study_dotenv_content)
 
-    # local dotenv has higher priority than global dotenv
-    env_vars[DOTENV_PATHS_VAR] = os.pathsep.join(
-        [str(fpath_dotenv_local_template), str(fpath_dotenv_global)]
-    )
+    # set HOME so ~ expands to the test home directory
+    monkeypatch.setenv("HOME", str(dpath_home))
 
     if subcommand == "subcommand-with-dataset":
         cli_args += ["--dataset", str(dpath_root)]
