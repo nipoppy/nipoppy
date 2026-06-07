@@ -14,7 +14,7 @@ from fids import fids
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
+from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 
@@ -148,10 +148,42 @@ def assert_layout_creation(workflow, dpath_root):
         assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
+def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
+    assert fpath_actual.read_text() == fpath_expected.read_text()
+
+
 def test_run(workflow: InitWorkflow, dpath_root: Path):
     workflow.run()
 
     assert_layout_creation(workflow, dpath_root)
+
+
+def test_create_config_file_defaults_to_sample_when_user_config_missing(
+    workflow: InitWorkflow, tmp_path: Path
+):
+    workflow._create_config_file(fpath_user_config=tmp_path / "missing_config.json")
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+
+
+def test_create_config_file_uses_user_config(workflow: InitWorkflow, tmp_path: Path):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"CUSTOM": "config"}\n')
+    workflow._create_config_file(fpath_user_config=fpath_user_config)
+
+    assert_config_matches(workflow.study.layout.fpath_config, fpath_user_config)
+
+
+def test_create_config_file_default_config_ignores_user_config(
+    dpath_root: Path, tmp_path: Path
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"CUSTOM": "config"}\n')
+
+    workflow = InitWorkflow(dpath_root=dpath_root, default_config=True)
+    workflow._create_config_file(fpath_user_config=fpath_user_config)
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
