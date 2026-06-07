@@ -13,6 +13,7 @@ from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
+    FPATH_USER_CONFIG,
     NIPOPPY_DIR_NAME,
     PipelineTypeEnum,
     StrOrPathLike,
@@ -76,6 +77,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         mode="symlink",
         force=False,
         fpath_layout: Optional[StrOrPathLike] = None,
+        default_config: bool = False,
         verbose: bool = False,
         dry_run: bool = False,
     ):
@@ -93,6 +95,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.bids_source = bids_source
         self.mode = mode
         self.force = force
+        self.default_config = default_config
 
     def run_main(self):
         """Create dataset directory structure.
@@ -139,14 +142,10 @@ class InitWorkflow(BaseDatasetWorkflow):
                 dry_run=self.dry_run,
             )
 
-        # copy sample config and manifest files
-        fileops.copy(
-            FPATH_SAMPLE_CONFIG,
-            self.study.layout.fpath_config,
-            exist_ok=True,
-            dry_run=self.dry_run,
-        )
+        # config file
+        self._create_config_file()
 
+        # manifest
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
         else:
@@ -210,6 +209,27 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.symlink(self.bids_source, dpath, dry_run=self.dry_run)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
+
+    def _create_config_file(
+        self,
+        fpath_user_config: StrOrPathLike = FPATH_USER_CONFIG,
+        fpath_default_config: StrOrPathLike = FPATH_SAMPLE_CONFIG,
+    ) -> None:
+        """Write the study's config file."""
+        fpath_user_config = Path(fpath_user_config).expanduser()
+
+        if not self.default_config and fpath_user_config.is_file():
+            fpath_config_to_copy = fpath_user_config
+        else:
+            fpath_config_to_copy = fpath_default_config
+
+        fileops.mkdir(self.study.layout.fpath_config.parent, dry_run=self.dry_run)
+        fileops.copy(
+            fpath_config_to_copy,
+            self.study.layout.fpath_config,
+            exist_ok=True,
+            dry_run=self.dry_run,
+        )
 
     def _write_readmes(self) -> None:
         if self.dry_run:
