@@ -126,7 +126,7 @@ class BIDSificationRunner(Runner):
 
         return invocation_and_descriptor
 
-    def write_status_file(self):
+    def _write_status_file(self):
         """Write the updated curation status table to disk."""
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.curation_status_table.save_with_backup(
@@ -137,4 +137,4 @@ class BIDSificationRunner(Runner):
     def run_main(self):
         """Run the BIDSification pipeline."""
         super().run_main()
-        self.write_status_file()
+        self._write_status_file()

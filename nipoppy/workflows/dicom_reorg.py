@@ -210,9 +210,9 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
             dry_run=self.dry_run,
         )
 
-        self.log_summary_message()
+        self._log_summary_message()
 
-    def log_summary_message(self):
+    def _log_summary_message(self):
         """Log a summary message about the run."""
         if self.n_total == 0:
             logger.warning(

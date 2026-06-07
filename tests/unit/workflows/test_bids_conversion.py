@@ -148,7 +148,7 @@ def test_write_status_file(table: CurationStatusTable, workflow: BIDSificationRu
     workflow.pipeline_step = "convert"
     workflow.curation_status_table = table
 
-    workflow.write_status_file()
+    workflow._write_status_file()
 
     assert workflow.study.layout.fpath_curation_status.exists()
     assert CurationStatusTable.load(workflow.study.layout.fpath_curation_status).equals(
@@ -161,7 +161,7 @@ def test_write_status_file_simulate(workflow: BIDSificationRunner):
     workflow.simulate = True
     workflow.curation_status_table = CurationStatusTable()
 
-    workflow.write_status_file()
+    workflow._write_status_file()
 
     assert not workflow.study.layout.fpath_curation_status.exists()
 
@@ -170,13 +170,13 @@ def test_write_status_file_no_update(workflow: BIDSificationRunner):
     workflow.pipeline_step = "prepare"
     workflow.curation_status_table = CurationStatusTable()
 
-    workflow.write_status_file()
+    workflow._write_status_file()
 
     assert not workflow.study.layout.fpath_curation_status.exists()
 
 
 def test_run_main(workflow: BIDSificationRunner, mocker: pytest_mock.MockerFixture):
-    mocked_write_status_file = mocker.patch.object(workflow, "write_status_file")
+    mocked_write_status_file = mocker.patch.object(workflow, "_write_status_file")
     mocker.patch.object(
         workflow, "get_participants_sessions_to_run", return_value=[("01", "1")]
     )

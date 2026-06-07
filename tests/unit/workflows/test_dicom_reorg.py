@@ -379,7 +379,7 @@ def test_run_main(
         workflow.curation_status_table,
         "save_with_backup",
     )
-    mocked_log_summary_message = mocker.patch.object(workflow, "log_summary_message")
+    mocked_log_summary_message = mocker.patch.object(workflow, "_log_summary_message")
 
     workflow.run_main()
 
@@ -485,6 +485,6 @@ def test_log_summary_message(
     workflow.curation_status_table = CurationStatusTable()  # empty table to avoid error
     workflow.n_success = n_success
     workflow.n_total = n_total
-    workflow.log_summary_message()
+    workflow._log_summary_message()
 
     assert expected_message.format(n_success, n_total) in caplog.text
