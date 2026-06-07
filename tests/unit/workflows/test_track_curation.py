@@ -63,6 +63,7 @@ def test_run_main(
     participants_and_sessions_organized: dict[str, list[str]],
     participants_and_sessions_bidsified: dict[str, list[str]],
     empty: bool,
+    caplog: pytest.LogCaptureFixture,
 ):
     workflow.empty = empty
 
@@ -108,6 +109,11 @@ def test_run_main(
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
+    )
+
+    assert (
+        "Successfully generated/updated the dataset's curation status file"
+        in caplog.text
     )
 
 
@@ -196,13 +202,4 @@ def test_run_main_regenerate(
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
         empty=empty,
-    )
-
-
-@pytest.mark.no_xdist
-def test_run_cleanup(tmp_path: Path, caplog: pytest.LogCaptureFixture):
-    TrackCurationWorkflow(dpath_root=tmp_path).run_cleanup()
-    assert (
-        "Successfully generated/updated the dataset's curation status file"
-        in caplog.text
     )
