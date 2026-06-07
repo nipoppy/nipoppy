@@ -157,6 +157,10 @@ class InitWorkflow(BaseDatasetWorkflow):
                 exist_ok=True,
                 dry_run=self.dry_run,
             )
+            logger.warning(
+                f"Sample manifest file copied to {self.study.layout.fpath_manifest}. "
+                "It should be edited to match your dataset."
+            )
 
         # copy dataset description file if specified in layout
         if getattr(self.study.layout, "fpath_bids_dataset_description", None):
@@ -180,13 +184,6 @@ class InitWorkflow(BaseDatasetWorkflow):
             self.study.layout.dpath_hpc,
             exist_ok=True,
             dry_run=self.dry_run,
-        )
-
-        # inform user to edit the sample files
-        logger.warning(
-            "Sample config and manifest files copied to "
-            f"{self.study.layout.fpath_config} and {self.study.layout.fpath_manifest} "
-            "respectively. They should be edited to match your dataset"
         )
 
     def handle_bids_source(self) -> None:
@@ -238,6 +235,11 @@ class InitWorkflow(BaseDatasetWorkflow):
             exist_ok=True,
             dry_run=self.dry_run,
         )
+        if fpath_config_to_copy == fpath_default_config:
+            logger.warning(
+                f"Default config file copied to {self.study.layout.fpath_config}. "
+                "It may need to be edited to match your dataset."
+            )
 
     def _write_readmes(self) -> None:
         if self.dry_run:
