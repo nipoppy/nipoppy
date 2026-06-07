@@ -205,19 +205,15 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                     f"{participant_id} session {session_id}: {exception}"
                 )
 
-    def run_cleanup(self):
-        """
-        Clean up after main DICOM reorg part is run.
-
-        Specifically:
-        - Write updated curation status file
-        - Log a summary message
-        """
         self.curation_status_table.save_with_backup(
             self.study.layout.fpath_curation_status,
             dry_run=self.dry_run,
         )
 
+        self.log_summary_message()
+
+    def log_summary_message(self):
+        """Log a summary message about the run."""
         if self.n_total == 0:
             logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
@@ -236,5 +232,3 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 logger.success(log_msg)
             else:
                 logger.warning(log_msg)
-
-        return super().run_cleanup()
