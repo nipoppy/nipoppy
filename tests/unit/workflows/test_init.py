@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 from fids import fids
+from pydantic import ValidationError
 
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.exceptions import FileOperationError
@@ -26,6 +27,12 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 @pytest.fixture
 def workflow(dpath_root: Path) -> InitWorkflow:
     return InitWorkflow(dpath_root=dpath_root)
+
+
+@pytest.fixture(autouse=True)
+def isolate_user_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Ignore any existing user config by setting HOME to a temporary directory."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
 
 
 @pytest.fixture
@@ -168,7 +175,7 @@ def test_create_config_file_defaults_to_sample_when_user_config_missing(
 
 def test_create_config_file_uses_user_config(workflow: InitWorkflow, tmp_path: Path):
     fpath_user_config = tmp_path / "config.json"
-    fpath_user_config.write_text('{"CUSTOM": "config"}\n')
+    fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
     workflow._create_config_file(fpath_user_config=fpath_user_config)
 
     assert_config_matches(workflow.study.layout.fpath_config, fpath_user_config)
@@ -178,12 +185,22 @@ def test_create_config_file_default_config_ignores_user_config(
     dpath_root: Path, tmp_path: Path
 ):
     fpath_user_config = tmp_path / "config.json"
-    fpath_user_config.write_text('{"CUSTOM": "config"}\n')
+    fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
 
     workflow = InitWorkflow(dpath_root=dpath_root, default_config=True)
     workflow._create_config_file(fpath_user_config=fpath_user_config)
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+
+
+def test_create_config_file_validates_config(workflow: InitWorkflow, tmp_path: Path):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"NOT_A_CONFIG_FIELD": "config"}\n')
+
+    with pytest.raises(ValidationError):
+        workflow._create_config_file(fpath_user_config=fpath_user_config)
+
+    assert not workflow.study.layout.fpath_config.exists()
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):

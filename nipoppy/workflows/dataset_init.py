@@ -9,6 +9,7 @@ try:
     from nipoppy._version import __version__
 except ImportError:
     __version__ = "unknown"
+from nipoppy.config.main import Config
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
@@ -222,6 +223,9 @@ class InitWorkflow(BaseDatasetWorkflow):
             fpath_config_to_copy = fpath_user_config
         else:
             fpath_config_to_copy = fpath_default_config
+
+        # validate the config file before copying
+        Config.load(fpath_config_to_copy)
 
         fileops.mkdir(self.study.layout.fpath_config.parent, dry_run=self.dry_run)
         fileops.copy(
