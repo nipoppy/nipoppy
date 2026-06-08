@@ -180,11 +180,12 @@ def test_get_dpath_pipeline(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected",
     [
         (
             "my_pipeline",
             "v1",
+            None,
             None,
             None,
             "scratch/work/my_pipeline-v1/my_pipeline-v1",
@@ -192,6 +193,7 @@ def test_get_dpath_pipeline(
         (
             "pipeline",
             "v2",
+            None,
             "3000",
             None,
             "scratch/work/pipeline-v2/pipeline-v2-3000",
@@ -199,9 +201,10 @@ def test_get_dpath_pipeline(
         (
             "pipeline",
             "v2",
+            "step1",
             "01",
             "1",
-            "scratch/work/pipeline-v2/pipeline-v2-01-1",
+            "scratch/work/pipeline-v2-step1/pipeline-v2-step1-01-1",
         ),
     ],
 )
@@ -209,6 +212,7 @@ def test_get_dpath_pipeline_work(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected,
@@ -218,6 +222,7 @@ def test_get_dpath_pipeline_work(
         layout.get_dpath_pipeline_work(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )
@@ -264,11 +269,12 @@ def test_get_dpath_pipeline_idps(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected",
     [
         (
             "my_pipeline",
             "v1",
+            None,
             None,
             None,
             Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "my_pipeline-v1",
@@ -276,9 +282,10 @@ def test_get_dpath_pipeline_idps(
         (
             "pipeline",
             "v2",
+            "step1",
             "01",
             "1",
-            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "pipeline-v2-01-1",
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "pipeline-v2-step1-01-1",
         ),
     ],
 )
@@ -286,6 +293,7 @@ def test_get_dpath_pybids_db(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected,
@@ -295,6 +303,7 @@ def test_get_dpath_pybids_db(
         layout.get_dpath_pybids_db(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )
