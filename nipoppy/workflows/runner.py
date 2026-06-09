@@ -1,5 +1,6 @@
 """Abstract class for workflow runners and runner utilities."""
 
+import copy
 import json
 import shlex
 from abc import ABC
@@ -123,6 +124,19 @@ class Runner(BasePipelineWorkflow, ABC):
         else:
             return run_bosh_launch
 
+    def _set_container_image(self, descriptor: dict, uri: str) -> dict:
+        descriptor = copy.deepcopy(descriptor)
+        scheme, sep, image = uri.partition("://")
+        if not sep:
+            logger.error(f"Failed to parse CONTAINER_INFO.URI {uri}.")
+        else:
+            container_type = "docker" if scheme == "docker" else "singularity"
+            descriptor["container-image"] = {
+                "image": image,
+                "type": container_type,
+            }
+        return descriptor
+
     def launch_boutiques_run(
         self,
         participant_id: str,
@@ -150,11 +164,26 @@ class Runner(BasePipelineWorkflow, ABC):
                 return_str=True,
             )
         else:
-            descriptor_str = json.dumps(self.descriptor)
+            descriptor = self.descriptor
+
+            # if the descriptor is missing "container-image" but CONTAINER_INFO.URI is
+            # set in the pipeline config, inject "container-image" so that the pipeline
+            # container will still run in a container
             if (
-                container_handler is None
-                or self.descriptor.get("container-image") is None
+                descriptor.get("container-image") is None
+                and self.pipeline_config.CONTAINER_INFO.URI is not None
             ):
+                logger.warning(
+                    "Descriptor is missing a 'container-image' field"
+                    ". Using information from CONTAINER_INFO.URI instead."
+                )
+
+                descriptor = self._set_container_image(
+                    descriptor, self.pipeline_config.CONTAINER_INFO.URI
+                )
+
+            descriptor_str = json.dumps(descriptor)
+            if container_handler is None or descriptor.get("container-image") is None:
                 bosh_exec_launch_args.append("--no-container")
             else:
                 bosh_exec_launch_args.extend(
