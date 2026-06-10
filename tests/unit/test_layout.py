@@ -1,6 +1,7 @@
 """Tests for dataset layout class."""
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -46,7 +47,7 @@ def test_schema_version_default():
 
 def test_schema_version_newer():
     data = DatasetLayout("my_dataset").config.model_dump()
-    data["SCHEMA_VERSION"] = "999.0.0"
+    data["SCHEMA_VERSION"] = str(sys.maxsize)
     with pytest.raises(ValidationError, match="newer than the schema version"):
         LayoutConfig(**data)
 
