@@ -158,7 +158,8 @@ def test_create_new_record_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
         )
 
 
-# Keep schema_version:1 since there're no uploaded records with the new version yet.
+# Ensure that records with the specified schema_version exist on Zenodo before changing
+#  the test parameters.
 @pytest.mark.api
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
 @pytest.mark.parametrize("keywords", [None, ["Nipoppy", "schema_version:1"]])
