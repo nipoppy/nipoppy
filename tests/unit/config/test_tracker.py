@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.config.tracker import TrackerConfig
 
 FIELDS_STEP = [
@@ -35,7 +35,7 @@ def test_no_extra_field():
 
 def test_schema_version_default():
     tracker_config = TrackerConfig(PATHS=["path1"])
-    assert tracker_config.SCHEMA_VERSION == DEFAULT_SCHEMA_VERSION
+    assert tracker_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_schema_version_newer():

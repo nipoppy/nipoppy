@@ -14,9 +14,10 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
     NIPOPPY_DIR_NAME,
+    ConfigType,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -184,7 +185,9 @@ def create_pipeline_config_files(
             continue
         for pipeline_config in pipeline_config_list:
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
-            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION.PIPELINE.value
+            pipeline_config["SCHEMA_VERSION"] = get_current_schema_version(
+                ConfigType.PIPELINE
+            )
             fpath_config = (
                 dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]

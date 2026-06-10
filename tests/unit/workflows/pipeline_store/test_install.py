@@ -12,9 +12,10 @@ import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcessingPipelineConfig
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
+    ConfigType,
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
@@ -32,7 +33,7 @@ def pipeline_config():
             "NAME": "my_pipeline",
             "VERSION": "1.0.0",
             "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
+            "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/container.sif",
                 "URI": "fake_uri",

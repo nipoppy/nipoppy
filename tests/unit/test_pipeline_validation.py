@@ -13,7 +13,8 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import get_current_schema_version
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
@@ -42,7 +43,7 @@ def valid_config_data():
     return {
         "NAME": "test_pipeline",
         "VERSION": "test_version",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
 
 

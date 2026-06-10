@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.layout import DatasetLayout, LayoutConfig, PathInfo
@@ -41,7 +41,7 @@ def test_config_path_infos():
 
 def test_schema_version_default():
     layout = DatasetLayout("my_dataset")
-    assert layout.config.SCHEMA_VERSION == DEFAULT_SCHEMA_VERSION
+    assert layout.config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_schema_version_newer():

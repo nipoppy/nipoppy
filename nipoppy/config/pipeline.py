@@ -15,10 +15,14 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
-from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION, check_schema_version
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    check_current_schema_version,
+    get_current_schema_version,
+)
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
+    ConfigType,
     PipelineTypeEnum,
 )
 from nipoppy.exceptions import ConfigError
@@ -75,10 +79,10 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     )
     PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
     SCHEMA_VERSION: str = Field(
-        default=DEFAULT_SCHEMA_VERSION,
+        default=EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this pipeline configuration. The current "
-            f"latest version is {CURRENT_SCHEMA_VERSION.PIPELINE.value}"
+            f"latest version is {get_current_schema_version(ConfigType.PIPELINE)}"
         ),
     )
 
@@ -111,9 +115,9 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         - If STEPS has more than one item, make sure that each step has a unique name.
         - If _expected_pipeline_type is not None, make sure it matches PIPELINE_TYPE.
         """
-        check_schema_version(
+        check_current_schema_version(
             schema_version=self.SCHEMA_VERSION,
-            current_version=CURRENT_SCHEMA_VERSION.PIPELINE,
+            config_type=ConfigType.PIPELINE,
         )
         if len(self.STEPS) > 1:
             step_names = []

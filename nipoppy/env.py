@@ -11,13 +11,21 @@ NIPOPPY_DIR_NAME = ".nipoppy"
 ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 
 
-class CURRENT_SCHEMA_VERSION(str, Enum):
-    """Current schema versions for Nipoppy configuration files."""
+class ConfigType(str, Enum):
+    """Nipoppy configuration schema types."""
 
-    STUDY = "1.0.0"
-    PIPELINE = "1.0.0"
-    TRACKER = "1.0.0"
-    LAYOUT = "1.0.0"
+    STUDY = "study"
+    PIPELINE = "pipeline"
+    TRACKER = "tracker"
+    LAYOUT = "layout"
+
+
+SCHEMA_VERSION_INFO = {
+    ConfigType.STUDY: {"current": "1.0.0"},
+    ConfigType.PIPELINE: {"current": "1.0.0"},
+    ConfigType.TRACKER: {"current": "1.0.0"},
+    ConfigType.LAYOUT: {"current": "1.0.0"},
+}
 
 
 # BIDS

@@ -15,9 +15,12 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
-from nipoppy.config.schema import SCHEMA_VERSION_FIELD
+from nipoppy.config.schema import (
+    SCHEMA_VERSION_FIELD,
+    get_current_schema_version,
+)
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
@@ -49,15 +52,16 @@ def check_schema_version_exist(
             f"{SCHEMA_VERSION_FIELD} field with an explicit version, but it is missing"
         )
     else:
+        current_schema_version = get_current_schema_version(ConfigType.PIPELINE)
         logger.warning(
             f"Pipeline configuration file {fpath_config} is missing "
             f"{SCHEMA_VERSION_FIELD} field. Assuming version "
-            f"{CURRENT_SCHEMA_VERSION.PIPELINE.value}, but this will raise an error in "
+            f"{current_schema_version}, but this will raise an error in "
             "a future version of Nipoppy. To fix this warning, please add the following"
             " field to your pipeline configuration file:\n"
-            f'"{SCHEMA_VERSION_FIELD}": "{CURRENT_SCHEMA_VERSION.PIPELINE.value}"'
+            f'"{SCHEMA_VERSION_FIELD}": "{current_schema_version}"'
         )
-        config[SCHEMA_VERSION_FIELD] = CURRENT_SCHEMA_VERSION.PIPELINE.value
+        config[SCHEMA_VERSION_FIELD] = current_schema_version
 
 
 # TODO we should probably refactor the config loaders to extract the check for

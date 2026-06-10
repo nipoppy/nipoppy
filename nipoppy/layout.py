@@ -7,10 +7,14 @@ from typing import Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from nipoppy.base import Base
-from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION, check_schema_version
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    check_current_schema_version,
+    get_current_schema_version,
+)
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
     NIPOPPY_DIR_NAME,
+    ConfigType,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -60,10 +64,10 @@ class LayoutConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     SCHEMA_VERSION: str = Field(
-        default=DEFAULT_SCHEMA_VERSION,
+        default=EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this layout configuration. The current "
-            f"latest version is {CURRENT_SCHEMA_VERSION.LAYOUT.value}"
+            f"latest version is {get_current_schema_version(ConfigType.LAYOUT)}"
         ),
     )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
@@ -168,9 +172,9 @@ class LayoutConfig(BaseModel):
     @model_validator(mode="after")
     def validate_after(self):
         """Validate the layout configuration after instantiation."""
-        check_schema_version(
+        check_current_schema_version(
             schema_version=self.SCHEMA_VERSION,
-            current_version=CURRENT_SCHEMA_VERSION.LAYOUT,
+            config_type=ConfigType.LAYOUT,
         )
         return self
 

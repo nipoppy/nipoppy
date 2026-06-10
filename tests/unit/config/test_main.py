@@ -10,8 +10,11 @@ from pydantic import ValidationError
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.config.schema import DEFAULT_SCHEMA_VERSION
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    get_current_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
@@ -82,7 +85,7 @@ def test_no_extra_fields(valid_config_data):
 
 def test_schema_version_default(valid_config_data):
     config = Config(**valid_config_data)
-    assert config.SCHEMA_VERSION == DEFAULT_SCHEMA_VERSION
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_schema_version_newer(valid_config_data):
@@ -219,7 +222,7 @@ def test_propagate_container_config(
             "VERSION": pipeline_version,
             container_config_key: data_pipeline,
             "STEPS": [{"NAME": step_name, container_config_key: data_step}],
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION.PIPELINE.value,
+            "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
         }
     )
 

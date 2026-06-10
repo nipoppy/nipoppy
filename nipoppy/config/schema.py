@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
-from nipoppy.env import CURRENT_SCHEMA_VERSION
+from nipoppy.env import SCHEMA_VERSION_INFO, ConfigType
 from nipoppy.exceptions import ConfigError
 
 SCHEMA_VERSION_FIELD = "SCHEMA_VERSION"
-DEFAULT_SCHEMA_VERSION = "1.0.0"
+EARLIEST_SCHEMA_VERSION = "1.0.0"
 
 
-def check_schema_version(
+def get_current_schema_version(config_type: ConfigType) -> str:
+    """Get the current schema version for a configuration type."""
+    return SCHEMA_VERSION_INFO[config_type]["current"]
+
+
+def check_current_schema_version(
     schema_version: str,
-    current_version: CURRENT_SCHEMA_VERSION,
+    config_type: ConfigType,
 ) -> None:
     """Validate schema version is supported by this version of Nipoppy.
 
@@ -22,9 +27,15 @@ def check_schema_version(
     ConfigError
         If schema version is newer than the one supported by this version of Nipoppy.
     """
-    if Version(schema_version) > Version(current_version.value):  # noqa: E501
+    current_version = get_current_schema_version(config_type)
+    try:
+        is_newer = Version(schema_version) > Version(current_version)
+    except InvalidVersion as exception:
+        raise ConfigError(f"Invalid schema version: {schema_version}") from exception
+
+    if is_newer:  # noqa: E501
         raise ConfigError(
-            f"{current_version.name} config uses schema version {schema_version}, which"
+            f"{config_type.value} config uses schema version {schema_version}, which"
             " is newer than the schema version supported by this version of Nipoppy "
-            f"({current_version.value}). Please upgrade Nipoppy."
+            f"({current_version}). Please upgrade Nipoppy."
         )
