@@ -1,14 +1,16 @@
 """Tests for dataset layout class."""
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, LayoutError
-from nipoppy.layout import DatasetLayout, PathInfo
+from nipoppy.layout import DatasetLayout, LayoutConfig, PathInfo
 from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,
@@ -36,6 +38,18 @@ def create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
 def test_config_path_infos():
     config = DatasetLayout("my_dataset").config
     assert all([isinstance(path_info, PathInfo) for path_info in config.path_infos])
+
+
+def test_schema_version_default():
+    layout = DatasetLayout("my_dataset")
+    assert layout.config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+
+
+def test_schema_version_newer():
+    data = DatasetLayout("my_dataset").config.model_dump()
+    data["SCHEMA_VERSION"] = str(sys.maxsize)
+    with pytest.raises(ValidationError, match="newer than the schema version"):
+        LayoutConfig(**data)
 
 
 def test_init_default(dpath_root):

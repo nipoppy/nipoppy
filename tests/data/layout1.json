@@ -1,4 +1,5 @@
 {
+    "SCHEMA_VERSION": "1.0.0",
     "dpath_bids": {
         "path": "bids",
         "description": "BIDS data"

@@ -15,8 +15,28 @@ BUG_REPORT_URL = (
 )
 DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
 
-# pipeline config schema version
-CURRENT_SCHEMA_VERSION = "1"
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
+
+class ConfigType(str, Enum):
+    """Nipoppy configuration schema types."""
+
+    STUDY = "study"
+    PIPELINE = "pipeline"
+    TRACKER = "tracker"
+    LAYOUT = "layout"
+
+
+SCHEMA_VERSION_INFO = {
+    ConfigType.STUDY: {"current": "1.0.0"},
+    ConfigType.PIPELINE: {"current": "1.0.0"},
+    ConfigType.TRACKER: {"current": "1.0.0"},
+    ConfigType.LAYOUT: {"current": "1.0.0"},
+}
+
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"

@@ -15,9 +15,14 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    check_current_schema_version,
+    get_current_schema_version,
+)
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
+    ConfigType,
     PipelineTypeEnum,
 )
 from nipoppy.exceptions import ConfigError
@@ -74,9 +79,10 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
     )
     PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
     SCHEMA_VERSION: str = Field(
+        default=EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this pipeline configuration. The current "
-            f"latest version is {CURRENT_SCHEMA_VERSION}"
+            f"latest version is {get_current_schema_version(ConfigType.PIPELINE)}"
         ),
     )
 
@@ -105,9 +111,14 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
+        - Check schema version compatibility.
         - If STEPS has more than one item, make sure that each step has a unique name.
         - If _expected_pipeline_type is not None, make sure it matches PIPELINE_TYPE.
         """
+        check_current_schema_version(
+            schema_version=self.SCHEMA_VERSION,
+            config_type=ConfigType.PIPELINE,
+        )
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:
@@ -133,13 +144,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
                 f"Expected pipeline type {self._expected_pipeline_type}"
                 f" but got {self.PIPELINE_TYPE=} for pipeline "
                 f"{self.NAME} {self.VERSION}"
-            )
-
-        if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION:
-            raise ConfigError(
-                f"Pipeline {self.NAME} {self.VERSION} uses schema version "
-                f"{self.SCHEMA_VERSION}, which is incompatible with the current version"
-                f" of Nipoppy (expected schema version: {CURRENT_SCHEMA_VERSION})"
             )
 
         return self

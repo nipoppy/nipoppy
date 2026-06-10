@@ -48,7 +48,11 @@ def test_run_main(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFi
         default_preview_filename=DatasetLayout.fname_pipeline_config,
     )
     get_pipeline_metadata.assert_called_once()
-    validator.assert_called_once_with(TEST_PIPELINE, strict=True)
+    validator.assert_called_once_with(
+        TEST_PIPELINE,
+        require_explicit_schema_version=True,
+        strict=True,
+    )
 
 
 def test_get_pipeline_metadata(
@@ -75,7 +79,7 @@ def test_get_pipeline_metadata(
                 {"subject": "pipeline_type:processing"},
                 {"subject": "pipeline_name:fmriprep"},
                 {"subject": "pipeline_version:24.1.1"},
-                {"subject": "schema_version:1"},
+                {"subject": "schema_version:1.0.0"},
             ],
         }
     }
@@ -98,7 +102,7 @@ def test_get_pipeline_metadata(
                 PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
                 NAME="fmriprep",
                 VERSION="24.1.1",
-                SCHEMA_VERSION="1",
+                SCHEMA_VERSION="1.0.0",
             ),
             {
                 "keywords": [
@@ -106,7 +110,7 @@ def test_get_pipeline_metadata(
                     "pipeline_type:processing",
                     "pipeline_name:fmriprep",
                     "pipeline_version:24.1.1",
-                    "schema_version:1",
+                    "schema_version:1.0.0",
                 ]
             },
             True,
@@ -116,7 +120,7 @@ def test_get_pipeline_metadata(
                 PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
                 NAME="mriqc",
                 VERSION="23.1.0",
-                SCHEMA_VERSION="1",
+                SCHEMA_VERSION="1.0.0",
             ),
             {
                 "keywords": [
@@ -124,7 +128,7 @@ def test_get_pipeline_metadata(
                     "pipeline_type:processing",
                     "pipeline_name:fmriprep",
                     "pipeline_version:24.1.1",
-                    "schema_version:1",
+                    "schema_version:1.0.0",
                 ]
             },
             False,
@@ -134,7 +138,7 @@ def test_get_pipeline_metadata(
                 PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
                 NAME="FMRIPREP",
                 VERSION="24.1.1",
-                SCHEMA_VERSION="1",
+                SCHEMA_VERSION="1.0.0",
             ),
             {
                 "keywords": [
@@ -142,7 +146,7 @@ def test_get_pipeline_metadata(
                     "pipeline_type:processing",
                     "pipeline_name:fmriprep",
                     "pipeline_version:24.1.1",
-                    "schema_version:1",
+                    "schema_version:1.0.0",
                 ]
             },
             True,
@@ -169,7 +173,7 @@ def test_upload_same_pipeline(
             "pipeline_type:processing",
             "pipeline_name:mriqc",
             "pipeline_version:23.1.0",
-            "schema_version:1",
+            "schema_version:1.0.0",
         ]
     }
 

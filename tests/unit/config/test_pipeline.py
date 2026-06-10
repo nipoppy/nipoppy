@@ -1,5 +1,6 @@
 """Tests for the pipeline configuration class."""
 
+import sys
 from contextlib import nullcontext
 
 import pytest
@@ -13,7 +14,11 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    get_current_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum
 
 FIELDS_BASE_PIPELINE = [
     "NAME",
@@ -37,7 +42,7 @@ def valid_data() -> dict:
     return {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
 
 
@@ -93,6 +98,11 @@ def test_fields_pipeline_info():
 def test_fields_missing_required(model_class, data):
     with pytest.raises(ValidationError):
         model_class(**data)
+
+
+def test_pipeline_schema_version_default():
+    config = BasePipelineConfig(NAME="my_pipeline", VERSION="1.2.3")
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize(
@@ -174,15 +184,30 @@ def test_error_pipeline_type(valid_data, extra_data, pipeline_class, valid):
         pipeline_class(**data)
 
 
-def test_error_schema_version():
+def test_error_invalid_schema_version():
     with pytest.raises(
         ValidationError,
-        match=("Pipeline .* uses schema version.*which is incompatible with"),
+        match="Invalid schema version:",
     ):
         BasePipelineConfig(
             NAME="my_pipeline",
             VERSION="1.0.0",
             SCHEMA_VERSION="invalid_version",
+        )
+
+
+def test_error_outdated_schema_version():
+    with pytest.raises(
+        ValidationError,
+        match=(
+            ".* config uses schema version.*which is newer than the schema version "
+            "supported by this version of Nipoppy.*Please upgrade Nipoppy."
+        ),
+    ):
+        BasePipelineConfig(
+            NAME="my_pipeline",
+            VERSION="1.0.0",
+            SCHEMA_VERSION=str(sys.maxsize),  # large int for current machine
         )
 
 

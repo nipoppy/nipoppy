@@ -1,10 +1,15 @@
 """Tests for TrackerConfig class."""
 
+import sys
+from pathlib import Path
+
 import pytest
 
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.config.tracker import TrackerConfig
 
 FIELDS_STEP = [
+    "SCHEMA_VERSION",
     "PATHS",
     "PARTICIPANT_SESSION_DIR",
 ]
@@ -27,6 +32,16 @@ def test_fields(data):
 def test_no_extra_field():
     with pytest.raises(ValueError, match="Extra inputs are not permitted"):
         TrackerConfig(not_a_field="a")
+
+
+def test_schema_version_default():
+    tracker_config = TrackerConfig(PATHS=["path1"])
+    assert tracker_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+
+
+def test_schema_version_newer():
+    with pytest.raises(ValueError, match="newer than the schema version"):
+        TrackerConfig(PATHS=[Path("path1")], SCHEMA_VERSION=str(sys.maxsize))
 
 
 def test_at_least_one_path():
