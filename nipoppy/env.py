@@ -10,6 +10,16 @@ PROGRAM_NAME = "nipoppy"
 NIPOPPY_DIR_NAME = ".nipoppy"
 ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
 
 class ConfigType(str, Enum):
     """Nipoppy configuration schema types."""
@@ -39,6 +49,16 @@ DEFAULT_PIPELINE_STEP_NAME = "default"
 # file extensions
 EXT_TAR = ".tar"
 EXT_LOG = ".log"
+
+# dotenv files
+# from highest to lowest priority
+DEFAULT_DOTENV_PATHS_LIST = [
+    "[[NIPOPPY_DPATH_ROOT]]/.env",
+    "~/.nipoppy/.env",
+    "/etc/nipoppy/.env",
+]
+DOTENV_PATHS_VAR = "NIPOPPY_ENV_PATHS"
+DEFAULT_DOTENV_PATHS = os.pathsep.join(DEFAULT_DOTENV_PATHS_LIST)
 
 
 class ContainerCommandEnum(str, Enum):

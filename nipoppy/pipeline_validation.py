@@ -24,7 +24,7 @@ from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
-from nipoppy.utils.utils import load_json
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, load_json
 
 logger = get_logger()
 
@@ -78,13 +78,7 @@ def _load_pipeline_config_file(
             f"Pipeline configuration file not found: {fpath_config}"
         )
 
-    try:
-        config_dict = load_json(fpath_config)
-    except json.JSONDecodeError as exception:
-        raise ConfigError(
-            f"Pipeline configuration file {fpath_config} is not a valid JSON file: "
-            f"{str(exception)}"
-        )
+    config_dict = load_json(fpath_config)
 
     check_schema_version_exist(
         config_dict, fpath_config, strict=require_explicit_schema_version
@@ -101,16 +95,15 @@ def _load_pipeline_config_file(
     return config
 
 
-def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
+def _check_descriptor_file(
+    fpath_descriptor: StrOrPathLike, strict: bool = False
+) -> str:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
     if not fpath_descriptor.exists():
         raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
 
-    try:
-        descriptor_dict = load_json(fpath_descriptor)
-    except json.JSONDecodeError as exception:
-        raise ConfigError(f"Descriptor file is not a valid JSON file: {exception}")
+    descriptor_dict = load_json(fpath_descriptor)
 
     descriptor_str = json.dumps(descriptor_dict)
     try:
@@ -119,6 +112,21 @@ def _check_descriptor_file(fpath_descriptor: StrOrPathLike) -> None:
         raise ConfigError(
             f"Descriptor file {fpath_descriptor} is invalid:\n{exception}"
         )
+
+    if TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is not None:
+        error_message = f"Descriptor file {fpath_descriptor} contains Nipoppy-specific template variables. "  # noqa E501
+        if strict:
+            raise ConfigError(
+                error_message
+                + 'Please remove these variables, add a "container-image" field, and update "command-line" to include the pipeline executable. '  # noqa E501
+                + "See example here: https://zenodo.org/records/16876772?preview_file=descriptor.json."  # noqa E501
+            )
+        else:
+            logger.warning(
+                error_message
+                + "This will be deprecated in the future: you should update this file following steps listed in https://nipoppy.readthedocs.io/en/0.4.1/changelog.html#release-0-4-1."  # noqa E501
+            )
+
     return descriptor_str
 
 
@@ -128,10 +136,7 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     if not fpath_invocation.exists():
         raise FileOperationError(f"Invocation file not found: {fpath_invocation}")
 
-    try:
-        invocation_dict = load_json(fpath_invocation)
-    except json.JSONDecodeError as exception:
-        raise ConfigError(f"Invocation file is not a valid JSON file: {exception}")
+    invocation_dict = load_json(fpath_invocation)
 
     try:
         boutiques.invocation(
@@ -149,10 +154,7 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
     if not fpath_hpc_config.exists():
         raise FileOperationError(f"HPC config file not found: {fpath_hpc_config}")
 
-    try:
-        hpc_config_dict = load_json(fpath_hpc_config)
-    except json.JSONDecodeError as exception:
-        raise ConfigError(f"HPC config file is not a valid JSON file: {exception}")
+    hpc_config_dict = load_json(fpath_hpc_config)
 
     try:
         HpcConfig(**hpc_config_dict)
@@ -170,10 +172,7 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
             f"Tracker config file not found: {fpath_tracker_config}"
         )
 
-    try:
-        tracker_config_dict = load_json(fpath_tracker_config)
-    except json.JSONDecodeError as exception:
-        raise ConfigError(f"Tracker config file is not a valid JSON file: {exception}")
+    tracker_config_dict = load_json(fpath_tracker_config)
 
     try:
         TrackerConfig(**tracker_config_dict)
@@ -191,18 +190,14 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
             f"PyBIDS ignore patterns file not found: {fpath_pybids_ignore}"
         )
 
-    try:
-        load_json(fpath_pybids_ignore)
-    except json.JSONDecodeError as exception:
-        raise ConfigError(
-            f"PyBIDS ignore patterns file is not a valid JSON file: {exception}"
-        )
+    load_json(fpath_pybids_ignore)
 
 
 def _check_pipeline_files(
     pipeline_config: BasePipelineConfig,
     dpath_bundle: StrOrPathLike,
     *,
+    strict: bool = False,
     log_level: int = logging.DEBUG,
 ) -> list[Path]:
     """
@@ -215,6 +210,8 @@ def _check_pipeline_files(
     - the HPC config file (if present)
     - the tracker config file (if present and pipeline is a processing pipeline)
     - the PyBIDS ignore patterns file (if present and pipeline is a processing pipeline)
+
+    If strict is True, raise error instead of warning in descriptor check.
 
     Also, collect all file paths for these files for further checks.
     """
@@ -232,7 +229,7 @@ def _check_pipeline_files(
                 msg=f"\tChecking descriptor file: {step.DESCRIPTOR_FILE}",
             )
             fpath_descriptor = dpath_bundle / step.DESCRIPTOR_FILE
-            descriptor_str = _check_descriptor_file(fpath_descriptor)
+            descriptor_str = _check_descriptor_file(fpath_descriptor, strict=strict)
             fpaths.append(fpath_descriptor)
 
             if step.INVOCATION_FILE is not None:
@@ -309,8 +306,13 @@ def check_pipeline_bundle(
     log_level: int = logging.DEBUG,
     *,
     require_explicit_schema_version: bool = False,
+    strict: bool = False,
 ) -> BasePipelineConfig:
-    """Load a pipeline bundle's main configuration file and validate it."""
+    """
+    Load a pipeline bundle's main configuration file and validate it.
+
+    If strict is True, raise error instead of warning in descriptor check.
+    """
     dpath_bundle = Path(dpath_bundle).resolve()
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
 
@@ -321,7 +323,9 @@ def check_pipeline_bundle(
     )
 
     # core file content validation
-    fpaths = _check_pipeline_files(config, dpath_bundle, log_level=log_level)
+    fpaths = _check_pipeline_files(
+        config, dpath_bundle, log_level=log_level, strict=strict
+    )
 
     # make sure that all files are within the bundle directory
     _check_self_contained(dpath_bundle, fpaths)

@@ -90,8 +90,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         # Safeguard before uploading
         try:
             pipeline_config = check_pipeline_bundle(
-                pipeline_dir,
-                require_explicit_schema_version=True,
+                pipeline_dir, require_explicit_schema_version=True, strict=True
             )
         except Exception as e:
             logger.error(
