@@ -35,7 +35,7 @@ def check_current_schema_version(
 
     if is_newer:  # noqa: E501
         raise ConfigError(
-            f"{config_type.value} config uses schema version {schema_version}, which"
-            " is newer than the schema version supported by this version of Nipoppy "
-            f"({current_version}). Please upgrade Nipoppy."
+            f"{config_type.value.capitalize()} config uses schema version "
+            f"{schema_version}, which is newer than the schema version supported by "
+            f"this version of Nipoppy ({current_version}). Please upgrade Nipoppy."
         )
