@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Sequence
 
@@ -71,6 +72,16 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
         raise NipoppyError(
             f"Invalid participant ID: must only contain alphanumeric characters, "
             f"got {participant_id}"
+        )
+
+    if participant_id.lower().startswith("sub"):
+        warnings.warn(
+            "One or more participant IDs in the manifest still start with 'sub' "
+            "after the BIDS 'sub-' prefix has been stripped (e.g. 'sub-sub123' or "
+            "'sub123'). This is likely unintentional — manifest participant IDs "
+            "should not contain the BIDS prefix.",
+            UserWarning,
+            stacklevel=2,
         )
 
     return participant_id
