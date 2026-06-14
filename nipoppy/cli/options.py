@@ -211,6 +211,7 @@ def password_file_option(required: bool):
             type=click.Path(
                 exists=True, path_type=Path, resolve_path=True, dir_okay=False
             ),
+            envvar="NIPOPPY_ZENODO_PASSWORD_FILE",
             required=required,
             help="Path to file containing Zenodo access token (and nothing else)",
         )(func)
