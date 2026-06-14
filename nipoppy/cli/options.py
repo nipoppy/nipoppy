@@ -12,43 +12,21 @@ logger = get_logger()
 
 
 def dataset_option(func):
-    """Define dataset options for the CLI.
-
-    It is separated from global_options to allow for a different ordering when printing
-    the `--help`.
-    """
+    """Define dataset options for the CLI."""
     # The dataset argument is deprecated, but we keep it for backward compatibility.
-    func = click.argument(
-        "dataset_argument",
-        required=False,
-        type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
-        is_eager=True,
-    )(func)
     return click.option(
         "--dataset",
         "dpath_root",
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
-        default=Path().cwd(),
+        default=Path.cwd(),
         show_default=(False if os.environ.get("READTHEDOCS") else True),
-        help=(
-            "Path to the root of the dataset (default is current working directory)."
-        ),
+        help="Path to the root of the dataset. Default: current working directory or the closest parent directory that contains a .nipoppy directory.",  # noqa: E501
     )(func)
 
 
 def dep_params(**params):
     """Handle deprecated parameters."""
-    # Verify either the dataset option or argument is provided, but not both.
-    if "dpath_root" in params and (_dep_dpath_root := params.pop("dataset_argument")):
-        logger.warning(
-            (
-                "Giving the dataset path without --dataset is deprecated and will "
-                "cause an error in a future version."
-            ),
-        )
-        params["dpath_root"] = _dep_dpath_root or params.get("dpath_root")
-
     # --write-list is deprecated by --write-subcohort
     if "write_subcohort" in params and (
         _dep_write_subcohort := params.pop("write_list")
@@ -63,7 +41,7 @@ def dep_params(**params):
 
 
 def global_options(func):
-    """Define global options (no layout) for the CLI."""
+    """Define global options for the CLI."""
     func = click.option(
         "--verbose",
         "-v",
@@ -89,6 +67,7 @@ def layout_option(func):
             " to be used instead of the default layout."
         ),
         envvar="NIPOPPY_LAYOUT",
+        show_envvar=True,
     )(func)
     return func
 

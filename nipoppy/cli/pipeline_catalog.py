@@ -4,7 +4,8 @@ from pathlib import Path
 
 import rich_click as click
 
-from nipoppy.cli import OrderedAliasedGroup, exception_handler
+from nipoppy.cli import exception_handler
+from nipoppy.cli.groups import OrderedAliasedGroup
 from nipoppy.cli.options import (
     assume_yes_option,
     dataset_option,
