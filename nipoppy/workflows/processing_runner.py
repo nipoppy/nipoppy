@@ -222,7 +222,9 @@ class ProcessingRunner(Runner):
 
     def run_cleanup(self):
         """Run pipeline runner cleanup."""
-        if self.n_success == self.n_total:
+        if self.simulate:
+            logger.info("Simulated run — skipping cleanup of working directories.")
+        elif self.n_success == self.n_total:
             if not self.keep_workdir:
                 for dpath in [self.dpath_pipeline_bids_db, self.dpath_pipeline_work]:
                     if dpath.exists():

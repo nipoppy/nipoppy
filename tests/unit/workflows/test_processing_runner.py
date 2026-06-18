@@ -165,6 +165,19 @@ def test_run_failed_cleanup(runner: ProcessingRunner, n_success):
         assert dpath.exists()
 
 
+def test_run_cleanup_simulate(runner: ProcessingRunner):
+    """Test that simulate mode skips file deletion in cleanup."""
+    runner.simulate = True
+    runner.keep_workdir = False
+    dpaths = [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]
+    for dpath in dpaths:
+        dpath.mkdir(parents=True)
+    runner.run_cleanup()
+    # Directories should still exist when simulating
+    for dpath in dpaths:
+        assert dpath.exists()
+
+
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(
     simulate, runner: ProcessingRunner, mocker: pytest_mock.MockFixture
