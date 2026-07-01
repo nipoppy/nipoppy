@@ -10,6 +10,7 @@ This module handles:
 # Shutdown pattern reference:
 # https://oneuptime.com/blog/post/2026-02-06-otel-sdk-shutdown-python-atexit-sigterm/view
 import atexit
+import logging
 import os
 import signal
 import sys
@@ -18,7 +19,7 @@ from typing import Optional, Dict
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 
 from nipoppy.exceptions import ReturnCode
@@ -57,7 +58,7 @@ def initialize_telemetry(
     Args:
         service_name: Service name for metrics (default: "nipoppy")
         service_version: Version tag (default: "1.0.0")
-        otlp_endpoint: Collector endpoint (default: localhost:4317)
+        otlp_endpoint: Collector endpoint (default: http://localhost:4318)
         export_interval_millis: Export frequency in milliseconds (default: 10000)
 
     Returns:
@@ -72,19 +73,22 @@ def initialize_telemetry(
         return False
 
     try:
+        # Telemetry must never disrupt the CLI. The OTLP/HTTP exporter logs a full
+        # traceback when the collector is unreachable; silence OTel's own logging so
+        # export failures stay invisible to the user (matches the fail-safe design).
+        logging.getLogger("opentelemetry").setLevel(logging.CRITICAL)
+
         if otlp_endpoint is None:
             otlp_endpoint = os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
-                "http://localhost:4317"
+                "http://localhost:4318"
             )
 
-        # Strip scheme prefix for gRPC; track whether to use TLS
-        insecure = True
-        if otlp_endpoint.startswith("https://"):
-            otlp_endpoint = otlp_endpoint[len("https://"):]
-            insecure = False
-        elif otlp_endpoint.startswith("http://"):
-            otlp_endpoint = otlp_endpoint[len("http://"):]
+        # OTLP/HTTP keeps the scheme in the URL (https:// implies TLS). When an
+        # endpoint is passed explicitly the SDK does not append the signal path,
+        # so add /v1/metrics here if the user gave only a base endpoint.
+        if not otlp_endpoint.rstrip("/").endswith("/v1/metrics"):
+            otlp_endpoint = otlp_endpoint.rstrip("/") + "/v1/metrics"
 
         resource = Resource(
             attributes={
@@ -100,10 +104,9 @@ def initialize_telemetry(
         os.environ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = "delta"
         otlp_exporter = OTLPMetricExporter(
             endpoint=otlp_endpoint,
-            insecure=insecure,
         )
 
-        # Short export interval so the gRPC connection is established before shutdown.
+        # Short export interval so the HTTP session is established before shutdown.
         # For CLI tools the periodic export rarely fires, but the shutdown flush reuses
         # the already-open connection — making export reliable even for 2s commands.
         metric_reader = PeriodicExportingMetricReader(

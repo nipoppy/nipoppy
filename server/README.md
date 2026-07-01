@@ -33,7 +33,7 @@ docker compose ps   # all three containers should show "Up"
 ### 2. Point nipoppy at the local collector
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ```
 
 ### 3. Run nipoppy commands
@@ -57,7 +57,7 @@ The server is already running the stack. You only need to point your nipoppy at 
 ### 1. Point nipoppy at the server
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://<YOUR_SERVER_IP>:4317
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://<YOUR_SERVER_IP>:4318
 ```
 
 ### 2. Run nipoppy commands — metrics go directly to the server

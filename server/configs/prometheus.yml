@@ -4,7 +4,7 @@
 # short-lived CLI processes into a running CUMULATIVE total.
 #
 # Architecture:
-#   nipoppy CLI → OTel Collector (OTLP/gRPC 4317) → deltatocumulative → Prometheus exporter (8889)
+#   nipoppy CLI → OTel Collector (OTLP/HTTP 4318) → deltatocumulative → Prometheus exporter (8889)
 #   Prometheus scrapes :8889 every 15s
 
 global:

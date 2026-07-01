@@ -21,7 +21,7 @@ volumes:
 
 services:
   # === PRESENTATION MARKER: OpenTelemetry Collector (Receives from CLIENT) ===
-  # Receives metrics from nipoppy CLI via OTLP/gRPC on port 4317
+  # Receives metrics from nipoppy CLI via OTLP/HTTP on port 4318
   # Batches metrics and exports to Prometheus on port 8889
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
@@ -31,7 +31,7 @@ services:
     volumes:
       - ./configs/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
     ports:
-      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
       - "8889:8889"   # Prometheus exporter (scraped by Prometheus)
     networks:
       - nipoppy-otel-network
