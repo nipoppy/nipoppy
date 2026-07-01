@@ -30,8 +30,6 @@ from nipoppy.cli.options import (
 )
 from nipoppy.cli.pipeline_catalog import pipeline
 
-from nipoppy.telemetry import record_location
-
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
         {
@@ -146,7 +144,6 @@ def init(**params):
     params = dep_params(**params)
     with exception_handler(InitWorkflow(**params)) as workflow:
         workflow.run()
-        record_location()
 
 
 @cli.command()

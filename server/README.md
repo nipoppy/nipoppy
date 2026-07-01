@@ -50,14 +50,14 @@ Open **http://localhost:3000** — credentials `admin / admin`
 
 ---
 
-## Option B — Pavot Server (206.12.94.146)
+## Option B — Pavot Server (<YOUR_SERVER_IP>)
 
 The server is already running the stack. You only need to point your nipoppy at it and open an SSH tunnel to see the dashboard.
 
 ### 1. Point nipoppy at the server
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://206.12.94.146:4317
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://<YOUR_SERVER_IP>:4317
 ```
 
 ### 2. Run nipoppy commands — metrics go directly to the server

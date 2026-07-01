@@ -43,7 +43,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nipoppy_commands_executed_total{command=\"init\"})",
+          "expr": "sum(nipoppy_commands_completed_total{command=\"init\"})",
           "instant": true,
           "refId": "A"
         }
@@ -99,7 +99,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nipoppy_commands_executed_total)",
+          "expr": "sum(nipoppy_commands_completed_total)",
           "instant": true,
           "refId": "A"
         }
@@ -215,7 +215,7 @@
       },
       "targets": [
         {
-          "expr": "count(sum by (command) (nipoppy_commands_executed_total))",
+          "expr": "count(sum by (command) (nipoppy_commands_completed_total))",
           "instant": true,
           "refId": "A"
         }
@@ -282,7 +282,7 @@
       },
       "targets": [
         {
-          "expr": "sort_desc(sum by (command) (nipoppy_commands_executed_total))",
+          "expr": "sort_desc(sum by (command) (nipoppy_commands_completed_total))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -377,7 +377,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (command) (nipoppy_commands_executed_total)",
+          "expr": "sum by (command) (nipoppy_commands_completed_total)",
           "legendFormat": "{{command}}",
           "instant": true,
           "refId": "A"

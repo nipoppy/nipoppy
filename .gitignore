@@ -50,3 +50,7 @@ nipoppy_env/
 
 # all-contributors CLI
 node_modules
+
+# Server README contains deployment-specific details (server IPs, credentials)
+# Keep locally but do not track changes
+server/README.md
