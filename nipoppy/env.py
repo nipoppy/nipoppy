@@ -32,13 +32,7 @@ EXT_LOG = ".log"
 
 # dotenv files
 # from highest to lowest priority
-DEFAULT_DOTENV_PATHS_LIST = [
-    "[[NIPOPPY_DPATH_ROOT]]/.env",
-    "~/.nipoppy/.env",
-    "/etc/nipoppy/.env",
-]
-DOTENV_PATHS_VAR = "NIPOPPY_ENV_PATHS"
-DEFAULT_DOTENV_PATHS = os.pathsep.join(DEFAULT_DOTENV_PATHS_LIST)
+DEFAULT_DOTENV_PATHS = ("[[NIPOPPY_DPATH_ROOT]]/.env", "~/.nipoppy/.env")
 
 
 class ContainerCommandEnum(str, Enum):
