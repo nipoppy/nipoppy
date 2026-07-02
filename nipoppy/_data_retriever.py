@@ -130,6 +130,38 @@ class NipoppyDataRetriever:
             df.index.isin(self._study.manifest.get_participants_sessions()), :
         ]
 
+    def get_all_phenotypes(self) -> pd.DataFrame:
+        """Get all harmonized phenotypic data from the Nipoppy study.
+
+        This function loads the study's harmonized phenotypic TSV file
+        (``<NIPOPPY_ROOT>/tabular/harmonized.tsv``). It then filters the rows to include
+        only participants and sessions that are present in the study's manifest.
+
+        The harmonized phenotypic TSV file is expected to have columns
+        ``"nb:ParticipantID"`` and ``"nb:SessionID"`` for participant and session
+        identifiers.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe containing all the phenotypic data, with a
+            ``pd.MultiIndex`` of participant IDs and session IDs.
+
+        Examples
+        --------
+        >>> from nipoppy import NipoppyDataRetriever
+        >>> api = NipoppyDataRetriever("/path/to/dataset")
+        >>> df = api.get_all_phenotypes()
+                                   nb:Age            nb:Sex     nb:Diagnosis snomed:859351000000102
+        participant_id session_id
+        001            1             70.0  snomed:248153007      ncit:C94342           nb:available
+        """  # noqa E501
+        df = self._load_tsv(
+            self._study.layout.fpath_harmonized, index_cols=self._index_cols_phenotypes
+        )
+        df = self._filter_with_manifest(df)
+        return df
+
     def get_phenotypes(self, phenotypes: List[str]) -> pd.DataFrame:
         """Get harmonized phenotypic data from the Nipoppy study.
 
@@ -162,19 +194,15 @@ class NipoppyDataRetriever:
         ...     [
         ...         "nb:Age",
         ...         "nb:Sex",
-        ...         "nb:Diagnosis",
         ...         "snomed:859351000000102",  # MoCA
         ...     ],
         ... )
-                                   nb:Age            nb:Sex     nb:Diagnosis snomed:859351000000102
+                                   nb:Age            nb:Sex   snomed:859351000000102
         participant_id session_id
-        001            1             70.0  snomed:248153007      ncit:C94342           nb:available
+        001            1             70.0  snomed:248153007             nb:available
         """  # noqa E501
         _check_phenotypes_arg(phenotypes)
-        df = self._load_tsv(
-            self._study.layout.fpath_harmonized, index_cols=self._index_cols_phenotypes
-        )
-        df = self._filter_with_manifest(df)
+        df = self.get_all_phenotypes()
         return df.loc[:, phenotypes]
 
     def get_derivatives(self, derivatives: List[Tuple[str, str, str]]) -> pd.DataFrame:
