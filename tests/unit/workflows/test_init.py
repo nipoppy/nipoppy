@@ -158,10 +158,30 @@ def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
     assert fpath_actual.read_text() == fpath_expected.read_text()
 
 
-def test_run(workflow: InitWorkflow, dpath_root: Path):
+@pytest.mark.no_xdist
+def test_run(
+    workflow: InitWorkflow, dpath_root: Path, caplog: pytest.LogCaptureFixture
+):
     workflow.run()
 
     assert_layout_creation(workflow, dpath_root)
+
+    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
+
+
+@pytest.mark.no_xdist
+def test_run_no_success_message_on_error(
+    workflow: InitWorkflow,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    error_message = "fake error"
+    mocker.patch.object(workflow, "run_main", side_effect=RuntimeError(error_message))
+
+    with pytest.raises(RuntimeError, match=error_message):
+        workflow.run()
+
+    assert "Successfully initialized a dataset" not in caplog.text
 
 
 def test_create_config_file_defaults_to_sample_when_user_config_missing(
@@ -246,6 +266,8 @@ def test_non_empty_dir_forced(workflow: InitWorkflow, dpath_root: Path):
 
     workflow.force = True
     workflow.run()
+
+    assert_layout_creation(workflow, dpath_root)
 
 
 def test_init_twice_force(workflow: InitWorkflow):
@@ -368,12 +390,6 @@ def test_bids_study_layout_passes_validation(dpath_root: Path):
 
     # Check that there are no errors (warnings are OK)
     assert result.returncode == 0
-
-
-@pytest.mark.no_xdist
-def test_run_cleanup(workflow: InitWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_cleanup()
-    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
 
 def test_init_bids(
