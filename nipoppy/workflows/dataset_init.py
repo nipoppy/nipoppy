@@ -188,6 +188,8 @@ class InitWorkflow(BaseDatasetWorkflow):
             "respectively. They should be edited to match your dataset"
         )
 
+        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
+
     def handle_bids_source(self) -> None:
         """Create bids source directory.
 
@@ -323,8 +325,3 @@ class InitWorkflow(BaseDatasetWorkflow):
         manifest.save_with_backup(
             self.study.layout.fpath_manifest, dry_run=self.dry_run
         )
-
-    def run_cleanup(self):
-        """Log a success message."""
-        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
-        return super().run_cleanup()
