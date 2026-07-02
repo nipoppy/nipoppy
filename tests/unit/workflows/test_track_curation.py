@@ -55,6 +55,7 @@ def workflow(tmp_path: Path):
     ],
 )
 @pytest.mark.parametrize("empty", [True, False])
+@pytest.mark.no_xdist
 def test_run_main(
     workflow: TrackCurationWorkflow,
     participants_and_sessions_manifest1: dict[str, list[str]],

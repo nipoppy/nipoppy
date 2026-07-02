@@ -148,6 +148,7 @@ def assert_layout_creation(workflow, dpath_root):
         assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
+@pytest.mark.no_xdist
 def test_run(
     workflow: InitWorkflow, dpath_root: Path, caplog: pytest.LogCaptureFixture
 ):
@@ -158,6 +159,7 @@ def test_run(
     assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_run_no_success_message_on_error(
     workflow: InitWorkflow,
     caplog: pytest.LogCaptureFixture,

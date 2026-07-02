@@ -1275,6 +1275,7 @@ def test_log_summary_message(
     assert expected_message.format(n_success, n_total) in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_log_summary_message_no_participants_warning(
     workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
 ):
@@ -1316,6 +1317,7 @@ def test_log_summary_message_hpc(
     assert expected_message in caplog.text
 
 
+@pytest.mark.no_xdist
 def test_log_summary_message_write_subcohort(
     workflow: PipelineWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
