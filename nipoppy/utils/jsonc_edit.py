@@ -1,4 +1,30 @@
-"""Utilities to edit JSONC/JSON5 objects while preserving comments."""
+"""Utilities to edit JSONC/JSON5 objects while preserving comments.
+
+Overview
+--------
+This module applies targeted edits to JSONC/JSON5 text *without* reformatting
+it, so comments and existing layout survive. It never rebuilds the document
+from a parsed tree. Instead it works in two phases:
+
+1. **Locate** the source span (start/end character indices) of the object,
+   member, or value that an edit targets.
+2. **Splice** new text into that span, leaving everything else byte-for-byte
+   unchanged.
+
+The code is organized in layers, from lowest to highest level:
+
+- ``_Scanner``: a cursor over the source text. Each method performs a single
+  scanning job (skip trivia, find a string end, match a bracket, find a value
+  end) and advances the cursor in place.
+- ``_parse_object_members`` / ``_find_root_object_span``: structural parsing
+  that produces :class:`_ObjectMember` spans.
+- Editing primitives (``_get_line_indent``, ``_format_member_text``,
+  ``_insert_member_into_object``): build and splice new member text.
+- Navigation helpers (``_find_member_by_key``, ``_get_object_value_span``) and
+  the high-level setter (``_set_value_at_key_path``) that resolves a key path
+  and writes a value.
+- Public API: :func:`update_jsonc_text` and :func:`update_jsonc_file`.
+"""
 
 from __future__ import annotations
 
@@ -26,196 +52,185 @@ class _ObjectMember:
 
 
 _IDENTIFIER_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
+_WHITESPACE = " \t\r\n"
+_VALUE_DELIMITERS = ",}]"
 
 
-def _skip_ws_and_comments(text: str, idx: int) -> int:
-    """Advance index past whitespace and JSONC comments.
+class _Scanner:
+    """A forward-only cursor over JSONC/JSON5 source text.
 
-    Parameters
-    ----------
-    text : str
-        Source JSONC text.
-    idx : int
-        Start index to scan from.
-
-    Returns
-    -------
-    int
-        Index of the first character that is neither whitespace nor comment,
-        or ``len(text)`` if none exists.
-
-    Raises
-    ------
-    ValueError
-        If a block comment is not terminated.
-
-    Notes
-    -----
-    Supports both line comments (``//``) and block comments (``/* ... */``).
-    """
-    n = len(text)
-    while idx < n:
-        ch = text[idx]
-        if ch in " \t\r\n":
-            idx += 1
-            continue
-        if text.startswith("//", idx):
-            idx += 2
-            while idx < n and text[idx] != "\n":
-                idx += 1
-            continue
-        if text.startswith("/*", idx):
-            end = text.find("*/", idx + 2)
-            if end == -1:
-                raise ValueError("Unterminated block comment")
-            idx = end + 2
-            continue
-        return idx
-    return idx
-
-
-def _parse_quoted_string(text: str, idx: int) -> tuple[str, int]:
-    """Parse a quoted string token from JSON/JSON5 text.
+    The scanner owns the current position (``pos``) so callers never thread a
+    character index manually. Each method performs a single scanning job and
+    advances ``pos`` past whatever it consumed.
 
     Parameters
     ----------
     text : str
-        Source JSONC text.
-    idx : int
-        Index of the opening quote character.
-
-    Returns
-    -------
-    tuple[str, int]
-        Parsed string value and index immediately after the closing quote.
-
-    Raises
-    ------
-    ValueError
-        If ``idx`` does not point to a quote or the string is unterminated.
-
-    Notes
-    -----
-    Double-quoted strings are decoded with ``json`` and single-quoted strings
-    with ``json5``.
+        Source JSONC text being scanned.
+    pos : int, optional
+        Initial cursor position. Defaults to ``0``.
     """
-    quote = text[idx]
-    if quote not in ('"', "'"):
-        raise ValueError("Expected a quoted string")
-    i = idx + 1
-    while i < len(text):
-        if text[i] == "\\":
-            i += 2
-            continue
-        if text[i] == quote:
-            raw = text[idx : i + 1]
-            value = json.loads(raw) if quote == '"' else json5.loads(raw)
-            return value, i + 1
-        i += 1
-    raise ValueError("Unterminated string")
+
+    def __init__(self, text: str, pos: int = 0) -> None:
+        self.text = text
+        self.pos = pos
+
+    def skip_whitespace_and_comments(self) -> None:
+        """Advance the cursor past whitespace and ``//`` / ``/* */`` comments.
+
+        Leaves ``pos`` at the first significant character, or at ``len(text)``.
+        This is the only place whitespace and comment syntax is interpreted.
+        """
+        text = self.text
+        n = len(text)
+        while self.pos < n:
+            ch = text[self.pos]
+            if ch in _WHITESPACE:
+                self.pos += 1
+            elif text.startswith("//", self.pos):
+                self._skip_line_comment()
+            elif text.startswith("/*", self.pos):
+                self._skip_block_comment()
+            else:
+                return
+
+    def _skip_line_comment(self) -> None:
+        """Advance past a ``//`` comment up to (not past) the newline."""
+        newline = self.text.find("\n", self.pos + 2)
+        self.pos = len(self.text) if newline == -1 else newline
+
+    def _skip_block_comment(self) -> None:
+        """Advance past a ``/* ... */`` comment.
+
+        Raises
+        ------
+        ValueError
+            If the block comment is not terminated.
+        """
+        end = self.text.find("*/", self.pos + 2)
+        if end == -1:
+            raise ValueError("Unterminated block comment")
+        self.pos = end + 2
+
+    def find_string_end_index(self) -> int:
+        """Advance past a quoted string and return the index after it.
+
+        Locates the string bounds only; it does not decode the value.
+
+        Raises
+        ------
+        ValueError
+            If the cursor is not on a quote or the string is unterminated.
+        """
+        text = self.text
+        quote = text[self.pos]
+        if quote not in ('"', "'"):
+            raise ValueError("Expected a quoted string")
+        i = self.pos + 1
+        while i < len(text):
+            # Prevent \\" or \\' from being mistaken for the string end.
+            if text[i] == "\\":
+                i += 2
+                continue
+            if text[i] == quote:
+                self.pos = i + 1
+                return self.pos
+            i += 1
+        raise ValueError("Unterminated string")
+
+    def find_matching_close_bracket(self, open_ch: str, close_ch: str) -> int:
+        """Find the close bracket matching the open bracket under the cursor.
+
+        Returns the index of the matching ``close_ch`` and leaves the cursor on
+        it.
+
+        Parameters
+        ----------
+        open_ch, close_ch : str
+            Matching bracket pair, e.g. ``{`` and ``}`` or ``[`` and ``]``.
+
+        Raises
+        ------
+        ValueError
+            If the cursor is not on ``open_ch`` or no matching closing bracket is found.
+        """
+        text = self.text
+        if text[self.pos] != open_ch:
+            raise ValueError(f"Expected '{open_ch}' at index {self.pos}")
+        depth = 1
+        self.pos += 1
+        while self.pos < len(text):
+            ch = text[self.pos]
+            # Skip strings and comments so brackets inside them are ignored.
+            if ch in ('"', "'"):
+                self.find_string_end_index()
+                continue
+            if text.startswith("//", self.pos) or text.startswith("/*", self.pos):
+                self.skip_whitespace_and_comments()
+                continue
+            if ch == open_ch:
+                depth += 1
+            elif ch == close_ch:
+                depth -= 1
+                if depth == 0:
+                    return self.pos
+            self.pos += 1
+        raise ValueError(f"Could not find matching {close_ch}")
+
+    def find_value_end_index(self) -> int:
+        """Return the end index (exclusive) of the value under the cursor.
+
+        Dispatches by value kind; primitives are delegated to
+        :meth:`_find_primitive_end`.
+
+        Raises
+        ------
+        ValueError
+            If the cursor is at end of input.
+        """
+        text = self.text
+        if self.pos >= len(text):
+            raise ValueError("Expected value, reached end of input")
+        ch = text[self.pos]
+        if ch == "{":
+            return self.find_matching_close_bracket("{", "}") + 1
+        elif ch == "[":
+            return self.find_matching_close_bracket("[", "]") + 1
+        elif ch in ('"', "'"):
+            return self.find_string_end_index()
+        else:
+            return self._find_primitive_end()
+
+    def _find_primitive_end(self) -> int:
+        """Return the end index (exclusive) of a primitive value.
+
+        A primitive ends at the next delimiter (``,``, ``}``, ``]``) or comment,
+        with trailing whitespace excluded.
+        """
+        text = self.text
+        start = self.pos
+        i = start
+        # Scan forward until the primitive is terminated. A primitive has no
+        # explicit closing token, so it runs until the next structural
+        # delimiter (',', '}', ']') or the start of a comment, both of which
+        # belong to the surrounding document rather than the value itself.
+        while i < len(text):
+            if text.startswith("//", i) or text.startswith("/*", i):
+                break
+            if text[i] in _VALUE_DELIMITERS:
+                break
+            i += 1
+        # Walk back over trailing whitespace so the returned span covers only
+        # the value; the gap before the delimiter/comment is layout, not part
+        # of the primitive, and must be preserved unchanged on edits.
+        while i > start and text[i - 1] in _WHITESPACE:
+            i -= 1
+        return i
 
 
-def _find_matching_bracket(text: str, idx: int, open_ch: str, close_ch: str) -> int:
-    """Find the matching closing bracket for an opening bracket.
-
-    Parameters
-    ----------
-    text : str
-        Source JSONC text.
-    idx : int
-        Index of the opening bracket.
-    open_ch : str
-        Opening bracket character.
-    close_ch : str
-        Closing bracket character.
-
-    Returns
-    -------
-    int
-        Index of the matching closing bracket.
-
-    Raises
-    ------
-    AssertionError
-        If ``text[idx]`` does not equal ``open_ch``.
-    ValueError
-        If no matching closing bracket is found.
-
-    Notes
-    -----
-    Brackets found inside strings or comments are ignored.
-    """
-    assert text[idx] == open_ch
-    depth = 1
-    i = idx + 1
-    while i < len(text):
-        ch = text[i]
-        if ch in ('"', "'"):
-            _, i = _parse_quoted_string(text, i)
-            continue
-        if text.startswith("//", i):
-            i = _skip_ws_and_comments(text, i)
-            continue
-        if text.startswith("/*", i):
-            i = _skip_ws_and_comments(text, i)
-            continue
-        if ch == open_ch:
-            depth += 1
-        elif ch == close_ch:
-            depth -= 1
-            if depth == 0:
-                return i
-        i += 1
-    raise ValueError(f"Could not find matching {close_ch}")
-
-
-def _parse_value_end(text: str, idx: int) -> int:
-    """Return the end index (exclusive) of a JSON/JSON5 value.
-
-    Parameters
-    ----------
-    text : str
-        Source JSONC text.
-    idx : int
-        Index where a value starts.
-
-    Returns
-    -------
-    int
-        End index (exclusive) of the parsed value.
-
-    Raises
-    ------
-    ValueError
-        If ``idx`` is out of bounds or nested parsing fails.
-
-    Notes
-    -----
-    Objects, arrays, and strings are parsed structurally. Primitive values are
-    scanned to the next delimiter or comment.
-    """
-    if idx >= len(text):
-        raise ValueError("Expected value, reached end of input")
-    ch = text[idx]
-    if ch == "{":
-        return _find_matching_bracket(text, idx, "{", "}") + 1
-    if ch == "[":
-        return _find_matching_bracket(text, idx, "[", "]") + 1
-    if ch in ('"', "'"):
-        _, end = _parse_quoted_string(text, idx)
-        return end
-
-    i = idx
-    while i < len(text):
-        if text.startswith("//", i) or text.startswith("/*", i):
-            break
-        if text[i] in ",}]":
-            break
-        i += 1
-
-    while i > idx and text[i - 1] in " \t\r\n":
-        i -= 1
-    return i
+# ---------------------------------------------------------------------------
+# Structural parsing
+# ---------------------------------------------------------------------------
 
 
 def _parse_object_members(
@@ -223,131 +238,130 @@ def _parse_object_members(
     obj_start: int,
     obj_end: int,
 ) -> list[_ObjectMember]:
-    """Parse direct members of an object span.
+    """Parse the direct members of an object span into span metadata.
+
+    Key and value spans are captured so edits can target a single member while
+    preserving surrounding comments and formatting.
 
     Parameters
     ----------
-    text : str
-        Source JSONC text.
     obj_start : int
         Index of the opening ``{``.
     obj_end : int
         End index (exclusive), where ``text[obj_end - 1]`` is ``}``.
 
-    Returns
-    -------
-    list[_ObjectMember]
-        Parsed member metadata for all direct members of the object.
-
     Raises
     ------
     ValueError
-        If object bounds are invalid or member syntax is malformed.
-
-    Notes
-    -----
-    This function captures source spans for keys and values to support targeted
-    text edits while preserving surrounding comments and formatting.
+        If the object bounds are invalid.
     """
     if text[obj_start] != "{" or text[obj_end - 1] != "}":
         raise ValueError("Object bounds are invalid")
 
     members: list[_ObjectMember] = []
-    idx = _skip_ws_and_comments(text, obj_start + 1)
+    scanner = _Scanner(text, obj_start + 1)
+    content_end = obj_end - 1
 
-    while idx < obj_end - 1:
-        idx = _skip_ws_and_comments(text, idx)
-        if idx >= obj_end - 1:
+    while True:
+        scanner.skip_whitespace_and_comments()
+        if scanner.pos >= content_end or text[scanner.pos] == "}":
             break
-        if text[idx] == "}":
-            break
-
-        member_start = idx
-        key_start = idx
-        if text[idx] in ('"', "'"):
-            key, idx = _parse_quoted_string(text, idx)
-            key_end = idx
-        else:
-            match = _IDENTIFIER_RE.match(text, idx)
-            if match is None:
-                raise ValueError(f"Expected an object key at index {idx}")
-            key = match.group(0)
-            idx = match.end()
-            key_end = idx
-
-        idx = _skip_ws_and_comments(text, idx)
-        if idx >= len(text) or text[idx] != ":":
-            raise ValueError(f"Expected ':' after key {key}")
-        idx += 1
-
-        idx = _skip_ws_and_comments(text, idx)
-        value_start = idx
-        value_end = _parse_value_end(text, idx)
-        idx = _skip_ws_and_comments(text, value_end)
-
-        has_comma = False
-        if idx < obj_end - 1 and text[idx] == ",":
-            has_comma = True
-            idx += 1
-
-        member_end = idx
-        members.append(
-            _ObjectMember(
-                key=key,
-                key_start=key_start,
-                key_end=key_end,
-                value_start=value_start,
-                value_end=value_end,
-                member_start=member_start,
-                member_end=member_end,
-                has_comma=has_comma,
-            )
-        )
+        members.append(_parse_one_member(scanner, content_end))
 
     return members
 
 
+def _parse_one_member(scanner: _Scanner, content_end: int) -> _ObjectMember:
+    """Parse the ``key: value`` member at the cursor into span metadata.
+
+    Leaves the cursor just past the member's trailing comma (if any).
+    ``content_end`` is the index of the object's closing ``}``.
+
+    Raises
+    ------
+    ValueError
+        If the key or the ``:`` separator is missing.
+    """
+    member_start = scanner.pos
+    key, key_start, key_end = _read_member_key(scanner)
+
+    scanner.skip_whitespace_and_comments()
+    if scanner.pos >= len(scanner.text) or scanner.text[scanner.pos] != ":":
+        raise ValueError(f"Expected ':' after key {key}")
+    scanner.pos += 1
+
+    scanner.skip_whitespace_and_comments()
+    value_start = scanner.pos
+    value_end = scanner.find_value_end_index()
+
+    scanner.pos = value_end
+    scanner.skip_whitespace_and_comments()
+    has_comma = scanner.pos < content_end and scanner.text[scanner.pos] == ","
+    if has_comma:
+        scanner.pos += 1
+
+    return _ObjectMember(
+        key=key,
+        key_start=key_start,
+        key_end=key_end,
+        value_start=value_start,
+        value_end=value_end,
+        member_start=member_start,
+        member_end=scanner.pos,
+        has_comma=has_comma,
+    )
+
+
+def _read_member_key(scanner: _Scanner) -> tuple[str, int, int]:
+    """Read the object key (quoted string or bare identifier) at the cursor.
+
+    Returns ``(key, key_start, key_end)`` and leaves the cursor past the key.
+
+    Raises
+    ------
+    ValueError
+        If no valid key is found at the cursor.
+    """
+    text = scanner.text
+    key_start = scanner.pos
+    if text[scanner.pos] in ('"', "'"):
+        key_end = scanner.find_string_end_index()
+        key = json5.loads(text[key_start:key_end])
+        return key, key_start, key_end
+
+    match = _IDENTIFIER_RE.match(text, scanner.pos)
+    if match is None:
+        raise ValueError(f"Expected an object key at index {scanner.pos}")
+    scanner.pos = match.end()
+    return match.group(0), key_start, scanner.pos
+
+
 def _find_root_object_span(text: str) -> tuple[int, int]:
-    """Find the span of the top-level object in JSONC text.
+    """Return the ``(start, end)`` span of the top-level object.
 
-    Parameters
-    ----------
-    text : str
-        Source JSONC text.
-
-    Returns
-    -------
-    tuple[int, int]
-        ``(start, end)`` indices where ``start`` is ``{`` and ``end`` is
-        exclusive.
+    ``start`` is the index of ``{`` and ``end`` is exclusive.
 
     Raises
     ------
     ValueError
         If the top-level value is not an object.
     """
-    idx = _skip_ws_and_comments(text, 0)
-    if idx >= len(text) or text[idx] != "{":
+    scanner = _Scanner(text)
+    scanner.skip_whitespace_and_comments()
+    if scanner.pos >= len(text) or text[scanner.pos] != "{":
         raise ValueError("Expected a top-level object")
-    end = _find_matching_bracket(text, idx, "{", "}")
-    return idx, end + 1
+    start = scanner.pos
+    end = scanner.find_matching_close_bracket("{", "}")
+    return start, end + 1
 
 
-def _line_indent(text: str, idx: int) -> str:
-    """Return leading indentation of the line containing ``idx``.
+# ---------------------------------------------------------------------------
+# Editing primitives
+# ---------------------------------------------------------------------------
 
-    Parameters
-    ----------
-    text : str
-        Source text.
-    idx : int
-        Index whose line indentation is requested.
 
-    Returns
-    -------
-    str
-        Leading spaces/tabs from line start to first non-whitespace character.
-    """
+def _get_line_indent(text: str, idx: int) -> str:
+    """Return the leading whitespace of the line containing ``idx``."""
     line_start = text.rfind("\n", 0, idx) + 1
     i = line_start
     while i < len(text) and text[i] in " \t":
@@ -355,7 +369,12 @@ def _line_indent(text: str, idx: int) -> str:
     return text[line_start:i]
 
 
-def _insert_member(
+def _format_member_text(key: str, value: Any, indent: str) -> str:
+    """Render an indented ``"key": value`` snippet (no newline or comma)."""
+    return f"{indent}{json.dumps(key)}: {json.dumps(value)}"
+
+
+def _insert_member_into_object(
     text: str,
     obj_start: int,
     obj_end: int,
@@ -363,170 +382,189 @@ def _insert_member(
     key: str,
     value: Any,
 ) -> str:
-    """Insert a key/value pair into an object span.
+    """Insert ``key``/``value`` into an object span and return the new text.
+
+    Indentation is inferred from existing ``members`` (or the object's own
+    line), and the existing trailing-comma style is preserved.
 
     Parameters
     ----------
-    text : str
-        Source JSONC text.
     obj_start : int
-        Index of the object opening ``{``.
+        Index of the object's opening ``{``.
     obj_end : int
         Object end index (exclusive).
-    members : list[_ObjectMember]
-        Existing direct members of the object.
-    key : str
-        Key to insert.
-    value : Any
-        JSON-serializable value to insert.
-
-    Returns
-    -------
-    str
-        Updated JSONC text with inserted member.
-
-    Notes
-    -----
-    Uses local indentation heuristics and preserves trailing-comma style.
     """
-    key_text = json.dumps(key)
-    value_text = json.dumps(value)
-    base_indent = _line_indent(text, obj_start)
-    member_indent = _line_indent(text, members[0].member_start) if members else ""
+    base_indent = _get_line_indent(text, obj_start)
+    member_indent = (
+        _get_line_indent(text, members[0].member_start)
+        if members
+        else base_indent + "    "
+    )
     if not member_indent:
         member_indent = base_indent + "    "
+    member_text = _format_member_text(key, value, member_indent)
 
     if not members:
-        insertion = f"\n{member_indent}{key_text}: {value_text}\n{base_indent}"
+        insertion = f"\n{member_text}\n{base_indent}"
         return text[: obj_start + 1] + insertion + text[obj_start + 1 :]
 
-    last_member = members[-1]
-    comma_prefix = "" if last_member.has_comma else ","
-    insertion = f"{comma_prefix}\n{member_indent}{key_text}: {value_text}"
+    comma_prefix = "" if members[-1].has_comma else ","
+    insertion = f"{comma_prefix}\n{member_text}"
     return text[: obj_end - 1] + insertion + text[obj_end - 1 :]
 
 
-def _find_member_at_key_path(text: str, key_path: list[str]) -> _ObjectMember | None:
-    """Resolve a member by traversing a nested key path.
+# ---------------------------------------------------------------------------
+# Navigation helpers
+# ---------------------------------------------------------------------------
 
-    Parameters
-    ----------
-    text : str
-        Source JSONC text.
-    key_path : list[str]
-        Sequence of keys from the root object.
 
-    Returns
-    -------
-    _ObjectMember | None
-        Member metadata for the terminal key, or ``None`` if traversal fails.
+def _find_member_by_key(
+    members: list[_ObjectMember],
+    key: str,
+) -> _ObjectMember | None:
+    """Return the member with the given ``key``, or ``None`` if absent."""
+    return next((member for member in members if member.key == key), None)
 
-    Raises
-    ------
-    ValueError
-        If the source text cannot be parsed as a root object.
+
+def _get_object_value_span(
+    text: str,
+    member: _ObjectMember,
+) -> tuple[int, int] | None:
+    """Return a member value's object span as ``(start, end)``, ``end`` exclusive.
+
+    Returns ``None`` if the value is not an object.
     """
-    obj_start, obj_end = _find_root_object_span(text)
-    members = _parse_object_members(text, obj_start, obj_end)
+    scanner = _Scanner(text, member.value_start)
+    scanner.skip_whitespace_and_comments()
+    if scanner.pos >= len(text) or text[scanner.pos] != "{":
+        return None
+    start = scanner.pos
+    end = scanner.find_matching_close_bracket("{", "}")
+    return start, end + 1
+
+
+# ---------------------------------------------------------------------------
+# High-level functions
+# ---------------------------------------------------------------------------
+
+
+def _find_member_by_key_path(
+    text: str,
+    key_path: list[str],
+) -> _ObjectMember | None:
+    """Resolve a member by traversing ``key_path`` from the root object.
+
+    Returns the terminal member, or ``None`` if any key along the path is
+    missing or its value is not an object.
+    """
+    obj_span = _find_root_object_span(text)
     member: _ObjectMember | None = None
 
     for key in key_path:
-        member = next((item for item in members if item.key == key), None)
+        members = _parse_object_members(text, *obj_span)
+        member = _find_member_by_key(members, key)
         if member is None:
             return None
-
-        value_idx = _skip_ws_and_comments(text, member.value_start)
-        if text[value_idx] != "{":
+        obj_span = _get_object_value_span(text, member)
+        if obj_span is None:
             return None
-        obj_start = value_idx
-        obj_end = _find_matching_bracket(text, obj_start, "{", "}") + 1
-        members = _parse_object_members(text, obj_start, obj_end)
 
     return member
 
 
-def _set_key_in_object(
+def _descend_into_object_member(
+    text: str,
+    obj_span: tuple[int, int],
+    key_path: list[str],
+    segment: str,
+) -> tuple[str, tuple[int, int]]:
+    """Ensure ``segment`` is an object within ``obj_span`` and return its span.
+
+    Returns the possibly-updated text and the child object's ``(start, end)``
+    span. The segment is handled by case: a missing key is inserted as an empty
+    object, a non-object value is replaced with one, and an existing object is
+    descended into unchanged. ``key_path`` is the already-traversed path, used
+    to re-resolve the child after an edit.
+    """
+    members = _parse_object_members(text, *obj_span)
+    member = _find_member_by_key(members, segment)
+
+    if member is None:
+        text = _insert_member_into_object(text, *obj_span, members, segment, {})
+        return text, _resolve_child_span(text, key_path, segment)
+
+    child_span = _get_object_value_span(text, member)
+    if child_span is None:
+        text = text[: member.value_start] + "{}" + text[member.value_end :]
+        return text, _resolve_child_span(text, key_path, segment)
+    else:
+        return text, child_span
+
+
+def _resolve_child_span(
+    text: str,
+    key_path: list[str],
+    segment: str,
+) -> tuple[int, int]:
+    """Re-resolve the ``(start, end)`` span of a child object after an edit.
+
+    Raises
+    ------
+    ValueError
+        If the child member cannot be found or is not an object.
+    """
+    member = _find_member_by_key_path(text, key_path + [segment])
+    if member is None:
+        raise ValueError(f"Could not find key after edit: {segment}")
+    span = _get_object_value_span(text, member)
+    if span is None:
+        raise ValueError(f"Expected object value for key: {segment}")
+    return span
+
+
+def _resolve_or_create_parent_object(
+    text: str,
+    parent_key_path: list[str],
+) -> tuple[str, tuple[int, int]]:
+    """Resolve the parent object's span, creating missing objects en route.
+
+    Returns the possibly-updated text and the parent object's ``(start, end)``
+    span. Missing intermediates are created and non-object intermediates are
+    replaced with empty objects, so the full path is guaranteed to exist.
+    """
+    obj_span = _find_root_object_span(text)
+    traversed: list[str] = []
+    for segment in parent_key_path:
+        text, obj_span = _descend_into_object_member(text, obj_span, traversed, segment)
+        traversed.append(segment)
+    return text, obj_span
+
+
+def _set_value_at_key_path(
     text: str,
     parent_key_path: list[str],
     key: str,
     value: Any,
 ) -> str:
-    """Set a key under a parent object identified by key path.
+    """Set ``key`` to ``value`` under the object at ``parent_key_path``.
 
-    Parameters
-    ----------
-    text : str
-        Source JSONC text.
-    parent_key_path : list[str]
-        Key path to the parent object where ``key`` is set.
-    key : str
-        Key to insert or update under the parent object.
-    value : Any
-        JSON-serializable value to set.
-
-    Returns
-    -------
-    str
-        Updated JSONC text.
-
-    Raises
-    ------
-    ValueError
-        If inserted/updated intermediate members cannot be re-resolved.
-
-    Notes
-    -----
-    Missing intermediate objects are created. Existing non-object intermediate
-    values are replaced with empty objects to continue traversal.
+    Missing intermediate objects are created. An existing ``key`` has only its
+    value replaced; a missing ``key`` is inserted.
     """
-    obj_start, obj_end = _find_root_object_span(text)
-    traversed_key_path: list[str] = []
+    text, obj_span = _resolve_or_create_parent_object(text, parent_key_path)
 
-    for segment in parent_key_path:
-        members = _parse_object_members(text, obj_start, obj_end)
-        member = next((item for item in members if item.key == segment), None)
-        if member is None:
-            text = _insert_member(text, obj_start, obj_end, members, segment, {})
-            member = _find_member_at_key_path(
-                text,
-                traversed_key_path + [segment],
-            )
-            if member is None:
-                raise ValueError(f"Could not find newly inserted key: {segment}")
-            value_idx = _skip_ws_and_comments(text, member.value_start)
-            obj_start = value_idx
-            obj_end = _find_matching_bracket(text, obj_start, "{", "}") + 1
-            traversed_key_path.append(segment)
-            continue
-
-        value_idx = _skip_ws_and_comments(text, member.value_start)
-        if text[value_idx] != "{":
-            text = text[: member.value_start] + "{}" + text[member.value_end :]
-            parent_member = _find_member_at_key_path(
-                text,
-                traversed_key_path + [segment],
-            )
-            if parent_member is None:
-                raise ValueError(f"Could not find updated key: {segment}")
-            member = parent_member
-            value_idx = _skip_ws_and_comments(text, member.value_start)
-
-        obj_start = value_idx
-        obj_end = _find_matching_bracket(text, obj_start, "{", "}") + 1
-        traversed_key_path.append(segment)
-
-    members = _parse_object_members(text, obj_start, obj_end)
-    existing_member = next((item for item in members if item.key == key), None)
-
-    if existing_member is None:
-        return _insert_member(text, obj_start, obj_end, members, key, value)
+    members = _parse_object_members(text, *obj_span)
+    existing = _find_member_by_key(members, key)
+    if existing is None:
+        return _insert_member_into_object(text, *obj_span, members, key, value)
 
     value_text = json.dumps(value)
-    return (
-        text[: existing_member.value_start]
-        + value_text
-        + text[existing_member.value_end :]
-    )
+    return text[: existing.value_start] + value_text + text[existing.value_end :]
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 
 def update_jsonc_text(
@@ -535,14 +573,14 @@ def update_jsonc_text(
 ) -> str:
     """Apply updates to JSONC text while preserving comments and formatting.
 
+    Input and output are validated with ``json5.loads``. Updates are applied in
+    order, and each update sees the result of previous edits.
+
     Parameters
     ----------
-    text : str
-        JSONC/JSON5 text to update.
     updates : Iterable[tuple[list[str], Any]]
-        Iterable of ``(key_path, value)`` tuples.
-        For each update, the key path is a list of nested keys where the final
-        key is set to ``value``.
+        ``(key_path, value)`` tuples. ``key_path`` is a list of nested keys
+        whose final key is set to ``value``.
 
     Returns
     -------
@@ -552,13 +590,8 @@ def update_jsonc_text(
     Raises
     ------
     ValueError
-        If input text is invalid JSONC/JSON5, a key path is empty, or output
-        validation fails after applying updates.
-
-    Notes
-    -----
-    Input and output are validated with ``json5.loads``. Updates are applied in
-    order and each update sees the result of previous edits.
+        If the input or resulting text is invalid JSONC/JSON5, or a key path is
+        empty.
     """
     json5.loads(text)
 
@@ -566,7 +599,7 @@ def update_jsonc_text(
     for key_path, value in updates:
         if len(key_path) == 0:
             raise ValueError("Key path cannot be empty")
-        updated_text = _set_key_in_object(
+        updated_text = _set_value_at_key_path(
             updated_text,
             parent_key_path=key_path[:-1],
             key=key_path[-1],
@@ -586,23 +619,9 @@ def update_jsonc_file(
     Parameters
     ----------
     fpath : StrOrPathLike
-        File path to the JSONC/JSON5 configuration file.
+        Path to the JSONC/JSON5 file to update.
     updates : Iterable[tuple[list[str], Any]]
-        Iterable of key-path updates to apply.
-
-    Returns
-    -------
-    None
-        The file is modified in place and no value is returned.
-
-    Raises
-    ------
-    FileNotFoundError
-        If ``fpath`` does not exist.
-    OSError
-        If file read or write operations fail.
-    ValueError
-        If parsing or validation fails in ``update_jsonc_text``.
+        Key-path updates to apply (see :func:`update_jsonc_text`).
     """
     file_path = Path(fpath)
     text = file_path.read_text()
