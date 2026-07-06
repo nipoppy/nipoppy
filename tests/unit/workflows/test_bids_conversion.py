@@ -144,11 +144,11 @@ def test_run_single(
         ).validate(),
     ],
 )
-def test_cleanup(table: CurationStatusTable, workflow: BIDSificationRunner):
+def test_write_status_file(table: CurationStatusTable, workflow: BIDSificationRunner):
     workflow.pipeline_step = "convert"
     workflow.curation_status_table = table
 
-    workflow.run_cleanup()
+    workflow._write_status_file()
 
     assert workflow.study.layout.fpath_curation_status.exists()
     assert CurationStatusTable.load(workflow.study.layout.fpath_curation_status).equals(
@@ -156,23 +156,32 @@ def test_cleanup(table: CurationStatusTable, workflow: BIDSificationRunner):
     )
 
 
-def test_cleanup_simulate(workflow: BIDSificationRunner):
+def test_write_status_file_simulate(workflow: BIDSificationRunner):
     workflow.pipeline_step = "convert"
     workflow.simulate = True
     workflow.curation_status_table = CurationStatusTable()
 
-    workflow.run_cleanup()
+    workflow._write_status_file()
 
     assert not workflow.study.layout.fpath_curation_status.exists()
 
 
-def test_cleanup_no_status_update(workflow: BIDSificationRunner):
+def test_write_status_file_no_update(workflow: BIDSificationRunner):
     workflow.pipeline_step = "prepare"
     workflow.curation_status_table = CurationStatusTable()
 
-    workflow.run_cleanup()
+    workflow._write_status_file()
 
     assert not workflow.study.layout.fpath_curation_status.exists()
+
+
+def test_run_main(workflow: BIDSificationRunner, mocker: pytest_mock.MockerFixture):
+    mocked_write_status_file = mocker.patch.object(workflow, "_write_status_file")
+    mocker.patch.object(
+        workflow, "get_participants_sessions_to_run", return_value=[("01", "1")]
+    )
+    workflow.run_main()
+    mocked_write_status_file.assert_called_once()
 
 
 @pytest.mark.parametrize(
