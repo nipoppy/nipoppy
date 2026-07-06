@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import pytest_mock
 
 from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
@@ -337,18 +338,24 @@ def test_run_single_no_config(tracker: PipelineTracker):
         ),
     ],
 )
-def test_run_cleanup(
+def test_update_status_file(
     tracker: PipelineTracker,
     records,
     expected_processing_status_table: ProcessingStatusTable,
 ):
     tracker.run_single_results = records
-    tracker.run_cleanup()
+    tracker._update_status_file()
 
     assert tracker.study.layout.fpath_processing_status.exists()
     assert ProcessingStatusTable.load(
         tracker.study.layout.fpath_processing_status
     ).equals(expected_processing_status_table)
+
+
+def test_run_main(tracker: PipelineTracker, mocker: pytest_mock.MockFixture):
+    mocked_update_status_file = mocker.patch.object(tracker, "_update_status_file")
+    tracker.run_main()
+    mocked_update_status_file.assert_called_once()
 
 
 def test_run_no_create_work_directory(tracker: PipelineTracker):

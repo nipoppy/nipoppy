@@ -179,6 +179,8 @@ class InitWorkflow(BaseDatasetWorkflow):
             "respectively. They should be edited to match your dataset"
         )
 
+        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
+
     def _raise_on_invalid_existing_root_dir(self) -> None:
         if not self.dpath_root.exists():
             return
@@ -312,8 +314,3 @@ class InitWorkflow(BaseDatasetWorkflow):
         manifest.save_with_backup(
             self.study.layout.fpath_manifest, dry_run=self.dry_run
         )
-
-    def run_cleanup(self):
-        """Log a success message."""
-        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
-        return super().run_cleanup()

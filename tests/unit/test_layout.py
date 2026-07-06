@@ -89,7 +89,7 @@ def test_init_config_not_found(dpath_root):
         ("dataset_root", "other/path", Path("dataset_root/other/path")),
     ],
 )
-def test_get_full_path(dpath_root: Path, path, expected):
+def test_prepend_root_path(dpath_root: Path, path, expected):
     layout = DatasetLayout(dpath_root=dpath_root)
     assert layout._prepend_root_path(path) == expected
 

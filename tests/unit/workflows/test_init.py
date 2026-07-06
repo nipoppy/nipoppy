@@ -113,7 +113,7 @@ def _assert_layout_creation(workflow):
             # Only check README if this directory has a description in the layout
             path_info = None
             for info in workflow.study.layout.config.path_infos:
-                if workflow.study.layout._get_full_path(info.path) == dpath:
+                if workflow.study.layout._prepend_root_path(info.path) == dpath:
                     path_info = info
                     break
             if path_info and path_info.description:
@@ -142,10 +142,28 @@ def _assert_layout_creation(workflow):
         assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
-def test_run(workflow: InitWorkflow):
+@pytest.mark.no_xdist
+def test_run(workflow: InitWorkflow, caplog: pytest.LogCaptureFixture):
     workflow.run()
 
     _assert_layout_creation(workflow)
+
+    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
+
+
+@pytest.mark.no_xdist
+def test_run_no_success_message_on_error(
+    workflow: InitWorkflow,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    error_message = "fake error"
+    mocker.patch.object(workflow, "run_main", side_effect=RuntimeError(error_message))
+
+    with pytest.raises(RuntimeError, match=error_message):
+        workflow.run()
+
+    assert "Successfully initialized a dataset" not in caplog.text
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
@@ -171,6 +189,8 @@ def test_non_empty_dir_forced(workflow: InitWorkflow, dpath_root: Path):
 
     workflow.force = True
     workflow.run()
+
+    _assert_layout_creation(workflow)
 
 
 def test_init_twice_force(workflow: InitWorkflow):
@@ -309,12 +329,6 @@ def test_bids_study_layout_passes_validation(dpath_root: Path):
 
     # Check that there are no errors (warnings are OK)
     assert result.returncode == 0
-
-
-@pytest.mark.no_xdist
-def test_run_cleanup(workflow: InitWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_cleanup()
-    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
 
 
 def test_init_bids(
