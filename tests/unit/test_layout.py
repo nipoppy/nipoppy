@@ -91,7 +91,7 @@ def test_init_config_not_found(dpath_root):
 )
 def test_get_full_path(dpath_root: Path, path, expected):
     layout = DatasetLayout(dpath_root=dpath_root)
-    assert layout._get_full_path(path) == expected
+    assert layout._prepend_root_path(path) == expected
 
 
 @pytest.mark.parametrize(

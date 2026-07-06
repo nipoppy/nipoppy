@@ -207,80 +207,86 @@ class DatasetLayout(Base):
         self.dpath_nipoppy = self.dpath_root / NIPOPPY_DIR_NAME
 
         # directories
-        self.dpath_bids: Path = self._get_full_path(self.config.dpath_bids.path)
-        self.dpath_derivatives: Path = self._get_full_path(
+        self.dpath_bids: Path = self._prepend_root_path(self.config.dpath_bids.path)
+        self.dpath_derivatives: Path = self._prepend_root_path(
             self.config.dpath_derivatives.path
         )
-        self.dpath_sourcedata: Path = self._get_full_path(
+        self.dpath_sourcedata: Path = self._prepend_root_path(
             self.config.dpath_sourcedata.path
         )
-        self.dpath_src_tabular: Path = self._get_full_path(
+        self.dpath_src_tabular: Path = self._prepend_root_path(
             self.config.dpath_src_tabular.path
         )
-        self.dpath_src_imaging: Path = self._get_full_path(
+        self.dpath_src_imaging: Path = self._prepend_root_path(
             self.config.dpath_src_imaging.path
         )
-        self.dpath_downloads: Path = self._get_full_path(
+        self.dpath_downloads: Path = self._prepend_root_path(
             self.config.dpath_downloads.path
         )
-        self.dpath_pre_reorg: Path = self._get_full_path(
+        self.dpath_pre_reorg: Path = self._prepend_root_path(
             self.config.dpath_pre_reorg.path
         )
-        self.dpath_post_reorg: Path = self._get_full_path(
+        self.dpath_post_reorg: Path = self._prepend_root_path(
             self.config.dpath_post_reorg.path
         )
-        self.dpath_code: Path = self._get_full_path(self.config.dpath_code.path)
-        self.dpath_hpc: Path = self._get_full_path(self.config.dpath_hpc.path)
-        self.dpath_pipelines: Path = self._get_full_path(
+        self.dpath_code: Path = self._prepend_root_path(self.config.dpath_code.path)
+        self.dpath_hpc: Path = self._prepend_root_path(self.config.dpath_hpc.path)
+        self.dpath_pipelines: Path = self._prepend_root_path(
             self.config.dpath_pipelines.path
         )
-        self.dpath_containers: Path = self._get_full_path(
+        self.dpath_containers: Path = self._prepend_root_path(
             self.config.dpath_containers.path
         )
-        self.dpath_scratch: Path = self._get_full_path(self.config.dpath_scratch.path)
-        self.dpath_work: Path = self._get_full_path(self.config.dpath_work.path)
-        self.dpath_pybids_db: Path = self._get_full_path(
+        self.dpath_scratch: Path = self._prepend_root_path(
+            self.config.dpath_scratch.path
+        )
+        self.dpath_work: Path = self._prepend_root_path(self.config.dpath_work.path)
+        self.dpath_pybids_db: Path = self._prepend_root_path(
             self.config.dpath_pybids_db.path
         )
-        self.dpath_logs: Path = self._get_full_path(self.config.dpath_logs.path)
-        self.dpath_tabular: Path = self._get_full_path(self.config.dpath_tabular.path)
-        self.dpath_assessments: Path = self._get_full_path(
+        self.dpath_logs: Path = self._prepend_root_path(self.config.dpath_logs.path)
+        self.dpath_tabular: Path = self._prepend_root_path(
+            self.config.dpath_tabular.path
+        )
+        self.dpath_assessments: Path = self._prepend_root_path(
             self.config.dpath_assessments.path
         )
 
         # files (for type hinting)
-        self.fpath_config: Path = self._get_full_path(self.config.fpath_config.path)
-        self.fpath_curation_status: Path = self._get_full_path(
+        self.fpath_config: Path = self._prepend_root_path(self.config.fpath_config.path)
+        self.fpath_curation_status: Path = self._prepend_root_path(
             self.config.fpath_curation_status.path
         )
-        self.fpath_manifest: Path = self._get_full_path(self.config.fpath_manifest.path)
-        self.fpath_processing_status: Path = self._get_full_path(
+        self.fpath_manifest: Path = self._prepend_root_path(
+            self.config.fpath_manifest.path
+        )
+        self.fpath_processing_status: Path = self._prepend_root_path(
             self.config.fpath_processing_status.path
         )
-        self.fpath_demographics: Path = self._get_full_path(
+        self.fpath_demographics: Path = self._prepend_root_path(
             self.config.fpath_demographics.path
         )
-        self.fpath_harmonized: Path = self._get_full_path(
+        self.fpath_harmonized: Path = self._prepend_root_path(
             self.config.fpath_harmonized.path
         )
         # Optional fields - only set if defined in layout
         if self.config.fpath_bids_dataset_description is not None:
-            self.fpath_bids_dataset_description: Path = self._get_full_path(
+            self.fpath_bids_dataset_description: Path = self._prepend_root_path(
                 self.config.fpath_bids_dataset_description.path
             )
         if self.config.fpath_bidsignore is not None:
-            self.fpath_bidsignore: Path = self._get_full_path(
+            self.fpath_bidsignore: Path = self._prepend_root_path(
                 self.config.fpath_bidsignore.path
             )
 
-    def _get_full_path(self, path: StrOrPathLike) -> Path:
+    def _prepend_root_path(self, path: StrOrPathLike) -> Path:
         """Build a full path from a relative path."""
         return self.dpath_root / path
 
     def get_paths(self, directory=True, include_optional=False) -> list[Path]:
         """Return a list of all directory or file paths."""
         paths = [
-            self._get_full_path(path_info.path)
+            self._prepend_root_path(path_info.path)
             for path_info in self.config.path_infos
             if directory == path_info._is_directory
             and (include_optional or path_info._is_required)
@@ -291,7 +297,7 @@ class DatasetLayout(Base):
     def _dpath_descriptions(self) -> dict[str, str]:
         """Return a dictionary of directory paths and associated description strings."""
         info_dict = {
-            str(self._get_full_path(path_info.path)): path_info.description
+            str(self._prepend_root_path(path_info.path)): path_info.description
             for path_info in self.config.path_infos
             if path_info._is_directory and path_info.description is not None
         }
