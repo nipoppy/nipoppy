@@ -1,4 +1,4 @@
-# Developing a Nipoppy pipeline
+# Adding a pipeline to Nipoppy
 
 This guide explains how to generate and customize a pipeline configuration for use with Nipoppy.
 
@@ -34,6 +34,12 @@ language: json
 class: dropdown
 ---
 `bosh` is the CLI from Boutiques—already installed with Nipoppy.
+
+Searching for a descriptor:
+
+```console
+$ bosh search
+```
 
 Validating a descriptor:
 
@@ -72,8 +78,7 @@ nipoppy pipeline create \
 ```
 
 :::{note}
-We recommend specifying an existing descriptor file via `--source-descriptor` since it will use information from that file when generating the other configuration files.
-Otherwise, the generated configuration files will need to be edited more heavily.
+It is also possible to run this command without the `--source-descriptor` option, but that will require more downstream manual editing since the files will not be pre-populated with information from the descriptor.
 :::
 
 This will create the following structure:
