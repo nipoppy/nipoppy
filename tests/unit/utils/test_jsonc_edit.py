@@ -59,6 +59,70 @@ def test_update_jsonc_text_inserts_nested_pipeline_variables():
     }
 
 
+def test_update_jsonc_text_inserts_multiple_members_into_new_object():
+    # Regression test: inserting a second member into a freshly-created
+    # object must not leave a dangling comma on its own line, and must not
+    # glue the closing bracket onto the previous member's line.
+    text = """
+{
+    "PIPELINE_VARIABLES": {
+        "PROCESSING": {}
+    }
+}
+""".strip()
+
+    expected_text = """
+{
+    "PIPELINE_VARIABLES": {
+        "PROCESSING": {
+            "fmriprep": {
+                "25.0.0": {
+                    "FREESURFER_LICENSE_FILE": null,
+                    "TEMPLATEFLOW_HOME": null
+                }
+            }
+        }
+    }
+}
+""".strip()
+
+    updated_text = update_jsonc_text(
+        text,
+        [
+            (
+                [
+                    "PIPELINE_VARIABLES",
+                    "PROCESSING",
+                    "fmriprep",
+                    "25.0.0",
+                    "FREESURFER_LICENSE_FILE",
+                ],
+                None,
+            ),
+            (
+                [
+                    "PIPELINE_VARIABLES",
+                    "PROCESSING",
+                    "fmriprep",
+                    "25.0.0",
+                    "TEMPLATEFLOW_HOME",
+                ],
+                None,
+            ),
+        ],
+    )
+
+    assert json5.loads(updated_text)["PIPELINE_VARIABLES"]["PROCESSING"] == {
+        "fmriprep": {
+            "25.0.0": {
+                "FREESURFER_LICENSE_FILE": None,
+                "TEMPLATEFLOW_HOME": None,
+            }
+        }
+    }
+    assert updated_text == expected_text
+
+
 def test_update_jsonc_text_replaces_non_object_with_object_for_nested_path():
     text = '{"A": 123}'
     updated_text = update_jsonc_text(text, [(["A", "B"], "x")])

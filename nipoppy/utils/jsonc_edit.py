@@ -408,9 +408,24 @@ def _insert_member_into_object(
         insertion = f"\n{member_text}\n{base_indent}"
         return text[: obj_start + 1] + insertion + text[obj_start + 1 :]
 
-    comma_prefix = "" if members[-1].has_comma else ","
-    insertion = f"{comma_prefix}\n{member_text}"
-    return text[: obj_end - 1] + insertion + text[obj_end - 1 :]
+    last = members[-1]
+    if last.has_comma:
+        # ``member_end`` already sits right after the comma, so the
+        # whitespace/indentation leading up to the closing bracket is
+        # untouched and the new member lands on its own line before it.
+        insert_at = last.member_end
+        insertion = f"\n{member_text}"
+    else:
+        # Without a trailing comma, ``member_end`` swallows the whitespace
+        # between the value and the closing bracket (see
+        # ``_parse_one_member``), so inserting there would splice the new
+        # member in front of that whitespace and glue the closing bracket to
+        # it. Insert right after the value instead, adding the missing
+        # comma, and let the original trailing whitespace/indentation carry
+        # over to precede the closing bracket unchanged.
+        insert_at = last.value_end
+        insertion = f",\n{member_text}"
+    return text[:insert_at] + insertion + text[insert_at:]
 
 
 # ---------------------------------------------------------------------------
