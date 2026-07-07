@@ -1,6 +1,5 @@
 """Tests for the pipeline configuration class."""
 
-import sys
 from contextlib import nullcontext
 
 import pytest
@@ -207,7 +206,7 @@ def test_error_outdated_schema_version():
         BasePipelineConfig(
             NAME="my_pipeline",
             VERSION="1.0.0",
-            SCHEMA_VERSION=str(sys.maxsize),  # large int for current machine
+            SCHEMA_VERSION="999.0.0",
         )
 
 

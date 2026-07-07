@@ -226,7 +226,6 @@ class DatasetLayout(Base):
 
         # load the config
         config = LayoutConfig(**load_json(fpath_config))
-        self.SCHEMA_VERSION = config.SCHEMA_VERSION
 
         self.dpath_root = Path(dpath_root)
         self.fpath_spec = Path(fpath_config)

@@ -1,6 +1,5 @@
 """Tests for TrackerConfig class."""
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -41,7 +40,7 @@ def test_schema_version_default():
 
 def test_schema_version_newer():
     with pytest.raises(ValueError, match="newer than the schema version"):
-        TrackerConfig(PATHS=[Path("path1")], SCHEMA_VERSION=str(sys.maxsize))
+        TrackerConfig(PATHS=[Path("path1")], SCHEMA_VERSION="999.0.0")
 
 
 def test_at_least_one_path():
