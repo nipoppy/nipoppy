@@ -1,5 +1,4 @@
 {
-    "SCHEMA_VERSION": "1.0.0",
     "dpath_bids": {
         "path": "bids"
     },
@@ -71,5 +70,6 @@
     },
     "fpath_harmonized": {
         "path": "tabular/harmonized.tsv"
-    }
+    },
+    "SCHEMA_VERSION": "1.0"
 }

@@ -1,5 +1,4 @@
 {
-    "SCHEMA_VERSION": "1.0.0",
     "CONTAINER_CONFIG": {
         "COMMAND": "apptainer",
         "ARGS": [
@@ -8,5 +7,6 @@
     },
     "CUSTOM": {
         "some_key": "this can be anything"
-    }
+    },
+    "SCHEMA_VERSION": "1.0"
 }

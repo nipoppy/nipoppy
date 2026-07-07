@@ -1,5 +1,4 @@
 {
-    "SCHEMA_VERSION": "1.0.0",
     "DICOM_DIR_MAP_FILE": "dicom_dir_map.tsv",
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
@@ -10,5 +9,6 @@
                 }
             }
         }
-    }
+    },
+    "SCHEMA_VERSION": "1.0"
 }

@@ -6,6 +6,6 @@
             "UPDATE_STATUS": true
         }
     ],
-    "SCHEMA_VERSION": "1.0.0",
-    "PIPELINE_TYPE": "processing"
+    "PIPELINE_TYPE": "processing",
+    "SCHEMA_VERSION": "1.0"
 }

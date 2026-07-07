@@ -1,5 +1,4 @@
 {
-    "SCHEMA_VERSION": "1.0.0",
     "dpath_bids": {
         "path": "bids",
         "description": "This directory contains the raw dataset converted to the BIDS standard."
@@ -95,5 +94,6 @@
     "fpath_harmonized": {
         "path": "tabular/harmonized.tsv",
         "description": "The harmonized phenotypic data file can be obtained using the Neurobagel CLI."
-    }
+    },
+    "SCHEMA_VERSION": "1.0"
 }
