@@ -10,7 +10,7 @@ from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.layout import DatasetLayout, LayoutConfig, PathInfo
-from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
+from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT, load_json
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_REQUIRED_FPATH_MAP,
@@ -34,20 +34,27 @@ def create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
             shutil.rmtree(path_to_delete, ignore_errors=True)
 
 
-def test_config_path_infos():
-    config = DatasetLayout("my_dataset").config
-    assert all([isinstance(path_info, PathInfo) for path_info in config.path_infos])
+@pytest.fixture
+def layout_config() -> LayoutConfig:
+    return LayoutConfig(**load_json(FPATH_DEFAULT_LAYOUT))
 
 
-def test_schema_version_default():
-    layout = DatasetLayout("my_dataset")
-    assert layout.config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+def test_config_path_infos(layout_config):
+    assert all(
+        [isinstance(path_info, PathInfo) for path_info in layout_config.path_infos]
+    )
 
 
-def test_schema_version_newer():
-    data = DatasetLayout("my_dataset").config.model_dump()
+def test_schema_version_default(layout_config):
+    assert layout_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+
+
+def test_schema_version_newer(layout_config):
+    data = layout_config.model_dump()
     data["SCHEMA_VERSION"] = "999.0.0"
-    with pytest.raises(ValidationError, match="newer than the schema version"):
+    with pytest.raises(
+        ValidationError, match="newer than the latest schema version supported"
+    ):
         LayoutConfig(**data)
 
 
