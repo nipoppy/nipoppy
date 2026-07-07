@@ -16,7 +16,6 @@ BUG_REPORT_URL = (
 DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
 
 
-
 class ConfigType(str, Enum):
     """Nipoppy configuration schema types."""
 
