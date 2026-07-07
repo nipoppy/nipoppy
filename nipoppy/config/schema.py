@@ -33,9 +33,9 @@ def check_current_schema_version(
     except InvalidVersion as exception:
         raise ConfigError(f"Invalid schema version: {schema_version}") from exception
 
-    if is_newer:  # noqa: E501
+    if is_newer:
         raise ConfigError(
             f"{config_type.value.capitalize()} config uses schema version "
-            f"{schema_version}, which is newer than the schema version supported by "
-            f"this version of Nipoppy ({current_version}). Please upgrade Nipoppy."
+            f"{schema_version}, which is newer than the latest schema version supported"
+            f" by this version of Nipoppy ({current_version}). Please upgrade Nipoppy."
         )
