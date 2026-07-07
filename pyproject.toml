@@ -25,6 +25,7 @@ dependencies = [
     "pydantic",
     "pydicom!=3.0.0",
     "pysqa[sge]>=0.2.4",
+    "python-dotenv",
     "rich",
     "rich-click",
     "typing-extensions",
@@ -41,7 +42,9 @@ parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
-    "myst-parser",
+    # Simplify after dropping Python 3.10 support
+    "myst-parser>=5.1.0 ; python_version >= '3.11'",
+    "myst-parser ; python_version < '3.11'",
     "sphinx",
     "sphinx-autoapi",
     "sphinx-click",
@@ -94,6 +97,7 @@ minversion = "6.0"
 xfail_strict = true
 markers = [
     "api: mark a test as an api test.",
+    "linkcheck: mark a test as a link check test.",
     "no_xdist: mark a test that should not be run with xdist in CI.",
 ]
 

@@ -19,7 +19,8 @@ except ImportError:
 
 
 from nipoppy._version import __version__
-from nipoppy.cli import OrderedAliasedGroup, exception_handler
+from nipoppy.cli import exception_handler
+from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
     dataset_option,
     dep_params,
@@ -93,8 +94,8 @@ click.rich_click.OPTION_GROUPS = {
 
 @tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
-    cls=OrderedAliasedGroup,
-    context_settings={"help_option_names": ["-h", "--help"]},
+    cls=OrderedAliasedGroupWithDotenv,
+    context_settings={"help_option_names": ["-h", "--help"], "show_default": True},
     epilog=(
         "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
         "Or visit the documentation at https://nipoppy.readthedocs.io"
@@ -130,7 +131,6 @@ if cli.commands.get("gui"):
     "--mode",
     type=click.Choice(["copy", "move", "symlink"]),
     default="symlink",
-    show_default=True,
     help=(
         "If using a BIDS source, specify whether to copy, move, or symlink the files."
     ),
@@ -252,7 +252,6 @@ def process(**params):
     "--n-jobs",
     type=int,
     default=1,
-    show_default=True,
     help=("Number of parallel workers to use."),
 )
 @global_options

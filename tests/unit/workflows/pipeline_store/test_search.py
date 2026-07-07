@@ -32,6 +32,7 @@ def hits():
             "stats": {"downloads": 4},
             "metadata": {
                 "description": "<div><p>\nDescription 1: <PIPELINE_NAME>\n</p></div>",
+                "communities": [{"id": "nipoppy"}],
             },
             "doi_url": "fake_doi_url_12345",
         },
@@ -52,11 +53,13 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
 
     # order is switched because of sorting by downloads
     assert df.iloc[0]["Zenodo ID"] == "[link=fake_doi_url_67890]67890[/link]"
+    assert df.iloc[0]["Community"] == "-"
     assert df.iloc[0]["Title"] == "Pipeline 2"
     assert pd.isna(df.iloc[0]["Description"])
     assert df.iloc[0]["Downloads"] == 100
 
     assert df.iloc[1]["Zenodo ID"] == "[link=fake_doi_url_12345]12345[/link]"
+    assert df.iloc[1]["Community"] == "nipoppy"
     assert df.iloc[1]["Title"] == "Pipeline 1"
     assert df.iloc[1]["Description"] == "Description 1: <PIPELINE_NAME>"
     assert df.iloc[1]["Downloads"] == 4
@@ -82,12 +85,14 @@ def test_df_to_table(
         [
             {
                 "Zenodo ID": "[link=fake_doi_url]12345[/link]",
+                "Community": "nipoppy",
                 "Title": "Pipeline 1",
                 "Description": "Description 1: <PIPELINE_NAME>",
                 "Downloads": 4,
             },
             {
                 "Zenodo ID": "[link=fake_doi_url]67890[/link]",
+                "Community": "-",
                 "Title": "Pipeline 2",
                 "Description": None,
                 "Downloads": 100,

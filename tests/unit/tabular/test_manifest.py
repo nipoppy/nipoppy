@@ -137,31 +137,29 @@ def test_get_imaging_subset(data, session_id, expected_count):
         ("03", "ses-BL", 1),
     ],
 )
-def get_participants_sessions(participant_id, session_id, expected_count):
-    data = (
-        {
-            "participant_id": ["01", "01", "01", "02", "02", "03", "04"],
-            "visit": ["BL", "M12", "M24", "BL", "M12", "BL", "SC"],
-            "session_id": [
-                "ses-BL",
-                "ses-M12",
-                "ses-M24",
-                "ses-BL",
-                "ses-M12",
-                "ses-BL",
-                None,
-            ],
-            "datatype": [
-                ["anat"],
-                ["anat"],
-                ["anat"],
-                ["anat"],
-                ["anat"],
-                ["anat"],
-                [],
-            ],
-        },
-    )
+def test_get_participants_sessions(participant_id, session_id, expected_count):
+    data = {
+        "participant_id": ["01", "01", "01", "02", "02", "03", "04"],
+        "visit_id": ["BL", "M12", "M24", "BL", "M12", "BL", "SC"],
+        "session_id": [
+            "ses-BL",
+            "ses-M12",
+            "ses-M24",
+            "ses-BL",
+            "ses-M12",
+            "ses-BL",
+            None,
+        ],
+        "datatype": [
+            ["anat"],
+            ["anat"],
+            ["anat"],
+            ["anat"],
+            ["anat"],
+            ["anat"],
+            [],
+        ],
+    }
     manifest = Manifest(data)
     count = 0
     for _ in manifest.get_participants_sessions(

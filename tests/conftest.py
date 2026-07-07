@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from pathlib import Path
 from typing import Generator, Optional
 
@@ -22,6 +23,7 @@ from nipoppy.env import (
 )
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import NipoppyLogger, get_logger
+from nipoppy.study import Study
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.bids import (
@@ -97,7 +99,18 @@ def datetime_fixture(
     yield mocked_datetime
 
 
-def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
+@pytest.fixture()
+def restore_environment():
+    """Fixture to restore environment variables after a test."""
+    environment_to_restore = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(environment_to_restore)
+
+
+def list_cli_commands(
+    group: click.Group, prefix="", include_hidden=True, include_group=True
+):
     """List all CLI commands recursively.
 
     Parameters
@@ -108,6 +121,8 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
         Prefix to add to command names (used for recursion), by default ""
     include_hidden : bool, optional
         Whether to include hidden commands, by default True
+    include_group : bool, optional
+        Whether to include group (parent) commands, by default True
 
     Returns
     -------
@@ -121,7 +136,8 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
             continue
 
         full_name = f"{prefix}{name}"
-        commands.append(full_name)
+        if include_group or not isinstance(cmd, click.Group):
+            commands.append(full_name)
 
         # If the command is itself a group, recurse
         if isinstance(cmd, click.Group):
@@ -432,3 +448,16 @@ def check_curation_status_table(
                         participant_id in participants_and_sessions_true
                         and session_id in participants_and_sessions_true[participant_id]
                     )
+
+
+@pytest.fixture
+def study(tmp_path: Path) -> Study:
+    """Create a fixture Study instance to use in tests."""
+    dpath_root = tmp_path / "my_study"
+    return Study(layout=DatasetLayout(dpath_root=dpath_root))
+
+
+def _set_up_substitution_testing(_object, mocker: pytest_mock.MockerFixture):
+    return mocker.patch.object(
+        _object, "process_template_json", side_effect=_object.process_template_json
+    )

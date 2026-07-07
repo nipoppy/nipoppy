@@ -6,7 +6,7 @@ from tarfile import is_tarfile
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, PROGRAM_NAME, StrOrPathLike
+from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
@@ -142,38 +142,14 @@ class ProcessingRunner(Runner):
                 yield participant_session
 
     def _generate_cli_command_for_hpc(
-        self, participant_id=None, session_id=None
+        self, participant_id: str | None = None, session_id: str | None = None
     ) -> list[str]:
-        """
-        Generate the CLI command to be run on the HPC cluster for a participant/session.
-
-        Skip the --simulate, --hpc, --write-list and --dry-run options.
-        """
-        command = [
-            PROGRAM_NAME,
-            "process",
-            "--dataset",
-            self.dpath_root,
-            "--pipeline",
-            self.pipeline_name,
-        ]
-        if self.pipeline_version is not None:
-            command.extend(["--pipeline-version", self.pipeline_version])
-        if self.pipeline_step is not None:
-            command.extend(["--pipeline-step", self.pipeline_step])
-        if participant_id is not None:
-            command.extend(["--participant-id", participant_id])
-        if session_id is not None:
-            command.extend(["--session-id", session_id])
-        if self.keep_workdir:
-            command.append("--keep-workdir")
-        if self.tar:
-            command.append("--tar")
-        if self.fpath_layout:
-            command.extend(["--layout", self.fpath_layout])
-        if self.verbose:
-            command.append("--verbose")
-        return [str(component) for component in command]
+        """Generate the CLI command to be run on the HPC cluster."""
+        return self.hpc_runner.generate_cli_command(
+            participant_id=participant_id,
+            session_id=session_id,
+            extra_flags=["--tar"] if self.tar else None,
+        )
 
     def run_setup(self):
         """Run pipeline runner setup."""

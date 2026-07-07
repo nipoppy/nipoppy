@@ -144,11 +144,11 @@ def test_run_single(
         ).validate(),
     ],
 )
-def test_cleanup(table: CurationStatusTable, workflow: BIDSificationRunner):
+def test_write_status_file(table: CurationStatusTable, workflow: BIDSificationRunner):
     workflow.pipeline_step = "convert"
     workflow.curation_status_table = table
 
-    workflow.run_cleanup()
+    workflow._write_status_file()
 
     assert workflow.study.layout.fpath_curation_status.exists()
     assert CurationStatusTable.load(workflow.study.layout.fpath_curation_status).equals(
@@ -156,23 +156,32 @@ def test_cleanup(table: CurationStatusTable, workflow: BIDSificationRunner):
     )
 
 
-def test_cleanup_simulate(workflow: BIDSificationRunner):
+def test_write_status_file_simulate(workflow: BIDSificationRunner):
     workflow.pipeline_step = "convert"
     workflow.simulate = True
     workflow.curation_status_table = CurationStatusTable()
 
-    workflow.run_cleanup()
+    workflow._write_status_file()
 
     assert not workflow.study.layout.fpath_curation_status.exists()
 
 
-def test_cleanup_no_status_update(workflow: BIDSificationRunner):
+def test_write_status_file_no_update(workflow: BIDSificationRunner):
     workflow.pipeline_step = "prepare"
     workflow.curation_status_table = CurationStatusTable()
 
-    workflow.run_cleanup()
+    workflow._write_status_file()
 
     assert not workflow.study.layout.fpath_curation_status.exists()
+
+
+def test_run_main(workflow: BIDSificationRunner, mocker: pytest_mock.MockerFixture):
+    mocked_write_status_file = mocker.patch.object(workflow, "_write_status_file")
+    mocker.patch.object(
+        workflow, "get_participants_sessions_to_run", return_value=[("01", "1")]
+    )
+    workflow.run_main()
+    mocked_write_status_file.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -226,77 +235,16 @@ def test_get_participants_sessions_to_run(
     ] == expected
 
 
-@pytest.mark.parametrize(
-    "init_params,participant_id,session_id,expected_command",
-    [
-        (
-            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
-            "P01",
-            "1",
-            [
-                "nipoppy",
-                "bidsify",
-                "--dataset",
-                "/path/to/root",
-                "--pipeline",
-                "my_pipeline",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-            ],
-        ),
-        (
-            {
-                "dpath_root": "/path/to/other/root",
-                "pipeline_name": "other_pipeline",
-                "pipeline_version": "1.0.0",
-                "pipeline_step": "step1",
-                "participant_id": "ShouldNotBeUsed",  # should be skipped
-                "session_id": "ShouldNotBeUsed",  # should be skipped
-                "simulate": True,  # should be skipped
-                "keep_workdir": True,
-                "hpc": "slurm",  # should be skipped
-                "use_subcohort": "/path/to/list",  # should be skipped
-                "fpath_layout": "/path/to/layout",
-                "dry_run": True,  # should be skipped
-                "verbose": True,
-            },
-            "P01",
-            "1",
-            [
-                "nipoppy",
-                "bidsify",
-                "--dataset",
-                "/path/to/other/root",
-                "--pipeline",
-                "other_pipeline",
-                "--pipeline-version",
-                "1.0.0",
-                "--pipeline-step",
-                "step1",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-                "--keep-workdir",
-                "--layout",
-                "/path/to/layout",
-                "--verbose",
-            ],
-        ),
-    ],
-)
 def test_generate_cli_command_for_hpc(
-    init_params,
-    participant_id,
-    session_id,
-    expected_command,
+    workflow: BIDSificationRunner,
     mocker: pytest_mock.MockFixture,
 ):
-    mocker.patch("nipoppy.workflows.base.DatasetLayout")
-    runner = BIDSificationRunner(**init_params)
-    assert (
-        runner._generate_cli_command_for_hpc(participant_id, session_id)
-        == expected_command
+    mocked_generate_cli_command = mocker.patch.object(
+        workflow.hpc_runner,
+        "generate_cli_command",
+    )
+    workflow._generate_cli_command_for_hpc("p01", "s01")
+    mocked_generate_cli_command.assert_called_once_with(
+        participant_id="p01",
+        session_id="s01",
     )

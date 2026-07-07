@@ -125,32 +125,9 @@ intersphinx_mapping = {
 
 # -- MyST configuration -------------------------------------------------------
 
-myst_enable_extensions = ["fieldlist", "substitution", "colon_fence"]
+myst_enable_extensions = ["fieldlist", "substitution", "colon_fence", "alert"]
 
 myst_heading_anchors = 5
-
-template_strings_bids_runner = [
-    "",
-    "The default pipeline invocation files (in {{dpath_pipelines}}`/<PIPELINE_NAME>-<PIPELINE_VERSION>`) can be modified by changing existing values or adding new key-value pairs.",
-    "",
-    "```{tip}",
-    "Run the pipeline on a single participant and session with the `--simulate` flag to check/debug custom invocation files.",
-    "```",
-    "```{note}",
-    "To account for invocations needing to be different for different participants and sessions (amongst other things), Nipoppy invocations are actually templates that need to be slightly processed at runtime to replace template strings by actual values. Recognized template strings include:",
-    "- `[[NIPOPPY_PARTICIPANT_ID]]`: the participant ID *without* the `sub-` prefix",
-    "- `[[NIPOPPY_SESSION_ID]]`: the session ID *without* the `ses-` prefix",
-    "- `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: the participant ID *with* the `sub-` prefix",
-    "- `[[NIPOPPY_BIDS_SESSION_ID]]`: the session ID *with* the `ses-` prefix",
-    "- `[[NIPOPPY_<LAYOUT_PROPERTY>]]`, where `<LAYOUT_PROPERTY>` is a property in the Nipoppy {ref}`dataset layout configuration file <layout-schema>` (all uppercase): any path defined in the Nipoppy dataset layout",
-    "```",
-]
-template_strings_proc_runner = template_strings_bids_runner[:-1] + [
-    f"- `[[NIPOPPY_DPATH_PIPELINE_OUTPUT]]`: the output directory for this pipeline, i.e. `{DEFAULT_LAYOUT_INFO.dpath_derivatives}/<PIPELINE_NAME>/<PIPELINE_VERSION>/output`",
-    f"- `[[NIPOPPY_DPATH_PIPELINE_WORK]]`: the working directory for this pipeline run, which will be a subdirectory of `{DEFAULT_LAYOUT_INFO.dpath_derivatives}/<PIPELINE_NAME>/<PIPELINE_VERSION>/work`",
-    "- `[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]`: the [PyBIDS](https://bids-standard.github.io/pybids/) database for the participant and session",
-    "```",
-]
 
 zenodo_api = ZenodoAPI(timeout=30)  # for getting the latest Zenodo IDs
 myst_substitutions = {
@@ -158,6 +135,7 @@ myst_substitutions = {
     "dpath_containers": f"`{DEFAULT_LAYOUT_INFO.dpath_containers}`",
     "dpath_downloads": f"`{DEFAULT_LAYOUT_INFO.dpath_downloads}`",
     "dpath_scratch": f"`{DEFAULT_LAYOUT_INFO.dpath_scratch}`",
+    "dpath_sourcedata": f"`{DEFAULT_LAYOUT_INFO.dpath_sourcedata}`",
     "dpath_src_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_src_tabular}`",
     "dpath_src_imaging": f"`{DEFAULT_LAYOUT_INFO.dpath_src_imaging}`",
     "dpath_pre_reorg": f"`{DEFAULT_LAYOUT_INFO.dpath_pre_reorg}`",
@@ -177,24 +155,6 @@ myst_substitutions = {
     "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
     "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
-    "content_dpath_pre_reorg": (
-        "Arbitrarily organized raw imaging data (DICOMs or NIfTIs)"
-    ),
-    "content_dpath_post_reorg": (
-        "Raw imaging data (DICOMs or NIfTIs) organized in a way "
-        "that facilitates BIDS conversion"
-    ),
-    "content_dpath_bids": (
-        "Raw imaging data (NIfTIs) organized according to the BIDS standard"
-    ),
-    "content_dpath_pipeline_output": (
-        "Derivative files produced by processing pipelines"
-    ),
-    "content_dpath_pipeline_idp": (
-        "Imaging-derived phenotypes (IDPs) produced by extraction pipelines"
-    ),
-    "template_strings_bids_runner": "\n".join(template_strings_bids_runner),
-    "template_strings_proc_runner": "\n".join(template_strings_proc_runner),
     "zenodo_id_dcm2bids_3_2_0": zenodo_api.get_latest_version_id("16876754"),
     "zenodo_id_mriqc_23_1_0": zenodo_api.get_latest_version_id("15427844"),
 }
@@ -233,6 +193,7 @@ nitpick_ignore = [
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
+    ("py:class", "httpx.Client"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------

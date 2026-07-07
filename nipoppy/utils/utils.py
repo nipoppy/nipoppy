@@ -16,7 +16,7 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import NipoppyError
+from nipoppy.exceptions import ConfigError, JSONError, NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -99,13 +99,8 @@ def load_json(
     parser = json5.loads if allow_json5 else json.loads
     try:
         return parser(json_text, **kwargs)
-    except Exception as e:
-        pos = getattr(e, "pos", 0)
-        raise json.JSONDecodeError(
-            f"Error loading JSON file at {fpath}",
-            json_text,
-            pos,
-        ) from e
+    except json.JSONDecodeError as e:
+        raise JSONError(e, fpath=fpath) from e
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
@@ -151,7 +146,7 @@ def save_df_with_backup(
     use_relative_path=True,
     dry_run=False,
     **kwargs,
-) -> Path | None:
+) -> Path:
     """Save a dataframe as a symlink pointing to a timestamped "backup" file.
 
     Parameters
@@ -170,8 +165,8 @@ def save_df_with_backup(
 
     Returns
     -------
-    Path or None
-        None if no file was saved, otherwise the path to the backup file
+    Path
+        The path to the backup file
     """
     if "index" not in kwargs:
         kwargs["index"] = False
@@ -262,6 +257,10 @@ def apply_substitutions_to_json(
     # convert json_obj to string
     json_text = json.dumps(json_obj)
     for key, value in substitutions.items():
+        if not isinstance(value, str):
+            raise ConfigError(
+                f"Substitution value must be a string, got {type(value)} for key '{key}'"  # noqa: E501
+            )
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
 
@@ -271,7 +270,7 @@ def get_today():
     return datetime.datetime.today().strftime("%Y-%m-%d")
 
 
-def is_nipoppy_project(cwd=Path.cwd()):
+def is_nipoppy_project(dpath: StrOrPathLike) -> Path | bool:
     """Verify if the current directory is a nipoppy project.
 
     This is done by checking if the `.nipoppy` directory exists in the
@@ -281,10 +280,10 @@ def is_nipoppy_project(cwd=Path.cwd()):
 
     Parameters
     ----------
-    cwd : nipoppy.env.StrOrPathLike, optional
-        Path to directory, by default Path.cwd()
+    dpath : nipoppy.env.StrOrPathLike
+        Path to directory to check
     """
-    current = Path(cwd).resolve()
+    current = Path(dpath).resolve()
     while True:
         candidate = current / NIPOPPY_DIR_NAME
         if candidate.is_dir():

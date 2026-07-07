@@ -1,15 +1,12 @@
 """Tests for PipelineRunner."""
 
 import json
-import re
-import subprocess
 import tarfile
 from pathlib import Path
 
 import pytest
 import pytest_mock
 from bids import BIDSLayout
-from fids import fids
 
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import (
@@ -19,7 +16,10 @@ from nipoppy.container import (
     SingularityHandler,
 )
 from nipoppy.env import ContainerCommandEnum
-from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+)
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -116,6 +116,15 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     }
     (runner.dpath_pipeline_bundle / fname_descriptor).write_text(json.dumps(descriptor))
     (runner.dpath_pipeline_bundle / fname_invocation).write_text(json.dumps(invocation))
+
+    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
+    create_empty_dataset(runner.study.layout.dpath_root)
+    manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=runner.study.layout.dpath_bids,
+    )
+    manifest.save_with_backup(runner.study.layout.fpath_manifest)
     return runner
 
 
@@ -274,40 +283,6 @@ def test_launch_boutiques_run_bosh_no_container_image(
 
     container_opts = mocked_run_command.call_args[0][0]  # first positional argument
     assert "--no-container" in container_opts
-
-
-@pytest.mark.parametrize("simulate", [True, False])
-def test_launch_boutiques_run_error(
-    simulate,
-    runner: ProcessingRunner,
-    mocker: pytest_mock.MockFixture,
-):
-    runner.simulate = simulate
-
-    participant_id = "01"
-    session_id = "BL"
-
-    fids.create_fake_bids_dataset(
-        runner.study.layout.dpath_bids,
-        subjects=participant_id,
-        sessions=session_id,
-    )
-
-    runner.dpath_pipeline_output.mkdir(parents=True, exist_ok=True)
-    runner.dpath_pipeline_work.mkdir(parents=True, exist_ok=True)
-
-    mocker.patch(
-        "nipoppy.workflows.runner._run_command",
-        side_effect=subprocess.CalledProcessError(1, "run_command failed"),
-    )
-
-    if simulate:
-        expected_message = "Pipeline simulation failed (return code: 1)"
-    else:
-        expected_message = "Pipeline did not complete successfully (return code: 1)"
-
-    with pytest.raises(RuntimeError, match=re.escape(expected_message)):
-        runner.launch_boutiques_run(participant_id, session_id, container_command="")
 
 
 def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
@@ -688,14 +663,6 @@ def test_run_multiple(runner: ProcessingRunner):
     runner.participant_id = participant_id
     runner.session_id = session_id
 
-    participants_and_sessions = {"01": ["1"], "02": ["2"]}
-    create_empty_dataset(runner.study.layout.dpath_root)
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=runner.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(runner.study.layout.fpath_manifest)
     runner.run_setup()
     runner.run_main()
 
@@ -791,79 +758,16 @@ def test_run_missing_container_raises_error(runner: ProcessingRunner):
         runner.run()
 
 
-@pytest.mark.parametrize(
-    "init_params,participant_id,session_id,expected_command",
-    [
-        (
-            {"dpath_root": "/path/to/root", "pipeline_name": "my_pipeline"},
-            "P01",
-            "1",
-            [
-                "nipoppy",
-                "process",
-                "--dataset",
-                "/path/to/root",
-                "--pipeline",
-                "my_pipeline",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-            ],
-        ),
-        (
-            {
-                "dpath_root": "/path/to/other/root",
-                "pipeline_name": "other_pipeline",
-                "pipeline_version": "1.0.0",
-                "pipeline_step": "step1",
-                "participant_id": "ShouldNotBeUsed",  # should be skipped
-                "session_id": "ShouldNotBeUsed",  # should be skipped
-                "simulate": True,  # should be skipped
-                "keep_workdir": True,
-                "hpc": "slurm",  # should be skipped
-                "use_subcohort": "/path/to/list",  # should be skipped
-                "tar": True,
-                "fpath_layout": "/path/to/layout",
-                "dry_run": True,  # should be skipped
-                "verbose": True,
-            },
-            "P01",
-            "1",
-            [
-                "nipoppy",
-                "process",
-                "--dataset",
-                "/path/to/other/root",
-                "--pipeline",
-                "other_pipeline",
-                "--pipeline-version",
-                "1.0.0",
-                "--pipeline-step",
-                "step1",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-                "--keep-workdir",
-                "--tar",
-                "--layout",
-                "/path/to/layout",
-                "--verbose",
-            ],
-        ),
-    ],
-)
-def test_generate_cli_command_for_hpc(
-    init_params,
-    participant_id,
-    session_id,
-    expected_command,
+def test_run_main_write_subcohort(
+    runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
+    tmp_path: Path,
 ):
-    mocker.patch("nipoppy.workflows.base.DatasetLayout")
-    runner = ProcessingRunner(**init_params)
-    assert (
-        runner._generate_cli_command_for_hpc(participant_id, session_id)
-        == expected_command
+    mocked_write_subcohort_to_file = mocker.patch.object(
+        runner, "_write_subcohort_to_file"
     )
+    runner.write_subcohort = tmp_path / "mocked"
+
+    runner.run_main()
+
+    mocked_write_subcohort_to_file.assert_called_once()
