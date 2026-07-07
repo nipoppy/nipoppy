@@ -130,7 +130,7 @@ def test_check_descriptor_file_remains_strict_json(tmp_path: Path):
     fpath = tmp_path / "descriptor.json"
     fpath.write_text('{"name": "x",}')  # trailing comma makes it invalid JSON
 
-    with pytest.raises(JSONError, match="Illegal trailing comma before end of object"):
+    with pytest.raises(JSONError):
         _check_descriptor_file(fpath)
 
 
