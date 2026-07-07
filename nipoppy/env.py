@@ -31,10 +31,10 @@ class ConfigType(str, Enum):
 
 
 SCHEMA_VERSION_INFO = {
-    ConfigType.STUDY: {"current": "1.0.0"},
-    ConfigType.PIPELINE: {"current": "1.0.0"},
-    ConfigType.TRACKER: {"current": "1.0.0"},
-    ConfigType.LAYOUT: {"current": "1.0.0"},
+    ConfigType.STUDY: {"current": "1.0"},
+    ConfigType.PIPELINE: {"current": "1.0"},
+    ConfigType.TRACKER: {"current": "1.0"},
+    ConfigType.LAYOUT: {"current": "1.0"},
 }
 
 
