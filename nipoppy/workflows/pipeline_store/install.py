@@ -114,6 +114,21 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             for variable_name in added_variables:
                 variable_description = pipeline_config.VARIABLES[variable_name]
                 logger.warning(f"\t{variable_name}\t{variable_description}")
+
+                jsonc_updates = []
+                jsonc_updates.append(
+                    (
+                        [
+                            "PIPELINE_VARIABLES",
+                            pipeline_config.PIPELINE_TYPE,
+                            pipeline_config.NAME,
+                            pipeline_config.VERSION,
+                            variable_name,
+                        ],
+                        variables[variable_name],
+                    )
+                )
+
             logger.warning(
                 "You must update the PIPELINE_VARIABLES section in "
                 f"{self.study.layout.fpath_config}"
@@ -122,26 +137,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
             # save
             if not self.dry_run:
-                pipeline_variables_key = (
-                    config.PIPELINE_VARIABLES._pipeline_type_to_key[
-                        pipeline_config.PIPELINE_TYPE
-                    ]
-                )
-                updates = []
-                for variable_name, variable_value in variables.items():
-                    updates.append(
-                        (
-                            [
-                                "PIPELINE_VARIABLES",
-                                pipeline_variables_key,
-                                pipeline_config.NAME,
-                                pipeline_config.VERSION,
-                                variable_name,
-                            ],
-                            variable_value,
-                        )
-                    )
-                update_jsonc_file(self.study.layout.fpath_config, updates)
+                update_jsonc_file(self.study.layout.fpath_config, jsonc_updates)
 
         return config
 
