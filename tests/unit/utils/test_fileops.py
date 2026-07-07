@@ -246,3 +246,20 @@ class TestSymlink:
         assert existing_file.is_symlink()
         assert existing_file.resolve() == source_file.resolve()
         assert existing_file.read_text() == "new content"
+
+    def test_symlink_no_force_raises(self, tmp_path: Path):
+        """Test that not using force raises an error if target exists."""
+        source_file = tmp_path / "new.txt"
+        source_file.write_text("new content")
+
+        existing_file = tmp_path / "existing.txt"
+        existing_file.write_text("old content")
+
+        with pytest.raises(
+            FileOperationError,
+            match="Symlink target already exists. Set force=True to overwrite.",
+        ):
+            fileops.symlink(source=source_file, target=existing_file, force=False)
+
+        assert not existing_file.is_symlink()
+        assert existing_file.read_text() == "old content"

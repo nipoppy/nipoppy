@@ -57,8 +57,13 @@ def movetree(source: Path, target: Path, dry_run=False):
 
 def symlink(source: Path, target: Path, force: bool = False, dry_run=False):
     """Create a symlink: target (symlink) -> source."""
-    if target.exists() and force:
-        rm(target, dry_run=dry_run)
+    if target.exists():
+        if force:
+            rm(target, dry_run=dry_run)
+        else:
+            raise FileOperationError(
+                "Symlink target already exists. Set force=True to overwrite."
+            )
 
     logger.debug(f"Creating a symlink from {target} to {source}")
     mkdir(target.parent, dry_run=dry_run)
