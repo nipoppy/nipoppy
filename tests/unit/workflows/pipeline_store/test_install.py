@@ -235,13 +235,13 @@ def test_update_config_and_save_preserves_jsonc(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,
 ):
+    # Replace the global config file with a empty JSONC file that has a comment
     fpath_config = workflow.study.layout.fpath_config
-    jsonc_text = fpath_config.read_text().replace(
-        '"PIPELINE_VARIABLES": {',
-        '"PIPELINE_VARIABLES": {\n        // keep this comment',
-        1,
-    )
-    fpath_config.write_text(jsonc_text)
+    fpath_config.write_text("""
+{
+    // keep this comment
+}
+""")
 
     pipeline_config.VARIABLES = {"var1": "description"}
     workflow._update_config_and_save(pipeline_config)
