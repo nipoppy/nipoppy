@@ -8,7 +8,7 @@ from nipoppy.env import SCHEMA_VERSION_INFO, ConfigType
 from nipoppy.exceptions import ConfigError
 
 SCHEMA_VERSION_FIELD = "SCHEMA_VERSION"
-EARLIEST_SCHEMA_VERSION = "1.0.0"
+EARLIEST_SCHEMA_VERSION = "1.0"
 
 
 def get_current_schema_version(config_type: ConfigType) -> str:
