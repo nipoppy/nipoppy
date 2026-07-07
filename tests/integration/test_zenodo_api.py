@@ -158,11 +158,9 @@ def test_create_new_record_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
         )
 
 
-# Ensure that records with the specified schema_version exist on Zenodo before changing
-#  the test parameters.
 @pytest.mark.api
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
-@pytest.mark.parametrize("keywords", [None, ["Nipoppy", "schema_version:1"]])
+@pytest.mark.parametrize("keywords", [None, ["Nipoppy", "pipeline_type:processing"]])
 def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     results = zenodo_api.search_records(query, keywords=keywords)
     assert len(results["hits"]) > 0
