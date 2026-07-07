@@ -108,6 +108,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         if len(added_variables) > 0:
             # log variable details
+            logger.warning(
+                f"Adding {len(added_variables)} variable(s) to the global config file:"
+            )
             jsonc_updates = []
             for variable_name in added_variables:
                 variable_description = pipeline_config.VARIABLES[variable_name]
