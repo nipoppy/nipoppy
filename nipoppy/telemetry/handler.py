@@ -73,14 +73,21 @@ class TelemetryHandler:
         export_interval_millis: int = 10000,
         metric_reader: Optional[MetricReader] = None,
     ) -> None:
-        """
-        Args:
-            service_name: Service name for metrics (default: "nipoppy")
-            service_version: Version tag (default: "1.0.0")
-            otlp_endpoint: Collector endpoint (default: http://localhost:4318)
-            export_interval_millis: Export frequency in milliseconds (default: 10000)
-            metric_reader: Pre-built reader to use instead of the default OTLP/HTTP
-                exporter. Primarily for testing (e.g. InMemoryMetricReader).
+        """Create a telemetry handler (does not initialize OpenTelemetry yet).
+
+        Parameters
+        ----------
+        service_name : str
+            Service name for metrics (default: "nipoppy").
+        service_version : str
+            Version tag (default: "1.0.0").
+        otlp_endpoint : str, optional
+            Collector endpoint (default: http://localhost:4318).
+        export_interval_millis : int
+            Export frequency in milliseconds (default: 10000).
+        metric_reader : opentelemetry MetricReader, optional
+            Pre-built reader to use instead of the default OTLP/HTTP exporter.
+            Primarily for testing (e.g. InMemoryMetricReader).
         """
         self._service_name = service_name
         self._service_version = service_version

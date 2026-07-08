@@ -337,8 +337,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         # To silence this message without disabling telemetry, comment out the
         # logger.info line below.
         logger.info(
-            "Nipoppy collects anonymous usage metrics (command counts, country of use). "
-            "No personal data is collected. "
+            "Nipoppy collects anonymous usage metrics (command counts, country "
+            "of use). No personal data is collected. "
             "To opt out: export OTEL_SDK_DISABLED=true"
         )
         # ─────────────────────────────────────────────────────────────────────
