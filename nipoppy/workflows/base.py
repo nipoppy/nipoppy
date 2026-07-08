@@ -24,7 +24,7 @@ from nipoppy.tabular.curation_status import (
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.telemetry import TelemetryHandler
+from nipoppy.telemetry.handler import TelemetryHandler
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,

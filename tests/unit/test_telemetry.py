@@ -8,7 +8,7 @@ import pytest
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 
 from nipoppy.exceptions import ReturnCode
-from nipoppy.telemetry import TelemetryHandler
+from nipoppy.telemetry.handler import TelemetryHandler
 
 
 def _data_points(reader: InMemoryMetricReader, metric_name: str):

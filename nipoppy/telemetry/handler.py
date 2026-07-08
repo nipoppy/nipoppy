@@ -9,6 +9,8 @@ never raises, so a broken or unreachable telemetry backend can never disrupt
 the CLI.
 """
 
+from __future__ import annotations
+
 # Shutdown pattern reference:
 # https://oneuptime.com/blog/post/2026-02-06-otel-sdk-shutdown-python-atexit-sigterm/view
 import atexit
@@ -16,10 +18,11 @@ import logging
 import os
 import signal
 import sys
-from typing import Dict, Optional
+from dataclasses import dataclass
 
 import httpx
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.metrics import Counter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     MetricReader,
@@ -28,6 +31,9 @@ from opentelemetry.sdk.metrics.export import (
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 
 from nipoppy.exceptions import ReturnCode
+from nipoppy.logger import get_logger
+
+logger = get_logger()
 
 
 def get_user_country() -> str:
@@ -56,6 +62,16 @@ def get_user_country() -> str:
         return "UNKNOWN"
 
 
+@dataclass
+class MetricInstruments:
+    """OpenTelemetry counter instruments used by Nipoppy telemetry."""
+
+    # Command outcomes (attributes: command, status, return_code)
+    commands_completed: Counter
+    # Geographic distribution (attributes: country, e.g. US, CA, IN)
+    location_by_country: Counter
+
+
 class TelemetryHandler:
     """
     Self-contained OpenTelemetry metrics handler.
@@ -69,9 +85,9 @@ class TelemetryHandler:
         self,
         service_name: str = "nipoppy",
         service_version: str = "1.0.0",
-        otlp_endpoint: Optional[str] = None,
+        otlp_endpoint: str | None = None,
         export_interval_millis: int = 10000,
-        metric_reader: Optional[MetricReader] = None,
+        metric_reader: MetricReader | None = None,
     ) -> None:
         """Create a telemetry handler (does not initialize OpenTelemetry yet).
 
@@ -95,8 +111,8 @@ class TelemetryHandler:
         self._export_interval_millis = export_interval_millis
         self._metric_reader = metric_reader
 
-        self._provider: Optional[MeterProvider] = None
-        self._metrics: Optional[Dict] = None
+        self._provider: MeterProvider | None = None
+        self._metrics: MetricInstruments | None = None
         self._shutdown_called = False
 
     @property
@@ -157,8 +173,10 @@ class TelemetryHandler:
             return True
 
         except Exception as e:
-            print(f"⚠ Warning: Telemetry initialization failed: {e}")
-            print("  Continuing without telemetry...")
+            # Fail silently: telemetry issues must never surface to the user.
+            logger.debug(
+                f"Telemetry initialization failed: {e}. Continuing without telemetry."
+            )
             return False
 
     def _build_default_reader(self) -> MetricReader:
@@ -191,24 +209,20 @@ class TelemetryHandler:
             export_interval_millis=min(self._export_interval_millis, 2000),
         )
 
-    def _create_metric_instruments(self, meter) -> Dict:
+    def _create_metric_instruments(self, meter) -> MetricInstruments:
         """Create Nipoppy metric instruments."""
-        return {
-            # Track command outcomes (success, partial, failure)
-            # Attributes: command, status, return_code
-            "commands_completed": meter.create_counter(
+        return MetricInstruments(
+            commands_completed=meter.create_counter(
                 name="commands.completed",
                 description="Number of Nipoppy commands completed with status",
                 unit="commands",
             ),
-            # Track geographic distribution of installations
-            # Attributes: country (US, CA, IN, etc.)
-            "location_by_country": meter.create_counter(
+            location_by_country=meter.create_counter(
                 name="location.by_country",
                 description="Number of installations per country",
                 unit="installations",
             ),
-        }
+        )
 
     def record_command_completion(self, command_name: str, return_code: int) -> None:
         """Emit a commands_completed metric. Fail-safe — never raises."""
@@ -224,7 +238,7 @@ class TelemetryHandler:
                 status = "partial"
             else:
                 status = "failure"
-            self._metrics["commands_completed"].add(
+            self._metrics.commands_completed.add(
                 1,
                 attributes={
                     "command": command_name,
@@ -245,7 +259,7 @@ class TelemetryHandler:
             if self._metrics is None:
                 return
             country_code = get_user_country()
-            self._metrics["location_by_country"].add(
+            self._metrics.location_by_country.add(
                 1,
                 attributes={"country": country_code},
             )
