@@ -18,13 +18,13 @@ from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
-from nipoppy.telemetry import TelemetryHandler
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
+from nipoppy.telemetry import TelemetryHandler
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,

@@ -90,9 +90,7 @@ class TestLocation:
         handler = TelemetryHandler(metric_reader=reader)
         handler.initialize()
 
-        monkeypatch.setattr(
-            "nipoppy.telemetry.handler.get_user_country", lambda: "CA"
-        )
+        monkeypatch.setattr("nipoppy.telemetry.handler.get_user_country", lambda: "CA")
         handler.record_location()
 
         points = _data_points(reader, "location.by_country")
