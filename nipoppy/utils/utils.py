@@ -138,7 +138,7 @@ def save_df_with_backup(
     use_relative_path=True,
     dry_run=False,
     **kwargs,
-) -> Path | None:
+) -> Path:
     """Save a dataframe as a symlink pointing to a timestamped "backup" file.
 
     Parameters
@@ -157,8 +157,8 @@ def save_df_with_backup(
 
     Returns
     -------
-    Path or None
-        None if no file was saved, otherwise the path to the backup file
+    Path
+        The path to the backup file
     """
     if "index" not in kwargs:
         kwargs["index"] = False

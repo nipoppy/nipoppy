@@ -88,6 +88,7 @@ def layout_option(func):
             "Path to a custom layout specification file,"
             " to be used instead of the default layout."
         ),
+        envvar="NIPOPPY_LAYOUT",
     )(func)
     return func
 

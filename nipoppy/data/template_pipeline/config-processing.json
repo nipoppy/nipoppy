@@ -13,9 +13,11 @@
         {
             "INVOCATION_FILE": "invocation.json",
             "DESCRIPTOR_FILE": "descriptor.json",
-            "HPC_CONFIG_FILE": "hpc.json",
+            "ANALYSIS_LEVEL": "participant_session",
             "TRACKER_CONFIG_FILE": "tracker.json",
-            "PYBIDS_IGNORE_FILE": "pybids_ignore.json"
+            "HPC_CONFIG_FILE": "hpc.json",
+            "GENERATE_PYBIDS_DATABASE": false,
+            "PYBIDS_IGNORE_FILE": null
         }
     ],
     "PIPELINE_TYPE": "processing",

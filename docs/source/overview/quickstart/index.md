@@ -108,9 +108,9 @@ A newly initialized Nipoppy dataset does not contain any pipeline setups or cont
 ```{code-block} console
 $ nipoppy pipeline search dcm2bids
 ```
-**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline (16876754 at the time of writing) and run:
+**2.** Copy the Zenodo ID of version 3.2.0 of the pipeline ({{zenodo_id_dcm2bids_3_2_0}} at the time of writing) and run:
 ```{code-block} console
-$ nipoppy pipeline install 16876754
+$ nipoppy pipeline install {{zenodo_id_dcm2bids_3_2_0}}
 ```
 **3.** Choose to install the container as well or not: `y/n`
 
@@ -129,7 +129,7 @@ INFO            - dcm2bids (3.2.0)
 ...
 ```
 
-## Bidsify the sourcedata
+## BIDSify the sourcedata
 
 ```{note}
 Please see the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/first-steps/) documentation to know what dcm2bids does and how it works.

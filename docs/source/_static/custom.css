@@ -1,0 +1,12 @@
+/* Light/dark mode image toggling */
+body:not([data-theme="dark"]) .only-dark,
+body[data-theme="light"] .only-dark { display: none; }
+
+body[data-theme="dark"] .only-light { display: none; }
+
+/* Card image sizing — adjust --card-img-max-width to taste */
+:root { --card-img-max-width: 150px; }
+
+.sd-card .sd-card-body img {
+    max-width: var(--card-img-max-width);
+}

@@ -6,7 +6,8 @@ import contextlib
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from types import NoneType
+from typing import Any, Optional, Sequence, Union, get_args, get_origin
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -14,7 +15,10 @@ from typing_extensions import Self
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import TabularError
+from nipoppy.logger import get_logger
 from nipoppy.utils.utils import save_df_with_backup
+
+logger = get_logger()
 
 
 class BaseTabularModel(BaseModel):
@@ -122,8 +126,23 @@ class BaseTabular(pd.DataFrame, ABC):
 
         # set column names if the dataframe is empty
         if self.empty and len(self.columns) == 0:
-            for col in self.model.model_fields.keys():
+            for col, field_info in self.model.model_fields.items():
                 self[col] = None
+
+                # set dtype based on model field annotation
+                # if the type is Optional (i.e. Union[X, NoneType]), use X
+                # fall back on object if the type is not supported by pandas
+                if (
+                    get_origin(field_info.annotation) == Union
+                    and (args := get_args(field_info.annotation))[1] == NoneType
+                ):
+                    col_dtype = args[0]
+                else:
+                    col_dtype = field_info.annotation
+                try:
+                    self[col] = self[col].astype(col_dtype)
+                except TypeError:
+                    self[col] = self[col].astype(object)
 
     def validate(self) -> Self:
         """Validate the dataframe based on the model."""
@@ -242,8 +261,10 @@ class BaseTabular(pd.DataFrame, ABC):
                 if sort:
                     tabular_old = tabular_old.sort_values()
                 if tabular_new.equals(tabular_old):
+                    logger.info(f"No changes to file at {fpath_symlink}")
                     return None
-        return save_df_with_backup(
+
+        fpath_backup = save_df_with_backup(
             tabular_new,
             fpath_symlink=fpath_symlink,
             dname_backups=dname_backups,
@@ -251,6 +272,9 @@ class BaseTabular(pd.DataFrame, ABC):
             dry_run=dry_run,
             sep=self.sep,
         )
+
+        logger.info(f"Saved to {fpath_symlink} (-> {fpath_backup})")
+        return fpath_backup
 
     def equals(self, other: object) -> bool:
         """Check if two dataframes are equal."""

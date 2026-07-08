@@ -1,19 +1,16 @@
 """Tests for the Study class."""
 
-from pathlib import Path
-
 import pytest
 import pytest_mock
 
-from nipoppy.layout import DatasetLayout
 from nipoppy.study import Study
 from tests.conftest import get_config
 
 
-@pytest.fixture
-def study(tmp_path: Path):
-    dpath_root = tmp_path / "my_study"
-    return Study(layout=DatasetLayout(dpath_root=dpath_root))
+def test_len(study: Study, mocker: pytest_mock.MockFixture):
+    study.manifest = mocker.MagicMock()
+    study.manifest.__len__.return_value = 5
+    assert len(study) == 5
 
 
 def test_config(study: Study, mocker: pytest_mock.MockFixture):

@@ -13,6 +13,8 @@
         {
             "INVOCATION_FILE": "invocation.json",
             "DESCRIPTOR_FILE": "descriptor.json",
+            "ANALYSIS_LEVEL": "participant_session",
+            "UPDATE_STATUS": true,
             "HPC_CONFIG_FILE": "hpc.json"
         }
     ],

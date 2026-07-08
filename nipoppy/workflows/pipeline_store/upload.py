@@ -7,6 +7,7 @@ from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import TerminatedByUserError, WorkflowError
+from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import get_today, load_json
@@ -22,7 +23,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
     def __init__(
         self,
         dpath_pipeline: StrOrPathLike,
-        zenodo_api: ZenodoAPI,
+        zenodo_api: ZenodoAPI | None = None,
         record_id: Optional[str] = None,
         assume_yes: bool = False,
         force: bool = False,
@@ -30,7 +31,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         dry_run=False,
     ):
         self.dpath_pipeline = dpath_pipeline
-        self.zenodo_api = zenodo_api
+        self.zenodo_api = zenodo_api or ZenodoAPI()
         self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.record_id = record_id
         self.assume_yes = assume_yes
@@ -143,10 +144,17 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
         metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
-        doi = self.zenodo_api.upload_pipeline(
-            input_dir=pipeline_dir, record_id=self.record_id, metadata=metadata
+        doi = self.zenodo_api.upload_record(
+            input_dir=pipeline_dir,
+            record_id=self.record_id,
+            metadata=metadata,
+            default_preview_filename=DatasetLayout.fname_pipeline_config,
         )
         logger.success(f"Pipeline successfully uploaded at {doi}")
+
+    def run_cleanup(self):
+        """Close resources used by the workflow."""
+        self.zenodo_api.close()
 
 
 def _is_same_pipeline(

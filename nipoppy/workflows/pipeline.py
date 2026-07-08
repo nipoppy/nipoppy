@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import shlex
 import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -13,10 +12,8 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
 
 import pandas as pd
 import rich
-from jinja2 import Environment, meta
 from packaging.version import Version
 from pydantic import ValidationError
-from pysqa import QueueAdapter
 
 from nipoppy.config.boutiques import (
     BoutiquesConfig,
@@ -44,7 +41,6 @@ from nipoppy.exceptions import (
     ConfigError,
     ContainerError,
     FileOperationError,
-    LayoutError,
     ReturnCode,
     WorkflowError,
 )
@@ -60,7 +56,6 @@ from nipoppy.utils.bids import (
     session_id_to_bids_session_id,
 )
 from nipoppy.utils.utils import (
-    FPATH_HPC_TEMPLATE,
     apply_substitutions_to_json,
     get_pipeline_tag,
     load_json,
@@ -693,6 +688,13 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return list(participants_sessions)
 
+    def _handle_execution_strategy(self, participants_sessions):
+        """Handle the execution strategy based on the workflow configuration."""
+        if self.write_subcohort is not None:
+            self._write_subcohort_to_file(participants_sessions)
+        else:
+            self._run_locally(participants_sessions)
+
     def run_main(self):
         """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
@@ -700,183 +702,55 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         )
 
         if self.use_subcohort is not None:
-            try:
-                df_participants_sessions = pd.read_csv(
-                    self.use_subcohort, header=None, sep="\t", dtype=str
-                )
-            except FileNotFoundError as e:
-                raise FileOperationError(
-                    f"Subcohort file {self.use_subcohort} not found"
-                ) from e
-            except pd.errors.EmptyDataError as e:
-                raise WorkflowError(
-                    f"Subcohort file {self.use_subcohort} is empty"
-                ) from e
-
-            participants_sessions = set(participants_sessions) & set(
-                df_participants_sessions.itertuples(index=False, name=None)
-            )
+            participants_sessions = self._filter_by_subcohort(participants_sessions)
 
         participants_sessions = self.apply_analysis_level(
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
+        self._handle_execution_strategy(participants_sessions)
 
-        if self.write_subcohort is not None:
-            if not self.dry_run:
-                pd.DataFrame(participants_sessions).to_csv(
-                    self.write_subcohort, header=False, index=False, sep="\t"
-                )
-        elif self.hpc:
-            self._submit_hpc_job(participants_sessions)
-        else:
-            results = list(self._get_results_generator(participants_sessions))
-
-            if len(results) == 0:
-                run_statuses = []
-                run_single_results = []
-            else:
-                run_statuses, run_single_results = zip(*results)
-
-            self.n_success += sum(run_statuses)
-            self.n_total += len(run_statuses)
-            self.run_single_results = run_single_results
-
-            # update return code if needed
-            if (self.n_success != self.n_total) and (self.n_total != 0):
-                self.return_code = ReturnCode.PARTIAL_SUCCESS
-
-    def _generate_cli_command_for_hpc(
-        self, participant_id=None, session_id=None
-    ) -> list[str]:
-        """Generate the CLI command to be run on the HPC cluster."""
-        raise NotImplementedError("This method should be implemented in a subclass")
-
-    def _check_hpc_config(self) -> dict:
-        """
-        Get HPC configuration values to be passed to Jinja template.
-
-        This function logs a warning if the HPC config does not exist (or is empty) or
-        if it contains variables that are not defined in the template job script.
-        """
-        job_args = self.hpc_config.model_dump()
-        if len(job_args) == 0:
-            logger.warning("HPC configuration is empty")
-
-        template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
-        template_vars = meta.find_undeclared_variables(template_ast)
-        missing_vars = set(job_args.keys()) - template_vars
-        if len(missing_vars) > 0:
-            logger.warning(
-                "Found variables in the HPC config that are not used in the template "
-                f"job script: {missing_vars}. Update the config or modify the template "
-                f"at {FPATH_HPC_TEMPLATE}."
-            )
-
-        return job_args
-
-    def _submit_hpc_job(self, participants_sessions):
-        """Submit jobs to a HPC cluster for processing."""
-        # make sure HPC directory exists
-        dpath_hpc_configs = self.study.layout.dpath_hpc
-        if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
-            raise LayoutError(
-                "The HPC directory with appropriate content needs to exist at "
-                f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
-            )
-
-        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
-
+    def _filter_by_subcohort(self, participants_sessions: Iterable) -> set:
+        """Filter participants/sessions by subcohort file."""
         try:
-            qa.switch_cluster(self.hpc)
-        except KeyError as e:
-            raise WorkflowError(
-                f"Invalid HPC cluster type: {self.hpc}"
-                f". Available clusters are: {qa.list_clusters()}"
+            df_participants_sessions = pd.read_csv(
+                self.use_subcohort, header=None, sep="\t", dtype=str
+            )
+        except FileNotFoundError as e:
+            raise FileOperationError(
+                f"Subcohort file {self.use_subcohort} not found"
             ) from e
+        except pd.errors.EmptyDataError as e:
+            raise WorkflowError(f"Subcohort file {self.use_subcohort} is empty") from e
 
-        # generate the list of nipoppy commands for a shell array
-        job_array_commands = []
-        participant_ids = []
-        session_ids = []
-        for participant_id, session_id in participants_sessions:
-            command = self._generate_cli_command_for_hpc(
-                participant_id=participant_id, session_id=session_id
-            )
-            job_array_commands.append(shlex.join(command))
-            participant_ids.append(participant_id)
-            session_ids.append(session_id)
-            self.n_total += 1  # for logging in run_cleanup()
-
-        # skip if there are no jobs to submit
-        if len(job_array_commands) == 0:
-            return
-
-        job_name = get_pipeline_tag(
-            pipeline_name=self.pipeline_name,
-            pipeline_version=self.pipeline_version,
-            pipeline_step=self.pipeline_step,
-            participant_id=self.participant_id,
-            session_id=self.session_id,
+        return set(participants_sessions) & set(
+            df_participants_sessions.itertuples(index=False, name=None)
         )
-        dpath_work = self.dpath_pipeline_work
 
-        # this is the file that will be created by PySQA
-        # if the job submission command fails
-        # first we delete it to make sure it is not already there
-        fpath_hpc_error = dpath_work / self.fname_hpc_error
-        fpath_hpc_error.unlink(missing_ok=True)
-
-        # create the HPC logs directory
-        dpath_hpc_logs = self.study.layout.dpath_logs / self.dname_hpc_logs
-        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
-
-        # user-defined args
-        job_args = self._check_hpc_config()
-
-        job_id = None
+    def _write_subcohort_to_file(self, participants_sessions: list) -> None:
+        """Write participants/sessions to file."""
         if not self.dry_run:
-            job_id = qa.submit_job(
-                queue=self.hpc,
-                working_directory=str(dpath_work),
-                command="",  # not used in default template but cannot be None
-                cores=0,  # not used in default template but cannot be None
-                NIPOPPY_HPC=self.hpc,
-                NIPOPPY_JOB_NAME=job_name,
-                NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
-                NIPOPPY_HPC_PREAMBLE_STRINGS=self.study.config.HPC_PREAMBLE,
-                NIPOPPY_COMMANDS=job_array_commands,
-                NIPOPPY_DPATH_ROOT=self.study.layout.dpath_root,
-                NIPOPPY_PIPELINE_NAME=self.pipeline_name,
-                NIPOPPY_PIPELINE_VERSION=self.pipeline_version,
-                NIPOPPY_PIPELINE_STEP=self.pipeline_step,
-                NIPOPPY_PARTICIPANT_IDS=participant_ids,
-                NIPOPPY_SESSION_IDS=session_ids,
-                **job_args,
+            pd.DataFrame(participants_sessions).to_csv(
+                self.write_subcohort, header=False, index=False, sep="\t"
             )
 
-        fpath_job_script = dpath_work / self.fname_job_script
-        if fpath_job_script.exists():
-            logger.info(f"Job script created at {fpath_job_script}")
+    def _run_locally(self, participants_sessions: list) -> None:
+        """Run pipeline locally and collect results."""
+        results = list(self._get_results_generator(participants_sessions))
+
+        if len(results) == 0:
+            run_statuses = []
+            run_single_results = []
         else:
-            logger.warning(f"No job script found at {fpath_job_script}.")
+            run_statuses, run_single_results = zip(*results)
 
-        # raise error if an error file was created
-        if fpath_hpc_error.exists():
-            raise WorkflowError(
-                "Error occurred while submitting the HPC job:"
-                f"\n{fpath_hpc_error.read_text()}"
-                f"\nThe job script can be found at {fpath_job_script}."
-                "\nThis file is auto-generated. To modify it, you will need to "
-                "modify the pipeline's HPC configuration in the config file and/or "
-                f"the template job script in {self.study.layout.dpath_hpc}."
-            )
+        self.n_success += sum(run_statuses)
+        self.n_total += len(run_statuses)
+        self.run_single_results = run_single_results
 
-        if job_id is not None:
-            logger.info(f"HPC job ID: {job_id}")
-
-        # for logging in run_cleanup()
-        self.n_success += len(job_array_commands)
+        # update return code if needed
+        if (self.n_success != self.n_total) and (self.n_total != 0):
+            self.return_code = ReturnCode.PARTIAL_SUCCESS
 
     def run_cleanup(self):
         """Log a summary message."""

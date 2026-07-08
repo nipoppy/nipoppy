@@ -40,7 +40,9 @@ For each curation stage, the status is determined based on the presence of files
 | `in_post_reorg` | {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
 | `in_bids` | {{dpath_bids}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
 
-<!-- TODO add tip box pointing to guide on reorg -->
+```{tip}
+See {doc}`../reorganize_sourcedata/index` for how to configure the location to check for the `in_pre_reorg` column.
+```
 
 ## Processing pipelines
 
@@ -135,3 +137,14 @@ If there is an existing processing status file, the rows relevant to the specifi
 The `pipeline_complete` column can have the following values:
 * `SUCCESS`: all specified paths have been found
 * `FAIL`: at least one of the paths has not been found
+
+### Speeding up pipeline tracking
+
+It is possible to parallelize the `track-processing` command to speed up its execution.
+This requires additional dependencies which can be installed by running this command:
+
+```console
+pip install nipoppy[parallel]
+```
+
+Then, the `--n-job` option can be used to specify the number of parallel workers to use.

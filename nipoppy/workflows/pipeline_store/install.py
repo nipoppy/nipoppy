@@ -20,7 +20,7 @@ from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.base import BaseDatasetWorkflow, _run_command
 from nipoppy.zenodo_api import ZenodoAPI
 
 logger = get_logger()
@@ -174,8 +174,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
                 with console.status(
                     "Downloading the container, this can take a while..."
                 ):
-                    self.run_command(pull_command)
-
+                    _run_command(pull_command, dry_run=self.dry_run)
             except subprocess.CalledProcessError as e:
                 logger.error(
                     f"Failed to download container {pipeline_config.CONTAINER_INFO.URI}"
@@ -234,7 +233,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
         # generate destination path
         dpath_target = self.study.layout.get_dpath_pipeline_bundle(
-            pipeline_config.PIPELINE_TYPE, pipeline_config.NAME, pipeline_config.VERSION
+            pipeline_config.PIPELINE_TYPE,
+            pipeline_config.NAME,
+            pipeline_config.VERSION,
         )
 
         # check if the target directory already exists
@@ -273,3 +274,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             f"{pipeline_config.NAME}, version {pipeline_config.VERSION} at "
             f"{dpath_target}"
         )
+
+    def run_cleanup(self):
+        """Close resources used by the workflow."""
+        self.zenodo_api.close()

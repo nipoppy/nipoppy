@@ -51,10 +51,10 @@ doc = [
     "sphinx-click",
     "sphinx-copybutton",
     "sphinx-github-changelog",
-    "sphinx-hoverxref",
     "sphinx-jsonschema",
     "sphinx-togglebutton",
     "sphinx_design",
+    "Sphinx-Substitution-Extensions",
 ]
 dev = ["nipoppy[doc,test]", "pre-commit"]
 test = [
@@ -98,6 +98,7 @@ minversion = "6.0"
 xfail_strict = true
 markers = [
     "api: mark a test as an api test.",
+    "linkcheck: mark a test as a link check test.",
     "no_xdist: mark a test that should not be run with xdist in CI.",
 ]
 
