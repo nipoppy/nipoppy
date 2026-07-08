@@ -33,7 +33,6 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
 )
-from nipoppy.telemetry.geo import record_location
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
@@ -313,5 +312,5 @@ class InitWorkflow(BaseDatasetWorkflow):
         )
         # ─────────────────────────────────────────────────────────────────────
 
-        record_location()
+        self.telemetry.record_location()
         return super().run_cleanup()

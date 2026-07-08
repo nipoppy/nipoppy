@@ -17,7 +17,7 @@ from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
-from nipoppy.telemetry.metrics import initialize_telemetry, record_command_completion
+from nipoppy.telemetry import TelemetryHandler
 from nipoppy.tabular.base import BaseTabular
 from nipoppy.tabular.curation_status import (
     CurationStatusTable,
@@ -41,6 +41,10 @@ class BaseWorkflow(Base, ABC):
     log_prefix_run = "[RUN]"
     log_prefix_run_stdout = "[RUN STDOUT]"
     log_prefix_run_stderr = "[RUN STDERR]"
+
+    # Uninitialized, fail-safe placeholder so self.telemetry always exists (even
+    # if run() is never called); run() replaces it with an initialized handler.
+    telemetry = TelemetryHandler()
 
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
@@ -185,7 +189,8 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        initialize_telemetry(service_version=__version__)
+        self.telemetry = TelemetryHandler(service_version=__version__)
+        self.telemetry.initialize()
         try:
             self.run_setup()
             self.run_main()
@@ -194,7 +199,7 @@ class BaseWorkflow(Base, ABC):
             self.return_code = ReturnCode.UNKNOWN_FAILURE
             raise
         finally:
-            record_command_completion(self.name, self.return_code)
+            self.telemetry.record_command_completion(self.name, self.return_code)
 
     def copy_template(self, path_source, path_dest, **template_kwargs):
         """Copy a file with template substitution.
