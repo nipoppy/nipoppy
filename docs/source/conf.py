@@ -183,6 +183,11 @@ autoapi_template_dir = "_templates/autoapi"
 # suppress_warnings = ["autoapi"]
 
 nitpick_ignore = [
+    # Pydantic renders Annotated validator metadata as class references even though
+    # these objects are not classes with linkable documentation targets.
+    ("py:class", "AfterValidator"),
+    ("py:class", "ensure_schema_support"),
+    ("py:class", "functools.partial"),
     ("py:class", "Path"),
     ("py:class", "optional"),
     ("py:class", "pd.DataFrame"),
