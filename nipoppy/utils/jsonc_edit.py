@@ -384,7 +384,10 @@ def _insert_member_into_object(
 ) -> str:
     """Insert ``key``/``value`` into an object span and return the new text.
 
-    Indentation is inferred from existing ``members`` (or the object's own
+    If the object is non-empty and written on a single line, the new member
+    is inserted inline (``{"A": 1, "B": 2}``); otherwise (including when the
+    object is initially empty) it is inserted on its own line, with
+    indentation inferred from existing ``members`` (or the object's own
     line), and the existing trailing-comma style is preserved.
 
     Parameters
@@ -394,21 +397,42 @@ def _insert_member_into_object(
     obj_end : int
         Object end index (exclusive).
     """
-    base_indent = _get_line_indent(text, obj_start)
-    member_indent = (
-        _get_line_indent(text, members[0].member_start)
-        if members
-        else base_indent + "    "
-    )
-    if not member_indent:
-        member_indent = base_indent + "    "
-    member_text = _format_member_text(key, value, member_indent)
+    is_inline = "\n" not in text[obj_start:obj_end]
 
     if not members:
+        # An initially empty object always expands to multiple lines, even
+        # if it was written inline as "{}", so it reads like a normal
+        # populated object rather than staying oddly condensed.
+        base_indent = _get_line_indent(text, obj_start)
+        member_text = _format_member_text(key, value, base_indent + "    ")
         insertion = f"\n{member_text}\n{base_indent}"
-        return text[: obj_start + 1] + insertion + text[obj_start + 1 :]
+        # A member-less object may still contain a comment before "}", which
+        # must be preserved. Only trim the whitespace-only run immediately
+        # before "}" (that's the empty-looking gap the insertion replaces);
+        # anything before it, such as a comment, is kept as-is.
+        content_end = obj_end - 1
+        trim_start = content_end
+        while trim_start > obj_start + 1 and text[trim_start - 1] in _WHITESPACE:
+            trim_start -= 1
+        return text[:trim_start] + insertion + text[content_end:]
 
     last = members[-1]
+    if is_inline:
+        core = _format_member_text(key, value, "")
+        if last.has_comma:
+            insert_at = last.member_end
+            insertion = f" {core}"
+        else:
+            insert_at = last.value_end
+            insertion = f", {core}"
+        return text[:insert_at] + insertion + text[insert_at:]
+
+    base_indent = _get_line_indent(text, obj_start)
+    member_indent = (
+        _get_line_indent(text, members[0].member_start) or base_indent + "    "
+    )
+    member_text = _format_member_text(key, value, member_indent)
+
     if last.has_comma:
         # ``member_end`` already sits right after the comma, so the
         # whitespace/indentation leading up to the closing bracket is
@@ -526,14 +550,15 @@ def _resolve_child_span(
     Raises
     ------
     ValueError
-        If the child member cannot be found or is not an object.
+        If the child member cannot be found.
     """
     member = _find_member_by_key_path(text, key_path + [segment])
     if member is None:
         raise ValueError(f"Could not find key after edit: {segment}")
     span = _get_object_value_span(text, member)
-    if span is None:
-        raise ValueError(f"Expected object value for key: {segment}")
+    # _find_member_by_key_path only returns a member whose value it has
+    # already confirmed is an object, so span is never None here.
+    assert span is not None
     return span
 
 
