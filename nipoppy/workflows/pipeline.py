@@ -230,6 +230,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         return self.study.layout.get_dpath_pipeline_work(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
             participant_id=self.participant_id,
             session_id=self.session_id,
         )

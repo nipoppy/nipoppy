@@ -335,10 +335,11 @@ class DatasetLayout(Base):
         """Return the path to a pipeline's working directory."""
         return (
             self.dpath_work
-            / get_pipeline_tag(pipeline_name, pipeline_version)
+            / get_pipeline_tag(pipeline_name, pipeline_version, pipeline_step)
             / get_pipeline_tag(
                 pipeline_name,
                 pipeline_version,
+                pipeline_step,
                 participant_id=participant_id,
                 session_id=session_id,
             )
