@@ -17,7 +17,7 @@ The code is organized in layers, from lowest to highest level:
   scanning job (skip trivia, find a string end, match a bracket, find a value
   end) and advances the cursor in place.
 - ``_parse_object_members`` / ``_find_root_object_span``: structural parsing
-  that produces :class:`_ObjectMember` spans.
+  that produces ``_ObjectMember`` spans.
 - Editing primitives (``_get_line_indent``, ``_format_member_text``,
   ``_insert_member_into_object``): build and splice new member text.
 - Navigation helpers (``_find_member_by_key``, ``_get_object_value_span``) and
