@@ -1332,28 +1332,38 @@ def test_log_summary_message_write_subcohort(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected_stem",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected_stem",
     [
         (
             "my_pipeline",
             "1.0",
+            "step1",
             "sub1",
             None,
-            "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
+            "test/my_pipeline-1.0-step1/my_pipeline-1.0-step1-sub1",
         ),
         (
             "my_pipeline",
             None,
+            None,
             "sub1",
             None,
-            "test/my_pipeline-2.0/my_pipeline-2.0-sub1",
+            "test/my_pipeline-2.0-default/my_pipeline-2.0-default-sub1",
         ),
-        ("fmriprep", None, None, "1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
+        (
+            "fmriprep",
+            None,
+            None,
+            None,
+            "1",
+            "test/fmriprep-23.1.3-default/fmriprep-23.1.3-default-1",
+        ),
     ],
 )
 def test_generate_fpath_log(
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected_stem,
@@ -1362,6 +1372,7 @@ def test_generate_fpath_log(
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
+    workflow.pipeline_step = pipeline_step
     workflow.participant_id = participant_id
     workflow.session_id = session_id
     fpath_log = workflow.generate_fpath_log()
