@@ -44,6 +44,7 @@ For each curation stage, the status is determined based on the presence of files
 See {doc}`../reorganize_sourcedata/index` for how to configure the location to check for the `in_pre_reorg` column.
 ```
 
+(how-to-track-processing)=
 ## Processing pipelines
 
 The [`nipoppy track-processing`](../../cli_reference/track_processing.rst) command can be used to track the completion status of processing pipelines. The minimal command is:
