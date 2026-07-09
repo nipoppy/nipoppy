@@ -35,12 +35,14 @@ class Runner(BasePipelineWorkflow, ABC):
 
     def __init__(
         self,
+        subcommand: str,
         simulate: bool = False,
         keep_workdir: bool = False,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.subcommand = subcommand
         self.simulate = simulate
         self.keep_workdir = keep_workdir
 
@@ -49,7 +51,7 @@ class Runner(BasePipelineWorkflow, ABC):
         """Get the HPC runner service."""
         return HPCRunner(
             study=self.study,
-            subcommand=self.name,
+            subcommand=self.subcommand,
             dpath_root=self.dpath_root,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,

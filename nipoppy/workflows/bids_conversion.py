@@ -38,6 +38,7 @@ class BIDSificationRunner(Runner):
         super().__init__(
             dpath_root=dpath_root,
             name="bidsify",
+            subcommand="bidsify",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
