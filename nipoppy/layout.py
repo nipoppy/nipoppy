@@ -328,6 +328,7 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: str,
         participant_id: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> Path:

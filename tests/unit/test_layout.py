@@ -180,28 +180,31 @@ def test_get_dpath_pipeline(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected",
     [
         (
             "my_pipeline",
             "v1",
+            "step1",
             None,
             None,
-            "scratch/work/my_pipeline-v1/my_pipeline-v1",
+            "scratch/work/my_pipeline-v1-step1/my_pipeline-v1-step1",
         ),
         (
             "pipeline",
             "v2",
+            "step2",
             "3000",
             None,
-            "scratch/work/pipeline-v2/pipeline-v2-3000",
+            "scratch/work/pipeline-v2-step2/pipeline-v2-step2-3000",
         ),
         (
             "pipeline",
             "v2",
+            "default",
             "01",
             "1",
-            "scratch/work/pipeline-v2/pipeline-v2-01-1",
+            "scratch/work/pipeline-v2-default/pipeline-v2-default-01-1",
         ),
     ],
 )
@@ -209,6 +212,7 @@ def test_get_dpath_pipeline_work(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected,
@@ -218,6 +222,7 @@ def test_get_dpath_pipeline_work(
         layout.get_dpath_pipeline_work(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )
