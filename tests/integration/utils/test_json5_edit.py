@@ -1,12 +1,12 @@
-"""Tests for the utils.jsonc_edit module."""
+"""Tests for the utils.json5_edit module."""
 
 import json5
 
-from nipoppy.utils.jsonc_edit import update_jsonc_text
+from nipoppy.utils.json5_edit import update_json5_text
 from tests.conftest import DPATH_TEST_DATA
 
 
-def test_update_jsonc_text_updates_existing_value_and_preserves_comment():
+def test_update_json5_text_updates_existing_value_and_preserves_comment():
     before = DPATH_TEST_DATA / "json5-before.json5"
     expected_text_after = (DPATH_TEST_DATA / "json5-after.json5").read_text().strip()
 
@@ -21,6 +21,6 @@ def test_update_jsonc_text_updates_existing_value_and_preserves_comment():
         (["Nested Dict", "Inner Dict", "null"], None),
     ]
 
-    updated_text = update_jsonc_text(before.read_text().strip(), updates)
+    updated_text = update_json5_text(before.read_text().strip(), updates)
     assert json5.loads(updated_text) == json5.loads(expected_text_after)
     assert updated_text.strip() == expected_text_after

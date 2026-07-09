@@ -231,11 +231,11 @@ def test_update_config_and_save_no_overwrite(
     assert not any([record.levelno == logging.WARNING for record in caplog.records])
 
 
-def test_update_config_and_save_preserves_jsonc(
+def test_update_config_and_save_preserves_json5(
     workflow: PipelineInstallWorkflow,
     pipeline_config: ProcessingPipelineConfig,
 ):
-    # Replace the global config file with a empty JSONC file that has a comment
+    # Replace the global config file with a empty JSON5 file that has a comment
     fpath_config = workflow.study.layout.fpath_config
     fpath_config.write_text("""
 {

@@ -1,11 +1,11 @@
-"""Tests for the utils.jsonc_edit module."""
+"""Tests for the utils.json5_edit module."""
 
 from pathlib import Path
 
 import json5
 import pytest
 
-from nipoppy.utils.jsonc_edit import (
+from nipoppy.utils.json5_edit import (
     _find_member_by_key_path,
     _find_root_object_span,
     _parse_object_members,
@@ -13,12 +13,12 @@ from nipoppy.utils.jsonc_edit import (
     _read_member_key,
     _resolve_child_span,
     _Scanner,
-    update_jsonc_file,
-    update_jsonc_text,
+    update_json5_file,
+    update_json5_text,
 )
 
 
-def test_update_jsonc_text_inserts_nested_pipeline_variables():
+def test_update_json5_text_inserts_nested_pipeline_variables():
     text = """
 {
   "PIPELINE_VARIABLES": {
@@ -28,7 +28,7 @@ def test_update_jsonc_text_inserts_nested_pipeline_variables():
 }
 """.strip()
 
-    updated_text = update_jsonc_text(
+    updated_text = update_json5_text(
         text,
         [
             (
@@ -51,7 +51,7 @@ def test_update_jsonc_text_inserts_nested_pipeline_variables():
     }
 
 
-def test_update_jsonc_text_inserts_multiple_members_into_new_object():
+def test_update_json5_text_inserts_multiple_members_into_new_object():
     # Regression test: inserting a second member into a freshly-created
     # object must not leave a dangling comma on its own line, and must not
     # glue the closing bracket onto the previous member's line.
@@ -78,7 +78,7 @@ def test_update_jsonc_text_inserts_multiple_members_into_new_object():
 }
 """.strip()
 
-    updated_text = update_jsonc_text(
+    updated_text = update_json5_text(
         text,
         [
             (
@@ -115,31 +115,31 @@ def test_update_jsonc_text_inserts_multiple_members_into_new_object():
     assert updated_text == expected_text
 
 
-def test_update_jsonc_text_replaces_non_object_with_object_for_nested_path():
+def test_update_json5_text_replaces_non_object_with_object_for_nested_path():
     text = '{"A": 123}'
-    updated_text = update_jsonc_text(text, [(["A", "B"], "x")])
+    updated_text = update_json5_text(text, [(["A", "B"], "x")])
     assert json5.loads(updated_text) == {"A": {"B": "x"}}
 
 
-def test_update_jsonc_text_inserts_inline_into_single_line_object():
+def test_update_json5_text_inserts_inline_into_single_line_object():
     text = '{"A": 1}'
-    updated_text = update_jsonc_text(text, [(["B"], 2)])
+    updated_text = update_json5_text(text, [(["B"], 2)])
     assert updated_text == '{"A": 1, "B": 2}'
 
 
-def test_update_jsonc_text_expands_empty_object_to_multiline():
+def test_update_json5_text_expands_empty_object_to_multiline():
     text = '{"X": {}}'
-    updated_text = update_jsonc_text(text, [(["X", "B"], 2)])
+    updated_text = update_json5_text(text, [(["X", "B"], 2)])
     assert updated_text == '{"X": {\n    "B": 2\n}}'
 
 
-def test_update_jsonc_text_inserts_inline_into_nested_single_line_object():
+def test_update_json5_text_inserts_inline_into_nested_single_line_object():
     text = """
 {
   "X": {"A": 1}
 }
 """.strip()
-    updated_text = update_jsonc_text(text, [(["X", "B"], 2)])
+    updated_text = update_json5_text(text, [(["X", "B"], 2)])
     assert updated_text == """
 {
   "X": {"A": 1, "B": 2}
@@ -147,20 +147,20 @@ def test_update_jsonc_text_inserts_inline_into_nested_single_line_object():
 """.strip()
 
 
-def test_update_jsonc_text_inserts_inline_after_member_with_trailing_comma():
+def test_update_json5_text_inserts_inline_after_member_with_trailing_comma():
     text = '{"A": 1,}'
-    updated_text = update_jsonc_text(text, [(["B"], 2)])
+    updated_text = update_json5_text(text, [(["B"], 2)])
     assert updated_text == '{"A": 1, "B": 2}'
 
 
-def test_update_jsonc_text_inserts_into_multiline_empty_object():
+def test_update_json5_text_inserts_into_multiline_empty_object():
     text = """
 {
   "X": {
   }
 }
 """.strip()
-    updated_text = update_jsonc_text(text, [(["X", "B"], 2)])
+    updated_text = update_json5_text(text, [(["X", "B"], 2)])
     assert updated_text == """
 {
   "X": {
@@ -170,17 +170,17 @@ def test_update_jsonc_text_inserts_into_multiline_empty_object():
 """.strip()
 
 
-def test_update_jsonc_text_raises_on_empty_key_path():
+def test_update_json5_text_raises_on_empty_key_path():
     with pytest.raises(ValueError, match="Key path cannot be empty"):
-        update_jsonc_text('{"A": 1}', [([], "x")])
+        update_json5_text('{"A": 1}', [([], "x")])
 
 
-def test_update_jsonc_text_raises_on_invalid_jsonc():
+def test_update_json5_text_raises_on_invalid_json5():
     with pytest.raises(ValueError):
-        update_jsonc_text('{"A": [1, }', [(["A"], 2)])
+        update_json5_text('{"A": [1, }', [(["A"], 2)])
 
 
-def test_update_jsonc_file(tmp_path: Path):
+def test_update_json5_file(tmp_path: Path):
     fpath = tmp_path / "config.json"
     fpath.write_text("""
 {
@@ -189,7 +189,7 @@ def test_update_jsonc_file(tmp_path: Path):
 }
 """.strip())
 
-    update_jsonc_file(fpath, [(["A"], 2), (["B"], True)])
+    update_json5_file(fpath, [(["A"], 2), (["B"], True)])
 
     updated_text = fpath.read_text()
     assert "// keep this comment" in updated_text

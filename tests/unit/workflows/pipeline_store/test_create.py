@@ -127,7 +127,7 @@ def test_create_from_descriptor(workflow: PipelineCreateWorkflow):
     )
 
 
-def test_create_from_descriptor_preserves_jsonc(
+def test_create_from_descriptor_preserves_json5(
     tmp_path: Path,
     workflow: PipelineCreateWorkflow,
     monkeypatch: pytest.MonkeyPatch,

@@ -10,7 +10,7 @@ from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
-from nipoppy.utils.jsonc_edit import update_jsonc_file
+from nipoppy.utils.json5_edit import update_json5_file
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.base import BaseWorkflow
 
@@ -105,7 +105,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 updates.append((["CONTAINER_INFO", "URI"], uri))
 
             if not self.dry_run:
-                update_jsonc_file(fpath_config, updates)
+                update_json5_file(fpath_config, updates)
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:

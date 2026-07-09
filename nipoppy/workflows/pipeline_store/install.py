@@ -19,7 +19,7 @@ from nipoppy.exceptions import (
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
-from nipoppy.utils.jsonc_edit import update_jsonc_file
+from nipoppy.utils.json5_edit import update_json5_file
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow, _run_command
 from nipoppy.zenodo_api import ZenodoAPI
@@ -111,12 +111,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             logger.warning(
                 f"Adding {len(added_variables)} variable(s) to the global config file:"
             )
-            jsonc_updates = []
+            json5_updates = []
             for variable_name in added_variables:
                 variable_description = pipeline_config.VARIABLES[variable_name]
                 logger.warning(f"\t{variable_name}\t{variable_description}")
 
-                jsonc_updates.append(
+                json5_updates.append(
                     (
                         [
                             "PIPELINE_VARIABLES",
@@ -137,7 +137,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
             # save
             if not self.dry_run:
-                update_jsonc_file(self.study.layout.fpath_config, jsonc_updates)
+                update_json5_file(self.study.layout.fpath_config, json5_updates)
 
         return config
 

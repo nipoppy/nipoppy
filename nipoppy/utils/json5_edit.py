@@ -1,8 +1,8 @@
-"""Utilities to edit JSONC/JSON5 objects while preserving comments.
+"""Utilities to edit JSON5 objects while preserving comments.
 
 Overview
 --------
-This module applies targeted edits to JSONC/JSON5 text *without* reformatting
+This module applies targeted edits to JSON5 text *without* reformatting
 it, so comments and existing layout survive. It never rebuilds the document
 from a parsed tree. Instead it works in two phases:
 
@@ -23,7 +23,7 @@ The code is organized in layers, from lowest to highest level:
 - Navigation helpers (``_find_member_by_key``, ``_get_object_value_span``) and
   the high-level setter (``_set_value_at_key_path``) that resolves a key path
   and writes a value.
-- Public API: :func:`update_jsonc_text` and :func:`update_jsonc_file`.
+- Public API: :func:`update_json5_text` and :func:`update_json5_file`.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ _VALUE_DELIMITERS = ",}]"
 
 
 class _Scanner:
-    """A forward-only cursor over JSONC/JSON5 source text.
+    """A forward-only cursor over JSON5 source text.
 
     The scanner owns the current position (``pos``) so callers never thread a
     character index manually. Each method performs a single scanning job and
@@ -66,7 +66,7 @@ class _Scanner:
     Parameters
     ----------
     text : str
-        Source JSONC text being scanned.
+        Source JSON5 text being scanned.
     pos : int, optional
         Initial cursor position. Defaults to ``0``.
     """
@@ -607,11 +607,11 @@ def _set_value_at_key_path(
 # ---------------------------------------------------------------------------
 
 
-def update_jsonc_text(
+def update_json5_text(
     text: str,
     updates: Iterable[tuple[list[str], Any]],
 ) -> str:
-    """Apply updates to JSONC text while preserving comments and formatting.
+    """Apply updates to JSON5 text while preserving comments and formatting.
 
     Input and output are validated with ``json5.loads``. Updates are applied in
     order, and each update sees the result of previous edits.
@@ -625,12 +625,12 @@ def update_jsonc_text(
     Returns
     -------
     str
-        Updated JSONC/JSON5 text.
+        Updated JSON5 text.
 
     Raises
     ------
     ValueError
-        If the input or resulting text is invalid JSONC/JSON5, or a key path is
+        If the input or resulting text is invalid JSON5, or a key path is
         empty.
     """
     json5.loads(text)
@@ -650,20 +650,20 @@ def update_jsonc_text(
     return updated_text
 
 
-def update_jsonc_file(
+def update_json5_file(
     fpath: StrOrPathLike,
     updates: Iterable[tuple[list[str], Any]],
 ) -> None:
-    """Apply ``(key_path, value)`` updates to a JSONC file in place.
+    """Apply ``(key_path, value)`` updates to a JSON5 file in place.
 
     Parameters
     ----------
     fpath : StrOrPathLike
-        Path to the JSONC/JSON5 file to update.
+        Path to the JSON5 file to update.
     updates : Iterable[tuple[list[str], Any]]
-        Key-path updates to apply (see :func:`update_jsonc_text`).
+        Key-path updates to apply (see :func:`update_json5_text`).
     """
     file_path = Path(fpath)
     text = file_path.read_text()
-    updated_text = update_jsonc_text(text, updates)
+    updated_text = update_json5_text(text, updates)
     file_path.write_text(updated_text)
