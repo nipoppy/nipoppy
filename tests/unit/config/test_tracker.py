@@ -39,7 +39,7 @@ def test_schema_version_default():
 
 
 def test_schema_version_newer():
-    with pytest.raises(ValueError, match="newer than the schema version"):
+    with pytest.raises(ValueError, match="newer than the latest schema version"):
         TrackerConfig(PATHS=[Path("path1")], SCHEMA_VERSION="999.0.0")
 
 

@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC
-from typing import Any, Optional, Union
+from typing import Annotated, Any, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
@@ -16,9 +23,9 @@ from nipoppy.config.pipeline_step import (
     ProcPipelineStepConfig,
 )
 from nipoppy.config.schema import (
-    EARLIEST_SCHEMA_VERSION,
-    check_current_schema_version,
+    ensure_schema_support,
     get_current_schema_version,
+    get_earliest_schema_version,
 )
 from nipoppy.env import (
     DEFAULT_PIPELINE_STEP_NAME,
@@ -78,8 +85,19 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         ),
     )
     PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
-    SCHEMA_VERSION: str = Field(
-        default=EARLIEST_SCHEMA_VERSION,
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.PIPELINE,
+            )
+        ),
+    ] = Field(
+        default_factory=functools.partial(
+            get_earliest_schema_version,
+            config_type=ConfigType.PIPELINE,
+        ),
         description=(
             "Version of the schema used for this pipeline configuration. The current "
             f"latest version is {get_current_schema_version(ConfigType.PIPELINE)}"
@@ -115,10 +133,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         - If STEPS has more than one item, make sure that each step has a unique name.
         - If _expected_pipeline_type is not None, make sure it matches PIPELINE_TYPE.
         """
-        check_current_schema_version(
-            schema_version=self.SCHEMA_VERSION,
-            config_type=ConfigType.PIPELINE,
-        )
         if len(self.STEPS) > 1:
             step_names = []
             for step in self.STEPS:

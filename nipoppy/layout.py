@@ -1,16 +1,22 @@
 """Dataset layout."""
 
+import functools
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Annotated, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+)
 
 from nipoppy.base import Base
 from nipoppy.config.schema import (
-    EARLIEST_SCHEMA_VERSION,
-    check_current_schema_version,
+    ensure_schema_support,
     get_current_schema_version,
+    get_earliest_schema_version,
 )
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
@@ -63,8 +69,19 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
-    SCHEMA_VERSION: str = Field(
-        default=EARLIEST_SCHEMA_VERSION,
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.LAYOUT,
+            )
+        ),
+    ] = Field(
+        default_factory=functools.partial(
+            get_earliest_schema_version,
+            config_type=ConfigType.LAYOUT,
+        ),
         description=(
             "Version of the schema used for this layout configuration. The current "
             f"latest version is {get_current_schema_version(ConfigType.LAYOUT)}"
@@ -168,15 +185,6 @@ class LayoutConfig(BaseModel):
     def get_path_info(self, path_label: str) -> PathInfo:
         """Return the PathInfo object associated with the given path label."""
         return getattr(self, path_label)
-
-    @model_validator(mode="after")
-    def validate_after(self):
-        """Validate the layout configuration after instantiation."""
-        check_current_schema_version(
-            schema_version=self.SCHEMA_VERSION,
-            config_type=ConfigType.LAYOUT,
-        )
-        return self
 
 
 class DatasetLayout(Base):

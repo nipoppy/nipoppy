@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from packaging.version import InvalidVersion, Version
 
 from nipoppy.env import SCHEMA_VERSION_INFO, ConfigType
 from nipoppy.exceptions import ConfigError
+from nipoppy.logger import get_logger
+from nipoppy.utils.utils import load_json
+
+logger = get_logger()
+
 
 SCHEMA_VERSION_FIELD = "SCHEMA_VERSION"
 EARLIEST_SCHEMA_VERSION = "1.0"
@@ -16,10 +23,10 @@ def get_current_schema_version(config_type: ConfigType) -> str:
     return SCHEMA_VERSION_INFO[config_type]["current"]
 
 
-def check_current_schema_version(
+def ensure_schema_support(
     schema_version: str,
     config_type: ConfigType,
-) -> None:
+) -> str:
     """Validate schema version is supported by this version of Nipoppy.
 
     Raises
@@ -39,3 +46,57 @@ def check_current_schema_version(
             f"{schema_version}, which is newer than the latest schema version supported"
             f" by this version of Nipoppy ({current_version}). Please upgrade Nipoppy."
         )
+
+    return schema_version
+
+
+def get_earliest_schema_version(
+    config_type: ConfigType,
+) -> str:
+    """Get default factory for schema version field in config objects.
+
+    This is used to warn users when they are using a config file that does not include a
+     schema version field.
+    """
+    latest_version = get_current_schema_version(config_type)
+    logger.warning(
+        f"{config_type.value.capitalize()} config must include "
+        f"{SCHEMA_VERSION_FIELD} field with an explicit version, but it is"
+        f" missing. Latest schema version is {latest_version}."
+    )
+    logger.warning(
+        "Setting schema version to the earliest known version"
+        f" ({EARLIEST_SCHEMA_VERSION}). This will raise an error in a future"
+        " version of Nipoppy. To fix this warning, please add the following field"
+        " to your config file:\n"
+        f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
+    )
+    return EARLIEST_SCHEMA_VERSION
+
+
+def ensure_config_file_schema_version_exists(
+    fpath_config: Path, config_type: ConfigType, strict: bool = False
+) -> str:
+    """Check if the current schema version for pipelines exists."""
+    config = load_json(fpath_config)
+
+    if SCHEMA_VERSION_FIELD not in config:
+        if strict:
+            raise ConfigError(
+                f"Pipeline configuration file {fpath_config} must include "
+                f"{SCHEMA_VERSION_FIELD} field with an explicit version, but it is"
+                " missing"
+            )
+        else:
+            current_version = get_current_schema_version(config_type)
+            logger.warning(
+                f"Pipeline configuration file {fpath_config} is missing "
+                f"{SCHEMA_VERSION_FIELD} field. Assuming version "
+                f"{current_version}, but this will raise an error in "
+                "a future version of Nipoppy. To fix this warning, please add the "
+                "following field to your pipeline configuration file:\n"
+                f'"{SCHEMA_VERSION_FIELD}": "{current_version}"'
+            )
+            config[SCHEMA_VERSION_FIELD] = current_version
+
+    return config[SCHEMA_VERSION_FIELD]

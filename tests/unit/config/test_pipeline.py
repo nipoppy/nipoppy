@@ -199,8 +199,8 @@ def test_error_outdated_schema_version():
     with pytest.raises(
         ValidationError,
         match=(
-            ".* config uses schema version.*which is newer than the schema version "
-            "supported by this version of Nipoppy.*Please upgrade Nipoppy."
+            ".* config uses schema version.*which is newer than the latest schema "
+            "version supported by this version of Nipoppy.*Please upgrade Nipoppy."
         ),
     ):
         BasePipelineConfig(
