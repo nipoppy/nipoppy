@@ -813,15 +813,18 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Generate a log file path."""
         # make sure that pipeline version is not None
         self.check_pipeline_version()
+        self.check_pipeline_step()
         if dnames_parent is None:
             dnames_parent = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
+                pipeline_step=self.pipeline_step,
             )
         if fname_stem is None:
             fname_stem = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
+                pipeline_step=self.pipeline_step,
                 participant_id=self.participant_id,
                 session_id=self.session_id,
             )
