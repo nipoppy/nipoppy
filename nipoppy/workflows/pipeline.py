@@ -240,6 +240,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         return self.study.layout.get_dpath_pybids_db(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
             participant_id=self.participant_id,
             session_id=self.session_id,
         )
