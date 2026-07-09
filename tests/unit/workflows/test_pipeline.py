@@ -1340,7 +1340,7 @@ def test_log_summary_message_write_subcohort(
             "step1",
             "sub1",
             None,
-            "test/my_pipeline-1.0-step1/my_pipeline-1.0-step1-sub1",
+            "nipoppy_test/my_pipeline-1.0-step1/my_pipeline-1.0-step1-sub1",
         ),
         (
             "my_pipeline",
@@ -1348,7 +1348,7 @@ def test_log_summary_message_write_subcohort(
             None,
             "sub1",
             None,
-            "test/my_pipeline-2.0-default/my_pipeline-2.0-default-sub1",
+            "nipoppy_test/my_pipeline-2.0-default/my_pipeline-2.0-default-sub1",
         ),
         (
             "fmriprep",
@@ -1356,7 +1356,7 @@ def test_log_summary_message_write_subcohort(
             None,
             None,
             "1",
-            "test/fmriprep-23.1.3-default/fmriprep-23.1.3-default-1",
+            "nipoppy_test/fmriprep-23.1.3-default/fmriprep-23.1.3-default-1",
         ),
     ],
 )
