@@ -49,6 +49,16 @@ def test_schema_version_default(layout_config):
     assert layout_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
+def test_error_invalid_schema_version():
+    with pytest.raises(
+        ValidationError,
+        match="Invalid schema version:",
+    ):
+        config_params = load_json(FPATH_DEFAULT_LAYOUT)
+        config_params["SCHEMA_VERSION"] = "invalid_version"
+        LayoutConfig(**config_params)
+
+
 def test_schema_version_newer(layout_config):
     data = layout_config.model_dump()
     data["SCHEMA_VERSION"] = "999.0.0"

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.config.tracker import TrackerConfig
@@ -36,6 +37,14 @@ def test_no_extra_field():
 def test_schema_version_default():
     tracker_config = TrackerConfig(PATHS=["path1"])
     assert tracker_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+
+
+def test_error_invalid_schema_version():
+    with pytest.raises(
+        ValidationError,
+        match="Invalid schema version:",
+    ):
+        TrackerConfig(PATHS=["path1"], SCHEMA_VERSION="invalid_version")
 
 
 def test_schema_version_newer():

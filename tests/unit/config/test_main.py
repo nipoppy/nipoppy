@@ -88,6 +88,14 @@ def test_schema_version_default(valid_config_data):
     assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
+def test_error_invalid_schema_version(valid_config_data):
+    with pytest.raises(
+        ValidationError,
+        match="Invalid schema version:",
+    ):
+        Config(**valid_config_data, SCHEMA_VERSION="invalid_version")
+
+
 def test_schema_version_newer(valid_config_data):
     with pytest.raises(ValidationError, match="newer than the latest schema version"):
         Config(**valid_config_data, SCHEMA_VERSION="999.0.0")
