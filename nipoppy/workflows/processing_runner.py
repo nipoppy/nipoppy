@@ -2,15 +2,13 @@
 
 from functools import cached_property
 from pathlib import Path
-from tarfile import is_tarfile
 from typing import Optional
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import EXT_TAR, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
-from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.runner import Runner
 
 logger = get_logger()
@@ -88,31 +86,6 @@ class ProcessingRunner(Runner):
                 "in the tracker config file at "
                 f"{self.pipeline_step_config.TRACKER_CONFIG_FILE}"
             )
-
-    def tar_directory(self, dpath: StrOrPathLike) -> Path:
-        """Tar a directory and delete it."""
-        dpath = Path(dpath)
-        if not dpath.exists():
-            raise FileOperationError(f"Not tarring {dpath} since it does not exist")
-        if not dpath.is_dir():
-            raise FileOperationError(f"Not tarring {dpath} since it is not a directory")
-
-        tar_flags = "-cvf"
-        fpath_tarred = dpath.with_suffix(EXT_TAR)
-
-        _run_command(
-            f"tar {tar_flags} {fpath_tarred} -C {dpath.parent} {dpath.name}",
-            dry_run=self.dry_run,
-        )
-
-        # make sure that the tarfile was created successfully before removing
-        # original directory
-        if fpath_tarred.exists() and is_tarfile(fpath_tarred):
-            fileops.rm(dpath, dry_run=self.dry_run)
-        else:
-            logger.error(f"Failed to tar {dpath} to {fpath_tarred}")
-
-        return fpath_tarred
 
     def get_participants_sessions_to_run(
         self, participant_id: Optional[str], session_id: Optional[str]
@@ -214,9 +187,12 @@ class ProcessingRunner(Runner):
                     session_id=session_id,
                 )
             )
-            self.tar_directory(
+            dpath_to_tar = (
                 self.dpath_pipeline_output / tracker_config.PARTICIPANT_SESSION_DIR
             )
+            fpath_tarred = fileops.tar_directory(dpath_to_tar, dry_run=self.dry_run)
+            if fpath_tarred.exists():
+                fileops.rm(dpath_to_tar, dry_run=self.dry_run)
 
         return invocation_and_descriptor
 
