@@ -11,7 +11,7 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID
+from nipoppy.env import FAKE_SESSION_ID, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
@@ -142,6 +142,12 @@ def assert_layout_creation(workflow, dpath_root):
         )
         == 0
     )
+
+    # check that empty pipeline directories remain tracked by Git
+    for pipeline_type in PipelineTypeEnum:
+        assert (
+            workflow.study.layout.get_dpath_pipeline_store(pipeline_type) / ".gitkeep"
+        ).is_file()
 
     # check that HPC config files have been copied
     for fname in DPATH_HPC.glob("*"):
