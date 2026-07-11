@@ -136,7 +136,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             continue_ = CONSOLE_STDOUT.confirm(
                 "The Nipoppy pipeline will be uploaded/updated on Zenodo"
                 f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
-                " this is a [bold]permanent[/] action, are you sure?",
+                " this is a [bold red]PERMANENT[/] action, are you sure?",
             )
             if not continue_:
                 logger.warning("Zenodo upload cancelled.")
