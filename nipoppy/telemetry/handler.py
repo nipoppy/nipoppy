@@ -100,7 +100,7 @@ class TelemetryHandler:
         service_version : str
             Version tag (default: "1.0.0").
         otlp_endpoint : str, optional
-            Collector endpoint (default: http://localhost:4318).
+            Collector endpoint (default: https://telemetry.nipoppy.org).
         export_interval_millis : int
             Export frequency in milliseconds (default: 10000).
         metric_reader : opentelemetry MetricReader, optional
@@ -187,7 +187,7 @@ class TelemetryHandler:
         if otlp_endpoint is None:
             otlp_endpoint = os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
-                "http://localhost:4318",
+                "https://telemetry.nipoppy.org",
             )
 
         # OTLP/HTTP keeps the scheme in the URL (https:// implies TLS). When an

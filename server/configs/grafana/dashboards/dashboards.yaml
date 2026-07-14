@@ -3,6 +3,7 @@
 #
 # Dashboards:
 # - nipoppy-telemetry.json: Main dashboard with separated command/location sections
+# - nipoppy-telemetry-exhaustive.json: Showcase dashboard using every emitted label
 # - nipoppy-init.json: Legacy dashboard (can be removed)
 
 apiVersion: 1
