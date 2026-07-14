@@ -58,7 +58,9 @@ def get_user_country() -> str:
 
         return "UNKNOWN"
 
-    except Exception:
+    except Exception as e:
+        # Debug-level only: telemetry stays invisible in normal runs.
+        logger.debug(f"GeoIP country lookup failed: {e}")
         return "UNKNOWN"
 
 
