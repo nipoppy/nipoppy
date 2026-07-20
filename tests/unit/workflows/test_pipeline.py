@@ -1033,6 +1033,7 @@ def test_run_main(
     participant_id,
     session_id,
     expected_count,
+    mocker: pytest_mock.MockFixture,
 ):
     workflow.participant_id = participant_id
     workflow.session_id = session_id
@@ -1044,10 +1045,14 @@ def test_run_main(
         dpath_bidsified=workflow.study.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.study.layout.fpath_manifest)
+
+    mocked_log_summary_message = mocker.patch.object(workflow, "_log_summary_message")
+
     workflow.run_main()
     assert workflow.n_total == expected_count
     assert workflow.n_success == expected_count
     assert workflow.run_single_results == tuple(["SUCCESS"] * expected_count)
+    mocked_log_summary_message.assert_called_once()
 
 
 def test_run_main_analysis_level(
@@ -1250,7 +1255,7 @@ def test_run_main_use_subcohort_empty_file(
     ],
 )
 @pytest.mark.no_xdist
-def test_run_cleanup(
+def test_log_summary_message(
     n_success,
     n_total,
     analysis_level,
@@ -1265,17 +1270,18 @@ def test_run_cleanup(
         ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
     ]
 
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert expected_message.format(n_success, n_total) in caplog.text
 
 
-def test_run_cleanup_no_participants_warning(
+@pytest.mark.no_xdist
+def test_log_summary_message_no_participants_warning(
     workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
 ):
     workflow.n_success = 0
     workflow.n_total = 0
-    workflow.run_cleanup()
+    workflow._log_summary_message()
     assert any(
         record.levelname == "WARNING"
         and "No participants or sessions to run" in record.message
@@ -1295,7 +1301,7 @@ def test_run_cleanup_no_participants_warning(
     ],
 )
 @pytest.mark.no_xdist
-def test_run_cleanup_hpc(
+def test_log_summary_message_hpc(
     n_success,
     n_total,
     expected_message,
@@ -1306,19 +1312,20 @@ def test_run_cleanup_hpc(
 
     workflow.n_success = n_success
     workflow.n_total = n_total
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert expected_message in caplog.text
 
 
-def test_run_cleanup_write_subcohort(
+@pytest.mark.no_xdist
+def test_log_summary_message_write_subcohort(
     workflow: PipelineWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
     workflow.write_subcohort = tmp_path / "subcohort.tsv"
 
     workflow.n_success = 0
     workflow.n_total = 0
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert "No participants or sessions to run" not in caplog.text
     assert "Wrote subcohort to" in caplog.text

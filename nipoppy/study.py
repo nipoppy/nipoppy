@@ -61,7 +61,7 @@ class Study(Base):
             **json.loads(
                 process_template_str(
                     config.model_dump_json(),
-                    objs=[self, self.layout],
+                    objs=[self.layout],
                 )
             )
         )
