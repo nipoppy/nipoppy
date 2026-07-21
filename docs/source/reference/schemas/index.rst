@@ -138,7 +138,7 @@ Layout configuration
 
     The default Nipoppy layout uses the following configuration:
 
-    .. literalinclude:: ../../../nipoppy/data/layouts/layout-default.json
+    .. literalinclude:: ../../../../nipoppy/data/layouts/layout-default.json
         :linenos:
         :language: json
 
