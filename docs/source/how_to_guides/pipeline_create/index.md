@@ -95,6 +95,11 @@ pipelines/howto
 
 ## Edit the configuration files
 
+:::{important}
+Nipoppy uses string substitutions to inject dataset-specific information (e.g., paths, participant IDs) into configuration files at runtime.
+See [this page](<project:../../substitutions.md>) for lists of available substitutions for each type of configuration file.
+:::
+
 ### File common for all pipeline types
 
 #### `config.json`
@@ -102,13 +107,26 @@ pipelines/howto
 Edit general pipeline metadata and settings.
 See the schemas for {ref}`BIDSification <bidsification-pipeline-config-schema>`, {ref}`processing <processing-pipeline-config-schema>` and {ref}`extraction <extraction-pipeline-config-schema>` pipelines.
 
-Example for the [FSL SIENA](https://fsl.fmrib.ox.ac.uk/fsl/docs/structural/siena/index.html) pipeline:
+##### Key fields
+
+- **`"NAME"`** and **`"VERSION"`** (if no source descriptor was used)
+- **`"CONTAINER_CONFIG"`** -> **`"BIND_PATHS"`**: paths to volumes to be mounted to the container (format: `local_path[:path_inside_container[:mode]]`)
+- **`"STEPS"`** -> **`"ANALYSIS_LEVEL"`**: to control the looping (if any) performed by Nipoppy
+    - `"participant_session"`: iterate over all participant-session pairs (default)
+    - `"participant`": iterate over participants only
+    - `"session`": iterate over sessions only
+    - `"group`": single iteration, for pipelines that do group analysis or handle all looping internally
+- **`"GENERATE_PYBIDS_DATABASE`"**: only set to `true` if the pipeline accepts a [PyBIDS](https://bids-standard.github.io/pybids/) database path as input. Nipoppy will then index the raw BIDS data and create a database that is constrained to the participant and/or session being run. The `[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]` substitution can be used to inject the path to this database into the invocation file.
+    - Indexing can further be controlled by the user via the **`"PYBIDS_IGNORE_FILE`"** field
+- **`"VARIABLES`"**: for pipelines that require information (typically file/directory paths) for which there is no good default (e.g. path to a configuration file or a FreeSurfer license file). This should be a dictionary with variable names as keys and descriptions as values, e.g., `{"REQUIRED_FILE": "This file is for running the pipeline"}`
+
+##### Example for the [FSL SIENA](https://fsl.fmrib.ox.ac.uk/fsl/docs/structural/siena/index.html) pipeline
 
 ```{literalinclude} data/config.json
 ---
 linenos: True
 language: json
-emphasize-lines: 2-11,16,19
+emphasize-lines: 2-3,10,17,20,24
 ---
 ```
 
@@ -117,10 +135,6 @@ emphasize-lines: 2-11,16,19
 
 `[[PIPELINE_NAME]]` and `[[PIPELINE_VERSION]]` are replaced dynamically during execution using the value from the `"NAME"` and `"VERSION"` fields,
 respectively.
-:::
-
-:::{warning}
-If not using a source descriptor, be sure to update the `"NAME"` and `"VERSION"` fields, and the `<OWNER>` placeholder of the `"CONTAINER_INFO"`'s `"URI"`. You may need to replace the entire `"URI"` field if the container name does not follow the `<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]` naming convention.
 :::
 
 #### `descriptor.json`
