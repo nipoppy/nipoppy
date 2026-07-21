@@ -155,7 +155,7 @@
       },
       "targets": [
         {
-          "expr": "100 * sum(nipoppy_commands_completed_total{status=\"success\"}) / sum(nipoppy_commands_completed_total)",
+          "expr": "100 * sum(nipoppy_commands_completed_total{status=\"SUCCESS\"}) / sum(nipoppy_commands_completed_total)",
           "instant": true,
           "refId": "A"
         }
@@ -488,18 +488,28 @@
                   {
                     "type": "value",
                     "options": {
-                      "success": {
-                        "text": "success",
+                      "SUCCESS": {
+                        "text": "SUCCESS",
                         "color": "green",
                         "index": 0
-                      },
-                      "partial": {
-                        "text": "partial",
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN)$",
+                      "result": {
                         "color": "yellow",
                         "index": 1
-                      },
-                      "failure": {
-                        "text": "failure",
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*",
+                      "result": {
                         "color": "red",
                         "index": 2
                       }

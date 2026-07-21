@@ -1,13 +1,4 @@
-"""
-Telemetry handler for Nipoppy.
-
-Consolidates OpenTelemetry setup, metric instruments, command-completion
-tracking and geographic (country) tracking into a single class.
-
-Telemetry is non-confounding by design: every public method is fail-safe and
-never raises, so a broken or unreachable telemetry backend can never disrupt
-the CLI.
-"""
+"""Telemetry handler for Nipoppy."""
 
 from __future__ import annotations
 
@@ -30,43 +21,39 @@ from opentelemetry.sdk.metrics.export import (
 )
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 
+from nipoppy.env import PROGRAM_NAME, TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
 from nipoppy.exceptions import ReturnCode
 from nipoppy.logger import get_logger
 
 logger = get_logger()
 
 
-def get_user_country() -> str:
+def _get_user_country(timeout: float = 5) -> str:
     """
     Get the user's country code from their public IP address.
 
     Returns a two-letter ISO country code (e.g. "US", "CA", "IN") or
-    "UNKNOWN" on any failure.
+    "UNKNOWN" on any failure. Not fail-safe on its own — callers are
+    responsible for exception handling (see `record_location`).
     """
-    try:
-        ip_response = httpx.get("https://api.ipify.org", timeout=5)
-        ip_response.raise_for_status()
-        public_ip = ip_response.text.strip()
+    ip_response = httpx.get("https://api.ipify.org", timeout=timeout)
+    ip_response.raise_for_status()
+    public_ip = ip_response.text.strip()
 
-        response = httpx.get(f"https://api.db-ip.com/v2/free/{public_ip}", timeout=5)
-        response.raise_for_status()
-        data = response.json()
+    response = httpx.get(f"https://api.db-ip.com/v2/free/{public_ip}", timeout=timeout)
+    response.raise_for_status()
+    data = response.json()
 
-        country_code = data.get("countryCode")
-        if country_code and isinstance(country_code, str) and len(country_code) == 2:
-            return country_code.upper()
+    country_code = data.get("countryCode")
+    if country_code is not None and isinstance(country_code, str):
+        return country_code.upper()
 
-        return "UNKNOWN"
-
-    except Exception as e:
-        # Debug-level only: telemetry stays invisible in normal runs.
-        logger.debug(f"GeoIP country lookup failed: {e}")
-        return "UNKNOWN"
+    return "UNKNOWN"
 
 
 @dataclass
 class MetricInstruments:
-    """OpenTelemetry counter instruments used by Nipoppy telemetry."""
+    """OpenTelemetry counter instruments."""
 
     # Command outcomes (attributes: command, status, return_code)
     commands_completed: Counter
@@ -85,10 +72,10 @@ class TelemetryHandler:
 
     def __init__(
         self,
-        service_name: str = "nipoppy",
-        service_version: str = "1.0.0",
+        service_name: str = PROGRAM_NAME,
+        service_version: str | None = None,
         otlp_endpoint: str | None = None,
-        export_interval_millis: int = 10000,
+        export_interval_millis: int = TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
         metric_reader: MetricReader | None = None,
     ) -> None:
         """Create a telemetry handler (does not initialize OpenTelemetry yet).
@@ -96,31 +83,33 @@ class TelemetryHandler:
         Parameters
         ----------
         service_name : str
-            Service name for metrics (default: "nipoppy").
-        service_version : str
-            Version tag (default: "1.0.0").
+            Service name for metrics (default: `nipoppy.env.PROGRAM_NAME`).
+        service_version : str, optional
+            Version tag, supplied by the base workflow (default: None).
         otlp_endpoint : str, optional
             Collector endpoint (default: https://telemetry.nipoppy.org).
         export_interval_millis : int
-            Export frequency in milliseconds (default: 10000).
+            Export frequency in milliseconds, capped at
+            `nipoppy.env.TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS`
+            (default: `TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS`).
         metric_reader : opentelemetry MetricReader, optional
             Pre-built reader to use instead of the default OTLP/HTTP exporter.
             Primarily for testing (e.g. InMemoryMetricReader).
         """
-        self._service_name = service_name
-        self._service_version = service_version
-        self._otlp_endpoint = otlp_endpoint
-        self._export_interval_millis = export_interval_millis
-        self._metric_reader = metric_reader
+        self.service_name = service_name
+        self.service_version = service_version
+        self.otlp_endpoint = otlp_endpoint
+        self.export_interval_millis = export_interval_millis
+        self.metric_reader = metric_reader
 
-        self._provider: MeterProvider | None = None
-        self._metrics: MetricInstruments | None = None
-        self._shutdown_called = False
+        self.provider: MeterProvider | None = None
+        self.metrics: MetricInstruments | None = None
+        self.shutdown_called = False
 
     @property
     def is_enabled(self) -> bool:
         """True if telemetry is initialized and active."""
-        return self._metrics is not None
+        return self.metrics is not None
 
     def initialize(self) -> bool:
         """
@@ -129,36 +118,44 @@ class TelemetryHandler:
         Safe to call multiple times (only initializes once). Returns False if
         initialization is disabled or fails; never raises.
         """
-        if self._provider is not None:
+        if self.provider is not None:
             return True
 
         if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
             return False
 
         try:
-            # Telemetry must never disrupt the CLI. The OTLP/HTTP exporter logs a
-            # full traceback when the collector is unreachable; silence OTel's own
-            # logging so export failures stay invisible to the user.
+            # OTLP/HTTP exporter uses requests/urllib3 internally; silence both loggers.
             logging.getLogger("opentelemetry").setLevel(logging.CRITICAL)
+            logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+
+            if self.service_version is not None and ".dev" not in self.service_version:
+                default_environment = "production"
+            else:
+                default_environment = "development"
 
             resource = Resource(
                 attributes={
-                    SERVICE_NAME: self._service_name,
-                    SERVICE_VERSION: self._service_version,
-                    "deployment.environment": os.getenv("ENVIRONMENT", "development"),
+                    SERVICE_NAME: self.service_name,
+                    SERVICE_VERSION: self.service_version or "unknown",
+                    "deployment.environment": os.getenv(
+                        "ENVIRONMENT", default_environment
+                    ),
                 }
             )
 
-            reader = self._metric_reader or self._build_default_reader()
+            reader = self.metric_reader or self.build_default_reader()
 
-            self._provider = MeterProvider(
+            self.provider = MeterProvider(
                 resource=resource,
                 metric_readers=[reader],
             )
-            meter = self._provider.get_meter(__name__)
-            self._metrics = self._create_metric_instruments(meter)
+            meter = self.provider.get_meter(__name__)
+            self.metrics = self.create_metric_instruments(meter)
 
-            # Flush and export pending metrics on exit (normal exit, Ctrl+C, SIGTERM).
+            # Flush and export pending metrics on normal exit and Ctrl+C (SIGINT
+            # raises KeyboardInterrupt, which unwinds normally). atexit does not
+            # fire on SIGTERM, so that signal gets its own handler below.
             atexit.register(self.shutdown)
 
             original_sigterm = signal.getsignal(signal.SIGTERM)
@@ -175,15 +172,14 @@ class TelemetryHandler:
             return True
 
         except Exception as e:
-            # Fail silently: telemetry issues must never surface to the user.
             logger.debug(
                 f"Telemetry initialization failed: {e}. Continuing without telemetry."
             )
             return False
 
-    def _build_default_reader(self) -> MetricReader:
+    def build_default_reader(self) -> MetricReader:
         """Build the default OTLP/HTTP exporting reader."""
-        otlp_endpoint = self._otlp_endpoint
+        otlp_endpoint = self.otlp_endpoint
         if otlp_endpoint is None:
             otlp_endpoint = os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
@@ -208,11 +204,13 @@ class TelemetryHandler:
         # 2s commands.
         return PeriodicExportingMetricReader(
             otlp_exporter,
-            export_interval_millis=min(self._export_interval_millis, 2000),
+            export_interval_millis=min(
+                self.export_interval_millis, TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
+            ),
         )
 
-    def _create_metric_instruments(self, meter) -> MetricInstruments:
-        """Create Nipoppy metric instruments."""
+    def create_metric_instruments(self, meter) -> MetricInstruments:
+        """Create metric instruments."""
         return MetricInstruments(
             commands_completed=meter.create_counter(
                 name="commands.completed",
@@ -226,52 +224,41 @@ class TelemetryHandler:
             ),
         )
 
-    def record_command_completion(self, command_name: str, return_code: int) -> None:
-        """Emit a commands_completed metric. Fail-safe — never raises."""
+    def record_command_completion(
+        self, command_name: str, return_code: ReturnCode
+    ) -> None:
+        """Emit a commands_completed metric."""
         try:
-            if self._metrics is None:
+            if self.metrics is None:
                 return
-            if return_code == ReturnCode.SUCCESS:
-                status = "success"
-            elif return_code in (
-                ReturnCode.PARTIAL_SUCCESS,
-                ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN,
-            ):
-                status = "partial"
-            else:
-                status = "failure"
-            self._metrics.commands_completed.add(
+            self.metrics.commands_completed.add(
                 1,
                 attributes={
                     "command": command_name,
-                    "status": status,
-                    "return_code": str(int(return_code)),
+                    "status": return_code.name,
+                    "return_code": str(return_code.value),
                 },
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to record command completion: {e}")
 
     def record_location(self) -> None:
-        """
-        Perform a GeoIP lookup and record the country metric. Fail-safe.
-
-        Called once during `nipoppy init`.
-        """
+        """Perform a country code lookup and record the country metric."""
         try:
-            if self._metrics is None:
+            if self.metrics is None:
                 return
-            country_code = get_user_country()
-            self._metrics.location_by_country.add(
+            country_code = _get_user_country()
+            self.metrics.location_by_country.add(
                 1,
                 attributes={"country": country_code},
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Country lookup failed: {e}")
 
     def shutdown(self) -> None:
         """Flush and shut down the meter provider. Safe to call multiple times."""
-        if self._shutdown_called:
+        if self.shutdown_called:
             return
-        self._shutdown_called = True
-        if self._provider is not None:
-            self._provider.shutdown()
+        self.shutdown_called = True
+        if self.provider is not None:
+            self.provider.shutdown()

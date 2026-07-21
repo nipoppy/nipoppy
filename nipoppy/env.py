@@ -25,6 +25,9 @@ DEFAULT_PIPELINE_STEP_NAME = "default"
 EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
+# telemetry
+TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 2000
+
 
 class ContainerCommandEnum(str, Enum):
     """Container commands."""

@@ -24,11 +24,11 @@ from nipoppy.tabular.curation_status import (
 )
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.telemetry.handler import TelemetryHandler
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
 )
+from nipoppy.workflows.services.telemetry import TelemetryHandler
 
 logger = get_logger()
 
@@ -161,10 +161,6 @@ def _run_command(
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
-    # Uninitialized, fail-safe placeholder so self.telemetry always exists (even
-    # if run() is never called); run() replaces it with an initialized handler.
-    telemetry = TelemetryHandler()
-
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
 
@@ -183,6 +179,8 @@ class BaseWorkflow(Base, ABC):
 
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
+
+        self.telemetry = TelemetryHandler(service_version=__version__)
 
         logger.set_verbose(self.verbose)
 
@@ -203,7 +201,6 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        self.telemetry = TelemetryHandler(service_version=__version__)
         self.telemetry.initialize()
         try:
             self.run_setup()
@@ -212,7 +209,7 @@ class BaseWorkflow(Base, ABC):
             self.run_cleanup()
             # return_code is finalized by the CLI's exception_handler after run()
             # returns, so detect an in-flight exception here to record failures
-            # accurately. Telemetry stays fail-safe and never owns exit codes.
+            # accurately.
             return_code = self.return_code
             if sys.exc_info()[0] is not None and return_code == ReturnCode.SUCCESS:
                 return_code = ReturnCode.UNKNOWN_FAILURE

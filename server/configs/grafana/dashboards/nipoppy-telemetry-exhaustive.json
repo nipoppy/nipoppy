@@ -202,7 +202,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "100 * sum(nipoppy_commands_completed_total{status=\"success\"}) / sum(nipoppy_commands_completed_total)",
+          "expr": "100 * sum(nipoppy_commands_completed_total{status=\"SUCCESS\"}) / sum(nipoppy_commands_completed_total)",
           "instant": true,
           "refId": "A"
         }
@@ -239,7 +239,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(nipoppy_commands_completed_total{status=\"failure\"})",
+          "expr": "sum(nipoppy_commands_completed_total{status!~\"SUCCESS|PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN\"})",
           "instant": true,
           "refId": "A"
         }
@@ -428,16 +428,19 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "success" },
-            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+            "matcher": { "id": "byRegexp", "options": ".*" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
           },
           {
-            "matcher": { "id": "byName", "options": "partial" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN)$"
+            },
             "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
           },
           {
-            "matcher": { "id": "byName", "options": "failure" },
-            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+            "matcher": { "id": "byRegexp", "options": "^SUCCESS$" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
           }
         ]
       }
@@ -553,7 +556,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "100 * sum by (command) (nipoppy_commands_completed_total{command=~\"$command\", status=\"success\"}) / sum by (command) (nipoppy_commands_completed_total{command=~\"$command\"})",
+          "expr": "100 * sum by (command) (nipoppy_commands_completed_total{command=~\"$command\", status=\"SUCCESS\"}) / sum by (command) (nipoppy_commands_completed_total{command=~\"$command\"})",
           "legendFormat": "{{command}}",
           "instant": true,
           "refId": "A"
@@ -593,7 +596,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sort_desc(sum by (command) (nipoppy_commands_completed_total{status=\"failure\"}))",
+          "expr": "sort_desc(sum by (command) (nipoppy_commands_completed_total{status!~\"SUCCESS|PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN\"}))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -697,11 +700,18 @@
                 "value": [
                   {
                     "type": "value",
+                    "options": { "SUCCESS": { "text": "SUCCESS", "color": "green", "index": 0 } }
+                  },
+                  {
+                    "type": "regex",
                     "options": {
-                      "success": { "text": "success", "color": "green", "index": 0 },
-                      "partial": { "text": "partial", "color": "yellow", "index": 1 },
-                      "failure": { "text": "failure", "color": "red", "index": 2 }
+                      "pattern": "^(PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN)$",
+                      "result": { "color": "yellow", "index": 1 }
                     }
+                  },
+                  {
+                    "type": "regex",
+                    "options": { "pattern": ".*", "result": { "color": "red", "index": 2 } }
                   }
                 ]
               },

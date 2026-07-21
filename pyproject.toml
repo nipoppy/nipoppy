@@ -19,6 +19,9 @@ dependencies = [
     "click",
     "httpx",
     "jinja2",
+    "opentelemetry-api",
+    "opentelemetry-exporter-otlp-proto-http",
+    "opentelemetry-sdk",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
@@ -27,11 +30,6 @@ dependencies = [
     "rich",
     "rich-click",
     "typing-extensions",
-    # OpenTelemetry for the telemetry client
-    "opentelemetry-api>=1.20.0",
-    "opentelemetry-sdk>=1.20.0",
-    "opentelemetry-exporter-otlp-proto-http>=1.20.0",
-
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"
 license = { file = "LICENSE" }

@@ -1,14 +1,13 @@
 """Tests for the TelemetryHandler class.
 
-Telemetry must be non-confounding: if it is disabled, uninitialized, or
-fails internally, it must never raise and never disrupt the caller.
+Additional tests will be added soon to cover the full telemetry surface.
 """
 
 import pytest
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 
 from nipoppy.exceptions import ReturnCode
-from nipoppy.telemetry.handler import TelemetryHandler
+from nipoppy.workflows.services.telemetry import TelemetryHandler
 
 
 def _data_points(reader: InMemoryMetricReader, metric_name: str):
@@ -68,16 +67,16 @@ class TestInitialize:
 
 class TestCommandCompletion:
     @pytest.mark.parametrize(
-        "return_code,expected_status",
+        "return_code",
         [
-            (ReturnCode.SUCCESS, "success"),
-            (ReturnCode.PARTIAL_SUCCESS, "partial"),
-            (ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, "partial"),
-            (ReturnCode.UNKNOWN_FAILURE, "failure"),
+            ReturnCode.SUCCESS,
+            ReturnCode.PARTIAL_SUCCESS,
+            ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN,
+            ReturnCode.UNKNOWN_FAILURE,
         ],
     )
-    def test_status_mapping(self, return_code, expected_status):
-        """Return codes map to the expected success/partial/failure status."""
+    def test_status_mapping(self, return_code):
+        """Return codes map to their enum name/value as status/return_code."""
         reader = InMemoryMetricReader()
         handler = TelemetryHandler(metric_reader=reader)
         handler.initialize()
@@ -88,7 +87,8 @@ class TestCommandCompletion:
         assert len(points) == 1
         assert points[0].value == 1
         assert points[0].attributes["command"] == "run"
-        assert points[0].attributes["status"] == expected_status
+        assert points[0].attributes["status"] == return_code.name
+        assert points[0].attributes["return_code"] == str(return_code.value)
 
 
 class TestLocation:
@@ -98,7 +98,9 @@ class TestLocation:
         handler = TelemetryHandler(metric_reader=reader)
         handler.initialize()
 
-        monkeypatch.setattr("nipoppy.telemetry.handler.get_user_country", lambda: "CA")
+        monkeypatch.setattr(
+            "nipoppy.workflows.services.telemetry._get_user_country", lambda: "CA"
+        )
         handler.record_location()
 
         points = _data_points(reader, "location.by_country")
