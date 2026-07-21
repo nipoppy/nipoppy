@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 import shlex
 import subprocess
+import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
 from typing import Optional, Protocol, Sequence
 
+from nipoppy._version import __version__
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, StrOrPathLike
 from nipoppy.exceptions import FileOperationError, ReturnCode
@@ -26,6 +28,7 @@ from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
 )
+from nipoppy.workflows.services.telemetry import TelemetryHandler
 
 logger = get_logger()
 
@@ -177,6 +180,8 @@ class BaseWorkflow(Base, ABC):
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
+        self.telemetry = TelemetryHandler(service_version=__version__)
+
         logger.set_verbose(self.verbose)
 
     def run_setup(self):
@@ -196,13 +201,19 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
+        self.telemetry.initialize()
         try:
             self.run_setup()
             self.run_main()
-        except Exception:
-            raise
         finally:
             self.run_cleanup()
+            # return_code is finalized by the CLI's exception_handler after run()
+            # returns, so detect an in-flight exception here to record failures
+            # accurately.
+            return_code = self.return_code
+            if sys.exc_info()[0] is not None and return_code == ReturnCode.SUCCESS:
+                return_code = ReturnCode.UNKNOWN_FAILURE
+            self.telemetry.record_command_completion(self.name, return_code)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):

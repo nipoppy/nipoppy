@@ -325,6 +325,23 @@ class InitWorkflow(BaseDatasetWorkflow):
         )
 
     def run_cleanup(self):
-        """Log a success message."""
+        """Log a success message and record geographic telemetry."""
         logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
+
+        # ── Telemetry notice ──────────────────────────────────────────────────
+        # Nipoppy collects anonymous usage metrics (command counts and country
+        # of installation) to help improve the tool.  No personally identifiable
+        # information is collected.
+        # To opt out, set the environment variable before running nipoppy:
+        #   export OTEL_SDK_DISABLED=true
+        # To silence this message without disabling telemetry, comment out the
+        # logger.info line below.
+        logger.info(
+            "Nipoppy collects anonymous usage metrics (command counts, country "
+            "of use). No personal data is collected. "
+            "To opt out: export OTEL_SDK_DISABLED=true"
+        )
+        # ─────────────────────────────────────────────────────────────────────
+
+        self.telemetry.record_location()
         return super().run_cleanup()

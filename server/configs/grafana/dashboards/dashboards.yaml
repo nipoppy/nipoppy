@@ -1,0 +1,21 @@
+# === SERVER-SIDE: Grafana Dashboard Provisioning ===
+# Auto-loads dashboard JSON files from this directory
+#
+# Dashboards:
+# - nipoppy-telemetry.json: Main dashboard with separated command/location sections
+# - nipoppy-telemetry-exhaustive.json: Showcase dashboard using every emitted label
+# - nipoppy-init.json: Legacy dashboard (can be removed)
+
+apiVersion: 1
+
+providers:
+  - name: 'Nipoppy Dashboards'
+    orgId: 1
+    folder: ''               # Root folder (no subfolder)
+    type: file
+    disableDeletion: false   # Allow deletion from UI
+    updateIntervalSeconds: 10
+    allowUiUpdates: true     # Allow editing in UI
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false
