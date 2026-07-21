@@ -108,8 +108,8 @@ includehidden:
 titlesonly:
 caption: Other
 ---
-changelog
-team
-contributing
-glossary
+other/changelog
+other/team
+other/contributing
+other/glossary
 ```
