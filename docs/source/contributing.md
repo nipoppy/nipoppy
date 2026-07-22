@@ -1,5 +1,12 @@
 # Contributing
 
+> [!IMPORTANT]
+> The Nipoppy development team hosts biweekly meetings on Discord to review issues and PRs requiring attention and plan priorities for the near future.
+>
+> This is a perfect opportunity to get more involved with the development of Nipoppy.
+> Anyone is welcome to join these "open dev meetings".
+> See the event on the [Nipoppy Discord server](https://discord.gg/dQGYADCCMB) for exact meeting times.
+
 > [!WARNING]
 > Ensure you read [our policy on AI-generated content](#use-of-generative-ai).
 
