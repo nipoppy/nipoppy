@@ -111,12 +111,12 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             logger.warning(
                 f"Adding {len(added_variables)} variable(s) to the global config file:"
             )
-            json5_updates = []
+            updates = []
             for variable_name in added_variables:
                 variable_description = pipeline_config.VARIABLES[variable_name]
                 logger.warning(f"\t{variable_name}\t{variable_description}")
 
-                json5_updates.append(
+                updates.append(
                     (
                         [
                             "PIPELINE_VARIABLES",
@@ -137,7 +137,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
             # save
             if not self.dry_run:
-                update_json5_file(self.study.layout.fpath_config, json5_updates)
+                update_json5_file(self.study.layout.fpath_config, updates)
 
         return config
 
