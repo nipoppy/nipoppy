@@ -27,9 +27,9 @@ If the pipeline you want to run is not listed, you will have to [install](<proje
 ## Running the pipeline
 
 The command to run a pipeline depends on the **pipeline type**:
-- BIDSification pipelines: [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>)
-- Processing pipelines: [`nipoppy process`](<project:../../cli_reference/process.rst>)
-- Extraction pipelines: [`nipoppy extract`](<project:../../cli_reference/extract.rst>)
+- BIDSification pipelines: [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>)
+- Processing pipelines: [`nipoppy process`](<project:../../reference/cli_reference/process.rst>)
+- Extraction pipelines: [`nipoppy extract`](<project:../../reference/cli_reference/extract.rst>)
 
 The minimal command to run any of these commands is:
 

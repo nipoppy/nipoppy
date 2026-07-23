@@ -4,7 +4,7 @@ This guide shows possible ways to parallelize pipeline runs on computer systems 
 
 ## Getting a list of participants and sessions to run
 
-The [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../cli_reference/process.rst>), and [`nipoppy extract`](<project:../../cli_reference/extract.rst>) commands all have a `--write-list` option.
+The [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../reference/cli_reference/process.rst>), and [`nipoppy extract`](<project:../../reference/cli_reference/extract.rst>) commands all have a `--write-list` option.
 If this option is specified, instead of launching the pipeline, the command will write a TSV file of participant and session IDs that need to be run.
 
 ```console

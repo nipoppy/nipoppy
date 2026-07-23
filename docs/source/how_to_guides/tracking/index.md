@@ -4,7 +4,7 @@ This guide shows how to track the completion status of [BIDSification](#bidsific
 
 ## BIDSification pipelines
 
-The [`nipoppy track-curation`](../../cli_reference/track_curation.rst) command can be used to track dataset curation stages (reorganization and BIDSification).
+The [`nipoppy track-curation`](../../reference/cli_reference/track_curation.rst) command can be used to track dataset curation stages (reorganization and BIDSification).
 The command to create a curation status file from scratch is:
 
 ```console
@@ -16,7 +16,7 @@ Without the `--regenerate` flag, `nipoppy track-curation` will only update the c
 ```
 
 The above command creates or updates the curation status file at {{fpath_curation_status}}.
-A summary of curation statuses can be displayed by running the [`nipoppy status`](../../cli_reference/status.rst) command, which outputs a table with participant counts at different curation stages, like this:
+A summary of curation statuses can be displayed by running the [`nipoppy status`](../../reference/cli_reference/status.rst) command, which outputs a table with participant counts at different curation stages, like this:
 
 ```
       Participant counts by session at each Nipoppy checkpoint
@@ -47,7 +47,7 @@ See {doc}`../reorganize_sourcedata/index` for how to configure the location to c
 (how-to-track-processing)=
 ## Processing pipelines
 
-The [`nipoppy track-processing`](../../cli_reference/track_processing.rst) command can be used to track the completion status of processing pipelines. The minimal command is:
+The [`nipoppy track-processing`](../../reference/cli_reference/track_processing.rst) command can be used to track the completion status of processing pipelines. The minimal command is:
 
 ```console
 $ nipoppy track-processing --pipeline <PIPELINE_NAME>
@@ -60,7 +60,7 @@ It is also possible to restrict the run to a single participant and/or session b
 ```
 
 The above command creates or updates the processing status file at {{fpath_processing_status}}.
-A summary of pipeline statuses can be displayed by running the [`nipoppy status`](../../cli_reference/status.rst) command:
+A summary of pipeline statuses can be displayed by running the [`nipoppy status`](../../reference/cli_reference/status.rst) command:
 
 ```
  Participant counts by session at each Nipoppy
