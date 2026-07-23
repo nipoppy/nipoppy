@@ -53,10 +53,10 @@ def ensure_schema_support(
 def get_earliest_schema_version(
     config_type: ConfigType,
 ) -> str:
-    """Get default factory for schema version field in config objects.
+    """Get the earliest schema version for a config type.
 
-    This is used to warn users when they are using a config file that does not include a
-     schema version field.
+    If set as the default_factory in a Pydantic model, this will warn users when 
+    they are using a config file that does not include a schema version field.
     """
     latest_version = get_current_schema_version(config_type)
     logger.warning(
