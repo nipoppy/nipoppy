@@ -7,7 +7,9 @@ import pytest
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 from ..conftest import datetime_fixture  # noqa F401
-from ..conftest import TEST_PIPELINE
+from ..conftest import (
+    TEST_PIPELINE,
+)
 
 ZENODO_SANDBOX = True
 DEFAULT_PREVIEW = "config.json"
@@ -124,7 +126,6 @@ def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict
     reason="Requires Zenodo token",
 )
 def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
-
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
     doi = zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
@@ -159,7 +160,7 @@ def test_create_new_record_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
 
 @pytest.mark.api
 @pytest.mark.parametrize("query", ["FMRIPREP", ""])
-@pytest.mark.parametrize("keywords", [None, ["Nipoppy", "schema_version:1"]])
+@pytest.mark.parametrize("keywords", [None, ["Nipoppy", "pipeline_type:processing"]])
 def test_search_records(query, keywords, zenodo_api: ZenodoAPI):
     results = zenodo_api.search_records(query, keywords=keywords)
     assert len(results["hits"]) > 0

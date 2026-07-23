@@ -1,15 +1,17 @@
 """Tests for dataset layout class."""
 
+import functools
 import shutil
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.config.schema import get_earliest_schema_version
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, LayoutError
-from nipoppy.layout import DatasetLayout, PathInfo
-from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
+from nipoppy.layout import DatasetLayout, LayoutConfig, PathInfo
+from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT, load_json
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_REQUIRED_FPATH_MAP,
@@ -33,9 +35,23 @@ def create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
             shutil.rmtree(path_to_delete, ignore_errors=True)
 
 
-def test_config_path_infos():
-    config = DatasetLayout("my_dataset").config
-    assert all([isinstance(path_info, PathInfo) for path_info in config.path_infos])
+@pytest.fixture
+def layout_config() -> LayoutConfig:
+    return LayoutConfig(**load_json(FPATH_DEFAULT_LAYOUT))
+
+
+def test_config_path_infos(layout_config):
+    assert all(
+        [isinstance(path_info, PathInfo) for path_info in layout_config.path_infos]
+    )
+
+
+def test_schema_version_default_factory():
+    default_factory = LayoutConfig.model_fields["SCHEMA_VERSION"].default_factory
+
+    assert isinstance(default_factory, functools.partial)
+    assert default_factory.func is get_earliest_schema_version
+    assert default_factory.keywords == {"config_type": ConfigType.LAYOUT}
 
 
 def test_init_default(dpath_root):

@@ -1,5 +1,6 @@
 """Tests for the pipeline configuration class."""
 
+import functools
 from contextlib import nullcontext
 
 import pytest
@@ -13,7 +14,11 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import (
+    get_current_schema_version,
+    get_earliest_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum
 
 FIELDS_BASE_PIPELINE = [
     "NAME",
@@ -37,7 +42,7 @@ def valid_data() -> dict:
     return {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
 
 
@@ -93,6 +98,14 @@ def test_fields_pipeline_info():
 def test_fields_missing_required(model_class, data):
     with pytest.raises(ValidationError):
         model_class(**data)
+
+
+def test_schema_version_default_factory():
+    default_factory = BasePipelineConfig.model_fields["SCHEMA_VERSION"].default_factory
+
+    assert isinstance(default_factory, functools.partial)
+    assert default_factory.func is get_earliest_schema_version
+    assert default_factory.keywords == {"config_type": ConfigType.PIPELINE}
 
 
 @pytest.mark.parametrize(
@@ -172,18 +185,6 @@ def test_error_pipeline_type(valid_data, extra_data, pipeline_class, valid):
         else nullcontext()
     ):
         pipeline_class(**data)
-
-
-def test_error_schema_version():
-    with pytest.raises(
-        ValidationError,
-        match=("Pipeline .* uses schema version.*which is incompatible with"),
-    ):
-        BasePipelineConfig(
-            NAME="my_pipeline",
-            VERSION="1.0.0",
-            SCHEMA_VERSION="invalid_version",
-        )
 
 
 def test_warning_if_duplicate_dependencies(valid_data):

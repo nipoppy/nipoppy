@@ -2,17 +2,29 @@
 
 from __future__ import annotations
 
+import functools
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import (
+    ensure_schema_support,
+    get_current_schema_version,
+    get_earliest_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
@@ -112,6 +124,24 @@ class PipelineVariables(BaseModel):
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.STUDY,
+            )
+        ),
+    ] = Field(
+        default_factory=functools.partial(
+            get_earliest_schema_version,
+            config_type=ConfigType.STUDY,
+        ),
+        description=(
+            "Version of the schema used for this study configuration. The current "
+            f"latest version is {get_current_schema_version(ConfigType.STUDY)}"
+        ),
+    )
     HPC_PREAMBLE: list[str] = Field(
         default=[],
         description=(

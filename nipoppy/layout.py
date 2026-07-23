@@ -1,13 +1,29 @@
 """Dataset layout."""
 
+import functools
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Annotated, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+)
 
 from nipoppy.base import Base
-from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import (
+    ensure_schema_support,
+    get_current_schema_version,
+    get_earliest_schema_version,
+)
+from nipoppy.env import (
+    NIPOPPY_DIR_NAME,
+    ConfigType,
+    PipelineTypeEnum,
+    StrOrPathLike,
+)
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
@@ -53,6 +69,24 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.LAYOUT,
+            )
+        ),
+    ] = Field(
+        default_factory=functools.partial(
+            get_earliest_schema_version,
+            config_type=ConfigType.LAYOUT,
+        ),
+        description=(
+            "Version of the schema used for this layout configuration. The current "
+            f"latest version is {get_current_schema_version(ConfigType.LAYOUT)}"
+        ),
+    )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"

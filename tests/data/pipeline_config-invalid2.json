@@ -6,6 +6,6 @@
             "TRACKER_CONFIG_FILE": "tracker.json"
         }
     ],
-    "SCHEMA_VERSION": "1",
-    "PIPELINE_TYPE": "extraction"
+    "PIPELINE_TYPE": "extraction",
+    "SCHEMA_VERSION": "1.0"
 }

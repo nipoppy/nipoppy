@@ -33,5 +33,5 @@
         "TEMPLATEFLOW_HOME": "Path to the directory where TemplateFlow will store templates (can be empty)"
     },
     "PIPELINE_TYPE": "processing",
-    "SCHEMA_VERSION": "1"
+    "SCHEMA_VERSION": "1.0"
 }
