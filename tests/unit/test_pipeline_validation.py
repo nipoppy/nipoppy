@@ -1,6 +1,8 @@
 """Tests for the nipoppy.pipeline_validation module."""
 
+import json
 import logging
+import sys
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -84,6 +86,19 @@ def test_check_descriptor_file(caplog: pytest.LogCaptureFixture):
         _check_descriptor_file(DPATH_TEST_DATA / "descriptor-valid.json"), str
     )
     assert len(caplog.records) == 0
+
+
+def test_check_descriptor_file_with_zenodo_tool_doi_without_requests(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    descriptor = json.loads((DPATH_TEST_DATA / "descriptor-valid.json").read_text())
+    descriptor["tool-doi"] = "example/zenodo.1234"
+    fpath_descriptor = tmp_path / "descriptor.json"
+    fpath_descriptor.write_text(json.dumps(descriptor))
+    monkeypatch.setitem(sys.modules, "requests", None)
+    monkeypatch.delitem(sys.modules, "boutiques.puller", raising=False)
+
+    assert isinstance(_check_descriptor_file(fpath_descriptor), str)
 
 
 def test_check_descriptor_file_deprecation_warning(caplog: pytest.LogCaptureFixture):
