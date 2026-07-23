@@ -3,8 +3,7 @@
 Overview
 --------
 This module applies targeted edits to JSON5 text *without* reformatting
-it, so comments and existing layout survive. It never rebuilds the document
-from a parsed tree. Instead it works in two phases:
+it, so comments and existing layout survive. Edits work in two phases:
 
 1. **Locate** the source span (start/end character indices) of the object,
    member, or value that an edit targets.
