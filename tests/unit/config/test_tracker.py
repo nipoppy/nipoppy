@@ -8,7 +8,7 @@ from nipoppy.config.schema import get_earliest_schema_version
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import ConfigType
 
-FIELDS_STEP = [
+FIELDS_TRACKER = [
     "SCHEMA_VERSION",
     "PATHS",
     "PARTICIPANT_SESSION_DIR",
@@ -23,10 +23,10 @@ FIELDS_STEP = [
 )
 def test_fields(data):
     tracker_config = TrackerConfig(**data)
-    for field in FIELDS_STEP:
+    for field in FIELDS_TRACKER:
         assert hasattr(tracker_config, field)
 
-    assert len(set(tracker_config.model_dump())) == len(FIELDS_STEP)
+    assert len(set(tracker_config.model_dump())) == len(FIELDS_TRACKER)
 
 
 def test_no_extra_field():
