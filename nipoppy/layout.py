@@ -328,16 +328,18 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: str,
         participant_id: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
             self.dpath_work
-            / get_pipeline_tag(pipeline_name, pipeline_version)
+            / get_pipeline_tag(pipeline_name, pipeline_version, pipeline_step)
             / get_pipeline_tag(
                 pipeline_name,
                 pipeline_version,
+                pipeline_step,
                 participant_id=participant_id,
                 session_id=session_id,
             )
@@ -373,6 +375,7 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: str,
         participant_id: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> Path:
@@ -380,6 +383,7 @@ class DatasetLayout(Base):
         dname = get_pipeline_tag(
             pipeline_name,
             pipeline_version,
+            pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )

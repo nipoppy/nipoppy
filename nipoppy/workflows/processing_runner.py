@@ -23,7 +23,6 @@ class ProcessingRunner(Runner):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        name: str = "process",
         pipeline_version: Optional[str] = None,
         pipeline_step: Optional[str] = None,
         participant_id: str = None,
@@ -40,7 +39,8 @@ class ProcessingRunner(Runner):
     ):
         super().__init__(
             dpath_root=dpath_root,
-            name=name,
+            name="process",
+            subcommand="process",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
