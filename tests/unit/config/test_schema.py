@@ -14,12 +14,8 @@ from nipoppy.exceptions import ConfigError
 from tests.conftest import DPATH_TEST_DATA
 
 
-@pytest.mark.parametrize("config_type", ConfigType)
-def test_get_earliest_schema_version(
-    config_type: ConfigType, caplog: pytest.LogCaptureFixture
-):
-    assert get_earliest_schema_version(config_type) == EARLIEST_SCHEMA_VERSION
-    assert "Defaulting to the earliest known version" in caplog.text
+def test_get_earliest_schema_version(caplog: pytest.LogCaptureFixture):
+    assert get_earliest_schema_version() == EARLIEST_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize("config_type", ConfigType)

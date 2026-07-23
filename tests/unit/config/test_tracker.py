@@ -1,12 +1,9 @@
 """Tests for TrackerConfig class."""
 
-import functools
-
 import pytest
 
-from nipoppy.config.schema import get_earliest_schema_version
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import ConfigType
 
 FIELDS_TRACKER = [
     "SCHEMA_VERSION",
@@ -35,11 +32,8 @@ def test_no_extra_field():
 
 
 def test_schema_version_default_factory():
-    default_factory = TrackerConfig.model_fields["SCHEMA_VERSION"].default_factory
-
-    assert isinstance(default_factory, functools.partial)
-    assert default_factory.func is get_earliest_schema_version
-    assert default_factory.keywords == {"config_type": ConfigType.TRACKER}
+    config = TrackerConfig(PATHS=["path1"])
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_at_least_one_path():

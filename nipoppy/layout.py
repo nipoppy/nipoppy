@@ -14,9 +14,9 @@ from pydantic import (
 
 from nipoppy.base import Base
 from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
     ensure_schema_support,
     get_current_schema_version,
-    get_earliest_schema_version,
 )
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
@@ -78,10 +78,7 @@ class LayoutConfig(BaseModel):
             )
         ),
     ] = Field(
-        default_factory=functools.partial(
-            get_earliest_schema_version,
-            config_type=ConfigType.LAYOUT,
-        ),
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this layout configuration. The current "
             f"latest version is {get_current_schema_version(ConfigType.LAYOUT)}"

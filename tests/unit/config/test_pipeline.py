@@ -1,6 +1,5 @@
 """Tests for the pipeline configuration class."""
 
-import functools
 from contextlib import nullcontext
 
 import pytest
@@ -15,8 +14,8 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import BasePipelineStepConfig
 from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
     get_current_schema_version,
-    get_earliest_schema_version,
 )
 from nipoppy.env import ConfigType, PipelineTypeEnum
 
@@ -101,11 +100,8 @@ def test_fields_missing_required(model_class, data):
 
 
 def test_schema_version_default_factory():
-    default_factory = BasePipelineConfig.model_fields["SCHEMA_VERSION"].default_factory
-
-    assert isinstance(default_factory, functools.partial)
-    assert default_factory.func is get_earliest_schema_version
-    assert default_factory.keywords == {"config_type": ConfigType.PIPELINE}
+    config = BasePipelineConfig(NAME="my_pipeline", VERSION="1.2.3")
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize(

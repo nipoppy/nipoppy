@@ -1,14 +1,13 @@
 """Tests for dataset layout class."""
 
-import functools
 import shutil
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.schema import get_earliest_schema_version
-from nipoppy.env import ConfigType, PipelineTypeEnum
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.layout import DatasetLayout, LayoutConfig, PathInfo
 from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT, load_json
@@ -46,12 +45,10 @@ def test_config_path_infos(layout_config):
     )
 
 
-def test_schema_version_default_factory():
-    default_factory = LayoutConfig.model_fields["SCHEMA_VERSION"].default_factory
-
-    assert isinstance(default_factory, functools.partial)
-    assert default_factory.func is get_earliest_schema_version
-    assert default_factory.keywords == {"config_type": ConfigType.LAYOUT}
+def test_schema_version_default_factory(layout_config):
+    config = layout_config.model_dump()
+    del config["SCHEMA_VERSION"]
+    assert LayoutConfig(**config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_init_default(dpath_root):

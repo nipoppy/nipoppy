@@ -20,9 +20,9 @@ from typing_extensions import Self
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
     ensure_schema_support,
     get_current_schema_version,
-    get_earliest_schema_version,
 )
 from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError
@@ -133,10 +133,7 @@ class Config(_SchemaWithContainerConfig):
             )
         ),
     ] = Field(
-        default_factory=functools.partial(
-            get_earliest_schema_version,
-            config_type=ConfigType.STUDY,
-        ),
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this study configuration. The current "
             f"latest version is {get_current_schema_version(ConfigType.STUDY)}"

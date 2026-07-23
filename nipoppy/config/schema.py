@@ -50,21 +50,8 @@ def ensure_schema_support(
     return schema_version
 
 
-def get_earliest_schema_version(
-    config_type: ConfigType,
-) -> str:
-    """Get the earliest schema version for a config type.
-
-    If set as the default_factory in a Pydantic model, this will warn users when
-    they are using a config file that does not include a schema version field.
-    """
-    logger.warning(
-        f"{config_type.value.capitalize()} config is missing the required "
-        f"{SCHEMA_VERSION_FIELD} field. Defaulting to the earliest known version "
-        f"({EARLIEST_SCHEMA_VERSION}); this will become an error in a future Nipoppy "
-        "release. Add the following field to the config:\n"
-        f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
-    )
+def get_earliest_schema_version() -> str:
+    """Get the earliest schema version for a config type."""
     return EARLIEST_SCHEMA_VERSION
 
 
@@ -83,6 +70,11 @@ def ensure_config_file_schema_version_exists(
             )
         else:
             logger.warning(
+                f"{config_type.value.capitalize()} config is missing the "
+                f"required {SCHEMA_VERSION_FIELD} field. Defaulting to the earliest "
+                f"known version ({EARLIEST_SCHEMA_VERSION}); this will become an error "
+                f"in a future Nipoppy release. Add the following field to the config:\n"
+                f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
                 f"Pipeline configuration file {fpath_config} is missing "
                 f"{SCHEMA_VERSION_FIELD} field."
             )

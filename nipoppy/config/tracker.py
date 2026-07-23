@@ -15,9 +15,9 @@ from pydantic import (
 )
 
 from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
     ensure_schema_support,
     get_current_schema_version,
-    get_earliest_schema_version,
 )
 from nipoppy.env import ConfigType
 from nipoppy.exceptions import ConfigError
@@ -35,10 +35,7 @@ class TrackerConfig(BaseModel):
             )
         ),
     ] = Field(
-        default_factory=functools.partial(
-            get_earliest_schema_version,
-            config_type=ConfigType.TRACKER,
-        ),
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this tracker configuration. The current "
             f"latest version is {get_current_schema_version(ConfigType.TRACKER)}"
