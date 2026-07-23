@@ -206,12 +206,14 @@ def test_create_config_file_uses_user_config(
 
 
 def test_create_config_file_default_config_ignores_user_config(
-    dpath_root: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ):
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
 
-    workflow = InitWorkflow(dpath_root=dpath_root, default_config=True)
+    workflow.default_config = True
     workflow._create_config_file(fpath_user_config=fpath_user_config)
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)

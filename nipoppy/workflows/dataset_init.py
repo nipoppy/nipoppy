@@ -212,12 +212,11 @@ class InitWorkflow(BaseDatasetWorkflow):
             raise ValueError(f"Invalid mode: {self.mode}")
 
     def _create_config_file(
-        self,
-        fpath_user_config: StrOrPathLike = FPATH_USER_CONFIG,
-        fpath_default_config: StrOrPathLike = FPATH_SAMPLE_CONFIG,
+        self, fpath_user_config: StrOrPathLike = FPATH_USER_CONFIG
     ) -> None:
         """Write the study's config file."""
         fpath_user_config = Path(fpath_user_config).expanduser()
+        fpath_default_config = FPATH_SAMPLE_CONFIG
 
         fpath_config_to_copy = fpath_default_config
         if not self.default_config and fpath_user_config.is_file():
