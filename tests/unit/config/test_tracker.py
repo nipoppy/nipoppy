@@ -34,9 +34,10 @@ def test_no_extra_field():
         TrackerConfig(not_a_field="a")
 
 
-def test_schema_version_default():
+def test_schema_version_default(caplog: pytest.LogCaptureFixture):
     tracker_config = TrackerConfig(PATHS=["path1"])
     assert tracker_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+    assert "Defaulting to the earliest known version" in caplog.text
 
 
 def test_error_invalid_schema_version():

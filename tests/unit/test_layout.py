@@ -45,8 +45,12 @@ def test_config_path_infos(layout_config):
     )
 
 
-def test_schema_version_default(layout_config):
-    assert layout_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+def test_schema_version_default(layout_config, caplog: pytest.LogCaptureFixture):
+    data = layout_config.model_dump()
+    del data["SCHEMA_VERSION"]
+
+    assert LayoutConfig(**data).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+    assert "Defaulting to the earliest known version" in caplog.text
 
 
 def test_error_invalid_schema_version():

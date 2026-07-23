@@ -99,9 +99,10 @@ def test_fields_missing_required(model_class, data):
         model_class(**data)
 
 
-def test_pipeline_schema_version_default():
+def test_pipeline_schema_version_default(caplog: pytest.LogCaptureFixture):
     config = BasePipelineConfig(NAME="my_pipeline", VERSION="1.2.3")
     assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+    assert "Defaulting to the earliest known version" in caplog.text
 
 
 @pytest.mark.parametrize(

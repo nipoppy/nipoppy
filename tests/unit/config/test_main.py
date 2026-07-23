@@ -83,9 +83,10 @@ def test_no_extra_fields(valid_config_data):
         Config(**valid_config_data, NOT_A_FIELD="x")
 
 
-def test_schema_version_default(valid_config_data):
+def test_schema_version_default(valid_config_data, caplog: pytest.LogCaptureFixture):
     config = Config(**valid_config_data)
     assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+    assert "Defaulting to the earliest known version" in caplog.text
 
 
 def test_error_invalid_schema_version(valid_config_data):
