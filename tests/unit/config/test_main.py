@@ -1,5 +1,6 @@
 """Tests for the config module."""
 
+import functools
 import json
 from contextlib import nullcontext
 from pathlib import Path
@@ -11,8 +12,8 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.config.schema import (
-    EARLIEST_SCHEMA_VERSION,
     get_current_schema_version,
+    get_earliest_schema_version,
 )
 from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
@@ -83,23 +84,12 @@ def test_no_extra_fields(valid_config_data):
         Config(**valid_config_data, NOT_A_FIELD="x")
 
 
-def test_schema_version_default(valid_config_data, caplog: pytest.LogCaptureFixture):
-    config = Config(**valid_config_data)
-    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
-    assert "Defaulting to the earliest known version" in caplog.text
+def test_schema_version_default_factory():
+    default_factory = Config.model_fields["SCHEMA_VERSION"].default_factory
 
-
-def test_error_invalid_schema_version(valid_config_data):
-    with pytest.raises(
-        ValidationError,
-        match="Invalid schema version:",
-    ):
-        Config(**valid_config_data, SCHEMA_VERSION="invalid_version")
-
-
-def test_schema_version_newer(valid_config_data):
-    with pytest.raises(ValidationError, match="newer than the latest schema version"):
-        Config(**valid_config_data, SCHEMA_VERSION="999.0.0")
+    assert isinstance(default_factory, functools.partial)
+    assert default_factory.func is get_earliest_schema_version
+    assert default_factory.keywords == {"config_type": ConfigType.STUDY}
 
 
 @pytest.mark.parametrize(

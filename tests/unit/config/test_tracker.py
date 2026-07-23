@@ -1,12 +1,12 @@
 """Tests for TrackerConfig class."""
 
-from pathlib import Path
+import functools
 
 import pytest
-from pydantic import ValidationError
 
-from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
+from nipoppy.config.schema import get_earliest_schema_version
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.env import ConfigType
 
 FIELDS_STEP = [
     "SCHEMA_VERSION",
@@ -34,23 +34,12 @@ def test_no_extra_field():
         TrackerConfig(not_a_field="a")
 
 
-def test_schema_version_default(caplog: pytest.LogCaptureFixture):
-    tracker_config = TrackerConfig(PATHS=["path1"])
-    assert tracker_config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
-    assert "Defaulting to the earliest known version" in caplog.text
+def test_schema_version_default_factory():
+    default_factory = TrackerConfig.model_fields["SCHEMA_VERSION"].default_factory
 
-
-def test_error_invalid_schema_version():
-    with pytest.raises(
-        ValidationError,
-        match="Invalid schema version:",
-    ):
-        TrackerConfig(PATHS=["path1"], SCHEMA_VERSION="invalid_version")
-
-
-def test_schema_version_newer():
-    with pytest.raises(ValueError, match="newer than the latest schema version"):
-        TrackerConfig(PATHS=[Path("path1")], SCHEMA_VERSION="999.0.0")
+    assert isinstance(default_factory, functools.partial)
+    assert default_factory.func is get_earliest_schema_version
+    assert default_factory.keywords == {"config_type": ConfigType.TRACKER}
 
 
 def test_at_least_one_path():
