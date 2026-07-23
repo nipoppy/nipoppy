@@ -54,22 +54,19 @@ def test_load_pipeline_config_file():
     )
 
 
-def test_load_pipeline_config_file_requires_schema_version():
-    fpath_config = DPATH_TEST_DATA / "pipeline_config-no-schema-version.json"
-
-    with pytest.raises(ConfigError, match="must include SCHEMA_VERSION"):
-        _load_pipeline_config_file(fpath_config, strict=True)
-
-
-def test_load_pipeline_config_file_warns_no_schema_version(
-    valid_config_data: dict, caplog: pytest.LogCaptureFixture
+@pytest.mark.parametrize("strict", [True, False])
+def test_load_pipeline_config_file_checks_schema_version(
+    strict: bool, mocker: pytest_mock.MockFixture
 ):
-    fpath_config = DPATH_TEST_DATA / "pipeline_config-no-schema-version.json"
+    fpath_config = DPATH_TEST_DATA / "pipeline_config-valid.json"
+    mocked_ensure_schema_version_exists = mocker.patch(
+        "nipoppy.pipeline_validation.ensure_config_file_schema_version_exists"
+    )
 
-    _load_pipeline_config_file(fpath_config)
+    _load_pipeline_config_file(fpath_config, strict=strict)
 
-    assert any(
-        "is missing SCHEMA_VERSION field" in record.message for record in caplog.records
+    mocked_ensure_schema_version_exists.assert_called_once_with(
+        fpath_config, ConfigType.PIPELINE, strict=strict
     )
 
 
