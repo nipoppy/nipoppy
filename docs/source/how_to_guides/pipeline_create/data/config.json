@@ -7,6 +7,7 @@
     },
     "CONTAINER_CONFIG": {
         "ENV_VARS": {},
+        "BIND_PATHS": [],
         "ARGS": []
     },
     "STEPS": [
@@ -20,6 +21,7 @@
             "PYBIDS_IGNORE_FILE": null
         }
     ],
+    "PIPELINE_VARIABLES": {},
     "PIPELINE_TYPE": "processing",
     "SCHEMA_VERSION": "1"
 }
