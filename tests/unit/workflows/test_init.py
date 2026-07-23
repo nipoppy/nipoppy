@@ -185,9 +185,16 @@ def test_run_no_success_message_on_error(
 
 
 def test_create_config_file_defaults_to_sample_when_user_config_missing(
-    workflow: InitWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
-    workflow._create_config_file(fpath_user_config=tmp_path / "missing_config.json")
+    mocker.patch(
+        "nipoppy.workflows.dataset_init.FPATH_USER_CONFIG",
+        tmp_path / "missing_config.json",
+    )
+    workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
     assert "Default config file copied" in caplog.text
@@ -195,11 +202,16 @@ def test_create_config_file_defaults_to_sample_when_user_config_missing(
 
 
 def test_create_config_file_uses_user_config(
-    workflow: InitWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
-    workflow._create_config_file(fpath_user_config=fpath_user_config)
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, fpath_user_config)
     assert "Default config file copied" not in caplog.text
@@ -209,12 +221,15 @@ def test_create_config_file_default_config_ignores_user_config(
     workflow: InitWorkflow,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
 
     workflow.default_config = True
-    workflow._create_config_file(fpath_user_config=fpath_user_config)
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
     assert "Default config file copied" in caplog.text
@@ -222,12 +237,16 @@ def test_create_config_file_default_config_ignores_user_config(
 
 
 def test_create_config_file_warns_and_falls_back_for_invalid_user_config(
-    workflow: InitWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
 ):
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"NOT_A_CONFIG_FIELD": "config"}\n')
 
-    workflow._create_config_file(fpath_user_config=fpath_user_config)
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
     assert f"{fpath_user_config} is invalid" in caplog.text
