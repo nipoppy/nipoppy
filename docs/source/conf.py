@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from nipoppy._version import __version__
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import FPATH_USER_CONFIG, PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 from nipoppy.zenodo_api import ZenodoAPI
 
@@ -155,6 +155,7 @@ myst_substitutions = {
     "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
     "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
+    "fpath_user_config": f"`{FPATH_USER_CONFIG}`",
     "zenodo_id_dcm2bids_3_2_0": zenodo_api.get_latest_version_id("16876754"),
     "zenodo_id_mriqc_23_1_0": zenodo_api.get_latest_version_id("15427844"),
 }
