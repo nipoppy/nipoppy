@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 import boutiques
+from boutiques.validator import validate_descriptor
 from pydantic_core import ValidationError
 
 from nipoppy.config.hpc import HpcConfig
@@ -69,7 +70,7 @@ def _check_descriptor_file(
 
     descriptor_str = json.dumps(descriptor_dict)
     try:
-        boutiques.validate(descriptor_str)
+        validate_descriptor(descriptor_dict)
     except boutiques.DescriptorValidationError as exception:
         raise ConfigError(
             f"Descriptor file {fpath_descriptor} is invalid:\n{exception}"
