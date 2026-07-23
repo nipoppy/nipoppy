@@ -58,17 +58,11 @@ def get_earliest_schema_version(
     If set as the default_factory in a Pydantic model, this will warn users when
     they are using a config file that does not include a schema version field.
     """
-    latest_version = get_current_schema_version(config_type)
     logger.warning(
-        f"{config_type.value.capitalize()} config must include "
-        f"{SCHEMA_VERSION_FIELD} field with an explicit version, but it is"
-        f" missing. Latest schema version is {latest_version}."
-    )
-    logger.warning(
-        "Setting schema version to the earliest known version"
-        f" ({EARLIEST_SCHEMA_VERSION}). This will raise an error in a future"
-        " version of Nipoppy. To fix this warning, please add the following field"
-        " to your config file:\n"
+        f"{config_type.value.capitalize()} config is missing the required "
+        f"{SCHEMA_VERSION_FIELD} field. Defaulting to the earliest known version "
+        f"({EARLIEST_SCHEMA_VERSION}); this will become an error in a future Nipoppy "
+        "release. Add the following field to the config:\n"
         f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
     )
     return EARLIEST_SCHEMA_VERSION
@@ -88,15 +82,11 @@ def ensure_config_file_schema_version_exists(
                 " missing"
             )
         else:
-            current_version = get_current_schema_version(config_type)
             logger.warning(
                 f"Pipeline configuration file {fpath_config} is missing "
-                f"{SCHEMA_VERSION_FIELD} field. Assuming version "
-                f"{current_version}, but this will raise an error in "
-                "a future version of Nipoppy. To fix this warning, please add the "
-                "following field to your pipeline configuration file:\n"
-                f'"{SCHEMA_VERSION_FIELD}": "{current_version}"'
+                f"{SCHEMA_VERSION_FIELD} field."
             )
+            current_version = get_current_schema_version(config_type)
             config[SCHEMA_VERSION_FIELD] = current_version
 
     return config[SCHEMA_VERSION_FIELD]

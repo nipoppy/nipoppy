@@ -66,7 +66,6 @@ class TrackerConfig(BaseModel):
         Validate the configuration after instantiation.
 
         Specifically:
-        - Check schema version compatibility.
         - Make sure PATHS is not an empty list
         """
         if len(self.PATHS) == 0:

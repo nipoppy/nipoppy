@@ -129,7 +129,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         Validate the pipeline configuration after creation.
 
         Specifically:
-        - Check schema version compatibility.
         - If STEPS has more than one item, make sure that each step has a unique name.
         - If _expected_pipeline_type is not None, make sure it matches PIPELINE_TYPE.
         """
