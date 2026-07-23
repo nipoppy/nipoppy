@@ -1,8 +1,8 @@
-"""Tests for the utils.json5_edit module."""
+"""Tests for the utils.json5 module."""
 
 import json5
 
-from nipoppy.utils.json5_edit import update_json5_text
+from nipoppy.utils.json5 import update_json5_text
 from tests.conftest import DPATH_TEST_DATA
 
 

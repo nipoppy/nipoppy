@@ -1,11 +1,11 @@
-"""Tests for the utils.json5_edit module."""
+"""Tests for the utils.json5 module."""
 
 from pathlib import Path
 
 import json5
 import pytest
 
-from nipoppy.utils.json5_edit import (
+from nipoppy.utils.json5 import (
     _find_member_by_key_path,
     _find_root_object_span,
     _parse_object_members,

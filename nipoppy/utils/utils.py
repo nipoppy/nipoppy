@@ -16,7 +16,7 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import ConfigError, JSONError, NipoppyError
+from nipoppy.exceptions import ConfigError, JSON5Error, JSONError, NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -96,11 +96,16 @@ def load_json(
     """
     fpath = Path(fpath)
     json_text = fpath.read_text()
-    parser = json5.loads if allow_json5 else json.loads
-    try:
-        return parser(json_text, **kwargs)
-    except json.JSONDecodeError as e:
-        raise JSONError(e, fpath=fpath) from e
+    if allow_json5:
+        try:
+            return json5.loads(json_text, **kwargs)
+        except ValueError as e:
+            raise JSON5Error(e, fpath=fpath) from e
+    else:
+        try:
+            return json.loads(json_text, **kwargs)
+        except json.JSONDecodeError as e:
+            raise JSONError(e, fpath=fpath) from e
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):

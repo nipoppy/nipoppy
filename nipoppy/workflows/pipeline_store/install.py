@@ -19,7 +19,7 @@ from nipoppy.exceptions import (
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
-from nipoppy.utils.json5_edit import update_json5_file
+from nipoppy.utils.json5 import update_json5_file
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow, _run_command
 from nipoppy.zenodo_api import ZenodoAPI

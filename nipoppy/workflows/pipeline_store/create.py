@@ -10,7 +10,7 @@ from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
-from nipoppy.utils.json5_edit import update_json5_file
+from nipoppy.utils.json5 import update_json5_file
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.base import BaseWorkflow
 
