@@ -195,7 +195,7 @@ def test_launch_boutiques_run(
         (
             ApptainerHandler(),
             [
-                "--force-singularity",
+                "--force-apptainer",
                 "--no-automount",
                 "--imagepath",
                 "--container-opts=",
