@@ -55,7 +55,7 @@ def get_earliest_schema_version(
 ) -> str:
     """Get the earliest schema version for a config type.
 
-    If set as the default_factory in a Pydantic model, this will warn users when 
+    If set as the default_factory in a Pydantic model, this will warn users when
     they are using a config file that does not include a schema version field.
     """
     latest_version = get_current_schema_version(config_type)
