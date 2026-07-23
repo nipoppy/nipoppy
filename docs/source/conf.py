@@ -162,6 +162,8 @@ myst_substitutions = {
 
 # -- Autodoc/AutoAPI configuration ----------------------------------------------------
 
+autoapi_root = "reference/autoapi"
+
 autodoc_typehints = "description"
 
 autoapi_dirs = ["../../nipoppy"]

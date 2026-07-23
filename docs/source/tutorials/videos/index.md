@@ -13,11 +13,11 @@ or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and down
 ## 1. nipoppy init
 
 In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
-- run the [`nipoppy init`](../../cli_reference/init.rst) command
+- run the [`nipoppy init`](../../reference/cli_reference/init.rst) command
 - discover the directories that follow the Nipoppy specification
-- explore the [`nipoppy status`](../../cli_reference/status.rst) command
+- explore the [`nipoppy status`](../../reference/cli_reference/status.rst) command
 - modify the content of the [`manifest.tsv`](../../explanations/manifest.md) file according to our dataset
-- and run the [`nipoppy track-curation --regenerate`](../../cli_reference/track_curation.rst) command
+- and run the [`nipoppy track-curation --regenerate`](../../reference/cli_reference/track_curation.rst) command
 
 Duration: 7:43m
 
@@ -26,7 +26,7 @@ Duration: 7:43m
 ## 2. nipoppy pipeline
 
 In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. More concretely, we will
-- explore the [`nipoppy pipeline`](../../cli_reference/pipeline_install.rst) subcommands
+- explore the [`nipoppy pipeline`](../../reference/cli_reference/pipeline_install.rst) subcommands
 - learn how to share containers
 - set pipeline configurations
 
@@ -40,7 +40,7 @@ Duration: 6:31m
 
 In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
 - explore the sourcedata directory
-- run the [`nipoppy reorg`](../../cli_reference/reorg.rst) command
+- run the [`nipoppy reorg`](../../reference/cli_reference/reorg.rst) command
 - and look at the {term}`curation_status.tsv <curation status file>` file
 
 Duration: 6:06m
@@ -51,8 +51,8 @@ Duration: 6:06m
 
 In this tutorial we will cover how to bidsify imaging sourcedata. More concretely, we will
 - install the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) pipeline
-- explore the [`nipoppy bidsify`](../../cli_reference/bidsify.rst) command
-- run [`nipoppy bidsify`](../../cli_reference/bidsify.rst) on our imaging sourcedata
+- explore the [`nipoppy bidsify`](../../reference/cli_reference/bidsify.rst) command
+- run [`nipoppy bidsify`](../../reference/cli_reference/bidsify.rst) on our imaging sourcedata
 
 Duration: 8:31m
 
@@ -62,7 +62,7 @@ Duration: 8:31m
 
 In this tutorial we will cover how to run processing pipelines on imaging data. More concretely, we will
 - check the prerequisites to run [mriqc](https://mriqc.readthedocs.io/en/stable/index.html) on our dataset
-- execute the [`nipoppy process`](../../cli_reference/process.rst) command
+- execute the [`nipoppy process`](../../reference/cli_reference/process.rst) command
 - explore the created output
 
 Duration: 5:26m
@@ -72,7 +72,7 @@ Duration: 5:26m
 ## 6. nipoppy track-processing
 
 In this tutorial we will cover how to track the processing status of our imaging data with Nipoppy. More concretely, we will
-- run the [`nipoppy track-processing`](../../cli_reference/track_processing.rst) command
+- run the [`nipoppy track-processing`](../../reference/cli_reference/track_processing.rst) command
 - get to know the {term}`processing_status.tsv <processing status file>` file
 - and explore the [Neurobagel digest dashboard](https://digest.neurobagel.org/)
 
@@ -82,7 +82,7 @@ Duration: 4:21m
 
 ## 7. nipoppy extract
 
-In this tutorial we will cover how to extract imaging-derived phenotypes (IDPs) from our imaging data by running the [`nipoppy extract`](../../cli_reference/extract.rst) command.
+In this tutorial we will cover how to extract imaging-derived phenotypes (IDPs) from our imaging data by running the [`nipoppy extract`](../../reference/cli_reference/extract.rst) command.
 
 Duration: 3:55m
 
