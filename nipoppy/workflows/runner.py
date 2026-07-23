@@ -163,19 +163,25 @@ class Runner(BasePipelineWorkflow, ABC):
                         f"--container-opts={shlex.join(container_handler.args)}",
                     ]
                 )
-                if container_handler.command in (
-                    ContainerCommandEnum.SINGULARITY,
-                    ContainerCommandEnum.APPTAINER,
-                ):
-                    bosh_exec_launch_args.extend(
-                        [
-                            "--imagepath",
-                            str(self.fpath_container),
-                            "--force-singularity",
-                        ]
-                    )
-                elif container_handler.command == ContainerCommandEnum.DOCKER:
-                    bosh_exec_launch_args.append("--force-docker")
+                match container_handler.command:
+                    case ContainerCommandEnum.SINGULARITY:
+                        bosh_exec_launch_args.extend(
+                            [
+                                "--imagepath",
+                                str(self.fpath_container),
+                                "--force-singularity",
+                            ]
+                        )
+                    case ContainerCommandEnum.APPTAINER:
+                        bosh_exec_launch_args.extend(
+                            [
+                                "--imagepath",
+                                str(self.fpath_container),
+                                "--force-apptainer",
+                            ]
+                        )
+                    case ContainerCommandEnum.DOCKER:
+                        bosh_exec_launch_args.append("--force-docker")
 
         # validate the descriptor
         logger.debug(f"Descriptor string: {descriptor_str}")
