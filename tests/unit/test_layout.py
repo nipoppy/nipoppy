@@ -46,30 +46,30 @@ def test_config_path_infos(layout_config):
 
 
 def test_schema_version_default(layout_config, caplog: pytest.LogCaptureFixture):
-    data = layout_config.model_dump()
-    del data["SCHEMA_VERSION"]
+    config = layout_config.model_dump()
+    del config["SCHEMA_VERSION"]
 
-    assert LayoutConfig(**data).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+    assert LayoutConfig(**config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
     assert "Defaulting to the earliest known version" in caplog.text
 
 
-def test_error_invalid_schema_version():
+def test_error_invalid_schema_version(layout_config):
+    config = layout_config.model_dump()
+    config["SCHEMA_VERSION"] = "invalid_version"
     with pytest.raises(
         ValidationError,
         match="Invalid schema version:",
     ):
-        config_params = load_json(FPATH_DEFAULT_LAYOUT)
-        config_params["SCHEMA_VERSION"] = "invalid_version"
-        LayoutConfig(**config_params)
+        LayoutConfig(**config)
 
 
 def test_schema_version_newer(layout_config):
-    data = layout_config.model_dump()
-    data["SCHEMA_VERSION"] = "999.0.0"
+    config = layout_config.model_dump()
+    config["SCHEMA_VERSION"] = "999.0.0"
     with pytest.raises(
         ValidationError, match="newer than the latest schema version supported"
     ):
-        LayoutConfig(**data)
+        LayoutConfig(**config)
 
 
 def test_init_default(dpath_root):
