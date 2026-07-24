@@ -59,7 +59,7 @@ nipoppy_study/
 └── tabular
 ```
 
-Nipoppy automatically generated a manifest file from the BIDS dataset. This file is considered the ground truth for which participants and sessions are available for processing.
+Nipoppy automatically generated a {term}`manifest file` from the BIDS dataset. This file is considered the ground truth for which participants and sessions are available for processing.
 
 ```{code-block}
 :caption: Content of `nipoppy_study/manifest.tsv`

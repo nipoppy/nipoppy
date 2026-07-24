@@ -8,7 +8,7 @@ We can use the [`nipoppy init`](../../reference/cli_reference/init) command with
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET> --bids-source <PATH_TO_EXISTING_BIDS_DATA>
 ```
 
-This will add the existing BIDS data to the {{dpath_bids}} directory and automatically generate a manifest file based on the participant IDs, session IDs and datatypes available in the BIDS data (based on directory names, not on any `participants.tsv` or `*_sessions.tsv` files).
+This will add the existing BIDS data to the {{dpath_bids}} directory and automatically generate a {term}`manifest file` based on the participant IDs, session IDs and datatypes available in the BIDS data (based on directory names, not on any `participants.tsv` or `*_sessions.tsv` files).
 
 ```{attention}
 If your study has additional visits that were not present in the BIDS data (e.g., non-imaging visits), you should manually add them to the manifest.
@@ -26,4 +26,4 @@ We believe that having explicitly labelled sessions constitutes best practices:
 3. It may help link data between non-imaging and imaging visits
 :::
 
-If you decide to continue with session-less BIDS data, `nipoppy init` will still be able to generate a manifest file, but it will use a dummy value (`unnamed`) for the `visit_id` and `session_id` columns. You might also need to change some of the downstream pipeline configuration files because the default configurations typically assume that the BIDS data has sessions.
+If you decide to continue with session-less BIDS data, `nipoppy init` will still be able to generate a {term}`manifest file`, but it will use a dummy value (`unnamed`) for the `visit_id` and `session_id` columns. You might also need to change some of the downstream pipeline configuration files because the default configurations typically assume that the BIDS data has sessions.

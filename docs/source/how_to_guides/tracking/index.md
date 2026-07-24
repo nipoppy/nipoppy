@@ -12,7 +12,7 @@ $ nipoppy track-curation --regenerate
 ```
 
 ```{note}
-Without the `--regenerate` flag, `nipoppy track-curation` will only update the curation status for new participants in the manifest.
+Without the `--regenerate` flag, `nipoppy track-curation` will only update the curation status for new participants in the {term}`manifest <manifest file>`.
 ```
 
 The above command creates or updates the curation status file at {{fpath_curation_status}}.
@@ -29,7 +29,7 @@ A summary of curation statuses can be displayed by running the [`nipoppy status`
 ```
 
 ```{note}
-The `in_pre_reorg` and `in_post_reorg` columns will be collapsed if all participants in the manifest have been BIDSified.
+The `in_pre_reorg` and `in_post_reorg` columns will be collapsed if all participants in the {term}`manifest <manifest file>` have been BIDSified.
 ```
 
 For each curation stage, the status is determined based on the presence of files in expected directories:
