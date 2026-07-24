@@ -132,12 +132,7 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         self._write_readmes()
 
-        # create empty pipeline config subdirectories
-        for pipeline_type in PipelineTypeEnum:
-            fileops.mkdir(
-                self.study.layout.get_dpath_pipeline_store(pipeline_type),
-                dry_run=self.dry_run,
-            )
+        self._create_pipeline_stores()
 
         # copy sample config and manifest files
         fileops.copy(
@@ -189,6 +184,16 @@ class InitWorkflow(BaseDatasetWorkflow):
         )
 
         logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
+
+    def _create_pipeline_stores(self) -> None:
+        """Create pipeline config directories with Git placeholders."""
+        for pipeline_type in PipelineTypeEnum:
+            dpath_pipeline_store = self.study.layout.get_dpath_pipeline_store(
+                pipeline_type
+            )
+            fileops.mkdir(dpath_pipeline_store, dry_run=self.dry_run)
+            if not self.dry_run:
+                dpath_pipeline_store.joinpath(".gitkeep").touch()
 
     def handle_bids_source(self) -> None:
         """Create bids source directory.
