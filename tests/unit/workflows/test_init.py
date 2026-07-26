@@ -55,7 +55,7 @@ class _HandleBIDSSourceResult:
 
 
 def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode: str):
-    dpath_root = workflow.study.layout.dpath_root
+    dpath_bids = workflow.study.layout.dpath_bids
 
     source_files_before_init = [
         x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
@@ -69,9 +69,7 @@ def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode
     source_files_after_init = [
         x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
     ]
-    target_files = [
-        x.relative_to(dpath_root / "bids") for x in dpath_root.glob("bids/**/*")
-    ]
+    target_files = [x.relative_to(dpath_bids) for x in dpath_bids.glob("**/*")]
 
     return _HandleBIDSSourceResult(
         source_files_before_init=source_files_before_init,
@@ -273,12 +271,14 @@ def test_custom_layout(dpath_root: Path):
     assert (dpath_root / "proc").exists()
     assert (dpath_root / "dicom").exists()
 
+    # check that BIDS-specific files are not created (not part of custom layout)
+    assert not (dpath_root / "dataset_description.json").exists()
+    assert not (dpath_root / ".bidsignore").exists()
+
 
 def test_bids_dataset_description_created(dpath_root: Path):
     """Test that dataset_description.json is created with BIDS study layout."""
-    workflow = InitWorkflow(
-        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
-    )
+    workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
     # The BIDS study layout includes an optional dataset_description.json file
@@ -287,9 +287,7 @@ def test_bids_dataset_description_created(dpath_root: Path):
 
 def test_bidsignore_created(dpath_root: Path):
     """Test that .bidsignore is created with BIDS study layout."""
-    workflow = InitWorkflow(
-        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
-    )
+    workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
     # The BIDS study layout includes an optional .bidsignore file
@@ -305,11 +303,9 @@ def test_bidsignore_created(dpath_root: Path):
     shutil.which("bids-validator-deno") is None,
     reason="bids-validator-deno not installed",
 )
-def test_bids_study_layout_passes_validation(dpath_root: Path):
+def test_default_layout_passes_bids_validation(dpath_root: Path):
     """Test that BIDS study layout passes BIDS validation with no errors."""
-    workflow = InitWorkflow(
-        dpath_root=dpath_root, fpath_layout=DPATH_LAYOUTS / "layout-bids-study.json"
-    )
+    workflow = InitWorkflow(dpath_root=dpath_root)
     workflow.run()
 
     # Run BIDS validator
@@ -320,7 +316,7 @@ def test_bids_study_layout_passes_validation(dpath_root: Path):
     )
 
     # Check that there are no errors (warnings are OK)
-    assert result.returncode == 0
+    assert result.returncode == 0, "BIDS validation failed"
 
 
 def test_init_bids(
@@ -376,16 +372,15 @@ def test_handle_bids_source_move(workflow: InitWorkflow, fake_bids_root: Path):
 
 def test_handle_bids_source_symlink(workflow: InitWorkflow, fake_bids_root: Path):
     """Check that all the files are linked to the source files."""
-    dpath_root = workflow.study.layout.dpath_root
-
     files = _setup_handle_bids_source(workflow, fake_bids_root, mode="symlink")
 
     for f in files.source_files_before_init:
         assert f in files.source_files_after_init
 
     # only the directory is linked, not the files within
-    assert (dpath_root / "bids").is_symlink()
-    assert (dpath_root / "bids").readlink() == fake_bids_root
+    dpath_bids = workflow.study.layout.dpath_bids
+    assert dpath_bids.is_symlink()
+    assert dpath_bids.readlink() == fake_bids_root
 
 
 def test_init_bids_readonly(
