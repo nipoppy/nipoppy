@@ -45,7 +45,7 @@ def test_config_path_infos(layout_config):
     )
 
 
-def test_schema_version_default_factory(layout_config):
+def test_schema_version_default_schema_version(layout_config):
     config = layout_config.model_dump()
     del config["SCHEMA_VERSION"]
     assert LayoutConfig(**config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION

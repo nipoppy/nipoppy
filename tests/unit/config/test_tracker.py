@@ -31,7 +31,7 @@ def test_no_extra_field():
         TrackerConfig(not_a_field="a")
 
 
-def test_schema_version_default_factory():
+def test_schema_version_default_schema_version():
     config = TrackerConfig(PATHS=["path1"])
     assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 

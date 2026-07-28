@@ -99,7 +99,7 @@ def test_fields_missing_required(model_class, data):
         model_class(**data)
 
 
-def test_schema_version_default_factory():
+def test_schema_version_default_schema_version():
     config = BasePipelineConfig(NAME="my_pipeline", VERSION="1.2.3")
     assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
