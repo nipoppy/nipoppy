@@ -3,19 +3,13 @@
 import pytest
 
 from nipoppy.config.schema import (
-    EARLIEST_SCHEMA_VERSION,
     ensure_config_file_schema_version_exists,
     ensure_schema_support,
     get_current_schema_version,
-    get_earliest_schema_version,
 )
 from nipoppy.env import ConfigType
 from nipoppy.exceptions import ConfigError
 from tests.conftest import DPATH_TEST_DATA
-
-
-def test_get_earliest_schema_version(caplog: pytest.LogCaptureFixture):
-    assert get_earliest_schema_version() == EARLIEST_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize("config_type", ConfigType)

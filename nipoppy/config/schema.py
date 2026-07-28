@@ -50,11 +50,6 @@ def ensure_schema_support(
     return schema_version
 
 
-def get_earliest_schema_version() -> str:
-    """Get the earliest schema version for a config type."""
-    return EARLIEST_SCHEMA_VERSION
-
-
 def ensure_config_file_schema_version_exists(
     fpath_config: Path, config_type: ConfigType, strict: bool = False
 ) -> str:
