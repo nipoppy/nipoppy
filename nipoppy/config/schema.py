@@ -70,13 +70,10 @@ def ensure_config_file_schema_version_exists(
             )
         else:
             logger.warning(
-                f"{config_type.value.capitalize()} config is missing the "
-                f"required {SCHEMA_VERSION_FIELD} field. Defaulting to the earliest "
-                f"known version ({EARLIEST_SCHEMA_VERSION}); this will become an error "
-                f"in a future Nipoppy release. Add the following field to the config:\n"
+                f"{fpath_config} is missing the required {SCHEMA_VERSION_FIELD} field; "
+                f"assuming version {EARLIEST_SCHEMA_VERSION}. This will become an "
+                f"error in a future Nipoppy release. Add the following to the config: "
                 f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
-                f"Pipeline configuration file {fpath_config} is missing "
-                f"{SCHEMA_VERSION_FIELD} field."
             )
             current_version = get_current_schema_version(config_type)
             config[SCHEMA_VERSION_FIELD] = current_version

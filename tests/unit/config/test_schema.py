@@ -51,5 +51,6 @@ def test_config_file_warns_no_schema_version(caplog: pytest.LogCaptureFixture):
 
     assert schema_version == get_current_schema_version(ConfigType.PIPELINE)
     assert any(
-        "is missing SCHEMA_VERSION field" in record.message for record in caplog.records
+        "is missing the required SCHEMA_VERSION field" in record.message
+        for record in caplog.records
     )
