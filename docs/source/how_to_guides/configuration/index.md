@@ -17,3 +17,9 @@ The overall order for determining the value of options is as follows (highest to
 2. Environment variables that are already defined at runtime
 3. Environment variables loaded from `.env` file(s) (see above)
 4. CLI default values
+
+## Overriding the global configuration file
+
+The default configuration file created by `nipoppy init` can be overridden by creating a user-level configuration file at {{fpath_user_config}}. This can enable the setting of certain machine- or user-specific fields, such as the container command. It can also allow the pre-definition of variables for common pipelines.
+
+The `--default-config` CLI flag can be used to ignore the user-level file and force the use of the original default global configuration file.
