@@ -130,6 +130,6 @@ class Study(Base):
         """
         pipeline_type_to_info_map = self._get_pipeline_info_map()
         return {
-            pipeline_type: dict(pipeline_info)
+            pipeline_type.value: dict(pipeline_info)
             for pipeline_type, pipeline_info in pipeline_type_to_info_map.items()
         }

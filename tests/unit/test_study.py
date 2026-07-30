@@ -1,5 +1,7 @@
 """Tests for the Study class."""
 
+from enum import Enum
+
 import pytest
 import pytest_mock
 
@@ -155,3 +157,6 @@ def test_get_installed_pipelines(
         "processing": {"pipeline2": ["0.1.0"]},
         "extraction": {"pipeline3": ["1.0.0"], "pipeline4": ["2.0.0"]},
     }
+    assert all(
+        not isinstance(pipeline_type, Enum) for pipeline_type in installed_pipelines
+    )
