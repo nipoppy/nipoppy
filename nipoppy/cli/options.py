@@ -72,6 +72,26 @@ def layout_option(func):
     return func
 
 
+def pipeline_identifier_options(func):
+    """Define options that identify an installed pipeline."""
+    func = click.option(
+        "--pipeline-version",
+        type=str,
+        help=(
+            "Pipeline version, as specified in the pipeline config file "
+            "(default: latest out of the installed versions)."
+        ),
+    )(func)
+    func = click.option(
+        "--pipeline",
+        "pipeline_name",
+        type=str,
+        required=True,
+        help="Pipeline name, as specified in the config file.",
+    )(func)
+    return func
+
+
 def pipeline_options(func):
     """Define pipeline options for the CLI."""
     func = click.option(
@@ -92,22 +112,7 @@ def pipeline_options(func):
             "(default: first step)."
         ),
     )(func)
-    func = click.option(
-        "--pipeline-version",
-        type=str,
-        help=(
-            "Pipeline version, as specified in the pipeline config file "
-            "(default: latest out of the installed versions)."
-        ),
-    )(func)
-    func = click.option(
-        "--pipeline",
-        "pipeline_name",
-        type=str,
-        required=True,
-        help="Pipeline name, as specified in the config file.",
-    )(func)
-    return func
+    return pipeline_identifier_options(func)
 
 
 def runners_options(func):

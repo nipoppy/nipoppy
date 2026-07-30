@@ -53,6 +53,10 @@ COMMAND_WORKFLOW_MAP = {
         "nipoppy.workflows.pipeline_store.list",
         "PipelineListWorkflow",
     ),
+    "pipeline info": (
+        "nipoppy.workflows.pipeline_store.info",
+        "PipelineInfoWorkflow",
+    ),
     "pipeline validate": (
         "nipoppy.workflows.pipeline_store.validate",
         "PipelineValidateWorkflow",
