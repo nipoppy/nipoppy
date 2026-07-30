@@ -137,27 +137,8 @@ def test_get_pipeline_info_map_error(study: Study):
         study._get_pipeline_info_map()
 
 
-@pytest.mark.parametrize(
-    "pipeline_type,expected_output",
-    [
-        (
-            "bidsification",
-            {"pipeline1": ["0.0.1", "0.0.2"]},
-        ),
-        (
-            "processing",
-            {"pipeline2": ["0.1.0"]},
-        ),
-        (
-            "extraction",
-            {"pipeline3": ["1.0.0"], "pipeline4": ["2.0.0"]},
-        ),
-    ],
-)
 def test_get_installed_pipelines(
     study: Study,
-    pipeline_type: str,
-    expected_output: dict,
     mocker: pytest_mock.MockFixture,
 ):
     pipeline_info_map = {
@@ -167,11 +148,10 @@ def test_get_installed_pipelines(
     }
     mocker.patch.object(study, "_get_pipeline_info_map", return_value=pipeline_info_map)
 
-    installed_pipelines = study.get_installed_pipelines(pipeline_type)
+    installed_pipelines = study.get_installed_pipelines()
 
-    assert installed_pipelines == expected_output
-
-
-def test_get_installed_pipelines_invalid_type(study: Study):
-    with pytest.raises(ValueError, match="Invalid pipeline type"):
-        study.get_installed_pipelines("invalid_type")
+    assert installed_pipelines == {
+        "bidsification": {"pipeline1": ["0.0.1", "0.0.2"]},
+        "processing": {"pipeline2": ["0.1.0"]},
+        "extraction": {"pipeline3": ["1.0.0"], "pipeline4": ["2.0.0"]},
+    }
