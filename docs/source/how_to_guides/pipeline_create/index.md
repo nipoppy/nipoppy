@@ -33,7 +33,7 @@ language: json
 
 class: dropdown
 ---
-`bosh` is the CLI from Boutiques—already installed with Nipoppy.
+`bosh` is the CLI from Boutiques. It comes packaged with Nipoppy.
 
 Searching for a descriptor:
 
@@ -95,7 +95,7 @@ pipelines/howto
 
 ## Edit the configuration files
 
-:::{important}
+:::{attention}
 Nipoppy uses string substitutions to inject dataset-specific information (e.g., paths, participant IDs) into configuration files at runtime.
 See [this page](<project:../../substitutions.md>) for lists of available substitutions for each type of configuration file.
 :::
@@ -155,7 +155,7 @@ language: json
 ```
 
 :::{note}
-Optionally, you can regenerate the `invocation.json` file to match the descriptor arguments.
+You can automatically generate an example `invocation.json` file with all the required keys from the descriptor.
 
 ```bash
 bosh example ./pipelines/howto/descriptor.json > ./pipelines/howto/invocation.json

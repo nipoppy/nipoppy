@@ -1,5 +1,5 @@
 {
-    "NAME": "FSL SIENA",
+    "NAME": "fsl_siena",
     "VERSION": "6.0.4",
     "CONTAINER_INFO": {
         "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
@@ -21,7 +21,10 @@
             "PYBIDS_IGNORE_FILE": null
         }
     ],
-    "PIPELINE_VARIABLES": {},
+    "VARIABLES": {
+        "FILEPATH_T1W_1": "File path of the first T1w image to be processed",
+        "FILEPATH_T1W_2": "File path of the second T1w image to be processed"
+    },
     "PIPELINE_TYPE": "processing",
     "SCHEMA_VERSION": "1"
 }
