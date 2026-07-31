@@ -9,7 +9,7 @@ The following changes need to be made to the `"CONTAINER_CONFIG"` field of the `
 - Any non-Docker argument/option should be removed from `"ARGS"`
     - In particular, the default `global_config.json` uses the `"--cleanenv"` argument, which is specific to Apptainer and needs to be removed if using Docker.
 
-```tip
+```{tip}
 To avoid having to manually make these changes for every new Nipoppy study, you can set a custom configuration file at {{fpath_user_config}} to be used instead of the default one below.
 See {ref}`here <default-config-override>` for more information.
 ```
