@@ -138,6 +138,24 @@ bosh example ./pipelines/howto/descriptor.json > ./pipelines/howto/invocation.js
 
 ::::
 
+#### Participant-specific invocation files
+
+The `INVOCATION_FILE` value in `config.json` can include participant and session
+substitutions when different runs need different invocation files. For example:
+
+```json
+{
+    "DESCRIPTOR_FILE": "descriptor.json",
+    "INVOCATION_FILE": "invocation-[[NIPOPPY_PARTICIPANT_ID]].json",
+    "INVOCATION_TEMPLATE_FILE": "invocation-template.json"
+}
+```
+
+The pipeline bundle should include `invocation-template.json`. Nipoppy validates and
+installs this file with the rest of the bundle, and users can use it to create their
+study-specific invocation files. At runtime, participant `001` uses
+`invocation-001.json`; the template is not used as a fallback if that file is missing.
+
 ### `hpc.json` (Optional)
 
 Defines HPC job submission parameters.

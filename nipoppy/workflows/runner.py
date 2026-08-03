@@ -185,7 +185,10 @@ class Runner(BasePipelineWorkflow, ABC):
         # process and validate the invocation
         logger.info("Processing the JSON invocation")
         invocation_str = self.process_template_json(
-            self.invocation,
+            self.get_invocation(
+                participant_id=participant_id,
+                session_id=session_id,
+            ),
             participant_id=participant_id,
             session_id=session_id,
             objs=objs,

@@ -396,6 +396,8 @@ def test_run_main(
         pipeline_config.NAME,
         pipeline_config.VERSION,
     )
+    fpath_invocation_template = workflow.dpath_pipeline / "invocation-template.json"
+    fpath_invocation_template.write_text("{}")
 
     # make sure directory does not already exist
     # also check that the parent directory will be created without error
@@ -415,6 +417,7 @@ def test_run_main(
     )
     mocked_update_config_and_save.assert_called_once_with(pipeline_config)
     mocked_download_container.assert_called_once_with(pipeline_config)
+    assert (dpath_installed / fpath_invocation_template.name).read_text() == "{}"
     assert "Successfully installed pipeline" in caplog.text
 
 

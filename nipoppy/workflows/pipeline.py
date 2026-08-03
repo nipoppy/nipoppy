@@ -321,14 +321,22 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         )
         return descriptor
 
-    @cached_property
-    def invocation(self) -> dict:
-        """Load the pipeline step's Boutiques invocation."""
+    def get_invocation(
+        self,
+        participant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> dict:
+        """Load the pipeline step's Boutiques invocation for a pipeline run."""
         if (fname_invocation := self.pipeline_step_config.INVOCATION_FILE) is None:
             raise ConfigError(
                 "No invocation file specified for pipeline"
                 f" {self.pipeline_name} {self.pipeline_version}"
             )
+        fname_invocation = self.process_template_json(
+            {"INVOCATION_FILE": str(fname_invocation)},
+            participant_id=participant_id,
+            session_id=session_id,
+        )["INVOCATION_FILE"]
         fpath_invocation = self.dpath_pipeline_bundle / fname_invocation
         logger.info(f"Loading invocation from {fpath_invocation}")
         invocation = load_json(fpath_invocation)
@@ -340,6 +348,14 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             json_obj=invocation,
         )
         return invocation
+
+    @property
+    def invocation(self) -> dict:
+        """Load the invocation using workflow-level participant/session filters."""
+        return self.get_invocation(
+            participant_id=self.participant_id,
+            session_id=self.session_id,
+        )
 
     @cached_property
     def tracker_config(self) -> TrackerConfig:
@@ -443,6 +459,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             pipeline_version=pipeline_version,
             json_obj=self.process_template_json(
                 load_json(fpath_config),
+                # Participant/session IDs are only known for each run. Keep these
+                # placeholders intact while loading the shared pipeline config.
+                participant_id="[[NIPOPPY_PARTICIPANT_ID]]",
+                session_id="[[NIPOPPY_SESSION_ID]]",
+                bids_participant_id="[[NIPOPPY_BIDS_PARTICIPANT_ID]]",
+                bids_session_id="[[NIPOPPY_BIDS_SESSION_ID]]",
             ),
         )
 

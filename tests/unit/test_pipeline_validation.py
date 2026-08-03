@@ -282,6 +282,27 @@ def test_check_config_files(
     assert n_files_expected == len(files)
 
 
+def test_check_pipeline_files_uses_invocation_template(valid_config_data):
+    fname_invocation = "invocation-[[NIPOPPY_PARTICIPANT_ID]].json"
+    fname_invocation_template = "invocation-valid.json"
+    pipeline_config = ProcessingPipelineConfig(
+        **valid_config_data,
+        PIPELINE_TYPE=PipelineTypeEnum.PROCESSING,
+        STEPS=[
+            {
+                "DESCRIPTOR_FILE": "descriptor-valid.json",
+                "INVOCATION_FILE": fname_invocation,
+                "INVOCATION_TEMPLATE_FILE": fname_invocation_template,
+            }
+        ],
+    )
+
+    files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
+
+    assert DPATH_TEST_DATA / fname_invocation_template in files
+    assert DPATH_TEST_DATA / fname_invocation in files
+
+
 @pytest.mark.no_xdist
 def test_check_config_files_logging(
     valid_config_data,

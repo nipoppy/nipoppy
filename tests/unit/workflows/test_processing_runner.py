@@ -188,6 +188,30 @@ def test_launch_boutiques_run(
     assert mocked_run_command.call_args[1].get("quiet") is True
 
 
+def test_launch_boutiques_run_participant_specific_invocations(
+    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+):
+    fpath_config = (
+        runner.dpath_pipeline_bundle / runner.study.layout.fname_pipeline_config
+    )
+    config = json.loads(fpath_config.read_text())
+    config["STEPS"][0]["INVOCATION_FILE"] = "invocation-[[NIPOPPY_PARTICIPANT_ID]].json"
+    fpath_config.write_text(json.dumps(config))
+
+    for participant_id, arg2 in [("01", 1), ("02", 2)]:
+        (runner.dpath_pipeline_bundle / f"invocation-{participant_id}.json").write_text(
+            json.dumps({"arg1": participant_id, "arg2": arg2})
+        )
+
+    mocker.patch("nipoppy.workflows.runner._run_command")
+
+    _, invocation_01 = runner.launch_boutiques_run("01", "BL")
+    _, invocation_02 = runner.launch_boutiques_run("02", "BL")
+
+    assert json.loads(invocation_01) == {"arg1": "01", "arg2": 1}
+    assert json.loads(invocation_02) == {"arg1": "02", "arg2": 2}
+
+
 @pytest.mark.parametrize(
     "container_handler,expected_container_opts",
     [

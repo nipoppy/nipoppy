@@ -531,6 +531,43 @@ def test_invocation_pipeline_variables(
     assert workflow.invocation == expected_invocation
 
 
+def test_get_invocation_participant_specific(workflow: PipelineWorkflow):
+    fname_invocation = (
+        "invocation-[[NIPOPPY_PARTICIPANT_ID]]-[[NIPOPPY_SESSION_ID]].json"
+    )
+    fpath_config = (
+        workflow.dpath_pipeline_bundle / workflow.study.layout.fname_pipeline_config
+    )
+    config = json.loads(fpath_config.read_text())
+    config["STEPS"][0].update(
+        {
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "INVOCATION_FILE": fname_invocation,
+        }
+    )
+    fpath_config.write_text(json.dumps(config))
+
+    invocations = {
+        ("01", "BL"): {"selected": "first"},
+        ("02", "FU"): {"selected": "second"},
+    }
+    for (participant_id, session_id), invocation in invocations.items():
+        fpath_invocation = workflow.dpath_pipeline_bundle / (
+            f"invocation-{participant_id}-{session_id}.json"
+        )
+        fpath_invocation.write_text(json.dumps(invocation))
+
+    assert str(workflow.pipeline_step_config.INVOCATION_FILE) == fname_invocation
+    for (participant_id, session_id), expected in invocations.items():
+        assert (
+            workflow.get_invocation(
+                participant_id=participant_id,
+                session_id=session_id,
+            )
+            == expected
+        )
+
+
 @pytest.mark.parametrize(
     "pipeline_name,pipeline_version,pipeline_step,tracker_config_data",
     [
