@@ -27,17 +27,23 @@ Pipeline configuration files
 
 Here are the schemas for the ``config.json`` files in pipeline configuration directories.
 
+.. _bidsification-pipeline-config-schema:
+
 BIDSification pipelines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. jsonschema:: bids_pipeline.json
     :lift_title: False
 
+.. _processing-pipeline-config-schema:
+
 Processing pipelines
 ~~~~~~~~~~~~~~~~~~~~
 
 .. jsonschema:: proc_pipeline.json
     :lift_title: False
+
+.. _extraction-pipeline-config-schema:
 
 Extraction pipelines
 ~~~~~~~~~~~~~~~~~~~~
@@ -75,7 +81,7 @@ Manifest file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the manifest file:
+Here is the schema for the {term}`manifest file`:
 
 .. jsonschema:: manifest.json
     :lift_title: False
@@ -88,7 +94,7 @@ Curation status file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the curation status file:
+Here is the schema for the {term}`curation status file`:
 
 .. jsonschema:: curation_status.json
     :lift_title: False
@@ -101,7 +107,7 @@ Processing status file
 .. include:: schema_howto.md
     :parser: myst_parser.sphinx_
 
-Here is the schema for the processing status file:
+Here is the schema for the {term}`processing status file`:
 
 .. jsonschema:: processing_status.json
     :lift_title: False
@@ -132,7 +138,7 @@ Layout configuration
 
     The default Nipoppy layout uses the following configuration:
 
-    .. literalinclude:: ../../../nipoppy/data/layouts/layout-default.json
+    .. literalinclude:: ../../../../nipoppy/data/layouts/layout-default.json
         :linenos:
         :language: json
 

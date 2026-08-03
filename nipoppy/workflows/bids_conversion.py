@@ -126,17 +126,15 @@ class BIDSificationRunner(Runner):
 
         return invocation_and_descriptor
 
-    def run_cleanup(self, **kwargs):
-        """
-        Clean up after main BIDS conversion part is run.
-
-        Specifically:
-
-        - Write updated curation status file
-        """
+    def _write_status_file(self):
+        """Write the updated curation status table to disk."""
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.curation_status_table.save_with_backup(
                 self.study.layout.fpath_curation_status,
                 dry_run=self.dry_run,
             )
-        return super().run_cleanup(**kwargs)
+
+    def run_main(self):
+        """Run the BIDSification pipeline."""
+        super().run_main()
+        self._write_status_file()

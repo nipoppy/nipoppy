@@ -219,7 +219,7 @@ def test_launch_boutiques_run_participant_specific_invocations(
         (
             ApptainerHandler(),
             [
-                "--force-singularity",
+                "--force-apptainer",
                 "--no-automount",
                 "--imagepath",
                 "--container-opts=",

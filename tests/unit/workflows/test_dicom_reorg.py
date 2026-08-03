@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.tabular.curation_status import CurationStatusTable
@@ -363,6 +364,7 @@ def test_run_main(
     participants_and_sessions_manifest: dict,
     participants_and_sessions_downloaded: dict,
     copy_files: bool,
+    mocker: pytest_mock.MockerFixture,
 ):
     workflow.copy_files = copy_files
 
@@ -372,6 +374,12 @@ def test_run_main(
         dpath_downloaded=workflow.study.layout.dpath_pre_reorg,
     )
     manifest.save_with_backup(workflow.study.layout.fpath_manifest)
+
+    mocked_save_with_backup = mocker.patch.object(
+        workflow.curation_status_table,
+        "save_with_backup",
+    )
+    mocked_log_summary_message = mocker.patch.object(workflow, "_log_summary_message")
 
     workflow.run_main()
 
@@ -413,6 +421,11 @@ def test_run_main(
 
     assert workflow.n_total != 0
     assert workflow.n_success == workflow.n_total
+    mocked_save_with_backup.assert_called_once_with(
+        workflow.study.layout.fpath_curation_status,
+        dry_run=workflow.dry_run,
+    )
+    mocked_log_summary_message.assert_called_once()
 
 
 def test_run_main_error(workflow: DicomReorgWorkflow):
@@ -441,36 +454,6 @@ def test_run_main_error(workflow: DicomReorgWorkflow):
 
 
 @pytest.mark.parametrize(
-    "curation_status_table",
-    [
-        CurationStatusTable(),
-        CurationStatusTable(
-            data={
-                CurationStatusTable.col_participant_id: ["01"],
-                CurationStatusTable.col_visit_id: ["1"],
-                CurationStatusTable.col_session_id: ["1"],
-                CurationStatusTable.col_datatype: "['anat']",
-                CurationStatusTable.col_participant_dicom_dir: ["01"],
-                CurationStatusTable.col_in_pre_reorg: [True],
-                CurationStatusTable.col_in_post_reorg: [True],
-                CurationStatusTable.col_in_bids: [True],
-            }
-        ).validate(),
-    ],
-)
-def test_cleanup_curation_status(
-    workflow: DicomReorgWorkflow, curation_status_table: CurationStatusTable
-):
-    workflow.curation_status_table = curation_status_table
-    workflow.run_cleanup()
-
-    assert workflow.study.layout.fpath_curation_status.exists()
-    assert CurationStatusTable.load(workflow.study.layout.fpath_curation_status).equals(
-        curation_status_table
-    )
-
-
-@pytest.mark.parametrize(
     "n_success,n_total,expected_message",
     [
         (0, 0, "No participant-session pairs to reorganize"),
@@ -492,7 +475,7 @@ def test_cleanup_curation_status(
     ],
 )
 @pytest.mark.no_xdist
-def test_run_cleanup_message(
+def test_log_summary_message(
     workflow: DicomReorgWorkflow,
     n_success,
     n_total,
@@ -502,6 +485,6 @@ def test_run_cleanup_message(
     workflow.curation_status_table = CurationStatusTable()  # empty table to avoid error
     workflow.n_success = n_success
     workflow.n_total = n_total
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert expected_message.format(n_success, n_total) in caplog.text

@@ -21,7 +21,7 @@ The default global configuration file has two {term}`HPC`-related fields that sh
 ---
 linenos: True
 language: json
-emphasize-lines: 4,16-25
+emphasize-lines: 5,18-27
 ---
 ```
 
@@ -70,7 +70,7 @@ You will also need to add an `"HPC_CONFIG_FILE"` field for each step in pipeline
 linenos: True
 language: json
 lines: 12-18
-emphasize-lines: 5
+emphasize-lines: 6
 ---
 ```
 ````
@@ -86,7 +86,7 @@ Set/leave as empty string if the field is not needed.
 
 ## Submitting HPC jobs via `nipoppy` commands
 
-To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../cli_reference/process.rst>), or [`nipoppy extract`](<project:../../cli_reference/extract.rst>) commands:
+To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../reference/cli_reference/process.rst>), or [`nipoppy extract`](<project:../../reference/cli_reference/extract.rst>) commands:
 
 ```console
 $ nipoppy <SUBCOMMAND> \

@@ -732,6 +732,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         )
         self._handle_execution_strategy(participants_sessions)
 
+        self._log_summary_message()
+
     def _filter_by_subcohort(self, participants_sessions: Iterable) -> set:
         """Filter participants/sessions by subcohort file."""
         try:
@@ -774,7 +776,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if (self.n_success != self.n_total) and (self.n_total != 0):
             self.return_code = ReturnCode.PARTIAL_SUCCESS
 
-    def run_cleanup(self):
+    def _log_summary_message(self):
         """Log a summary message."""
         if self.write_subcohort:
             logger.success(f"Wrote subcohort to {self.write_subcohort}")
@@ -806,8 +808,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 logger.success(log_msg)
             else:
                 logger.warning(log_msg)
-
-        return super().run_cleanup()
 
     @abstractmethod
     def get_participants_sessions_to_run(
