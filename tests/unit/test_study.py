@@ -1,8 +1,14 @@
 """Tests for the Study class."""
 
+from enum import Enum
+
 import pytest
 import pytest_mock
 
+from nipoppy.config.pipeline import BasePipelineConfig
+from nipoppy.config.schema import get_current_schema_version
+from nipoppy.env import ConfigType, PipelineTypeEnum
+from nipoppy.exceptions import ConfigError
 from nipoppy.study import Study
 from tests.conftest import get_config
 
@@ -49,3 +55,109 @@ def test_tabular_file_load(
     getattr(study, property_name)
 
     mocked_load.assert_called_once_with(fpath)
+
+
+@pytest.mark.parametrize(
+    "pipeline_config_dicts,expected_pipeline_info",
+    [
+        (
+            [],
+            {
+                PipelineTypeEnum.BIDSIFICATION: {},
+                PipelineTypeEnum.PROCESSING: {},
+                PipelineTypeEnum.EXTRACTION: {},
+            },
+        ),
+        (
+            [
+                {
+                    "NAME": "pipeline1",
+                    "VERSION": "0.0.1",
+                    "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
+                },
+                {
+                    "NAME": "pipeline1",
+                    "VERSION": "0.0.2",
+                    "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
+                },
+                {
+                    "NAME": "pipeline2",
+                    "VERSION": "0.1.0",
+                    "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
+                },
+                {
+                    "NAME": "pipeline3",
+                    "VERSION": "1.0.0",
+                    "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
+                },
+            ],
+            {
+                PipelineTypeEnum.BIDSIFICATION: {"pipeline1": ["0.0.1", "0.0.2"]},
+                PipelineTypeEnum.PROCESSING: {"pipeline2": ["0.1.0"]},
+                PipelineTypeEnum.EXTRACTION: {"pipeline3": ["1.0.0"]},
+            },
+        ),
+    ],
+)
+def test_get_pipeline_map_info(
+    study: Study,
+    pipeline_config_dicts: list[dict],
+    expected_pipeline_info: dict[str, list[str]],
+):
+    for pipeline_config_dict in pipeline_config_dicts:
+        pipeline_config = BasePipelineConfig(**pipeline_config_dict)
+        fpath_config = (
+            study.layout.get_dpath_pipeline_bundle(
+                pipeline_config.PIPELINE_TYPE,
+                pipeline_config.NAME,
+                pipeline_config.VERSION,
+            )
+            / study.layout.fname_pipeline_config
+        )
+        fpath_config.parent.mkdir(parents=True, exist_ok=True)
+        fpath_config.write_text(pipeline_config.model_dump_json())
+
+    pipeline_info = study._get_pipeline_info_map()
+
+    assert pipeline_info == expected_pipeline_info
+
+
+def test_get_pipeline_info_map_error(study: Study):
+    fpath_config = (
+        study.layout.get_dpath_pipeline_bundle(
+            PipelineTypeEnum.BIDSIFICATION, "pipeline1", "0.0.1"
+        )
+        / study.layout.fname_pipeline_config
+    )
+    fpath_config.parent.mkdir(parents=True, exist_ok=True)
+    fpath_config.write_text("invalid json")
+
+    with pytest.raises(ConfigError, match="Error when loading pipeline config"):
+        study._get_pipeline_info_map()
+
+
+def test_get_installed_pipelines(
+    study: Study,
+    mocker: pytest_mock.MockFixture,
+):
+    pipeline_info_map = {
+        PipelineTypeEnum.BIDSIFICATION: {"pipeline1": ["0.0.1", "0.0.2"]},
+        PipelineTypeEnum.PROCESSING: {"pipeline2": ["0.1.0"]},
+        PipelineTypeEnum.EXTRACTION: {"pipeline3": ["1.0.0"], "pipeline4": ["2.0.0"]},
+    }
+    mocker.patch.object(study, "_get_pipeline_info_map", return_value=pipeline_info_map)
+
+    installed_pipelines = study.get_installed_pipelines()
+
+    assert installed_pipelines == {
+        "bidsification": {"pipeline1": ["0.0.1", "0.0.2"]},
+        "processing": {"pipeline2": ["0.1.0"]},
+        "extraction": {"pipeline3": ["1.0.0"], "pipeline4": ["2.0.0"]},
+    }
+    assert all(
+        not isinstance(pipeline_type, Enum) for pipeline_type in installed_pipelines
+    )

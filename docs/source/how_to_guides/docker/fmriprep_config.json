@@ -9,14 +9,10 @@
         "ENV_VARS": {
             "TEMPLATEFLOW_HOME": "[[TEMPLATEFLOW_HOME]]"
         },
-        "ARGS": [
-            "--bind",
+        "BIND_PATHS": [
             "[[FREESURFER_LICENSE_FILE]]",
-            "--bind",
             "[[TEMPLATEFLOW_HOME]]",
-            "--bind",
             "[[NIPOPPY_DPATH_PIPELINE_WORK]]:/work",
-            "--bind",
             "[[NIPOPPY_DPATH_DERIVATIVES]]/freesurfer/7.3.2/output/[[NIPOPPY_BIDS_SESSION_ID]]"
         ]
     },

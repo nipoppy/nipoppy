@@ -2,7 +2,7 @@
 
 This guide shows how to initialize a new Nipoppy dataset for a study with source imaging data that consists of DICOM files or non-{term}`BIDS` NIfTI files.
 
-The first step is to create an empty Nipoppy dataset using the [`nipoppy init`](../../cli_reference/init) command:
+The first step is to create an empty Nipoppy dataset using the [`nipoppy init`](../../reference/cli_reference/init) command:
 
 ```console
 $ nipoppy init --dataset <PATH_TO_NEW_DATASET>
@@ -11,9 +11,9 @@ $ nipoppy init --dataset <PATH_TO_NEW_DATASET>
 This will create the directory tree and copy an [example manifest](https://github.com/nipoppy/nipoppy/blob/main/nipoppy/data/examples/sample_manifest.tsv) and an [example global configuration file](https://github.com/nipoppy/nipoppy/blob/main/nipoppy/data/examples/sample_global_config.json) into it.
 
 ```{attention}
-It is extremely unlikely that the example manifest accurately represents your dataset, so you will have to generate one yourself. See [this guide](../manifest/index) for more details.
+It is extremely unlikely that the example {term}`manifest <manifest file>` accurately represents your dataset, so you will have to generate one yourself. See [this guide](../manifest/index) for more details.
 
-You may also need to modify the default [global configuration file](../../config.md), depending on your setup.
+You may also need to modify the default [global configuration file](../../reference/config.md), depending on your setup.
 ```
 
-Then the raw imaging data should be added (symlinked/copied/moved) to {{dpath_pre_reorg}} and reorganized with [`nipoppy reorg`](../../cli_reference/reorg) to prepare it for BIDS conversion. See [this guide](../reorganize_sourcedata/index.md) for more information.
+Then the raw imaging data should be added (symlinked/copied/moved) to {{dpath_pre_reorg}} and reorganized with [`nipoppy reorg`](../../reference/cli_reference/reorg) to prepare it for BIDS conversion. See [this guide](../reorganize_sourcedata/index.md) for more information.

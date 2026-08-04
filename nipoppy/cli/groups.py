@@ -1,27 +1,30 @@
 """Custom Click groups."""
 
-import os
+from collections.abc import Iterable
 from pathlib import Path
 
 import rich_click as click
 from dotenv import load_dotenv
 
 from nipoppy.cli.options import dataset_option
-from nipoppy.env import DEFAULT_DOTENV_PATHS, DOTENV_PATHS_VAR
+from nipoppy.env import DEFAULT_DOTENV_PATHS
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import is_nipoppy_project, process_template_str
 
 logger = get_logger()
 
 
-def _load_dotenv_files(dpath_root: Path):
+def _load_dotenv_files(
+    dpath_root: Path, fpaths_dotenv: Iterable[str] = DEFAULT_DOTENV_PATHS
+):
     """Load .env files."""
     dpath_root = is_nipoppy_project(dpath_root) or dpath_root
 
-    fpaths_dotenv_str = os.environ.get(DOTENV_PATHS_VAR, DEFAULT_DOTENV_PATHS)
-    fpaths_dotenv_str = process_template_str(fpaths_dotenv_str, dpath_root=dpath_root)
-
-    for fpath_dotenv in fpaths_dotenv_str.split(os.pathsep):
+    for fpath_dotenv in fpaths_dotenv:
+        fpath_dotenv = process_template_str(
+            fpath_dotenv,
+            dpath_root=dpath_root,
+        )
         fpath_dotenv = Path(fpath_dotenv).expanduser()
         if fpath_dotenv.is_file():
             # the logger only logs at INFO or higher at this point

@@ -30,6 +30,7 @@ from nipoppy.cli.options import (
     runners_options,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
+from nipoppy.env import FPATH_USER_CONFIG
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
@@ -42,6 +43,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--pipeline-step",
                 "--bids-source",
                 "--mode",
+                "--default-config",
                 "--empty",
                 "--copy-files",
                 "--check-dicoms",
@@ -134,6 +136,11 @@ if cli.commands.get("gui"):
     help=(
         "If using a BIDS source, specify whether to copy, move, or symlink the files."
     ),
+)
+@click.option(
+    "--default-config",
+    is_flag=True,
+    help=f"Force use of the default config file, ignoring any user-level config file defined at {FPATH_USER_CONFIG}.",  # noqa: E501
 )
 @global_options
 @layout_option
