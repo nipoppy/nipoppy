@@ -3,9 +3,12 @@
 import errno
 import shutil
 from pathlib import Path
+from tarfile import is_tarfile
 
+from nipoppy.env import EXT_TAR
 from nipoppy.exceptions import FileOperationError
 from nipoppy.logger import get_logger
+from nipoppy.utils.subprocess_runner import run_command
 
 logger = get_logger()
 
@@ -68,6 +71,47 @@ def _ignore_oserror_empty_dir(function, path, excinfo):
     if isinstance(exception, OSError) and exception.errno == errno.ENOTEMPTY:
         return
     raise exception
+
+
+def tar_directory(dpath: Path, dry_run: bool = False) -> Path:
+    """Create a tarball of a directory.
+
+    The tarball is created in the same parent directory as the original directory,
+    with the same name and a .tar extension.
+
+    The original directory is NOT removed after tarring. The caller is responsible for
+    removing the original directory if desired.
+
+    Parameters
+    ----------
+    dpath: Path
+        Path to the directory to tar.
+    dry_run: bool, optional
+        If True, do not actually perform the tarring operation, just log it. Default is
+        False.
+
+    Returns
+    -------
+    Path
+        Path to the tarball.
+    """
+    if not dpath.exists():
+        raise FileOperationError(f"Dir does not exist: {dpath}")
+    if not dpath.is_dir():
+        raise FileOperationError(f"Cannot tar non-directory: {dpath}")
+
+    fpath_tarred = dpath.with_suffix(EXT_TAR)
+    logger.debug(f"Tarring {dpath} to {fpath_tarred}")
+    run_command(
+        ["tar", "-cvf", str(fpath_tarred), "-C", str(dpath.parent), dpath.name],
+        check=True,
+        dry_run=dry_run,
+    )
+    if not dry_run:
+        if not (fpath_tarred.exists() and is_tarfile(fpath_tarred)):
+            raise FileOperationError(f"Failed to tar {dpath} to {fpath_tarred}")
+
+    return fpath_tarred
 
 
 def rm(path: Path, dry_run=False):

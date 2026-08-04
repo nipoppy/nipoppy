@@ -7,7 +7,7 @@ from typing import Protocol
 
 from nipoppy.exceptions import ExecutionError
 from nipoppy.logger import get_logger
-from nipoppy.workflows.base import CommandRunner
+from nipoppy.utils.subprocess_runner import CommandRunner
 
 logger = get_logger()
 

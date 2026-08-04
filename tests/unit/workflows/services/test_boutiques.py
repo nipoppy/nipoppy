@@ -80,7 +80,7 @@ def test_run_bosh_func_capture_error(
 ):
     """Test that a Boutiques launch command captures errors correctly."""
     mocked_run_command = mocker.patch(
-        "nipoppy.workflows.base._run_command",
+        "nipoppy.utils.subprocess_runner.run_command",
         side_effect=subprocess.CalledProcessError(
             returncode=1,
             cmd=["bosh", "exec", "launch"],
@@ -104,7 +104,7 @@ def test_bosh_simulate_log(
     mocker: pytest_mock.MockerFixture,
 ):
     """Test that a Boutiques simulate command logs the command."""
-    mocked_run_command = mocker.patch("nipoppy.workflows.base._run_command")
+    mocked_run_command = mocker.patch("nipoppy.utils.subprocess_runner.run_command")
     run_bosh_simulate(
         invocation_str=json.dumps(invocation),
         descriptor_str=json.dumps(bosh_descriptor),
