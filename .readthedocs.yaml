@@ -9,7 +9,7 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.14"
+    python: "3.11"
   jobs:
     pre_build:
       - python docs/scripts/pydantic_to_jsonschema.py
