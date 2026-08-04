@@ -119,7 +119,7 @@ def _assert_layout_creation(workflow):
             # Only check README if this directory has a description in the layout
             path_info = None
             for info in workflow.study.layout.config.path_infos:
-                if workflow.study.layout._prepend_root_path(info.path) == dpath:
+                if workflow.study.layout._prepend_study_path(info.path) == dpath:
                     path_info = info
                     break
             if path_info and path_info.description:
