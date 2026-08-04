@@ -58,7 +58,7 @@ language: json
 
 ### [Customizing the manifest.tsv file](../../how_to_guides/manifest/index.md)
 
-The example manifest file created at {{fpath_manifest}} by `nipoppy init` always looks like this:
+The example {term}`manifest file` created at {{fpath_manifest}} by `nipoppy init` always looks like this:
 ```{literalinclude} ../../../../nipoppy/data/examples/sample_manifest.tsv
 ---
 linenos: True
@@ -67,7 +67,7 @@ linenos: True
 
 **For our example study, we changed it to this:**
 
-(This is the `manifest.tsv` file you copied from the tutorial-dataset; you will always have to modify the `manifest.tsv` according to your study setup)
+(This is the {term}`manifest file` you copied from the tutorial-dataset; you will always have to modify it according to your study setup)
 ```{literalinclude} example-dataset_manifest.tsv
 ---
 linenos: True

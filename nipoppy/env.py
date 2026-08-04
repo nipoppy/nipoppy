@@ -29,6 +29,9 @@ BIDS_PATH_INJECTION_PREFIX = "BIDS_PATH_INJECTION_"
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"
 
+# user-level config
+FPATH_USER_CONFIG = "~/.nipoppy/config.json"
+
 # file extensions
 EXT_TAR = ".tar"
 EXT_LOG = ".log"

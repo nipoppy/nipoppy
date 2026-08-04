@@ -14,7 +14,7 @@ from fids import fids
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
+from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 
@@ -26,6 +26,12 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 @pytest.fixture
 def workflow(dpath_root: Path) -> InitWorkflow:
     return InitWorkflow(dpath_root=dpath_root)
+
+
+@pytest.fixture(autouse=True)
+def isolate_user_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Ignore any existing user config by setting HOME to a temporary directory."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
 
 
 @pytest.fixture
@@ -148,6 +154,10 @@ def assert_layout_creation(workflow, dpath_root):
         assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
+def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
+    assert fpath_actual.read_text() == fpath_expected.read_text()
+
+
 @pytest.mark.no_xdist
 def test_run(
     workflow: InitWorkflow, dpath_root: Path, caplog: pytest.LogCaptureFixture
@@ -172,6 +182,86 @@ def test_run_no_success_message_on_error(
         workflow.run()
 
     assert "Successfully initialized a dataset" not in caplog.text
+
+
+def test_create_config_file_defaults_to_sample_when_user_config_missing(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch(
+        "nipoppy.workflows.dataset_init.FPATH_USER_CONFIG",
+        tmp_path / "missing_config.json",
+    )
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert "Default config file copied" in caplog.text
+    assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_create_config_file_uses_user_config(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, fpath_user_config)
+    assert "Default config file copied" not in caplog.text
+
+
+def test_create_config_file_default_config_ignores_user_config(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
+
+    workflow.default_config = True
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert "Default config file copied" in caplog.text
+    assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_create_config_file_warns_and_falls_back_for_invalid_user_config(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"NOT_A_CONFIG_FIELD": "config"}\n')
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert f"{fpath_user_config} is invalid" in caplog.text
+    assert "Falling back to the default config file" in caplog.text
+    assert "Default config file copied" in caplog.text
+    assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_run_warns_when_sample_manifest_copied(
+    workflow: InitWorkflow, caplog: pytest.LogCaptureFixture
+):
+    workflow.run()
+
+    assert "Sample manifest file copied" in caplog.text
+    assert "It should be edited to match your dataset" in caplog.text
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
@@ -327,6 +417,7 @@ def test_init_bids(
     workflow: InitWorkflow,
     fake_bids_root: Path,
     mocker: pytest_mock.MockerFixture,
+    caplog: pytest.LogCaptureFixture,
 ):
     """Test init from an existing BIDS dataset.
 
@@ -346,6 +437,7 @@ def test_init_bids(
     assert_layout_creation(workflow, workflow.study.layout.dpath_root)
     _assert_manifest_creation(workflow)
     mocked_handle_bids_source.assert_called_once()
+    assert "Sample manifest file copied" not in caplog.text
 
 
 def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root: Path):
