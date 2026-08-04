@@ -32,7 +32,7 @@ def ensure_schema_support(
     Raises
     ------
     ConfigError
-        If schema version is newer than the one supported by this version of Nipoppy.
+        If schema version is invalid or newer than the one supported by this version of Nipoppy.
     """
     current_version = get_current_schema_version(config_type)
     try:
