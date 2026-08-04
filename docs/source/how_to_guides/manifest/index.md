@@ -10,7 +10,7 @@ Example script 2<example2>
 Example script 3<example3>
 ```
 
-This guide shows how to create a dataset's manifest file, which is a list of participants recruited in the study, their visits, and expected data modalities.
+This guide shows how to create a dataset's [manifest file](<project:../../explanations/manifest.md>), which is a list of participants recruited in the study, their visits, and expected data modalities.
 
 :::{note}
 If the Nipoppy dataset was initialized from an existing BIDS dataset with `nipoppy init --bids-source`, then a manifest file containing valid and accurate entries for the imaging data was automatically generated from the BIDS input. In this case, it is not necessary to manually insert or update the imaging data information in the manifest file.
