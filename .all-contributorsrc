@@ -2,7 +2,7 @@
   "projectName": "nipoppy",
   "projectOwner": "nipoppy",
   "files": [
-    "docs/source/team.md"
+    "docs/source/other/team.md"
   ],
   "repoType": "github",
   "commitConvention": "angular",

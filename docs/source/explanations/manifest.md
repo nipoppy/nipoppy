@@ -32,12 +32,12 @@ Following the [Nipoppy principle](../overview/why_nipoppy/principles) of specify
 
 The manifest is considered the ground truth of what data should be available for a given study: any participant/visit that is not present in the manifest is ignored by the Nipoppy software tools, regardless of whether they have data on disk.
 
-The [`nipoppy status` command](../cli_reference/status) prints a summary table that includes counts for the number of participants that are in the manifest for each imaging session.
+The [`nipoppy status` command](../reference/cli_reference/status) prints a summary table that includes counts for the number of participants that are in the manifest for each imaging session.
 
-The [`nipoppy track-curation` command](../cli_reference/track_curation) will check whether each participant-session pair listed in the manifest file has imaging data in each of the three data curation stages:
+The [`nipoppy track-curation` command](../reference/cli_reference/track_curation) will check whether each participant-session pair listed in the manifest file has imaging data in each of the three data curation stages:
 
 - Arbitrarily organized sourcedata in {{dpath_pre_reorg}}
 - Sourcedata ready for BIDS conversion in {{dpath_post_reorg}}
 - Data organized according to BIDS in {{dpath_bids}}
 
-This information is stored in the {term}`curation status file`, which is used by the [`nipoppy bidsify`](../cli_reference/bidsify), [`nipoppy process`](../cli_reference/process) and [`nipoppy extract`](../cli_reference/extract) commands to determine which participants and sessions a pipeline should be run on.
+This information is stored in the {term}`curation status file`, which is used by the [`nipoppy bidsify`](../reference/cli_reference/bidsify), [`nipoppy process`](../reference/cli_reference/process) and [`nipoppy extract`](../reference/cli_reference/extract) commands to determine which participants and sessions a pipeline should be run on.
