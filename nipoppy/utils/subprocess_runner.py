@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import shlex
 import subprocess
-from typing import Protocol, Sequence
+from typing import Any, Protocol, Sequence, TextIO
 
 from nipoppy.logger import get_logger
 
@@ -20,11 +20,91 @@ class LogPrefix:
     RUN_STDERR = "[RUN STDERR]"
 
 
-def _log_command(command: str):
+def _log_command(command: str) -> None:
     """Write a command to the log with a special prefix."""
     # using extra={"markup": False} in case the command contains substrings
     # that would be interpreted as closing tags by the RichHandler
     logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
+
+
+def _log_output(
+    output_source: TextIO,
+    log_prefix: str,
+    log_level: int = logging.INFO,
+) -> None:
+    """Consume lines from an IO stream and log them."""
+    for line in output_source:
+        line = line.strip("\n")
+        # using extra={"markup": False} in case the output contains substrings
+        # that would be interpreted as closing tags by the RichHandler
+        logger.log(
+            level=log_level,
+            msg=f"{log_prefix} {line}",
+            extra={"markup": False},
+        )
+
+
+def _drain_process(process: subprocess.Popen[str]) -> None:
+    """Read lines from the process's stdout and stderr and log them."""
+    assert process.stdout is not None
+    assert process.stderr is not None
+    _log_output(
+        process.stdout,
+        LogPrefix.RUN_STDOUT,
+    )
+    _log_output(
+        process.stderr,
+        LogPrefix.RUN_STDERR,
+        log_level=logging.ERROR,
+    )
+
+
+def _build_command(
+    command_or_args: Sequence[str] | str, quiet: bool = False
+) -> tuple[str, list[str]]:
+    """Build display and argument representations of a command."""
+    if isinstance(command_or_args, str):
+        command = command_or_args
+        args = shlex.split(command)
+    else:
+        args = [str(arg) for arg in command_or_args]
+        command = shlex.join(args)
+
+    if not quiet:
+        _log_command(command)
+
+    return command, args
+
+
+def _execute_process(
+    command_or_args: Sequence[str] | str,
+    /,
+    *,
+    command: str,
+    check: bool,
+    **kwargs: Any,
+) -> subprocess.Popen[str]:
+    """Execute a command and stream its output to the log."""
+    process: subprocess.Popen[str] = subprocess.Popen(
+        command_or_args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        **kwargs,
+    )
+
+    while process.poll() is None:
+        _drain_process(process)
+
+    # final drain: the poll() loop can exit before the last lines written
+    # just prior to process termination are read, so flush any remaining
+    # buffered output now that the process has exited.
+    _drain_process(process)
+
+    if check and process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, command)
+
+    return process
 
 
 class CommandRunner(Protocol):
@@ -50,7 +130,7 @@ def run_command(
     check: bool = True,
     quiet: bool = False,
     dry_run: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> subprocess.Popen[str] | str:
     """Run a command in a subprocess.
 
@@ -79,46 +159,7 @@ def run_command(
     -------
     subprocess.Popen or str
     """
-
-    def process_output(output_source, log_prefix: str, log_level=logging.INFO):
-        """Consume lines from an IO stream and log them."""
-        for line in output_source:
-            line = line.strip("\n")
-            # using extra={"markup": False} in case the output contains substrings
-            # that would be interpreted as closing tags by the RichHandler
-            logger.log(
-                level=log_level,
-                msg=f"{log_prefix} {line}",
-                extra={"markup": False},
-            )
-
-    def drain_process(process: subprocess.Popen[str]):
-        """Read lines from the process's stdout and stderr and log them."""
-        process_output(
-            process.stdout,
-            LogPrefix.RUN_STDOUT,
-        )
-        process_output(
-            process.stderr,
-            LogPrefix.RUN_STDERR,
-            log_level=logging.ERROR,
-        )
-
-    def build_cmd(command_or_args: Sequence[str] | str) -> tuple[str, list[str]]:
-        # build command string
-        if isinstance(command_or_args, str):
-            command = command_or_args
-            args = shlex.split(command)
-        else:
-            args = [str(arg) for arg in command_or_args]
-            command = shlex.join(args)
-
-        return command, args
-
-    command, args = build_cmd(command_or_args)
-
-    if not quiet:
-        _log_command(command)
+    command, args = _build_command(command_or_args, quiet=quiet)
 
     if dry_run:
         return command
@@ -127,23 +168,9 @@ def run_command(
     if not kwargs.get("shell"):
         command_or_args = args
 
-    process: subprocess.Popen[str] = subprocess.Popen(
+    return _execute_process(
         command_or_args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
+        command=command,
+        check=check,
         **kwargs,
     )
-
-    while process.poll() is None:
-        drain_process(process)
-
-    # final drain: the poll() loop can exit before the last lines written
-    # just prior to process termination are read, so flush any remaining
-    # buffered output now that the process has exited.
-    drain_process(process)
-
-    if check and process.returncode != 0:
-        raise subprocess.CalledProcessError(process.returncode, command)
-
-    return process
