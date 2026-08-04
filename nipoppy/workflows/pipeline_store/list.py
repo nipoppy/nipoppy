@@ -1,13 +1,7 @@
 """Workflow for pipeline list command."""
 
-from collections import defaultdict
-
-from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PROGRAM_NAME, PipelineTypeEnum
-from nipoppy.exceptions import WorkflowError
-from nipoppy.layout import DatasetLayout
 from nipoppy.logger import emphasize, get_logger
-from nipoppy.utils.utils import load_json
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
@@ -31,36 +25,6 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-
-    def _get_pipeline_info_map(
-        self,
-    ) -> dict[PipelineTypeEnum, dict[str, list[str]]]:
-        pipeline_type_to_info_map = {}
-        for pipeline_type in PipelineTypeEnum:
-            pipeline_names_to_versions_map = defaultdict(list)
-            dpath_pipeline_bundles = (
-                self.study.layout.dpath_pipelines
-                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
-            )
-            for fpath_config in sorted(
-                dpath_pipeline_bundles.glob(
-                    f"*/{self.study.layout.fname_pipeline_config}"
-                )
-            ):
-                try:
-                    pipeline_config = BasePipelineConfig(**load_json(fpath_config))
-                except Exception as e:
-                    raise WorkflowError(
-                        f"Error when loading pipeline config at {fpath_config}: {e}"
-                    ) from e
-
-                pipeline_names_to_versions_map[pipeline_config.NAME].append(
-                    pipeline_config.VERSION
-                )
-
-            pipeline_type_to_info_map[pipeline_type] = pipeline_names_to_versions_map
-
-        return pipeline_type_to_info_map
 
     def _log_pipeline_info(
         self,
@@ -86,7 +50,7 @@ class PipelineListWorkflow(BaseDatasetWorkflow):
 
     def run_main(self):
         """List the available pipelines in a dataset."""
-        pipeline_type_to_info_map = self._get_pipeline_info_map()
+        pipeline_type_to_info_map = self.study._get_pipeline_info_map()
 
         logger.info(
             f"Checking pipelines installed in {self.study.layout.dpath_pipelines}"
