@@ -5,8 +5,26 @@
 
 version: 2
 updates:
-  - package-ecosystem: "github-actions" # See documentation for possible values
+
+  - package-ecosystem: "github-actions"
     directory: "/" # Location of package manifests
+    schedule:
+      interval: "monthly"
+    labels:
+      - "T.2 - Maintenance"
+      - "bot"
+    commit-message:
+      prefix: "[MAINT] "
+
+  - package-ecosystem: "pip"
+    directory: "/" # Location of package manifests
+    allow:
+      - dependency-name: "furo"
+      - dependency-name: "mdit-py-plugins"
+      - dependency-name: "myst-parser"
+      - dependency-name: "sphinx*"
+      - dependency-name: "Sphinx*"
+    versioning-strategy: increase
     schedule:
       interval: "monthly"
     labels:
