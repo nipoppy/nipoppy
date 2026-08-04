@@ -3,8 +3,8 @@
 import pytest
 
 from nipoppy.config.schema import (
-    ensure_config_file_schema_version_exists,
     ensure_schema_support,
+    ensure_schema_version_exists,
     get_current_schema_version,
 )
 from nipoppy.env import ConfigType
@@ -31,17 +31,13 @@ def test_config_file_requires_schema_version():
     fpath_config = DPATH_TEST_DATA / "pipeline_config-no-schema-version.json"
 
     with pytest.raises(ConfigError, match="must include SCHEMA_VERSION"):
-        ensure_config_file_schema_version_exists(
-            fpath_config, ConfigType.PIPELINE, strict=True
-        )
+        ensure_schema_version_exists(fpath_config, ConfigType.PIPELINE, strict=True)
 
 
 def test_config_file_warns_no_schema_version(caplog: pytest.LogCaptureFixture):
     fpath_config = DPATH_TEST_DATA / "pipeline_config-no-schema-version.json"
 
-    schema_version = ensure_config_file_schema_version_exists(
-        fpath_config, ConfigType.PIPELINE
-    )
+    schema_version = ensure_schema_version_exists(fpath_config, ConfigType.PIPELINE)
 
     assert schema_version == get_current_schema_version(ConfigType.PIPELINE)
     assert any(

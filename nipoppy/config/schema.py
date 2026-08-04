@@ -32,7 +32,8 @@ def ensure_schema_support(
     Raises
     ------
     ConfigError
-        If schema version is invalid or newer than the one supported by this version of Nipoppy.
+        If schema version is invalid or newer than the one supported by this version of
+        Nipoppy.
     """
     current_version = get_current_schema_version(config_type)
     try:
@@ -50,7 +51,7 @@ def ensure_schema_support(
     return schema_version
 
 
-def ensure_config_file_schema_version_exists(
+def ensure_schema_version_exists(
     fpath_config: Path, config_type: ConfigType, strict: bool = False
 ) -> str:
     """Check if the schema version field is set."""
@@ -67,7 +68,8 @@ def ensure_config_file_schema_version_exists(
             logger.warning(
                 f"{fpath_config} is missing the required {SCHEMA_VERSION_FIELD} field; "
                 f"assuming version {EARLIEST_SCHEMA_VERSION}. This will become an "
-                f"error in a future Nipoppy release. To silence this warning, add the following to the config: "
+                f"error in a future Nipoppy release. To silence this warning, add the "
+                "following to the config: "
                 f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
             )
             current_version = get_current_schema_version(config_type)

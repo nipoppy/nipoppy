@@ -15,7 +15,7 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
-from nipoppy.config.schema import ensure_config_file_schema_version_exists
+from nipoppy.config.schema import ensure_schema_version_exists
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
@@ -57,9 +57,7 @@ def _load_pipeline_config_file(
             f"Pipeline configuration file {fpath_config} is invalid:\n{exception}"
         )
 
-    ensure_config_file_schema_version_exists(
-        fpath_config, ConfigType.PIPELINE, strict=strict
-    )
+    ensure_schema_version_exists(fpath_config, ConfigType.PIPELINE, strict=strict)
 
     return config
 
@@ -227,7 +225,7 @@ def _check_pipeline_files(
                 )
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE
                 _check_tracker_config_file(fpath_tracker_config)
-                ensure_config_file_schema_version_exists(
+                ensure_schema_version_exists(
                     fpath_tracker_config, ConfigType.TRACKER, strict=strict
                 )
                 fpaths.append(fpath_tracker_config)
