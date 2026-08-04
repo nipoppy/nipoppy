@@ -11,11 +11,11 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID
-from nipoppy.exceptions import FileOperationError
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
-from nipoppy.workflows.dataset_init import InitWorkflow
+from nipoppy.core._constant import FAKE_SESSION_ID
+from nipoppy.core._exceptions import FileOperationError
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._utils.utils import DPATH_HPC, DPATH_LAYOUTS
+from nipoppy.workflows.init import InitWorkflow
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])

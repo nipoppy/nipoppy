@@ -3,14 +3,14 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.env import StrOrPathLike
-from nipoppy.logger import get_logger
-from nipoppy.tabular.curation_status import (
+from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._logger import get_logger
+from nipoppy.core._models.tabular.curation_status import (
     CurationStatusTable,
     generate_curation_status_table,
     update_curation_status_table,
 )
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows._base import BaseDatasetWorkflow
 
 logger = get_logger()
 

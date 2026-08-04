@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from nipoppy.logger import add_logfile
+from nipoppy.core._logger import add_logfile
 from nipoppy.workflows import DicomReorgWorkflow
 
 

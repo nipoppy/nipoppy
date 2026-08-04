@@ -6,8 +6,8 @@ from contextlib import contextmanager
 import rich_click as click
 from pydantic_core import ValidationError
 
-from nipoppy.exceptions import NipoppyError, ReturnCode
-from nipoppy.logger import get_logger
+from nipoppy.core._exceptions import NipoppyError, ReturnCode
+from nipoppy.core._logger import get_logger
 
 logger = get_logger()
 

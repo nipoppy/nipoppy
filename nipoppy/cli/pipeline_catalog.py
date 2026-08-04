@@ -13,8 +13,8 @@ from nipoppy.cli.options import (
     layout_option,
     password_file_option,
 )
-from nipoppy.env import PipelineTypeEnum
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI
 
 
 @click.group(
@@ -60,7 +60,7 @@ def zenodo_options(func):
 @global_options
 def pipeline_search(**params):
     """Search for available pipelines on Zenodo."""
-    from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
+    from nipoppy.workflows.pipeline.search import PipelineSearchWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),
@@ -103,7 +103,7 @@ def pipeline_search(**params):
 @global_options
 def pipeline_create(**params):
     """Create a template pipeline config directory."""
-    from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
+    from nipoppy.workflows.pipeline.create import PipelineCreateWorkflow
 
     with exception_handler(PipelineCreateWorkflow(**params)) as workflow:
         workflow.run()
@@ -133,7 +133,7 @@ def pipeline_install(**params):
 
     The source of the pipeline can be a local directory or a Zenodo ID.
     """
-    from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
+    from nipoppy.workflows.pipeline.install import PipelineInstallWorkflow
 
     params = dep_params(**params)
     params["zenodo_api"] = ZenodoAPI(
@@ -150,7 +150,7 @@ def pipeline_install(**params):
 @layout_option
 def pipeline_list(**params):
     """List installed pipelines for a dataset."""
-    from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
+    from nipoppy.workflows.pipeline.list import PipelineListWorkflow
 
     params = dep_params(**params)
     with exception_handler(PipelineListWorkflow(**params)) as workflow:
@@ -166,7 +166,7 @@ def pipeline_list(**params):
 @global_options
 def pipeline_validate(**params):
     """Validate a pipeline config directory."""
-    from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
+    from nipoppy.workflows.pipeline.validate import PipelineValidateWorkflow
 
     params["dpath_pipeline"] = params.pop("path")
     with exception_handler(PipelineValidateWorkflow(**params)) as workflow:
@@ -197,7 +197,7 @@ def pipeline_validate(**params):
 @global_options
 def pipeline_upload(**params):
     """Upload a pipeline config directory to Zenodo."""
-    from nipoppy.workflows.pipeline_store.upload import PipelineUploadWorkflow
+    from nipoppy.workflows.pipeline.upload import PipelineUploadWorkflow
 
     params["zenodo_api"] = ZenodoAPI(
         sandbox=params.pop("sandbox"),

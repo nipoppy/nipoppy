@@ -7,15 +7,15 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import (
+from nipoppy.core._constant import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._exceptions import ConfigError, FileOperationError
+from nipoppy.core._models.config.pipeline import (
     BasePipelineConfig,
     BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.exceptions import ConfigError, FileOperationError
-from nipoppy.pipeline_validation import (
+from nipoppy.workflows.pipeline._utils.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
     _check_invocation_file,
@@ -387,18 +387,21 @@ def test_check_pipeline_bundle(
     fpaths = [dpath_bundle / "file1.txt", dpath_bundle / "file2.txt"]
 
     mocked_load_pipeline_config_file = mocker.patch(
-        "nipoppy.pipeline_validation._load_pipeline_config_file",
+        "nipoppy.workflows.pipeline._utils.pipeline_validation."
+        "_load_pipeline_config_file",
         return_value=config,
     )
     mocked_check_pipeline_files = mocker.patch(
-        "nipoppy.pipeline_validation._check_pipeline_files",
+        "nipoppy.workflows.pipeline._utils.pipeline_validation."
+        "_check_pipeline_files",
         return_value=fpaths,
     )
     mocked_check_self_contained = mocker.patch(
-        "nipoppy.pipeline_validation._check_self_contained"
+        "nipoppy.workflows.pipeline._utils.pipeline_validation." "_check_self_contained"
     )
     mocked_check_no_subdirectories = mocker.patch(
-        "nipoppy.pipeline_validation._check_no_subdirectories"
+        "nipoppy.workflows.pipeline._utils.pipeline_validation."
+        "_check_no_subdirectories"
     )
 
     check_pipeline_bundle(dpath_bundle, log_level=log_level)

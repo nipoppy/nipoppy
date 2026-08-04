@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from fids import fids
 
-from nipoppy.exceptions import NipoppyError
-from nipoppy.utils.bids import (
+from nipoppy.core._exceptions import NipoppyError
+from nipoppy.core._utils.bids import (
     add_pybids_ignore_patterns,
     check_participant_id,
     check_session_id,

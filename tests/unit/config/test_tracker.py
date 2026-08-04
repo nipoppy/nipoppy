@@ -2,7 +2,7 @@
 
 import pytest
 
-from nipoppy.config.tracker import TrackerConfig
+from nipoppy.core._models.config.tracker import TrackerConfig
 
 FIELDS_STEP = [
     "PATHS",

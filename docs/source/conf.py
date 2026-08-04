@@ -10,9 +10,9 @@ from datetime import datetime
 from pathlib import Path
 
 from nipoppy._version import __version__
-from nipoppy.env import PipelineTypeEnum
-from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core.layout import DEFAULT_LAYOUT_INFO  # for substitutions
+from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

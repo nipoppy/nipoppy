@@ -7,13 +7,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from nipoppy.config.pipeline_step import AnalysisLevelType
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.processing_runner import ProcessingRunner
-from nipoppy.workflows.tracker import PipelineTracker
+from nipoppy.core._constant import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.core._models.config.pipeline_step import AnalysisLevelType
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._models.tabular.processing_status import ProcessingStatusTable
+from nipoppy.workflows.process import ProcessingRunner
+from nipoppy.workflows.track_processing import PipelineTracker
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,

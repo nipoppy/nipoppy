@@ -3,11 +3,11 @@
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.boutiques import (
+from nipoppy.core._exceptions import ConfigError
+from nipoppy.core._models.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.exceptions import ConfigError
 
 FIELDS_BOUTIQUES = ["CONTAINER_CONFIG", "CONTAINER_SUBCOMMAND"]
 

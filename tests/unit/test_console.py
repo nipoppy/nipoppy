@@ -7,7 +7,13 @@ import pytest
 from rich.logging import RichHandler
 from rich.table import Table
 
-from nipoppy.console import _INDENT, CONSOLE_STDERR, CONSOLE_STDOUT, _Console, _Status
+from nipoppy.core._console import (
+    _INDENT,
+    CONSOLE_STDERR,
+    CONSOLE_STDOUT,
+    _Console,
+    _Status,
+)
 
 
 @pytest.fixture

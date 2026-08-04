@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.exceptions import FileOperationError
-from nipoppy.utils import fileops
+from nipoppy.core._exceptions import FileOperationError
+from nipoppy.workflows._utils import fileops
 
 
 def create_dummy_directory_structure(base_path: Path):

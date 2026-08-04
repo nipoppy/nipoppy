@@ -2,8 +2,8 @@
 
 import pytest
 
-from nipoppy.base import Base
-from nipoppy.exceptions import NipoppyError
+from nipoppy.core._base import Base
+from nipoppy.core._exceptions import NipoppyError
 
 
 class BaseA(Base):

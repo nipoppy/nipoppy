@@ -5,19 +5,19 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import (
+from nipoppy.core._constant import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.core._exceptions import FileOperationError
+from nipoppy.core._models.config.pipeline import (
     ExtractionPipelineConfig,
     ExtractionPipelineStepConfig,
     PipelineInfo,
 )
-from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.exceptions import FileOperationError
-from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.utils.bids import (
+from nipoppy.core._models.tabular.processing_status import ProcessingStatusTable
+from nipoppy.core._utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.extractor import ExtractionRunner
+from nipoppy.workflows.extract import ExtractionRunner
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,

@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.hpc import HpcConfig
+from nipoppy.core._models.config.hpc import HpcConfig
 
 
 @pytest.mark.parametrize(

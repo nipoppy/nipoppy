@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.exceptions import FileOperationError, ReturnCode
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.bids import (
+from nipoppy.core._exceptions import FileOperationError, ReturnCode
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.dicom_dir_map import DicomDirMap
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow, is_derived_dicom
+from nipoppy.workflows.reorg import DicomReorgWorkflow, is_derived_dicom
 from tests.conftest import (
     DPATH_TEST_DATA,
     create_empty_dataset,

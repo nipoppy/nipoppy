@@ -14,43 +14,43 @@ from click.testing import CliRunner
 
 from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
-from nipoppy.exceptions import NipoppyError, ReturnCode
+from nipoppy.core._exceptions import NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
 
 # tuple of command/subcommands -> (module path, workflow class name)
 COMMAND_WORKFLOW_MAP = {
-    "init": ("nipoppy.workflows.dataset_init", "InitWorkflow"),
+    "init": ("nipoppy.workflows.init", "InitWorkflow"),
     "track-curation": ("nipoppy.workflows.track_curation", "TrackCurationWorkflow"),
-    "reorg": ("nipoppy.workflows.dicom_reorg", "DicomReorgWorkflow"),
-    "bidsify": ("nipoppy.workflows.bids_conversion", "BIDSificationRunner"),
-    "process": ("nipoppy.workflows.processing_runner", "ProcessingRunner"),
-    "track-processing": ("nipoppy.workflows.tracker", "PipelineTracker"),
-    "extract": ("nipoppy.workflows.extractor", "ExtractionRunner"),
-    "status": ("nipoppy.workflows.dataset_status", "StatusWorkflow"),
+    "reorg": ("nipoppy.workflows.reorg", "DicomReorgWorkflow"),
+    "bidsify": ("nipoppy.workflows.bidsify", "BIDSificationRunner"),
+    "process": ("nipoppy.workflows.process", "ProcessingRunner"),
+    "track-processing": ("nipoppy.workflows.track_processing", "PipelineTracker"),
+    "extract": ("nipoppy.workflows.extract", "ExtractionRunner"),
+    "status": ("nipoppy.workflows.status", "StatusWorkflow"),
     "pipeline search": (
-        "nipoppy.workflows.pipeline_store.search",
+        "nipoppy.workflows.pipeline.search",
         "PipelineSearchWorkflow",
     ),
     "pipeline create": (
-        "nipoppy.workflows.pipeline_store.create",
+        "nipoppy.workflows.pipeline.create",
         "PipelineCreateWorkflow",
     ),
     "pipeline install": (
-        "nipoppy.workflows.pipeline_store.install",
+        "nipoppy.workflows.pipeline.install",
         "PipelineInstallWorkflow",
     ),
     "pipeline list": (
-        "nipoppy.workflows.pipeline_store.list",
+        "nipoppy.workflows.pipeline.list",
         "PipelineListWorkflow",
     ),
     "pipeline validate": (
-        "nipoppy.workflows.pipeline_store.validate",
+        "nipoppy.workflows.pipeline.validate",
         "PipelineValidateWorkflow",
     ),
     "pipeline upload": (
-        "nipoppy.workflows.pipeline_store.upload",
+        "nipoppy.workflows.pipeline.upload",
         "PipelineUploadWorkflow",
     ),
 }
@@ -78,7 +78,7 @@ def test_cli_invalid(args):
     [
         (
             ["init", "[tmp_path]/nipoppy_study"],
-            "nipoppy.workflows.dataset_init.InitWorkflow",
+            "nipoppy.workflows.init.InitWorkflow",
             "Giving the dataset path without --dataset is deprecated",
         ),
         (
@@ -91,7 +91,7 @@ def test_cli_invalid(args):
                 "--write-list",
                 "[tmp_path]/subcohort.txt",
             ],
-            "nipoppy.workflows.processing_runner.ProcessingRunner",
+            "nipoppy.workflows.process.ProcessingRunner",
             (
                 "The --write-list option is deprecated and will be removed in a future "
                 "version. Use --write-subcohort instead."
@@ -167,7 +167,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--dataset",
                 "[mocked_dir]",
             ],
-            "nipoppy.workflows.dataset_init.InitWorkflow",
+            "nipoppy.workflows.init.InitWorkflow",
         ),
         (
             [
@@ -183,7 +183,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--dataset",
                 "[mocked_dir]",
             ],
-            "nipoppy.workflows.dicom_reorg.DicomReorgWorkflow",
+            "nipoppy.workflows.reorg.DicomReorgWorkflow",
         ),
         (
             [
@@ -197,7 +197,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-step",
                 "step1",
             ],
-            "nipoppy.workflows.bids_conversion.BIDSificationRunner",
+            "nipoppy.workflows.bidsify.BIDSificationRunner",
         ),
         (
             [
@@ -209,7 +209,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-version",
                 "1.0",
             ],
-            "nipoppy.workflows.processing_runner.ProcessingRunner",
+            "nipoppy.workflows.process.ProcessingRunner",
         ),
         (
             [
@@ -221,7 +221,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-version",
                 "1.0",
             ],
-            "nipoppy.workflows.tracker.PipelineTracker",
+            "nipoppy.workflows.track_processing.PipelineTracker",
         ),
         (
             [
@@ -233,7 +233,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--pipeline-version",
                 "1.0",
             ],
-            "nipoppy.workflows.extractor.ExtractionRunner",
+            "nipoppy.workflows.extract.ExtractionRunner",
         ),
         (
             [
@@ -241,7 +241,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--dataset",
                 "[mocked_dir]",
             ],
-            "nipoppy.workflows.dataset_status.StatusWorkflow",
+            "nipoppy.workflows.status.StatusWorkflow",
         ),
         (
             [
@@ -249,7 +249,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "search",
                 "mriqc",
             ],
-            "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
+            "nipoppy.workflows.pipeline.search.PipelineSearchWorkflow",
         ),
         (
             [
@@ -258,7 +258,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--password-file",
                 str(PASSWORD_FILE),
             ],
-            "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
+            "nipoppy.workflows.pipeline.search.PipelineSearchWorkflow",
         ),
         (
             [
@@ -268,7 +268,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "processing",
                 "[mocked_dir]",
             ],
-            "nipoppy.workflows.pipeline_store.create.PipelineCreateWorkflow",
+            "nipoppy.workflows.pipeline.create.PipelineCreateWorkflow",
         ),
         (
             [
@@ -278,7 +278,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "[mocked_dir]",
                 "zenodo.123456",
             ],
-            "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
+            "nipoppy.workflows.pipeline.install.PipelineInstallWorkflow",
         ),
         (
             [
@@ -290,7 +290,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--password-file",
                 str(PASSWORD_FILE),
             ],
-            "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
+            "nipoppy.workflows.pipeline.install.PipelineInstallWorkflow",
         ),
         (
             [
@@ -299,11 +299,11 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--dataset",
                 "[mocked_dir]",
             ],
-            "nipoppy.workflows.pipeline_store.list.PipelineListWorkflow",
+            "nipoppy.workflows.pipeline.list.PipelineListWorkflow",
         ),
         (
             ["pipeline", "validate", "[mocked_dir]"],
-            "nipoppy.workflows.pipeline_store.validate.PipelineValidateWorkflow",
+            "nipoppy.workflows.pipeline.validate.PipelineValidateWorkflow",
         ),
         (
             [
@@ -315,7 +315,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--password-file",
                 str(PASSWORD_FILE),
             ],
-            "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
+            "nipoppy.workflows.pipeline.upload.PipelineUploadWorkflow",
         ),
     ],
 )

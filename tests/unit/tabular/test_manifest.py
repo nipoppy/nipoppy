@@ -5,8 +5,8 @@ from contextlib import nullcontext
 import pandas as pd
 import pytest
 
-from nipoppy.exceptions import TabularError
-from nipoppy.tabular.manifest import Manifest
+from nipoppy.core._exceptions import TabularError
+from nipoppy.core._models.tabular.manifest import Manifest
 from tests.conftest import DPATH_TEST_DATA
 
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from nipoppy.config.container import (
+from nipoppy.core._models.config.container import (
     ContainerConfig,
     ContainerInfo,
     _SchemaWithContainerConfig,

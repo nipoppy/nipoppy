@@ -1,7 +1,7 @@
 import pytest
 
-from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
-from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
+from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI, ZenodoAPIError
+from nipoppy.workflows.pipeline.search import PipelineSearchWorkflow
 
 
 @pytest.fixture

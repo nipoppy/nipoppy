@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import BIDSificationPipelineConfig
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.workflows.bids_conversion import BIDSificationRunner
+from nipoppy.core._models.config.pipeline import BIDSificationPipelineConfig
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.workflows.bidsify import BIDSificationRunner
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,

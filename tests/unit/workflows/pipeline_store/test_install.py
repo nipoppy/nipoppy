@@ -10,18 +10,18 @@ from typing import Optional
 import pytest
 import pytest_mock
 
-from nipoppy.config.main import Config
-from nipoppy.config.pipeline import ProcessingPipelineConfig
-from nipoppy.container import ApptainerHandler
-from nipoppy.env import (
+from nipoppy.core._constant import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
-from nipoppy.layout import DatasetLayout
-from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.core._container import ApptainerHandler
+from nipoppy.core._exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.core._models.config.main import Config
+from nipoppy.core._models.config.pipeline import ProcessingPipelineConfig
+from nipoppy.core.layout import DatasetLayout
+from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI
+from nipoppy.workflows.pipeline.install import PipelineInstallWorkflow
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
 
 
@@ -68,7 +68,7 @@ def workflow(
     )
 
     # mock singularity/apptainer pull (this is overridden by some tests)
-    mocker.patch("nipoppy.workflows.pipeline_store.install._run_command")
+    mocker.patch("nipoppy.workflows.pipeline.install._run_command")
 
     return workflow
 
@@ -237,12 +237,10 @@ def test_download_container(
     mocker: pytest_mock.MockFixture,
 ):
     mocked_get_container_handler = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.get_container_handler",
+        "nipoppy.workflows.pipeline.install.get_container_handler",
         return_value=ApptainerHandler(),
     )
-    mocked_run_command = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install._run_command"
-    )
+    mocked_run_command = mocker.patch("nipoppy.workflows.pipeline.install._run_command")
 
     workflow._download_container(pipeline_config)
 
@@ -272,7 +270,7 @@ def test_download_container_confirm_true(
     workflow.assume_yes = False
 
     mocked_confirm_ask = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.confirm",
+        "nipoppy.workflows.pipeline.install.CONSOLE_STDOUT.confirm",
         return_value=confirm_download,
     )
 
@@ -280,13 +278,11 @@ def test_download_container_confirm_true(
     mock_handler.is_image_downloaded.return_value = False
     mock_handler.get_pull_confirmation_prompt.return_value = "not used"
     mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.get_container_handler",
+        "nipoppy.workflows.pipeline.install.get_container_handler",
         return_value=mock_handler,
     )
 
-    mocked_run_command = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install._run_command"
-    )
+    mocked_run_command = mocker.patch("nipoppy.workflows.pipeline.install._run_command")
 
     workflow._download_container(pipeline_config)
     mocked_confirm_ask.assert_called_once()
@@ -315,11 +311,9 @@ def test_download_container_status(
     mocker: pytest_mock.MockFixture,
 ):
     mocked_status = mocker.patch(
-        f"nipoppy.workflows.pipeline_store.install.{console}.status",
+        f"nipoppy.workflows.pipeline.install.{console}.status",
     )
-    mocked_run_command = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install._run_command"
-    )
+    mocked_run_command = mocker.patch("nipoppy.workflows.pipeline.install._run_command")
 
     workflow.study.config.CONTAINER_CONFIG.COMMAND = command
     workflow._download_container(pipeline_config)
@@ -339,7 +333,7 @@ def test_download_container_failed(
 ):
     error_message = "Download failed"
     mocked = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install._run_command",
+        "nipoppy.workflows.pipeline.install._run_command",
         side_effect=subprocess.CalledProcessError(1, error_message),
     )
 
@@ -360,7 +354,7 @@ def test_download_container_no_uri(
     mocker: pytest_mock.MockFixture,
 ):
     pipeline_config.CONTAINER_INFO.URI = None
-    mocked = mocker.patch("nipoppy.workflows.pipeline_store.install._run_command")
+    mocked = mocker.patch("nipoppy.workflows.pipeline.install._run_command")
 
     workflow._download_container(pipeline_config)
 
@@ -378,7 +372,7 @@ def test_download_container_image_exists(
     )
     fpath_container.parent.mkdir(parents=True, exist_ok=True)
     fpath_container.touch()
-    mocked = mocker.patch("nipoppy.workflows.pipeline_store.install._run_command")
+    mocked = mocker.patch("nipoppy.workflows.pipeline.install._run_command")
 
     workflow._download_container(pipeline_config)
     mocked.assert_not_called()

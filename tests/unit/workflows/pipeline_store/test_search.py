@@ -7,8 +7,8 @@ import pytest
 import pytest_mock
 from rich.table import Table
 
-from nipoppy.env import ZENODO_COMMUNITY_ID
-from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
+from nipoppy.core._constant import ZENODO_COMMUNITY_ID
+from nipoppy.workflows.pipeline.search import PipelineSearchWorkflow
 
 
 @pytest.fixture(scope="function")
@@ -78,7 +78,7 @@ def test_df_to_table(
     is_description_hidden: bool,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    import nipoppy.workflows.pipeline_store.search as search_module
+    import nipoppy.workflows.pipeline.search as search_module
 
     monkeypatch.setattr(search_module, "CURRENT_CONSOLE_WIDTH", console_width)
     df_hits = pd.DataFrame(
@@ -119,7 +119,7 @@ def test_run_main(
     df = pd.DataFrame(hits)
 
     mocked_console_status = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.status",
+        "nipoppy.workflows.pipeline.install.CONSOLE_STDOUT.status",
     )
 
     # mock search_records and downstream methods

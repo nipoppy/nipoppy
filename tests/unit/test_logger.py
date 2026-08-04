@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 import rich.logging
 
-from nipoppy.env import PROGRAM_NAME
-from nipoppy.logger import LogColor, emphasize
+from nipoppy.core._constant import PROGRAM_NAME
+from nipoppy.core._logger import LogColor, emphasize
 
 
 def test_color():

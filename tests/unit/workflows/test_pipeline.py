@@ -13,30 +13,33 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.pipeline import (
-    BIDSificationPipelineConfig,
-    ExtractionPipelineConfig,
-    ProcessingPipelineConfig,
-)
-from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
-from nipoppy.config.tracker import TrackerConfig
-from nipoppy.container import ApptainerHandler
-from nipoppy.env import (
+from nipoppy.core._constant import (
     BIDS_SESSION_PREFIX,
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
     ContainerCommandEnum,
 )
-from nipoppy.exceptions import (
+from nipoppy.core._container import ApptainerHandler
+from nipoppy.core._exceptions import (
     ConfigError,
     FileOperationError,
     ReturnCode,
     WorkflowError,
 )
-from nipoppy.logger import get_logger
-from nipoppy.workflows.pipeline import (
+from nipoppy.core._logger import get_logger
+from nipoppy.core._models.config.boutiques import BoutiquesConfig
+from nipoppy.core._models.config.pipeline import (
+    BIDSificationPipelineConfig,
+    ExtractionPipelineConfig,
+    ProcessingPipelineConfig,
+)
+from nipoppy.core._models.config.pipeline_step import (
+    AnalysisLevelType,
+    ProcPipelineStepConfig,
+)
+from nipoppy.core._models.config.tracker import TrackerConfig
+from nipoppy.workflows._pipeline_workflow import (
     BasePipelineWorkflow,
     get_pipeline_version,
 )
@@ -142,10 +145,10 @@ def reimport_joblib(mocker: pytest_mock.MockerFixture):
 
     # fmt: off
     mocker.stopall()
-    import nipoppy.workflows.pipeline
-    importlib.reload(nipoppy.workflows.pipeline)
-    from nipoppy.workflows.pipeline import BasePipelineWorkflow  # noqa F401
-    from nipoppy.workflows.pipeline import (
+    import nipoppy.workflows._pipeline_workflow
+    importlib.reload(nipoppy.workflows._pipeline_workflow)
+    from nipoppy.workflows._pipeline_workflow import BasePipelineWorkflow  # noqa F401
+    from nipoppy.workflows._pipeline_workflow import (
         JOBLIB_INSTALLED,
     )
     assert JOBLIB_INSTALLED
@@ -172,10 +175,10 @@ def test_joblib_import_fails(
     _mock_joblib_import_error(mocker, error_message)
 
     # reload the module
-    import nipoppy.workflows.pipeline
+    import nipoppy.workflows._pipeline_workflow
 
     with pytest.raises(ImportError, match=error_message):
-        importlib.reload(nipoppy.workflows.pipeline)
+        importlib.reload(nipoppy.workflows._pipeline_workflow)
 
 
 @pytest.mark.parametrize(
@@ -264,7 +267,7 @@ def test_init_n_jobs_but_no_joblib(
 ):
     """Test that an error is raised when joblib is not installed and n_jobs > 1."""
     dpath_root = tmp_path / "my_dataset"
-    mocker.patch("nipoppy.workflows.pipeline.JOBLIB_INSTALLED", False)
+    mocker.patch("nipoppy.workflows._pipeline_workflow.JOBLIB_INSTALLED", False)
     with pytest.raises(SystemExit):
         PipelineWorkflow(
             dpath_root=dpath_root,
@@ -356,7 +359,7 @@ def test_fpath_container(workflow: PipelineWorkflow, mocker: pytest_mock.MockFix
     fpath_container.touch()
 
     mocked = mocker.patch(
-        "nipoppy.workflows.pipeline.get_container_handler",
+        "nipoppy.workflows._pipeline_workflow.get_container_handler",
         return_value=ApptainerHandler(),
     )
 
@@ -393,7 +396,7 @@ def test_fpath_container_not_specified_docker(
     workflow.pipeline_step_config.CONTAINER_CONFIG.COMMAND = ContainerCommandEnum.DOCKER
 
     mocker.patch(
-        "nipoppy.container.DockerHandler.is_image_downloaded", return_value=True
+        "nipoppy.core._container.DockerHandler.is_image_downloaded", return_value=True
     )
 
     # no error expected
@@ -975,14 +978,14 @@ def test_get_results_generator_no_joblib(
 
     # also mock joblib.delayed which is not supposed to be called
     # when joblib is not installed
-    mocked_delayed = mocker.patch("nipoppy.workflows.pipeline.delayed")
+    mocked_delayed = mocker.patch("nipoppy.workflows._pipeline_workflow.delayed")
 
     # reload the module
     # fmt: off
-    import nipoppy.workflows.pipeline
-    importlib.reload(nipoppy.workflows.pipeline)
+    import nipoppy.workflows._pipeline_workflow
+    importlib.reload(nipoppy.workflows._pipeline_workflow)
     # check that mocking/reloading worked
-    from nipoppy.workflows.pipeline import (  # noqa: F401
+    from nipoppy.workflows._pipeline_workflow import (  # noqa: F401
         JOBLIB_INSTALLED,
         BasePipelineWorkflow,
     )
@@ -1001,7 +1004,9 @@ def test_get_results_generator_with_progress_bar(
     workflow._show_progress = True
     participants_sessions = [("001", "1")]
 
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
+    mocked_track = mocker.patch(
+        "nipoppy.workflows._pipeline_workflow.rich.progress.track"
+    )
 
     workflow._get_results_generator(participants_sessions)
     mocked_track.assert_called_once()
@@ -1018,7 +1023,9 @@ def test_get_results_generator_no_progress_bar(
 ):
     workflow._show_progress = show_progress
 
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
+    mocked_track = mocker.patch(
+        "nipoppy.workflows._pipeline_workflow.rich.progress.track"
+    )
 
     workflow._get_results_generator(participants_sessions)
     mocked_track.assert_not_called()
@@ -1069,7 +1076,7 @@ def test_run_main_n_jobs(workflow: PipelineWorkflow, n_jobs: int):
     """Smoke test for parallel execution (with joblib installed)."""
     # fmt: off
     # make sure joblib is installed
-    from nipoppy.workflows.pipeline import JOBLIB_INSTALLED
+    from nipoppy.workflows._pipeline_workflow import JOBLIB_INSTALLED
     assert JOBLIB_INSTALLED, "joblib must be installed"
     # fmt: on
 

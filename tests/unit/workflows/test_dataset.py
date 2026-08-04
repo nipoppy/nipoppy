@@ -5,11 +5,11 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.exceptions import FileOperationError
-from nipoppy.layout import LayoutError
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.core._exceptions import FileOperationError
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.dicom_dir_map import DicomDirMap
+from nipoppy.core.layout import LayoutError
+from nipoppy.workflows._base import BaseDatasetWorkflow
 from tests.conftest import (
     DPATH_TEST_DATA,
     create_empty_dataset,
@@ -79,7 +79,7 @@ def test_run_setup_logfile(
         workflow, "generate_fpath_log", return_value=fpath_log
     )
     mocked_add_file_handler = mocker.patch(
-        "nipoppy.workflows.base.logger.add_file_handler"
+        "nipoppy.workflows._base.logger.add_file_handler"
     )
     workflow._skip_logfile = skip_logfile
     workflow.run_setup()
@@ -118,7 +118,7 @@ def test_curation_status_file_generated_if_not_found(
     workflow: BaseDatasetWorkflow, mocker: pytest_mock.MockFixture
 ):
     mocked = mocker.patch(
-        "nipoppy.workflows.base.generate_curation_status_table",
+        "nipoppy.workflows._base.generate_curation_status_table",
         return_value=CurationStatusTable(),
     )
     assert not workflow.study.layout.fpath_curation_status.exists()

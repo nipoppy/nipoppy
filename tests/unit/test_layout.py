@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError, LayoutError
-from nipoppy.layout import DatasetLayout, PathInfo
-from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
+from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._exceptions import FileOperationError, LayoutError
+from nipoppy.core._utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
+from nipoppy.core.layout import DatasetLayout, PathInfo
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_REQUIRED_FPATH_MAP,

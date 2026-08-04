@@ -8,22 +8,22 @@ import pytest
 import pytest_mock
 from bids import BIDSLayout
 
-from nipoppy.config.tracker import TrackerConfig
-from nipoppy.container import (
+from nipoppy.core._constant import ContainerCommandEnum
+from nipoppy.core._container import (
     ApptainerHandler,
     ContainerHandler,
     DockerHandler,
     SingularityHandler,
 )
-from nipoppy.env import ContainerCommandEnum
-from nipoppy.exceptions import (
+from nipoppy.core._exceptions import (
     ConfigError,
     FileOperationError,
 )
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.processing_runner import ProcessingRunner
+from nipoppy.core._models.config.tracker import TrackerConfig
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._models.tabular.processing_status import ProcessingStatusTable
+from nipoppy.workflows.process import ProcessingRunner
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
@@ -50,7 +50,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     )
 
     mocker.patch(
-        "nipoppy.container.shutil.which",
+        "nipoppy.core._container.shutil.which",
         side_effect=(lambda command: command),
     )
 
@@ -174,7 +174,7 @@ def test_launch_boutiques_run(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows._runner._run_command")
 
     descriptor_str, invocation_str = runner.launch_boutiques_run(
         participant_id, session_id
@@ -239,7 +239,7 @@ def test_launch_boutiques_run_bosh_opts(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows._runner._run_command")
 
     runner.launch_boutiques_run(
         participant_id,
@@ -273,7 +273,7 @@ def test_launch_boutiques_run_bosh_no_container_image(
     participant_id = "01"
     session_id = "BL"
 
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
+    mocked_run_command = mocker.patch("nipoppy.workflows._runner._run_command")
 
     runner.launch_boutiques_run(
         participant_id,
@@ -410,7 +410,7 @@ def test_tar_directory_failure(
     fpath_to_tar.touch()
 
     mocked_is_tarfile = mocker.patch(
-        "nipoppy.workflows.processing_runner.is_tarfile", return_value=False
+        "nipoppy.workflows.process.is_tarfile", return_value=False
     )
 
     fpath_tarred = runner.tar_directory(dpath_to_tar)

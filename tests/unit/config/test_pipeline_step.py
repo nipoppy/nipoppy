@@ -6,7 +6,7 @@ from typing import Type
 import pytest
 from pydantic import BaseModel
 
-from nipoppy.config.pipeline_step import (
+from nipoppy.core._models.config.pipeline_step import (
     AnalysisLevelType,
     BasePipelineStepConfig,
     BidsPipelineStepConfig,

@@ -2,10 +2,10 @@
 
 import pytest
 
-from nipoppy.exceptions import TabularError
-from nipoppy.tabular.dicom_dir_map import DicomDirMap
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import FPATH_SAMPLE_DICOM_DIR_MAP
+from nipoppy.core._exceptions import TabularError
+from nipoppy.core._models.tabular.dicom_dir_map import DicomDirMap
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._utils.utils import FPATH_SAMPLE_DICOM_DIR_MAP
 from tests.conftest import DPATH_TEST_DATA
 
 

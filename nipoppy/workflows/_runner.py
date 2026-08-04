@@ -1,0 +1,276 @@
+"""Abstract class for workflow runners and runner utilities."""
+
+import json
+import shlex
+from abc import ABC
+from functools import cached_property
+from pathlib import Path
+from typing import Optional, Tuple
+
+from boutiques import bosh
+from typing_extensions import override
+
+from nipoppy.core._boutiques import (
+    BoshRunnerCallable,
+    run_bosh_launch,
+    run_bosh_simulate,
+)
+from nipoppy.core._constant import ContainerCommandEnum, StrOrPathLike
+from nipoppy.core._container import ContainerHandler, get_container_handler
+from nipoppy.core._hpc import HPCRunner
+from nipoppy.core._logger import get_logger
+from nipoppy.core._models.config.boutiques import BoutiquesConfig
+from nipoppy.core._models.config.container import ContainerConfig
+from nipoppy.core._utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
+from nipoppy.workflows._base import _run_command
+from nipoppy.workflows._pipeline_workflow import BasePipelineWorkflow
+
+logger = get_logger()
+
+
+class Runner(BasePipelineWorkflow, ABC):
+    """Abstract class for workflow runners."""
+
+    # TODO Generic type for pipeline config and pipeline step config attributes
+
+    def __init__(
+        self,
+        simulate: bool = False,
+        keep_workdir: bool = False,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.simulate = simulate
+        self.keep_workdir = keep_workdir
+
+    @cached_property
+    def hpc_runner(self) -> HPCRunner:
+        """Get the HPC runner service."""
+        return HPCRunner(
+            study=self.study,
+            subcommand=self.name,
+            dpath_root=self.dpath_root,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            keep_workdir=self.keep_workdir,
+            fpath_layout=self.fpath_layout,
+            verbose=self.verbose,
+            hpc_config=self.hpc_config if self.hpc else None,
+        )
+
+    def _generate_cli_command_for_hpc(
+        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+    ) -> list[str]:
+        """Generate the CLI command to be run on the HPC cluster."""
+        return self.hpc_runner.generate_cli_command(
+            participant_id=participant_id,
+            session_id=session_id,
+        )
+
+    def _submit_hpc_job(self, participants_sessions):
+        """Submit jobs to a HPC cluster for processing."""
+        # generate the list of nipoppy commands for a shell array
+        job_array_commands = []
+        participant_ids = []
+        session_ids = []
+        for participant_id, session_id in participants_sessions:
+            command = self._generate_cli_command_for_hpc(
+                participant_id=participant_id, session_id=session_id
+            )
+            job_array_commands.append(shlex.join(command))
+            participant_ids.append(participant_id)
+            session_ids.append(session_id)
+            self.n_total += 1  # for logging in run_cleanup()
+
+        # skip if there are no jobs to submit
+        if len(job_array_commands) == 0:
+            return
+
+        job_name = get_pipeline_tag(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            participant_id=self.participant_id,
+            session_id=self.session_id,
+        )
+
+        self.hpc_runner.submit(
+            hpc_cluster=self.hpc,
+            job_name=job_name,
+            job_array_commands=job_array_commands,
+            participant_ids=participant_ids,
+            session_ids=session_ids,
+            dpath_work=self.dpath_pipeline_work,
+            dpath_hpc_logs=self.study.layout.dpath_logs / self.dname_hpc_logs,
+            fname_hpc_error=self.fname_hpc_error,
+            fname_job_script=self.fname_job_script,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+            dry_run=self.dry_run,
+        )
+
+        # for logging in run_cleanup()
+        self.n_success += len(job_array_commands)
+
+    @cached_property
+    def bosh_runner(self) -> BoshRunnerCallable:
+        """Get the bosh exec command."""
+        if self.simulate:
+            return run_bosh_simulate
+        else:
+            return run_bosh_launch
+
+    def launch_boutiques_run(
+        self,
+        participant_id: str,
+        session_id: str,
+        container_handler: Optional[ContainerHandler] = None,
+        objs: Optional[list] = None,
+        **kwargs,
+    ):
+        """Launch a pipeline run using Boutiques."""
+        bosh_exec_launch_args = ["--no-pull"]
+
+        if self.verbose:
+            bosh_exec_launch_args.append("--debug")
+
+        # process the descriptor if it containers Nipoppy-specific placeholder
+        # expressions (legacy behaviour)
+        if TEMPLATE_REPLACE_PATTERN.search(self.descriptor["command-line"]):
+            logger.info("Processing the JSON descriptor")
+            descriptor_str = self.process_template_json(
+                self.descriptor,
+                participant_id=participant_id,
+                session_id=session_id,
+                objs=objs,
+                **kwargs,
+                return_str=True,
+            )
+        else:
+            descriptor_str = json.dumps(self.descriptor)
+            if (
+                container_handler is None
+                or self.descriptor.get("container-image") is None
+            ):
+                bosh_exec_launch_args.append("--no-container")
+            else:
+                bosh_exec_launch_args.extend(
+                    [
+                        "--no-automount",
+                        f"--container-opts={shlex.join(container_handler.args)}",
+                    ]
+                )
+                if container_handler.command in (
+                    ContainerCommandEnum.SINGULARITY,
+                    ContainerCommandEnum.APPTAINER,
+                ):
+                    bosh_exec_launch_args.extend(
+                        [
+                            "--imagepath",
+                            str(self.fpath_container),
+                            "--force-singularity",
+                        ]
+                    )
+                elif container_handler.command == ContainerCommandEnum.DOCKER:
+                    bosh_exec_launch_args.append("--force-docker")
+
+        # validate the descriptor
+        logger.debug(f"Descriptor string: {descriptor_str}")
+        logger.info("Validating the JSON descriptor")
+        bosh(["validate", descriptor_str])
+
+        # process and validate the invocation
+        logger.info("Processing the JSON invocation")
+        invocation_str = self.process_template_json(
+            self.invocation,
+            participant_id=participant_id,
+            session_id=session_id,
+            objs=objs,
+            **kwargs,
+            return_str=True,
+        )
+        logger.debug(f"Invocation string: {invocation_str}")
+        logger.info("Validating the JSON invocation")
+        bosh(["invocation", "-i", invocation_str, descriptor_str])
+
+        # run as a subprocess so that stdout/error are captured in the log
+        # by default, this will raise an exception if the command fails
+        self.bosh_runner(
+            invocation_str=invocation_str,
+            descriptor_str=descriptor_str,
+            bosh_exec_launch_args=bosh_exec_launch_args,
+            run_command=_run_command,
+            dry_run=self.dry_run,
+        )
+
+        return descriptor_str, invocation_str
+
+    def process_container_config(
+        self,
+        participant_id: str,
+        session_id: str,
+        bind_paths: Optional[list[StrOrPathLike]] = None,
+    ) -> Tuple[str, ContainerHandler]:
+        """Update container config and generate container command."""
+        if bind_paths is None:
+            bind_paths = []
+
+        # always bind the dataset's root directory
+        bind_paths = [self.study.layout.dpath_root] + bind_paths
+
+        # get and process container config
+        container_config = self.pipeline_step_config.get_container_config()
+        container_config = ContainerConfig(
+            **self.process_template_json(
+                container_config.model_dump(),
+                participant_id=participant_id,
+                session_id=session_id,
+            )
+        )
+        logger.debug(f"Initial container config: {container_config}")
+
+        # get and process Boutiques config
+        boutiques_config = BoutiquesConfig(
+            **self.process_template_json(
+                self.boutiques_config.model_dump(),
+                participant_id=participant_id,
+                session_id=session_id,
+            )
+        )
+
+        # update container config with additional information from Boutiques config
+        logger.debug(f"Boutiques config: {boutiques_config}")
+        if boutiques_config != BoutiquesConfig():
+            logger.debug("Updating container config with config from descriptor")
+            container_config.merge(boutiques_config.get_container_config())
+
+        container_handler = get_container_handler(container_config)
+
+        # add bind paths
+        for bind_path in bind_paths:
+            if Path(bind_path).resolve() != Path.cwd().resolve():
+                container_handler.add_bind_arg(bind_path)
+
+        logger.debug(f"Using container handler: {container_handler}")
+
+        container_command = container_handler.get_shell_command(
+            subcommand=boutiques_config.CONTAINER_SUBCOMMAND,
+        )
+
+        return container_command, container_handler
+
+    @override
+    def _handle_execution_strategy(self, participants_sessions):
+        """Handle the execution strategy based on the workflow configuration.
+
+        Same as the parent, with HPC submission added as an option if configured.
+        """
+        if self.write_subcohort is not None:
+            self._write_subcohort_to_file(participants_sessions)
+        elif self.hpc:
+            self._submit_hpc_job(participants_sessions)
+        else:
+            self._run_locally(participants_sessions)

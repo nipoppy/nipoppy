@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.exceptions import TabularError
-from nipoppy.tabular.processing_status import (
+from nipoppy.core._exceptions import TabularError
+from nipoppy.core._models.tabular.processing_status import (
     ProcessingStatusModel,
     ProcessingStatusTable,
 )

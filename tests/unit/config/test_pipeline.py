@@ -5,15 +5,15 @@ from contextlib import nullcontext
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from nipoppy.config.pipeline import (
+from nipoppy.core._constant import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._models.config.pipeline import (
     BasePipelineConfig,
     BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
     PipelineInfo,
     ProcessingPipelineConfig,
 )
-from nipoppy.config.pipeline_step import BasePipelineStepConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._models.config.pipeline_step import BasePipelineStepConfig
 
 FIELDS_BASE_PIPELINE = [
     "NAME",

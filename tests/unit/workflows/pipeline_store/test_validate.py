@@ -5,7 +5,7 @@ import logging
 import pytest
 import pytest_mock
 
-from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
+from nipoppy.workflows.pipeline.validate import PipelineValidateWorkflow
 
 
 @pytest.fixture(scope="function")
@@ -22,9 +22,7 @@ def test_run_main(
     mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
 ):
-    mocked = mocker.patch(
-        "nipoppy.workflows.pipeline_store.validate.check_pipeline_bundle"
-    )
+    mocked = mocker.patch("nipoppy.workflows.pipeline.validate.check_pipeline_bundle")
     workflow.run_main()
 
     mocked.assert_called_once_with(workflow.dpath_pipeline, log_level=logging.INFO)

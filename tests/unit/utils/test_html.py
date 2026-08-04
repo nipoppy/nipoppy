@@ -2,7 +2,7 @@
 
 import pytest
 
-from nipoppy.utils.html import strip_html_tags
+from nipoppy.workflows.pipeline._utils.html import strip_html_tags
 
 
 @pytest.mark.parametrize(

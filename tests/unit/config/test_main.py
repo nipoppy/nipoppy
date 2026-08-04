@@ -7,12 +7,12 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.config.container import ContainerConfig
-from nipoppy.config.main import Config, PipelineVariables
-from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.exceptions import ConfigError
-from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
+from nipoppy.core._constant import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._exceptions import ConfigError
+from nipoppy.core._models.config.container import ContainerConfig
+from nipoppy.core._models.config.main import Config, PipelineVariables
+from nipoppy.core._models.config.pipeline import BasePipelineConfig
+from nipoppy.core._utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
 
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]

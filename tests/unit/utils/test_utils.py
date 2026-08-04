@@ -7,9 +7,8 @@ from typing import Optional
 import pandas as pd
 import pytest
 
-from nipoppy.exceptions import NipoppyError
-from nipoppy.layout import DatasetLayout
-from nipoppy.utils.utils import (
+from nipoppy.core._exceptions import NipoppyError
+from nipoppy.core._utils.utils import (
     add_path_suffix,
     add_path_timestamp,
     apply_substitutions_to_json,
@@ -20,6 +19,7 @@ from nipoppy.utils.utils import (
     save_df_with_backup,
     save_json,
 )
+from nipoppy.core.layout import DatasetLayout
 from tests.conftest import datetime_fixture  # noqa F401
 from tests.conftest import (
     DPATH_TEST_DATA,

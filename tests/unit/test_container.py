@@ -7,8 +7,7 @@ from typing import Type
 import pytest
 import pytest_mock
 
-from nipoppy.config.container import ContainerConfig
-from nipoppy.container import (
+from nipoppy.core._container import (
     ApptainerHandler,
     BareMetalHandler,
     ContainerHandler,
@@ -16,7 +15,8 @@ from nipoppy.container import (
     SingularityHandler,
     get_container_handler,
 )
-from nipoppy.exceptions import ContainerError
+from nipoppy.core._exceptions import ContainerError
+from nipoppy.core._models.config.container import ContainerConfig
 
 
 class _TestHandler(ContainerHandler):
@@ -65,7 +65,7 @@ def test_check_command_exists(
 ):
     # should not raise error
     mocked_which = mocker.patch(
-        "nipoppy.container.shutil.which", return_value="/some/path/to/command"
+        "nipoppy.core._container.shutil.which", return_value="/some/path/to/command"
     )
     handler.check_command_exists()
     mocked_which.assert_called_once_with(handler.command)
@@ -74,7 +74,7 @@ def test_check_command_exists(
 def test_check_command_exists_error(
     handler: ContainerHandler, mocker: pytest_mock.MockerFixture
 ):
-    mocker.patch("nipoppy.container.shutil.which", return_value=None)
+    mocker.patch("nipoppy.core._container.shutil.which", return_value=None)
     with pytest.raises(ContainerError, match="Container executable not found"):
         handler.check_command_exists()
 
@@ -294,7 +294,7 @@ def test_is_image_downloaded_docker(
         else:
             return MockCompletedProcess(1, "")
 
-    mocker.patch("nipoppy.container.subprocess.run", side_effect=mock_run)
+    mocker.patch("nipoppy.core._container.subprocess.run", side_effect=mock_run)
 
     assert handler.is_image_downloaded(uri, "not_used") == exists
 

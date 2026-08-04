@@ -5,12 +5,14 @@ from contextlib import nullcontext
 import pytest
 import pytest_mock
 
-from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import ReturnCode, TerminatedByUserError, WorkflowError
-from nipoppy.layout import DatasetLayout
-from nipoppy.pipeline_validation import _load_pipeline_config_file
-from nipoppy.workflows.pipeline_store.upload import (
+from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._exceptions import ReturnCode, TerminatedByUserError, WorkflowError
+from nipoppy.core._models.config.pipeline import BasePipelineConfig
+from nipoppy.core.layout import DatasetLayout
+from nipoppy.workflows.pipeline._utils.pipeline_validation import (
+    _load_pipeline_config_file,
+)
+from nipoppy.workflows.pipeline.upload import (
     PipelineUploadWorkflow,
     _is_same_pipeline,
 )
@@ -34,7 +36,7 @@ def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixt
         workflow, "_get_pipeline_metadata", return_value=metadata
     )
     validator = mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
+        "nipoppy.workflows.pipeline.upload.check_pipeline_bundle",
     )
 
     workflow.assume_yes = True
@@ -192,7 +194,7 @@ def test_confirm_upload_no(
     mocker: pytest_mock.MockerFixture,
 ):
     mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT.confirm",
+        "nipoppy.workflows.pipeline.upload.CONSOLE_STDOUT.confirm",
         return_value=False,
     )
     workflow.assume_yes = False
@@ -254,7 +256,7 @@ def test_fails_check_pipeline_bundle(
     mocker: pytest_mock.MockerFixture,
 ):
     mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
+        "nipoppy.workflows.pipeline.upload.check_pipeline_bundle",
         side_effect=Exception("Mocked validation failed"),
     )
 

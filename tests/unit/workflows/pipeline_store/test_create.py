@@ -4,11 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError, WorkflowError
-from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
-from nipoppy.workflows.pipeline_store.create import (
+from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._exceptions import FileOperationError, WorkflowError
+from nipoppy.core._utils.utils import TEMPLATE_PIPELINE_PATH, load_json
+from nipoppy.workflows.pipeline._utils.pipeline_validation import (
+    check_pipeline_bundle,
+)
+from nipoppy.workflows.pipeline.create import (
     PipelineCreateWorkflow,
 )
 from tests.conftest import TEST_PIPELINE

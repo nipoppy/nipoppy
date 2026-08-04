@@ -9,7 +9,11 @@ import pytest
 import pytest_httpx
 import pytest_mock
 
-from nipoppy.zenodo_api import ChecksumError, ZenodoAPI, ZenodoAPIError
+from nipoppy.workflows.pipeline._utils.zenodo_api import (
+    ChecksumError,
+    ZenodoAPI,
+    ZenodoAPIError,
+)
 from tests.conftest import PASSWORD_FILE
 
 
