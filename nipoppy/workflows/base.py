@@ -264,7 +264,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
             dnames_parent = [dnames_parent]
         if fname_stem is None:
             fname_stem = self.name
-        dpath_log = self.study.layout.dpath_logs / f"{PROGRAM_NAME}_{self.name}"
+        dpath_log = self.study.layout.dpath_logs / PROGRAM_NAME / self.name
         for dname in dnames_parent:
             dpath_log = dpath_log / dname
         return dpath_log / add_path_timestamp(f"{fname_stem}{EXT_LOG}")
