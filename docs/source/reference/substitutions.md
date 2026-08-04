@@ -30,10 +30,10 @@ These substitutions are available for **all configuration files**:
 - `[[NIPOPPY_DPATH_CONTAINERS]]`: path to the directory storing container images
 - `[[NIPOPPY_DPATH_LOGS]]`: path to the logs directory
 - `[[NIPOPPY_DPATH_TABULAR]]`: path to the directory container curated tabular phenotypic data
-- `[[NIPOPPY_FPATH_CONFIG]]`: path to the global configuration file
-- `[[NIPOPPY_FPATH_MANIFEST]]`: path to the manifest file
-- `[[NIPOPPY_FPATH_CURATION_STATUS]]`: path to the curation status file
-- `[[NIPOPPY_FPATH_PROCESSING_STATUS]]`: path to the processing status file
+- `[[NIPOPPY_FPATH_CONFIG]]`: path to the {term}`global configuration file <global config file>`
+- `[[NIPOPPY_FPATH_MANIFEST]]`: path to the {term}`manifest file`
+- `[[NIPOPPY_FPATH_CURATION_STATUS]]`: path to the {term}`curation status file`
+- `[[NIPOPPY_FPATH_PROCESSING_STATUS]]`: path to the {term}`processing status file`
 - And other strings of form `[[NIPOPPY_<LAYOUT_PROPERTY>]]`, where `<LAYOUT_PROPERTY>` is a property in the Nipoppy {ref}`dataset layout configuration file <layout-schema>` (all uppercase)
 
 ### Pipeline configuration files
