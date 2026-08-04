@@ -123,7 +123,7 @@ def test_run_setup_validates_pipeline_bundle(
     runner: ProcessingRunner, mocker: pytest_mock.MockFixture
 ):
     from nipoppy.pipeline_validation import check_pipeline_bundle  # somewhere above
-    
+
     runner.pipeline_version = None
     mocked_check_pipeline_bundle = mocker.patch(
         "nipoppy.workflows.runner.check_pipeline_bundle",

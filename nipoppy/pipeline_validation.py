@@ -131,7 +131,9 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
         )
 
 
-def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
+def _check_tracker_config_file(
+    fpath_tracker_config: Path, strict: bool = False
+) -> None:
     """Validate a tracker config file."""
     fpath_tracker_config: Path = Path(fpath_tracker_config)
     if not fpath_tracker_config.exists():
@@ -147,6 +149,10 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
         raise ConfigError(
             f"Tracker config file {fpath_tracker_config} is invalid:\n{exception}"
         )
+
+    ensure_schema_version_exists(
+        fpath_tracker_config, ConfigType.TRACKER, strict=strict
+    )
 
 
 def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
@@ -224,10 +230,7 @@ def _check_pipeline_files(
                     msg=f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}",
                 )
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE
-                _check_tracker_config_file(fpath_tracker_config)
-                ensure_schema_version_exists(
-                    fpath_tracker_config, ConfigType.TRACKER, strict=strict
-                )
+                _check_tracker_config_file(fpath_tracker_config, strict=strict)
                 fpaths.append(fpath_tracker_config)
 
             if step.PYBIDS_IGNORE_FILE is not None:

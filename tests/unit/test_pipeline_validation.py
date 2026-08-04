@@ -55,12 +55,12 @@ def test_load_pipeline_config_file():
 
 
 @pytest.mark.parametrize("strict", [True, False])
-def test_load_pipeline_config_file_checks_schema_version(
+def test_load_pipeline_checks_schema_version(
     strict: bool, mocker: pytest_mock.MockFixture
 ):
     fpath_config = DPATH_TEST_DATA / "pipeline_config-valid.json"
     mocked_ensure_schema_version_exists = mocker.patch(
-        "nipoppy.pipeline_validation.ensure_config_file_schema_version_exists"
+        "nipoppy.pipeline_validation.ensure_schema_version_exists"
     )
 
     _load_pipeline_config_file(fpath_config, strict=strict)
