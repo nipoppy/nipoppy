@@ -53,7 +53,7 @@ def ensure_schema_support(
 def ensure_config_file_schema_version_exists(
     fpath_config: Path, config_type: ConfigType, strict: bool = False
 ) -> str:
-    """Check if the current schema version for pipelines exists."""
+    """Check if the schema version field is set."""
     config = load_json(fpath_config)
 
     if SCHEMA_VERSION_FIELD not in config:
@@ -67,7 +67,7 @@ def ensure_config_file_schema_version_exists(
             logger.warning(
                 f"{fpath_config} is missing the required {SCHEMA_VERSION_FIELD} field; "
                 f"assuming version {EARLIEST_SCHEMA_VERSION}. This will become an "
-                f"error in a future Nipoppy release. Add the following to the config: "
+                f"error in a future Nipoppy release. To silence this warning, add the following to the config: "
                 f'"{SCHEMA_VERSION_FIELD}": "{EARLIEST_SCHEMA_VERSION}"'
             )
             current_version = get_current_schema_version(config_type)

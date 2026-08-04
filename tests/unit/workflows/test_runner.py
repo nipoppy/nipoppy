@@ -122,10 +122,12 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
 def test_run_setup_validates_pipeline_bundle(
     runner: ProcessingRunner, mocker: pytest_mock.MockFixture
 ):
+    from nipoppy.pipeline_validation import check_pipeline_bundle  # somewhere above
+    
     runner.pipeline_version = None
-    runner.__dict__.pop("dpath_pipeline_bundle", None)
     mocked_check_pipeline_bundle = mocker.patch(
-        "nipoppy.workflows.runner.check_pipeline_bundle"
+        "nipoppy.workflows.runner.check_pipeline_bundle",
+        wraps=check_pipeline_bundle,
     )
 
     runner.run_setup()

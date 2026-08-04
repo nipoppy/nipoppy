@@ -41,7 +41,7 @@ def layout_config() -> LayoutConfig:
 
 def test_config_path_infos(layout_config):
     assert all(
-        [isinstance(path_info, PathInfo) for path_info in layout_config.path_infos]
+        isinstance(path_info, PathInfo) for path_info in layout_config.path_infos
     )
 
 
