@@ -19,7 +19,7 @@ from nipoppy.core._models.tabular.manifest import ManifestModel
 from nipoppy.core._models.tabular.processing_status import ProcessingStatusModel
 from nipoppy.core.layout import LayoutConfig
 
-DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "schemas"
+DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "reference" / "schemas"
 
 MODEL_FILENAME_MAP = {
     BoutiquesConfig: "boutiques.json",

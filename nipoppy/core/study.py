@@ -1,16 +1,20 @@
 """Study class."""
 
 import json
+from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
 from nipoppy.core._base import Base
+from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._exceptions import ConfigError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.config.main import Config
+from nipoppy.core._models.config.pipeline import BasePipelineConfig
 from nipoppy.core._models.tabular.curation_status import CurationStatusTable
 from nipoppy.core._models.tabular.manifest import Manifest
 from nipoppy.core._models.tabular.processing_status import ProcessingStatusTable
-from nipoppy.core._utils.utils import process_template_str
+from nipoppy.core._utils.utils import load_json, process_template_str
 from nipoppy.core.layout import DatasetLayout
 
 logger = get_logger()
@@ -56,7 +60,7 @@ class Study(Base):
             **json.loads(
                 process_template_str(
                     config.model_dump_json(),
-                    objs=[self, self.layout],
+                    objs=[self.layout],
                 )
             )
         )
@@ -85,3 +89,47 @@ class Study(Base):
         fpath_table = self.layout.fpath_processing_status
         logger.debug(f"Loading processing status table from {fpath_table}")
         return ProcessingStatusTable.load(fpath_table)
+
+    def _get_pipeline_info_map(
+        self,
+    ) -> dict[PipelineTypeEnum, defaultdict[str, list[str]]]:
+        pipeline_type_to_info_map = {}
+        for pipeline_type in PipelineTypeEnum:
+            pipeline_names_to_versions_map = defaultdict(list)
+            dpath_pipeline_bundles = (
+                self.layout.dpath_pipelines
+                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
+            )
+            for fpath_config in sorted(
+                dpath_pipeline_bundles.glob(f"*/{self.layout.fname_pipeline_config}")
+            ):
+                try:
+                    pipeline_config = BasePipelineConfig(**load_json(fpath_config))
+                except Exception as e:
+                    raise ConfigError(
+                        f"Error when loading pipeline config at {fpath_config}: {e}"
+                    ) from e
+
+                pipeline_names_to_versions_map[pipeline_config.NAME].append(
+                    pipeline_config.VERSION
+                )
+
+            pipeline_type_to_info_map[pipeline_type] = pipeline_names_to_versions_map
+
+        return pipeline_type_to_info_map
+
+    def get_installed_pipelines(self) -> dict[str, dict[str, list[str]]]:
+        """Get the name and version of installed pipelines.
+
+        Returns
+        -------
+        dict[str, dict[str, list[str]]]
+            Nested dictionary following the structure
+            {pipeline_type: {pipeline_name: [version1, ...]}},
+            with pipeline types "bidsification", "processing", and "extraction".
+        """
+        pipeline_type_to_info_map = self._get_pipeline_info_map()
+        return {
+            pipeline_type.value: dict(pipeline_info)
+            for pipeline_type, pipeline_info in pipeline_type_to_info_map.items()
+        }

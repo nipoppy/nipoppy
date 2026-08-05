@@ -25,7 +25,9 @@ def test_run_main(
     mocked = mocker.patch("nipoppy.workflows.pipeline.validate.check_pipeline_bundle")
     workflow.run_main()
 
-    mocked.assert_called_once_with(workflow.dpath_pipeline, log_level=logging.INFO)
+    mocked.assert_called_once_with(
+        workflow.dpath_pipeline, log_level=logging.INFO, strict=True
+    )
 
     assert "Validating pipeline at" in caplog.text
     assert "The pipeline files are all valid" in caplog.text

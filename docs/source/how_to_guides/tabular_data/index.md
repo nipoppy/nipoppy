@@ -11,7 +11,7 @@ The question of managing tabular (e.g. clinical or behavioural) data is a comple
 Similar to imaging data, it is good to separate "data collection" from "data curation" tasks even for the tabular data. This way we don't modify the acquired source data and only create "clean" curated copies. This is especially useful when your study has different naming conventions for your `participant_id`s and/or `visit_id`s for the tabular vs imaging data. The recommended location for putting the "collected/acquired" data dump is {{dpath_src_tabular}} directory.
 
 ```{note}
-If you do have different naming conventions for the clinical visits vs imaging sessions, then you can establish the correct mapping between those (e.g. `V01` <-> `ses-BL`) in the [manifest](../manifest/index) file.
+If you do have different naming conventions for the clinical visits vs imaging sessions, then you can establish the correct mapping between those (e.g. `V01` <-> `ses-BL`) in the {term}`manifest file`.
 ```
 
 ## Demographic variables
