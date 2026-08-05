@@ -124,7 +124,7 @@ class Runner(BasePipelineWorkflow, ABC):
         else:
             return run_bosh_launch
 
-    def _set_container_image(self, descriptor: dict, uri: str) -> dict:
+    def _inject_container_image(self, descriptor: dict, uri: str) -> dict:
         descriptor = copy.deepcopy(descriptor)
         scheme, sep, image = uri.partition("://")
         if not sep:
@@ -174,11 +174,11 @@ class Runner(BasePipelineWorkflow, ABC):
                 and self.pipeline_config.CONTAINER_INFO.URI is not None
             ):
                 logger.warning(
-                    "Descriptor is missing a 'container-image' field"
-                    ". Using information from CONTAINER_INFO.URI instead."
+                    "Descriptor is missing a 'container-image' field."
+                    " Using information from CONTAINER_INFO.URI instead."
                 )
 
-                descriptor = self._set_container_image(
+                descriptor = self._inject_container_image(
                     descriptor, self.pipeline_config.CONTAINER_INFO.URI
                 )
 

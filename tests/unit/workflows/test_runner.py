@@ -442,27 +442,32 @@ def test_generate_cli_command_for_hpc(
     "uri,expected_image,expected_type",
     [
         ("docker://owner/project:1.0.0", "owner/project:1.0.0", "docker"),
+        (
+            "docker://ghcr.io/owner/project:1.0.0",
+            "ghcr.io/owner/project:1.0.0",
+            "docker",
+        ),
         ("shub://owner/project:1.0.0", "owner/project:1.0.0", "singularity"),
         ("library://owner/project:1.0.0", "owner/project:1.0.0", "singularity"),
     ],
 )
-def test_set_container_image(
+def test_inject_container_image(
     runner: ProcessingRunner,
     uri: str,
     expected_image: str,
     expected_type: str,
 ):
-    descriptor = runner._set_container_image(descriptor=runner.descriptor, uri=uri)
+    descriptor = runner._inject_container_image(descriptor=runner.descriptor, uri=uri)
     assert "container-image" in descriptor
     assert descriptor["container-image"]["image"] == expected_image
     assert descriptor["container-image"]["type"] == expected_type
 
 
-def test_set_container_image_invalid_uri(
+def test_inject_container_image_invalid_uri(
     runner: ProcessingRunner,
     caplog: pytest.LogCaptureFixture,
 ):
-    runner._set_container_image(descriptor=runner.descriptor, uri="invalid_uri")
+    runner._inject_container_image(descriptor=runner.descriptor, uri="invalid_uri")
     assert "Failed to parse CONTAINER_INFO.URI" in caplog.text
 
 
@@ -591,9 +596,6 @@ def test_launch_boutiques_run_container_image(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
-    participant_id = "01"
-    session_id = "BL"
-
     # remove [[NIPOPPY_DPATH_BIDS]]
     runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
 
@@ -601,16 +603,13 @@ def test_launch_boutiques_run_container_image(
 
     original_descriptor = copy.deepcopy(runner.descriptor)
 
-    mocked_set_container_image = mocker.patch.object(
-        runner, "_set_container_image", wraps=runner._set_container_image
+    mocked_inject_container_image = mocker.patch.object(
+        runner, "_inject_container_image", wraps=runner._inject_container_image
     )
 
-    runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-    )
+    runner.launch_boutiques_run(participant_id="01", session_id="BL")
 
-    mocked_set_container_image.assert_called_with(
+    mocked_inject_container_image.assert_called_with(
         original_descriptor,
         runner.pipeline_config.CONTAINER_INFO.URI,
     )
@@ -620,22 +619,16 @@ def test_launch_boutiques_run_no_container_image(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
-    participant_id = "01"
-    session_id = "BL"
-
     # remove [[NIPOPPY_DPATH_BIDS]]
     runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
 
-    mocked_set_container_image = mocker.patch.object(
-        runner, "_set_container_image", wraps=runner._set_container_image
+    mocked_inject_container_image = mocker.patch.object(
+        runner, "_inject_container_image", wraps=runner._inject_container_image
     )
 
-    runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-    )
+    runner.launch_boutiques_run(participant_id="01", session_id="BL")
 
-    mocked_set_container_image.assert_not_called()
+    mocked_inject_container_image.assert_not_called()
 
 
 def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
