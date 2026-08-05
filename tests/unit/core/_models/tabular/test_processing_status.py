@@ -428,7 +428,7 @@ def test_get_completed_participants_sessions(
     [
         DPATH_TEST_DATA / "processing_status1.tsv",
         DPATH_TEST_DATA / "processing_status2.tsv",
-        Path(__file__).parents[3]
+        Path(__file__).parents[5]
         / "docs"
         / "source"
         / "how_to_guides"
