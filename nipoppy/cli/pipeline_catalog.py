@@ -13,6 +13,7 @@ from nipoppy.cli.options import (
     global_options,
     layout_option,
     password_file_option,
+    pipeline_identifier_options,
 )
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.zenodo_api import ZenodoAPI
@@ -155,6 +156,20 @@ def pipeline_list(**params):
 
     params = dep_params(**params)
     with exception_handler(PipelineListWorkflow(**params)) as workflow:
+        workflow.run()
+
+
+@pipeline.command("info")
+@dataset_option
+@pipeline_identifier_options
+@global_options
+@layout_option
+def pipeline_info(**params):
+    """Show details about an installed pipeline."""
+    from nipoppy.workflows.pipeline_store.info import PipelineInfoWorkflow
+
+    params = dep_params(**params)
+    with exception_handler(PipelineInfoWorkflow(**params)) as workflow:
         workflow.run()
 
 
