@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
-from nipoppy.core._constant import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.core._constants import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.core._exceptions import ConfigError
 from nipoppy.core._models.config.container import _SchemaWithContainerConfig
 from nipoppy.core._models.tabular.curation_status import CurationStatusTable

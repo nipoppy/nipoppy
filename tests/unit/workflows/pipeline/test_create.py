@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._exceptions import FileOperationError, WorkflowError
 from nipoppy.core._utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.pipeline._utils.pipeline_validation import (

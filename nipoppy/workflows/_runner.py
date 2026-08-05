@@ -15,7 +15,7 @@ from nipoppy.core._boutiques import (
     run_bosh_launch,
     run_bosh_simulate,
 )
-from nipoppy.core._constant import ContainerCommandEnum, StrOrPathLike
+from nipoppy.core._constants import ContainerCommandEnum, StrOrPathLike
 from nipoppy.core._container import ContainerHandler, get_container_handler
 from nipoppy.core._hpc import HPCRunner
 from nipoppy.core._logger import get_logger

@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 
-from nipoppy.core._constant import PipelineTypeEnum, StrOrPathLike
+from nipoppy.core._constants import PipelineTypeEnum, StrOrPathLike
 from nipoppy.core._exceptions import ConfigError
 from nipoppy.core._models.config.container import _SchemaWithContainerConfig
 from nipoppy.core._models.config.pipeline import BasePipelineConfig

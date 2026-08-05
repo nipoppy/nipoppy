@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from jinja2 import Environment, meta
 from pysqa import QueueAdapter
 
-from nipoppy.core._constant import PROGRAM_NAME, StrOrPathLike
+from nipoppy.core._constants import PROGRAM_NAME, StrOrPathLike
 from nipoppy.core._exceptions import LayoutError, WorkflowError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.config.hpc import HpcConfig

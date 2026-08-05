@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._exceptions import FileOperationError, LayoutError
 from nipoppy.core._utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
 from nipoppy.core.layout import DatasetLayout, PathInfo

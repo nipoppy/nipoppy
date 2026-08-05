@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from nipoppy.core._constant import ContainerCommandEnum
+from nipoppy.core._constants import ContainerCommandEnum
 
 
 class ContainerConfig(BaseModel):

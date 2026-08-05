@@ -13,7 +13,7 @@ import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
 from typing_extensions import Self
 
-from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 from nipoppy.core._exceptions import TabularError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._utils.utils import save_df_with_backup

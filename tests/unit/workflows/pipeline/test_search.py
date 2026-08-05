@@ -7,7 +7,7 @@ import pytest
 import pytest_mock
 from rich.table import Table
 
-from nipoppy.core._constant import ZENODO_COMMUNITY_ID
+from nipoppy.core._constants import ZENODO_COMMUNITY_ID
 from nipoppy.workflows.pipeline.search import PipelineSearchWorkflow
 
 

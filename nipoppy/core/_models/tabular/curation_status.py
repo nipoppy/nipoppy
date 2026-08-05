@@ -8,7 +8,7 @@ from typing import Optional
 from pydantic import Field
 from typing_extensions import Self
 
-from nipoppy.core._constant import FAKE_SESSION_ID, StrOrPathLike
+from nipoppy.core._constants import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.core._exceptions import TabularError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.tabular.dicom_dir_map import DicomDirMap

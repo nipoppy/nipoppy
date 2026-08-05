@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.tabular.curation_status import (
     CurationStatusTable,

@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 
-from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 from nipoppy.core._models.tabular.manifest import Manifest
 from nipoppy.core._utils.bids import check_participant_id, check_session_id
 from nipoppy.core.layout import DatasetLayout

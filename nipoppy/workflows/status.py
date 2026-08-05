@@ -8,7 +8,7 @@ from rich import box
 from rich.table import Table
 
 from nipoppy.core._console import CONSOLE_STDOUT
-from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.tabular.processing_status import STATUS_SUCCESS
 from nipoppy.core.layout import DEFAULT_LAYOUT_INFO

@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Sequence
 
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     StrOrPathLike,

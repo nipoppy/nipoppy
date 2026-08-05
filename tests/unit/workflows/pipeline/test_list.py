@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._logger import LogColor
 from nipoppy.workflows.pipeline.list import PipelineListWorkflow
 from tests.conftest import create_empty_dataset

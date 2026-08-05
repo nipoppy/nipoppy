@@ -1,4 +1,4 @@
-"""Tests for the nipoppy.pipeline_validation module."""
+"""Tests for the nipoppy.workflows.pipeline._utils.pipeline_validation module."""
 
 import logging
 from contextlib import nullcontext
@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._constants import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.core._exceptions import ConfigError, FileOperationError
 from nipoppy.core._models.config.pipeline import (
     BasePipelineConfig,
@@ -276,7 +276,7 @@ def test_check_pipeline_files(
     mocker: pytest_mock.MockFixture,
 ):
     mocked_check_descriptor_file = mocker.patch(
-        "nipoppy.pipeline_validation._check_descriptor_file",
+        "nipoppy.workflows.pipeline._utils.pipeline_validation._check_descriptor_file",
         wraps=_check_descriptor_file,
     )
 

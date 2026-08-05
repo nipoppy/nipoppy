@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, Protocol, Sequence
 
 from nipoppy.core._base import Base
-from nipoppy.core._constant import EXT_LOG, StrOrPathLike
+from nipoppy.core._constants import EXT_LOG, StrOrPathLike
 from nipoppy.core._exceptions import FileOperationError, ReturnCode
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.tabular.curation_status import (

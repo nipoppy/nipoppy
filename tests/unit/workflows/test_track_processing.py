@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.core._constants import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.core._models.config.pipeline_step import AnalysisLevelType
 from nipoppy.core._models.tabular.curation_status import CurationStatusTable
 from nipoppy.core._models.tabular.manifest import Manifest

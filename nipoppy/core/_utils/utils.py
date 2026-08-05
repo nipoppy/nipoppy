@@ -10,7 +10,7 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )

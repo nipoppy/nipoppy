@@ -3,7 +3,7 @@
 import json
 from enum import IntEnum
 
-from nipoppy.env import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 
 
 class ReturnCode(IntEnum):

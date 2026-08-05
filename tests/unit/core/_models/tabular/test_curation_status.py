@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from nipoppy.core._constant import FAKE_SESSION_ID, StrOrPathLike
+from nipoppy.core._constants import FAKE_SESSION_ID, StrOrPathLike
 from nipoppy.core._exceptions import TabularError
 from nipoppy.core._models.tabular.curation_status import (
     CurationStatusTable,

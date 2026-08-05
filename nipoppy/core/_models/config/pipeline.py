@@ -8,7 +8,7 @@ from typing import Any, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
 
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     PipelineTypeEnum,

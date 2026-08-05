@@ -10,7 +10,7 @@ try:
     from nipoppy._version import __version__
 except ImportError:
     __version__ = "unknown"
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,

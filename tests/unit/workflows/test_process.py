@@ -8,7 +8,7 @@ import pytest
 import pytest_mock
 from bids import BIDSLayout
 
-from nipoppy.core._constant import ContainerCommandEnum
+from nipoppy.core._constants import ContainerCommandEnum
 from nipoppy.core._container import (
     ApptainerHandler,
     ContainerHandler,

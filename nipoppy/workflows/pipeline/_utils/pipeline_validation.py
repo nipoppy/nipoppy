@@ -7,7 +7,7 @@ from pathlib import Path
 import boutiques
 from pydantic_core import ValidationError
 
-from nipoppy.core._constant import PipelineTypeEnum, StrOrPathLike
+from nipoppy.core._constants import PipelineTypeEnum, StrOrPathLike
 from nipoppy.core._exceptions import ConfigError, FileOperationError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.config.hpc import HpcConfig

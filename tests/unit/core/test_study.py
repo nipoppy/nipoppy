@@ -5,7 +5,7 @@ from enum import Enum
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._exceptions import ConfigError
 from nipoppy.core._models.config.pipeline import BasePipelineConfig
 from nipoppy.core.study import Study

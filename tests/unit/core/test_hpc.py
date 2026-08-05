@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import PROGRAM_NAME
+from nipoppy.core._constants import PROGRAM_NAME
 from nipoppy.core._hpc import HPCRunner
 from nipoppy.core._models.config.hpc import HpcConfig
 from nipoppy.core.study import Study

@@ -10,7 +10,7 @@ from typing import Optional
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     CURRENT_SCHEMA_VERSION,
     ContainerCommandEnum,
     PipelineTypeEnum,

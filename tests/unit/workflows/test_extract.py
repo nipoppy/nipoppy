@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.core._constants import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.core._exceptions import FileOperationError
 from nipoppy.core._models.config.pipeline import (
     ExtractionPipelineConfig,

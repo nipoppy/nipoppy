@@ -4,7 +4,7 @@ import tarfile
 from pathlib import Path
 from typing import Iterable, List, Optional, Tuple
 
-from nipoppy.core._constant import EXT_TAR, StrOrPathLike
+from nipoppy.core._constants import EXT_TAR, StrOrPathLike
 from nipoppy.core._exceptions import NipoppyError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.config.pipeline_step import AnalysisLevelType

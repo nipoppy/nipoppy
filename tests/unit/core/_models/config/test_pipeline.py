@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from nipoppy.core._constant import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._constants import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.core._models.config.pipeline import (
     BasePipelineConfig,
     BIDSificationPipelineConfig,

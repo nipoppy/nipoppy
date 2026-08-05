@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 from nipoppy.core._logger import get_logger
 from nipoppy.workflows._base import BaseWorkflow
 from nipoppy.workflows.pipeline._utils.pipeline_validation import (

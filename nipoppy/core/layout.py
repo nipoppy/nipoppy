@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from nipoppy.core._base import Base
-from nipoppy.core._constant import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.core._constants import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
 from nipoppy.core._exceptions import FileOperationError, LayoutError
 from nipoppy.core._utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 

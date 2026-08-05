@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import pytest
 import pytest_mock
 
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._exceptions import ReturnCode, TerminatedByUserError, WorkflowError
 from nipoppy.core._models.config.pipeline import BasePipelineConfig
 from nipoppy.core.layout import DatasetLayout

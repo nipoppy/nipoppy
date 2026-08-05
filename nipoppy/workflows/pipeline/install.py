@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from nipoppy.core._console import CONSOLE_STDERR, CONSOLE_STDOUT
-from nipoppy.core._constant import ContainerCommandEnum, StrOrPathLike
+from nipoppy.core._constants import ContainerCommandEnum, StrOrPathLike
 from nipoppy.core._container import get_container_handler
 from nipoppy.core._exceptions import (
     ConfigError,

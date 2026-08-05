@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import rich.logging
 
-from nipoppy.core._constant import PROGRAM_NAME
+from nipoppy.core._constants import PROGRAM_NAME
 from nipoppy.core._logger import LogColor, emphasize
 
 

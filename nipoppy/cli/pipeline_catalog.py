@@ -14,7 +14,7 @@ from nipoppy.cli.options import (
     layout_option,
     password_file_option,
 )
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI
 
 

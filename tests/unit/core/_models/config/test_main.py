@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from nipoppy.core._constant import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._constants import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
 from nipoppy.core._exceptions import ConfigError
 from nipoppy.core._models.config.container import ContainerConfig
 from nipoppy.core._models.config.main import Config, PipelineVariables

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from pydantic_core import ValidationError
 
-from nipoppy.core._constant import BUG_REPORT_URL, DISCORD_URL
+from nipoppy.core._constants import BUG_REPORT_URL, DISCORD_URL
 from nipoppy.core._exceptions import NipoppyError, ReturnCode
 from nipoppy.core._logger import get_logger
 

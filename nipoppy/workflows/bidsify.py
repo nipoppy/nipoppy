@@ -6,7 +6,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
-from nipoppy.core._constant import PipelineTypeEnum, StrOrPathLike
+from nipoppy.core._constants import PipelineTypeEnum, StrOrPathLike
 from nipoppy.core._exceptions import WorkflowError
 from nipoppy.core._models.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.core._models.config.pipeline_step import BidsPipelineStepConfig

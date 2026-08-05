@@ -14,7 +14,7 @@ import pytest
 import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     CURRENT_SCHEMA_VERSION,
     NIPOPPY_DIR_NAME,
     PipelineTypeEnum,

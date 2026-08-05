@@ -5,7 +5,7 @@ from pathlib import Path
 from tarfile import is_tarfile
 from typing import Optional
 
-from nipoppy.core._constant import EXT_TAR, StrOrPathLike
+from nipoppy.core._constants import EXT_TAR, StrOrPathLike
 from nipoppy.core._exceptions import ConfigError, FileOperationError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.config.tracker import TrackerConfig

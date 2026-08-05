@@ -1,6 +1,6 @@
 """Workflow for pipeline list command."""
 
-from nipoppy.core._constant import PROGRAM_NAME, PipelineTypeEnum
+from nipoppy.core._constants import PROGRAM_NAME, PipelineTypeEnum
 from nipoppy.core._logger import emphasize, get_logger
 from nipoppy.workflows._base import BaseDatasetWorkflow
 

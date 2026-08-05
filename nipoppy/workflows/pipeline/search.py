@@ -7,7 +7,7 @@ from rich import box
 from rich.table import Table
 
 from nipoppy.core._console import _INDENT, CONSOLE_STDOUT
-from nipoppy.core._constant import ZENODO_COMMUNITY_ID
+from nipoppy.core._constants import ZENODO_COMMUNITY_ID
 from nipoppy.core._logger import get_logger
 from nipoppy.workflows._base import BaseWorkflow
 from nipoppy.workflows.pipeline._utils.html import strip_html_tags

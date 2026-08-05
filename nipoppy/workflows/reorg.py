@@ -7,7 +7,7 @@ from typing import Optional
 
 import pydicom
 
-from nipoppy.core._constant import StrOrPathLike
+from nipoppy.core._constants import StrOrPathLike
 from nipoppy.core._exceptions import FileOperationError, ReturnCode, WorkflowError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.tabular.curation_status import update_curation_status_table

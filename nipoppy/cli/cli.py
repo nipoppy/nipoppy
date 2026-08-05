@@ -30,7 +30,7 @@ from nipoppy.cli.options import (
     runners_options,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
-from nipoppy.env import FPATH_USER_CONFIG
+from nipoppy.core._constants import FPATH_USER_CONFIG
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [

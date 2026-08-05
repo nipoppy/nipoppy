@@ -6,7 +6,7 @@ from functools import cached_property
 from pathlib import Path
 
 from nipoppy.core._base import Base
-from nipoppy.core._constant import PipelineTypeEnum
+from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._exceptions import ConfigError
 from nipoppy.core._logger import get_logger
 from nipoppy.core._models.config.main import Config

@@ -13,7 +13,7 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.core._constant import (
+from nipoppy.core._constants import (
     BIDS_SESSION_PREFIX,
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
