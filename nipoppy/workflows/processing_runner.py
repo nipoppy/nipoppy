@@ -32,8 +32,7 @@ def _get_bids_paths_to_inject(
                 f"Expected exactly one file to match criteria {kwargs}, got: {bids_path}"  # noqa: E501
             )
 
-        bids_path = bids_path[0]
-        bids_paths[f"{BIDS_PATH_INJECTION_PREFIX}{key}".lower()] = bids_path
+        bids_paths[f"{BIDS_PATH_INJECTION_PREFIX}{key}".lower()] = bids_path[0]
 
     return bids_paths
 

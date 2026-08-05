@@ -200,11 +200,11 @@ def test_error_schema_version():
         ),
         (
             {"123": {"extension": "nii.gz", "suffix": "T1w"}},
-            'Invalid key "123" in BIDS_PATH_INJECTION_MAP: keys must be valid Python identifiers.',  # noqa: E501
+            'Invalid key "123" in BIDS_PATH_INJECTION_MAP: must only contain alphanumeric characters and underscores, and cannot start with a number or contain any spaces.',  # noqa: E501
         ),
     ],
 )
-def test_errors_bids_path_injection_map_reserved_keyword(
+def test_errors_bids_path_injection_map_invalid_keyword(
     injection_map, error_message, valid_data
 ):
     with pytest.raises(ValidationError, match=error_message):
