@@ -52,7 +52,8 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = [
     # not ideal but otherwise we wrongly get a warning
-    "reference/schemas/schema_howto.md",
+    "schemas/schema_howto.md",
+    "how_to_guides/user_guide/inserts/boutiques_stub.md",
 ]
 
 nitpicky = True
@@ -231,9 +232,15 @@ nitpick_ignore = [
     ("py:class", "argparse._SubParsersAction"),
     ("py:class", "argparse._ActionsContainer"),
     ("py:class", "StrOrPathLike"),
-    ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
     ("py:class", "httpx.Client"),
+    ("py:class", "NipoppyLogger"),
+]
+
+nitpick_ignore_regex = [
+    ("py:class", r"nipoppy\.core\._.*"),
+    ("py:func", r"nipoppy\.core\._.*"),
+    ("py:class", r"nipoppy\.workflows\.pipeline\._utils\..*"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------

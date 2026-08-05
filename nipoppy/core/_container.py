@@ -64,10 +64,10 @@ class ContainerHandler(Base, ABC):
 
         Parameters
         ----------
-        path_src : nipoppy.env.StrOrPathLike
+        path_src : nipoppy.core._constant.StrOrPathLike
             Path on disk. If this is a relative path or contains symlinks,
             it will be resolved
-        path_dest : Optional[nipoppy.env.StrOrPathLike], optional
+        path_dest : Optional[nipoppy.core._constant.StrOrPathLike], optional
             Path inside the container (if None, will be the same as the local path),
             by default None
         mode : str, optional
@@ -183,7 +183,7 @@ class ContainerHandler(Base, ABC):
         ----------
         uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : Optional[nipoppy.core._constant.StrOrPathLike]
             Path to the container image
 
         Returns
@@ -198,7 +198,7 @@ class ContainerHandler(Base, ABC):
 
         Parameters
         ----------
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : nipoppy.core._constant.StrOrPathLike
             Path where the container image will be saved
 
         Returns
@@ -217,7 +217,7 @@ class ContainerHandler(Base, ABC):
         ----------
         uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : Optional[nipoppy.core._constant.StrOrPathLike]
             Path where the container image should be saved
 
         Returns
@@ -242,7 +242,7 @@ class ApptainerHandler(ContainerHandler):
         ----------
         uri : Optional[str]
             URI of the container image (e.g. docker://...) (not used)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : Optional[nipoppy.core._constant.StrOrPathLike]
             Path to the container image
 
         Returns
@@ -259,7 +259,7 @@ class ApptainerHandler(ContainerHandler):
 
         Parameters
         ----------
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : nipoppy.core._constant.StrOrPathLike
             Path where the container image will be saved
 
         Returns
@@ -281,7 +281,7 @@ class ApptainerHandler(ContainerHandler):
         ----------
         uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : Optional[nipoppy.core._constant.StrOrPathLike]
             Path where the container image should be saved
 
         Returns
@@ -320,7 +320,7 @@ class DockerHandler(ContainerHandler):
         ----------
         uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : Optional[nipoppy.core._constant.StrOrPathLike]
             Path to the container image (not used)
 
         Returns
@@ -341,7 +341,7 @@ class DockerHandler(ContainerHandler):
 
         Parameters
         ----------
-        fpath_container : nipoppy.env.StrOrPathLike
+        fpath_container : nipoppy.core._constant.StrOrPathLike
             Path where the container image will be saved
 
         Returns
@@ -360,7 +360,7 @@ class DockerHandler(ContainerHandler):
         ----------
         uri : Optional[str]
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : Optional[nipoppy.core._constant.StrOrPathLike]
             Path where the container image should be saved
 
         Returns

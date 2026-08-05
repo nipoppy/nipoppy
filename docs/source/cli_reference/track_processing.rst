@@ -2,7 +2,7 @@
 ============================
 
 .. note::
-   This command calls the :py:class:`nipoppy.workflows.tracker.PipelineTracker` class from the Python :term:`API` internally.
+   This command calls the :py:class:`nipoppy.workflows.track_processing.PipelineTracker` class from the Python :term:`API` internally.
 
 .. click:: nipoppy.cli.cli:track_processing
    :prog: nipoppy track-processing

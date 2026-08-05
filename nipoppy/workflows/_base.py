@@ -222,11 +222,11 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
         Parameters
         ----------
-        dpath_root : nipoppy.env.StrOrPathLike
+        dpath_root : nipoppy.core._constant.StrOrPathLike
             Path the the root directory of the dataset.
         name : str
             Name of the workflow, used for logging.
-        fpath_layout : nipoppy.env.StrOrPathLike, optional
+        fpath_layout : nipoppy.core._constant.StrOrPathLike, optional
             Path to a custom layout file, by default None
         verbose : bool, optional
             If True, set the logger to DEBUG level, by default False

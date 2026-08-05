@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from nipoppy.core._logger import add_logfile
-from nipoppy.workflows import DicomReorgWorkflow
+from nipoppy.workflows.reorg import DicomReorgWorkflow
 
 
 class CustomDicomReorgWorkflow(DicomReorgWorkflow):

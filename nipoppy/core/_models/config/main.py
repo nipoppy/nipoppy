@@ -146,7 +146,8 @@ class Config(_SchemaWithContainerConfig):
         description=(
             "Top-level mapping for replacing placeholder expressions in the rest "
             "of the config file. Note: the replacement only happens if the config "
-            "is loaded from a file with :func:`nipoppy.config.main.Config.load`"
+            "is loaded from a file with "
+            ":func:`nipoppy.core._models.config.main.Config.load`"
         ),
     )
     PIPELINE_VARIABLES: PipelineVariables = Field(
@@ -255,7 +256,7 @@ class Config(_SchemaWithContainerConfig):
 
         Parameters
         ----------
-        fpath : nipoppy.env.StrOrPathLike
+        fpath : nipoppy.core._constant.StrOrPathLike
             Path to the JSON file to write
         """
         fpath: Path = Path(fpath)

@@ -84,7 +84,7 @@ class DicomDirMap(BaseTabular):
 
         Parameters
         ----------
-        manifest : :class:`nipoppy.tabular.manifest.Manifest`
+        manifest : :class:`nipoppy.core._models.tabular.manifest.Manifest`
             Manifest for generating the mapping (not used if ``fpath_dicom_dir_map``
             is not ``None``).
         fpath_dicom_dir_map : str | Path | None
@@ -100,7 +100,7 @@ class DicomDirMap(BaseTabular):
 
         Returns
         -------
-        :class:`nipoppy.tabular.dicom_dir_map.DicomDirMap`
+        :class:`nipoppy.core._models.tabular.dicom_dir_map.DicomDirMap`
         """
         # if these is a custom dicom_dir_map, use it
         if fpath_dicom_dir_map is not None:

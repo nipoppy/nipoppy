@@ -57,7 +57,7 @@ def check_participant_id(participant_id: Optional[str], raise_error=False):
 
     Raises
     ------
-    nipoppy.exceptions.NipoppyError
+    nipoppy.core._exceptions.NipoppyError
     """
     if participant_id is None:
         return participant_id
@@ -103,7 +103,7 @@ def check_session_id(session_id: Optional[str], raise_error=False):
 
     Raises
     ------
-    nipoppy.exceptions.NipoppyError
+    nipoppy.core._exceptions.NipoppyError
     """
     if session_id is None:
         return session_id
