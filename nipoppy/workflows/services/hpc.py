@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -55,6 +56,10 @@ class HPCRunner:
         self.fpath_layout = fpath_layout
         self.verbose = verbose
         self.hpc_config = hpc_config
+
+    @cached_property
+    def _qa(self) -> QueueAdapter:
+        return QueueAdapter(directory=str(self.study.layout.dpath_hpc))
 
     def generate_cli_command(
         self,
@@ -216,14 +221,12 @@ class HPCRunner:
                 f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
             )
 
-        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
-
         try:
-            qa.switch_cluster(hpc_cluster)
+            self._qa.switch_cluster(hpc_cluster)
         except KeyError as e:
             raise WorkflowError(
                 f"Invalid HPC cluster type: {hpc_cluster}"
-                f". Available clusters are: {qa.list_clusters()}"
+                f". Available clusters are: {self._qa.list_clusters()}"
             ) from e
 
         # This file is created by PySQA if the job submission command fails.
@@ -238,7 +241,7 @@ class HPCRunner:
 
         job_id = None
         if not dry_run:
-            job_id = qa.submit_job(
+            job_id = self._qa.submit_job(
                 queue=hpc_cluster,
                 working_directory=str(dpath_work),
                 command="",  # not used in default template but cannot be None
