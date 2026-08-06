@@ -48,6 +48,7 @@ class Runner(BasePipelineWorkflow, ABC):
     def hpc_runner(self) -> HPCRunner:
         """Get the HPC runner service."""
         return HPCRunner(
+            hpc_cluster=self.hpc,
             study=self.study,
             subcommand=self.name,
             dpath_root=self.dpath_root,
@@ -97,7 +98,6 @@ class Runner(BasePipelineWorkflow, ABC):
         )
 
         self.hpc_runner.submit(
-            hpc_cluster=self.hpc,
             job_name=job_name,
             job_array_commands=job_array_commands,
             participant_ids=participant_ids,

@@ -1,6 +1,7 @@
 """Tests for the Runner class."""
 
 import json
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -214,8 +215,6 @@ def test_submit_hpc_job_no_dir(
     _set_up_hpc_for_testing(runner, mocker)
 
     # remove the directory created by _set_up_hpc_for_testing
-    import shutil
-
     if runner.study.layout.dpath_hpc.exists():
         shutil.rmtree(runner.study.layout.dpath_hpc)
 
