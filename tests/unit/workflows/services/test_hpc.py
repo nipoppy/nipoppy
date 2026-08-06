@@ -40,6 +40,39 @@ def test_hpc_runner_initialization(study, hpc_runner: HPCRunner, hpc_config: Hpc
     assert hpc_runner.hpc_config is hpc_config
 
 
+@pytest.mark.parametrize(
+    "queue_limit,n_jobs_in_queue,expected_max_jobs",
+    [(10, 0, 10), (10, 4, 6), (5, 5, 0), (2, 3, 0)],
+)
+def test_hpc_runner_get_max_n_jobs(
+    queue_limit,
+    n_jobs_in_queue,
+    expected_max_jobs,
+    hpc_runner: HPCRunner,
+    mocker: pytest_mock.MockerFixture,
+):
+    """Test HPCRunner._get_max_n_jobs()."""
+    mock_df = mocker.MagicMock()
+    mock_df.__len__ = lambda _: n_jobs_in_queue
+
+    hpc_runner._qa = mocker.MagicMock()
+    hpc_runner._qa.get_queue_status.return_value = mock_df
+
+    max_jobs = hpc_runner._get_max_n_jobs(queue_limit=queue_limit)
+    assert max_jobs == expected_max_jobs
+
+
+def test_hpc_runner_get_max_n_jobs_pysqa_error(
+    hpc_runner: HPCRunner, mocker: pytest_mock.MockerFixture
+):
+    """Test that HPCRunner._get_max_n_jobs() still runs on pysqa errors."""
+    hpc_runner._qa = mocker.MagicMock()
+    hpc_runner._qa.get_queue_status.side_effect = Exception("pysqa error")
+
+    max_jobs = hpc_runner._get_max_n_jobs(queue_limit=10)
+    assert max_jobs == 10
+
+
 def test_hpc_runner_check_hpc_config(hpc_runner: HPCRunner):
     """Test that HPCRunner can check HPC config correctly."""
     hpc_runner.hpc_config = HpcConfig(CORES="8", MEMORY="32G")

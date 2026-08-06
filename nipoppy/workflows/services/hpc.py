@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import getpass
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
@@ -16,6 +17,8 @@ from nipoppy.logger import get_logger
 from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from nipoppy.study import Study
 
 logger = get_logger()
@@ -132,6 +135,20 @@ class HPCRunner:
             command.append(flag)
 
         return [str(c) for c in command]
+
+    def _get_max_n_jobs(self, queue_limit: int) -> int:
+        try:
+            df_queue_status: pd.DataFrame = self._qa.get_queue_status(
+                user=getpass.getuser()
+            )
+        except Exception as exception:
+            logger.warning(
+                f"Failed to get queue status: {type(exception)} {exception}."
+                " Assuming no jobs are currently in the queue."
+            )
+            return queue_limit
+
+        return max(0, queue_limit - len(df_queue_status))
 
     def _check_hpc_config(self) -> dict:
         """
