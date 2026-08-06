@@ -11,6 +11,7 @@ from jinja2 import Environment, meta
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.exceptions import ConfigError, WorkflowError
 from nipoppy.layout import LayoutError
+from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.processing_runner import ProcessingRunner
@@ -122,8 +123,6 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
 def test_run_setup_validates_pipeline_bundle(
     runner: ProcessingRunner, mocker: pytest_mock.MockFixture
 ):
-    from nipoppy.pipeline_validation import check_pipeline_bundle  # somewhere above
-
     runner.pipeline_version = None
     mocked_check_pipeline_bundle = mocker.patch(
         "nipoppy.workflows.runner.check_pipeline_bundle",

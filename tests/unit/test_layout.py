@@ -2,6 +2,7 @@
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -35,20 +36,20 @@ def create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
 
 
 @pytest.fixture
-def layout_config() -> LayoutConfig:
-    return LayoutConfig(**load_json(FPATH_DEFAULT_LAYOUT))
+def layout_config() -> dict[str, Any]:
+    return load_json(FPATH_DEFAULT_LAYOUT)
 
 
 def test_config_path_infos(layout_config):
     assert all(
-        isinstance(path_info, PathInfo) for path_info in layout_config.path_infos
+        isinstance(path_info, PathInfo)
+        for path_info in LayoutConfig(**layout_config).path_infos
     )
 
 
 def test_schema_version_default_schema_version(layout_config):
-    config = layout_config.model_dump()
-    del config["SCHEMA_VERSION"]
-    assert LayoutConfig(**config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+    del layout_config["SCHEMA_VERSION"]
+    assert LayoutConfig(**layout_config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_init_default(dpath_root):
