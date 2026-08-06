@@ -175,7 +175,7 @@ def test_get_bids_paths_to_inject(mocker: pytest_mock.MockFixture):
 
 
 @pytest.mark.parametrize("returned_filenames", [[], ["file1.nii.gz", "file2.nii.gz"]])
-def test_get_bids_paths_to_inject_no_single_match(
+def test_get_bids_paths_to_inject_error_no_single_match(
     returned_filenames, mocker: pytest_mock.MockFixture
 ):
     mocked_layout = mocker.Mock()
@@ -763,7 +763,7 @@ def test_run_single_pybids_db(
         mocked_set_up_bids_db.assert_not_called()
 
 
-def test_run_single_bids_path_injection(
+def test_run_single_bids_path_injection_with_pybids_database(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):
