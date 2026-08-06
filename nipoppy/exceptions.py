@@ -95,7 +95,7 @@ class JSON5Error(_JSONError, ValueError):
     ):
         msg = f"{str(e)}: {fpath}"
 
-        # self.args[0] is the JSONDecodeError error message
+        # self.args[0] is the ValueError error message
         _JSONError.__init__(self, msg, hint=hint)
 
 
