@@ -48,25 +48,9 @@ def valid_config_data():
 
 def test_load_pipeline_config_file():
     assert isinstance(
-        _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json"),
+        _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json5"),
         BasePipelineConfig,
     )
-
-
-def test_load_pipeline_config_file_json5(tmp_path: Path):
-    fpath = tmp_path / "pipeline_config.json"
-    fpath.write_text("""
-{
-  // comments and trailing commas should be accepted
-  "NAME": "test_pipeline",
-  "VERSION": "test_version",
-  "SCHEMA_VERSION": "1",
-  "PIPELINE_TYPE": "processing",
-}
-""".strip())
-
-    config = _load_pipeline_config_file(fpath)
-    assert isinstance(config, BasePipelineConfig)
 
 
 @pytest.mark.parametrize(
