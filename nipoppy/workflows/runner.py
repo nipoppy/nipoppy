@@ -12,10 +12,11 @@ from typing_extensions import override
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
-from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag, load_json
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import (
@@ -60,6 +61,17 @@ class Runner(BasePipelineWorkflow, ABC):
             verbose=self.verbose,
             hpc_config=self.hpc_config if self.hpc else None,
         )
+
+    @cached_property
+    def hpc_config(self) -> HpcConfig:
+        """Load the pipeline step's HPC configuration."""
+        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
+            data = {}
+        else:
+            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
+            logger.info(f"Loading HPC config from {fpath_hpc_config}")
+            data = self.process_template_json(load_json(fpath_hpc_config))
+        return HpcConfig(**data)
 
     def _generate_cli_command_for_hpc(
         self, participant_id: Optional[str] = None, session_id: Optional[str] = None

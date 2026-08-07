@@ -19,7 +19,6 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BIDSificationPipelineConfig,
@@ -383,17 +382,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
 
         return [re.compile(pattern) for pattern in patterns]
-
-    @cached_property
-    def hpc_config(self) -> HpcConfig:
-        """Load the pipeline step's HPC configuration."""
-        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
-            data = {}
-        else:
-            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
-            logger.info(f"Loading HPC config from {fpath_hpc_config}")
-            data = self.process_template_json(load_json(fpath_hpc_config))
-        return HpcConfig(**data)
 
     @cached_property
     def boutiques_config(self):
