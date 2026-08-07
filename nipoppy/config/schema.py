@@ -55,7 +55,7 @@ def ensure_schema_version_exists(
     fpath_config: Path, config_type: ConfigType, strict: bool = False
 ) -> str:
     """Check if the schema version field is set."""
-    config = load_json(fpath_config)
+    config = load_json(fpath_config, allow_json5=True)
 
     if SCHEMA_VERSION_FIELD not in config:
         if strict:

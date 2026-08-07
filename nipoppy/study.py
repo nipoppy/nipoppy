@@ -104,7 +104,9 @@ class Study(Base):
                 dpath_pipeline_bundles.glob(f"*/{self.layout.fname_pipeline_config}")
             ):
                 try:
-                    pipeline_config = BasePipelineConfig(**load_json(fpath_config))
+                    pipeline_config = BasePipelineConfig(
+                        **load_json(fpath_config, allow_json5=True)
+                    )
                 except Exception as e:
                     raise ConfigError(
                         f"Error when loading pipeline config at {fpath_config}: {e}"
