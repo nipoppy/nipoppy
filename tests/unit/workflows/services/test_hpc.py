@@ -68,6 +68,13 @@ def test_hpc_runner_initialization(study, hpc_runner: HPCRunner, hpc_config: Hpc
     assert hpc_runner.hpc_config is hpc_config
 
 
+def test_hpc_runner_invalid_cluster(hpc_runner: HPCRunner):
+    hpc_runner.hpc_cluster = "invalid"
+
+    with pytest.raises(WorkflowError, match="Invalid HPC cluster type"):
+        _ = hpc_runner._qa
+
+
 def test_hpc_runner_check_hpc_config(hpc_runner: HPCRunner):
     """Test that HPCRunner can check HPC config correctly."""
     hpc_runner.hpc_config = HpcConfig(CORES="8", MEMORY="32G")
@@ -279,16 +286,6 @@ def test_hpc_runner_submit_error_no_dir(
         LayoutError,
         match="The HPC directory with appropriate content needs to exist",
     ):
-        hpc_runner.submit(**submit_kwargs)
-
-
-def test_hpc_runner_submit_error_invalid_cluster(
-    hpc_runner: HPCRunner,
-    submit_kwargs: dict,
-):
-    hpc_runner.hpc_cluster = "invalid"
-
-    with pytest.raises(WorkflowError, match="Invalid HPC cluster type"):
         hpc_runner.submit(**submit_kwargs)
 
 
