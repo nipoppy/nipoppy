@@ -10,7 +10,11 @@ from pydantic import ValidationError
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    get_current_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
@@ -18,6 +22,7 @@ from tests.conftest import DPATH_TEST_DATA
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
 REQUIRED_FIELDS_CONFIG = []
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
+    "SCHEMA_VERSION",
     "SUBSTITUTIONS",
     "CUSTOM",
     "CONTAINER_CONFIG",
@@ -77,6 +82,11 @@ def test_fields(valid_config_data: dict):
 def test_no_extra_fields(valid_config_data):
     with pytest.raises(ValidationError):
         Config(**valid_config_data, NOT_A_FIELD="x")
+
+
+def test_schema_version_default_schema_version():
+    config = Config()
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize(
@@ -208,7 +218,7 @@ def test_propagate_container_config(
             "VERSION": pipeline_version,
             container_config_key: data_pipeline,
             "STEPS": [{"NAME": step_name, container_config_key: data_step}],
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
         }
     )
 
