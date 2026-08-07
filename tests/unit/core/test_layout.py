@@ -2,14 +2,16 @@
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
 
 from nipoppy.core._constants import PipelineTypeEnum
 from nipoppy.core._exceptions import FileOperationError, LayoutError
-from nipoppy.core._utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
-from nipoppy.core.layout import DatasetLayout, PathInfo
+from nipoppy.core._models.config.schema import EARLIEST_SCHEMA_VERSION
+from nipoppy.core._utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT, load_json
+from nipoppy.core.layout import DatasetLayout, LayoutConfig, PathInfo
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_REQUIRED_FPATH_MAP,
@@ -33,9 +35,21 @@ def create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
             shutil.rmtree(path_to_delete, ignore_errors=True)
 
 
-def test_config_path_infos():
-    config = DatasetLayout("my_dataset").config
-    assert all([isinstance(path_info, PathInfo) for path_info in config.path_infos])
+@pytest.fixture
+def layout_config() -> dict[str, Any]:
+    return load_json(FPATH_DEFAULT_LAYOUT)
+
+
+def test_config_path_infos(layout_config):
+    assert all(
+        isinstance(path_info, PathInfo)
+        for path_info in LayoutConfig(**layout_config).path_infos
+    )
+
+
+def test_schema_version_default_schema_version(layout_config):
+    del layout_config["SCHEMA_VERSION"]
+    assert LayoutConfig(**layout_config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_init_default(dpath_root):

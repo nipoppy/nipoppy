@@ -8,11 +8,11 @@ import pytest
 import pytest_mock
 from jinja2 import Environment, meta
 
-from nipoppy.core._exceptions import WorkflowError
+from nipoppy.core._exceptions import ConfigError, LayoutError, WorkflowError
 from nipoppy.core._models.config.hpc import HpcConfig
 from nipoppy.core._utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
-from nipoppy.core.layout import LayoutError
 from nipoppy.workflows._utils import fileops
+from nipoppy.workflows.pipeline._utils.pipeline_validation import check_pipeline_bundle
 from nipoppy.workflows.process import ProcessingRunner
 from tests.conftest import (
     _set_up_substitution_testing,
@@ -117,6 +117,39 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     )
     manifest.save_with_backup(runner.study.layout.fpath_manifest)
     return runner
+
+
+def test_run_setup_validates_pipeline_bundle(
+    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+):
+    runner.pipeline_version = None
+    mocked_check_pipeline_bundle = mocker.patch(
+        "nipoppy.workflows._runner.check_pipeline_bundle",
+        wraps=check_pipeline_bundle,
+    )
+
+    runner.run_setup()
+
+    assert runner.pipeline_version == "1.0.0"
+    mocked_check_pipeline_bundle.assert_called_once_with(
+        runner.dpath_pipeline_bundle, strict=False
+    )
+
+
+def test_run_validation_error_prevents_execution(
+    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+):
+    error = ConfigError("Invalid pipeline bundle")
+    mocker.patch(
+        "nipoppy.workflows._runner.check_pipeline_bundle",
+        side_effect=error,
+    )
+    mocked_run_main = mocker.patch.object(runner, "run_main")
+
+    with pytest.raises(ConfigError, match="Invalid pipeline bundle"):
+        runner.run()
+
+    mocked_run_main.assert_not_called()
 
 
 @pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])

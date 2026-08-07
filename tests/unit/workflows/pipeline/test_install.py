@@ -11,7 +11,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.core._constants import (
-    CURRENT_SCHEMA_VERSION,
+    ConfigType,
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
@@ -19,6 +19,7 @@ from nipoppy.core._container import ApptainerHandler
 from nipoppy.core._exceptions import ConfigError, FileOperationError, WorkflowError
 from nipoppy.core._models.config.main import Config
 from nipoppy.core._models.config.pipeline import ProcessingPipelineConfig
+from nipoppy.core._models.config.schema import get_current_schema_version
 from nipoppy.core.layout import DatasetLayout
 from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI
 from nipoppy.workflows.pipeline.install import PipelineInstallWorkflow
@@ -32,7 +33,7 @@ def pipeline_config():
             "NAME": "my_pipeline",
             "VERSION": "1.0.0",
             "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/container.sif",
                 "URI": "fake_uri",

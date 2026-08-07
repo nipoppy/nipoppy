@@ -24,6 +24,7 @@ from nipoppy.core._models.config.container import ContainerConfig
 from nipoppy.core._utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
 from nipoppy.workflows._base import _run_command
 from nipoppy.workflows._pipeline_workflow import BasePipelineWorkflow
+from nipoppy.workflows.pipeline._utils.pipeline_validation import check_pipeline_bundle
 
 logger = get_logger()
 
@@ -43,6 +44,12 @@ class Runner(BasePipelineWorkflow, ABC):
         super().__init__(*args, **kwargs)
         self.simulate = simulate
         self.keep_workdir = keep_workdir
+
+    def run_setup(self):
+        """Run pipeline setup and validate the pipeline bundle."""
+        to_return = super().run_setup()
+        check_pipeline_bundle(self.dpath_pipeline_bundle, strict=False)
+        return to_return
 
     @cached_property
     def hpc_runner(self) -> HPCRunner:

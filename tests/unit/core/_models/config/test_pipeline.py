@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from nipoppy.core._constants import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.core._constants import ConfigType, PipelineTypeEnum
 from nipoppy.core._models.config.pipeline import (
     BasePipelineConfig,
     BIDSificationPipelineConfig,
@@ -14,6 +14,10 @@ from nipoppy.core._models.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.core._models.config.pipeline_step import BasePipelineStepConfig
+from nipoppy.core._models.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    get_current_schema_version,
+)
 
 FIELDS_BASE_PIPELINE = [
     "NAME",
@@ -37,7 +41,7 @@ def valid_data() -> dict:
     return {
         "NAME": "my_pipeline",
         "VERSION": "1.0.0",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
 
 
@@ -98,6 +102,11 @@ def test_fields_pipeline_info():
 def test_fields_missing_required(model_class, data):
     with pytest.raises(ValidationError):
         model_class(**data)
+
+
+def test_schema_version_default_schema_version():
+    config = BasePipelineConfig(NAME="my_pipeline", VERSION="1.2.3")
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize(
@@ -177,18 +186,6 @@ def test_error_pipeline_type(valid_data, extra_data, pipeline_class, valid):
         else nullcontext()
     ):
         pipeline_class(**data)
-
-
-def test_error_schema_version():
-    with pytest.raises(
-        ValidationError,
-        match=("Pipeline .* uses schema version.*which is incompatible with"),
-    ):
-        BasePipelineConfig(
-            NAME="my_pipeline",
-            VERSION="1.0.0",
-            SCHEMA_VERSION="invalid_version",
-        )
 
 
 @pytest.mark.parametrize(

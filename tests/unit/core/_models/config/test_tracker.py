@@ -2,9 +2,11 @@
 
 import pytest
 
+from nipoppy.core._models.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.core._models.config.tracker import TrackerConfig
 
-FIELDS_STEP = [
+FIELDS_TRACKER = [
+    "SCHEMA_VERSION",
     "PATHS",
     "PARTICIPANT_SESSION_DIR",
 ]
@@ -18,15 +20,20 @@ FIELDS_STEP = [
 )
 def test_fields(data):
     tracker_config = TrackerConfig(**data)
-    for field in FIELDS_STEP:
+    for field in FIELDS_TRACKER:
         assert hasattr(tracker_config, field)
 
-    assert len(set(tracker_config.model_dump())) == len(FIELDS_STEP)
+    assert len(set(tracker_config.model_dump())) == len(FIELDS_TRACKER)
 
 
 def test_no_extra_field():
     with pytest.raises(ValueError, match="Extra inputs are not permitted"):
         TrackerConfig(not_a_field="a")
+
+
+def test_schema_version_default_schema_version():
+    config = TrackerConfig(PATHS=["path1"])
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_at_least_one_path():
