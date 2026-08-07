@@ -14,7 +14,7 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.schema import get_current_schema_version
-from nipoppy.env import CURRENT_SCHEMA_VERSION, ConfigType, PipelineTypeEnum
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError, FileOperationError, JSONError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,

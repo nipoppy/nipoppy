@@ -642,7 +642,7 @@ def test_get_pipeline_config_json5(workflow: PipelineWorkflow, tmp_path: Path):
   "NAME": "{workflow.pipeline_name}",
   "VERSION": "{workflow.pipeline_version}",
   "PIPELINE_TYPE": "processing",
-  "SCHEMA_VERSION": "{CURRENT_SCHEMA_VERSION}",
+  "SCHEMA_VERSION": "{get_current_schema_version(ConfigType.PIPELINE)}",
   "STEPS": [
     {{}},
   ],
