@@ -15,8 +15,9 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import ProcPipelineStepConfig
+from nipoppy.config.schema import ensure_schema_version_exists
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
@@ -36,7 +37,9 @@ class PipelineValidationError(LayoutError): ...  # noqa E701
 
 # TODO we should probably refactor the config loaders to extract the check for
 # file existence and JSON validity into reusable functions
-def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
+def _load_pipeline_config_file(
+    fpath_config: Path, strict: bool = False
+) -> BasePipelineConfig:
     """Load the main pipeline configuration file."""
     fpath_config: Path = Path(fpath_config)
     if not fpath_config.exists():
@@ -53,6 +56,8 @@ def _load_pipeline_config_file(fpath_config: Path) -> BasePipelineConfig:
         raise ConfigError(
             f"Pipeline configuration file {fpath_config} is invalid:\n{exception}"
         )
+
+    ensure_schema_version_exists(fpath_config, ConfigType.PIPELINE, strict=strict)
 
     return config
 
@@ -126,7 +131,9 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
         )
 
 
-def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
+def _check_tracker_config_file(
+    fpath_tracker_config: Path, strict: bool = False
+) -> None:
     """Validate a tracker config file."""
     fpath_tracker_config: Path = Path(fpath_tracker_config)
     if not fpath_tracker_config.exists():
@@ -142,6 +149,10 @@ def _check_tracker_config_file(fpath_tracker_config: Path) -> None:
         raise ConfigError(
             f"Tracker config file {fpath_tracker_config} is invalid:\n{exception}"
         )
+
+    ensure_schema_version_exists(
+        fpath_tracker_config, ConfigType.TRACKER, strict=strict
+    )
 
 
 def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
@@ -219,7 +230,7 @@ def _check_pipeline_files(
                     msg=f"\tChecking tracker config file: {step.TRACKER_CONFIG_FILE}",
                 )
                 fpath_tracker_config = dpath_bundle / step.TRACKER_CONFIG_FILE
-                _check_tracker_config_file(fpath_tracker_config)
+                _check_tracker_config_file(fpath_tracker_config, strict=strict)
                 fpaths.append(fpath_tracker_config)
 
             if step.PYBIDS_IGNORE_FILE is not None:
@@ -264,7 +275,10 @@ def _check_no_subdirectories(dpath_bundle: StrOrPathLike):
 
 
 def check_pipeline_bundle(
-    dpath_bundle: StrOrPathLike, log_level: int = logging.DEBUG, strict: bool = False
+    dpath_bundle: StrOrPathLike,
+    log_level: int = logging.DEBUG,
+    *,
+    strict: bool = False,
 ) -> BasePipelineConfig:
     """
     Load a pipeline bundle's main configuration file and validate it.
@@ -275,7 +289,7 @@ def check_pipeline_bundle(
     fpath_config: Path = dpath_bundle / DatasetLayout.fname_pipeline_config
 
     # try to load the configuration file
-    config = _load_pipeline_config_file(fpath_config)
+    config = _load_pipeline_config_file(fpath_config, strict=strict)
 
     # core file content validation
     fpaths = _check_pipeline_files(
