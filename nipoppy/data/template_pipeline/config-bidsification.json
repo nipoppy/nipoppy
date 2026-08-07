@@ -12,6 +12,7 @@
     "STEPS": [
         {
             "INVOCATION_FILE": "invocation.json",
+            "INVOCATION_TEMPLATE_FILE": null,
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
             "UPDATE_STATUS": true,

@@ -18,6 +18,7 @@ FIELDS_STEP_BASE = [
     "NAME",
     "DESCRIPTOR_FILE",
     "INVOCATION_FILE",
+    "INVOCATION_TEMPLATE_FILE",
     "HPC_CONFIG_FILE",
     "CONTAINER_CONFIG",
     "ANALYSIS_LEVEL",
@@ -43,6 +44,7 @@ FIELDS_STEP_EXTRACTION = FIELDS_STEP_BASE
                 {
                     "DESCRIPTOR_FILE": "PATH_TO_DESCRIPTOR_FILE",
                     "INVOCATION_FILE": "PATH_TO_INVOCATION_FILE",
+                    "INVOCATION_TEMPLATE_FILE": "PATH_TO_INVOCATION_TEMPLATE_FILE",
                 },
                 {"CONTAINER_CONFIG": {}},
             ],
@@ -103,9 +105,14 @@ def test_substitutions(step_class: Type[BasePipelineStepConfig]):
         NAME="step_name",
         DESCRIPTOR_FILE="descriptor-[[STEP_NAME]].json",
         INVOCATION_FILE="invocation-[[STEP_NAME]].json",
+        INVOCATION_TEMPLATE_FILE="invocation-template-[[STEP_NAME]].json",
     )
     assert str(step_config.DESCRIPTOR_FILE) == "descriptor-step_name.json"
     assert str(step_config.INVOCATION_FILE) == "invocation-step_name.json"
+    assert (
+        str(step_config.INVOCATION_TEMPLATE_FILE)
+        == "invocation-template-step_name.json"
+    )
 
 
 @pytest.mark.parametrize(
@@ -134,6 +141,17 @@ def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_e
         )
 
 
+def test_invocation_template_requires_invocation():
+    with pytest.raises(
+        ValueError,
+        match=(
+            "INVOCATION_TEMPLATE_FILE can only be defined when INVOCATION_FILE is "
+            "also defined"
+        ),
+    ):
+        BasePipelineStepConfig(INVOCATION_TEMPLATE_FILE="invocation-template.json")
+
+
 @pytest.mark.parametrize(
     "data,pipeline_class,expect_error",
     [
@@ -149,6 +167,15 @@ def test_descriptor_invocation_fields(descriptor_file, invocation_file, expect_e
             {
                 "DESCRIPTOR_FILE": "descriptor.json",
                 "INVOCATION_FILE": "/invocation.json",
+            },
+            BasePipelineStepConfig,
+            True,
+        ),
+        (
+            {
+                "DESCRIPTOR_FILE": "descriptor.json",
+                "INVOCATION_FILE": "invocation.json",
+                "INVOCATION_TEMPLATE_FILE": "/invocation-template.json",
             },
             BasePipelineStepConfig,
             True,

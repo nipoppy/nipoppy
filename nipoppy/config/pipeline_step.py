@@ -30,7 +30,11 @@ class AnalysisLevelType(str, Enum):
 class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     """Schema for processing pipeline step configuration."""
 
-    _path_fields = ["DESCRIPTOR_FILE", "INVOCATION_FILE"]
+    _path_fields = [
+        "DESCRIPTOR_FILE",
+        "INVOCATION_FILE",
+        "INVOCATION_TEMPLATE_FILE",
+    ]
 
     NAME: str = Field(
         default=DEFAULT_PIPELINE_STEP_NAME,
@@ -58,6 +62,13 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
     INVOCATION_FILE: Optional[Path] = Field(
         default=None,
         description="Path to the JSON invocation file",
+    )
+    INVOCATION_TEMPLATE_FILE: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Path to a template JSON invocation file used for pipeline bundle "
+            "validation. The runtime invocation is always loaded from INVOCATION_FILE."
+        ),
     )
     HPC_CONFIG_FILE: Optional[Path] = Field(
         default=None,
@@ -108,6 +119,11 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
                 "DESCRIPTOR_FILE and INVOCATION_FILE must both be defined or both be "
                 f"None, got {self.DESCRIPTOR_FILE} and {self.INVOCATION_FILE}"
             )
+        if self.INVOCATION_TEMPLATE_FILE is not None and self.INVOCATION_FILE is None:
+            raise ConfigError(
+                "INVOCATION_TEMPLATE_FILE can only be defined when INVOCATION_FILE "
+                "is also defined"
+            )
         return self
 
 
@@ -117,6 +133,7 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
     _path_fields = [
         "DESCRIPTOR_FILE",
         "INVOCATION_FILE",
+        "INVOCATION_TEMPLATE_FILE",
         "TRACKER_CONFIG_FILE",
         "PYBIDS_IGNORE_FILE",
     ]
