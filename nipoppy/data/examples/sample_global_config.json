@@ -25,6 +25,7 @@
         "# ========== Set environment variables ==========",
         "export PYTHONUNBUFFERED=1"
     ],
+    "HPC_QUEUE_LIMIT": 1000,
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {},
         "PROCESSING": {},
