@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.workflows.base import BaseWorkflow, LogPrefix, _log_command, _run_command
+from nipoppy.workflows._base import BaseWorkflow, LogPrefix, _log_command, _run_command
 
 
 @pytest.fixture()

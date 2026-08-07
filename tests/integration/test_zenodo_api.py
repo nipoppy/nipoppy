@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
+from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI, ZenodoAPIError
 
 from ..conftest import datetime_fixture  # noqa F401
 from ..conftest import (

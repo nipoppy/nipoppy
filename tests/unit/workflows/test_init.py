@@ -11,11 +11,11 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID
-from nipoppy.exceptions import FileOperationError
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
-from nipoppy.workflows.dataset_init import InitWorkflow
+from nipoppy.core._constants import FAKE_SESSION_ID
+from nipoppy.core._exceptions import FileOperationError
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
+from nipoppy.workflows.init import InitWorkflow
 
 
 @pytest.fixture(params=["my_dataset", "dataset_dir"])
@@ -191,7 +191,7 @@ def test_create_config_file_defaults_to_sample_when_user_config_missing(
     mocker: pytest_mock.MockerFixture,
 ):
     mocker.patch(
-        "nipoppy.workflows.dataset_init.FPATH_USER_CONFIG",
+        "nipoppy.workflows.init.FPATH_USER_CONFIG",
         tmp_path / "missing_config.json",
     )
     workflow._create_config_file()
@@ -210,7 +210,7 @@ def test_create_config_file_uses_user_config(
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
 
-    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    mocker.patch("nipoppy.workflows.init.FPATH_USER_CONFIG", fpath_user_config)
     workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, fpath_user_config)
@@ -228,7 +228,7 @@ def test_create_config_file_default_config_ignores_user_config(
 
     workflow.default_config = True
 
-    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    mocker.patch("nipoppy.workflows.init.FPATH_USER_CONFIG", fpath_user_config)
     workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
@@ -245,7 +245,7 @@ def test_create_config_file_warns_and_falls_back_for_invalid_user_config(
     fpath_user_config = tmp_path / "config.json"
     fpath_user_config.write_text('{"NOT_A_CONFIG_FIELD": "config"}\n')
 
-    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    mocker.patch("nipoppy.workflows.init.FPATH_USER_CONFIG", fpath_user_config)
     workflow._create_config_file()
 
     assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)

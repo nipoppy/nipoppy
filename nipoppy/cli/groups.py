@@ -7,9 +7,9 @@ import rich_click as click
 from dotenv import load_dotenv
 
 from nipoppy.cli.options import dataset_option
-from nipoppy.env import DEFAULT_DOTENV_PATHS
-from nipoppy.logger import get_logger
-from nipoppy.utils.utils import is_nipoppy_project, process_template_str
+from nipoppy.core._constants import DEFAULT_DOTENV_PATHS
+from nipoppy.core._logger import get_logger
+from nipoppy.core._utils.utils import is_nipoppy_project, process_template_str
 
 logger = get_logger()
 

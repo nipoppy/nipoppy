@@ -5,9 +5,9 @@ from contextlib import contextmanager
 
 from pydantic_core import ValidationError
 
-from nipoppy.env import BUG_REPORT_URL, DISCORD_URL
-from nipoppy.exceptions import NipoppyError, ReturnCode
-from nipoppy.logger import get_logger
+from nipoppy.core._constants import BUG_REPORT_URL, DISCORD_URL
+from nipoppy.core._exceptions import NipoppyError, ReturnCode
+from nipoppy.core._logger import get_logger
 
 logger = get_logger()
 

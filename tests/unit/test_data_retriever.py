@@ -6,12 +6,12 @@ import pandas as pd
 import pytest
 import pytest_mock
 
-from nipoppy._data_retriever import (
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.data_retriever import (
     NipoppyDataRetriever,
     _check_derivatives_arg,
     _check_phenotypes_arg,
 )
-from nipoppy.tabular.manifest import Manifest
 
 
 @pytest.fixture
@@ -208,7 +208,7 @@ def test_get_derivatives_table(
         return_value=expected_path,
     )
     mocked_load_tsv = mocker.patch(
-        "nipoppy._data_retriever.NipoppyDataRetriever._load_tsv",
+        "nipoppy.data_retriever.NipoppyDataRetriever._load_tsv",
         return_value=pd.DataFrame(),
     )
 
@@ -295,7 +295,7 @@ def test_get_phenotypes(
     mocker: pytest_mock.MockFixture,
 ):
     mocked_check_phenotypes_arg = mocker.patch(
-        "nipoppy._data_retriever._check_phenotypes_arg"
+        "nipoppy.data_retriever._check_phenotypes_arg"
     )
     mocked_get_all_phenotypes = mocker.patch.object(
         api,
@@ -314,7 +314,7 @@ def test_get_phenotypes(
 
 def test_get_derivatives(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture):
     mocked_check_derivatives_arg = mocker.patch(
-        "nipoppy._data_retriever._check_derivatives_arg"
+        "nipoppy.data_retriever._check_derivatives_arg"
     )
     mocked_get_derivatives_table = mocker.patch.object(
         api,

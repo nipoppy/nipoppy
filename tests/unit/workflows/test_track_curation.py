@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.manifest import Manifest
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.manifest import Manifest
 from nipoppy.workflows.track_curation import TrackCurationWorkflow
 from tests.conftest import (
     check_curation_status_table,

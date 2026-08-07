@@ -10,9 +10,9 @@ from datetime import datetime
 from pathlib import Path
 
 from nipoppy._version import __version__
-from nipoppy.env import FPATH_USER_CONFIG, PipelineTypeEnum
-from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
-from nipoppy.zenodo_api import ZenodoAPI
+from nipoppy.core._constants import FPATH_USER_CONFIG, PipelineTypeEnum
+from nipoppy.core.layout import DEFAULT_LAYOUT_INFO  # for substitutions
+from nipoppy.workflows.pipeline._utils.zenodo_api import ZenodoAPI
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -199,9 +199,15 @@ nitpick_ignore = [
     ("py:class", "argparse._SubParsersAction"),
     ("py:class", "argparse._ActionsContainer"),
     ("py:class", "StrOrPathLike"),
-    ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
     ("py:class", "httpx.Client"),
+    ("py:class", "NipoppyLogger"),
+]
+
+nitpick_ignore_regex = [
+    ("py:class", r"nipoppy\.core\._.*"),
+    ("py:func", r"nipoppy\.core\._.*"),
+    ("py:class", r"nipoppy\.workflows\.pipeline\._utils\..*"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------

@@ -1,0 +1,140 @@
+"""Workflow for convert command."""
+
+from __future__ import annotations
+
+from functools import cached_property
+from pathlib import Path
+from typing import Optional
+
+from nipoppy.core._constants import PipelineTypeEnum, StrOrPathLike
+from nipoppy.core._exceptions import WorkflowError
+from nipoppy.core._models.config.pipeline import BIDSificationPipelineConfig
+from nipoppy.core._models.config.pipeline_step import BidsPipelineStepConfig
+from nipoppy.workflows._runner import Runner
+
+
+class BIDSificationRunner(Runner):
+    """Convert data to BIDS."""
+
+    _pipeline_type = PipelineTypeEnum.BIDSIFICATION
+
+    def __init__(
+        self,
+        dpath_root: StrOrPathLike,
+        pipeline_name: str,
+        pipeline_version: Optional[str] = None,
+        pipeline_step: Optional[str] = None,
+        participant_id: str = None,
+        session_id: str = None,
+        use_subcohort: Optional[StrOrPathLike] = None,
+        simulate: bool = False,
+        keep_workdir: bool = False,
+        hpc: Optional[str] = None,
+        write_subcohort: Optional[StrOrPathLike] = None,
+        fpath_layout: Optional[StrOrPathLike] = None,
+        verbose: bool = False,
+        dry_run: bool = False,
+    ):
+        super().__init__(
+            dpath_root=dpath_root,
+            name="bidsify",
+            pipeline_name=pipeline_name,
+            pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
+            participant_id=participant_id,
+            session_id=session_id,
+            use_subcohort=use_subcohort,
+            simulate=simulate,
+            keep_workdir=keep_workdir,
+            hpc=hpc,
+            write_subcohort=write_subcohort,
+            fpath_layout=fpath_layout,
+            verbose=verbose,
+            dry_run=dry_run,
+        )
+
+    @cached_property
+    def dpath_pipeline(self):
+        """Not available."""
+        raise WorkflowError(
+            f'"dpath_pipeline" attribute is not available for {type(self)}'
+        )
+
+    @cached_property
+    def dpaths_to_check(self) -> list[Path]:
+        """Directory paths to create if needed during the setup phase."""
+        return [self.dpath_pipeline_work]
+
+    @cached_property
+    def pipeline_config(self) -> BIDSificationPipelineConfig:
+        """Get the user config object for the BIDS pipeline."""
+        return super().pipeline_config
+
+    @cached_property
+    def pipeline_step_config(self) -> BidsPipelineStepConfig:
+        """Get the config for the relevant step of the BIDS conversion pipeline."""
+        return super().pipeline_step_config
+
+    def get_participants_sessions_to_run(
+        self, participant_id: Optional[str], session_id: Optional[str]
+    ):
+        """Return participant-session pairs to run the pipeline on."""
+        participants_sessions_bidsified = set(
+            self.curation_status_table.get_bidsified_participants_sessions(
+                participant_id=participant_id, session_id=session_id
+            )
+        )
+        for (
+            participant_session
+        ) in self.curation_status_table.get_organized_participants_sessions(
+            participant_id=participant_id, session_id=session_id
+        ):
+            if participant_session not in participants_sessions_bidsified:
+                yield participant_session
+
+    def run_single(self, participant_id: str, session_id: str):
+        """Run BIDS conversion on a single participant/session."""
+        # get container command
+        launch_boutiques_run_kwargs = {}
+        if self.study.config.CONTAINER_CONFIG.COMMAND is not None:
+            container_command, container_handler = self.process_container_config(
+                participant_id=participant_id,
+                session_id=session_id,
+                bind_paths=[
+                    self.study.layout.dpath_post_reorg,
+                    self.study.layout.dpath_bids,
+                ],
+            )
+            launch_boutiques_run_kwargs["container_command"] = container_command
+            launch_boutiques_run_kwargs["container_handler"] = container_handler
+
+        # run pipeline with Boutiques
+        invocation_and_descriptor = self.launch_boutiques_run(
+            participant_id,
+            session_id,
+            **launch_boutiques_run_kwargs,
+        )
+
+        # update status
+        if self.pipeline_step_config.UPDATE_STATUS:
+            self.curation_status_table.set_status(
+                participant_id=participant_id,
+                session_id=session_id,
+                col=self.curation_status_table.col_in_bids,
+                status=True,
+            )
+
+        return invocation_and_descriptor
+
+    def _write_status_file(self):
+        """Write the updated curation status table to disk."""
+        if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
+            self.curation_status_table.save_with_backup(
+                self.study.layout.fpath_curation_status,
+                dry_run=self.dry_run,
+            )
+
+    def run_main(self):
+        """Run the BIDSification pipeline."""
+        super().run_main()
+        self._write_status_file()
