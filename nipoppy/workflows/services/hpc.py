@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import getpass
+from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Environment, meta
 from pysqa import QueueAdapter
@@ -15,25 +17,19 @@ from nipoppy.logger import get_logger
 from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from nipoppy.study import Study
 
 logger = get_logger()
 
 
 class HPCRunner:
-    """
-    Service for generating and submitting HPC jobs via PySQA.
-
-    Parameters
-    ----------
-    study : Study
-        The shared workflow study containing layout, logger, and config.
-    hpc_config : HpcConfig
-        The HPC-specific configuration.
-    """
+    """Class for generating and submitting HPC jobs via PySQA."""
 
     def __init__(
         self,
+        hpc_cluster: str,
         study: Study,
         subcommand: str,
         dpath_root: StrOrPathLike,
@@ -45,6 +41,7 @@ class HPCRunner:
         verbose: bool = False,
         hpc_config: HpcConfig | None = None,
     ):
+        self.hpc_cluster = hpc_cluster
         self.study = study
         self.subcommand = subcommand
         self.dpath_root = dpath_root
@@ -55,6 +52,19 @@ class HPCRunner:
         self.fpath_layout = fpath_layout
         self.verbose = verbose
         self.hpc_config = hpc_config
+
+    @cached_property
+    def _qa(self) -> QueueAdapter:
+        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
+        try:
+            qa.switch_cluster(self.hpc_cluster)
+        except KeyError as e:
+            raise WorkflowError(
+                f"Invalid HPC cluster type: {self.hpc_cluster}."
+                f" Available clusters are: {qa.list_clusters()}"
+            ) from e
+
+        return qa
 
     def generate_cli_command(
         self,
@@ -155,9 +165,22 @@ class HPCRunner:
 
         return job_args
 
+    def _get_max_n_jobs(self, queue_limit: int) -> int:
+        try:
+            df_queue_status: pd.DataFrame = self._qa.get_queue_status(
+                user=getpass.getuser()
+            )
+        except Exception as exception:
+            logger.warning(
+                f"Failed to get queue status: {type(exception)} {exception}."
+                " Assuming no jobs are currently in the queue."
+            )
+            return queue_limit
+
+        return max(0, queue_limit - len(df_queue_status))
+
     def submit(
         self,
-        hpc_cluster: str,
         job_name: str,
         job_array_commands: list,
         participant_ids: list,
@@ -170,14 +193,12 @@ class HPCRunner:
         pipeline_version: str,
         pipeline_step: str,
         dry_run: bool = False,
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Submit a job to the HPC scheduler.
 
         Parameters
         ----------
-        hpc_cluster : str
-            The name of the HPC cluster configuration to use.
         job_name : str
             Name of the job to submit.
         job_array_commands : list
@@ -216,16 +237,6 @@ class HPCRunner:
                 f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
             )
 
-        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
-
-        try:
-            qa.switch_cluster(hpc_cluster)
-        except KeyError as e:
-            raise WorkflowError(
-                f"Invalid HPC cluster type: {hpc_cluster}"
-                f". Available clusters are: {qa.list_clusters()}"
-            ) from e
-
         # This file is created by PySQA if the job submission command fails.
         # Delete it first to ensure only fresh submission errors are detected.
         fpath_hpc_error = dpath_work / fname_hpc_error
@@ -238,12 +249,12 @@ class HPCRunner:
 
         job_id = None
         if not dry_run:
-            job_id = qa.submit_job(
-                queue=hpc_cluster,
+            job_id = self._qa.submit_job(
+                queue=self.hpc_cluster,
                 working_directory=str(dpath_work),
                 command="",  # not used in default template but cannot be None
                 cores=0,  # not used in default template but cannot be None
-                NIPOPPY_HPC=hpc_cluster,
+                NIPOPPY_HPC=self.hpc_cluster,
                 NIPOPPY_JOB_NAME=job_name,
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
                 NIPOPPY_HPC_PREAMBLE_STRINGS=self.study.config.HPC_PREAMBLE,

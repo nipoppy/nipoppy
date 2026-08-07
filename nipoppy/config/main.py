@@ -148,6 +148,13 @@ class Config(_SchemaWithContainerConfig):
             "with Nipoppy installed, and setting up job-specific variables."
         ),
     )
+    HPC_QUEUE_LIMIT: Optional[int] = Field(
+        default=None,
+        description=(
+            "Maximum number of jobs allowed in the HPC queue per user."
+            " If not specified, no limit will be applied when submitting jobs."
+        ),
+    )
     DICOM_DIR_MAP_FILE: Optional[Path] = Field(
         default=None,
         description=(

@@ -5,18 +5,18 @@ import shlex
 from abc import ABC
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
 
 from boutiques import bosh
 from typing_extensions import override
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag, load_json
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import (
@@ -55,6 +55,7 @@ class Runner(BasePipelineWorkflow, ABC):
     def hpc_runner(self) -> HPCRunner:
         """Get the HPC runner service."""
         return HPCRunner(
+            hpc_cluster=self.hpc,
             study=self.study,
             subcommand=self.name,
             dpath_root=self.dpath_root,
@@ -67,8 +68,19 @@ class Runner(BasePipelineWorkflow, ABC):
             hpc_config=self.hpc_config if self.hpc else None,
         )
 
+    @cached_property
+    def hpc_config(self) -> HpcConfig:
+        """Load the pipeline step's HPC configuration."""
+        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
+            data = {}
+        else:
+            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
+            logger.info(f"Loading HPC config from {fpath_hpc_config}")
+            data = self.process_template_json(load_json(fpath_hpc_config))
+        return HpcConfig(**data)
+
     def _generate_cli_command_for_hpc(
-        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+        self, participant_id: str | None = None, session_id: str | None = None
     ) -> list[str]:
         """Generate the CLI command to be run on the HPC cluster."""
         return self.hpc_runner.generate_cli_command(
@@ -91,6 +103,14 @@ class Runner(BasePipelineWorkflow, ABC):
             session_ids.append(session_id)
             self.n_total += 1  # for logging in run_cleanup()
 
+        if self.study.config.HPC_QUEUE_LIMIT is not None:
+            max_jobs = self.hpc_runner._get_max_n_jobs(
+                queue_limit=self.study.config.HPC_QUEUE_LIMIT
+            )
+            job_array_commands = job_array_commands[:max_jobs]
+            participant_ids = participant_ids[:max_jobs]
+            session_ids = session_ids[:max_jobs]
+
         # skip if there are no jobs to submit
         if len(job_array_commands) == 0:
             return
@@ -104,7 +124,6 @@ class Runner(BasePipelineWorkflow, ABC):
         )
 
         self.hpc_runner.submit(
-            hpc_cluster=self.hpc,
             job_name=job_name,
             job_array_commands=job_array_commands,
             participant_ids=participant_ids,
@@ -134,8 +153,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        container_handler: Optional[ContainerHandler] = None,
-        objs: Optional[list] = None,
+        container_handler: ContainerHandler | None = None,
+        objs: list | None = None,
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
@@ -225,8 +244,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> Tuple[str, ContainerHandler]:
+        bind_paths: list[StrOrPathLike] | None = None,
+    ) -> tuple[str, ContainerHandler]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
