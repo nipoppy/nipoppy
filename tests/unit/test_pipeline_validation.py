@@ -68,6 +68,8 @@ def test_load_pipeline_config_file_json5(tmp_path: Path):
 
     config = _load_pipeline_config_file(fpath)
     assert isinstance(config, BasePipelineConfig)
+
+
 @pytest.mark.parametrize("strict", [True, False])
 def test_load_pipeline_checks_schema_version(
     strict: bool, mocker: pytest_mock.MockFixture
