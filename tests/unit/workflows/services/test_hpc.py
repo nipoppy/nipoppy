@@ -296,10 +296,7 @@ def test_hpc_runner_submit_error_invalid_cluster(
     "kwargs,expected_command",
     [
         (
-            dict(
-                participant_id="P01",
-                session_id="1",
-            ),
+            {"participant_id": "P01", "session_id": "1"},
             [
                 PROGRAM_NAME,
                 "test",
@@ -314,12 +311,12 @@ def test_hpc_runner_submit_error_invalid_cluster(
             ],
         ),
         (
-            dict(
-                participant_id="P01",
-                session_id="1",
-                extra_flags=["--flag1", "--flag2"],
-                extra_options={"--option1": "value1", "--option2": "value2"},
-            ),
+            {
+                "participant_id": "P01",
+                "session_id": "1",
+                "extra_flags": ["--flag1", "--flag2"],
+                "extra_options": {"--option1": "value1", "--option2": "value2"},
+            },
             [
                 PROGRAM_NAME,
                 "test",

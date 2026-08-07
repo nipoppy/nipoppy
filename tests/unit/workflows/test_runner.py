@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import pytest
 import pytest_mock
@@ -233,7 +232,7 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: ProcessingRunner)
 )
 def test_generate_cli_command_for_hpc(
     tar: bool,
-    extra_flags: Optional[list[str]],
+    extra_flags: list[str] | None,
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
 ):

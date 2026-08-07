@@ -5,7 +5,6 @@ import shlex
 from abc import ABC
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
 
 from boutiques import bosh
 from typing_extensions import override
@@ -74,7 +73,7 @@ class Runner(BasePipelineWorkflow, ABC):
         return HpcConfig(**data)
 
     def _generate_cli_command_for_hpc(
-        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+        self, participant_id: str | None = None, session_id: str | None = None
     ) -> list[str]:
         """Generate the CLI command to be run on the HPC cluster."""
         return self.hpc_runner.generate_cli_command(
@@ -147,8 +146,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        container_handler: Optional[ContainerHandler] = None,
-        objs: Optional[list] = None,
+        container_handler: ContainerHandler | None = None,
+        objs: list | None = None,
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
@@ -238,8 +237,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> Tuple[str, ContainerHandler]:
+        bind_paths: list[StrOrPathLike] | None = None,
+    ) -> tuple[str, ContainerHandler]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []
