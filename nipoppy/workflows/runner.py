@@ -85,6 +85,14 @@ class Runner(BasePipelineWorkflow, ABC):
             session_ids.append(session_id)
             self.n_total += 1  # for logging in run_cleanup()
 
+        if self.study.config.HPC_QUEUE_LIMIT is not None:
+            max_jobs = self.hpc_runner._get_max_n_jobs(
+                queue_limit=self.study.config.HPC_QUEUE_LIMIT
+            )
+            job_array_commands = job_array_commands[:max_jobs]
+            participant_ids = participant_ids[:max_jobs]
+            session_ids = session_ids[:max_jobs]
+
         # skip if there are no jobs to submit
         if len(job_array_commands) == 0:
             return

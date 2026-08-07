@@ -12,7 +12,6 @@ from jinja2 import Environment, meta
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.exceptions import WorkflowError
 from nipoppy.layout import LayoutError
-from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.processing_runner import ProcessingRunner
 from tests.conftest import (
@@ -25,12 +24,13 @@ from tests.conftest import (
 
 
 @pytest.fixture(scope="function")
-def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
+def runner(study, tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     runner = ProcessingRunner(
-        dpath_root=tmp_path / "my_dataset",
+        dpath_root=study.layout.dpath_root,
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
+    runner.study = study
 
     create_empty_dataset(runner.study.layout.dpath_root)
 
@@ -155,7 +155,7 @@ def _set_up_hpc_for_testing(
     runner.hpc = "slurm"
 
     # copy HPC config files
-    fileops.copy(DPATH_HPC, runner.study.layout.dpath_hpc)
+    shutil.copytree(DPATH_HPC, runner.study.layout.dpath_hpc)
 
     mocker.patch.object(
         runner,
@@ -174,39 +174,36 @@ def _set_up_hpc_for_testing(
         return mock_submit_job
 
 
-@pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
+@pytest.mark.parametrize("queue_limit,expected_n_jobs", [(None, 2), (1, 1), (3, 2)])
 @pytest.mark.no_xdist
 def test_submit_hpc_job(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    hpc_type: str,
-    hpc_command: str,
+    queue_limit: int | None,
+    expected_n_jobs: int,
 ):
-    job_id = "12345"
     hpc_config = {
         "CORES": "8",
         "MEMORY": "32G",
     }
     _set_up_hpc_for_testing(runner, mocker, mock_pysqa=False)
-    runner.hpc = hpc_type
+    runner.study.config.HPC_QUEUE_LIMIT = queue_limit
 
-    mocker.patch(
-        "nipoppy.workflows.services.hpc.HPCRunner._check_hpc_config",
-        return_value=hpc_config,
+    mocker.patch.object(runner.hpc_runner, "_check_hpc_config", return_value=hpc_config)
+    mocker.patch.object(
+        runner.hpc_runner,
+        "_get_max_n_jobs",
+        return_value=queue_limit,
     )
-    mocked_check_output = mocker.patch(
-        "pysqa.base.core.subprocess.check_output", return_value=job_id
-    )
-    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
+    mocked_submit = mocker.patch.object(runner.hpc_runner, "submit", return_value=12345)
 
-    runner._submit_hpc_job(participants_sessions)
+    runner._submit_hpc_job([("participant1", "session1"), ("participant2", "session2")])
 
-    mocked_check_output.assert_called_once()
-    # positional arguments, index 0, first element of the list
-    assert mocked_check_output.call_args[0][0][0] == hpc_command
-
-    assert f"HPC job ID: {job_id}" in caplog.text
+    mocked_submit.assert_called_once()
+    _, kwargs = mocked_submit.call_args
+    assert len(kwargs["job_array_commands"]) == expected_n_jobs
+    assert len(kwargs["participant_ids"]) == expected_n_jobs
+    assert len(kwargs["session_ids"]) == expected_n_jobs
 
 
 def test_submit_hpc_job_no_dir(
