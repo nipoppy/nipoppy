@@ -191,15 +191,20 @@ def test_confirm_upload_no(
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,
 ):
-    mocker.patch(
+    confirm = mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT.confirm",
         return_value=False,
     )
     workflow.assume_yes = False
+    workflow.zenodo_api.sandbox = False
 
     with pytest.raises(TerminatedByUserError):
         workflow.run_main()
 
+    confirm.assert_called_once_with(
+        "The Nipoppy pipeline will be uploaded/updated on Zenodo,"
+        " this is a [bold red]PERMANENT[/] action, are you sure?"
+    )
     assert "Zenodo upload cancelled." in caplog.text
 
 
