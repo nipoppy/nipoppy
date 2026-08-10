@@ -57,12 +57,6 @@ jobs:
       contents: write  # IMPORTANT: mandatory for updating GitHub Releases
       id-token: write  # IMPORTANT: mandatory for sigstore
     steps:
-    - name: Generate a token
-      id: generate-token
-      uses: actions/create-github-app-token@v3
-      with:
-        app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
-        private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
     - name: Download all the dists
       uses: actions/download-artifact@v8
       with:
