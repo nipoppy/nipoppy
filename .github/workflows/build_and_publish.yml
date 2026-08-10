@@ -61,7 +61,7 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
-    - name: Sign the dists with Sigstore
+    - name: Sign and upload the dists with Sigstore
       uses: sigstore/gh-action-sigstore-python@v3.5.0
       with:
         inputs: >-
