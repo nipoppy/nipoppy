@@ -56,16 +56,18 @@ class Runner(BasePipelineWorkflow, ABC):
         """Get the HPC runner service."""
         return HPCRunner(
             hpc_cluster=self.hpc,
-            study=self.study,
+            hpc_config=self.hpc_config,
             subcommand=self.name,
             dpath_root=self.dpath_root,
+            dpath_hpc=self.study.layout.dpath_hpc,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             pipeline_step=self.pipeline_step,
+            preamble=self.study.config.HPC_PREAMBLE,
+            queue_limit=self.study.config.HPC_QUEUE_LIMIT,
             keep_workdir=self.keep_workdir,
             fpath_layout=self.fpath_layout,
             verbose=self.verbose,
-            hpc_config=self.hpc_config if self.hpc else None,
         )
 
     @cached_property
@@ -102,19 +104,7 @@ class Runner(BasePipelineWorkflow, ABC):
             job_array_commands.append(shlex.join(command))
             participant_ids.append(participant_id)
             session_ids.append(session_id)
-            self.n_total += 1  # for logging in run_cleanup()
-
-        if self.study.config.HPC_QUEUE_LIMIT is not None:
-            max_jobs = self.hpc_runner._get_n_available_job_slots(
-                queue_limit=self.study.config.HPC_QUEUE_LIMIT
-            )
-            job_array_commands = job_array_commands[:max_jobs]
-            participant_ids = participant_ids[:max_jobs]
-            session_ids = session_ids[:max_jobs]
-
-        # skip if there are no jobs to submit
-        if len(job_array_commands) == 0:
-            return
+            self.n_total += 1  # for logging
 
         job_name = get_pipeline_tag(
             pipeline_name=self.pipeline_name,
@@ -124,7 +114,7 @@ class Runner(BasePipelineWorkflow, ABC):
             session_id=self.session_id,
         )
 
-        self.hpc_runner.submit(
+        n_jobs_submitted = self.hpc_runner.submit(
             job_name=job_name,
             job_array_commands=job_array_commands,
             participant_ids=participant_ids,
@@ -140,7 +130,7 @@ class Runner(BasePipelineWorkflow, ABC):
         )
 
         # for logging in run_cleanup()
-        self.n_success += len(job_array_commands)
+        self.n_success += n_jobs_submitted
 
     @cached_property
     def bosh_runner(self) -> BoshRunnerCallable:

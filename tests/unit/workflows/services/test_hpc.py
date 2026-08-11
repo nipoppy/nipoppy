@@ -27,19 +27,21 @@ def hpc_config():
 
 
 @pytest.fixture(scope="function")
-def hpc_runner(study, hpc_config: HpcConfig) -> HPCRunner:
+def hpc_runner(hpc_config: HpcConfig, tmp_path: Path) -> HPCRunner:
     """Fixture for HpcConfig."""
+    dpath_hpc = tmp_path / "hpc"
+    shutil.copytree(DPATH_HPC, dpath_hpc)
+
     hpc_runner = HPCRunner(
         hpc_cluster="slurm",
-        study=study,
         hpc_config=hpc_config,
         subcommand="test",
         dpath_root="test",
+        dpath_hpc=dpath_hpc,
         pipeline_name="test",
+        preamble=["module load some_module"],
+        queue_limit=None,
     )
-    shutil.copytree(DPATH_HPC, study.layout.dpath_hpc)
-    study.config = get_config()
-    study.config.HPC_PREAMBLE = ["module load some_module"]
     return hpc_runner
 
 
@@ -62,10 +64,28 @@ def submit_kwargs(tmp_path: Path) -> dict:
     }
 
 
-def test_hpc_runner_initialization(study, hpc_runner: HPCRunner, hpc_config: HpcConfig):
+@pytest.mark.parametrize(
+    "preamble,expected_preamble",
+    [
+        (["module load some_module"], ["module load some_module"]),
+        (None, []),
+    ],
+)
+def test_hpc_runner_initialization(
+    preamble, expected_preamble, hpc_config: HpcConfig, tmp_path: Path
+):
     """Test that HPCRunner can be initialized."""
-    assert hpc_runner.study is study
-    assert hpc_runner.hpc_config is hpc_config
+    hpc_runner = HPCRunner(
+        hpc_cluster="slurm",
+        hpc_config=hpc_config,
+        subcommand="test",
+        dpath_root=tmp_path / "test_study",
+        dpath_hpc=tmp_path / "hpc",
+        pipeline_name="test",
+        preamble=preamble,
+    )
+
+    assert hpc_runner.preamble == expected_preamble
 
 
 def test_hpc_runner_invalid_cluster(hpc_runner: HPCRunner):
@@ -81,13 +101,12 @@ def test_hpc_runner_check_hpc_config(hpc_runner: HPCRunner):
     assert hpc_runner._check_hpc_config() == {"CORES": "8", "MEMORY": "32G"}
 
 
-@pytest.mark.parametrize("hpc_config", [HpcConfig(), None])
 @pytest.mark.no_xdist
 def test_hpc_runner_check_hpc_config_empty(
-    hpc_runner: HPCRunner, hpc_config: HpcConfig, caplog
+    hpc_runner: HPCRunner, caplog: pytest.LogCaptureFixture
 ):
     """Test empty hpc config."""
-    hpc_runner.hpc_config = hpc_config
+    hpc_runner.hpc_config = HpcConfig()
     hpc_runner._check_hpc_config()
     assert (
         sum("HPC configuration is empty" in record.message for record in caplog.records)
@@ -186,9 +205,9 @@ def test_hpc_runner_submit(
         NIPOPPY_HPC=hpc_runner.hpc_cluster,
         NIPOPPY_JOB_NAME=submit_kwargs["job_name"],
         NIPOPPY_DPATH_LOGS=submit_kwargs["dpath_hpc_logs"],
-        NIPOPPY_HPC_PREAMBLE_STRINGS=hpc_runner.study.config.HPC_PREAMBLE,
+        NIPOPPY_HPC_PREAMBLE_STRINGS=hpc_runner.preamble,
         NIPOPPY_COMMANDS=submit_kwargs["job_array_commands"],
-        NIPOPPY_DPATH_ROOT=hpc_runner.study.layout.dpath_root,
+        NIPOPPY_DPATH_ROOT=hpc_runner.dpath_root,
         NIPOPPY_PIPELINE_NAME=submit_kwargs["pipeline_name"],
         NIPOPPY_PIPELINE_VERSION=submit_kwargs["pipeline_version"],
         NIPOPPY_PIPELINE_STEP=submit_kwargs["pipeline_step"],
@@ -276,15 +295,11 @@ def test_hpc_runner_submit_pysqa_error(
         hpc_runner.submit(**submit_kwargs)
 
 
-def test_hpc_runner_submit_error_no_dir(
-    hpc_runner: HPCRunner,
-    study: Study,
-    submit_kwargs: dict,
-):
+def test_hpc_runner_submit_error_no_dir(hpc_runner: HPCRunner, submit_kwargs: dict):
     # remove the HPC config directory
-    if study.layout.dpath_hpc.exists():
-        shutil.rmtree(study.layout.dpath_hpc)
-    assert not study.layout.dpath_hpc.exists()
+    if hpc_runner.dpath_hpc.exists():
+        shutil.rmtree(hpc_runner.dpath_hpc)
+    assert not hpc_runner.dpath_hpc.exists()
 
     with pytest.raises(
         LayoutError,

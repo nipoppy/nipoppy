@@ -176,19 +176,8 @@ def test_hpc_config_no_file(runner: ProcessingRunner):
     assert runner.hpc_config == HpcConfig()
 
 
-@pytest.mark.parametrize("queue_limit,expected_n_jobs", [(None, 2), (1, 1), (3, 2)])
-def test_submit_hpc_job(
-    runner: ProcessingRunner,
-    mocker: pytest_mock.MockFixture,
-    queue_limit: int | None,
-    expected_n_jobs: int,
-):
+def test_submit_hpc_job(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
 
-    runner.study.config.HPC_QUEUE_LIMIT = queue_limit
-
-    mocker.patch.object(
-        runner.hpc_runner, "_get_n_available_job_slots", return_value=queue_limit
-    )
     mocker.patch.object(
         runner,
         "_generate_cli_command_for_hpc",
@@ -199,7 +188,11 @@ def test_submit_hpc_job(
             ]
         ),
     )
-    mocked_submit = mocker.patch.object(runner.hpc_runner, "submit", return_value=12345)
+
+    n_jobs_submitted = 1
+    mocked_submit = mocker.patch.object(
+        runner.hpc_runner, "submit", return_value=n_jobs_submitted
+    )
 
     participant_ids = ["participant1", "participant2"]
     session_ids = ["session1", "session2"]
@@ -217,9 +210,9 @@ def test_submit_hpc_job(
         job_array_commands=[
             "echo 'participant1, session1'",
             "echo 'participant2, session2'",
-        ][:expected_n_jobs],
-        participant_ids=participant_ids[:expected_n_jobs],
-        session_ids=session_ids[:expected_n_jobs],
+        ],
+        participant_ids=participant_ids,
+        session_ids=session_ids,
         dpath_work=runner.dpath_pipeline_work,
         dpath_hpc_logs=runner.study.layout.dpath_logs / runner.dname_hpc_logs,
         fname_hpc_error=runner.fname_hpc_error,
@@ -230,16 +223,8 @@ def test_submit_hpc_job(
         dry_run=runner.dry_run,
     )
 
-    assert runner.n_success == expected_n_jobs
-    assert runner.n_total == 2
-
-
-def test_submit_hpc_job_no_jobs(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
-):
-    mocked_submit = mocker.patch.object(runner.hpc_runner, "submit")
-    runner._submit_hpc_job([])
-    assert not mocked_submit.called
+    assert runner.n_success == n_jobs_submitted
+    assert runner.n_total == len(participants_sessions)
 
 
 def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: ProcessingRunner):
