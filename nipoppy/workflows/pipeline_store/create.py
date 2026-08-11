@@ -1,5 +1,6 @@
 """Workflow for pipeline validate command."""
 
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -130,11 +131,15 @@ class PipelineCreateWorkflow(BaseWorkflow):
     def run_main(self):
         """Run the main workflow."""
         logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
-        self.create_bundle(
-            target=self.pipeline_dir,
-            type_=self.type_,
-            source_descriptor=self.source_descriptor,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message="Unable to replace .*", category=UserWarning
+            )
+            self.create_bundle(
+                target=self.pipeline_dir,
+                type_=self.type_,
+                source_descriptor=self.source_descriptor,
+            )
         logger.success(f"Pipeline bundle successfully created at {self.pipeline_dir}!")
         logger.warning("Edit the files to customize your pipeline.")
         logger.info(
