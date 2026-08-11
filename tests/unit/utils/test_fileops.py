@@ -202,6 +202,20 @@ class TestCopy:
             check_dummy_directory_structure(dest_dir)
 
 
+class TestCopyTemplate:
+    def test_substitution(self, tmp_path: Path):
+        """Test copying a template file with substitution."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+
+        fileops.copy_template(template_file, dest_file, name="World")
+
+        assert dest_file.is_file()
+        assert dest_file.read_text() == "Hello, World!"
+
+
 class TestMoveTree:
     # Should we add an exist_ok test here too?
     def test_mv_directory(self, tmp_path: Path):

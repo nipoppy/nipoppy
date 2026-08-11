@@ -5,7 +5,7 @@ from typing import Optional
 
 import boutiques
 
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
@@ -73,9 +73,10 @@ class PipelineCreateWorkflow(BaseWorkflow):
         target.joinpath("invocation.json").write_text(
             boutiques.example(str(descriptor_path))
         )
-        fileops.copy(
+        fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
             target.joinpath("hpc.json"),
+            version=PROGRAM_VERSION,
             dry_run=self.dry_run,
         )
 
@@ -107,9 +108,10 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
-            fileops.copy(
+            fileops.copy_template(
                 TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
                 target.joinpath("tracker.json"),
+                version=PROGRAM_VERSION,
                 dry_run=self.dry_run,
             )
 

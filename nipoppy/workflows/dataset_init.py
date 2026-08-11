@@ -32,38 +32,10 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_BIDSIGNORE,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
-    process_template_str,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
-
-
-def copy_template(
-    path_source: Path,
-    path_dest: Path,
-    *,
-    dry_run: bool = False,
-    **template_kwargs,
-):
-    """Copy a file with template substitution.
-
-    Parameters
-    ----------
-    path_source
-        Source template file path
-    path_dest
-        Destination file path
-    **template_kwargs
-        Keyword arguments passed to process_template_str for substitution
-    """
-    logger.debug(f"Copying template {path_source} to {path_dest}")
-    if not dry_run:
-        with open(path_source, "r") as f:
-            content = process_template_str(f.read(), **template_kwargs)
-        fileops.mkdir(Path(path_dest).parent, dry_run=dry_run)
-        with open(path_dest, "w") as f:
-            f.write(content)
 
 
 class InitWorkflow(BaseDatasetWorkflow):
@@ -161,7 +133,7 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # copy dataset description file if specified in layout
         if getattr(self.study.layout, "fpath_bids_dataset_description", None):
-            copy_template(
+            fileops.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
                 version=PROGRAM_VERSION,

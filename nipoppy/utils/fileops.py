@@ -6,6 +6,7 @@ from pathlib import Path
 
 from nipoppy.exceptions import FileOperationError
 from nipoppy.logger import get_logger
+from nipoppy.utils.utils import process_template_str
 
 logger = get_logger()
 
@@ -43,6 +44,33 @@ def copy(source: Path, target: Path, dry_run=False, exist_ok: bool = False):
             shutil.copy2(src=source, dst=target)
         else:
             shutil.copytree(src=source, dst=target, dirs_exist_ok=exist_ok)
+
+
+def copy_template(
+    path_source: Path,
+    path_dest: Path,
+    *,
+    dry_run: bool = False,
+    **template_kwargs,
+):
+    """Copy a file with template substitution.
+
+    Parameters
+    ----------
+    path_source
+        Source template file path
+    path_dest
+        Destination file path
+    **template_kwargs
+        Keyword arguments passed to process_template_str for substitution
+    """
+    logger.debug(f"Copying template {path_source} to {path_dest}")
+    if not dry_run:
+        with open(path_source, "r") as f:
+            content = process_template_str(f.read(), **template_kwargs)
+        mkdir(Path(path_dest).parent, dry_run=dry_run)
+        with open(path_dest, "w") as f:
+            f.write(content)
 
 
 def movetree(source: Path, target: Path, dry_run=False):
