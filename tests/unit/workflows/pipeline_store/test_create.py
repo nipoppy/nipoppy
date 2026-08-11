@@ -65,8 +65,12 @@ def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
     # because boutiques generates random args values.
     # Instead, we compare the keys of the JSON object
     assert (
-        load_json(workflow.pipeline_dir.joinpath("invocation.json")).keys()
-        == load_json(TEMPLATE_PIPELINE_PATH.joinpath("invocation.json")).keys()
+        load_json(
+            workflow.pipeline_dir.joinpath("invocation.json"), allow_json5=True
+        ).keys()
+        == load_json(
+            TEMPLATE_PIPELINE_PATH.joinpath("invocation.json"), allow_json5=True
+        ).keys()
     )
 
     assert workflow.pipeline_dir.joinpath("hpc.json").is_file()
@@ -111,14 +115,18 @@ def test_create_from_descriptor(workflow: PipelineCreateWorkflow):
         workflow.pipeline_dir.joinpath("descriptor.json"), source_descriptor
     )
 
-    assert set(load_json(workflow.pipeline_dir.joinpath("invocation.json")).keys()) == {
+    assert set(
+        load_json(
+            workflow.pipeline_dir.joinpath("invocation.json"), allow_json5=True
+        ).keys()
+    ) == {
         "bids_dir",
         "output_dir",
         "analysis_level",
     }
 
     descriptor = load_json(workflow.pipeline_dir.joinpath("descriptor.json"))
-    config = load_json(workflow.pipeline_dir.joinpath("config.json"))
+    config = load_json(workflow.pipeline_dir.joinpath("config.json"), allow_json5=True)
     assert config["NAME"] == descriptor["name"]
     assert config["VERSION"] == descriptor["tool-version"]
     assert (
