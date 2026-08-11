@@ -144,7 +144,7 @@ def test_check_invocation_file(descriptor_str):
     [
         ("fake_path.json", FileOperationError, "Invocation file not found"),
         (
-            DPATH_TEST_DATA / "invocation-invalid1.json",
+            DPATH_TEST_DATA / "invocation-invalid.json",
             ConfigError,
             "Invocation file .* is invalid",
         ),
