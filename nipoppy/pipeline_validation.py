@@ -206,13 +206,19 @@ def _check_pipeline_files(
             fpaths.append(fpath_descriptor)
 
             if step.INVOCATION_FILE is not None:
+                fname_invocation = step.INVOCATION_TEMPLATE_FILE or step.INVOCATION_FILE
                 logger.log(
                     level=log_level,
-                    msg=f"\tChecking invocation file: {step.INVOCATION_FILE}",
+                    msg=f"\tChecking invocation file: {fname_invocation}",
                 )
-                fpath_invocation = dpath_bundle / step.INVOCATION_FILE
+                fpath_invocation = dpath_bundle / fname_invocation
                 _check_invocation_file(fpath_invocation, descriptor_str)
                 fpaths.append(fpath_invocation)
+
+                # The runtime path may contain participant/session substitutions and
+                # need not exist yet, but it must still remain within the bundle.
+                if step.INVOCATION_TEMPLATE_FILE is not None:
+                    fpaths.append(dpath_bundle / step.INVOCATION_FILE)
 
         if step.HPC_CONFIG_FILE is not None:
             logger.log(
