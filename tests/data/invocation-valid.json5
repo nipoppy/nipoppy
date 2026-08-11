@@ -1,0 +1,7 @@
+{
+    /*
+    Test that block comments are allowed in the JSON5 file.
+    This is a multi-line comment that should be ignored by the parser.
+    */
+    "basic_param2": "mychoice1.log", // Test inline comments + trailing commas
+}
