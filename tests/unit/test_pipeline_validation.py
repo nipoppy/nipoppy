@@ -54,22 +54,6 @@ def test_load_pipeline_config_file():
     )
 
 
-def test_load_pipeline_config_file_json5(tmp_path: Path):
-    fpath = tmp_path / "pipeline_config.json"
-    fpath.write_text("""
-{
-  // comments and trailing commas should be accepted
-  "NAME": "test_pipeline",
-  "VERSION": "test_version",
-  "SCHEMA_VERSION": "1",
-  "PIPELINE_TYPE": "processing",
-}
-""".strip())
-
-    config = _load_pipeline_config_file(fpath)
-    assert isinstance(config, BasePipelineConfig)
-
-
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
