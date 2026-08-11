@@ -71,7 +71,8 @@ class Runner(BasePipelineWorkflow, ABC):
     @cached_property
     def hpc_config(self) -> HpcConfig:
         """Load the pipeline step's HPC configuration."""
-        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
+        fname_hpc_config = self.pipeline_step_config.HPC_CONFIG_FILE
+        if fname_hpc_config is None:
             data = {}
         else:
             fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
@@ -104,7 +105,7 @@ class Runner(BasePipelineWorkflow, ABC):
             self.n_total += 1  # for logging in run_cleanup()
 
         if self.study.config.HPC_QUEUE_LIMIT is not None:
-            max_jobs = self.hpc_runner._get_max_n_jobs(
+            max_jobs = self.hpc_runner._get_n_available_job_slots(
                 queue_limit=self.study.config.HPC_QUEUE_LIMIT
             )
             job_array_commands = job_array_commands[:max_jobs]

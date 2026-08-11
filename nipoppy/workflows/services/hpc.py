@@ -165,7 +165,7 @@ class HPCRunner:
 
         return job_args
 
-    def _get_max_n_jobs(self, queue_limit: int) -> int:
+    def _get_n_available_job_slots(self, queue_limit: int) -> int:
         try:
             df_queue_status: pd.DataFrame = self._queue_adapter.get_queue_status(
                 user=getpass.getuser()

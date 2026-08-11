@@ -186,7 +186,9 @@ def test_submit_hpc_job(
 
     runner.study.config.HPC_QUEUE_LIMIT = queue_limit
 
-    mocker.patch.object(runner.hpc_runner, "_get_max_n_jobs", return_value=queue_limit)
+    mocker.patch.object(
+        runner.hpc_runner, "_get_n_available_job_slots", return_value=queue_limit
+    )
     mocker.patch.object(
         runner,
         "_generate_cli_command_for_hpc",
