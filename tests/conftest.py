@@ -14,24 +14,24 @@ import pytest
 import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
-from nipoppy.config.main import Config
-from nipoppy.config.schema import get_current_schema_version
-from nipoppy.env import (
+from nipoppy.core._constants import (
     NIPOPPY_DIR_NAME,
     ConfigType,
     PipelineTypeEnum,
     StrOrPathLike,
 )
-from nipoppy.layout import DatasetLayout
-from nipoppy.logger import NipoppyLogger, get_logger
-from nipoppy.study import Study
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.bids import (
+from nipoppy.core._logger import NipoppyLogger, get_logger
+from nipoppy.core._models.config.main import Config
+from nipoppy.core._models.config.schema import get_current_schema_version
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._utils.bids import (
     participant_id_to_bids_participant_id,
     session_id_to_bids_session_id,
 )
-from nipoppy.utils.utils import save_json
+from nipoppy.core._utils.utils import save_json
+from nipoppy.core.layout import DatasetLayout
+from nipoppy.core.study import Study
 
 FPATH_CONFIG = "global_config.json"
 FPATH_MANIFEST = "manifest.tsv"
@@ -94,7 +94,7 @@ def datetime_fixture(
 
     See https://stackoverflow.com/a/75591976 for mocking datetime.datetime.now
     """
-    mocked_datetime = mocker.patch("nipoppy.utils.utils.datetime")
+    mocked_datetime = mocker.patch("nipoppy.core._utils.utils.datetime")
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime

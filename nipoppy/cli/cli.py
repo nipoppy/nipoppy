@@ -30,7 +30,7 @@ from nipoppy.cli.options import (
     runners_options,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
-from nipoppy.env import FPATH_USER_CONFIG
+from nipoppy.core._constants import FPATH_USER_CONFIG
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
@@ -146,7 +146,7 @@ if cli.commands.get("gui"):
 @layout_option
 def init(**params):
     """Initialize a new dataset."""
-    from nipoppy.workflows.dataset_init import InitWorkflow
+    from nipoppy.workflows.init import InitWorkflow
 
     params = dep_params(**params)
     with exception_handler(InitWorkflow(**params)) as workflow:
@@ -208,7 +208,7 @@ def reorg(**params):
     From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
     ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
     """
-    from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
+    from nipoppy.workflows.reorg import DicomReorgWorkflow
 
     params = dep_params(**params)
     with exception_handler(DicomReorgWorkflow(**params)) as workflow:
@@ -222,7 +222,7 @@ def reorg(**params):
 @layout_option
 def bidsify(**params):
     """Run a BIDS conversion pipeline."""
-    from nipoppy.workflows.bids_conversion import BIDSificationRunner
+    from nipoppy.workflows.bidsify import BIDSificationRunner
 
     params = dep_params(**params)
     with exception_handler(BIDSificationRunner(**params)) as workflow:
@@ -245,7 +245,7 @@ def bidsify(**params):
 @layout_option
 def process(**params):
     """Run a processing pipeline."""
-    from nipoppy.workflows.processing_runner import ProcessingRunner
+    from nipoppy.workflows.process import ProcessingRunner
 
     params = dep_params(**params)
     with exception_handler(ProcessingRunner(**params)) as workflow:
@@ -265,7 +265,7 @@ def process(**params):
 @layout_option
 def track_processing(**params):
     """Track the processing status of a pipeline."""
-    from nipoppy.workflows.tracker import PipelineTracker
+    from nipoppy.workflows.track_processing import PipelineTracker
 
     params = dep_params(**params)
     with exception_handler(PipelineTracker(**params)) as workflow:
@@ -279,7 +279,7 @@ def track_processing(**params):
 @layout_option
 def extract(**params):
     """Extract imaging-derived phenotypes (IDPs) from processed data."""
-    from nipoppy.workflows.extractor import ExtractionRunner
+    from nipoppy.workflows.extract import ExtractionRunner
 
     params = dep_params(**params)
     with exception_handler(ExtractionRunner(**params)) as workflow:
@@ -292,7 +292,7 @@ def extract(**params):
 @layout_option
 def status(**params):
     """Print a summary of the dataset."""
-    from nipoppy.workflows.dataset_status import StatusWorkflow
+    from nipoppy.workflows.status import StatusWorkflow
 
     params = dep_params(**params)
     with exception_handler(StatusWorkflow(**params)) as workflow:

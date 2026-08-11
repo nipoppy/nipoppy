@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nipoppy.tabular.curation_status import CurationStatusTable
-from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.dataset_status import StatusWorkflow
+from nipoppy.core._models.tabular.curation_status import CurationStatusTable
+from nipoppy.core._models.tabular.manifest import Manifest
+from nipoppy.core._models.tabular.processing_status import ProcessingStatusTable
+from nipoppy.workflows.status import StatusWorkflow
 from tests.conftest import get_config
 
 

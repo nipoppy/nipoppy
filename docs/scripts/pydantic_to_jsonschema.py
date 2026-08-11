@@ -4,20 +4,20 @@
 import json
 from pathlib import Path
 
-from nipoppy.config.boutiques import BoutiquesConfig
-from nipoppy.config.hpc import HpcConfig
-from nipoppy.config.main import Config
-from nipoppy.config.pipeline import (
+from nipoppy.core._models.config.boutiques import BoutiquesConfig
+from nipoppy.core._models.config.hpc import HpcConfig
+from nipoppy.core._models.config.main import Config
+from nipoppy.core._models.config.pipeline import (
     BIDSificationPipelineConfig,
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.config.tracker import TrackerConfig
-from nipoppy.layout import LayoutConfig
-from nipoppy.tabular.curation_status import CurationStatusModel
-from nipoppy.tabular.dicom_dir_map import DicomDirMapModel
-from nipoppy.tabular.manifest import ManifestModel
-from nipoppy.tabular.processing_status import ProcessingStatusModel
+from nipoppy.core._models.config.tracker import TrackerConfig
+from nipoppy.core._models.tabular.curation_status import CurationStatusModel
+from nipoppy.core._models.tabular.dicom_dir_map import DicomDirMapModel
+from nipoppy.core._models.tabular.manifest import ManifestModel
+from nipoppy.core._models.tabular.processing_status import ProcessingStatusModel
+from nipoppy.core.layout import LayoutConfig
 
 DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "reference" / "schemas"
 
