@@ -18,7 +18,6 @@ except ImportError:
         return decorator
 
 
-from nipoppy._version import __version__
 from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
@@ -30,7 +29,7 @@ from nipoppy.cli.options import (
     runners_options,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
-from nipoppy.env import FPATH_USER_CONFIG
+from nipoppy.env import FPATH_USER_CONFIG, PROGRAM_VERSION
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
@@ -103,7 +102,7 @@ click.rich_click.OPTION_GROUPS = {
         "Or visit the documentation at https://nipoppy.readthedocs.io"
     ),
 )
-@click.version_option(version=__version__)
+@click.version_option(version=PROGRAM_VERSION)
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
     pass

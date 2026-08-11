@@ -6,10 +6,6 @@ from typing import Optional
 import httpx
 from pydantic import ValidationError
 
-try:
-    from nipoppy._version import __version__
-except ImportError:
-    __version__ = "unknown"
 from nipoppy.config.main import Config
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -17,6 +13,7 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     FPATH_USER_CONFIG,
     NIPOPPY_DIR_NAME,
+    PROGRAM_VERSION,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -167,7 +164,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
-                version=__version__,
+                version=PROGRAM_VERSION,
                 dry_run=self.dry_run,
             )
 
