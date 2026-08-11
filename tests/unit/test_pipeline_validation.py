@@ -136,21 +136,7 @@ def test_check_descriptor_file_invalid(fpath, exception_class, exception_message
 
 
 def test_check_invocation_file(descriptor_str):
-    _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json", descriptor_str)
-
-
-def test_check_invocation_file_remains_strict_json(
-    tmp_path: Path,
-    descriptor_str: str,
-):
-    fpath = tmp_path / "invocation.json"
-    fpath.write_text('{"title": true,}')  # trailing comma makes it invalid JSON
-
-    with pytest.raises(
-        ConfigError,
-        match="Invocation file .* is invalid:",
-    ):
-        _check_invocation_file(fpath, descriptor_str)
+    _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json5", descriptor_str)
 
 
 @pytest.mark.parametrize(
@@ -158,7 +144,7 @@ def test_check_invocation_file_remains_strict_json(
     [
         ("fake_path.json", FileOperationError, "Invocation file not found"),
         (
-            DPATH_TEST_DATA / "invocation-invalid.json",
+            DPATH_TEST_DATA / "invocation-invalid1.json",
             ConfigError,
             "Invocation file .* is invalid",
         ),
@@ -232,7 +218,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             {
                 "STEPS": [
                     {
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                         "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
@@ -247,7 +233,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             {
                 "STEPS": [
                     {
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                         "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                         "TRACKER_CONFIG_FILE": "tracker_config-valid.json5",
@@ -266,19 +252,19 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 "STEPS": [
                     {
                         "NAME": "step1",
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                         "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                     {
                         "NAME": "step2",
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                         "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                     {
                         "NAME": "step3",
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                 ],
