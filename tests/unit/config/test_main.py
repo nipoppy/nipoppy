@@ -243,6 +243,7 @@ def test_save(tmp_path: Path, valid_config_data):
         DPATH_TEST_DATA / "config1.json",
         DPATH_TEST_DATA / "config2.json",
         DPATH_TEST_DATA / "config3.json",
+        DPATH_TEST_DATA / "config4.json5",
     ],
 )
 def test_load(path):
@@ -250,22 +251,6 @@ def test_load(path):
     assert isinstance(config, Config)
     for field in REQUIRED_FIELDS_CONFIG:
         assert hasattr(config, field)
-
-
-def test_load_json5_with_comments_and_trailing_commas(tmp_path: Path):
-    fpath_config = tmp_path / "global_config.json"
-    fpath_config.write_text("""
-{
-  // Comments and trailing commas should be supported
-  "HPC_PREAMBLE": [
-    "module load apptainer",
-  ],
-}
-""".strip())
-
-    config = Config.load(fpath_config)
-    assert isinstance(config, Config)
-    assert config.HPC_PREAMBLE == ["module load apptainer"]
 
 
 @pytest.mark.parametrize(

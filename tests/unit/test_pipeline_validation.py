@@ -172,19 +172,7 @@ def test_check_invocation_file_invalid(
 
 
 def test_check_hpc_config_file():
-    _check_hpc_config_file(DPATH_TEST_DATA / "hpc_config-valid.json")
-
-
-def test_check_hpc_config_file_json5(tmp_path: Path):
-    fpath = tmp_path / "hpc_config.json"
-    fpath.write_text("""
-{
-  // comments and trailing commas should be accepted
-  "walltime": "00:10:00",
-}
-""".strip())
-
-    _check_hpc_config_file(fpath)
+    _check_hpc_config_file(DPATH_TEST_DATA / "hpc_config-valid.json5")
 
 
 @pytest.mark.parametrize(
@@ -204,21 +192,7 @@ def test_check_hpc_config_file_invalid(fpath, exception_class, exception_message
 
 
 def test_check_tracker_config_file():
-    _check_tracker_config_file(DPATH_TEST_DATA / "tracker_config-valid.json")
-
-
-def test_check_tracker_config_file_json5(tmp_path: Path):
-    fpath = tmp_path / "tracker_config.json"
-    fpath.write_text("""
-{
-  // comments and trailing commas should be accepted
-  "PATHS": [
-    "output/sub-[[NIPOPPY_PARTICIPANT_ID]]",
-  ],
-}
-""".strip())
-
-    _check_tracker_config_file(fpath)
+    _check_tracker_config_file(DPATH_TEST_DATA / "tracker_config-valid.json5")
 
 
 @pytest.mark.parametrize(
@@ -238,19 +212,7 @@ def test_check_tracker_config_file_invalid(fpath, exception_class, exception_mes
 
 
 def test_check_pybids_ignore_file():
-    _check_pybids_ignore_file(DPATH_TEST_DATA / "pybids_ignore-valid.json")
-
-
-def test_check_pybids_ignore_file_json5(tmp_path: Path):
-    fpath = tmp_path / "pybids_ignore.json"
-    fpath.write_text("""
-[
-  // comments and trailing commas should be accepted
-  "^/code",
-]
-""".strip())
-
-    _check_pybids_ignore_file(fpath)
+    _check_pybids_ignore_file(DPATH_TEST_DATA / "pybids_ignore-valid.json5")
 
 
 @pytest.mark.parametrize(
@@ -272,7 +234,7 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                     {
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
@@ -287,9 +249,9 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                     {
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
-                        "TRACKER_CONFIG_FILE": "tracker_config-valid.json",
-                        "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
+                        "TRACKER_CONFIG_FILE": "tracker_config-valid.json5",
+                        "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json5",
                     },
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
@@ -306,13 +268,13 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                         "NAME": "step1",
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                     {
                         "NAME": "step2",
                         "INVOCATION_FILE": "invocation-valid.json",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                     {
                         "NAME": "step3",
