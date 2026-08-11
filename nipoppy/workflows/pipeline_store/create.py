@@ -71,9 +71,18 @@ class PipelineCreateWorkflow(BaseWorkflow):
         else:
             boutiques.create(str(descriptor_path))
 
-        target.joinpath("invocation.json").write_text(
-            boutiques.example(str(descriptor_path))
+        fpath_invocation = target.joinpath("invocation.json")
+        # copy the 'header' (top-level comments)
+        fileops.copy_template(
+            TEMPLATE_PIPELINE_PATH.joinpath("invocation_header.txt"),
+            fpath_invocation,
+            version=PROGRAM_VERSION,
+            dry_run=self.dry_run,
         )
+        # then append the actual example invocation
+        with open(fpath_invocation, "a") as file_invocation:
+            file_invocation.write(boutiques.example(str(descriptor_path)))
+
         fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
             target.joinpath("hpc.json"),
@@ -82,9 +91,10 @@ class PipelineCreateWorkflow(BaseWorkflow):
         )
 
         fpath_config = target.joinpath(DatasetLayout.fname_pipeline_config)
-        fileops.copy(
+        fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
             fpath_config,
+            version=PROGRAM_VERSION,
             dry_run=self.dry_run,
         )
 
