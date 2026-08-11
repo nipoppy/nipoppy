@@ -243,6 +243,7 @@ def test_save(tmp_path: Path, valid_config_data):
         DPATH_TEST_DATA / "config1.json",
         DPATH_TEST_DATA / "config2.json",
         DPATH_TEST_DATA / "config3.json",
+        DPATH_TEST_DATA / "config4.json5",
     ],
 )
 def test_load(path):
