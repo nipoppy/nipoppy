@@ -13,7 +13,8 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import get_current_schema_version
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError, FileOperationError, JSONError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
@@ -42,7 +43,7 @@ def valid_config_data():
     return {
         "NAME": "test_pipeline",
         "VERSION": "test_version",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
 
 
@@ -51,6 +52,22 @@ def test_load_pipeline_config_file():
         _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json5"),
         BasePipelineConfig,
     )
+
+
+def test_load_pipeline_config_file_json5(tmp_path: Path):
+    fpath = tmp_path / "pipeline_config.json"
+    fpath.write_text("""
+{
+  // comments and trailing commas should be accepted
+  "NAME": "test_pipeline",
+  "VERSION": "test_version",
+  "SCHEMA_VERSION": "1",
+  "PIPELINE_TYPE": "processing",
+}
+""".strip())
+
+    config = _load_pipeline_config_file(fpath)
+    assert isinstance(config, BasePipelineConfig)
 
 
 @pytest.mark.parametrize(
@@ -477,7 +494,7 @@ def test_check_pipeline_bundle(
     check_pipeline_bundle(dpath_bundle, log_level=log_level, strict=strict)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
-        dpath_bundle / "config.json"
+        dpath_bundle / "config.json", strict=strict
     )
     mocked_check_pipeline_files.assert_called_once_with(
         config, dpath_bundle, log_level=log_level, strict=strict
