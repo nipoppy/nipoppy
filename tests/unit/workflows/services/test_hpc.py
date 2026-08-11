@@ -72,7 +72,7 @@ def test_hpc_runner_invalid_cluster(hpc_runner: HPCRunner):
     hpc_runner.hpc_cluster = "invalid"
 
     with pytest.raises(WorkflowError, match="Invalid HPC cluster type"):
-        _ = hpc_runner._qa
+        _ = hpc_runner._queue_adapter
 
 
 def test_hpc_runner_check_hpc_config(hpc_runner: HPCRunner):
@@ -129,8 +129,8 @@ def test_hpc_runner_get_max_n_jobs(
     mock_df = mocker.MagicMock()
     mock_df.__len__ = lambda _: n_jobs_in_queue
 
-    hpc_runner._qa = mocker.MagicMock()
-    hpc_runner._qa.get_queue_status.return_value = mock_df
+    hpc_runner._queue_adapter = mocker.MagicMock()
+    hpc_runner._queue_adapter.get_queue_status.return_value = mock_df
 
     max_jobs = hpc_runner._get_max_n_jobs(queue_limit=queue_limit)
     assert max_jobs == expected_max_jobs
@@ -140,8 +140,8 @@ def test_hpc_runner_get_max_n_jobs_pysqa_error(
     hpc_runner: HPCRunner, mocker: pytest_mock.MockerFixture
 ):
     """Test that HPCRunner._get_max_n_jobs() still runs on pysqa errors."""
-    hpc_runner._qa = mocker.MagicMock()
-    hpc_runner._qa.get_queue_status.side_effect = Exception("pysqa error")
+    hpc_runner._queue_adapter = mocker.MagicMock()
+    hpc_runner._queue_adapter.get_queue_status.side_effect = Exception("pysqa error")
 
     max_jobs = hpc_runner._get_max_n_jobs(queue_limit=10)
     assert max_jobs == 10
@@ -164,7 +164,9 @@ def test_hpc_runner_submit(
         "pysqa.base.core.subprocess.check_output", return_value=str(job_id)
     )
     mocked_submit_job = mocker.patch.object(
-        hpc_runner._qa, "submit_job", wraps=hpc_runner._qa.submit_job
+        hpc_runner._queue_adapter,
+        "submit_job",
+        wraps=hpc_runner._queue_adapter.submit_job,
     )
 
     returned_job_id = hpc_runner.submit(**submit_kwargs)
@@ -210,7 +212,7 @@ def test_hpc_runner_submit_creates_logdir(
 ):
     dpath_logs = submit_kwargs["dpath_hpc_logs"]
 
-    mocker.patch.object(hpc_runner._qa, "submit_job")
+    mocker.patch.object(hpc_runner._queue_adapter, "submit_job")
 
     # check that logs directory is created
     assert not (dpath_logs).exists()
@@ -236,7 +238,7 @@ def test_hpc_runner_submit_logs_job_script(
         fpath_script.parent.mkdir(parents=True, exist_ok=True)
         fpath_script.touch()
 
-    mocked_submit_job = mocker.patch.object(hpc_runner._qa, "submit_job")
+    mocked_submit_job = mocker.patch.object(hpc_runner._queue_adapter, "submit_job")
     if write_job_script:
         mocked_submit_job.side_effect = touch_job_script
 
@@ -251,7 +253,7 @@ def test_hpc_runner_submit_no_job_id(
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
-    mocker.patch.object(hpc_runner._qa, "submit_job", return_value=None)
+    mocker.patch.object(hpc_runner._queue_adapter, "submit_job", return_value=None)
 
     hpc_runner.submit(**submit_kwargs)
     assert "HPC job ID" not in caplog.text
@@ -265,7 +267,9 @@ def test_hpc_runner_submit_pysqa_error(
         fpath_error.parent.mkdir(parents=True, exist_ok=True)
         fpath_error.write_text("PYSQA ERROR\n")
 
-    mocker.patch.object(hpc_runner._qa, "submit_job", side_effect=write_error_file)
+    mocker.patch.object(
+        hpc_runner._queue_adapter, "submit_job", side_effect=write_error_file
+    )
     with pytest.raises(
         RuntimeError, match="Error occurred while submitting the HPC job:\nPYSQA ERROR"
     ):

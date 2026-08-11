@@ -54,17 +54,17 @@ class HPCRunner:
         self.hpc_config = hpc_config
 
     @cached_property
-    def _qa(self) -> QueueAdapter:
-        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
+    def _queue_adapter(self) -> QueueAdapter:
+        queue_adapter = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
         try:
-            qa.switch_cluster(self.hpc_cluster)
+            queue_adapter.switch_cluster(self.hpc_cluster)
         except KeyError as e:
             raise WorkflowError(
                 f"Invalid HPC cluster type: {self.hpc_cluster}."
-                f" Available clusters are: {qa.list_clusters()}"
+                f" Available clusters are: {queue_adapter.list_clusters()}"
             ) from e
 
-        return qa
+        return queue_adapter
 
     def generate_cli_command(
         self,
@@ -167,7 +167,7 @@ class HPCRunner:
 
     def _get_max_n_jobs(self, queue_limit: int) -> int:
         try:
-            df_queue_status: pd.DataFrame = self._qa.get_queue_status(
+            df_queue_status: pd.DataFrame = self._queue_adapter.get_queue_status(
                 user=getpass.getuser()
             )
         except Exception as exception:
@@ -249,7 +249,7 @@ class HPCRunner:
 
         job_id = None
         if not dry_run:
-            job_id = self._qa.submit_job(
+            job_id = self._queue_adapter.submit_job(
                 queue=self.hpc_cluster,
                 working_directory=str(dpath_work),
                 command="",  # not used in default template but cannot be None
