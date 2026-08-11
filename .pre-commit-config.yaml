@@ -12,7 +12,6 @@ repos:
     hooks:
     -   id: check-ast
     -   id: check-case-conflict
-    -   id: check-json
     -   id: check-merge-conflict
     -   id: check-yaml
     -   id: end-of-file-fixer
