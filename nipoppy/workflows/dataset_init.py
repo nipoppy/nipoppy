@@ -1,5 +1,6 @@
 """Workflow for init command."""
 
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -197,12 +198,16 @@ class InitWorkflow(BaseDatasetWorkflow):
                 )
 
         fileops.mkdir(self.study.layout.fpath_config.parent, dry_run=self.dry_run)
-        fileops.copy(
-            fpath_config_to_copy,
-            self.study.layout.fpath_config,
-            exist_ok=True,
-            dry_run=self.dry_run,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=UserWarning, message="Unable to replace"
+            )
+            fileops.copy_template(
+                fpath_config_to_copy,
+                self.study.layout.fpath_config,
+                version=PROGRAM_VERSION,
+                dry_run=self.dry_run,
+            )
         if fpath_config_to_copy == fpath_default_config:
             logger.warning(
                 f"Default config file copied to {self.study.layout.fpath_config}. "

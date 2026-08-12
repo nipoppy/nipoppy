@@ -1,3 +1,5 @@
+// String substitutions will be applied when this file is loaded,
+// see https://nipoppy.readthedocs.io/en/[[NIPOPPY_VERSION]]/reference/substitutions.html
 {
     "SUBSTITUTIONS": {
         // Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware
