@@ -10,10 +10,8 @@ from jinja2 import Environment, meta
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import LayoutError, WorkflowError
-from nipoppy.study import Study
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE
 from nipoppy.workflows.services.hpc import HPCRunner
-from tests.conftest import get_config
 
 
 @pytest.fixture
