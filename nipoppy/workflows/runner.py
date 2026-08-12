@@ -79,7 +79,9 @@ class Runner(BasePipelineWorkflow, ABC):
         else:
             fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
             logger.info(f"Loading HPC config from {fpath_hpc_config}")
-            data = self.process_template_json(load_json(fpath_hpc_config))
+            data = self.process_template_json(
+                load_json(fpath_hpc_config, allow_json5=True)
+            )
         return HpcConfig(**data)
 
     def _generate_cli_command_for_hpc(

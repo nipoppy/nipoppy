@@ -47,7 +47,7 @@ def _load_pipeline_config_file(
             f"Pipeline configuration file not found: {fpath_config}"
         )
 
-    config_dict = load_json(fpath_config)
+    config_dict = load_json(fpath_config, allow_json5=True)
 
     try:
         config = BasePipelineConfig(**config_dict)
@@ -103,7 +103,7 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     if not fpath_invocation.exists():
         raise FileOperationError(f"Invocation file not found: {fpath_invocation}")
 
-    invocation_dict = load_json(fpath_invocation)
+    invocation_dict = load_json(fpath_invocation, allow_json5=True)
 
     try:
         boutiques.invocation(
@@ -121,7 +121,7 @@ def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
     if not fpath_hpc_config.exists():
         raise FileOperationError(f"HPC config file not found: {fpath_hpc_config}")
 
-    hpc_config_dict = load_json(fpath_hpc_config)
+    hpc_config_dict = load_json(fpath_hpc_config, allow_json5=True)
 
     try:
         HpcConfig(**hpc_config_dict)
@@ -141,7 +141,7 @@ def _check_tracker_config_file(
             f"Tracker config file not found: {fpath_tracker_config}"
         )
 
-    tracker_config_dict = load_json(fpath_tracker_config)
+    tracker_config_dict = load_json(fpath_tracker_config, allow_json5=True)
 
     try:
         TrackerConfig(**tracker_config_dict)
@@ -163,7 +163,7 @@ def _check_pybids_ignore_file(fpath_pybids_ignore: Path) -> None:
             f"PyBIDS ignore patterns file not found: {fpath_pybids_ignore}"
         )
 
-    load_json(fpath_pybids_ignore)
+    load_json(fpath_pybids_ignore, allow_json5=True)
 
 
 def _check_pipeline_files(
