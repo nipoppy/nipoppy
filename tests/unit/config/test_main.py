@@ -106,6 +106,19 @@ def test_hpc_preamble_list(hpc_preamble, valid_config_data):
     assert config.HPC_PREAMBLE == ["module load preamble"]
 
 
+@pytest.mark.parametrize("queue_limit", [None, 1, 100])
+def test_hpc_queue_limit_valid(queue_limit, valid_config_data):
+    valid_config_data["HPC_QUEUE_LIMIT"] = queue_limit
+    Config(**valid_config_data)
+
+
+@pytest.mark.parametrize("queue_limit", [-1, 0])
+def test_hpc_queue_limit_invalid(queue_limit, valid_config_data):
+    valid_config_data["HPC_QUEUE_LIMIT"] = queue_limit
+    with pytest.raises(ValidationError, match="Input should be greater than 0"):
+        Config(**valid_config_data)
+
+
 @pytest.mark.parametrize(
     "dicom_dir_map_file,dicom_dir_participant_first,is_valid",
     [

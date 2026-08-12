@@ -150,6 +150,7 @@ class Config(_SchemaWithContainerConfig):
     )
     HPC_QUEUE_LIMIT: Optional[int] = Field(
         default=None,
+        gt=0,
         description=(
             "Maximum number of jobs allowed in the HPC queue per user."
             " If not specified, no limit will be applied when submitting jobs."
