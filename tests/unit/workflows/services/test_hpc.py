@@ -50,9 +50,9 @@ def submit_kwargs(tmp_path: Path) -> dict:
     """Fixture for HPCRunner.submit() tests that don't care about kwargs."""
     return {
         "job_name": "my-job",
-        "job_array_commands": ["echo test"],
-        "participant_ids": ["P01"],
-        "session_ids": ["S01"],
+        "job_array_commands": ["echo test", "echo test2"],
+        "participant_ids": ["P01", "P02"],
+        "session_ids": ["S01", "S01"],
         "dpath_work": tmp_path / "work",
         "dpath_hpc_logs": tmp_path / "logs",
         "fname_hpc_error": "error.log",
@@ -135,7 +135,7 @@ def test_check_hpc_config_unused_vars(
 
 @pytest.mark.parametrize(
     "queue_limit,n_jobs_in_queue,expected_max_jobs",
-    [(10, 0, 10), (10, 4, 6), (5, 5, 0), (2, 3, 0)],
+    [(10, 0, 10), (10, 4, 6), (5, 5, 0), (2, 3, 0), (0, 1, 0), (-1, 1, 0)],
 )
 def test_hpc_runner_get_n_available_job_slots(
     queue_limit,
@@ -166,10 +166,15 @@ def test_hpc_runner_get_n_available_job_slots_pysqa_error(
     assert max_jobs == 10
 
 
-@pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
+@pytest.mark.parametrize(
+    "hpc_type,hpc_command,queue_limit,n_available_job_slots",
+    [("slurm", "sbatch", 10, 2), ("sge", "qsub", 1, 1)],
+)
 def test_hpc_runner_submit(
     hpc_type: str,
     hpc_command: str,
+    queue_limit: int,
+    n_available_job_slots: int,
     hpc_runner: HPCRunner,
     submit_kwargs: dict,
     mocker: pytest_mock.MockerFixture,
@@ -177,10 +182,14 @@ def test_hpc_runner_submit(
 ):
     """Test that HPCRunner can submit a job."""
     hpc_runner.hpc_cluster = hpc_type
+    hpc_runner.queue_limit = queue_limit
 
     job_id = 12345
     mocked_check_output = mocker.patch(
         "pysqa.base.core.subprocess.check_output", return_value=str(job_id)
+    )
+    mocked_get_n_available_job_slots = mocker.patch.object(
+        hpc_runner, "_get_n_available_job_slots", return_value=n_available_job_slots
     )
     mocked_submit_job = mocker.patch.object(
         hpc_runner._queue_adapter,
@@ -188,9 +197,11 @@ def test_hpc_runner_submit(
         wraps=hpc_runner._queue_adapter.submit_job,
     )
 
-    returned_job_id = hpc_runner.submit(**submit_kwargs)
+    n_submitted_jobs = hpc_runner.submit(**submit_kwargs)
 
-    assert returned_job_id == job_id
+    assert n_submitted_jobs == n_available_job_slots
+
+    mocked_get_n_available_job_slots.assert_called_once_with(hpc_runner.queue_limit)
 
     mocked_check_output.assert_called_once()
     args, _ = mocked_check_output.call_args
@@ -206,13 +217,15 @@ def test_hpc_runner_submit(
         NIPOPPY_JOB_NAME=submit_kwargs["job_name"],
         NIPOPPY_DPATH_LOGS=submit_kwargs["dpath_hpc_logs"],
         NIPOPPY_HPC_PREAMBLE_STRINGS=hpc_runner.preamble,
-        NIPOPPY_COMMANDS=submit_kwargs["job_array_commands"],
+        NIPOPPY_COMMANDS=submit_kwargs["job_array_commands"][:n_available_job_slots],
         NIPOPPY_DPATH_ROOT=hpc_runner.dpath_root,
         NIPOPPY_PIPELINE_NAME=submit_kwargs["pipeline_name"],
         NIPOPPY_PIPELINE_VERSION=submit_kwargs["pipeline_version"],
         NIPOPPY_PIPELINE_STEP=submit_kwargs["pipeline_step"],
-        NIPOPPY_PARTICIPANT_IDS=submit_kwargs["participant_ids"],
-        NIPOPPY_SESSION_IDS=submit_kwargs["session_ids"],
+        NIPOPPY_PARTICIPANT_IDS=submit_kwargs["participant_ids"][
+            :n_available_job_slots
+        ],
+        NIPOPPY_SESSION_IDS=submit_kwargs["session_ids"][:n_available_job_slots],
         **hpc_runner._check_hpc_config(),
     )
     assert f"HPC job ID: {job_id}" in caplog.text
@@ -224,6 +237,41 @@ def test_hpc_runner_submit(
     ]
     for arg in nipoppy_args:
         assert arg in template_vars, f"Variable {arg} not found in the template"
+
+
+def test_hpc_runner_submit_no_queue_limit(
+    hpc_runner: HPCRunner, submit_kwargs: dict, mocker: pytest_mock.MockerFixture
+):
+    """Test that HPCRunner.submit() works when queue_limit is None."""
+    hpc_runner.queue_limit = None
+
+    mocker.patch("pysqa.base.core.subprocess.check_output", return_value="12345")
+    mocked_get_n_available_job_slots = mocker.patch.object(
+        hpc_runner, "_get_n_available_job_slots"
+    )
+    mocker.patch.object(
+        hpc_runner._queue_adapter,
+        "submit_job",
+        wraps=hpc_runner._queue_adapter.submit_job,
+    )
+
+    n_submitted_jobs = hpc_runner.submit(**submit_kwargs)
+
+    mocked_get_n_available_job_slots.assert_not_called()
+    assert n_submitted_jobs == 2
+
+
+def test_hpc_runner_submit_no_jobs(
+    hpc_runner: HPCRunner, submit_kwargs: dict, mocker: pytest_mock.MockerFixture
+):
+    """Test that HPCRunner.submit() does not submit when there are no jobs."""
+    hpc_runner.queue_limit = 10  # cannot be None
+    mocker.patch.object(hpc_runner, "_get_n_available_job_slots", return_value=0)
+    mocked_submit_job = mocker.patch.object(hpc_runner._queue_adapter, "submit_job")
+
+    n_submitted_jobs = hpc_runner.submit(**submit_kwargs)
+    assert n_submitted_jobs == 0
+    mocked_submit_job.assert_not_called()
 
 
 def test_hpc_runner_submit_creates_logdir(

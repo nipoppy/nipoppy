@@ -238,7 +238,7 @@ class HPCRunner:
 
         # skip if there are no jobs to submit
         if len(job_array_commands) == 0:
-            return None
+            return 0
 
         # Make sure HPC directory exists.
         if not (self.dpath_hpc.exists() and self.dpath_hpc.is_dir()):

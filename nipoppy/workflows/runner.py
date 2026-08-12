@@ -114,7 +114,7 @@ class Runner(BasePipelineWorkflow, ABC):
             session_id=self.session_id,
         )
 
-        n_jobs_submitted = self.hpc_runner.submit(
+        n_submitted_jobs = self.hpc_runner.submit(
             job_name=job_name,
             job_array_commands=job_array_commands,
             participant_ids=participant_ids,
@@ -129,8 +129,8 @@ class Runner(BasePipelineWorkflow, ABC):
             dry_run=self.dry_run,
         )
 
-        # for logging in run_cleanup()
-        self.n_success += n_jobs_submitted
+        # for logging
+        self.n_success += n_submitted_jobs
 
     @cached_property
     def bosh_runner(self) -> BoshRunnerCallable:
