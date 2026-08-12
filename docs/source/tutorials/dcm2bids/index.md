@@ -164,7 +164,7 @@ and by running `nipoppy status`:
 ---
 linenos: True
 language: json
-emphasize-lines: 4,9
+emphasize-lines: 6,11
 ---
 ```
 

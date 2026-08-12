@@ -21,7 +21,7 @@ The default global configuration file has two {term}`HPC`-related fields that sh
 ---
 linenos: True
 language: json
-emphasize-lines: 5,18-27
+emphasize-lines: 7,20-29
 ---
 ```
 

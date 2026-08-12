@@ -18,7 +18,7 @@ See {ref}`here <default-config-override>` for more information.
 ---
 linenos: True
 language: json
-emphasize-lines: 9,11
+emphasize-lines: 11,13
 ---
 ```
 
