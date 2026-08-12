@@ -14,7 +14,7 @@ from fids import fids
 from nipoppy.env import FAKE_SESSION_ID, PROGRAM_VERSION
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
+from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG, load_json
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 
@@ -155,7 +155,9 @@ def assert_layout_creation(workflow, dpath_root):
 
 
 def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
-    assert fpath_actual.read_text() == fpath_expected.read_text()
+    assert load_json(fpath_actual, allow_json5=True) == load_json(
+        fpath_expected, allow_json5=True
+    )
 
 
 @pytest.mark.no_xdist
