@@ -52,7 +52,11 @@ def workflow(target: Path) -> PipelineCreateWorkflow:
         PipelineTypeEnum.EXTRACTION,
     ],
 )
-def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
+def test_create(
+    workflow: PipelineCreateWorkflow,
+    type_: PipelineTypeEnum,
+    recwarn: pytest.WarningsRecorder,
+):
     """Test the creation of a pipeline bundle."""
     assert not workflow.pipeline_dir.exists()
 
@@ -73,7 +77,7 @@ def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
     invocation_file_path = workflow.pipeline_dir.joinpath("invocation.json")
     assert invocation_file_path.is_file()
     # Cannot compare the content of the invocation.json file
-    # because boutiques generates random args values.
+    # because boutiques generates random arg values.
     # Instead, we compare the keys of the JSON object
     assert set(load_json(invocation_file_path, allow_json5=True).keys()) == {
         "basic_param2"
@@ -104,6 +108,8 @@ def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
             TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
         )
         assert _JSON5_comment_correct(tracker_file_path)
+
+    assert not any(["Unable to replace" in str(warning.message) for warning in recwarn])
 
 
 def test_create_already_exists(workflow: PipelineCreateWorkflow):
