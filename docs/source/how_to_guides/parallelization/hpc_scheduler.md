@@ -17,7 +17,7 @@ If the default Slurm/SGE configurations do not work for you, please consider [op
 
 The default global configuration file has two {term}`HPC`-related fields that should be updated as needed:
 
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json
 ---
 linenos: True
 language: json

@@ -27,6 +27,7 @@ htmlcov
 docs/build
 docs/source/reference/autoapi
 docs/source/reference/schemas/*.json
+docs/source/_inserts/sample_study_config.json
 
 # OSX
 .DS_STORE

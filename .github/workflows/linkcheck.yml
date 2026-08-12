@@ -29,6 +29,7 @@ jobs:
     - name: Generate JSON schemas for docs
       run: |
         python docs/scripts/pydantic_to_jsonschema.py
+        python docs/scripts/sample_study_config.py
 
     - name: Run linkcheck
       run: |

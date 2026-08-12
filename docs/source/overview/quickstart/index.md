@@ -45,7 +45,7 @@ $ cd my-example-study
 ### Customizing the global configuration file
 
 The global configuration file at {{fpath_config}} starts out like this:
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json
 ---
 linenos: True
 language: json
