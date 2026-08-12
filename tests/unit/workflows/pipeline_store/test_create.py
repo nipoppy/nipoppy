@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
@@ -17,6 +17,16 @@ from tests.conftest import TEST_PIPELINE
 def _has_same_JSON_content(a: Path, b: Path) -> bool:
     """Check if two files have the same JSON content."""
     return load_json(a, allow_json5=True) == load_json(b, allow_json5=True)
+
+
+def _JSON5_comment_correct(path: Path) -> bool:
+    """Check that the comment is preserved and that the substitution was applied."""
+    content = path.read_text()
+    return (
+        ("// String substitutions will be applied when this file is loaded" in content)
+        and ("[[NIPOPPY_VERSION]]" not in content)
+        and (PROGRAM_VERSION in content)
+    )
 
 
 @pytest.fixture(scope="function")
@@ -53,40 +63,47 @@ def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
     check_pipeline_bundle(workflow.pipeline_dir)
 
     # Check the bundle content exists and is correct
-    assert workflow.pipeline_dir.joinpath("descriptor.json").is_file()
+    descriptor_file_path = workflow.pipeline_dir.joinpath("descriptor.json")
+    assert descriptor_file_path.is_file()
     assert _has_same_JSON_content(
-        workflow.pipeline_dir.joinpath("descriptor.json"),
+        descriptor_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath("descriptor.json"),
     )
 
-    assert workflow.pipeline_dir.joinpath("invocation.json").is_file()
+    invocation_file_path = workflow.pipeline_dir.joinpath("invocation.json")
+    assert invocation_file_path.is_file()
     # Cannot compare the content of the invocation.json file
     # because boutiques generates random args values.
     # Instead, we compare the keys of the JSON object
-    assert set(
-        load_json(
-            workflow.pipeline_dir.joinpath("invocation.json"), allow_json5=True
-        ).keys()
-    ) == {"basic_param2"}
+    assert set(load_json(invocation_file_path, allow_json5=True).keys()) == {
+        "basic_param2"
+    }
+    assert _JSON5_comment_correct(invocation_file_path)
 
-    assert workflow.pipeline_dir.joinpath("hpc.json").is_file()
+    hpc_file_path = workflow.pipeline_dir.joinpath("hpc.json")
+    assert hpc_file_path.is_file()
     assert _has_same_JSON_content(
-        workflow.pipeline_dir.joinpath("hpc.json"),
+        hpc_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
     )
+    assert _JSON5_comment_correct(hpc_file_path)
 
-    assert workflow.pipeline_dir.joinpath("config.json").is_file()
+    pipeline_config_file_path = workflow.pipeline_dir.joinpath("config.json")
+    assert pipeline_config_file_path.is_file()
     assert _has_same_JSON_content(
-        workflow.pipeline_dir.joinpath("config.json"),
+        pipeline_config_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
     )
+    assert _JSON5_comment_correct(pipeline_config_file_path)
 
     if type_ == PipelineTypeEnum.PROCESSING:
-        assert workflow.pipeline_dir.joinpath("tracker.json").is_file()
+        tracker_file_path = workflow.pipeline_dir.joinpath("tracker.json")
+        assert tracker_file_path.is_file()
         assert _has_same_JSON_content(
-            workflow.pipeline_dir.joinpath("tracker.json"),
+            tracker_file_path,
             TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
         )
+        assert _JSON5_comment_correct(tracker_file_path)
 
 
 def test_create_already_exists(workflow: PipelineCreateWorkflow):
