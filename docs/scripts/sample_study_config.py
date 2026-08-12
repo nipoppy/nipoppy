@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Script to automatically generate the sample study config file shown in the docs."""
 
 from pathlib import Path
 
