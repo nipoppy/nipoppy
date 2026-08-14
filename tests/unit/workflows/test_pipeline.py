@@ -20,13 +20,14 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
-    CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
+    ConfigType,
     ContainerCommandEnum,
 )
 from nipoppy.exceptions import (
@@ -634,6 +635,29 @@ def test_get_pipeline_config(
     )
 
 
+def test_get_pipeline_config_json5(workflow: PipelineWorkflow, tmp_path: Path):
+    (tmp_path / "config.json").write_text(f"""
+{{
+  // Comments and trailing commas should be supported
+  "NAME": "{workflow.pipeline_name}",
+  "VERSION": "{workflow.pipeline_version}",
+  "PIPELINE_TYPE": "processing",
+  "SCHEMA_VERSION": "{get_current_schema_version(ConfigType.PIPELINE)}",
+  "STEPS": [
+    {{}},
+  ],
+}}
+""".strip())
+
+    config = workflow._get_pipeline_config(
+        tmp_path,
+        pipeline_name=workflow.pipeline_name,
+        pipeline_version=workflow.pipeline_version,
+        pipeline_class=ProcessingPipelineConfig,
+    )
+    assert isinstance(config, ProcessingPipelineConfig)
+
+
 def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
     pipeline_name = "new_pipeline"
     pipeline_version = "1.0.0"
@@ -646,7 +670,7 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
         "NAME": pipeline_name,
         "VERSION": "2.0.0",  # different version
         "PIPELINE_TYPE": "processing",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
     dpath_pipeline_bundle.mkdir(parents=True)
     (dpath_pipeline_bundle / "config.json").write_text(json.dumps(config_dict))

@@ -1,0 +1,27 @@
+{
+    // keep this comment
+    "NAME": "new_name",
+    "Quoted parsing": "a \"quoted\" \'word\'",
+    "Array": [
+        // Should keep the multi-line formatting
+        1,
+        2,
+        3
+    ],
+    // Keep inline object inline when adding new values
+    "Inline Dict": {"a": 1, "b": 2, "c": 3, "d": 4},
+    "Nested Dict": { // Inline comment
+        "Inner Dict": {
+            "int": 1,
+            "float": 2.0,
+            "string": "bar",
+            "bool": false,
+            "null": null // must not impose trailing comma
+        },
+        "Inner Array": ["a", "b", "c"],
+        "Inner String": "new string"
+    },
+    /* keep this block comment */
+    "VERSION": "1.0.0",
+    JSON5: "allows unquoted keys and trailing commas",
+}
