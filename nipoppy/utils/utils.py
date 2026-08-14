@@ -58,15 +58,19 @@ def get_pipeline_tag(
     session_id: Optional[str] = None,
     sep="-",
 ):
-    """Generate a tag for a pipeline."""
-    components = [pipeline_name, pipeline_version]
-    if pipeline_step is not None:
-        components.append(pipeline_step)
-    if participant_id is not None:
-        components.append(participant_id)
-    if session_id is not None:
-        components.append(session_id)
-    return sep.join(components)
+    """Join pipeline submission parameters, filtering out None values."""
+    return sep.join(
+        filter(
+            None,
+            [
+                pipeline_name,
+                pipeline_version,
+                pipeline_step,
+                participant_id,
+                session_id,
+            ],
+        )
+    )
 
 
 def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
