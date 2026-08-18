@@ -106,7 +106,6 @@ class Runner(BasePipelineWorkflow, ABC):
             job_array_commands.append(shlex.join(command))
             participant_ids.append(participant_id)
             session_ids.append(session_id)
-            self.n_total += 1  # for logging
 
         job_name = get_pipeline_tag(
             pipeline_name=self.pipeline_name,
@@ -133,6 +132,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # for logging
         self.n_success += n_submitted_jobs
+        self.n_total += len(job_array_commands)
 
     @cached_property
     def bosh_runner(self) -> BoshRunnerCallable:

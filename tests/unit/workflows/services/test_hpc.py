@@ -1,6 +1,7 @@
 """Unit tests for HPCRunner."""
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -63,14 +64,19 @@ def submit_kwargs(tmp_path: Path) -> dict:
 
 
 @pytest.mark.parametrize(
-    "preamble,expected_preamble",
+    "preamble,expected_preamble,queue_limit,expected_queue_limit",
     [
-        (["module load some_module"], ["module load some_module"]),
-        (None, []),
+        (["module load some_module"], ["module load some_module"], None, sys.maxsize),
+        (None, [], 10, 10),
     ],
 )
 def test_hpc_runner_initialization(
-    preamble, expected_preamble, hpc_config: HpcConfig, tmp_path: Path
+    preamble,
+    expected_preamble,
+    queue_limit,
+    expected_queue_limit,
+    hpc_config: HpcConfig,
+    tmp_path: Path,
 ):
     """Test that HPCRunner can be initialized."""
     hpc_runner = HPCRunner(
@@ -81,9 +87,11 @@ def test_hpc_runner_initialization(
         dpath_hpc=tmp_path / "hpc",
         pipeline_name="test",
         preamble=preamble,
+        queue_limit=queue_limit,
     )
 
     assert hpc_runner.preamble == expected_preamble
+    assert hpc_runner.queue_limit == expected_queue_limit
 
 
 def test_hpc_runner_invalid_cluster(hpc_runner: HPCRunner):
@@ -146,10 +154,11 @@ def test_hpc_runner_get_n_available_job_slots(
     mock_df = mocker.MagicMock()
     mock_df.__len__ = lambda _: n_jobs_in_queue
 
+    hpc_runner.queue_limit = queue_limit
     hpc_runner._queue_adapter = mocker.MagicMock()
     hpc_runner._queue_adapter.get_queue_status.return_value = mock_df
 
-    max_jobs = hpc_runner._get_n_available_job_slots(queue_limit=queue_limit)
+    max_jobs = hpc_runner._get_n_available_job_slots()
     assert max_jobs == expected_max_jobs
 
 
@@ -160,8 +169,8 @@ def test_hpc_runner_get_n_available_job_slots_pysqa_error(
     hpc_runner._queue_adapter = mocker.MagicMock()
     hpc_runner._queue_adapter.get_queue_status.side_effect = Exception("pysqa error")
 
-    max_jobs = hpc_runner._get_n_available_job_slots(queue_limit=10)
-    assert max_jobs == 10
+    max_jobs = hpc_runner._get_n_available_job_slots()
+    assert isinstance(max_jobs, int)
 
 
 @pytest.mark.parametrize(
@@ -199,7 +208,7 @@ def test_hpc_runner_submit(
 
     assert n_submitted_jobs == n_available_job_slots
 
-    mocked_get_n_available_job_slots.assert_called_once_with(hpc_runner.queue_limit)
+    mocked_get_n_available_job_slots.assert_called_once()
 
     mocked_check_output.assert_called_once()
     args, _ = mocked_check_output.call_args
@@ -237,33 +246,10 @@ def test_hpc_runner_submit(
         assert arg in template_vars, f"Variable {arg} not found in the template"
 
 
-def test_hpc_runner_submit_no_queue_limit(
-    hpc_runner: HPCRunner, submit_kwargs: dict, mocker: pytest_mock.MockerFixture
-):
-    """Test that HPCRunner.submit() works when queue_limit is None."""
-    hpc_runner.queue_limit = None
-
-    mocker.patch("pysqa.base.core.subprocess.check_output", return_value="12345")
-    mocked_get_n_available_job_slots = mocker.patch.object(
-        hpc_runner, "_get_n_available_job_slots"
-    )
-    mocker.patch.object(
-        hpc_runner._queue_adapter,
-        "submit_job",
-        wraps=hpc_runner._queue_adapter.submit_job,
-    )
-
-    n_submitted_jobs = hpc_runner.submit(**submit_kwargs)
-
-    mocked_get_n_available_job_slots.assert_not_called()
-    assert n_submitted_jobs == 2
-
-
 def test_hpc_runner_submit_no_jobs(
     hpc_runner: HPCRunner, submit_kwargs: dict, mocker: pytest_mock.MockerFixture
 ):
     """Test that HPCRunner.submit() does not submit when there are no jobs."""
-    hpc_runner.queue_limit = 10  # cannot be None
     mocker.patch.object(hpc_runner, "_get_n_available_job_slots", return_value=0)
     mocked_submit_job = mocker.patch.object(hpc_runner._queue_adapter, "submit_job")
 

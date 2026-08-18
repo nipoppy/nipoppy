@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import getpass
+import sys
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -43,6 +44,9 @@ class HPCRunner:
     ):
         if preamble is None:
             preamble = []
+
+        if queue_limit is None:
+            queue_limit = sys.maxsize
 
         self.hpc_cluster = hpc_cluster
         self.hpc_config = hpc_config
@@ -166,7 +170,7 @@ class HPCRunner:
 
         return job_args
 
-    def _get_n_available_job_slots(self, queue_limit: int) -> int:
+    def _get_n_available_job_slots(self) -> int:
         try:
             df_queue_status: pd.DataFrame = self._queue_adapter.get_queue_status(
                 user=getpass.getuser()
@@ -176,9 +180,9 @@ class HPCRunner:
                 f"Failed to get queue status: {type(exception)} {exception}."
                 " Assuming no jobs are currently in the queue."
             )
-            return queue_limit
+            return self.queue_limit
 
-        return max(0, queue_limit - len(df_queue_status))
+        return max(0, self.queue_limit - len(df_queue_status))
 
     def submit(
         self,
@@ -230,11 +234,10 @@ class HPCRunner:
         int
             The number of jobs submitted
         """
-        if self.queue_limit is not None:
-            max_jobs = self._get_n_available_job_slots(self.queue_limit)
-            job_array_commands = job_array_commands[:max_jobs]
-            participant_ids = participant_ids[:max_jobs]
-            session_ids = session_ids[:max_jobs]
+        n_available_jobs = self._get_n_available_job_slots()
+        job_array_commands = job_array_commands[:n_available_jobs]
+        participant_ids = participant_ids[:n_available_jobs]
+        session_ids = session_ids[:n_available_jobs]
 
         # skip if there are no jobs to submit
         if len(job_array_commands) == 0:
