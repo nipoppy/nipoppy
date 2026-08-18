@@ -12,9 +12,10 @@ import pytest_mock
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcessingPipelineConfig
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
+    ConfigType,
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
@@ -32,7 +33,7 @@ def pipeline_config():
             "NAME": "my_pipeline",
             "VERSION": "1.0.0",
             "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
             "CONTAINER_INFO": {
                 "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/container.sif",
                 "URI": "fake_uri",
@@ -229,6 +230,26 @@ def test_update_config_and_save_no_overwrite(
 
     # should not log any warnings about adding variables
     assert not any([record.levelno == logging.WARNING for record in caplog.records])
+
+
+def test_update_config_and_save_preserves_json5(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+):
+    # Replace the global config file with a empty JSON5 file that has a comment
+    fpath_config = workflow.study.layout.fpath_config
+    fpath_config.write_text("""
+{
+    // keep this comment
+}
+""")
+
+    pipeline_config.VARIABLES = {"var1": "description"}
+    workflow._update_config_and_save(pipeline_config)
+
+    updated_text = fpath_config.read_text()
+    assert "// keep this comment" in updated_text
+    assert '"var1": null' in updated_text
 
 
 def test_download_container(

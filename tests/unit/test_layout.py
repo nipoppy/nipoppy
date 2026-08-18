@@ -2,14 +2,16 @@
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
 
+from nipoppy.config.schema import EARLIEST_SCHEMA_VERSION
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, LayoutError
-from nipoppy.layout import DatasetLayout, PathInfo
-from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT
+from nipoppy.layout import DatasetLayout, LayoutConfig, PathInfo
+from nipoppy.utils.utils import DPATH_LAYOUTS, FPATH_DEFAULT_LAYOUT, load_json
 from tests.conftest import (
     ATTR_TO_DPATH_MAP,
     ATTR_TO_REQUIRED_FPATH_MAP,
@@ -33,9 +35,21 @@ def create_invalid_dataset(dpath_root: Path, paths_to_delete: list[str]):
             shutil.rmtree(path_to_delete, ignore_errors=True)
 
 
-def test_config_path_infos():
-    config = DatasetLayout("my_dataset").config
-    assert all([isinstance(path_info, PathInfo) for path_info in config.path_infos])
+@pytest.fixture
+def layout_config() -> dict[str, Any]:
+    return load_json(FPATH_DEFAULT_LAYOUT)
+
+
+def test_config_path_infos(layout_config):
+    assert all(
+        isinstance(path_info, PathInfo)
+        for path_info in LayoutConfig(**layout_config).path_infos
+    )
+
+
+def test_schema_version_default_schema_version(layout_config):
+    del layout_config["SCHEMA_VERSION"]
+    assert LayoutConfig(**layout_config).SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
 
 
 def test_init_default(dpath_root):
@@ -180,28 +194,31 @@ def test_get_dpath_pipeline(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected",
     [
         (
             "my_pipeline",
             "v1",
+            "step1",
             None,
             None,
-            "scratch/work/my_pipeline-v1/my_pipeline-v1",
+            "scratch/work/my_pipeline-v1-step1/my_pipeline-v1-step1",
         ),
         (
             "pipeline",
             "v2",
+            "step2",
             "3000",
             None,
-            "scratch/work/pipeline-v2/pipeline-v2-3000",
+            "scratch/work/pipeline-v2-step2/pipeline-v2-step2-3000",
         ),
         (
             "pipeline",
             "v2",
+            "default",
             "01",
             "1",
-            "scratch/work/pipeline-v2/pipeline-v2-01-1",
+            "scratch/work/pipeline-v2-default/pipeline-v2-default-01-1",
         ),
     ],
 )
@@ -209,6 +226,7 @@ def test_get_dpath_pipeline_work(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected,
@@ -218,6 +236,7 @@ def test_get_dpath_pipeline_work(
         layout.get_dpath_pipeline_work(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )
@@ -264,21 +283,23 @@ def test_get_dpath_pipeline_idps(
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected",
     [
         (
             "my_pipeline",
             "v1",
+            "step1",
             None,
             None,
-            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "my_pipeline-v1",
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "my_pipeline-v1-step1",
         ),
         (
             "pipeline",
             "v2",
+            "step2",
             "01",
             "1",
-            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "pipeline-v2-01-1",
+            Path(ATTR_TO_DPATH_MAP["dpath_pybids_db"]) / "pipeline-v2-step2-01-1",
         ),
     ],
 )
@@ -286,6 +307,7 @@ def test_get_dpath_pybids_db(
     dpath_root: Path,
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected,
@@ -295,6 +317,7 @@ def test_get_dpath_pybids_db(
         layout.get_dpath_pybids_db(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
+            pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )

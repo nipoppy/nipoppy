@@ -6,10 +6,11 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.config.schema import get_current_schema_version
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
 from nipoppy.study import Study
-from tests.conftest import CURRENT_SCHEMA_VERSION, get_config
+from tests.conftest import get_config
 
 
 def test_len(study: Study, mocker: pytest_mock.MockFixture):
@@ -73,25 +74,25 @@ def test_tabular_file_load(
                     "NAME": "pipeline1",
                     "VERSION": "0.0.1",
                     "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
                 },
                 {
                     "NAME": "pipeline1",
                     "VERSION": "0.0.2",
                     "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
                 },
                 {
                     "NAME": "pipeline2",
                     "VERSION": "0.1.0",
                     "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
                 },
                 {
                     "NAME": "pipeline3",
                     "VERSION": "1.0.0",
                     "PIPELINE_TYPE": PipelineTypeEnum.EXTRACTION,
-                    "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+                    "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
                 },
             ],
             {
