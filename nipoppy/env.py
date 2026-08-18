@@ -15,13 +15,31 @@ BUG_REPORT_URL = (
 )
 DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
 
-# pipeline config schema version
-CURRENT_SCHEMA_VERSION = "1"
+
+class ConfigType(str, Enum):
+    """Nipoppy configuration schema types."""
+
+    STUDY = "study"
+    PIPELINE = "pipeline"
+    TRACKER = "tracker"
+    LAYOUT = "layout"
+
+
+SCHEMA_VERSION_INFO = {
+    ConfigType.STUDY: {"current": "1.0"},
+    ConfigType.PIPELINE: {"current": "1.0"},
+    ConfigType.TRACKER: {"current": "1.0"},
+    ConfigType.LAYOUT: {"current": "1.0"},
+}
+
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
 FAKE_SESSION_ID = "unnamed"
+
+# substitutions
+BIDS_PATH_INJECTION_PREFIX = "BIDS_PATH_INJECTION_"
 
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"
