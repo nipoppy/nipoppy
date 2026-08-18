@@ -108,7 +108,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         Copy default config files.
         Copy HPC config files.
         """
-        self._raise_on_invalid_existing_root_dir()
+        self._validate_study_root()
 
         # create directories
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
@@ -180,7 +180,7 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
 
-    def _raise_on_invalid_existing_root_dir(self) -> None:
+    def _validate_study_root(self) -> None:
         if not self.dpath_root.exists():
             return
         try:
