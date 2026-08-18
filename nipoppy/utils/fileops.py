@@ -65,6 +65,9 @@ def symlink(source: Path, target: Path, force: bool = False, dry_run=False):
                 "Symlink target already exists. Set force=True to overwrite."
             )
 
+    # ensure parent directory of symlink exists
+    mkdir(target.parent, dry_run=dry_run)
+
     logger.debug(f"Creating a symlink from {target} to {source}")
     mkdir(target.parent, dry_run=dry_run)
     if not dry_run:

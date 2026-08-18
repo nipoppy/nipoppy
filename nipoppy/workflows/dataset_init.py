@@ -119,7 +119,6 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.container_store is not None
                 and dpath == self.study.layout.dpath_containers
             ):
-                fileops.mkdir(dpath.parent, dry_run=self.dry_run)
                 fileops.symlink(
                     self.container_store, dpath, force=self.force, dry_run=self.dry_run
                 )

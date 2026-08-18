@@ -220,7 +220,7 @@ class TestSymlink:
     @pytest.mark.parametrize(
         "target_path_relative", ["symlink_to_target", "parent_dir/symlink_to_target"]
     )
-    def test_symlink(self, target_path_relative: str, tmp_path: Path):
+    def test_file(self, target_path_relative: str, tmp_path: Path):
         """Test creating a symlink to a file."""
         source_file = tmp_path / "source.txt"
         expected_content = "source content"
@@ -233,7 +233,7 @@ class TestSymlink:
         assert symlink.is_symlink()
         assert symlink.read_text() == expected_content
 
-    def test_symlink_force(self, tmp_path: Path):
+    def test_force(self, tmp_path: Path):
         """Test that force option allows overwriting existing paths."""
         source_file = tmp_path / "new.txt"
         source_file.write_text("new content")
@@ -247,7 +247,7 @@ class TestSymlink:
         assert existing_file.resolve() == source_file.resolve()
         assert existing_file.read_text() == "new content"
 
-    def test_symlink_no_force_raises(self, tmp_path: Path):
+    def test_no_force_raises(self, tmp_path: Path):
         """Test that not using force raises an error if target exists."""
         source_file = tmp_path / "new.txt"
         source_file.write_text("new content")
@@ -263,3 +263,15 @@ class TestSymlink:
 
         assert not existing_file.is_symlink()
         assert existing_file.read_text() == "old content"
+
+    def test_parent_dir_is_created(self, tmp_path: Path):
+        """Test that the parent directory of the symlink is created."""
+        source_file = tmp_path / "source.txt"
+        source_file.write_text("content")
+
+        symlink = tmp_path / "nonexistent_dir" / "symlink_to_source"
+
+        fileops.symlink(source=source_file, target=symlink)
+
+        assert symlink.is_symlink()
+        assert symlink.read_text() == "content"
