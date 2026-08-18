@@ -1,13 +1,29 @@
 """Dataset layout."""
 
+import functools
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Annotated, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+)
 
 from nipoppy.base import Base
-from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    ensure_schema_support,
+    get_current_schema_version,
+)
+from nipoppy.env import (
+    NIPOPPY_DIR_NAME,
+    ConfigType,
+    PipelineTypeEnum,
+    StrOrPathLike,
+)
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
@@ -53,6 +69,21 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.LAYOUT,
+            )
+        ),
+    ] = Field(
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
+        description=(
+            "Version of the schema used for this layout configuration. The current "
+            f"latest version is {get_current_schema_version(ConfigType.LAYOUT)}"
+        ),
+    )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
@@ -328,16 +359,18 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: str,
         participant_id: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
             self.dpath_work
-            / get_pipeline_tag(pipeline_name, pipeline_version)
+            / get_pipeline_tag(pipeline_name, pipeline_version, pipeline_step)
             / get_pipeline_tag(
                 pipeline_name,
                 pipeline_version,
+                pipeline_step,
                 participant_id=participant_id,
                 session_id=session_id,
             )
@@ -373,6 +406,7 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
+        pipeline_step: str,
         participant_id: Optional[str] = None,
         session_id: Optional[str] = None,
     ) -> Path:
@@ -380,6 +414,7 @@ class DatasetLayout(Base):
         dname = get_pipeline_tag(
             pipeline_name,
             pipeline_version,
+            pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )

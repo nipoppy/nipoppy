@@ -15,6 +15,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
+from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
@@ -35,21 +36,29 @@ class Runner(BasePipelineWorkflow, ABC):
 
     def __init__(
         self,
+        subcommand: str,
         simulate: bool = False,
         keep_workdir: bool = False,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.subcommand = subcommand
         self.simulate = simulate
         self.keep_workdir = keep_workdir
+
+    def run_setup(self):
+        """Run pipeline setup and validate the pipeline bundle."""
+        to_return = super().run_setup()
+        check_pipeline_bundle(self.dpath_pipeline_bundle, strict=False)
+        return to_return
 
     @cached_property
     def hpc_runner(self) -> HPCRunner:
         """Get the HPC runner service."""
         return HPCRunner(
             study=self.study,
-            subcommand=self.name,
+            subcommand=self.subcommand,
             dpath_root=self.dpath_root,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,

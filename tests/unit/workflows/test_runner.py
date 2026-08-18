@@ -9,11 +9,13 @@ import pytest_mock
 from jinja2 import Environment, meta
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.exceptions import WorkflowError
+from nipoppy.exceptions import ConfigError, WorkflowError
 from nipoppy.layout import LayoutError
+from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
 from nipoppy.workflows.processing_runner import ProcessingRunner
+from nipoppy.workflows.runner import Runner
 from tests.conftest import (
     _set_up_substitution_testing,
     create_empty_dataset,
@@ -119,10 +121,43 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     return runner
 
 
+def test_run_setup_validates_pipeline_bundle(
+    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+):
+    runner.pipeline_version = None
+    mocked_check_pipeline_bundle = mocker.patch(
+        "nipoppy.workflows.runner.check_pipeline_bundle",
+        wraps=check_pipeline_bundle,
+    )
+
+    runner.run_setup()
+
+    assert runner.pipeline_version == "1.0.0"
+    mocked_check_pipeline_bundle.assert_called_once_with(
+        runner.dpath_pipeline_bundle, strict=False
+    )
+
+
+def test_run_validation_error_prevents_execution(
+    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+):
+    error = ConfigError("Invalid pipeline bundle")
+    mocker.patch(
+        "nipoppy.workflows.runner.check_pipeline_bundle",
+        side_effect=error,
+    )
+    mocked_run_main = mocker.patch.object(runner, "run_main")
+
+    with pytest.raises(ConfigError, match="Invalid pipeline bundle"):
+        runner.run()
+
+    mocked_run_main.assert_not_called()
+
+
 @pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])
 def test_hpc_config(
     hpc_config_data: dict,
-    runner: ProcessingRunner,
+    runner: Runner,
     tmp_path: Path,
     mocker: pytest_mock.MockFixture,
 ):
@@ -140,13 +175,17 @@ def test_hpc_config(
     mocked_process_template_json.assert_called_once()
 
 
-def test_hpc_config_no_file(runner: ProcessingRunner):
+def test_hpc_config_no_file(runner: Runner):
     runner.pipeline_step_config.HPC_CONFIG_FILE = None
     assert runner.hpc_config == HpcConfig()
 
 
+def test_hpc_runner(runner: Runner):
+    assert runner.hpc_runner.subcommand == runner.subcommand
+
+
 def _set_up_hpc_for_testing(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
     mock_pysqa=True,
 ):
@@ -176,7 +215,7 @@ def _set_up_hpc_for_testing(
 @pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
 @pytest.mark.no_xdist
 def test_submit_hpc_job(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
     hpc_type: str,
@@ -208,9 +247,7 @@ def test_submit_hpc_job(
     assert f"HPC job ID: {job_id}" in caplog.text
 
 
-def test_submit_hpc_job_no_dir(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
-):
+def test_submit_hpc_job_no_dir(runner: Runner, mocker: pytest_mock.MockFixture):
     _set_up_hpc_for_testing(runner, mocker)
 
     # remove the directory created by _set_up_hpc_for_testing
@@ -227,9 +264,7 @@ def test_submit_hpc_job_no_dir(
         runner._submit_hpc_job([("P1", "1")])
 
 
-def test_submit_hpc_job_invalid_hpc(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
-):
+def test_submit_hpc_job_invalid_hpc(runner: Runner, mocker: pytest_mock.MockFixture):
     _set_up_hpc_for_testing(runner, mocker)
     runner.hpc = "invalid"
 
@@ -237,7 +272,7 @@ def test_submit_hpc_job_invalid_hpc(
         runner._submit_hpc_job([("P1", "1")])
 
 
-def test_submit_hpc_job_logs(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
+def test_submit_hpc_job_logs(runner: Runner, mocker: pytest_mock.MockFixture):
     _set_up_hpc_for_testing(runner, mocker)
 
     dpath_logs = runner.study.layout.dpath_logs / runner.dname_hpc_logs
@@ -248,9 +283,7 @@ def test_submit_hpc_job_logs(runner: ProcessingRunner, mocker: pytest_mock.MockF
     assert dpath_logs.exists()
 
 
-def test_submit_hpc_job_no_jobs(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
-):
+def test_submit_hpc_job_no_jobs(runner: Runner, mocker: pytest_mock.MockFixture):
     mocked = _set_up_hpc_for_testing(runner, mocker)
     runner._submit_hpc_job([])
     assert not mocked.called
@@ -258,7 +291,7 @@ def test_submit_hpc_job_no_jobs(
 
 @pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
 def test_submit_hpc_job_pysqa_call(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
     hpc_type,
 ):
@@ -337,7 +370,7 @@ def test_submit_hpc_job_pysqa_call(
 def test_submit_hpc_job_job_script(
     write_job_script: bool,
     expected_message,
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -354,9 +387,7 @@ def test_submit_hpc_job_job_script(
     assert expected_message in caplog.text
 
 
-def test_submit_hpc_job_pysqa_error(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
-):
+def test_submit_hpc_job_pysqa_error(runner: Runner, mocker: pytest_mock.MockFixture):
     def write_error_file(*args, **kwargs):
         fpath_error = runner.dpath_pipeline_work / runner.fname_hpc_error
         fpath_error.parent.mkdir(parents=True, exist_ok=True)
@@ -373,7 +404,7 @@ def test_submit_hpc_job_pysqa_error(
 @pytest.mark.parametrize("job_id", ["12345", None])
 @pytest.mark.no_xdist
 def test_submit_hpc_job_job_id(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
     job_id,
@@ -388,7 +419,7 @@ def test_submit_hpc_job_job_id(
         assert "HPC job ID" not in caplog.text
 
 
-def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: ProcessingRunner):
+def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: Runner):
     mocker.patch("os.makedirs", mocker.MagicMock())
     mocked_submit_hpc_job = mocker.patch.object(runner, "_submit_hpc_job")
 
@@ -416,7 +447,7 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: ProcessingRunner)
 def test_generate_cli_command_for_hpc(
     tar: bool,
     extra_flags: Optional[list[str]],
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
 ):
     mocked_generate_cli_command = mocker.patch.object(
