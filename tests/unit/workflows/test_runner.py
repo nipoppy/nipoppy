@@ -3,11 +3,9 @@
 import copy
 import json
 from pathlib import Path
-from typing import Optional
 
 import pytest
 import pytest_mock
-from jinja2 import Environment, meta
 
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.container import (
@@ -17,11 +15,9 @@ from nipoppy.container import (
     SingularityHandler,
 )
 from nipoppy.env import ContainerCommandEnum
-from nipoppy.exceptions import ConfigError, WorkflowError
-from nipoppy.layout import LayoutError
+from nipoppy.exceptions import ConfigError
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils import fileops
-from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE, get_pipeline_tag
+from nipoppy.utils.utils import get_pipeline_tag
 from nipoppy.workflows.processing_runner import ProcessingRunner
 from nipoppy.workflows.runner import Runner
 from tests.conftest import (
@@ -34,12 +30,13 @@ from tests.conftest import (
 
 
 @pytest.fixture(scope="function")
-def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
+def runner(study, tmp_path: Path, mocker: pytest_mock.MockFixture) -> Runner:
     runner = ProcessingRunner(
-        dpath_root=tmp_path / "my_dataset",
+        dpath_root=study.layout.dpath_root,
         pipeline_name="dummy_pipeline",
         pipeline_version="1.0.0",
     )
+    runner.study = study
 
     create_empty_dataset(runner.study.layout.dpath_root)
 
@@ -130,7 +127,7 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
 
 
 def test_run_setup_validates_pipeline_bundle(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+    runner: Runner, mocker: pytest_mock.MockFixture
 ):
     runner.pipeline_version = None
     mocked_check_pipeline_bundle = mocker.patch(
@@ -147,7 +144,7 @@ def test_run_setup_validates_pipeline_bundle(
 
 
 def test_run_validation_error_prevents_execution(
-    runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+    runner: Runner, mocker: pytest_mock.MockFixture
 ):
     error = ConfigError("Invalid pipeline bundle")
     mocker.patch(
@@ -192,16 +189,7 @@ def test_hpc_runner(runner: Runner):
     assert runner.hpc_runner.subcommand == runner.subcommand
 
 
-def _set_up_hpc_for_testing(
-    runner: Runner,
-    mocker: pytest_mock.MockFixture,
-    mock_pysqa=True,
-):
-    # set HPC attribute to something valid
-    runner.hpc = "slurm"
-
-    # copy HPC config files
-    fileops.copy(DPATH_HPC, runner.study.layout.dpath_hpc)
+def test_submit_hpc_job(runner: Runner, mocker: pytest_mock.MockFixture):
 
     mocker.patch.object(
         runner,
@@ -214,217 +202,42 @@ def _set_up_hpc_for_testing(
         ),
     )
 
-    # mock PySQA job submission function
-    if mock_pysqa:
-        mock_submit_job = mocker.patch("pysqa.QueueAdapter.submit_job")
-        return mock_submit_job
-
-
-@pytest.mark.parametrize("hpc_type,hpc_command", [("slurm", "sbatch"), ("sge", "qsub")])
-@pytest.mark.no_xdist
-def test_submit_hpc_job(
-    runner: Runner,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    hpc_type: str,
-    hpc_command: str,
-):
-    job_id = "12345"
-    hpc_config = {
-        "CORES": "8",
-        "MEMORY": "32G",
-    }
-    _set_up_hpc_for_testing(runner, mocker, mock_pysqa=False)
-    runner.hpc = hpc_type
-
-    mocker.patch(
-        "nipoppy.workflows.services.hpc.HPCRunner._check_hpc_config",
-        return_value=hpc_config,
+    n_jobs_submitted = 1
+    mocked_submit = mocker.patch.object(
+        runner.hpc_runner, "submit", return_value=n_jobs_submitted
     )
-    mocked_check_output = mocker.patch(
-        "pysqa.base.core.subprocess.check_output", return_value=job_id
-    )
-    participants_sessions = [("participant1", "session1"), ("participant2", "session2")]
-
-    runner._submit_hpc_job(participants_sessions)
-
-    mocked_check_output.assert_called_once()
-    # positional arguments, index 0, first element of the list
-    assert mocked_check_output.call_args[0][0][0] == hpc_command
-
-    assert f"HPC job ID: {job_id}" in caplog.text
-
-
-def test_submit_hpc_job_no_dir(runner: Runner, mocker: pytest_mock.MockFixture):
-    _set_up_hpc_for_testing(runner, mocker)
-
-    # remove the directory created by _set_up_hpc_for_testing
-    import shutil
-
-    if runner.study.layout.dpath_hpc.exists():
-        shutil.rmtree(runner.study.layout.dpath_hpc)
-
-    assert not runner.study.layout.dpath_hpc.exists()
-    with pytest.raises(
-        LayoutError,
-        match="The HPC directory with appropriate content needs to exist",
-    ):
-        runner._submit_hpc_job([("P1", "1")])
-
-
-def test_submit_hpc_job_invalid_hpc(runner: Runner, mocker: pytest_mock.MockFixture):
-    _set_up_hpc_for_testing(runner, mocker)
-    runner.hpc = "invalid"
-
-    with pytest.raises(WorkflowError, match="Invalid HPC cluster type"):
-        runner._submit_hpc_job([("P1", "1")])
-
-
-def test_submit_hpc_job_logs(runner: Runner, mocker: pytest_mock.MockFixture):
-    _set_up_hpc_for_testing(runner, mocker)
-
-    dpath_logs = runner.study.layout.dpath_logs / runner.dname_hpc_logs
-
-    # check that logs directory is created
-    assert not (dpath_logs).exists()
-    runner._submit_hpc_job([("P1", "1")])
-    assert dpath_logs.exists()
-
-
-def test_submit_hpc_job_no_jobs(runner: Runner, mocker: pytest_mock.MockFixture):
-    mocked = _set_up_hpc_for_testing(runner, mocker)
-    runner._submit_hpc_job([])
-    assert not mocked.called
-
-
-@pytest.mark.parametrize("hpc_type", ["slurm", "sge"])
-def test_submit_hpc_job_pysqa_call(
-    runner: Runner,
-    mocker: pytest_mock.MockFixture,
-    hpc_type,
-):
-    preamble_list = ["module load some module"]
-    hpc_config = {
-        "CORES": "8",
-        "MEMORY": "32G",
-    }
-
-    mocked_submit_job = _set_up_hpc_for_testing(runner, mocker)
-    runner.hpc = hpc_type
-
-    runner.hpc_config = HpcConfig(**hpc_config)
-    runner.study.config.HPC_PREAMBLE = preamble_list
 
     participant_ids = ["participant1", "participant2"]
     session_ids = ["session1", "session2"]
     participants_sessions = list(zip(participant_ids, session_ids))
-
-    # Call the function we're testing
     runner._submit_hpc_job(participants_sessions)
 
-    # Extract the arguments passed to submit_job
-    submit_job_args = mocked_submit_job.call_args[1]
-
-    # Verify args
-    assert submit_job_args["queue"] == hpc_type
-    assert submit_job_args["working_directory"] == str(runner.dpath_pipeline_work)
-    assert submit_job_args["NIPOPPY_HPC"] == hpc_type
-    assert submit_job_args["NIPOPPY_JOB_NAME"] == get_pipeline_tag(
-        runner.pipeline_name,
-        runner.pipeline_version,
-        runner.pipeline_step,
-        runner.participant_id,
-        runner.session_id,
+    mocked_submit.assert_called_once_with(
+        job_name=get_pipeline_tag(
+            runner.pipeline_name,
+            runner.pipeline_version,
+            runner.pipeline_step,
+            runner.participant_id,
+            runner.session_id,
+        ),
+        job_array_commands=[
+            "echo 'participant1, session1'",
+            "echo 'participant2, session2'",
+        ],
+        participant_ids=participant_ids,
+        session_ids=session_ids,
+        dpath_work=runner.dpath_pipeline_work,
+        dpath_hpc_logs=runner.study.layout.dpath_logs / runner.dname_hpc_logs,
+        fname_hpc_error=runner.fname_hpc_error,
+        fname_job_script=runner.fname_job_script,
+        pipeline_name=runner.pipeline_name,
+        pipeline_version=runner.pipeline_version,
+        pipeline_step=runner.pipeline_step,
+        dry_run=runner.dry_run,
     )
-    assert (
-        submit_job_args["NIPOPPY_DPATH_LOGS"]
-        == runner.study.layout.dpath_logs / runner.dname_hpc_logs
-    )
-    assert submit_job_args["NIPOPPY_HPC_PREAMBLE_STRINGS"] == preamble_list
 
-    assert submit_job_args["NIPOPPY_DPATH_ROOT"] == runner.study.layout.dpath_root
-    assert submit_job_args["NIPOPPY_PIPELINE_NAME"] == runner.pipeline_name
-    assert submit_job_args["NIPOPPY_PIPELINE_VERSION"] == runner.pipeline_version
-    assert submit_job_args["NIPOPPY_PIPELINE_STEP"] == runner.pipeline_step
-
-    submitted_participant_ids = submit_job_args["NIPOPPY_PARTICIPANT_IDS"]
-    submitted_session_ids = submit_job_args["NIPOPPY_SESSION_IDS"]
-    assert submitted_participant_ids == participant_ids
-    assert submitted_session_ids == session_ids
-
-    command_list = submit_job_args["NIPOPPY_COMMANDS"]
-    assert len(command_list) == len(participants_sessions)
-    for participant_id, session_id in participants_sessions:
-        assert (f"echo '{participant_id}, {session_id}'") in command_list
-
-    for key, value in hpc_config.items():
-        assert submit_job_args.get(key) == value
-
-    template_ast = Environment().parse(FPATH_HPC_TEMPLATE.read_text())
-    template_vars = meta.find_undeclared_variables(template_ast)
-    nipoppy_args = [arg for arg in submit_job_args.keys() if arg.startswith("NIPOPPY_")]
-    for arg in nipoppy_args:
-        assert arg in template_vars, f"Variable {arg} not found in the template"
-
-    assert runner.n_success == 2
-    assert runner.n_total == 2
-
-
-@pytest.mark.parametrize(
-    "write_job_script,expected_message",
-    [(True, "Job script created at "), (False, "No job script found at ")],
-)
-@pytest.mark.no_xdist
-def test_submit_hpc_job_job_script(
-    write_job_script: bool,
-    expected_message,
-    runner: Runner,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-):
-    def touch_job_script(*args, **kwargs):
-        fpath_script = runner.dpath_pipeline_work / "run_queue.sh"
-        fpath_script.parent.mkdir(parents=True, exist_ok=True)
-        fpath_script.touch()
-
-    mocked = _set_up_hpc_for_testing(runner, mocker)
-    if write_job_script:
-        mocked.side_effect = touch_job_script
-
-    runner._submit_hpc_job([("P1", "1")])
-    assert expected_message in caplog.text
-
-
-def test_submit_hpc_job_pysqa_error(runner: Runner, mocker: pytest_mock.MockFixture):
-    def write_error_file(*args, **kwargs):
-        fpath_error = runner.dpath_pipeline_work / runner.fname_hpc_error
-        fpath_error.parent.mkdir(parents=True, exist_ok=True)
-        fpath_error.write_text("PYSQA ERROR\n")
-
-    mocked = _set_up_hpc_for_testing(runner, mocker)
-    mocked.side_effect = write_error_file
-    with pytest.raises(
-        RuntimeError, match="Error occurred while submitting the HPC job:\nPYSQA ERROR"
-    ):
-        runner._submit_hpc_job([("P1", "1")])
-
-
-@pytest.mark.parametrize("job_id", ["12345", None])
-@pytest.mark.no_xdist
-def test_submit_hpc_job_job_id(
-    runner: Runner,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    job_id,
-):
-    mocked = _set_up_hpc_for_testing(runner, mocker)
-    mocked.return_value = job_id
-    runner._submit_hpc_job([("P1", "1")])
-
-    if job_id is not None:
-        assert f"HPC job ID: {job_id}" in caplog.text
-    else:
-        assert "HPC job ID" not in caplog.text
+    assert runner.n_success == n_jobs_submitted
+    assert runner.n_total == len(participants_sessions)
 
 
 def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: Runner):
@@ -454,7 +267,7 @@ def test_run_main_hpc(mocker: pytest_mock.MockFixture, runner: Runner):
 )
 def test_generate_cli_command_for_hpc(
     tar: bool,
-    extra_flags: Optional[list[str]],
+    extra_flags: list[str] | None,
     runner: Runner,
     mocker: pytest_mock.MockFixture,
 ):
@@ -483,7 +296,7 @@ def test_generate_cli_command_for_hpc(
     ],
 )
 def test_inject_container_image(
-    runner: ProcessingRunner,
+    runner: Runner,
     uri: str,
     expected_image: str,
     expected_type: str,
@@ -495,7 +308,7 @@ def test_inject_container_image(
 
 
 def test_inject_container_image_invalid_uri(
-    runner: ProcessingRunner,
+    runner: Runner,
     caplog: pytest.LogCaptureFixture,
 ):
     runner._inject_container_image(descriptor=runner.descriptor, uri="invalid_uri")
@@ -504,7 +317,7 @@ def test_inject_container_image_invalid_uri(
 
 @pytest.mark.parametrize("simulate", [True, False])
 def test_launch_boutiques_run(
-    simulate, runner: ProcessingRunner, mocker: pytest_mock.MockFixture
+    simulate, runner: Runner, mocker: pytest_mock.MockFixture
 ):
     runner.simulate = simulate
 
@@ -565,7 +378,7 @@ def test_launch_boutiques_run_bosh_opts(
     expected_container_opts,
     simulate,
     verbose,
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -601,7 +414,7 @@ def test_launch_boutiques_run_bosh_opts(
 
 
 def test_launch_boutiques_run_bosh_no_container_image(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
 ):
     runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
@@ -624,7 +437,7 @@ def test_launch_boutiques_run_bosh_no_container_image(
 
 
 def test_launch_boutiques_run_container_image(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
 ):
     # remove [[NIPOPPY_DPATH_BIDS]]
@@ -647,7 +460,7 @@ def test_launch_boutiques_run_container_image(
 
 
 def test_launch_boutiques_run_no_container_image(
-    runner: ProcessingRunner,
+    runner: Runner,
     mocker: pytest_mock.MockFixture,
 ):
     # remove [[NIPOPPY_DPATH_BIDS]]
@@ -662,7 +475,7 @@ def test_launch_boutiques_run_no_container_image(
     mocked_inject_container_image.assert_not_called()
 
 
-def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
+def test_process_container_config(runner: Runner, tmp_path: Path):
     bind_path = tmp_path / "to_bind"
     container_command, container_handler = runner.process_container_config(
         participant_id="01", session_id="BL", bind_paths=[bind_path]
@@ -695,7 +508,7 @@ def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
 
 
 def test_process_container_config_no_bind_cwd(
-    runner: ProcessingRunner, tmp_path: Path, mocker: pytest_mock.MockFixture
+    runner: Runner, tmp_path: Path, mocker: pytest_mock.MockFixture
 ):
     bind_path = tmp_path / "to_bind"
     mocker.patch("pathlib.Path.cwd", return_value=bind_path)
@@ -709,6 +522,6 @@ def test_process_container_config_no_bind_cwd(
     )
 
 
-def test_process_container_config_no_bindpaths(runner: ProcessingRunner):
+def test_process_container_config_no_bindpaths(runner: Runner):
     # smoke test for no bind paths
     runner.process_container_config(participant_id="01", session_id="BL")
