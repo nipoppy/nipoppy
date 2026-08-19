@@ -31,6 +31,9 @@ Fields for configuring image processing pipelines, container runtimes, and high-
 `HPC_PREAMBLE`
     Command(s) to include at the top of the {term}`HPC` job submission file
 
+`HPC_QUEUE_LIMIT`
+    Maximum number of jobs allowed in the {term}`HPC` queue per user. This limit varies based on {term}`HPC` systems.
+
 `PIPELINE_VARIABLES`
     Dataset-specific configurations for individual pipelines. This section is populated as needed when new pipelines are installed.
 ```
