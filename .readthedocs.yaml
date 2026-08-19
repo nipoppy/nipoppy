@@ -16,11 +16,10 @@ build:
 
 python:
   install:
-  - requirements: pylock.toml
-  - method: pip
-    path: .
-    extra_requirements:
-    - doc
+  - method: uv
+    command: sync
+    extras:
+        - docs
 
 # Build documentation with Sphinx
 sphinx:

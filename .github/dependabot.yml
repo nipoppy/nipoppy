@@ -16,15 +16,9 @@ updates:
     commit-message:
       prefix: "[MAINT] "
 
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"
     directory: "/" # Location of package manifests
-    allow:
-      - dependency-name: "furo"
-      - dependency-name: "mdit-py-plugins"
-      - dependency-name: "myst-parser"
-      - dependency-name: "sphinx*"
-      - dependency-name: "Sphinx*"
-    versioning-strategy: increase
+    versioning-strategy: lockfile-only
     schedule:
       interval: "monthly"
     labels:
