@@ -16,6 +16,7 @@ build:
 
 python:
   install:
+  - requirements: pylock.toml
   - method: pip
     path: .
     extra_requirements:
