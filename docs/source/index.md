@@ -94,11 +94,11 @@ includehidden:
 titlesonly:
 caption: Reference
 ---
-config
-substitutions
-cli_reference/index
-autoapi/index
-schemas/index
+reference/config
+reference/substitutions
+reference/cli_reference/index
+reference/autoapi/index
+reference/schemas/index
 ```
 
 ```{toctree}
@@ -108,8 +108,8 @@ includehidden:
 titlesonly:
 caption: Other
 ---
-changelog
-team
-contributing
-glossary
+other/changelog
+other/team
+other/contributing
+other/glossary
 ```

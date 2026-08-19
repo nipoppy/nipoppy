@@ -14,7 +14,8 @@ from fids import fids
 from nipoppy.env import FAKE_SESSION_ID
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS
+from nipoppy.utils import fileops
+from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 
@@ -26,6 +27,12 @@ def dpath_root(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
 @pytest.fixture
 def workflow(dpath_root: Path) -> InitWorkflow:
     return InitWorkflow(dpath_root=dpath_root)
+
+
+@pytest.fixture(autouse=True)
+def isolate_user_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Ignore any existing user config by setting HOME to a temporary directory."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
 
 
 @pytest.fixture
@@ -64,7 +71,7 @@ def _setup_handle_bids_source(workflow: InitWorkflow, fake_bids_root: Path, mode
     workflow.bids_source = fake_bids_root
     workflow.mode = mode
 
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
 
     source_files_after_init = [
         x.relative_to(fake_bids_root) for x in fake_bids_root.glob("**/*")
@@ -100,24 +107,17 @@ def _assert_manifest_creation(
     assert workflow.study.manifest[Manifest.col_datatype].to_list() == datatypes
 
 
-def exist_or_none(o: object, s: str) -> bool:
-    # walrus operator ":=" does assignment inside the "if" statement
-    if attr := getattr(o, s, None):
-        return attr.exists()
-    return True
-
-
-def assert_layout_creation(workflow, dpath_root):
+def _assert_layout_creation(workflow):
     # check that all directories have been created (using layout-aware paths)
     for dpath in workflow.study.layout.get_paths(directory=True, include_optional=True):
         assert dpath.exists(), f"Expected directory not found: {dpath}"
         # Check README exists for directories with descriptions (except .nipoppy)
-        if dpath != workflow.study.layout.dpath_nipoppy:
+        if dpath != workflow.study.layout.dpath_nipoppy and not dpath.is_symlink():
             readme_path = dpath / "README.md"
             # Only check README if this directory has a description in the layout
             path_info = None
             for info in workflow.study.layout.config.path_infos:
-                if workflow.study.layout.get_full_path(info.path) == dpath:
+                if workflow.study.layout._prepend_study_path(info.path) == dpath:
                     path_info = info
                     break
             if path_info and path_info.description:
@@ -146,10 +146,112 @@ def assert_layout_creation(workflow, dpath_root):
         assert (workflow.study.layout.dpath_hpc / fname.name).exists()
 
 
-def test_run(workflow: InitWorkflow, dpath_root: Path):
+def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
+    assert fpath_actual.read_text() == fpath_expected.read_text()
+
+
+@pytest.mark.no_xdist
+def test_run(workflow: InitWorkflow, caplog: pytest.LogCaptureFixture):
     workflow.run()
 
-    assert_layout_creation(workflow, dpath_root)
+    _assert_layout_creation(workflow)
+
+    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
+
+
+@pytest.mark.no_xdist
+def test_run_no_success_message_on_error(
+    workflow: InitWorkflow,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    error_message = "fake error"
+    mocker.patch.object(workflow, "run_main", side_effect=RuntimeError(error_message))
+
+    with pytest.raises(RuntimeError, match=error_message):
+        workflow.run()
+
+    assert "Successfully initialized a dataset" not in caplog.text
+
+
+def test_create_config_file_defaults_to_sample_when_user_config_missing(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch(
+        "nipoppy.workflows.dataset_init.FPATH_USER_CONFIG",
+        tmp_path / "missing_config.json",
+    )
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert "Default config file copied" in caplog.text
+    assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_create_config_file_uses_user_config(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, fpath_user_config)
+    assert "Default config file copied" not in caplog.text
+
+
+def test_create_config_file_default_config_ignores_user_config(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"CUSTOM": {"label": "config"}}\n')
+
+    workflow.default_config = True
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert "Default config file copied" in caplog.text
+    assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_create_config_file_warns_and_falls_back_for_invalid_user_config(
+    workflow: InitWorkflow,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    fpath_user_config = tmp_path / "config.json"
+    fpath_user_config.write_text('{"NOT_A_CONFIG_FIELD": "config"}\n')
+
+    mocker.patch("nipoppy.workflows.dataset_init.FPATH_USER_CONFIG", fpath_user_config)
+    workflow._create_config_file()
+
+    assert_config_matches(workflow.study.layout.fpath_config, FPATH_SAMPLE_CONFIG)
+    assert f"{fpath_user_config} is invalid" in caplog.text
+    assert "Falling back to the default config file" in caplog.text
+    assert "Default config file copied" in caplog.text
+    assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_run_warns_when_sample_manifest_copied(
+    workflow: InitWorkflow, caplog: pytest.LogCaptureFixture
+):
+    workflow.run()
+
+    assert "Sample manifest file copied" in caplog.text
+    assert "It should be edited to match your dataset" in caplog.text
 
 
 def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
@@ -158,14 +260,14 @@ def test_empty_dir(workflow: InitWorkflow, dpath_root: Path):
 
     workflow.run()
 
-    assert_layout_creation(workflow, dpath_root)
+    _assert_layout_creation(workflow)
 
 
 def test_non_empty_dir(workflow: InitWorkflow, dpath_root: Path):
     dpath_root.mkdir(parents=True)
     dpath_root.joinpath("unexpected_file").touch()
 
-    with pytest.raises(FileOperationError, match="Dataset directory is non-empty"):
+    with pytest.raises(FileOperationError, match="Study root directory is non-empty"):
         workflow.run()
 
 
@@ -176,6 +278,8 @@ def test_non_empty_dir_forced(workflow: InitWorkflow, dpath_root: Path):
     workflow.force = True
     workflow.run()
 
+    _assert_layout_creation(workflow)
+
 
 def test_init_twice_force(workflow: InitWorkflow):
     # run once
@@ -185,7 +289,23 @@ def test_init_twice_force(workflow: InitWorkflow):
     workflow.force = True
     workflow.run()
 
-    assert_layout_creation(workflow, dpath_root)
+    _assert_layout_creation(workflow)
+
+
+def test_run_main_container_store(
+    workflow: InitWorkflow, tmp_path: Path, mocker: pytest_mock.MockerFixture
+):
+    workflow.container_store = tmp_path / "container_store"
+
+    mocked = mocker.patch.object(fileops, "symlink", wraps=fileops.symlink)
+
+    workflow.run_main()
+    mocked.assert_called_once_with(
+        workflow.container_store,
+        workflow.study.layout.dpath_containers,
+        force=workflow.force,
+        dry_run=workflow.dry_run,
+    )
 
 
 def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
@@ -199,7 +319,7 @@ def test_handle_bids_source_force(workflow: InitWorkflow, fake_bids_root: Path):
     workflow.bids_source = fake_bids_root
     workflow.mode = "copy"
     workflow.force = True
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
 
     # Verify old content was replaced
     assert existing_bids.exists()
@@ -224,7 +344,7 @@ def test_handle_bids_source_force_symlink(
     workflow.bids_source = fake_bids_root
     workflow.mode = "symlink"
     workflow.force = True
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
 
     # Verify old symlink was replaced
     assert existing_bids_symlink.is_symlink()
@@ -235,7 +355,7 @@ def test_handle_bids_source_force_symlink(
 def test_is_file(workflow: InitWorkflow, dpath_root: Path):
     dpath_root.touch()
 
-    with pytest.raises(FileOperationError, match="Dataset is an existing file"):
+    with pytest.raises(FileOperationError, match="Study root path is an existing file"):
         workflow.run()
 
 
@@ -297,16 +417,11 @@ def test_default_layout_passes_bids_validation(dpath_root: Path):
     assert result.returncode == 0, "BIDS validation failed"
 
 
-@pytest.mark.no_xdist
-def test_run_cleanup(workflow: InitWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_cleanup()
-    assert f"Successfully initialized a dataset at {workflow.dpath_root}" in caplog.text
-
-
 def test_init_bids(
     workflow: InitWorkflow,
     fake_bids_root: Path,
     mocker: pytest_mock.MockerFixture,
+    caplog: pytest.LogCaptureFixture,
 ):
     """Test init from an existing BIDS dataset.
 
@@ -318,14 +433,15 @@ def test_init_bids(
     workflow.bids_source = fake_bids_root
 
     mocked_handle_bids_source = mocker.patch.object(
-        workflow, "handle_bids_source", wraps=workflow.handle_bids_source
+        workflow, "_handle_bids_source", wraps=workflow._handle_bids_source
     )
 
     workflow.run()
 
-    assert_layout_creation(workflow, workflow.study.layout.dpath_root)
+    _assert_layout_creation(workflow)
     _assert_manifest_creation(workflow)
     mocked_handle_bids_source.assert_called_once()
+    assert "Sample manifest file copied" not in caplog.text
 
 
 def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root: Path):
@@ -333,7 +449,7 @@ def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root:
     workflow.bids_source = fake_bids_root
     workflow.mode = "invalid"
     with pytest.raises(ValueError, match="Invalid mode: invalid"):
-        workflow.handle_bids_source()
+        workflow._handle_bids_source()
 
 
 def test_handle_bids_source_copy(workflow: InitWorkflow, fake_bids_root: Path):
@@ -382,7 +498,6 @@ def test_init_bids_readonly(
 
     workflow.run()
 
-    assert "Skipping README creation" in caplog.text
     assert not (workflow.study.layout.dpath_bids / "README.md").exists()
 
 
@@ -416,7 +531,7 @@ def test_manifest_from_bids_dataset_no_sessions(
         datatypes=["anat", "func"],
     )
     workflow.bids_source = bids_to_copy
-    workflow.handle_bids_source()
+    workflow._handle_bids_source()
     workflow._init_manifest_from_bids_dataset()
 
     assert (

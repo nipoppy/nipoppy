@@ -19,7 +19,7 @@ from nipoppy.tabular.dicom_dir_map import DicomDirMapModel
 from nipoppy.tabular.manifest import ManifestModel
 from nipoppy.tabular.processing_status import ProcessingStatusModel
 
-DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "schemas"
+DPATH_SCHEMAS = Path(__file__).parent / ".." / "source" / "reference" / "schemas"
 
 MODEL_FILENAME_MAP = {
     BoutiquesConfig: "boutiques.json",

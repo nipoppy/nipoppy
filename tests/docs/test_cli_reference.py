@@ -26,7 +26,7 @@ def test_cli_command_has_documentation(command: str):
         Path(__file__).parents[2]  # Path to repo root
         / "docs"
         / "source"
-        / "cli_reference"
+        / "reference/cli_reference"
         / doc_filename
     )
 
@@ -35,5 +35,5 @@ def test_cli_command_has_documentation(command: str):
         f"Missing CLI reference documentation for command '{command}'. "
         f"Expected file: {doc_path}. "
         f"Please create the documentation file following the pattern of other "
-        f"CLI reference files in docs/source/cli_reference/."
+        f"CLI reference files in docs/source/reference/cli_reference/."
     )

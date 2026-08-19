@@ -1,23 +1,30 @@
 {
-    "NAME": "FSL SIENA",
+    "NAME": "fsl_siena",
     "VERSION": "6.0.4",
     "CONTAINER_INFO": {
         "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
-        "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+        "URI": "docker://mathdugre/fsl:[[PIPELINE_VERSION]]"
     },
     "CONTAINER_CONFIG": {
         "ENV_VARS": {},
+        "BIND_PATHS": [],
         "ARGS": []
     },
     "STEPS": [
         {
             "INVOCATION_FILE": "invocation.json",
             "DESCRIPTOR_FILE": "descriptor.json",
-            "HPC_CONFIG_FILE": "hpc.json",
+            "ANALYSIS_LEVEL": "participant_session",
             "TRACKER_CONFIG_FILE": "tracker.json",
-            "PYBIDS_IGNORE_FILE": "pybids_ignore.json"
+            "HPC_CONFIG_FILE": "hpc.json",
+            "GENERATE_PYBIDS_DATABASE": false,
+            "PYBIDS_IGNORE_FILE": null
         }
     ],
+    "VARIABLES": {
+        "FILEPATH_T1W_1": "File path of the first T1w image to be processed",
+        "FILEPATH_T1W_2": "File path of the second T1w image to be processed"
+    },
     "PIPELINE_TYPE": "processing",
-    "SCHEMA_VERSION": "1"
+    "SCHEMA_VERSION": "1.0"
 }

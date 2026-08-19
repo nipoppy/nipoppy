@@ -1,0 +1,8 @@
+[
+    /*
+    Test that block comments are allowed in the JSON5 file.
+    This is a multi-line comment that should be ignored by the parser.
+    */
+    "pattern1",
+    "pattern2", // Test inline comments + trailing commas
+]

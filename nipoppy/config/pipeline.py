@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC
-from typing import Any, Optional, Union
+from typing import Annotated, Any, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 from pydantic_core import to_jsonable_python
 
 from nipoppy.config.container import ContainerInfo, _SchemaWithContainerConfig
@@ -15,9 +22,15 @@ from nipoppy.config.pipeline_step import (
     ExtractionPipelineStepConfig,
     ProcPipelineStepConfig,
 )
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    ensure_schema_support,
+    get_current_schema_version,
+)
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
+    BIDS_PATH_INJECTION_PREFIX,
     DEFAULT_PIPELINE_STEP_NAME,
+    ConfigType,
     PipelineTypeEnum,
 )
 from nipoppy.exceptions import ConfigError
@@ -73,10 +86,19 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
         ),
     )
     PIPELINE_TYPE: Optional[PipelineTypeEnum] = None
-    SCHEMA_VERSION: str = Field(
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.PIPELINE,
+            )
+        ),
+    ] = Field(
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
         description=(
             "Version of the schema used for this pipeline configuration. The current "
-            f"latest version is {CURRENT_SCHEMA_VERSION}"
+            f"latest version is {get_current_schema_version(ConfigType.PIPELINE)}"
         ),
     )
 
@@ -135,13 +157,6 @@ class BasePipelineConfig(_SchemaWithContainerConfig, ABC):
                 f"{self.NAME} {self.VERSION}"
             )
 
-        if self.SCHEMA_VERSION != CURRENT_SCHEMA_VERSION:
-            raise ConfigError(
-                f"Pipeline {self.NAME} {self.VERSION} uses schema version "
-                f"{self.SCHEMA_VERSION}, which is incompatible with the current version"
-                f" of Nipoppy (expected schema version: {CURRENT_SCHEMA_VERSION})"
-            )
-
         return self
 
     def get_step_config(
@@ -187,6 +202,51 @@ class ProcessingPipelineConfig(BasePipelineConfig):
         default=[],
         description="List of pipeline step configurations",
     )
+
+    BIDS_PATH_INJECTION_MAP: dict[str, dict] = Field(
+        default={},
+        description=(
+            "Filters for selecting paths to individual BIDS files to inject into "
+            "the invocation file. This should be a dictionary where "
+            "keys correspond to placeholders in the invocation file and values are "
+            "keyword arguments to be passed to PyBIDS' bids.layout.BIDSLayout.get()."
+            " For example, if the invocation file has a placeholder "
+            f"[[NIPOPPY_{BIDS_PATH_INJECTION_PREFIX}KEY1]] and "
+            "the BIDS_PATH_INJECTION_MAP has entry "
+            f'{{"KEY1": {{"extension": "nii.gz", "suffix": "T1w"}}}}, '
+            f"then [[NIPOPPY_{BIDS_PATH_INJECTION_PREFIX}KEY1]] will be replaced with "
+            "the path to a T1w NIfTI file (provided there is only one match)."
+            " This can be useful for pipelines that are not BIDS Apps and that "
+            "take as input specific files rather than the root directory of the "
+            "BIDS dataset. Note: this map is only used for pipeline steps that have "
+            "GENERATE_PYBIDS_DATABASE set to true."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def validate_after(self):
+        """
+        Validate the pipeline config after instantiation.
+
+        Specifically, make sure that BIDS_PATH_INJECTION_MAP entries have valid keys
+        (must be valid Python identifiers) and do not use reserved
+        keywords.
+        """
+        super().validate_after()
+        for key, kwargs in self.BIDS_PATH_INJECTION_MAP.items():
+            if not key.isidentifier():
+                raise ConfigError(
+                    f'Invalid key "{key}" in BIDS_PATH_INJECTION_MAP: '
+                    "must only contain alphanumeric characters and underscores, "
+                    "and cannot start with a number or contain any spaces."
+                )
+            if "return_value" in kwargs:
+                raise ConfigError(
+                    f'Invalid entry for key "{key}" in BIDS_PATH_INJECTION_MAP: '
+                    '"return_value" is a reserved keyword argument and cannot be set externally.'  # noqa: E501
+                )
+        return self
+
     model_config = ConfigDict(extra="forbid")
 
 
