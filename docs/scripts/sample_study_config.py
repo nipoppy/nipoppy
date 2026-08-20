@@ -7,7 +7,7 @@ import nipoppy.utils.fileops
 from nipoppy.env import PROGRAM_VERSION
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 
-DPATH_INSERTS = Path(__file__).parent / ".." / "source" / "_inserts"
+DPATH_INSERTS = Path(__file__).parent.parent / "source" / "_inserts"
 
 if __name__ == "__main__":
     DPATH_INSERTS.mkdir(parents=True, exist_ok=True)

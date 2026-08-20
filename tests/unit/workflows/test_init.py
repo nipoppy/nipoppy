@@ -256,12 +256,12 @@ def test_create_config_file_preserves_json5_comments(
 
     study_config_content = workflow.study.layout.fpath_config.read_text()
     assert (
-        "// String substitutions will be applied when this file is loaded"
+        "// Nipoppy will apply string substitutions when this file is loaded"
         in study_config_content
     )
     assert "[[NIPOPPY_VERSION]]" not in study_config_content
     assert PROGRAM_VERSION in study_config_content
-    assert not any(["Unable to replace" in str(warning.message) for warning in recwarn])
+    assert not any("Unable to replace" in str(warning.message) for warning in recwarn)
 
 
 def test_run_warns_when_sample_manifest_copied(

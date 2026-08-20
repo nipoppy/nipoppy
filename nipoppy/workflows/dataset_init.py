@@ -130,6 +130,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.study.layout.fpath_bids_dataset_description,
                 version=PROGRAM_VERSION,
                 dry_run=self.dry_run,
+                exist_ok=True,
             )
 
         # copy bidsignore file if specified in layout
@@ -137,6 +138,8 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
+                exist_ok=True,
+                dry_run=self.dry_run,
             )
 
         # copy HPC files
@@ -217,6 +220,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                 self.study.layout.fpath_config,
                 version=PROGRAM_VERSION,
                 dry_run=self.dry_run,
+                exist_ok=True,
             )
         if fpath_config_to_copy == fpath_default_config:
             logger.warning(

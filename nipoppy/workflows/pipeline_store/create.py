@@ -81,7 +81,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
             dry_run=self.dry_run,
         )
         # then append the actual example invocation
-        with open(fpath_invocation, "a") as file_invocation:
+        with fpath_invocation.open("a") as file_invocation:
             file_invocation.write(boutiques.example(str(descriptor_path)))
 
         fileops.copy_template(

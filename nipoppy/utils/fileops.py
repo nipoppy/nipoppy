@@ -47,30 +47,30 @@ def copy(source: Path, target: Path, dry_run=False, exist_ok: bool = False):
 
 
 def copy_template(
-    path_source: Path,
-    path_dest: Path,
+    source: Path,
+    dest: Path,
     *,
     dry_run: bool = False,
+    exist_ok: bool = False,
     **template_kwargs,
 ):
     """Copy a file with template substitution.
 
     Parameters
     ----------
-    path_source
+    source
         Source template file path
-    path_dest
+    dest
         Destination file path
     **template_kwargs
         Keyword arguments passed to process_template_str for substitution
     """
-    logger.debug(f"Copying template {path_source} to {path_dest}")
+    logger.debug(f"Copying template {source} to {dest}")
+    mkdir(dest.parent, dry_run=dry_run)
+    copy(source, dest, dry_run=dry_run, exist_ok=exist_ok)
     if not dry_run:
-        with open(path_source, "r") as f:
-            content = process_template_str(f.read(), **template_kwargs)
-        mkdir(Path(path_dest).parent, dry_run=dry_run)
-        with open(path_dest, "w") as f:
-            f.write(content)
+        content = process_template_str(dest.read_text(), **template_kwargs)
+        dest.write_text(content)
 
 
 def movetree(source: Path, target: Path, dry_run=False):

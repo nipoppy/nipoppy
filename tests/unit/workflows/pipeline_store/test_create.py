@@ -19,11 +19,14 @@ def _has_same_JSON_content(a: Path, b: Path) -> bool:
     return load_json(a, allow_json5=True) == load_json(b, allow_json5=True)
 
 
-def _JSON5_comment_correct(path: Path) -> bool:
+def _has_correct_JSON5_comment(path: Path) -> bool:
     """Check that the comment is preserved and that the substitution was applied."""
     content = path.read_text()
     return (
-        ("// String substitutions will be applied when this file is loaded" in content)
+        (
+            "// Nipoppy will apply string substitutions when this file is loaded"
+            in content
+        )
         and ("[[NIPOPPY_VERSION]]" not in content)
         and (PROGRAM_VERSION in content)
     )
@@ -82,7 +85,7 @@ def test_create(
     assert set(load_json(invocation_file_path, allow_json5=True).keys()) == {
         "basic_param2"
     }
-    assert _JSON5_comment_correct(invocation_file_path)
+    assert _has_correct_JSON5_comment(invocation_file_path)
 
     hpc_file_path = workflow.pipeline_dir.joinpath("hpc.json")
     assert hpc_file_path.is_file()
@@ -90,7 +93,7 @@ def test_create(
         hpc_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
     )
-    assert _JSON5_comment_correct(hpc_file_path)
+    assert _has_correct_JSON5_comment(hpc_file_path)
 
     pipeline_config_file_path = workflow.pipeline_dir.joinpath("config.json")
     assert pipeline_config_file_path.is_file()
@@ -98,7 +101,7 @@ def test_create(
         pipeline_config_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
     )
-    assert _JSON5_comment_correct(pipeline_config_file_path)
+    assert _has_correct_JSON5_comment(pipeline_config_file_path)
 
     if type_ == PipelineTypeEnum.PROCESSING:
         tracker_file_path = workflow.pipeline_dir.joinpath("tracker.json")
@@ -107,9 +110,9 @@ def test_create(
             tracker_file_path,
             TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
         )
-        assert _JSON5_comment_correct(tracker_file_path)
+        assert _has_correct_JSON5_comment(tracker_file_path)
 
-    assert not any(["Unable to replace" in str(warning.message) for warning in recwarn])
+    assert not any("Unable to replace" in str(warning.message) for warning in recwarn)
 
 
 def test_create_already_exists(workflow: PipelineCreateWorkflow):
