@@ -69,8 +69,9 @@ def copy_template(
     mkdir(dest.parent, dry_run=dry_run)
     copy(source, dest, dry_run=dry_run, exist_ok=exist_ok)
     if not dry_run:
-        content = process_template_str(dest.read_text(), **template_kwargs)
-        dest.write_text(content)
+        dest.write_text(
+            process_template_str(dest.read_text(), **template_kwargs),
+        )
 
 
 def movetree(source: Path, target: Path, dry_run=False):
