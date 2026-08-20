@@ -6,18 +6,18 @@ import shlex
 from abc import ABC
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
 
 from boutiques import bosh
 from typing_extensions import override
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
+from nipoppy.config.hpc import HpcConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
-from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag
+from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag, load_json
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import (
@@ -58,20 +58,37 @@ class Runner(BasePipelineWorkflow, ABC):
     def hpc_runner(self) -> HPCRunner:
         """Get the HPC runner service."""
         return HPCRunner(
-            study=self.study,
+            hpc_cluster=self.hpc,
+            hpc_config=self.hpc_config,
             subcommand=self.subcommand,
             dpath_root=self.dpath_root,
+            dpath_hpc=self.study.layout.dpath_hpc,
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
             pipeline_step=self.pipeline_step,
+            preamble=self.study.config.HPC_PREAMBLE,
+            queue_limit=self.study.config.HPC_QUEUE_LIMIT,
             keep_workdir=self.keep_workdir,
             fpath_layout=self.fpath_layout,
             verbose=self.verbose,
-            hpc_config=self.hpc_config if self.hpc else None,
         )
 
+    @cached_property
+    def hpc_config(self) -> HpcConfig:
+        """Load the pipeline step's HPC configuration."""
+        fname_hpc_config = self.pipeline_step_config.HPC_CONFIG_FILE
+        if fname_hpc_config is None:
+            data = {}
+        else:
+            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
+            logger.info(f"Loading HPC config from {fpath_hpc_config}")
+            data = self.process_template_json(
+                load_json(fpath_hpc_config, allow_json5=True)
+            )
+        return HpcConfig(**data)
+
     def _generate_cli_command_for_hpc(
-        self, participant_id: Optional[str] = None, session_id: Optional[str] = None
+        self, participant_id: str | None = None, session_id: str | None = None
     ) -> list[str]:
         """Generate the CLI command to be run on the HPC cluster."""
         return self.hpc_runner.generate_cli_command(
@@ -92,11 +109,6 @@ class Runner(BasePipelineWorkflow, ABC):
             job_array_commands.append(shlex.join(command))
             participant_ids.append(participant_id)
             session_ids.append(session_id)
-            self.n_total += 1  # for logging in run_cleanup()
-
-        # skip if there are no jobs to submit
-        if len(job_array_commands) == 0:
-            return
 
         job_name = get_pipeline_tag(
             pipeline_name=self.pipeline_name,
@@ -106,8 +118,7 @@ class Runner(BasePipelineWorkflow, ABC):
             session_id=self.session_id,
         )
 
-        self.hpc_runner.submit(
-            hpc_cluster=self.hpc,
+        n_submitted_jobs = self.hpc_runner.submit(
             job_name=job_name,
             job_array_commands=job_array_commands,
             participant_ids=participant_ids,
@@ -122,8 +133,9 @@ class Runner(BasePipelineWorkflow, ABC):
             dry_run=self.dry_run,
         )
 
-        # for logging in run_cleanup()
-        self.n_success += len(job_array_commands)
+        # for logging
+        self.n_success += n_submitted_jobs
+        self.n_total += len(job_array_commands)
 
     @cached_property
     def bosh_runner(self) -> BoshRunnerCallable:
@@ -150,8 +162,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        container_handler: Optional[ContainerHandler] = None,
-        objs: Optional[list] = None,
+        container_handler: ContainerHandler | None = None,
+        objs: list | None = None,
         **kwargs,
     ):
         """Launch a pipeline run using Boutiques."""
@@ -256,8 +268,8 @@ class Runner(BasePipelineWorkflow, ABC):
         self,
         participant_id: str,
         session_id: str,
-        bind_paths: Optional[list[StrOrPathLike]] = None,
-    ) -> Tuple[str, ContainerHandler]:
+        bind_paths: list[StrOrPathLike] | None = None,
+    ) -> tuple[str, ContainerHandler]:
         """Update container config and generate container command."""
         if bind_paths is None:
             bind_paths = []

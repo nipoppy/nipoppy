@@ -15,13 +15,13 @@ If the default Slurm/SGE configurations do not work for you, please consider [op
 
 ### Global settings
 
-The default global configuration file has two {term}`HPC`-related fields that should be updated as needed:
+The default global configuration file has three {term}`HPC`-related fields that should be updated as needed:
 
 ```{literalinclude} ../../_inserts/sample_study_config.json
 ---
 linenos: True
 language: json
-emphasize-lines: 7,20-29
+emphasize-lines: 7,20-29,30
 ---
 ```
 
@@ -41,6 +41,12 @@ This can be left blank if these options are not needed.
 ```{attention}
 If your HPC system needs flags other than `--account-name` or `-q` need to be set, you will have to modify the template job submission script: see the [Further customization](#further-customization) section for more information.
 ```
+
+#### `HPC_QUEUE_LIMIT`
+
+The maximum number of jobs allowed in the queue for a given user.
+This limit is specific to your HPC system.
+Set to `null` if there is no such limit, in which case all jobs will always be submitted.
 
 ### Pipeline-specific settings
 
