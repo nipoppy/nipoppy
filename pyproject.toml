@@ -44,8 +44,7 @@ doc = [
     "mdit-py-plugins",
     # Simplify after dropping Python 3.10 support
     "myst-parser>=5.1.0 ; python_version >= '3.11'",
-    "myst-parser ; python_version < '3.11'",
-    "sphinx",
+    "myst-parser ; python_version < '3.11'",    "sphinx",
     "sphinx-autoapi",
     "sphinx-click",
     "sphinx-copybutton",
@@ -88,7 +87,7 @@ version-file = "nipoppy/_version.py"
 source = "vcs"
 
 [tool.codespell]
-skip = '.git,.github,pyproject.toml'
+skip = '.git,.github,pyproject.toml,uv.lock'
 
 [tool.pytest.ini_options]
 addopts = "--color=yes -n auto --dist loadfile -ra -q -vv"
