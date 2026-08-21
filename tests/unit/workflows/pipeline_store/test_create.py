@@ -135,7 +135,8 @@ def test_create_from_descriptor_preserves_json5(
     dpath_template = tmp_path / "template_pipeline"
     dpath_template.mkdir(parents=True)
 
-    (dpath_template / "config-processing.json").write_text("""
+    (dpath_template / "config-processing.json").write_text(
+        """
 {
   // keep this comment
   "NAME": "tool name",
@@ -161,7 +162,8 @@ def test_create_from_descriptor_preserves_json5(
   "PIPELINE_TYPE": "processing",
   "SCHEMA_VERSION": "1",
 }
-""".strip())
+""".strip()
+    )
     (dpath_template / "hpc.json").write_text("{}")
     (dpath_template / "tracker.json").write_text("{}")
 

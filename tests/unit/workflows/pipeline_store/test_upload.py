@@ -51,9 +51,7 @@ def test_run_main(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFi
     validator.assert_called_once_with(TEST_PIPELINE, strict=True)
 
 
-def test_get_pipeline_metadata(
-    workflow: PipelineUploadWorkflow, datetime_fixture
-):  # noqa F811
+def test_get_pipeline_metadata(workflow: PipelineUploadWorkflow, datetime_fixture):  # noqa F811
     expected = {
         "metadata": {
             "title": "Upload test",
