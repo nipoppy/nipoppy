@@ -96,7 +96,7 @@ def tar_directory(dpath: Path, dry_run: bool = False) -> Path:
         Path to the tarball.
     """
     if not dpath.exists():
-        raise FileOperationError(f"Dir does not exist: {dpath}")
+        raise FileOperationError(f"Directory does not exist: {dpath}")
     if not dpath.is_dir():
         raise FileOperationError(f"Cannot tar non-directory: {dpath}")
 

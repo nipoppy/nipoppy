@@ -234,7 +234,7 @@ class TestSymlink:
 
 @pytest.fixture
 def dpath_to_tar(tmp_path: Path) -> Path:
-    """Return a temporary directory with nested files, ready to be tarred."""
+    """Return a temporary directory with nested files."""
     dpath = tmp_path / "my_data"
     (dpath / "dir1").mkdir(parents=True)
     (dpath / "dir1" / "file1.txt").touch()
