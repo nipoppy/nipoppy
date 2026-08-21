@@ -72,7 +72,7 @@
         "description": "This directory is for assessments data."
     },
     "fpath_config": {
-        "path": ".nipoppy/config.json",
+        "path": ".nipoppy/config.json5",
         "description": "The configuration file for the study/dataset where all data processing is configured."
     },
     "fpath_curation_status": {
