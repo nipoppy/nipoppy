@@ -202,7 +202,7 @@ class ZenodoAPI:
             )
         new_record_id = response.json()["id"]
         owner_id = response.json()["owners"][0]["id"]
-        return new_record_id, owner_id
+        return str(new_record_id), str(owner_id)
 
     def _create_draft(self) -> Tuple[str, str]:
         response = self.client.post(
@@ -212,7 +212,7 @@ class ZenodoAPI:
         if response.status_code != 201:
             raise ZenodoAPIError(f"Failed to create a draft record: {response.json()}")
 
-        return response.json()["id"], response.json()["owners"][0]["id"]
+        return str(response.json()["id"]), str(response.json()["owners"][0]["id"])
 
     def _add_creators_to_metadata(self, owner_id: str, metadata: dict) -> dict:
         # get user profile info
@@ -535,11 +535,24 @@ class ZenodoAPI:
             json={"communities": [{"id": community_id}]},
         )
         response_json = response.json()
+        errors = response_json.get("errors", [])
+        error_messages = {error.get("message") for error in errors}
+        if "The record is already included in this community." in error_messages:
+            self.logger.info(
+                f"zenodo.{record_id} is already in community {community_id}"
+            )
+            return
         if (
-            response.status_code != 200
-            or response_json.get("errors")
-            or not response_json.get("processed")
+            "There is already an open inclusion request for this community."
+            in error_messages
         ):
+            self.logger.warning(
+                f"zenodo.{record_id} already has an open inclusion request for "
+                f"community {community_id}"
+            )
+            return
+
+        if response.status_code != 200 or not response_json.get("processed") or errors:
             raise ZenodoAPIError(
                 f"Failed to request inclusion of zenodo.{record_id} in community "
                 f"{community_id}: {response_json}"

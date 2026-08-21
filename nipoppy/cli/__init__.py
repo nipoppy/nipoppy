@@ -8,6 +8,7 @@ from pydantic_core import ValidationError
 from nipoppy.env import BUG_REPORT_URL, DISCORD_URL
 from nipoppy.exceptions import NipoppyError, ReturnCode
 from nipoppy.logger import get_logger
+from nipoppy.zenodo_api import ZenodoAPIError
 
 logger = get_logger()
 
@@ -29,6 +30,9 @@ def exception_handler(workflow):
         logger.info(
             "Troubleshooting: Review your configuration fields and value types."
         )
+    except ZenodoAPIError as e:
+        workflow.return_code = ReturnCode.KNOWN_FAILURE
+        logger.error(e)
     except SystemExit as e:
         workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
         logger.error(e)

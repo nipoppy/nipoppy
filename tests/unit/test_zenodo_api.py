@@ -1045,6 +1045,33 @@ def test_record_not_up_to_date_when_metadata_differs(
     )
 
 
+def test_record_not_up_to_date_without_owner(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    mocker.patch.object(
+        zenodo_api,
+        "get_record_files",
+        return_value={
+            "entries": [
+                {"key": file_to_upload.name, "checksum": _get_file_md5(file_to_upload)}
+            ]
+        },
+    )
+    mocker.patch.object(
+        zenodo_api,
+        "get_record",
+        return_value={"metadata": {}, "owners": []},
+    )
+
+    assert not zenodo_api.is_record_up_to_date(
+        record_id="123456",
+        input_dir=tmp_path,
+        metadata={"metadata": {"creators": []}},
+    )
+
+
 def test_record_up_to_date_with_default_creator(
     tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
 ):

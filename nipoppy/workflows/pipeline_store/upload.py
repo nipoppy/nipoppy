@@ -211,7 +211,7 @@ def _is_same_pipeline(
     bool
         True if the pipelines are the same, False otherwise.
     """
-    keywords = zenodo_metadata["keywords"]
+    keywords = zenodo_metadata.get("keywords", [])
     pipeline_type = pipeline_config.PIPELINE_TYPE.value
     pipeline_name = pipeline_config.NAME
     pipeline_version = pipeline_config.VERSION
