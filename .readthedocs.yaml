@@ -19,7 +19,7 @@ python:
   - method: uv
     command: sync
     extras:
-        - docs
+        - doc
 
 # Build documentation with Sphinx
 sphinx:
