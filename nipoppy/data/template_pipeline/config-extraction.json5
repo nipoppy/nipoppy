@@ -16,7 +16,7 @@
             "INVOCATION_FILE": "invocation.json",
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
-            "HPC_CONFIG_FILE": "hpc.json"
+            "HPC_CONFIG_FILE": "hpc.json5"
         }
     ],
     "PROC_DEPENDENCIES": [

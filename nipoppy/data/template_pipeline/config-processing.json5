@@ -16,8 +16,8 @@
             "INVOCATION_FILE": "invocation.json",
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
-            "TRACKER_CONFIG_FILE": "tracker.json",
-            "HPC_CONFIG_FILE": "hpc.json",
+            "TRACKER_CONFIG_FILE": "tracker.json5",
+            "HPC_CONFIG_FILE": "hpc.json5",
             "GENERATE_PYBIDS_DATABASE": false,
             "PYBIDS_IGNORE_FILE": null
         }

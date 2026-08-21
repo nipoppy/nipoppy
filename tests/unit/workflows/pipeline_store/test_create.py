@@ -87,11 +87,11 @@ def test_create(
     }
     assert _has_correct_JSON5_comment(invocation_file_path)
 
-    hpc_file_path = workflow.pipeline_dir.joinpath("hpc.json")
+    hpc_file_path = workflow.pipeline_dir.joinpath("hpc.json5")
     assert hpc_file_path.is_file()
     assert _has_same_JSON_content(
         hpc_file_path,
-        TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
+        TEMPLATE_PIPELINE_PATH.joinpath("hpc.json5"),
     )
     assert _has_correct_JSON5_comment(hpc_file_path)
 
@@ -104,11 +104,11 @@ def test_create(
     assert _has_correct_JSON5_comment(pipeline_config_file_path)
 
     if type_ == PipelineTypeEnum.PROCESSING:
-        tracker_file_path = workflow.pipeline_dir.joinpath("tracker.json")
+        tracker_file_path = workflow.pipeline_dir.joinpath("tracker.json5")
         assert tracker_file_path.is_file()
         assert _has_same_JSON_content(
             tracker_file_path,
-            TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
+            TEMPLATE_PIPELINE_PATH.joinpath("tracker.json5"),
         )
         assert _has_correct_JSON5_comment(tracker_file_path)
 

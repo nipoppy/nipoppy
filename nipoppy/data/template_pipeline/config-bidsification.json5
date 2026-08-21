@@ -17,7 +17,7 @@
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
             "UPDATE_STATUS": true,
-            "HPC_CONFIG_FILE": "hpc.json"
+            "HPC_CONFIG_FILE": "hpc.json5"
         }
     ],
     "PIPELINE_TYPE": "bidsification",

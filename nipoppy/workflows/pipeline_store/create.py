@@ -10,6 +10,7 @@ from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.utils import fileops
 from nipoppy.utils.json5 import update_json5_file
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
@@ -55,7 +56,16 @@ class PipelineCreateWorkflow(BaseWorkflow):
         else:
             target.mkdir(parents=True, exist_ok=True)
 
-        descriptor_path = target / "descriptor.json"
+        source_pipeline_config_path = TEMPLATE_PIPELINE_PATH.joinpath(
+            f"config-{type_.value}.json5"
+        )
+
+        # the template pipeline only has one step
+        pipeline_step_config = _load_pipeline_config_file(
+            source_pipeline_config_path, strict=True
+        ).get_step_config()
+
+        descriptor_path = target.joinpath(pipeline_step_config.DESCRIPTOR_FILE)
         if source_descriptor:
             try:
                 boutiques.validate(str(source_descriptor))
@@ -72,29 +82,29 @@ class PipelineCreateWorkflow(BaseWorkflow):
         else:
             boutiques.create(str(descriptor_path))
 
-        fpath_invocation = target.joinpath("invocation.json")
+        invocation_path = target.joinpath(pipeline_step_config.INVOCATION_FILE)
         # copy the 'header' (top-level comments)
         fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath("invocation_header.txt"),
-            fpath_invocation,
+            invocation_path,
             version=PROGRAM_VERSION,
             dry_run=self.dry_run,
         )
         # then append the actual example invocation
-        with fpath_invocation.open("a") as file_invocation:
+        with invocation_path.open("a") as file_invocation:
             file_invocation.write(boutiques.example(str(descriptor_path)))
 
         fileops.copy_template(
-            TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
-            target.joinpath("hpc.json"),
+            TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
+            target.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
             version=PROGRAM_VERSION,
             dry_run=self.dry_run,
         )
 
-        fpath_config = target.joinpath(DatasetLayout.fname_pipeline_config)
+        dest_pipeline_config_path = target.joinpath(DatasetLayout.fname_pipeline_config)
         fileops.copy_template(
-            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json5"),
-            fpath_config,
+            source_pipeline_config_path,
+            dest_pipeline_config_path,
             version=PROGRAM_VERSION,
             dry_run=self.dry_run,
         )
@@ -117,13 +127,15 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 updates.append((["CONTAINER_INFO", "URI"], uri))
 
             if not self.dry_run:
-                update_json5_file(fpath_config, updates)
+                update_json5_file(dest_pipeline_config_path, updates)
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
             fileops.copy_template(
-                TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
-                target.joinpath("tracker.json"),
+                TEMPLATE_PIPELINE_PATH.joinpath(
+                    pipeline_step_config.TRACKER_CONFIG_FILE
+                ),
+                target.joinpath(pipeline_step_config.TRACKER_CONFIG_FILE),
                 version=PROGRAM_VERSION,
                 dry_run=self.dry_run,
             )
