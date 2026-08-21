@@ -55,7 +55,7 @@ Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/
 
 The HPC config file should look similar to this:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/hpc.json
+```{literalinclude} ../../../../nipoppy/data/template_pipeline/hpc.json5
 ---
 linenos: True
 language: json
