@@ -28,8 +28,10 @@ logger = get_logger()
 
 
 class BaseWorkflow(Base, ABC):
-    """Base workflow class with logging/subprocess/filesystem utilities."""
+    """Base workflow class with shared workflow and logging utilities.
 
+    For subprocess helpers, see :mod:`nipoppy.utils.subprocess_runner`.
+    """
     def __init__(self, name: str, verbose: bool = False, dry_run: bool = False):
         """Initialize the workflow instance.
 
