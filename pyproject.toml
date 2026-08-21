@@ -19,13 +19,11 @@ dependencies = [
     "click",
     "httpx",
     "jinja2",
-    "json5",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
     "pydicom!=3.0.0",
     "pysqa[sge]>=0.2.4",
-    "python-dotenv",
     "rich",
     "rich-click",
     "typing-extensions",
@@ -42,9 +40,7 @@ parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
-    # Simplify after dropping Python 3.10 support
-    "myst-parser>=5.1.0 ; python_version >= '3.11'",
-    "myst-parser ; python_version < '3.11'",
+    "myst-parser",
     "sphinx",
     "sphinx-autoapi",
     "sphinx-click",
@@ -89,6 +85,25 @@ source = "vcs"
 
 [tool.codespell]
 skip = '.git,.github,pyproject.toml'
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+ignore = ["D105"]
+select = ["C90", "D", "E", "F", "I", "W"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["D104", "F401"]
+"**/test_*.py" = ["D100", "D101", "D103"]
+"docs/source/conf.py" = ["E501"]
+"tests/unit/workflows/test_*.py" = ["E501"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.pytest.ini_options]
 addopts = "--color=yes -n auto --dist loadfile -ra -q -vv"

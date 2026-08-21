@@ -41,11 +41,11 @@ from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     get_pipeline_version,
 )
-from tests.conftest import datetime_fixture  # noqa F401
 from tests.conftest import (
     _set_up_substitution_testing,
     create_empty_dataset,
     create_pipeline_config_files,
+    datetime_fixture,  # noqa F401
     get_config,
     prepare_dataset,
 )
@@ -636,7 +636,8 @@ def test_get_pipeline_config(
 
 
 def test_get_pipeline_config_json5(workflow: PipelineWorkflow, tmp_path: Path):
-    (tmp_path / "config.json").write_text(f"""
+    (tmp_path / "config.json").write_text(
+        f"""
 {{
   // Comments and trailing commas should be supported
   "NAME": "{workflow.pipeline_name}",
@@ -647,7 +648,8 @@ def test_get_pipeline_config_json5(workflow: PipelineWorkflow, tmp_path: Path):
     {{}},
   ],
 }}
-""".strip())
+""".strip()
+    )
 
     config = workflow._get_pipeline_config(
         tmp_path,
@@ -900,7 +902,7 @@ def test_set_up_bids_db_no_session(
         session_id=session_id,
     )
 
-    assert not (f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})" in caplog.text)
+    assert f".*?/{BIDS_SESSION_PREFIX}(?!{session_id})" not in caplog.text
     assert len(bids_layout.get(extension=".nii.gz")) > 0
 
 
@@ -1311,9 +1313,9 @@ def test_log_summary_message_no_participants_warning(
         and "No participants or sessions to run" in record.message
         for record in caplog.records
     ), "Wrong log message or level"
-    assert (
-        workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
-    ), "Wrong return code"
+    assert workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, (
+        "Wrong return code"
+    )
 
 
 @pytest.mark.parametrize(

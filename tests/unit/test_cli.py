@@ -89,18 +89,18 @@ def dummy_cli():
 def _assert_command_success(args):
     """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
-    assert (
-        result.exit_code == ReturnCode.SUCCESS
-    ), f"Command failed: {args}\n{result.output}"
+    assert result.exit_code == ReturnCode.SUCCESS, (
+        f"Command failed: {args}\n{result.output}"
+    )
 
 
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
 def test_cli_invalid(args):
     """Test that a fake command does not exist."""
     result = runner.invoke(cli, args, catch_exceptions=False)
-    assert (
-        result.exit_code == ReturnCode.INVALID_COMMAND
-    ), f"Expected invalid command exit code for: {args}\n{result.output}"
+    assert result.exit_code == ReturnCode.INVALID_COMMAND, (
+        f"Expected invalid command exit code for: {args}\n{result.output}"
+    )
 
 
 @pytest.mark.parametrize(
