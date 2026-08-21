@@ -39,6 +39,7 @@ docs/source/reference/schemas/*.json
 env/
 venv/
 .venv/
+.venv
 nipoppy_env/
 
 # Env var file

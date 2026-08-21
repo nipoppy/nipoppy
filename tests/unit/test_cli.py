@@ -339,6 +339,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "zenodo.123456",
                 "--password-file",
                 str(PASSWORD_FILE),
+                "--community",
             ],
             "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
         ),
