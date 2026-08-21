@@ -5,7 +5,6 @@ import shutil
 import subprocess
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional
 
 import pytest
 import pytest_mock
@@ -478,7 +477,7 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
     "zenodo_id,exception", [(None, FileOperationError), ("123456", ConfigError)]
 )
 def test_run_main_file_not_found(
-    workflow: PipelineInstallWorkflow, zenodo_id: Optional[str], exception: Exception
+    workflow: PipelineInstallWorkflow, zenodo_id: str | None, exception: Exception
 ):
     # create a non-existent path
     workflow.dpath_pipeline = (

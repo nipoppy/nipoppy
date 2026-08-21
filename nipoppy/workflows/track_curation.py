@@ -1,7 +1,6 @@
 """Workflow for init command."""
 
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.logger import get_logger
@@ -23,7 +22,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         dpath_root: Path,
         empty: bool = False,
         force: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):
