@@ -8,7 +8,7 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
@@ -53,9 +53,9 @@ FIELD_DESCRIPTION_MAP = {
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
-    pipeline_step: Optional[str] = None,
-    participant_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    pipeline_step: str | None = None,
+    participant_id: str | None = None,
+    session_id: str | None = None,
     sep="-",
 ):
     """Generate a tag for a pipeline."""
@@ -134,7 +134,7 @@ def add_path_timestamp(
 def save_df_with_backup(
     df: pd.DataFrame,
     fpath_symlink: StrOrPathLike,
-    dname_backups: Optional[str] = None,
+    dname_backups: str | None = None,
     use_relative_path=True,
     dry_run=False,
     **kwargs,
@@ -147,7 +147,7 @@ def save_df_with_backup(
         The dataframe to save
     fpath_symlink : nipoppy.env.StrOrPathLike
         The path to the symlink
-    dname_backups : Optional[str], optional
+    dname_backups : str | None, optional
         The directory where the timestamped backup file should be written
         (automatically determined if None), by default None
     use_relative_path : bool, optional

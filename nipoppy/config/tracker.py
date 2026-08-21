@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -20,7 +19,7 @@ class TrackerConfig(BaseModel):
         ),
     )
 
-    PARTICIPANT_SESSION_DIR: Optional[Path] = Field(
+    PARTICIPANT_SESSION_DIR: Path | None = Field(
         default=None,
         description=(
             "Path to the directory where participant-session results are expected"

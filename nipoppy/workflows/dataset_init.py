@@ -1,7 +1,6 @@
 """Workflow for init command."""
 
 from pathlib import Path
-from typing import Optional
 
 import httpx
 
@@ -75,7 +74,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         bids_source=None,
         mode="symlink",
         force=False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

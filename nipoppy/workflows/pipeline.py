@@ -6,9 +6,10 @@ import json
 import re
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import rich
@@ -144,15 +145,15 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         participant_id: str = None,
         session_id: str = None,
-        use_subcohort: Optional[StrOrPathLike] = None,
-        hpc: Optional[str] = None,
-        write_subcohort: Optional[StrOrPathLike] = None,
-        n_jobs: Optional[int] = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        use_subcohort: StrOrPathLike | None = None,
+        hpc: str | None = None,
+        write_subcohort: StrOrPathLike | None = None,
+        n_jobs: int | None = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run=False,
         _skip_logfile: bool = False,
@@ -426,7 +427,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         dpath_pipeline_bundle: Path,
         pipeline_name: str,
         pipeline_version: str,
-        pipeline_class: Type[BasePipelineConfig],
+        pipeline_class: type[BasePipelineConfig],
     ) -> BasePipelineConfig:
         """Get the config for a pipeline."""
         fpath_config = dpath_pipeline_bundle / self.study.layout.fname_pipeline_config
@@ -464,11 +465,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def process_template_json(
         self,
         template_json: dict,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        bids_participant_id: Optional[str] = None,
-        bids_session_id: Optional[str] = None,
-        objs: Optional[list] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
+        bids_participant_id: str | None = None,
+        bids_session_id: str | None = None,
+        objs: list | None = None,
         return_str: bool = False,
         with_substitutions: bool = True,
         **kwargs,
@@ -516,8 +517,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def set_up_bids_db(
         self,
         dpath_pybids_db: StrOrPathLike,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> bids.BIDSLayout:
         """Set up the BIDS database."""
         dpath_pybids_db: Path = Path(dpath_pybids_db)
@@ -633,7 +634,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         # failure
         return False, None
 
-    def _get_results_generator(self, participants_sessions: Iterable[Tuple[str, str]]):
+    def _get_results_generator(self, participants_sessions: Iterable[tuple[str, str]]):
         participants_sessions = list(participants_sessions)
         n_total = len(participants_sessions)
         if JOBLIB_INSTALLED:
@@ -667,7 +668,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def apply_analysis_level(
         participants_sessions: Iterable[str],
         analysis_level: AnalysisLevelType,
-    ) -> List[Tuple[str, str]]:
+    ) -> list[tuple[str, str]]:
         """Filter participant-session pairs to run based on the analysis level."""
         if analysis_level == AnalysisLevelType.group:
             return [(None, None)]
@@ -789,7 +790,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     @abstractmethod
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """
         Return participant-session pairs to loop over with run_single().
@@ -798,7 +799,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """
 
     @abstractmethod
-    def run_single(self, participant_id: Optional[str], session_id: Optional[str]):
+    def run_single(self, participant_id: str | None, session_id: str | None):
         """
         Run on a single participant/session.
 
@@ -807,8 +808,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
+        dnames_parent: str | list[str] | None = None,
+        fname_stem: str | None = None,
     ) -> Path:
         """Generate a log file path."""
         # make sure that pipeline version is not None

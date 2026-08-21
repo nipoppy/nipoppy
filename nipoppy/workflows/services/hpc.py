@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Environment, meta
 from pysqa import QueueAdapter
@@ -170,7 +170,7 @@ class HPCRunner:
         pipeline_version: str,
         pipeline_step: str,
         dry_run: bool = False,
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Submit a job to the HPC scheduler.
 
