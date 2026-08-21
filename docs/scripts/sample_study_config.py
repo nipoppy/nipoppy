@@ -15,4 +15,5 @@ if __name__ == "__main__":
         FPATH_SAMPLE_CONFIG,
         DPATH_INSERTS / "sample_study_config.json5",
         version=PROGRAM_VERSION,
+        exist_ok=True,
     )
