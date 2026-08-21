@@ -23,6 +23,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v8
         with:
           title: '[MAINT] Update lockfile'
+          branch: ci/update_lockfile
           labels: 'T.2 - Maintenance,bot'
           commit-message: '[MAINT] Update lockfile'
           token: $${{ steps.generate-token.outputs.token }}
