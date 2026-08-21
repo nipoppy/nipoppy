@@ -93,7 +93,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         fpath_config = target.joinpath(DatasetLayout.fname_pipeline_config)
         fileops.copy_template(
-            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
+            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json5"),
             fpath_config,
             version=PROGRAM_VERSION,
             dry_run=self.dry_run,

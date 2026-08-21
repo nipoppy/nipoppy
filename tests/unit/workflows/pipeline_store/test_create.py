@@ -99,7 +99,7 @@ def test_create(
     assert pipeline_config_file_path.is_file()
     assert _has_same_JSON_content(
         pipeline_config_file_path,
-        TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
+        TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json5"),
     )
     assert _has_correct_JSON5_comment(pipeline_config_file_path)
 
