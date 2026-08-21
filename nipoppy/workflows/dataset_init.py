@@ -167,6 +167,8 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
+                dry_run=self.dry_run,
+                exist_ok=True,
             )
 
         # copy HPC files
