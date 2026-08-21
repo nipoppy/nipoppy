@@ -13,7 +13,7 @@
     },
     "STEPS": [
         {
-            "INVOCATION_FILE": "invocation.json",
+            "INVOCATION_FILE": "invocation.json5",
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
             "HPC_CONFIG_FILE": "hpc.json5"

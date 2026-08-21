@@ -77,7 +77,7 @@ def test_create(
         TEMPLATE_PIPELINE_PATH.joinpath("descriptor.json"),
     )
 
-    invocation_file_path = workflow.pipeline_dir.joinpath("invocation.json")
+    invocation_file_path = workflow.pipeline_dir.joinpath("invocation.json5")
     assert invocation_file_path.is_file()
     # Cannot compare the content of the invocation.json file
     # because boutiques generates random arg values.
@@ -139,7 +139,7 @@ def test_create_from_descriptor(workflow: PipelineCreateWorkflow):
 
     assert set(
         load_json(
-            workflow.pipeline_dir.joinpath("invocation.json"), allow_json5=True
+            workflow.pipeline_dir.joinpath("invocation.json5"), allow_json5=True
         ).keys()
     ) == {
         "bids_dir",

@@ -13,7 +13,7 @@
     },
     "STEPS": [
         {
-            "INVOCATION_FILE": "invocation.json",
+            "INVOCATION_FILE": "invocation.json5",
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
             "TRACKER_CONFIG_FILE": "tracker.json5",
