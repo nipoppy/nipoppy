@@ -193,6 +193,11 @@ def pipeline_validate(**params):
     is_flag=True,
     help="Ignore safeguard warnings and upload anyway. Use with caution.",
 )
+@click.option(
+    "--community",
+    is_flag=True,
+    help="Request inclusion of the pipeline in the Nipoppy Zenodo community.",
+)
 @zenodo_options
 @global_options
 def pipeline_upload(**params):

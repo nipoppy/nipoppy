@@ -1,6 +1,8 @@
 """Client for Zenodo API."""
 
+import copy
 import hashlib
+import json
 import logging
 from pathlib import Path
 from typing import Any, Optional, Tuple
@@ -13,6 +15,60 @@ class ChecksumError(Exception): ...  # noqa E701
 
 
 class ZenodoAPIError(Exception): ...  # noqa E701
+
+
+def _normalize_metadata(metadata: dict) -> dict:
+    """Remove dynamic and Zenodo-generated values before comparison.
+
+    Basically, this function recursively removes None values, empty lists, and empty
+    dictionaries from the metadata dictionary.
+    """
+
+    def normalize(value):
+        if isinstance(value, dict):
+            normalized = {}
+            for key, item in value.items():
+                # Zenodo enriches controlled vocabularies with display titles.
+                if key == "title" and "id" in value:
+                    continue
+                # Zenodo derives display names for people and identified affiliations.
+                if key == "name" and (
+                    "id" in value or "family_name" in value or "given_name" in value
+                ):
+                    continue
+
+                normalized_item = normalize(item)
+                if normalized_item in (None, [], {}):
+                    continue
+                normalized[key] = normalized_item
+            return normalized
+
+        if isinstance(value, list):
+            return [
+                normalized_item
+                for item in value
+                if (normalized_item := normalize(item)) not in (None, [], {})
+            ]
+
+        return value
+
+    metadata = copy.deepcopy(metadata)
+    metadata.pop("publication_date", None)
+    metadata = normalize(metadata)
+
+    # Subject order does not affect the record metadata.
+    if subjects := metadata.get("subjects"):
+        metadata["subjects"] = sorted(
+            subjects, key=lambda subject: json.dumps(subject, sort_keys=True)
+        )
+
+    return metadata
+
+
+def _get_file_md5(file: Path) -> str:
+    """Calculate the MD5 checksum used by Zenodo for uploaded files."""
+    checksum = hashlib.md5(file.read_bytes())
+    return f"md5:{checksum.hexdigest()}"
 
 
 class ZenodoAPI:
@@ -102,16 +158,10 @@ class ZenodoAPI:
         record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        response = self.client.get(f"/records/{record_id}/files")
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to get files for zenodo.{record_id}: {response.json()}"
-            )
-
         # Exclude "md5:" prefix
         files = {
             entry["key"]: entry["checksum"].removeprefix("md5:")
-            for entry in response.json()["entries"]
+            for entry in self.get_record_files(record_id)["entries"]
         }
         for file, checksum in files.items():
             response = self.client.get(f"/records/{record_id}/files/{file}/content")
@@ -272,6 +322,7 @@ class ZenodoAPI:
         metadata: dict,
         record_id: Optional[str] = None,
         default_preview_filename: Optional[str] = None,
+        community_id: Optional[str] = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
         record_id = self._process_record_id(record_id)
@@ -305,7 +356,6 @@ class ZenodoAPI:
 
             self._update_metadata(record_id, metadata)
             doi = self._publish(record_id)
-            return doi
 
         except Exception as e:
             # Delete the draft if an error occurs
@@ -325,6 +375,17 @@ class ZenodoAPI:
                 )
 
             raise ZenodoAPIError from e
+
+        if community_id is not None:
+            try:
+                self.request_community_inclusion(record_id, community_id)
+            except ZenodoAPIError as e:
+                raise ZenodoAPIError(
+                    f"Pipeline was published at {doi}, but its inclusion request "
+                    f"to community {community_id} failed: {e}"
+                ) from e
+
+        return doi
 
     def search_records(
         self,
@@ -380,16 +441,109 @@ class ZenodoAPI:
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
+        processed_record_id = self._process_record_id(record_id)
+        try:
+            return self.get_record(processed_record_id)["metadata"]
+        except ZenodoAPIError as e:
+            raise ZenodoAPIError(
+                f"Failed to get metadata for zenodo.{processed_record_id}: {e}"
+            ) from e
+
+    def get_record(self, record_id: str, native: bool = False) -> dict:
+        """Get a complete Zenodo record."""
         record_id = self._process_record_id(record_id)
+        headers = {"Accept": "application/vnd.inveniordm.v1+json"} if native else None
         response = self.client.get(
             f"{self.api_endpoint}/records/{record_id}",
+            headers=headers,
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
-                f"Failed to get metadata for zenodo.{record_id}: {response.json()}"
+                f"Failed to get record zenodo.{record_id}: {response.json()}"
             )
 
-        return response.json()["metadata"]
+        return response.json()
+
+    def get_record_files(self, record_id: str) -> dict:
+        """Get the file manifest of a published Zenodo record."""
+        record_id = self._process_record_id(record_id)
+        response = self.client.get(f"/records/{record_id}/files")
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get files for zenodo.{record_id}: {response.json()}"
+            )
+        return response.json()
+
+    def is_record_up_to_date(
+        self,
+        record_id: str,
+        input_dir: Path,
+        metadata: dict,
+        default_preview_filename: Optional[str] = None,
+    ) -> bool:
+        """Check whether local files and metadata match a published record."""
+        record_id = self._process_record_id(record_id)
+        local_files = {
+            file.name: _get_file_md5(file) for file in sorted(input_dir.iterdir())
+        }
+
+        record_files = self.get_record_files(record_id)
+        remote_files = {
+            entry["key"]: (
+                entry["checksum"].lower()
+                if ":" in entry["checksum"]
+                else f"md5:{entry['checksum'].lower()}"
+            )
+            for entry in record_files["entries"]
+        }
+        if local_files != remote_files:
+            return False
+        if (
+            default_preview_filename is not None
+            and record_files.get("default_preview") != default_preview_filename
+        ):
+            return False
+
+        record = self.get_record(record_id, native=True)
+        local_metadata = copy.deepcopy(metadata)
+        if not local_metadata["metadata"].get("creators"):
+            owners = record.get("owners", [])
+            if not owners:
+                return False  # Cannot infer creators if the record has no owners
+            local_metadata = self._add_creators_to_metadata(
+                owners[0]["id"], local_metadata
+            )
+
+        return _normalize_metadata(local_metadata["metadata"]) == _normalize_metadata(
+            record["metadata"]
+        )
+
+    def get_community_id(self, community: str) -> str:
+        """Resolve a community slug or ID in the active Zenodo environment."""
+        response = self.client.get(f"/communities/{community}")
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get Zenodo community {community}: {response.json()}"
+            )
+        return str(response.json()["id"])
+
+    def request_community_inclusion(self, record_id: str, community_id: str) -> None:
+        """Request inclusion of a published record in a Zenodo community."""
+        record_id = self._process_record_id(record_id)
+        response = self.client.post(
+            f"/records/{record_id}/communities",
+            json={"communities": [{"id": community_id}]},
+        )
+        response_json = response.json()
+        if (
+            response.status_code != 200
+            or response_json.get("errors")
+            or not response_json.get("processed")
+        ):
+            raise ZenodoAPIError(
+                f"Failed to request inclusion of zenodo.{record_id} in community "
+                f"{community_id}: {response_json}"
+            )
 
     def get_latest_version_id(self, record_id: str) -> str:
         """Get the ID of the latest version of a Zenodo record.

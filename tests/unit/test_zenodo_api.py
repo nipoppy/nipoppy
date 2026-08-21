@@ -9,7 +9,12 @@ import pytest
 import pytest_httpx
 import pytest_mock
 
-from nipoppy.zenodo_api import ChecksumError, ZenodoAPI, ZenodoAPIError
+from nipoppy.zenodo_api import (
+    ChecksumError,
+    ZenodoAPI,
+    ZenodoAPIError,
+    _get_file_md5,
+)
 from tests.conftest import PASSWORD_FILE
 
 
@@ -669,6 +674,61 @@ def test_upload_record_default_preview(
     mocked_add_default_preview_to_metadata.assert_called_once_with(metadata, fnames[-1])
 
 
+def test_upload_record_community_request(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    record_id = "654321"
+    community_id = "nipoppy-community-id"
+    metadata = {"metadata": {"creators": [{}]}}
+    mocker.patch.object(zenodo_api, "_check_authentication")
+    mocker.patch.object(zenodo_api, "_create_draft", return_value=(record_id, "888888"))
+    mocker.patch.object(zenodo_api, "_upload_files")
+    mocker.patch.object(zenodo_api, "_update_metadata")
+    mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
+    request_community_inclusion = mocker.patch.object(
+        zenodo_api, "request_community_inclusion"
+    )
+
+    zenodo_api.upload_record(
+        input_dir=tmp_path,
+        metadata=metadata,
+        community_id=community_id,
+    )
+
+    request_community_inclusion.assert_called_once_with(record_id, community_id)
+
+
+def test_upload_record_community_failure_does_not_revert(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    record_id = "654321"
+    doi = "fake_doi"
+    metadata = {"metadata": {"creators": [{}]}}
+    mocker.patch.object(zenodo_api, "_check_authentication")
+    mocker.patch.object(zenodo_api, "_create_draft", return_value=(record_id, "888888"))
+    mocker.patch.object(zenodo_api, "_upload_files")
+    mocker.patch.object(zenodo_api, "_update_metadata")
+    mocker.patch.object(zenodo_api, "_publish", return_value=doi)
+    mocker.patch.object(
+        zenodo_api,
+        "request_community_inclusion",
+        side_effect=ZenodoAPIError("Request failed"),
+    )
+    delete = mocker.patch.object(zenodo_api.client, "delete")
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=f"Pipeline was published at {doi}, but its inclusion request",
+    ):
+        zenodo_api.upload_record(
+            input_dir=tmp_path,
+            metadata=metadata,
+            community_id="nipoppy-community-id",
+        )
+
+    delete.assert_not_called()
+
+
 def test_upload_record_dir_not_found(zenodo_api: ZenodoAPI):
     with pytest.raises(FileNotFoundError):
         zenodo_api.upload_record(input_dir=Path("fake_path"), metadata={})
@@ -705,6 +765,9 @@ def test_upload_record_delete_draft(
     mocker.patch.object(
         zenodo_api, "_publish", side_effect=ZenodoAPIError("Publish failed")
     )
+    request_community_inclusion = mocker.patch.object(
+        zenodo_api, "request_community_inclusion"
+    )
     httpx_mock.add_response(
         url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
         method="DELETE",
@@ -716,10 +779,12 @@ def test_upload_record_delete_draft(
         zenodo_api.upload_record(
             input_dir=tmp_path,
             metadata={"metadata": {}},
+            community_id="nipoppy-community-id",
         )
 
     assert "Reverting record creation" in caplog.text
     assert expected_log_message in caplog.text
+    request_community_inclusion.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -829,6 +894,264 @@ def test_get_record_metadata_fails(
         ZenodoAPIError, match=f"Failed to get metadata for zenodo.{record_id}"
     ):
         zenodo_api.get_record_metadata(record_id=record_id)
+
+
+def test_get_record_native(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
+    record_id = "123456"
+    record = {"id": record_id, "metadata": {}}
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
+        method="GET",
+        match_headers={"Accept": "application/vnd.inveniordm.v1+json"},
+        json=record,
+    )
+
+    assert zenodo_api.get_record(record_id, native=True) == record
+
+
+def test_record_up_to_date_ignores_dynamic_metadata(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    record_id = "123456"
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    local_metadata = {
+        "metadata": {
+            "title": "Test pipeline",
+            "publication_date": "2026-08-04",
+            "creators": [
+                {
+                    "person_or_org": {
+                        "family_name": "Test",
+                        "type": "personal",
+                    }
+                }
+            ],
+            "resource_type": {"id": "software"},
+            "subjects": [{"subject": "Nipoppy"}, {"subject": "processing"}],
+        }
+    }
+    remote_metadata = {
+        "title": "Test pipeline",
+        "publication_date": "2025-01-01",
+        "creators": [
+            {
+                "person_or_org": {
+                    "family_name": "Test",
+                    "name": "Test",
+                    "type": "personal",
+                }
+            }
+        ],
+        "resource_type": {"id": "software", "title": {"en": "Software"}},
+        "subjects": [{"subject": "processing"}, {"subject": "Nipoppy"}],
+    }
+    mocker.patch.object(
+        zenodo_api,
+        "get_record_files",
+        return_value={
+            "default_preview": "config.json",
+            "entries": [
+                {
+                    "key": file_to_upload.name,
+                    "checksum": _get_file_md5(file_to_upload).removeprefix("md5:"),
+                }
+            ],
+        },
+    )
+    get_record = mocker.patch.object(
+        zenodo_api,
+        "get_record",
+        return_value={"metadata": remote_metadata, "owners": [{"id": "1"}]},
+    )
+
+    assert zenodo_api.is_record_up_to_date(
+        record_id=record_id,
+        input_dir=tmp_path,
+        metadata=local_metadata,
+        default_preview_filename="config.json",
+    )
+    get_record.assert_called_once_with(record_id, native=True)
+
+
+@pytest.mark.parametrize(
+    "remote_checksum,default_preview",
+    [("md5:wrong", "config.json"), (None, "other.json")],
+)
+def test_record_not_up_to_date_when_files_differ(
+    remote_checksum: str | None,
+    default_preview: str,
+    tmp_path: Path,
+    zenodo_api: ZenodoAPI,
+    mocker: pytest_mock.MockerFixture,
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    mocker.patch.object(
+        zenodo_api,
+        "get_record_files",
+        return_value={
+            "default_preview": default_preview,
+            "entries": (
+                [{"key": file_to_upload.name, "checksum": remote_checksum}]
+                if remote_checksum is not None
+                else [
+                    {
+                        "key": file_to_upload.name,
+                        "checksum": _get_file_md5(file_to_upload),
+                    }
+                ]
+            ),
+        },
+    )
+    get_record = mocker.patch.object(zenodo_api, "get_record")
+
+    assert not zenodo_api.is_record_up_to_date(
+        record_id="123456",
+        input_dir=tmp_path,
+        metadata={"metadata": {}},
+        default_preview_filename="config.json",
+    )
+    get_record.assert_not_called()
+
+
+def test_record_not_up_to_date_when_metadata_differs(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    mocker.patch.object(
+        zenodo_api,
+        "get_record_files",
+        return_value={
+            "entries": [
+                {"key": file_to_upload.name, "checksum": _get_file_md5(file_to_upload)}
+            ]
+        },
+    )
+    mocker.patch.object(
+        zenodo_api,
+        "get_record",
+        return_value={
+            "metadata": {"title": "Old title", "creators": [{}]},
+            "owners": [{"id": "1"}],
+        },
+    )
+
+    assert not zenodo_api.is_record_up_to_date(
+        record_id="123456",
+        input_dir=tmp_path,
+        metadata={"metadata": {"title": "New title", "creators": [{}]}},
+    )
+
+
+def test_record_up_to_date_with_default_creator(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    creator = {"person_or_org": {"family_name": "Test", "type": "personal"}}
+    mocker.patch.object(
+        zenodo_api,
+        "get_record_files",
+        return_value={
+            "entries": [
+                {"key": file_to_upload.name, "checksum": _get_file_md5(file_to_upload)}
+            ]
+        },
+    )
+    mocker.patch.object(
+        zenodo_api,
+        "get_record",
+        return_value={
+            "metadata": {"title": "Test", "creators": [creator]},
+            "owners": [{"id": "owner-id"}],
+        },
+    )
+
+    def add_creator(owner_id, metadata):
+        assert owner_id == "owner-id"
+        metadata["metadata"]["creators"] = [creator]
+        return metadata
+
+    add_creators = mocker.patch.object(
+        zenodo_api, "_add_creators_to_metadata", side_effect=add_creator
+    )
+
+    assert zenodo_api.is_record_up_to_date(
+        record_id="123456",
+        input_dir=tmp_path,
+        metadata={"metadata": {"title": "Test", "creators": []}},
+    )
+    add_creators.assert_called_once()
+
+
+def test_get_community_id(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/communities/nipoppy",
+        method="GET",
+        json={"id": community_id},
+    )
+
+    assert zenodo_api.get_community_id("nipoppy") == community_id
+
+
+def test_get_community_id_fails(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/communities/nipoppy",
+        method="GET",
+        status_code=404,
+        json={"message": "Not found"},
+    )
+
+    with pytest.raises(ZenodoAPIError, match="Failed to get Zenodo community nipoppy"):
+        zenodo_api.get_community_id("nipoppy")
+
+
+def test_request_community_inclusion(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "123456"
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/communities",
+        method="POST",
+        match_json={"communities": [{"id": community_id}]},
+        status_code=200,
+        json={"processed": [{"community_id": community_id}]},
+    )
+
+    zenodo_api.request_community_inclusion(record_id, community_id)
+
+
+@pytest.mark.parametrize(
+    "status_code,response_json",
+    [
+        (400, {"message": "Invalid request"}),
+        (200, {"errors": [{"message": "Request already exists"}]}),
+        (200, {"processed": []}),
+    ],
+)
+def test_request_community_inclusion_fails(
+    status_code: int,
+    response_json: dict,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+):
+    record_id = "123456"
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/communities",
+        method="POST",
+        status_code=status_code,
+        json=response_json,
+    )
+
+    with pytest.raises(ZenodoAPIError, match="Failed to request inclusion"):
+        zenodo_api.request_community_inclusion(record_id, community_id)
 
 
 def test_close(zenodo_api: ZenodoAPI):

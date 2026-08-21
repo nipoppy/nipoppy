@@ -46,6 +46,7 @@ def test_upload(workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixt
         record_id=None,
         metadata=metadata,
         default_preview_filename=DatasetLayout.fname_pipeline_config,
+        community_id=None,
     )
     get_pipeline_metadata.assert_called_once()
     validator.assert_called_once()
@@ -183,6 +184,93 @@ def test_upload_same_pipeline(
         )
     ):
         workflow.run()
+
+
+@pytest.mark.parametrize("community", [True, False])
+@pytest.mark.no_xdist
+def test_unchanged_pipeline_skips_upload(
+    workflow: PipelineUploadWorkflow,
+    community: bool,
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    record_id = "1234567"
+    latest_record_id = "7654321"
+    community_id = "nipoppy-community-id"
+    workflow.record_id = record_id
+    workflow.community = community
+    workflow.assume_yes = False
+    workflow.zenodo_api.get_latest_version_id.return_value = latest_record_id
+    workflow.zenodo_api.get_record_metadata.return_value = {
+        "keywords": [
+            "Nipoppy",
+            "pipeline_type:processing",
+            "pipeline_name:fmriprep",
+            "pipeline_version:24.1.1",
+            "schema_version:1",
+        ]
+    }
+    workflow.zenodo_api.get_community_id.return_value = community_id
+    workflow.zenodo_api.is_record_up_to_date.return_value = True
+    confirm = mocker.patch(
+        "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT.confirm"
+    )
+
+    workflow.run_main()
+
+    workflow.zenodo_api.is_record_up_to_date.assert_called_once()
+    workflow.zenodo_api.upload_record.assert_not_called()
+    confirm.assert_not_called()
+    assert "files and metadata are unchanged; skipping upload" in caplog.text
+    if community:
+        workflow.zenodo_api.get_community_id.assert_called_once_with("nipoppy")
+        workflow.zenodo_api.request_community_inclusion.assert_called_once_with(
+            latest_record_id, community_id
+        )
+        assert "Nipoppy community inclusion request submitted" in caplog.text
+    else:
+        workflow.zenodo_api.get_community_id.assert_not_called()
+        workflow.zenodo_api.request_community_inclusion.assert_not_called()
+
+
+def test_upload_to_nipoppy_community(
+    workflow: PipelineUploadWorkflow,
+    mocker: pytest_mock.MockerFixture,
+):
+    metadata = {"metadata": {}}
+    community_id = "nipoppy-community-id"
+    mocker.patch.object(workflow, "_get_pipeline_metadata", return_value=metadata)
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
+    )
+    workflow.assume_yes = True
+    workflow.force = True
+    workflow.community = True
+    workflow.zenodo_api.get_community_id.return_value = community_id
+
+    workflow.run_main()
+
+    workflow.zenodo_api.get_community_id.assert_called_once_with("nipoppy")
+    workflow.zenodo_api.upload_record.assert_called_once_with(
+        input_dir=TEST_PIPELINE,
+        record_id=None,
+        metadata=metadata,
+        default_preview_filename=DatasetLayout.fname_pipeline_config,
+        community_id=community_id,
+    )
+
+
+def test_force_bypasses_unchanged_check(workflow: PipelineUploadWorkflow):
+    workflow.record_id = "1234567"
+    workflow.assume_yes = True
+    workflow.force = True
+    workflow.zenodo_api.get_latest_version_id.return_value = "7654321"
+    workflow.zenodo_api.get_record_metadata.return_value = {"keywords": []}
+
+    workflow.run_main()
+
+    workflow.zenodo_api.is_record_up_to_date.assert_not_called()
+    workflow.zenodo_api.upload_record.assert_called_once()
 
 
 @pytest.mark.no_xdist
