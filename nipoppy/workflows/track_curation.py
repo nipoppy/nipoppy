@@ -81,9 +81,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         logger.info(f"New/updated curation status table shape: {table.shape}")
         table.save_with_backup(fpath_table, dry_run=self.dry_run)
 
-    def run_cleanup(self):
-        """Log a success message."""
         logger.success(
             "Successfully generated/updated the dataset's curation status file"
         )
-        return super().run_cleanup()

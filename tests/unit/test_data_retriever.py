@@ -20,6 +20,21 @@ def api(tmp_path: Path) -> NipoppyDataRetriever:
     return NipoppyDataRetriever(path=dpath_root)
 
 
+@pytest.fixture
+def df_harmonized() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": [4, 5, 6],
+            "col3": [7, 8, 9],
+        },
+        index=pd.MultiIndex.from_tuples(
+            [("01", "A"), ("01", "B"), ("02", "A")],
+            names=["nb:ParticipantID", "nb:SessionID"],
+        ),
+    )
+
+
 @pytest.mark.parametrize(
     "phenotypes",
     [
@@ -170,7 +185,7 @@ def test_find_derivative_path_invalid(
         expected_path.touch()
 
     with pytest.raises(error_type, match=error_message):
-        api._get_derivatives_table(
+        api._find_derivative_path(
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             filepath_pattern=filepath_pattern,
@@ -248,22 +263,11 @@ def test_filter_with_manifest(api: NipoppyDataRetriever):
     assert api._filter_with_manifest(df).equals(df_expected)
 
 
-def test_get_phenotypes(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixture):
-    df_harmonized = pd.DataFrame(
-        {
-            "col1": [1, 2, 3],
-            "col2": [4, 5, 6],
-            "col3": [7, 8, 9],
-        },
-        index=pd.MultiIndex.from_tuples(
-            [("01", "A"), ("01", "B"), ("02", "A")],
-            names=["nb:ParticipantID", "nb:SessionID"],
-        ),
-    )
-
-    mocked_check_phenotypes_arg = mocker.patch(
-        "nipoppy._data_retriever._check_phenotypes_arg"
-    )
+def test_get_all_phenotypes(
+    api: NipoppyDataRetriever,
+    df_harmonized: pd.DataFrame,
+    mocker: pytest_mock.MockFixture,
+):
     mocked_load_tsv = mocker.patch.object(
         api,
         "_load_tsv",
@@ -275,14 +279,35 @@ def test_get_phenotypes(api: NipoppyDataRetriever, mocker: pytest_mock.MockFixtu
         return_value=df_harmonized,
     )
 
-    phenotypes = ["col1", "col3"]
-    df_phenotypes = api.get_phenotypes(phenotypes=phenotypes)
+    df_phenotypes = api.get_all_phenotypes()
 
-    mocked_check_phenotypes_arg.assert_called_once_with(phenotypes)
     mocked_load_tsv.assert_called_once_with(
         api._study.layout.fpath_harmonized, index_cols=api._index_cols_phenotypes
     )
     mocked_filter_with_manifest.assert_called_once_with(df_harmonized)
+
+    assert df_phenotypes.equals(df_harmonized)
+
+
+def test_get_phenotypes(
+    api: NipoppyDataRetriever,
+    df_harmonized: pd.DataFrame,
+    mocker: pytest_mock.MockFixture,
+):
+    mocked_check_phenotypes_arg = mocker.patch(
+        "nipoppy._data_retriever._check_phenotypes_arg"
+    )
+    mocked_get_all_phenotypes = mocker.patch.object(
+        api,
+        "get_all_phenotypes",
+        return_value=df_harmonized,
+    )
+
+    phenotypes = ["col1", "col3"]
+    df_phenotypes = api.get_phenotypes(phenotypes=phenotypes)
+
+    mocked_check_phenotypes_arg.assert_called_once_with(phenotypes)
+    mocked_get_all_phenotypes.assert_called_once_with()
 
     assert list(df_phenotypes.columns) == phenotypes
 

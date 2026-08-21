@@ -10,20 +10,50 @@ PROGRAM_NAME = "nipoppy"
 NIPOPPY_DIR_NAME = ".nipoppy"
 ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 
-# pipeline config schema version
-CURRENT_SCHEMA_VERSION = "1"
+BUG_REPORT_URL = (
+    "https://github.com/nipoppy/nipoppy/issues/new/choose?template=1-bug.yml"
+)
+DISCORD_URL = "https://discord.gg/2VMKFRpjkm"
+
+
+class ConfigType(str, Enum):
+    """Nipoppy configuration schema types."""
+
+    STUDY = "study"
+    PIPELINE = "pipeline"
+    TRACKER = "tracker"
+    LAYOUT = "layout"
+
+
+SCHEMA_VERSION_INFO = {
+    ConfigType.STUDY: {"current": "1.0"},
+    ConfigType.PIPELINE: {"current": "1.0"},
+    ConfigType.TRACKER: {"current": "1.0"},
+    ConfigType.LAYOUT: {"current": "1.0"},
+}
+
 
 # BIDS
 BIDS_SUBJECT_PREFIX = "sub-"
 BIDS_SESSION_PREFIX = "ses-"
 FAKE_SESSION_ID = "unnamed"
 
+# substitutions
+BIDS_PATH_INJECTION_PREFIX = "BIDS_PATH_INJECTION_"
+
 # default config
 DEFAULT_PIPELINE_STEP_NAME = "default"
+
+# user-level config
+FPATH_USER_CONFIG = "~/.nipoppy/config.json"
 
 # file extensions
 EXT_TAR = ".tar"
 EXT_LOG = ".log"
+
+# dotenv files
+# from highest to lowest priority
+DEFAULT_DOTENV_PATHS = ("[[NIPOPPY_DPATH_ROOT]]/.env", "~/.nipoppy/.env")
 
 
 class ContainerCommandEnum(str, Enum):

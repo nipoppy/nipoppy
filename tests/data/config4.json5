@@ -1,0 +1,16 @@
+{
+    /*
+    Test that block comments are allowed in the JSON5 file.
+    This is a multi-line comment that should be ignored by the parser.
+    */
+    "CONTAINER_CONFIG": {
+        "COMMAND": "apptainer",
+        "ARGS": [
+            "--cleanenv"
+        ]
+    },
+    "CUSTOM": {
+        "some_key": "this can be anything"
+    },
+    "SCHEMA_VERSION": "1.0", // Test inline comments + trailing commas
+}
