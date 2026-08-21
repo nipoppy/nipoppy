@@ -202,6 +202,60 @@ class TestCopy:
             check_dummy_directory_structure(dest_dir)
 
 
+class TestCopyTemplate:
+    def test_copy_template_substitution(self, tmp_path: Path):
+        """Test copying a template file with substitution."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+
+        fileops.copy_template(template_file, dest_file, name="World")
+
+        assert dest_file.is_file()
+        assert dest_file.read_text() == "Hello, World!"
+
+    def test_copy_template_creates_parent_directory(self, tmp_path: Path):
+        """Test that the parent directory of the destination is created."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "nonexistent_dir" / "output.txt"
+
+        fileops.copy_template(template_file, dest_file, name="World")
+
+        assert dest_file.is_file()
+        assert dest_file.read_text() == "Hello, World!"
+
+    def test_copy_template_existing_file(self, tmp_path: Path):
+        """Test copying a template file to an existing file with exist_ok=False."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+        dest_file.write_text("Old content")
+
+        with pytest.raises(FileOperationError):
+            fileops.copy_template(
+                template_file, dest_file, name="World", exist_ok=False
+            )
+
+        # Ensure the destination file remains unchanged
+        assert dest_file.read_text() == "Old content"
+
+    def test_copy_template_existing_file_with_exist_ok(self, tmp_path: Path):
+        """Test copying a template file to an existing file with exist_ok=True."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+
+        fileops.copy_template(template_file, dest_file, name="World", exist_ok=True)
+
+        # Ensure the destination file is updated with the new content
+        assert dest_file.read_text() == "Hello, World!"
+
+
 class TestMoveTree:
     # Should we add an exist_ok test here too?
     def test_mv_directory(self, tmp_path: Path):

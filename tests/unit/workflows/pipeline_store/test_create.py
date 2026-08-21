@@ -4,20 +4,32 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
-from nipoppy.workflows.pipeline_store import create as create_module
 from nipoppy.workflows.pipeline_store.create import (
     PipelineCreateWorkflow,
 )
 from tests.conftest import TEST_PIPELINE
 
 
-def _has_same_content(a: Path, b: Path) -> bool:
-    """Check if two files are the same."""
-    return a.read_text().strip() == b.read_text().strip()
+def _has_same_JSON_content(a: Path, b: Path) -> bool:
+    """Check if two files have the same JSON content."""
+    return load_json(a, allow_json5=True) == load_json(b, allow_json5=True)
+
+
+def _has_correct_JSON5_comment(path: Path) -> bool:
+    """Check that the comment is preserved and that the substitution was applied."""
+    content = path.read_text()
+    return (
+        (
+            "// Nipoppy will apply string substitutions when this file is loaded"
+            in content
+        )
+        and ("[[NIPOPPY_VERSION]]" not in content)
+        and (PROGRAM_VERSION in content)
+    )
 
 
 @pytest.fixture(scope="function")
@@ -43,7 +55,11 @@ def workflow(target: Path) -> PipelineCreateWorkflow:
         PipelineTypeEnum.EXTRACTION,
     ],
 )
-def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
+def test_create(
+    workflow: PipelineCreateWorkflow,
+    type_: PipelineTypeEnum,
+    recwarn: pytest.WarningsRecorder,
+):
     """Test the creation of a pipeline bundle."""
     assert not workflow.pipeline_dir.exists()
 
@@ -54,39 +70,49 @@ def test_create(workflow: PipelineCreateWorkflow, type_: PipelineTypeEnum):
     check_pipeline_bundle(workflow.pipeline_dir)
 
     # Check the bundle content exists and is correct
-    assert workflow.pipeline_dir.joinpath("descriptor.json").is_file()
-    assert _has_same_content(
-        workflow.pipeline_dir.joinpath("descriptor.json"),
+    descriptor_file_path = workflow.pipeline_dir.joinpath("descriptor.json")
+    assert descriptor_file_path.is_file()
+    assert _has_same_JSON_content(
+        descriptor_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath("descriptor.json"),
     )
 
-    assert workflow.pipeline_dir.joinpath("invocation.json").is_file()
+    invocation_file_path = workflow.pipeline_dir.joinpath("invocation.json5")
+    assert invocation_file_path.is_file()
     # Cannot compare the content of the invocation.json file
-    # because boutiques generates random args values.
+    # because boutiques generates random arg values.
     # Instead, we compare the keys of the JSON object
-    assert (
-        load_json(workflow.pipeline_dir.joinpath("invocation.json")).keys()
-        == load_json(TEMPLATE_PIPELINE_PATH.joinpath("invocation.json")).keys()
-    )
+    assert set(load_json(invocation_file_path, allow_json5=True).keys()) == {
+        "basic_param2"
+    }
+    assert _has_correct_JSON5_comment(invocation_file_path)
 
-    assert workflow.pipeline_dir.joinpath("hpc.json").is_file()
-    assert _has_same_content(
-        workflow.pipeline_dir.joinpath("hpc.json"),
-        TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
+    hpc_file_path = workflow.pipeline_dir.joinpath("hpc.json5")
+    assert hpc_file_path.is_file()
+    assert _has_same_JSON_content(
+        hpc_file_path,
+        TEMPLATE_PIPELINE_PATH.joinpath("hpc.json5"),
     )
+    assert _has_correct_JSON5_comment(hpc_file_path)
 
-    assert workflow.pipeline_dir.joinpath("config.json").is_file()
-    assert _has_same_content(
-        workflow.pipeline_dir.joinpath("config.json"),
-        TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json"),
+    pipeline_config_file_path = workflow.pipeline_dir.joinpath("config.json")
+    assert pipeline_config_file_path.is_file()
+    assert _has_same_JSON_content(
+        pipeline_config_file_path,
+        TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json5"),
     )
+    assert _has_correct_JSON5_comment(pipeline_config_file_path)
 
     if type_ == PipelineTypeEnum.PROCESSING:
-        assert workflow.pipeline_dir.joinpath("tracker.json").is_file()
-        assert _has_same_content(
-            workflow.pipeline_dir.joinpath("tracker.json"),
-            TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
+        tracker_file_path = workflow.pipeline_dir.joinpath("tracker.json5")
+        assert tracker_file_path.is_file()
+        assert _has_same_JSON_content(
+            tracker_file_path,
+            TEMPLATE_PIPELINE_PATH.joinpath("tracker.json5"),
         )
+        assert _has_correct_JSON5_comment(tracker_file_path)
+
+    assert not any("Unable to replace" in str(warning.message) for warning in recwarn)
 
 
 def test_create_already_exists(workflow: PipelineCreateWorkflow):
@@ -107,73 +133,28 @@ def test_create_from_descriptor(workflow: PipelineCreateWorkflow):
 
     check_pipeline_bundle(workflow.pipeline_dir)
 
-    assert _has_same_content(
+    assert _has_same_JSON_content(
         workflow.pipeline_dir.joinpath("descriptor.json"), source_descriptor
     )
 
-    assert set(load_json(workflow.pipeline_dir.joinpath("invocation.json")).keys()) == {
+    assert set(
+        load_json(
+            workflow.pipeline_dir.joinpath("invocation.json5"), allow_json5=True
+        ).keys()
+    ) == {
         "bids_dir",
         "output_dir",
         "analysis_level",
     }
 
     descriptor = load_json(workflow.pipeline_dir.joinpath("descriptor.json"))
-    config = load_json(workflow.pipeline_dir.joinpath("config.json"))
+    config = load_json(workflow.pipeline_dir.joinpath("config.json"), allow_json5=True)
     assert config["NAME"] == descriptor["name"]
     assert config["VERSION"] == descriptor["tool-version"]
     assert (
         config["CONTAINER_INFO"]["URI"]
         == "docker://nipreps/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
     )
-
-
-def test_create_from_descriptor_preserves_json5(
-    tmp_path: Path,
-    workflow: PipelineCreateWorkflow,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    dpath_template = tmp_path / "template_pipeline"
-    dpath_template.mkdir(parents=True)
-
-    (dpath_template / "config-processing.json").write_text("""
-{
-  // keep this comment
-  "NAME": "tool name",
-  "VERSION": "v0.1.0",
-  "CONTAINER_INFO": {
-    "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]",
-  },
-  "CONTAINER_CONFIG": {
-    "ENV_VARS": {},
-    "ARGS": [],
-  },
-  "STEPS": [
-    {
-      "INVOCATION_FILE": "invocation.json",
-      "DESCRIPTOR_FILE": "descriptor.json",
-      "ANALYSIS_LEVEL": "participant_session",
-      "TRACKER_CONFIG_FILE": "tracker.json",
-      "HPC_CONFIG_FILE": "hpc.json",
-      "GENERATE_PYBIDS_DATABASE": false,
-      "PYBIDS_IGNORE_FILE": null,
-    },
-  ],
-  "PIPELINE_TYPE": "processing",
-  "SCHEMA_VERSION": "1",
-}
-""".strip())
-    (dpath_template / "hpc.json").write_text("{}")
-    (dpath_template / "tracker.json").write_text("{}")
-
-    monkeypatch.setattr(create_module, "TEMPLATE_PIPELINE_PATH", dpath_template)
-
-    workflow.source_descriptor = TEST_PIPELINE / "descriptor.json"
-    workflow.run_main()
-
-    config_text = workflow.pipeline_dir.joinpath("config.json").read_text()
-    assert "// keep this comment" in config_text
-    assert '"NAME": "fmriprep"' in config_text
-    assert '"VERSION": "24.1.1"' in config_text
 
 
 @pytest.mark.parametrize(

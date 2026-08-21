@@ -17,11 +17,11 @@ If the default Slurm/SGE configurations do not work for you, please consider [op
 
 The default global configuration file has three {term}`HPC`-related fields that should be updated as needed:
 
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json5
 ---
 linenos: True
 language: json
-emphasize-lines: 5,18-27,28
+emphasize-lines: 7,20-29,30
 ---
 ```
 
@@ -55,7 +55,7 @@ Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/
 
 The HPC config file should look similar to this:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/hpc.json
+```{literalinclude} ../../_inserts/hpc.json5
 ---
 linenos: True
 language: json
@@ -71,11 +71,11 @@ You can create an HPC config file manually by copying the content above into a n
 
 You will also need to add an `"HPC_CONFIG_FILE"` field for each step in pipeline's `config.json` file:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/config-extraction.json
+```{literalinclude} ../../_inserts/config-extraction.json5
 ---
 linenos: True
 language: json
-lines: 12-18
+lines: 14-21
 emphasize-lines: 6
 ---
 ```
