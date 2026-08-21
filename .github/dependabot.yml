@@ -15,14 +15,3 @@ updates:
       - "bot"
     commit-message:
       prefix: "[MAINT] "
-
-  - package-ecosystem: "uv"
-    directory: "/" # Location of package manifests
-    versioning-strategy: lockfile-only
-    schedule:
-      interval: "monthly"
-    labels:
-      - "T.2 - Maintenance"
-      - "bot"
-    commit-message:
-      prefix: "[MAINT] "
