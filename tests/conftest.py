@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from collections.abc import Generator
 from pathlib import Path
 
@@ -14,9 +15,10 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
     NIPOPPY_DIR_NAME,
+    ConfigType,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -98,7 +100,18 @@ def datetime_fixture(
     yield mocked_datetime
 
 
-def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
+@pytest.fixture()
+def restore_environment():
+    """Fixture to restore environment variables after a test."""
+    environment_to_restore = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(environment_to_restore)
+
+
+def list_cli_commands(
+    group: click.Group, prefix="", include_hidden=True, include_group=True
+):
     """List all CLI commands recursively.
 
     Parameters
@@ -109,6 +122,8 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
         Prefix to add to command names (used for recursion), by default ""
     include_hidden : bool, optional
         Whether to include hidden commands, by default True
+    include_group : bool, optional
+        Whether to include group (parent) commands, by default True
 
     Returns
     -------
@@ -122,7 +137,8 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
             continue
 
         full_name = f"{prefix}{name}"
-        commands.append(full_name)
+        if include_group or not isinstance(cmd, click.Group):
+            commands.append(full_name)
 
         # If the command is itself a group, recurse
         if isinstance(cmd, click.Group):
@@ -184,7 +200,9 @@ def create_pipeline_config_files(
             continue
         for pipeline_config in pipeline_config_list:
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
-            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION
+            pipeline_config["SCHEMA_VERSION"] = get_current_schema_version(
+                ConfigType.PIPELINE
+            )
             fpath_config = (
                 dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]

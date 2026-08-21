@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import getpass
+import sys
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -15,46 +18,62 @@ from nipoppy.logger import get_logger
 from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
 
 if TYPE_CHECKING:
-    from nipoppy.study import Study
+    import pandas as pd
 
 logger = get_logger()
 
 
 class HPCRunner:
-    """
-    Service for generating and submitting HPC jobs via PySQA.
-
-    Parameters
-    ----------
-    study : Study
-        The shared workflow study containing layout, logger, and config.
-    hpc_config : HpcConfig
-        The HPC-specific configuration.
-    """
+    """Class for generating and submitting HPC jobs via PySQA."""
 
     def __init__(
         self,
-        study: Study,
+        hpc_cluster: str,
+        hpc_config: HpcConfig,
         subcommand: str,
         dpath_root: StrOrPathLike,
+        dpath_hpc: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str | None = None,
         pipeline_step: str | None = None,
+        preamble: list[str] | None = None,
+        queue_limit: int | None = None,
         keep_workdir: bool = False,
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
-        hpc_config: HpcConfig | None = None,
     ):
-        self.study = study
+        if preamble is None:
+            preamble = []
+
+        if queue_limit is None:
+            queue_limit = sys.maxsize
+
+        self.hpc_cluster = hpc_cluster
+        self.hpc_config = hpc_config
         self.subcommand = subcommand
         self.dpath_root = dpath_root
+        self.dpath_hpc = dpath_hpc
         self.pipeline_name = pipeline_name
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
+        self.preamble = preamble
+        self.queue_limit = queue_limit
         self.keep_workdir = keep_workdir
         self.fpath_layout = fpath_layout
         self.verbose = verbose
-        self.hpc_config = hpc_config
+
+    @cached_property
+    def _queue_adapter(self) -> QueueAdapter:
+        queue_adapter = QueueAdapter(directory=str(self.dpath_hpc))
+        try:
+            queue_adapter.switch_cluster(self.hpc_cluster)
+        except KeyError as e:
+            raise WorkflowError(
+                f"Invalid HPC cluster type: {self.hpc_cluster}."
+                f" Available clusters are: {queue_adapter.list_clusters()}"
+            ) from e
+
+        return queue_adapter
 
     def generate_cli_command(
         self,
@@ -135,10 +154,6 @@ class HPCRunner:
         This function logs a warning if the HPC config does not exist (or is empty) or
         if it contains variables that are not defined in the template job script.
         """
-        if not self.hpc_config:
-            logger.warning("HPC configuration is empty")
-            return {}
-
         job_args = self.hpc_config.model_dump()
         if len(job_args) == 0:
             logger.warning("HPC configuration is empty")
@@ -155,9 +170,22 @@ class HPCRunner:
 
         return job_args
 
+    def _get_n_available_job_slots(self) -> int:
+        try:
+            df_queue_status: pd.DataFrame = self._queue_adapter.get_queue_status(
+                user=getpass.getuser()
+            )
+        except Exception as exception:
+            logger.warning(
+                f"Failed to get queue status: {type(exception)} {exception}."
+                " Assuming no jobs are currently in the queue."
+            )
+            return self.queue_limit
+
+        return max(0, self.queue_limit - len(df_queue_status))
+
     def submit(
         self,
-        hpc_cluster: str,
         job_name: str,
         job_array_commands: list,
         participant_ids: list,
@@ -176,8 +204,6 @@ class HPCRunner:
 
         Parameters
         ----------
-        hpc_cluster : str
-            The name of the HPC cluster configuration to use.
         job_name : str
             Name of the job to submit.
         job_array_commands : list
@@ -205,26 +231,24 @@ class HPCRunner:
 
         Returns
         -------
-        int or None
-            The job ID if submitted successfully, else None.
+        int
+            The number of jobs submitted
         """
+        n_available_jobs = self._get_n_available_job_slots()
+        job_array_commands = job_array_commands[:n_available_jobs]
+        participant_ids = participant_ids[:n_available_jobs]
+        session_ids = session_ids[:n_available_jobs]
+
+        # skip if there are no jobs to submit
+        if len(job_array_commands) == 0:
+            return 0
+
         # Make sure HPC directory exists.
-        dpath_hpc_configs = self.study.layout.dpath_hpc
-        if not (dpath_hpc_configs.exists() and dpath_hpc_configs.is_dir()):
+        if not (self.dpath_hpc.exists() and self.dpath_hpc.is_dir()):
             raise LayoutError(
                 "The HPC directory with appropriate content needs to exist at "
-                f"{self.study.layout.dpath_hpc} if HPC job submission is requested"
+                f"{self.dpath_hpc} if HPC job submission is requested"
             )
-
-        qa = QueueAdapter(directory=str(self.study.layout.dpath_hpc))
-
-        try:
-            qa.switch_cluster(hpc_cluster)
-        except KeyError as e:
-            raise WorkflowError(
-                f"Invalid HPC cluster type: {hpc_cluster}"
-                f". Available clusters are: {qa.list_clusters()}"
-            ) from e
 
         # This file is created by PySQA if the job submission command fails.
         # Delete it first to ensure only fresh submission errors are detected.
@@ -238,17 +262,17 @@ class HPCRunner:
 
         job_id = None
         if not dry_run:
-            job_id = qa.submit_job(
-                queue=hpc_cluster,
+            job_id = self._queue_adapter.submit_job(
+                queue=self.hpc_cluster,
                 working_directory=str(dpath_work),
                 command="",  # not used in default template but cannot be None
                 cores=0,  # not used in default template but cannot be None
-                NIPOPPY_HPC=hpc_cluster,
+                NIPOPPY_HPC=self.hpc_cluster,
                 NIPOPPY_JOB_NAME=job_name,
                 NIPOPPY_DPATH_LOGS=dpath_hpc_logs,
-                NIPOPPY_HPC_PREAMBLE_STRINGS=self.study.config.HPC_PREAMBLE,
+                NIPOPPY_HPC_PREAMBLE_STRINGS=self.preamble,
                 NIPOPPY_COMMANDS=job_array_commands,
-                NIPOPPY_DPATH_ROOT=self.study.layout.dpath_root,
+                NIPOPPY_DPATH_ROOT=self.dpath_root,
                 NIPOPPY_PIPELINE_NAME=pipeline_name,
                 NIPOPPY_PIPELINE_VERSION=pipeline_version,
                 NIPOPPY_PIPELINE_STEP=pipeline_step,
@@ -271,10 +295,10 @@ class HPCRunner:
                 f"\nThe job script can be found at {fpath_job_script}."
                 "\nThis file is auto-generated. To modify it, you will need to "
                 "modify the pipeline's HPC configuration in the config file and/or "
-                f"the template job script in {self.study.layout.dpath_hpc}."
+                f"the template job script in {self.dpath_hpc}."
             )
 
         if job_id is not None:
             logger.info(f"HPC job ID: {job_id}")
 
-        return job_id
+        return len(job_array_commands)

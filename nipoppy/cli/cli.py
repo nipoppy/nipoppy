@@ -19,7 +19,8 @@ except ImportError:
 
 
 from nipoppy._version import __version__
-from nipoppy.cli import OrderedAliasedGroup, exception_handler
+from nipoppy.cli import exception_handler
+from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
     dataset_option,
     dep_params,
@@ -29,6 +30,7 @@ from nipoppy.cli.options import (
     runners_options,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
+from nipoppy.env import FPATH_USER_CONFIG
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
@@ -41,6 +43,8 @@ click.rich_click.OPTION_GROUPS = {
                 "--pipeline-step",
                 "--bids-source",
                 "--mode",
+                "--container-store",
+                "--default-config",
                 "--empty",
                 "--copy-files",
                 "--check-dicoms",
@@ -81,9 +85,9 @@ click.rich_click.OPTION_GROUPS = {
         {
             "name": "Miscellaneous",
             "options": [
-                "--layout",
-                "--assume-yes",
                 "--force",
+                "--assume-yes",
+                "--layout",
                 "--help",
             ],
         },
@@ -93,8 +97,8 @@ click.rich_click.OPTION_GROUPS = {
 
 @tui(command="gui", help="Open the Nipoppy terminal GUI.")
 @click.group(
-    cls=OrderedAliasedGroup,
-    context_settings={"help_option_names": ["-h", "--help"]},
+    cls=OrderedAliasedGroupWithDotenv,
+    context_settings={"help_option_names": ["-h", "--help"], "show_default": True},
     epilog=(
         "Run 'nipoppy COMMAND --help' for more information on a subcommand.\n\n"
         "Or visit the documentation at https://nipoppy.readthedocs.io"
@@ -118,22 +122,33 @@ if cli.commands.get("gui"):
     help="Path to a BIDS dataset to initialize the layout with.",
 )
 @click.option(
+    "--mode",
+    type=click.Choice(["copy", "move", "symlink"]),
+    default="symlink",
+    help=(
+        "If using a BIDS source, specify whether to copy, move, or symlink the files."
+    ),
+)
+@click.option(
+    "--container-store",
+    type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
+    help="Path to an existing (shared) directory for container images.",
+    envvar="NIPOPPY_CONTAINER_STORE",
+    show_envvar=True,
+)
+@click.option(
     "--force",
     "-f",
     is_flag=True,
     help=(
-        "Create a nipoppy dataset even if there are already files present"
+        "Create the dataset even if there are already files present"
         " (may clobber existing files)."
     ),
 )
 @click.option(
-    "--mode",
-    type=click.Choice(["copy", "move", "symlink"]),
-    default="symlink",
-    show_default=True,
-    help=(
-        "If using a BIDS source, specify whether to copy, move, or symlink the files."
-    ),
+    "--default-config",
+    is_flag=True,
+    help=f"Force use of the default config file, ignoring any user-level config file defined at {FPATH_USER_CONFIG}.",  # noqa: E501
 )
 @global_options
 @layout_option
@@ -252,7 +267,6 @@ def process(**params):
     "--n-jobs",
     type=int,
     default=1,
-    show_default=True,
     help=("Number of parallel workers to use."),
 )
 @global_options

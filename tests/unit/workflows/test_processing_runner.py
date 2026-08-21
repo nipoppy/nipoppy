@@ -9,21 +9,19 @@ import pytest_mock
 from bids import BIDSLayout
 
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.container import (
-    ApptainerHandler,
-    ContainerHandler,
-    DockerHandler,
-    SingularityHandler,
-)
-from nipoppy.env import ContainerCommandEnum
+from nipoppy.env import BIDS_PATH_INJECTION_PREFIX
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    WorkflowError,
 )
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows.processing_runner import ProcessingRunner
+from nipoppy.workflows.processing_runner import (
+    ProcessingRunner,
+    _get_bids_paths_to_inject,
+)
 from tests.conftest import (
     create_empty_dataset,
     create_pipeline_config_files,
@@ -128,6 +126,63 @@ def runner(tmp_path: Path, mocker: pytest_mock.MockFixture) -> ProcessingRunner:
     return runner
 
 
+def test_get_bids_paths_to_inject(mocker: pytest_mock.MockFixture):
+    def mocked_get(**kwargs):
+        if kwargs == {
+            "extension": "nii.gz",
+            "suffix": "T1w",
+            "return_type": "filename",
+        }:
+            return ["sub-1_ses-A_T1w.nii.gz"]
+        elif kwargs == {
+            "extension": "nii.gz",
+            "suffix": "T2w",
+            "return_type": "filename",
+        }:
+            return ["sub-1_ses-A_T2w.nii.gz"]
+        elif kwargs == {
+            "extension": "json",
+            "suffix": "T2w",
+            "return_type": "filename",
+        }:
+            return ["sub-1_ses-A_T2w.json"]
+
+    mocked_layout = mocker.Mock()
+    mocked_layout.get.side_effect = mocked_get
+
+    injection_map = {
+        "T1w": {"extension": "nii.gz", "suffix": "T1w"},
+        "T2w": {"extension": "nii.gz", "suffix": "T2w"},
+        "T2w_json": {"extension": "json", "suffix": "T2w"},
+    }
+    expected = {
+        f"{BIDS_PATH_INJECTION_PREFIX}t1w".lower(): "sub-1_ses-A_T1w.nii.gz",
+        f"{BIDS_PATH_INJECTION_PREFIX}t2w".lower(): "sub-1_ses-A_T2w.nii.gz",
+        f"{BIDS_PATH_INJECTION_PREFIX}t2w_json".lower(): "sub-1_ses-A_T2w.json",
+    }
+
+    result = _get_bids_paths_to_inject(
+        bids_layout=mocked_layout,
+        injection_map=injection_map,
+    )
+    assert result == expected
+
+
+@pytest.mark.parametrize("returned_filenames", [[], ["file1.nii.gz", "file2.nii.gz"]])
+def test_get_bids_paths_to_inject_error_no_single_match(
+    returned_filenames, mocker: pytest_mock.MockFixture
+):
+    mocked_layout = mocker.Mock()
+    mocked_layout.get.return_value = returned_filenames
+    with pytest.raises(
+        WorkflowError, match="Expected exactly one file to match criteria"
+    ):
+        _get_bids_paths_to_inject(
+            bids_layout=mocked_layout,
+            injection_map={"TEST": {"subject": "01"}},
+        )
+
+
 def test_run_setup(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
     mocked_check_tar_conditions = mocker.patch.object(runner, "_check_tar_conditions")
     runner.run_setup()
@@ -163,178 +218,6 @@ def test_run_failed_cleanup(runner: ProcessingRunner, n_success):
         assert not dpath.exists()
     else:
         assert dpath.exists()
-
-
-@pytest.mark.parametrize("simulate", [True, False])
-def test_launch_boutiques_run(
-    simulate, runner: ProcessingRunner, mocker: pytest_mock.MockFixture
-):
-    runner.simulate = simulate
-
-    participant_id = "01"
-    session_id = "BL"
-
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
-
-    descriptor_str, invocation_str = runner.launch_boutiques_run(
-        participant_id, session_id
-    )
-
-    assert "[[NIPOPPY_DPATH_BIDS]]" not in descriptor_str
-    assert "[[NIPOPPY_PARTICIPANT_ID]]" not in invocation_str
-    assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
-
-    assert mocked_run_command.call_count == 1
-    assert mocked_run_command.call_args[1].get("quiet") is True
-
-
-@pytest.mark.parametrize(
-    "container_handler,expected_container_opts",
-    [
-        (None, ["--no-container"]),
-        (
-            ApptainerHandler(),
-            [
-                "--force-singularity",
-                "--no-automount",
-                "--imagepath",
-                "--container-opts=",
-            ],
-        ),
-        (
-            SingularityHandler(),
-            [
-                "--force-singularity",
-                "--no-automount",
-                "--imagepath",
-                "--container-opts=",
-            ],
-        ),
-        (
-            DockerHandler(),
-            [
-                "--force-docker",
-                "--no-automount",
-                "--container-opts=",
-            ],
-        ),
-    ],
-)
-@pytest.mark.parametrize("simulate", [True, False])
-@pytest.mark.parametrize("verbose", [True, False])
-@pytest.mark.no_xdist
-def test_launch_boutiques_run_bosh_opts(
-    container_handler,
-    expected_container_opts,
-    simulate,
-    verbose,
-    runner: ProcessingRunner,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-):
-    runner.simulate = simulate
-    runner.verbose = verbose
-    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
-
-    participant_id = "01"
-    session_id = "BL"
-
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
-
-    runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-        container_handler=container_handler,
-    )
-
-    if not simulate:
-        # first positional argument
-        bosh_command_args = mocked_run_command.call_args[0][0]
-
-        for opt in expected_container_opts:
-            assert (
-                opt in bosh_command_args
-            ), f"Expected container option '{opt}' not found in {bosh_command_args}"
-
-        assert ("--debug" in bosh_command_args) == verbose
-
-    else:
-        assert "Additional launch options:" in caplog.text
-        assert ("--debug" in caplog.text) == verbose
-
-
-def test_launch_boutiques_run_bosh_no_container_image(
-    runner: ProcessingRunner,
-    mocker: pytest_mock.MockFixture,
-):
-    runner.descriptor["command-line"] = "echo [ARG1] [ARG2]"
-    runner.descriptor.pop("container-image")
-
-    participant_id = "01"
-    session_id = "BL"
-
-    mocked_run_command = mocker.patch("nipoppy.workflows.runner._run_command")
-
-    runner.launch_boutiques_run(
-        participant_id,
-        session_id,
-        container_handler=None,
-    )
-
-    container_opts = mocked_run_command.call_args[0][0]  # first positional argument
-    assert "--no-container" in container_opts
-
-
-def test_process_container_config(runner: ProcessingRunner, tmp_path: Path):
-    bind_path = tmp_path / "to_bind"
-    container_command, container_handler = runner.process_container_config(
-        participant_id="01", session_id="BL", bind_paths=[bind_path]
-    )
-
-    # check that the subcommand 'exec' from the Boutiques container config is used
-    # note: the container command in the config is "echo" because otherwise the
-    # check for the container command fails if Singularity/Apptainer is not on the PATH
-    root_path = runner.study.layout.dpath_root.resolve()
-    assert container_command.startswith("apptainer exec")
-    assert f"--bind {root_path}:{root_path}:rw " in container_command
-    assert container_command.endswith(
-        f"--bind {bind_path.resolve()}:{bind_path.resolve()}:rw"
-    )
-
-    # check that the right container config was used
-    assert "--flag1" in container_command
-    assert "--flag2" in container_command
-    assert "--flag3" in container_command
-
-    # check that container config object matches command string
-    assert isinstance(container_handler, ContainerHandler)
-    assert container_handler.command == ContainerCommandEnum.APPTAINER.value
-    assert "--bind" in container_handler.args
-    assert f"{root_path}:{root_path}:rw" in container_handler.args
-    assert f"{bind_path.resolve()}:{bind_path.resolve()}:rw" in container_handler.args
-    assert "--flag1" in container_handler.args
-    assert "--flag2" in container_handler.args
-    assert "--flag3" in container_handler.args
-
-
-def test_process_container_config_no_bind_cwd(
-    runner: ProcessingRunner, tmp_path: Path, mocker: pytest_mock.MockFixture
-):
-    bind_path = tmp_path / "to_bind"
-    mocker.patch("pathlib.Path.cwd", return_value=bind_path)
-    container_command, _ = runner.process_container_config(
-        participant_id="01", session_id="BL", bind_paths=[bind_path]
-    )
-
-    assert (
-        f"--bind {bind_path.resolve()}:{bind_path.resolve()}:rw"
-        not in container_command
-    )
-
-
-def test_process_container_config_no_bindpaths(runner: ProcessingRunner):
-    # smoke test for no bind paths
-    runner.process_container_config(participant_id="01", session_id="BL")
 
 
 def test_check_tar_conditions_no_tracker_config(runner: ProcessingRunner):
@@ -700,6 +583,58 @@ def test_run_single_pybids_db(
         )
     else:
         mocked_set_up_bids_db.assert_not_called()
+
+
+def test_run_single_bids_path_injection_with_pybids_database(
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = True
+
+    mocked_bids_layout = mocker.Mock()
+    mocker.patch.object(runner, "set_up_bids_db", return_value=mocked_bids_layout)
+
+    mocked_get_bids_paths_to_inject = mocker.patch(
+        "nipoppy.workflows.processing_runner._get_bids_paths_to_inject",
+        return_value={"key1": "path1", "key2": "path2"},
+    )
+
+    # mock the Boutiques run outcome
+    mocked_launch_boutiques_run = mocker.patch.object(runner, "launch_boutiques_run")
+
+    runner.run_single(participant_id="01", session_id="1")
+
+    mocked_get_bids_paths_to_inject.assert_called_once_with(
+        bids_layout=mocked_bids_layout,
+        injection_map=runner.pipeline_config.BIDS_PATH_INJECTION_MAP,
+    )
+
+    launch_boutiques_run_kwargs = mocked_launch_boutiques_run.call_args[1]
+    for key, value in mocked_get_bids_paths_to_inject.return_value.items():
+        assert key in launch_boutiques_run_kwargs
+        assert launch_boutiques_run_kwargs[key] == value
+
+
+def test_run_single_bids_path_injection_no_pybids_database(
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+):
+    runner.pipeline_step_config.GENERATE_PYBIDS_DATABASE = False
+
+    mocked_bids_layout = mocker.Mock()
+    mocker.patch.object(runner, "set_up_bids_db", return_value=mocked_bids_layout)
+
+    mocked_get_bids_paths_to_inject = mocker.patch(
+        "nipoppy.workflows.processing_runner._get_bids_paths_to_inject",
+        return_value={"key1": "path1", "key2": "path2"},
+    )
+
+    # mock the Boutiques run outcome
+    mocker.patch.object(runner, "launch_boutiques_run")
+
+    runner.run_single(participant_id="01", session_id="1")
+
+    mocked_get_bids_paths_to_inject.assert_not_called()
 
 
 @pytest.mark.parametrize("tar", [True, False])

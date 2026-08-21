@@ -58,15 +58,18 @@ class NipoppyLogger(logging.Logger):
     def __init__(self, *args, **kwargs):
         """Initialize the Nipoppy logger."""
         super().__init__(*args, **kwargs)
-        self._stdout_handler: RichHandler | None = None
         self._file_handler: logging.FileHandler | None = None
+        # File logging: DEBUG and above
+        self.setLevel(logging.DEBUG)
 
-        self.setLevel(logging.DEBUG)  # File logging: DEBUG and above
         # stderr: ERROR and CRITICAL
-        self.stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
-        self.addHandler(self.stderr_handler)
-        # stdout: INFO and WARNING by default
-        self.set_verbose(False)
+        self._stderr_handler = rich_handler(logging.ERROR, console=CONSOLE_STDERR)
+        self.addHandler(self._stderr_handler)
+
+        # stdout: INFO and WARNING by default (+ DEBUG if verbose)
+        self._stdout_handler = rich_handler(logging.INFO, console=CONSOLE_STDOUT)
+        self._stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
+        self.addHandler(self._stdout_handler)
 
     def _cleanup_handler(self, handler: logging.Handler | None = None) -> None:
         """Close and remove a handler from the logger.
@@ -93,15 +96,7 @@ class NipoppyLogger(logging.Logger):
         Self
             The nipoppy logger
         """
-        # Remove existing stdout handler with previous verbosity level
-        self._cleanup_handler(self._stdout_handler)
-
-        # stdout: INFO and WARNING
-        # If verbose is enabled, also display DEBUG
-        log_level = logging.DEBUG if verbose else logging.INFO
-        self._stdout_handler = rich_handler(log_level, console=CONSOLE_STDOUT)
-        self._stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
-        self.addHandler(self._stdout_handler)
+        self._stdout_handler.setLevel(logging.DEBUG if verbose else logging.INFO)
         return self
 
     def add_file_handler(self, file: Path) -> Self:
@@ -180,5 +175,11 @@ def get_logger(verbose: bool = False) -> NipoppyLogger:
     # Otherwise, external libraries will also use NipoppyLogger
     # This can lead to error when enabling rich's markup.
     logging.setLoggerClass(logging.Logger)
+
+    # Ensure that the dotenv logger uses the same handlers as the Nipoppy logger
+    dotenv_logger = logging.getLogger("dotenv.main")
+    for handler in logger.handlers:
+        if handler not in dotenv_logger.handlers:
+            dotenv_logger.addHandler(handler)
 
     return logger

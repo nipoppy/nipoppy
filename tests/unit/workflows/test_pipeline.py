@@ -20,13 +20,14 @@ from nipoppy.config.pipeline import (
     ProcessingPipelineConfig,
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import ApptainerHandler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
-    CURRENT_SCHEMA_VERSION,
     DEFAULT_PIPELINE_STEP_NAME,
     FAKE_SESSION_ID,
+    ConfigType,
     ContainerCommandEnum,
 )
 from nipoppy.exceptions import (
@@ -634,6 +635,29 @@ def test_get_pipeline_config(
     )
 
 
+def test_get_pipeline_config_json5(workflow: PipelineWorkflow, tmp_path: Path):
+    (tmp_path / "config.json").write_text(f"""
+{{
+  // Comments and trailing commas should be supported
+  "NAME": "{workflow.pipeline_name}",
+  "VERSION": "{workflow.pipeline_version}",
+  "PIPELINE_TYPE": "processing",
+  "SCHEMA_VERSION": "{get_current_schema_version(ConfigType.PIPELINE)}",
+  "STEPS": [
+    {{}},
+  ],
+}}
+""".strip())
+
+    config = workflow._get_pipeline_config(
+        tmp_path,
+        pipeline_name=workflow.pipeline_name,
+        pipeline_version=workflow.pipeline_version,
+        pipeline_class=ProcessingPipelineConfig,
+    )
+    assert isinstance(config, ProcessingPipelineConfig)
+
+
 def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
     pipeline_name = "new_pipeline"
     pipeline_version = "1.0.0"
@@ -646,7 +670,7 @@ def test_get_pipeline_config_invalid(workflow: PipelineWorkflow):
         "NAME": pipeline_name,
         "VERSION": "2.0.0",  # different version
         "PIPELINE_TYPE": "processing",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
     dpath_pipeline_bundle.mkdir(parents=True)
     (dpath_pipeline_bundle / "config.json").write_text(json.dumps(config_dict))
@@ -1033,6 +1057,7 @@ def test_run_main(
     participant_id,
     session_id,
     expected_count,
+    mocker: pytest_mock.MockFixture,
 ):
     workflow.participant_id = participant_id
     workflow.session_id = session_id
@@ -1044,10 +1069,14 @@ def test_run_main(
         dpath_bidsified=workflow.study.layout.dpath_bids,
     )
     manifest.save_with_backup(workflow.study.layout.fpath_manifest)
+
+    mocked_log_summary_message = mocker.patch.object(workflow, "_log_summary_message")
+
     workflow.run_main()
     assert workflow.n_total == expected_count
     assert workflow.n_success == expected_count
     assert workflow.run_single_results == tuple(["SUCCESS"] * expected_count)
+    mocked_log_summary_message.assert_called_once()
 
 
 def test_run_main_analysis_level(
@@ -1250,7 +1279,7 @@ def test_run_main_use_subcohort_empty_file(
     ],
 )
 @pytest.mark.no_xdist
-def test_run_cleanup(
+def test_log_summary_message(
     n_success,
     n_total,
     analysis_level,
@@ -1265,17 +1294,18 @@ def test_run_cleanup(
         ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
     ]
 
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert expected_message.format(n_success, n_total) in caplog.text
 
 
-def test_run_cleanup_no_participants_warning(
+@pytest.mark.no_xdist
+def test_log_summary_message_no_participants_warning(
     workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
 ):
     workflow.n_success = 0
     workflow.n_total = 0
-    workflow.run_cleanup()
+    workflow._log_summary_message()
     assert any(
         record.levelname == "WARNING"
         and "No participants or sessions to run" in record.message
@@ -1295,7 +1325,7 @@ def test_run_cleanup_no_participants_warning(
     ],
 )
 @pytest.mark.no_xdist
-def test_run_cleanup_hpc(
+def test_log_summary_message_hpc(
     n_success,
     n_total,
     expected_message,
@@ -1306,47 +1336,58 @@ def test_run_cleanup_hpc(
 
     workflow.n_success = n_success
     workflow.n_total = n_total
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert expected_message in caplog.text
 
 
-def test_run_cleanup_write_subcohort(
+@pytest.mark.no_xdist
+def test_log_summary_message_write_subcohort(
     workflow: PipelineWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ):
     workflow.write_subcohort = tmp_path / "subcohort.tsv"
 
     workflow.n_success = 0
     workflow.n_total = 0
-    workflow.run_cleanup()
+    workflow._log_summary_message()
 
     assert "No participants or sessions to run" not in caplog.text
     assert "Wrote subcohort to" in caplog.text
 
 
 @pytest.mark.parametrize(
-    "pipeline_name,pipeline_version,participant_id,session_id,expected_stem",
+    "pipeline_name,pipeline_version,pipeline_step,participant_id,session_id,expected_stem",
     [
         (
             "my_pipeline",
             "1.0",
+            "step1",
             "sub1",
             None,
-            "test/my_pipeline-1.0/my_pipeline-1.0-sub1",
+            "nipoppy/test/my_pipeline-1.0-step1/my_pipeline-1.0-step1-sub1",
         ),
         (
             "my_pipeline",
             None,
+            None,
             "sub1",
             None,
-            "test/my_pipeline-2.0/my_pipeline-2.0-sub1",
+            "nipoppy/test/my_pipeline-2.0-default/my_pipeline-2.0-default-sub1",
         ),
-        ("fmriprep", None, None, "1", "test/fmriprep-23.1.3/fmriprep-23.1.3-1"),
+        (
+            "fmriprep",
+            None,
+            None,
+            None,
+            "1",
+            "nipoppy/test/fmriprep-23.1.3-default/fmriprep-23.1.3-default-1",
+        ),
     ],
 )
 def test_generate_fpath_log(
     pipeline_name,
     pipeline_version,
+    pipeline_step,
     participant_id,
     session_id,
     expected_stem,
@@ -1355,6 +1396,7 @@ def test_generate_fpath_log(
 ):
     workflow.pipeline_name = pipeline_name
     workflow.pipeline_version = pipeline_version
+    workflow.pipeline_step = pipeline_step
     workflow.participant_id = participant_id
     workflow.session_id = session_id
     fpath_log = workflow.generate_fpath_log()

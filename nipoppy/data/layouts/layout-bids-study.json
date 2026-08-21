@@ -102,5 +102,6 @@
     "fpath_bidsignore": {
         "path": ".bidsignore",
         "description": "The .bidsignore file lists files and directories to exclude from BIDS validation."
-    }
+    },
+    "SCHEMA_VERSION": "1.0"
 }

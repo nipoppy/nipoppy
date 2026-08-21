@@ -10,11 +10,13 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import json5
+
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import NipoppyError
+from nipoppy.exceptions import ConfigError, JSON5Error, JSONError, NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -69,30 +71,41 @@ def get_pipeline_tag(
     return sep.join(components)
 
 
-def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
+def load_json(
+    fpath: StrOrPathLike,
+    *,
+    allow_json5: bool = False,
+    **kwargs,
+) -> dict | list:
     """Load a JSON file.
 
     Parameters
     ----------
     fpath : nipoppy.env.StrOrPathLike
         Path to the JSON file
+    allow_json5 : bool, optional
+        Whether to parse the file as JSON5 (supports comments and trailing commas),
+        by default False
     **kwargs :
-        Keyword arguments to pass to json.load
+        Keyword arguments to pass to json.loads or json5.loads
 
     Returns
     -------
-    dict
+    dict | list
         The JSON object.
     """
-    with open(fpath, "r") as file:
+    fpath = Path(fpath)
+    json_text = fpath.read_text()
+    if allow_json5:
         try:
-            return json.load(file, **kwargs)
+            return json5.loads(json_text, **kwargs)
+        except ValueError as e:
+            raise JSON5Error(e, fpath=fpath) from e
+    else:
+        try:
+            return json.loads(json_text, **kwargs)
         except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(
-                f"Error loading JSON file at {fpath}",
-                e.doc,
-                e.pos,
-            )
+            raise JSONError(e, fpath=fpath) from e
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
@@ -249,6 +262,10 @@ def apply_substitutions_to_json(
     # convert json_obj to string
     json_text = json.dumps(json_obj)
     for key, value in substitutions.items():
+        if not isinstance(value, str):
+            raise ConfigError(
+                f"Substitution value must be a string, got {type(value)} for key '{key}'"  # noqa: E501
+            )
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
 
@@ -258,7 +275,7 @@ def get_today():
     return datetime.datetime.today().strftime("%Y-%m-%d")
 
 
-def is_nipoppy_project(cwd=Path.cwd()):
+def is_nipoppy_project(dpath: StrOrPathLike) -> Path | bool:
     """Verify if the current directory is a nipoppy project.
 
     This is done by checking if the `.nipoppy` directory exists in the
@@ -268,10 +285,10 @@ def is_nipoppy_project(cwd=Path.cwd()):
 
     Parameters
     ----------
-    cwd : nipoppy.env.StrOrPathLike, optional
-        Path to directory, by default Path.cwd()
+    dpath : nipoppy.env.StrOrPathLike
+        Path to directory to check
     """
-    current = Path(cwd).resolve()
+    current = Path(dpath).resolve()
     while True:
         candidate = current / NIPOPPY_DIR_NAME
         if candidate.is_dir():

@@ -4,17 +4,25 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import json
 import logging
 import shlex
 from pathlib import Path
 
 import pytest
 import pytest_mock
+import rich_click as click
 from click.testing import CliRunner
 
-from nipoppy.cli import exception_handler
+from nipoppy.cli import (
+    BUG_REPORT_URL,
+    DISCORD_URL,
+    exception_handler,
+)
 from nipoppy.cli.cli import cli
-from nipoppy.exceptions import NipoppyError, ReturnCode
+from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
+from nipoppy.cli.options import dataset_option
+from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -55,8 +63,30 @@ COMMAND_WORKFLOW_MAP = {
     ),
 }
 
+DEFAULT_VALUE_DUMMY_CLI = "default"
 
-def assert_command_success(args):
+
+@pytest.fixture
+def dummy_cli():
+    @click.group(cls=OrderedAliasedGroupWithDotenv)
+    def cli():
+        pass
+
+    @cli.command()
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
+    def subcommand_without_dataset(**params):
+        print(params["test_param"])
+
+    @cli.command()
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
+    @dataset_option
+    def subcommand_with_dataset(**params):
+        print(params["test_param"])
+
+    return cli
+
+
+def _assert_command_success(args):
     """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
     assert (
@@ -76,11 +106,6 @@ def test_cli_invalid(args):
 @pytest.mark.parametrize(
     "command,workflow,expected_warning",
     [
-        (
-            ["init", "[tmp_path]/nipoppy_study"],
-            "nipoppy.workflows.dataset_init.InitWorkflow",
-            "Giving the dataset path without --dataset is deprecated",
-        ),
         (
             [
                 "process",
@@ -124,7 +149,7 @@ def test_dep_params(
 @pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
-    assert_command_success(f"{command} -h")
+    _assert_command_success(f"{command} -h")
     assert any(
         [
             (record.levelno == logging.WARNING and "is deprecated" in record.message)
@@ -335,7 +360,7 @@ def test_cli_command(
 
     if workflow:
         mocker.patch(f"{workflow}.run")
-    assert_command_success(command)
+    _assert_command_success(command)
 
 
 def test_context_manager_no_exception(mocker):
@@ -359,7 +384,7 @@ def test_context_manager_no_exception(mocker):
     ],
 )
 def test_context_manager_system_exit_exception(
-    mocker, return_code, expected_return_code, caplog
+    mocker: pytest_mock.MockerFixture, return_code, expected_return_code, caplog
 ):
     """Test that the context manager handles exceptions correctly.
 
@@ -391,7 +416,9 @@ class MyCustomException(NipoppyError):
         MyCustomException,
     ],
 )
-def test_context_manager_nipoppy_exception(mocker, exception):
+def test_context_manager_nipoppy_exception(
+    mocker: pytest_mock.MockerFixture, exception
+):
     """Test that the context manager handles exceptions correctly.
 
     NipoppyError and its subclasses should set the workflow return code to the
@@ -408,11 +435,71 @@ def test_context_manager_nipoppy_exception(mocker, exception):
     mock_exit.assert_called_once_with(exception.code)
 
 
+@pytest.mark.parametrize("hint", ["", "This is a hint."])
+def test_context_manager_nipoppy_exception_logs_custom_hint(
+    hint, mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
+    """Known NipoppyError should emit custom hint when provided."""
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    with exception_handler(workflow):
+        raise NipoppyError("Invalid project config", hint=hint)
+
+    assert any(
+        "Troubleshooting:" in record.message and hint in record.message
+        for record in caplog.records
+    )
+
+
+def test_context_manager_nipoppy_exception_logs_default_hint(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
+    """Known NipoppyError should emit default hint when none provided."""
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    default_hint = "This is a default hint."
+    with exception_handler(workflow):
+        e = NipoppyError("Invalid project config", hint=None)
+        e.default_hint = default_hint
+        raise e
+
+    assert any(
+        f"Troubleshooting: {default_hint}" in record.message
+        for record in caplog.records
+    )
+
+
+def test_context_manager_json_error(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
+    """Test that JSONError includes the file path in the error message."""
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    fpath = "invalid.json"
+    with exception_handler(workflow):
+        raise JSONError(
+            json.JSONDecodeError("Invalid JSON", "{}", 10),
+            fpath=Path(fpath),
+        )
+    assert any(
+        f"Invalid JSON: {fpath}: line 1 column 11 (char 10)" in record.message
+        for record in caplog.records
+    )
+
+
 @pytest.mark.parametrize(
     "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_COMMAND)]
 )
 @pytest.mark.parametrize("exception", [Exception, RuntimeError])
-def test_context_manager_unknown_exception(mocker, exception, return_code):
+def test_context_manager_unknown_exception(
+    mocker: pytest_mock.MockerFixture,
+    exception,
+    return_code,
+    caplog: pytest.LogCaptureFixture,
+):
     """Test that the context manager handles exceptions correctly.
 
     Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
@@ -430,9 +517,13 @@ def test_context_manager_unknown_exception(mocker, exception, return_code):
     # Exit code is always set to UNKNOWN_FAILURE for unknown exceptions
     assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
     mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
+    assert any(BUG_REPORT_URL in record.message for record in caplog.records)
+    assert any(DISCORD_URL in record.message for record in caplog.records)
 
 
-def test_context_manager_pydantic_failed_validation(mocker):
+def test_context_manager_pydantic_failed_validation(
+    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
+):
     """Test that the context manager handles pydantic ValidationError correctly."""
     from pydantic import BaseModel
 
@@ -449,6 +540,11 @@ def test_context_manager_pydantic_failed_validation(mocker):
 
     assert workflow.return_code == ReturnCode.INVALID_CONFIG
     mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
+    assert any(
+        "Troubleshooting:" in record.message
+        and "Review your configuration fields and value types" in record.message
+        for record in caplog.records
+    )
 
 
 @pytest.mark.parametrize("command", list_cli_commands(cli))
@@ -466,11 +562,7 @@ def test_no_duplicated_flag(
 
 @pytest.mark.parametrize(
     "command_name",
-    [
-        command
-        for command in list_cli_commands(cli)
-        if command not in ("gui", "pipeline")
-    ],
+    list_cli_commands(cli, include_hidden=False, include_group=False),
 )
 def test_cli_params_match_workflows(command_name):
     ignored_params = {
@@ -505,3 +597,122 @@ def test_cli_params_match_workflows(command_name):
         f"Command '{command_name}' is missing params {missing_params}"
         f" expected by {workflow_name}"
     )
+
+
+@pytest.mark.parametrize(
+    "subcommand,user_dotenv_content,study_dotenv_content,env_vars,cli_args,expected_parsed_param",  # noqa: E501
+    [
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",
+            {"TEST_PARAM": "env_var"},
+            ["--test-param", "cli_arg"],
+            "cli_arg",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",
+            {"TEST_PARAM": "env_var"},
+            [],
+            "env_var",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",
+            {},
+            [],
+            "study_dotenv",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='user_dotenv'",
+            "",
+            {},
+            [],
+            "user_dotenv",
+        ),
+        (
+            "subcommand-with-dataset",
+            "TEST_PARAM='user_dotenv'",
+            None,
+            {},
+            [],
+            "user_dotenv",
+        ),
+        ("subcommand-with-dataset", "", None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        ("subcommand-with-dataset", None, None, {}, [], DEFAULT_VALUE_DUMMY_CLI),
+        (
+            "subcommand-without-dataset",
+            "TEST_PARAM='user_dotenv'",
+            "TEST_PARAM='study_dotenv'",  # ignored
+            {},
+            [],
+            "user_dotenv",
+        ),
+    ],
+)
+def test_param_source_priority(
+    dummy_cli: click.Group,
+    subcommand: str,
+    user_dotenv_content,
+    study_dotenv_content,
+    env_vars,
+    cli_args,
+    expected_parsed_param: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    restore_environment,
+):
+    dpath_root = tmp_path / "nipoppy_root"
+
+    # user-level dotenv at ~/.nipoppy/.env
+    dpath_home = tmp_path / "home"
+    fpath_user_dotenv = dpath_home / ".nipoppy" / ".env"
+
+    # study-level dotenv at [[NIPOPPY_DPATH_ROOT]]/.env
+    fpath_study_dotenv = dpath_root / ".env"
+
+    if user_dotenv_content is not None:
+        fpath_user_dotenv.parent.mkdir(parents=True, exist_ok=True)
+        fpath_user_dotenv.write_text(user_dotenv_content)
+
+    if study_dotenv_content is not None:
+        fpath_study_dotenv.parent.mkdir(parents=True, exist_ok=True)
+        fpath_study_dotenv.write_text(study_dotenv_content)
+
+    # set HOME so ~ expands to the test home directory
+    monkeypatch.setenv("HOME", str(dpath_home))
+
+    if subcommand == "subcommand-with-dataset":
+        cli_args += ["--dataset", str(dpath_root)]
+
+    results = runner.invoke(
+        dummy_cli, [subcommand] + cli_args, env=env_vars, catch_exceptions=False
+    )
+
+    # get the last printed line which should be the parsed parameter value
+    parsed_param = results.stdout.split()[-1].strip()
+
+    assert parsed_param == expected_parsed_param
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    list_cli_commands(cli, include_hidden=False, include_group=False),
+)
+def test_cli_show_envvar(command_name: str):
+    # get Click Command object
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    for param in command.params:
+        if param.envvar is not None:
+            assert param.show_envvar, (
+                f"Parameter '{param.name}' in subcommand '{command_name}' has envvar "
+                f"'{param.envvar}' but show_envvar is False. Set show_envvar to True "
+                f"to display the env var in the help message."
+            )
