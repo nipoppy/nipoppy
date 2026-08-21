@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from nipoppy.utils.subprocess_runner import (
-    LogPrefix,
     _log_command,
+    _LogPrefix,
     run_command,
 )
 
@@ -21,7 +21,7 @@ def test_log_command(command, caplog: pytest.LogCaptureFixture):
     assert caplog.records
     record = caplog.records[-1]
     assert record.levelno == logging.INFO
-    assert record.message.startswith(LogPrefix.RUN)
+    assert record.message.startswith(_LogPrefix.RUN)
     assert command in record.message
 
 
@@ -77,7 +77,7 @@ def test_run_command_no_markup(caplog: pytest.LogCaptureFixture, tmp_path: Path)
 def test_run_command_quiet(caplog: pytest.LogCaptureFixture):
     message = "This should be printed"
     run_command(["echo", message], quiet=True)
-    assert LogPrefix.RUN not in caplog.text
+    assert _LogPrefix.RUN not in caplog.text
     assert message in caplog.text
 
 
@@ -118,5 +118,5 @@ def test_run_command_streams_final_lines(
         quiet=True,  # suppress the [RUN] line so assertions only match process output
     )
 
-    assert f"{LogPrefix.RUN_STDOUT} {final_stdout_line}" in caplog.text
-    assert f"{LogPrefix.RUN_STDERR} {final_stderr_line}" in caplog.text
+    assert f"{_LogPrefix.RUN_STDOUT} {final_stdout_line}" in caplog.text
+    assert f"{_LogPrefix.RUN_STDERR} {final_stderr_line}" in caplog.text

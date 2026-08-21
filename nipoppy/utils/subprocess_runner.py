@@ -12,7 +12,7 @@ from nipoppy.logger import get_logger
 logger = get_logger()
 
 
-class LogPrefix:
+class _LogPrefix:
     """Prefixes for logging subprocess output."""
 
     RUN = "[RUN]"
@@ -24,7 +24,7 @@ def _log_command(command: str) -> None:
     """Write a command to the log with a special prefix."""
     # using extra={"markup": False} in case the command contains substrings
     # that would be interpreted as closing tags by the RichHandler
-    logger.info(f"{LogPrefix.RUN} {command}", extra={"markup": False})
+    logger.info(f"{_LogPrefix.RUN} {command}", extra={"markup": False})
 
 
 def _log_output(
@@ -50,11 +50,11 @@ def _drain_process(process: subprocess.Popen[str]) -> None:
     assert process.stderr is not None
     _log_output(
         process.stdout,
-        LogPrefix.RUN_STDOUT,
+        _LogPrefix.RUN_STDOUT,
     )
     _log_output(
         process.stderr,
-        LogPrefix.RUN_STDERR,
+        _LogPrefix.RUN_STDERR,
         log_level=logging.ERROR,
     )
 
