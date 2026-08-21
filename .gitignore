@@ -40,6 +40,7 @@ docs/source/autoapi
 env/
 venv/
 .venv/
+.venv
 nipoppy_env/
 
 # Env var file
