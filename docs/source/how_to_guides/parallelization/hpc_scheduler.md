@@ -55,7 +55,7 @@ Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/
 
 The HPC config file should look similar to this:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/hpc.json5
+```{literalinclude} ../../_inserts/hpc.json5
 ---
 linenos: True
 language: json
@@ -71,11 +71,11 @@ You can create an HPC config file manually by copying the content above into a n
 
 You will also need to add an `"HPC_CONFIG_FILE"` field for each step in pipeline's `config.json` file:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/config-extraction.json5
+```{literalinclude} ../../_inserts/config-extraction.json5
 ---
 linenos: True
 language: json
-lines: 12-18
+lines: 14-21
 emphasize-lines: 6
 ---
 ```

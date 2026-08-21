@@ -21,5 +21,5 @@ linkcheck:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	./scripts/pydantic_to_jsonschema.py
-	./scripts/sample_study_config.py
+	./scripts/process_template_json5_configs.py
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
