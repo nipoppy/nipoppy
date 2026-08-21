@@ -14,7 +14,7 @@ To avoid having to manually make these changes for every new Nipoppy study, you 
 See {ref}`here <default-config-override>` for more information.
 ```
 
-```{literalinclude} ../../_inserts/sample_study_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json5
 ---
 linenos: True
 language: json

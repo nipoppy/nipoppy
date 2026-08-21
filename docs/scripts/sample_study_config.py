@@ -13,6 +13,6 @@ if __name__ == "__main__":
     DPATH_INSERTS.mkdir(parents=True, exist_ok=True)
     nipoppy.utils.fileops.copy_template(
         FPATH_SAMPLE_CONFIG,
-        DPATH_INSERTS / "sample_study_config.json",
+        DPATH_INSERTS / "sample_study_config.json5",
         version=PROGRAM_VERSION,
     )
