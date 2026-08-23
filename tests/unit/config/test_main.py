@@ -10,7 +10,11 @@ from pydantic import ValidationError
 from nipoppy.config.container import ContainerConfig
 from nipoppy.config.main import Config, PipelineVariables
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    get_current_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum
 from nipoppy.exceptions import ConfigError
 from nipoppy.utils.utils import FPATH_SAMPLE_CONFIG
 from tests.conftest import DPATH_TEST_DATA
@@ -18,12 +22,14 @@ from tests.conftest import DPATH_TEST_DATA
 FIELDS_PIPELINE_VARIABLES = ["BIDSIFICATION", "PROCESSING", "EXTRACTION"]
 REQUIRED_FIELDS_CONFIG = []
 FIELDS_CONFIG = REQUIRED_FIELDS_CONFIG + [
+    "SCHEMA_VERSION",
     "SUBSTITUTIONS",
     "CUSTOM",
     "CONTAINER_CONFIG",
     "DICOM_DIR_MAP_FILE",
     "DICOM_DIR_PARTICIPANT_FIRST",
     "HPC_PREAMBLE",
+    "HPC_QUEUE_LIMIT",
     "PIPELINE_VARIABLES",
 ]
 
@@ -78,6 +84,11 @@ def test_no_extra_fields(valid_config_data):
         Config(**valid_config_data, NOT_A_FIELD="x")
 
 
+def test_schema_version_default_schema_version():
+    config = Config()
+    assert config.SCHEMA_VERSION == EARLIEST_SCHEMA_VERSION
+
+
 @pytest.mark.parametrize(
     "deprecated_field", ["DATASET_NAME", "VISIT_IDS", "SESSION_IDS"]
 )
@@ -93,6 +104,19 @@ def test_hpc_preamble_list(hpc_preamble, valid_config_data):
     valid_config_data["HPC_PREAMBLE"] = hpc_preamble
     config = Config(**valid_config_data)
     assert config.HPC_PREAMBLE == ["module load preamble"]
+
+
+@pytest.mark.parametrize("queue_limit", [None, 1, 100])
+def test_hpc_queue_limit_valid(queue_limit, valid_config_data):
+    valid_config_data["HPC_QUEUE_LIMIT"] = queue_limit
+    Config(**valid_config_data)
+
+
+@pytest.mark.parametrize("queue_limit", [-1, 0])
+def test_hpc_queue_limit_invalid(queue_limit, valid_config_data):
+    valid_config_data["HPC_QUEUE_LIMIT"] = queue_limit
+    with pytest.raises(ValidationError, match="Input should be greater than 0"):
+        Config(**valid_config_data)
 
 
 @pytest.mark.parametrize(
@@ -207,7 +231,7 @@ def test_propagate_container_config(
             "VERSION": pipeline_version,
             container_config_key: data_pipeline,
             "STEPS": [{"NAME": step_name, container_config_key: data_step}],
-            "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+            "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
         }
     )
 
@@ -233,6 +257,7 @@ def test_save(tmp_path: Path, valid_config_data):
         DPATH_TEST_DATA / "config1.json",
         DPATH_TEST_DATA / "config2.json",
         DPATH_TEST_DATA / "config3.json",
+        DPATH_TEST_DATA / "config4.json5",
     ],
 )
 def test_load(path):

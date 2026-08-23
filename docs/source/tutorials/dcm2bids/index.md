@@ -72,7 +72,7 @@ nipoppy_study/
 ## Step 2: Reorganize the DICOM sourcedata
 
 :::{dropdown} Good to know: why reorganization?
-Usually, there is a gap between data state out of scanner vs. ready for bidsification. Source data is often messy in different ways, making it hard to use BIDSification tools directly. Nipoppy provides a unified way to deal with DICOM vs. Nifti sourcedata which simplifies BIDSification. It also helps fixing issues related to file naming which often appear in chaotic data dumps or due to typos. Additionally, the organization simplifies taring the DICOMs after bidsification. All this is implemented in one simple command, namely [`nipoppy reorg`](../../cli_reference/reorg.rst).
+Usually, there is a gap between data state out of scanner vs. ready for bidsification. Source data is often messy in different ways, making it hard to use BIDSification tools directly. Nipoppy provides a unified way to deal with DICOM vs. Nifti sourcedata which simplifies BIDSification. It also helps fixing issues related to file naming which often appear in chaotic data dumps or due to typos. Additionally, the organization simplifies taring the DICOMs after bidsification. All this is implemented in one simple command, namely [`nipoppy reorg`](../../reference/cli_reference/reorg.rst).
 :::
 
 

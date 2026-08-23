@@ -15,13 +15,13 @@ If the default Slurm/SGE configurations do not work for you, please consider [op
 
 ### Global settings
 
-The default global configuration file has two {term}`HPC`-related fields that should be updated as needed:
+The default global configuration file has three {term}`HPC`-related fields that should be updated as needed:
 
 ```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
 ---
 linenos: True
 language: json
-emphasize-lines: 5,18-27
+emphasize-lines: 5,18-27,28
 ---
 ```
 
@@ -41,6 +41,12 @@ This can be left blank if these options are not needed.
 ```{attention}
 If your HPC system needs flags other than `--account-name` or `-q` need to be set, you will have to modify the template job submission script: see the [Further customization](#further-customization) section for more information.
 ```
+
+#### `HPC_QUEUE_LIMIT`
+
+The maximum number of jobs allowed in the queue for a given user.
+This limit is specific to your HPC system.
+Set to `null` if there is no such limit, in which case all jobs will always be submitted.
 
 ### Pipeline-specific settings
 
@@ -86,7 +92,7 @@ Set/leave as empty string if the field is not needed.
 
 ## Submitting HPC jobs via `nipoppy` commands
 
-To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../cli_reference/process.rst>), or [`nipoppy extract`](<project:../../cli_reference/extract.rst>) commands:
+To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../reference/cli_reference/process.rst>), or [`nipoppy extract`](<project:../../reference/cli_reference/extract.rst>) commands:
 
 ```console
 $ nipoppy <SUBCOMMAND> \

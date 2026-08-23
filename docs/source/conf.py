@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from nipoppy._version import __version__
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import FPATH_USER_CONFIG, PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 from nipoppy.zenodo_api import ZenodoAPI
 
@@ -52,7 +52,7 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = [
     # not ideal but otherwise we wrongly get a warning
-    "how_to_guides/user_guide/inserts/boutiques_stub.md",
+    "reference/schemas/schema_howto.md",
 ]
 
 nitpicky = True
@@ -146,7 +146,7 @@ myst_substitutions = {
     "dpath_pipelines": f"`{DEFAULT_LAYOUT_INFO.dpath_pipelines}`",
     "dpath_pipeline_output": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_output('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
     "dpath_pipeline_idp": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_idp('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
-    "dpath_pipeline_work": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_work('<PIPELINE_NAME>', '<PIPELINE_VERSION>')}`",
+    "dpath_pipeline_work": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_work('<PIPELINE_NAME>', '<PIPELINE_VERSION>', '<PIPELINE_STEP>')}`",
     "fpath_processing_pipeline_config": f"`{DEFAULT_LAYOUT_INFO.get_dpath_pipeline_bundle(PipelineTypeEnum.PROCESSING, '<PIPELINE_NAME>', '<PIPELINE_VERSION>')}/{DEFAULT_LAYOUT_INFO.fname_pipeline_config}`",
     "dpath_pybids_db": f"`{DEFAULT_LAYOUT_INFO.dpath_pybids_db}`",
     "dpath_tabular": f"`{DEFAULT_LAYOUT_INFO.dpath_tabular}`",
@@ -155,11 +155,14 @@ myst_substitutions = {
     "fpath_processing_status": f"`{DEFAULT_LAYOUT_INFO.fpath_processing_status}`",
     "fpath_manifest": f"`{DEFAULT_LAYOUT_INFO.fpath_manifest}`",
     "fpath_config": f"`{DEFAULT_LAYOUT_INFO.fpath_config}`",
+    "fpath_user_config": f"`{FPATH_USER_CONFIG}`",
     "zenodo_id_dcm2bids_3_2_0": zenodo_api.get_latest_version_id("16876754"),
     "zenodo_id_mriqc_23_1_0": zenodo_api.get_latest_version_id("15427844"),
 }
 
 # -- Autodoc/AutoAPI configuration ----------------------------------------------------
+
+autoapi_root = "reference/autoapi"
 
 autodoc_typehints = "description"
 
@@ -183,6 +186,11 @@ autoapi_template_dir = "_templates/autoapi"
 # suppress_warnings = ["autoapi"]
 
 nitpick_ignore = [
+    # Pydantic renders Annotated validator metadata as class references even though
+    # these objects are not classes with linkable documentation targets.
+    ("py:class", "AfterValidator"),
+    ("py:class", "ensure_schema_support"),
+    ("py:class", "functools.partial"),
     ("py:class", "Path"),
     ("py:class", "optional"),
     ("py:class", "pd.DataFrame"),
