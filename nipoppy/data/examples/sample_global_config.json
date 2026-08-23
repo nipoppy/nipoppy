@@ -25,10 +25,12 @@
         "# ========== Set environment variables ==========",
         "export PYTHONUNBUFFERED=1"
     ],
+    "HPC_QUEUE_LIMIT": 1000,
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {},
         "PROCESSING": {},
         "EXTRACTION": {}
     },
-    "CUSTOM": {}
+    "CUSTOM": {},
+    "SCHEMA_VERSION": "1.0"
 }

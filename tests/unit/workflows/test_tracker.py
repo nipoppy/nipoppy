@@ -80,7 +80,7 @@ def tracker(tmp_path: Path):
 
 @pytest.mark.parametrize(
     "analysis_level",
-    enumerate(AnalysisLevelType),
+    tuple(AnalysisLevelType),
 )
 def test_apply_analysis_level_success(analysis_level):
     participants_sessions = [("S01", "BL"), ("S01", "FU"), ("S02", "BL"), ("S02", "FU")]

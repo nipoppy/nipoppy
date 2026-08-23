@@ -1,0 +1,11 @@
+{
+    /*
+    Test that block comments are allowed in the JSON5 file.
+    This is a multi-line comment that should be ignored by the parser.
+    */
+    "NAME": "my_test_pipeline",
+    "VERSION": "1.0.0",
+    "STEPS": [],
+    "SCHEMA_VERSION": "1",
+    "PIPELINE_TYPE": "processing", // Test inline comments + trailing commas
+}

@@ -1,5 +1,12 @@
 # Contributing
 
+> [!IMPORTANT]
+> The Nipoppy development team hosts biweekly meetings on Discord to review issues and PRs requiring attention and plan priorities for the near future.
+>
+> This is a perfect opportunity to get more involved with the development of Nipoppy.
+> Anyone is welcome to join these "open dev meetings".
+> See the event on the [Nipoppy Discord server](https://discord.gg/dQGYADCCMB) for exact meeting times.
+
 > [!WARNING]
 > Ensure you read [our policy on AI-generated content](#use-of-generative-ai).
 
@@ -39,9 +46,8 @@ If you would like to contribute but are not sure where to start, we recommend lo
 
 ## Developer environment setup
 
-```{tip}
-You should use a Python environment dedicated to Nipoppy development (see [here](#python-env-instructions) for instructions).
-```
+> [!TIP]
+> You should use a Python environment dedicated to Nipoppy development (see [here](#python-env-instructions) for instructions).
 
 First, [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) the [repository](https://github.com/nipoppy/nipoppy) on GitHub.
 
@@ -122,10 +128,8 @@ Then open the `build/html/index.html` file in a browser.
 1. Publish the release.
 1. Make a post in the Discord server in the `#announcements` channel about the release and the summarized changes.
 
-```{note}
-This will trigger the GitHub workflow for publishing the package to PyPI.
-```
+> [!NOTE]
+> This will trigger the GitHub workflow for publishing the package to PyPI.
 
-```{warning}
-If you edit the release notes afterwards, make sure to rebuild the docs for that release to update the "What's new" section of the documentation.
-```
+> [!WARNING]
+> If you edit the release notes afterwards, make sure to rebuild the docs for that release to update the "What's new" section of the documentation.
