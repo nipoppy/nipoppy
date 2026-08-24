@@ -2,7 +2,6 @@
 
 import warnings
 from pathlib import Path
-from typing import Optional
 
 from pydantic import ValidationError
 
@@ -48,7 +47,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         mode="symlink",
         force=False,
         container_store: StrOrPathLike | None = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         default_config: bool = False,
         verbose: bool = False,
         dry_run: bool = False,

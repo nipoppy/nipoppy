@@ -2,7 +2,6 @@
 
 import warnings
 from pathlib import Path
-from typing import Optional
 
 import boutiques
 
@@ -27,7 +26,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         pipeline_dir: Path,
         type_: PipelineTypeEnum,
         *,
-        source_descriptor: Optional[Path] = None,
+        source_descriptor: Path | None = None,
         verbose=False,
         dry_run=False,
     ):
@@ -45,7 +44,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         target: Path,
         type_: PipelineTypeEnum,
         *,
-        source_descriptor: Optional[Path] = None,
+        source_descriptor: Path | None = None,
     ):
         """Create a pipeline bundle."""
         if target.exists():

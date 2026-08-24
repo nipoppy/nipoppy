@@ -1,7 +1,7 @@
 """Container (i.e., Singularity/Apptainer) configuration model and utility functions."""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -15,7 +15,7 @@ class ContainerConfig(BaseModel):
     Does not include information about the container image.
     """
 
-    COMMAND: Optional[ContainerCommandEnum] = Field(
+    COMMAND: ContainerCommandEnum | None = Field(
         default=ContainerCommandEnum.APPTAINER,
         description=(
             "Name of container engine. If null/None, the pipeline will not run in a "
@@ -90,14 +90,14 @@ class ContainerConfig(BaseModel):
 class ContainerInfo(BaseModel):
     """Schema for container image (i.e., file) information."""
 
-    FILE: Optional[Path] = Field(
+    FILE: Path | None = Field(
         default=None,
         description=(
             "Path to the container associated with the pipeline"
             ", relative to the root directory of the dataset"
         ),
     )
-    URI: Optional[str] = Field(
+    URI: str | None = Field(
         default=None,
         description="The Docker or Apptainer/Singularity URI for the container",
     )
