@@ -1,7 +1,5 @@
 """Workflow for pipeline search command."""
 
-from typing import Optional
-
 import pandas as pd
 from rich import box
 from rich.table import Table
@@ -42,7 +40,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
     def __init__(
         self,
         query: str,
-        zenodo_api: Optional[ZenodoAPI] = None,
+        zenodo_api: ZenodoAPI | None = None,
         community: bool = False,
         size: int = 10,
         verbose: bool = False,
