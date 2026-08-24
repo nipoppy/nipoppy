@@ -7,8 +7,8 @@ import shlex
 import shutil
 import subprocess
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional
 
 from nipoppy.base import Base
 from nipoppy.config.container import ContainerConfig
@@ -57,8 +57,8 @@ class ContainerHandler(Base, ABC):
     def add_bind_arg(
         self,
         path_src: StrOrPathLike,
-        path_dest: Optional[StrOrPathLike] = None,
-        mode: Optional[str] = "rw",
+        path_dest: StrOrPathLike | None = None,
+        mode: str | None = "rw",
     ):
         """Add a bind path to the container args.
 
@@ -67,7 +67,7 @@ class ContainerHandler(Base, ABC):
         path_src : nipoppy.env.StrOrPathLike
             Path on disk. If this is a relative path or contains symlinks,
             it will be resolved
-        path_dest : Optional[nipoppy.env.StrOrPathLike], optional
+        path_dest : nipoppy.env.StrOrPathLike | None, optional
             Path inside the container (if None, will be the same as the local path),
             by default None
         mode : str, optional
@@ -175,15 +175,15 @@ class ContainerHandler(Base, ABC):
 
     @abstractmethod
     def is_image_downloaded(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> bool:
         """Check if a container image has been downloaded.
 
         Parameters
         ----------
-        uri : Optional[str]
+        uri : str | None
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : nipoppy.env.StrOrPathLike | None
             Path to the container image
 
         Returns
@@ -209,15 +209,15 @@ class ContainerHandler(Base, ABC):
 
     @abstractmethod
     def get_pull_command(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> str:
         """Get the command to pull a container image to a specified location.
 
         Parameters
         ----------
-        uri : Optional[str]
+        uri : str | None
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : nipoppy.env.StrOrPathLike | None
             Path where the container image should be saved
 
         Returns
@@ -234,15 +234,15 @@ class ApptainerHandler(ContainerHandler):
     bind_flags = ("--bind", "-B")
 
     def is_image_downloaded(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> bool:
         """Check if a container image has been downloaded.
 
         Parameters
         ----------
-        uri : Optional[str]
+        uri : str | None
             URI of the container image (e.g. docker://...) (not used)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : nipoppy.env.StrOrPathLike | None
             Path to the container image
 
         Returns
@@ -273,15 +273,15 @@ class ApptainerHandler(ContainerHandler):
         )
 
     def get_pull_command(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> str:
         """Get the command to pull a container image to a specified location.
 
         Parameters
         ----------
-        uri : Optional[str]
+        uri : str | None
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : nipoppy.env.StrOrPathLike | None
             Path where the container image should be saved
 
         Returns
@@ -312,15 +312,15 @@ class DockerHandler(ContainerHandler):
         return uri.removeprefix("docker://")
 
     def is_image_downloaded(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> bool:
         """Check if a container image has been downloaded.
 
         Parameters
         ----------
-        uri : Optional[str]
+        uri : str | None
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : nipoppy.env.StrOrPathLike | None
             Path to the container image (not used)
 
         Returns
@@ -352,15 +352,15 @@ class DockerHandler(ContainerHandler):
         return "This pipeline is containerized: do you want to download the container locally?"  # noqa: E501
 
     def get_pull_command(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> str:
         """Get the command to pull a container image to a specified location.
 
         Parameters
         ----------
-        uri : Optional[str]
+        uri : str | None
             URI of the container image (e.g. docker://...)
-        fpath_container : Optional[nipoppy.env.StrOrPathLike]
+        fpath_container : nipoppy.env.StrOrPathLike | None
             Path where the container image should be saved
 
         Returns
@@ -388,8 +388,8 @@ class BareMetalHandler(ContainerHandler):
     def add_bind_arg(
         self,
         path_src: StrOrPathLike,
-        path_dest: Optional[StrOrPathLike] = None,
-        mode: Optional[str] = "rw",
+        path_dest: StrOrPathLike | None = None,
+        mode: str | None = "rw",
     ):
         """
         Add a bind path to the container args.
@@ -403,7 +403,7 @@ class BareMetalHandler(ContainerHandler):
         os.environ[key] = value
 
     def is_image_downloaded(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> bool:
         """Check if a container image has been downloaded.
 
@@ -418,7 +418,7 @@ class BareMetalHandler(ContainerHandler):
         )
 
     def get_pull_command(
-        self, uri: Optional[str], fpath_container: Optional[StrOrPathLike]
+        self, uri: str | None, fpath_container: StrOrPathLike | None
     ) -> str:
         """Should not be used."""  # noqa D401
         raise NotImplementedError(

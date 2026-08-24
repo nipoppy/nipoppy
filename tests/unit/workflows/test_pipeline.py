@@ -4,9 +4,9 @@ import builtins
 import importlib
 import json
 import re
+from collections.abc import Generator
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Generator, Optional
 
 import pandas as pd
 import pytest
@@ -60,7 +60,7 @@ class PipelineWorkflow(BasePipelineWorkflow):
         super().__init__(*args, name="test", **kwargs)
 
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """Only run on participant_id/sessions with BIDS data."""
         return self.curation_status_table.get_bidsified_participants_sessions(

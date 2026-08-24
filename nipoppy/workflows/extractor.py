@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
@@ -25,16 +24,16 @@ class ExtractionRunner(Runner):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         participant_id: str = None,
         session_id: str = None,
-        use_subcohort: Optional[StrOrPathLike] = None,
+        use_subcohort: StrOrPathLike | None = None,
         simulate: bool = False,
         keep_workdir: bool = False,
-        hpc: Optional[str] = None,
-        write_subcohort: Optional[StrOrPathLike] = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        hpc: str | None = None,
+        write_subcohort: StrOrPathLike | None = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):
@@ -119,7 +118,7 @@ class ExtractionRunner(Runner):
         )
 
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """Return participant-session pairs to run the pipeline on."""
         # get the intersection of participants/sessions that have completed
