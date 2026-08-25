@@ -1,5 +1,6 @@
 """Workflow for interacting with Zenodo API."""
 
+import hashlib
 from pathlib import Path
 from typing import Optional
 
@@ -84,6 +85,21 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         return metadata
 
+    def _is_same_record(self, record_id: str, input_dir: Path) -> bool:
+        """Check whether local files match a published Zenodo record."""
+        local_files = {
+            file.name: _get_file_md5(file) for file in sorted(input_dir.iterdir())
+        }
+        remote_files = {
+            entry["key"]: (
+                entry["checksum"].lower()
+                if ":" in entry["checksum"]
+                else f"md5:{entry['checksum'].lower()}"
+            )
+            for entry in self.zenodo_api.get_record_files(record_id)["entries"]
+        }
+        return local_files == remote_files
+
     def run_main(self):
         """Run the main workflow."""
         pipeline_dir = Path(self.dpath_pipeline)
@@ -135,8 +151,6 @@ class PipelineUploadWorkflow(BaseWorkflow):
                     f"{', '.join(potential_duplicates)}",
                 )
 
-        zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
-        metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
         community_id = (
             self.zenodo_api.get_community_id("nipoppy") if self.community else None
         )
@@ -144,15 +158,13 @@ class PipelineUploadWorkflow(BaseWorkflow):
         if (
             latest_record_id is not None
             and not self.force
-            and self.zenodo_api.is_record_up_to_date(
+            and self._is_same_record(
                 record_id=latest_record_id,
                 input_dir=pipeline_dir,
-                metadata=metadata,
-                default_preview_filename=DatasetLayout.fname_pipeline_config,
             )
         ):
             logger.success(
-                "Pipeline files and metadata are unchanged; skipping upload for "
+                "Pipeline files are unchanged; skipping upload for "
                 f"zenodo.{latest_record_id}."
             )
             if community_id is not None:
@@ -173,6 +185,9 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 logger.warning("Zenodo upload cancelled.")
                 raise TerminatedByUserError("User cancelled the upload.")
 
+        zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
+        metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
+
         doi = self.zenodo_api.upload_record(
             input_dir=pipeline_dir,
             record_id=self.record_id,
@@ -187,6 +202,12 @@ class PipelineUploadWorkflow(BaseWorkflow):
     def run_cleanup(self):
         """Close resources used by the workflow."""
         self.zenodo_api.close()
+
+
+def _get_file_md5(file: Path) -> str:
+    """Calculate the MD5 checksum used by Zenodo for uploaded files."""
+    checksum = hashlib.md5(file.read_bytes())
+    return f"md5:{checksum.hexdigest()}"
 
 
 def _is_same_pipeline(

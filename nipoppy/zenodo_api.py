@@ -1,8 +1,6 @@
 """Client for Zenodo API."""
 
-import copy
 import hashlib
-import json
 import logging
 from pathlib import Path
 from typing import Any, Optional, Tuple
@@ -15,60 +13,6 @@ class ChecksumError(Exception): ...  # noqa E701
 
 
 class ZenodoAPIError(Exception): ...  # noqa E701
-
-
-def _normalize_metadata(metadata: dict) -> dict:
-    """Remove dynamic and Zenodo-generated values before comparison.
-
-    Basically, this function recursively removes None values, empty lists, and empty
-    dictionaries from the metadata dictionary.
-    """
-
-    def normalize(value):
-        if isinstance(value, dict):
-            normalized = {}
-            for key, item in value.items():
-                # Zenodo enriches controlled vocabularies with display titles.
-                if key == "title" and "id" in value:
-                    continue
-                # Zenodo derives display names for people and identified affiliations.
-                if key == "name" and (
-                    "id" in value or "family_name" in value or "given_name" in value
-                ):
-                    continue
-
-                normalized_item = normalize(item)
-                if normalized_item in (None, [], {}):
-                    continue
-                normalized[key] = normalized_item
-            return normalized
-
-        if isinstance(value, list):
-            return [
-                normalized_item
-                for item in value
-                if (normalized_item := normalize(item)) not in (None, [], {})
-            ]
-
-        return value
-
-    metadata = copy.deepcopy(metadata)
-    metadata.pop("publication_date", None)
-    metadata = normalize(metadata)
-
-    # Subject order does not affect the record metadata.
-    if subjects := metadata.get("subjects"):
-        metadata["subjects"] = sorted(
-            subjects, key=lambda subject: json.dumps(subject, sort_keys=True)
-        )
-
-    return metadata
-
-
-def _get_file_md5(file: Path) -> str:
-    """Calculate the MD5 checksum used by Zenodo for uploaded files."""
-    checksum = hashlib.md5(file.read_bytes())
-    return f"md5:{checksum.hexdigest()}"
 
 
 class ZenodoAPI:
@@ -449,13 +393,11 @@ class ZenodoAPI:
                 f"Failed to get metadata for zenodo.{processed_record_id}: {e}"
             ) from e
 
-    def get_record(self, record_id: str, native: bool = False) -> dict:
+    def get_record(self, record_id: str) -> dict:
         """Get a complete Zenodo record."""
         record_id = self._process_record_id(record_id)
-        headers = {"Accept": "application/vnd.inveniordm.v1+json"} if native else None
         response = self.client.get(
             f"{self.api_endpoint}/records/{record_id}",
-            headers=headers,
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
@@ -473,50 +415,6 @@ class ZenodoAPI:
                 f"Failed to get files for zenodo.{record_id}: {response.json()}"
             )
         return response.json()
-
-    def is_record_up_to_date(
-        self,
-        record_id: str,
-        input_dir: Path,
-        metadata: dict,
-        default_preview_filename: Optional[str] = None,
-    ) -> bool:
-        """Check whether local files and metadata match a published record."""
-        record_id = self._process_record_id(record_id)
-        local_files = {
-            file.name: _get_file_md5(file) for file in sorted(input_dir.iterdir())
-        }
-
-        record_files = self.get_record_files(record_id)
-        remote_files = {
-            entry["key"]: (
-                entry["checksum"].lower()
-                if ":" in entry["checksum"]
-                else f"md5:{entry['checksum'].lower()}"
-            )
-            for entry in record_files["entries"]
-        }
-        if local_files != remote_files:
-            return False
-        if (
-            default_preview_filename is not None
-            and record_files.get("default_preview") != default_preview_filename
-        ):
-            return False
-
-        record = self.get_record(record_id, native=True)
-        local_metadata = copy.deepcopy(metadata)
-        if not local_metadata["metadata"].get("creators"):
-            owners = record.get("owners", [])
-            if not owners:
-                return False  # Cannot infer creators if the record has no owners
-            local_metadata = self._add_creators_to_metadata(
-                owners[0]["id"], local_metadata
-            )
-
-        return _normalize_metadata(local_metadata["metadata"]) == _normalize_metadata(
-            record["metadata"]
-        )
 
     def get_community_id(self, community: str) -> str:
         """Resolve a community slug or ID in the active Zenodo environment."""

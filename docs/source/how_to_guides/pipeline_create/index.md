@@ -231,7 +231,7 @@ nipoppy pipeline upload \
   <PIPELINE_DIR>
 ```
 
-The request is still submitted when an update is skipped because the local files and metadata are unchanged. The flag only supports the Nipoppy community.
+The request is still submitted when an update is skipped because the local files are unchanged. The flag only supports the Nipoppy community.
 
 To request inclusion in another community, open the published record on the Zenodo website, open the communities menu, select **Submit to community**, choose the community, authorize curator access, and submit the request. See Zenodo's [Submit to community guide](https://help.zenodo.org/docs/share/submit-to-community/) for details.
 ::::

@@ -1,6 +1,7 @@
 """Test for the PipelineUploadWorkflow class."""
 
 from contextlib import nullcontext
+from pathlib import Path
 
 import pytest
 import pytest_mock
@@ -12,6 +13,7 @@ from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,
+    _get_file_md5,
     _is_same_pipeline,
 )
 from tests.conftest import TEST_PIPELINE
@@ -154,6 +156,73 @@ def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
     assert _is_same_pipeline(pipeline_config, zenodo_metadata) == expected
 
 
+def test_is_same_record(tmp_path: Path, workflow: PipelineUploadWorkflow):
+    record_id = "123456"
+    files = [tmp_path / "config.json", tmp_path / "zenodo.json"]
+    for file_to_upload in files:
+        file_to_upload.write_text(file_to_upload.name)
+    workflow.zenodo_api.get_record_files.return_value = {
+        "default_preview": "different-preview.json",
+        "entries": [
+            {
+                "key": file_to_upload.name,
+                "checksum": (
+                    # Zenodo prepends "md5:" to the checksum of the preview file
+                    _get_file_md5(file_to_upload).removeprefix("md5:")
+                    if index == 0
+                    else _get_file_md5(file_to_upload)
+                ),
+            }
+            for index, file_to_upload in enumerate(files)
+        ],
+    }
+
+    assert workflow._is_same_record(
+        record_id=record_id,
+        input_dir=tmp_path,
+    )
+    workflow.zenodo_api.get_record_files.assert_called_once_with(record_id)
+
+
+def test_is_not_same_record_when_content_differs(
+    tmp_path: Path, workflow: PipelineUploadWorkflow
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    workflow.zenodo_api.get_record_files.return_value = {
+        "entries": [{"key": file_to_upload.name, "checksum": "md5:wrong"}],
+    }
+
+    assert not workflow._is_same_record(
+        record_id="123456",
+        input_dir=tmp_path,
+    )
+
+
+@pytest.mark.parametrize(
+    "remote_filenames",
+    [[], ["config.json", "extra.json"], ["renamed.json"]],
+)
+def test_is_not_same_record_when_filename_set_differs(
+    remote_filenames: list[str],
+    tmp_path: Path,
+    workflow: PipelineUploadWorkflow,
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    workflow.zenodo_api.get_record_files.return_value = {
+        "entries": [
+            {"key": filename, "checksum": _get_file_md5(file_to_upload)}
+            for filename in remote_filenames
+        ]
+    }
+
+    assert not workflow._is_same_record(
+        record_id="123456",
+        input_dir=tmp_path,
+    )
+
+
 @pytest.mark.parametrize("force", [True, False])
 def test_upload_same_pipeline(
     workflow: PipelineUploadWorkflow,
@@ -211,17 +280,24 @@ def test_unchanged_pipeline_skips_upload(
         ]
     }
     workflow.zenodo_api.get_community_id.return_value = community_id
-    workflow.zenodo_api.is_record_up_to_date.return_value = True
+    is_same_record = mocker.patch.object(
+        workflow,
+        "_is_same_record",
+        return_value=True,
+    )
     confirm = mocker.patch(
         "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT.confirm"
     )
 
     workflow.run_main()
 
-    workflow.zenodo_api.is_record_up_to_date.assert_called_once()
+    is_same_record.assert_called_once_with(
+        record_id=latest_record_id,
+        input_dir=TEST_PIPELINE,
+    )
     workflow.zenodo_api.upload_record.assert_not_called()
     confirm.assert_not_called()
-    assert "files and metadata are unchanged; skipping upload" in caplog.text
+    assert "files are unchanged; skipping upload" in caplog.text
     if community:
         workflow.zenodo_api.get_community_id.assert_called_once_with("nipoppy")
         workflow.zenodo_api.request_community_inclusion.assert_called_once_with(
@@ -260,16 +336,19 @@ def test_upload_to_nipoppy_community(
     )
 
 
-def test_force_bypasses_unchanged_check(workflow: PipelineUploadWorkflow):
+def test_force_bypasses_unchanged_check(
+    workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture
+):
     workflow.record_id = "1234567"
     workflow.assume_yes = True
     workflow.force = True
     workflow.zenodo_api.get_latest_version_id.return_value = "7654321"
     workflow.zenodo_api.get_record_metadata.return_value = {"keywords": []}
+    is_same_record = mocker.patch.object(workflow, "_is_same_record")
 
     workflow.run_main()
 
-    workflow.zenodo_api.is_record_up_to_date.assert_not_called()
+    is_same_record.assert_not_called()
     workflow.zenodo_api.upload_record.assert_called_once()
 
 
