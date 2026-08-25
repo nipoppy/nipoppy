@@ -29,6 +29,7 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             verbose=verbose,
             dry_run=dry_run,
         )
+        self.regenerate = regenerate  # not used but needed for __repr__ to work
 
     def run_main(self):
         """Generate/update the dataset's curation status file."""

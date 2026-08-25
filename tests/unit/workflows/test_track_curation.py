@@ -25,7 +25,7 @@ def workflow(tmp_path: Path):
     return workflow
 
 
-def test_run_main_without_existing_curation_status_file(
+def test_run_without_existing_curation_status_file(
     workflow: TrackCurationWorkflow,
     mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
@@ -42,7 +42,7 @@ def test_run_main_without_existing_curation_status_file(
         curation_status_table, "save_with_backup"
     )
 
-    workflow.run_main()
+    workflow.run()
 
     mocked_generate_curation_status_table.assert_called_once_with(
         manifest=workflow.study.manifest,
@@ -61,7 +61,7 @@ def test_run_main_without_existing_curation_status_file(
     )
 
 
-def test_run_main_overwrites_existing_curation_status_file(
+def test_run_overwrites_existing_curation_status_file(
     workflow: TrackCurationWorkflow,
     mocker: pytest_mock.MockerFixture,
 ):
@@ -89,7 +89,7 @@ def test_run_main_overwrites_existing_curation_status_file(
         return_value=new_curation_status_table,
     )
 
-    workflow.run_main()
+    workflow.run()
 
     mocked_generate_curation_status_table.assert_called_once_with(
         manifest=workflow.study.manifest,
