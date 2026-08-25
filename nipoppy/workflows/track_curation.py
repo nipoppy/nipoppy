@@ -4,11 +4,7 @@ from pathlib import Path
 
 from nipoppy.env import StrOrPathLike
 from nipoppy.logger import get_logger
-from nipoppy.tabular.curation_status import (
-    CurationStatusTable,
-    generate_curation_status_table,
-    update_curation_status_table,
-)
+from nipoppy.tabular.curation_status import generate_curation_status_table
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
@@ -20,10 +16,10 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        force: bool = False,
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
+        regenerate: bool | None = None,  # deprecated
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -34,8 +30,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
         )
 
-        self.force = force
-
     def run_main(self):
         """Generate/update the dataset's curation status file."""
         fpath_table = self.study.layout.fpath_curation_status
@@ -43,36 +37,15 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         dpath_organized = self.study.layout.dpath_post_reorg
         dpath_bidsified = self.study.layout.dpath_bids
 
-        if fpath_table.exists() and not self.force:
-            old_table = CurationStatusTable.load(fpath_table)
-            logger.info(
-                f"Found existing curation status file (shape: {old_table.shape})"
-            )
-            table = update_curation_status_table(
-                curation_status_table=old_table,
-                manifest=self.study.manifest,
-                dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=dpath_downloaded,
-                dpath_organized=dpath_organized,
-                dpath_bidsified=dpath_bidsified,
-            )
+        table = generate_curation_status_table(
+            manifest=self.study.manifest,
+            dicom_dir_map=self.dicom_dir_map,
+            dpath_downloaded=dpath_downloaded,
+            dpath_organized=dpath_organized,
+            dpath_bidsified=dpath_bidsified,
+        )
 
-        else:
-            if self.force:
-                logger.info("Regenerating the entire curation status file")
-            else:
-                logger.info(
-                    f"Did not find existing curation status file at {fpath_table}"
-                )
-            table = generate_curation_status_table(
-                manifest=self.study.manifest,
-                dicom_dir_map=self.dicom_dir_map,
-                dpath_downloaded=dpath_downloaded,
-                dpath_organized=dpath_organized,
-                dpath_bidsified=dpath_bidsified,
-            )
-
-        logger.info(f"New/updated curation status table shape: {table.shape}")
+        logger.info(f"Curation status table shape: {table.shape}")
         table.save_with_backup(fpath_table, dry_run=self.dry_run)
 
         logger.success(
