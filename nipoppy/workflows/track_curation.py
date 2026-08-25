@@ -20,7 +20,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        empty: bool = False,
         force: bool = False,
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
@@ -35,7 +34,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
         )
 
-        self.empty = empty
         self.force = force
 
     def run_main(self):
@@ -44,7 +42,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
         dpath_downloaded = self.study.layout.dpath_pre_reorg
         dpath_organized = self.study.layout.dpath_post_reorg
         dpath_bidsified = self.study.layout.dpath_bids
-        empty = self.empty
 
         if fpath_table.exists() and not self.force:
             old_table = CurationStatusTable.load(fpath_table)
@@ -58,7 +55,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
                 dpath_downloaded=dpath_downloaded,
                 dpath_organized=dpath_organized,
                 dpath_bidsified=dpath_bidsified,
-                empty=empty,
             )
 
         else:
@@ -74,7 +70,6 @@ class TrackCurationWorkflow(BaseDatasetWorkflow):
                 dpath_downloaded=dpath_downloaded,
                 dpath_organized=dpath_organized,
                 dpath_bidsified=dpath_bidsified,
-                empty=empty,
             )
 
         logger.info(f"New/updated curation status table shape: {table.shape}")

@@ -420,37 +420,28 @@ def check_curation_status_table(
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,
     participants_and_sessions_bidsified,
-    empty,
 ):
     """Check that a curation status table has the corrected status values."""
-    if empty:
-        for col in [
-            table.col_in_pre_reorg,
-            table.col_in_post_reorg,
-            table.col_in_bids,
-        ]:
-            assert (~table[col]).all()
-    else:
-        for participant_id in participants_and_sessions_manifest:
-            for session_id in participants_and_sessions_manifest[participant_id]:
-                for col, participants_and_sessions_true in {
-                    table.col_in_pre_reorg: participants_and_sessions_downloaded,
-                    table.col_in_post_reorg: participants_and_sessions_organized,
-                    table.col_in_bids: participants_and_sessions_bidsified,
-                }.items():
-                    status: pd.Series = table.loc[
-                        (table[table.col_participant_id] == participant_id)
-                        & (table[table.col_session_id] == session_id),
-                        col,
-                    ]
+    for participant_id in participants_and_sessions_manifest:
+        for session_id in participants_and_sessions_manifest[participant_id]:
+            for col, participants_and_sessions_true in {
+                table.col_in_pre_reorg: participants_and_sessions_downloaded,
+                table.col_in_post_reorg: participants_and_sessions_organized,
+                table.col_in_bids: participants_and_sessions_bidsified,
+            }.items():
+                status: pd.Series = table.loc[
+                    (table[table.col_participant_id] == participant_id)
+                    & (table[table.col_session_id] == session_id),
+                    col,
+                ]
 
-                    assert len(status) == 1
-                    status = status.iloc[0]
+                assert len(status) == 1
+                status = status.iloc[0]
 
-                    assert status == (
-                        participant_id in participants_and_sessions_true
-                        and session_id in participants_and_sessions_true[participant_id]
-                    )
+                assert status == (
+                    participant_id in participants_and_sessions_true
+                    and session_id in participants_and_sessions_true[participant_id]
+                )
 
 
 @pytest.fixture

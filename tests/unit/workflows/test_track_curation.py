@@ -51,7 +51,6 @@ def test_run_main_without_existing_curation_status_file(
         dpath_downloaded=workflow.study.layout.dpath_pre_reorg,
         dpath_organized=workflow.study.layout.dpath_post_reorg,
         dpath_bidsified=workflow.study.layout.dpath_bids,
-        empty=workflow.empty,
     )
     mocked_save_with_backup.assert_called_once_with(
         workflow.study.layout.fpath_curation_status,
