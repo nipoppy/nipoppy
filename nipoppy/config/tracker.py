@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 from pydantic import (
     AfterValidator,
@@ -48,7 +48,7 @@ class TrackerConfig(BaseModel):
         ),
     )
 
-    PARTICIPANT_SESSION_DIR: Optional[Path] = Field(
+    PARTICIPANT_SESSION_DIR: Path | None = Field(
         default=None,
         description=(
             "Path to the directory where participant-session results are expected"

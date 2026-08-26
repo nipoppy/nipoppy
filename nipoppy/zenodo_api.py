@@ -3,7 +3,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import httpx
 from typing_extensions import Self
@@ -30,8 +30,8 @@ class ZenodoAPI:
     def __init__(
         self,
         sandbox: bool = False,
-        password_file: Optional[Path] = None,
-        logger: Optional[logging.Logger] = None,
+        password_file: Path | None = None,
+        logger: logging.Logger | None = None,
         timeout: float = 10.0,
     ):
         self.sandbox = sandbox
@@ -135,7 +135,7 @@ class ZenodoAPI:
                 f"Failed to update metadata for zenodo.{record_id}: {response.json()}"
             )
 
-    def _create_new_version(self, record_id: str) -> Tuple[str, str]:
+    def _create_new_version(self, record_id: str) -> tuple[str, str]:
         response = self.client.post(
             f"{self.api_endpoint}/records/{record_id}/versions",
         )
@@ -148,7 +148,7 @@ class ZenodoAPI:
         owner_id = response.json()["owners"][0]["id"]
         return str(new_record_id), str(owner_id)
 
-    def _create_draft(self) -> Tuple[str, str]:
+    def _create_draft(self) -> tuple[str, str]:
         response = self.client.post(
             f"{self.api_endpoint}/records",
             headers={"Content-Type": "application/json"},
@@ -264,9 +264,9 @@ class ZenodoAPI:
         self,
         input_dir: Path,
         metadata: dict,
-        record_id: Optional[str] = None,
-        default_preview_filename: Optional[str] = None,
-        community_id: Optional[str] = None,
+        record_id: str | None = None,
+        default_preview_filename: str | None = None,
+        community_id: str | None = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
         record_id = self._process_record_id(record_id)
@@ -335,8 +335,8 @@ class ZenodoAPI:
         self,
         query: str,
         sort: str = "mostdownloaded",
-        community_id: Optional[str] = None,
-        keywords: Optional[list[str]] = None,
+        community_id: str | None = None,
+        keywords: list[str] | None = None,
         size: int = 10,
     ):
         """Search for records in Zenodo."""
@@ -376,7 +376,7 @@ class ZenodoAPI:
 
         return response.json()["hits"]
 
-    def _get_api_endpoint(self, community_id: Optional[str] = None) -> str:
+    def _get_api_endpoint(self, community_id: str | None = None) -> str:
         """Get the API endpoint, considering the community if set."""
         if community_id is None or community_id == "":
             return self.api_endpoint + "/records"

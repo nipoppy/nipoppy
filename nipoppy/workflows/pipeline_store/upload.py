@@ -2,7 +2,6 @@
 
 import hashlib
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
@@ -25,7 +24,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         self,
         dpath_pipeline: StrOrPathLike,
         zenodo_api: ZenodoAPI | None = None,
-        record_id: Optional[str] = None,
+        record_id: str | None = None,
         assume_yes: bool = False,
         force: bool = False,
         community: bool = False,
