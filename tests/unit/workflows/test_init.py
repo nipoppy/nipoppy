@@ -12,7 +12,7 @@ import pytest_mock
 from fids import fids
 
 from nipoppy.env import FAKE_SESSION_ID
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import fileops
 from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
@@ -446,6 +446,15 @@ def test_init_bids(
     _assert_manifest_creation(workflow)
     mocked_handle_bids_source.assert_called_once()
     assert "Sample manifest file copied" not in caplog.text
+
+
+def test_init_bids_no_subjects(workflow: InitWorkflow, tmp_path: Path):
+    bids_source = tmp_path / "empty_bids"
+    bids_source.mkdir()
+    workflow.bids_source = bids_source
+
+    with pytest.raises(WorkflowError, match="No BIDS subject directories found"):
+        workflow.run()
 
 
 def test_handle_bids_source_invalid_mode(workflow: InitWorkflow, fake_bids_root: Path):

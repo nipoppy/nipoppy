@@ -18,7 +18,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     StrOrPathLike,
 )
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import fileops
@@ -276,6 +276,12 @@ class InitWorkflow(BaseDatasetWorkflow):
                 if x.is_dir() and x.name.startswith(BIDS_SUBJECT_PREFIX)
             ]
         )
+
+        if not bids_participant_ids:
+            raise WorkflowError(
+                "No BIDS subject directories found in "
+                f"{self.study.layout.dpath_bids}."
+            )
 
         logger.info("Creating a manifest file from the BIDS dataset content.")
 
