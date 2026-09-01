@@ -933,6 +933,52 @@ def test_request_community_inclusion(
 
 
 @pytest.mark.parametrize(
+    ("message", "log_level", "expected_log"),
+    [
+        (
+            "The record is already included in this community.",
+            logging.INFO,
+            "zenodo.123456 is already in community nipoppy-community-id",
+        ),
+        (
+            "There is already an open inclusion request for this community.",
+            logging.WARNING,
+            "zenodo.123456 already has an open inclusion request for "
+            "community nipoppy-community-id",
+        ),
+    ],
+)
+@pytest.mark.no_xdist
+def test_request_community_inclusion_existing_state(
+    message: str,
+    log_level: str,
+    expected_log: str,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+    caplog: pytest.LogCaptureFixture,
+):
+    record_id = "123456"
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/communities",
+        method="POST",
+        match_json={"communities": [{"id": community_id}]},
+        status_code=400,
+        json={"errors": [{"message": message}]},
+    )
+
+    assert zenodo_api.request_community_inclusion(record_id, community_id) is None
+    assert expected_log in caplog.text
+
+    assert any(
+        [
+            (record.levelno == log_level and expected_log in record.message)
+            for record in caplog.records
+        ]
+    )
+
+
+@pytest.mark.parametrize(
     "status_code,response_json",
     [
         (400, {"message": "Invalid request"}),
