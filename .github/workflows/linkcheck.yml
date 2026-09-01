@@ -21,18 +21,19 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
+    - uses: astral-sh/setup-uv@v10.0.1
+
     - name: Install package with doc dependencies
       run: |
-        pip install -U pip
-        pip install .[doc]
+        uv sync --extra doc
 
     - name: Generate JSON schemas for docs
       run: |
-        python docs/scripts/pydantic_to_jsonschema.py
+        uv run python docs/scripts/pydantic_to_jsonschema.py
 
     - name: Run linkcheck
       run: |
-        python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
+        uv run python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
 
   pytest:
     runs-on: ubuntu-latest
@@ -45,11 +46,12 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
+    - uses: astral-sh/setup-uv@v10.0.1
+
     - name: Install package with test dependencies
       run: |
-        pip install -U pip
-        pip install .[tests]
+        uv sync --extra tests
 
     - name: Run pytest linkcheck tests
       run: |
-        python -m pytest -m linkcheck
+        uv run python -m pytest -m linkcheck
