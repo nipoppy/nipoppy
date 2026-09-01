@@ -1,0 +1,29 @@
+name: Update lockfile
+
+on:
+  schedule:
+    - cron: '0 11 1 * *'  # 11:00 UTC on the first day of every month
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: 3.14
+      - run: uv lock
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
+          private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          title: '[MAINT] Update lockfile'
+          branch: ci/update_lockfile
+          labels: 'T.2 - Maintenance,bot'
+          commit-message: '[MAINT] Update lockfile'
+          token: $${{ steps.generate-token.outputs.token }}

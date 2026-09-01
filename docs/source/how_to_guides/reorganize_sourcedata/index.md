@@ -109,7 +109,7 @@ sub- and ses- prefix added
 $ nipoppy status --dataset <NIPOPPY_PROJECT_ROOT>
 ```
 
-The output should list the number of participants that are present in both the {term}`manifest file` and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`. If you feel like the information of `nipoppy status` is outdated, you can run `nipoppy track-curation --regenerate` to update.
+The output should list the number of participants that are present in both the {term}`manifest file` and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`. If you feel like the information of `nipoppy status` is outdated, you can run `nipoppy track-curation` to update.
 
 - file organization in {{dpath_pre_reorg}} must follow a subject-first, session-second manner (see next section for help if this is not the case for your data)
 - the {term}`manifest file` must list all participants and sessions

@@ -3,7 +3,6 @@
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Optional
 
 import rich_click as click
 from rich.logging import RichHandler
@@ -59,7 +58,7 @@ class NipoppyLogger(logging.Logger):
     def __init__(self, *args, **kwargs):
         """Initialize the Nipoppy logger."""
         super().__init__(*args, **kwargs)
-        self._file_handler: Optional[logging.FileHandler] = None
+        self._file_handler: logging.FileHandler | None = None
         # File logging: DEBUG and above
         self.setLevel(logging.DEBUG)
 
@@ -72,7 +71,7 @@ class NipoppyLogger(logging.Logger):
         self._stdout_handler.addFilter(lambda record: record.levelno <= logging.WARNING)
         self.addHandler(self._stdout_handler)
 
-    def _cleanup_handler(self, handler: Optional[logging.Handler] = None) -> None:
+    def _cleanup_handler(self, handler: logging.Handler | None = None) -> None:
         """Close and remove a handler from the logger.
 
         Parameters
