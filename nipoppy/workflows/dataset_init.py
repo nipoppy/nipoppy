@@ -1,13 +1,10 @@
 """Workflow for init command."""
 
+import warnings
 from pathlib import Path
 
 from pydantic import ValidationError
 
-try:
-    from nipoppy._version import __version__
-except ImportError:
-    __version__ = "unknown"
 from nipoppy.config.main import Config
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -15,6 +12,7 @@ from nipoppy.env import (
     FAKE_SESSION_ID,
     FPATH_USER_CONFIG,
     NIPOPPY_DIR_NAME,
+    PROGRAM_VERSION,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -33,38 +31,10 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_BIDSIGNORE,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
-    process_template_str,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
-
-
-def copy_template(
-    path_source: Path,
-    path_dest: Path,
-    *,
-    dry_run: bool = False,
-    **template_kwargs,
-):
-    """Copy a file with template substitution.
-
-    Parameters
-    ----------
-    path_source
-        Source template file path
-    path_dest
-        Destination file path
-    **template_kwargs
-        Keyword arguments passed to process_template_str for substitution
-    """
-    logger.debug(f"Copying template {path_source} to {path_dest}")
-    if not dry_run:
-        with open(path_source, "r") as f:
-            content = process_template_str(f.read(), **template_kwargs)
-        fileops.mkdir(Path(path_dest).parent, dry_run=dry_run)
-        with open(path_dest, "w") as f:
-            f.write(content)
 
 
 class InitWorkflow(BaseDatasetWorkflow):
@@ -154,11 +124,12 @@ class InitWorkflow(BaseDatasetWorkflow):
 
         # copy dataset description file if specified in layout
         if getattr(self.study.layout, "fpath_bids_dataset_description", None):
-            copy_template(
+            fileops.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
-                version=__version__,
+                substitutions={"version": PROGRAM_VERSION},
                 dry_run=self.dry_run,
+                exist_ok=True,
             )
 
         # copy bidsignore file if specified in layout
@@ -166,6 +137,8 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
+                exist_ok=True,
+                dry_run=self.dry_run,
             )
 
         # copy HPC files
@@ -237,12 +210,17 @@ class InitWorkflow(BaseDatasetWorkflow):
                 )
 
         fileops.mkdir(self.study.layout.fpath_config.parent, dry_run=self.dry_run)
-        fileops.copy(
-            fpath_config_to_copy,
-            self.study.layout.fpath_config,
-            exist_ok=True,
-            dry_run=self.dry_run,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=UserWarning, message="Unable to replace"
+            )
+            fileops.copy_template(
+                fpath_config_to_copy,
+                self.study.layout.fpath_config,
+                substitutions={"version": PROGRAM_VERSION},
+                dry_run=self.dry_run,
+                exist_ok=True,
+            )
         if fpath_config_to_copy == fpath_default_config:
             logger.warning(
                 f"Default config file copied to {self.study.layout.fpath_config}. "
