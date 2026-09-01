@@ -23,6 +23,7 @@ from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import dataset_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
+from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -411,14 +412,15 @@ class MyCustomException(NipoppyError):
 
 
 @pytest.mark.parametrize(
-    "exception",
+    "exception,return_code",
     [
-        NipoppyError,
-        MyCustomException,
+        (NipoppyError, NipoppyError.code),
+        (ZenodoAPIError, ReturnCode.KNOWN_FAILURE),
+        (MyCustomException, MyCustomException.code),
     ],
 )
 def test_context_manager_nipoppy_exception(
-    mocker: pytest_mock.MockerFixture, exception
+    mocker: pytest_mock.MockerFixture, exception: Exception, return_code: int
 ):
     """Test that the context manager handles exceptions correctly.
 
@@ -432,8 +434,8 @@ def test_context_manager_nipoppy_exception(
     with exception_handler(workflow):
         raise exception
 
-    assert workflow.return_code == exception.code
-    mock_exit.assert_called_once_with(exception.code)
+    assert workflow.return_code == return_code
+    mock_exit.assert_called_once_with(return_code)
 
 
 @pytest.mark.parametrize("hint", ["", "This is a hint."])
