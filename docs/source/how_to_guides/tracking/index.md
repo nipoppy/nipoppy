@@ -8,11 +8,7 @@ The [`nipoppy track-curation`](../../reference/cli_reference/track_curation.rst)
 The command to create a curation status file from scratch is:
 
 ```console
-$ nipoppy track-curation --regenerate
-```
-
-```{note}
-Without the `--regenerate` flag, `nipoppy track-curation` will only update the curation status for new participants in the {term}`manifest <manifest file>`.
+$ nipoppy track-curation
 ```
 
 The above command creates or updates the curation status file at {{fpath_curation_status}}.
