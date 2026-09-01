@@ -10,7 +10,6 @@ from datetime import datetime
 from pathlib import Path
 
 from nipoppy._version import __version__
-
 from nipoppy.env import FPATH_USER_CONFIG, PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 from nipoppy.zenodo_api import ZenodoAPI
