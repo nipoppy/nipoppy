@@ -9,7 +9,7 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.11"
+    python: "3.14"
   jobs:
     pre_build:
       - python docs/scripts/pydantic_to_jsonschema.py
@@ -17,10 +17,10 @@ build:
 
 python:
   install:
-  - method: pip
-    path: .
-    extra_requirements:
-    - doc
+  - method: uv
+    command: sync
+    extras:
+        - doc
 
 # Build documentation with Sphinx
 sphinx:

@@ -44,7 +44,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--mode",
                 "--container-store",
                 "--default-config",
-                "--empty",
                 "--copy-files",
                 "--check-dicoms",
                 "--tar",
@@ -54,6 +53,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--password-file",
                 "--sandbox",
                 "--community",
+                "--regenerate",
             ],
         },
         {
@@ -106,7 +106,6 @@ click.rich_click.OPTION_GROUPS = {
 @click.version_option(version=PROGRAM_VERSION)
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
-    pass
 
 
 if cli.commands.get("gui"):
@@ -163,21 +162,12 @@ def init(**params):
 @cli.command()
 @dataset_option
 @click.option(
-    "--empty",
-    is_flag=True,
-    help=(
-        "Set all statuses to False in newly added records"
-        " (regardless of what is on disk). May be useful to reduce runtime."
-    ),
-)
-@click.option(
-    "--force",
     "--regenerate",
-    "-f",
     is_flag=True,
-    help=(
-        "Regenerate the curation status file even if it already exists"
-        " (default: only append rows for new records)"
+    help="Regenerate the curation status file even if it already exists.",
+    deprecated=(
+        "This is now the default/only behaviour,"
+        " and this option will be removed in a future release."
     ),
 )
 @global_options

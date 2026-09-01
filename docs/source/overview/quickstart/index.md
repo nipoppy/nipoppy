@@ -161,7 +161,7 @@ $ nipoppy bidsify --pipeline dcm2bids --pipeline-step convert
 
 **3.** Track the curation status:
 ```{code-block} console
-$ nipoppy track-curation --regenerate
+$ nipoppy track-curation
 ```
 
 The curation status file can be found at {{fpath_curation_status}}.

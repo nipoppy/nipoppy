@@ -140,11 +140,14 @@ def test_update_json5_text_inserts_inline_into_nested_single_line_object():
 }
 """.strip()
     updated_text = update_json5_text(text, [(["X", "B"], 2)])
-    assert updated_text == """
+    assert (
+        updated_text
+        == """
 {
   "X": {"A": 1, "B": 2}
 }
 """.strip()
+    )
 
 
 def test_update_json5_text_inserts_inline_after_member_with_trailing_comma():
@@ -161,13 +164,16 @@ def test_update_json5_text_inserts_into_multiline_empty_object():
 }
 """.strip()
     updated_text = update_json5_text(text, [(["X", "B"], 2)])
-    assert updated_text == """
+    assert (
+        updated_text
+        == """
 {
   "X": {
       "B": 2
   }
 }
 """.strip()
+    )
 
 
 def test_update_json5_text_raises_on_empty_key_path():
@@ -182,12 +188,14 @@ def test_update_json5_text_raises_on_invalid_json5():
 
 def test_update_json5_file(tmp_path: Path):
     fpath = tmp_path / "config.json"
-    fpath.write_text("""
+    fpath.write_text(
+        """
 {
   // keep this comment
   "A": 1,
 }
-""".strip())
+""".strip()
+    )
 
     update_json5_file(fpath, [(["A"], 2), (["B"], True)])
 

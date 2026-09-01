@@ -6,9 +6,9 @@ import pytest
 
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
 
-from ..conftest import datetime_fixture  # noqa F401
 from ..conftest import (
     TEST_PIPELINE,
+    datetime_fixture,  # noqa F401
 )
 
 ZENODO_SANDBOX = True
