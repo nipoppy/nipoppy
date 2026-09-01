@@ -50,9 +50,9 @@ def copy_template(
     source: Path,
     dest: Path,
     *,
+    substitutions: dict,
     dry_run: bool = False,
     exist_ok: bool = False,
-    **template_kwargs,
 ):
     """Copy a file with template substitution.
 
@@ -62,15 +62,15 @@ def copy_template(
         Source template file path
     dest
         Destination file path
-    **template_kwargs
-        Keyword arguments passed to process_template_str for substitution
+    substitutions
+        Key-value pairs passed to process_template_str for substitution
     """
     logger.debug(f"Copying template {source} to {dest}")
     mkdir(dest.parent, dry_run=dry_run)
     copy(source, dest, dry_run=dry_run, exist_ok=exist_ok)
     if not dry_run:
         dest.write_text(
-            process_template_str(dest.read_text(), **template_kwargs),
+            process_template_str(dest.read_text(), **substitutions),
         )
 
 

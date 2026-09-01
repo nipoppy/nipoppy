@@ -127,7 +127,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
-                version=PROGRAM_VERSION,
+                substitutions={"version": PROGRAM_VERSION},
                 dry_run=self.dry_run,
                 exist_ok=True,
             )
@@ -217,7 +217,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy_template(
                 fpath_config_to_copy,
                 self.study.layout.fpath_config,
-                version=PROGRAM_VERSION,
+                substitutions={"version": PROGRAM_VERSION},
                 dry_run=self.dry_run,
                 exist_ok=True,
             )

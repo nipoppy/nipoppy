@@ -81,12 +81,14 @@ class PipelineCreateWorkflow(BaseWorkflow):
         else:
             boutiques.create(str(descriptor_path))
 
+        substitutions = {"version": PROGRAM_VERSION}
+
         invocation_path = target.joinpath(pipeline_step_config.INVOCATION_FILE)
         # copy the 'header' (top-level comments)
         fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath("invocation_header.txt"),
             invocation_path,
-            version=PROGRAM_VERSION,
+            substitutions=substitutions,
             dry_run=self.dry_run,
         )
         # then append the actual example invocation
@@ -96,7 +98,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
             target.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
-            version=PROGRAM_VERSION,
+            substitutions=substitutions,
             dry_run=self.dry_run,
         )
 
@@ -104,7 +106,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         fileops.copy_template(
             source_pipeline_config_path,
             dest_pipeline_config_path,
-            version=PROGRAM_VERSION,
+            substitutions=substitutions,
             dry_run=self.dry_run,
         )
 
@@ -135,7 +137,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
                     pipeline_step_config.TRACKER_CONFIG_FILE
                 ),
                 target.joinpath(pipeline_step_config.TRACKER_CONFIG_FILE),
-                version=PROGRAM_VERSION,
+                substitutions=substitutions,
                 dry_run=self.dry_run,
             )
 

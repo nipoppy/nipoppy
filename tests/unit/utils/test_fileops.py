@@ -210,7 +210,7 @@ class TestCopyTemplate:
 
         dest_file = tmp_path / "output.txt"
 
-        fileops.copy_template(template_file, dest_file, name="World")
+        fileops.copy_template(template_file, dest_file, substitutions={"name": "World"})
 
         assert dest_file.is_file()
         assert dest_file.read_text() == "Hello, World!"
@@ -222,9 +222,7 @@ class TestCopyTemplate:
 
         dest_file = tmp_path / "nonexistent_dir" / "output.txt"
 
-        fileops.copy_template(template_file, dest_file, name="World")
-
-        assert dest_file.is_file()
+        fileops.copy_template(template_file, dest_file, substitutions={"name": "World"})
         assert dest_file.read_text() == "Hello, World!"
 
     def test_copy_template_existing_file(self, tmp_path: Path):
@@ -237,7 +235,10 @@ class TestCopyTemplate:
 
         with pytest.raises(FileOperationError):
             fileops.copy_template(
-                template_file, dest_file, name="World", exist_ok=False
+                template_file,
+                dest_file,
+                substitutions={"name": "World"},
+                exist_ok=False,
             )
 
         # Ensure the destination file remains unchanged
@@ -250,7 +251,9 @@ class TestCopyTemplate:
 
         dest_file = tmp_path / "output.txt"
 
-        fileops.copy_template(template_file, dest_file, name="World", exist_ok=True)
+        fileops.copy_template(
+            template_file, dest_file, substitutions={"name": "World"}, exist_ok=True
+        )
 
         # Ensure the destination file is updated with the new content
         assert dest_file.read_text() == "Hello, World!"

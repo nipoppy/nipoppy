@@ -21,6 +21,6 @@ if __name__ == "__main__":
         nipoppy.utils.fileops.copy_template(
             source,
             dest,
-            version=PROGRAM_VERSION,
+            substitutions={"version": PROGRAM_VERSION},
             exist_ok=True,
         )
