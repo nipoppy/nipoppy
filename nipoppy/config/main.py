@@ -2,17 +2,29 @@
 
 from __future__ import annotations
 
+import functools
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 from typing_extensions import Self
 
 from nipoppy.config.container import _SchemaWithContainerConfig
 from nipoppy.config.pipeline import BasePipelineConfig
-from nipoppy.env import PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    ensure_schema_support,
+    get_current_schema_version,
+)
+from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
@@ -28,7 +40,7 @@ class PipelineVariables(BaseModel):
         PipelineTypeEnum.EXTRACTION: "EXTRACTION",
     }
 
-    BIDSIFICATION: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+    BIDSIFICATION: dict[str, dict[str, dict[str, str | None]]] = Field(
         default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the BIDSification pipelines. This should be a nested "
@@ -36,7 +48,7 @@ class PipelineVariables(BaseModel):
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
-    PROCESSING: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+    PROCESSING: dict[str, dict[str, dict[str, str | None]]] = Field(
         default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the processing pipelines. This should be a nested "
@@ -44,7 +56,7 @@ class PipelineVariables(BaseModel):
             "pipeline name -> pipeline version -> variable name -> variable value"
         ),
     )
-    EXTRACTION: dict[str, dict[str, dict[str, Optional[str]]]] = Field(
+    EXTRACTION: dict[str, dict[str, dict[str, str | None]]] = Field(
         default_factory=(lambda: defaultdict(lambda: defaultdict(dict))),
         description=(
             "Variables for the extraction pipelines. This should be a nested "
@@ -74,7 +86,7 @@ class PipelineVariables(BaseModel):
         pipeline_type: PipelineTypeEnum,
         pipeline_name: str,
         pipeline_version: str,
-        variables: dict[str, Optional[str]],
+        variables: dict[str, str | None],
     ) -> Self:
         """Set the variables for a specific pipeline."""
         try:
@@ -112,6 +124,21 @@ class PipelineVariables(BaseModel):
 class Config(_SchemaWithContainerConfig):
     """Schema for dataset configuration."""
 
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.STUDY,
+            )
+        ),
+    ] = Field(
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
+        description=(
+            "Version of the schema used for this study configuration. The current "
+            f"latest version is {get_current_schema_version(ConfigType.STUDY)}"
+        ),
+    )
     HPC_PREAMBLE: list[str] = Field(
         default=[],
         description=(
@@ -121,7 +148,15 @@ class Config(_SchemaWithContainerConfig):
             "with Nipoppy installed, and setting up job-specific variables."
         ),
     )
-    DICOM_DIR_MAP_FILE: Optional[Path] = Field(
+    HPC_QUEUE_LIMIT: int | None = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Maximum number of jobs allowed in the HPC queue per user."
+            " If not specified, no limit will be applied when submitting jobs."
+        ),
+    )
+    DICOM_DIR_MAP_FILE: Path | None = Field(
         default=None,
         description=(
             "Path to a TSV file mapping participant IDs to DICOM directories"
@@ -132,7 +167,7 @@ class Config(_SchemaWithContainerConfig):
             f', and "{DicomDirMap.col_participant_dicom_dir}"'
         ),
     )
-    DICOM_DIR_PARTICIPANT_FIRST: Optional[bool] = Field(
+    DICOM_DIR_PARTICIPANT_FIRST: bool | None = Field(
         default=None,
         description=(
             f"Whether subdirectories under  {DEFAULT_LAYOUT_INFO.dpath_pre_reorg}) "
@@ -285,7 +320,7 @@ class Config(_SchemaWithContainerConfig):
     def load(cls, path: StrOrPathLike, apply_substitutions=True) -> Self:
         """Load a dataset configuration from a file."""
         substitutions_key = "SUBSTITUTIONS"
-        config_dict = load_json(path)
+        config_dict = load_json(path, allow_json5=True)
         substitutions = config_dict.get(substitutions_key, {})
         if apply_substitutions and substitutions:
             # apply user-defined substitutions to all fields except SUBSTITUTIONS itself

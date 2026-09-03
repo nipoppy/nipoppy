@@ -45,7 +45,7 @@ $ cd my-example-study
 ### Customizing the global configuration file
 
 The global configuration file at {{fpath_config}} starts out like this:
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json5
 ---
 linenos: True
 language: json
@@ -58,7 +58,7 @@ language: json
 
 ### [Customizing the manifest.tsv file](../../how_to_guides/manifest/index.md)
 
-The example manifest file created at {{fpath_manifest}} by `nipoppy init` always looks like this:
+The example {term}`manifest file` created at {{fpath_manifest}} by `nipoppy init` always looks like this:
 ```{literalinclude} ../../../../nipoppy/data/examples/sample_manifest.tsv
 ---
 linenos: True
@@ -67,7 +67,7 @@ linenos: True
 
 **For our example study, we changed it to this:**
 
-(This is the `manifest.tsv` file you copied from the tutorial-dataset; you will always have to modify the `manifest.tsv` according to your study setup)
+(This is the {term}`manifest file` you copied from the tutorial-dataset; you will always have to modify it according to your study setup)
 ```{literalinclude} example-dataset_manifest.tsv
 ---
 linenos: True
@@ -161,7 +161,7 @@ $ nipoppy bidsify --pipeline dcm2bids --pipeline-step convert
 
 **3.** Track the curation status:
 ```{code-block} console
-$ nipoppy track-curation --regenerate
+$ nipoppy track-curation
 ```
 
 The curation status file can be found at {{fpath_curation_status}}.

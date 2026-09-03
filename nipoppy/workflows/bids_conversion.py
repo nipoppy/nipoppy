@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.config.pipeline import BIDSificationPipelineConfig
 from nipoppy.config.pipeline_step import BidsPipelineStepConfig
@@ -22,22 +21,23 @@ class BIDSificationRunner(Runner):
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         participant_id: str = None,
         session_id: str = None,
-        use_subcohort: Optional[StrOrPathLike] = None,
+        use_subcohort: StrOrPathLike | None = None,
         simulate: bool = False,
         keep_workdir: bool = False,
-        hpc: Optional[str] = None,
-        write_subcohort: Optional[StrOrPathLike] = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        hpc: str | None = None,
+        write_subcohort: StrOrPathLike | None = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):
         super().__init__(
             dpath_root=dpath_root,
             name="bidsify",
+            subcommand="bidsify",
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
@@ -76,7 +76,7 @@ class BIDSificationRunner(Runner):
         return super().pipeline_step_config
 
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """Return participant-session pairs to run the pipeline on."""
         participants_sessions_bidsified = set(
@@ -126,17 +126,15 @@ class BIDSificationRunner(Runner):
 
         return invocation_and_descriptor
 
-    def run_cleanup(self, **kwargs):
-        """
-        Clean up after main BIDS conversion part is run.
-
-        Specifically:
-
-        - Write updated curation status file
-        """
+    def _write_status_file(self):
+        """Write the updated curation status table to disk."""
         if self.pipeline_step_config.UPDATE_STATUS and not self.simulate:
             self.curation_status_table.save_with_backup(
                 self.study.layout.fpath_curation_status,
                 dry_run=self.dry_run,
             )
-        return super().run_cleanup(**kwargs)
+
+    def run_main(self):
+        """Run the BIDSification pipeline."""
+        super().run_main()
+        self._write_status_file()

@@ -6,9 +6,10 @@ import json
 import re
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import rich
@@ -19,7 +20,6 @@ from nipoppy.config.boutiques import (
     BoutiquesConfig,
     get_boutiques_config_from_descriptor,
 )
-from nipoppy.config.hpc import HpcConfig
 from nipoppy.config.pipeline import (
     BasePipelineConfig,
     BIDSificationPipelineConfig,
@@ -102,7 +102,9 @@ def get_pipeline_version(
     for fpath_pipeline_config in Path(dpath_pipelines).glob(
         f"*/{DatasetLayout.fname_pipeline_config}"
     ):
-        pipeline_config = BasePipelineConfig(**load_json(fpath_pipeline_config))
+        pipeline_config = BasePipelineConfig(
+            **load_json(fpath_pipeline_config, allow_json5=True)
+        )
         if pipeline_config.NAME == pipeline_name:
             if pipeline_config_latest is None:
                 pipeline_config_latest = pipeline_config
@@ -144,15 +146,15 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         pipeline_name: str,
-        pipeline_version: Optional[str] = None,
-        pipeline_step: Optional[str] = None,
+        pipeline_version: str | None = None,
+        pipeline_step: str | None = None,
         participant_id: str = None,
         session_id: str = None,
-        use_subcohort: Optional[StrOrPathLike] = None,
-        hpc: Optional[str] = None,
-        write_subcohort: Optional[StrOrPathLike] = None,
-        n_jobs: Optional[int] = None,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        use_subcohort: StrOrPathLike | None = None,
+        hpc: str | None = None,
+        write_subcohort: StrOrPathLike | None = None,
+        n_jobs: int | None = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run=False,
         _skip_logfile: bool = False,
@@ -230,6 +232,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         return self.study.layout.get_dpath_pipeline_work(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
             participant_id=self.participant_id,
             session_id=self.session_id,
         )
@@ -240,6 +243,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         return self.study.layout.get_dpath_pybids_db(
             pipeline_name=self.pipeline_name,
             pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
             participant_id=self.participant_id,
             session_id=self.session_id,
         )
@@ -353,7 +357,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
         fpath_tracker_config = self.dpath_pipeline_bundle / fname_tracker_config
         logger.info(f"Loading tracker config from {fpath_tracker_config}")
-        return TrackerConfig(**load_json(fpath_tracker_config))
+        return TrackerConfig(**load_json(fpath_tracker_config, allow_json5=True))
 
     @cached_property
     def pybids_ignore_patterns(self) -> list[str]:
@@ -373,7 +377,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         # load patterns from file
         logger.info(f"Loading PyBIDS ignore patterns from {fpath_pybids_ignore}")
-        patterns = load_json(fpath_pybids_ignore)
+        patterns = load_json(fpath_pybids_ignore, allow_json5=True)
 
         # validate format
         if not isinstance(patterns, list):
@@ -383,17 +387,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
 
         return [re.compile(pattern) for pattern in patterns]
-
-    @cached_property
-    def hpc_config(self) -> HpcConfig:
-        """Load the pipeline step's HPC configuration."""
-        if (fname_hpc_config := self.pipeline_step_config.HPC_CONFIG_FILE) is None:
-            data = {}
-        else:
-            fpath_hpc_config = self.dpath_pipeline_bundle / fname_hpc_config
-            logger.info(f"Loading HPC config from {fpath_hpc_config}")
-            data = self.process_template_json(load_json(fpath_hpc_config))
-        return HpcConfig(**data)
 
     @cached_property
     def boutiques_config(self):
@@ -426,7 +419,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         dpath_pipeline_bundle: Path,
         pipeline_name: str,
         pipeline_version: str,
-        pipeline_class: Type[BasePipelineConfig],
+        pipeline_class: type[BasePipelineConfig],
     ) -> BasePipelineConfig:
         """Get the config for a pipeline."""
         fpath_config = dpath_pipeline_bundle / self.study.layout.fname_pipeline_config
@@ -442,7 +435,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             pipeline_name=pipeline_name,
             pipeline_version=pipeline_version,
             json_obj=self.process_template_json(
-                load_json(fpath_config),
+                load_json(fpath_config, allow_json5=True),
             ),
         )
 
@@ -464,11 +457,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def process_template_json(
         self,
         template_json: dict,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        bids_participant_id: Optional[str] = None,
-        bids_session_id: Optional[str] = None,
-        objs: Optional[list] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
+        bids_participant_id: str | None = None,
+        bids_session_id: str | None = None,
+        objs: list | None = None,
         return_str: bool = False,
         with_substitutions: bool = True,
         **kwargs,
@@ -516,8 +509,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def set_up_bids_db(
         self,
         dpath_pybids_db: StrOrPathLike,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> bids.BIDSLayout:
         """Set up the BIDS database."""
         dpath_pybids_db: Path = Path(dpath_pybids_db)
@@ -633,7 +626,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         # failure
         return False, None
 
-    def _get_results_generator(self, participants_sessions: Iterable[Tuple[str, str]]):
+    def _get_results_generator(self, participants_sessions: Iterable[tuple[str, str]]):
         participants_sessions = list(participants_sessions)
         n_total = len(participants_sessions)
         if JOBLIB_INSTALLED:
@@ -667,7 +660,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     def apply_analysis_level(
         participants_sessions: Iterable[str],
         analysis_level: AnalysisLevelType,
-    ) -> List[Tuple[str, str]]:
+    ) -> list[tuple[str, str]]:
         """Filter participant-session pairs to run based on the analysis level."""
         if analysis_level == AnalysisLevelType.group:
             return [(None, None)]
@@ -709,6 +702,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
         self._handle_execution_strategy(participants_sessions)
+
+        self._log_summary_message()
 
     def _filter_by_subcohort(self, participants_sessions: Iterable) -> set:
         """Filter participants/sessions by subcohort file."""
@@ -752,7 +747,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         if (self.n_success != self.n_total) and (self.n_total != 0):
             self.return_code = ReturnCode.PARTIAL_SUCCESS
 
-    def run_cleanup(self):
+    def _log_summary_message(self):
         """Log a summary message."""
         if self.write_subcohort:
             logger.success(f"Wrote subcohort to {self.write_subcohort}")
@@ -785,11 +780,9 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             else:
                 logger.warning(log_msg)
 
-        return super().run_cleanup()
-
     @abstractmethod
     def get_participants_sessions_to_run(
-        self, participant_id: Optional[str], session_id: Optional[str]
+        self, participant_id: str | None, session_id: str | None
     ):
         """
         Return participant-session pairs to loop over with run_single().
@@ -798,7 +791,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """
 
     @abstractmethod
-    def run_single(self, participant_id: Optional[str], session_id: Optional[str]):
+    def run_single(self, participant_id: str | None, session_id: str | None):
         """
         Run on a single participant/session.
 
@@ -807,21 +800,24 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
+        dnames_parent: str | list[str] | None = None,
+        fname_stem: str | None = None,
     ) -> Path:
         """Generate a log file path."""
         # make sure that pipeline version is not None
         self.check_pipeline_version()
+        self.check_pipeline_step()
         if dnames_parent is None:
             dnames_parent = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
+                pipeline_step=self.pipeline_step,
             )
         if fname_stem is None:
             fname_stem = get_pipeline_tag(
                 pipeline_name=self.pipeline_name,
                 pipeline_version=self.pipeline_version,
+                pipeline_step=self.pipeline_step,
                 participant_id=self.participant_id,
                 session_id=self.session_id,
             )

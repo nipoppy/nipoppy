@@ -13,8 +13,9 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.env import CURRENT_SCHEMA_VERSION, PipelineTypeEnum
-from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.config.schema import get_current_schema_version
+from nipoppy.env import ConfigType, PipelineTypeEnum
+from nipoppy.exceptions import ConfigError, FileOperationError, JSONError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
@@ -42,13 +43,13 @@ def valid_config_data():
     return {
         "NAME": "test_pipeline",
         "VERSION": "test_version",
-        "SCHEMA_VERSION": CURRENT_SCHEMA_VERSION,
+        "SCHEMA_VERSION": get_current_schema_version(ConfigType.PIPELINE),
     }
 
 
 def test_load_pipeline_config_file():
     assert isinstance(
-        _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json"),
+        _load_pipeline_config_file(DPATH_TEST_DATA / "pipeline_config-valid.json5"),
         BasePipelineConfig,
     )
 
@@ -57,11 +58,6 @@ def test_load_pipeline_config_file():
     "fpath,exception_class,exception_message",
     [
         ("fake_path.json", FileOperationError, "Pipeline configuration file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Pipeline configuration file .* is not a valid JSON file",
-        ),
         (
             DPATH_TEST_DATA / "pipeline_config-invalid1.json",
             ConfigError,
@@ -84,21 +80,49 @@ def test_load_pipeline_config_file_invalid(fpath, exception_class, exception_mes
         _load_pipeline_config_file(fpath)
 
 
-def test_check_descriptor_file():
+def test_check_descriptor_file(caplog: pytest.LogCaptureFixture):
     assert isinstance(
         _check_descriptor_file(DPATH_TEST_DATA / "descriptor-valid.json"), str
     )
+    assert len(caplog.records) == 0
+
+
+def test_check_descriptor_file_deprecation_warning(caplog: pytest.LogCaptureFixture):
+
+    _check_descriptor_file(DPATH_TEST_DATA / "descriptor-deprecated.json")
+
+    assert any(
+        [
+            record.levelno == logging.WARNING
+            and "This will be deprecated in the future" in record.message
+            for record in caplog.records
+        ]
+    )
+
+
+def test_check_descriptor_file_deprecation_error():
+
+    with pytest.raises(
+        ConfigError,
+        match="Descriptor file .* contains Nipoppy-specific template variables",
+    ):
+        _check_descriptor_file(
+            DPATH_TEST_DATA / "descriptor-deprecated.json", strict=True
+        )
+
+
+def test_check_descriptor_file_remains_strict_json(tmp_path: Path):
+    fpath = tmp_path / "descriptor.json"
+    fpath.write_text('{"name": "x",}')  # trailing comma makes it invalid JSON
+
+    with pytest.raises(JSONError):
+        _check_descriptor_file(fpath)
 
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
         ("fake_path.json", FileOperationError, "Descriptor file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Descriptor file is not a valid JSON file",
-        ),
         (
             DPATH_TEST_DATA / "descriptor-invalid.json",
             ConfigError,
@@ -112,18 +136,13 @@ def test_check_descriptor_file_invalid(fpath, exception_class, exception_message
 
 
 def test_check_invocation_file(descriptor_str):
-    _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json", descriptor_str)
+    _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json5", descriptor_str)
 
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
         ("fake_path.json", FileOperationError, "Invocation file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Invocation file is not a valid JSON file",
-        ),
         (
             DPATH_TEST_DATA / "invocation-invalid.json",
             ConfigError,
@@ -139,18 +158,13 @@ def test_check_invocation_file_invalid(
 
 
 def test_check_hpc_config_file():
-    _check_hpc_config_file(DPATH_TEST_DATA / "hpc_config-valid.json")
+    _check_hpc_config_file(DPATH_TEST_DATA / "hpc_config-valid.json5")
 
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
         ("fake_path.json", FileOperationError, "HPC config file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "HPC config file is not a valid JSON file",
-        ),
         (
             DPATH_TEST_DATA / "hpc_config-invalid.json",
             ConfigError,
@@ -164,18 +178,13 @@ def test_check_hpc_config_file_invalid(fpath, exception_class, exception_message
 
 
 def test_check_tracker_config_file():
-    _check_tracker_config_file(DPATH_TEST_DATA / "tracker_config-valid.json")
+    _check_tracker_config_file(DPATH_TEST_DATA / "tracker_config-valid.json5")
 
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
         ("fake_path.json", FileOperationError, "Tracker config file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "Tracker config file is not a valid JSON file",
-        ),
         (
             DPATH_TEST_DATA / "tracker_config-invalid.json",
             ConfigError,
@@ -189,19 +198,12 @@ def test_check_tracker_config_file_invalid(fpath, exception_class, exception_mes
 
 
 def test_check_pybids_ignore_file():
-    _check_pybids_ignore_file(DPATH_TEST_DATA / "pybids_ignore-valid.json")
+    _check_pybids_ignore_file(DPATH_TEST_DATA / "pybids_ignore-valid.json5")
 
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
-    [
-        ("fake_path.json", FileOperationError, "PyBIDS ignore patterns file not found"),
-        (
-            DPATH_TEST_DATA / "empty_file.txt",
-            ConfigError,
-            "PyBIDS ignore patterns file is not a valid JSON file",
-        ),
-    ],
+    [("fake_path.json", FileOperationError, "PyBIDS ignore patterns file not found")],
 )
 def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_message):
     with pytest.raises(exception_class, match=exception_message):
@@ -209,38 +211,40 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
 
 
 @pytest.mark.parametrize(
-    "pipeline_config_data,pipeline_class,n_files_expected",
+    "pipeline_config_data,pipeline_class,n_files_expected,strict",
     [
-        ({"STEPS": [{}]}, BasePipelineConfig, 0),
+        ({"STEPS": [{}]}, BasePipelineConfig, 0, False),
         (
             {
                 "STEPS": [
                     {
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.BIDSIFICATION,
             },
             BIDSificationPipelineConfig,
             3,
+            False,
         ),
         (
             {
                 "STEPS": [
                     {
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
-                        "TRACKER_CONFIG_FILE": "tracker_config-valid.json",
-                        "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
+                        "TRACKER_CONFIG_FILE": "tracker_config-valid.json5",
+                        "PYBIDS_IGNORE_FILE": "pybids_ignore-valid.json5",
                     },
                 ],
                 "PIPELINE_TYPE": PipelineTypeEnum.PROCESSING,
             },
             ProcessingPipelineConfig,
             5,
+            True,
         ),
         (
             {
@@ -248,19 +252,19 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
                 "STEPS": [
                     {
                         "NAME": "step1",
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                     {
                         "NAME": "step2",
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
-                        "HPC_CONFIG_FILE": "hpc_config-valid.json",
+                        "HPC_CONFIG_FILE": "hpc_config-valid.json5",
                     },
                     {
                         "NAME": "step3",
-                        "INVOCATION_FILE": "invocation-valid.json",
+                        "INVOCATION_FILE": "invocation-valid.json5",
                         "DESCRIPTOR_FILE": "descriptor-valid.json",
                     },
                 ],
@@ -268,22 +272,37 @@ def test_check_pybids_ignore_file_invalid(fpath, exception_class, exception_mess
             },
             ExtractionPipelineConfig,
             8,
+            True,
         ),
     ],
 )
-def test_check_config_files(
-    pipeline_config_data, pipeline_class, n_files_expected, valid_config_data
+def test_check_pipeline_files(
+    pipeline_config_data,
+    pipeline_class,
+    n_files_expected,
+    valid_config_data,
+    strict,
+    mocker: pytest_mock.MockFixture,
 ):
+    mocked_check_descriptor_file = mocker.patch(
+        "nipoppy.pipeline_validation._check_descriptor_file",
+        wraps=_check_descriptor_file,
+    )
+
     pipeline_config = pipeline_class(**pipeline_config_data, **valid_config_data)
-    files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA)
+    files = _check_pipeline_files(pipeline_config, DPATH_TEST_DATA, strict=strict)
 
     # check that the function returns the expected number of files
     assert isinstance(files, list)
     assert n_files_expected == len(files)
 
+    if n_files_expected > 0:
+        mocked_check_descriptor_file.assert_called()
+        assert mocked_check_descriptor_file.call_args[1].get("strict") == strict
+
 
 @pytest.mark.no_xdist
-def test_check_config_files_logging(
+def test_check_pipeline_files_logging(
     valid_config_data,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -378,9 +397,12 @@ def test_check_no_subdirectories_logging(
     assert all([record.levelno == log_level for record in caplog.records])
 
 
-@pytest.mark.parametrize("log_level", [logging.DEBUG, logging.INFO, logging.WARNING])
+@pytest.mark.parametrize(
+    "log_level,strict",
+    [(logging.DEBUG, False), (logging.INFO, True), (logging.WARNING, False)],
+)
 def test_check_pipeline_bundle(
-    log_level: int, valid_config_data, mocker: pytest_mock.MockFixture
+    log_level: int, strict: bool, valid_config_data, mocker: pytest_mock.MockFixture
 ):
     dpath_bundle = Path("bundle_dir").resolve()
     config = BasePipelineConfig(**valid_config_data)
@@ -401,13 +423,13 @@ def test_check_pipeline_bundle(
         "nipoppy.pipeline_validation._check_no_subdirectories"
     )
 
-    check_pipeline_bundle(dpath_bundle, log_level=log_level)
+    check_pipeline_bundle(dpath_bundle, log_level=log_level, strict=strict)
 
     mocked_load_pipeline_config_file.assert_called_once_with(
-        dpath_bundle / "config.json"
+        dpath_bundle / "config.json", strict=strict
     )
     mocked_check_pipeline_files.assert_called_once_with(
-        config, dpath_bundle, log_level=log_level
+        config, dpath_bundle, log_level=log_level, strict=strict
     )
     mocked_check_self_contained.assert_called_once_with(dpath_bundle, fpaths)
     mocked_check_no_subdirectories.assert_called_once_with(dpath_bundle)

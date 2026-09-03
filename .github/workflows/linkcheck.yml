@@ -15,9 +15,9 @@ jobs:
   sphinx:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -29,6 +29,7 @@ jobs:
     - name: Generate JSON schemas for docs
       run: |
         python docs/scripts/pydantic_to_jsonschema.py
+        python docs/scripts/process_template_json5_configs.py
 
     - name: Run linkcheck
       run: |
@@ -39,9 +40,9 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 

@@ -1,16 +1,18 @@
 """Workflow for pipeline validate command."""
 
+import warnings
 from pathlib import Path
-from typing import Optional
 
 import boutiques
 
-from nipoppy.env import PipelineTypeEnum
+from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
+from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.utils import fileops
-from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json, save_json
+from nipoppy.utils.json5 import update_json5_file
+from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
 from nipoppy.workflows.base import BaseWorkflow
 
 logger = get_logger()
@@ -24,7 +26,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         pipeline_dir: Path,
         type_: PipelineTypeEnum,
         *,
-        source_descriptor: Optional[Path] = None,
+        source_descriptor: Path | None = None,
         verbose=False,
         dry_run=False,
     ):
@@ -42,7 +44,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         target: Path,
         type_: PipelineTypeEnum,
         *,
-        source_descriptor: Optional[Path] = None,
+        source_descriptor: Path | None = None,
     ):
         """Create a pipeline bundle."""
         if target.exists():
@@ -53,7 +55,16 @@ class PipelineCreateWorkflow(BaseWorkflow):
         else:
             target.mkdir(parents=True, exist_ok=True)
 
-        descriptor_path = target / "descriptor.json"
+        source_pipeline_config_path = TEMPLATE_PIPELINE_PATH.joinpath(
+            f"config-{type_.value}.json5"
+        )
+
+        # the template pipeline only has one step
+        pipeline_step_config = _load_pipeline_config_file(
+            source_pipeline_config_path, strict=True
+        ).get_step_config()
+
+        descriptor_path = target.joinpath(pipeline_step_config.DESCRIPTOR_FILE)
         if source_descriptor:
             try:
                 boutiques.validate(str(source_descriptor))
@@ -70,57 +81,78 @@ class PipelineCreateWorkflow(BaseWorkflow):
         else:
             boutiques.create(str(descriptor_path))
 
-        target.joinpath("invocation.json").write_text(
-            boutiques.example(str(descriptor_path))
+        substitutions = {"version": PROGRAM_VERSION}
+
+        invocation_path = target.joinpath(pipeline_step_config.INVOCATION_FILE)
+        # copy the 'header' (top-level comments)
+        fileops.copy_template(
+            TEMPLATE_PIPELINE_PATH.joinpath("invocation_header.txt"),
+            invocation_path,
+            substitutions=substitutions,
+            dry_run=self.dry_run,
         )
-        fileops.copy(
-            TEMPLATE_PIPELINE_PATH.joinpath("hpc.json"),
-            target.joinpath("hpc.json"),
+        # then append the actual example invocation
+        with invocation_path.open("a") as file_invocation:
+            file_invocation.write(boutiques.example(str(descriptor_path)))
+
+        fileops.copy_template(
+            TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
+            target.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
+            substitutions=substitutions,
             dry_run=self.dry_run,
         )
 
-        config = load_json(
-            TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json")
+        dest_pipeline_config_path = target.joinpath(DatasetLayout.fname_pipeline_config)
+        fileops.copy_template(
+            source_pipeline_config_path,
+            dest_pipeline_config_path,
+            substitutions=substitutions,
+            dry_run=self.dry_run,
         )
 
         # Populate the config.json using descriptor information
         if source_descriptor is not None:
+            descriptor = load_json(source_descriptor)
+            updates = [
+                (["NAME"], descriptor["name"]),
+                (["VERSION"], descriptor["tool-version"]),
+            ]
 
-            descriptor = load_json(descriptor_path)
-            config["NAME"] = descriptor["name"]
-            config["VERSION"] = descriptor["tool-version"]
             if "container-image" in descriptor:
-                config["CONTAINER_INFO"][
-                    "URI"
-                ] = f"docker://{descriptor['container-image']['image']}"
+                uri = f"docker://{descriptor['container-image']['image']}"
 
                 # replace the pipeline name/version with placeholders
                 # to avoid users forgetting to update them when copy-pasting
-                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
-                    "URI"
-                ].replace(descriptor["name"], "[[PIPELINE_NAME]]")
-                config["CONTAINER_INFO"]["URI"] = config["CONTAINER_INFO"][
-                    "URI"
-                ].replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+                uri = uri.replace(descriptor["name"], "[[PIPELINE_NAME]]")
+                uri = uri.replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
+                updates.append((["CONTAINER_INFO", "URI"], uri))
 
-        save_json(config, target.joinpath(DatasetLayout.fname_pipeline_config))
+            if not self.dry_run:
+                update_json5_file(dest_pipeline_config_path, updates)
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
-            fileops.copy(
-                TEMPLATE_PIPELINE_PATH.joinpath("tracker.json"),
-                target.joinpath("tracker.json"),
+            fileops.copy_template(
+                TEMPLATE_PIPELINE_PATH.joinpath(
+                    pipeline_step_config.TRACKER_CONFIG_FILE
+                ),
+                target.joinpath(pipeline_step_config.TRACKER_CONFIG_FILE),
+                substitutions=substitutions,
                 dry_run=self.dry_run,
             )
 
     def run_main(self):
         """Run the main workflow."""
         logger.debug(f"Creating pipeline bundle at {self.pipeline_dir}")
-        self.create_bundle(
-            target=self.pipeline_dir,
-            type_=self.type_,
-            source_descriptor=self.source_descriptor,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message="Unable to replace .*", category=UserWarning
+            )
+            self.create_bundle(
+                target=self.pipeline_dir,
+                type_=self.type_,
+                source_descriptor=self.source_descriptor,
+            )
         logger.success(f"Pipeline bundle successfully created at {self.pipeline_dir}!")
         logger.warning("Edit the files to customize your pipeline.")
         logger.info(

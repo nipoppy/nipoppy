@@ -3,7 +3,6 @@
 import hashlib
 import os
 from pathlib import Path
-from typing import Optional
 
 import pydicom
 
@@ -42,14 +41,14 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         dpath_root: StrOrPathLike,
         copy_files: bool = False,
         check_dicoms: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):
         """Initialize the DICOM reorganization workflow."""
         super().__init__(
             dpath_root=dpath_root,
-            name="dicom_reorg",
+            name="reorg",
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
@@ -205,19 +204,15 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                     f"{participant_id} session {session_id}: {exception}"
                 )
 
-    def run_cleanup(self):
-        """
-        Clean up after main DICOM reorg part is run.
-
-        Specifically:
-        - Write updated curation status file
-        - Log a summary message
-        """
         self.curation_status_table.save_with_backup(
             self.study.layout.fpath_curation_status,
             dry_run=self.dry_run,
         )
 
+        self._log_summary_message()
+
+    def _log_summary_message(self):
+        """Log a summary message about the run."""
         if self.n_total == 0:
             logger.warning(
                 "No participant-session pairs to reorganize. Make sure there are no "
@@ -236,5 +231,3 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
                 logger.success(log_msg)
             else:
                 logger.warning(log_msg)
-
-        return super().run_cleanup()
