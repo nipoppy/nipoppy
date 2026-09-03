@@ -1,0 +1,1138 @@
+{
+  "title": "Nipoppy Telemetry (Exhaustive)",
+  "uid": "nipoppy-telemetry-exhaustive",
+  "description": "Showcase dashboard using every label emitted by the telemetry client: command, status, return_code, country, service_version, deployment_environment. Trim down after team review.",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "nipoppy"
+  ],
+  "editable": true,
+  "templating": {
+    "list": [
+      {
+        "name": "command",
+        "label": "Command",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nipoppy_commands_completed_total, command)",
+          "refId": "command"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        }
+      },
+      {
+        "name": "status",
+        "label": "Status",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nipoppy_commands_completed_total, status)",
+          "refId": "status"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        }
+      },
+      {
+        "name": "country",
+        "label": "Country",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nipoppy_location_by_country_installations_total, country)",
+          "refId": "country"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        }
+      },
+      {
+        "name": "version",
+        "label": "Nipoppy version",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nipoppy_commands_completed_total, service_version)",
+          "refId": "version"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        }
+      },
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nipoppy_commands_completed_total, deployment_environment)",
+          "refId": "environment"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 100,
+      "type": "row",
+      "title": "All-Time Overview",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 101,
+      "type": "stat",
+      "title": "Total Commands",
+      "description": "All nipoppy commands ever run across all users",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(nipoppy_commands_completed_total)",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 102,
+      "type": "stat",
+      "title": "Total Inits",
+      "description": "All nipoppy init runs ever received by this server",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(nipoppy_commands_completed_total{command=\"init\"})",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 103,
+      "type": "stat",
+      "title": "Success Rate",
+      "description": "Percentage of commands that completed successfully (all time)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "100 * sum(nipoppy_commands_completed_total{status=\"SUCCESS\"}) / sum(nipoppy_commands_completed_total)",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 104,
+      "type": "stat",
+      "title": "Failures",
+      "description": "Commands that ended in failure (all time)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(nipoppy_commands_completed_total{status!~\"SUCCESS|PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN\"})",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 105,
+      "type": "stat",
+      "title": "Unique Commands Seen",
+      "description": "How many distinct nipoppy commands have been used at least once",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "count(sum by (command) (nipoppy_commands_completed_total))",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "purple" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 106,
+      "type": "stat",
+      "title": "Countries Reached",
+      "description": "Distinct countries that have run nipoppy init",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "count(sum by (country) (nipoppy_location_by_country_installations_total))",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 107,
+      "type": "stat",
+      "title": "Nipoppy Versions in the Wild",
+      "description": "Distinct nipoppy versions that have reported telemetry",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "count(sum by (service_version) (nipoppy_commands_completed_total))",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "yellow" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "yellow", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 200,
+      "type": "row",
+      "title": "Activity Over Time  (history limited by Prometheus retention / collector uptime)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 201,
+      "type": "timeseries",
+      "title": "Commands per Day (by command)",
+      "description": "Daily command volume, split by command. Filtered by the Command variable.",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (command) (increase(nipoppy_commands_completed_total{command=~\"$command\"}[1d]))",
+          "legendFormat": "{{command}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["sum"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "showPoints": "never",
+            "stacking": { "mode": "none" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 202,
+      "type": "timeseries",
+      "title": "Outcomes per Day (stacked)",
+      "description": "Daily success / partial / failure counts. Filtered by the Status variable.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (status) (increase(nipoppy_commands_completed_total{status=~\"$status\"}[1d]))",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "spanNulls": false,
+            "showPoints": "never",
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": ".*" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN)$"
+            },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "^SUCCESS$" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 203,
+      "type": "timeseries",
+      "title": "Cumulative Commands (running total)",
+      "description": "Total commands accumulated by the server over time.",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(nipoppy_commands_completed_total)",
+          "legendFormat": "total commands",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "spanNulls": true,
+            "showPoints": "never",
+            "stacking": { "mode": "none" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 300,
+      "type": "row",
+      "title": "Command Deep-Dive",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
+      "collapsed": false
+    },
+    {
+      "id": 301,
+      "type": "table",
+      "title": "Invocations per Command",
+      "description": "Total runs per command. Sorted by most used. Filtered by the Command variable.",
+      "gridPos": { "h": 10, "w": 8, "x": 0, "y": 26 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(sum by (command) (nipoppy_commands_completed_total{command=~\"$command\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "noValue": "0" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "command" },
+            "properties": [
+              { "id": "displayName", "value": "Command" },
+              { "id": "custom.width", "value": 160 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Total Runs" },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "deployment_environment": true,
+              "exported_job": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "service_version": true,
+              "otel_scope_name": true,
+              "otel_scope_schema_url": true,
+              "otel_scope_version": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 302,
+      "type": "bargauge",
+      "title": "Success Rate by Command",
+      "description": "Share of runs that succeeded, per command. Filtered by the Command variable.",
+      "gridPos": { "h": 10, "w": 10, "x": 8, "y": 26 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "100 * sum by (command) (nipoppy_commands_completed_total{command=~\"$command\", status=\"SUCCESS\"}) / sum by (command) (nipoppy_commands_completed_total{command=~\"$command\"})",
+          "legendFormat": "{{command}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 303,
+      "type": "table",
+      "title": "Top Failing Commands",
+      "description": "Commands ranked by number of failed runs.",
+      "gridPos": { "h": 10, "w": 6, "x": 18, "y": 26 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(sum by (command) (nipoppy_commands_completed_total{status!~\"SUCCESS|PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "noValue": "No failures 🎉" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "command" },
+            "properties": [{ "id": "displayName", "value": "Command" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Failures" },
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "color", "value": { "mode": "continuous-RdYlGr", "reverse": true } }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "deployment_environment": true,
+              "exported_job": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "service_version": true,
+              "otel_scope_name": true,
+              "otel_scope_schema_url": true,
+              "otel_scope_version": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 400,
+      "type": "row",
+      "title": "Return Codes  (raw codes behind the success/partial/failure mapping)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "collapsed": false
+    },
+    {
+      "id": 401,
+      "type": "table",
+      "title": "Return Codes per Command",
+      "description": "Exact CLI return codes per command. 0 = success; see ReturnCode enum for the rest.",
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (command, return_code, status) (nipoppy_commands_completed_total{command=~\"$command\", status=~\"$status\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": { "show": false },
+        "sortBy": [{ "desc": true, "displayName": "Count" }]
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "noValue": "0" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "command" },
+            "properties": [
+              { "id": "displayName", "value": "Command" },
+              { "id": "custom.width", "value": 150 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "return_code" },
+            "properties": [
+              { "id": "displayName", "value": "Return Code" },
+              { "id": "custom.width", "value": 110 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "status" },
+            "properties": [
+              { "id": "displayName", "value": "Status" },
+              { "id": "custom.width", "value": 90 },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": { "SUCCESS": { "text": "SUCCESS", "color": "green", "index": 0 } }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(PARTIAL_SUCCESS|NO_PARTICIPANTS_OR_SESSIONS_TO_RUN)$",
+                      "result": { "color": "yellow", "index": 1 }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": { "pattern": ".*", "result": { "color": "red", "index": 2 } }
+                  }
+                ]
+              },
+              { "id": "custom.displayMode", "value": "color-text" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Count" },
+              { "id": "custom.width", "value": 80 }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "deployment_environment": true,
+              "exported_job": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "service_version": true,
+              "otel_scope_name": true,
+              "otel_scope_schema_url": true,
+              "otel_scope_version": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 402,
+      "type": "piechart",
+      "title": "Return Code Distribution",
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (return_code) (nipoppy_commands_completed_total)",
+          "legendFormat": "code {{return_code}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "value"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": { "decimals": 0 },
+        "overrides": []
+      }
+    },
+    {
+      "id": 500,
+      "type": "row",
+      "title": "Geographic Distribution",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 46 },
+      "collapsed": false
+    },
+    {
+      "id": 501,
+      "type": "geomap",
+      "title": "Installations World Map",
+      "description": "nipoppy init runs by country. Marker size scales with count.",
+      "gridPos": { "h": 12, "w": 14, "x": 0, "y": 47 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (country) (nipoppy_location_by_country_installations_total{country=~\"$country\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "view": { "id": "zero", "lat": 0, "lon": 0, "zoom": 1.2 },
+        "basemap": { "type": "default", "name": "Basemap", "config": {} },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": false,
+          "showAttribution": true,
+          "showScale": false,
+          "showMeasure": false,
+          "showDebug": false
+        },
+        "tooltip": { "mode": "details" },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Installations",
+            "location": {
+              "mode": "lookup",
+              "lookup": "country",
+              "gazetteer": "public/gazetteer/countries.json"
+            },
+            "config": {
+              "style": {
+                "size": { "field": "Value", "min": 5, "max": 25 },
+                "color": { "fixed": "semi-dark-blue" },
+                "opacity": 0.7,
+                "symbol": { "mode": "fixed", "fixed": "img/icons/marker/circle.svg" },
+                "textConfig": { "fontSize": 12, "offsetX": 0, "offsetY": 0, "textAlign": "center", "textBaseline": "middle" }
+              },
+              "showLegend": true
+            },
+            "tooltip": true
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": []
+      }
+    },
+    {
+      "id": 502,
+      "type": "table",
+      "title": "Installations by Country",
+      "description": "Total nipoppy init runs per country (ISO 2-letter code).",
+      "gridPos": { "h": 6, "w": 10, "x": 14, "y": 47 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(sum by (country) (nipoppy_location_by_country_installations_total{country=~\"$country\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "noValue": "0" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "country" },
+            "properties": [
+              { "id": "displayName", "value": "Country" },
+              { "id": "custom.width", "value": 100 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Installations" },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "deployment_environment": true,
+              "exported_job": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "service_version": true,
+              "otel_scope_name": true,
+              "otel_scope_schema_url": true,
+              "otel_scope_version": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 503,
+      "type": "piechart",
+      "title": "Init Distribution by Country",
+      "gridPos": { "h": 6, "w": 10, "x": 14, "y": 53 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (country) (nipoppy_location_by_country_installations_total{country=~\"$country\"})",
+          "legendFormat": "{{country}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": { "decimals": 0 },
+        "overrides": []
+      }
+    },
+    {
+      "id": 600,
+      "type": "row",
+      "title": "Version Adoption",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 59 },
+      "collapsed": false
+    },
+    {
+      "id": 601,
+      "type": "timeseries",
+      "title": "Commands per Day by Nipoppy Version",
+      "description": "Shows upgrade uptake over time. Filtered by the Nipoppy version variable.",
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 60 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (service_version) (increase(nipoppy_commands_completed_total{service_version=~\"$version\"}[1d]))",
+          "legendFormat": "{{service_version}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["sum"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "spanNulls": false,
+            "showPoints": "never",
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 602,
+      "type": "table",
+      "title": "Versions in Use",
+      "description": "Total commands reported by each nipoppy version.",
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 60 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(sum by (service_version) (nipoppy_commands_completed_total{service_version=~\"$version\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "noValue": "0" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "service_version" },
+            "properties": [
+              { "id": "displayName", "value": "Nipoppy Version" },
+              { "id": "custom.width", "value": 200 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Commands" },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "deployment_environment": true,
+              "exported_job": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "otel_scope_name": true,
+              "otel_scope_schema_url": true,
+              "otel_scope_version": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 700,
+      "type": "row",
+      "title": "Environment  (development vs production clients)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 69 },
+      "collapsed": false
+    },
+    {
+      "id": 701,
+      "type": "piechart",
+      "title": "Commands by Environment",
+      "description": "Set via the ENVIRONMENT env var on the client (default: development). Useful to separate dev/test noise from real usage.",
+      "gridPos": { "h": 8, "w": 10, "x": 0, "y": 70 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (deployment_environment) (nipoppy_commands_completed_total{deployment_environment=~\"$environment\"})",
+          "legendFormat": "{{deployment_environment}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "value"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": { "decimals": 0 },
+        "overrides": []
+      }
+    },
+    {
+      "id": 702,
+      "type": "table",
+      "title": "Command Breakdown by Environment",
+      "gridPos": { "h": 8, "w": 14, "x": 10, "y": 70 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (deployment_environment, command) (nipoppy_commands_completed_total{deployment_environment=~\"$environment\", command=~\"$command\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": { "show": false },
+        "sortBy": [{ "desc": true, "displayName": "Count" }]
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "noValue": "0" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "deployment_environment" },
+            "properties": [
+              { "id": "displayName", "value": "Environment" },
+              { "id": "custom.width", "value": 140 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "command" },
+            "properties": [
+              { "id": "displayName", "value": "Command" },
+              { "id": "custom.width", "value": 160 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Count" },
+              { "id": "custom.width", "value": 80 }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "exported_job": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "service_version": true,
+              "otel_scope_name": true,
+              "otel_scope_schema_url": true,
+              "otel_scope_version": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
