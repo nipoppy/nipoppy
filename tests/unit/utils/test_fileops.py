@@ -202,6 +202,63 @@ class TestCopy:
             check_dummy_directory_structure(dest_dir)
 
 
+class TestCopyTemplate:
+    def test_copy_template_substitution(self, tmp_path: Path):
+        """Test copying a template file with substitution."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+
+        fileops.copy_template(template_file, dest_file, substitutions={"name": "World"})
+
+        assert dest_file.is_file()
+        assert dest_file.read_text() == "Hello, World!"
+
+    def test_copy_template_creates_parent_directory(self, tmp_path: Path):
+        """Test that the parent directory of the destination is created."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "nonexistent_dir" / "output.txt"
+
+        fileops.copy_template(template_file, dest_file, substitutions={"name": "World"})
+        assert dest_file.read_text() == "Hello, World!"
+
+    def test_copy_template_existing_file(self, tmp_path: Path):
+        """Test copying a template file to an existing file with exist_ok=False."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+        dest_file.write_text("Old content")
+
+        with pytest.raises(FileOperationError):
+            fileops.copy_template(
+                template_file,
+                dest_file,
+                substitutions={"name": "World"},
+                exist_ok=False,
+            )
+
+        # Ensure the destination file remains unchanged
+        assert dest_file.read_text() == "Old content"
+
+    def test_copy_template_existing_file_with_exist_ok(self, tmp_path: Path):
+        """Test copying a template file to an existing file with exist_ok=True."""
+        template_file = tmp_path / "template.txt"
+        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
+
+        dest_file = tmp_path / "output.txt"
+
+        fileops.copy_template(
+            template_file, dest_file, substitutions={"name": "World"}, exist_ok=True
+        )
+
+        # Ensure the destination file is updated with the new content
+        assert dest_file.read_text() == "Hello, World!"
+
+
 class TestMoveTree:
     # Should we add an exist_ok test here too?
     def test_mv_directory(self, tmp_path: Path):
@@ -217,15 +274,61 @@ class TestMoveTree:
 
 class TestSymlink:
     # Should we add an exist_ok test here too?
-    def test_symlink(self, tmp_path: Path):
+    @pytest.mark.parametrize(
+        "target_path_relative", ["symlink_to_target", "parent_dir/symlink_to_target"]
+    )
+    def test_symlink_file(self, target_path_relative: str, tmp_path: Path):
         """Test creating a symlink to a file."""
-        source_file = tmp_path / "target.txt"
-        expected_content = "target content"
+        source_file = tmp_path / "source.txt"
+        expected_content = "source content"
         source_file.write_text(expected_content)
 
-        symlink = tmp_path / "symlink_to_target"
+        symlink = tmp_path / target_path_relative
 
         fileops.symlink(source=source_file, target=symlink)
 
         assert symlink.is_symlink()
         assert symlink.read_text() == expected_content
+
+    def test_symlink_force(self, tmp_path: Path):
+        """Test that force option allows overwriting existing paths."""
+        source_file = tmp_path / "new.txt"
+        source_file.write_text("new content")
+
+        existing_file = tmp_path / "existing.txt"
+        existing_file.write_text("old content")
+
+        fileops.symlink(source=source_file, target=existing_file, force=True)
+
+        assert existing_file.is_symlink()
+        assert existing_file.resolve() == source_file.resolve()
+        assert existing_file.read_text() == "new content"
+
+    def test_symlink_no_force_raises(self, tmp_path: Path):
+        """Test that not using force raises an error if target exists."""
+        source_file = tmp_path / "new.txt"
+        source_file.write_text("new content")
+
+        existing_file = tmp_path / "existing.txt"
+        existing_file.write_text("old content")
+
+        with pytest.raises(
+            FileOperationError,
+            match="Symlink target already exists. Set force=True to overwrite.",
+        ):
+            fileops.symlink(source=source_file, target=existing_file, force=False)
+
+        assert not existing_file.is_symlink()
+        assert existing_file.read_text() == "old content"
+
+    def test_symlink_parent_dir_is_created(self, tmp_path: Path):
+        """Test that the parent directory of the symlink is created."""
+        source_file = tmp_path / "source.txt"
+        source_file.write_text("content")
+
+        symlink = tmp_path / "nonexistent_dir" / "symlink_to_source"
+
+        fileops.symlink(source=source_file, target=symlink)
+
+        assert symlink.is_symlink()
+        assert symlink.read_text() == "content"

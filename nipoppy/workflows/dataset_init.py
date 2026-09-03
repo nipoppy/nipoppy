@@ -1,19 +1,18 @@
 """Workflow for init command."""
 
+import warnings
 from pathlib import Path
-from typing import Optional
 
-import httpx
+from pydantic import ValidationError
 
-try:
-    from nipoppy._version import __version__
-except ImportError:
-    __version__ = "unknown"
+from nipoppy.config.main import Config
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
     BIDS_SUBJECT_PREFIX,
     FAKE_SESSION_ID,
+    FPATH_USER_CONFIG,
     NIPOPPY_DIR_NAME,
+    PROGRAM_VERSION,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -32,38 +31,10 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_BIDSIGNORE,
     FPATH_SAMPLE_CONFIG,
     FPATH_SAMPLE_MANIFEST,
-    process_template_str,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
 
 logger = get_logger()
-
-
-def copy_template(
-    path_source: Path,
-    path_dest: Path,
-    *,
-    dry_run: bool = False,
-    **template_kwargs,
-):
-    """Copy a file with template substitution.
-
-    Parameters
-    ----------
-    path_source
-        Source template file path
-    path_dest
-        Destination file path
-    **template_kwargs
-        Keyword arguments passed to process_template_str for substitution
-    """
-    logger.debug(f"Copying template {path_source} to {path_dest}")
-    if not dry_run:
-        with open(path_source, "r") as f:
-            content = process_template_str(f.read(), **template_kwargs)
-        fileops.mkdir(Path(path_dest).parent, dry_run=dry_run)
-        with open(path_dest, "w") as f:
-            f.write(content)
 
 
 class InitWorkflow(BaseDatasetWorkflow):
@@ -75,7 +46,9 @@ class InitWorkflow(BaseDatasetWorkflow):
         bids_source=None,
         mode="symlink",
         force=False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        container_store: StrOrPathLike | None = None,
+        fpath_layout: StrOrPathLike | None = None,
+        default_config: bool = False,
         verbose: bool = False,
         dry_run: bool = False,
     ):
@@ -93,6 +66,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.bids_source = bids_source
         self.mode = mode
         self.force = force
+        self.container_store = container_store
+        self.default_config = default_config
 
     def run_main(self):
         """Create dataset directory structure.
@@ -102,35 +77,25 @@ class InitWorkflow(BaseDatasetWorkflow):
         Copy default config files.
         Copy HPC config files.
         """
-        # dataset must not already exist
-        if self.dpath_root.exists():
-            try:
-                filenames = [
-                    f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"
-                ]
-            except NotADirectoryError:
-                raise FileOperationError(
-                    f"Dataset is an existing file: {self.dpath_root}"
-                )
-
-            if len(filenames) > 0:
-                msg = f"Dataset directory is non-empty: {self.dpath_root}"
-                if self.force:
-                    logger.warning(f"{msg} `--force` specified, proceeding anyway.")
-                else:
-                    raise FileOperationError(
-                        f"{msg}, if this is intended consider using the --force flag."
-                    )
+        self._validate_study_root()
 
         # create directories
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
         for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
             if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
-                self.handle_bids_source()
+                self._handle_bids_source()
+            elif (
+                self.container_store is not None
+                and dpath == self.study.layout.dpath_containers
+            ):
+                fileops.symlink(
+                    self.container_store, dpath, force=self.force, dry_run=self.dry_run
+                )
             else:
                 fileops.mkdir(dpath, dry_run=self.dry_run)
-
-        self._write_readmes()
+                self._write_readme(
+                    dpath, self.study.layout._dpath_descriptions.get(str(dpath))
+                )
 
         # create empty pipeline config subdirectories
         for pipeline_type in PipelineTypeEnum:
@@ -139,14 +104,10 @@ class InitWorkflow(BaseDatasetWorkflow):
                 dry_run=self.dry_run,
             )
 
-        # copy sample config and manifest files
-        fileops.copy(
-            FPATH_SAMPLE_CONFIG,
-            self.study.layout.fpath_config,
-            exist_ok=True,
-            dry_run=self.dry_run,
-        )
+        # config file
+        self._create_config_file()
 
+        # manifest
         if self.bids_source is not None:
             self._init_manifest_from_bids_dataset()
         else:
@@ -156,14 +117,19 @@ class InitWorkflow(BaseDatasetWorkflow):
                 exist_ok=True,
                 dry_run=self.dry_run,
             )
+            logger.warning(
+                f"Sample manifest file copied to {self.study.layout.fpath_manifest}. "
+                "It should be edited to match your dataset."
+            )
 
         # copy dataset description file if specified in layout
         if getattr(self.study.layout, "fpath_bids_dataset_description", None):
-            copy_template(
+            fileops.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
-                version=__version__,
+                substitutions={"version": PROGRAM_VERSION},
                 dry_run=self.dry_run,
+                exist_ok=True,
             )
 
         # copy bidsignore file if specified in layout
@@ -171,6 +137,8 @@ class InitWorkflow(BaseDatasetWorkflow):
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
+                exist_ok=True,
+                dry_run=self.dry_run,
             )
 
         # copy HPC files
@@ -181,14 +149,28 @@ class InitWorkflow(BaseDatasetWorkflow):
             dry_run=self.dry_run,
         )
 
-        # inform user to edit the sample files
-        logger.warning(
-            "Sample config and manifest files copied to "
-            f"{self.study.layout.fpath_config} and {self.study.layout.fpath_manifest} "
-            "respectively. They should be edited to match your dataset"
-        )
+        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
 
-    def handle_bids_source(self) -> None:
+    def _validate_study_root(self) -> None:
+        if not self.dpath_root.exists():
+            return
+        try:
+            filenames = [f for f in self.dpath_root.iterdir() if f.name != ".DS_STORE"]
+        except NotADirectoryError:
+            raise FileOperationError(
+                f"Study root path is an existing file: {self.dpath_root}"
+            )
+
+        if len(filenames) > 0:
+            msg = f"Study root directory is non-empty: {self.dpath_root}"
+            if self.force:
+                logger.warning(f"{msg} `--force` specified, proceeding anyway.")
+            else:
+                raise FileOperationError(
+                    f"{msg}. If this is intended, consider using the --force flag."
+                )
+
+    def _handle_bids_source(self) -> None:
         """Create bids source directory.
 
         Handles copy/move/symlink modes.
@@ -211,33 +193,46 @@ class InitWorkflow(BaseDatasetWorkflow):
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 
-    def _write_readmes(self) -> None:
-        if self.dry_run:
-            return None
-        for dpath, description in self.study.layout.dpath_descriptions:
-            fpath_readme = dpath / self.fname_readme
-            if description is None:
-                continue
-            if dpath.stem != "bids" or self.bids_source is None:
-                fpath_readme.write_text(f"{description}\n")
-            elif self.bids_source is not None and not fpath_readme.exists():
-                gh_org = "bids-standard"
-                gh_repo = "bids-starter-kit"
-                commit = "f2328c58238bdf2088bc587b0eb4198131d8ffe2"
-                path = "templates/README.MD"
-                url = (
-                    "https://raw.githubusercontent.com/"
-                    f"{gh_org}/{gh_repo}/{commit}/{path}"
+    def _create_config_file(self) -> None:
+        """Write the study's config file."""
+        fpath_user_config = Path(FPATH_USER_CONFIG).expanduser()
+        fpath_default_config = FPATH_SAMPLE_CONFIG
+
+        fpath_config_to_copy = fpath_default_config
+        if not self.default_config and fpath_user_config.is_file():
+            try:
+                Config.load(fpath_user_config)
+                fpath_config_to_copy = fpath_user_config
+            except ValidationError as exception:
+                logger.warning(
+                    f"{fpath_user_config} is invalid:\n{exception}."
+                    "\nFalling back to the default config file."
                 )
-                response = httpx.get(url)
-                readme_content = response.content.decode("utf-8")
-                try:
-                    fpath_readme.write_text(readme_content)
-                except PermissionError:
-                    logger.warning(
-                        f"Permission denied when writing {fpath_readme}. "
-                        "Skipping README creation."
-                    )
+
+        fileops.mkdir(self.study.layout.fpath_config.parent, dry_run=self.dry_run)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=UserWarning, message="Unable to replace"
+            )
+            fileops.copy_template(
+                fpath_config_to_copy,
+                self.study.layout.fpath_config,
+                substitutions={"version": PROGRAM_VERSION},
+                dry_run=self.dry_run,
+                exist_ok=True,
+            )
+        if fpath_config_to_copy == fpath_default_config:
+            logger.warning(
+                f"Default config file copied to {self.study.layout.fpath_config}. "
+                "It may need to be edited to match your dataset."
+            )
+
+    def _write_readme(self, dpath, description) -> None:
+        if self.dry_run or description is None:
+            return
+
+        fpath_readme = dpath / self.fname_readme
+        fpath_readme.write_text(f"{description}\n")
 
     def _init_manifest_from_bids_dataset(self) -> None:
         """Assume a BIDS dataset with session level folders.
@@ -323,8 +318,3 @@ class InitWorkflow(BaseDatasetWorkflow):
         manifest.save_with_backup(
             self.study.layout.fpath_manifest, dry_run=self.dry_run
         )
-
-    def run_cleanup(self):
-        """Log a success message."""
-        logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
-        return super().run_cleanup()

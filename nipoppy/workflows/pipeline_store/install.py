@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import BasePipelineConfig
@@ -19,6 +18,7 @@ from nipoppy.exceptions import (
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils import fileops
+from nipoppy.utils.json5 import update_json5_file
 from nipoppy.utils.utils import apply_substitutions_to_json, process_template_str
 from nipoppy.workflows.base import BaseDatasetWorkflow, _run_command
 from nipoppy.zenodo_api import ZenodoAPI
@@ -36,7 +36,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         zenodo_api: ZenodoAPI = None,
         assume_yes: bool = False,
         force: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):
@@ -110,9 +110,24 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             logger.warning(
                 f"Adding {len(added_variables)} variable(s) to the global config file:"
             )
+            updates = []
             for variable_name in added_variables:
                 variable_description = pipeline_config.VARIABLES[variable_name]
                 logger.warning(f"\t{variable_name}\t{variable_description}")
+
+                updates.append(
+                    (
+                        [
+                            "PIPELINE_VARIABLES",
+                            pipeline_config.PIPELINE_TYPE.name,
+                            pipeline_config.NAME,
+                            pipeline_config.VERSION,
+                            variable_name,
+                        ],
+                        variables[variable_name],
+                    )
+                )
+
             logger.warning(
                 "You must update the PIPELINE_VARIABLES section in "
                 f"{self.study.layout.fpath_config}"
@@ -121,7 +136,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
 
             # save
             if not self.dry_run:
-                config.save(self.study.layout.fpath_config)
+                update_json5_file(self.study.layout.fpath_config, updates)
 
         return config
 

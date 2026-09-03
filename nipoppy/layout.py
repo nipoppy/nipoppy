@@ -1,13 +1,29 @@
 """Dataset layout."""
 
+import functools
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+)
 
 from nipoppy.base import Base
-from nipoppy.env import NIPOPPY_DIR_NAME, PipelineTypeEnum, StrOrPathLike
+from nipoppy.config.schema import (
+    EARLIEST_SCHEMA_VERSION,
+    ensure_schema_support,
+    get_current_schema_version,
+)
+from nipoppy.env import (
+    NIPOPPY_DIR_NAME,
+    ConfigType,
+    PipelineTypeEnum,
+    StrOrPathLike,
+)
 from nipoppy.exceptions import FileOperationError, LayoutError
 from nipoppy.utils.utils import FPATH_DEFAULT_LAYOUT, get_pipeline_tag, load_json
 
@@ -19,7 +35,7 @@ class PathInfo(BaseModel):
     _is_required: bool = True
 
     path: Path = Field(description="Relative path to the file or directory")
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         description="Description of the function of the file or directory",
     )
@@ -53,6 +69,21 @@ class LayoutConfig(BaseModel):
     """Relative paths for the dataset layout."""
 
     model_config = ConfigDict(extra="forbid")
+    SCHEMA_VERSION: Annotated[
+        str,
+        AfterValidator(
+            functools.partial(
+                ensure_schema_support,
+                config_type=ConfigType.LAYOUT,
+            )
+        ),
+    ] = Field(
+        default_factory=lambda: EARLIEST_SCHEMA_VERSION,
+        description=(
+            "Version of the schema used for this layout configuration. The current "
+            f"latest version is {get_current_schema_version(ConfigType.LAYOUT)}"
+        ),
+    )
     dpath_bids: DpathInfo = Field(description="Directory for raw imaging data in BIDS")
     dpath_derivatives: DpathInfo = Field(
         description="Directory for imaging derivatives"
@@ -125,12 +156,12 @@ class LayoutConfig(BaseModel):
     )
     # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
     # as optional for path validation, not for Pydantic model validation.
-    # Optional[OptionalFpathInfo] with default=None is needed to make the field
+    # OptionalFpathInfo | None with default=None is needed to make the field
     # truly optional so it can be missing from layout JSON files entirely.
-    fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
+    fpath_bids_dataset_description: OptionalFpathInfo | None = Field(
         default=None, description="Path to the BIDS dataset description file"
     )
-    fpath_bidsignore: Optional[OptionalFpathInfo] = Field(
+    fpath_bidsignore: OptionalFpathInfo | None = Field(
         default=None, description="Path to the .bidsignore file"
     )
 
@@ -173,7 +204,7 @@ class DatasetLayout(Base):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
-        fpath_config: Optional[StrOrPathLike] = None,
+        fpath_config: StrOrPathLike | None = None,
     ):
         """Initialize the object.
 
@@ -181,7 +212,7 @@ class DatasetLayout(Base):
         ----------
         dpath_root : nipoppy.env.StrOrPathLike
             Path to the root directory of the dataset.
-        fpath_config : Optional[nipoppy.env.StrOrPathLike], optional
+        fpath_config : nipoppy.env.StrOrPathLike | None, optional
             Path to the layout config to use, by default None.
             If None, the default layout will be used.
 
@@ -206,81 +237,89 @@ class DatasetLayout(Base):
         self.config = config
         self.dpath_nipoppy = self.dpath_root / NIPOPPY_DIR_NAME
 
-        # directories (for type hinting)
-        self.dpath_bids: Path = self.get_full_path(self.config.dpath_bids.path)
-        self.dpath_derivatives: Path = self.get_full_path(
+        # directories
+        self.dpath_bids: Path = self._prepend_study_path(self.config.dpath_bids.path)
+        self.dpath_derivatives: Path = self._prepend_study_path(
             self.config.dpath_derivatives.path
         )
-        self.dpath_sourcedata: Path = self.get_full_path(
+        self.dpath_sourcedata: Path = self._prepend_study_path(
             self.config.dpath_sourcedata.path
         )
-        self.dpath_src_tabular: Path = self.get_full_path(
+        self.dpath_src_tabular: Path = self._prepend_study_path(
             self.config.dpath_src_tabular.path
         )
-        self.dpath_src_imaging: Path = self.get_full_path(
+        self.dpath_src_imaging: Path = self._prepend_study_path(
             self.config.dpath_src_imaging.path
         )
-        self.dpath_downloads: Path = self.get_full_path(
+        self.dpath_downloads: Path = self._prepend_study_path(
             self.config.dpath_downloads.path
         )
-        self.dpath_pre_reorg: Path = self.get_full_path(
+        self.dpath_pre_reorg: Path = self._prepend_study_path(
             self.config.dpath_pre_reorg.path
         )
-        self.dpath_post_reorg: Path = self.get_full_path(
+        self.dpath_post_reorg: Path = self._prepend_study_path(
             self.config.dpath_post_reorg.path
         )
-        self.dpath_code: Path = self.get_full_path(self.config.dpath_code.path)
-        self.dpath_hpc: Path = self.get_full_path(self.config.dpath_hpc.path)
-        self.dpath_pipelines: Path = self.get_full_path(
+        self.dpath_code: Path = self._prepend_study_path(self.config.dpath_code.path)
+        self.dpath_hpc: Path = self._prepend_study_path(self.config.dpath_hpc.path)
+        self.dpath_pipelines: Path = self._prepend_study_path(
             self.config.dpath_pipelines.path
         )
-        self.dpath_containers: Path = self.get_full_path(
+        self.dpath_containers: Path = self._prepend_study_path(
             self.config.dpath_containers.path
         )
-        self.dpath_scratch: Path = self.get_full_path(self.config.dpath_scratch.path)
-        self.dpath_work: Path = self.get_full_path(self.config.dpath_work.path)
-        self.dpath_pybids_db: Path = self.get_full_path(
+        self.dpath_scratch: Path = self._prepend_study_path(
+            self.config.dpath_scratch.path
+        )
+        self.dpath_work: Path = self._prepend_study_path(self.config.dpath_work.path)
+        self.dpath_pybids_db: Path = self._prepend_study_path(
             self.config.dpath_pybids_db.path
         )
-        self.dpath_logs: Path = self.get_full_path(self.config.dpath_logs.path)
-        self.dpath_tabular: Path = self.get_full_path(self.config.dpath_tabular.path)
-        self.dpath_assessments: Path = self.get_full_path(
+        self.dpath_logs: Path = self._prepend_study_path(self.config.dpath_logs.path)
+        self.dpath_tabular: Path = self._prepend_study_path(
+            self.config.dpath_tabular.path
+        )
+        self.dpath_assessments: Path = self._prepend_study_path(
             self.config.dpath_assessments.path
         )
 
         # files (for type hinting)
-        self.fpath_config: Path = self.get_full_path(self.config.fpath_config.path)
-        self.fpath_curation_status: Path = self.get_full_path(
+        self.fpath_config: Path = self._prepend_study_path(
+            self.config.fpath_config.path
+        )
+        self.fpath_curation_status: Path = self._prepend_study_path(
             self.config.fpath_curation_status.path
         )
-        self.fpath_manifest: Path = self.get_full_path(self.config.fpath_manifest.path)
-        self.fpath_processing_status: Path = self.get_full_path(
+        self.fpath_manifest: Path = self._prepend_study_path(
+            self.config.fpath_manifest.path
+        )
+        self.fpath_processing_status: Path = self._prepend_study_path(
             self.config.fpath_processing_status.path
         )
-        self.fpath_demographics: Path = self.get_full_path(
+        self.fpath_demographics: Path = self._prepend_study_path(
             self.config.fpath_demographics.path
         )
-        self.fpath_harmonized: Path = self.get_full_path(
+        self.fpath_harmonized: Path = self._prepend_study_path(
             self.config.fpath_harmonized.path
         )
         # Optional fields - only set if defined in layout
         if self.config.fpath_bids_dataset_description is not None:
-            self.fpath_bids_dataset_description: Path = self.get_full_path(
+            self.fpath_bids_dataset_description: Path = self._prepend_study_path(
                 self.config.fpath_bids_dataset_description.path
             )
         if self.config.fpath_bidsignore is not None:
-            self.fpath_bidsignore: Path = self.get_full_path(
+            self.fpath_bidsignore: Path = self._prepend_study_path(
                 self.config.fpath_bidsignore.path
             )
 
-    def get_full_path(self, path: StrOrPathLike) -> Path:
-        """Build a full path from a relative path."""
+    def _prepend_study_path(self, path: StrOrPathLike) -> Path:
+        """Build the full study path from a relative path."""
         return self.dpath_root / path
 
     def get_paths(self, directory=True, include_optional=False) -> list[Path]:
         """Return a list of all directory or file paths."""
         paths = [
-            self.get_full_path(path_info.path)
+            self._prepend_study_path(path_info.path)
             for path_info in self.config.path_infos
             if directory == path_info._is_directory
             and (include_optional or path_info._is_required)
@@ -288,14 +327,14 @@ class DatasetLayout(Base):
         return paths
 
     @cached_property
-    def dpath_descriptions(self) -> list[Tuple[Path, str]]:
-        """Return a list of directory paths and associated description strings."""
-        info_list = [
-            (self.get_full_path(path_info.path), path_info.description)
+    def _dpath_descriptions(self) -> dict[str, str]:
+        """Return a dictionary of directory paths and associated description strings."""
+        info_dict = {
+            str(self._prepend_study_path(path_info.path)): path_info.description
             for path_info in self.config.path_infos
             if path_info._is_directory and path_info.description is not None
-        ]
-        return info_list
+        }
+        return info_dict
 
     def _find_missing_paths(self) -> list[Path]:
         """Return a list of missing paths."""
@@ -328,16 +367,18 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        pipeline_step: str,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
             self.dpath_work
-            / get_pipeline_tag(pipeline_name, pipeline_version)
+            / get_pipeline_tag(pipeline_name, pipeline_version, pipeline_step)
             / get_pipeline_tag(
                 pipeline_name,
                 pipeline_version,
+                pipeline_step,
                 participant_id=participant_id,
                 session_id=session_id,
             )
@@ -373,13 +414,15 @@ class DatasetLayout(Base):
         self,
         pipeline_name: str,
         pipeline_version: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        pipeline_step: str,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> Path:
         """Return the path to a pipeline's BIDS database directory."""
         dname = get_pipeline_tag(
             pipeline_name,
             pipeline_version,
+            pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
         )

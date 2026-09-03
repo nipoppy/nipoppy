@@ -1,0 +1,30 @@
+// Nipoppy will apply string substitutions when this file is loaded,
+// see https://nipoppy.readthedocs.io/en/[[NIPOPPY_VERSION]]/reference/substitutions.html
+{
+    "NAME": "tool name",
+    "VERSION": "v0.1.0",
+    "CONTAINER_INFO": {
+        "FILE": "[[NIPOPPY_DPATH_CONTAINERS]]/[[PIPELINE_NAME]]_[[PIPELINE_VERSION]].sif",
+        "URI": "docker://<OWNER>/[[PIPELINE_NAME]]:[[PIPELINE_VERSION]]"
+    },
+    "CONTAINER_CONFIG": {
+        "ENV_VARS": {},
+        "ARGS": []
+    },
+    "STEPS": [
+        {
+            "INVOCATION_FILE": "invocation.json5",
+            "DESCRIPTOR_FILE": "descriptor.json",
+            "ANALYSIS_LEVEL": "participant_session",
+            "HPC_CONFIG_FILE": "hpc.json5"
+        }
+    ],
+    "PROC_DEPENDENCIES": [
+        {
+            "NAME": "proc_pipeline",
+            "VERSION": "x.y.z"
+        }
+    ],
+    "PIPELINE_TYPE": "extraction",
+    "SCHEMA_VERSION": "1.0"
+}

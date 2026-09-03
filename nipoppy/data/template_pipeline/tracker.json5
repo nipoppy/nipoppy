@@ -1,0 +1,10 @@
+// Nipoppy will apply string substitutions when this file is loaded,
+// see https://nipoppy.readthedocs.io/en/[[NIPOPPY_VERSION]]/reference/substitutions.html
+{
+    // Paths are relative to the pipeline's `<PIPELINE_NAME>/<PIPELINE_VERSION>/output/` directory
+    "PATHS": [
+        "[[NIPOPPY_BIDS_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]/anat/[[NIPOPPY_BIDS_PARTICIPANT_ID]]_[[NIPOPPY_BIDS_SESSION_ID]]*_example.txt"
+    ],
+    "PARTICIPANT_SESSION_DIR": "[[NIPOPPY_BIDS_PARTICIPANT_ID]]/[[NIPOPPY_BIDS_SESSION_ID]]",
+    "SCHEMA_VERSION": "1.0"
+}

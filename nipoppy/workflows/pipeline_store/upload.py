@@ -1,7 +1,6 @@
 """Workflow for interacting with Zenodo API."""
 
 from pathlib import Path
-from typing import Optional
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
@@ -24,7 +23,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         self,
         dpath_pipeline: StrOrPathLike,
         zenodo_api: ZenodoAPI | None = None,
-        record_id: Optional[str] = None,
+        record_id: str | None = None,
         assume_yes: bool = False,
         force: bool = False,
         verbose=False,
@@ -89,7 +88,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         # Safeguard before uploading
         try:
-            pipeline_config = check_pipeline_bundle(pipeline_dir)
+            pipeline_config = check_pipeline_bundle(pipeline_dir, strict=True)
         except Exception as e:
             logger.error(
                 f"Pipeline validation failed. Please check the pipeline files: {e}"

@@ -15,13 +15,13 @@ If the default Slurm/SGE configurations do not work for you, please consider [op
 
 ### Global settings
 
-The default global configuration file has two {term}`HPC`-related fields that should be updated as needed:
+The default global configuration file has three {term}`HPC`-related fields that should be updated as needed:
 
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json5
 ---
 linenos: True
 language: json
-emphasize-lines: 4,16-25
+emphasize-lines: 7,20-29,30
 ---
 ```
 
@@ -42,6 +42,12 @@ This can be left blank if these options are not needed.
 If your HPC system needs flags other than `--account-name` or `-q` need to be set, you will have to modify the template job submission script: see the [Further customization](#further-customization) section for more information.
 ```
 
+#### `HPC_QUEUE_LIMIT`
+
+The maximum number of jobs allowed in the queue for a given user.
+This limit is specific to your HPC system.
+Set to `null` if there is no such limit, in which case all jobs will always be submitted.
+
 ### Pipeline-specific settings
 
 Job time limit and CPU and memory requests can be configured separately for each pipeline via the HPC config file.
@@ -49,7 +55,7 @@ Look for this file inside the pipeline config directory at {{dpath_pipelines}}`/
 
 The HPC config file should look similar to this:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/hpc.json
+```{literalinclude} ../../_inserts/hpc.json5
 ---
 linenos: True
 language: json
@@ -65,12 +71,12 @@ You can create an HPC config file manually by copying the content above into a n
 
 You will also need to add an `"HPC_CONFIG_FILE"` field for each step in pipeline's `config.json` file:
 
-```{literalinclude} ../../../../nipoppy/data/template_pipeline/config-extraction.json
+```{literalinclude} ../../_inserts/config-extraction.json5
 ---
 linenos: True
 language: json
-lines: 12-18
-emphasize-lines: 5
+lines: 14-21
+emphasize-lines: 6
 ---
 ```
 ````
@@ -86,7 +92,7 @@ Set/leave as empty string if the field is not needed.
 
 ## Submitting HPC jobs via `nipoppy` commands
 
-To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../cli_reference/process.rst>), or [`nipoppy extract`](<project:../../cli_reference/extract.rst>) commands:
+To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../reference/cli_reference/process.rst>), or [`nipoppy extract`](<project:../../reference/cli_reference/extract.rst>) commands:
 
 ```console
 $ nipoppy <SUBCOMMAND> \

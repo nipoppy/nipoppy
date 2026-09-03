@@ -8,13 +8,15 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
+
+import json5
 
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import NipoppyError
+from nipoppy.exceptions import ConfigError, JSON5Error, JSONError, NipoppyError
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -27,7 +29,7 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 NIPOPPY_ROOT = Path(__file__).parents[1]
 DPATH_DATA = NIPOPPY_ROOT / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json5"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION = (
@@ -53,9 +55,9 @@ FIELD_DESCRIPTION_MAP = {
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
-    pipeline_step: Optional[str] = None,
-    participant_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    pipeline_step: str | None = None,
+    participant_id: str | None = None,
+    session_id: str | None = None,
     sep="-",
 ):
     """Join pipeline submission parameters, filtering out None values."""
@@ -73,30 +75,41 @@ def get_pipeline_tag(
     )
 
 
-def load_json(fpath: StrOrPathLike, **kwargs) -> dict:
+def load_json(
+    fpath: StrOrPathLike,
+    *,
+    allow_json5: bool = False,
+    **kwargs,
+) -> dict | list:
     """Load a JSON file.
 
     Parameters
     ----------
     fpath : nipoppy.env.StrOrPathLike
         Path to the JSON file
+    allow_json5 : bool, optional
+        Whether to parse the file as JSON5 (supports comments and trailing commas),
+        by default False
     **kwargs :
-        Keyword arguments to pass to json.load
+        Keyword arguments to pass to json.loads or json5.loads
 
     Returns
     -------
-    dict
+    dict | list
         The JSON object.
     """
-    with open(fpath, "r") as file:
+    fpath = Path(fpath)
+    json_text = fpath.read_text()
+    if allow_json5:
         try:
-            return json.load(file, **kwargs)
+            return json5.loads(json_text, **kwargs)
+        except ValueError as e:
+            raise JSON5Error(e, fpath=fpath) from e
+    else:
+        try:
+            return json.loads(json_text, **kwargs)
         except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(
-                f"Error loading JSON file at {fpath}",
-                e.doc,
-                e.pos,
-            )
+            raise JSONError(e, fpath=fpath) from e
 
 
 def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
@@ -138,7 +151,7 @@ def add_path_timestamp(
 def save_df_with_backup(
     df: pd.DataFrame,
     fpath_symlink: StrOrPathLike,
-    dname_backups: Optional[str] = None,
+    dname_backups: str | None = None,
     use_relative_path=True,
     dry_run=False,
     **kwargs,
@@ -151,7 +164,7 @@ def save_df_with_backup(
         The dataframe to save
     fpath_symlink : nipoppy.env.StrOrPathLike
         The path to the symlink
-    dname_backups : Optional[str], optional
+    dname_backups : str | None, optional
         The directory where the timestamped backup file should be written
         (automatically determined if None), by default None
     use_relative_path : bool, optional
@@ -253,6 +266,10 @@ def apply_substitutions_to_json(
     # convert json_obj to string
     json_text = json.dumps(json_obj)
     for key, value in substitutions.items():
+        if not isinstance(value, str):
+            raise ConfigError(
+                f"Substitution value must be a string, got {type(value)} for key '{key}'"  # noqa: E501
+            )
         json_text = json_text.replace(key, value)
     return json.loads(json_text)
 
@@ -262,7 +279,7 @@ def get_today():
     return datetime.datetime.today().strftime("%Y-%m-%d")
 
 
-def is_nipoppy_project(cwd=Path.cwd()):
+def is_nipoppy_project(dpath: StrOrPathLike) -> Path | bool:
     """Verify if the current directory is a nipoppy project.
 
     This is done by checking if the `.nipoppy` directory exists in the
@@ -272,10 +289,10 @@ def is_nipoppy_project(cwd=Path.cwd()):
 
     Parameters
     ----------
-    cwd : nipoppy.env.StrOrPathLike, optional
-        Path to directory, by default Path.cwd()
+    dpath : nipoppy.env.StrOrPathLike
+        Path to directory to check
     """
-    current = Path(cwd).resolve()
+    current = Path(dpath).resolve()
     while True:
         candidate = current / NIPOPPY_DIR_NAME
         if candidate.is_dir():

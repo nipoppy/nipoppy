@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import datetime
+import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, Optional
 
 import click
 import numpy as np
@@ -14,9 +15,10 @@ import pytest_mock
 from fids.fids import create_fake_bids_dataset
 
 from nipoppy.config.main import Config
+from nipoppy.config.schema import get_current_schema_version
 from nipoppy.env import (
-    CURRENT_SCHEMA_VERSION,
     NIPOPPY_DIR_NAME,
+    ConfigType,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -98,7 +100,18 @@ def datetime_fixture(
     yield mocked_datetime
 
 
-def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
+@pytest.fixture()
+def restore_environment():
+    """Fixture to restore environment variables after a test."""
+    environment_to_restore = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(environment_to_restore)
+
+
+def list_cli_commands(
+    group: click.Group, prefix="", include_hidden=True, include_group=True
+):
     """List all CLI commands recursively.
 
     Parameters
@@ -109,6 +122,8 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
         Prefix to add to command names (used for recursion), by default ""
     include_hidden : bool, optional
         Whether to include hidden commands, by default True
+    include_group : bool, optional
+        Whether to include group (parent) commands, by default True
 
     Returns
     -------
@@ -122,7 +137,8 @@ def list_cli_commands(group: click.Group, prefix="", include_hidden=True):
             continue
 
         full_name = f"{prefix}{name}"
-        commands.append(full_name)
+        if include_group or not isinstance(cmd, click.Group):
+            commands.append(full_name)
 
         # If the command is itself a group, recurse
         if isinstance(cmd, click.Group):
@@ -170,9 +186,9 @@ def create_empty_dataset(dpath_root: Path):
 
 def create_pipeline_config_files(
     dpath_pipelines: Path,
-    bidsification_pipelines: Optional[list[dict]] = None,
-    processing_pipelines: Optional[list[dict]] = None,
-    extraction_pipelines: Optional[list[dict]] = None,
+    bidsification_pipelines: list[dict] | None = None,
+    processing_pipelines: list[dict] | None = None,
+    extraction_pipelines: list[dict] | None = None,
 ):
     """Create pipeline bundles (inside subdirectories)."""
     for pipeline_config_list, pipeline_type in [
@@ -184,7 +200,9 @@ def create_pipeline_config_files(
             continue
         for pipeline_config in pipeline_config_list:
             pipeline_config["PIPELINE_TYPE"] = pipeline_type
-            pipeline_config["SCHEMA_VERSION"] = CURRENT_SCHEMA_VERSION
+            pipeline_config["SCHEMA_VERSION"] = get_current_schema_version(
+                ConfigType.PIPELINE
+            )
             fpath_config = (
                 dpath_pipelines
                 / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
@@ -196,9 +214,9 @@ def create_pipeline_config_files(
 
 
 def _process_participants_sessions(
-    participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participant_ids: Optional[list[str]] = None,
-    session_ids: Optional[list[str] | dict[str, list[str]]] = None,
+    participants_and_sessions: dict[str, list[str]] | None = None,
+    participant_ids: list[str] | None = None,
+    session_ids: list[str] | dict[str, list[str]] | None = None,
 ):
     """Process participant/session arguments."""
     if participants_and_sessions is None:
@@ -214,9 +232,9 @@ def _process_participants_sessions(
 
 def _fake_dicoms(  # noqa: C901
     dpath: StrOrPathLike,
-    participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participant_ids: Optional[list[str]] = None,
-    session_ids: Optional[list[str]] = None,
+    participants_and_sessions: dict[str, list[str]] | None = None,
+    participant_ids: list[str] | None = None,
+    session_ids: list[str] | None = None,
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
@@ -283,9 +301,9 @@ def _fake_dicoms(  # noqa: C901
 
 def fake_dicoms_downloaded(
     dpath: StrOrPathLike,
-    participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participant_ids: Optional[list[str]] = None,
-    session_ids: Optional[list[str]] = None,
+    participants_and_sessions: dict[str, list[str]] | None = None,
+    participant_ids: list[str] | None = None,
+    session_ids: list[str] | None = None,
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
@@ -314,9 +332,9 @@ def fake_dicoms_downloaded(
 
 def fake_dicoms_organized(
     dpath: StrOrPathLike,
-    participants_and_sessions: Optional[dict[str, list[str]]] = None,
-    participant_ids: Optional[list[str]] = None,
-    session_ids: Optional[list[str]] = None,
+    participants_and_sessions: dict[str, list[str]] | None = None,
+    participant_ids: list[str] | None = None,
+    session_ids: list[str] | None = None,
     n_images: int = 3,
     min_n_files_per_image: int = 1,
     max_n_files_per_image: int = 5,
@@ -344,12 +362,12 @@ def fake_dicoms_organized(
 
 def prepare_dataset(
     participants_and_sessions_manifest: dict[str, list[str]],
-    participants_and_sessions_downloaded: Optional[dict[str, list[str]]] = None,
-    participants_and_sessions_organized: Optional[dict[str, list[str]]] = None,
-    participants_and_sessions_bidsified: Optional[dict[str, list[str]]] = None,
-    dpath_downloaded: Optional[StrOrPathLike] = None,
-    dpath_organized: Optional[StrOrPathLike] = None,
-    dpath_bidsified: Optional[StrOrPathLike] = None,
+    participants_and_sessions_downloaded: dict[str, list[str]] | None = None,
+    participants_and_sessions_organized: dict[str, list[str]] | None = None,
+    participants_and_sessions_bidsified: dict[str, list[str]] | None = None,
+    dpath_downloaded: StrOrPathLike | None = None,
+    dpath_organized: StrOrPathLike | None = None,
+    dpath_bidsified: StrOrPathLike | None = None,
 ):
     """Create dummy imaging files for testing the DICOM-to-BIDS conversion process."""
     # create the manifest
@@ -402,37 +420,28 @@ def check_curation_status_table(
     participants_and_sessions_downloaded,
     participants_and_sessions_organized,
     participants_and_sessions_bidsified,
-    empty,
 ):
     """Check that a curation status table has the corrected status values."""
-    if empty:
-        for col in [
-            table.col_in_pre_reorg,
-            table.col_in_post_reorg,
-            table.col_in_bids,
-        ]:
-            assert (~table[col]).all()
-    else:
-        for participant_id in participants_and_sessions_manifest:
-            for session_id in participants_and_sessions_manifest[participant_id]:
-                for col, participants_and_sessions_true in {
-                    table.col_in_pre_reorg: participants_and_sessions_downloaded,
-                    table.col_in_post_reorg: participants_and_sessions_organized,
-                    table.col_in_bids: participants_and_sessions_bidsified,
-                }.items():
-                    status: pd.Series = table.loc[
-                        (table[table.col_participant_id] == participant_id)
-                        & (table[table.col_session_id] == session_id),
-                        col,
-                    ]
+    for participant_id in participants_and_sessions_manifest:
+        for session_id in participants_and_sessions_manifest[participant_id]:
+            for col, participants_and_sessions_true in {
+                table.col_in_pre_reorg: participants_and_sessions_downloaded,
+                table.col_in_post_reorg: participants_and_sessions_organized,
+                table.col_in_bids: participants_and_sessions_bidsified,
+            }.items():
+                status: pd.Series = table.loc[
+                    (table[table.col_participant_id] == participant_id)
+                    & (table[table.col_session_id] == session_id),
+                    col,
+                ]
 
-                    assert len(status) == 1
-                    status = status.iloc[0]
+                assert len(status) == 1
+                status = status.iloc[0]
 
-                    assert status == (
-                        participant_id in participants_and_sessions_true
-                        and session_id in participants_and_sessions_true[participant_id]
-                    )
+                assert status == (
+                    participant_id in participants_and_sessions_true
+                    and session_id in participants_and_sessions_true[participant_id]
+                )
 
 
 @pytest.fixture
