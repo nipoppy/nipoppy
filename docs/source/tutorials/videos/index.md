@@ -10,6 +10,10 @@ $ git clone https://github.com/nipoppy/tutorial-dataset.git
 
 or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and download the data without using `git`. We show in the videos how to!
 
+```{note}
+Nipoppy version used in the tutorial videos was 0.4.5. Console output as well as certain flags could have changed between this version and newer versions. Please consult the release notes on [GitHub](https://github.com/nipoppy/nipoppy/releases) for details. E.g., the `--regenerate` flag for the `track-curation` command will be deprecated soon.
+```
+
 ## 1. nipoppy init
 
 In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
