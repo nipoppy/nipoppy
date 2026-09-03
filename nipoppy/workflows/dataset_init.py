@@ -149,7 +149,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             exist_ok=True,
             dry_run=self.dry_run,
         )
-        
+
         logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
 
     def _validate_study_root(self) -> None:
