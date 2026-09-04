@@ -1017,3 +1017,21 @@ def test_get_latest_version_id_invalid(
         match=f"Failed to get latest version for zenodo.{record_id}:",
     ):
         zenodo_api.get_latest_version_id(record_id)
+
+
+def test_get_files_checksum(zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture):
+    mocker.patch.object(
+        zenodo_api,
+        "_get_record",
+        return_value={
+            "files": [
+                {"key": "file1.txt", "checksum": "md5:abc123"},
+                {"key": "file2.txt", "checksum": "md5:def456"},
+            ]
+        },
+    )
+    expected_checksum = {
+        "file1.txt": "abc123",
+        "file2.txt": "def456",
+    }
+    assert zenodo_api._get_files_checksum(record_id="123456") == expected_checksum
