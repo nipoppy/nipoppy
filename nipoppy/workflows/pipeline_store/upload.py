@@ -5,7 +5,7 @@ from pathlib import Path
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.env import StrOrPathLike
+from nipoppy.env import ZENODO_COMMUNITY_ID, StrOrPathLike
 from nipoppy.exceptions import TerminatedByUserError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
@@ -151,7 +151,9 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 )
 
         community_id = (
-            self.zenodo_api.get_community_id("nipoppy") if self.community else None
+            self.zenodo_api.get_community_id(ZENODO_COMMUNITY_ID)
+            if self.community
+            else None
         )
 
         if (
