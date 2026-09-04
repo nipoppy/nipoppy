@@ -41,15 +41,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
 
+    - uses: astral-sh/setup-uv@v10.0.1
+
     - name: Install package
       run: |
-        pip install -U pip
-        pip install .[tests,gui]
+        uv sync --extra tests --extra gui
 
     - name: Run non-API tests
       run: |
-        python -m pytest -m "not api and not linkcheck and no_xdist" -n 0 --cov=nipoppy --cov-report=xml
-        python -m pytest -m "not api and not linkcheck and not no_xdist" --cov=nipoppy --cov-report=xml --cov-append
+        uv run python -m pytest -m "not api and not linkcheck and no_xdist" -n 0 --cov=nipoppy --cov-report=xml
+        uv run python -m pytest -m "not api and not linkcheck and not no_xdist" --cov=nipoppy --cov-report=xml --cov-append
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v7
@@ -61,7 +62,7 @@ jobs:
     - name: Run API tests
       if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.14'
       run: |
-        python -m pytest -m api
+        uv run python -m pytest -m api
       env:
         ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
         ZENODO_ID: ${{ vars.ZENODO_ID }}
