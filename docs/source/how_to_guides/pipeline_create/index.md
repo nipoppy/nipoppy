@@ -27,7 +27,6 @@ language: json
 
 </div>
 
-
 ````{admonition} Helpful commands
 ---
 
@@ -112,12 +111,12 @@ See the schemas for {ref}`BIDSification <bidsification-pipeline-config-schema>`,
 - **`"NAME"`** and **`"VERSION"`** (if no source descriptor was used)
 - **`"CONTAINER_CONFIG"`** -> **`"BIND_PATHS"`**: paths to volumes to be mounted to the container (format: `local_path[:path_inside_container[:mode]]`)
 - **`"STEPS"`** -> **`"ANALYSIS_LEVEL"`**: to control the looping (if any) performed by Nipoppy
-    - `"participant_session"`: iterate over all participant-session pairs (default)
-    - `"participant`": iterate over participants only
-    - `"session`": iterate over sessions only
-    - `"group`": single iteration, for pipelines that do group analysis or handle all looping internally
+  - `"participant_session"`: iterate over all participant-session pairs (default)
+  - `"participant`": iterate over participants only
+  - `"session`": iterate over sessions only
+  - `"group`": single iteration, for pipelines that do group analysis or handle all looping internally
 - **`"GENERATE_PYBIDS_DATABASE`"**: only set to `true` if the pipeline accepts a [PyBIDS](https://bids-standard.github.io/pybids/) database path as input. Nipoppy will then index the raw BIDS data and create a database that is constrained to the participant and/or session being run. The `[[NIPOPPY_DPATH_PIPELINE_BIDS_DB]]` substitution can be used to inject the path to this database into the invocation file.
-    - Indexing can further be controlled by the user via the **`"PYBIDS_IGNORE_FILE`"** field
+  - Indexing can further be controlled by the user via the **`"PYBIDS_IGNORE_FILE`"** field
 - **`"VARIABLES`"**: for pipelines that require information (typically file/directory paths) for which there is no good default (e.g. path to a configuration file or a FreeSurfer license file). This should be a dictionary with variable names as keys and descriptions as values, e.g., `{"REQUIRED_FILE": "This file is for running the pipeline"}`
 
 ##### Example for the [FSL SIENA](https://fsl.fmrib.ox.ac.uk/fsl/docs/structural/siena/index.html) pipeline
@@ -221,6 +220,10 @@ nipoppy pipeline upload \
   <PIPELINE_DIR>
 ```
 
+:::{note}
+To update an existing Zenodo record, use the `--zenodo-id` flag.
+:::
+
 ::::{tip}
 Use the `--community` flag to request inclusion in the Nipoppy Zenodo community during the upload process or for an already published record:
 
@@ -235,10 +238,6 @@ The request is still submitted when an update is skipped because the local files
 
 To request inclusion in another community, open the published record on the Zenodo website, open the communities menu, select **Submit to community**, choose the community, authorize curator access, and submit the request. See Zenodo's [Submit to community guide](https://help.zenodo.org/docs/share/submit-to-community/) for details.
 ::::
-
-:::{note}
-To update an existing Zenodo record, use the `--zenodo-id` flag.
-:::
 
 ### `zenodo.json` (Optional)
 
