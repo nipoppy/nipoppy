@@ -89,14 +89,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         local_files = {
             file.name: _get_file_md5(file) for file in sorted(input_dir.iterdir())
         }
-        remote_files = {
-            entry["key"]: (
-                entry["checksum"].lower()
-                if ":" in entry["checksum"]
-                else f"md5:{entry['checksum'].lower()}"
-            )
-            for entry in self.zenodo_api.get_record_files(record_id)["entries"]
-        }
+        remote_files = self.zenodo_api.get_record_files(record_id)
         return local_files == remote_files
 
     def _confirm_upload(self) -> None:
@@ -214,7 +207,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
 def _get_file_md5(file: Path) -> str:
     """Calculate the MD5 checksum used by Zenodo for uploaded files."""
     checksum = hashlib.md5(file.read_bytes())
-    return f"md5:{checksum.hexdigest()}"
+    return checksum.hexdigest()
 
 
 def _is_same_pipeline(

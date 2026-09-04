@@ -102,12 +102,7 @@ class ZenodoAPI:
         record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Exclude "md5:" prefix
-        files = {
-            entry["key"]: entry["checksum"].removeprefix("md5:")
-            for entry in self.get_record_files(record_id)["entries"]
-        }
-        for file, checksum in files.items():
+        for file, checksum in self.get_record_files(record_id).items():
             response = self.client.get(f"/records/{record_id}/files/{file}/content")
             if response.status_code != 200:
                 raise ZenodoAPIError(
@@ -396,7 +391,7 @@ class ZenodoAPI:
 
         return response.json()
 
-    def get_record_files(self, record_id: str) -> dict:
+    def get_record_files(self, record_id: str) -> dict[str, str]:
         """Get the file manifest of a published Zenodo record."""
         record_id = self._process_record_id(record_id)
         response = self.client.get(f"/records/{record_id}/files")
@@ -404,7 +399,10 @@ class ZenodoAPI:
             raise ZenodoAPIError(
                 f"Failed to get files for zenodo.{record_id}: {response.json()}"
             )
-        return response.json()
+        return {
+            entry["key"]: entry["checksum"].removeprefix("md5:")
+            for entry in response.json()["entries"]
+        }
 
     def get_community_id(self, community: str) -> str:
         """Resolve a community slug or ID to is uuid."""

@@ -164,19 +164,8 @@ def test_is_same_record(tmp_path: Path, workflow: PipelineUploadWorkflow):
     for file_to_upload in files:
         file_to_upload.write_text(file_to_upload.name)
     workflow.zenodo_api.get_record_files.return_value = {
-        "default_preview": "different-preview.json",
-        "entries": [
-            {
-                "key": file_to_upload.name,
-                "checksum": (
-                    # Zenodo prepends "md5:" to the checksum of the preview file
-                    _get_file_md5(file_to_upload).removeprefix("md5:")
-                    if index == 0
-                    else _get_file_md5(file_to_upload)
-                ),
-            }
-            for index, file_to_upload in enumerate(files)
-        ],
+        record_file.name: _get_file_md5(record_file).removeprefix("md5:")
+        for record_file in files
     }
 
     assert workflow._is_same_record(
@@ -192,7 +181,7 @@ def test_is_not_same_record_when_content_differs(
     file_to_upload = tmp_path / "config.json"
     file_to_upload.write_text("pipeline config")
     workflow.zenodo_api.get_record_files.return_value = {
-        "entries": [{"key": file_to_upload.name, "checksum": "md5:wrong"}],
+        file_to_upload.name: "md5:wrong"
     }
 
     assert not workflow._is_same_record(
@@ -213,10 +202,7 @@ def test_is_not_same_record_when_filename_set_differs(
     file_to_upload = tmp_path / "config.json"
     file_to_upload.write_text("pipeline config")
     workflow.zenodo_api.get_record_files.return_value = {
-        "entries": [
-            {"key": filename, "checksum": _get_file_md5(file_to_upload)}
-            for filename in remote_filenames
-        ]
+        filename: _get_file_md5(file_to_upload) for filename in remote_filenames
     }
 
     assert not workflow._is_same_record(
