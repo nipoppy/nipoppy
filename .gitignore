@@ -39,7 +39,6 @@ docs/source/reference/schemas/*.json
 # Python virtual environment
 env/
 venv/
-.venv/
 .venv
 nipoppy_env/
 
