@@ -891,7 +891,7 @@ def test_request_community_inclusion(
     [
         (
             "The record is already included in this community.",
-            logging.INFO,
+            logging.WARNING,
             "zenodo.123456 is already in community nipoppy-community-id",
         ),
         (

@@ -84,8 +84,11 @@ class PipelineUploadWorkflow(BaseWorkflow):
 
         return metadata
 
-    def _is_same_record(self, record_id: str, input_dir: Path) -> bool:
+    def _is_same_record(self, record_id: str | None, input_dir: Path) -> bool:
         """Check whether local files match a published Zenodo record."""
+        if record_id is None:
+            return False
+
         local_files = {
             file.name: _get_file_md5(file) for file in sorted(input_dir.iterdir())
         }
@@ -108,7 +111,6 @@ class PipelineUploadWorkflow(BaseWorkflow):
             "The Nipoppy pipeline will be uploaded/updated on Zenodo"
             f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
             " this is a [bold]permanent[/] action, are you sure?",
-            default=False,
         ):
             raise TerminatedByUserError("Zenodo upload cancelled by user.")
 
@@ -118,7 +120,6 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 record_id=record_id,
                 community_id=self.zenodo_api.get_community_id("nipoppy"),
             )
-            logger.success("Nipoppy community inclusion request submitted.")
         else:
             logger.info(
                 "Use the --community flag to request inclusion in the Nipoppy Zenodo "
@@ -196,6 +197,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
                 default_preview_filename=DatasetLayout.fname_pipeline_config,
             )
             logger.success(f"Pipeline successfully uploaded at {doi}")
+            self.record_id = doi.split("/")[-1]  # extract record ID from DOI URL
 
         self._request_community_inclusion(self.record_id)
 
@@ -233,14 +235,10 @@ def _is_same_pipeline(
         True if the pipelines are the same, False otherwise.
     """
     keywords = zenodo_metadata.get("keywords", [])
-    pipeline_type = pipeline_config.PIPELINE_TYPE.value
-    pipeline_name = pipeline_config.NAME
-    pipeline_version = pipeline_config.VERSION
-
     return all(
         [
-            keywords.count(f"pipeline_type:{pipeline_type}"),
-            keywords.count(f"pipeline_name:{pipeline_name.lower()}"),
-            keywords.count(f"pipeline_version:{pipeline_version}"),
+            keywords.count(f"pipeline_type:{pipeline_config.PIPELINE_TYPE.value}"),
+            keywords.count(f"pipeline_name:{pipeline_config.NAME.lower()}"),
+            keywords.count(f"pipeline_version:{pipeline_config.VERSION}"),
         ]
     )

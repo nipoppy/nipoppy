@@ -175,6 +175,15 @@ def test_is_same_record(tmp_path: Path, workflow: PipelineUploadWorkflow):
     workflow.zenodo_api.get_record_files.assert_called_once_with(record_id)
 
 
+def test_is_not_same_when_record_is_null(
+    tmp_path: Path, workflow: PipelineUploadWorkflow
+):
+    assert not workflow._is_same_record(
+        record_id=None,
+        input_dir=tmp_path,
+    )
+
+
 def test_is_not_same_record_when_content_differs(
     tmp_path: Path, workflow: PipelineUploadWorkflow
 ):

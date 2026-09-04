@@ -424,7 +424,7 @@ class ZenodoAPI:
         errors = response_json.get("errors", [])
         error_messages = {error.get("message") for error in errors}
         if "The record is already included in this community." in error_messages:
-            self.logger.info(
+            self.logger.warning(
                 f"zenodo.{record_id} is already in community {community_id}"
             )
             return
@@ -443,6 +443,11 @@ class ZenodoAPI:
                 f"Failed to request inclusion of zenodo.{record_id} in community "
                 f"{community_id}: {response_json}"
             )
+
+        self.logger.info(
+            f"Successfully requested inclusion of zenodo.{record_id} in community "
+            f"{community_id}"
+        )
 
     def get_latest_version_id(self, record_id: str) -> str:
         """Get the ID of the latest version of a Zenodo record.
