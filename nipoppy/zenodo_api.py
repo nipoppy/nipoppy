@@ -122,7 +122,7 @@ class ZenodoAPI:
 
     def _update_metadata(self, record_id: str, metadata: dict):
         response = self.client.put(
-            f"{self.api_endpoint}/records/{record_id}/draft",
+            f"/records/{record_id}/draft",
             json=metadata,
         )
         if response.status_code != 200:
@@ -132,7 +132,7 @@ class ZenodoAPI:
 
     def _create_new_version(self, record_id: str) -> tuple[str, str]:
         response = self.client.post(
-            f"{self.api_endpoint}/records/{record_id}/versions",
+            f"/records/{record_id}/versions",
         )
         if response.status_code != 201:
             raise ZenodoAPIError(
@@ -145,7 +145,7 @@ class ZenodoAPI:
 
     def _create_draft(self) -> tuple[str, str]:
         response = self.client.post(
-            f"{self.api_endpoint}/records",
+            "/records",
             headers={"Content-Type": "application/json"},
         )
         if response.status_code != 201:
@@ -456,7 +456,7 @@ class ZenodoAPI:
         """
         record_id = self._process_record_id(record_id)
         response = self.client.get(
-            f"{self.api_endpoint}/records/{record_id}/versions/latest",
+            f"/records/{record_id}/versions/latest",
             follow_redirects=True,
             timeout=self.timeout,
         )

@@ -335,7 +335,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
             [
                 "pipeline",
                 "upload",
-                "mocked.zip",
+                "[mocked_dir]",
                 "--zenodo-id",
                 "zenodo.123456",
                 "--password-file",

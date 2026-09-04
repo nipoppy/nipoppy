@@ -177,7 +177,7 @@ def pipeline_validate(**params):
 @pipeline.command("upload")
 @click.argument(
     "pipeline_dir",
-    type=str,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
 @click.option(
     "--zenodo-id",
