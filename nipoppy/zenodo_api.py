@@ -266,7 +266,6 @@ class ZenodoAPI:
         metadata: dict,
         record_id: str | None = None,
         default_preview_filename: str | None = None,
-        community_id: str | None = None,
     ) -> str:
         """Upload a pipeline to Zenodo."""
         record_id = self._process_record_id(record_id)
@@ -319,15 +318,6 @@ class ZenodoAPI:
                 )
 
             raise ZenodoAPIError from e
-
-        if community_id is not None:
-            try:
-                self.request_community_inclusion(record_id, community_id)
-            except ZenodoAPIError as e:
-                raise ZenodoAPIError(
-                    f"Pipeline was published at {doi}, but its inclusion request "
-                    f"to community {community_id} failed: {e}"
-                ) from e
 
         return doi
 
@@ -417,7 +407,7 @@ class ZenodoAPI:
         return response.json()
 
     def get_community_id(self, community: str) -> str:
-        """Resolve a community slug or ID in the active Zenodo environment."""
+        """Resolve a community slug or ID to is uuid."""
         response = self.client.get(f"/communities/{community}")
         if response.status_code != 200:
             raise ZenodoAPIError(

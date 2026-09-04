@@ -5,8 +5,8 @@ from pathlib import Path
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
-from nipoppy.env import ZENODO_COMMUNITY_ID, StrOrPathLike
-from nipoppy.exceptions import TerminatedByUserError, WorkflowError
+from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import ExecutionError, TerminatedByUserError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
@@ -99,6 +99,39 @@ class PipelineUploadWorkflow(BaseWorkflow):
         }
         return local_files == remote_files
 
+    def _confirm_upload(self) -> None:
+        """Confirm upload with the user."""
+        if self.assume_yes:
+            logger.debug("Assuming yes to all prompts (--assume-yes flag).")
+            return
+
+        if not CONSOLE_STDOUT.is_interactive or not CONSOLE_STDOUT.is_terminal:
+            raise ExecutionError(
+                "Non-interactive terminal detected."
+                " Use the --assume-yes flag to bypass this prompt."
+            )
+
+        if not CONSOLE_STDOUT.confirm(
+            "The Nipoppy pipeline will be uploaded/updated on Zenodo"
+            f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
+            " this is a [bold]permanent[/] action, are you sure?",
+            default=False,
+        ):
+            raise TerminatedByUserError("Zenodo upload cancelled by user.")
+
+    def _request_community_inclusion(self, record_id: str):
+        if self.community:
+            self.zenodo_api.request_community_inclusion(
+                record_id=record_id,
+                community_id=self.zenodo_api.get_community_id("nipoppy"),
+            )
+            logger.success("Nipoppy community inclusion request submitted.")
+        else:
+            logger.info(
+                "Use the --community flag to request inclusion in the Nipoppy Zenodo "
+                "community."
+            )
+
     def run_main(self):
         """Run the main workflow."""
         pipeline_dir = Path(self.dpath_pipeline)
@@ -113,31 +146,29 @@ class PipelineUploadWorkflow(BaseWorkflow):
             )
             raise WorkflowError from e
 
-        latest_record_id = None
         if self.record_id:
-            self.record_id = self.record_id.removeprefix("zenodo.")
-            latest_record_id = self.zenodo_api.get_latest_version_id(self.record_id)
-            current_metadata = self.zenodo_api.get_record_metadata(latest_record_id)
+            # If a record ID is provided, get it's latest Zenodo version and metadata
+            self.record_id = self.zenodo_api.get_latest_version_id(self.record_id)
+            record_metadata = self.zenodo_api.get_record_metadata(self.record_id)
+
             if not self.force and not _is_same_pipeline(
-                pipeline_config, current_metadata
+                pipeline_config, record_metadata
             ):
                 raise WorkflowError(
                     "The pipeline metadata does not match the existing record "
-                    f"(zenodo.{self.record_id}). Aborting."
+                    f"({self.record_id}). Aborting."
                     "\nUse the --force flag to force the update."
                 )
         else:
-            pipeline_type = pipeline_config.PIPELINE_TYPE.value
-            pipeline_name = pipeline_config.NAME
-            pipeline_version = pipeline_config.VERSION
             records = self.zenodo_api.search_records(
                 "",
                 keywords=[
-                    f"pipeline_type:{pipeline_type}",
-                    f"pipeline_name:{pipeline_name}",
-                    f"pipeline_version:{pipeline_version}",
+                    f"pipeline_type:{pipeline_config.PIPELINE_TYPE.value}",
+                    f"pipeline_name:{pipeline_config.NAME}",
+                    f"pipeline_version:{pipeline_config.VERSION}",
                 ],
             )["hits"]
+
             if not self.force and len(records) > 0:
                 potential_duplicates = [
                     record["links"]["self_html"] for record in records
@@ -150,55 +181,30 @@ class PipelineUploadWorkflow(BaseWorkflow):
                     f"{', '.join(potential_duplicates)}",
                 )
 
-        community_id = (
-            self.zenodo_api.get_community_id(ZENODO_COMMUNITY_ID)
-            if self.community
-            else None
-        )
-
-        if (
-            latest_record_id is not None
-            and not self.force
-            and self._is_same_record(
-                record_id=latest_record_id,
-                input_dir=pipeline_dir,
-            )
-        ):
-            logger.success(
-                "Pipeline files are unchanged; skipping upload for "
-                f"zenodo.{latest_record_id}."
-            )
-            if community_id is not None:
-                self.zenodo_api.request_community_inclusion(
-                    latest_record_id, community_id
-                )
-                logger.success("Nipoppy community inclusion request submitted.")
-            return
-
-        # Confirm upload
-        if not self.assume_yes:
-            continue_ = CONSOLE_STDOUT.confirm(
-                "The Nipoppy pipeline will be uploaded/updated on Zenodo"
-                f"{' (sandbox)' if self.zenodo_api.sandbox else ''},"
-                " this is a [bold]permanent[/] action, are you sure?",
-            )
-            if not continue_:
-                logger.warning("Zenodo upload cancelled.")
-                raise TerminatedByUserError("User cancelled the upload.")
-
-        zenodo_metadata = pipeline_dir.joinpath("zenodo.json")
-        metadata = self._get_pipeline_metadata(zenodo_metadata, pipeline_config)
-
-        doi = self.zenodo_api.upload_record(
-            input_dir=pipeline_dir,
+        if not self.force and self._is_same_record(
             record_id=self.record_id,
-            metadata=metadata,
-            default_preview_filename=DatasetLayout.fname_pipeline_config,
-            community_id=community_id,
-        )
-        logger.success(f"Pipeline successfully uploaded at {doi}")
-        if community_id is not None:
-            logger.success("Nipoppy community inclusion request submitted.")
+            input_dir=pipeline_dir,
+        ):
+            logger.warning(
+                f"Pipeline files are unchanged; skipping upload for {self.record_id}."
+            )
+        else:
+            self._confirm_upload()
+
+            metadata = self._get_pipeline_metadata(
+                zenodo_metadata_file=pipeline_dir.joinpath("zenodo.json"),
+                pipeline_config=pipeline_config,
+            )
+
+            doi = self.zenodo_api.upload_record(
+                input_dir=pipeline_dir,
+                record_id=self.record_id,
+                metadata=metadata,
+                default_preview_filename=DatasetLayout.fname_pipeline_config,
+            )
+            logger.success(f"Pipeline successfully uploaded at {doi}")
+
+        self._request_community_inclusion(self.record_id)
 
     def run_cleanup(self):
         """Close resources used by the workflow."""

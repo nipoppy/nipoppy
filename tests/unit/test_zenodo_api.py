@@ -673,55 +673,17 @@ def test_upload_record_community_request(
     tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
 ):
     record_id = "654321"
-    community_id = "nipoppy-community-id"
     metadata = {"metadata": {"creators": [{}]}}
     mocker.patch.object(zenodo_api, "_check_authentication")
     mocker.patch.object(zenodo_api, "_create_draft", return_value=(record_id, "888888"))
     mocker.patch.object(zenodo_api, "_upload_files")
     mocker.patch.object(zenodo_api, "_update_metadata")
     mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
-    request_community_inclusion = mocker.patch.object(
-        zenodo_api, "request_community_inclusion"
-    )
 
     zenodo_api.upload_record(
         input_dir=tmp_path,
         metadata=metadata,
-        community_id=community_id,
     )
-
-    request_community_inclusion.assert_called_once_with(record_id, community_id)
-
-
-def test_upload_record_community_failure_does_not_revert(
-    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
-):
-    record_id = "654321"
-    doi = "fake_doi"
-    metadata = {"metadata": {"creators": [{}]}}
-    mocker.patch.object(zenodo_api, "_check_authentication")
-    mocker.patch.object(zenodo_api, "_create_draft", return_value=(record_id, "888888"))
-    mocker.patch.object(zenodo_api, "_upload_files")
-    mocker.patch.object(zenodo_api, "_update_metadata")
-    mocker.patch.object(zenodo_api, "_publish", return_value=doi)
-    mocker.patch.object(
-        zenodo_api,
-        "request_community_inclusion",
-        side_effect=ZenodoAPIError("Request failed"),
-    )
-    delete = mocker.patch.object(zenodo_api.client, "delete")
-
-    with pytest.raises(
-        ZenodoAPIError,
-        match=f"Pipeline was published at {doi}, but its inclusion request",
-    ):
-        zenodo_api.upload_record(
-            input_dir=tmp_path,
-            metadata=metadata,
-            community_id="nipoppy-community-id",
-        )
-
-    delete.assert_not_called()
 
 
 def test_upload_record_dir_not_found(zenodo_api: ZenodoAPI):
@@ -760,9 +722,6 @@ def test_upload_record_delete_draft(
     mocker.patch.object(
         zenodo_api, "_publish", side_effect=ZenodoAPIError("Publish failed")
     )
-    request_community_inclusion = mocker.patch.object(
-        zenodo_api, "request_community_inclusion"
-    )
     httpx_mock.add_response(
         url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
         method="DELETE",
@@ -771,15 +730,10 @@ def test_upload_record_delete_draft(
     )
 
     with pytest.raises(ZenodoAPIError):
-        zenodo_api.upload_record(
-            input_dir=tmp_path,
-            metadata={"metadata": {}},
-            community_id="nipoppy-community-id",
-        )
+        zenodo_api.upload_record(input_dir=tmp_path, metadata={"metadata": {}})
 
     assert "Reverting record creation" in caplog.text
     assert expected_log_message in caplog.text
-    request_community_inclusion.assert_not_called()
 
 
 @pytest.mark.parametrize(
