@@ -102,18 +102,7 @@ class ZenodoAPI:
         record_id = self._process_record_id(record_id)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        response = self.client.get(f"/records/{record_id}/files")
-        if response.status_code != 200:
-            raise ZenodoAPIError(
-                f"Failed to get files for zenodo.{record_id}: {response.json()}"
-            )
-
-        # Exclude "md5:" prefix
-        files = {
-            entry["key"]: entry["checksum"].removeprefix("md5:")
-            for entry in response.json()["entries"]
-        }
-        for file, checksum in files.items():
+        for file, checksum in self._get_files_checksum(record_id).items():
             response = self.client.get(f"/records/{record_id}/files/{file}/content")
             if response.status_code != 200:
                 raise ZenodoAPIError(
@@ -133,7 +122,7 @@ class ZenodoAPI:
 
     def _update_metadata(self, record_id: str, metadata: dict):
         response = self.client.put(
-            f"{self.api_endpoint}/records/{record_id}/draft",
+            f"/records/{record_id}/draft",
             json=metadata,
         )
         if response.status_code != 200:
@@ -143,7 +132,7 @@ class ZenodoAPI:
 
     def _create_new_version(self, record_id: str) -> tuple[str, str]:
         response = self.client.post(
-            f"{self.api_endpoint}/records/{record_id}/versions",
+            f"/records/{record_id}/versions",
         )
         if response.status_code != 201:
             raise ZenodoAPIError(
@@ -152,17 +141,17 @@ class ZenodoAPI:
             )
         new_record_id = response.json()["id"]
         owner_id = response.json()["owners"][0]["id"]
-        return new_record_id, owner_id
+        return str(new_record_id), str(owner_id)
 
     def _create_draft(self) -> tuple[str, str]:
         response = self.client.post(
-            f"{self.api_endpoint}/records",
+            "/records",
             headers={"Content-Type": "application/json"},
         )
         if response.status_code != 201:
             raise ZenodoAPIError(f"Failed to create a draft record: {response.json()}")
 
-        return response.json()["id"], response.json()["owners"][0]["id"]
+        return str(response.json()["id"]), str(response.json()["owners"][0]["id"])
 
     def _add_creators_to_metadata(self, owner_id: str, metadata: dict) -> dict:
         # get user profile info
@@ -305,7 +294,6 @@ class ZenodoAPI:
 
             self._update_metadata(record_id, metadata)
             doi = self._publish(record_id)
-            return doi
 
         except Exception as e:
             # Delete the draft if an error occurs
@@ -325,6 +313,8 @@ class ZenodoAPI:
                 )
 
             raise ZenodoAPIError from e
+
+        return doi
 
     def search_records(
         self,
@@ -380,16 +370,76 @@ class ZenodoAPI:
 
     def get_record_metadata(self, record_id: str):
         """Get the metadata of a Zenodo record."""
+        processed_record_id = self._process_record_id(record_id)
+        try:
+            return self._get_record(processed_record_id)["metadata"]
+        except ZenodoAPIError as e:
+            raise ZenodoAPIError(
+                f"Failed to get metadata for zenodo.{processed_record_id}: {e}"
+            ) from e
+
+    def _get_record(self, record_id: str) -> dict:
+        """Get a complete Zenodo record."""
         record_id = self._process_record_id(record_id)
         response = self.client.get(
-            f"{self.api_endpoint}/records/{record_id}",
+            f"/records/{record_id}",
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
-                f"Failed to get metadata for zenodo.{record_id}: {response.json()}"
+                f"Failed to get record for zenodo.{record_id}: {response.json()}"
             )
 
-        return response.json()["metadata"]
+        return response.json()
+
+    def _get_files_checksum(self, record_id: str) -> dict[str, str]:
+        """Get the MD5 checksums of the files in a Zenodo record."""
+        files = self._get_record(record_id)["files"]
+        return {file["key"]: file["checksum"].removeprefix("md5:") for file in files}
+
+    def _get_community_id(self, community: str) -> str:
+        """Resolve a community slug or ID to is uuid."""
+        response = self.client.get(f"/communities/{community}")
+        if response.status_code != 200:
+            raise ZenodoAPIError(
+                f"Failed to get Zenodo community {community}: {response.json()}"
+            )
+        return str(response.json()["id"])
+
+    def request_community_inclusion(self, record_id: str, community_id: str) -> None:
+        """Request inclusion of a published record in a Zenodo community."""
+        record_id = self._process_record_id(record_id)
+        response = self.client.post(
+            f"/records/{record_id}/communities",
+            json={"communities": [{"id": community_id}]},
+        )
+        response_json = response.json()
+        errors = response_json.get("errors", [])
+        error_messages = {error.get("message") for error in errors}
+        if "The record is already included in this community." in error_messages:
+            self.logger.warning(
+                f"zenodo.{record_id} is already in community {community_id}"
+            )
+            return
+        if (
+            "There is already an open inclusion request for this community."
+            in error_messages
+        ):
+            self.logger.warning(
+                f"zenodo.{record_id} already has an open inclusion request for "
+                f"community {community_id}"
+            )
+            return
+
+        if response.status_code != 200 or not response_json.get("processed") or errors:
+            raise ZenodoAPIError(
+                f"Failed to request inclusion of zenodo.{record_id} in community "
+                f"{community_id}: {response_json}"
+            )
+
+        self.logger.info(
+            f"Successfully requested inclusion of zenodo.{record_id} in community "
+            f"{community_id}"
+        )
 
     def get_latest_version_id(self, record_id: str) -> str:
         """Get the ID of the latest version of a Zenodo record.
@@ -406,7 +456,7 @@ class ZenodoAPI:
         """
         record_id = self._process_record_id(record_id)
         response = self.client.get(
-            f"{self.api_endpoint}/records/{record_id}/versions/latest",
+            f"/records/{record_id}/versions/latest",
             follow_redirects=True,
             timeout=self.timeout,
         )

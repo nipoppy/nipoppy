@@ -1,17 +1,24 @@
 """Test for the PipelineUploadWorkflow class."""
 
 from contextlib import nullcontext
+from pathlib import Path
 
 import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum
-from nipoppy.exceptions import ReturnCode, TerminatedByUserError, WorkflowError
+from nipoppy.exceptions import (
+    ExecutionError,
+    ReturnCode,
+    TerminatedByUserError,
+    WorkflowError,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.workflows.pipeline_store.upload import (
     PipelineUploadWorkflow,
+    _get_file_md5,
     _is_same_pipeline,
 )
 from tests.conftest import TEST_PIPELINE
@@ -151,6 +158,68 @@ def test_is_same_pipeline(pipeline_config, zenodo_metadata, expected):
     assert _is_same_pipeline(pipeline_config, zenodo_metadata) == expected
 
 
+def test_is_same_record(tmp_path: Path, workflow: PipelineUploadWorkflow):
+    record_id = "123456"
+    files = [tmp_path / "config.json", tmp_path / "zenodo.json"]
+    for file_to_upload in files:
+        file_to_upload.write_text(file_to_upload.name)
+    workflow.zenodo_api._get_files_checksum.return_value = {
+        record_file.name: _get_file_md5(record_file).removeprefix("md5:")
+        for record_file in files
+    }
+
+    assert workflow._is_same_record(
+        record_id=record_id,
+        input_dir=tmp_path,
+    )
+    workflow.zenodo_api._get_files_checksum.assert_called_once_with(record_id)
+
+
+def test_is_not_same_when_record_is_null(
+    tmp_path: Path, workflow: PipelineUploadWorkflow
+):
+    assert not workflow._is_same_record(
+        record_id=None,
+        input_dir=tmp_path,
+    )
+
+
+def test_is_not_same_record_when_content_differs(
+    tmp_path: Path, workflow: PipelineUploadWorkflow
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    workflow.zenodo_api._get_files_checksum.return_value = {
+        file_to_upload.name: "md5:wrong"
+    }
+
+    assert not workflow._is_same_record(
+        record_id="123456",
+        input_dir=tmp_path,
+    )
+
+
+@pytest.mark.parametrize(
+    "remote_filenames",
+    [[], ["config.json", "extra.json"], ["renamed.json"]],
+)
+def test_is_not_same_record_when_filename_set_differs(
+    remote_filenames: list[str],
+    tmp_path: Path,
+    workflow: PipelineUploadWorkflow,
+):
+    file_to_upload = tmp_path / "config.json"
+    file_to_upload.write_text("pipeline config")
+    workflow.zenodo_api._get_files_checksum.return_value = {
+        filename: _get_file_md5(file_to_upload) for filename in remote_filenames
+    }
+
+    assert not workflow._is_same_record(
+        record_id="123456",
+        input_dir=tmp_path,
+    )
+
+
 @pytest.mark.parametrize("force", [True, False])
 def test_upload_same_pipeline(
     workflow: PipelineUploadWorkflow,
@@ -184,21 +253,155 @@ def test_upload_same_pipeline(
 
 
 @pytest.mark.no_xdist
-def test_confirm_upload_no(
+def test_unchanged_pipeline_skips_upload(
     workflow: PipelineUploadWorkflow,
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,
 ):
-    mocker.patch(
-        "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT.confirm",
-        return_value=False,
+    latest_record_id = "7654321"
+    workflow.record_id = "1234567"
+    workflow.zenodo_api.get_latest_version_id.return_value = latest_record_id
+    workflow.zenodo_api.get_record_metadata.return_value = {
+        "keywords": [
+            "Nipoppy",
+            "pipeline_type:processing",
+            "pipeline_name:fmriprep",
+            "pipeline_version:24.1.1",
+            "schema_version:1",
+        ]
+    }
+    is_same_record = mocker.patch.object(
+        workflow,
+        "_is_same_record",
+        return_value=True,
     )
-    workflow.assume_yes = False
+    _request_community_inclusion = mocker.patch.object(
+        workflow, "_request_community_inclusion"
+    )
 
-    with pytest.raises(TerminatedByUserError):
-        workflow.run_main()
+    workflow.run_main()
 
-    assert "Zenodo upload cancelled." in caplog.text
+    workflow.zenodo_api.upload_record.assert_not_called()
+    is_same_record.assert_called_once_with(
+        record_id=latest_record_id,
+        input_dir=TEST_PIPELINE,
+    )
+    assert "files are unchanged; skipping upload" in caplog.text
+    _request_community_inclusion.assert_called_once()
+
+
+def test_upload_to_nipoppy_community(
+    workflow: PipelineUploadWorkflow,
+    mocker: pytest_mock.MockerFixture,
+):
+    metadata = {"metadata": {}}
+    community_id = "nipoppy-community-id"
+    mocker.patch.object(workflow, "_get_pipeline_metadata", return_value=metadata)
+    mocker.patch.object(workflow, "_confirm_upload", return_value=True)
+    mocker.patch(
+        "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
+    )
+    workflow.community = True
+    workflow.zenodo_api._get_community_id.return_value = community_id
+
+    workflow.run_main()
+
+    workflow.zenodo_api._get_community_id.assert_called_once_with("nipoppy")
+    workflow.zenodo_api.upload_record.assert_called_once_with(
+        input_dir=TEST_PIPELINE,
+        record_id=None,
+        metadata=metadata,
+        default_preview_filename=DatasetLayout.fname_pipeline_config,
+    )
+
+
+def test_force_bypasses_unchanged_check(
+    workflow: PipelineUploadWorkflow, mocker: pytest_mock.MockerFixture
+):
+    workflow.record_id = "1234567"
+    workflow.assume_yes = True
+    workflow.force = True
+    workflow.zenodo_api.get_latest_version_id.return_value = "7654321"
+    workflow.zenodo_api.get_record_metadata.return_value = {"keywords": []}
+    is_same_record = mocker.patch.object(workflow, "_is_same_record")
+
+    workflow.run_main()
+
+    is_same_record.assert_not_called()
+    workflow.zenodo_api.upload_record.assert_called_once()
+
+
+class TestConfirmUpload:
+    @pytest.mark.no_xdist
+    def test_assume_yes(
+        self,
+        workflow: PipelineUploadWorkflow,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        """Test that the --assume-yes flag bypasses the confirmation prompt."""
+        workflow.assume_yes = True
+
+        with caplog.at_level("DEBUG"):
+            workflow._confirm_upload()
+
+        assert "Assuming yes to all prompts (--assume-yes flag)." in caplog.text
+
+    @pytest.mark.parametrize(
+        "is_interactive, is_terminal",
+        [(True, False), (False, True)],
+    )
+    def test_no_tty(
+        self,
+        is_interactive: bool,
+        is_terminal: bool,
+        workflow: PipelineUploadWorkflow,
+        mocker: pytest_mock.MockerFixture,
+    ):
+        """Test that a non-interactive terminal raises an ExecutionError."""
+        console = mocker.patch(
+            "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT",
+        )
+        console.is_interactive = is_interactive
+        console.is_terminal = is_terminal
+
+        with pytest.raises(ExecutionError, match="Non-interactive terminal detected."):
+            workflow._confirm_upload()
+
+    @pytest.mark.no_xdist
+    def test_confirm(
+        self,
+        workflow: PipelineUploadWorkflow,
+        caplog: pytest.LogCaptureFixture,
+        mocker: pytest_mock.MockerFixture,
+    ):
+        """Test that accepting the confirmation prompt allows the upload to proceed."""
+        console = mocker.patch(
+            "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT",
+        )
+        console.confirm.return_value = True
+        console.is_interactive = True
+        console.is_terminal = True
+
+        workflow._confirm_upload()
+        assert "" == caplog.text  # No log or error raised
+
+    def test_decline(
+        self,
+        workflow: PipelineUploadWorkflow,
+        mocker: pytest_mock.MockerFixture,
+    ):
+        """Test that declining the confirmation prompt raises TerminatedByUserError."""
+        console = mocker.patch(
+            "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT",
+        )
+        console.confirm.return_value = False
+        console.is_interactive = True
+        console.is_terminal = True
+
+        with pytest.raises(
+            TerminatedByUserError, match="Zenodo upload cancelled by user."
+        ):
+            workflow._confirm_upload()
 
 
 @pytest.mark.parametrize(

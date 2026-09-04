@@ -33,10 +33,10 @@ def test_download_record_files(
     content = "abc"
 
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         json={
-            "entries": [
+            "files": [
                 {
                     "key": filename,
                     "checksum": "900150983cd24fb0d6963f7d28e17f72",
@@ -61,14 +61,14 @@ def test_download_record_files_invalid_record_id(
 ):
     record_id = "123456"
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         status_code=404,
         json={"message": "The persistent identifier does not exist."},
     )
 
     with pytest.raises(
-        ZenodoAPIError, match=f"Failed to get files for zenodo.{record_id}"
+        ZenodoAPIError, match=f"Failed to get record for zenodo.{record_id}"
     ):
         zenodo_api.download_record_files(output_dir=tmp_path, record_id=record_id)
 
@@ -80,10 +80,10 @@ def test_download_record_files_download_failure(
     filename = "abc.txt"
 
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         json={
-            "entries": [
+            "files": [
                 {
                     "key": filename,
                     "checksum": "900150983cd24fb0d6963f7d28e17f72",
@@ -114,10 +114,10 @@ def test_download_record_files_checksum_mismatch(
     content = "abc"
 
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         json={
-            "entries": [
+            "files": [
                 {
                     "key": filename,
                     "checksum": "wrong_checksum",
@@ -669,6 +669,23 @@ def test_upload_record_default_preview(
     mocked_add_default_preview_to_metadata.assert_called_once_with(metadata, fnames[-1])
 
 
+def test_upload_record_community_request(
+    tmp_path: Path, zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture
+):
+    record_id = "654321"
+    metadata = {"metadata": {"creators": [{}]}}
+    mocker.patch.object(zenodo_api, "_check_authentication")
+    mocker.patch.object(zenodo_api, "_create_draft", return_value=(record_id, "888888"))
+    mocker.patch.object(zenodo_api, "_upload_files")
+    mocker.patch.object(zenodo_api, "_update_metadata")
+    mocker.patch.object(zenodo_api, "_publish", return_value="fake_doi")
+
+    zenodo_api.upload_record(
+        input_dir=tmp_path,
+        metadata=metadata,
+    )
+
+
 def test_upload_record_dir_not_found(zenodo_api: ZenodoAPI):
     with pytest.raises(FileNotFoundError):
         zenodo_api.upload_record(input_dir=Path("fake_path"), metadata={})
@@ -713,10 +730,7 @@ def test_upload_record_delete_draft(
     )
 
     with pytest.raises(ZenodoAPIError):
-        zenodo_api.upload_record(
-            input_dir=tmp_path,
-            metadata={"metadata": {}},
-        )
+        zenodo_api.upload_record(input_dir=tmp_path, metadata={"metadata": {}})
 
     assert "Reverting record creation" in caplog.text
     assert expected_log_message in caplog.text
@@ -831,6 +845,120 @@ def test_get_record_metadata_fails(
         zenodo_api.get_record_metadata(record_id=record_id)
 
 
+def test_get_community_id(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock):
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/communities/nipoppy",
+        method="GET",
+        json={"id": community_id},
+    )
+
+    assert zenodo_api._get_community_id("nipoppy") == community_id
+
+
+def test_get_community_id_fails(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/communities/nipoppy",
+        method="GET",
+        status_code=404,
+        json={"message": "Not found"},
+    )
+
+    with pytest.raises(ZenodoAPIError, match="Failed to get Zenodo community nipoppy"):
+        zenodo_api._get_community_id("nipoppy")
+
+
+def test_request_community_inclusion(
+    zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXMock
+):
+    record_id = "123456"
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/communities",
+        method="POST",
+        match_json={"communities": [{"id": community_id}]},
+        status_code=200,
+        json={"processed": [{"community_id": community_id}]},
+    )
+
+    zenodo_api.request_community_inclusion(record_id, community_id)
+
+
+@pytest.mark.parametrize(
+    ("message", "log_level", "expected_log"),
+    [
+        (
+            "The record is already included in this community.",
+            logging.WARNING,
+            "zenodo.123456 is already in community nipoppy-community-id",
+        ),
+        (
+            "There is already an open inclusion request for this community.",
+            logging.WARNING,
+            "zenodo.123456 already has an open inclusion request for "
+            "community nipoppy-community-id",
+        ),
+    ],
+)
+@pytest.mark.no_xdist
+def test_request_community_inclusion_existing_state(
+    message: str,
+    log_level: str,
+    expected_log: str,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+    caplog: pytest.LogCaptureFixture,
+):
+    record_id = "123456"
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/communities",
+        method="POST",
+        match_json={"communities": [{"id": community_id}]},
+        status_code=400,
+        json={"errors": [{"message": message}]},
+    )
+
+    assert zenodo_api.request_community_inclusion(record_id, community_id) is None
+    assert expected_log in caplog.text
+
+    assert any(
+        [
+            (record.levelno == log_level and expected_log in record.message)
+            for record in caplog.records
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "status_code,response_json",
+    [
+        (400, {"message": "Invalid request"}),
+        (200, {"errors": [{"message": "Request already exists"}]}),
+        (200, {"processed": []}),
+    ],
+)
+def test_request_community_inclusion_fails(
+    status_code: int,
+    response_json: dict,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+):
+    record_id = "123456"
+    community_id = "nipoppy-community-id"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/communities",
+        method="POST",
+        status_code=status_code,
+        json=response_json,
+    )
+
+    with pytest.raises(ZenodoAPIError, match="Failed to request inclusion"):
+        zenodo_api.request_community_inclusion(record_id, community_id)
+
+
 def test_close(zenodo_api: ZenodoAPI):
     """Test that close() shuts down the underlying HTTP client."""
     zenodo_api.close()
@@ -889,3 +1017,45 @@ def test_get_latest_version_id_invalid(
         match=f"Failed to get latest version for zenodo.{record_id}:",
     ):
         zenodo_api.get_latest_version_id(record_id)
+
+
+@pytest.mark.parametrize(
+    "record_id, cleaned_record_id",
+    [
+        ("123456", "123456"),
+        ("zenodo.123456", "123456"),
+    ],
+)
+def test_get_record(
+    record_id: str,
+    cleaned_record_id: str,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+):
+    record_data = {"id": record_id, "metadata": {"title": "Test Record"}}
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{cleaned_record_id}",
+        method="GET",
+        json=record_data,
+    )
+
+    assert zenodo_api._get_record(record_id) == record_data
+
+
+def test_get_files_checksum(zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture):
+    mocker.patch.object(
+        zenodo_api,
+        "_get_record",
+        return_value={
+            "files": [
+                {"key": "file1.txt", "checksum": "md5:abc123"},
+                {"key": "file2.txt", "checksum": "md5:def456"},
+            ]
+        },
+    )
+    expected_checksum = {
+        "file1.txt": "abc123",
+        "file2.txt": "def456",
+    }
+    assert zenodo_api._get_files_checksum(record_id="123456") == expected_checksum
