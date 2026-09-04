@@ -1019,6 +1019,30 @@ def test_get_latest_version_id_invalid(
         zenodo_api.get_latest_version_id(record_id)
 
 
+@pytest.mark.parametrize(
+    "record_id, cleaned_record_id",
+    [
+        ("123456", "123456"),
+        ("zenodo.123456", "123456"),
+    ],
+)
+def test_get_record(
+    record_id: str,
+    cleaned_record_id: str,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+):
+    record_data = {"id": record_id, "metadata": {"title": "Test Record"}}
+
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{cleaned_record_id}",
+        method="GET",
+        json=record_data,
+    )
+
+    assert zenodo_api._get_record(record_id) == record_data
+
+
 def test_get_files_checksum(zenodo_api: ZenodoAPI, mocker: pytest_mock.MockerFixture):
     mocker.patch.object(
         zenodo_api,

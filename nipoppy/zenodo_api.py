@@ -382,7 +382,7 @@ class ZenodoAPI:
         """Get a complete Zenodo record."""
         record_id = self._process_record_id(record_id)
         response = self.client.get(
-            f"{self.api_endpoint}/records/{record_id}",
+            f"/records/{record_id}",
         )
         if response.status_code != 200:
             raise ZenodoAPIError(
