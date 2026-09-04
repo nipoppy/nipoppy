@@ -12,6 +12,7 @@ from ..conftest import (
 )
 
 ZENODO_SANDBOX = True
+SANDBOX_COMMUNITY_ID = "6bea0505-4b7e-4340-93a4-8275e747748e"
 DEFAULT_PREVIEW = "config.json"
 
 
@@ -193,3 +194,33 @@ def test_get_latest_version_id_invalid(zenodo_api: ZenodoAPI):
         ),
     ):
         zenodo_api.get_latest_version_id(record_id)
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    not os.environ.get("ZENODO_TOKEN"),
+    reason="Requires Zenodo token",
+)
+def test_request_community_inclusion(zenodo_api: ZenodoAPI, metadata: dict):
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+    doi = zenodo_api.upload_record(
+        input_dir=TEST_PIPELINE,
+        metadata=metadata,
+        default_preview_filename=DEFAULT_PREVIEW,
+    )
+
+    new_record_id = doi.split("/")[-1].removeprefix("zenodo.")
+    zenodo_api.request_community_inclusion(
+        new_record_id, community_id=zenodo_api._get_community_id("nipoppy")
+    )
+    # Verify record opened a community request for inclusion in the Nipoppy community
+    response = httpx.get(
+        f"{zenodo_api.api_endpoint}/records/{new_record_id}/requests",
+        headers=zenodo_api.client.headers,
+    )
+    response.raise_for_status()
+    assert response.json()["hits"]["total"] == 1
+    assert response.json()["hits"]["hits"][0]["type"] == "community-inclusion"
+    assert response.json()["hits"]["hits"][0]["receiver"] == {
+        "community": SANDBOX_COMMUNITY_ID
+    }
