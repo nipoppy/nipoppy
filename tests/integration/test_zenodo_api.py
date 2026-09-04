@@ -75,7 +75,7 @@ def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
     with pytest.raises(
         ZenodoAPIError,
         match=(
-            f"Failed to get files for zenodo.{record_id}: "
+            f"Failed to get record for zenodo.{record_id}: "
             "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
         ),
     ):

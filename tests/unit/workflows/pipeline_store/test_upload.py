@@ -163,7 +163,7 @@ def test_is_same_record(tmp_path: Path, workflow: PipelineUploadWorkflow):
     files = [tmp_path / "config.json", tmp_path / "zenodo.json"]
     for file_to_upload in files:
         file_to_upload.write_text(file_to_upload.name)
-    workflow.zenodo_api.get_record_files.return_value = {
+    workflow.zenodo_api._get_files_checksum.return_value = {
         record_file.name: _get_file_md5(record_file).removeprefix("md5:")
         for record_file in files
     }
@@ -172,7 +172,7 @@ def test_is_same_record(tmp_path: Path, workflow: PipelineUploadWorkflow):
         record_id=record_id,
         input_dir=tmp_path,
     )
-    workflow.zenodo_api.get_record_files.assert_called_once_with(record_id)
+    workflow.zenodo_api._get_files_checksum.assert_called_once_with(record_id)
 
 
 def test_is_not_same_when_record_is_null(
@@ -189,7 +189,7 @@ def test_is_not_same_record_when_content_differs(
 ):
     file_to_upload = tmp_path / "config.json"
     file_to_upload.write_text("pipeline config")
-    workflow.zenodo_api.get_record_files.return_value = {
+    workflow.zenodo_api._get_files_checksum.return_value = {
         file_to_upload.name: "md5:wrong"
     }
 
@@ -210,7 +210,7 @@ def test_is_not_same_record_when_filename_set_differs(
 ):
     file_to_upload = tmp_path / "config.json"
     file_to_upload.write_text("pipeline config")
-    workflow.zenodo_api.get_record_files.return_value = {
+    workflow.zenodo_api._get_files_checksum.return_value = {
         filename: _get_file_md5(file_to_upload) for filename in remote_filenames
     }
 
@@ -302,11 +302,11 @@ def test_upload_to_nipoppy_community(
         "nipoppy.workflows.pipeline_store.upload.check_pipeline_bundle",
     )
     workflow.community = True
-    workflow.zenodo_api.get_community_id.return_value = community_id
+    workflow.zenodo_api._get_community_id.return_value = community_id
 
     workflow.run_main()
 
-    workflow.zenodo_api.get_community_id.assert_called_once_with("nipoppy")
+    workflow.zenodo_api._get_community_id.assert_called_once_with("nipoppy")
     workflow.zenodo_api.upload_record.assert_called_once_with(
         input_dir=TEST_PIPELINE,
         record_id=None,

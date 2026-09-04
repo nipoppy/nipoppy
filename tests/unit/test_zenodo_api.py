@@ -33,10 +33,10 @@ def test_download_record_files(
     content = "abc"
 
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         json={
-            "entries": [
+            "files": [
                 {
                     "key": filename,
                     "checksum": "900150983cd24fb0d6963f7d28e17f72",
@@ -61,14 +61,14 @@ def test_download_record_files_invalid_record_id(
 ):
     record_id = "123456"
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         status_code=404,
         json={"message": "The persistent identifier does not exist."},
     )
 
     with pytest.raises(
-        ZenodoAPIError, match=f"Failed to get files for zenodo.{record_id}"
+        ZenodoAPIError, match=f"Failed to get record for zenodo.{record_id}"
     ):
         zenodo_api.download_record_files(output_dir=tmp_path, record_id=record_id)
 
@@ -80,10 +80,10 @@ def test_download_record_files_download_failure(
     filename = "abc.txt"
 
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         json={
-            "entries": [
+            "files": [
                 {
                     "key": filename,
                     "checksum": "900150983cd24fb0d6963f7d28e17f72",
@@ -114,10 +114,10 @@ def test_download_record_files_checksum_mismatch(
     content = "abc"
 
     httpx_mock.add_response(
-        url=f"{zenodo_api.api_endpoint}/records/{record_id}/files",
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}",
         method="GET",
         json={
-            "entries": [
+            "files": [
                 {
                     "key": filename,
                     "checksum": "wrong_checksum",
@@ -853,7 +853,7 @@ def test_get_community_id(zenodo_api: ZenodoAPI, httpx_mock: pytest_httpx.HTTPXM
         json={"id": community_id},
     )
 
-    assert zenodo_api.get_community_id("nipoppy") == community_id
+    assert zenodo_api._get_community_id("nipoppy") == community_id
 
 
 def test_get_community_id_fails(
@@ -867,7 +867,7 @@ def test_get_community_id_fails(
     )
 
     with pytest.raises(ZenodoAPIError, match="Failed to get Zenodo community nipoppy"):
-        zenodo_api.get_community_id("nipoppy")
+        zenodo_api._get_community_id("nipoppy")
 
 
 def test_request_community_inclusion(

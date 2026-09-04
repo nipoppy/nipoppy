@@ -92,7 +92,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         local_files = {
             file.name: _get_file_md5(file) for file in sorted(input_dir.iterdir())
         }
-        remote_files = self.zenodo_api.get_record_files(record_id)
+        remote_files = self.zenodo_api._get_files_checksum(record_id)
         return local_files == remote_files
 
     def _confirm_upload(self) -> None:
@@ -118,7 +118,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
         if self.community:
             self.zenodo_api.request_community_inclusion(
                 record_id=record_id,
-                community_id=self.zenodo_api.get_community_id("nipoppy"),
+                community_id=self.zenodo_api._get_community_id("nipoppy"),
             )
         else:
             logger.info(
