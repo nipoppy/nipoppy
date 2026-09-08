@@ -4,7 +4,6 @@ Nipoppy is a lightweight framework for standardized organization and processing 
 
 <img alt="Nipoppy protocol" src="_static/img/nipoppy_protocol.jpg" width=850px>
 
-
 The framework includes three components:
 
 1. A **protocol** for data _wrangling_ to standardize generation of analysis-ready datasets
@@ -26,7 +25,6 @@ Instructions to set up Nipoppy package
 A user guide to get started
 :::
 ::::
-
 
 ```{toctree}
 ---
@@ -85,7 +83,6 @@ how_to_guides/parallelization/index
 how_to_guides/pipeline_create/index
 Configuring projects <how_to_guides/configuration/index>
 ```
-
 
 ```{toctree}
 ---

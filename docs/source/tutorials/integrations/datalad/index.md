@@ -14,7 +14,6 @@ $ datalad get -r .
 $ cd ..
 ```
 
-
 ## Step 1: Initialize the Nipoppy dataset
 
 Create a DataLad dataset first so we can record the provenance of all the Nipoppy commands from the beginning.
