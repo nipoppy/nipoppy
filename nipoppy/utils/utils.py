@@ -60,7 +60,7 @@ def get_pipeline_tag(
     session_id: str | None = None,
     sep="-",
 ):
-    """Join pipeline submission parameters, filtering out None values."""
+    """Generate a tag for a pipeline."""
     return sep.join(
         filter(
             None,
