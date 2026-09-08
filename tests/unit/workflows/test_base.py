@@ -65,6 +65,7 @@ def test_run_command(tmp_path: Path):
     assert fpath.exists()
 
 
+@pytest.mark.no_xdist
 def test_run_command_capture_output(tmp_path: Path):
     fpath = tmp_path / "test.txt"
     process, (stdout, stderr) = _run_command(["echo", fpath], capture_output=True)
