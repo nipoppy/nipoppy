@@ -106,8 +106,18 @@ def test_run_command_no_markup(caplog: pytest.LogCaptureFixture, tmp_path: Path)
 
 
 @pytest.mark.no_xdist
-def test_run_command_no_log_command(caplog: pytest.LogCaptureFixture):
+def test_run_command_log_command_false(caplog: pytest.LogCaptureFixture):
     message = "This should be printed"
     _run_command(["echo", message], log_command=False)
     assert LogPrefix.RUN not in caplog.text
+    assert LogPrefix.RUN_STDOUT in caplog.text
+    assert message in caplog.text
+
+
+@pytest.mark.no_xdist
+def test_run_command_log_output_false(caplog: pytest.LogCaptureFixture):
+    message = "This should be printed"
+    _run_command(["echo", message], log_output=False)
+    assert LogPrefix.RUN in caplog.text
+    assert LogPrefix.RUN_STDOUT not in caplog.text
     assert message in caplog.text
