@@ -335,7 +335,7 @@ def test_launch_boutiques_run(
     assert "[[NIPOPPY_BIDS_SESSION_ID]]" not in invocation_str
 
     assert mocked_run_command.call_count == 1
-    assert mocked_run_command.call_args[1].get("quiet") is True
+    assert mocked_run_command.call_args[1].get("log_command") is False
 
 
 @pytest.mark.parametrize(
