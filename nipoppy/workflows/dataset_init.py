@@ -317,7 +317,7 @@ class InitWorkflow(BaseDatasetWorkflow):
         manifest = Manifest(df).validate()
         if manifest.empty:
             raise WorkflowError(
-                "Cannot initialize an empty manifest: no subjects found in BIDS source "
+                "No subjects found in BIDS source "
                 f"directory {self.bids_source}. Expected {BIDS_SUBJECT_PREFIX}* "
                 "directories directly inside it."
             )
