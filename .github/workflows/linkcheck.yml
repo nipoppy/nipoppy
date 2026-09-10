@@ -16,12 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-
-    - uses: actions/setup-python@v7
+    - uses: astral-sh/setup-uv@v10.0.1
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-
-    - uses: astral-sh/setup-uv@v10.0.1
 
     - name: Install package with doc dependencies
       run: |
@@ -42,12 +39,9 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v7
-
-    - uses: actions/setup-python@v7
+    - uses: astral-sh/setup-uv@v10.0.1
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-
-    - uses: astral-sh/setup-uv@v10.0.1
 
     - name: Install package with test dependencies
       run: |
