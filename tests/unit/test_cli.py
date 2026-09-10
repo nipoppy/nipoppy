@@ -358,7 +358,7 @@ def test_cli_command(
     # Hack to inject the mocked directory into the command
     command = [arg.replace("[mocked_dir]", str(mocked_dir)) for arg in command]
 
-    if workflow:
+    if workflow is not None:
         mocker.patch(f"{workflow}.run")
     _assert_command_success(command)
 
