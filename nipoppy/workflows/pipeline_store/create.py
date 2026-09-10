@@ -63,7 +63,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         ).get_step_config()
 
         descriptor_path = target.joinpath(pipeline_step_config.DESCRIPTOR_FILE)
-        if source_descriptor:
+        if source_descriptor is not None:
             process, (stdout, stderr) = _run_command(
                 ["bosh", "validate", str(source_descriptor)],
                 check=False,

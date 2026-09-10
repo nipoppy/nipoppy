@@ -173,7 +173,7 @@ class Runner(BasePipelineWorkflow, ABC):
 
         # process the descriptor if it containers Nipoppy-specific placeholder
         # expressions (legacy behaviour)
-        if TEMPLATE_REPLACE_PATTERN.search(self.descriptor["command-line"]):
+        if TEMPLATE_REPLACE_PATTERN.search(self.descriptor["command-line"]) is not None:
             logger.info("Processing the JSON descriptor")
             descriptor_str = self.process_template_json(
                 self.descriptor,
@@ -320,7 +320,7 @@ class Runner(BasePipelineWorkflow, ABC):
         """
         if self.write_subcohort is not None:
             self._write_subcohort_to_file(participants_sessions)
-        elif self.hpc:
+        elif self.hpc is not None:
             self._submit_hpc_job(participants_sessions)
         else:
             self._run_locally(participants_sessions)
