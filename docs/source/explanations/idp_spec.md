@@ -9,6 +9,7 @@ This specification currently only covers tabular measures. It may be extended in
 ```
 
 The Nipoppy framework recommends that tabular IDP files follow this specification:
+
 1. The file format should be tab-separated (TSV)
 2. The file name should be informative and may contain the name and version of the extraction pipeline and/or the parent processing pipeline(s), e.g. `<parent_pipeline_name>-<parent_pipeline_version>-<measure>.tsv`
 3. Index columns:

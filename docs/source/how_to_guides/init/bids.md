@@ -21,9 +21,11 @@ If your raw BIDS data does not have session-level directories or `ses-` entities
 :::{admonition} Why should I have sessions even if my data is cross-sectional?
 :class: hint
 We believe that having explicitly labelled sessions constitutes best practices:
+
 1. It allows for more consistent organization across cross-sectional and longitudinal datasets
 2. It will facilitate the addition of new sessions if follow-up data collection is carried out or if the study design becomes longitudinal
 3. It may help link data between non-imaging and imaging visits
+
 :::
 
 If you decide to continue with session-less data, `nipoppy init` will still be able to generate a {term}`manifest file`, but it will use a dummy value (`unnamed`) for the `visit_id` and `session_id` columns.

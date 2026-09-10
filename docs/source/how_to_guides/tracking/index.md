@@ -41,6 +41,7 @@ See {doc}`../reorganize_sourcedata/index` for how to configure the location to c
 ```
 
 (how-to-track-processing)=
+
 ## Processing pipelines
 
 The [`nipoppy track-processing`](../../reference/cli_reference/track_processing.rst) command can be used to track the completion status of processing pipelines. The minimal command is:
@@ -92,6 +93,7 @@ Importantly, pipeline completion status is **not** inferred from exit codes, as 
 Instead, the status is determined by checking for the presence of expected output files.
 
 Here is example of tracker configuration file for the MRIQC pipeline, version 23.1.0:
+
 ```{literalinclude} ./mriqc-23.1.0-tracker_config.json
 ```
 
@@ -112,6 +114,7 @@ Available template strings are:
 ```
 
 Given a dataset with the following content in {{dpath_pipeline_output}}:
+
 ```{literalinclude} ./mriqc_outputs.txt
 ---
 class: no-copybutton
@@ -119,6 +122,7 @@ class: no-copybutton
 ```
 
 Running the tracker with the above configuration will result in the processing status file showing:
+
 ```{csv-table}
 ---
 file: ./mriqc_processing_status.tsv
@@ -132,6 +136,7 @@ If there is an existing processing status file, the rows relevant to the specifi
 ```
 
 The `pipeline_complete` column can have the following values:
+
 * `SUCCESS`: all specified paths have been found
 * `FAIL`: at least one of the paths has not been found
 

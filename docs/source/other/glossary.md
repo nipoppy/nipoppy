@@ -2,7 +2,7 @@
 
 ## Nipoppy terms
 
-```{glossary}
+````{glossary}
 Manifest file
     The [manifest file](../explanations/manifest) at {{fpath_manifest}} contains ground truth information about the participants and visits/sessions available for a dataset.
 
@@ -38,7 +38,7 @@ Session ID
 
 Visit ID
     An identifier for a data collection event, not restricted to imaging data.
-```
+````
 
 ## Neuroimaging/software terms
 

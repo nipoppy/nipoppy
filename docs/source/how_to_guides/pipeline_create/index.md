@@ -27,7 +27,6 @@ language: json
 
 </div>
 
-
 ````{admonition} Helpful commands
 ---
 
@@ -205,6 +204,7 @@ Assuming a participant ID `001` and session ID `A`, the template strings will re
 - `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: `sub-001`
 - `[[NIPOPPY_SESSION_ID]]`: `A`
 - `[[NIPOPPY_BIDS_SESSION_ID]]`: `ses-A`
+
 :::
 
 ## Upload to the Nipoppy pipeline store (optional)

@@ -3,6 +3,7 @@
 In this example, we have a longitudinal study with both non-imaging and imaging visits. Specifically, non-imaging (neuropsychological) data was collected every year, and imaging data (anatomical only) was collected every two years.
 
 We start with two CSV files:
+
 - `example2-demographics_neuropsych.csv` contains demographics information and dates for the neuropsych visits
     :::{csv-table}
     :file: ./inserts/example2-demographics_neuropsych.csv
@@ -17,6 +18,7 @@ We start with two CSV files:
     :::
 
 These files give us the following information:
+
 - The study has 3 participants
 - Each participant has 3 non-imaging visits and 2 imaging visits
 

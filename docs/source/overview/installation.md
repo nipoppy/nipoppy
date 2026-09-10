@@ -11,6 +11,7 @@ If you already have an existing Python environment setup, you can go directly to
 The Nipoppy tools are primarily intended to be used on Linux operating system and may not work well on other operating systems. The default container platform used is Apptainer (formerly Singularity), which [cannot run natively on Windows or macOS](https://apptainer.org/docs/admin/main/installation.html#installation-on-windows-or-mac). Support for the Docker container platform has been added in 0.4.2, though users may need to change default container arguments that are Apptainer-specific.
 
 (python-env-instructions)=
+
 ## Setting up a Python environment
 
 ```{tip}
@@ -22,6 +23,7 @@ If you do not already have Python set up on your system and/or wish to run Nipop
 Install `conda` (e.g. through Miniconda) following instructions from [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
 Create a new environment (if needed) with Python version of at least `3.9` (we recommended the [latest available version](https://www.python.org/doc/versions)). Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
+
 ```{code-block} console
 $ conda create --name nipoppy_env python=3
 ```
@@ -31,6 +33,7 @@ The [conda cheatsheet](https://docs.conda.io/projects/conda/en/latest/user-guide
 ```
 
 Activate the environment, e.g. by running:
+
 ```{code-block} console
 $ conda activate nipoppy_env
 ```
@@ -50,9 +53,11 @@ If you have multiple versions of Python installed, you should specify which one 
 ```
 
 (pip-install-section)=
+
 ## Installing the `nipoppy` package
 
 The latest release of Nipoppy can be installed from {term}`PyPI`. In a Terminal window, run:
+
 ```{code-block} console
 $ pip install nipoppy
 ```
@@ -78,12 +83,14 @@ The user interface is available with the `nipoppy-gui` command.
 ### Verifying the install
 
 Nipoppy was installed successfully if the {term}`CLI` runs. The following command should print a usage message and exit without error:
+
 ```{code-block} console
 $ nipoppy -h
 ```
 
 ### Enable shell completion
-We list the configuration for `bash` and `zsh` shells. For more details on shell completion with Click, visit the official documentation at: https://click.palletsprojects.com/en/stable/shell-completion/
+
+We list the configuration for `bash` and `zsh` shells. For more details on shell completion with Click, visit the official documentation at: <https://click.palletsprojects.com/en/stable/shell-completion/>
 
 ::::{tab-set}
 
@@ -126,6 +133,7 @@ Please open a [GitHub issue](https://github.com/nipoppy/nipoppy/issues/new/choos
 ### Error when installing `pydantic-core`
 
 The latest version of the `pydantic-core` package (required by `pydantic`) is written in Rust, not pure Python. If this package needs to be compiled during the install, but Rust is not available, then there might be an error complaining that Rust and/or Cargo cannot be found. In that case, if you are on an {term}`HPC` system that uses `lmod`, try loading Rust before installing:
+
 ```{code-block} console
 $ module load rust
 ```
