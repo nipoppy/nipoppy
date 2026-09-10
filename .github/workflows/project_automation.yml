@@ -55,7 +55,7 @@ jobs:
           status_value: ${{ env.assigned }} # Target status
 
       - name: Move PR to ${{ env.in_progress }}
-        if: github.event_name == 'pull_request_target' && github.event.action == 'converted_to_draft'
+        if: github.event_name == 'pull_request_target' && ( github.event.action == 'opened' || github.event.action == 'converted_to_draft' || github.event.action == 'reopened')
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ steps.generate-token.outputs.token }}
