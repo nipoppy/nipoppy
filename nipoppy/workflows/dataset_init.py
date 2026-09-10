@@ -123,7 +123,10 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy dataset description file if specified in layout
-        if getattr(self.study.layout, "fpath_bids_dataset_description", None):
+        if (
+            getattr(self.study.layout, "fpath_bids_dataset_description", None)
+            is not None
+        ):
             fileops.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
@@ -133,7 +136,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy bidsignore file if specified in layout
-        if getattr(self.study.layout, "fpath_bidsignore", None):
+        if getattr(self.study.layout, "fpath_bidsignore", None) is not None:
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
