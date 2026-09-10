@@ -122,7 +122,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             )
         else:
             logger.info(
-                "Use the --community flag to request inclusion in the Nipoppy Zenodo "
+                f'Rerun with "--community --zenodo-id {record_id}" to request inclusion in the Nipoppy Zenodo '
                 "community."
             )
 
@@ -141,7 +141,7 @@ class PipelineUploadWorkflow(BaseWorkflow):
             raise WorkflowError from e
 
         if self.record_id:
-            # If a record ID is provided, get it's latest Zenodo version and metadata
+            # If a record ID is provided, get its latest Zenodo version and metadata
             self.record_id = self.zenodo_api.get_latest_version_id(self.record_id)
             record_metadata = self.zenodo_api.get_record_metadata(self.record_id)
 

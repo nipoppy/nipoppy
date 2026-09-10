@@ -397,7 +397,7 @@ class ZenodoAPI:
         return {file["key"]: file["checksum"].removeprefix("md5:") for file in files}
 
     def _get_community_id(self, community: str) -> str:
-        """Resolve a community slug or ID to is uuid."""
+        """Resolve a community slug or ID to its uuid."""
         response = self.client.get(f"/communities/{community}")
         if response.status_code != 200:
             raise ZenodoAPIError(
