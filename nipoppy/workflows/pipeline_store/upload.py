@@ -6,7 +6,7 @@ from pathlib import Path
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
-from nipoppy.exceptions import ExecutionError, TerminatedByUserError, WorkflowError
+from nipoppy.exceptions import TerminatedByUserError, WorkflowError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
@@ -100,12 +100,6 @@ class PipelineUploadWorkflow(BaseWorkflow):
         if self.assume_yes:
             logger.debug("Assuming yes to all prompts (--assume-yes flag).")
             return
-
-        if not CONSOLE_STDOUT.is_interactive or not CONSOLE_STDOUT.is_terminal:
-            raise ExecutionError(
-                "Non-interactive terminal detected."
-                " Use the --assume-yes flag to bypass this prompt."
-            )
 
         if not CONSOLE_STDOUT.confirm(
             "The Nipoppy pipeline will be uploaded/updated on Zenodo"

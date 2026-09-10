@@ -9,7 +9,6 @@ import pytest_mock
 from nipoppy.config.pipeline import BasePipelineConfig
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import (
-    ExecutionError,
     ReturnCode,
     TerminatedByUserError,
     WorkflowError,
@@ -346,27 +345,6 @@ class TestConfirmUpload:
 
         assert "Assuming yes to all prompts (--assume-yes flag)." in caplog.text
 
-    @pytest.mark.parametrize(
-        "is_interactive, is_terminal",
-        [(True, False), (False, True)],
-    )
-    def test_no_tty(
-        self,
-        is_interactive: bool,
-        is_terminal: bool,
-        workflow: PipelineUploadWorkflow,
-        mocker: pytest_mock.MockerFixture,
-    ):
-        """Test that a non-interactive terminal raises an ExecutionError."""
-        console = mocker.patch(
-            "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT",
-        )
-        console.is_interactive = is_interactive
-        console.is_terminal = is_terminal
-
-        with pytest.raises(ExecutionError, match="Non-interactive terminal detected."):
-            workflow._confirm_upload()
-
     @pytest.mark.no_xdist
     def test_confirm(
         self,
@@ -379,8 +357,6 @@ class TestConfirmUpload:
             "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT",
         )
         console.confirm.return_value = True
-        console.is_interactive = True
-        console.is_terminal = True
 
         workflow._confirm_upload()
         assert "" == caplog.text  # No log or error raised
@@ -395,8 +371,6 @@ class TestConfirmUpload:
             "nipoppy.workflows.pipeline_store.upload.CONSOLE_STDOUT",
         )
         console.confirm.return_value = False
-        console.is_interactive = True
-        console.is_terminal = True
 
         with pytest.raises(
             TerminatedByUserError, match="Zenodo upload cancelled by user."
