@@ -40,7 +40,7 @@ docs/source/_inserts/*.json5
 # Python virtual environment
 env/
 venv/
-.venv/
+.venv
 nipoppy_env/
 
 # Env var file
