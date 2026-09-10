@@ -48,7 +48,7 @@ class ContainerHandler(Base, ABC):
 
     def check_command_exists(self):
         """Check that the command is available (i.e. in PATH)."""
-        if not shutil.which(self.command):
+        if shutil.which(self.command) is None:
             raise ContainerError(
                 f"Container executable not found: {self.command}"
                 ". Make sure it is installed and in your PATH."
