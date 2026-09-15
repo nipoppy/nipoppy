@@ -20,9 +20,11 @@ We will use the [**ds004101 dataset from OpenNeuro**](https://openneuro.org/data
 - Click on the "Download shell script" link at the bottom of [this page](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). This should download a file called `ds004101-1.0.1.sh` to your computer.
 - Move `ds004101-1.0.1.sh` to the directory you will use for this tutorial.
 - Open a Terminal window and go to the directory where you put the script. Then run:
+
   ```console
   $ bash ds004101-1.0.1.sh
   ```
+
 - Depending on your internet connection, the above command may take a few minutes. Once it is done, you should have a new directory `ds004101-1.0.1` containing the BIDS dataset. Run `tree ds004101-1.0.1` to see the dataset content.
 
 ## Step 1: Initialize the Nipoppy dataset
@@ -112,11 +114,13 @@ emphasize-lines: 6,11
 ```
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
+
 - If Apptainer is not available on your system, you will need to change `CONTAINER_CONFIG` -> `COMMAND` to
     - `"singularity"` if you have Singularity installed
     - `"docker"` if you have Docker installed
     - `"null"` if you have MRIQC installed locally ("baremetal" install)
 - If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
+
     ```json
     "SUBSTITUTIONS": {
         "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
@@ -124,16 +128,19 @@ By default, this file does not contain any pipeline-specific information, since 
         "[[HPC_ACCOUNT_NAME]]": ""
     },
     ```
+
     - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted) (recommended).
 
 ## Step 3: Install the MRIQC pipeline into the dataset
 
 The following command can be used to check which pipelines can be run with the dataset:
+
 ```console
 $ nipoppy pipeline list --dataset nipoppy_study
 ```
 
 The output says that there are no available pipelines to be run:
+
 ```
 INFO     No available bidsification pipelines
 INFO     No available processing pipelines
@@ -141,6 +148,7 @@ INFO     No available extraction pipelines
 ```
 
 That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for MRIQC](https://zenodo.org/records/15306682) can be downloaded by running the following:
+
 ```{code-block} console
 $ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_mriqc_23_1_0}}
 ```

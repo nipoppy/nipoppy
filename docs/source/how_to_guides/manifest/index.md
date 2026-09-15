@@ -21,22 +21,18 @@ However, if the study has additional visits that were not present in the BIDS da
 Every Nipoppy dataset should have a manifest file at {{fpath_manifest}}.
 This file is tab-separated and has four columns: `participant_id`, `visit_id`, `session_id` and `datatype`.
 Here is an example of a valid manifest file:
+
 :::{csv-table}
----
-file: ../../../../nipoppy/data/examples/sample_manifest.tsv
-header-rows: 1
-delim: tab
----
+:file: ../../../../nipoppy/data/examples/sample_manifest.tsv
+:header-rows: 1
+:delim: tab
 :::
 
 ::::{admonition} Raw content of the example manifest file
----
-class: dropdown
----
+:class: dropdown
+
 :::{literalinclude} ../../../../nipoppy/data/examples/sample_manifest.tsv
----
-linenos: True
----
+:linenos:
 :::
 ::::
 
@@ -49,6 +45,7 @@ There must be only **one row** per unique `participant_id`/`visit_id` combinatio
 ### `participant_id`
 
 A unique identifier for a participant in the study. Must be present in every row.
+
 - **Cannot** contain non-alphanumeric characters (spaces, dashes, underscores, etc.)
 - **Cannot** have the `sub-` prefix
 - Example valid values: `001`, `ABC01`
@@ -56,9 +53,8 @@ A unique identifier for a participant in the study. Must be present in every row
 - Example invalid values: `sub-001`, `ABC.01`
 
 ::::{admonition} What if the participant IDs in my existing study files are not Nipoppy-compatible?
----
-class: dropdown
----
+:class: dropdown
+
 In those situations, you should still make sure that `participant_id` values in the Nipoppy manifest do not contain non-alphanumeric characters.
 To keep track of the mapping between the Nipoppy `participant_id`s and the original study's IDs (also referred to as "recruitment IDs"), you should create a [recruitment.tsv](../../explanations/recruitment.md) file.
 
@@ -72,6 +68,7 @@ An identifier for a data collection event (imaging or non-imaging). Must be pres
 ### `session_id`
 
 An identifier for an imaging data collection event. Should be left empty if no imaging data was collected.
+
 - **Cannot** contain non-alphanumeric characters (spaces, dashes, underscores, etc.)
 - **Cannot** have the `ses-` prefix
 - Example valid values: `1`, `baseline`, `Month12`
@@ -89,9 +86,11 @@ However, having two descriptors becomes particularly useful when imaging and non
 ### `datatype`
 
 A list of datatypes expected to be in the {term}`BIDS` data. Should be left empty if no imaging data was collected.
+
 - Example valid values: `['anat']`, `['anat', 'dwi']`
 
 Common {term}`MRI` datatypes include:
+
 - `anat`: anatomical MRI
 - `dwi`: diffusion MRI
 - `func`: functional MRI

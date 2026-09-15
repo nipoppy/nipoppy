@@ -20,6 +20,7 @@ The Nipoppy directory tree for the imaging sourcedata looks like the following:
 <table><tr><td valign="top">
 
 **downloads**
+
 ```
 ├── downloads
 │   ├── example.zip
@@ -45,6 +46,7 @@ or
 </td><td valign="top">
 
 **pre-reorg**
+
 ```
 ├── pre_reorg
 │   ├── 01
@@ -73,6 +75,7 @@ or
 </td><td valign="top">
 
 **post-reorg**
+
 ```
 ├── post_reorg
 │   ├── sub-01
@@ -122,6 +125,7 @@ $ nipoppy reorg --dataset <NIPOPPY_PROJECT_ROOT>
 ```
 
 For each participant-session pair, Nipoppy
+
 - "copies" (the default is to create symlinks) files from the {{dpath_pre_reorg}} directory to the {{dpath_post_reorg}} directory into a flat list
 - adds a `sub-` prefix to all participant folders and a `ses-` prefix to all session folders
 

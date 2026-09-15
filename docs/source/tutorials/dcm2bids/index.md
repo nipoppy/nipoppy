@@ -3,6 +3,7 @@
 In this tutorial, you will learn how to use Nipoppy and the BIDS converter [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) to convert your imaging sourcedata to {term}`BIDS`.
 
 Concretely, we will:
+
 1. Initialize a Nipoppy dataset
 2. Reorganize DICOM sourcedata
 3. Install and set up the dcm2bids pipeline
@@ -35,6 +36,7 @@ HTTPS: `git clone https://github.com/nipoppy/tutorial-dataset.git`
 ```
 wget -O tutorial-dataset.zip https://github.com/nipoppy/tutorial-dataset/archive/refs/heads/main.zip
 ```
+
 Unzip once downloaded.
 
 ## Step 1: Initialize the Nipoppy dataset
@@ -74,7 +76,6 @@ nipoppy_study/
 :::{dropdown} Good to know: why reorganization?
 Usually, there is a gap between data state out of scanner vs. ready for bidsification. Source data is often messy in different ways, making it hard to use BIDSification tools directly. Nipoppy provides a unified way to deal with DICOM vs. Nifti sourcedata which simplifies BIDSification. It also helps fixing issues related to file naming which often appear in chaotic data dumps or due to typos. Additionally, the organization simplifies taring the DICOMs after bidsification. All this is implemented in one simple command, namely [`nipoppy reorg`](../../reference/cli_reference/reorg.rst).
 :::
-
 
 **2.1.** We need to move the **content** of the `tutorial-dataset/reorg` directory to the `sourcedata/imaging/pre_reorg` directory of our `nipoppy_study` dataset, i.e.:
 
@@ -169,11 +170,13 @@ emphasize-lines: 6,11
 ```
 
 By default, this file does not contain any pipeline-specific information, since the dataset does not have any pipelines installed yet. Still, there are fields that may need to be modified depending on your setup:
+
 - If Apptainer is not available on your system, you will need to change `CONTAINER_CONFIG` -> `COMMAND` to
     - `"singularity"` if you have Singularity installed
     - `"docker"` if you have Docker installed
     - `"null"` if you have dcm2bids installed locally ("baremetal" install)
 - If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
+
     ```json
     "SUBSTITUTIONS": {
         "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
@@ -181,6 +184,7 @@ By default, this file does not contain any pipeline-specific information, since 
         "[[HPC_ACCOUNT_NAME]]": ""
     },
     ```
+
     - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted) (recommended).
 
 **3.2.** We can use following command to check which pipelines can be run with the dataset:
@@ -190,6 +194,7 @@ $ nipoppy pipeline list --dataset nipoppy_study
 ```
 
 The output says that there are no available pipelines to be run:
+
 ```
 INFO     No available bidsification pipelines
 INFO     No available processing pipelines
@@ -197,6 +202,7 @@ INFO     No available extraction pipelines
 ```
 
 That is because a newly initialized Nipoppy dataset does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for dcm2bids](https://zenodo.org/records/16876754) can be downloaded by running the following:
+
 ```{code-block} console
 $ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_dcm2bids_3_2_0}}
 ```
@@ -245,13 +251,14 @@ Without setting this path now, the next `nipoppy bidsify prepare` step will cras
 
 dcm2bids is a multi-step pipeline in Nipoppy. The steps are detailed in {{dpath_pipelines}}`/bidsification/dcm2bids-3.2.0/config.json`:
 
-
 **4.1.** We run
+
 ```console
 nipoppy bidsify --dataset nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step prepare
 ```
 
 In our scratch directory we should see something like this now:
+
 ```
 scratch/
 ├── dcm2bids_helper

@@ -14,7 +14,6 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
 
 ## Use cases for individual researchers
 
-
 **Imaging Data Curation**
 
 | Task | Starting point | End goal | Related resources |

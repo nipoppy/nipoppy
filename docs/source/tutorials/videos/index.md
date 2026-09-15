@@ -17,6 +17,7 @@ The Nipoppy version used in the tutorial videos was 0.4.5. Console output as wel
 ## 1. nipoppy init
 
 In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
+
 - run the [`nipoppy init`](../../reference/cli_reference/init.rst) command
 - discover the directories that follow the Nipoppy specification
 - explore the [`nipoppy status`](../../reference/cli_reference/status.rst) command
@@ -30,6 +31,7 @@ Duration: 7:43m
 ## 2. nipoppy pipeline
 
 In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. More concretely, we will
+
 - explore the [`nipoppy pipeline`](../../reference/cli_reference/pipeline_install.rst) subcommands
 - learn how to share containers
 - set pipeline configurations
@@ -43,6 +45,7 @@ Duration: 6:31m
 ## 3. nipoppy reorg
 
 In this tutorial we will cover how to reorganize imaging sourcedata. More concretely, we will
+
 - explore the sourcedata directory
 - run the [`nipoppy reorg`](../../reference/cli_reference/reorg.rst) command
 - and look at the {term}`curation_status.tsv <curation status file>` file
@@ -54,6 +57,7 @@ Duration: 6:06m
 ## 4. nipoppy bidsify
 
 In this tutorial we will cover how to bidsify imaging sourcedata. More concretely, we will
+
 - install the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/) pipeline
 - explore the [`nipoppy bidsify`](../../reference/cli_reference/bidsify.rst) command
 - run [`nipoppy bidsify`](../../reference/cli_reference/bidsify.rst) on our imaging sourcedata
@@ -65,6 +69,7 @@ Duration: 8:31m
 ## 5. nipoppy process
 
 In this tutorial we will cover how to run processing pipelines on imaging data. More concretely, we will
+
 - check the prerequisites to run [mriqc](https://mriqc.readthedocs.io/en/stable/index.html) on our dataset
 - execute the [`nipoppy process`](../../reference/cli_reference/process.rst) command
 - explore the created output
@@ -76,6 +81,7 @@ Duration: 5:26m
 ## 6. nipoppy track-processing
 
 In this tutorial we will cover how to track the processing status of our imaging data with Nipoppy. More concretely, we will
+
 - run the [`nipoppy track-processing`](../../reference/cli_reference/track_processing.rst) command
 - get to know the {term}`processing_status.tsv <processing status file>` file
 - and explore the [Neurobagel digest dashboard](https://digest.neurobagel.org/)

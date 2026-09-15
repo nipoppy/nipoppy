@@ -1,0 +1,10 @@
+# Preserve the documentation's existing presentation conventions.
+rules '~MD002', # The PR template starts with second-level headings.
+      '~MD007', # Nested lists use both two- and four-space indentation.
+      '~MD013', # Prose, links, and tables are not hard-wrapped.
+      '~MD014', # Console examples include shell prompts.
+      '~MD026', # Headings may end with questions or exclamations.
+      '~MD028', # Adjacent GitHub alerts are separate blockquotes.
+      '~MD029', # Ordered lists use both explicit and automatic numbering.
+      '~MD033', # Images, tables, and embedded videos use HTML.
+      '~MD036'  # Standalone emphasis is used for captions and callouts.
