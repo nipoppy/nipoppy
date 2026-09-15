@@ -177,7 +177,7 @@ def pipeline_validate(**params):
 @pipeline.command("upload")
 @click.argument(
     "pipeline_dir",
-    type=str,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
 @click.option(
     "--zenodo-id",
@@ -193,6 +193,11 @@ def pipeline_validate(**params):
     "-f",
     is_flag=True,
     help="Ignore safeguard warnings and upload anyway. Use with caution.",
+)
+@click.option(
+    "--community",
+    is_flag=True,
+    help="Request inclusion of the pipeline in the Nipoppy Zenodo community.",
 )
 @zenodo_options
 @global_options
