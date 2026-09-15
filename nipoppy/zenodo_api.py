@@ -436,7 +436,7 @@ class ZenodoAPI:
                 f"{community_id}: {response_json}"
             )
 
-        self.logger.success(
+        self.logger.info(
             f"Successfully requested inclusion of zenodo.{record_id} in community "
             f"{community_id}"
         )

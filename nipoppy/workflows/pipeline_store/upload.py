@@ -116,8 +116,8 @@ class PipelineUploadWorkflow(BaseWorkflow):
             )
         else:
             logger.info(
-                f'Rerun with "--community --zenodo-id {record_id}" to request inclusion in the Nipoppy Zenodo '
-                "community."
+                f'Rerun with "--community --zenodo-id {record_id}" to request inclusion'
+                " in the Nipoppy Zenodo community."
             )
 
     def run_main(self):
