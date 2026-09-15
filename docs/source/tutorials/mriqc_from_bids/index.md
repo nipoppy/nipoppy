@@ -103,11 +103,11 @@ For now, the dataset only has BIDS data:
 
 The `nipoppy init` command created the configuration file at `nipoppy_study/global_config.json`. This file may need to be updated with information specific to your computing environment. Initially, it will look like this:
 
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json5
 ---
 linenos: True
 language: json
-emphasize-lines: 4,9
+emphasize-lines: 6,11
 ---
 ```
 

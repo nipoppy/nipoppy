@@ -28,8 +28,9 @@ def dataset_option(func):
 def dep_params(**params):
     """Handle deprecated parameters."""
     # --write-list is deprecated by --write-subcohort
-    if "write_subcohort" in params and (
-        _dep_write_subcohort := params.pop("write_list")
+    if (
+        "write_subcohort" in params
+        and (_dep_write_subcohort := params.pop("write_list")) is not None
     ):
         logger.warning(
             "The --write-list option is deprecated and will be removed in a future "

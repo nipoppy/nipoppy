@@ -29,7 +29,7 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 NIPOPPY_ROOT = Path(__file__).parents[1]
 DPATH_DATA = NIPOPPY_ROOT / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json5"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION = (
@@ -61,14 +61,18 @@ def get_pipeline_tag(
     sep="-",
 ):
     """Generate a tag for a pipeline."""
-    components = [pipeline_name, pipeline_version]
-    if pipeline_step is not None:
-        components.append(pipeline_step)
-    if participant_id is not None:
-        components.append(participant_id)
-    if session_id is not None:
-        components.append(session_id)
-    return sep.join(components)
+    return sep.join(
+        filter(
+            None,
+            [
+                pipeline_name,
+                pipeline_version,
+                pipeline_step,
+                participant_id,
+                session_id,
+            ],
+        )
+    )
 
 
 def load_json(

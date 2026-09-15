@@ -11,11 +11,11 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID
+from nipoppy.env import FAKE_SESSION_ID, PROGRAM_VERSION
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import fileops
-from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG
+from nipoppy.utils.utils import DPATH_HPC, DPATH_LAYOUTS, FPATH_SAMPLE_CONFIG, load_json
 from nipoppy.workflows.dataset_init import InitWorkflow
 
 
@@ -149,7 +149,9 @@ def _assert_layout_creation(workflow):
 
 
 def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
-    assert fpath_actual.read_text() == fpath_expected.read_text()
+    assert load_json(fpath_actual, allow_json5=True) == load_json(
+        fpath_expected, allow_json5=True
+    )
 
 
 @pytest.mark.no_xdist
@@ -245,6 +247,21 @@ def test_create_config_file_warns_and_falls_back_for_invalid_user_config(
     assert "Falling back to the default config file" in caplog.text
     assert "Default config file copied" in caplog.text
     assert "It may need to be edited to match your dataset" in caplog.text
+
+
+def test_create_config_file_preserves_json5_comments(
+    workflow: InitWorkflow, recwarn: pytest.WarningsRecorder
+):
+    workflow._create_config_file()
+
+    study_config_content = workflow.study.layout.fpath_config.read_text()
+    assert (
+        "// Nipoppy will apply string substitutions when this file is loaded"
+        in study_config_content
+    )
+    assert "[[NIPOPPY_VERSION]]" not in study_config_content
+    assert PROGRAM_VERSION in study_config_content
+    assert not any("Unable to replace" in str(warning.message) for warning in recwarn)
 
 
 def test_run_warns_when_sample_manifest_copied(
