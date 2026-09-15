@@ -29,10 +29,11 @@ The best way to get started contributing is to explore the list of open issues i
 When you are ready to contribute, we welcome you to join the conversation through one of these issues, or open a new issue referencing a change you would like to see or contribute. Ensuring that a relevant issue is open before you start contributing code is important because it allows others in the project to discuss your idea and tell you where your contribution would be the most helpful.
 
 - **If the issue you want to work on already exists**: Comment on the open issue to indicate you would like to work on it, along with any clarification/implementation questions you have
+  - **Wait to be assigned**: Please wait until a maintainer assigns you to the issue before starting work.
   - If someone is already [assigned to the issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/assigning-issues-and-pull-requests-to-other-github-users), the task is actively being worked on and a solution will soon be proposed. Feel free to share some helpful resources or pointers that may be interesting to the person who is working the issue, and/or check back in a couple of days.
 
 - **If the issue you want to work on does not exist**: Open a new issue describing your proposed change and why it is necessary/beneficial. The more detail here, the better!
-  - This allows members of the Nipoppy developer team to confirm that you will not be overlapping with currently active work and that everyone is on the same page about the task to be accomplished.
+  - This allows members of the Nipoppy developer team to confirm that you will not be overlapping with currently active work and that everyone is on the same page about the task to be accomplished. Wait until the proposed change is discussed and the issue is assigned to you before starting work.
 
 If you would like to contribute but are not sure where to start, we recommend looking for open issues with the following labels:
 
@@ -75,6 +76,9 @@ To keep up with changes in the Nipoppy repository while you work and avoid merge
 ## Pull requests
 
 All changes to the `main` branch of the code repository need to be done through GitHub [pull requests (PRs)](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
+
+> [!IMPORTANT]
+> Before submitting a pull request, ensure that you are assigned to the corresponding issue. Pull requests will be closed if the issue is not assigned to the person opening the PR.
 
 Nipoppy PR reviews may use the following emoji signifiers:
 
