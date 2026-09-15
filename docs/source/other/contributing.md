@@ -77,7 +77,7 @@ To keep up with changes in the Nipoppy repository while you work and avoid merge
 
 All changes to the `main` branch of the code repository need to be done through GitHub [pull requests (PRs)](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
 
-> [!IMPORTANT]
+> [!WARNING]
 > Before submitting a pull request, ensure that you are assigned to the corresponding issue. Pull requests will be closed if the issue is not assigned to the person opening the PR.
 
 Nipoppy PR reviews may use the following emoji signifiers:
