@@ -56,6 +56,20 @@ def zenodo_options(func):
         " community."
     ),
 )
+@click.option(
+    "--type",
+    "-t",
+    "pipeline_type",
+    type=click.Choice(
+        [
+            PipelineTypeEnum.BIDSIFICATION,
+            PipelineTypeEnum.PROCESSING,
+            PipelineTypeEnum.EXTRACTION,
+        ],
+        case_sensitive=False,
+    ),
+    help="Filter search results by pipeline type.",
+)
 @password_file_option(required=False)
 @zenodo_options
 @global_options

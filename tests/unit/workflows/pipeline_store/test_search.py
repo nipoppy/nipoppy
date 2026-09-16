@@ -7,7 +7,7 @@ import pytest
 import pytest_mock
 from rich.table import Table
 
-from nipoppy.env import ZENODO_COMMUNITY_ID
+from nipoppy.env import ZENODO_COMMUNITY_ID, PipelineTypeEnum
 from nipoppy.workflows.pipeline_store.search import PipelineSearchWorkflow
 
 
@@ -33,6 +33,7 @@ def hits():
             "metadata": {
                 "description": "<div><p>\nDescription 1: <PIPELINE_NAME>\n</p></div>",
                 "communities": [{"id": "nipoppy"}],
+                "keywords": ["pipeline_type:processing"],
             },
             "doi_url": "fake_doi_url_12345",
         },
@@ -54,38 +55,76 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
     # order is switched because of sorting by downloads
     assert df.iloc[0]["Zenodo ID"] == "[link=fake_doi_url_67890]67890[/link]"
     assert df.iloc[0]["Community"] == "-"
+    assert df.iloc[0]["Pipeline Type"] == "-"
     assert df.iloc[0]["Title"] == "Pipeline 2"
     assert pd.isna(df.iloc[0]["Description"])
     assert df.iloc[0]["Downloads"] == 100
 
     assert df.iloc[1]["Zenodo ID"] == "[link=fake_doi_url_12345]12345[/link]"
     assert df.iloc[1]["Community"] == "nipoppy"
+    assert df.iloc[1]["Pipeline Type"] == "processing"
     assert df.iloc[1]["Title"] == "Pipeline 1"
     assert df.iloc[1]["Description"] == "Description 1: <PIPELINE_NAME>"
     assert df.iloc[1]["Downloads"] == 4
 
 
 @pytest.mark.parametrize(
-    "console_width, is_description_hidden",
+    "keywords, expected_pipeline_type",
     [
-        (80, True),
-        (120, False),
+        (["pipeline_type:processing"], "processing"),
+        (["pipeline_type:extraction"], "extraction"),
+        (["pipeline_type:bidsification"], "bidsification"),
+        (["Nipoppy"], "-"),
+    ],
+)
+def test_hits_to_df_extracts_pipeline_type_from_keywords(
+    workflow: PipelineSearchWorkflow,
+    keywords: list[str],
+    expected_pipeline_type: str,
+):
+    hits = [
+        {
+            "id": 12345,
+            "title": "Pipeline 1",
+            "stats": {"downloads": 4},
+            "metadata": {
+                "keywords": keywords,
+            },
+            "doi_url": "fake_doi_url_12345",
+        }
+    ]
+
+    df = workflow._hits_to_df(hits)
+
+    assert df.iloc[0]["Pipeline Type"] == expected_pipeline_type
+
+
+@pytest.mark.parametrize(
+    "console_width, pipeline_type, is_description_hidden",
+    [
+        (80, None, True),
+        (120, None, False),
+        (80, PipelineTypeEnum.PROCESSING, True),
+        (120, PipelineTypeEnum.PROCESSING, False),
     ],
 )
 def test_df_to_table(
     workflow: PipelineSearchWorkflow,
     console_width: int,
+    pipeline_type: PipelineTypeEnum | None,
     is_description_hidden: bool,
     monkeypatch: pytest.MonkeyPatch,
 ):
     import nipoppy.workflows.pipeline_store.search as search_module
 
     monkeypatch.setattr(search_module, "CURRENT_CONSOLE_WIDTH", console_width)
+    workflow.pipeline_type = pipeline_type
     df_hits = pd.DataFrame(
         [
             {
                 "Zenodo ID": "[link=fake_doi_url]12345[/link]",
                 "Community": "nipoppy",
+                "Pipeline Type": "processing",
                 "Title": "Pipeline 1",
                 "Description": "Description 1: <PIPELINE_NAME>",
                 "Downloads": 4,
@@ -93,6 +132,7 @@ def test_df_to_table(
             {
                 "Zenodo ID": "[link=fake_doi_url]67890[/link]",
                 "Community": "-",
+                "Pipeline Type": "-",
                 "Title": "Pipeline 2",
                 "Description": None,
                 "Downloads": 100,
@@ -101,16 +141,23 @@ def test_df_to_table(
     )
     table = workflow._df_to_table(df_hits)
     assert table.row_count == len(df_hits)
-    if is_description_hidden:
-        assert len(table.columns) == len(df_hits.columns) - 1
+    if pipeline_type is None:
+        assert workflow.col_pipeline_type in [col.header for col in table.columns]
     else:
-        assert len(table.columns) == len(df_hits.columns)
+        assert workflow.col_pipeline_type not in [col.header for col in table.columns]
+
+    if is_description_hidden:
+        assert workflow.col_description not in [col.header for col in table.columns]
+    else:
+        assert workflow.col_description in [col.header for col in table.columns]
 
 
+@pytest.mark.parametrize("pipeline_type", list(PipelineTypeEnum))
 @pytest.mark.parametrize("community", [True, False])
 @pytest.mark.no_xdist
 def test_run_main(
     workflow: PipelineSearchWorkflow,
+    pipeline_type: PipelineTypeEnum,
     community: bool,
     hits: list[dict],
     mocker: pytest_mock.MockerFixture,
@@ -129,12 +176,13 @@ def test_run_main(
         workflow, "_df_to_table", return_value=Table()
     )
 
+    workflow.pipeline_type = pipeline_type
     workflow.community = community
     workflow.run()
 
     workflow.zenodo_api.search_records.assert_called_once_with(
         query=workflow.query,
-        keywords=["Nipoppy"],
+        keywords=["Nipoppy", f"pipeline_type:{pipeline_type.value}"],
         size=workflow.size,
         community_id=ZENODO_COMMUNITY_ID if community else None,
     )

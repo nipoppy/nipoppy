@@ -54,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--sandbox",
                 "--community",
                 "--regenerate",
+                "--type",
             ],
         },
         {
