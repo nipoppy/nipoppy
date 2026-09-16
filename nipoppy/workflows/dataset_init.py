@@ -291,6 +291,7 @@ class InitWorkflow(BaseDatasetWorkflow):
                                 self.study.layout.dpath_bids / bids_participant_id
                             ).iterdir()
                             if x.is_dir()
+                            and any(child.is_file() for child in x.iterdir())
                         ]
                     )
                 else:
@@ -303,8 +304,14 @@ class InitWorkflow(BaseDatasetWorkflow):
                                 / bids_session_id
                             ).iterdir()
                             if x.is_dir()
+                            and any(child.is_file() for child in x.iterdir())
                         ]
                     )
+
+                if len(datatypes) == 0:
+                    # Skip datatype folder without any files in it.
+                    # e.g. empty anat folder
+                    continue
 
                 df[Manifest.col_participant_id].append(
                     check_participant_id(bids_participant_id)
@@ -317,9 +324,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         manifest = Manifest(df).validate()
         if manifest.empty:
             raise WorkflowError(
-                "No subjects found in BIDS source "
-                f"directory {self.bids_source}. Expected {BIDS_SUBJECT_PREFIX}* "
-                "directories directly inside it."
+                f"No subjects found in BIDS source directory {self.bids_source}. "
+                f"Expected {BIDS_SUBJECT_PREFIX}* directories directly inside it."
             )
         manifest.save_with_backup(
             self.study.layout.fpath_manifest, dry_run=self.dry_run

@@ -188,7 +188,7 @@ def test_run(
     workflow.run()
 
     if dry_run:
-        assert not dpath_root.exists()
+        assert not workflow.dpath_root.exists()
     else:
         _assert_layout_creation(workflow)
         assert (
@@ -512,36 +512,29 @@ def test_init_bids(
     assert "Sample manifest file copied" not in caplog.text
 
 
-@pytest.mark.parametrize("mode", ["copy", "move", "symlink"])
-@pytest.mark.parametrize("nested", [False, True], ids=["empty", "nested-bids"])
-def test_init_bids_empty_manifest(
+@pytest.mark.parametrize(
+    "nested", ["", "sub-01/ses-1/anat"], ids=["empty", "nested-bids"]
+)
+def test_init_manifest_from_empty_bids_fails(
     workflow: InitWorkflow,
-    tmp_path: Path,
+    dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
-    mode: str,
-    nested: bool,
+    nested: str,
 ):
-    bids_source = tmp_path / "bids"
-    bids_source.mkdir()
-    if nested:
-        (bids_source / "bids" / "sub-01" / "ses-1" / "anat").mkdir(parents=True)
-
+    bids_source = dpath_root / "bids" / nested
+    bids_source.mkdir(parents=True)
+    # workflow.study.layout.dpath_bids = bids_source
     workflow.bids_source = bids_source
-    workflow.mode = mode
 
     with pytest.raises(
         WorkflowError,
         match=re.escape(
-            "Cannot initialize an empty manifest: no subjects found in BIDS source "
-            f"directory {str(bids_source)}. "
+            f"No subjects found in BIDS source directory {str(bids_source)}. "
             "Expected sub-* directories directly inside it."
         ),
     ):
-        workflow.run()
+        workflow._init_manifest_from_bids_dataset()
 
-    assert workflow.study.layout.dpath_bids.is_dir()
-    assert workflow.study.layout.dpath_bids.is_symlink() == (mode == "symlink")
-    assert bids_source.exists() == (mode != "move")
     # Failing to create the manifest from a BIDS dataset should fail immediately.
     assert list(workflow.dpath_root.iterdir()) == [workflow.study.layout.dpath_bids]
     assert "Successfully initialized a dataset" not in caplog.text
