@@ -86,6 +86,7 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--force",
                 "--assume-yes",
+                "--skip-container",
                 "--layout",
                 "--help",
             ],

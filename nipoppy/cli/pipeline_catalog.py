@@ -124,6 +124,11 @@ def pipeline_create(**params):
     is_flag=True,
     help="Overwrite existing pipeline directory if it exists.",
 )
+@click.option(
+    "--skip-container",
+    is_flag=True,
+    help="Skip downloading the pipeline container.",
+)
 @global_options
 @layout_option
 @password_file_option(required=False)
