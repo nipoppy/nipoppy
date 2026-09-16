@@ -232,6 +232,131 @@ def make_processing_status_table(
     return table, session_participant_counts_df
 
 
+def make_mixed_datatype_status_tables():
+    manifest = Manifest(
+        pd.DataFrame(
+            [
+                ("01", "BL", "BL", ["anat"]),
+                ("02", "BL", "BL", ["anat", "dwi"]),
+                ("03", "BL", "BL", ["dwi"]),
+                ("01", "M12", "M12", ["anat"]),
+                ("02", "M12", "M12", ["dwi"]),
+                ("04", "M12", None, []),
+            ],
+            columns=[
+                Manifest.col_participant_id,
+                Manifest.col_visit_id,
+                Manifest.col_session_id,
+                Manifest.col_datatype,
+            ],
+        )
+    )
+    curation_status_table = CurationStatusTable(
+        pd.DataFrame(
+            [
+                ("01", "BL", True, True, True),
+                ("02", "BL", False, False, False),
+                ("03", "BL", True, True, True),
+                ("01", "M12", True, True, False),
+                ("02", "M12", False, False, False),
+            ],
+            columns=[
+                CurationStatusTable.col_participant_id,
+                CurationStatusTable.col_session_id,
+                CurationStatusTable.col_in_pre_reorg,
+                CurationStatusTable.col_in_post_reorg,
+                CurationStatusTable.col_in_bids,
+            ],
+        )
+    )
+
+    processing_status_table = ProcessingStatusTable(
+        pd.DataFrame(
+            [
+                ("01", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                ("02", "BL", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                ("03", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                ("01", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                ("02", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+            ],
+            columns=[
+                ProcessingStatusTable.col_participant_id,
+                ProcessingStatusTable.col_session_id,
+                ProcessingStatusTable.col_pipeline_name,
+                ProcessingStatusTable.col_pipeline_version,
+                ProcessingStatusTable.col_pipeline_step,
+                ProcessingStatusTable.col_status,
+            ],
+        )
+    )
+
+    return manifest, curation_status_table, processing_status_table
+
+
+@pytest.mark.parametrize(
+    "datatype,expected",
+    [
+        (
+            None,
+            {
+                "in_manifest": {"BL": 3, "M12": 2},
+                "in_pre_reorg": {"BL": 2, "M12": 1},
+                "in_post_reorg": {"BL": 2, "M12": 1},
+                "in_bids": {"BL": 2, "M12": 0},
+                "pipeline\n1.0.0\ndefault": {"BL": 2, "M12": 0},
+            },
+        ),
+        (
+            "anat",
+            {
+                "in_manifest": {"BL": 2, "M12": 1},
+                "in_pre_reorg": {"BL": 1, "M12": 1},
+                "in_post_reorg": {"BL": 1, "M12": 1},
+                "in_bids": {"BL": 1, "M12": 0},
+                "pipeline\n1.0.0\ndefault": {"BL": 1, "M12": 0},
+            },
+        ),
+        (
+            "dwi",
+            {
+                "in_manifest": {"BL": 2, "M12": 1},
+                "in_pre_reorg": {"BL": 1, "M12": 0},
+                "in_post_reorg": {"BL": 1, "M12": 0},
+                "in_bids": {"BL": 1, "M12": 0},
+                "pipeline\n1.0.0\ndefault": {"BL": 1, "M12": 0},
+            },
+        ),
+    ],
+)
+def test_datatype_filters_all_status_tables(dpath_root: Path, datatype, expected):
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
+    (
+        workflow.study.manifest,
+        workflow.curation_status_table,
+        workflow.processing_status_table,
+    ) = make_mixed_datatype_status_tables()
+
+    assert workflow.run_main().to_dict() == expected
+
+
+def test_unmatched_datatype_stops(dpath_root: Path, caplog: pytest.LogCaptureFixture):
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatype="fake_datatype")
+    (
+        workflow.study.manifest,
+        workflow.curation_status_table,
+        workflow.processing_status_table,
+    ) = make_mixed_datatype_status_tables()
+
+    with pytest.raises(SystemExit, match="0"):
+        status_df = workflow.run_main()
+        assert status_df.empty
+
+    assert any(
+        "No imaging manifest rows matched datatype 'fake_datatype'" in r.message
+        for r in caplog.records
+    )
+
+
 @pytest.mark.parametrize(
     "n_participants,session_ids,randomize_counts",
     [

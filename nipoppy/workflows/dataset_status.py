@@ -8,6 +8,7 @@ from rich.table import Table
 
 from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import ReturnCode
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import STATUS_SUCCESS
@@ -25,6 +26,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
+        datatype: str | None = None,
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -36,6 +38,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
             _skip_logfile=True,
         )
         self.col_pipeline = "pipeline"
+        self.datatype = datatype
+        self._participant_session_pairs: set[tuple[str, str]] | None = None
 
     def run_main(self):
         """Check the status of the dataset and report.
@@ -90,7 +94,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        logger.info("Dataset summary (based on the manifest file):")
 
         manifest = self.study.manifest
 
@@ -102,6 +105,25 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
         # filter participants with imaging data
         imaging_manifest = manifest.get_imaging_subset()
+        if self.datatype is not None:
+            imaging_manifest = imaging_manifest.loc[
+                imaging_manifest[manifest.col_datatype].apply(
+                    lambda datatypes: (
+                        isinstance(datatypes, list) and self.datatype in datatypes
+                    )
+                )
+            ]
+            self._participant_session_pairs = set(
+                imaging_manifest[
+                    [manifest.col_participant_id, manifest.col_session_id]
+                ].itertuples(index=False, name=None)
+            )
+            if imaging_manifest.empty:
+                logger.warning(
+                    f"No imaging manifest rows matched datatype '{self.datatype}'."
+                )
+                raise SystemExit(ReturnCode.SUCCESS)
+
         imaging_participant_ids = imaging_manifest[
             imaging_manifest.col_participant_id
         ].unique()
@@ -110,17 +132,14 @@ class StatusWorkflow(BaseDatasetWorkflow):
         session_ids = sorted(imaging_manifest[manifest.col_session_id].unique())
 
         logger.info(
-            f"\tNumber of participants (imaging and non-imaging): "
+            "Dataset summary (based on the manifest file):"
+            f"\n\tNumber of participants (imaging and non-imaging): "
             f"{len(participant_ids)}"
-        )
-        logger.info(
-            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
-        )
-        logger.info(
-            f"\tNumber of participants with imaging data: "
+            f"\n\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
+            f"\n\tNumber of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
+            f"\n\tImaging sessions (n={len(session_ids)}): {session_ids}"
         )
-        logger.info(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
 
         manifest_status_df = imaging_manifest.groupby(
             [imaging_manifest.col_session_id]
@@ -147,6 +166,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
             table.col_in_post_reorg,
             table.col_in_bids,
         ]
+
+        table = self._filter_status_table(table)
 
         # Get the number of participants in the curation status file
         participant_ids = table[table.col_participant_id].unique()
@@ -176,6 +197,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
                 "'nipoppy track-processing' to generate a processing status file"
             )
             return status_df, []
+
+        table = self._filter_status_table(table)
 
         # Get the number of participants in the processing status file
         participant_ids = table[table.col_participant_id].unique()
@@ -243,6 +266,20 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
         processing_cols = list(status_df.columns[status_df.columns.str.contains("\n")])
         return status_df, processing_cols
+
+    def _filter_status_table(self, table: pd.DataFrame) -> pd.DataFrame:
+        """Filter a table based on the selected manifest pairs."""
+        if self._participant_session_pairs is None:
+            return table
+
+        participant_session_pairs = table[
+            [table.col_participant_id, table.col_session_id]
+        ].itertuples(index=False, name=None)
+        mask = [
+            participant_session in self._participant_session_pairs
+            for participant_session in participant_session_pairs
+        ]
+        return table.loc[mask]
 
     def _df_to_table(self, status_df: pd.DataFrame, status_col_dict: dict):
         """Convert a pandas.DataFrame obj into a rich.Table obj."""
