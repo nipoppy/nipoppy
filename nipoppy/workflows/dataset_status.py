@@ -122,7 +122,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
                 logger.warning(
                     f"No imaging manifest rows matched datatype '{self.datatype}'."
                 )
-                raise SystemExit(ReturnCode.SUCCESS)
+                raise SystemExit(ReturnCode.SUCCESS.value)
 
         imaging_participant_ids = imaging_manifest[
             imaging_manifest.col_participant_id
