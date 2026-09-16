@@ -28,6 +28,7 @@ from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError
 from nipoppy.layout import DEFAULT_LAYOUT_INFO
 from nipoppy.tabular.dicom_dir_map import DicomDirMap
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import apply_substitutions_to_json, load_json
 
 
@@ -296,7 +297,7 @@ class Config(_SchemaWithContainerConfig):
         fpath: Path = Path(fpath)
         if "indent" not in kwargs:
             kwargs["indent"] = 4
-        fpath.parent.mkdir(parents=True, exist_ok=True)
+        fileops.mkdir(fpath.parent)
         with open(fpath, "w") as file:
             file.write(self.model_dump_json(**kwargs))
 

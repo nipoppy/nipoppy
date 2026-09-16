@@ -53,7 +53,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 "Please remove it or choose a different name.",
             )
         else:
-            target.mkdir(parents=True, exist_ok=True)
+            fileops.mkdir(target)
 
         source_pipeline_config_path = TEMPLATE_PIPELINE_PATH.joinpath(
             f"config-{type_.value}.json5"

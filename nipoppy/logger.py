@@ -115,7 +115,9 @@ class NipoppyLogger(logging.Logger):
         # Only one file handler allowed
         self._cleanup_handler(self._file_handler)
 
-        file.parent.mkdir(parents=True, exist_ok=True)
+        from nipoppy.utils import fileops
+
+        fileops.mkdir(file.parent)
         self._file_handler = logging.FileHandler(file)
         self._file_handler.setFormatter(
             logging.Formatter(FILE_FORMAT, datefmt=DATE_FORMAT)
