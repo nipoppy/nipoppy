@@ -118,7 +118,7 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
     )
 
 
-def test_assume_yes_and_skip_container_are_mutually_exclusive(tmp_path: Path):
+def test_init_assume_yes_and_skip_container_are_mutually_exclusive(tmp_path: Path):
     with pytest.raises(
         WorkflowError,
         match="--assume-yes and --skip-container are mutually exclusive",
