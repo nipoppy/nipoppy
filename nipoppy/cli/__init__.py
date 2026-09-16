@@ -30,8 +30,8 @@ def exception_handler(workflow):
             "Troubleshooting: Review your configuration fields and value types."
         )
     except SystemExit as e:
-        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
-        logger.error(e)
+        workflow.return_code = ReturnCode.UNKNOWN_FAILURE if e.code is None else e.code
+
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
         logger.exception("Unexpected error occurred")
