@@ -284,29 +284,23 @@ class InitWorkflow(BaseDatasetWorkflow):
                 ):
                     # if the session is fake, we don't expect BIDS data
                     # to have session dir in the path
-                    datatypes = sorted(
-                        [
-                            x.name
-                            for x in (
-                                self.study.layout.dpath_bids / bids_participant_id
-                            ).iterdir()
-                            if x.is_dir()
-                            and any(child.is_file() for child in x.iterdir())
-                        ]
+                    dpath_participant_session = (
+                        self.study.layout.dpath_bids / bids_participant_id
                     )
                 else:
-                    datatypes = sorted(
-                        [
-                            x.name
-                            for x in (
-                                self.study.layout.dpath_bids
-                                / bids_participant_id
-                                / bids_session_id
-                            ).iterdir()
-                            if x.is_dir()
-                            and any(child.is_file() for child in x.iterdir())
-                        ]
+                    dpath_participant_session = (
+                        self.study.layout.dpath_bids
+                        / bids_participant_id
+                        / bids_session_id
                     )
+
+                datatypes = sorted(
+                    [
+                        x.name
+                        for x in (dpath_participant_session).iterdir()
+                        if x.is_dir() and any(child.is_file() for child in x.iterdir())
+                    ]
+                )
 
                 if len(datatypes) == 0:
                     # Skip datatype folder without any files in it.
