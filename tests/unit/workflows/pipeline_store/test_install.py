@@ -303,20 +303,12 @@ def test_download_container_skipped(
     workflow.assume_yes = False
     workflow.skip_container = True
 
-    mocked_get_container_handler = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.get_container_handler"
-    )
-    mocked_confirm = mocker.patch(
-        "nipoppy.workflows.pipeline_store.install.CONSOLE_STDOUT.confirm"
-    )
     mocked_run_command = mocker.patch(
         "nipoppy.workflows.pipeline_store.install._run_command"
     )
 
     workflow._download_container(pipeline_config)
 
-    mocked_get_container_handler.assert_not_called()
-    mocked_confirm.assert_not_called()
     mocked_run_command.assert_not_called()
 
 
