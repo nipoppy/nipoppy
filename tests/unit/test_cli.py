@@ -21,7 +21,7 @@ from nipoppy.cli import (
 )
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
-from nipoppy.cli.options import dataset_option
+from nipoppy.cli.options import study_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
@@ -79,7 +79,7 @@ def dummy_cli():
 
     @cli.command()
     @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
-    @dataset_option
+    @study_option
     def subcommand_with_dataset(**params):
         print(params["test_param"])
 
